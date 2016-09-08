@@ -1,2 +1,0 @@
-# parsec
-Secure cloud framework
