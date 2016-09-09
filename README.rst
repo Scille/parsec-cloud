@@ -9,8 +9,9 @@ ParSec
         :target: https://travis-ci.org/Scille/parsec-cloud
 
 .. image:: https://readthedocs.org/projects/parsec-cloud/badge/?version=latest
-        :target: https://readthedocs.org/projects/parsec-cloud/?badge=latest
+        :target: http://parsec-cloud.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
+
 .. image:: https://coveralls.io/repos/github/Scille/parsec-cloud/badge.svg?branch=master
     :target: https://coveralls.io/github/Scille/parsec-cloud
     :alt: Code coverage
