@@ -5,7 +5,8 @@ Credits
 Development Lead
 ----------------
 
-* Emmanuel Leblond <emmanuel.leblond@gmail.com>
+* Antoine Cardon <antoine.cardon@scille.fr>
+* Emmanuel Leblond <emmanuel.leblond@scille.fr>
 
 Contributors
 ------------

@@ -23,13 +23,13 @@ test_requirements = [
 ]
 
 setup(
-    name='parsec',
+    name='parsec-cloud',
     version='0.1.0',
     description="Secure cloud framework",
     long_description=readme + '\n\n' + history,
-    author="Scille SAS.",
-    author_email='emmanuel.leblond@gmail.com',
-    url='https://github.com/Scille/parsec',
+    author="Scille SAS",
+    author_email='contact@scille.fr',
+    url='https://github.com/Scille/parsec-cloud',
     packages=[
         'parsec',
     ],
