@@ -2,23 +2,23 @@
 ParSec
 ===============================
 
-.. image:: https://img.shields.io/pypi/v/parsec.svg
-        :target: https://pypi.python.org/pypi/parsec
+.. image:: https://img.shields.io/pypi/v/parsec-cloud.svg
+        :target: https://pypi.python.org/pypi/parsec-cloud
 
-.. image:: https://img.shields.io/travis/touilleMan/parsec.svg
-        :target: https://travis-ci.org/touilleMan/parsec
+.. image:: https://img.shields.io/travis/touilleMan/parsec-cloud.svg
+        :target: https://travis-ci.org/touilleMan/parsec-cloud
 
-.. image:: https://readthedocs.org/projects/parsec/badge/?version=latest
-        :target: https://readthedocs.org/projects/parsec/?badge=latest
+.. image:: https://readthedocs.org/projects/parsec-cloud/badge/?version=latest
+        :target: https://readthedocs.org/projects/parsec-cloud/?badge=latest
         :alt: Documentation Status
-.. image:: https://coveralls.io/repos/github/touilleMan/parsec/badge.svg?branch=master
-    :target: https://coveralls.io/github/touilleMan/parsec
+.. image:: https://coveralls.io/repos/github/touilleMan/parsec-cloud/badge.svg?branch=master
+    :target: https://coveralls.io/github/touilleMan/parsec-cloud
     :alt: Code coverage
 
 Secure cloud framework
 
 * Free software: GPL v3
-* Documentation: https://parsec.readthedocs.org.
+* Documentation: https://parsec-cloud.readthedocs.org.
 
 Features
 --------
