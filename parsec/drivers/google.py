@@ -87,7 +87,8 @@ class GoogleDriver:
                 "isAppAuthorized": True,
                 "appProperties": {'appName': '%s' % APPLICATION_NAME,
                                   'role': "root-folder",
-                                  'path': '/'},
+                                  'path': '/',
+                                  'mode': 'directory'},
                 "name": APPLICATION_NAME,
             }
         ).execute()
@@ -103,6 +104,7 @@ class GoogleDriver:
                                   'role': "root-manifest"},
                 "parents": (self._root_folder,),
                 "name": "MANIFEST",
+                'mode': 'file',
             }
         ).execute()
         self._root_manifest = results.get('id')
@@ -194,7 +196,8 @@ class GoogleDriver:
                     'appProperties': {
                         "appName": APPLICATION_NAME,
                         "path": path,
-                        "role": 'parsec-file'
+                        "role": 'parsec-file',
+                        "mode": 'file'
                     },
                     'parents': (self._root_folder,),
                     'name': split(path)[1]
@@ -208,6 +211,7 @@ class GoogleDriver:
 
     def cmd_STAT(self, path):
         from stat import S_ISDIR, S_IFREG, S_IFDIR
+
         if path == '/':
             items = self._lookup_app_file(
                 name=APPLICATION_NAME, role='root-folder', fields='files', pageSize=1)
@@ -221,7 +225,7 @@ class GoogleDriver:
             'st_ctime': mktime(parse(file_info.get('createdTime', '')).timetuple()),
             'st_mtime': mktime(parse(file_info.get('modifiedTime', '')).timetuple()),
         }
-        if path != '/':  # ugly fix
+        if file_info.get('appProperties', {}).get('mode') == 'file':
             data['st_mode'] = S_IFREG
         else:
             data['st_mode'] = S_IFDIR
@@ -249,6 +253,34 @@ class GoogleDriver:
             if path == item_path:
                 ret.append(item_name)
         return {'_items': ret}
+
+    def cmd_MAKE_DIR(self, path):
+        # TODO implement for more than 1000 files in dir
+        path = _clean_path(path)
+        check = self._lookup_file(path=path, pageSize=1)
+        if len(check):
+            raise GoogleDriverException('File Already exists')
+        # Lookup for parent folder:
+        parent_path, folder_name = path.rsplit('/', 1)
+        if not parent_path:
+            parent = self._root_folder
+        else:
+            parent = self._lookup_file(path=parent_path)
+            if len(parent) != 1:
+                raise GoogleDriverException('File not found')
+            parent = parent[0]
+        infos = self._service.files().create(
+            body={
+                "mimeType": "application/vnd.google-apps.folder",
+                'appProperties': {
+                    "appName": APPLICATION_NAME,
+                    "path": path,
+                    "role": 'parsec-file',
+                    "mode": 'folder'
+                },
+                'parents': (parent,),
+                'name': folder_name
+            }).execute()
 
     def cmd_dispach(self, cmd, params):
 
