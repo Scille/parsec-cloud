@@ -92,7 +92,6 @@ def main(addr='tcp://127.0.0.1:5000', mock_path='/tmp'):
         cmd = msg.get('cmd')
         params = msg.get('params')
         try:
-            print('==>', cmd, params)
             data = drive.cmd_dispach(cmd, params)
         except DriveMockError as exc:
             ret = {'ok': False, 'reason': str(exc)}
@@ -100,7 +99,6 @@ def main(addr='tcp://127.0.0.1:5000', mock_path='/tmp'):
             ret = {'ok': True}
             if data:
                 ret['data'] = data
-        print('<==', ret)
         socket.send_json(ret)
 
 
