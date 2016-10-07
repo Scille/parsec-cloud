@@ -1,6 +1,6 @@
 import httplib2
 import os
-from io import StringIO, BytesIO
+from io import BytesIO
 from os.path import split
 from base64 import decodebytes, encodebytes
 
@@ -9,10 +9,8 @@ from apiclient.http import MediaIoBaseUpload
 import oauth2client
 from oauth2client import client
 from oauth2client import tools
-from datetime import datetime
 from time import mktime
 from dateutil.parser import parse
-import json
 import zmq
 
 
@@ -133,10 +131,7 @@ class GoogleDriver:
         if not credentials or credentials.invalid:
             flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
             flow.user_agent = APPLICATION_NAME
-            if flags:
-                credentials = tools.run_flow(flow, store, flags)
-            else:  # Needed only for compatibility with Python 2.6
-                credentials = tools.run(flow, store)
+            credentials = tools.run(flow, store)
         return credentials
 
     def _lookup_app_file(self, name='MANIFEST', role='root-manifest', pageSize=2, fields='nextPageToken, files(id, name)'):
@@ -327,32 +322,6 @@ def main(addr='tcp://127.0.0.1:5000', mock_path='/tmp'):
                 ret['data'] = data
         print('<==', ret)
         socket.send_json(ret)
-
-
-# def main():
-#     """Shows basic usage of the Google Drive API.
-
-#     Creates a Google Drive API service object and outputs the names and IDs
-#     for up to 10 files.
-#     """
-
-#     driver = GoogleDriver()
-#     try:
-#         driver.initialize_driver()
-#     except GoogleDriverException:
-#         driver.create_driver_files()
-#     finally:
-#         driver.initialize_driver()
-#     driver.cmd_WRITE_FILE(path="/test/toto.txt", content="BITE")
-#     driver.cmd_WRITE_FILE(path="/test/test2/toto2.txt", content="BITE")
-#     driver.cmd_WRITE_FILE(path="/test2/toto2.txt", content="BITE")
-#     driver.cmd_WRITE_FILE(path="/test2/toto3.txt", content="BITE")
-#     driver.cmd_LIST_DIR(path="/test/")
-#     # driver.cmd_READ_FILE(path="test/toto.txt")
-#     # driver.cmd_DELETE_FILE(path="test/toto.txt")
-#     # import pdb
-#     # pdb.set_trace()
-
 
 if __name__ == '__main__':
     main()
