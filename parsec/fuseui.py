@@ -23,6 +23,7 @@ def _content_unwrap(wrapped_content):
 
 
 class DriveInterface:
+
     def __init__(self, addr='tcp://127.0.0.1:5000'):
         self._context = zmq.Context()
         self._socket = self._context.socket(zmq.REQ)
@@ -64,6 +65,7 @@ class DriveInterface:
 
 
 class DriveFile:
+
     def __init__(self, drive, path, flags=0):
         self.path = path
         self._drive = drive
@@ -163,7 +165,7 @@ class FuseOperations(LoggingMixIn, Operations):
                 self.release(path, fh)
 
     def unlink(self, path):
-        self.drive.delete_file(path)
+        self._drive.delete_file(path)
 
     def mkdir(self, path, mode):
         # TODO
