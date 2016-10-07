@@ -137,7 +137,6 @@ class GoogleDriver:
                 credentials = tools.run_flow(flow, store, flags)
             else:  # Needed only for compatibility with Python 2.6
                 credentials = tools.run(flow, store)
-            print('Storing credentials to ' + credential_path)
         return credentials
 
     def _lookup_app_file(self, name='MANIFEST', role='root-manifest', pageSize=2, fields='nextPageToken, files(id, name)'):
@@ -152,19 +151,30 @@ class GoogleDriver:
         ).execute()
         return lookup.get('files', [])
 
-    def _lookup_file(self, path, pageSize=2, parent=None, fields='nextPageToken, files(id, name)'):
-        if not parent:
-            parent = self._root_folder
+    def _lookup_file(self, path, pageSize=2, fields='nextPageToken, files(id, name)'):
         lookup = self._service.files().list(
             pageSize=pageSize,
             spaces='drive',
             q=("appProperties has {{ key='appName' and value='{}' }}"
                " and appProperties has {{ key='role' and value='parsec-file' }}"
                " and appProperties has {{ key='path' and value='{}' }}"
-               " and '{}' in parents").format(APPLICATION_NAME, path, parent),
+               ).format(APPLICATION_NAME, path),
             fields=fields
         ).execute()
         return lookup.get('files', [])
+
+    def _get_parent(self, path, isFolder=False):
+        # Lookup for parent folder:
+        if not isFolder:
+            path, _ = path.rsplit('/', 1)
+        if path in (None, '/'):
+            parent = self._root_folder
+        else:
+            parent = self._lookup_file(path=path)
+            if len(parent) != 1:
+                raise GoogleDriverException('File not found')
+            parent = parent[0].get('id')
+        return parent
 
     def cmd_READ_FILE(self, path):
         items = self._lookup_file(path)
@@ -191,6 +201,7 @@ class GoogleDriver:
                 fileId=items[0].get('id'),
                 media_body=media).execute()
         else:
+            parent = self._get_parent(path=path, isFolder=False)
             infos = self._service.files().create(
                 body={
                     'appProperties': {
@@ -199,7 +210,7 @@ class GoogleDriver:
                         "role": 'parsec-file',
                         "mode": 'file'
                     },
-                    'parents': (self._root_folder,),
+                    'parents': (parent,),
                     'name': split(path)[1]
                 }, media_body=media).execute()
 
@@ -236,22 +247,16 @@ class GoogleDriver:
     def cmd_LIST_DIR(self, path):
         # TODO implement for more than 1000 files in dir
         path = _clean_path(path)
+        parent = self._get_parent(path, isFolder=True)
         lookup = self._service.files().list(
             pageSize=1000,
             spaces='drive',
             q=("appProperties has {{ key='appName' and value='{}' }}"
                " and appProperties has {{ key='role' and value='parsec-file' }}"
-               " and '{}' in parents").format(APPLICATION_NAME, self._root_folder),
+               " and '{}' in parents").format(APPLICATION_NAME, parent),
             fields='files(appProperties, name)'
         ).execute()
-        items = lookup.get('files', [])
-        ret = []
-        for item in items:
-            item_path, item_name = item.get('appProperties', {}).get('path').rsplit('/', 1)
-            if not item_path:  # root file
-                item_path = '/'
-            if path == item_path:
-                ret.append(item_name)
+        ret = [item.get('name') for item in lookup.get('files', [])] or []
         return {'_items': ret}
 
     def cmd_MAKE_DIR(self, path):
@@ -263,7 +268,7 @@ class GoogleDriver:
         # Lookup for parent folder:
         parent_path, folder_name = path.rsplit('/', 1)
         if not parent_path:
-            parent = self._root_folder
+            parent = {'id': self._root_folder}
         else:
             parent = self._lookup_file(path=parent_path)
             if len(parent) != 1:
@@ -278,7 +283,7 @@ class GoogleDriver:
                     "role": 'parsec-file',
                     "mode": 'folder'
                 },
-                'parents': (parent,),
+                'parents': (parent.get('id'),),
                 'name': folder_name
             }).execute()
 
