@@ -63,6 +63,9 @@ class DriveInterface:
     def list_dir(self, path):
         return self.__ll_com('LIST_DIR', {'path': path})
 
+    def make_dir(self, path):
+        return self.__ll_com('MAKE_DIR', {'path': path})
+
 
 class DriveFile:
 
@@ -168,8 +171,8 @@ class FuseOperations(LoggingMixIn, Operations):
         self._drive.delete_file(path)
 
     def mkdir(self, path, mode):
-        # TODO
-        raise FuseOSError(EROFS)
+        self._drive.make_dir(path)
+        return 0
 
     def flush(self, path, fh):
         fd = self._get_fd(fh)
