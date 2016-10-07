@@ -216,11 +216,10 @@ class GoogleDriver:
         if len(items) != 1:
             raise GoogleDriverException('File not found')
         file_info = items[0]
-
         data = {
-            'st_size': int(file_info.get('size')),
-            'st_ctime': mktime(parse(file_info.get('createdTime')).timetuple()),
-            'st_mtime': mktime(parse(file_info.get('modifiedTime')).timetuple()),
+            'st_size': int(file_info.get('size', '0')),
+            'st_ctime': mktime(parse(file_info.get('createdTime', '')).timetuple()),
+            'st_mtime': mktime(parse(file_info.get('modifiedTime', '')).timetuple()),
         }
         if path != '/':  # ugly fix
             data['st_mode'] = S_IFREG
@@ -245,6 +244,8 @@ class GoogleDriver:
         ret = []
         for item in items:
             item_path, item_name = item.get('appProperties', {}).get('path').rsplit('/', 1)
+            if not item_path:  # root file
+                item_path = '/'
             if path == item_path:
                 ret.append(item_name)
         return {'_items': ret}
