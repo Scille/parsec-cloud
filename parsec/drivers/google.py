@@ -9,6 +9,9 @@ from apiclient.http import MediaIoBaseUpload
 import oauth2client
 from oauth2client import client
 from oauth2client import tools
+from datetime import datetime
+from time import mktime
+from dateutil.parser import parse
 import json
 import zmq
 
@@ -135,14 +138,15 @@ class GoogleDriver:
             print('Storing credentials to ' + credential_path)
         return credentials
 
-    def _lookup_app_file(self, name='MANIFEST', role='root-manifest', pageSize=2):
+    def _lookup_app_file(self, name='MANIFEST', role='root-manifest', pageSize=2, fields='nextPageToken, files(id, name)'):
         lookup = self._service.files().list(
             pageSize=pageSize,
             spaces='drive',
             q=("name='{}'"
                " and appProperties has {{ key='appName' and value='{}' }}"
                " and appProperties has {{ key='role' and value='{}' }}"
-               ).format(name, APPLICATION_NAME, role)
+               ).format(name, APPLICATION_NAME, role),
+            fields=fields
         ).execute()
         return lookup.get('files', [])
 
@@ -172,10 +176,13 @@ class GoogleDriver:
         return self.cmd_WRITE_FILE(path, content=content)
 
     def cmd_WRITE_FILE(self, path, content=None):
-        content_io = BytesIO(content.encode())
-        media = MediaIoBaseUpload(content_io,
-                                  mimetype='application/binary',
-                                  resumable=True)
+        if content:
+            content_io = BytesIO(content.encode())
+            media = MediaIoBaseUpload(content_io,
+                                      mimetype='application/binary',
+                                      resumable=True)
+        else:
+            media = None
         items = self._lookup_file(path)
         if len(items) == 1:
             infos = self._service.files().update(
@@ -202,7 +209,8 @@ class GoogleDriver:
     def cmd_STAT(self, path):
         from stat import S_ISDIR, S_IFREG, S_IFDIR
         if path == '/':
-            items = self._lookup_app_file(name=APPLICATION_NAME, role='root-folder', pageSize=1)
+            items = self._lookup_app_file(
+                name=APPLICATION_NAME, role='root-folder', fields='files', pageSize=1)
         else:
             items = self._lookup_file(path=path, fields='files')
         if len(items) != 1:
@@ -210,14 +218,15 @@ class GoogleDriver:
         file_info = items[0]
 
         data = {
-            'st_size': file_info.get('size'),
-            'st_ctime': file_info.get('createdTime'),
-            'st_mtime': file_info.get('modifiedTime')
+            'st_size': int(file_info.get('size')),
+            'st_ctime': mktime(parse(file_info.get('createdTime')).timetuple()),
+            'st_mtime': mktime(parse(file_info.get('modifiedTime')).timetuple()),
         }
         if path != '/':  # ugly fix
             data['st_mode'] = S_IFREG
         else:
             data['st_mode'] = S_IFDIR
+            data['st_size'] = 4096
 
         return data
 
