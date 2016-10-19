@@ -1,17 +1,12 @@
 import httplib2
 import os
-from io import BytesIO
-from os.path import split
+from io import BytesIO, StringIO
 from base64 import decodebytes, encodebytes
-
 from apiclient import discovery
 from apiclient.http import MediaIoBaseUpload
-import oauth2client
-from oauth2client import client
-from oauth2client import tools
-from time import mktime
-from dateutil.parser import parse
-import zmq
+from oauth2client import client, tools
+from oauth2client.file import Storage
+from json import loads, dumps
 
 
 # If modifying these scopes, delete your previously saved credentials
@@ -19,19 +14,14 @@ import zmq
 SCOPES = 'https://www.googleapis.com/auth/drive'
 CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Parsec'
-PREFIX = 'PARSEC'
 
 
 def _content_wrap(content):
-    return encodebytes(content).decode()
+    return encodebytes(content.encode())
 
 
 def _content_unwrap(wrapped_content):
-    return decodebytes(wrapped_content.encode())
-
-
-def _clean_path(path):
-    return '/' + '/'.join([e for e in path.split('/') if e])
+    return decodebytes(wrapped_content).decode()
 
 
 class GoogleDriverException(Exception):
@@ -46,35 +36,78 @@ class GoogleDriver:
         self._http = self._credentials.authorize(httplib2.Http())
         self._service = discovery.build('drive', 'v3', http=self._http)
 
+    def _get_credentials(self):
+        """Gets valid user credentials from storage.
+
+        If nothing has been stored, or if the stored credentials are invalid,
+        the OAuth2 flow is completed to obtain the new credentials.
+
+        Returns:
+            Credentials, the obtained credential.
+        """
+        home_dir = os.path.expanduser('~')
+        credential_dir = os.path.join(home_dir, '.credentials')
+        if not os.path.exists(credential_dir):
+            os.makedirs(credential_dir)
+        credential_path = os.path.join(credential_dir,
+                                       'drive-python-quickstart.json')
+
+        store = Storage(credential_path)
+        credentials = store.get()
+        flags = tools.argparser.parse_args(args=[])
+        if not credentials or credentials.invalid:
+            flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
+            flow.user_agent = APPLICATION_NAME
+            credentials = tools.run_flow(flow, store, flags)
+        return credentials
+
     def initialized(self):
+        """ Check if the driver is initialized.
+            Returns:
+                Boolean
+            Raises:
+                None
+            """
         return self._initialized
 
     def initialize_driver(self):
-        # check for specific files
+        """ Looks up Parsec system files one the cloud and load their ID into
+        the Driver class instance. This Function also loads the mapping between
+        virtual IDs used by the VFS and the Physical IDs used on the cloud side.
+        Sets the initialized attribute to the according boolean value.
+        WARNING: You MUST not use the driver if not successfully initialized.
+            Returns:
+                None
+            Raises:
+                GoogleDriverException if a system file is not found
+        """
         if self._initialized:
             return
-        # Locate the root folder
-        items = self._lookup_app_file(name="Parsec", role='root-folder')
-        if len(items) != 1:
-            raise GoogleDriverException('Drive Directory is broken, please check.')
-        self._root_folder = items[0].get('id')
-        if not self._root_folder:
-            raise GoogleDriverException('Cannot locate root folder')
+        # (name, role, attr_name, function to call on result)
+        system_files = (('Parsec', 'root-folder', '_root_folder', None),
+                        ('MANIFEST', 'root-manifest', '_root_manifest', None),
+                        ('MAP', 'mapping-file', '_mapping_file', self._load_mapping))
 
-        # Locate the root manifest
-        items = self._lookup_app_file(name="MANIFEST", role='root-manifest')
-        if len(items) != 1:
-            raise GoogleDriverException('Drive Directory is broken, please check.')
-        self._root_manifest = items[0].get('id')
-        if not self._root_manifest:
-            raise GoogleDriverException('Cannot locate root manifest')
+        for (name, role, attr_name, func) in system_files:
+            items = self._lookup_app_file(name=name, role=role)
+            if len(items) != 1:
+                raise GoogleDriverException('Drive Directory is broken, please check.')
+            setattr(self, attr_name, items[0].get('id'))
+            if getattr(self, attr_name, None) is None:
+                raise GoogleDriverException('Cannot locate %s' % role)
+            if func:
+                func()
+
         self._initialized = True
 
-        # TODO : load all other manifests
-
     def create_driver_files(self):
-        """Initialize Driver Environnement in Google Drive"""
-
+        """Initialize Driver Environnement in Google Drive. Creates all required system files
+        used by Parsec.
+            Returns:
+                None
+            Raises:
+                GoogleDriverException if a system file is not found
+        """
         if self._initialized:
             raise GoogleDriverException('Driver is already initialized, so does folder.')
 
@@ -94,6 +127,7 @@ class GoogleDriver:
         if not self._root_folder:
             raise GoogleDriverException('Failed to initialise root folder')
 
+        # Create the manifest file
         results = self._service.files().create(
             body={
                 "mimeType": "application/scille.parsec.manifest",
@@ -108,31 +142,24 @@ class GoogleDriver:
         self._root_manifest = results.get('id')
         if not self._root_manifest:
             raise GoogleDriverException('Failed to initialise root manifest')
-        self.initialized = True
 
-    def _get_credentials(self):
-        """Gets valid user credentials from storage.
-
-        If nothing has been stored, or if the stored credentials are invalid,
-        the OAuth2 flow is completed to obtain the new credentials.
-
-        Returns:
-            Credentials, the obtained credential.
-        """
-        home_dir = os.path.expanduser('~')
-        credential_dir = os.path.join(home_dir, '.credentials')
-        if not os.path.exists(credential_dir):
-            os.makedirs(credential_dir)
-        credential_path = os.path.join(credential_dir,
-                                       'drive-python-quickstart.json')
-
-        store = oauth2client.file.Storage(credential_path)
-        credentials = store.get()
-        if not credentials or credentials.invalid:
-            flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
-            flow.user_agent = APPLICATION_NAME
-            credentials = tools.run(flow, store)
-        return credentials
+        # Create the PID/VID mapping file
+        results = self._service.files().create(
+            body={
+                "mimeType": "application/scille.parsec.google.mapping",
+                "isAppAuthorized": True,
+                "appProperties": {'appName': '%s' % APPLICATION_NAME,
+                                  'role': "mapping-file"},
+                "parents": (self._root_folder,),
+                "name": "MAP",
+                'mode': 'file',
+            }
+        ).execute()
+        self._mapping_file = results.get('id')
+        self._mapping = {}
+        if not self._mapping_file:
+            raise GoogleDriverException('Failed to initialise map table')
+        self._initialized = True
 
     def _lookup_app_file(self, name='MANIFEST', role='root-manifest', pageSize=2, fields='nextPageToken, files(id, name)'):
         lookup = self._service.files().list(
@@ -146,182 +173,111 @@ class GoogleDriver:
         ).execute()
         return lookup.get('files', [])
 
-    def _lookup_file(self, path, pageSize=2, fields='nextPageToken, files(id, name)'):
-        lookup = self._service.files().list(
-            pageSize=pageSize,
-            spaces='drive',
-            q=("appProperties has {{ key='appName' and value='{}' }}"
-               " and appProperties has {{ key='role' and value='parsec-file' }}"
-               " and appProperties has {{ key='path' and value='{}' }}"
-               ).format(APPLICATION_NAME, path),
-            fields=fields
-        ).execute()
-        return lookup.get('files', [])
+    def _load_mapping(self):
+        """Opens the content of the MAP system file stored on the drive side and loads it
+        into memory. This file contains the mapping between VID used by VFS and PID used
+        by Google Drive
+            Returns:
+                None
+            Raises:
+                None
+        """
+        mapping_content = self._service.files().get_media(fileId=self._mapping_file).execute()
+        mapping_content = _content_unwrap(mapping_content)
+        self._mapping = loads(mapping_content)
 
-    def _get_parent(self, path, isFolder=False):
-        # Lookup for parent folder:
-        if not isFolder:
-            path, _ = path.rsplit('/', 1)
-        if path in (None, '/'):
-            parent = self._root_folder
-        else:
-            parent = self._lookup_file(path=path)
-            if len(parent) != 1:
-                raise GoogleDriverException('File not found')
-            parent = parent[0].get('id')
-        return parent
+    def _save_mapping(self):
+        """Saves the content of self._mapping into the MAP system file stored on the
+        drive side.
+            Returns:
+                None
+            Raises:
+                None
+        """
+        content_io = BytesIO(_content_wrap(dumps(self._mapping)))
+        media = MediaIoBaseUpload(content_io,
+                                  mimetype='application/binary',
+                                  resumable=True)
+        self._service.files().update(
+            fileId=self._mapping_file,
+            media_body=media).execute()
 
-    def cmd_READ_FILE(self, path):
-        items = self._lookup_file(path)
-        if (len(items) != 1):
+    def sync(self):
+        self._save_mapping()
+
+    def get_manifest(self):
+        """ Public function used to get the manifest stored on the remote cloud.
+            Returns:
+                A StringIO with the content of the manifest
+            Raises:
+                None
+        """
+        if not self._initialized:
+            raise GoogleDriverException("Driver not initialized")
+        manifest = self._lookup_app_file(name='MANIFEST', role='root-manifest')
+        manifest_content = self._service.files().get_media(fileId=manifest[0].get('id')).execute()
+
+        return StringIO(_content_unwrap(manifest_content))
+
+    def read_file(self, vid):
+        """ Get the content of a file stored on the Google Drive.
+            Returns:
+                Content of the file as a str
+            Raises:
+                GoogleDriverException() if file is not in mapping
+        """
+        file_id = self._mapping.get(vid)
+        if file_id is None:
             raise GoogleDriverException('File not found')
-        file_content = self._service.files().get_media(fileId=items[0].get('id')).execute()
+        file_content = self._service.files().get_media(fileId=file_id).execute()
+        return _content_unwrap(file_content)
 
-        return {'content': _content_wrap(file_content)}
+    def write_file(self, vid=None, content=None):
+        """ Creates or writes a file on the Google Drive.
+            self._mapping is updated only in case of a file creation.
+            @content may be empty.
+            Returns:
+                None # Should return a status of the write function...
+            Raises:
+                GoogleDriverException() if not vid is provided by the VFS
+        """
+        if vid is None:
+            raise GoogleDriverException('A VID is mandatory')
 
-    def cmd_CREATE_FILE(self, path, content=None):
-        return self.cmd_WRITE_FILE(path, content=content)
-
-    def cmd_WRITE_FILE(self, path, content=None):
+        media = None
         if content:
-            content_io = BytesIO(content.encode())
+            content_io = BytesIO(_content_wrap(content))
             media = MediaIoBaseUpload(content_io,
                                       mimetype='application/binary',
                                       resumable=True)
-        else:
-            media = None
-        items = self._lookup_file(path)
-        if len(items) == 1:
-            infos = self._service.files().update(
-                fileId=items[0].get('id'),
-                media_body=media).execute()
-        else:
-            parent = self._get_parent(path=path, isFolder=False)
+        file_id = self._mapping.get(vid)
+        if file_id is None:
             infos = self._service.files().create(
                 body={
                     'appProperties': {
                         "appName": APPLICATION_NAME,
-                        "path": path,
                         "role": 'parsec-file',
                         "mode": 'file'
                     },
-                    'parents': (parent,),
-                    'name': split(path)[1]
-                }, media_body=media).execute()
-
-    def cmd_DELETE_FILE(self, path):
-        items = self._lookup_file(path)
-        if len(items) != 1:
-            raise GoogleDriverException('File not found')
-        file = self._service.files().delete(fileId=items[0].get('id')).execute()
-
-    def cmd_STAT(self, path):
-        from stat import S_ISDIR, S_IFREG, S_IFDIR
-
-        if path == '/':
-            items = self._lookup_app_file(
-                name=APPLICATION_NAME, role='root-folder', fields='files', pageSize=1)
-        else:
-            items = self._lookup_file(path=path, fields='files')
-        if len(items) != 1:
-            raise GoogleDriverException('File not found')
-        file_info = items[0]
-        data = {
-            'st_size': int(file_info.get('size', '0')),
-            'st_ctime': mktime(parse(file_info.get('createdTime', '')).timetuple()),
-            'st_mtime': mktime(parse(file_info.get('modifiedTime', '')).timetuple()),
-        }
-        if file_info.get('appProperties', {}).get('mode') == 'file':
-            data['st_mode'] = S_IFREG
-        else:
-            data['st_mode'] = S_IFDIR
-            data['st_size'] = 4096
-
-        return data
-
-    def cmd_LIST_DIR(self, path):
-        # TODO implement for more than 1000 files in dir
-        path = _clean_path(path)
-        parent = self._get_parent(path, isFolder=True)
-        lookup = self._service.files().list(
-            pageSize=1000,
-            spaces='drive',
-            q=("appProperties has {{ key='appName' and value='{}' }}"
-               " and appProperties has {{ key='role' and value='parsec-file' }}"
-               " and '{}' in parents").format(APPLICATION_NAME, parent),
-            fields='files(appProperties, name)'
-        ).execute()
-        ret = [item.get('name') for item in lookup.get('files', [])] or []
-        return {'_items': ret}
-
-    def cmd_MAKE_DIR(self, path):
-        # TODO implement for more than 1000 files in dir
-        path = _clean_path(path)
-        check = self._lookup_file(path=path, pageSize=1)
-        if len(check):
-            raise GoogleDriverException('File Already exists')
-        # Lookup for parent folder:
-        parent_path, folder_name = path.rsplit('/', 1)
-        if not parent_path:
-            parent = {'id': self._root_folder}
-        else:
-            parent = self._lookup_file(path=parent_path)
-            if len(parent) != 1:
-                raise GoogleDriverException('File not found')
-            parent = parent[0]
-        infos = self._service.files().create(
-            body={
-                "mimeType": "application/vnd.google-apps.folder",
-                'appProperties': {
-                    "appName": APPLICATION_NAME,
-                    "path": path,
-                    "role": 'parsec-file',
-                    "mode": 'folder'
+                    'parents': (self._root_folder,),
                 },
-                'parents': (parent.get('id'),),
-                'name': folder_name
-            }).execute()
-
-    def cmd_dispach(self, cmd, params):
-
-        attr_name = 'cmd_%s' % cmd.upper()
-        if hasattr(self, attr_name):
-            try:
-                ret = getattr(self, attr_name)(**params)
-            except TypeError:
-                raise GoogleDriverException('Bad params for cmd `%s`' % cmd)
+                media_body=media,
+                fields='id').execute()
+            self._mapping[vid] = infos['id']
         else:
-            raise GoogleDriverException('Unknown cmd `%s`' % cmd)
+            self._service.files().update(
+                fileId=file_id,
+                media_body=media).execute()
 
-        return ret
-
-
-def main(addr='tcp://127.0.0.1:5000', mock_path='/tmp'):
-    context = zmq.Context()
-    socket = context.socket(zmq.REP)
-    socket.bind(addr)
-    driver = GoogleDriver()
-    try:
-        driver.initialize_driver()
-    except GoogleDriverException:
-        driver.create_driver_files()
-    finally:
-        driver.initialize_driver()
-    while True:
-        msg = socket.recv_json()
-        cmd = msg.get('cmd')
-        params = msg.get('params')
-        try:
-            print('==>', cmd, params)
-            data = driver.cmd_dispach(cmd, params)
-        except GoogleDriverException as exc:
-            ret = {'ok': False, 'reason': str(exc)}
-        else:
-            ret = {'ok': True}
-            if data:
-                ret['data'] = data
-        print('<==', ret)
-        socket.send_json(ret)
-
-if __name__ == '__main__':
-    main()
+    def delete_file(self, vid=None):
+        """ Deletes file on the cloud storage. if vis does not exists,
+        the function does nothing.
+            Returns:
+                None # Should return a status of the delete call...
+            Raises:
+                None
+        """
+        file_id = self._mapping.get(vid)
+        if file_id is not None:
+            self._service.files().delete(fileId=file_id).execute()
+            del self._mapping[vid]
