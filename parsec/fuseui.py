@@ -1,9 +1,9 @@
 import logging
 
-from errno import EROFS, ENOENT, EBADFD
+from errno import EROFS, ENOENT, EBADFD, ENOTEMPTY
 import os
 import sys
-from stat import S_IRWXU, S_IRWXG, S_IRWXO
+from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from sys import argv, exit
 import base64
 from logbook import debug, warning, StreamHandler
@@ -37,6 +37,9 @@ class DriveInterface:
             if reason == 'File not found':
                 debug('%s: File not found (%s)' % (cmd, params))
                 raise FuseOSError(ENOENT)
+            elif reason == 'Directory not empty':
+                debug('%s: Directory not empty (%s)' % (cmd, params))
+                raise FuseOSError(ENOTEMPTY)
             else:
                 msg = '`%s` has failed (reason: %s)' % (cmd, reason)
                 warning(msg)
@@ -65,6 +68,9 @@ class DriveInterface:
 
     def make_dir(self, path):
         return self.__ll_com('MAKE_DIR', {'path': path})
+
+    def remove_dir(self, path):
+        return self.__ll_com('REMOVE_DIR', {'path': path})
 
 
 class DriveFile:
@@ -120,21 +126,30 @@ class FuseOperations(LoggingMixIn, Operations):
     def getattr(self, path, fh=None):
         stats = self._drive.stat(path)
         # Set it to 777 access
+        stats['st_mode'] = 0
+        if stats['directory']:
+            stats['st_mode'] |= S_IFDIR
+        else:
+            stats['st_mode'] |= S_IFREG
+
         stats['st_mode'] |= S_IRWXU | S_IRWXG | S_IRWXO
-        stats['st_atime'] = stats['st_mtime']
+        stats['st_atime'] = stats.pop('last_access')
+        stats['st_ctime'] = stats.pop('creation_time')
+        stats['st_mtime'] = stats.pop('modification_time')
         stats['st_nlink'] = 1
         stats['st_uid'] = os.getuid()
         stats['st_gid'] = os.getgid()
+        stats['st_size'] = stats.pop('size')
         return stats
 
     def readdir(self, path, fh):
-        return ['.', '..'] + self._drive.list_dir(path)['_items']
+        return ['.', '..'] + self._drive.list_dir(path)
 
     def create(self, path, mode):
         self._drive.create_file(path)
         return self.open(path)
 
-    def open(self, path, flags):
+    def open(self, path, flags=0):
         fd_id = self.next_fd_id
         self.fds[fd_id] = DriveFile(self._drive, path, flags)
         self.next_fd_id += 1
@@ -172,6 +187,10 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def mkdir(self, path, mode):
         self._drive.make_dir(path)
+        return 0
+
+    def rmdir(self, path):
+        self._drive.remove_dir(path)
         return 0
 
     def flush(self, path, fh):

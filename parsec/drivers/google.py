@@ -6,7 +6,7 @@ from apiclient import discovery
 from apiclient.http import MediaIoBaseUpload
 from oauth2client import client, tools
 from oauth2client.file import Storage
-from json import loads, dumps
+from json import loads, dumps, JSONDecodeError
 from parsec.drivers.interface import DriverInterfaceException
 
 
@@ -15,14 +15,6 @@ from parsec.drivers.interface import DriverInterfaceException
 SCOPES = 'https://www.googleapis.com/auth/drive'
 CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Parsec'
-
-
-def _content_wrap(content):
-    return encodebytes(content.encode())
-
-
-def _content_unwrap(wrapped_content):
-    return decodebytes(wrapped_content).decode()
 
 
 class GoogleDriverException(DriverInterfaceException):
@@ -104,7 +96,7 @@ class GoogleDriver:
     def initialize_driver(self, force=False):
         try:
             self._initialize_driver()
-        except ParsecVFSException:
+        except GoogleDriverException:
             if force:
                 self.create_driver_files()
         finally:
@@ -193,8 +185,10 @@ class GoogleDriver:
                 None
         """
         mapping_content = self._service.files().get_media(fileId=self._mapping_file).execute()
-        mapping_content = _content_unwrap(mapping_content)
-        self._mapping = loads(mapping_content)
+        try:
+            self._mapping = loads(mapping_content.decode())
+        except JSONDecodeError:
+            self._mapping = {}
 
     def _save_mapping(self):
         """Saves the content of self._mapping into the MAP system file stored on the
@@ -204,7 +198,7 @@ class GoogleDriver:
             Raises:
                 None
         """
-        content_io = BytesIO(_content_wrap(dumps(self._mapping)))
+        content_io = BytesIO(dumps(self._mapping).encode())
         media = MediaIoBaseUpload(content_io,
                                   mimetype='application/binary',
                                   resumable=True)
@@ -214,20 +208,6 @@ class GoogleDriver:
 
     def sync(self):
         self._save_mapping()
-
-    def get_manifest(self):
-        """ Public function used to get the manifest stored on the remote cloud.
-            Returns:
-                A StringIO with the content of the manifest
-            Raises:
-                None
-        """
-        if not self._initialized:
-            raise GoogleDriverException("Driver not initialized")
-        manifest = self._lookup_app_file(name='MANIFEST', role='root-manifest')
-        manifest_content = self._service.files().get_media(fileId=manifest[0].get('id')).execute()
-
-        return StringIO(_content_unwrap(manifest_content))
 
     def read_file(self, vid):
         """ Get the content of a file stored on the Google Drive.
@@ -240,7 +220,7 @@ class GoogleDriver:
         if file_id is None:
             raise GoogleDriverException('File not found')
         file_content = self._service.files().get_media(fileId=file_id).execute()
-        return _content_unwrap(file_content)
+        return file_content
 
     def write_file(self, vid=None, content=None):
         """ Creates or writes a file on the Google Drive.
@@ -256,7 +236,7 @@ class GoogleDriver:
 
         media = None
         if content:
-            content_io = BytesIO(_content_wrap(content))
+            content_io = BytesIO(content)
             media = MediaIoBaseUpload(content_io,
                                       mimetype='application/binary',
                                       resumable=True)

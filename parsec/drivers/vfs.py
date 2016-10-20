@@ -2,7 +2,17 @@ import zmq
 from io import StringIO
 from json import loads, dumps
 from uuid import uuid4
+from datetime import datetime
 from parsec.drivers.interface import DriverInterfaceException
+import base64
+
+
+def _content_wrap(content):
+    return base64.encodebytes(content).decode()
+
+
+def _content_unwrap(wrapped_content):
+    return base64.decodebytes(wrapped_content.encode())
 
 
 class vInode:
@@ -72,11 +82,11 @@ class ParsecVFS:
         """ Initialise the filesystem from a driver. The driver must implment a function
         that return the plain manifest files as a StringIO. """
         self._driver = driver
-        self._driver.initialize_driver()
+        self._driver.initialize_driver(force=True)
         self._build_root()
 
     def _init_metadata(self, isdir=False):
-        now = datime.utcnow()
+        now = datetime.utcnow().timestamp()
         return {'creation_time': now,
                 'modification_time': now,
                 'last_access': now,
@@ -84,7 +94,7 @@ class ParsecVFS:
                 'directory': isdir}
 
     def _update_metadata(self, metadata):
-        now = datime.utcnow()
+        now = datetime.utcnow().timestamp()
         metadata.update({'creation_time': now,
                          'modification_time': now,
                          'last_access': now})
@@ -96,9 +106,9 @@ class ParsecVFS:
             Raises : None
             """
         try:
-            self._root = loads(self._driver.read_file('0'))
+            self._root = loads(self._driver.read_file('0').decode())
         except DriverInterfaceException:
-            self._root = {'/': {'metadata': {}}}
+            self._root = {'/': {'metadata': self._init_metadata(isdir=True)}}
 
     def _locate_file(self, path):
         """ Method aimed to find a file in the tree
@@ -113,33 +123,36 @@ class ParsecVFS:
             raise ParsecVFSException('File not found')
 
     def _save_manifest(self):
-        self._driver.write_file('0', dumps(self._root))
+        self._driver.write_file('0', dumps(self._root).encode())
 
     def create_file(self, path, content):
-        now = datime.utcnow()
+        content = _content_unwrap(content)
+        now = datetime.utcnow().timestamp()
         file = self._root.get(path, None)
-        metadata = file.get('metadata', None) or self._init_metadata()
-        if file is None:
-            file = {'metadata': metadata, 'vid': uuid4().hex
-                    }
+        if not file:
+            file = {'metadata': self._init_metadata(), 'vid': uuid4().hex}
             # TODO : update metadata (dates, etc.)
             self._root[path] = file
         if file['vid'] is None:
             raise ParsecVFSException('File is a directory')
-        file.metadata.update({'modification_time': now,
-                              'last_access': now})
+        file['metadata'].update({'modification_time': now,
+                                 'size': len(content)})
         self._driver.write_file(file['vid'], content)
-        self._driver.sync()
         self._save_manifest()
+        self._driver.sync()
 
     def read_file(self, path):
         try:
-            file_id = self._root[path]['vid']
+            file = self._root[path]
         except KeyError:
             raise ParsecVFSException('File not found')
-        if vid is None:
+        if file['vid'] is None:
             raise ParsecVFSException('File is Directory')
-        return {'content': self._driver.read_file(file_id)}
+        now = datetime.utcnow().timestamp()
+        file['metadata'].update({'last_access': now, })
+        self._save_manifest()
+
+        return {'content': _content_wrap(self._driver.read_file(file['vid']))}
 
     def write_file(self, path, content):
         self.create_file(path, content)
@@ -155,23 +168,29 @@ class ParsecVFS:
         try:
             return self._root[path]['metadata']
         except KeyError:
-            raise ParsecVFSException('File Not found')
+            raise ParsecVFSException('File not found')
 
     def list_dir(self, path):
         files = []
+        path = path[:-1] if path.endswith('/') else path
         for key in self._root.keys():
             head, tail = key.rsplit('/', 1)
-            if head == path:
-                files.append(key)
+            if head == path and tail not in (None, ''):
+                files.append(tail)
 
         return files
 
-    def create_dir(self, path):
+    def make_dir(self, path):
         if self._root.get(path):
             raise ParsecVFSException('File exists')
         else:
-            metadata = {}
+            metadata = self._init_metadata(True)
             self._root[path] = {'vid': None, 'path': path, 'metadata': metadata}
+
+    def remove_dir(self, path):
+        if len(self.list_dir(path)):
+            raise ParsecVFSException('Directory not empty')
+        del self._root[path]
 
     def cmd_dispach(self, cmd, params):
         cmd = cmd.lower()
@@ -181,7 +200,7 @@ class ParsecVFS:
             except TypeError:
                 raise ParsecVFSException('Bad params for cmd `%s`' % cmd)
         else:
-            raise ParsecVFSException('Ulnknown cmd `%s`' % cmd)
+            raise ParsecVFSException('Unknown cmd `%s`' % cmd)
 
         return ret
 
@@ -204,7 +223,7 @@ def main(addr='tcp://127.0.0.1:5000', mock_path='/tmp'):
             ret = {'ok': False, 'reason': str(exc)}
         else:
             ret = {'ok': True}
-            if data:
+            if data is not None:
                 ret['data'] = data
         print('<==', ret)
         socket.send_json(ret)
