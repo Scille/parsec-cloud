@@ -7,6 +7,7 @@ from apiclient.http import MediaIoBaseUpload
 from oauth2client import client, tools
 from oauth2client.file import Storage
 from json import loads, dumps
+from parsec.drivers.interface import DriverInterfaceException
 
 
 # If modifying these scopes, delete your previously saved credentials
@@ -24,7 +25,7 @@ def _content_unwrap(wrapped_content):
     return decodebytes(wrapped_content).decode()
 
 
-class GoogleDriverException(Exception):
+class GoogleDriverException(DriverInterfaceException):
     pass
 
 
@@ -70,7 +71,7 @@ class GoogleDriver:
             """
         return self._initialized
 
-    def initialize_driver(self):
+    def _initialize_driver(self):
         """ Looks up Parsec system files one the cloud and load their ID into
         the Driver class instance. This Function also loads the mapping between
         virtual IDs used by the VFS and the Physical IDs used on the cloud side.
@@ -85,7 +86,7 @@ class GoogleDriver:
             return
         # (name, role, attr_name, function to call on result)
         system_files = (('Parsec', 'root-folder', '_root_folder', None),
-                        ('MANIFEST', 'root-manifest', '_root_manifest', None),
+                        # ('MANIFEST', 'root-manifest', '_root_manifest', None),
                         ('MAP', 'mapping-file', '_mapping_file', self._load_mapping))
 
         for (name, role, attr_name, func) in system_files:
@@ -99,6 +100,15 @@ class GoogleDriver:
                 func()
 
         self._initialized = True
+
+    def initialize_driver(self, force=False):
+        try:
+            self._initialize_driver()
+        except ParsecVFSException:
+            if force:
+                self.create_driver_files()
+        finally:
+            self._initialize_driver()
 
     def create_driver_files(self):
         """Initialize Driver Environnement in Google Drive. Creates all required system files
@@ -127,21 +137,21 @@ class GoogleDriver:
         if not self._root_folder:
             raise GoogleDriverException('Failed to initialise root folder')
 
-        # Create the manifest file
-        results = self._service.files().create(
-            body={
-                "mimeType": "application/scille.parsec.manifest",
-                "isAppAuthorized": True,
-                "appProperties": {'appName': '%s' % APPLICATION_NAME,
-                                  'role': "root-manifest"},
-                "parents": (self._root_folder,),
-                "name": "MANIFEST",
-                'mode': 'file',
-            }
-        ).execute()
-        self._root_manifest = results.get('id')
-        if not self._root_manifest:
-            raise GoogleDriverException('Failed to initialise root manifest')
+        # # Create the manifest file
+        # results = self._service.files().create(
+        #     body={
+        #         "mimeType": "application/scille.parsec.manifest",
+        #         "isAppAuthorized": True,
+        #         "appProperties": {'appName': '%s' % APPLICATION_NAME,
+        #                           'role': "root-manifest"},
+        #         "parents": (self._root_folder,),
+        #         "name": "MANIFEST",
+        #         'mode': 'file',
+        #     }
+        # ).execute()
+        # self._root_manifest = results.get('id')
+        # if not self._root_manifest:
+        #     raise GoogleDriverException('Failed to initialise root manifest')
 
         # Create the PID/VID mapping file
         results = self._service.files().create(
