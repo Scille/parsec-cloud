@@ -1,7 +1,6 @@
 import httplib2
 import os
-from io import BytesIO, StringIO
-from base64 import decodebytes, encodebytes
+from io import BytesIO
 from apiclient import discovery
 from apiclient.http import MediaIoBaseUpload
 from oauth2client import client, tools
@@ -128,22 +127,6 @@ class GoogleDriver:
         self._root_folder = results.get('id')
         if not self._root_folder:
             raise GoogleDriverException('Failed to initialise root folder')
-
-        # # Create the manifest file
-        # results = self._service.files().create(
-        #     body={
-        #         "mimeType": "application/scille.parsec.manifest",
-        #         "isAppAuthorized": True,
-        #         "appProperties": {'appName': '%s' % APPLICATION_NAME,
-        #                           'role': "root-manifest"},
-        #         "parents": (self._root_folder,),
-        #         "name": "MANIFEST",
-        #         'mode': 'file',
-        #     }
-        # ).execute()
-        # self._root_manifest = results.get('id')
-        # if not self._root_manifest:
-        #     raise GoogleDriverException('Failed to initialise root manifest')
 
         # Create the PID/VID mapping file
         results = self._service.files().create(
