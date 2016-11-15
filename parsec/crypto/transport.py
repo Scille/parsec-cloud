@@ -21,7 +21,7 @@ class SecurityTransportLayer:
             return ret['data']
 
     def encrypt(self, content):
-        return self.__ll_com('encrypt', {'content': content}).encode()
+        return self.__ll_com('encrypt', {'content': content})
 
     def decrypt(self, content):
-        return self.__ll_com('decrypt', {'content': content}).encode()
+        return self.__ll_com('decrypt', {'content': content})

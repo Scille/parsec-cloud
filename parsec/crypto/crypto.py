@@ -33,6 +33,7 @@ class CryptoEngine:
             self.key = RSACipher.load_key(key=f.read(), passphrase=passphrase)
 
     def encrypt(self, content):
+        content = content.encode()
         signature = RSACipher.sign(self.key, content)
         aes_key, enc = AESCipher.encrypt(content)
         encrypted_key = RSACipher.encrypt(self.key, aes_key)
@@ -61,7 +62,7 @@ class CryptoEngine:
         # check signature, we have only one key yet.
         if not RSACipher.verify(self.key, dec, encrypted['headers']['signature']):
             raise CryptoEngineError('Invalid signature')
-        return dec
+        return dec.decode()
 
     def cmd_dispach(self, cmd, params):
         cmd = cmd.lower()

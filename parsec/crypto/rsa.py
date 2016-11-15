@@ -25,7 +25,7 @@ class RSACipher:
 
     @staticmethod
     def sign(key, data):
-        data_hash = SHA512.new(data.encode()).digest()
+        data_hash = SHA512.new(data).digest()
         signature = key.sign(data_hash, '')
         return signature
 

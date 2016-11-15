@@ -54,7 +54,7 @@ class ParsecVFS:
             Raises : None
             """
         try:
-            self._root = loads(self._decrypt(self._driver.read_file('0')).decode())
+            self._root = loads(self._decrypt(self._driver.read_file('0')))
         except DriverInterfaceException:
             self._root = {'/': {'metadata': self._init_metadata(isdir=True)}}
 
@@ -71,7 +71,7 @@ class ParsecVFS:
             raise ParsecVFSException('File not found')
 
     def _save_manifest(self):
-        self._driver.write_file('0', self._encrypt(dumps(self._root).encode()))
+        self._driver.write_file('0', self._encrypt(dumps(self._root)))
 
     def _encrypt(self, content):
         try:
@@ -82,7 +82,7 @@ class ParsecVFS:
         except SecurityTransportLayerError as e:
             raise ParsecVFSException("Security error. Reason: %s." % str(e))
         # TODO : set sig and return
-        return content
+        return content.encode()
 
     def _decrypt(self, content):
         try:
@@ -96,7 +96,6 @@ class ParsecVFS:
         return content
 
     def create_file(self, path, content):
-        content = _content_unwrap(content)
         now = datetime.utcnow().timestamp()
         file = self._root.get(path, None)
         if not file:
@@ -123,7 +122,7 @@ class ParsecVFS:
         file['metadata'].update({'last_access': now, })
         self._save_manifest()
 
-        return {'content': _content_wrap(self._decrypt(self._driver.read_file(file['vid'])))}
+        return {'content': self._decrypt(self._driver.read_file(file['vid']))}
 
     def write_file(self, path, content):
         self.create_file(path, content)
