@@ -3,6 +3,7 @@ from json import loads, dumps
 from uuid import uuid4
 from datetime import datetime
 from parsec.drivers.interface import DriverInterfaceException
+from parsec.crypto.transport import SecurityTransportLayer, SecurityTransportLayerError
 import base64
 
 
@@ -24,11 +25,12 @@ class ParsecVFS:
     a glue layer must be implemented in ordre to link the module to the VFS.
     eg : map fuse functions and metadata to their equivalent in the VFS."""
 
-    def __init__(self, driver):
+    def __init__(self, driver_layer, security_layer=None):
         """ Initialise the filesystem from a driver. The driver must implment a function
         that return the plain manifest files as a StringIO. """
-        self._driver = driver
+        self._driver = driver_layer
         self._driver.initialize_driver(force=True)
+        self._security = security_layer
         self._build_root()
 
     def _init_metadata(self, isdir=False):
@@ -52,7 +54,7 @@ class ParsecVFS:
             Raises : None
             """
         try:
-            self._root = loads(self._driver.read_file('0').decode())
+            self._root = loads(self._decrypt(self._driver.read_file('0')).decode())
         except DriverInterfaceException:
             self._root = {'/': {'metadata': self._init_metadata(isdir=True)}}
 
@@ -69,7 +71,29 @@ class ParsecVFS:
             raise ParsecVFSException('File not found')
 
     def _save_manifest(self):
-        self._driver.write_file('0', dumps(self._root).encode())
+        self._driver.write_file('0', self._encrypt(dumps(self._root).encode()))
+
+    def _encrypt(self, content):
+        try:
+            content = self._security.encrypt(content)
+        except AttributeError:
+            # No security layer
+            pass
+        except SecurityTransportLayerError as e:
+            raise ParsecVFSException("Security error. Reason: %s." % str(e))
+        # TODO : set sig and return
+        return content
+
+    def _decrypt(self, content):
+        try:
+            content = self._security.decrypt(content)
+        except AttributeError:
+            # No security layer
+            pass
+        except SecurityTransportLayerError as e:
+            raise ParsecVFSException("Security error. Reason: %s." % str(e))
+        # TODO : check sig and return
+        return content
 
     def create_file(self, path, content):
         content = _content_unwrap(content)
@@ -83,6 +107,7 @@ class ParsecVFS:
             raise ParsecVFSException('File is a directory')
         file['metadata'].update({'modification_time': now,
                                  'size': len(content)})
+        content = self._encrypt(content)
         self._driver.write_file(file['vid'], content)
         self._save_manifest()
         self._driver.sync()
@@ -98,7 +123,7 @@ class ParsecVFS:
         file['metadata'].update({'last_access': now, })
         self._save_manifest()
 
-        return {'content': _content_wrap(self._driver.read_file(file['vid']))}
+        return {'content': _content_wrap(self._decrypt(self._driver.read_file(file['vid'])))}
 
     def write_file(self, path, content):
         self.create_file(path, content)
@@ -156,7 +181,7 @@ def main(addr='tcp://127.0.0.1:5000'):
     context = zmq.Context()
     socket = context.socket(zmq.REP)
     socket.bind(addr)
-    vfs = ParsecVFS(GoogleDriver())
+    vfs = ParsecVFS(driver_layer=GoogleDriver(), security_layer=SecurityTransportLayer())
 
     while True:
         msg = socket.recv_json()
