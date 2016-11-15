@@ -1,4 +1,3 @@
-import base64
 from Crypto.Cipher import AES
 from Crypto import Random
 
@@ -16,11 +15,11 @@ class AESCipher:
     @staticmethod
     def pad(s):
         BS = AES.block_size
-        return s + (BS - len(s) % BS) * chr(BS - len(s) % BS)
+        return s + bytes([(BS - len(s) % BS) for _ in range((BS - len(s) % BS))])
 
     @staticmethod
     def unpad(s):
-        return s[:-ord(s[len(s) - 1:])]
+        return s[:-s[-1]]
 
     @staticmethod
     def _generate_key():
@@ -33,11 +32,10 @@ class AESCipher:
         iv = Random.new().read(AES.block_size)
         cipher = AES.new(key, AES.MODE_CBC, iv)
         # TODO : try/except then return
-        return (key, base64.b64encode(iv + cipher.encrypt(raw)))
+        return (key, iv + cipher.encrypt(raw))
 
     @staticmethod
     def decrypt(enc, key):
-        enc = base64.b64decode(enc)
         iv = enc[:16]
         cipher = AES.new(key, AES.MODE_CBC, iv)
         # TODO : try/except then return
