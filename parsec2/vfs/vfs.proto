@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package vfs;
+
+enum RequestType {
+    CREATE_FILE = 0;
+    READ_FILE = 1;
+    WRITE_FILE = 2;
+    DELETE_FILE = 3;
+    STAT = 4;
+    LIST_DIR = 5;
+    MAKE_DIR = 6;
+    REMOVE_DIR = 7;
+}
+
+message RootRequest {
+    RequestType type = 1;
+    Any body;
+}
+
+
+message Request {
+    string path = 1;
+}
+
+
+message RequestWithContent {
+    string path = 1;
+    bytes content = 2;
+}
+
+
+message Response {
+    bool success = 1;
+    string error_msg = 2;
+}
+
+
+message ReadFileResponse {
+    bool success = 1;
+    string error_msg = 2;
+    bytes content = 3;
+}
+
+
+message ListDirResponse {
+    bool success = 1;
+    string error_msg = 2;
+    repeated string files = 3;
+}
