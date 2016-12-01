@@ -19,15 +19,15 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='parsec2/vfs/vfs.proto',
   package='vfs',
   syntax='proto3',
-  serialized_pb=_b('\n\x15parsec2/vfs/vfs.proto\x12\x03vfs\"\x87\x02\n\x0bRootRequest\x12$\n\x04type\x18\x01 \x01(\x0e\x32\x16.vfs.RootRequest.Types\x12\x1f\n\x07request\x18\x02 \x01(\x0b\x32\x0c.vfs.RequestH\x00\x12)\n\x06requst\x18\x03 \x01(\x0b\x32\x17.vfs.RequestWithContentH\x00\"~\n\x05Types\x12\x0f\n\x0b\x43REATE_FILE\x10\x00\x12\r\n\tREAD_FILE\x10\x01\x12\x0e\n\nWRITE_FILE\x10\x02\x12\x0f\n\x0b\x44\x45LETE_FILE\x10\x03\x12\x08\n\x04STAT\x10\x04\x12\x0c\n\x08LIST_DIR\x10\x05\x12\x0c\n\x08MAKE_DIR\x10\x06\x12\x0e\n\nREMOVE_DIR\x10\x07\x42\x06\n\x04\x62ody\"\x17\n\x07Request\x12\x0c\n\x04path\x18\x01 \x01(\t\"3\n\x12RequestWithContent\x12\x0c\n\x04path\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\x0c\".\n\x08Response\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x11\n\terror_msg\x18\x02 \x01(\t\"G\n\x10ReadFileResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x11\n\terror_msg\x18\x02 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\x0c\"D\n\x0fListDirResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x11\n\terror_msg\x18\x02 \x01(\t\x12\r\n\x05\x66iles\x18\x03 \x03(\tb\x06proto3')
+  serialized_pb=_b('\n\x15parsec2/vfs/vfs.proto\x12\x03vfs\"\xd7\x01\n\x07Request\x12&\n\x04type\x18\x01 \x01(\x0e\x32\x18.vfs.Request.RequestType\x12\x0c\n\x04path\x18\x02 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\x0c\"\x84\x01\n\x0bRequestType\x12\x0f\n\x0b\x43REATE_FILE\x10\x00\x12\r\n\tREAD_FILE\x10\x01\x12\x0e\n\nWRITE_FILE\x10\x02\x12\x0f\n\x0b\x44\x45LETE_FILE\x10\x03\x12\x08\n\x04STAT\x10\x04\x12\x0c\n\x08LIST_DIR\x10\x05\x12\x0c\n\x08MAKE_DIR\x10\x06\x12\x0e\n\nREMOVE_DIR\x10\x07\"\x90\x01\n\x04Stat\x12\x0c\n\x04size\x18\x01 \x01(\x03\x12\r\n\x05\x63time\x18\x02 \x01(\x02\x12\r\n\x05mtime\x18\x03 \x01(\x02\x12\r\n\x05\x61time\x18\x04 \x01(\x02\x12$\n\x04type\x18\x05 \x01(\x0e\x32\x16.vfs.Stat.StatModeType\"\'\n\x0cStatModeType\x12\r\n\tDIRECTORY\x10\x00\x12\x08\n\x04\x46ILE\x10\x01\"\xd9\x01\n\x08Response\x12\x31\n\x0bstatus_code\x18\x01 \x01(\x0e\x32\x1c.vfs.Response.StatusCodeType\x12\x11\n\terror_msg\x18\x02 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\x0c\x12\x0c\n\x04size\x18\x04 \x01(\x03\x12\x10\n\x08list_dir\x18\x05 \x03(\t\x12\x17\n\x04stat\x18\x06 \x01(\x0b\x32\t.vfs.Stat\"=\n\x0eStatusCodeType\x12\x06\n\x02OK\x10\x00\x12\x0f\n\x0b\x42\x41\x44_REQUEST\x10\x02\x12\x12\n\x0e\x46ILE_NOT_FOUND\x10\x03\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 
 
-_ROOTREQUEST_TYPES = _descriptor.EnumDescriptor(
-  name='Types',
-  full_name='vfs.RootRequest.Types',
+_REQUEST_REQUESTTYPE = _descriptor.EnumDescriptor(
+  name='RequestType',
+  full_name='vfs.Request.RequestType',
   filename=None,
   file=DESCRIPTOR,
   values=[
@@ -66,59 +66,58 @@ _ROOTREQUEST_TYPES = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=160,
-  serialized_end=286,
+  serialized_start=114,
+  serialized_end=246,
 )
-_sym_db.RegisterEnumDescriptor(_ROOTREQUEST_TYPES)
+_sym_db.RegisterEnumDescriptor(_REQUEST_REQUESTTYPE)
 
-
-_ROOTREQUEST = _descriptor.Descriptor(
-  name='RootRequest',
-  full_name='vfs.RootRequest',
+_STAT_STATMODETYPE = _descriptor.EnumDescriptor(
+  name='StatModeType',
+  full_name='vfs.Stat.StatModeType',
   filename=None,
   file=DESCRIPTOR,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='DIRECTORY', index=0, number=0,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='FILE', index=1, number=1,
+      options=None,
+      type=None),
+  ],
   containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='type', full_name='vfs.RootRequest.type', index=0,
-      number=1, type=14, cpp_type=8, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='request', full_name='vfs.RootRequest.request', index=1,
-      number=2, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='requst', full_name='vfs.RootRequest.requst', index=2,
-      number=3, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-    _ROOTREQUEST_TYPES,
-  ],
   options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-    _descriptor.OneofDescriptor(
-      name='body', full_name='vfs.RootRequest.body',
-      index=0, containing_type=None, fields=[]),
-  ],
-  serialized_start=31,
-  serialized_end=294,
+  serialized_start=354,
+  serialized_end=393,
 )
+_sym_db.RegisterEnumDescriptor(_STAT_STATMODETYPE)
+
+_RESPONSE_STATUSCODETYPE = _descriptor.EnumDescriptor(
+  name='StatusCodeType',
+  full_name='vfs.Response.StatusCodeType',
+  filename=None,
+  file=DESCRIPTOR,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='OK', index=0, number=0,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='BAD_REQUEST', index=1, number=2,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='FILE_NOT_FOUND', index=2, number=3,
+      options=None,
+      type=None),
+  ],
+  containing_type=None,
+  options=None,
+  serialized_start=552,
+  serialized_end=613,
+)
+_sym_db.RegisterEnumDescriptor(_RESPONSE_STATUSCODETYPE)
 
 
 _REQUEST = _descriptor.Descriptor(
@@ -129,46 +128,22 @@ _REQUEST = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='path', full_name='vfs.Request.path', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      name='type', full_name='vfs.Request.type', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=296,
-  serialized_end=319,
-)
-
-
-_REQUESTWITHCONTENT = _descriptor.Descriptor(
-  name='RequestWithContent',
-  full_name='vfs.RequestWithContent',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
     _descriptor.FieldDescriptor(
-      name='path', full_name='vfs.RequestWithContent.path', index=0,
-      number=1, type=9, cpp_type=9, label=1,
+      name='path', full_name='vfs.Request.path', index=1,
+      number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='content', full_name='vfs.RequestWithContent.content', index=1,
-      number=2, type=12, cpp_type=9, label=1,
+      name='content', full_name='vfs.Request.content', index=2,
+      number=3, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -178,6 +153,7 @@ _REQUESTWITHCONTENT = _descriptor.Descriptor(
   ],
   nested_types=[],
   enum_types=[
+    _REQUEST_REQUESTTYPE,
   ],
   options=None,
   is_extendable=False,
@@ -185,8 +161,68 @@ _REQUESTWITHCONTENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=321,
-  serialized_end=372,
+  serialized_start=31,
+  serialized_end=246,
+)
+
+
+_STAT = _descriptor.Descriptor(
+  name='Stat',
+  full_name='vfs.Stat',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='size', full_name='vfs.Stat.size', index=0,
+      number=1, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='ctime', full_name='vfs.Stat.ctime', index=1,
+      number=2, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='mtime', full_name='vfs.Stat.mtime', index=2,
+      number=3, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='atime', full_name='vfs.Stat.atime', index=3,
+      number=4, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='type', full_name='vfs.Stat.type', index=4,
+      number=5, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+    _STAT_STATMODETYPE,
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=249,
+  serialized_end=393,
 )
 
 
@@ -198,9 +234,9 @@ _RESPONSE = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='success', full_name='vfs.Response.success', index=0,
-      number=1, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
+      name='status_code', full_name='vfs.Response.status_code', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -211,101 +247,40 @@ _RESPONSE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=374,
-  serialized_end=420,
-)
-
-
-_READFILERESPONSE = _descriptor.Descriptor(
-  name='ReadFileResponse',
-  full_name='vfs.ReadFileResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
     _descriptor.FieldDescriptor(
-      name='success', full_name='vfs.ReadFileResponse.success', index=0,
-      number=1, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='error_msg', full_name='vfs.ReadFileResponse.error_msg', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='content', full_name='vfs.ReadFileResponse.content', index=2,
+      name='content', full_name='vfs.Response.content', index=2,
       number=3, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=422,
-  serialized_end=493,
-)
-
-
-_LISTDIRRESPONSE = _descriptor.Descriptor(
-  name='ListDirResponse',
-  full_name='vfs.ListDirResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
     _descriptor.FieldDescriptor(
-      name='success', full_name='vfs.ListDirResponse.success', index=0,
-      number=1, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
+      name='size', full_name='vfs.Response.size', index=3,
+      number=4, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='error_msg', full_name='vfs.ListDirResponse.error_msg', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='files', full_name='vfs.ListDirResponse.files', index=2,
-      number=3, type=9, cpp_type=9, label=3,
+      name='list_dir', full_name='vfs.Response.list_dir', index=4,
+      number=5, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='stat', full_name='vfs.Response.stat', index=5,
+      number=6, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
+    _RESPONSE_STATUSCODETYPE,
   ],
   options=None,
   is_extendable=False,
@@ -313,33 +288,20 @@ _LISTDIRRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=495,
-  serialized_end=563,
+  serialized_start=396,
+  serialized_end=613,
 )
 
-_ROOTREQUEST.fields_by_name['type'].enum_type = _ROOTREQUEST_TYPES
-_ROOTREQUEST.fields_by_name['request'].message_type = _REQUEST
-_ROOTREQUEST.fields_by_name['requst'].message_type = _REQUESTWITHCONTENT
-_ROOTREQUEST_TYPES.containing_type = _ROOTREQUEST
-_ROOTREQUEST.oneofs_by_name['body'].fields.append(
-  _ROOTREQUEST.fields_by_name['request'])
-_ROOTREQUEST.fields_by_name['request'].containing_oneof = _ROOTREQUEST.oneofs_by_name['body']
-_ROOTREQUEST.oneofs_by_name['body'].fields.append(
-  _ROOTREQUEST.fields_by_name['requst'])
-_ROOTREQUEST.fields_by_name['requst'].containing_oneof = _ROOTREQUEST.oneofs_by_name['body']
-DESCRIPTOR.message_types_by_name['RootRequest'] = _ROOTREQUEST
+_REQUEST.fields_by_name['type'].enum_type = _REQUEST_REQUESTTYPE
+_REQUEST_REQUESTTYPE.containing_type = _REQUEST
+_STAT.fields_by_name['type'].enum_type = _STAT_STATMODETYPE
+_STAT_STATMODETYPE.containing_type = _STAT
+_RESPONSE.fields_by_name['status_code'].enum_type = _RESPONSE_STATUSCODETYPE
+_RESPONSE.fields_by_name['stat'].message_type = _STAT
+_RESPONSE_STATUSCODETYPE.containing_type = _RESPONSE
 DESCRIPTOR.message_types_by_name['Request'] = _REQUEST
-DESCRIPTOR.message_types_by_name['RequestWithContent'] = _REQUESTWITHCONTENT
+DESCRIPTOR.message_types_by_name['Stat'] = _STAT
 DESCRIPTOR.message_types_by_name['Response'] = _RESPONSE
-DESCRIPTOR.message_types_by_name['ReadFileResponse'] = _READFILERESPONSE
-DESCRIPTOR.message_types_by_name['ListDirResponse'] = _LISTDIRRESPONSE
-
-RootRequest = _reflection.GeneratedProtocolMessageType('RootRequest', (_message.Message,), dict(
-  DESCRIPTOR = _ROOTREQUEST,
-  __module__ = 'parsec2.vfs.vfs_pb2'
-  # @@protoc_insertion_point(class_scope:vfs.RootRequest)
-  ))
-_sym_db.RegisterMessage(RootRequest)
 
 Request = _reflection.GeneratedProtocolMessageType('Request', (_message.Message,), dict(
   DESCRIPTOR = _REQUEST,
@@ -348,12 +310,12 @@ Request = _reflection.GeneratedProtocolMessageType('Request', (_message.Message,
   ))
 _sym_db.RegisterMessage(Request)
 
-RequestWithContent = _reflection.GeneratedProtocolMessageType('RequestWithContent', (_message.Message,), dict(
-  DESCRIPTOR = _REQUESTWITHCONTENT,
+Stat = _reflection.GeneratedProtocolMessageType('Stat', (_message.Message,), dict(
+  DESCRIPTOR = _STAT,
   __module__ = 'parsec2.vfs.vfs_pb2'
-  # @@protoc_insertion_point(class_scope:vfs.RequestWithContent)
+  # @@protoc_insertion_point(class_scope:vfs.Stat)
   ))
-_sym_db.RegisterMessage(RequestWithContent)
+_sym_db.RegisterMessage(Stat)
 
 Response = _reflection.GeneratedProtocolMessageType('Response', (_message.Message,), dict(
   DESCRIPTOR = _RESPONSE,
@@ -361,20 +323,6 @@ Response = _reflection.GeneratedProtocolMessageType('Response', (_message.Messag
   # @@protoc_insertion_point(class_scope:vfs.Response)
   ))
 _sym_db.RegisterMessage(Response)
-
-ReadFileResponse = _reflection.GeneratedProtocolMessageType('ReadFileResponse', (_message.Message,), dict(
-  DESCRIPTOR = _READFILERESPONSE,
-  __module__ = 'parsec2.vfs.vfs_pb2'
-  # @@protoc_insertion_point(class_scope:vfs.ReadFileResponse)
-  ))
-_sym_db.RegisterMessage(ReadFileResponse)
-
-ListDirResponse = _reflection.GeneratedProtocolMessageType('ListDirResponse', (_message.Message,), dict(
-  DESCRIPTOR = _LISTDIRRESPONSE,
-  __module__ = 'parsec2.vfs.vfs_pb2'
-  # @@protoc_insertion_point(class_scope:vfs.ListDirResponse)
-  ))
-_sym_db.RegisterMessage(ListDirResponse)
 
 
 # @@protoc_insertion_point(module_scope)

@@ -1,3 +1,56 @@
+from .vfs_pb2 import Request, Response
+
+
+class VFSError(Exception):
+    pass
+
+
+class VFSFileNotFoundError(VFSError):
+    pass
+
+
+class VFSClient:
+
+    def __init__(self, communicator):
+        self._ll_communicator = communicator
+
+    def _ll_communicate(self, **kwargs):
+        request = Request(**kwargs)
+        response = self._ll_communicator(request)
+        if response.status_code == Response.OK:
+            return response
+        elif response.status_code == Response.FILE_NOT_FOUND:
+            raise VFSFileNotFoundError(response.error_msg)
+        else:
+            raise VFSError(response.error_msg)
+
+    def create_file(self, path: str, content: bytes=b'') -> Response:
+        return self._ll_communicate(type=Request.CREATE_FILE, path=path, content=content)
+
+    def read_file(self, path: str) -> Response:
+        return self._ll_communicate(type=Request.READ_FILE, path=path)
+
+    def write_file(self, path: str, content: bytes) -> Response:
+        return self._ll_communicate(type=Request.WRITE_FILE, path=path, content=content)
+
+    def delete_file(self, path: str) -> Response:
+        return self._ll_communicate(type=Request.DELETE_FILE, path=path)
+
+    def stat(self, path: str) -> Response:
+        return self._ll_communicate(type=Request.STAT, path=path)
+
+    def list_dir(self, path: str) -> Response:
+        return self._ll_communicate(type=Request.LIST_DIR, path=path)
+
+    def make_dir(self, path: str) -> Response:
+        return self._ll_communicate(type=Request.MAKE_DIR, path=path)
+
+    def remove_dir(self, path: str) -> Response:
+        return self._ll_communicate(type=Request.REMOVE_DIR, path=path)
+
+
+
+"""
 from ..base import BaseConponentClient
 from .vfs_pb2 import (
     Request, RequestWithContent, Response, ReadFileResponse, ListDirResponse)
@@ -67,28 +120,28 @@ class BaseServer:
 class VFSClient(BaseClient):
 
     def create_file(request: RequestWithContent) -> Response:
-        return Response(**self.__ll_communicate(RequestType.CREATE_FILE, request.SerializeToString()))
+        return Response(**self.__ll_communicate(Request.CREATE_FILE, request.SerializeToString()))
 
     def read_file(request: Request) -> ReadFileResponse:
-        return ReadFileResponse(**self.__ll_communicate(RequestType.READ_FILE, request.SerializeToString()))
+        return ReadFileResponse(**self.__ll_communicate(Request.READ_FILE, request.SerializeToString()))
 
     def write_file(request: RequestWithContent) -> Response:
-        return Response(**self.__ll_communicate(RequestType.WRITE_FILE, request.SerializeToString()))
+        return Response(**self.__ll_communicate(Request.WRITE_FILE, request.SerializeToString()))
 
     def delete_file(request: Request) -> Response:
-        return Response(**self.__ll_communicate(RequestType.DELETE_FILE, request.SerializeToString()))
+        return Response(**self.__ll_communicate(Request.DELETE_FILE, request.SerializeToString()))
 
     def stat(request: Request) -> Response:
-        return Response(**self.__ll_communicate(RequestType.STAT, request.SerializeToString()))
+        return Response(**self.__ll_communicate(Request.STAT, request.SerializeToString()))
 
     def list_dir(request: Request) -> ListDirResponse:
-        return ListDirResponse(**self.__ll_communicate(RequestType.LIST_DIR, request.SerializeToString()))
+        return ListDirResponse(**self.__ll_communicate(Request.LIST_DIR, request.SerializeToString()))
 
     def make_dir(request: Request) -> Response:
-        return Response(**self.__ll_communicate(RequestType.MAKE_DIR, request.SerializeToString()))
+        return Response(**self.__ll_communicate(Request.MAKE_DIR, request.SerializeToString()))
 
     def remove_dir(request: Request) -> Response:
-        return Response(**self.__ll_communicate(RequestType.REMOVE_DIR, request.SerializeToString()))
+        return Response(**self.__ll_communicate(Request.REMOVE_DIR, request.SerializeToString()))
 
 
 class VFSServer:
@@ -126,3 +179,4 @@ class MetaBaseInterface(type):
 
 class BaseInterface(metaclass=MetaBaseInterface):
     pass
+"""

@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package volume;
+
+
+enum RequestType {
+    READ_FILE = 0;
+    WRITE_FILE = 1;
+    DELETE_FILE = 2;
+}
+
+
+message Request {
+    RequestType type = 1;
+    int32 vid = 2;
+    bytes content = 3;
+}
+
+
+message Response {
+    bool success = 1;
+    string error_msg = 2;
+    bytes content = 3;
+}
