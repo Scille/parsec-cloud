@@ -2,10 +2,10 @@ import sys
 import signal
 from multiprocessing import Process
 
-from parsec2.vfs import LocalVFSClient, ReqResVFSClient
-from parsec2.vfs.mock import VFSServiceMock
-from parsec2.ui.fuse import FuseUIServer
-from parsec2.broker import ResRepServer
+from parsec.vfs import LocalVFSClient, ReqResVFSClient
+from parsec.vfs.mock import VFSServiceMock
+from parsec.ui.fuse import FuseUIServer
+from parsec.broker import ResRepServer
 
 
 if 0:
