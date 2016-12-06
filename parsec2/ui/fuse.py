@@ -1,15 +1,38 @@
-import logging
-
 from errno import EROFS, ENOENT, EBADFD, ENOTEMPTY
 import os
+from threading import Lock
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
-from sys import argv, exit
 from logbook import debug, warning, StreamHandler
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 
-from ..vfs import VFSClient, VFSFileNotFoundError
+from ..abstract import BaseServer
+from ..vfs import BaseVFSClient, VFSFileNotFoundError
 from ..vfs.vfs_pb2 import Stat
 
+
+class LockProxy:
+    """
+    Lock when calling the given object's methods to prevent concurrency issues.
+
+    FUSE's C library make use of multiple threads, however given zmq req/rep
+    calls must be synchronized we have to make use of locks.
+    """
+    def __init__(self, obj):
+        self.lock = Lock()
+        self.base_obj = obj
+
+    def __getattr__(self, name):
+        fn = getattr(self.base_obj, name)
+
+        def wrapper(*args, **kwargs):
+            try:
+                self.lock.acquire()
+                ret = fn(*args, **kwargs)
+            finally:
+                self.lock.release()
+            return ret
+
+        return wrapper
 
 
 class VFSFile:
@@ -52,7 +75,8 @@ class VFSFile:
 class FuseOperations(LoggingMixIn, Operations):
 
     def __init__(self, vfs):
-        self._vfs = vfs
+        self._vfs = LockProxy(vfs)
+        # self._vfs = vfs
         self.fds = {}
         self.next_fd_id = 0
 
@@ -148,11 +172,13 @@ class FuseOperations(LoggingMixIn, Operations):
         return 0  # TODO
 
 
-class FuseUI:
-    def __init__(self, mountpoint: str, vfs: VFSClient):
+class FuseUIServer(BaseServer):
+    def __init__(self, mountpoint: str, vfs: BaseVFSClient):
         self.mountpoint = mountpoint
         self.vfs = vfs
 
     def start(self):
-        logging.basicConfig(level=logging.DEBUG)
         FUSE(FuseOperations(self.vfs), self.mountpoint, foreground=True)
+
+    def stop(self):
+        raise NotImplementedError()

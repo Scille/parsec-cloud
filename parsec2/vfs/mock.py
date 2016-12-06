@@ -1,6 +1,8 @@
 import os
 from stat import S_ISDIR
+from google.protobuf.message import DecodeError
 
+from ..abstract import BaseService
 from .vfs_pb2 import Request, Response, Stat
 
 
@@ -20,7 +22,7 @@ def _check_required(cmd, *fields):
             raise CmdError('field `%s` is mandatory' % field)
 
 
-class VFSMock:
+class VFSServiceMock(BaseService):
     def __init__(self, mock_path):
         assert mock_path.startswith('/'), '`mock_path` must be absolute'
         self.mock_path = _clean_path(mock_path)
@@ -51,6 +53,7 @@ class VFSMock:
         _check_required(cmd, 'path')
         try:
             os.unlink(self._get_path(cmd.path))
+            return Response(status_code=Response.OK)
         except FileNotFoundError:
             raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
 
@@ -102,13 +105,20 @@ class VFSMock:
         Request.REMOVE_DIR: cmd_REMOVE_DIR
     }
 
-    def cmd_dispach(self, cmd):
-        # cmd = Request.ParseFromString(raw_cmd)
-        # todo: handle protobuf errors
+    def dispatch_msg(self, msg):
         try:
             try:
-                return self._CMD_MAP[cmd.type](self, cmd)
+                return self._CMD_MAP[msg.type](self, msg)
             except KeyError:
-                raise CmdError('Unknown cmd `%s`' % cmd.type)
+                raise CmdError('Unknown msg `%s`' % msg.type)
         except CmdError as exc:
             return Response(status_code=exc.status_code, error_msg=exc.error_msg)
+
+    def dispatch_raw_msg(self, raw_msg):
+        try:
+            msg = Request()
+            msg.ParseFromString(raw_msg)
+            ret = self.dispatch_msg(msg)
+        except DecodeError as exc:
+            ret = Request(status_code=Response.BAD_REQUEST, error_msg='Invalid request format')
+        return ret.SerializeToString()
