@@ -10,7 +10,7 @@ message Request {
         DELETE_FILE = 2;
     }
     RequestType type = 1;
-    int32 vid = 2;
+    string vid = 2;
     bytes content = 3;
 }
 

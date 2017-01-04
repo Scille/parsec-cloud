@@ -11,31 +11,31 @@ class TestVolumeClient:
 
     def test_basic(self):
         # Create a file
-        self.client.write_file(0, b'test')
-        ret = self.client.read_file(0)
+        self.client.write_file('0', b'test')
+        ret = self.client.read_file('0')
         assert ret.content == b'test'
         # Modify it
-        self.client.write_file(0, b'')
-        ret = self.client.read_file(0)
+        self.client.write_file('0', b'')
+        ret = self.client.read_file('0')
         assert ret.content == b''
-        ret = self.client.read_file(0)
+        ret = self.client.read_file('0')
         assert ret.content == b''
         # Destroy it
-        assert self.client.delete_file(0)
+        assert self.client.delete_file('0')
         with pytest.raises(VolumeFileNotFoundError):
-            self.client.read_file(0)
+            self.client.read_file('0')
         # Recreate it
-        self.client.write_file(0, b'test')
-        ret = self.client.read_file(0)
+        self.client.write_file('0', b'test')
+        ret = self.client.read_file('0')
         assert ret.content == b'test'
 
     def test_read_bad_file(self):
         with pytest.raises(VolumeFileNotFoundError):
-            self.client.read_file(42)
+            self.client.read_file('bad_vid')
 
     def test_delete_bad_file(self):
         with pytest.raises(VolumeFileNotFoundError):
-            self.client.delete_file(42)
+            self.client.delete_file('bad_vid')
 
 
 class TestVolumeServiceInMemoryMock:

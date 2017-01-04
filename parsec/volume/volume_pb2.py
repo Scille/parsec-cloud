@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='parsec/volume/volume.proto',
   package='volume',
   syntax='proto3',
-  serialized_pb=_b('\n\x1aparsec/volume/volume.proto\x12\x06volume\"\x91\x01\n\x07Request\x12)\n\x04type\x18\x01 \x01(\x0e\x32\x1b.volume.Request.RequestType\x12\x0b\n\x03vid\x18\x02 \x01(\x05\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\x0c\"=\n\x0bRequestType\x12\r\n\tREAD_FILE\x10\x00\x12\x0e\n\nWRITE_FILE\x10\x01\x12\x0f\n\x0b\x44\x45LETE_FILE\x10\x02\"\xb1\x01\n\x08Response\x12\x34\n\x0bstatus_code\x18\x01 \x01(\x0e\x32\x1f.volume.Response.StatusCodeType\x12\x11\n\terror_msg\x18\x02 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\x0c\x12\x0c\n\x04size\x18\x04 \x01(\x03\"=\n\x0eStatusCodeType\x12\x06\n\x02OK\x10\x00\x12\x0f\n\x0b\x42\x41\x44_REQUEST\x10\x01\x12\x12\n\x0e\x46ILE_NOT_FOUND\x10\x02\x62\x06proto3')
+  serialized_pb=_b('\n\x1aparsec/volume/volume.proto\x12\x06volume\"\x91\x01\n\x07Request\x12)\n\x04type\x18\x01 \x01(\x0e\x32\x1b.volume.Request.RequestType\x12\x0b\n\x03vid\x18\x02 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\x0c\"=\n\x0bRequestType\x12\r\n\tREAD_FILE\x10\x00\x12\x0e\n\nWRITE_FILE\x10\x01\x12\x0f\n\x0b\x44\x45LETE_FILE\x10\x02\"\xb1\x01\n\x08Response\x12\x34\n\x0bstatus_code\x18\x01 \x01(\x0e\x32\x1f.volume.Response.StatusCodeType\x12\x11\n\terror_msg\x18\x02 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\x0c\x12\x0c\n\x04size\x18\x04 \x01(\x03\"=\n\x0eStatusCodeType\x12\x06\n\x02OK\x10\x00\x12\x0f\n\x0b\x42\x41\x44_REQUEST\x10\x01\x12\x12\n\x0e\x46ILE_NOT_FOUND\x10\x02\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -94,8 +94,8 @@ _REQUEST = _descriptor.Descriptor(
       options=None),
     _descriptor.FieldDescriptor(
       name='vid', full_name='volume.Request.vid', index=1,
-      number=2, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
