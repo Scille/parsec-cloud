@@ -38,13 +38,13 @@ if 0:
     }
 
 
-def bootstrap_ui(mock_path, mountpoint):
+def bootstrap_vfs(mock_path, mountpoint):
     vfs_service = VFSServiceMock(mock_path)
     vfs_server = ResRepServer(service=vfs_service, addr='tcp://127.0.0.1:5000')
     vfs_server.start()
 
 
-def bootstrap_vfs(mock_path, mountpoint):
+def bootstrap_ui(mock_path, mountpoint):
     vfs_client = ReqResVFSClient(addr='tcp://127.0.0.1:5000')
     fuseui = FuseUIServer(mountpoint, vfs_client)
     fuseui.start()
