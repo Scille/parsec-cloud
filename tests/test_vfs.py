@@ -1,13 +1,12 @@
 import pytest
+import tempfile
 
 from parsec.volume import VolumeServiceInMemoryMock, LocalVolumeClient
-from parsec.vfs import VFSService
+from parsec.vfs import VFSService, VFSServiceMock
 from parsec.vfs.vfs_pb2 import Request, Response
 
 
-class TestVFSService:
-    def setup_method(self):
-        self.service = VFSService(LocalVolumeClient(VolumeServiceInMemoryMock()))
+class BaseTestVFSService:
 
     def test_create_dir(self):
         msg = Request(type=Request.MAKE_DIR, path='/test_dir')
@@ -115,3 +114,16 @@ class TestVFSService:
         response.ParseFromString(rep_buff)
         assert response.status_code == Response.BAD_REQUEST
         assert response.error_msg == 'Invalid request format'
+
+
+class TestVFSService(BaseTestVFSService):
+
+    def setup_method(self):
+        self.service = VFSService(LocalVolumeClient(VolumeServiceInMemoryMock()))
+
+
+class TestVFSServiceMock(BaseTestVFSService):
+
+    def setup_method(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.service = VFSServiceMock(self.tmpdir.name)

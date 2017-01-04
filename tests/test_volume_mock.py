@@ -1,6 +1,8 @@
 import pytest
+import tempfile
 
-from parsec.volume import VolumeServiceInMemoryMock, LocalVolumeClient, VolumeFileNotFoundError
+from parsec.volume import (VolumeServiceMock, VolumeServiceInMemoryMock,
+                           LocalVolumeClient, VolumeFileNotFoundError)
 from parsec.volume.volume_pb2 import Request, Response
 
 
@@ -38,9 +40,46 @@ class TestVolumeClient:
             self.client.delete_file('bad_vid')
 
 
-class TestVolumeServiceInMemoryMock:
-    def setup_method(self):
-        self.service = VolumeServiceInMemoryMock()
+class BaseTestVolumeService:
+
+    def test_read_file(self):
+        self.test_write_file()
+        msg = Request(type=Request.READ_FILE, vid='000')
+        ret = self.service.dispatch_msg(msg)
+        assert isinstance(ret, Response)
+        assert ret.status_code == Response.OK
+        assert ret.content == b'test'
+
+    def test_write_file(self):
+        msg = Request(type=Request.WRITE_FILE, vid='000', content=b'test')
+        ret = self.service.dispatch_msg(msg)
+        assert isinstance(ret, Response)
+        assert ret.status_code == Response.OK
+
+    def test_overwrite_file(self):
+        self.test_write_file()
+        msg = Request(type=Request.WRITE_FILE, vid='000', content=b'foo')
+        ret = self.service.dispatch_msg(msg)
+        assert isinstance(ret, Response)
+        assert ret.status_code == Response.OK
+        # Make sure content has change
+        msg = Request(type=Request.READ_FILE, vid='000')
+        ret = self.service.dispatch_msg(msg)
+        assert isinstance(ret, Response)
+        assert ret.status_code == Response.OK
+        assert ret.content == b'foo'
+
+    def test_delete_file(self):
+        self.test_write_file()
+        msg = Request(type=Request.DELETE_FILE, vid='000')
+        ret = self.service.dispatch_msg(msg)
+        assert isinstance(ret, Response)
+        assert ret.status_code == Response.OK
+        # Make sure file has been removed
+        msg = Request(type=Request.READ_FILE, vid='000')
+        ret = self.service.dispatch_msg(msg)
+        assert isinstance(ret, Response)
+        assert ret.status_code == Response.FILE_NOT_FOUND
 
     def test_service_bad_msg(self):
         msg = Request()
@@ -55,3 +94,16 @@ class TestVolumeServiceInMemoryMock:
         response.ParseFromString(rep_buff)
         assert response.status_code == Response.BAD_REQUEST
         assert response.error_msg == 'Invalid request format'
+
+
+class TestVolumeServiceInMemoryMock(BaseTestVolumeService):
+
+    def setup_method(self):
+        self.service = VolumeServiceInMemoryMock()
+
+
+class TestVolumeServiceMock(BaseTestVolumeService):
+
+    def setup_method(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.service = VolumeServiceMock(self.tmpdir.name)

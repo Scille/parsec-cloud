@@ -81,18 +81,20 @@ class VFSServiceMock(BaseService):
     def cmd_MAKE_DIR(self, cmd):
         _check_required(cmd, 'path')
         try:
-            os.mkdir(cmd.path)
+            os.mkdir(self._get_path(cmd.path))
             return Response(status_code=Response.OK)
         except FileExistsError:
-            raise CmdError('path `%s` already exists' % cmd.path)
+            raise CmdError('Target already exists')
 
     def cmd_REMOVE_DIR(self, cmd):
         _check_required(cmd, 'path')
         try:
-            os.mkdir(cmd.path)
+            os.rmdir(self._get_path(cmd.path))
             return Response(status_code=Response.OK)
+        except OSError:
+            raise CmdError('Directory not empty')
         except FileNotFoundError:
-            raise CmdError("path `%s` does't exist" % cmd.path)
+            raise CmdError('Directory not found', status_code=Response.FILE_NOT_FOUND)
 
     _CMD_MAP = {
         Request.CREATE_FILE: cmd_CREATE_FILE,
