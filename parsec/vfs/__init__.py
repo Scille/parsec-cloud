@@ -2,6 +2,17 @@ from ..abstract import BaseClient
 from ..exceptions import ParsecError
 from ..broker import LocalClientMixin, ResRepClientMixin
 from .vfs_pb2 import Request, Response
+from .mock import VFSServiceMock
+
+
+__all__ = (
+    'VFSServiceMock',
+    'VFSError',
+    'VFSFileNotFoundError',
+    'BaseVFSClient',
+    'LocalVFSClient',
+    'ReqResVFSClient'
+)
 
 
 class VFSError(ParsecError):

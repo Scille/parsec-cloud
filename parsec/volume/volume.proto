@@ -3,14 +3,12 @@ syntax = "proto3";
 package volume;
 
 
-enum RequestType {
-    READ_FILE = 0;
-    WRITE_FILE = 1;
-    DELETE_FILE = 2;
-}
-
-
 message Request {
+    enum RequestType {
+        READ_FILE = 0;
+        WRITE_FILE = 1;
+        DELETE_FILE = 2;
+    }
     RequestType type = 1;
     int32 vid = 2;
     bytes content = 3;
@@ -18,7 +16,13 @@ message Request {
 
 
 message Response {
-    bool success = 1;
+    enum StatusCodeType {
+        OK = 0;
+        BAD_REQUEST = 1;
+        FILE_NOT_FOUND = 2;
+    }
+    StatusCodeType status_code = 1;
     string error_msg = 2;
     bytes content = 3;
+    int64 size = 4;
 }

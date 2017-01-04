@@ -23,7 +23,7 @@ def _check_required(cmd, *fields):
 
 
 class VFSServiceMock(BaseService):
-    def __init__(self, mock_path):
+    def __init__(self, mock_path: str):
         assert mock_path.startswith('/'), '`mock_path` must be absolute'
         self.mock_path = _clean_path(mock_path)
 
@@ -120,5 +120,5 @@ class VFSServiceMock(BaseService):
             msg.ParseFromString(raw_msg)
             ret = self.dispatch_msg(msg)
         except DecodeError as exc:
-            ret = Request(status_code=Response.BAD_REQUEST, error_msg='Invalid request format')
+            ret = Response(status_code=Response.BAD_REQUEST, error_msg='Invalid request format')
         return ret.SerializeToString()

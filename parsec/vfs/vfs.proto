@@ -35,9 +35,9 @@ message Stat {
 
 message Response {
     enum StatusCodeType {
-        OK = 1;
-        BAD_REQUEST = 2;
-        FILE_NOT_FOUND = 3;
+        OK = 0;
+        BAD_REQUEST = 1;
+        FILE_NOT_FOUND = 2;
     }
     StatusCodeType status_code = 1;
     string error_msg = 2;
