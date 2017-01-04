@@ -5,6 +5,10 @@ ParSec
 .. image:: https://img.shields.io/pypi/v/parsec-cloud.svg
         :target: https://pypi.python.org/pypi/parsec-cloud
 
+.. image:: https://badge.waffle.io/Scille/parsec-cloud.svg?label=ready&title=Ready 
+        :target: https://waffle.io/Scille/parsec-cloud 
+        :alt: 'Stories in Ready'
+
 .. image:: https://img.shields.io/travis/Scille/parsec-cloud.svg
         :target: https://travis-ci.org/Scille/parsec-cloud
 
@@ -15,6 +19,7 @@ ParSec
 .. image:: https://coveralls.io/repos/github/Scille/parsec-cloud/badge.svg?branch=master
     :target: https://coveralls.io/github/Scille/parsec-cloud
     :alt: Code coverage
+
 
 Secure cloud framework
 
