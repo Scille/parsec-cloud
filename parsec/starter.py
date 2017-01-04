@@ -4,6 +4,7 @@ import yaml
 
 Component = namedtuple('Component', ('name', ))
 
+
 def parse_component(component):
     name = component.get('name')
     if not name:
@@ -16,4 +17,3 @@ def bootstrap(config_path):
     components = config.get('components', ())
     for c in components:
         c.get('name')
-

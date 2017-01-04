@@ -76,7 +76,6 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def __init__(self, vfs):
         self._vfs = LockProxy(vfs)
-        # self._vfs = vfs
         self.fds = {}
         self.next_fd_id = 0
 
