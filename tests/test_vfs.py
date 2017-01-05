@@ -28,21 +28,26 @@ class BaseTestVFSService:
         assert ret.status_code == Response.OK
 
     def test_list_dir(self):
+
         # Create folders
         def mkdir(path):
             self.service.dispatch_msg(Request(type=Request.MAKE_DIR, path=path))
+
         mkdir('/countries')
         mkdir('/countries/France')
         mkdir('/countries/France/cities')
         mkdir('/countries/Belgium')
         mkdir('/countries/Belgium/cities')
+
         # Create multiple files
         def mkfile(path, content=b''):
             self.service.dispatch_msg(Request(type=Request.CREATE_FILE, path=path, content=content))
+
         mkfile('/.root')
         mkfile('/countries/index', b'1 - Belgium\n2 - France')
         mkfile('/countries/France/info', b'good=Wine, bad=Beer')
         mkfile('/countries/Belgium/info', b'good=Beer, bad=Wine')
+
         # Finally do some lookup
         def assert_ls(path, expected):
             msg = Request(type=Request.LIST_DIR, path=path)
@@ -50,6 +55,7 @@ class BaseTestVFSService:
             assert isinstance(ret, Response)
             assert ret.status_code == Response.OK
             assert list(sorted(ret.list_dir)) == list(sorted(expected))
+
         assert_ls('/', ['.root', 'countries'])
         assert_ls('/countries', ['index', 'Belgium', 'France'])
 

@@ -146,7 +146,8 @@ class GoogleDriver:
             raise GoogleDriverException('Failed to initialise map table')
         self._initialized = True
 
-    def _lookup_app_file(self, name='MANIFEST', role='root-manifest', pageSize=2, fields='nextPageToken, files(id, name)'):
+    def _lookup_app_file(self, name='MANIFEST', role='root-manifest', pageSize=2,
+                         fields='nextPageToken, files(id, name)'):
         lookup = self._service.files().list(
             pageSize=pageSize,
             spaces='drive',

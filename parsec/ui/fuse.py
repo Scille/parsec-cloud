@@ -1,8 +1,7 @@
-from errno import EROFS, ENOENT, EBADFD, ENOTEMPTY
+from errno import ENOENT, EBADFD
 import os
 from threading import Lock
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
-from logbook import debug, warning, StreamHandler
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 
 from ..abstract import BaseServer
