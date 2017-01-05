@@ -15,7 +15,8 @@ class BaseTestVFSService:
         assert ret.status_code == Response.OK
 
     def mkfile(self, path, content=b''):
-        ret = self.service.dispatch_msg(Request(type=Request.CREATE_FILE, path=path, content=content))
+        ret = self.service.dispatch_msg(Request(
+            type=Request.CREATE_FILE, path=path, content=content))
         assert ret.status_code == Response.OK
 
     def rmfile(self, path):
