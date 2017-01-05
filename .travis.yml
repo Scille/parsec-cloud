@@ -1,11 +1,10 @@
 language: python
-python: 3.5
-env:
-- TOXENV=py35
-- TOXENV=py34
+python:
+- 3.4
+- 3.5
 install:
 - pip install -Ur requirements_dev.txt
-script: tox
+script: tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)
 after_success:
 - coveralls
 deploy:
@@ -17,4 +16,4 @@ deploy:
   on:
     tags: true
     repo: Scille/parsec-cloud
-    condition: $TOXENV == py35
+    condition: $TRAVIS_PYTHON_VERSION == 3.5
