@@ -5,7 +5,7 @@ python:
 install:
 - pip install -U coveralls
 - pip install -Ur requirements_dev.txt
-script: tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)
+script: tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .) -- -v
 after_success:
 - coveralls
 deploy:
