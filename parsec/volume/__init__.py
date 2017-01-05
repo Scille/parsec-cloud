@@ -2,12 +2,14 @@ from ..abstract import BaseClient
 from ..exceptions import ParsecError
 from ..broker import LocalClientMixin, ResRepClientMixin
 from .mock import VolumeServiceMock, VolumeServiceInMemoryMock
+from .google_drive import GoogleDriveVolumeService
 from .volume_pb2 import Request, Response
 
 
 __all__ = (
     'VolumeServiceMock',
     'VolumeServiceInMemoryMock',
+    'GoogleDriveVolumeService',
     'VolumeError',
     'VolumeFileNotFoundError',
     'BaseVolumeClient',
@@ -25,6 +27,7 @@ class VolumeFileNotFoundError(VolumeError):
 
 
 class BaseVolumeClient(BaseClient):
+
     @property
     def request_cls(self):
         return Request

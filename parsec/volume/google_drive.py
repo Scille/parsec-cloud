@@ -6,7 +6,9 @@ from apiclient.http import MediaIoBaseUpload
 from oauth2client import client, tools
 from oauth2client.file import Storage
 from json import loads, dumps, JSONDecodeError
-from parsec.drivers.interface import DriverInterfaceException
+from google.protobuf.message import DecodeError
+from ..abstract import BaseService
+from .volume_pb2 import Request, Response
 
 
 # If modifying these scopes, delete your previously saved credentials
@@ -16,11 +18,18 @@ CLIENT_SECRET_FILE = 'secret.json'
 APPLICATION_NAME = 'Parsec'
 
 
-class GoogleDriverException(DriverInterfaceException):
+class CmdError(Exception):
+
+    def __init__(self, error_msg, status_code=Response.BAD_REQUEST):
+        self.error_msg = error_msg
+        self.status_code = status_code
+
+
+class GoogleDriverException(CmdError):
     pass
 
 
-class GoogleDriver:
+class GoogleDriveVolumeService(BaseService):
 
     def __init__(self):
         self._initialized = False
@@ -193,20 +202,20 @@ class GoogleDriver:
     def sync(self):
         self._save_mapping()
 
-    def read_file(self, vid):
+    def _read_file(self, msg):
         """ Get the content of a file stored on the Google Drive.
             Returns:
                 Content of the file as a str
             Raises:
                 GoogleDriverException() if file is not in mapping
         """
-        file_id = self._mapping.get(vid)
+        file_id = self._mapping.get(msg.vid)
         if file_id is None:
-            raise GoogleDriverException('File not found')
+            return Response(status_code=Response.FILE_NOT_FOUND)
         file_content = self._service.files().get_media(fileId=file_id).execute()
-        return file_content
+        return Response(status_code=Response.OK, content=file_content)
 
-    def write_file(self, vid=None, content=None):
+    def _write_file(self, msg):
         """ Creates or writes a file on the Google Drive.
             self._mapping is updated only in case of a file creation.
             @content may be empty.
@@ -215,6 +224,8 @@ class GoogleDriver:
             Raises:
                 GoogleDriverException() if not vid is provided by the VFS
         """
+        vid = msg.vid
+        content = msg.content
         if vid is None:
             raise GoogleDriverException('A VID is mandatory')
 
@@ -242,8 +253,9 @@ class GoogleDriver:
             self._service.files().update(
                 fileId=file_id,
                 media_body=media).execute()
+        return Response(status_code=Response.OK)
 
-    def delete_file(self, vid=None):
+    def _delete_file(self, msg):
         """ Deletes file on the cloud storage. if vis does not exists,
         the function does nothing.
             Returns:
@@ -251,7 +263,31 @@ class GoogleDriver:
             Raises:
                 None
         """
-        file_id = self._mapping.get(vid)
+        file_id = self._mapping.get(msg.vid)
         if file_id is not None:
             self._service.files().delete(fileId=file_id).execute()
-            del self._mapping[vid]
+            del self._mapping[msg.vid]
+            return Response(status_code=Response.OK)
+        return Response(status_code=Response.FILE_NOT_FOUND)
+
+    def dispatch_msg(self, msg):
+        try:
+            if msg.type == Request.READ_FILE:
+                return self._read_file(msg)
+            elif msg.type == Request.WRITE_FILE:
+                return self._write_file(msg)
+            elif msg.type == Request.DELETE_FILE:
+                return self._delete_file(msg)
+            else:
+                raise CmdError('Unknown msg `%s`' % msg.type)
+        except CmdError as exc:
+            return Response(status_code=exc.status_code, error_msg=exc.error_msg)
+
+    def dispatch_raw_msg(self, raw_msg):
+        try:
+            msg = Request()
+            msg.ParseFromString(raw_msg)
+            ret = self.dispatch_msg(msg)
+        except DecodeError as exc:
+            ret = Response(status_code=Response.BAD_REQUEST, error_msg='Invalid request format')
+        return ret.SerializeToString()
