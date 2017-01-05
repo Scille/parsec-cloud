@@ -4,8 +4,7 @@ env:
 - TOXENV=py35
 - TOXENV=py34
 install:
-- pip install -U tox
-- pip install -U coveralls
+- pip install -Ur requirements_dev.txt
 script: tox
 after_success:
 - coveralls

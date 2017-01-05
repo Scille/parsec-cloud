@@ -15,7 +15,11 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    # TODO: put package requirements here
+    "fusepy==2.0.4",
+    "google-api-python-client==1.5.3",
+    "Logbook==1.0.0",
+    "protobuf==3.1.0.post1",
+    "pyzmq==15.4.0",
 ]
 
 test_requirements = [
