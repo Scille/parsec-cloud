@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package vfs;
+
+
+message Request {
+    enum RequestType {
+        CREATE_FILE = 0;
+        READ_FILE = 1;
+        WRITE_FILE = 2;
+        DELETE_FILE = 3;
+        STAT = 4;
+        LIST_DIR = 5;
+        MAKE_DIR = 6;
+        REMOVE_DIR = 7;
+    }
+    RequestType type = 1;
+    string path = 2;
+    bytes content = 3;
+}
+
+
+message Stat {
+    enum StatModeType {
+        DIRECTORY = 0;
+        FILE = 1;
+    }
+    int64 size = 1;
+    float ctime = 2;
+    float mtime = 3;
+    float atime = 4;
+    StatModeType type = 5;
+}
+
+
+message Response {
+    enum StatusCodeType {
+        OK = 0;
+        BAD_REQUEST = 1;
+        FILE_NOT_FOUND = 2;
+    }
+    StatusCodeType status_code = 1;
+    string error_msg = 2;
+    bytes content = 3;
+    int64 size = 4;
+    repeated string list_dir = 5;
+    Stat stat = 6;
+}
