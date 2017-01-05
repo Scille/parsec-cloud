@@ -3,7 +3,10 @@ import signal
 from multiprocessing import Process
 
 from parsec.vfs import LocalVFSClient, ReqResVFSClient
+from parsec.volume import LocalVolumeClient
+from parsec.volume.google_drive import GoogleDriveVolumeService
 from parsec.vfs.mock import VFSServiceMock
+from parsec.vfs.vfs import VFSService
 from parsec.ui.fuse import FuseUIServer
 from parsec.broker import ResRepServer
 
@@ -73,8 +76,13 @@ def bootstrap_all(mock_path, mountpoint):
 
 
 def bootstrap_nozmq(mock_path, mountpoint):
-    vfs_service = VFSServiceMock(mock_path)
+    volume_service = GoogleDriveVolumeService()
+    volume_service.initialize_driver(force=True)
+    volume_client = LocalVolumeClient(service=volume_service)
+
+    vfs_service = VFSService(volume_client)
     vfs_client = LocalVFSClient(service=vfs_service)
+
     fuseui = FuseUIServer(mountpoint, vfs_client)
 
     fuseui.start()
@@ -87,10 +95,12 @@ def usage_and_quit():
 
 if __name__ == '__main__':
     import logging
+    import os
     logging.basicConfig(level=logging.DEBUG)
+    home_dir = os.path.expanduser('~')
     kwargs = {
-        'mock_path': '/home/emmanuel/projects/parsec-cloud/tmp/mocked',
-        'mountpoint': '/home/emmanuel/projects/parsec-cloud/tmp/mounted'
+        'mock_path': home_dir + '/projects/parsec-cloud/tmp/mocked',
+        'mountpoint': home_dir + '/projects/parsec-cloud/tmp/mounted'
     }
     if len(sys.argv) == 2:
         if sys.argv[1] == 'ui':
