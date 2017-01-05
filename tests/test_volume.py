@@ -111,6 +111,7 @@ class TestVolumeServiceMock(BaseTestVolumeService):
         self.service = VolumeServiceMock(self.tmpdir.name)
 
 
+@pytest.mark.xfail
 class TestGoogleDriveVolumeService(BaseTestVolumeService):
 
     def setup_method(self):
