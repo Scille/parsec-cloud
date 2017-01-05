@@ -63,12 +63,14 @@ class VFSServiceMock(BaseService):
             stat = os.stat(self._get_path(cmd.path))
         except FileNotFoundError:
             raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
-        kwargs = {'size': stat.st_size, 'ctime': stat.st_ctime, 'mtime': stat.st_mtime}
+        kwargs = {'atime': stat.st_atime, 'ctime': stat.st_ctime, 'mtime': stat.st_mtime}
         # File or directory ?
         if S_ISDIR(stat.st_mode):
             kwargs['type'] = Stat.DIRECTORY
+            kwargs['size'] = 0
         else:
             kwargs['type'] = Stat.FILE
+            kwargs['size'] = stat.st_size
         return Response(status_code=Response.OK, stat=Stat(**kwargs))
 
     def cmd_LIST_DIR(self, cmd):
@@ -88,13 +90,15 @@ class VFSServiceMock(BaseService):
 
     def cmd_REMOVE_DIR(self, cmd):
         _check_required(cmd, 'path')
+        if cmd.path == '/':
+            raise CmdError('Cannot remove root')
         try:
             os.rmdir(self._get_path(cmd.path))
             return Response(status_code=Response.OK)
-        except OSError:
-            raise CmdError('Directory not empty')
         except FileNotFoundError:
             raise CmdError('Directory not found', status_code=Response.FILE_NOT_FOUND)
+        except OSError:
+            raise CmdError('Directory not empty')
 
     _CMD_MAP = {
         Request.CREATE_FILE: cmd_CREATE_FILE,

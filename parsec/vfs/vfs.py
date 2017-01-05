@@ -134,6 +134,8 @@ class VFSService(BaseService):
         return Response(status_code=Response.OK)
 
     def cmd_REMOVE_DIR(self, cmd):
+        if cmd.path == '/':
+            raise CmdError('Cannot remove root')
         if self._list_dir(cmd.path):
             raise CmdError('Directory not empty')
         try:
