@@ -85,4 +85,5 @@ install: clean
 
 gen_protobufs:
 	tools/protoc/bin/protoc -I=. --python_out=. parsec/vfs/vfs.proto
+	tools/protoc/bin/protoc -I=. --python_out=. parsec/crypto/crypto.proto
 	tools/protoc/bin/protoc -I=. --python_out=. parsec/volume/volume.proto

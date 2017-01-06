@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package crypto;
+
+
+message Request {
+    enum RequestType {
+        ENCRYPT = 0;
+        DECRYPT = 1;
+        LOAD_KEY = 2;
+        GEN_KEY = 3;
+    }
+    RequestType type = 1;
+    bytes key = 2;
+    bytes content = 3;
+    bytes signature = 4;
+    string passphrase = 5;
+    int32 key_size = 6;
+}
+
+
+message Response {
+    enum StatusCodeType {
+        OK = 0;
+        BAD_REQUEST = 1;
+        VERIFY_FAILED = 2;
+        AES_DECRYPT_FAILED = 3;
+        RSA_DECRYPT_FAILED = 4;
+        RSA_KEY_ERROR = 5;
+    }
+    StatusCodeType status_code = 1;
+    string error_msg = 2;
+    bytes key = 3;
+    bytes signature = 4;
+    bytes content = 5;
+}
