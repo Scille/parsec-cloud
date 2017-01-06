@@ -6,6 +6,11 @@ from parsec.volume import (VolumeServiceMock, VolumeServiceInMemoryMock,
                            LocalVolumeClient, VolumeFileNotFoundError)
 from parsec.volume.volume_pb2 import Request, Response
 
+google_drive = pytest.mark.skipif(
+    not pytest.config.getoption("--run-google-drive"),
+    reason="Cannot run Drive test without order"
+)
+
 
 class TestVolumeClient:
 
@@ -111,7 +116,7 @@ class TestVolumeServiceMock(BaseTestVolumeService):
         self.service = VolumeServiceMock(self.tmpdir.name)
 
 
-@pytest.mark.xfail
+@google_drive
 class TestGoogleDriveVolumeService(BaseTestVolumeService):
 
     def setup_method(self):
