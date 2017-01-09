@@ -5,7 +5,7 @@ from apiclient import discovery
 from apiclient.http import MediaIoBaseUpload
 from oauth2client import client, tools
 from oauth2client.file import Storage
-from json import loads, dumps, JSONDecodeError
+from json import loads, dumps
 from google.protobuf.message import DecodeError
 from ..abstract import BaseService
 from .volume_pb2 import Request, Response
@@ -180,7 +180,7 @@ class GoogleDriveVolumeService(BaseService):
         mapping_content = self._service.files().get_media(fileId=self._mapping_file).execute()
         try:
             self._mapping = loads(mapping_content.decode())
-        except JSONDecodeError:
+        except ValueError:
             self._mapping = {}
 
     def _save_mapping(self):
