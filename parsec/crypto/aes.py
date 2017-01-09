@@ -9,9 +9,6 @@ class AESCipherError(Exception):
 class AESCipher:
     KEY_SIZE = 32  # 256 bits long key
 
-    def __init__(self):
-        pass
-
     @staticmethod
     def pad(s):
         BS = AES.block_size

@@ -38,9 +38,10 @@ class BaseCryptoClient(BaseClient):
     def encrypt(self, content: bytes=b'') -> Response:
         return self._communicate(type=Request.ENCRYPT, content=content)
 
-    def decrypt(self, content: bytes=b'', key: bytes=b'', signature: bytes=b'') -> Response:
+    def decrypt(self, content: bytes=b'', key: bytes=b'',
+                signature: bytes=b'', key_signature: bytes=b'') -> Response:
         return self._communicate(type=Request.DECRYPT, content=content,
-                                 key=key, signature=signature)
+                                 key=key, signature=signature, key_signature=key_signature)
 
     def load_key(self, key: bytes=b'', passphrase: str='')-> Response:
         return self._communicate(type=Request.LOAD_KEY, key=key, passphrase=passphrase)

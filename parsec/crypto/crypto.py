@@ -45,9 +45,10 @@ class CryptoEngineService(BaseService):
                                     error_msg='Not RSA key loaded')
         signature = RSACipher.sign(self._key, msg.content)
         aes_key, enc = AESCipher.encrypt(msg.content)
+        key_sig = RSACipher.sign(self._key, aes_key)
         encrypted_key = RSACipher.encrypt(self._key, aes_key)
         return Response(status_code=Response.OK, key=encrypted_key,
-                        content=enc, signature=signature)
+                        content=enc, signature=signature, key_signature=key_sig)
 
     def _decrypt(self, msg):
         if not self._key:
@@ -55,10 +56,14 @@ class CryptoEngineService(BaseService):
                                     error_msg='Not RSA key loaded')
         try:
             key = RSACipher.decrypt(self._key, msg.key)
-            dec = AESCipher.decrypt(msg.content, key)
         except RSACipherError:
             raise CryptoEngineError(status_code=Response.RSA_DECRYPT_FAILED,
+                                    error_msg='Cannot Decrypt AES key')
+        if not RSACipher.verify(self._key, key, msg.key_signature):
+            raise CryptoEngineError(status_code=Response.RSA_DECRYPT_FAILED,
                                     error_msg='Cannot decrypt AES key')
+        try:
+            dec = AESCipher.decrypt(msg.content, key)
         except AESCipherError:
             raise CryptoEngineError(status_code=Response.AES_DECRYPT_FAILED,
                                     error_msg='Cannot Decrypt file content')

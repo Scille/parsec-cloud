@@ -12,10 +12,11 @@ message Request {
     }
     RequestType type = 1;
     bytes key = 2;
-    bytes content = 3;
-    bytes signature = 4;
-    string passphrase = 5;
-    int32 key_size = 6;
+    bytes key_signature = 3;
+    bytes content = 4;
+    bytes signature = 5;
+    string passphrase = 6;
+    int32 key_size = 7;
 }
 
 
@@ -32,5 +33,6 @@ message Response {
     string error_msg = 2;
     bytes key = 3;
     bytes signature = 4;
-    bytes content = 5;
+    bytes key_signature = 5;
+    bytes content = 6;
 }

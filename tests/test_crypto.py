@@ -1,4 +1,5 @@
 import pytest
+from collections import namedtuple
 
 from Crypto.PublicKey import RSA
 
@@ -84,7 +85,8 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
         assert ret.status_code == Response.OK
         assert ret.key
         assert ret.content
-        ret = self.client.decrypt(content=ret.content, key=ret.key, signature=ret.signature)
+        ret = self.client.decrypt(content=ret.content, key=ret.key,
+                                  signature=ret.signature, key_signature=ret.key_signature)
         assert ret.status_code == Response.OK
         assert ret.content == b'EncryptMePlz'
 
@@ -94,6 +96,15 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
 
 
 class BaseTestCryptoEngineService:
+
+    def test_unknown_cmd(self):
+        # Key too short
+        msg = namedtuple('Request', ['type', 'argument'], verbose=True)
+        msg.type = 'DUNNO'
+        msg.argument = 'noideawhatimdoinghere'
+        ret = self.service.dispatch_msg(msg)
+        assert ret.status_code == Response.BAD_REQUEST
+        assert ret.error_msg == "Unknown msg `DUNNO`"
 
     def test_gen_key_too_short(self):
         # Key too short
@@ -217,6 +228,7 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
         ret = self.service.dispatch_msg(msg)
         assert ret.status_code == Response.OK
         assert ret.key
+        assert ret.key_signature
         assert ret.signature == expected_sig
         assert data != ret.content
 
@@ -225,6 +237,7 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
         ret = self.service.dispatch_msg(msg)
         assert ret.status_code == Response.RSA_KEY_ERROR
         assert not ret.key
+        assert not ret.key_signature
         assert not ret.content
 
     def test_decrypt_all_good(self):
@@ -263,7 +276,7 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
         assert data != ret.content
 
         msg = Request(type=Request.DECRYPT, content=ret.content,
-                      signature=expected_sig, key=ret.key)
+                      signature=expected_sig, key=ret.key, key_signature=ret.key_signature)
         ret = self.service.dispatch_msg(msg)
         assert ret.status_code == Response.OK
         assert data == ret.content
@@ -299,7 +312,7 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
         assert data != ret.content
 
         msg = Request(type=Request.DECRYPT, content=ret.content,
-                      signature=expected_sig, key=ret.key)
+                      signature=expected_sig, key=ret.key, key_signature=ret.key_signature)
         ret = self.service.dispatch_msg(msg)
         assert ret.status_code == Response.VERIFY_FAILED
         assert not ret.content
@@ -312,6 +325,49 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
         assert not ret.key
         assert not ret.signature
         assert not ret.content
+
+    def test_decrypt_bad_aes_key(self):
+        test_key = b"""-----BEGIN RSA PRIVATE KEY-----
+MIICXAIBAAKBgQDRHfGy9r/LaOBHuaH+CRv4JMhfJyWkyLwA8HB9WrGAa3B2q4oO
+cBXSzC2KZ3lwJLqhaEcMPvalCxwSAh8YseQIkD73RwSLfbDJWcCaS0CbIsMimMO3
+44vpMRUsnltcu+WWLdiMw6oTG9rYHkg/1V6WTgXmilI+bFYmSFoqdGrqGQIDAQAB
+AoGAJaRjPpjGG4JsZNzYeRcAruFIJECyuP/dP7oINbhenUQ5wVLNjh3E/+X7CJ/p
+rzMdWTKhH2YyFbFzQxaYrGRRLJng6axLbA+CjHEsqMkyKNaC0Z6RVt57/b7uB0t2
+PgA0CqChkeQ8DELhJbnU65qPkSb+7FjEhJUYsO5F60hYxEUCQQDVdk2Zh0CwjNuo
+IgvG5ANjY6Isb9uXSncii7qRkwPZMFLktv+dbNxb7KLyTBNLdHSy/1FBE5j8mHVJ
+JWvEHTpnAkEA+sn5fMUXWeBKDo9jkzS6dCUld9+D2cn1PNQtStWNf9yWcuZtlFky
+WJsahi4CqwwkXvqeaDFFa6I30oy/8QjnfwJAOey4cgj5zO7sTFuwxm/pW3cV8ukH
+ta5HVeCE6Cv0x2MNm3LtOlLoGSnFrepm8frQECKocfhXc3QLn6W/8J/d0QJBAJvA
+4J+q0EvTTmsohpEgCESl5VVDjeGu2g4DQHXfl1e3qgCGN7wQgYIiIiD/ZkzQ563N
+PKA9KX4la0HqhDKwcwUCQHecDjFt4dvvQgt0TzHNZI9eE/I4xFB12MJ9KxN1+AvF
+lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
+-----END RSA PRIVATE KEY-----"""
+        msg = Request(type=Request.LOAD_KEY, key=test_key)
+        ret = self.service.dispatch_msg(msg)
+        assert ret.status_code == Response.OK
+
+        data = b'hellooooooooow'
+        expected_sig = (b'k\x9c\xcd\xb3my\xbaR\xc67\xdd\xe0\xc5\x9d\x1a\xf2d\x14\xaa\xc3"'
+                        b'\xd7\xb08\xc9\xc2\x15t]\xc1\x06b\n\x18\xd8\xae\x0b\x82\x95y'
+                        b'\xbc\xd9\xaa\x08\xee\xc0\x8d\'\x9b*F\x87\xdamL\xfb1W"\xca9p'
+                        b'\x93U0Y\xd7y\x1d\x15\xeeO\x8bs\x12iO\x83\xb7z^6w\xb8i\x12'
+                        b'\xbc\xcd\x881_7\x17\x96\x17\xd4\xac!+\x83L\xd2\xbfY'
+                        b'U\x9dte\x9b\xbav\x89\xcf\xeb\x02\x0b v\xcc\xa9\x95U\x18|\x1aJ\x9dQ')
+
+        msg = Request(type=Request.ENCRYPT, content=data)
+        ret = self.service.dispatch_msg(msg)
+        bad_key = ret.key
+        ret = self.service.dispatch_msg(msg)
+        assert ret.status_code == Response.OK
+        assert ret.key
+        assert ret.signature == expected_sig
+        assert data != ret.content
+        assert bad_key != ret.key
+
+        msg = Request(type=Request.DECRYPT, content=ret.content,
+                      signature=expected_sig, key=bad_key, key_signature=ret.key_signature)
+        ret = self.service.dispatch_msg(msg)
+        assert ret.status_code == Response.RSA_DECRYPT_FAILED
 
     def test_decrypt_no_aes_key(self):
         test_key = b"""-----BEGIN RSA PRIVATE KEY-----
@@ -351,7 +407,99 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
         msg = Request(type=Request.DECRYPT, content=ret.content,
                       signature=expected_sig, key=None)
         ret = self.service.dispatch_msg(msg)
+        assert ret.status_code == Response.RSA_DECRYPT_FAILED
+
+    def test_decrypt_invalid_aes_key(self):
+        test_key = b"""-----BEGIN RSA PRIVATE KEY-----
+MIICXAIBAAKBgQDRHfGy9r/LaOBHuaH+CRv4JMhfJyWkyLwA8HB9WrGAa3B2q4oO
+cBXSzC2KZ3lwJLqhaEcMPvalCxwSAh8YseQIkD73RwSLfbDJWcCaS0CbIsMimMO3
+44vpMRUsnltcu+WWLdiMw6oTG9rYHkg/1V6WTgXmilI+bFYmSFoqdGrqGQIDAQAB
+AoGAJaRjPpjGG4JsZNzYeRcAruFIJECyuP/dP7oINbhenUQ5wVLNjh3E/+X7CJ/p
+rzMdWTKhH2YyFbFzQxaYrGRRLJng6axLbA+CjHEsqMkyKNaC0Z6RVt57/b7uB0t2
+PgA0CqChkeQ8DELhJbnU65qPkSb+7FjEhJUYsO5F60hYxEUCQQDVdk2Zh0CwjNuo
+IgvG5ANjY6Isb9uXSncii7qRkwPZMFLktv+dbNxb7KLyTBNLdHSy/1FBE5j8mHVJ
+JWvEHTpnAkEA+sn5fMUXWeBKDo9jkzS6dCUld9+D2cn1PNQtStWNf9yWcuZtlFky
+WJsahi4CqwwkXvqeaDFFa6I30oy/8QjnfwJAOey4cgj5zO7sTFuwxm/pW3cV8ukH
+ta5HVeCE6Cv0x2MNm3LtOlLoGSnFrepm8frQECKocfhXc3QLn6W/8J/d0QJBAJvA
+4J+q0EvTTmsohpEgCESl5VVDjeGu2g4DQHXfl1e3qgCGN7wQgYIiIiD/ZkzQ563N
+PKA9KX4la0HqhDKwcwUCQHecDjFt4dvvQgt0TzHNZI9eE/I4xFB12MJ9KxN1+AvF
+lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
+-----END RSA PRIVATE KEY-----"""
+        msg = Request(type=Request.LOAD_KEY, key=test_key)
+        ret = self.service.dispatch_msg(msg)
+        assert ret.status_code == Response.OK
+
+        data = b'hellooooooooow'
+
+        msg = Request(type=Request.ENCRYPT, content=data)
+        ret = self.service.dispatch_msg(msg)
+        assert ret.status_code == Response.OK
+        assert ret.key
+        assert data != ret.content
+
+        # alter key
+        ret.key = b"This Will Probably not work..."
+        msg = Request(type=Request.DECRYPT, content=ret.content,
+                      signature=ret.signature, key=ret.key, key_signature=b'Nope')
+        ret = self.service.dispatch_msg(msg)
+        assert ret.status_code == Response.RSA_DECRYPT_FAILED
+
+    def test_decrypt_bad_content(self):
+        test_key = b"""-----BEGIN RSA PRIVATE KEY-----
+MIICXAIBAAKBgQDRHfGy9r/LaOBHuaH+CRv4JMhfJyWkyLwA8HB9WrGAa3B2q4oO
+cBXSzC2KZ3lwJLqhaEcMPvalCxwSAh8YseQIkD73RwSLfbDJWcCaS0CbIsMimMO3
+44vpMRUsnltcu+WWLdiMw6oTG9rYHkg/1V6WTgXmilI+bFYmSFoqdGrqGQIDAQAB
+AoGAJaRjPpjGG4JsZNzYeRcAruFIJECyuP/dP7oINbhenUQ5wVLNjh3E/+X7CJ/p
+rzMdWTKhH2YyFbFzQxaYrGRRLJng6axLbA+CjHEsqMkyKNaC0Z6RVt57/b7uB0t2
+PgA0CqChkeQ8DELhJbnU65qPkSb+7FjEhJUYsO5F60hYxEUCQQDVdk2Zh0CwjNuo
+IgvG5ANjY6Isb9uXSncii7qRkwPZMFLktv+dbNxb7KLyTBNLdHSy/1FBE5j8mHVJ
+JWvEHTpnAkEA+sn5fMUXWeBKDo9jkzS6dCUld9+D2cn1PNQtStWNf9yWcuZtlFky
+WJsahi4CqwwkXvqeaDFFa6I30oy/8QjnfwJAOey4cgj5zO7sTFuwxm/pW3cV8ukH
+ta5HVeCE6Cv0x2MNm3LtOlLoGSnFrepm8frQECKocfhXc3QLn6W/8J/d0QJBAJvA
+4J+q0EvTTmsohpEgCESl5VVDjeGu2g4DQHXfl1e3qgCGN7wQgYIiIiD/ZkzQ563N
+PKA9KX4la0HqhDKwcwUCQHecDjFt4dvvQgt0TzHNZI9eE/I4xFB12MJ9KxN1+AvF
+lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
+-----END RSA PRIVATE KEY-----"""
+        msg = Request(type=Request.LOAD_KEY, key=test_key)
+        ret = self.service.dispatch_msg(msg)
+        assert ret.status_code == Response.OK
+
+        data = b'hellooooooooow'
+        expected_sig = (b'k\x9c\xcd\xb3my\xbaR\xc67\xdd\xe0\xc5\x9d\x1a\xf2d\x14\xaa\xc3"'
+                        b'\xd7\xb08\xc9\xc2\x15t]\xc1\x06b\n\x18\xd8\xae\x0b\x82\x95y'
+                        b'\xbc\xd9\xaa\x08\xee\xc0\x8d\'\x9b*F\x87\xdamL\xfb1W"\xca9p'
+                        b'\x93U0Y\xd7y\x1d\x15\xeeO\x8bs\x12iO\x83\xb7z^6w\xb8i\x12'
+                        b'\xbc\xcd\x881_7\x17\x96\x17\xd4\xac!+\x83L\xd2\xbfY'
+                        b'U\x9dte\x9b\xbav\x89\xcf\xeb\x02\x0b v\xcc\xa9\x95U\x18|\x1aJ\x9dQ')
+
+        msg = Request(type=Request.ENCRYPT, content=data)
+        ret = self.service.dispatch_msg(msg)
+        assert ret.status_code == Response.OK
+        assert ret.key
+        assert ret.signature == expected_sig
+        assert data != ret.content
+
+        msg = Request(type=Request.DECRYPT, content=data,
+                      signature=expected_sig, key=ret.key, key_signature=ret.key_signature)
+        ret = self.service.dispatch_msg(msg)
         assert ret.status_code == Response.AES_DECRYPT_FAILED
+        assert ret.error_msg == 'Cannot Decrypt file content'
+
+    def test_service_bad_raw_msg(self):
+        rep_buff = self.service.dispatch_raw_msg(b'dummy stuff')
+        response = Response()
+        response.ParseFromString(rep_buff)
+        assert response.status_code == Response.BAD_REQUEST
+        assert response.error_msg == 'Invalid request format'
+
+    def test_service_good_raw_msg(self):
+        # Smallest key available
+        msg = Request(type=Request.GEN_KEY, passphrase='', key_size=1024)
+        msg = msg.SerializeToString()
+        rep_buff = self.service.dispatch_raw_msg(msg)
+        response = Response()
+        response.ParseFromString(rep_buff)
+        assert response.status_code == Response.OK
 
 
 class TestCryptoService(BaseTestCryptoEngineService):
