@@ -20,7 +20,7 @@ requirements = [
     "Logbook==1.0.0",
     "protobuf==3.1.0.post1",
     "pyzmq==15.4.0",
-    "pycrypto==2.6.1",
+    "cryptography==1.7.1",
     "simplejson==3.10.0",
 ]
 

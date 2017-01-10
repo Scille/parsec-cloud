@@ -1,5 +1,9 @@
-from Crypto.Cipher import AES
-from Crypto import Random
+from os import urandom
+from cryptography.hazmat.backends.openssl import backend as openssl
+from cryptography.hazmat.primitives.ciphers.algorithms import AES
+from cryptography.hazmat.primitives.ciphers.modes import GCM
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.exceptions import InvalidTag
 
 
 class AESCipherError(Exception):
@@ -10,34 +14,30 @@ class AESCipher:
     KEY_SIZE = 32  # 256 bits long key
 
     @staticmethod
-    def pad(s):
-        BS = AES.block_size
-        return s + bytes([(BS - len(s) % BS) for _ in range((BS - len(s) % BS))])
-
-    @staticmethod
-    def unpad(s):
-        return s[:-s[-1]]
-
-    @staticmethod
-    def _generate_key():
-        return Random.new().read(AESCipher.KEY_SIZE)
-
-    @staticmethod
     def encrypt(raw):
-        key = AESCipher._generate_key()
-        raw = AESCipher.pad(raw)
-        iv = Random.new().read(AES.block_size)
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        enc = cipher.encrypt(raw)
-        return (key, iv + enc)
+        # Generate key for AES encryption
+        key = urandom(AESCipher.KEY_SIZE)
+
+        # No need for padding as we are using GCM
+        # Get a new iv for GCM
+        iv = urandom(int(AES.block_size / 8))
+
+        cipher = Cipher(AES(key), GCM(iv), backend=openssl)
+        encryptor = cipher.encryptor()
+
+        enc = encryptor.update(raw) + encryptor.finalize()
+        return (key, iv + enc + encryptor.tag)
 
     @staticmethod
     def decrypt(enc, key):
-        iv = enc[:16]
+        iv = enc[:int(AES.block_size / 8)]
+        tag = enc[-16:]
         dec = None
         try:
-            cipher = AES.new(key, AES.MODE_CBC, iv)
-            dec = AESCipher.unpad(cipher.decrypt(enc[16:]))
+            cipher = Cipher(AES(key), GCM(iv, tag), backend=openssl).decryptor()
+            dec = cipher.update(enc[16:-16]) + cipher.finalize()
         except ValueError:
             raise AESCipherError("Cannot decrypt data")
+        except InvalidTag:
+            raise AESCipherError("GMAC verification failed")
         return dec

@@ -15,7 +15,7 @@ message Request {
     bytes key_signature = 3;
     bytes content = 4;
     bytes signature = 5;
-    string passphrase = 6;
+    bytes passphrase = 6;
     int32 key_size = 7;
 }
 
@@ -28,6 +28,7 @@ message Response {
         AES_DECRYPT_FAILED = 3;
         RSA_DECRYPT_FAILED = 4;
         RSA_KEY_ERROR = 5;
+        RSA_KEY_SIGN_ERROR = 6;
     }
     StatusCodeType status_code = 1;
     string error_msg = 2;
