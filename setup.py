@@ -43,6 +43,9 @@ setup(
                  'parsec'},
     include_package_data=True,
     install_requires=requirements,
+    extras_require={
+        'sftp': ['asyncssh==1.8.1'],
+    },
     license="GPLv3",
     zip_safe=False,
     keywords='parsec',

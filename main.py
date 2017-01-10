@@ -2,12 +2,9 @@ import sys
 import signal
 from multiprocessing import Process
 
-from parsec.vfs import LocalVFSClient, ReqResVFSClient
-from parsec.volume import LocalVolumeClient
-from parsec.volume.google_drive import GoogleDriveVolumeService
-from parsec.vfs.mock import VFSServiceMock
-from parsec.vfs.vfs import VFSService
-from parsec.ui.fuse import FuseUIServer
+from parsec.vfs import LocalVFSClient, ReqResVFSClient, VFSServiceMock, VFSService
+from parsec.volume import LocalVolumeClient, GoogleDriveVolumeService, VolumeServiceInMemoryMock
+from parsec.ui import FuseUIServer, SFTPUIServer
 from parsec.broker import ResRepServer
 
 
@@ -76,16 +73,18 @@ def bootstrap_all(mock_path, mountpoint):
 
 
 def bootstrap_nozmq(mock_path, mountpoint):
-    volume_service = GoogleDriveVolumeService()
-    volume_service.initialize_driver(force=True)
+    volume_service = VolumeServiceInMemoryMock()
+    # volume_service = GoogleDriveVolumeService()
+    # volume_service.initialize_driver(force=True)
     volume_client = LocalVolumeClient(service=volume_service)
 
     vfs_service = VFSService(volume_client)
     vfs_client = LocalVFSClient(service=vfs_service)
 
-    fuseui = FuseUIServer(mountpoint, vfs_client)
+    # ui = FuseUIServer(mountpoint, vfs_client)
+    ui = SFTPUIServer(vfs_client)
 
-    fuseui.start()
+    ui.start()
 
 
 def usage_and_quit():
