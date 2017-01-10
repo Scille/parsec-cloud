@@ -155,6 +155,26 @@ class BaseTestCryptoEngineService:
     #     key = RSA.importKey(ret.key, 'thisisaT3st!')
     #     assert key
 
+    def test_load_key_too_small(self):
+        test_key = b"""-----BEGIN RSA PRIVATE KEY-----
+MIICXAIBAAKBgQDRHfGy9r/LaOBHuaH+CRv4JMhfJyWkyLwA8HB9WrGAa3B2q4oO
+cBXSzC2KZ3lwJLqhaEcMPvalCxwSAh8YseQIkD73RwSLfbDJWcCaS0CbIsMimMO3
+44vpMRUsnltcu+WWLdiMw6oTG9rYHkg/1V6WTgXmilI+bFYmSFoqdGrqGQIDAQAB
+AoGAJaRjPpjGG4JsZNzYeRcAruFIJECyuP/dP7oINbhenUQ5wVLNjh3E/+X7CJ/p
+rzMdWTKhH2YyFbFzQxaYrGRRLJng6axLbA+CjHEsqMkyKNaC0Z6RVt57/b7uB0t2
+PgA0CqChkeQ8DELhJbnU65qPkSb+7FjEhJUYsO5F60hYxEUCQQDVdk2Zh0CwjNuo
+IgvG5ANjY6Isb9uXSncii7qRkwPZMFLktv+dbNxb7KLyTBNLdHSy/1FBE5j8mHVJ
+JWvEHTpnAkEA+sn5fMUXWeBKDo9jkzS6dCUld9+D2cn1PNQtStWNf9yWcuZtlFky
+WJsahi4CqwwkXvqeaDFFa6I30oy/8QjnfwJAOey4cgj5zO7sTFuwxm/pW3cV8ukH
+ta5HVeCE6Cv0x2MNm3LtOlLoGSnFrepm8frQECKocfhXc3QLn6W/8J/d0QJBAJvA
+4J+q0EvTTmsohpEgCESl5VVDjeGu2g4DQHXfl1e3qgCGN7wQgYIiIiD/ZkzQ563N
+PKA9KX4la0HqhDKwcwUCQHecDjFt4dvvQgt0TzHNZI9eE/I4xFB12MJ9KxN1+AvF
+lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
+-----END RSA PRIVATE KEY-----"""
+        msg = Request(type=Request.LOAD_KEY, key=test_key)
+        ret = self.service.dispatch_msg(msg)
+        assert ret.status_code == Response.RSA_KEY_ERROR
+
     def test_load_key_bad_format(self):
         test_key = b'this is bullshit'
         msg = Request(type=Request.LOAD_KEY, key=test_key)
