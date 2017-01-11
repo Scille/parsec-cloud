@@ -1,11 +1,18 @@
 language: python
-python:
-- 3.4
-- 3.5
+cache:
+  directories:
+  - $HOME/ossl-1/
+matrix:
+    include:
+        - python: 3.4
+          env: OPENSSL=1.1.0c
+        - python: 3.5
+          env: OPENSSL=1.1.0c
+
 install:
-- pip install -U coveralls
-- pip install -Ur requirements_dev.txt
-script: tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .) -- -v
+- bash ./.travis/install.sh
+script:
+- bash ./.travis/run.sh
 after_success:
 - coveralls
 deploy:
