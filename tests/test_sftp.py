@@ -84,7 +84,17 @@ def ctx(event_loop, unused_tcp_port, tmpdir):
 
 
 @pytest.mark.asyncio
-async def test_simple(ctx):
+async def test_listdir(ctx):
+    client = await ctx.start()
+    try:
+        ret = await client.listdir('/')
+        assert ret == ['.', '..']
+    finally:
+        await ctx.finish()
+
+
+@pytest.mark.asyncio
+async def test_statfile(ctx):
     client = await ctx.start()
     try:
         ret = await client.listdir('/')
