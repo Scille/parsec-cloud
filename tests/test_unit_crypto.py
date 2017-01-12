@@ -1,7 +1,7 @@
 import pytest
 
 from os import urandom
-from base64 import b64decode, b64encode
+from base64 import b64encode
 from parsec.crypto.aes import AESCipher, AESCipherError
 from parsec.crypto.crypto_mock import MockSymCipher, MockSymCipherError
 
