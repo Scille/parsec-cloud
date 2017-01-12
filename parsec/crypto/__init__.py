@@ -10,7 +10,7 @@ __all__ = (
     'CryptoError',
     'BaseCryptoClient',
     'LocalCryptoClient',
-    'ReqResVFSClient'
+    'ReqResCryptoClient'
 )
 
 
@@ -54,5 +54,5 @@ class LocalCryptoClient(BaseCryptoClient, LocalClientMixin):
     pass
 
 
-class ReqResVFSClient(BaseCryptoClient, ResRepClientMixin):
+class ReqResCryptoClient(BaseCryptoClient, ResRepClientMixin):
     pass

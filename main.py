@@ -2,6 +2,8 @@ import sys
 import signal
 from multiprocessing import Process
 
+from parsec.crypto.crypto import CryptoEngineService
+from parsec.crypto import LocalCryptoClient
 from parsec.vfs import LocalVFSClient, ReqResVFSClient
 from parsec.volume import LocalVolumeClient
 from parsec.volume.google_drive import GoogleDriveVolumeService
@@ -80,7 +82,9 @@ def bootstrap_nozmq(mock_path, mountpoint):
     volume_service.initialize_driver(force=True)
     volume_client = LocalVolumeClient(service=volume_service)
 
-    vfs_service = VFSService(volume_client)
+    crypto_service = CryptoEngineService()
+    crypto_client = LocalCryptoClient(service=crypto_service)
+    vfs_service = VFSService(volume_client, crypto_client)
     vfs_client = LocalVFSClient(service=vfs_service)
 
     fuseui = FuseUIServer(mountpoint, vfs_client)

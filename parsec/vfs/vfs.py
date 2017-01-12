@@ -9,6 +9,7 @@ from .vfs_pb2 import Request, Response, Stat
 
 
 class CmdError(Exception):
+
     def __init__(self, error_msg, status_code=Response.BAD_REQUEST):
         self.error_msg = error_msg
         self.status_code = status_code
@@ -19,10 +20,10 @@ def _clean_path(path):
 
 
 class VFSService(BaseService):
-    # def __init__(self, volume, crypto):
-    def __init__(self, volume):
+
+    def __init__(self, volume, crypto):
         self._volume = volume
-        # self._crypto = crypto
+        self._crypto = crypto
         self._build_root()
 
     def _init_metadata(self, isdir=False):
