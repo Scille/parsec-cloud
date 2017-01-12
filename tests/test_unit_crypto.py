@@ -1,7 +1,9 @@
 import pytest
 
-from parsec.crypto.aes import AESCipher, AESCipherError
 from os import urandom
+from base64 import b64decode, b64encode
+from parsec.crypto.aes import AESCipher, AESCipherError
+from parsec.crypto.crypto_mock import MockSymCipher, MockSymCipherError
 
 
 class TestUnitCryptoAES:
@@ -61,5 +63,61 @@ class TestUnitCryptoAES:
 
 
 class TestUnitCryptoRSA:
+    # TODO
+    pass
+
+
+class TestUnitCryptoSymMock:
+
+    def setup_method(self):
+        self.test_data = b"Hellooow"
+        self.test_iv = b"123456789"
+        self.test_tag = b"tagged"
+        self.test_key = b"123456789"
+        self.test_encrypted = self.test_iv + self.test_key + \
+            b64encode(self.test_data) + self.test_tag
+        self._sym = MockSymCipher()
+        assert not self._sym
+        self._sym = MockSymCipher(override='I SWEAR I AM ONLY USING THIS PLUGIN IN MY TEST SUITE')
+
+    def test_mock_encrypt_good(self):
+        key, enc = self._sym.encrypt(self.test_data)
+        assert key
+        assert enc
+        assert len(enc) == len(self.test_encrypted)
+        assert self.test_data not in enc
+
+    def test_mock_decrypt_good(self):
+        dec = self._sym.decrypt(self.test_key, self.test_encrypted)
+        assert dec == self.test_data
+
+    def test_mock_decrypt_bad_iv(self):
+        new_enc = urandom(9) + self.test_encrypted[9:]
+        with pytest.raises(MockSymCipherError) as e:
+            self._sym.decrypt(self.test_key, new_enc)
+        assert e.value.error_code == 2
+        assert e.value.error_msg == 'GMAC verification failed'
+
+    def test_mock_decrypt_bad_tag(self):
+        new_enc = self.test_encrypted[:-6] + urandom(6)
+        with pytest.raises(MockSymCipherError) as e:
+            self._sym.decrypt(self.test_key, new_enc)
+        assert e.value.error_code == 2
+        assert e.value.error_msg == 'GMAC verification failed'
+
+    def test_mock_decrypt_bad_key(self):
+        with pytest.raises(MockSymCipherError) as e:
+            self._sym.decrypt(urandom(9), self.test_encrypted,)
+        assert e.value.error_code == 2
+        assert e.value.error_msg == 'GMAC verification failed'
+
+    def test_mock_decrypt_bad_key_length(self):
+        with pytest.raises(MockSymCipherError) as e:
+            self._sym.decrypt(urandom(31), self.test_encrypted,)
+        assert e.value.error_code == 1
+        assert e.value.error_msg == 'Cannot decrypt data'
+
+
+class TestUnitCryptoAsymMock:
     # TODO
     pass

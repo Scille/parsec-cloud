@@ -6,6 +6,7 @@ from parsec.crypto import CryptoEngineService
 from parsec.crypto.crypto_pb2 import Request, Response
 from parsec.crypto.aes import AESCipher
 from parsec.crypto.rsa import RSACipher
+from parsec.crypto.crypto_mock import MockAsymCipher, MockSymCipher
 
 
 class TestBaseCryptoClient:
@@ -128,10 +129,10 @@ class BaseTestCryptoEngineService:
 
     def test_gen_key_too_short(self):
         # Key too short
-        msg = Request(type=Request.GEN_KEY, passphrase=b'', key_size=256)
+        msg = Request(type=Request.GEN_KEY, passphrase=b'', key_size=self.key_size_small)
         ret = self.service.dispatch_msg(msg)
         assert ret.status_code == Response.ASYMETRIC_KEY_ERROR
-        assert ret.error_msg == "Generation error : Key size must be >= 2048 bits"
+        assert "Generation error : Key size must" in ret.error_msg
 
     # def test_gen_key_good_key_no_passphrase(self):
     #     # Smallest key available
@@ -158,22 +159,7 @@ class BaseTestCryptoEngineService:
     #     assert key
 
     def test_load_key_too_small(self):
-        test_key = b"""-----BEGIN RSA PRIVATE KEY-----
-MIICXAIBAAKBgQDRHfGy9r/LaOBHuaH+CRv4JMhfJyWkyLwA8HB9WrGAa3B2q4oO
-cBXSzC2KZ3lwJLqhaEcMPvalCxwSAh8YseQIkD73RwSLfbDJWcCaS0CbIsMimMO3
-44vpMRUsnltcu+WWLdiMw6oTG9rYHkg/1V6WTgXmilI+bFYmSFoqdGrqGQIDAQAB
-AoGAJaRjPpjGG4JsZNzYeRcAruFIJECyuP/dP7oINbhenUQ5wVLNjh3E/+X7CJ/p
-rzMdWTKhH2YyFbFzQxaYrGRRLJng6axLbA+CjHEsqMkyKNaC0Z6RVt57/b7uB0t2
-PgA0CqChkeQ8DELhJbnU65qPkSb+7FjEhJUYsO5F60hYxEUCQQDVdk2Zh0CwjNuo
-IgvG5ANjY6Isb9uXSncii7qRkwPZMFLktv+dbNxb7KLyTBNLdHSy/1FBE5j8mHVJ
-JWvEHTpnAkEA+sn5fMUXWeBKDo9jkzS6dCUld9+D2cn1PNQtStWNf9yWcuZtlFky
-WJsahi4CqwwkXvqeaDFFa6I30oy/8QjnfwJAOey4cgj5zO7sTFuwxm/pW3cV8ukH
-ta5HVeCE6Cv0x2MNm3LtOlLoGSnFrepm8frQECKocfhXc3QLn6W/8J/d0QJBAJvA
-4J+q0EvTTmsohpEgCESl5VVDjeGu2g4DQHXfl1e3qgCGN7wQgYIiIiD/ZkzQ563N
-PKA9KX4la0HqhDKwcwUCQHecDjFt4dvvQgt0TzHNZI9eE/I4xFB12MJ9KxN1+AvF
-lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
------END RSA PRIVATE KEY-----"""
-        msg = Request(type=Request.LOAD_KEY, key=test_key)
+        msg = Request(type=Request.LOAD_KEY, key=self.small_test_key)
         ret = self.service.dispatch_msg(msg)
         assert ret.status_code == Response.ASYMETRIC_KEY_ERROR
 
@@ -189,7 +175,8 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
         assert ret.status_code == Response.OK
 
     def test_load_key_with_passphrase(self):
-        msg = Request(type=Request.LOAD_KEY, key=self.test_key_encrypted)
+        msg = Request(type=Request.LOAD_KEY, key=self.test_key_encrypted,
+                      passphrase=b'Not Working.')
         ret = self.service.dispatch_msg(msg)
         assert ret.status_code == Response.ASYMETRIC_KEY_ERROR
         msg = Request(type=Request.LOAD_KEY,
@@ -269,7 +256,7 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
         assert not ret.signature
         assert not ret.content
 
-    def test_decrypt_bad_aes_key(self):
+    def test_decrypt_bad_sym_key(self):
         msg = Request(type=Request.LOAD_KEY, key=self.test_key)
         ret = self.service.dispatch_msg(msg)
         assert ret.status_code == Response.OK
@@ -289,7 +276,7 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
         ret = self.service.dispatch_msg(msg)
         assert ret.status_code == Response.ASYMETRIC_KEY_SIGN_ERROR
 
-    def test_decrypt_no_aes_key(self):
+    def test_decrypt_no_sym_key(self):
         msg = Request(type=Request.LOAD_KEY, key=self.test_key)
         ret = self.service.dispatch_msg(msg)
         assert ret.status_code == Response.OK
@@ -336,7 +323,7 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
 
     def test_service_good_raw_msg(self):
         # Smallest key available
-        msg = Request(type=Request.GEN_KEY, passphrase=b'', key_size=2048)
+        msg = Request(type=Request.GEN_KEY, passphrase=b'', key_size=self.key_size_request)
         msg = msg.SerializeToString()
         rep_buff = self.service.dispatch_raw_msg(msg)
         response = Response()
@@ -348,6 +335,8 @@ class TestCryptoService(BaseTestCryptoEngineService):
 
     def setup_method(self):
         self.service = CryptoEngineService(symetric_cls=AESCipher, asymetric_cls=RSACipher)
+        self.key_size_small = 256
+        self.key_size_request = 2048
         self.test_key = b"""-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCUKiMBsx4lMVrx
 0tRU6q/P5s0n3Rf9y0ogtrkCC2NwUrwSrx/xvfUyRXZnWxhtEqACGzwBDvExWY2Y
@@ -407,7 +396,40 @@ xGpG5euZ/dgFVK3yKIkm6XTFy62NkuneIQC4FMkb8j2HkkVsSmMZvxf5JyDVAOf7
 SEqP+SV9/Vj8xW+lC5gnlbV88qsLiCO4HEfUCqlUkpFquL8Z0HTWNTN7fTUNyxpZ
 l8CTZbRr7g4ooUKxa0p+RWIrNw==
 -----END ENCRYPTED PRIVATE KEY-----"""
+        self.small_test_key = b"""-----BEGIN RSA PRIVATE KEY-----
+MIICXAIBAAKBgQDRHfGy9r/LaOBHuaH+CRv4JMhfJyWkyLwA8HB9WrGAa3B2q4oO
+cBXSzC2KZ3lwJLqhaEcMPvalCxwSAh8YseQIkD73RwSLfbDJWcCaS0CbIsMimMO3
+44vpMRUsnltcu+WWLdiMw6oTG9rYHkg/1V6WTgXmilI+bFYmSFoqdGrqGQIDAQAB
+AoGAJaRjPpjGG4JsZNzYeRcAruFIJECyuP/dP7oINbhenUQ5wVLNjh3E/+X7CJ/p
+rzMdWTKhH2YyFbFzQxaYrGRRLJng6axLbA+CjHEsqMkyKNaC0Z6RVt57/b7uB0t2
+PgA0CqChkeQ8DELhJbnU65qPkSb+7FjEhJUYsO5F60hYxEUCQQDVdk2Zh0CwjNuo
+IgvG5ANjY6Isb9uXSncii7qRkwPZMFLktv+dbNxb7KLyTBNLdHSy/1FBE5j8mHVJ
+JWvEHTpnAkEA+sn5fMUXWeBKDo9jkzS6dCUld9+D2cn1PNQtStWNf9yWcuZtlFky
+WJsahi4CqwwkXvqeaDFFa6I30oy/8QjnfwJAOey4cgj5zO7sTFuwxm/pW3cV8ukH
+ta5HVeCE6Cv0x2MNm3LtOlLoGSnFrepm8frQECKocfhXc3QLn6W/8J/d0QJBAJvA
+4J+q0EvTTmsohpEgCESl5VVDjeGu2g4DQHXfl1e3qgCGN7wQgYIiIiD/ZkzQ563N
+PKA9KX4la0HqhDKwcwUCQHecDjFt4dvvQgt0TzHNZI9eE/I4xFB12MJ9KxN1+AvF
+lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
+-----END RSA PRIVATE KEY-----"""
 
-# TODO Test on a mock version ? Do we need a mock version of crypto ?
-# Maybe with a know and fixed RSA/AES key ? We'll need to mock AES and RSA classes
-#
+
+class TestMockCryptoService(BaseTestCryptoEngineService):
+
+    def setup_method(self):
+        params = {
+            'asymetric_parameters': {
+                'override': 'I SWEAR I AM ONLY USING THIS PLUGIN IN MY TEST SUITE'
+            },
+            'symetric_parameters': {
+                'override': 'I SWEAR I AM ONLY USING THIS PLUGIN IN MY TEST SUITE'
+            }
+        }
+        self.service = CryptoEngineService(symetric_cls=MockSymCipher,
+                                           asymetric_cls=MockAsymCipher,
+                                           **params)
+        self.test_key = b"""123456789"""
+        self.default_passphrase = b'passphrase'
+        self.test_key_encrypted = b"""123456789"""
+        self.small_test_key = b""""""
+        self.key_size_request = 5
+        self.key_size_small = 1

@@ -19,8 +19,8 @@ class CryptoEngineService(BaseService):
 
     def __init__(self, symetric_cls, asymetric_cls, **kwargs):
         self._key = None
-        self._asym = asymetric_cls(kwargs=kwargs.get('asymetric_parameters', {}))
-        self._sym = symetric_cls(kwargs=kwargs.get('symetric_parameters', {}))
+        self._asym = asymetric_cls(**kwargs.get('asymetric_parameters', {}))
+        self._sym = symetric_cls(**kwargs.get('symetric_parameters', {}))
 
     def _generate_key(self, msg):
         try:
