@@ -8,9 +8,10 @@ matrix:
           env: OPENSSL=1.1.0c
         - python: 3.5
           env: OPENSSL=1.1.0c
-
 install:
 - bash ./.travis/install.sh
+- pip install -U coveralls
+- pip install -Ur requirements_dev.txt
 script:
 - bash ./.travis/run.sh
 after_success:
