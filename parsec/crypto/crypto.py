@@ -1,8 +1,6 @@
 from google.protobuf.message import DecodeError
-from cryptography.hazmat.primitives import serialization
 from ..abstract import BaseService
-from .aes import AESCipher, AESCipherError
-from .rsa import RSACipher, RSACipherError
+from .abstract import SymetricEncryptionError, AsymetricEncryptionError
 from .crypto_pb2 import Request, Response
 
 
@@ -17,81 +15,72 @@ class CryptoEngineError(CmdError):
     pass
 
 
-# TODO : Make this class able to load other crypto drivers than RSA (DSA, custom ones, etc.)
 class CryptoEngineService(BaseService):
 
-    def __init__(self):
+    def __init__(self, symetric_cls, asymetric_cls, **kwargs):
         self._key = None
+        self._asym = asymetric_cls(kwargs=kwargs.get('asymetric_parameters', {}))
+        self._sym = symetric_cls(kwargs=kwargs.get('symetric_parameters', {}))
 
     def _generate_key(self, msg):
         try:
-            self._key = RSACipher.generate_key(key_size=msg.key_size)
-        except RSACipherError:
-            raise CryptoEngineError(status_code=Response.RSA_KEY_ERROR,
-                                    error_msg='Incorrect RSA key size')
+            self._key = self._asym.generate_key(key_size=msg.key_size)
+        except AsymetricEncryptionError as e:
+            raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
+                                    error_msg=e.error_msg)
+        pem = self._asym.export_key(self._key, msg.passphrase)
 
-        if msg.passphrase:
-            pem = self._key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.BestAvailableEncryption(msg.passphrase))
-        else:
-            pem = self._key.private_bytes(encoding=serialization.Encoding.PEM,
-                                          format=serialization.PrivateFormat.PKCS8,
-                                          encryption_algorithm=serialization.NoEncryption())
-
-        return Response(status_code=Response.OK,
-                        key=pem)
+        return Response(status_code=Response.OK, key=pem)
 
     def _load_key(self, msg):
         try:
-            self._key = RSACipher.load_key(pem=msg.key, passphrase=msg.passphrase)
-        except RSACipherError:
-            raise CryptoEngineError(status_code=Response.RSA_KEY_ERROR,
-                                    error_msg='Cannot Load RSA key, wrong pasphrase ?')
+            self._key = self._asym.load_key(pem=msg.key, passphrase=msg.passphrase)
+        except AsymetricEncryptionError as e:
+            raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
+                                    error_msg=e.error_msg)
         return Response(status_code=Response.OK)
 
     def _encrypt(self, msg):
         if not self._key:
-            raise CryptoEngineError(status_code=Response.RSA_KEY_ERROR,
-                                    error_msg='Not RSA key loaded')
+            raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
+                                    error_msg='No private key loaded')
 
-        aes_key, enc = AESCipher.encrypt(msg.content)
-        signature = RSACipher.sign(self._key, enc)
-        encrypted_key = RSACipher.encrypt(self._key, aes_key)
-        key_sig = RSACipher.sign(self._key, encrypted_key)
+        aes_key, enc = self._sym.encrypt(msg.content)
+        signature = self._asym.sign(self._key, enc)
+        encrypted_key = self._asym.encrypt(self._key, aes_key)
+        key_sig = self._asym.sign(self._key, encrypted_key)
 
         return Response(status_code=Response.OK, key=encrypted_key,
                         content=enc, signature=signature, key_signature=key_sig)
 
     def _decrypt(self, msg):
         if not self._key:
-            raise CryptoEngineError(status_code=Response.RSA_KEY_ERROR,
-                                    error_msg='Not RSA key loaded')
+            raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
+                                    error_msg='No private key loaded')
         # Check if the key and its signature match
         try:
-            RSACipher.verify(self._key, msg.key, msg.key_signature)
-        except RSACipherError:
-            raise CryptoEngineError(status_code=Response.RSA_KEY_SIGN_ERROR,
-                                    error_msg='Incorrect RSA key signature')
+            self._asym.verify(self._key, msg.key, msg.key_signature)
+        except AsymetricEncryptionError as e:
+            raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_SIGN_ERROR,
+                                    error_msg=e.error_msg)
         # Decrypt the AES key
         try:
-            aes_key = RSACipher.decrypt(self._key, msg.key)
-        except RSACipherError:
-            raise CryptoEngineError(status_code=Response.RSA_DECRYPT_FAILED,
-                                    error_msg='Cannot Decrypt AES key')
+            aes_key = self._asym.decrypt(self._key, msg.key)
+        except AsymetricEncryptionError as e:
+            raise CryptoEngineError(status_code=Response.ASYMETRIC_DECRYPT_FAILED,
+                                    error_msg=e.error_msg)
 
         # Check if the encrypted content matches its signature
         try:
-            RSACipher.verify(self._key, msg.content, msg.signature)
-        except RSACipherError:
+            self._asym.verify(self._key, msg.content, msg.signature)
+        except AsymetricEncryptionError as e:
             raise CryptoEngineError(status_code=Response.VERIFY_FAILED,
-                                    error_msg='Invalid signature, content may be tampered')
+                                    error_msg=e.error_msg)
         try:
-            dec = AESCipher.decrypt(msg.content, aes_key)
-        except AESCipherError:
-            raise CryptoEngineError(status_code=Response.AES_DECRYPT_FAILED,
-                                    error_msg='Cannot Decrypt file content')
+            dec = self._sym.decrypt(aes_key, msg.content)
+        except SymetricEncryptionError as e:
+            raise CryptoEngineError(status_code=Response.SYMETRIC_DECRYPT_FAILED,
+                                    error_msg=e.error_msg)
 
         return Response(status_code=Response.OK, content=dec)
 

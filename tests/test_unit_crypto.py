@@ -19,9 +19,10 @@ class TestUnitCryptoAES:
         self.test_tag = b"""J/\xfd98\x94[2D\xa2\x0b?H\xec\x8a2"""
         self.test_key = (b"""\xb6\x12\xdc$\xe4\xc3\x03[J\xf7\xdbr\x17\xe1\xf5"""
                          b"""\xcf\x9d@%Y\xa2\xc5\xd6O\xbf>\xeb\xb0\xec"\x85|""")
+        self._aes = AESCipher()
 
     def test_aes_encrypt_good(self):
-        key, enc = AESCipher.encrypt(self.test_data)
+        key, enc = self._aes.encrypt(self.test_data)
         assert key
         assert enc
         # 32 == Size of IV + size of AES-GCM tag
@@ -29,30 +30,34 @@ class TestUnitCryptoAES:
         assert self.test_data not in enc
 
     def test_aes_decrypt_good(self):
-        dec = AESCipher.decrypt(self.test_encrypted, self.test_key)
+        dec = self._aes.decrypt(self.test_key, self.test_encrypted)
         assert dec == self.test_data
 
     def test_aes_decrypt_bad_iv(self):
         new_enc = urandom(16) + self.test_encrypted[16:]
         with pytest.raises(AESCipherError) as e:
-            AESCipher.decrypt(new_enc, self.test_key)
-        assert str(e.value) == 'GMAC verification failed'
+            self._aes.decrypt(self.test_key, new_enc)
+        assert e.value.error_code == 2
+        assert e.value.error_msg == 'GMAC verification failed'
 
     def test_aes_decrypt_bad_tag(self):
         new_enc = self.test_encrypted[:-16] + urandom(16)
         with pytest.raises(AESCipherError) as e:
-            AESCipher.decrypt(new_enc, self.test_key)
-        assert str(e.value) == 'GMAC verification failed'
+            self._aes.decrypt(self.test_key, new_enc)
+        assert e.value.error_code == 2
+        assert e.value.error_msg == 'GMAC verification failed'
 
     def test_aes_decrypt_bad_key(self):
         with pytest.raises(AESCipherError) as e:
-            AESCipher.decrypt(self.test_encrypted, urandom(32))
-        assert str(e.value) == 'GMAC verification failed'
+            self._aes.decrypt(urandom(32), self.test_encrypted,)
+        assert e.value.error_code == 2
+        assert e.value.error_msg == 'GMAC verification failed'
 
     def test_aes_decrypt_bad_key_length(self):
         with pytest.raises(AESCipherError) as e:
-            AESCipher.decrypt(self.test_encrypted, urandom(31))
-        assert str(e.value) == 'Cannot decrypt data'
+            self._aes.decrypt(urandom(31), self.test_encrypted,)
+        assert e.value.error_code == 1
+        assert e.value.error_msg == 'Cannot decrypt data'
 
 
 class TestUnitCryptoRSA:

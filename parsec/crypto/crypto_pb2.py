@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='parsec/crypto/crypto.proto',
   package='crypto',
   syntax='proto3',
-  serialized_pb=_b('\n\x1aparsec/crypto/crypto.proto\x12\x06\x63rypto\"\xe6\x01\n\x07Request\x12)\n\x04type\x18\x01 \x01(\x0e\x32\x1b.crypto.Request.RequestType\x12\x0b\n\x03key\x18\x02 \x01(\x0c\x12\x15\n\rkey_signature\x18\x03 \x01(\x0c\x12\x0f\n\x07\x63ontent\x18\x04 \x01(\x0c\x12\x11\n\tsignature\x18\x05 \x01(\x0c\x12\x12\n\npassphrase\x18\x06 \x01(\x0c\x12\x10\n\x08key_size\x18\x07 \x01(\x05\"B\n\x0bRequestType\x12\x0b\n\x07\x45NCRYPT\x10\x00\x12\x0b\n\x07\x44\x45\x43RYPT\x10\x01\x12\x0c\n\x08LOAD_KEY\x10\x02\x12\x0b\n\x07GEN_KEY\x10\x03\"\xb5\x02\n\x08Response\x12\x34\n\x0bstatus_code\x18\x01 \x01(\x0e\x32\x1f.crypto.Response.StatusCodeType\x12\x11\n\terror_msg\x18\x02 \x01(\t\x12\x0b\n\x03key\x18\x03 \x01(\x0c\x12\x11\n\tsignature\x18\x04 \x01(\x0c\x12\x15\n\rkey_signature\x18\x05 \x01(\x0c\x12\x0f\n\x07\x63ontent\x18\x06 \x01(\x0c\"\x97\x01\n\x0eStatusCodeType\x12\x06\n\x02OK\x10\x00\x12\x0f\n\x0b\x42\x41\x44_REQUEST\x10\x01\x12\x11\n\rVERIFY_FAILED\x10\x02\x12\x16\n\x12\x41\x45S_DECRYPT_FAILED\x10\x03\x12\x16\n\x12RSA_DECRYPT_FAILED\x10\x04\x12\x11\n\rRSA_KEY_ERROR\x10\x05\x12\x16\n\x12RSA_KEY_SIGN_ERROR\x10\x06\x62\x06proto3')
+  serialized_pb=_b('\n\x1aparsec/crypto/crypto.proto\x12\x06\x63rypto\"\xe6\x01\n\x07Request\x12)\n\x04type\x18\x01 \x01(\x0e\x32\x1b.crypto.Request.RequestType\x12\x0b\n\x03key\x18\x02 \x01(\x0c\x12\x15\n\rkey_signature\x18\x03 \x01(\x0c\x12\x0f\n\x07\x63ontent\x18\x04 \x01(\x0c\x12\x11\n\tsignature\x18\x05 \x01(\x0c\x12\x12\n\npassphrase\x18\x06 \x01(\x0c\x12\x10\n\x08key_size\x18\x07 \x01(\x05\"B\n\x0bRequestType\x12\x0b\n\x07\x45NCRYPT\x10\x00\x12\x0b\n\x07\x44\x45\x43RYPT\x10\x01\x12\x0c\n\x08LOAD_KEY\x10\x02\x12\x0b\n\x07GEN_KEY\x10\x03\"\xcc\x02\n\x08Response\x12\x34\n\x0bstatus_code\x18\x01 \x01(\x0e\x32\x1f.crypto.Response.StatusCodeType\x12\x11\n\terror_msg\x18\x02 \x01(\t\x12\x0b\n\x03key\x18\x03 \x01(\x0c\x12\x11\n\tsignature\x18\x04 \x01(\x0c\x12\x15\n\rkey_signature\x18\x05 \x01(\x0c\x12\x0f\n\x07\x63ontent\x18\x06 \x01(\x0c\"\xae\x01\n\x0eStatusCodeType\x12\x06\n\x02OK\x10\x00\x12\x0f\n\x0b\x42\x41\x44_REQUEST\x10\x01\x12\x11\n\rVERIFY_FAILED\x10\x02\x12\x1b\n\x17SYMETRIC_DECRYPT_FAILED\x10\x03\x12\x1c\n\x18\x41SYMETRIC_DECRYPT_FAILED\x10\x04\x12\x17\n\x13\x41SYMETRIC_KEY_ERROR\x10\x05\x12\x1c\n\x18\x41SYMETRIC_KEY_SIGN_ERROR\x10\x06\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -74,26 +74,26 @@ _RESPONSE_STATUSCODETYPE = _descriptor.EnumDescriptor(
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='AES_DECRYPT_FAILED', index=3, number=3,
+      name='SYMETRIC_DECRYPT_FAILED', index=3, number=3,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='RSA_DECRYPT_FAILED', index=4, number=4,
+      name='ASYMETRIC_DECRYPT_FAILED', index=4, number=4,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='RSA_KEY_ERROR', index=5, number=5,
+      name='ASYMETRIC_KEY_ERROR', index=5, number=5,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='RSA_KEY_SIGN_ERROR', index=6, number=6,
+      name='ASYMETRIC_KEY_SIGN_ERROR', index=6, number=6,
       options=None,
       type=None),
   ],
   containing_type=None,
   options=None,
   serialized_start=430,
-  serialized_end=581,
+  serialized_end=604,
 )
 _sym_db.RegisterEnumDescriptor(_RESPONSE_STATUSCODETYPE)
 
@@ -235,7 +235,7 @@ _RESPONSE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=272,
-  serialized_end=581,
+  serialized_end=604,
 )
 
 _REQUEST.fields_by_name['type'].enum_type = _REQUEST_REQUESTTYPE

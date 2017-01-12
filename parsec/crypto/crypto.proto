@@ -25,10 +25,10 @@ message Response {
         OK = 0;
         BAD_REQUEST = 1;
         VERIFY_FAILED = 2;
-        AES_DECRYPT_FAILED = 3;
-        RSA_DECRYPT_FAILED = 4;
-        RSA_KEY_ERROR = 5;
-        RSA_KEY_SIGN_ERROR = 6;
+        SYMETRIC_DECRYPT_FAILED = 3;
+        ASYMETRIC_DECRYPT_FAILED = 4;
+        ASYMETRIC_KEY_ERROR = 5;
+        ASYMETRIC_KEY_SIGN_ERROR = 6;
     }
     StatusCodeType status_code = 1;
     string error_msg = 2;

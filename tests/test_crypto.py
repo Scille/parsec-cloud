@@ -4,12 +4,14 @@ from collections import namedtuple
 from parsec.crypto import LocalCryptoClient, CryptoError
 from parsec.crypto import CryptoEngineService
 from parsec.crypto.crypto_pb2 import Request, Response
+from parsec.crypto.aes import AESCipher
+from parsec.crypto.rsa import RSACipher
 
 
 class TestBaseCryptoClient:
 
     def setup_method(self):
-        self.service = CryptoEngineService()
+        self.service = CryptoEngineService(symetric_cls=AESCipher, asymetric_cls=RSACipher)
         self.client = LocalCryptoClient(service=self.service)
         self.test_key = b"""-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCUKiMBsx4lMVrx
@@ -128,8 +130,8 @@ class BaseTestCryptoEngineService:
         # Key too short
         msg = Request(type=Request.GEN_KEY, passphrase=b'', key_size=256)
         ret = self.service.dispatch_msg(msg)
-        assert ret.status_code == Response.RSA_KEY_ERROR
-        assert ret.error_msg == "Incorrect RSA key size"
+        assert ret.status_code == Response.ASYMETRIC_KEY_ERROR
+        assert ret.error_msg == "Generation error : Key size must be >= 2048 bits"
 
     # def test_gen_key_good_key_no_passphrase(self):
     #     # Smallest key available
@@ -173,13 +175,13 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
 -----END RSA PRIVATE KEY-----"""
         msg = Request(type=Request.LOAD_KEY, key=test_key)
         ret = self.service.dispatch_msg(msg)
-        assert ret.status_code == Response.RSA_KEY_ERROR
+        assert ret.status_code == Response.ASYMETRIC_KEY_ERROR
 
     def test_load_key_bad_format(self):
         test_key = b'this is bullshit'
         msg = Request(type=Request.LOAD_KEY, key=test_key)
         ret = self.service.dispatch_msg(msg)
-        assert ret.status_code == Response.RSA_KEY_ERROR
+        assert ret.status_code == Response.ASYMETRIC_KEY_ERROR
 
     def test_load_key_no_passphrase(self):
         msg = Request(type=Request.LOAD_KEY, key=self.test_key)
@@ -189,7 +191,7 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
     def test_load_key_with_passphrase(self):
         msg = Request(type=Request.LOAD_KEY, key=self.test_key_encrypted)
         ret = self.service.dispatch_msg(msg)
-        assert ret.status_code == Response.RSA_KEY_ERROR
+        assert ret.status_code == Response.ASYMETRIC_KEY_ERROR
         msg = Request(type=Request.LOAD_KEY,
                       key=self.test_key_encrypted,
                       passphrase=self.default_passphrase)
@@ -213,7 +215,7 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
     def test_encrypt_no_key(self):
         msg = Request(type=Request.ENCRYPT, content=b'Not Working')
         ret = self.service.dispatch_msg(msg)
-        assert ret.status_code == Response.RSA_KEY_ERROR
+        assert ret.status_code == Response.ASYMETRIC_KEY_ERROR
         assert not ret.key
         assert not ret.key_signature
         assert not ret.content
@@ -262,7 +264,7 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
         data = b'hellooooooooow'
         msg = Request(type=Request.DECRYPT, content=data)
         ret = self.service.dispatch_msg(msg)
-        assert ret.status_code == Response.RSA_KEY_ERROR
+        assert ret.status_code == Response.ASYMETRIC_KEY_ERROR
         assert not ret.key
         assert not ret.signature
         assert not ret.content
@@ -285,7 +287,7 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
         msg = Request(type=Request.DECRYPT, content=ret.content,
                       signature=ret.key, key=bad_key, key_signature=ret.key_signature)
         ret = self.service.dispatch_msg(msg)
-        assert ret.status_code == Response.RSA_KEY_SIGN_ERROR
+        assert ret.status_code == Response.ASYMETRIC_KEY_SIGN_ERROR
 
     def test_decrypt_no_aes_key(self):
         msg = Request(type=Request.LOAD_KEY, key=self.test_key)
@@ -303,7 +305,7 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
         msg = Request(type=Request.DECRYPT, content=ret.content,
                       signature=ret.signature, key=None)
         ret = self.service.dispatch_msg(msg)
-        assert ret.status_code == Response.RSA_KEY_SIGN_ERROR
+        assert ret.status_code == Response.ASYMETRIC_KEY_SIGN_ERROR
 
     def test_decrypt_bad_content(self):
         msg = Request(type=Request.LOAD_KEY, key=self.test_key)
@@ -345,7 +347,7 @@ lCoZCXHy1VegtTRKsUuu/trbmz15FW75c/T1ceK7c6o=
 class TestCryptoService(BaseTestCryptoEngineService):
 
     def setup_method(self):
-        self.service = CryptoEngineService()
+        self.service = CryptoEngineService(symetric_cls=AESCipher, asymetric_cls=RSACipher)
         self.test_key = b"""-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCUKiMBsx4lMVrx
 0tRU6q/P5s0n3Rf9y0ogtrkCC2NwUrwSrx/xvfUyRXZnWxhtEqACGzwBDvExWY2Y
