@@ -1,5 +1,5 @@
 from .fuse import FuseUIServer
-from .stfp import SFTPUIServer
+from .sftp import SFTPUIServer
 
 
 __all__ = ('FuseUIServer', 'SFTPUIServer')

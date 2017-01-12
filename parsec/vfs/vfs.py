@@ -1,4 +1,5 @@
 import json
+from os.path import normpath
 from uuid import uuid4
 from datetime import datetime
 from google.protobuf.message import DecodeError
@@ -65,7 +66,8 @@ class VFSService(BaseService):
 
     def cmd_READ_FILE(self, cmd):
         try:
-            file = self._root[cmd.path]
+            path = normpath(cmd.path)
+            file = self._root[path]
         except KeyError:
             raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
         if file['vid'] is None:
@@ -77,12 +79,13 @@ class VFSService(BaseService):
         return Response(status_code=Response.OK, content=ret.content)
 
     def cmd_CREATE_FILE(self, cmd):
+        path = normpath(cmd.path)
         now = datetime.utcnow().timestamp()
-        file = self._root.get(cmd.path, None)
+        file = self._root.get(path, None)
         if not file:
             file = {'metadata': self._init_metadata(), 'vid': uuid4().hex}
             # TODO: update metadata (dates, etc.)
-            self._root[cmd.path] = file
+            self._root[path] = file
         if file['vid'] is None:
             raise CmdError('File is a directory')
         file_size = len(cmd.content)
@@ -96,18 +99,20 @@ class VFSService(BaseService):
         return self.cmd_CREATE_FILE(cmd)
 
     def cmd_DELETE_FILE(self, cmd):
-        file = self._root.get(cmd.path, None)
+        path = normpath(cmd.path)
+        file = self._root.get(path, None)
         if file is not None:
             self._volume.delete_file(file['vid'])
-            del self._root[cmd.path]
+            del self._root[path]
             self._save_manifest()
             return Response(status_code=Response.OK)
         else:
             raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
 
     def cmd_STAT(self, cmd):
+        path = normpath(cmd.path)
         try:
-            meta = self._root[cmd.path]['metadata']
+            meta = self._root[path]['metadata']
             return Response(status_code=Response.OK, stat=Stat(**meta))
         except KeyError:
             raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
@@ -122,11 +127,13 @@ class VFSService(BaseService):
         return files
 
     def cmd_LIST_DIR(self, cmd):
-        files = self._list_dir(cmd.path)
+        path = normpath(cmd.path)
+        files = self._list_dir(path)
         return Response(status_code=Response.OK, list_dir=files)
 
     def cmd_MAKE_DIR(self, cmd):
-        if self._root.get(cmd.path):
+        path = normpath(cmd.path)
+        if self._root.get(path):
             raise CmdError('Target already exists')
         else:
             metadata = self._init_metadata(True)
@@ -134,12 +141,13 @@ class VFSService(BaseService):
         return Response(status_code=Response.OK)
 
     def cmd_REMOVE_DIR(self, cmd):
-        if cmd.path == '/':
+        path = normpath(cmd.path)
+        if path == '/':
             raise CmdError('Cannot remove root')
-        if self._list_dir(cmd.path):
+        if self._list_dir(path):
             raise CmdError('Directory not empty')
         try:
-            del self._root[cmd.path]
+            del self._root[path]
         except KeyError:
             raise CmdError('Directory not found', status_code=Response.FILE_NOT_FOUND)
         return Response(status_code=Response.OK)

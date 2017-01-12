@@ -4,7 +4,8 @@ from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 import asyncio
 import asyncssh
 from asyncssh.constants import (
-    FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL)
+    FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL,
+    FX_NO_SUCH_FILE, FX_OP_UNSUPPORTED)
 from asyncssh import SFTPServer, SFTPError, SFTPAttrs
 # import zmq
 # import zmq.asyncio
@@ -176,7 +177,7 @@ class ParsecSFTPServer(SFTPServer):
         try:
             stat = self._vfs.stat(path).stat
         except VFSFileNotFoundError:
-            raise SFTPError('no such file')
+            raise SFTPError(FX_NO_SUCH_FILE, 'No such file')
         mod = S_IFDIR if stat.type == Stat.DIRECTORY else S_IFREG
         return SFTPAttrs(**{
             'size': stat.size,
@@ -219,7 +220,7 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        raise SFTPError('Not implemented')
+        raise SFTPError(FX_OP_UNSUPPORTED, 'Not implemented')
 
     def fsetstat(self, file_obj, attrs):
         """Set attributes of an open file
@@ -231,7 +232,7 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        raise SFTPError('Not implemented')
+        raise SFTPError(FX_OP_UNSUPPORTED, 'Not implemented')
 
     def listdir(self, path):
         """List the contents of a directory
@@ -244,7 +245,10 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        return [b'.', b'..'] + [d.encode() for d in self._vfs.list_dir(path).list_dir]
+        try:
+            return [b'.', b'..'] + [d.encode() for d in self._vfs.list_dir(path).list_dir]
+        except VFSFileNotFoundError:
+            raise SFTPError(FX_NO_SUCH_FILE, 'No such directory')
 
     def remove(self, path):
         """Remove a file or symbolic link
@@ -255,7 +259,10 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        self._vfs.delete_file(path)
+        try:
+            self._vfs.delete_file(path)
+        except VFSFileNotFoundError:
+            raise SFTPError(FX_NO_SUCH_FILE, 'No such file')
 
     def mkdir(self, path, attrs):
         """Create a directory with the specified attributes
@@ -280,7 +287,10 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        self._vfs.remove_dir(path)
+        try:
+            self._vfs.remove_dir(path)
+        except VFSFileNotFoundError:
+            raise SFTPError(FX_NO_SUCH_FILE, 'No such file')
 
     def realpath(self, path):
         """Return the canonical version of a path
@@ -311,7 +321,10 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        return self._vfs.stat(path)
+        try:
+            return self._vfs.stat(path)
+        except VFSFileNotFoundError:
+            raise SFTPError(FX_NO_SUCH_FILE, 'No such file')
 
     def rename(self, oldpath, newpath):
         """Rename a file, directory, or link
@@ -333,7 +346,7 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        raise SFTPError('Not implemented')
+        raise SFTPError(FX_OP_UNSUPPORTED, 'Not implemented')
 
     def readlink(self, path):
         """Return the target of a symbolic link
@@ -346,7 +359,7 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        raise SFTPError('Not implemented')
+        raise SFTPError(FX_OP_UNSUPPORTED, 'Not implemented')
 
     def symlink(self, oldpath, newpath):
         """Create a symbolic link
@@ -359,7 +372,7 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        raise SFTPError('Not implemented')
+        raise SFTPError(FX_OP_UNSUPPORTED, 'Not implemented')
 
     def posix_rename(self, oldpath, newpath):
         """Rename a file, directory, or link with POSIX semantics
@@ -375,7 +388,7 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        raise SFTPError('Not implemented')
+        raise SFTPError(FX_OP_UNSUPPORTED, 'Not implemented')
 
     def statvfs(self, path):
         """Get attributes of the file system containing a file
@@ -389,7 +402,7 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        raise SFTPError('Not implemented')
+        raise SFTPError(FX_OP_UNSUPPORTED, 'Not implemented')
 
     def fstatvfs(self, file_obj):
         """Return attributes of the file system containing an open file
@@ -403,7 +416,7 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        raise SFTPError('Not implemented')
+        raise SFTPError(FX_OP_UNSUPPORTED, 'Not implemented')
 
     def link(self, oldpath, newpath):
         """Create a hard link
@@ -416,7 +429,7 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        raise SFTPError('Not implemented')
+        raise SFTPError(FX_OP_UNSUPPORTED, 'Not implemented')
 
     def fsync(self, file_obj):
         """Force file data to be written to disk
