@@ -4,6 +4,8 @@ from multiprocessing import Process
 
 from parsec.crypto.crypto import CryptoEngineService
 from parsec.crypto import LocalCryptoClient
+from parsec.crypto.aes import AESCipher
+from parsec.crypto.rsa import RSACipher
 from parsec.vfs import LocalVFSClient, ReqResVFSClient
 from parsec.volume import LocalVolumeClient
 from parsec.volume.google_drive import GoogleDriveVolumeService
@@ -82,8 +84,13 @@ def bootstrap_nozmq(mock_path, mountpoint):
     volume_service.initialize_driver(force=True)
     volume_client = LocalVolumeClient(service=volume_service)
 
-    crypto_service = CryptoEngineService()
+    crypto_service = CryptoEngineService(symetric_cls=AESCipher, asymetric_cls=RSACipher)
     crypto_client = LocalCryptoClient(service=crypto_service)
+
+    home_dir = os.path.expanduser('~')
+    with open(home_dir + '/.parsec/test_key.rsa', 'rb') as f:
+        crypto_client.load_key(pem=f.read(), passphrase=b'test')
+
     vfs_service = VFSService(volume_client, crypto_client)
     vfs_client = LocalVFSClient(service=vfs_service)
 

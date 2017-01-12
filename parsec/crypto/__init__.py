@@ -43,8 +43,8 @@ class BaseCryptoClient(BaseClient):
         return self._communicate(type=Request.DECRYPT, content=content,
                                  key=key, signature=signature, key_signature=key_signature)
 
-    def load_key(self, key: bytes=b'', passphrase: bytes=b'')-> Response:
-        return self._communicate(type=Request.LOAD_KEY, key=key, passphrase=passphrase)
+    def load_key(self, pem: bytes=b'', passphrase: bytes=b'')-> Response:
+        return self._communicate(type=Request.LOAD_KEY, key=pem, passphrase=passphrase)
 
     def genkey(self, passphrase: bytes=b'', key_size: int=4096) -> Response:
         return self._communicate(type=Request.GEN_KEY, passphrase=passphrase, key_size=key_size)

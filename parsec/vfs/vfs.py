@@ -1,10 +1,12 @@
 import json
 from uuid import uuid4
+from base64 import b64decode, b64encode
 from datetime import datetime
 from google.protobuf.message import DecodeError
 
 from ..abstract import BaseService
 from ..volume import VolumeFileNotFoundError
+from ..crypto import CryptoError
 from .vfs_pb2 import Request, Response, Stat
 
 
@@ -51,9 +53,9 @@ class VFSService(BaseService):
         """
         try:
             ret = self._volume.read_file('0')
-            # ret = self._crypto.decrypt(ret.content)
+            # ret = self._crypto.decrypt(content=ret.content)
             self._root = json.loads(ret.content.decode())
-        except VolumeFileNotFoundError:
+        except (VolumeFileNotFoundError, CryptoError):
             self._root = {'/': {'metadata': self._init_metadata(isdir=True)}}
 
     def _save_manifest(self):
@@ -75,6 +77,11 @@ class VFSService(BaseService):
         file['metadata'].update({'atime': now, })
         self._save_manifest()
         ret = self._volume.read_file(file['vid'])
+        ret = self._crypto.decrypt(
+            content=ret.content,
+            key=b64decode(file['metadata']['key'].encode()),
+            signature=b64decode(file['metadata']['signature'].encode()),
+            key_signature=b64decode(file['metadata']['key_signature'].encode()))
         return Response(status_code=Response.OK, content=ret.content)
 
     def cmd_CREATE_FILE(self, cmd):
@@ -88,8 +95,11 @@ class VFSService(BaseService):
             raise CmdError('File is a directory')
         file_size = len(cmd.content)
         file['metadata'].update({'mtime': now, 'size': file_size})
-        # ret = self._crypto.encrypt(cmd.content)
-        self._volume.write_file(file['vid'], cmd.content)
+        ret = self._crypto.encrypt(cmd.content)
+        file['metadata'].update({'key': b64encode(ret.key).decode(),
+                                 'signature': b64encode(ret.signature).decode(),
+                                 'key_signature': b64encode(ret.key_signature).decode()})
+        self._volume.write_file(file['vid'], ret.content)
         self._save_manifest()
         return Response(status_code=Response.OK, size=file_size)
 
@@ -109,7 +119,9 @@ class VFSService(BaseService):
     def cmd_STAT(self, cmd):
         try:
             meta = self._root[cmd.path]['metadata']
-            return Response(status_code=Response.OK, stat=Stat(**meta))
+            stat = Stat(type=meta['type'], ctime=meta['ctime'], mtime=meta['mtime'],
+                        atime=meta['atime'], size=meta['size'])
+            return Response(status_code=Response.OK, stat=stat)
         except KeyError:
             raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
 
