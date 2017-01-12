@@ -31,50 +31,63 @@ def _generate_async_key(wdir, name):
     return key_path, key_pub_path
 
 
+def _sftp_server_factory(conn):
+    volume_s = VolumeServiceInMemoryMock()
+    volume_c = LocalVolumeClient(service=volume_s)
+    vfs_s = VFSService(volume_c)
+    vfs_c = LocalVFSClient(vfs_s)
+    return ParsecSFTPServer(conn, vfs_c)
+
+
+class Context:
+    def __init__(self, host, port, loop, skey, skey_pub, ckey, ckey_pub):
+        self.host = host
+        self.port = port
+        self.loop = loop
+        self.skey = skey
+        self.skey_pub = skey_pub
+        self.ckey = ckey
+        self.ckey_pub = ckey_pub
+        self.server = self.connection = None
+
+    async def start(self):
+        self.server = await asyncssh.create_server(
+            Server,
+            host=self.host,
+            port=self.port,
+            sftp_factory=_sftp_server_factory,
+            server_host_keys=[self.skey],
+            authorized_client_keys=[self.ckey_pub],
+            loop=self.loop)
+        self.connection, _ = await asyncssh.create_connection(
+            None,
+            # client_factory=asyncssh.SFTPClient,
+            known_hosts=None,
+            host=self.host, port=self.port,
+            client_keys=self.ckey,
+            loop=self.loop)
+        client = await self.connection.start_sftp_client()
+        return client
+
+    async def finish(self):
+        self.connection.close()
+        self.server.close()
+        await self.connection.wait_closed()
+        await self.server.wait_closed()
+
+
 @pytest.fixture
 def ctx(event_loop, unused_tcp_port, tmpdir):
-    ctx = type('Ctx', (), {})()
-    ctx.port = unused_tcp_port
-    ctx.loop = event_loop
-    ctx.host = 'localhost'
-    ctx.skey, ctx.skey_pub = _generate_async_key(tmpdir, "skey")
-    ctx.ckey, ctx.ckey_pub = _generate_async_key(tmpdir, "ckey")
-    return ctx
+    skey, skey_pub = _generate_async_key(tmpdir, "skey")
+    ckey, ckey_pub = _generate_async_key(tmpdir, "ckey")
+    return Context('localhost', unused_tcp_port, event_loop, skey, skey_pub, ckey, ckey_pub)
 
 
 @pytest.mark.asyncio
 async def test_simple(ctx):
-
-    def _sftp_server_factory(conn):
-        volume_s = VolumeServiceInMemoryMock()
-        volume_c = LocalVolumeClient(service=volume_s)
-        vfs_s = VFSService(volume_c)
-        vfs_c = LocalVFSClient(vfs_s)
-        return ParsecSFTPServer(conn, vfs_c)
-
-    server = await asyncssh.create_server(
-        Server,
-        host=ctx.host,
-        port=ctx.port,
-        sftp_factory=_sftp_server_factory,
-        server_host_keys=[ctx.skey],
-        authorized_client_keys=[ctx.ckey_pub],
-        loop=ctx.loop)
+    client = await ctx.start()
     try:
-        connection, _ = await asyncssh.create_connection(
-            None,
-            # client_factory=asyncssh.SFTPClient,
-            known_hosts=None,
-            host=ctx.host, port=ctx.port,
-            client_keys=ctx.ckey,
-            loop=ctx.loop)
-        client = await connection.start_sftp_client()
-
         ret = await client.listdir('/')
         assert ret == ['.', '..']
-
-        connection.close()
-        await connection.wait_closed()
     finally:
-        server.close()
-        await server.wait_closed()
+        await ctx.finish()
