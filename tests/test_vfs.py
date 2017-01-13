@@ -2,6 +2,9 @@ import pytest
 import tempfile
 
 from parsec.volume import VolumeServiceInMemoryMock, LocalVolumeClient
+from parsec.crypto.crypto import CryptoEngineService
+from parsec.crypto import LocalCryptoClient
+from parsec.crypto.crypto_mock import MockAsymCipher, MockSymCipher
 from parsec.vfs import VFSService, VFSServiceMock
 from parsec.vfs.vfs_pb2 import Request, Response, Stat
 
@@ -219,7 +222,21 @@ class BaseTestVFSService:
 class TestVFSService(BaseTestVFSService):
 
     def setup_method(self):
-        self.service = VFSService(LocalVolumeClient(VolumeServiceInMemoryMock()))
+        params = {
+            'asymetric_parameters': {
+                'override': 'I SWEAR I AM ONLY USING THIS PLUGIN IN MY TEST SUITE'
+            },
+            'symetric_parameters': {
+                'override': 'I SWEAR I AM ONLY USING THIS PLUGIN IN MY TEST SUITE'
+            }
+        }
+        crypto_service = CryptoEngineService(symetric_cls=MockSymCipher,
+                                             asymetric_cls=MockAsymCipher,
+                                             **params)
+        crypto_client = LocalCryptoClient(service=crypto_service)
+        crypto_client.load_key(b'123456789')
+        volume_client = LocalVolumeClient(VolumeServiceInMemoryMock())
+        self.service = VFSService(volume_client, crypto_client)
 
 
 class TestVFSServiceMock(BaseTestVFSService):
