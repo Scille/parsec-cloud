@@ -20,47 +20,47 @@ class SymetricEncryption(metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self, **kwargs):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def encrypt(self, raw):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def decrypt(self, key, enc):
-        pass
+        pass  # pragma: no cover
 
 
 class AsymetricEncryption(metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self, **kwargs):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def generate_key(self, key_size):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def load_key(self, pem, passphrase):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def export_key(self, key, passphrase):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def sign(self, key, data):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def verify(self, key, data, signature):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def encrypt(self, key, data):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def decrypt(self, key, enc):
-        pass
+        pass  # pragma: no cover
