@@ -15,7 +15,6 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    "fusepy==2.0.4",
     "google-api-python-client==1.5.3",
     "Logbook==1.0.0",
     "protobuf==3.1.0.post1",
@@ -45,6 +44,7 @@ setup(
     install_requires=requirements,
     extras_require={
         'sftp': ['asyncssh==1.8.1'],
+        'fuse': ['fusepy==2.0.4'],
     },
     license="GPLv3",
     zip_safe=False,
