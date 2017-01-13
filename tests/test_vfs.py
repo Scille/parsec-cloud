@@ -5,7 +5,7 @@ from parsec.volume import VolumeServiceInMemoryMock, LocalVolumeClient
 from parsec.crypto.crypto import CryptoEngineService
 from parsec.crypto import LocalCryptoClient
 from parsec.crypto.crypto_mock import MockAsymCipher, MockSymCipher
-from parsec.vfs import VFSService, VFSServiceMock
+from parsec.vfs import VFSService, VFSServiceMock, VFSServiceInMemoryMock
 from parsec.vfs.vfs_pb2 import Request, Response, Stat
 
 
@@ -244,3 +244,9 @@ class TestVFSServiceMock(BaseTestVFSService):
     def setup_method(self):
         self.tmpdir = tempfile.TemporaryDirectory()
         self.service = VFSServiceMock(self.tmpdir.name)
+
+
+class TestVFSInMemoryServiceMock(BaseTestVFSService):
+
+    def setup_method(self):
+        self.service = VFSServiceInMemoryMock()
