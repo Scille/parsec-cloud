@@ -79,7 +79,7 @@ class MockAsymCipher(AsymetricEncryption):
         if passphrase and passphrase != b'passphrase':
             raise MockAsymCipherError(3, 'Cannot import key : wrong format or bad passphrase')
         if len(pem) < 1 or len(pem) > 9:
-            raise MockAsymCipherError(4, "Loading error : Key size must be >= 2048 bits")
+            raise MockAsymCipherError(4, "Loading error : Key size must be between 1 and 9")
         return pem
 
     def export_key(self, key, passphrase):
