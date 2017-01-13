@@ -201,7 +201,7 @@ class VFSServiceInMemoryMock(VFSServiceBaseMock):
     def _is_valid_file(self, path, missing_is_ok=False):
         basedir = path.rsplit('/', 1)[0] or '/'
         if self._is_valid_dir(basedir):
-            if (path not in self._dir and missing_is_ok) or (self._dir[path].stat == Stat.FILE):
+            if (path not in self._dir and missing_is_ok) or (self._dir[path].stat.type == Stat.FILE):
                 return True
         return False
 

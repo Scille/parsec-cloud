@@ -55,6 +55,7 @@ class FileObj(IOBase):
         self._can_read = read
         self._can_write = write
         self._content = None
+        self._need_flush = False
 
     def _get_content(self, force=False):
         if not self._content or force:
@@ -76,7 +77,7 @@ class FileObj(IOBase):
         if self._offset == 0 and not self._append:
             content = b''
         else:
-            content = self.get_content()
+            content = self._get_content()
         offset = len(content) if self._append else self._offset
         self._content = content[:offset] + data
         self._need_flush = True
@@ -137,7 +138,7 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        append = pflags & FXF_APPEND
+        append = bool(pflags & FXF_APPEND)
         try:
             response = self._vfs.stat(path)
             if pflags & FXF_EXCL:
@@ -321,10 +322,7 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        try:
-            return self._vfs.stat(path)
-        except VFSFileNotFoundError:
-            raise SFTPError(FX_NO_SUCH_FILE, 'No such file')
+        return self.lstat(path)
 
     def rename(self, oldpath, newpath):
         """Rename a file, directory, or link
