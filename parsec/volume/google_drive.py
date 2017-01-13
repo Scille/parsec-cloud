@@ -249,6 +249,7 @@ class GoogleDriveVolumeService(BaseService):
                 media_body=media,
                 fields='id').execute()
             self._mapping[vid] = infos['id']
+            self.sync()
         else:
             self._service.files().update(
                 fileId=file_id,
