@@ -63,7 +63,6 @@ class VFSServiceBaseMock(BaseService):
     def cmd_REMOVE_DIR(self, cmd):
         raise NotImplementedError()
 
-
     def dispatch_msg(self, msg):
         try:
             try:
@@ -81,7 +80,6 @@ class VFSServiceBaseMock(BaseService):
         except DecodeError as exc:
             ret = Response(status_code=Response.BAD_REQUEST, error_msg='Invalid request format')
         return ret.SerializeToString()
-
 
 
 class VFSServiceMock(VFSServiceBaseMock):
@@ -201,7 +199,8 @@ class VFSServiceInMemoryMock(VFSServiceBaseMock):
     def _is_valid_file(self, path, missing_is_ok=False):
         basedir = path.rsplit('/', 1)[0] or '/'
         if self._is_valid_dir(basedir):
-            if (path not in self._dir and missing_is_ok) or (self._dir[path].stat.type == Stat.FILE):
+            if ((path not in self._dir and missing_is_ok) or
+                    (self._dir[path].stat.type == Stat.FILE)):
                 return True
         return False
 

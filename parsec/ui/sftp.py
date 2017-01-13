@@ -444,4 +444,3 @@ class ParsecSFTPServer(SFTPServer):
         """Shut down this SFTP server"""
 
         pass
-

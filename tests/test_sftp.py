@@ -66,9 +66,6 @@ class Context:
         await self.connection.wait_closed()
         await self.server.wait_closed()
 
-    def create_file(name, content=None):
-        self.vfs_client.create_file(name, content=content)
-
 
 @pytest.fixture
 def ctx(event_loop, unused_tcp_port, tmpdir):
@@ -132,6 +129,7 @@ async def test_statfile(ctx):
     try:
         ctx.vfs_client.create_file('/test.txt', content=b'hello')
         stat = await client.stat('/test.txt')
+        assert stat.size == 5
     finally:
         await ctx.finish()
 

@@ -7,7 +7,7 @@ from parsec.crypto import LocalCryptoClient
 from parsec.crypto.aes import AESCipher
 from parsec.crypto.rsa import RSACipher
 from parsec.vfs import LocalVFSClient, ReqResVFSClient, VFSServiceMock, VFSService
-from parsec.volume import LocalVolumeClient, GoogleDriveVolumeService, VolumeServiceInMemoryMock
+from parsec.volume import LocalVolumeClient, VolumeServiceInMemoryMock
 from parsec.ui import FuseUIServer, SFTPUIServer
 from parsec.broker import ResRepServer
 
