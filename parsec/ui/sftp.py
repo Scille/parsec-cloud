@@ -16,10 +16,13 @@ from ..vfs.vfs_pb2 import Stat
 
 
 class SFTPUIServer(BaseServer):
-    def __init__(self, vfs: BaseVFSClient, host: str='', port: int=8022):
+    def __init__(self, vfs: BaseVFSClient, host: str='', port: int=8022,
+                 host_key: str='host_key', authorized_client_keys: str='client_keys.pub'):
         self.host = host
         self.port = port
         self._vfs = vfs
+        self._host_key = host_key
+        self._authorized_client_keys = authorized_client_keys
 
     def start(self):
         loop = asyncio.get_event_loop()
@@ -27,8 +30,8 @@ class SFTPUIServer(BaseServer):
         loop.run_forever()
 
     async def _start_server(self):
-        await asyncssh.listen(self.host, self.port, server_host_keys=['ssh_host_key'],
-                              authorized_client_keys='/home/emmanuel/.ssh/id_rsa.pub',
+        await asyncssh.listen(self.host, self.port, server_host_keys=[self._host_key],
+                              authorized_client_keys=self._authorized_client_keys,
                               sftp_factory=lambda c: ParsecSFTPServer(c, self._vfs))
 
     # async def _recv_and_process(self):

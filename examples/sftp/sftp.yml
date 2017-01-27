@@ -1,0 +1,15 @@
+services:
+    - id: "services:vfs-mock"
+      class: vfs.VFSServiceInMemoryMock
+clients:
+    - id: "clients:vfs-mock"
+      class: vfs.LocalVFSClient
+      params:
+        service: "services:vfs-mock"
+servers:
+    - id: "servers:sftp"
+      class: ui.SFTPUIServer
+      params:
+        vfs: "clients:vfs-mock"
+        host: $SFTP_HOST
+        port: $SFTP_PORT

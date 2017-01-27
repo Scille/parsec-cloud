@@ -51,7 +51,7 @@ class LocalClientMixin(BaseClient):
     to the service instance within the same process.
     """
 
-    def __init__(self, service, **kwargs):
+    def __init__(self, service: BaseService, **kwargs):
         super().__init__(**kwargs)
         self.service = service
 
