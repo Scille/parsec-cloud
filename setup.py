@@ -21,6 +21,7 @@ requirements = [
     "pyzmq==15.4.0",
     "cryptography==1.7.1",
     "simplejson==3.10.0",
+    "pyaml==16.12.2"
 ]
 
 test_requirements = [
