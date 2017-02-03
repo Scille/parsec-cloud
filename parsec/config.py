@@ -218,7 +218,7 @@ def load_config(fp):
 
 
 def loads_config(raw_data):
-    raw_yaml = yaml.load(raw_data)
+    raw_yaml = yaml.load_safe(raw_data)
     _check_fields(raw_yaml, optional={k: list for k in TOP_LEVEL_FIELDS})
     topology = Topology()
     errors = {}
