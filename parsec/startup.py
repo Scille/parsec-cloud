@@ -1,6 +1,5 @@
-#! /usr/bin/env python3
-
 import signal
+import logging
 import argparse
 from multiprocessing import Process
 
@@ -25,20 +24,16 @@ def boot_servers(servers_factory):
         p.join()
 
 
-if __name__ == '__main__':
-    import logging
-    import os
-    logging.basicConfig(level=logging.DEBUG)
-    home_dir = os.path.expanduser('~')
-    kwargs = {
-        'mock_path': home_dir + '/projects/parsec-cloud/tmp/mocked',
-        'mountpoint': home_dir + '/projects/parsec-cloud/tmp/mounted'
-    }
+def execute_from_command_line():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', '-c', type=argparse.FileType('r'), default='parsec.yml',
                         help='Config file to use (default: parsec.yml)')
+    parser.add_argument('--log-level', '-l', dest='loglevel', default='WARNING',
+                        help='Log level (default: WARNING)',
+                        choices=('DEBUG', 'INFO', 'WARNING', 'ERROR'))
     parser.add_argument('--servers', '-s', nargs='*', help='Only start given servers')
     args = parser.parse_args()
+    logging.basicConfig(level=getattr(logging, args.loglevel))
     topology = load_config(args.config)
 
     if args.servers:
