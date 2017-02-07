@@ -139,7 +139,7 @@ class VFSServiceMock(VFSServiceBaseMock):
         try:
             return Response(status_code=Response.OK, list_dir=os.listdir(self._get_path(cmd.path)))
         except (FileNotFoundError, NotADirectoryError) as exc:
-            raise CmdError(str(exc))
+            raise CmdError('Directory not found', status_code=Response.FILE_NOT_FOUND)
 
     def cmd_MAKE_DIR(self, cmd):
         _check_required(cmd, 'path')
@@ -234,7 +234,7 @@ class VFSServiceInMemoryMock(VFSServiceBaseMock):
         _check_required(cmd, 'path')
         path = normpath(cmd.path)
         if path not in self._dir or self._dir[path].stat.type != Stat.DIRECTORY:
-            raise CmdError("Directory doesn't exists")
+            raise CmdError('Directory not found', status_code=Response.FILE_NOT_FOUND)
         listing = []
         if not path.endswith('/'):
             path = path + '/'

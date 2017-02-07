@@ -132,6 +132,9 @@ class VFSService(BaseService):
 
     def _list_dir(self, path):
         files = []
+        if path not in self._root:
+            raise CmdError('Directory not found', status_code=Response.FILE_NOT_FOUND)
+        # Cook path to support single '/' comparison
         path = path[:-1] if path.endswith('/') else path
         for key in self._root.keys():
             head, tail = key.rsplit('/', 1)
@@ -146,7 +149,7 @@ class VFSService(BaseService):
 
     def cmd_MAKE_DIR(self, cmd):
         path = normpath(cmd.path)
-        if self._root.get(path):
+        if path in self._root:
             raise CmdError('Target already exists')
         else:
             metadata = self._init_metadata(True)

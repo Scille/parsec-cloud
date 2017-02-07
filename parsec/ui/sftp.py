@@ -7,8 +7,6 @@ from asyncssh.constants import (
     FXF_READ, FXF_WRITE, FXF_APPEND, FXF_CREAT, FXF_TRUNC, FXF_EXCL,
     FX_NO_SUCH_FILE, FX_OP_UNSUPPORTED)
 from asyncssh import SFTPServer, SFTPError, SFTPAttrs
-# import zmq
-# import zmq.asyncio
 
 from ..abstract import BaseServer
 from ..vfs import BaseVFSClient, VFSFileNotFoundError
