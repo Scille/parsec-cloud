@@ -47,7 +47,7 @@ setup(
         'sftp': ['asyncssh==1.8.1'],
         'fuse': ['fusepy==2.0.4'],
     },
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'parsec = parsec.startup:execute_from_command_line',
         ],

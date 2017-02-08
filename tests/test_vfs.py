@@ -5,8 +5,7 @@ from parsec.volume import VolumeServiceInMemoryMock, LocalVolumeClient
 from parsec.crypto.crypto import CryptoEngineService
 from parsec.crypto import LocalCryptoClient
 from parsec.crypto.crypto_mock import MockAsymCipher, MockSymCipher
-from parsec.vfs import (
-    VFSService, VFSServiceMock, VFSServiceInMemoryMock, VFSFileNotFoundError)
+from parsec.vfs import VFSService, VFSServiceMock, VFSServiceInMemoryMock
 from parsec.vfs.vfs_pb2 import Request, Response, Stat
 
 
@@ -111,7 +110,6 @@ class BaseTestVFSService:
         msg = Request(type=Request.LIST_DIR, path='/countries/dummy')
         ret = self.service.dispatch_msg(msg)
         assert ret.status_code == Response.FILE_NOT_FOUND
-
 
     def test_create_file(self):
         msg = Request(type=Request.CREATE_FILE, path='/test', content=b'test')
