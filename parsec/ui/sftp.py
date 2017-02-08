@@ -305,7 +305,9 @@ class ParsecSFTPServer(SFTPServer):
            :raises: :exc:`SFTPError` to return an error to the client
 
         """
-        return path
+        # TODO: find a better way to convert relative path
+        path = b'/' + path if path[:1] != b'/' else path
+        return os.path.normpath(path)
 
     def stat(self, path):
         """Get attributes of a file or directory, following symlinks
