@@ -4,12 +4,14 @@ from ..broker import LocalClientMixin, ResRepClientMixin
 from .mock import VolumeServiceMock, VolumeServiceInMemoryMock
 from .google_drive import GoogleDriveVolumeService
 from .volume_pb2 import Request, Response
+from .local_folder import LocalFolderVolumeService
 
 
 __all__ = (
     'VolumeServiceMock',
     'VolumeServiceInMemoryMock',
     'GoogleDriveVolumeService',
+    'LocalFolderVolumeService',
     'VolumeError',
     'VolumeFileNotFoundError',
     'BaseVolumeClient',

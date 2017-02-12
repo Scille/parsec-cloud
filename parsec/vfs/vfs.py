@@ -6,8 +6,8 @@ from datetime import datetime
 from google.protobuf.message import DecodeError
 
 from ..abstract import BaseService
-from ..volume import VolumeFileNotFoundError
-from ..crypto import CryptoError
+from ..volume import VolumeFileNotFoundError, BaseVolumeClient
+from ..crypto import CryptoError, BaseCryptoClient
 from .vfs_pb2 import Request, Response, Stat
 
 
@@ -24,7 +24,7 @@ def _clean_path(path):
 
 class VFSService(BaseService):
 
-    def __init__(self, volume, crypto):
+    def __init__(self, volume: BaseVolumeClient, crypto: BaseCryptoClient):
         self._volume = volume
         self._crypto = crypto
         self._build_root()

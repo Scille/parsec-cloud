@@ -3,6 +3,8 @@ from ..exceptions import ParsecError
 from ..broker import LocalClientMixin, ResRepClientMixin
 from .crypto_pb2 import Request, Response
 from .crypto import CryptoEngineService
+from .aes import AESCipher
+from .rsa import RSACipher
 
 
 __all__ = (
@@ -10,7 +12,9 @@ __all__ = (
     'CryptoError',
     'BaseCryptoClient',
     'LocalCryptoClient',
-    'ReqResCryptoClient'
+    'ReqResCryptoClient',
+    'AESCipher',
+    'RSACipher',
 )
 
 

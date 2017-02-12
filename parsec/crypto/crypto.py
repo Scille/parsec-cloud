@@ -1,6 +1,7 @@
 from google.protobuf.message import DecodeError
 from ..abstract import BaseService
-from .abstract import SymetricEncryptionError, AsymetricEncryptionError
+from .abstract import (SymetricEncryption, AsymetricEncryption,
+                       SymetricEncryptionError, AsymetricEncryptionError)
 from .crypto_pb2 import Request, Response
 
 
@@ -17,10 +18,14 @@ class CryptoEngineError(CmdError):
 
 class CryptoEngineService(BaseService):
 
-    def __init__(self, symetric_cls, asymetric_cls, **kwargs):
+    def __init__(self,
+                 symetric_cls: SymetricEncryption,
+                 asymetric_cls: AsymetricEncryption,
+                 asymetric_parameters: dict = None,
+                 symetric_parameters: dict = None):
         self._key = None
-        self._asym = asymetric_cls(**kwargs.get('asymetric_parameters', {}))
-        self._sym = symetric_cls(**kwargs.get('symetric_parameters', {}))
+        self._asym = asymetric_cls(asymetric_parameters)
+        self._sym = symetric_cls(symetric_parameters)
 
     def _generate_key(self, msg):
         try:
