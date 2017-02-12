@@ -19,65 +19,61 @@ class CryptoEngineError(CmdError):
 class CryptoEngineService(BaseService):
 
     def __init__(self,
-                 symetric_cls: SymetricEncryption,
-                 asymetric_cls: AsymetricEncryption,
-                 asymetric_parameters: dict = None,
-                 symetric_parameters: dict = None):
-        self._key = None
-        self._asym = asymetric_cls(asymetric_parameters)
-        self._sym = symetric_cls(symetric_parameters)
+                 symetric: SymetricEncryption,
+                 asymetric: AsymetricEncryption):
+        self._asym = asymetric
+        self._sym = symetric
 
     def _generate_key(self, msg):
         try:
-            self._key = self._asym.generate_key(key_size=msg.key_size)
+            self._asym.generate_key(key_size=msg.key_size)
         except AsymetricEncryptionError as e:
             raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
                                     error_msg=e.error_msg)
-        pem = self._asym.export_key(self._key, msg.passphrase)
+        pem = self._asym.export_key(msg.passphrase)
 
         return Response(status_code=Response.OK, key=pem)
 
     def _load_key(self, msg):
         try:
-            self._key = self._asym.load_key(pem=msg.key, passphrase=msg.passphrase)
+            self._asym.load_key(pem=msg.key, passphrase=msg.passphrase)
         except AsymetricEncryptionError as e:
             raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
                                     error_msg=e.error_msg)
         return Response(status_code=Response.OK)
 
     def _encrypt(self, msg):
-        if not self._key:
+        if not self.asymetric.ready():
             raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
-                                    error_msg='No private key loaded')
-
+                                    error_msg='Asymetric engine not ready')
         aes_key, enc = self._sym.encrypt(msg.content)
-        signature = self._asym.sign(self._key, enc)
-        encrypted_key = self._asym.encrypt(self._key, aes_key)
-        key_sig = self._asym.sign(self._key, encrypted_key)
+        signature = self._asym.sign(enc)
+        encrypted_key = self._asym.encrypt(aes_key)
+        key_sig = self._asym.sign(encrypted_key)
 
         return Response(status_code=Response.OK, key=encrypted_key,
                         content=enc, signature=signature, key_signature=key_sig)
 
     def _decrypt(self, msg):
-        if not self._key:
+        if not self.asymetric.ready():
             raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
-                                    error_msg='No private key loaded')
+                                    error_msg='Asymetric engine not ready')
         # Check if the key and its signature match
         try:
-            self._asym.verify(self._key, msg.key, msg.key_signature)
+            self._asym.verify(msg.key, msg.key_signature)
         except AsymetricEncryptionError as e:
             raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_SIGN_ERROR,
                                     error_msg=e.error_msg)
         # Decrypt the AES key
         try:
-            aes_key = self._asym.decrypt(self._key, msg.key)
+            aes_key = self._asym.decrypt(msg.key)
         except AsymetricEncryptionError as e:
             raise CryptoEngineError(status_code=Response.ASYMETRIC_DECRYPT_FAILED,
                                     error_msg=e.error_msg)
 
         # Check if the encrypted content matches its signature
         try:
-            self._asym.verify(self._key, msg.content, msg.signature)
+            self._asym.verify(msg.content, msg.signature)
         except AsymetricEncryptionError as e:
             raise CryptoEngineError(status_code=Response.VERIFY_FAILED,
                                     error_msg=e.error_msg)

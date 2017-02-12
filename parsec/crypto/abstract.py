@@ -38,6 +38,10 @@ class AsymetricEncryption(metaclass=ABCMeta):
         pass  # pragma: no cover
 
     @abstractmethod
+    def ready(self, key_size):
+        pass  # pragma: no cover
+
+    @abstractmethod
     def generate_key(self, key_size):
         pass  # pragma: no cover
 
