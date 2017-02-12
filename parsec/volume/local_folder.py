@@ -33,7 +33,8 @@ class LocalFolderVolumeService(BaseService):
     def __init__(self, path: str):
         self._initialized = False
         path = _clean_path(path)
-        self._path = os.path.abspath(os.path.expanduser("~" + path)) + '/'
+        self._path = os.path.abspath(os.path.expanduser(path)) + '/'
+        self._initialize_driver()
 
     def _initialize_driver(self):
         """ Looks up Parsec system files one the cloud and load their ID into
@@ -54,12 +55,13 @@ class LocalFolderVolumeService(BaseService):
                 self._mapping = loads(mapf.read().decode())
         except (EnvironmentError, ValueError):
             self._mapping = {}
+        self._sync()
         self._initialized = True
 
     def _sync(self):
         try:
             with open(self._path + 'MAP', 'bw') as mapf:
-                self._mapping = mapf.write(dumps(self._mapping).encode())
+                mapf.write(dumps(self._mapping).encode())
         except (EnvironmentError, ValueError):
             raise LocalFolderServiceException('Cannot save mapping file')
 
@@ -92,10 +94,10 @@ class LocalFolderVolumeService(BaseService):
             raise LocalFolderServiceException('A VID is mandatory')
         file_id = self._mapping.get(vid)
         if file_id is None:
-            pid = uuid4().hex
-            self._mapping[msg.vid] = pid
+            file_id = uuid4().hex
+            self._mapping[msg.vid] = file_id
         try:
-            with open(self._path + pid, 'wb')as f:
+            with open(self._path + file_id, 'wb')as f:
                 f.write(msg.content)
         except IOError:
             raise LocalFolderServiceException('Cannot write file')
