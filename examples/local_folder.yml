@@ -6,10 +6,13 @@ services:
     - id: "service:crypto"
       class: crypto.CryptoEngineService
       params:
-        asymetric_cls: crypto.RSACipher
-        symetric_cls: crypto.AESCipher
-        asymetric_parameters: {}
-        symetric_parameters: {}
+        asymetric:
+          class: crypto.RSACipher
+          params:
+            key_file: "/tmp/parsec/key.rsa"
+        symetric:
+          class: crypto.AESCipher
+          params: {}
     - id: "service:vfs"
       class: vfs.VFSService
       params:
