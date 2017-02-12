@@ -3,7 +3,8 @@ import tempfile
 
 from parsec.volume import (VolumeServiceMock, VolumeServiceInMemoryMock,
                            GoogleDriveVolumeService,
-                           LocalVolumeClient, VolumeFileNotFoundError)
+                           LocalVolumeClient, VolumeFileNotFoundError,
+                           LocalFolderVolumeService)
 from parsec.volume.volume_pb2 import Request, Response
 
 google_drive = pytest.mark.skipif(
@@ -114,6 +115,13 @@ class TestVolumeServiceMock(BaseTestVolumeService):
     def setup_method(self):
         self.tmpdir = tempfile.TemporaryDirectory()
         self.service = VolumeServiceMock(self.tmpdir.name)
+
+
+class TestLocalFolderVolumeService(BaseTestVolumeService):
+
+    def setup_method(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.service = LocalFolderVolumeService(self.tmpdir.name)
 
 
 @google_drive
