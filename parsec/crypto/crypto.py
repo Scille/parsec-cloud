@@ -43,7 +43,7 @@ class CryptoEngineService(BaseService):
         return Response(status_code=Response.OK)
 
     def _encrypt(self, msg):
-        if not self.asymetric.ready():
+        if not self._asym.ready():
             raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
                                     error_msg='Asymetric engine not ready')
         aes_key, enc = self._sym.encrypt(msg.content)
@@ -55,7 +55,7 @@ class CryptoEngineService(BaseService):
                         content=enc, signature=signature, key_signature=key_sig)
 
     def _decrypt(self, msg):
-        if not self.asymetric.ready():
+        if not self._asym.ready():
             raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
                                     error_msg='Asymetric engine not ready')
         # Check if the key and its signature match
