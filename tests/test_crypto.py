@@ -12,7 +12,7 @@ from parsec.crypto.crypto_mock import MockAsymCipher, MockSymCipher
 class TestBaseCryptoClient:
 
     def setup_method(self):
-        self.service = CryptoEngineService(symetric_cls=AESCipher, asymetric_cls=RSACipher)
+        self.service = CryptoEngineService(symetric=AESCipher(), asymetric=RSACipher())
         self.client = LocalCryptoClient(service=self.service)
         self.test_key = b"""-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCUKiMBsx4lMVrx
@@ -334,7 +334,7 @@ class BaseTestCryptoEngineService:
 class TestCryptoService(BaseTestCryptoEngineService):
 
     def setup_method(self):
-        self.service = CryptoEngineService(symetric_cls=AESCipher, asymetric_cls=RSACipher)
+        self.service = CryptoEngineService(symetric=AESCipher(), asymetric=RSACipher())
         self.key_size_small = 256
         self.key_size_request = 2048
         self.test_key = b"""-----BEGIN PRIVATE KEY-----
@@ -417,16 +417,11 @@ class TestMockCryptoService(BaseTestCryptoEngineService):
 
     def setup_method(self):
         params = {
-            'asymetric_parameters': {
-                'override': 'I SWEAR I AM ONLY USING THIS PLUGIN IN MY TEST SUITE'
-            },
-            'symetric_parameters': {
-                'override': 'I SWEAR I AM ONLY USING THIS PLUGIN IN MY TEST SUITE'
-            }
+            'override': 'I SWEAR I AM ONLY USING THIS PLUGIN IN MY TEST SUITE'
         }
-        self.service = CryptoEngineService(symetric_cls=MockSymCipher,
-                                           asymetric_cls=MockAsymCipher,
-                                           **params)
+
+        self.service = CryptoEngineService(symetric=MockSymCipher(**params),
+                                           asymetric=MockAsymCipher(**params))
         self.test_key = b"""123456789"""
         self.default_passphrase = b'passphrase'
         self.test_key_encrypted = b"""123456789"""

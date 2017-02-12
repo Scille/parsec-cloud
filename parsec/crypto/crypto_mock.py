@@ -67,39 +67,43 @@ class MockAsymCipher(AsymetricEncryption):
         return None
 
     def __init__(self, **kwargs):
+        self._key = None
         pass
 
+    def ready(self):
+        return self._key is not None
+
     def generate_key(self, key_size=2):
-        key = b'123456789'
+        self._key = b'123456789'
         if key_size < 2 or key_size > 9:
             raise MockAsymCipherError(1, "Generation error : Key size must be between 1 and 9")
-        return key[0:key_size]
+        self._key = self._key[0:key_size]
 
     def load_key(self, pem, passphrase):
         if passphrase and passphrase != b'passphrase':
             raise MockAsymCipherError(3, 'Cannot import key : wrong format or bad passphrase')
         if len(pem) < 1 or len(pem) > 9:
             raise MockAsymCipherError(4, "Loading error : Key size must be between 1 and 9")
-        return pem
+        self._key = pem
 
-    def export_key(self, key, passphrase):
-        return key
+    def export_key(self, passphrase):
+        return self._key
 
-    def sign(self, key, data):
+    def sign(self, data):
         m = md5()
-        m.update(key)
+        m.update(self._key)
         m.update(data)
         return m.digest()
 
-    def encrypt(self, key, data):
+    def encrypt(self, data):
         return b'encrypted' + data + b'encrypted'
 
-    def decrypt(self, key, enc):
+    def decrypt(self, enc):
         return enc[9:-9]
 
-    def verify(self, key, data, signature):
+    def verify(self, data, signature):
         m = md5()
-        m.update(key)
+        m.update(self._key)
         m.update(data)
         if signature != m.digest():
             raise MockAsymCipherError(5, "Invalid signature, content may be tampered")

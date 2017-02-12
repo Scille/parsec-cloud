@@ -233,16 +233,10 @@ class TestVFSService(BaseTestVFSService):
 
     def setup_method(self):
         params = {
-            'asymetric_parameters': {
-                'override': 'I SWEAR I AM ONLY USING THIS PLUGIN IN MY TEST SUITE'
-            },
-            'symetric_parameters': {
-                'override': 'I SWEAR I AM ONLY USING THIS PLUGIN IN MY TEST SUITE'
-            }
+            'override': 'I SWEAR I AM ONLY USING THIS PLUGIN IN MY TEST SUITE'
         }
-        crypto_service = CryptoEngineService(symetric_cls=MockSymCipher,
-                                             asymetric_cls=MockAsymCipher,
-                                             **params)
+        crypto_service = CryptoEngineService(symetric=MockSymCipher(**params),
+                                             asymetric=MockAsymCipher(**params))
         crypto_client = LocalCryptoClient(service=crypto_service)
         crypto_client.load_key(b'123456789')
         volume_client = LocalVolumeClient(VolumeServiceInMemoryMock())

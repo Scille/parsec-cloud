@@ -13,9 +13,14 @@ class RSACipherError(AsymetricEncryptionError):
 
 class RSACipher(AsymetricEncryption):
 
-    def __init__(self, key_file: str = '', passphrase: str = b''):
-        with open(key_file, 'rb') as f:
-            self.load_key(f.read(), passphrase)
+    def __init__(self, key_file: str = None, key_pem: bytes = None, passphrase: bytes = b''):
+        if key_file:
+            with open(key_file, 'rb') as f:
+                self.load_key(f.read(), passphrase)
+        elif key_pem:
+            self.load_key(key_pem, passphrase)
+        else:
+            self._key = None
 
     def ready(self):
         return self._key is not None
