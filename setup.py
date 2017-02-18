@@ -39,8 +39,8 @@ setup(
     packages=[
         'parsec',
     ],
-    package_dir={'parsec':
-                 'parsec'},
+    package_data={'parsec': ['resources']},
+    package_dir={'parsec': 'parsec'},
     include_package_data=True,
     install_requires=requirements,
     extras_require={

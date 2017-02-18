@@ -1,16 +1,30 @@
 import logging
 import argparse
 from multiprocessing import Process
+from setproctitle import getproctitle, setproctitle
 
 from parsec.config import load_config, ConfigError
 
 
+def _mk_bootstrap(server_name, start):
+
+    def bootstrap():
+        basename = getproctitle()
+        print('Boot', basename)
+        setproctitle(basename + ' -s ' + server_name)
+        print('changed to', getproctitle())
+        start()
+
+    return bootstrap
+
+
 def boot_servers(servers_factory, main_factory=None):
     processes = []
-    for factory in servers_factory:
+    for key, factory in servers_factory.items():
         if factory is main_factory:
             continue
-        p = Process(target=factory().start)
+        # p = Process(target=factory().start)
+        p = Process(target=_mk_bootstrap(key, factory().start))
         p.start()
         processes.append(p)
 
@@ -48,15 +62,14 @@ def execute_from_command_line():
         raise SystemExit("Configuration error:\n" + exc.dump())
 
     if args.servers:
-        servers_factory = [f for k, f in topology.servers_factory.items() if k in args.servers]
+        servers_factory = {k: f for k, f in topology.servers_factory.items() if k in args.servers}
     else:
-        servers_factory = list(topology.servers_factory.values())
+        servers_factory = topology.servers_factory
     if args.main:
         try:
-            main_factory = topology.servers_factory[args.main]
+            main_factory = servers_factory.pop(args.main)
         except KeyError:
             raise SystemError('Unknown server `%s`' % args.main)
-        servers_factory.remove(main_factory)
     else:
         main_factory = None
     boot_servers(servers_factory, main_factory=main_factory)

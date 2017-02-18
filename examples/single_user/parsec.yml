@@ -1,0 +1,39 @@
+services:
+    - id: "services:volume"
+      class: volume.VolumeServiceInMemoryMock
+    - id: "services:vfs"
+      class: vfs.VFSService
+      params:
+        volume: "clients:volume"
+        crypto: "clients:crypto"
+    - id: "services:crypto"
+      class: crypto.CryptoEngineService
+      params:
+        symetric:
+          class: crypto.AESCipher
+        asymetric:
+          class: crypto.RSACipher
+clients:
+    - id: "clients:volume"
+      class: volume.LocalVolumeClient
+      params:
+        service: "services:volume"
+    - id: "clients:vfs"
+      class: vfs.LocalVFSClient
+      params:
+        service: "services:vfs"
+    - id: "clients:crypto"
+      class: crypto.LocalCryptoClient
+      params:
+        service: "services:crypto"
+servers:
+    # - id: "servers:sftp"
+    #   class: ui.SFTPUIServer
+    #   params:
+    #     vfs: "clients:vfs"
+    #     host: $SFTP_HOST
+    #     port: $SFTP_PORT
+    - id: "servers:gui"
+      class: ui.QtGUIServer
+      params:
+        crypto: "clients:crypto"
