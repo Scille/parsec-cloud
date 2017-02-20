@@ -11,6 +11,7 @@ from ..crypto import BaseCryptoClient, CryptoError
 
 
 ICON_PATH = dirname(__file__) + '/../resources/logo.ico'
+DRIVE_ICON_PATH = dirname(__file__) + '/../resources/google_drive.ico'
 CONFIG_PATH = str(pathlib.Path.home() / '.parsec')
 
 
@@ -28,6 +29,11 @@ class SettingsWindow(QWidget):
         super().__init__(parent)
         self.setWindowTitle("Parsec - Settings")
         self.setWindowIcon(QIcon(ICON_PATH))
+
+        self.drive_button = QPushButton(self)
+        self.drive_button.setIcon(QIcon(DRIVE_ICON_PATH))
+        # self.drive_button.clicked.connect()
+
         self.crypto = crypto
 
         self.load_key_button = QPushButton(self)
@@ -50,6 +56,7 @@ class SettingsWindow(QWidget):
 
         self.layout = QHBoxLayout(self)
         self.layout.addWidget(self.load_key_button)
+        self.layout.addWidget(self.drive_button)
         # self.layout.addWidget(self.file_dialog_rsa_key)
 
     def closeEvent(self, event):
