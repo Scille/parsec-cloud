@@ -1,11 +1,10 @@
 import pytest
 import tempfile
 
-from parsec.volume import (VolumeServiceMock, VolumeServiceInMemoryMock,
-                           GoogleDriveVolumeService,
-                           LocalVolumeClient, VolumeFileNotFoundError,
-                           LocalFolderVolumeService)
-from parsec.volume.volume_pb2 import Request, Response
+from .common import b64
+
+from parsec.volume import VolumeServiceMock, VolumeServiceInMemoryMock
+
 
 google_drive = pytest.mark.skipif(
     not pytest.config.getoption("--run-google-drive"),
@@ -13,95 +12,43 @@ google_drive = pytest.mark.skipif(
 )
 
 
-class TestVolumeClient:
-
-    def setup_method(self):
-        self.service = VolumeServiceInMemoryMock()
-        self.client = LocalVolumeClient(service=self.service)
-
-    def test_basic(self):
-        # Create a file
-        self.client.write_file('0', b'test')
-        ret = self.client.read_file('0')
-        assert ret.content == b'test'
-        # Modify it
-        self.client.write_file('0', b'')
-        ret = self.client.read_file('0')
-        assert ret.content == b''
-        ret = self.client.read_file('0')
-        assert ret.content == b''
-        # Destroy it
-        assert self.client.delete_file('0')
-        with pytest.raises(VolumeFileNotFoundError):
-            self.client.read_file('0')
-        # Recreate it
-        self.client.write_file('0', b'test')
-        ret = self.client.read_file('0')
-        assert ret.content == b'test'
-
-    def test_read_bad_file(self):
-        with pytest.raises(VolumeFileNotFoundError):
-            self.client.read_file('bad_vid')
-
-    def test_delete_bad_file(self):
-        with pytest.raises(VolumeFileNotFoundError):
-            self.client.delete_file('bad_vid')
-
-
 class BaseTestVolumeService:
 
-    def test_read_file(self):
-        self.test_write_file()
-        msg = Request(type=Request.READ_FILE, vid='000')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
-        assert ret.content == b'test'
+    # Helpers
 
-    def test_write_file(self):
-        msg = Request(type=Request.WRITE_FILE, vid='000', content=b'test')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
+    async def mkfile(self, vid, content=b''):
+        return await self.service.write_file(vid=vid, content=content)
 
-    def test_overwrite_file(self):
-        self.test_write_file()
-        msg = Request(type=Request.WRITE_FILE, vid='000', content=b'foo')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
+    # Tests
+
+    @pytest.mark.asyncio
+    async def test_read_file(self):
+        await self.mkfile(vid='000', content=b'test')
+        ret = await self.service.dispatch_msg({'cmd': 'read_file', 'vid': '000'})
+        assert ret == {'status': 'ok', 'content': b64(b'test')}
+
+    @pytest.mark.asyncio
+    async def test_write_file(self):
+        ret = await self.service.dispatch_msg({'cmd': 'write_file', 'vid': '000', 'content': b64(b'test')})
+        assert ret == {'status': 'ok', 'size': 4}
+
+    @pytest.mark.asyncio
+    async def test_overwrite_file(self):
+        await self.mkfile(vid='000', content=b'test')
+        ret = await self.service.dispatch_msg({'cmd': 'write_file', 'vid': '000', 'content': b64(b'foo')})
+        assert ret == {'status': 'ok', 'size': 3}
         # Make sure content has change
-        msg = Request(type=Request.READ_FILE, vid='000')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
-        assert ret.content == b'foo'
+        ret = await self.service.dispatch_msg({'cmd': 'read_file', 'vid': '000'})
+        assert ret == {'status': 'ok', 'content': b64(b'foo')}
 
-    def test_delete_file(self):
-        self.test_write_file()
-        msg = Request(type=Request.DELETE_FILE, vid='000')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
+    @pytest.mark.asyncio
+    async def test_delete_file(self):
+        await self.mkfile(vid='000', content=b'test')
+        ret = await self.service.dispatch_msg({'cmd': 'delete_file', 'vid': '000'})
+        assert ret == {'status': 'ok'}
         # Make sure file has been removed
-        msg = Request(type=Request.READ_FILE, vid='000')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.FILE_NOT_FOUND
-
-    def test_service_bad_msg(self):
-        msg = Request()
-        msg.type = 42  # Force unknow msg type
-        response = self.service.dispatch_msg(msg)
-        assert response.status_code == Response.BAD_REQUEST
-        assert response.error_msg == 'Unknown msg `42`'
-
-    def test_service_bad_raw_msg(self):
-        rep_buff = self.service.dispatch_raw_msg(b'dummy stuff')
-        response = Response()
-        response.ParseFromString(rep_buff)
-        assert response.status_code == Response.BAD_REQUEST
-        assert response.error_msg == 'Invalid request format'
+        ret = await self.service.dispatch_msg({'cmd': 'read_file', 'vid': '000'})
+        assert ret == {'status': 'not_found', 'label': 'File not found.'}
 
 
 class TestVolumeServiceInMemoryMock(BaseTestVolumeService):
@@ -117,16 +64,16 @@ class TestVolumeServiceMock(BaseTestVolumeService):
         self.service = VolumeServiceMock(self.tmpdir.name)
 
 
-class TestLocalFolderVolumeService(BaseTestVolumeService):
+# class TestLocalFolderVolumeService(BaseTestVolumeService):
 
-    def setup_method(self):
-        self.tmpdir = tempfile.TemporaryDirectory()
-        self.service = LocalFolderVolumeService(self.tmpdir.name)
+#     def setup_method(self):
+#         self.tmpdir = tempfile.TemporaryDirectory()
+#         self.service = LocalFolderVolumeService(self.tmpdir.name)
 
 
-@google_drive
-class TestGoogleDriveVolumeService(BaseTestVolumeService):
+# @google_drive
+# class TestGoogleDriveVolumeService(BaseTestVolumeService):
 
-    def setup_method(self):
-        self.service = GoogleDriveVolumeService()
-        self.service.initialize_driver(force=True)
+#     def setup_method(self):
+#         self.service = GoogleDriveVolumeService()
+#         self.service.initialize_driver(force=True)

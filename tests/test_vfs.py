@@ -1,12 +1,9 @@
 import pytest
 import tempfile
-from base64 import encodebytes
+
+from .common import b64
 
 from parsec.vfs import VFSServiceMock, VFSServiceInMemoryMock
-
-
-def b64(raw):
-    return encodebytes(raw).decode()
 
 
 class BaseTestVFSService:
