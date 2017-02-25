@@ -2,29 +2,22 @@ import os
 import asyncio
 
 
-class ParsecProtocol(asyncio.Protocol):
-    transport = None
-
-    def connection_made(self, transport):
-        self.transport = transport
-
-    def data_received(self, data):
+async def _connection(reader, writer):
+    print('Connected with client')
+    while True:
+        data = await reader.readline()
+        if not data:
+            print('End of connection')
+            return
         print("Received:", data.decode())
-        self.transport.write("teube.".encode())
-
-        # # We are done: close the transport (it will call connection_lost())
-        # self.transport.close()
-
-    # def connection_lost(self, exc):
-    #     # The socket has been closed, stop the event loop
-    #     loop.stop()
+        writer.write('teuebe.\n'.encode())
 
 
 def start_server(socket_path):
     loop = asyncio.get_event_loop()
     try:
-        connect_coro = loop.create_unix_server(ParsecProtocol, path=socket_path)
-        loop.run_until_complete(connect_coro)
+        connect_coro = asyncio.start_unix_server(_connection, path=socket_path, loop=loop)
+        loop.create_task(connect_coro)
         loop.run_forever()
     finally:
         loop.close()
