@@ -2,7 +2,8 @@ from sys import argv
 from socket import socket, AF_UNIX, SOCK_STREAM
 import click
 
-from .server import start_server
+from parsec.server import start_server
+from parsec.shell import start_shell
 
 
 SOCKET_PATH = '/tmp/parsec'
@@ -29,11 +30,17 @@ def cmd(id, args):
 
 
 @click.command()
+def shell():
+    start_shell(SOCKET_PATH)
+
+
+@click.command()
 def server():
     start_server(SOCKET_PATH)
 
 
 cli.add_command(cmd)
+cli.add_command(shell)
 cli.add_command(server)
 
 
