@@ -36,3 +36,9 @@ class BaseService:
                 for name in value._cmds:
                     cmds[name] = value
         return cmds
+
+    async def dispatch_msg(self, msg):
+        try:
+            return await self.get_cmds()[msg['cmd']](msg)
+        except ParsecError as exc:
+            return exc.to_dict()

@@ -53,50 +53,50 @@ class BaseVFSService(BaseService):
         return value
 
     @cmd('create_file')
-    async def __CREATE_FILE(self, msg):
+    async def cmd_CREATE_FILE(self, msg):
         if 'content' not in msg:
             msg['content'] = ''
-        return await self.__WRITE_FILE(msg)
+        return await self.cmd_WRITE_FILE(msg)
 
     @cmd('read_file')
-    async def __READ_FILE(self, msg):
+    async def cmd_READ_FILE(self, msg):
         path = self._get_field(msg, 'path')
         content = await self.read_file(path)
         return {'status': 'ok', 'content': encodebytes(content).decode()}
 
     @cmd('write_file')
-    async def __WRITE_FILE(self, msg):
+    async def cmd_WRITE_FILE(self, msg):
         path = self._get_field(msg, 'path')
         content = self._get_field(msg, 'content', bytes)
-        count = await self.write_file(path, content)
-        return {'status': 'ok', 'count': count}
+        size = await self.write_file(path, content)
+        return {'status': 'ok', 'size': size}
 
     @cmd('delete_file')
-    async def __DELETE_FILE(self, msg):
+    async def cmd_DELETE_FILE(self, msg):
         path = self._get_field(msg, 'path')
         await self.delete_file(path)
         return {'status': 'ok'}
 
     @cmd('stat')
-    async def __STAT(self, msg):
+    async def cmd_STAT(self, msg):
         path = self._get_field(msg, 'path')
         stat = await self.stat(path)
         return {'status': 'ok', 'stat': stat}
 
     @cmd('list_dir')
-    async def __LIST_DIR(self, msg):
+    async def cmd_LIST_DIR(self, msg):
         path = self._get_field(msg, 'path')
         listing = await self.list_dir(path)
         return {'status': 'ok', 'list': listing}
 
     @cmd('make_dir')
-    async def __MAKE_DIR(self, msg):
+    async def cmd_MAKE_DIR(self, msg):
         path = self._get_field(msg, 'path')
         await self.make_dir(path)
         return {'status': 'ok'}
 
     @cmd('remove_dir')
-    async def __REMOVE_DIR(self, msg):
+    async def cmd_REMOVE_DIR(self, msg):
         path = self._get_field(msg, 'path')
         await self.remove_dir(path)
         return {'status': 'ok'}

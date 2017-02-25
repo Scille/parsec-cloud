@@ -1,246 +1,193 @@
 import pytest
 import tempfile
+from base64 import encodebytes
 
-from parsec.volume import VolumeServiceInMemoryMock, LocalVolumeClient
-from parsec.crypto.crypto import CryptoEngineService
-from parsec.crypto import LocalCryptoClient
-from parsec.crypto.crypto_mock import MockAsymCipher, MockSymCipher
-from parsec.vfs import VFSService, VFSServiceMock, VFSServiceInMemoryMock
-from parsec.vfs.vfs_pb2 import Request, Response, Stat
+from parsec.vfs import VFSServiceMock, VFSServiceInMemoryMock
+
+
+def b64(raw):
+    return encodebytes(raw).decode()
 
 
 class BaseTestVFSService:
 
     # Helpers
 
-    def mkdir(self, path):
-        ret = self.service.dispatch_msg(Request(type=Request.MAKE_DIR, path=path))
-        assert ret.status_code == Response.OK
+    async def mkdir(self, path):
+        return await self.service.make_dir(path=path)
 
-    def mkfile(self, path, content=b''):
-        ret = self.service.dispatch_msg(Request(
-            type=Request.CREATE_FILE, path=path, content=content))
-        assert ret.status_code == Response.OK
+    async def mkfile(self, path, content=b''):
+        return await self.service.create_file(path=path, content=content)
 
-    def rmfile(self, path):
-        ret = self.service.dispatch_msg(Request(type=Request.DELETE_FILE, path=path))
-        assert ret.status_code == Response.OK
+    async def rmfile(self, path):
+        return await self.service.delete_file(path=path)
 
-    def rmdir(self, path):
-        ret = self.service.dispatch_msg(Request(type=Request.REMOVE_DIR, path=path))
-        assert ret.status_code == Response.OK
+    async def rmdir(self, path):
+        return await self.service.remove_dir(path=path)
 
     # Tests
 
-    def test_create_dir(self):
-        msg = Request(type=Request.MAKE_DIR, path='/test_dir')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
+    @pytest.mark.asyncio
+    async def test_create_dir(self):
+        ret = await self.service.dispatch_msg({'cmd': 'make_dir', 'path': '/test_dir'})
+        assert ret['status'] == 'ok'
         # Make sure target has been created
-        msg = Request(type=Request.MAKE_DIR, path='/test_dir')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.BAD_REQUEST
-        assert ret.error_msg == 'Target already exists'
+        ret = await self.service.dispatch_msg({'cmd': 'make_dir', 'path': '/test_dir'})
+        assert ret == {'status': 'already_exist', 'label': 'Target already exists.'}
 
-    def test_remove_dir(self):
-        self.mkdir('/test_dir')
-        msg = Request(type=Request.REMOVE_DIR, path='/test_dir')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
+    @pytest.mark.asyncio
+    async def test_remove_dir(self):
+        await self.mkdir('/test_dir')
+        ret = await self.service.dispatch_msg({'cmd': 'remove_dir', 'path': '/test_dir'})
+        assert ret == {'status': 'ok'}
         # Cannot remove already destroyed folder
-        msg = Request(type=Request.REMOVE_DIR, path='/test_dir')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.FILE_NOT_FOUND
+        ret = await self.service.dispatch_msg({'cmd': 'remove_dir', 'path': '/test_dir'})
+        assert ret == {'status': 'not_found', 'label': 'Directory not found.'}
 
-    def test_cant_remove_root_dir(self):
-        msg = Request(type=Request.REMOVE_DIR, path='/')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.BAD_REQUEST
+    @pytest.mark.asyncio
+    async def test_cant_remove_root_dir(self):
+        ret = await self.service.dispatch_msg({'cmd': 'remove_dir', 'path': '/'})
+        assert ret == {'status': 'cannot_remove_root', 'label': 'Cannot remove root directory.'}
 
-    def test_remove_not_empty_dir(self):
-        self.mkdir('/test_dir')
-        self.mkfile('/test_dir/test')
-        msg = Request(type=Request.REMOVE_DIR, path='/test_dir')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.BAD_REQUEST
+    @pytest.mark.asyncio
+    async def test_remove_not_empty_dir(self):
+        await self.mkdir('/test_dir')
+        await self.mkfile('/test_dir/test')
+        ret = await self.service.dispatch_msg({'cmd': 'remove_dir', 'path': '/test_dir'})
+        assert ret == {'status': 'directory_not_empty', 'label': 'Directory not empty.'}
         # Delete file so we can remove the folder
-        ret = self.service.dispatch_msg(Request(type=Request.DELETE_FILE, path='/test_dir/test'))
-        assert ret.status_code == Response.OK
-        msg = Request(type=Request.REMOVE_DIR, path='/test_dir')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
+        ret = await self.service.dispatch_msg({'cmd': 'delete_file', 'path': '/test_dir/test'})
+        assert ret == {'status': 'ok'}
+        ret = await self.service.dispatch_msg({'cmd': 'remove_dir', 'path': '/test_dir'})
+        assert ret == {'status': 'ok'}
 
-    def test_list_dir(self):
+    @pytest.mark.asyncio
+    async def test_list_dir(self):
         # Create folders
-        self.mkdir('/countries')
-        self.mkdir('/countries/France')
-        self.mkdir('/countries/France/cities')
-        self.mkdir('/countries/Belgium')
-        self.mkdir('/countries/Belgium/cities')
+        await self.mkdir('/countries')
+        await self.mkdir('/countries/France')
+        await self.mkdir('/countries/France/cities')
+        await self.mkdir('/countries/Belgium')
+        await self.mkdir('/countries/Belgium/cities')
         # Create multiple files
-        self.mkfile('/.root')
-        self.mkfile('/countries/index', b'1 - Belgium\n2 - France')
-        self.mkfile('/countries/France/info', b'good=Wine, bad=Beer')
-        self.mkfile('/countries/Belgium/info', b'good=Beer, bad=Wine')
+        await self.mkfile('/.root')
+        await self.mkfile('/countries/index', b'1 - Belgium\n2 - France')
+        await self.mkfile('/countries/France/info', b'good=Wine, bad=Beer')
+        await self.mkfile('/countries/Belgium/info', b'good=Beer, bad=Wine')
 
         # Finally do some lookup
-        def assert_ls(path, expected):
-            msg = Request(type=Request.LIST_DIR, path=path)
-            ret = self.service.dispatch_msg(msg)
-            assert isinstance(ret, Response)
-            assert ret.status_code == Response.OK
-            assert list(sorted(ret.list_dir)) == list(sorted(expected))
+        async def assert_ls(path, expected):
+            ret = await self.service.dispatch_msg({'cmd': 'list_dir', 'path': path})
+            assert ret['status'] == 'ok'
+            assert list(sorted(ret['list'])) == list(sorted(expected))
 
-        assert_ls('/', ['.root', 'countries'])
-        assert_ls('/countries', ['index', 'Belgium', 'France'])
-        assert_ls('/countries/France/cities', [])
+        await assert_ls('/', ['.root', 'countries'])
+        await assert_ls('/countries', ['index', 'Belgium', 'France'])
+        await assert_ls('/countries/France/cities', [])
 
         # Test bad list as well
-        msg = Request(type=Request.LIST_DIR, path='/dummy')
-        ret = self.service.dispatch_msg(msg)
-        assert ret.status_code == Response.FILE_NOT_FOUND
+        ret = await self.service.dispatch_msg({'cmd': 'list_dir', 'path': '/dummy'})
+        assert ret == {'status': 'not_found', 'label': 'Directory not found.'}
 
-        msg = Request(type=Request.LIST_DIR, path='/countries/dummy')
-        ret = self.service.dispatch_msg(msg)
-        assert ret.status_code == Response.FILE_NOT_FOUND
+        ret = await self.service.dispatch_msg({'cmd': 'list_dir', 'path': '/countries/dummy'})
+        assert ret == {'status': 'not_found', 'label': 'Directory not found.'}
 
-    def test_create_file(self):
-        msg = Request(type=Request.CREATE_FILE, path='/test', content=b'test')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
+    @pytest.mark.asyncio
+    async def test_create_file(self):
+        ret = await self.service.dispatch_msg({'cmd': 'create_file', 'path': '/test', 'content': b64(b'test')})
+        assert ret == {'status': 'ok', 'size': 4}
         # Try to create file inside directory as well
-        self.mkdir('/test_dir')
-        msg = Request(type=Request.CREATE_FILE, path='/test_dir/test', content=b'test')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
+        await self.mkdir('/test_dir')
+        ret = await self.service.dispatch_msg({'cmd': 'create_file', 'path': '/test_dir/test', 'content': b64(b'test')})
+        assert ret == {'status': 'ok', 'size': 4}
 
     @pytest.mark.parametrize('path', ('/test', '/test_dir/test'))
-    def test_read_file(self, path):
-        self.mkfile('/test', content=b'foo')
-        self.mkdir('/test_dir')
-        self.mkfile('/test_dir/test', content=b'foo')
-        msg = Request(type=Request.READ_FILE, path=path)
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
-        assert ret.content == b'foo'
+    @pytest.mark.asyncio
+    async def test_read_file(self, path):
+        await self.mkfile('/test', content=b'foo')
+        await self.mkdir('/test_dir')
+        await self.mkfile('/test_dir/test', content=b'foo')
+        ret = await self.service.dispatch_msg({'cmd': 'read_file', 'path': path})
+        assert ret == {'status': 'ok', 'content': b64(b'foo')}
 
     @pytest.mark.parametrize('path', ('/test', '/test_dir/test'))
-    def test_write_file(self, path):
-        self.mkdir('/test_dir')
-        msg = Request(type=Request.WRITE_FILE, path=path, content=b'bar')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
+    @pytest.mark.asyncio
+    async def test_write_file(self, path):
+        await self.mkdir('/test_dir')
+        ret = await self.service.dispatch_msg({'cmd': 'write_file', 'path': path, 'content': b64(b'bar')})
+        assert ret == {'status': 'ok', 'size': 3}
         # Make sure file has been changed
-        msg = Request(type=Request.READ_FILE, path=path)
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
-        assert ret.content == b'bar'
+        ret = await self.service.dispatch_msg({'cmd': 'read_file', 'path': path})
+        assert ret == {'status': 'ok', 'content': b64(b'bar')}
 
     @pytest.mark.parametrize('path', ('/test', '/test_dir/test'))
-    def test_delete_file(self, path):
-        self.mkfile('/test')
-        self.mkdir('/test_dir')
-        self.mkfile('/test_dir/test')
-        msg = Request(type=Request.DELETE_FILE, path=path)
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
+    @pytest.mark.asyncio
+    async def test_delete_file(self, path):
+        await self.mkfile('/test')
+        await self.mkdir('/test_dir')
+        await self.mkfile('/test_dir/test')
+        ret = await self.service.dispatch_msg({'cmd': 'delete_file', 'path': path})
+        assert ret == {'status': 'ok'}
         # Make sure the file is no longer there
-        msg = Request(type=Request.READ_FILE, path=path)
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.FILE_NOT_FOUND
+        ret = await self.service.dispatch_msg({'cmd': 'read_file', 'path': path})
+        assert ret == {'status': 'not_found', 'label': 'File not found.'}
 
     @pytest.mark.parametrize('path', ('/test', '/test_dir/test'))
-    def test_stat_file(self, path):
-        self.mkfile('/test', content=b'foo')
-        self.mkdir('/test_dir')
-        self.mkfile('/test_dir/test', content=b'foo')
-        msg = Request(type=Request.STAT, path=path)
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
-        assert isinstance(ret.stat, Stat)
-        assert ret.stat.type == Stat.FILE
-        assert ret.stat.size == len(b'foo')
-        assert ret.stat.atime
-        assert ret.stat.ctime
-        assert ret.stat.mtime
+    @pytest.mark.asyncio
+    async def test_stat_file(self, path):
+        await self.mkfile('/test', content=b'foo')
+        await self.mkdir('/test_dir')
+        await self.mkfile('/test_dir/test', content=b'foo')
+        ret = await self.service.dispatch_msg({'cmd': 'stat', 'path': path})
+        assert ret['status'] == 'ok'
+        assert ret['stat']['is_dir'] is False
+        assert ret['stat']['size'] == len(b'foo')
+        assert ret['stat']['atime']
+        assert ret['stat']['ctime']
+        assert ret['stat']['mtime']
         # Remove file and make sure stat is altered as well
-        ret = self.service.dispatch_msg(Request(type=Request.DELETE_FILE, path=path))
-        assert ret.status_code == Response.OK
-        msg = Request(type=Request.STAT, path=path)
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.FILE_NOT_FOUND
+        ret = await self.service.dispatch_msg({'cmd': 'delete_file', 'path': path})
+        assert ret == {'status': 'ok'}
+        ret = await self.service.dispatch_msg({'cmd': 'stat', 'path': path})
+        assert ret == {'status': 'not_found', 'label': 'Target not found.'}
 
-    def test_stat_dir(self):
-        self.mkfile('/test')
-        self.mkdir('/test_dir')
-        self.mkfile('/test_dir/test')
-        msg = Request(type=Request.STAT, path='/test_dir')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.OK
-        assert isinstance(ret.stat, Stat)
-        assert ret.stat.type == Stat.DIRECTORY
-        assert ret.stat.size == 0
-        assert ret.stat.atime
-        assert ret.stat.ctime
-        assert ret.stat.mtime
+    @pytest.mark.asyncio
+    async def test_stat_dir(self):
+        await self.mkfile('/test')
+        await self.mkdir('/test_dir')
+        await self.mkfile('/test_dir/test')
+        ret = await self.service.dispatch_msg({'cmd': 'stat', 'path': '/test_dir'})
+        assert ret['status'] == 'ok'
+        assert ret['stat']['is_dir'] is True
+        assert ret['stat']['size'] == 0
+        assert ret['stat']['atime']
+        assert ret['stat']['ctime']
+        assert ret['stat']['mtime']
         # Remove dir and make sure stat is altered as well
-        self.rmfile('/test_dir/test')
-        self.rmdir('/test_dir')
-        msg = Request(type=Request.STAT, path='/test_dir')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.FILE_NOT_FOUND
+        await self.rmfile('/test_dir/test')
+        await self.rmdir('/test_dir')
+        ret = await self.service.dispatch_msg({'cmd': 'stat', 'path': '/test_dir'})
+        assert ret == {'status': 'not_found', 'label': 'Target not found.'}
 
-    def test_bad_stat(self):
-        msg = Request(type=Request.STAT, path='/unknown')
-        ret = self.service.dispatch_msg(msg)
-        assert isinstance(ret, Response)
-        assert ret.status_code == Response.FILE_NOT_FOUND
-
-    def test_service_bad_msg(self):
-        msg = Request()
-        msg.type = 42  # Force unknow msg type
-        response = self.service.dispatch_msg(msg)
-        assert response.status_code == Response.BAD_REQUEST
-        assert response.error_msg == 'Unknown msg `42`'
-
-    def test_service_bad_raw_msg(self):
-        rep_buff = self.service.dispatch_raw_msg(b'dummy stuff')
-        response = Response()
-        response.ParseFromString(rep_buff)
-        assert response.status_code == Response.BAD_REQUEST
-        assert response.error_msg == 'Invalid request format'
+    @pytest.mark.asyncio
+    async def test_bad_stat(self):
+        ret = await self.service.dispatch_msg({'cmd': 'stat', 'path': '/unknown'})
+        assert ret == {'status': 'not_found', 'label': 'Target not found.'}
 
 
-class TestVFSService(BaseTestVFSService):
 
-    def setup_method(self):
-        params = {
-            'override': 'I SWEAR I AM ONLY USING THIS PLUGIN IN MY TEST SUITE'
-        }
-        crypto_service = CryptoEngineService(symetric=MockSymCipher(**params),
-                                             asymetric=MockAsymCipher(**params))
-        crypto_client = LocalCryptoClient(service=crypto_service)
-        crypto_client.load_key(b'123456789')
-        volume_client = LocalVolumeClient(VolumeServiceInMemoryMock())
-        self.service = VFSService(volume_client, crypto_client)
+# class TestVFSService(BaseTestVFSService):
+
+#     def setup_method(self):
+#         params = {
+#             'override': 'I SWEAR I AM ONLY USING THIS PLUGIN IN MY TEST SUITE'
+#         }
+#         crypto_service = CryptoEngineService(symetric=MockSymCipher(**params),
+#                                              asymetric=MockAsymCipher(**params))
+#         crypto_client = LocalCryptoClient(service=crypto_service)
+#         crypto_client.load_key(b'123456789')
+#         volume_client = LocalVolumeClient(VolumeServiceInMemoryMock())
+#         self.service = VFSService(volume_client, crypto_client)
 
 
 class TestVFSServiceMock(BaseTestVFSService):

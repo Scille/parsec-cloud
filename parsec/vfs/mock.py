@@ -42,7 +42,7 @@ class VFSServiceMock(BaseVFSService):
         try:
             osstat = os.stat(self._get_path(path))
         except FileNotFoundError:
-            raise VFSNotFound('File not found.')
+            raise VFSNotFound('Target not found.')
         stat = {'atime': osstat.st_atime, 'ctime': osstat.st_ctime, 'mtime': osstat.st_mtime}
         # File or directory ?
         if S_ISDIR(osstat.st_mode):
@@ -63,17 +63,17 @@ class VFSServiceMock(BaseVFSService):
         try:
             os.mkdir(self._get_path(path))
         except FileExistsError:
-            raise VFSError('already_exist', 'Target already exists')
+            raise VFSError('already_exist', 'Target already exists.')
 
     async def remove_dir(self, path: str):
         if path == '/':
-            raise VFSError('cannot_remove_root', 'Cannot remove root')
+            raise VFSError('cannot_remove_root', 'Cannot remove root directory.')
         try:
             os.rmdir(self._get_path(path))
         except FileNotFoundError:
             raise VFSNotFound('Directory not found.')
         except OSError:
-            raise VFSError('directory_not_empty', 'Directory not empty')
+            raise VFSError('directory_not_empty', 'Directory not empty.')
 
 
 class VFSServiceInMemoryMock(BaseVFSService):
@@ -141,7 +141,7 @@ class VFSServiceInMemoryMock(BaseVFSService):
         try:
             return self._dir[path].stat
         except KeyError:
-            raise VFSNotFound('File not found.')
+            raise VFSNotFound('Target not found.')
 
     async def list_dir(self, path: str) -> list:
         path = normpath(path)
