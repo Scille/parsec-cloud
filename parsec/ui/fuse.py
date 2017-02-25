@@ -1,51 +1,34 @@
-from errno import ENOENT, EBADFD
 import os
-from threading import Lock
+import sys
+import socket
+import json
+import threading
+from base64 import decodebytes, encodebytes
+from errno import ENOENT, EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
-
-from ..abstract import BaseServer
-from ..vfs import BaseVFSClient, VFSFileNotFoundError
-from ..vfs.vfs_pb2 import Stat
+from logbook import Logger, StreamHandler
 
 
-class LockProxy:
-    """
-    Lock when calling the given object's methods to prevent concurrency issues.
-
-    FUSE's C library make use of multiple threads, however given zmq req/rep
-    calls must be synchronized we have to make use of locks.
-    """
-    def __init__(self, obj):
-        self.lock = Lock()
-        self.base_obj = obj
-
-    def __getattr__(self, name):
-        fn = getattr(self.base_obj, name)
-
-        def wrapper(*args, **kwargs):
-            try:
-                self.lock.acquire()
-                ret = fn(*args, **kwargs)
-            finally:
-                self.lock.release()
-            return ret
-
-        return wrapper
+LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name}) {record.level_name}: {record.channel}: {record.message}'
+log = Logger('Parsec-FUSE')
 
 
 class VFSFile:
 
-    def __init__(self, vfs, path, flags=0):
+    def __init__(self, operations, path, flags=0):
         self.path = path
-        self._vfs = vfs
+        self._operations = operations
         self._need_flush = False
         self.flags = flags
         self._content = None
 
     def get_content(self, force=False):
         if not self._content or force:
-            self._content = self._vfs.read_file(self.path).content
+            response = self._operations.send_cmd(cmd='vfs:read_file', path=self.path)
+            if response['status'] != 'ok':
+                raise FuseOSError(ENOENT)
+            self._content = decodebytes(response['content'].encode())
         return self._content
 
     def read(self, size=None, offset=0):
@@ -67,16 +50,43 @@ class VFSFile:
 
     def flush(self):
         if self._need_flush:
-            self._vfs.write_file(self.path, self._content)
+            response = self._operations.send_cmd(
+                cmd='vfs:write_file', path=self.path,
+                content=encodebytes(self._content).decode())
+            if response['status'] != 'ok':
+                raise FuseOSError(ENOENT)
             self._need_flush = False
 
 
 class FuseOperations(LoggingMixIn, Operations):
 
-    def __init__(self, vfs):
-        self._vfs = LockProxy(vfs)
+    def __init__(self, socket_path):
+        self.perthread = threading.local()
         self.fds = {}
         self.next_fd_id = 0
+        self._socket_path = socket_path
+
+    @property
+    def sock(self):
+        if not hasattr(self.perthread, 'sock'):
+            self._init_socket()
+        return self.perthread.sock
+
+    def _init_socket(self):
+        sock = socket.socket(socket.AF_UNIX, type=socket.SOCK_STREAM)
+        sock.connect(self._socket_path)
+        log.debug('Init socket')
+        self.perthread.sock = sock
+
+    def send_cmd(self, **msg):
+        req = json.dumps(msg).encode() + b'\n'
+        log.debug('Send: %r' % req)
+        self.sock.send(req)
+        raw_reps = self.sock.recv(4096)
+        while raw_reps[-1] != ord(b'\n'):
+            raw_reps += self.sock.recv(4096)
+        log.debug('Received: %r' % raw_reps)
+        return json.loads(raw_reps.decode())
 
     def _get_fd(self, fh):
         try:
@@ -85,38 +95,43 @@ class FuseOperations(LoggingMixIn, Operations):
             raise FuseOSError(EBADFD)
 
     def getattr(self, path, fh=None):
-        try:
-            response = self._vfs.stat(path)
-        except VFSFileNotFoundError:
+        response = self.send_cmd(cmd='vfs:stat', path=path)
+        if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
-        stats = {
-            'st_size': response.stat.size,
-            'st_ctime': response.stat.ctime,
-            'st_mtime': response.stat.mtime,
-            'st_atime': response.stat.atime,
+        stat = response['stat']
+        fuse_stat = {
+            'st_size': stat['size'],
+            'st_ctime': stat['ctime'],
+            'st_mtime': stat['mtime'],
+            'st_atime': stat['atime'],
         }
         # Set it to 777 access
-        stats['st_mode'] = 0
-        if response.stat.type == Stat.DIRECTORY:
-            stats['st_mode'] |= S_IFDIR
+        fuse_stat['st_mode'] = 0
+        if stat['is_dir']:
+            fuse_stat['st_mode'] |= S_IFDIR
         else:
-            stats['st_mode'] |= S_IFREG
-        stats['st_mode'] |= S_IRWXU | S_IRWXG | S_IRWXO
-        stats['st_nlink'] = 1
-        stats['st_uid'] = os.getuid()
-        stats['st_gid'] = os.getgid()
-        return stats
+            fuse_stat['st_mode'] |= S_IFREG
+        fuse_stat['st_mode'] |= S_IRWXU | S_IRWXG | S_IRWXO
+        fuse_stat['st_nlink'] = 1
+        fuse_stat['st_uid'] = os.getuid()
+        fuse_stat['st_gid'] = os.getgid()
+        return fuse_stat
 
     def readdir(self, path, fh):
-        return ['.', '..'] + list(self._vfs.list_dir(path).list_dir)
+        response = self.send_cmd(cmd='vfs:list_dir', path=path)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
+        return ['.', '..'] + response['list']
 
     def create(self, path, mode):
-        self._vfs.create_file(path)
+        response = self.send_cmd(cmd='vfs:create_file', path=path)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
         return self.open(path)
 
     def open(self, path, flags=0):
         fd_id = self.next_fd_id
-        self.fds[fd_id] = VFSFile(self._vfs, path, flags)
+        self.fds[fd_id] = VFSFile(self, path, flags)
         self.next_fd_id += 1
         return fd_id
 
@@ -148,14 +163,20 @@ class FuseOperations(LoggingMixIn, Operations):
                 self.release(path, fh)
 
     def unlink(self, path):
-        self._vfs.delete_file(path)
+        response = self.send_cmd(cmd='vfs:delete_file', path=path)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
 
     def mkdir(self, path, mode):
-        self._vfs.make_dir(path)
+        response = self.send_cmd(cmd='vfs:make_dir', path=path)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
         return 0
 
     def rmdir(self, path):
-        self._vfs.remove_dir(path)
+        response = self.send_cmd(cmd='vfs:remove_dir', path=path)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
         return 0
 
     def flush(self, path, fh):
@@ -170,13 +191,7 @@ class FuseOperations(LoggingMixIn, Operations):
         return 0  # TODO
 
 
-class FuseUIServer(BaseServer):
-    def __init__(self, mountpoint: str, vfs: BaseVFSClient):
-        self.mountpoint = mountpoint
-        self.vfs = vfs
-
-    def start(self):
-        FUSE(FuseOperations(self.vfs), self.mountpoint, foreground=True)
-
-    def stop(self):
-        raise NotImplementedError()
+def start_fuse(socket_path: str, mountpoint: str, debug: bool=False, nothreads: bool=False):
+    StreamHandler(sys.stdout, format_string=LOG_FORMAT).push_application()
+    operations = FuseOperations(socket_path)
+    FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)

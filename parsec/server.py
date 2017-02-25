@@ -5,7 +5,8 @@ import json
 from uuid import uuid4
 from logbook import Logger, StreamHandler
 
-from parsec.services import VFSServiceInMemoryMock
+from parsec.vfs import VFSServiceInMemoryMock
+from parsec.base import ParsecError
 
 
 StreamHandler(sys.stdout).push_application()
@@ -37,7 +38,7 @@ class ParsecServer:
             return None
         try:
             msg = json.loads(raw.decode())
-            if isinstance(msg.get('cmd'), str) and isinstance(msg.get('service'), str):
+            if isinstance(msg.get('cmd'), str):
                 return msg
             else:
                 return None
@@ -70,19 +71,22 @@ class ParsecServer:
             conn_log.debug('Received: %r' % raw_req)
             msg = self._parse_raw_msg(raw_req[:-1])
             if msg is None:
-                resp = '{"status": "bad_message", "label": "Message is not a valid JSON."}'
+                resp = {"status": "bad_message", "label": "Message is not a valid JSON."}
             else:
                 cmd = self._cmds.get(msg['cmd'])
                 if not cmd:
-                    resp = '{"status": "badcmd", "label": "Unknown command `%s`"' % msg['cmd']
+                    resp = {"status": "badcmd", "label": "Unknown command `%s`" % msg['cmd']}
                 else:
-                    resp = await cmd(msg)
+                    try:
+                        resp = await cmd(msg)
+                    except ParsecError as exc:
+                        resp = exc.to_dict()
             conn_log.debug('Replied: %r' % resp)
             writer.write(json.dumps(resp).encode())
             writer.write(b'\n')
 
 
-def start_server(socket_path):
+def start_server(socket_path: str):
     loop = asyncio.get_event_loop()
     server = ParsecServer()
     server.register_service(VFSServiceInMemoryMock(), 'vfs')
@@ -94,7 +98,3 @@ def start_server(socket_path):
     finally:
         loop.close()
         os.remove(socket_path)
-
-
-if __name__ == '__main__':
-    start_server()

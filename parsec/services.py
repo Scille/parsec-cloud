@@ -19,6 +19,9 @@ def cmd(param):
 
 
 class BaseService:
+    async def bootstrap(self):
+        pass
+
     def get_cmds(self):
         cmds = {}
         for key in dir(self):

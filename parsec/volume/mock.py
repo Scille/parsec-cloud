@@ -17,13 +17,13 @@ def _clean_path(path):
 
 class VolumeServiceBaseMock(BaseService):
 
-    def cmd_READ_FILE(self, cmd):
+    async def cmd_READ_FILE(self, cmd):
         raise NotImplementedError()
 
-    def cmd_WRITE_FILE(self, cmd):
+    async def cmd_WRITE_FILE(self, cmd):
         raise NotImplementedError()
 
-    def cmd_DELETE_FILE(self, path):
+    async def cmd_DELETE_FILE(self, path):
         raise NotImplementedError()
 
     def dispatch_msg(self, msg):
@@ -57,19 +57,19 @@ class VolumeServiceMock(VolumeServiceBaseMock):
     def _get_path(self, path):
         return _clean_path('%s/%s' % (self.mock_path, path))
 
-    def cmd_READ_FILE(self, cmd):
+    async def cmd_READ_FILE(self, cmd):
         try:
             with open(self._get_path(cmd.vid), 'rb') as fd:
                 return Response(status_code=Response.OK, content=fd.read())
         except FileNotFoundError:
             raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
 
-    def cmd_WRITE_FILE(self, cmd):
+    async def cmd_WRITE_FILE(self, cmd):
         with open(self._get_path(cmd.vid), 'wb') as fd:
             fd.write(cmd.content)
             return Response(status_code=Response.OK)
 
-    def cmd_DELETE_FILE(self, cmd):
+    async def cmd_DELETE_FILE(self, cmd):
         try:
             os.unlink(self._get_path(cmd.vid))
             return Response(status_code=Response.OK)
@@ -81,17 +81,17 @@ class VolumeServiceInMemoryMock(VolumeServiceBaseMock):
     def __init__(self):
         self._dir = {}
 
-    def cmd_READ_FILE(self, cmd):
+    async def cmd_READ_FILE(self, cmd):
         try:
             return Response(status_code=Response.OK, content=self._dir[cmd.vid])
         except KeyError:
             raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
 
-    def cmd_WRITE_FILE(self, cmd):
+    async def cmd_WRITE_FILE(self, cmd):
         self._dir[cmd.vid] = cmd.content
         return Response(status_code=Response.OK)
 
-    def cmd_DELETE_FILE(self, cmd):
+    async def cmd_DELETE_FILE(self, cmd):
         try:
             del self._dir[cmd.vid]
             return Response(status_code=Response.OK)

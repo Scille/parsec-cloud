@@ -1,88 +1,12 @@
 import os
 from os.path import normpath
-from datetime import datetime
 from stat import S_ISDIR
-from google.protobuf.message import DecodeError
+from datetime import datetime
 
-from ..abstract import BaseService
-from .vfs_pb2 import Request, Response, Stat
-
-
-class CmdError(Exception):
-    def __init__(self, error_msg, status_code=Response.BAD_REQUEST):
-        self.error_msg = error_msg
-        self.status_code = status_code
+from parsec.vfs.base import BaseVFSService, VFSError, VFSNotFound
 
 
-def _clean_path(path):
-
-    return '/' + '/'.join([e for e in path.split('/') if e])
-
-
-def _check_required(cmd, *fields):
-    for field in fields:
-        if getattr(cmd, field) is None:
-            raise CmdError('field `%s` is mandatory' % field)
-
-
-class VFSServiceBaseMock(BaseService):
-
-    def __init__(self):
-        self._CMD_MAP = {
-            Request.CREATE_FILE: self.cmd_CREATE_FILE,
-            Request.READ_FILE: self.cmd_READ_FILE,
-            Request.WRITE_FILE: self.cmd_WRITE_FILE,
-            Request.DELETE_FILE: self.cmd_DELETE_FILE,
-            Request.STAT: self.cmd_STAT,
-            Request.LIST_DIR: self.cmd_LIST_DIR,
-            Request.MAKE_DIR: self.cmd_MAKE_DIR,
-            Request.REMOVE_DIR: self.cmd_REMOVE_DIR
-        }
-
-    def cmd_READ_FILE(self, cmd):
-        raise NotImplementedError()
-
-    def cmd_CREATE_FILE(self, cmd):
-        raise NotImplementedError()
-
-    def cmd_WRITE_FILE(self, cmd):
-        raise NotImplementedError()
-
-    def cmd_DELETE_FILE(self, cmd):
-        raise NotImplementedError()
-
-    def cmd_STAT(self, cmd):
-        raise NotImplementedError()
-
-    def cmd_LIST_DIR(self, cmd):
-        raise NotImplementedError()
-
-    def cmd_MAKE_DIR(self, cmd):
-        raise NotImplementedError()
-
-    def cmd_REMOVE_DIR(self, cmd):
-        raise NotImplementedError()
-
-    def dispatch_msg(self, msg):
-        try:
-            try:
-                return self._CMD_MAP[msg.type](msg)
-            except KeyError:
-                raise CmdError('Unknown msg `%s`' % msg.type)
-        except CmdError as exc:
-            return Response(status_code=exc.status_code, error_msg=exc.error_msg)
-
-    def dispatch_raw_msg(self, raw_msg):
-        try:
-            msg = Request()
-            msg.ParseFromString(raw_msg)
-            ret = self.dispatch_msg(msg)
-        except DecodeError as exc:
-            ret = Response(status_code=Response.BAD_REQUEST, error_msg='Invalid request format')
-        return ret.SerializeToString()
-
-
-class VFSServiceMock(VFSServiceBaseMock):
+class VFSServiceMock(BaseVFSService):
     def __init__(self, mock_path: str):
         super().__init__()
         assert mock_path.startswith('/'), '`mock_path` must be absolute'
@@ -91,78 +15,69 @@ class VFSServiceMock(VFSServiceBaseMock):
     def _get_path(self, path):
         return normpath('%s/%s' % (self.mock_path, path))
 
-    def cmd_READ_FILE(self, cmd):
-        _check_required(cmd, 'path')
-        try:
-            with open(self._get_path(cmd.path), 'rb') as fd:
-                return Response(status_code=Response.OK, content=fd.read())
-        except FileNotFoundError:
-            raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
+    async def create_file(self, path: str, content: bytes=b''):
+        await self.write_file(path, content)
 
-    def cmd_CREATE_FILE(self, cmd):
-        return self.cmd_WRITE_FILE(cmd)
-
-    def cmd_WRITE_FILE(self, cmd):
-        _check_required(cmd, 'path', 'content')
+    async def read_file(self, path: str) -> bytes:
         try:
-            with open(self._get_path(cmd.path), 'wb') as fd:
-                return Response(status_code=Response.OK, size=fd.write(cmd.content))
+            with open(self._get_path(path), 'rb') as fd:
+                return fd.read()
         except FileNotFoundError:
-            raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
+            raise VFSNotFound('File not found.')
 
-    def cmd_DELETE_FILE(self, cmd):
-        _check_required(cmd, 'path')
+    async def write_file(self, path: str, content: bytes) -> int:
         try:
-            os.unlink(self._get_path(cmd.path))
-            return Response(status_code=Response.OK)
+            with open(self._get_path(path), 'wb') as fd:
+                return fd.write(content)
         except FileNotFoundError:
-            raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
+            raise VFSNotFound('File not found.')
 
-    def cmd_STAT(self, cmd):
-        _check_required(cmd, 'path')
+    async def delete_file(self, path: str):
         try:
-            stat = os.stat(self._get_path(cmd.path))
+            os.unlink(self._get_path(path))
         except FileNotFoundError:
-            raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
-        kwargs = {'atime': stat.st_atime, 'ctime': stat.st_ctime, 'mtime': stat.st_mtime}
+            raise VFSNotFound('File not found.')
+
+    async def stat(self, path: str) -> dict:
+        try:
+            osstat = os.stat(self._get_path(path))
+        except FileNotFoundError:
+            raise VFSNotFound('File not found.')
+        stat = {'atime': osstat.st_atime, 'ctime': osstat.st_ctime, 'mtime': osstat.st_mtime}
         # File or directory ?
-        if S_ISDIR(stat.st_mode):
-            kwargs['type'] = Stat.DIRECTORY
-            kwargs['size'] = 0
+        if S_ISDIR(osstat.st_mode):
+            stat['is_dir'] = True
+            stat['size'] = 0
         else:
-            kwargs['type'] = Stat.FILE
-            kwargs['size'] = stat.st_size
-        return Response(status_code=Response.OK, stat=Stat(**kwargs))
+            stat['is_dir'] = False
+            stat['size'] = osstat.st_size
+        return stat
 
-    def cmd_LIST_DIR(self, cmd):
-        _check_required(cmd, 'path')
+    async def list_dir(self, path: str) -> list:
         try:
-            return Response(status_code=Response.OK, list_dir=os.listdir(self._get_path(cmd.path)))
+            return os.listdir(self._get_path(path))
         except (FileNotFoundError, NotADirectoryError) as exc:
-            raise CmdError('Directory not found', status_code=Response.FILE_NOT_FOUND)
+            raise VFSNotFound('Directory not found.')
 
-    def cmd_MAKE_DIR(self, cmd):
-        _check_required(cmd, 'path')
+    async def make_dir(self, path: str):
         try:
-            os.mkdir(self._get_path(cmd.path))
-            return Response(status_code=Response.OK)
+            os.mkdir(self._get_path(path))
         except FileExistsError:
-            raise CmdError('Target already exists')
+            raise VFSError('already_exist', 'Target already exists')
 
-    def cmd_REMOVE_DIR(self, cmd):
-        _check_required(cmd, 'path')
-        if cmd.path == '/':
-            raise CmdError('Cannot remove root')
+    async def remove_dir(self, path: str):
+        if path == '/':
+            raise VFSError('cannot_remove_root', 'Cannot remove root')
         try:
-            os.rmdir(self._get_path(cmd.path))
-            return Response(status_code=Response.OK)
+            os.rmdir(self._get_path(path))
         except FileNotFoundError:
-            raise CmdError('Directory not found', status_code=Response.FILE_NOT_FOUND)
+            raise VFSNotFound('Directory not found.')
         except OSError:
-            raise CmdError('Directory not empty')
+            raise VFSError('directory_not_empty', 'Directory not empty')
 
 
-class VFSServiceInMemoryMock(VFSServiceBaseMock):
+class VFSServiceInMemoryMock(BaseVFSService):
+
     def __init__(self):
         super().__init__()
         self._dir = {'/': self.Node(is_dir=True)}
@@ -173,26 +88,18 @@ class VFSServiceInMemoryMock(VFSServiceBaseMock):
     class Node:
         def __init__(self, content=None, is_dir=False):
             now = datetime.utcnow().timestamp()
-            self.stat = Stat()
-            self.stat.type = Stat.DIRECTORY if is_dir else Stat.FILE
-            self.stat.size = len(content) if content is not None else 0
-            self.stat.ctime = self.stat.mtime = self.stat.atime = now
+            self.stat = {
+                'is_dir': is_dir,
+                'size': len(content) if content is not None else 0,
+                'ctime': now,
+                'mtime': now,
+                'atime': now,
+            }
             self.content = content
-
-    def cmd_READ_FILE(self, cmd):
-        _check_required(cmd, 'path')
-        try:
-            path = normpath(cmd.path)
-            return Response(status_code=Response.OK, content=self._dir[path].content)
-        except KeyError:
-            raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
-
-    def cmd_CREATE_FILE(self, cmd):
-        return self.cmd_WRITE_FILE(cmd)
 
     def _is_valid_dir(self, basedir):
         try:
-            return self._dir[basedir].stat.type == Stat.DIRECTORY
+            return self._dir[basedir].stat['is_dir']
         except:
             return False
 
@@ -200,41 +107,48 @@ class VFSServiceInMemoryMock(VFSServiceBaseMock):
         basedir = path.rsplit('/', 1)[0] or '/'
         if self._is_valid_dir(basedir):
             if ((path not in self._dir and missing_is_ok) or
-                    (self._dir[path].stat.type == Stat.FILE)):
+                    (not self._dir[path].stat['is_dir'])):
                 return True
         return False
 
-    def cmd_WRITE_FILE(self, cmd):
-        _check_required(cmd, 'path', 'content')
-        path = normpath(cmd.path)
-        if self._is_valid_file(path, missing_is_ok=True):
-            self._dir[path] = self.Node(content=cmd.content)
-            return Response(status_code=Response.OK, size=len(cmd.content))
-        else:
-            raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
+    async def create_file(self, path: str, content: bytes=b''):
+        await self.write_file(path, content)
 
-    def cmd_DELETE_FILE(self, cmd):
-        _check_required(cmd, 'path')
-        path = normpath(cmd.path)
+    async def read_file(self, path: str) -> bytes:
+        try:
+            path = normpath(path)
+            return self._dir[path].content
+        except KeyError:
+            raise VFSNotFound('File not found.')
+
+    async def write_file(self, path: str, content: bytes) -> int:
+        path = normpath(path)
+        if self._is_valid_file(path, missing_is_ok=True):
+            self._dir[path] = self.Node(content=content)
+            return len(content)
+        else:
+            raise VFSNotFound('File not found.')
+
+    async def delete_file(self, path: str):
+        path = normpath(path)
         try:
             del self._dir[path]
-            return Response(status_code=Response.OK)
         except KeyError:
-            raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
+            raise VFSNotFound('File not found.')
 
-    def cmd_STAT(self, cmd):
-        _check_required(cmd, 'path')
-        path = normpath(cmd.path)
+    async def stat(self, path: str) -> dict:
+        path = normpath(path)
         try:
-            return Response(status_code=Response.OK, stat=self._dir[path].stat)
+            return self._dir[path].stat
         except KeyError:
-            raise CmdError('File not found', status_code=Response.FILE_NOT_FOUND)
+            raise VFSNotFound('File not found.')
 
-    def cmd_LIST_DIR(self, cmd):
-        _check_required(cmd, 'path')
-        path = normpath(cmd.path)
-        if path not in self._dir or self._dir[path].stat.type != Stat.DIRECTORY:
-            raise CmdError('Directory not found', status_code=Response.FILE_NOT_FOUND)
+    async def list_dir(self, path: str) -> list:
+        path = normpath(path)
+        if path not in self._dir:
+            raise VFSNotFound('Directory not found.')
+        elif not self._dir[path].stat['is_dir']:
+            raise VFSError(status='not_a_directory')
         listing = []
         if not path.endswith('/'):
             path = path + '/'
@@ -242,26 +156,22 @@ class VFSServiceInMemoryMock(VFSServiceBaseMock):
             relative_p = p[len(path):]
             if p.startswith(path) and '/' not in relative_p and p != path:
                 listing.append(relative_p)
-        return Response(status_code=Response.OK, list_dir=listing)
+        return listing
 
-    def cmd_MAKE_DIR(self, cmd):
-        _check_required(cmd, 'path')
-        path = normpath(cmd.path)
+    async def make_dir(self, path: str):
+        path = normpath(path)
         if path not in self._dir:
             self._dir[path] = self.Node(is_dir=True)
-            return Response(status_code=Response.OK)
         else:
-            raise CmdError('Target already exists')
+            raise VFSError('already_exist', 'Target already exists.')
 
-    def cmd_REMOVE_DIR(self, cmd):
-        _check_required(cmd, 'path')
-        path = normpath(cmd.path)
-        if cmd.path == '/':
-            raise CmdError('Cannot remove root')
+    async def remove_dir(self, path: str):
+        path = normpath(path)
+        if path == '/':
+            raise VFSError('cannot_remove_root', 'Cannot remove root directory.')
         elif self._is_valid_dir(path):
             if any(p for p in self._dir.keys() if p.startswith(path) and p != path):
-                raise CmdError('Directory not empty')
+                raise VFSError('directory_not_empty', 'Directory not empty.')
             del self._dir[path]
-            return Response(status_code=Response.OK)
         else:
-            raise CmdError('Directory not found', status_code=Response.FILE_NOT_FOUND)
+            raise VFSNotFound('Directory not found.')

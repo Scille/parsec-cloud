@@ -3,8 +3,8 @@ from socket import socket, AF_UNIX, SOCK_STREAM
 import click
 
 from parsec.server import start_server
-from parsec.shell import start_shell
-
+from parsec.ui.shell import start_shell
+from parsec.ui.fuse import start_fuse
 
 SOCKET_PATH = '/tmp/parsec'
 
@@ -35,11 +35,20 @@ def shell():
 
 
 @click.command()
+@click.argument('mountpoint', type=click.Path(exists=True, file_okay=False))
+@click.option('--debug', '-d', is_flag=True, default=False)
+@click.option('--nothreads', is_flag=True, default=False)
+def fuse(mountpoint, debug, nothreads):
+    start_fuse(SOCKET_PATH, mountpoint, debug=debug, nothreads=nothreads)
+
+
+@click.command()
 def server():
     start_server(SOCKET_PATH)
 
 
 cli.add_command(cmd)
+cli.add_command(fuse)
 cli.add_command(shell)
 cli.add_command(server)
 
