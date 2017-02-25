@@ -1,86 +1,30 @@
 import os
 import sys
 import asyncio
+import json
 from uuid import uuid4
-from base64 import b64decode, b64encode
 from logbook import Logger, StreamHandler
+
+from parsec.services import VFSServiceInMemoryMock
 
 
 StreamHandler(sys.stdout).push_application()
 log = Logger('Parsec')
 
 
-class Response:
-    @classmethod
-    def from_raw(cls, data: bytes):
-        assert isinstance(data, bytes)
-        args = data.split(b' ', maxsplit=1)
-        if len(args) == 2:
-            return cls(status=args[0].decode(), raw_body=args[1])
-        else:
-            return cls(status=args[0].decode())
-
-    def __init__(self, status: str='ok', body: bytes=None, raw_body: bytes=None):
-        assert raw_body is None or isinstance(raw_body, bytes)
-        assert isinstance(status, str)
-        if isinstance(body, str):
-            body = body.encode()
-        self.status = status
-        self._body = body
-        self._raw_body = raw_body or b''
-
-    @property
-    def body(self):
-        if self._body is None:
-            self._body = b64decode(self._raw_body)
-        return self._body
-
-    @property
-    def is_ok(self):
-        return self.status == 'ok'
-
-    def pack(self) -> bytes:
-        return self.status.encode() + b' ' + b64encode(self.body)
-
-    def __repr__(self):
-        return '<Response(status=%s, body=%s)>' % (self.status, self.body)
-
-
-class Request:
-    @classmethod
-    def from_raw(cls, data: bytes):
-        assert isinstance(data, bytes)
-        args = data.split(b' ', maxsplit=1)
-        if len(args) == 2:
-            return cls(args[0].decode(), raw_body=args[1])
-        else:
-            return cls(args[0].decode())
-
-    def __init__(self, cmdid: str, body: bytes=None, raw_body: bytes=None):
-        assert raw_body is None or isinstance(raw_body, bytes)
-        assert isinstance(cmdid, str)
-        if isinstance(body, str):
-            body = body.encode()
-        self.cmdid = cmdid
-        self._body = body
-        self._raw_body = raw_body or b''
-
-    @property
-    def body(self):
-        if self._body is None:
-            self._body = b64decode(self._raw_body)
-        return self._body
-
-    def pack(self) -> bytes:
-        return self.cmdid.encode() + b' ' + b64encode(self.body)
-
-    def __repr__(self):
-        return '<Request(cmdid=%s, body=%s)>' % (self.cmdid, self.body)
-
-
 class ParsecServer:
     def __init__(self):
-        self._cmds = {}
+        self._cmds = {
+            'list_cmds': self.__cmd_LIST_CMDS
+        }
+
+    async def __cmd_LIST_CMDS(self, data):
+        return {'status': 'ok', 'cmds': list(self._cmds.keys())}
+
+    def register_service(self, service, name=None):
+        name = name or type(service).__name__
+        for cmdid, cb in service.get_cmds().items():
+            self.register_cmd('%s:%s' % (name, cmdid), cb)
 
     def register_cmd(self, cmd, cb):
         if cmd in self._cmds:
@@ -88,8 +32,32 @@ class ParsecServer:
         self._cmds[cmd] = cb
 
     @staticmethod
-    def _parse_raw_msg(msg):
-        return msg.split(maxsplit=1)
+    def _parse_raw_msg(raw):
+        if not raw:
+            return None
+        try:
+            msg = json.loads(raw.decode())
+            if isinstance(msg.get('cmd'), str) and isinstance(msg.get('service'), str):
+                return msg
+            else:
+                return None
+        except json.decoder.JSONDecodeError:
+            pass
+        # Not a JSON payload, try cmdline mode
+        splitted = raw.decode().strip().split(' ')
+        cmd = splitted[0]
+        raw_msg = '{"cmd": "%s"' % cmd
+        for data in splitted[1:]:
+            if '=' not in data:
+                return None
+            raw_msg += ', "%s": %s' % tuple(data.split('=', maxsplit=1))
+        raw_msg += '}'
+        try:
+            return json.loads(raw_msg)
+        except json.decoder.JSONDecodeError:
+            pass
+        # Nothing worked :'-(
+        return None
 
     async def on_connection(self, reader, writer):
         conn_log = Logger('Connection ' + uuid4().hex)
@@ -99,21 +67,25 @@ class ParsecServer:
             if not raw_req:
                 conn_log.debug('Connection stopped')
                 return
-            req = Request.from_raw(raw_req)
-            conn_log.debug('Received: %r' % req)
-            cmd = self._cmds.get(req.cmdid)
-            if not cmd:
-                resp = Response('badcmd', 'Unknown command `%s`' % req.cmdid)
+            conn_log.debug('Received: %r' % raw_req)
+            msg = self._parse_raw_msg(raw_req[:-1])
+            if msg is None:
+                resp = '{"status": "bad_message", "label": "Message is not a valid JSON."}'
             else:
-                resp = await cmd(req)
+                cmd = self._cmds.get(msg['cmd'])
+                if not cmd:
+                    resp = '{"status": "badcmd", "label": "Unknown command `%s`"' % msg['cmd']
+                else:
+                    resp = await cmd(msg)
             conn_log.debug('Replied: %r' % resp)
-            writer.write(resp.pack())
+            writer.write(json.dumps(resp).encode())
             writer.write(b'\n')
 
 
 def start_server(socket_path):
     loop = asyncio.get_event_loop()
     server = ParsecServer()
+    server.register_service(VFSServiceInMemoryMock(), 'vfs')
     try:
         connect_coro = asyncio.start_unix_server(
             server.on_connection, path=socket_path, loop=loop)

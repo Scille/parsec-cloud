@@ -1,7 +1,6 @@
 import asyncio
+import json
 import readline  # noqa: side effect powaaa !
-
-from parsec.server import Request, Response
 
 
 async def repl(socket_path):
@@ -15,13 +14,10 @@ async def repl(socket_path):
         elif data in ('help', 'h'):
             print('No help for the braves !')
             continue
-        args = data.split(' ', maxsplit=1)
-        cmdid = args[0]
-        req = Request(cmdid, body=(args[1].encode() if len(args) == 2 else b''))
-        writer.write(req.pack())
+        writer.write(data.encode())
         writer.write(b'\n')
         raw_resp = await reader.readline()
-        resp = Response.from_raw(raw_resp[:-1])
+        resp = json.loads(raw_resp.decode())
         print('Received: %r' % resp)
 
 
