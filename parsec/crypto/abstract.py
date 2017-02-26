@@ -1,26 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 
-class EncryptionError(Exception):
-
-    def __init__(self, error_code=None, error_msg=''):
-        self.error_msg = error_msg
-        self.error_code = error_code
-
-
-class SymetricEncryptionError(EncryptionError):
-    pass
-
-
-class AsymetricEncryptionError(EncryptionError):
-    pass
-
-
-class SymetricEncryption(metaclass=ABCMeta):
-
-    @abstractmethod
-    def __init__(self, **kwargs):
-        pass  # pragma: no cover
+class BaseSymCipher(metaclass=ABCMeta):
 
     @abstractmethod
     def encrypt(self, raw):
@@ -31,11 +12,7 @@ class SymetricEncryption(metaclass=ABCMeta):
         pass  # pragma: no cover
 
 
-class AsymetricEncryption(metaclass=ABCMeta):
-
-    @abstractmethod
-    def __init__(self, **kwargs):
-        pass  # pragma: no cover
+class BaseAsymCipher(metaclass=ABCMeta):
 
     @abstractmethod
     def ready(self, key_size):

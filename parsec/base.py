@@ -12,6 +12,10 @@ class ParsecError(Exception):
         return {'status': self.status, 'label': self.label}
 
 
+class ServiceNotReadyError(ParsecError):
+    status = 'service_not_ready'
+
+
 def cmd(param):
     # TODO: do that with metaclasses
     def patcher(name, callback):

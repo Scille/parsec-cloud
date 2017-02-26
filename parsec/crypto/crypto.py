@@ -1,111 +1,38 @@
-from google.protobuf.message import DecodeError
-from ..abstract import BaseService
-from .abstract import (SymetricEncryption, AsymetricEncryption,
-                       SymetricEncryptionError, AsymetricEncryptionError)
-from .crypto_pb2 import Request, Response
+from parsec.crypto.base import BaseCryptoService
+from parsec.crypto.abstract import BaseSymCipher, BaseAsymCipher
 
 
-class CmdError(Exception):
+class CryptoService(BaseCryptoService):
 
-    def __init__(self, error_msg, status_code=Response.BAD_REQUEST):
-        self.error_msg = error_msg
-        self.status_code = status_code
-
-
-class CryptoEngineError(CmdError):
-    pass
-
-
-class CryptoEngineService(BaseService):
-
-    def __init__(self,
-                 symetric: SymetricEncryption,
-                 asymetric: AsymetricEncryption):
+    def __init__(self, symetric: BaseSymCipher, asymetric: BaseAsymCipher):
         self._asym = asymetric
         self._sym = symetric
 
-    def _generate_key(self, msg):
-        try:
-            self._asym.generate_key(key_size=msg.key_size)
-        except AsymetricEncryptionError as e:
-            raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
-                                    error_msg=e.error_msg)
-        pem = self._asym.export_key(msg.passphrase)
+    async def gen_key(self, key_size: int, passphrase: str):
+        self._asym.generate_key(key_size=key_size)
+        return self._asym.export_key(passphrase)
 
-        return Response(status_code=Response.OK, key=pem)
+    async def load_key(self, key: str, passphrase: str):
+        self._asym.load_key(pem=key, passphrase=passphrase)
 
-    def _load_key(self, msg):
-        try:
-            self._asym.load_key(pem=msg.key, passphrase=msg.passphrase)
-        except AsymetricEncryptionError as e:
-            raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
-                                    error_msg=e.error_msg)
-        return Response(status_code=Response.OK)
-
-    def _encrypt(self, msg):
-        if not self._asym.ready():
-            raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
-                                    error_msg='Asymetric engine not ready')
-        aes_key, enc = self._sym.encrypt(msg.content)
+    async def encrypt(self, content: bytes):
+        aes_key, enc = self._sym.encrypt(content)
         signature = self._asym.sign(enc)
         encrypted_key = self._asym.encrypt(aes_key)
         key_sig = self._asym.sign(encrypted_key)
+        return {
+            'key': encrypted_key,
+            'content': enc,
+            'signature': signature,
+            'key_signature': key_sig
+        }
 
-        return Response(status_code=Response.OK, key=encrypted_key,
-                        content=enc, signature=signature, key_signature=key_sig)
-
-    def _decrypt(self, msg):
-        if not self._asym.ready():
-            raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_ERROR,
-                                    error_msg='Asymetric engine not ready')
+    async def decrypt(self, key: str, key_signature: str, content: bytes, signature: str):
         # Check if the key and its signature match
-        try:
-            self._asym.verify(msg.key, msg.key_signature)
-        except AsymetricEncryptionError as e:
-            raise CryptoEngineError(status_code=Response.ASYMETRIC_KEY_SIGN_ERROR,
-                                    error_msg=e.error_msg)
+        self._asym.verify(key, key_signature)
         # Decrypt the AES key
-        try:
-            aes_key = self._asym.decrypt(msg.key)
-        except AsymetricEncryptionError as e:
-            raise CryptoEngineError(status_code=Response.ASYMETRIC_DECRYPT_FAILED,
-                                    error_msg=e.error_msg)
-
+        aes_key = self._asym.decrypt(key)
         # Check if the encrypted content matches its signature
-        try:
-            self._asym.verify(msg.content, msg.signature)
-        except AsymetricEncryptionError as e:
-            raise CryptoEngineError(status_code=Response.VERIFY_FAILED,
-                                    error_msg=e.error_msg)
-        try:
-            dec = self._sym.decrypt(aes_key, msg.content)
-        except SymetricEncryptionError as e:
-            raise CryptoEngineError(status_code=Response.SYMETRIC_DECRYPT_FAILED,
-                                    error_msg=e.error_msg)
-
-        return Response(status_code=Response.OK, content=dec)
-
-    _CMD_MAP = {
-        Request.ENCRYPT: _encrypt,
-        Request.DECRYPT: _decrypt,
-        Request.LOAD_KEY: _load_key,
-        Request.GEN_KEY: _generate_key,
-    }
-
-    def dispatch_msg(self, msg):
-        try:
-            try:
-                return self._CMD_MAP[msg.type](self, msg)
-            except KeyError:
-                raise CmdError('Unknown msg `%s`' % msg.type)
-        except CmdError as exc:
-            return Response(status_code=exc.status_code, error_msg=exc.error_msg)
-
-    def dispatch_raw_msg(self, raw_msg):
-        try:
-            msg = Request()
-            msg.ParseFromString(raw_msg)
-            ret = self.dispatch_msg(msg)
-        except DecodeError as exc:
-            ret = Response(status_code=Response.BAD_REQUEST, error_msg='Invalid request format')
-        return ret.SerializeToString()
+        self._asym.verify(content, signature)
+        dec = self._sym.decrypt(aes_key, content)
+        return dec
