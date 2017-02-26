@@ -1,4 +1,3 @@
-from .abstract import AsymetricEncryption, AsymetricEncryptionError
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends.openssl import backend as openssl
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -6,12 +5,11 @@ from cryptography.hazmat.primitives.hashes import SHA512
 from cryptography.hazmat.primitives.asymmetric.padding import PSS, OAEP, MGF1
 from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 
+from parsec.crypto.abstract import BaseAsymCipher
+from parsec.crypto.base import AsymCryptoError
 
-class RSACipherError(AsymetricEncryptionError):
-    pass
 
-
-class RSACipher(AsymetricEncryption):
+class RSACipher(BaseAsymCipher):
 
     def __init__(self, key_file: str = None, key_pem: bytes = None, passphrase: bytes = b''):
         if key_file:
@@ -27,13 +25,13 @@ class RSACipher(AsymetricEncryption):
 
     def generate_key(self, key_size=4096):
         if key_size < 2048:
-            raise RSACipherError(1, "Generation error : Key size must be >= 2048 bits")
+            raise AsymCryptoError("Invalid key size.")
         try:
             self._key = rsa.generate_private_key(public_exponent=65537,
                                                  key_size=key_size,
                                                  backend=openssl)
         except UnsupportedAlgorithm:
-            raise RSACipherError(2, "Generation error : RSA is not supported by backend")
+            raise AsymCryptoError("Generation error : RSA is not supported by backend.")
 
     def load_key(self, pem, passphrase):
         self._key = None
@@ -44,9 +42,9 @@ class RSACipher(AsymetricEncryption):
                                                            password=passphrase,
                                                            backend=openssl)
         except (ValueError, IndexError, TypeError):
-            raise RSACipherError(3, 'Cannot import key : wrong format or bad passphrase')
-        if self._key.key_size < 2048:
-            raise RSACipherError(4, "Loading error : Key size must be >= 2048 bits")
+            pass
+        if not self._key or self._key.key_size < 2048:
+            raise AsymCryptoError('Invalid key or bad passphrase.')
 
     def export_key(self, passphrase):
         if passphrase:
@@ -87,4 +85,4 @@ class RSACipher(AsymetricEncryption):
         try:
             verifier.verify()
         except InvalidSignature:
-            raise RSACipherError(5, "Invalid signature, content may be tampered")
+            raise AsymCryptoError("Invalid signature, content may be tampered.")
