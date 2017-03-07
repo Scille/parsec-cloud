@@ -93,7 +93,7 @@ def start_server(socket_path: str):
     try:
         connect_coro = asyncio.start_unix_server(
             server.on_connection, path=socket_path, loop=loop)
-        loop.create_task(connect_coro)
+        loop.run_until_complete(connect_coro)
         loop.run_forever()
     finally:
         loop.close()

@@ -15,13 +15,11 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    "google-api-python-client==1.5.3",
     "Logbook==1.0.0",
-    "protobuf==3.1.0.post1",
-    "pyzmq==15.4.0",
     "cryptography==1.7.1",
     "simplejson==3.10.0",
-    "pyaml==16.12.2"
+    "pyaml==16.12.2",
+    "click==6.7"
 ]
 
 test_requirements = [
@@ -46,10 +44,11 @@ setup(
     extras_require={
         'sftp': ['asyncssh==1.8.1'],
         'fuse': ['fusepy==2.0.4'],
+        'gdrive': ['google-api-python-client==1.5.3'],
     },
     entry_points={
         'console_scripts': [
-            'parsec = parsec.startup:execute_from_command_line',
+            'parsec = parsec.cli:cli',
         ],
     },
     license="GPLv3",

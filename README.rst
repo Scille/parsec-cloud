@@ -26,6 +26,11 @@ Secure cloud framework
 * Free software: GPL v3
 * Documentation: https://parsec-cloud.readthedocs.org.
 
+Cryptography's dependencies::
+
+    apt-get install libffi-dev libssl-dev
+
+
 Features
 --------
 

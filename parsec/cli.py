@@ -6,6 +6,7 @@ from parsec.server import start_server
 from parsec.ui.shell import start_shell
 from parsec.ui.fuse import start_fuse
 
+
 SOCKET_PATH = '/tmp/parsec'
 
 
@@ -30,21 +31,27 @@ def cmd(id, args):
 
 
 @click.command()
-def shell():
-    start_shell(SOCKET_PATH)
+@click.option('--socket', '-s', default=SOCKET_PATH,
+              help='Path to the UNIX socket (default: %s).' % SOCKET_PATH)
+def shell(socket):
+    start_shell(socket)
 
 
 @click.command()
 @click.argument('mountpoint', type=click.Path(exists=True, file_okay=False))
 @click.option('--debug', '-d', is_flag=True, default=False)
 @click.option('--nothreads', is_flag=True, default=False)
-def fuse(mountpoint, debug, nothreads):
-    start_fuse(SOCKET_PATH, mountpoint, debug=debug, nothreads=nothreads)
+@click.option('--socket', '-s', default=SOCKET_PATH,
+              help='Path to the UNIX socket (default: %s).' % SOCKET_PATH)
+def fuse(mountpoint, debug, nothreads, socket):
+    start_fuse(socket, mountpoint, debug=debug, nothreads=nothreads)
 
 
 @click.command()
-def server():
-    start_server(SOCKET_PATH)
+@click.option('--socket', '-s', default=SOCKET_PATH,
+              help='Path to the UNIX socket (default: %s).' % SOCKET_PATH)
+def server(socket):
+    start_server(socket)
 
 
 cli.add_command(cmd)
