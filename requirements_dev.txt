@@ -2,6 +2,7 @@
 bumpversion
 wheel
 flake8
+freezegun
 tox
 coverage
 Sphinx

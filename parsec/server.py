@@ -6,6 +6,8 @@ from uuid import uuid4
 from logbook import Logger, StreamHandler
 
 from parsec.vfs import VFSServiceInMemoryMock
+from parsec.file_service import FileService
+from parsec.user_manifest_service import UserManifestService
 from parsec.base import ParsecError
 
 
@@ -25,6 +27,7 @@ class ParsecServer:
     def register_service(self, service, name=None):
         name = name or type(service).__name__
         for cmdid, cb in service.get_cmds().items():
+            print(name, cmdid, cb)
             self.register_cmd('%s:%s' % (name, cmdid), cb)
 
     def register_cmd(self, cmd, cb):
@@ -90,6 +93,8 @@ def start_server(socket_path: str):
     loop = asyncio.get_event_loop()
     server = ParsecServer()
     server.register_service(VFSServiceInMemoryMock(), 'vfs')
+    server.register_service(UserManifestService(), 'user_manifest')
+    server.register_service(FileService(), 'file')
     try:
         connect_coro = asyncio.start_unix_server(
             server.on_connection, path=socket_path, loop=loop)
