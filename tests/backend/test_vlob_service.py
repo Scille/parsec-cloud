@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import Mock
 
 from parsec.backend import VlobService
 
@@ -39,7 +38,11 @@ class TestVlobServiceAPI:
             'id': vlob.id,
             'trust_seed': vlob.read_trust_seed,
         })
-        assert ret == {'status': 'ok', 'content': vlob.blob_versions[-1], 'version': len(vlob.blob_versions)}
+        assert ret == {
+            'status': 'ok',
+            'content': vlob.blob_versions[-1],
+            'version': len(vlob.blob_versions)
+        }
 
     @pytest.mark.asyncio
     async def test_update(self, vlob_svc, vlob):

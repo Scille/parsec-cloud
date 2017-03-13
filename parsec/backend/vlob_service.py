@@ -1,8 +1,6 @@
-from blinker import signal
 import random
 import string
 from uuid import uuid4
-from collections import defaultdict
 
 from parsec.service import BaseService, cmd, event
 

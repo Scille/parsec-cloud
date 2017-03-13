@@ -1,4 +1,3 @@
-from sys import argv
 from socket import socket, AF_UNIX, SOCK_STREAM
 import click
 

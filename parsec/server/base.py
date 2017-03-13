@@ -1,6 +1,6 @@
 import json
 from uuid import uuid4
-from logbook import Logger, StreamHandler
+from logbook import Logger
 
 from parsec.exceptions import ParsecError
 

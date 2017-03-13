@@ -10,7 +10,8 @@ from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 from logbook import Logger, StreamHandler
 
 
-LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name}) {record.level_name}: {record.channel}: {record.message}'
+LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name})' \
+             ' {record.level_name}: {record.channel}: {record.message}'
 log = Logger('Parsec-FUSE')
 
 

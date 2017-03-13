@@ -1,7 +1,5 @@
 import os
 import asyncio
-from uuid import uuid4
-from logbook import Logger, StreamHandler
 
 from parsec.server.base import BaseClientContext, BaseServer
 
