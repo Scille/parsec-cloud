@@ -19,7 +19,9 @@ requirements = [
     "cryptography==1.7.1",
     "simplejson==3.10.0",
     "pyaml==16.12.2",
-    "click==6.7"
+    "click==6.7",
+    "blinker==1.4",
+    "websockets==3.2"
 ]
 
 test_requirements = [

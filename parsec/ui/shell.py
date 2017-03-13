@@ -4,6 +4,9 @@ import readline  # noqa: side effect powaaa !
 
 
 async def repl(socket_path):
+    from parsec import __version__
+    print('Parsec shell version: %s' % __version__)
+    print('Connecting to: %s' % socket_path)
     reader, writer = await asyncio.open_unix_connection(path=socket_path)
     quit = False
     while not quit:
