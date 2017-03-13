@@ -1,6 +1,7 @@
 from base64 import decodebytes
 
-from parsec.base import BaseService, cmd, ParsecError
+from parsec.service import BaseService, cmd
+from parsec.exceptions import ParsecError
 from parsec.file_service import FileService
 
 

@@ -3,7 +3,8 @@ from base64 import decodebytes
 from datetime import datetime
 from uuid import uuid4
 
-from parsec.base import BaseService, cmd, ParsecError
+from parsec.service import BaseService, cmd
+from parsec.exceptions import ParsecError
 
 
 class FileError(ParsecError):
