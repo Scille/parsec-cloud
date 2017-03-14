@@ -4,7 +4,6 @@ import click
 from parsec.server import UnixSocketServer, WebSocketServer
 from parsec.backend import MessageService, VlobService
 from parsec.ui.shell import start_shell
-from parsec.ui.fuse import start_fuse
 
 
 CORE_UNIX_SOCKET = '/tmp/parsec'
@@ -44,6 +43,8 @@ def shell(socket):
 @click.option('--socket', '-s', default=CORE_UNIX_SOCKET,
               help='Path to the UNIX socket (default: %s).' % CORE_UNIX_SOCKET)
 def fuse(mountpoint, debug, nothreads, socket):
+    # Do the import here in case fuse is not an available dependency
+    from parsec.ui.fuse import start_fuse
     start_fuse(socket, mountpoint, debug=debug, nothreads=nothreads)
 
 

@@ -32,17 +32,17 @@ def cmd(param):
 class MetaBaseService(type):
 
     def __new__(cls, name, bases, nmspc):
-        cmds = {}
+        cmd_keys = {}
         events = {}
-        cooked_nmspc = {'_cmds': cmds, '_events': events}
+        cooked_nmspc = {'_cmd_keys': cmd_keys, '_events': events}
         for b in bases:
-            cmds.update(getattr(b, '_cmds', {}))
+            cmd_keys.update(getattr(b, '_cmd_keys', {}))
             events.update(getattr(b, '_events', {}))
         # Retrieve new cmd and event here
         # TODO: check for overwritten cmd/events ?
         for k, v in nmspc.items():
             if isinstance(v, CmdWrap):
-                cmds[v.name] = v.callback
+                cmd_keys[k] = v.name
                 cooked_nmspc[k] = v.callback
             elif isinstance(v, EventWrap):
                 events[v.name] = v.event
@@ -54,8 +54,15 @@ class MetaBaseService(type):
 
 
 class BaseService(metaclass=MetaBaseService):
+    def __init__(self):
+        super().__init__()
+        self._cmds = {}
+
     @property
     def cmds(self):
+        # Lazy load commands to get them binded to the self object
+        if not self._cmds:
+            self._cmds = {name: getattr(self, field) for field, name in self._cmd_keys.items()}
         return self._cmds
 
     @property
@@ -64,6 +71,6 @@ class BaseService(metaclass=MetaBaseService):
 
     async def dispatch_msg(self, msg):
         try:
-            return await self.cmds[msg['cmd']](self, msg)
+            return await self.cmds[msg['cmd']](msg)
         except ParsecError as exc:
             return exc.to_dict()

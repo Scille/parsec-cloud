@@ -6,6 +6,7 @@ from parsec.server.base import BaseClientContext, BaseServer
 
 class UnixSocketClientContext(BaseClientContext):
     def __init__(self, reader, writer):
+        super().__init__()
         self.reader = reader
         self.writer = writer
 

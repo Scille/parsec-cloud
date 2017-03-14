@@ -23,6 +23,7 @@ class BaseMessageService(BaseService):
 
 class MessageService(BaseMessageService):
     def __init__(self):
+        super().__init__()
         self._messages = defaultdict(list)
 
     async def new(self, recipient, body):

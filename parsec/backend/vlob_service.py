@@ -51,6 +51,7 @@ class Vlob:
 
 class VlobService(BaseVlobService):
     def __init__(self):
+        super().__init__()
         self._vlobs = {}
 
     async def create(self, id=None, blob=None):

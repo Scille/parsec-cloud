@@ -16,6 +16,7 @@ class ManifestNotFound(ManifestError):
 class ManifestService(BaseService):
 
     def __init__(self):
+        super().__init__()
         self.file_service = FileService()  # TODO register file service
         self.manifest = {}
 

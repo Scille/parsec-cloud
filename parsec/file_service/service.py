@@ -18,6 +18,7 @@ class FileNotFound(FileError):
 class FileService(BaseService):
 
     def __init__(self):
+        super().__init__()
         self.files = {}
 
     @staticmethod
