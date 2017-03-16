@@ -19,14 +19,15 @@ class BaseServer:
         self._cmds = {
             'list_cmds': self.__cmd_LIST_CMDS
         }
+        self._services = {}
 
     async def __cmd_LIST_CMDS(self, data):
         return {'status': 'ok', 'cmds': list(self._cmds.keys())}
 
-    def register_service(self, service, name=None):
-        name = name or type(service).__name__
+    def register_service(self, service):
+        self._services[service.name] = service
         for cmdid, cb in service.cmds.items():
-            self.register_cmd('%s:%s' % (name, cmdid), cb)
+            self.register_cmd('%s:%s' % (service.name, cmdid), cb)
 
     def register_cmd(self, cmd, cb):
         if cmd in self._cmds:
@@ -84,6 +85,22 @@ class BaseServer:
                         resp = exc.to_dict()
             conn_log.debug('Replied: %r' % resp)
             await context.send(json.dumps(resp).encode())
+
+    def bootstrap_services(self):
+        errors = []
+        for service in self._services.values():
+            try:
+                boot = service.bootstrap()
+                dep = next(boot)
+                while True:
+                    if dep not in self._services:
+                        errors.append("Service `%s` required unknown service `%s`" % (service.name, dep))
+                        break
+                    dep = boot.send(self._services[dep])
+            except StopIteration:
+                pass
+        if errors:
+            raise RuntimeError(errors)
 
     def start(self):
         raise NotImplementedError()

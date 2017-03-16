@@ -1,5 +1,6 @@
 import pytest
 
+from parsec.server import BaseServer
 from parsec.core.user_manifest_service import UserManifestService
 from parsec.core.file_service import FileService
 
@@ -141,3 +142,7 @@ class TestUserManifestService(BaseTestUserManifestService):
     def setup_method(self):
         self.file_service = FileService()
         self.service = UserManifestService(self.file_service)
+        self.server = BaseServer()
+        self.server.register_service(FileService())
+        self.server.register_service(self.service)
+        self.server.bootstrap_services()

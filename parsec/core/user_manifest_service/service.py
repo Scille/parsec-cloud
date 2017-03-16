@@ -1,7 +1,7 @@
 from base64 import decodebytes
 import json
 
-from parsec.service import BaseService, cmd
+from parsec.service import BaseService, cmd, service
 from parsec.exceptions import ParsecError
 
 
@@ -15,9 +15,10 @@ class UserManifestNotFound(UserManifestError):
 
 class UserManifestService(BaseService):
 
+    _file_service = service('FileService')
+
     def __init__(self, file_service):
         super().__init__()
-        self.file_service = file_service  # TODO register file service
         self.manifest = {}
         self.manifest['/'] = {'id': None,
                               'read_trust_seed': None,
@@ -111,7 +112,7 @@ class UserManifestService(BaseService):
         if path in self.manifest:
             raise UserManifestError('already_exist', 'Target already exists.')
         else:
-            ret = await self.file_service.create()
+            ret = await self._file_service.create()
             file = {}
             for key in ('id', 'read_trust_seed', 'write_trust_seed'):
                 file[key] = ret[key]
@@ -177,7 +178,7 @@ class UserManifestService(BaseService):
         for _, entry in manifest.items():
             if entry['id']:
                 try:
-                    await self.file_service.stat(entry)
+                    await self._file_service.stat(entry)
                 except:
                     return False
         return True

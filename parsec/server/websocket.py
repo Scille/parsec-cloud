@@ -10,6 +10,7 @@ class WebSocketServer(BaseServer):
         await super().on_connection(websocket)
 
     def start(self, domain: str='localhost', port: int=677, loop=None):
+        self.bootstrap_services()
         loop = loop or asyncio.get_event_loop()
         try:
             start_server = websockets.serve(self.on_connection, domain, port)

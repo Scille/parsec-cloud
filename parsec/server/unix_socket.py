@@ -30,6 +30,7 @@ class UnixSocketServer(BaseServer):
         await super().on_connection(context)
 
     def start(self, socket_path: str, loop=None):
+        self.bootstrap_services()
         loop = loop or asyncio.get_event_loop()
         try:
             connect_coro = asyncio.start_unix_server(
