@@ -187,14 +187,18 @@ class TopologyLoader:
         errors = []
         for k, v in params.items():
             t = anns[k]
-            if t in (int, float, str, list, dict):
+            if t in (int, float, str, bytes, list, dict):
                 if isinstance(v, str) and v.startswith('$'):
                     # Handle env var here
                     # If env var is not defined, use default value if available
                     env_var = v[1:]
                     if env_var in os.environ or k not in with_default_fields:
+                        value = os.environ.get(v[1:], '')
                         try:
-                            cooked[k] = t(os.environ.get(v[1:], ''))
+                            if t == bytes:
+                                cooked[k] = value.encode()
+                            else:
+                                cooked[k] = t(value)
                         except TypeError:
                             errors.append('Field `%s` should be of type `%s`' % (k, t))
                 elif isinstance(v, t):
