@@ -1,10 +1,10 @@
 from base64 import decodebytes
 
 from datetime import datetime
-from uuid import uuid4
 
 from parsec.service import BaseService, cmd
 from parsec.exceptions import ParsecError
+from parsec.backend import VlobService
 
 
 class FileError(ParsecError):
@@ -19,6 +19,7 @@ class FileService(BaseService):
 
     def __init__(self):
         super().__init__()
+        self.vlob_service = VlobService()  # TODO call this remotely
         self.files = {}
 
     @staticmethod
@@ -63,27 +64,29 @@ class FileService(BaseService):
     @cmd('create_file')
     async def _cmd_CREATE(self, msg):
         id = await self.create()
-        return {'status': 'ok', 'id': id}
+        return {'status': 'ok', 'file': id}
 
     @cmd('read_file')
     async def _cmd_READ(self, msg):
-        if 'id' not in msg:
-            raise FileError('bad_params', 'Invalid parameters')
-        content = await self.read(msg['id'])
-        return {'status': 'ok', 'content': content}
+        id = self._get_field(msg, 'id')
+        trust_seed = self._get_field(msg, 'trust_seed')
+        response = await self.read(id, trust_seed)
+        response.update({'status': 'ok'})
+        return response
 
     @cmd('write_file')
     async def _cmd_WRITE(self, msg):
-        if 'id' not in msg:
-            raise FileError('bad_params', 'Invalid parameters')
-        await self.write(msg['id'], msg['content'])
+        id = self._get_field(msg, 'id')
+        trust_seed = self._get_field(msg, 'trust_seed')
+        version = self._get_field(msg, 'version', int)
+        content = self._get_field(msg, 'content')
+        await self.write(id, trust_seed, version, content)
         return {'status': 'ok'}
 
     @cmd('stat_file')
     async def _cmd_STAT(self, msg):
-        if 'id' not in msg:
-            raise FileError('bad_params', 'Invalid parameters')
-        stats = await self.stat(msg['id'])
+        id = self._get_field(msg, 'id')
+        stats = await self.stat(id)
         return {'status': 'ok', 'stats': stats}
 
     @cmd('history')
@@ -93,27 +96,38 @@ class FileService(BaseService):
         return {'status': 'ok', 'history': history}
 
     async def create(self):
-        id = uuid4().hex
+        ret = await self.vlob_service._cmd_CREATE({})  # TODO empty dict ?
         file = {
             'ctime': datetime.utcnow().timestamp(),
             'mtime': datetime.utcnow().timestamp(),
             'atime': datetime.utcnow().timestamp(),
-            'content': ''
+            'size': 0
         }
-        self.files[id] = file
-        return id
+        self.files[ret['id']] = file
+        response = {}
+        for key in ('id', 'read_trust_seed', 'write_trust_seed'):
+            response[key] = ret[key]
+        return ret
 
-    async def read(self, id):
+    async def read(self, id, trust_seed):
         if id not in self.files:
             raise FileNotFound('File not found.')
         self.files[id]['atime'] = datetime.utcnow().timestamp()
-        return self.files[id]['content']
+        ret = await self.vlob_service._cmd_READ({'id': id, 'trust_seed': trust_seed})
+        file = {}
+        for key in ('content', 'version'):
+            file[key] = ret[key]
+        return file
 
-    async def write(self, id, content):
+    async def write(self, id, trust_seed, version, content):
         if id not in self.files:
             raise FileNotFound('File not found.')
         self.files[id]['mtime'] = datetime.utcnow().timestamp()
-        self.files[id]['content'] = content
+        self.files[id]['size'] = len(content)
+        await self.vlob_service._cmd_UPDATE({'id': id,
+                                             'trust_seed': trust_seed,
+                                             'version': version,
+                                             'blob': content})
 
     async def stat(self, id):
         if id not in self.files:
@@ -123,7 +137,7 @@ class FileService(BaseService):
                 'ctime': file['ctime'],
                 'mtime': file['mtime'],
                 'atime': file['atime'],
-                'size': len(file['content'])}
+                'size': file['size']}
 
     async def history(self, id):
         # TODO raise ParsecNotImplementedError

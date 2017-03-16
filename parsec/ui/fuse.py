@@ -17,8 +17,11 @@ log = Logger('Parsec-FUSE')
 
 class File:
 
-    def __init__(self, operations, id, flags=0):
+    def __init__(self, operations, id, version, read_trust_seed, write_trust_seed, flags=0):
         self.id = id
+        self.version = version
+        self.read_trust_seed = read_trust_seed
+        self.write_trust_seed = write_trust_seed
         self._operations = operations
         self._need_flush = False
         self.flags = flags
@@ -26,10 +29,13 @@ class File:
 
     def get_content(self, force=False):
         if not self._content or force:
-            response = self._operations.send_cmd(cmd='FileService:read_file', id=self.id)
+            response = self._operations.send_cmd(cmd='FileService:read_file',
+                                                 id=self.id,
+                                                 trust_seed=self.read_trust_seed)
             if response['status'] != 'ok':
                 raise FuseOSError(ENOENT)
             self._content = decodebytes(response['content'].encode())
+            self.version = response['version']
         return self._content
 
     def read(self, size=None, offset=0):
@@ -51,8 +57,13 @@ class File:
 
     def flush(self):
         if self._need_flush:
+            print(self.version)
+            self.version += 1
+            print(self.version)
             response = self._operations.send_cmd(
                 cmd='FileService:write_file', id=self.id,
+                trust_seed=self.write_trust_seed,
+                version=self.version,
                 content=encodebytes(self._content).decode())
             if response['status'] != 'ok':
                 raise FuseOSError(ENOENT)
@@ -148,7 +159,23 @@ class FuseOperations(LoggingMixIn, Operations):
     def open(self, path, flags=0):
         fd_id = self.next_fd_id
         id = self._get_file_id(path)
-        self.fds[fd_id] = File(self, id, flags)
+        response = self.send_cmd(cmd='UserManifestService:list_dir', path=path)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
+        id = response['current']['id']
+        read_trust_seed = response['current']['read_trust_seed']
+        write_trust_seed = response['current']['write_trust_seed']
+        response = self.send_cmd(cmd='FileService:read_file', id=id, trust_seed=read_trust_seed)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
+        version = response['version']
+        file = File(self,
+                    id,
+                    version,
+                    read_trust_seed,
+                    write_trust_seed,
+                    flags)
+        self.fds[fd_id] = file
         self.next_fd_id += 1
         return fd_id
 

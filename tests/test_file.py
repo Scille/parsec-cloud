@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from freezegun import freeze_time
 import pytest
 
@@ -16,39 +14,60 @@ class BaseTestFileService:
     async def test_create_file(self):
         ret = await self.service.dispatch_msg({'cmd': 'create_file'})
         assert ret['status'] == 'ok'
-        # assert ret['id'] # TODO check id
+        # assert ret['file']['id'] # TODO check id
 
     @pytest.mark.asyncio
     async def test_read_file(self):
         ret = await self.service.dispatch_msg({'cmd': 'create_file'})
-        id = ret['id']
+        id = ret['file']['id']
+        read_trust_seed = ret['file']['read_trust_seed']
+        write_trust_seed = ret['file']['write_trust_seed']
         # Empty file
-        ret = await self.service.dispatch_msg({'cmd': 'read_file', 'id': id})
-        assert ret == {'status': 'ok', 'content': ''}
+        ret = await self.service.dispatch_msg({'cmd':
+                                               'read_file',
+                                               'id': id,
+                                               'trust_seed': read_trust_seed})
+        assert ret == {'status': 'ok', 'content': '', 'version': 1}
         # Not empty file
-        ret = await self.service.dispatch_msg({'cmd': 'write_file', 'id': id, 'content': 'foo'})
-        ret = await self.service.dispatch_msg({'cmd': 'read_file', 'id': id})
-        assert ret == {'status': 'ok', 'content': 'foo'}
+        ret = await self.service.dispatch_msg({'cmd': 'write_file',
+                                               'id': id,
+                                               'trust_seed': write_trust_seed,
+                                               'version': 2,
+                                               'content': 'foo'})
+        ret = await self.service.dispatch_msg({'cmd': 'read_file',
+                                               'id': id,
+                                               'trust_seed': read_trust_seed})
+        assert ret == {'status': 'ok', 'content': 'foo', 'version': 2}
         # Unknown file
         ret = await self.service.dispatch_msg({'cmd': 'read_file',
-                                               'id': '5ea26ae2479c49f58ede248cdca1a3ca'})
+                                               'id': '5ea26ae2479c49f58ede248cdca1a3ca',
+                                               'trust_seed': read_trust_seed})
         assert ret == {'status': 'not_found', 'label': 'File not found.'}
 
     @pytest.mark.asyncio
     async def test_write_file(self):
         ret = await self.service.dispatch_msg({'cmd': 'create_file'})
-        id = ret['id']
+        id = ret['file']['id']
+        read_trust_seed = ret['file']['read_trust_seed']
+        write_trust_seed = ret['file']['write_trust_seed']
         # Check with empty and not empty file
-        for content in ['foo', 'bar']:
+        content = ['foo', 'bar']
+        for value in content:
             ret = await self.service.dispatch_msg({'cmd': 'write_file',
                                                    'id': id,
-                                                   'content': content})
+                                                   'trust_seed': write_trust_seed,
+                                                   'version': content.index(value) + 2,
+                                                   'content': value})
             assert ret == {'status': 'ok'}
-            ret = await self.service.dispatch_msg({'cmd': 'read_file', 'id': id})
-            assert ret == {'status': 'ok', 'content': content}
+            ret = await self.service.dispatch_msg({'cmd': 'read_file',
+                                                   'id': id,
+                                                   'trust_seed': read_trust_seed})
+            assert ret == {'status': 'ok', 'content': value, 'version': content.index(value) + 2}
         # Unknown file
         ret = await self.service.dispatch_msg({'cmd': 'write_file',
-                                               'id': uuid4(),
+                                               'id': '1234',
+                                               'trust_seed': write_trust_seed,
+                                               'version': 1,
                                                'content': 'foo'})
         assert ret == {'status': 'not_found', 'label': 'File not found.'}
 
@@ -58,7 +77,9 @@ class BaseTestFileService:
             # Good file
             with freeze_time('2012-01-01') as frozen_datetime:
                 ret = await self.service.dispatch_msg({'cmd': 'create_file'})
-                id = ret['id']
+                id = ret['file']['id']
+                read_trust_seed = ret['file']['read_trust_seed']
+                write_trust_seed = ret['file']['write_trust_seed']
                 ret = await self.service.dispatch_msg({'cmd': 'stat_file', 'id': id})
                 ctime = frozen_datetime().timestamp()
                 assert ret == {'status': 'ok', 'stats': {'id': id,
@@ -70,6 +91,8 @@ class BaseTestFileService:
                 mtime = frozen_datetime().timestamp()
                 ret = await self.service.dispatch_msg({'cmd': 'write_file',
                                                        'id': id,
+                                                       'trust_seed': write_trust_seed,
+                                                       'version': 2,
                                                        'content': 'foo'})
                 ret = await self.service.dispatch_msg({'cmd': 'stat_file', 'id': id})
                 assert ret == {'status': 'ok', 'stats': {'id': id,
@@ -80,7 +103,9 @@ class BaseTestFileService:
 
                 frozen_datetime.tick()
                 atime = frozen_datetime().timestamp()
-                ret = await self.service.dispatch_msg({'cmd': 'read_file', 'id': id})
+                ret = await self.service.dispatch_msg({'cmd': 'read_file',
+                                                       'id': id,
+                                                       'trust_seed': read_trust_seed})
                 ret = await self.service.dispatch_msg({'cmd': 'stat_file', 'id': id})
                 assert ret == {'status': 'ok', 'stats': {'id': id,
                                                          'ctime': ctime,
@@ -89,7 +114,9 @@ class BaseTestFileService:
                                                          'size': 3}}
             # Unknown file
             ret = await self.service.dispatch_msg({'cmd': 'write_file',
-                                                   'id': uuid4(),
+                                                   'id': '1234',
+                                                   'trust_seed': write_trust_seed,
+                                                   'version': 1,
                                                    'content': 'foo'})
             assert ret == {'status': 'not_found', 'label': 'File not found.'}
 

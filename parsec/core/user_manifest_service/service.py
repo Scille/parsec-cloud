@@ -20,8 +20,8 @@ class UserManifestService(BaseService):
         self.file_service = file_service  # TODO register file service
         self.manifest = {}
         self.manifest['/'] = {'id': None,
-                              'read_seed': None,
-                              'write_seed': None,
+                              'read_trust_seed': None,
+                              'write_trust_seed': None,
                               'key': None}  # TODO call make_dir
 
     @staticmethod
@@ -66,9 +66,8 @@ class UserManifestService(BaseService):
 
     @cmd('create_file')
     async def _cmd_CREATE_FILE(self, msg):
-        if 'path' not in msg:
-            raise UserManifestError('bad_params', 'Invalid parameters')
-        file = await self.create_file(msg['path'])
+        path = self._get_field(msg, 'path')
+        file = await self.create_file(path)
         return {'status': 'ok', 'file': file}
 
     @cmd('rename_file')
@@ -112,9 +111,12 @@ class UserManifestService(BaseService):
         if path in self.manifest:
             raise UserManifestError('already_exist', 'Target already exists.')
         else:
-            id = await self.file_service.create()
-            # TODO set correct values
-            self.manifest[path] = {'id': id, 'read_seed': None, 'write_seed': None, 'key': None}
+            ret = await self.file_service.create()
+            file = {}
+            for key in ('id', 'read_trust_seed', 'write_trust_seed'):
+                file[key] = ret[key]
+            file['key'] = None  # TODO set value
+            self.manifest[path] = file
         return self.manifest[path]
 
     async def rename_file(self, old_path, new_path):
@@ -141,8 +143,8 @@ class UserManifestService(BaseService):
             raise UserManifestError('already_exist', 'Target already exists.')
         else:
             self.manifest[path] = {'id': None,
-                                   'read_seed': None,
-                                   'write_seed': None,
+                                   'read_trust_seed': None,
+                                   'write_trust_seed': None,
                                    'key': None}  # TODO set correct values
         return self.manifest[path]
 

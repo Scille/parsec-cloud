@@ -36,7 +36,7 @@ class BaseVlobService(BaseService):
 
     @cmd('update')
     async def _cmd_UPDATE(self, msg):
-        await self.update(msg['id'], msg['trust_seed'], msg['version'], msg['blob'])
+        await self.update(msg['id'], msg['trust_seed'], int(msg['version']), msg['blob'])
         return {'status': 'ok'}
 
 

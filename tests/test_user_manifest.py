@@ -75,8 +75,9 @@ class BaseTestUserManifestService:
             ret = await self.service.dispatch_msg({'cmd': 'list_dir', 'path': path})
             assert ret['status'] == 'ok'
             for name in expected_childrens:
-                assert list(sorted(['id', 'read_seed', 'write_seed', 'key'])) == list(sorted(ret['current'].keys()))
-                assert list(sorted(['id', 'read_seed', 'write_seed', 'key'])) == list(sorted(ret['childrens'][name].keys()))
+                keys = ['id', 'read_trust_seed', 'write_trust_seed', 'key']
+                assert list(sorted(keys)) == list(sorted(ret['current'].keys()))
+                assert list(sorted(keys)) == list(sorted(ret['childrens'][name].keys()))
 
         await assert_ls('/', ['.root', 'countries'])
         await assert_ls('/countries', ['index', 'Belgium', 'France'])
@@ -106,7 +107,9 @@ class BaseTestUserManifestService:
         ret = await self.service.dispatch_msg({'cmd': 'create_file', 'path': '/test'})
         assert ret['status'] == 'ok'
         assert ret['file']['id'] is not None
-        ret = await self.service.dispatch_msg({'cmd': 'rename_file', 'old_path': '/test', 'new_path': '/foo'})
+        ret = await self.service.dispatch_msg({'cmd': 'rename_file',
+                                               'old_path': '/test',
+                                               'new_path': '/foo'})
         assert ret['status'] == 'ok'
         ret = await self.service.dispatch_msg({'cmd': 'delete_file', 'path': '/test'})
         assert ret == {'status': 'not_found', 'label': 'File not found.'}
