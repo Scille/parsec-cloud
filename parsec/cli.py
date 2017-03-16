@@ -3,6 +3,8 @@ import click
 
 from parsec.server import UnixSocketServer, WebSocketServer
 from parsec.backend import MessageService, VlobService
+from parsec.core.file_service import FileService
+from parsec.core.user_manifest_service import UserManifestService
 from parsec.ui.shell import start_shell
 
 
@@ -56,7 +58,9 @@ def fuse(mountpoint, debug, nothreads, socket):
 @click.option('--backend-port', '-P', default=6777, type=int)
 def core(socket, backend_host, backend_port):
     server = UnixSocketServer()
-    # server.register_service()
+    file_service = FileService()
+    server.register_service(file_service)
+    server.register_service(UserManifestService(file_service))
     server.start(socket)
 
 

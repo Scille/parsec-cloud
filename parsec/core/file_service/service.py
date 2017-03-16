@@ -61,33 +61,33 @@ class FileService(BaseService):
         return value
 
     @cmd('create_file')
-    async def cmd_CREATE(self, msg):
+    async def _cmd_CREATE(self, msg):
         id = await self.create()
         return {'status': 'ok', 'id': id}
 
     @cmd('read_file')
-    async def cmd_READ(self, msg):
+    async def _cmd_READ(self, msg):
         if 'id' not in msg:
             raise FileError('bad_params', 'Invalid parameters')
         content = await self.read(msg['id'])
         return {'status': 'ok', 'content': content}
 
     @cmd('write_file')
-    async def cmd_WRITE(self, msg):
+    async def _cmd_WRITE(self, msg):
         if 'id' not in msg:
             raise FileError('bad_params', 'Invalid parameters')
         await self.write(msg['id'], msg['content'])
         return {'status': 'ok'}
 
     @cmd('stat_file')
-    async def cmd_STAT(self, msg):
+    async def _cmd_STAT(self, msg):
         if 'id' not in msg:
             raise FileError('bad_params', 'Invalid parameters')
         stats = await self.stat(msg['id'])
         return {'status': 'ok', 'stats': stats}
 
     @cmd('history')
-    async def cmd_HISTORY(self, msg):
+    async def _cmd_HISTORY(self, msg):
         id = self._get_field(msg, 'id')
         history = await self.history(id)
         return {'status': 'ok', 'history': history}
@@ -122,7 +122,8 @@ class FileService(BaseService):
         return {'id': id,
                 'ctime': file['ctime'],
                 'mtime': file['mtime'],
-                'atime': file['atime']}
+                'atime': file['atime'],
+                'size': len(file['content'])}
 
     async def history(self, id):
         # TODO raise ParsecNotImplementedError

@@ -1,5 +1,6 @@
 # No version number as these are dev tools
 bumpversion
+blinker
 wheel
 flake8
 freezegun
@@ -10,3 +11,4 @@ pytest
 pytest-cov
 pytest-mock
 pytest-asyncio
+websockets

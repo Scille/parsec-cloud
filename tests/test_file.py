@@ -3,7 +3,7 @@ from uuid import uuid4
 from freezegun import freeze_time
 import pytest
 
-from parsec.file_service import FileService
+from parsec.core.file_service import FileService
 
 
 class BaseTestFileService:
@@ -64,7 +64,8 @@ class BaseTestFileService:
                 assert ret == {'status': 'ok', 'stats': {'id': id,
                                                          'ctime': ctime,
                                                          'mtime': ctime,
-                                                         'atime': ctime}}
+                                                         'atime': ctime,
+                                                         'size': 0}}
                 frozen_datetime.tick()
                 mtime = frozen_datetime().timestamp()
                 ret = await self.service.dispatch_msg({'cmd': 'write_file',
@@ -74,7 +75,9 @@ class BaseTestFileService:
                 assert ret == {'status': 'ok', 'stats': {'id': id,
                                                          'ctime': ctime,
                                                          'mtime': mtime,
-                                                         'atime': ctime}}
+                                                         'atime': ctime,
+                                                         'size': 3}}
+
                 frozen_datetime.tick()
                 atime = frozen_datetime().timestamp()
                 ret = await self.service.dispatch_msg({'cmd': 'read_file', 'id': id})
@@ -82,7 +85,8 @@ class BaseTestFileService:
                 assert ret == {'status': 'ok', 'stats': {'id': id,
                                                          'ctime': ctime,
                                                          'mtime': mtime,
-                                                         'atime': atime}}
+                                                         'atime': atime,
+                                                         'size': 3}}
             # Unknown file
             ret = await self.service.dispatch_msg({'cmd': 'write_file',
                                                    'id': uuid4(),

@@ -15,10 +15,10 @@ LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name})' \
 log = Logger('Parsec-FUSE')
 
 
-class VFSFile:
+class File:
 
-    def __init__(self, operations, path, flags=0):
-        self.path = path
+    def __init__(self, operations, id, flags=0):
+        self.id = id
         self._operations = operations
         self._need_flush = False
         self.flags = flags
@@ -26,7 +26,7 @@ class VFSFile:
 
     def get_content(self, force=False):
         if not self._content or force:
-            response = self._operations.send_cmd(cmd='vfs:read_file', path=self.path)
+            response = self._operations.send_cmd(cmd='FileService:read_file', id=self.id)
             if response['status'] != 'ok':
                 raise FuseOSError(ENOENT)
             self._content = decodebytes(response['content'].encode())
@@ -52,7 +52,7 @@ class VFSFile:
     def flush(self):
         if self._need_flush:
             response = self._operations.send_cmd(
-                cmd='vfs:write_file', path=self.path,
+                cmd='FileService:write_file', id=self.id,
                 content=encodebytes(self._content).decode())
             if response['status'] != 'ok':
                 raise FuseOSError(ENOENT)
@@ -95,11 +95,26 @@ class FuseOperations(LoggingMixIn, Operations):
         except KeyError:
             raise FuseOSError(EBADFD)
 
-    def getattr(self, path, fh=None):
-        response = self.send_cmd(cmd='vfs:stat', path=path)
+    def _get_file_id(self, path):
+        response = self.send_cmd(cmd='UserManifestService:list_dir', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
-        stat = response['stat']
+        return response['current']['id']
+
+    def getattr(self, path, fh=None):
+        if fh:  # TODO check if fh is used ?
+            id = self.fds[fh].id
+        else:
+            id = self._get_file_id(path)
+        if id:
+            response = self.send_cmd(cmd='FileService:stat_file', id=id)
+            if response['status'] != 'ok':
+                raise FuseOSError(ENOENT)
+            stat = response['stats']
+            stat['is_dir'] = False  # TODO remove this ?
+        else:
+            # TODO implement this in user manifest ?
+            stat = {'is_dir': True, 'size': 0, 'ctime': 0, 'mtime': 0, 'atime': 0}
         fuse_stat = {
             'st_size': stat['size'],
             'st_ctime': stat['ctime'],
@@ -119,20 +134,21 @@ class FuseOperations(LoggingMixIn, Operations):
         return fuse_stat
 
     def readdir(self, path, fh):
-        response = self.send_cmd(cmd='vfs:list_dir', path=path)
+        response = self.send_cmd(cmd='UserManifestService:list_dir', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
-        return ['.', '..'] + response['list']
+        return ['.', '..'] + list(response['childrens'].keys())
 
     def create(self, path, mode):
-        response = self.send_cmd(cmd='vfs:create_file', path=path)
+        response = self.send_cmd(cmd='UserManifestService:create_file', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         return self.open(path)
 
     def open(self, path, flags=0):
         fd_id = self.next_fd_id
-        self.fds[fd_id] = VFSFile(self, path, flags)
+        id = self._get_file_id(path)
+        self.fds[fd_id] = File(self, id, flags)
         self.next_fd_id += 1
         return fd_id
 
@@ -164,18 +180,26 @@ class FuseOperations(LoggingMixIn, Operations):
                 self.release(path, fh)
 
     def unlink(self, path):
-        response = self.send_cmd(cmd='vfs:delete_file', path=path)
+        response = self.send_cmd(cmd='UserManifestService:delete_file', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
 
     def mkdir(self, path, mode):
-        response = self.send_cmd(cmd='vfs:make_dir', path=path)
+        response = self.send_cmd(cmd='UserManifestService:make_dir', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         return 0
 
     def rmdir(self, path):
-        response = self.send_cmd(cmd='vfs:remove_dir', path=path)
+        response = self.send_cmd(cmd='UserManifestService:remove_dir', path=path)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
+        return 0
+
+    def rename(self, old_path, new_path):
+        response = self.send_cmd(cmd='UserManifestService:rename_file',
+                                 old_path=old_path,
+                                 new_path=new_path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         return 0
