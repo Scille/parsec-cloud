@@ -94,7 +94,8 @@ class BaseServer:
                 dep = next(boot)
                 while True:
                     if dep not in self._services:
-                        errors.append("Service `%s` required unknown service `%s`" % (service.name, dep))
+                        errors.append("Service `%s` required unknown service `%s`" %
+                            (service.name, dep))
                         break
                     dep = boot.send(self._services[dep])
             except StopIteration:
