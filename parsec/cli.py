@@ -2,7 +2,7 @@ from socket import socket, AF_UNIX, SOCK_STREAM
 import click
 
 from parsec.server import UnixSocketServer, WebSocketServer
-from parsec.backend import MessageService, VlobService
+from parsec.backend import MessageService, VlobService, BlockService
 from parsec.core.file_service import FileService
 from parsec.core.user_manifest_service import UserManifestService
 from parsec.ui.shell import start_shell
@@ -71,6 +71,7 @@ def backend(host, port):
     server = WebSocketServer()
     server.register_service(MessageService())
     server.register_service(VlobService())
+    server.register_service(BlockService())
     server.start(host, port)
 
 
