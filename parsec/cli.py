@@ -4,6 +4,8 @@ import click
 from parsec.server import UnixSocketServer, WebSocketServer
 from parsec.backend import MessageService, VlobService, BlockService
 from parsec.core.file_service import FileService
+from parsec.core.identity_service import IdentityService
+from parsec.core.pub_keys_service import PubKeysService
 from parsec.core.user_manifest_service import UserManifestService
 from parsec.ui.shell import start_shell
 
@@ -40,14 +42,23 @@ def shell(socket):
 
 @click.command()
 @click.argument('mountpoint', type=click.Path(exists=True, file_okay=False))
+@click.argument('email', type=click.STRING)
+@click.argument('key_file', type=click.Path(exists=True, file_okay=True))
+@click.argument('user_manifest_file', type=click.Path(exists=False))
 @click.option('--debug', '-d', is_flag=True, default=False)
 @click.option('--nothreads', is_flag=True, default=False)
 @click.option('--socket', '-s', default=CORE_UNIX_SOCKET,
               help='Path to the UNIX socket (default: %s).' % CORE_UNIX_SOCKET)
-def fuse(mountpoint, debug, nothreads, socket):
+def fuse(mountpoint, email, key_file, user_manifest_file, debug, nothreads, socket):
     # Do the import here in case fuse is not an available dependency
     from parsec.ui.fuse import start_fuse
-    start_fuse(socket, mountpoint, debug=debug, nothreads=nothreads)
+    start_fuse(socket,
+               mountpoint,
+               email,
+               key_file,
+               user_manifest_file,
+               debug=debug,
+               nothreads=nothreads)
 
 
 @click.command()
@@ -58,9 +69,10 @@ def fuse(mountpoint, debug, nothreads, socket):
 @click.option('--backend-port', '-P', default=6777, type=int)
 def core(socket, backend_host, backend_port):
     server = UnixSocketServer()
-    file_service = FileService()
-    server.register_service(file_service)
-    server.register_service(UserManifestService(file_service))
+    server.register_service(FileService(backend_host, backend_port))
+    server.register_service(IdentityService())
+    server.register_service(PubKeysService())
+    server.register_service(UserManifestService())
     server.start(socket)
 
 

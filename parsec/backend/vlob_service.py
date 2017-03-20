@@ -46,7 +46,7 @@ class Vlob:
         self.id = id or uuid4().hex
         self.read_trust_seed = generate_trust_seed()
         self.write_trust_seed = generate_trust_seed()
-        self.blob_versions = [blob or '']
+        self.blob_versions = [blob or (None, None, None)]
 
 
 class VlobService(BaseVlobService):

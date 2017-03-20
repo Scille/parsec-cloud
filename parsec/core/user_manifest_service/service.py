@@ -15,9 +15,10 @@ class UserManifestNotFound(UserManifestError):
 
 class UserManifestService(BaseService):
 
-    _file_service = service('FileService')
+    file_service = service('FileService')
+    identity_service = service('IdentityService')
 
-    def __init__(self, file_service):
+    def __init__(self):
         super().__init__()
         self.manifest = {}
         self.manifest['/'] = {'id': None,
@@ -108,11 +109,24 @@ class UserManifestService(BaseService):
         history = await self.history(path)
         return {'status': 'ok', 'history': history}
 
+    @cmd('load_from_file')
+    async def _cmd_LOAD_FROM_FILE(self, msg):
+        user_manifest_file = self._get_field(msg, 'user_manifest_file')
+        if await self.load_from_file(user_manifest_file):
+            return {'status': 'ok'}
+        else:
+            raise UserManifestError()
+
+    @cmd('dump_to_file')
+    async def _cmd_DUMP_TO_FILE(self, msg):
+        user_manifest_file = self._get_field(msg, 'user_manifest_file')
+        await self.dump_to_file(user_manifest_file)
+
     async def create_file(self, path):
         if path in self.manifest:
             raise UserManifestError('already_exist', 'Target already exists.')
         else:
-            ret = await self._file_service.create()
+            ret = await self.file_service.create()
             file = {}
             for key in ('id', 'read_trust_seed', 'write_trust_seed'):
                 file[key] = ret[key]
@@ -161,25 +175,32 @@ class UserManifestService(BaseService):
             raise UserManifestNotFound('Directory not found.')
 
     async def load_from_file(self, manifest_file):
-        with open(manifest_file, 'r') as manifest_file:
+        with open(manifest_file, 'rb') as manifest_file:
+            new_manifest = await self.identity_service.decrypt(manifest_file.read())
+        if new_manifest:
             new_manifest = json.load(manifest_file)
             consistency = await self.check_consistency(new_manifest)
             if consistency:
                 self.manifest = new_manifest
                 return True
-            else:
-                return False
+        return False
 
     async def dump_to_file(self, manifest_file):
-        with open(manifest_file, 'w') as outfile:
-            json.dump(self.manifest, outfile, sort_keys=True, indent=4, separators=(',', ': '))
+        manifest = json.dumps(self.manifest,
+                              sort_keys=True,
+                              indent=4,
+                              separators=(',', ': '))  # TODO remove indentation ?
+        manifest = bytes(manifest, encoding='UTF-8')
+        crypted_manifest = await self.identity_service.encrypt(manifest)
+        with open(manifest_file, 'wb') as outfile:
+            outfile.write(crypted_manifest)
 
     async def check_consistency(self, manifest):
         for _, entry in manifest.items():
             if entry['id']:
                 try:
-                    await self._file_service.stat(entry)
-                except:
+                    await self.file_service.stat(entry)
+                except Exception:
                     return False
         return True
 

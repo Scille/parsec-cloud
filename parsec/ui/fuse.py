@@ -57,9 +57,7 @@ class File:
 
     def flush(self):
         if self._need_flush:
-            print(self.version)
             self.version += 1
-            print(self.version)
             response = self._operations.send_cmd(
                 cmd='FileService:write_file', id=self.id,
                 trust_seed=self.write_trust_seed,
@@ -243,7 +241,23 @@ class FuseOperations(LoggingMixIn, Operations):
         return 0  # TODO
 
 
-def start_fuse(socket_path: str, mountpoint: str, debug: bool=False, nothreads: bool=False):
+def start_fuse(socket_path: str,
+               mountpoint: str,
+               email: str,
+               key_file: str,
+               user_manifest_file: str,
+               debug: bool=False,
+               nothreads: bool=False):
     StreamHandler(sys.stdout, format_string=LOG_FORMAT).push_application()
     operations = FuseOperations(socket_path)
+    response = operations.send_cmd(cmd='IdentityService:load_identity',
+                                   email=email,
+                                   key_file=key_file)
+    if response['status'] != 'ok':
+        raise FuseOSError(ENOENT)  # TODO change error message
+    if os.path.isfile(user_manifest_file):
+        response = operations.send_cmd(cmd='UserManifestService:load_from_file',
+                                       user_manifest_file=user_manifest_file)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)  # TODO change error message
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)
