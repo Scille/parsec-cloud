@@ -1,4 +1,6 @@
 from base64 import decodebytes
+from os import listdir
+from os.path import isfile, join
 
 from parsec.crypto import RSACipher
 from parsec.service import BaseService, cmd
@@ -15,10 +17,10 @@ class PubKeysNotFound(PubKeysError):
 
 class PubKeysService(BaseService):
 
-    def __init__(self):
+    def __init__(self, pub_keys_directory):
         super().__init__()
-        self.pub_key = None
-        self.rsa_cipher = RSACipher()
+        self.pub_keys = {}
+        self.pub_keys_directory = pub_keys_directory
 
     @staticmethod
     def _pack_PubKeys_error(error):
@@ -64,15 +66,33 @@ class PubKeysService(BaseService):
         user_key = self.get_user_key()
         return {'status': 'ok', 'user_key': user_key}
 
-    @cmd('encrypt_and_sign')
-    async def _cmd_CRYPT_AND_SIGN(self, msg):
+    @cmd('sign_encrypt')
+    async def _cmd_SIGN_ENCRYPT(self, msg):
         data = self._get_field('data')
-        crypted_signed_data = self.crypt_and_sign(data)
+        crypted_signed_data = self.sign_and_encrypt(data)
         return {'status': 'ok', 'data': crypted_signed_data}
 
-    async def get_user_key(self):
-        return self.pub_key
+    async def get_user_key(self, identity):
+        if identity not in self.pub_keys:
+            await self.load_keys()  # TODO load at startup
+        if identity in self.pub_keys:
+            return self.pub_keys[identity]
+        else:
+            raise PubKeysNotFound()
 
-    async def encrypt_and_sign(self, data):
-        crypted_data = self.rsa_cipher.encrypt(data)
-        return self.rsa_cipher.sign(crypted_data)
+    async def encrypt(self, identity, data):  # TODO sign with public key??
+        if identity not in self.pub_keys:
+            await self.load_keys()  # TODO load at startup
+        if identity in self.pub_keys:
+            pub_key = self.pub_keys[identity]
+            return pub_key.encrypt(data)
+        else:
+            raise PubKeysNotFound()
+
+    async def load_keys(self):
+        filenames = [join(self.pub_keys_directory, file)
+                     for file in listdir(self.pub_keys_directory)
+                     if isfile(join(self.pub_keys_directory, file))]
+        for file in filenames:
+            identity = 'francois.rossigneux@scille.fr'  # TODO remove this, read identity
+            self.pub_keys[identity] = RSACipher(file)  # TODO doesn't work with public

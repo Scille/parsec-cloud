@@ -17,11 +17,9 @@ log = Logger('Parsec-FUSE')
 
 class File:
 
-    def __init__(self, operations, id, version, read_trust_seed, write_trust_seed, flags=0):
+    def __init__(self, operations, id, version, flags=0):
         self.id = id
         self.version = version
-        self.read_trust_seed = read_trust_seed
-        self.write_trust_seed = write_trust_seed
         self._operations = operations
         self._need_flush = False
         self.flags = flags
@@ -29,9 +27,7 @@ class File:
 
     def get_content(self, force=False):
         if not self._content or force:
-            response = self._operations.send_cmd(cmd='FileService:read_file',
-                                                 id=self.id,
-                                                 trust_seed=self.read_trust_seed)
+            response = self._operations.send_cmd(cmd='FileService:read_file', id=self.id)
             if response['status'] != 'ok':
                 raise FuseOSError(ENOENT)
             self._content = decodebytes(response['content'].encode())
@@ -59,8 +55,8 @@ class File:
         if self._need_flush:
             self.version += 1
             response = self._operations.send_cmd(
-                cmd='FileService:write_file', id=self.id,
-                trust_seed=self.write_trust_seed,
+                cmd='FileService:write_file',
+                id=self.id,
                 version=self.version,
                 content=encodebytes(self._content).decode())
             if response['status'] != 'ok':
@@ -111,22 +107,22 @@ class FuseOperations(LoggingMixIn, Operations):
         return response['current']['id']
 
     def getattr(self, path, fh=None):
-        if fh:  # TODO check if fh is used ?
-            id = self.fds[fh].id
-        else:
-            id = self._get_file_id(path)
+        response = self.send_cmd(cmd='UserManifestService:list_dir', path=path)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
+        id = response['current']['id']
         if id:
             response = self.send_cmd(cmd='FileService:stat_file', id=id)
             if response['status'] != 'ok':
                 raise FuseOSError(ENOENT)
-            stat = response['stats']
+            stat = response
             stat['is_dir'] = False  # TODO remove this ?
         else:
-            # TODO implement this in user manifest ?
+            # TODO remove this?
             stat = {'is_dir': True, 'size': 0, 'ctime': 0, 'mtime': 0, 'atime': 0}
         fuse_stat = {
             'st_size': stat['size'],
-            'st_ctime': stat['ctime'],
+            'st_ctime': stat['ctime'],  # TOTO change to local timezone
             'st_mtime': stat['mtime'],
             'st_atime': stat['atime'],
         }
@@ -161,18 +157,11 @@ class FuseOperations(LoggingMixIn, Operations):
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         id = response['current']['id']
-        read_trust_seed = response['current']['read_trust_seed']
-        write_trust_seed = response['current']['write_trust_seed']
-        response = self.send_cmd(cmd='FileService:read_file', id=id, trust_seed=read_trust_seed)
+        response = self.send_cmd(cmd='FileService:read_file', id=id)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         version = response['version']
-        file = File(self,
-                    id,
-                    version,
-                    read_trust_seed,
-                    write_trust_seed,
-                    flags)
+        file = File(self, id, version, flags)
         self.fds[fd_id] = file
         self.next_fd_id += 1
         return fd_id
@@ -245,7 +234,6 @@ def start_fuse(socket_path: str,
                mountpoint: str,
                email: str,
                key_file: str,
-               user_manifest_file: str,
                debug: bool=False,
                nothreads: bool=False):
     StreamHandler(sys.stdout, format_string=LOG_FORMAT).push_application()
@@ -255,9 +243,8 @@ def start_fuse(socket_path: str,
                                    key_file=key_file)
     if response['status'] != 'ok':
         raise FuseOSError(ENOENT)  # TODO change error message
-    if os.path.isfile(user_manifest_file):
-        response = operations.send_cmd(cmd='UserManifestService:load_from_file',
-                                       user_manifest_file=user_manifest_file)
-        if response['status'] != 'ok':
-            raise FuseOSError(ENOENT)  # TODO change error message
+    # TODO call this automatically
+    response = operations.send_cmd(cmd='UserManifestService:load_user_manifest', identity=email)
+    if response['status'] != 'ok':
+        raise FuseOSError(ENOENT)  # TODO change error message
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)

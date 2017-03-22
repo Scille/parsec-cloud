@@ -18,6 +18,7 @@ def _str_to_bytes(cooked):
 class CryptoService(BaseCryptoService):
 
     def __init__(self, symetric: BaseSymCipher, asymetric: BaseAsymCipher):
+        super().__init__()
         self._asym = asymetric
         self._sym = symetric
 
