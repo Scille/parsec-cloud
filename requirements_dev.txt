@@ -4,6 +4,8 @@ blinker
 wheel
 flake8
 freezegun
+gnupg
+keybaseio-api
 tox
 coverage
 Sphinx

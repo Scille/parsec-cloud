@@ -232,19 +232,19 @@ class FuseOperations(LoggingMixIn, Operations):
 
 def start_fuse(socket_path: str,
                mountpoint: str,
-               email: str,
-               key_file: str,
+               identity: str,
+               passphrase: str,
                debug: bool=False,
                nothreads: bool=False):
     StreamHandler(sys.stdout, format_string=LOG_FORMAT).push_application()
     operations = FuseOperations(socket_path)
-    response = operations.send_cmd(cmd='IdentityService:load_identity',
-                                   email=email,
-                                   key_file=key_file)
+    response = operations.send_cmd(cmd='IdentityService:load_user_identity',
+                                   identity=identity,
+                                   passphrase=passphrase)
     if response['status'] != 'ok':
         raise FuseOSError(ENOENT)  # TODO change error message
     # TODO call this automatically
-    response = operations.send_cmd(cmd='UserManifestService:load_user_manifest', identity=email)
+    response = operations.send_cmd(cmd='UserManifestService:load_user_manifest')
     if response['status'] != 'ok':
         raise FuseOSError(ENOENT)  # TODO change error message
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)

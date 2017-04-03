@@ -57,11 +57,11 @@ class BlockService(BaseBlockService):
             self._blocks[id]['access_timestamp'] = datetime.utcnow().timestamp()
             return self._blocks[id]
         except KeyError:
-            raise BlockNotFound()
+            raise BlockNotFound('Block not found.')
 
     async def stat(self, id):
         try:
             return {'access_timestamp': self._blocks[id]['access_timestamp'],
                     'creation_timestamp': self._blocks[id]['creation_timestamp']}
         except KeyError:
-            raise BlockNotFound()
+            raise BlockNotFound('Block not found.')

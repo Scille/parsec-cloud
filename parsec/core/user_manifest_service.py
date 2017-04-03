@@ -24,7 +24,6 @@ class UserManifestNotFound(UserManifestError):
 
 class UserManifestService(BaseService):
 
-    crypto_service = service('CryptoService')
     file_service = service('FileService')
     identity_service = service('IdentityService')
 
@@ -210,13 +209,12 @@ class UserManifestService(BaseService):
         try:
             response = await self.send_cmd(cmd='VlobService:read',
                                            id=user_identity,
-                                           challenge=challenge)
+                                           challenge=challenge.decode())
         except Exception:
             raise UserManifestError('Unable to load newly created user manifest.')
         self.version = response['version']
-        blob = json.loads(response['blob'])
-        blob['content'] = decodebytes(blob['content'].encode())
-        content = await self.crypto_service.decrypt(**blob)
+        blob = response['blob']
+        content = await self.identity_service.decrypt(blob)
         content = content.decode()
         manifest = json.loads(content)
         consistency = await self.check_consistency(manifest)
@@ -228,15 +226,13 @@ class UserManifestService(BaseService):
         user_identity, challenge = await self.identity_service.compute_sign_challenge()
         blob = json.dumps(self.manifest)
         blob = blob.encode()
-        encrypted_blob = await self.crypto_service.encrypt(blob)
-        encrypted_blob['content'] = encodebytes(encrypted_blob['content']).decode()
-        encrypted_blob = json.dumps(encrypted_blob)
+        encrypted_blob = await self.identity_service.encrypt(blob)
         self.version += 1
         response = await self.send_cmd(cmd='VlobService:update',
                                        id=user_identity,
                                        version=self.version,
-                                       blob=encrypted_blob,
-                                       challenge=challenge)
+                                       blob=encrypted_blob.decode(),
+                                       challenge=challenge.decode())
         if response['status'] != 'ok':
             raise UserManifestError('Cannot update vlob.')
 
@@ -255,6 +251,7 @@ class UserManifestService(BaseService):
                 key = entry['key']
                 entry['key'] = key if key else None
                 return entry
+        raise(UserManifestNotFound('File not found.'))
 
     async def update_key(self, id, new_key):  # TODO don't call when update manifest
         for key, values in self.manifest.items():

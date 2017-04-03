@@ -1,4 +1,4 @@
-from base64 import encodebytes, decodebytes
+from base64 import decodebytes
 import random
 import string
 from uuid import uuid4
@@ -34,14 +34,14 @@ class VlobNotFound(VlobError):
 
 class BaseVlobService(BaseService):
 
+    crypto_service = service('CryptoService')
     pub_keys_service = service('PubKeysService')
     on_vlob_updated = event('updated')
 
     @cmd('get_sign_challenge')
     async def _cmd_GET_SIGN_CHAlLENGE(self, msg):
         challenge = await self.get_sign_challenge(msg['id'])
-        challenge = encodebytes(challenge).decode()
-        return {'status': 'ok', 'challenge': challenge}
+        return {'status': 'ok', 'challenge': challenge.decode()}
 
     @cmd('get_seed_challenge')
     async def _cmd_GET_SEED_CHALLENGE(self, msg):
@@ -118,7 +118,7 @@ class VlobService(BaseVlobService):
     async def get_sign_challenge(self, id):
         challenge = generate_trust_seed()
         # TODO id = hash or identity?
-        encrypted_challenge = await self.pub_keys_service.encrypt(id, challenge.encode())
+        encrypted_challenge = await self.crypto_service.asym_encrypt(challenge, id)
         self._challenges[challenge] = id
         return encrypted_challenge
 

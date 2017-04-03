@@ -1,8 +1,8 @@
 from base64 import decodebytes
-from os import listdir
-from os.path import isfile, join
 
-from parsec.crypto import RSACipher
+import gnupg
+from keybaseapi import User
+
 from parsec.service import BaseService, cmd
 from parsec.exceptions import ParsecError
 
@@ -17,10 +17,9 @@ class PubKeysNotFound(PubKeysError):
 
 class PubKeysService(BaseService):
 
-    def __init__(self, pub_keys_directory):
+    def __init__(self):
         super().__init__()
-        self.pub_keys = {}
-        self.pub_keys_directory = pub_keys_directory
+        self.gpg = gnupg.GPG(binary='/usr/bin/gpg', homedir='~/.gnupg')  # TODO default params?
 
     @staticmethod
     def _pack_PubKeys_error(error):
@@ -61,38 +60,30 @@ class PubKeysService(BaseService):
             raise PubKeysError('bad_params', 'Param `%s` must be of type `%s`' % (field, type_))
         return value
 
-    @cmd('get_user_key')
-    async def _cmd_GET_USER_KEY(self, msg):
-        user_key = self.get_user_key()
+    @cmd('get_pub_key')
+    async def _cmd_GET_PUB_KEY(self, msg):
+        user_key = self.get_pub_key()
         return {'status': 'ok', 'user_key': user_key}
 
-    @cmd('sign_encrypt')
-    async def _cmd_SIGN_ENCRYPT(self, msg):
-        data = self._get_field('data')
-        crypted_signed_data = self.sign_and_encrypt(data)
-        return {'status': 'ok', 'data': crypted_signed_data}
+    async def list_identities(self, identity, secret=False):
+        return [key['fingerprint'] for key in self.gpg.list_keys(secret)]
 
-    async def get_user_key(self, identity):
-        if identity not in self.pub_keys:
-            await self.load_keys()  # TODO load at startup
-        if identity in self.pub_keys:
-            return self.pub_keys[identity]
+    async def identity_exists(self, identity, secret=False):
+        return identity in await self.list_identities(identity, secret)
+
+    async def get_pub_key(self, identity):
+        if identity not in [key['fingerprint'] for key in self.gpg.list_keys()]:
+            await self.fetch_pub_key_from_keybase(identity)  # TODO load at startup
+        pub_key = self.gpg.export_keys(identity)
+        if pub_key:
+            return pub_key
         else:
             raise PubKeysNotFound()
 
-    async def encrypt(self, identity, data):  # TODO sign with public key??
-        if identity not in self.pub_keys:
-            await self.load_keys()  # TODO load at startup
-        if identity in self.pub_keys:
-            pub_key = self.pub_keys[identity]
-            return pub_key.encrypt(data)
+    async def fetch_pub_key_from_keybase(self, identity):
+        try:
+            user = User('key_fingerprint://' + identity)
+        except AttributeError:
+            raise(PubKeysNotFound('Identity not found in Keybase.'))
         else:
-            raise PubKeysNotFound()
-
-    async def load_keys(self):
-        filenames = [join(self.pub_keys_directory, file)
-                     for file in listdir(self.pub_keys_directory)
-                     if isfile(join(self.pub_keys_directory, file))]
-        for file in filenames:
-            identity = 'francois.rossigneux@scille.fr'  # TODO remove this, read identity
-            self.pub_keys[identity] = RSACipher(file)  # TODO doesn't work with public
+            self.gpg.import_keys(user.raw_public_key)

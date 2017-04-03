@@ -8,7 +8,6 @@ from cryptography.hazmat.primitives import hashes
 from logbook import Logger, StreamHandler
 import websockets
 
-from parsec.crypto import AESCipher
 from parsec.service import BaseService, cmd, service
 from parsec.exceptions import ParsecError
 
@@ -28,7 +27,9 @@ class FileNotFound(FileError):
 
 class FileService(BaseService):
 
+    crypto_service = service('CryptoService')
     identity_service = service('IdentityService')
+    pub_keys_service = service('PubKeysService')
     user_manifest_service = service('UserManifestService')
 
     def __init__(self, backend_host, backend_port):
@@ -128,7 +129,10 @@ class FileService(BaseService):
         return response
 
     async def read(self, id):
-        properties = await self.user_manifest_service.get_properties(id)
+        try:
+            properties = await self.user_manifest_service.get_properties(id)
+        except Exception:
+            raise FileNotFound('Vlob not found.')
         key = decodebytes(properties['key'].encode()) if properties['key'] else None
         trust_seed = properties['read_trust_seed']
         if not key:
@@ -142,9 +146,8 @@ class FileService(BaseService):
             raise FileError('Cannot read vlob.')
         version = response['version']
         if response['blob']:
-            encryptor = AESCipher()
             encrypted_blob = decodebytes(response['blob'].encode())
-            blob = encryptor.decrypt(key, encrypted_blob)
+            blob = await self.crypto_service.sym_decrypt(encrypted_blob, key)
             blob = json.loads(blob.decode())
             key = decodebytes(blob['key'].encode())
             old_digest = decodebytes(blob['digest'].encode())
@@ -154,8 +157,7 @@ class FileService(BaseService):
                 raise FileError('Cannot read block.')
             # Decrypt
             encrypted_content = decodebytes(response['content'].encode())
-            encryptor = AESCipher()
-            content = encryptor.decrypt(key, encrypted_content)
+            content = await self.crypto_service.sym_decrypt(encrypted_content, key)
             # Check integrity
             digest = hashes.Hash(hashes.SHA512(), backend=openssl)
             digest.update(content)
@@ -164,7 +166,10 @@ class FileService(BaseService):
         return {'content': content.decode(), 'version': version}
 
     async def write(self, id, version, content):
-        properties = await self.user_manifest_service.get_properties(id)
+        try:
+            properties = await self.user_manifest_service.get_properties(id)
+        except Exception:
+            raise FileNotFound('Vlob not found.')
         key = decodebytes(properties['key'].encode()) if properties['key'] else None
         trust_seed = properties['write_trust_seed']
         content = content.encode()
@@ -175,8 +180,7 @@ class FileService(BaseService):
         content_digest = digest.finalize()  # TODO replace with hexdigest ?
         content_digest = encodebytes(content_digest).decode()
         # Encrypt block
-        encryptor = AESCipher()
-        key, data = encryptor.encrypt(content)
+        key, data = await self.crypto_service.sym_encrypt(content)
         key = encodebytes(key).decode()
         data = encodebytes(data).decode()
         # Store block
@@ -192,7 +196,7 @@ class FileService(BaseService):
         # Encrypt blob
         blob = json.dumps(blob)
         blob = blob.encode()
-        key, encrypted_blob = encryptor.encrypt(blob)
+        key, encrypted_blob = await self.crypto_service.sym_encrypt(blob)
         encrypted_blob = encodebytes(encrypted_blob).decode()
         response = await self.send_cmd(cmd='VlobService:update',
                                        id=id,
@@ -206,7 +210,10 @@ class FileService(BaseService):
         return key
 
     async def stat(self, id):
-        properties = await self.user_manifest_service.get_properties(id)
+        try:
+            properties = await self.user_manifest_service.get_properties(id)
+        except Exception:
+            raise FileNotFound('Vlob not found.')
         key = decodebytes(properties['key'].encode()) if properties['key'] else None
         trust_seed = properties['read_trust_seed']
         if not key:
@@ -222,10 +229,9 @@ class FileService(BaseService):
                                        hash=hash)
         if response['status'] != 'ok':
             raise FileError('Cannot read vlob.')
-        encryptor = AESCipher()
         encrypted_blob = response['blob']
         encrypted_blob = decodebytes(encrypted_blob.encode())
-        blob = encryptor.decrypt(key, encrypted_blob)
+        blob = await self.crypto_service.sym_decrypt(encrypted_blob, key)
         blob = json.loads(blob.decode())
         response = await self.send_cmd(cmd='BlockService:stat', id=blob['block'])
         if response['status'] != 'ok':
