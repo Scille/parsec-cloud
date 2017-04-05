@@ -15,7 +15,7 @@ class BaseMessageService(BaseService):
 
     @cmd('get')
     async def _cmd_GET(self, msg):
-        offset = msg.get('offset', 0)
+        offset = self._get_field(msg, 'offset', type_=int, default=0)
         messages = [{'count': i, 'body': msg} for i, msg in enumerate(
             await self.get(msg['recipient'], offset), 1 + offset)]
         return {'status': 'ok', 'messages': messages}

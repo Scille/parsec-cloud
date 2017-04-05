@@ -1,4 +1,3 @@
-from base64 import decodebytes
 import random
 import string
 from uuid import uuid4
@@ -50,10 +49,10 @@ class BaseVlobService(BaseService):
 
     @cmd('create')
     async def _cmd_CREATE(self, msg):
-        vlob = await self.create(msg.get('id'),
-                                 msg.get('blob'),
-                                 msg.get('read_trust_seed'),
-                                 msg.get('write_trust_seed'))
+        vlob = await self.create(self._get_field(msg, 'id', default=None),
+                                 self._get_field(msg, 'blob', default=None),
+                                 self._get_field(msg, 'read_trust_seed', default=None),
+                                 self._get_field(msg, 'write_trust_seed', default=None))
         return {
             'status': 'ok',
             'id': vlob.id,
@@ -63,31 +62,22 @@ class BaseVlobService(BaseService):
 
     @cmd('read')
     async def _cmd_READ(self, msg):
-        if 'hash' in msg:
-            hash = decodebytes(msg.get('hash').encode())
-            vlob = await self.read(msg.get('id'), msg.get('challenge'), hash)
-        else:
-            vlob = await self.read_named_vlob(msg.get('id'), msg.get('challenge'))
+        hash = self._get_field(msg, 'hash', type_=bytes, default=None)
+        vlob = await self.read(self._get_field(msg, 'id'), self._get_field(msg, 'challenge'), hash)
         blob = None
-        version = msg.get('version', len(vlob.blob_versions))
+        version = self._get_field(msg, 'version', default=len(vlob.blob_versions))
         if version >= 1:
             blob = vlob.blob_versions[version - 1]
         return {'status': 'ok', 'blob': blob, 'version': version}
 
     @cmd('update')
     async def _cmd_UPDATE(self, msg):
-        if 'hash' in msg:
-            hash = decodebytes(msg.get('hash').encode())
-            await self.update(msg['id'],
-                              int(msg['version']),
-                              msg['blob'],
-                              msg.get('challenge'),
-                              hash)
-        else:
-            await self.update_named_vlob(msg['id'],
-                                         int(msg['version']),
-                                         msg['blob'],
-                                         msg.get('challenge'))
+        hash = self._get_field(msg, 'hash', type_=bytes, default=None)
+        await self.update(msg['id'],
+                          int(msg['version']),
+                          msg['blob'],
+                          self._get_field(msg, 'challenge'),
+                          hash)
         return {'status': 'ok'}
 
 
@@ -159,40 +149,25 @@ class VlobService(BaseVlobService):
         self._vlobs[vlob.id] = vlob
         return vlob
 
-    async def read(self, id, challenge, hash):
-        if await self.validate_seed_challenge('READ', challenge, hash):
+    async def read(self, id, challenge, hash=None):
+        if ((hash and await self.validate_seed_challenge('READ', challenge, hash)) or
+                (not hash and await self.validate_sign_challenge(id, challenge))):
             try:
                 vlob = self._vlobs[id]
             except KeyError:
-                raise VlobNotFound('Cannod find vlob.')
+                raise VlobNotFound('Cannot find vlob.')
             return vlob
 
-    async def read_named_vlob(self, id, challenge):
-        if await self.validate_sign_challenge(id, challenge):
-            vlob = self._vlobs[id]
-            assert vlob.id == vlob.read_trust_seed
-            assert vlob.id == vlob.write_trust_seed
-            return vlob
-
-    async def update(self, id, next_version, blob, challenge, hash):
-        if await self.validate_seed_challenge('WRITE', challenge, hash):
+    async def update(self, id, next_version, blob, challenge, hash=None):
+        if ((hash and await self.validate_seed_challenge('WRITE', challenge, hash)) or
+                (not hash and await self.validate_sign_challenge(id, challenge))):
             try:
                 vlob = self._vlobs[id]
             except KeyError:
-                raise VlobNotFound('Cannod find vlob.')
+                raise VlobNotFound('Cannot find vlob.')
             if next_version == len(vlob.blob_versions) + 1:
                 vlob.blob_versions.append(blob)
                 self._vlobs[id] = vlob
             else:
-                raise VlobError('Bad vlob version.')
-            self.on_vlob_updated.send(id)
-
-    async def update_named_vlob(self, id, next_version, blob, challenge):
-        if await self.validate_sign_challenge(id, challenge):
-            vlob = self._vlobs[id]
-            assert vlob.id == vlob.read_trust_seed
-            assert vlob.id == vlob.write_trust_seed
-            if next_version != len(vlob.blob_versions) + 1:
-                raise VlobNotFound('Cannot find vlob.')
-            vlob.blob_versions.append(blob)
+                raise VlobError('Wrong blob version.')
             self.on_vlob_updated.send(id)

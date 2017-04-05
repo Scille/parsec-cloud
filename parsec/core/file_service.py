@@ -47,45 +47,6 @@ class FileService(BaseService):
             log.debug('Received: %r' % raw_reps)
             return json.loads(raw_reps.decode())
 
-    @staticmethod
-    def _pack_file_error(error):
-        if error.message:
-            return ('%s %s' % (error.status, error.message)).encode()
-        else:
-            return error.status.encode()
-
-    @staticmethod
-    def _extract_params(raw_data, *types):
-        number = len(types)
-        splitted = raw_data.split(b' ', maxsplit=number - 1)
-        if len(splitted) != number:
-            raise FileError('bad_params', 'Invalid parameters')
-        try:
-            for i, tp in enumerate(types):
-                if tp is bytes:
-                    continue
-                elif tp is str:
-                    splitted[i] = splitted[i].decode()
-                else:
-                    splitted[i] = tp(splitted[i])
-        except TypeError:
-            raise FileError('bad_params', 'Parameter %s should be of type %s' % (i, tp))
-        return splitted
-
-    @staticmethod
-    def _get_field(msg, field, type_=str):
-        value = msg.get(field)
-        if value is None:
-            raise FileError('bad_params', 'Param `%s` is required' % field)
-        if type_ is bytes:
-            try:
-                value = decodebytes(value.encode())
-            except TypeError:
-                raise FileError('bad_params', 'Param `%s` is not valid base64 data' % field)
-        if not isinstance(value, type_):
-            raise FileError('bad_params', 'Param `%s` must be of type `%s`' % (field, type_))
-        return value
-
     @cmd('create_file')
     async def _cmd_CREATE(self, msg):
         id = await self.create()
@@ -156,7 +117,7 @@ class FileService(BaseService):
             if response['status'] != 'ok':
                 raise FileError('Cannot read block.')
             # Decrypt
-            encrypted_content = decodebytes(response['content'].encode())
+            encrypted_content = response['content'].encode()
             content = await self.crypto_service.sym_decrypt(encrypted_content, key)
             # Check integrity
             digest = hashes.Hash(hashes.SHA512(), backend=openssl)
@@ -182,7 +143,7 @@ class FileService(BaseService):
         # Encrypt block
         key, data = await self.crypto_service.sym_encrypt(content)
         key = encodebytes(key).decode()
-        data = encodebytes(data).decode()
+        data = data.decode()
         # Store block
         response = await self.send_cmd(cmd='BlockService:create', content=data)
         if response['status'] != 'ok':

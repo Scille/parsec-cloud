@@ -1,4 +1,4 @@
-from base64 import encodebytes, decodebytes
+from base64 import encodebytes
 import json
 import sys
 
@@ -46,49 +46,10 @@ class IdentityService(BaseService):
             log.debug('Received: %r' % raw_reps)
             return json.loads(raw_reps.decode())
 
-    @staticmethod
-    def _pack_identity_error(error):
-        if error.message:
-            return ('%s %s' % (error.status, error.message)).encode()
-        else:
-            return error.status.encode()
-
-    @staticmethod
-    def _extract_params(raw_data, *types):
-        number = len(types)
-        splitted = raw_data.split(b' ', maxsplit=number - 1)
-        if len(splitted) != number:
-            raise IdentityError('bad_params', 'Invalid parameters')
-        try:
-            for i, tp in enumerate(types):
-                if tp is bytes:
-                    continue
-                elif tp is str:
-                    splitted[i] = splitted[i].decode()
-                else:
-                    splitted[i] = tp(splitted[i])
-        except TypeError:
-            raise IdentityError('bad_params', 'Parameter %s should be of type %s' % (i, tp))
-        return splitted
-
-    @staticmethod
-    def _get_field(msg, field, type_=str):
-        value = msg.get(field)
-        if value is None:
-            raise IdentityError('bad_params', 'Param `%s` is required' % field)
-        if type_ is bytes:
-            try:
-                value = decodebytes(value.encode())
-            except TypeError:
-                raise IdentityError('bad_params', 'Param `%s` is not valid base64 data' % field)
-        if not isinstance(value, type_):
-            raise IdentityError('bad_params', 'Param `%s` must be of type `%s`' % (field, type_))
-        return value
-
     @cmd('load_user_identity')
     async def _cmd_LOAD_USER_IDENTITY(self, msg):
-        identity = msg.get('identity')
-        passphrase = msg.get('passphrase')
+        identity = self._get_field(msg, 'identity', default=None)
+        passphrase = self._get_field(msg, 'passphrase', default=None)
         await self.load_user_identity(identity, passphrase)
         return {'status': 'ok'}
 
@@ -133,10 +94,7 @@ class IdentityService(BaseService):
             raise(IdentityNotFound('No identity loaded.'))
         if not recipient:
             recipient = await self.get_user_identity()
-        return await self.crypto_service.asym_encrypt(data,
-                                                      recipient,
-                                                      default_key=self.identity,
-                                                      passphrase=self.passphrase)
+        return await self.crypto_service.asym_encrypt(data, recipient)
 
     async def decrypt(self, data):
         if not self.identity:

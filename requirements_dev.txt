@@ -1,4 +1,5 @@
 # No version number as these are dev tools
+asynctest
 bumpversion
 blinker
 wheel

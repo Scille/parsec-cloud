@@ -1,4 +1,4 @@
-from base64 import encodebytes, decodebytes
+from base64 import encodebytes
 import json
 import sys
 
@@ -43,46 +43,6 @@ class UserManifestService(BaseService):
             raw_reps = await websocket.recv()
             log.debug('Received: %r' % raw_reps)
             return json.loads(raw_reps.decode())
-
-    @staticmethod
-    def _pack_manifest_error(error):
-        if error.message:
-            return ('%s %s' % (error.status, error.message)).encode()
-        else:
-            return error.status.encode()
-
-    @staticmethod
-    def _extract_params(raw_data, *types):
-        number = len(types)
-        splitted = raw_data.split(b' ', maxsplit=number - 1)
-        if len(splitted) != number:
-            raise UserManifestError('bad_params', 'Invalid parameters')
-        try:
-            for i, tp in enumerate(types):
-                if tp is bytes:
-                    continue
-                elif tp is str:
-                    splitted[i] = splitted[i].decode()
-                else:
-                    splitted[i] = tp(splitted[i])
-        except TypeError:
-            raise UserManifestError('bad_params', 'Parameter %s should be of type %s' % (i, tp))
-        return splitted
-
-    @staticmethod
-    def _get_field(msg, field, type_=str):
-        value = msg.get(field)
-        if value is None:
-            raise UserManifestError('bad_params', 'Param `%s` is required' % field)
-        if type_ is bytes:
-            try:
-                value = decodebytes(value.encode())
-            except TypeError:
-                raise UserManifestError('bad_params', 'Param `%s` is not valid base64 data' % field)
-        if not isinstance(value, type_):
-            raise UserManifestError('bad_params', 'Param `%s` must be of type `%s`'
-                                    % (field, type_))
-        return value
 
     @cmd('create_file')
     async def _cmd_CREATE_FILE(self, msg):
