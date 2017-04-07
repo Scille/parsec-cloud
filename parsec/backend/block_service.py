@@ -25,7 +25,7 @@ class cmd_READ_Schema(BaseCmdSchema):
 
 class BaseBlockService(BaseService):
 
-    vlob_service = service('VlobService')
+    vlob_service = service('MockedVlobService')
     on_vlob_updated = event('updated')
 
     @cmd('create')

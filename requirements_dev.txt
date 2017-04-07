@@ -7,6 +7,7 @@ flake8
 freezegun
 gnupg
 keybaseio-api
+marshmallow
 tox
 coverage
 Sphinx

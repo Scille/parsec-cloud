@@ -1,109 +1,104 @@
-from base64 import encodebytes
 import shutil
 
-from asynctest import mock, MagicMock
 import gnupg
 import pytest
 
 from parsec.server import BaseServer
-from parsec.core import CryptoService, PubKeysService
+from parsec.core import CryptoService, IdentityService, PubKeysService
 
 
-class AsyncMock(MagicMock):
-    async def __call__(self, *args, **kwargs):
-        return super(AsyncMock, self).__call__(*args, **kwargs)
-
-
-class BaseTestCryptoService:
+class BaseTestIdentityService:
 
     # Helpers
 
     # Tests
 
     @pytest.mark.asyncio
-    @mock.patch('parsec.core.crypto_service.urandom', return_value=b'123456789')
-    async def test_sym_encrypt(self, urandom_function):
-        ret = await self.service.dispatch_msg({'cmd': 'sym_encrypt', 'data': self.test_data})
+    async def test_load_identity(self):
+        # Default identity not found
+        ret = await self.service.dispatch_msg({'cmd': 'load_identity'})
+        assert ret == {'status': 'not_found', 'label': 'Default identity not found.'}
+        # Default identity found
+        self.gpg.import_keys(self.unprotected_key)
+        ret = await self.service.dispatch_msg({'cmd': 'load_identity'})
+        assert ret == {'status': 'ok'}
+        self.gpg.import_keys(self.protected_key)
+        # Multiple identity found
+        ret = await self.service.dispatch_msg({'cmd': 'load_identity'})
+        assert ret == {'status': 'error', 'label': 'Multiple identities found.'}
+        # Identity not found
+        ret = await self.service.dispatch_msg({'cmd': 'load_identity', 'identity': 'unknown'})
+        assert ret == {'status': 'not_found', 'label': 'Identity not found.'}
+        # Wrong passphrase for protected key
+        ret = await self.service.dispatch_msg({'cmd': 'load_identity',
+                                               'identity': self.fingerprint_protected_key,
+                                               'passphrase': 'wrong'})
+        assert ret == {'status': 'error', 'label': 'Bad passphrase.'}
+        # Passphrase with an unprotected key (should be ignored)
+        ret = await self.service.dispatch_msg({'cmd': 'load_identity',
+                                               'identity': self.fingerprint_unprotected_key,
+                                               'passphrase': self.passphrase})
+        assert ret == {'status': 'ok'}
+        # Working with passphrase and protected key
+        ret = await self.service.dispatch_msg({'cmd': 'load_identity',
+                                               'identity': self.fingerprint_protected_key,
+                                               'passphrase': self.passphrase})
+        assert ret == {'status': 'ok'}
+        # Working without passphrase and unprotected key
+        ret = await self.service.dispatch_msg({'cmd': 'load_identity',
+                                               'identity': self.fingerprint_unprotected_key})
+        assert ret == {'status': 'ok'}
+
+    @pytest.mark.asyncio
+    async def test_get_identity(self):
+        self.gpg.import_keys(self.unprotected_key)
+        self.gpg.import_keys(self.protected_key)
+        # Identity loaded
+        ret = await self.service.dispatch_msg({'cmd': 'get_identity'})
+        assert ret == {'status': 'ok', 'identity': None}
+        # Identity loaded
+        ret = await self.service.dispatch_msg({'cmd': 'load_identity',
+                                               'identity': self.fingerprint_protected_key,
+                                               'passphrase': self.passphrase})
+        assert ret == {'status': 'ok'}
+        ret = await self.service.dispatch_msg({'cmd': 'get_identity'})
+        assert ret == {'status': 'ok', 'identity': self.fingerprint_protected_key}
+
+    @pytest.mark.asyncio
+    async def test_encrypt(self):
+        self.gpg.import_keys(self.unprotected_key)
+        self.gpg.import_keys(self.protected_key)
+        # Identity not loaded
+        ret = await self.service.dispatch_msg({'cmd': 'encrypt', 'data': self.test_data})
+        assert ret == {'status': 'not_found', 'label': 'No identity loaded.'}
+        # Identity loaded
+        ret = await self.service.dispatch_msg({'cmd': 'load_identity',
+                                               'identity': self.fingerprint_protected_key,
+                                               'passphrase': self.passphrase})
+        assert ret == {'status': 'ok'}
+        ret = await self.service.dispatch_msg({'cmd': 'encrypt', 'data': self.test_data})
         assert ret['status'] == 'ok'
         assert '-----BEGIN PGP MESSAGE-----' in ret['data']
         assert '-----END PGP MESSAGE-----' in ret['data']
-        assert ret['key'] == encodebytes(b'123456789').decode()
 
     @pytest.mark.asyncio
-    async def test_asym_encrypt(self):
-        # Bad recipient
-        ret = await self.service.dispatch_msg(
-            {'cmd': 'asym_encrypt',
-             'recipient': 'wrong',
-             'data': self.test_data})
-        assert ret == {'status': 'error', 'label': 'Encryption failure.'}
-        # Working
-        ret = await self.service.dispatch_msg(
-            {'cmd': 'asym_encrypt',
-             'recipient': self.fingerprint_protected_key,
-             'data': self.test_data})
-        assert ret['status'] == 'ok'
-        assert '-----BEGIN PGP MESSAGE-----' in ret['data']
-        assert '-----END PGP MESSAGE-----' in ret['data']
-
-    @pytest.mark.asyncio
-    async def test_sym_decrypt(self):
-        original = await self.service.dispatch_msg({'cmd': 'sym_encrypt', 'data': self.test_data})
-        # Bad data
-        ret = await self.service.dispatch_msg(
-            {'cmd': 'sym_decrypt',
-             'data': 'bad',
-             'key': original['key']})
-        assert ret == {'status': 'error', 'label': 'Decryption failure.'}
-        # Wrong key
-        ret = await self.service.dispatch_msg(
-            {'cmd': 'sym_decrypt',
-             'data': original['data'],
-             'key': 'd3Jvbmc=\n'})
-        assert ret == {'status': 'error', 'label': 'Decryption failure.'}
-        # Good key
-        ret = await self.service.dispatch_msg(
-            {'cmd': 'sym_decrypt',
-             'data': original['data'],
-             'key': original['key']})
-        assert ret == {'status': 'ok', 'data': 'Hello, I am a plaintext. I need to be encrypted.'}
-
-    @pytest.mark.asyncio
-    async def test_asym_decrypt(self):
-        original_with_passphrase = await self.service.dispatch_msg(
-            {'cmd': 'asym_encrypt',
-             'recipient': self.fingerprint_protected_key,
-             'data': self.test_data})
-        original_without_passphrase = await self.service.dispatch_msg(
-            {'cmd': 'asym_encrypt',
-             'recipient': self.fingerprint_unprotected_key,
-             'data': self.test_data})
-        # Bad data
-        ret = await self.service.dispatch_msg(
-            {'cmd': 'asym_decrypt',
-             'data': 'bad',
-             'passphrase': self.passphrase})
-        assert ret == {'status': 'error', 'label': 'Decryption failure.'}
-        # Wrong passphrase
-        ret = await self.service.dispatch_msg(
-            {'cmd': 'asym_decrypt',
-             'data': original_with_passphrase['data'],
-             'passphrase': 'wrong'})
-        assert ret == {'status': 'error', 'label': 'Decryption failure.'}
-        # Good passphrase
-        ret = await self.service.dispatch_msg(
-            {'cmd': 'asym_decrypt',
-             'data': original_with_passphrase['data'],
-             'passphrase': self.passphrase})
-        assert ret == {'status': 'ok', 'data': self.test_data}
-        # Without passphrase
-        ret = await self.service.dispatch_msg(
-            {'cmd': 'asym_decrypt',
-             'data': original_without_passphrase['data']})
+    async def test_decrypt(self):
+        self.gpg.import_keys(self.unprotected_key)
+        self.gpg.import_keys(self.protected_key)
+        # Identity not loaded
+        ret = await self.service.dispatch_msg({'cmd': 'decrypt', 'data': self.test_data})
+        assert ret == {'status': 'not_found', 'label': 'No identity loaded.'}
+        # Identity loaded
+        ret = await self.service.dispatch_msg({'cmd': 'load_identity',
+                                               'identity': self.fingerprint_protected_key,
+                                               'passphrase': self.passphrase})
+        assert ret == {'status': 'ok'}
+        original = await self.service.dispatch_msg({'cmd': 'encrypt', 'data': self.test_data})
+        ret = await self.service.dispatch_msg({'cmd': 'decrypt', 'data': original['data']})
         assert ret == {'status': 'ok', 'data': self.test_data}
 
 
-class TestCryptoService(BaseTestCryptoService):
+class TestIdentityService(BaseTestIdentityService):
 
     def setup_method(self, gpg):
         self.test_data = 'Hello, I am a plaintext. I need to be encrypted.'
@@ -185,15 +180,15 @@ class TestCryptoService(BaseTestCryptoService):
         """
 
         shutil.rmtree('/tmp/parsec-tests', ignore_errors=True)
-        gpg = gnupg.GPG(binary='/usr/bin/gpg', homedir='/tmp/parsec-tests')
-        gpg.import_keys(self.protected_key)
-        gpg.import_keys(self.unprotected_key)
+        self.gpg = gnupg.GPG(binary='/usr/bin/gpg', homedir='/tmp/parsec-tests')
 
-        self.service = CryptoService()
+        self.service = IdentityService('foo', 123)
         server = BaseServer()
         server.register_service(self.service)
+        crypto_service = CryptoService()
+        server.register_service(crypto_service)
         server.register_service(PubKeysService())
         server.bootstrap_services()
 
-        self.service.gpg = gpg  # TODO user mock
+        crypto_service.gpg = self.gpg  # TODO user mock
         # mock.patch.object(gnupg, 'GPG', return_value=gpg).start()

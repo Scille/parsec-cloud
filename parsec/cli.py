@@ -2,7 +2,7 @@ from socket import socket, AF_UNIX, SOCK_STREAM
 import click
 
 from parsec.server import UnixSocketServer, WebSocketServer
-from parsec.backend import MessageService, VlobService, BlockService
+from parsec.backend import (InMemoryMessageService, MockedVlobService, MockedBlockService)
 from parsec.core.crypto_service import CryptoService
 from parsec.core.file_service import FileService
 from parsec.core.identity_service import IdentityService
@@ -82,9 +82,9 @@ def backend(host, port):
     server = WebSocketServer()
     server.register_service(CryptoService())
     server.register_service(PubKeysService())
-    server.register_service(MessageService())
-    server.register_service(VlobService())
-    server.register_service(BlockService())
+    server.register_service(InMemoryMessageService())
+    server.register_service(MockedVlobService())
+    server.register_service(MockedBlockService())
     server.start(host, port)
 
 

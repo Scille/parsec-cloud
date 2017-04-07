@@ -2,13 +2,34 @@ from base64 import encodebytes, decodebytes
 from os import urandom
 
 import gnupg
+from marshmallow import fields
 
 from parsec.service import BaseService, cmd, service
 from parsec.exceptions import ParsecError
+from parsec.tools import BaseCmdSchema
 
 
 class CryptoError(ParsecError):
     pass
+
+
+class cmd_SYM_ENCRYPT_Schema(BaseCmdSchema):
+    data = fields.String(required=True)
+
+
+class cmd_ASYM_ENCRYPT_Schema(BaseCmdSchema):
+    data = fields.String(required=True)
+    recipient = fields.String(required=True)
+
+
+class cmd_SYM_DECRYPT_Schema(BaseCmdSchema):
+    data = fields.String(required=True)
+    key = fields.String(required=True)
+
+
+class cmd_ASYM_DECRYPT_Schema(BaseCmdSchema):
+    data = fields.String(required=True)
+    passphrase = fields.String(missing=None)
 
 
 class CryptoService(BaseService):
@@ -20,32 +41,29 @@ class CryptoService(BaseService):
         self.gpg = gnupg.GPG(binary='/usr/bin/gpg', homedir='~/.gnupg')  # TODO default params?
 
     @cmd('sym_encrypt')
-    async def _cmd_SYM_ENCRYPT(self, msg):
-        data = self._get_field(msg, 'data')
-        key, encrypted_data = await self.sym_encrypt(data)
+    async def _cmd_SYM_ENCRYPT(self, session, msg):
+        msg = cmd_SYM_ENCRYPT_Schema().load(msg)
+        key, encrypted_data = await self.sym_encrypt(msg['data'])
         key = encodebytes(key).decode()
         return {'status': 'ok', 'key': key, 'data': encrypted_data.decode()}
 
     @cmd('asym_encrypt')
-    async def _cmd_ASYM_ENCRYPT(self, msg):
-        recipient = self._get_field(msg, 'recipient')
-        data = self._get_field(msg, 'data')
-        encrypted_signed_data = await self.asym_encrypt(data, recipient)
+    async def _cmd_ASYM_ENCRYPT(self, session, msg):
+        msg = cmd_ASYM_ENCRYPT_Schema().load(msg)
+        encrypted_signed_data = await self.asym_encrypt(msg['data'], msg['recipient'])
         return {'status': 'ok', 'data': encrypted_signed_data.decode()}
 
     @cmd('sym_decrypt')
-    async def _cmd_SYM_DECRYPT(self, msg):
-        data = self._get_field(msg, 'data')
-        key = self._get_field(msg, 'key')
-        key = decodebytes(key.encode())
-        decrypted_data = await self.sym_decrypt(data, key)
+    async def _cmd_SYM_DECRYPT(self, session, msg):
+        msg = cmd_SYM_DECRYPT_Schema().load(msg)
+        msg['key'] = decodebytes(msg['key'].encode())  # TODO use marshmallow
+        decrypted_data = await self.sym_decrypt(msg['data'], msg['key'])
         return {'status': 'ok', 'data': decrypted_data.decode()}
 
     @cmd('asym_decrypt')
-    async def _cmd_ASYM_DECRYPT(self, msg):
-        data = self._get_field(msg, 'data')
-        passphrase = self._get_field(msg, 'passphrase', default=None)
-        decrypted_data = await self.asym_decrypt(data, passphrase)
+    async def _cmd_ASYM_DECRYPT(self, session, msg):
+        msg = cmd_ASYM_DECRYPT_Schema().load(msg)
+        decrypted_data = await self.asym_decrypt(msg['data'], msg['passphrase'])
         return {'status': 'ok', 'data': decrypted_data.decode()}
 
     async def sym_encrypt(self, data):
@@ -76,3 +94,15 @@ class CryptoService(BaseService):
             return decrypted.data
         else:
             raise CryptoError('Decryption failure.')
+
+    async def list_identities(self, identity, secret=False):
+        return [key['fingerprint'] for key in self.gpg.list_keys(secret)]
+
+    async def identity_exists(self, identity, secret=False):
+        return identity in await self.list_identities(identity, secret)
+
+    async def import_keys(self, keys):
+        self.gpg.import_keys(keys)
+
+    async def export_keys(self, identity):
+        return self.gpg.export_keys(identity)

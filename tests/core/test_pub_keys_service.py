@@ -1,9 +1,11 @@
 import shutil
 
+from asynctest import mock
 import gnupg
 import pytest
 
-from parsec.core import PubKeysService
+from parsec.server import BaseServer
+from parsec.core import CryptoService, PubKeysService
 
 
 class BaseTestPubKeysService:
@@ -33,46 +35,52 @@ class BaseTestPubKeysService:
 class TestPubKeysService(BaseTestPubKeysService):
 
     def setup_method(self, gpg):
-        self.test_data = 'Hello, I am a plaintext. I need to be encrypted.'
-        self.asym_passphrase = 'test1'
-        self.fingerprint = 'D75F53F92D950618D8C868237C0C7DF0F405623E'
+        self.fingerprint = '8D74B53B7580166E47E244BB1B3C781556A044F7'
         # test1@domain.com
         self.key = """-----BEGIN PGP PRIVATE KEY BLOCK-----
-        Version: BCPG C# v1.6.1.0
+        Version: GnuPG v1
 
-        lQOsBFjkm+kBCACYpCXEqit1E/2WzXz/CT822K57HEaHQ7ZZhNprf66fNxnlj3R3
-        b8F4zK4TGyoKDKCkCcFPQoqW5eRgnYsaJW5FCjQyQJgMcWsVRuBySEXqNCcfsxMH
-        LNePyvfJvdwUQWY4BgdLzoPzeQXy7EVrTfGKJfRxDEnugBCpH66ugIVCyLfx+icG
-        XrRqZcnUKPRHLY9nf5vNqmBj2orPinB8+rrYdYyRXnZ4zKUzicJDrr2oYl2fqLvh
-        eH+uja2fcSJffTrxNb5q6j0vgF/I9C6M2mN64w3cRfhQUUlO0Y2yaV16KjdvqNgD
-        TrAQcpepj+hOqlOvjdjJRmG4TvfnUUL1DwIhABEBAAH/AwMCWVd9rKvzFGlgFF16
-        WSDsJryJsdmDCkqktgf0ddeXashBXs7KT4uHzlN7uJ6CSR+U7Ka/S3/cqwRzCXrS
-        jQB19W2ZQOoBoxnGSBu1S+xLOKXymW18YHm7+yJge7cpjugXrnnTHsgWDZelX6Qg
-        MhNDBz4W0ZegR5OuxOVC1t32DXWQT/FW4SuQoFDiRwoBXzzNc+8EW1vpU/rHrWK9
-        OzT6CYQPqkc50jmSrAgNkMEtcGfrnJnkesMDU/qrJ23YiqQ2uuZ4avO5nnEWytSj
-        lm1DuRkncISNwni3x1qhWRmTozS81oBjFIW/V9rIprPrtyPcnDmP/UHqsxrDV7W5
-        oHGcc157VVLJz9tfxCTDjwKsC/H4z0JDh8gTanVLw8IdNQ4+oQswz1uJy73i2RGp
-        b1mbt0Ns8jikZrX4XSk091HVfdTmLUYAd/XnXgRdwNZknPlV6Iap0KmObf6cY9q4
-        7VydFbY0YW9UEowkwI0uNrBZQ44c5OM+bLNY1+KFWewFr2cI8dPkD3/xbsQ5x7hv
-        lhtm4peaBUUKBwEGSPK2XjEefqB52oi8xOflCVqqUexeCUwxW0M6FTz0L4xfW68I
-        n3RqYm1E4z8GVFRWU0lQh+yZORIfv61snM/DR7OcQfhDH7Wi4HWKGW3V1L8I4TfC
-        m/mkMrXXpW4JANntSSTaa82POs3MBkhWwAC1GNtwY3CAZAHgGLueyz9PVSDAfyH1
-        6I3jejjyBJ3Tl0n4T/jMpAwqk3xPSjuTEKdMC+ooT6SHhOmLadtkmxkTTOpAbrnf
-        O38CTh+EcKWpWtZbCLCmP9xCHYuFdQtCU/8YmG9Z44zgs1gSAZjamtYjP6UTmN4s
-        2ECsbQc6l0P6UC0W65dSsar/nLgr36gGwXSgFuesY7QQdGVzdDFAZG9tYWluLmNv
-        bYkBHAQQAQIABgUCWOSb6QAKCRB8DH3w9AViPkszB/4kW/zDepuy8LehmEUbh58i
-        VNUTgtnj4S8PrkXQ1NAoJXrlgUl7X13ViCvLAOfa7cOl+ic1pLgC+UaRtf8t1mOc
-        /61DJScYaghkeQycwNPZwzafNdDpBMnJ5U23bdtZY4wUkQtsWmXdVJIemsZOx1kL
-        tKmHaxaxiqctbCl8FnGJAXEQoIAwJo2uEI1/jf/+w/NkfaV5zLX8f2m8243f13Ot
-        U7PBO9/t5hJLYqp4jlx17I8eNjZ6REK+GxRpe+cSa28RG7hoFhHaVlRhB8+6NbrX
-        rYIuU12ooUsj+XtMpqSFtCTW68afT46+vTaW8ukL2JuBeMO0eW4AK3hfkgxygYBl
-        =4v8o
+        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
+        =4VRv
         -----END PGP PRIVATE KEY BLOCK-----
         """
 
         shutil.rmtree('/tmp/parsec-tests', ignore_errors=True)
         gpg = gnupg.GPG(binary='/usr/bin/gpg', homedir='/tmp/parsec-tests')
         gpg.import_keys(self.key)
+        mock.patch.object(gnupg, 'GPG', return_value=gpg).start()
 
         self.service = PubKeysService()
-        self.service.gpg = gpg  # TODO use mock instead?
+        server = BaseServer()
+        server.register_service(self.service)
+        server.register_service(CryptoService())
+        server.bootstrap_services()

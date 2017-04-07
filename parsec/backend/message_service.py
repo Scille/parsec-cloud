@@ -1,4 +1,3 @@
-from blinker import signal
 from collections import defaultdict
 from marshmallow import fields
 

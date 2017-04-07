@@ -5,10 +5,13 @@ import sys
 from cryptography.hazmat.backends.openssl import backend as openssl
 from cryptography.hazmat.primitives import hashes
 from logbook import Logger, StreamHandler
+from marshmallow import fields
 import websockets
 
 from parsec.service import BaseService, cmd, service
 from parsec.exceptions import ParsecError
+from parsec.tools import BaseCmdSchema
+
 
 LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name})' \
              ' {record.level_name}: {record.channel}: {record.message}'
@@ -22,6 +25,19 @@ class IdentityError(ParsecError):
 
 class IdentityNotFound(IdentityError):
     status = 'not_found'
+
+
+class cmd_LOAD_IDENTITY_Schema(BaseCmdSchema):
+    identity = fields.String(missing=None)
+    passphrase = fields.String(missing=None)
+
+
+class cmd_ENCRYPT_Schema(BaseCmdSchema):
+    data = fields.String(required=True)
+
+
+class cmd_DECRYPT_Schema(BaseCmdSchema):
+    data = fields.String(required=True)
 
 
 class IdentityService(BaseService):
@@ -46,45 +62,49 @@ class IdentityService(BaseService):
             log.debug('Received: %r' % raw_reps)
             return json.loads(raw_reps.decode())
 
-    @cmd('load_user_identity')
-    async def _cmd_LOAD_USER_IDENTITY(self, msg):
-        identity = self._get_field(msg, 'identity', default=None)
-        passphrase = self._get_field(msg, 'passphrase', default=None)
-        await self.load_user_identity(identity, passphrase)
+    @cmd('load_identity')
+    async def _cmd_LOAD_IDENTITY(self, session, msg):
+        msg = cmd_LOAD_IDENTITY_Schema().load(msg)
+        await self.load_user_identity(msg['identity'], msg['passphrase'])
         return {'status': 'ok'}
 
     @cmd('get_identity')
-    async def _cmd_GET_USER_IDENTITY(self, msg):
+    async def _cmd_GET_IDENTITY(self, session, msg):
         identity = await self.get_user_identity()
         return {'status': 'ok', 'identity': identity}
 
     @cmd('encrypt')
-    async def _cmd_ENCRYPT(self, msg):
-        data = self._get_field(msg, 'data')
-        encrypted_data = await self.encrypt(data)
-        return {'status': 'ok', 'data': encrypted_data}
+    async def _cmd_ENCRYPT(self, session, msg):
+        msg = cmd_ENCRYPT_Schema().load(msg)
+        encrypted_data = await self.encrypt(msg['data'])
+        return {'status': 'ok', 'data': encrypted_data.decode()}
 
     @cmd('decrypt')
-    async def _cmd_DECRYPT(self, msg):
-        data = self._get_field(msg, 'data')
-        decrypted_data = await self.decrypt(data)
+    async def _cmd_DECRYPT(self, session, msg):
+        msg = cmd_DECRYPT_Schema().load(msg)
+        decrypted_data = await self.decrypt(msg['data'])
         return {'status': 'ok', 'data': decrypted_data.decode()}
 
     async def load_user_identity(self, identity=None, passphrase=None):
         if identity:
-            if await self.pub_keys_service.identity_exists(identity, secret=True):
+            if await self.crypto_service.identity_exists(identity, secret=True):
                 self.identity = identity
             else:
                 raise IdentityNotFound('Identity not found.')
         else:
-            identities = await self.pub_keys_service.list_identities(identity, secret=True)
+            identities = await self.crypto_service.list_identities(identity, secret=True)
             if len(identities) == 1:
                 self.identity = identities[0]
             elif len(identities) > 1:
                 raise IdentityError('Multiple identities found.')
             else:
-                raise IdentityNotFound('Identity not found.')
+                raise IdentityNotFound('Default identity not found.')
         self.passphrase = passphrase
+        encrypted = await self.encrypt('foo', self.identity)
+        try:
+            await self.decrypt(encrypted)
+        except Exception:
+            raise IdentityError('Bad passphrase.')
 
     async def get_user_identity(self):  # TODO identity=fingerprint?
         return self.identity

@@ -3,10 +3,13 @@ import json
 import sys
 
 from logbook import Logger, StreamHandler
+from marshmallow import fields
 import websockets
 
 from parsec.service import BaseService, cmd, service
 from parsec.exceptions import ParsecError
+from parsec.tools import BaseCmdSchema
+
 
 LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name})' \
              ' {record.level_name}: {record.channel}: {record.message}'
@@ -20,6 +23,35 @@ class UserManifestError(ParsecError):
 
 class UserManifestNotFound(UserManifestError):
     status = 'not_found'
+
+
+class cmd_CREATE_FILE_Schema(BaseCmdSchema):
+    path = fields.String(required=True)
+
+
+class cmd_RENAME_FILE_Schema(BaseCmdSchema):
+    old_path = fields.String(required=True)
+    new_path = fields.String(required=True)
+
+
+class cmd_DELETE_FILE_Schema(BaseCmdSchema):
+    path = fields.String(required=True)
+
+
+class cmd_LIST_DIR_Schema(BaseCmdSchema):
+    path = fields.String(required=True)
+
+
+class cmd_MAKE_DIR_Schema(BaseCmdSchema):
+    path = fields.String(required=True)
+
+
+class cmd_REMOVE_DIR_Schema(BaseCmdSchema):
+    path = fields.String(required=True)
+
+
+class cmd_HISTORY_Schema(BaseCmdSchema):
+    path = fields.String(required=True)
 
 
 class UserManifestService(BaseService):
@@ -46,46 +78,45 @@ class UserManifestService(BaseService):
 
     @cmd('create_file')
     async def _cmd_CREATE_FILE(self, msg):
-        path = self._get_field(msg, 'path')
-        file = await self.create_file(path)
+        msg = cmd_CREATE_FILE_Schema().load(msg)
+        file = await self.create_file(msg['path'])
         file.update({'status': 'ok'})
         return file
 
     @cmd('rename_file')
     async def _cmd_RENAME_FILE(self, msg):
-        old_path = self._get_field(msg, 'old_path')
-        new_path = self._get_field(msg, 'new_path')
-        await self.rename_file(old_path, new_path)
+        msg = cmd_CREATE_FILE_Schema().load(msg)
+        await self.rename_file(msg['old_path'], msg['new_path'])
         return {'status': 'ok'}
 
     @cmd('delete_file')
     async def _cmd_DELETE_FILE(self, msg):
-        path = self._get_field(msg, 'path')
-        await self.delete_file(path)
+        msg = cmd_CREATE_FILE_Schema().load(msg)
+        await self.delete_file(msg['path'])
         return {'status': 'ok'}
 
     @cmd('list_dir')
     async def _cmd_LIST_DIR(self, msg):
-        path = self._get_field(msg, 'path')
-        current, childrens = await self.list_dir(path)
+        msg = cmd_CREATE_FILE_Schema().load(msg)
+        current, childrens = await self.list_dir(msg['path'])
         return {'status': 'ok', 'current': current, 'childrens': childrens}
 
     @cmd('make_dir')
     async def _cmd_MAKE_DIR(self, msg):
-        path = self._get_field(msg, 'path')
-        await self.make_dir(path)
+        msg = cmd_CREATE_FILE_Schema().load(msg)
+        await self.make_dir(msg['path'])
         return {'status': 'ok'}
 
     @cmd('remove_dir')
     async def _cmd_REMOVE_DIR(self, msg):
-        path = self._get_field(msg, 'path')
-        await self.remove_dir(path)
+        msg = cmd_CREATE_FILE_Schema().load(msg)
+        await self.remove_dir(msg['path'])
         return {'status': 'ok'}
 
     @cmd('history')
     async def _cmd_HISTORY(self, msg):
-        path = self._get_field(msg, 'path')
-        history = await self.history(path)
+        msg = cmd_CREATE_FILE_Schema().load(msg)
+        history = await self.history(msg['path'])
         return {'status': 'ok', 'history': history}
 
     @cmd('load_user_manifest')

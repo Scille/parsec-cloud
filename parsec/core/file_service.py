@@ -6,10 +6,13 @@ import sys
 from cryptography.hazmat.backends.openssl import backend as openssl
 from cryptography.hazmat.primitives import hashes
 from logbook import Logger, StreamHandler
+from marshmallow import fields
 import websockets
 
 from parsec.service import BaseService, cmd, service
 from parsec.exceptions import ParsecError
+from parsec.tools import BaseCmdSchema
+
 
 LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name})' \
              ' {record.level_name}: {record.channel}: {record.message}'
@@ -23,6 +26,24 @@ class FileError(ParsecError):
 
 class FileNotFound(FileError):
     status = 'not_found'
+
+
+class cmd_READ_Schema(BaseCmdSchema):
+    id = fields.String(required=True)
+
+
+class cmd_WRITE_Schema(BaseCmdSchema):
+    id = fields.String(required=True)
+    version = fields.Integer(required=True)
+    content = fields.String(required=True)
+
+
+class cmd_STAT_Schema(BaseCmdSchema):
+    id = fields.String(required=True)
+
+
+class cmd_HISTORY_Schema(BaseCmdSchema):
+    id = fields.String(required=True)
 
 
 class FileService(BaseService):
@@ -54,30 +75,28 @@ class FileService(BaseService):
 
     @cmd('read_file')
     async def _cmd_READ(self, msg):
-        id = self._get_field(msg, 'id')
-        file = await self.read(id)
+        msg = cmd_READ_Schema().load(msg)
+        file = await self.read(msg['id'])
         file.update({'status': 'ok'})
         return file
 
     @cmd('write_file')
     async def _cmd_WRITE(self, msg):
-        id = self._get_field(msg, 'id')
-        version = self._get_field(msg, 'version', int)
-        content = self._get_field(msg, 'content')
-        await self.write(id, version, content)
+        msg = cmd_WRITE_Schema().load(msg)
+        await self.write(msg['id'], msg['version'], msg['content'])
         return {'status': 'ok'}
 
     @cmd('stat_file')
     async def _cmd_STAT(self, msg):
-        id = self._get_field(msg, 'id')
-        stats = await self.stat(id)
+        msg = cmd_STAT_Schema().load(msg)
+        stats = await self.stat(msg['id'])
         stats.update({'status': 'ok'})
         return stats
 
     @cmd('history')
     async def _cmd_HISTORY(self, msg):
-        id = self._get_field(msg, 'id')
-        history = await self.history(id)
+        msg = cmd_STAT_Schema().load(msg)
+        history = await self.history(msg['id'])
         return {'status': 'ok', 'history': history}
 
     async def create(self, id=None):

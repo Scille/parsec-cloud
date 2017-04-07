@@ -38,6 +38,15 @@ class TestVlobServiceAPI:
         assert ret['status'] == 'bad_msg'
 
     @pytest.mark.asyncio
+    async def test_read_not_found(self, vlob_svc, vlob):
+        ret = await vlob_svc.dispatch_msg({
+            'cmd': 'read',
+            'id': '1234',
+            'trust_seed': vlob.read_trust_seed,
+        })
+        assert ret == {'status': 'not_found', 'label': 'Cannot find vlob.'}
+
+    @pytest.mark.asyncio
     async def test_read(self, vlob_svc, vlob):
         ret = await vlob_svc.dispatch_msg({
             'cmd': 'read',
@@ -67,6 +76,18 @@ class TestVlobServiceAPI:
             bad_msg['trust_seed'] = vlob.read_trust_seed
         ret = await vlob_svc.dispatch_msg(bad_msg)
         assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
+    async def test_update_not_found(self, vlob_svc, vlob):
+        blob = 'Next version.'
+        ret = await vlob_svc.dispatch_msg({
+            'cmd': 'update',
+            'id': '1234',
+            'trust_seed': vlob.write_trust_seed,
+            'version': 2,
+            'blob': blob
+        })
+        assert ret == {'status': 'not_found', 'label': 'Cannot find vlob.'}
 
     @pytest.mark.asyncio
     async def test_update(self, vlob_svc, vlob):
