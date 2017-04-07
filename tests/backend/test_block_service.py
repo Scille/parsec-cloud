@@ -1,12 +1,12 @@
 from freezegun import freeze_time
 import pytest
 
-from parsec.backend import BlockService
+from parsec.backend import MockedBlockService
 
 
-@pytest.fixture
-def block_svc():
-    return BlockService()
+@pytest.fixture(params=[MockedBlockService, ])
+def block_svc(request):
+    return request.param()
 
 
 @pytest.fixture
@@ -22,6 +22,16 @@ class TestBlockServiceAPI:
         ret = await block_svc.dispatch_msg({'cmd': 'create', 'content': 'Foo.'})
         assert ret['status'] == 'ok'
         assert ret['id']
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'create', 'content': '...', 'bad_field': 'foo'},
+        {'cmd': 'create', 'content': 42},
+        {'cmd': 'create', 'content': None},
+        {'cmd': 'create'}, {}])
+    async def test_bad_msg_create(self, block_svc, bad_msg):
+        ret = await block_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
 
     @pytest.mark.asyncio
     @freeze_time("2012-01-01")
@@ -41,6 +51,19 @@ class TestBlockServiceAPI:
         assert {'label': 'Block not found.', 'status': 'not_found'} == ret
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'read', 'id': '<insert_id_here>', 'bad_field': 'foo'},
+        {'cmd': 'read', 'id': 42},
+        {'cmd': 'read', 'id': None},
+        {'cmd': 'read'}, {}])
+    async def test_bad_msg_read(self, block_svc, block, bad_msg):
+        block_id, block_content = block
+        if bad_msg.get('id') == '<insert_id_here>':
+            bad_msg['id'] = block_id
+        ret = await block_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
     @freeze_time("2012-01-01")
     async def test_stat(self, block_svc, block):
         block_id, block_content = block
@@ -53,3 +76,16 @@ class TestBlockServiceAPI:
         # Unknown block
         ret = await block_svc.dispatch_msg({'cmd': 'stat', 'id': '1234'})
         assert {'label': 'Block not found.', 'status': 'not_found'} == ret
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'stat', 'id': '<insert_id_here>', 'bad_field': 'foo'},
+        {'cmd': 'stat', 'id': 42},
+        {'cmd': 'stat', 'id': None},
+        {'cmd': 'stat'}, {}])
+    async def test_bad_msg_stat(self, block_svc, block, bad_msg):
+        block_id, block_content = block
+        if bad_msg.get('id') == '<insert_id_here>':
+            bad_msg['id'] = block_id
+        ret = await block_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'

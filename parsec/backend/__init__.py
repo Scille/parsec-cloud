@@ -1,6 +1,7 @@
-from parsec.backend.block_service import BlockService
-from parsec.backend.message_service import MessageService
-from parsec.backend.vlob_service import VlobService
+from parsec.backend.block_service import MockedBlockService
+from parsec.backend.message_service import InMemoryMessageService
+from parsec.backend.vlob_service import MockedVlobService
+from parsec.backend.named_vlob_service import MockedNamedVlobService
 
-
-__all__ = ('MessageService', 'VlobService', 'BlockService')
+__all__ = ('InMemoryMessageService', 'MockedVlobService',
+           'MockedBlockService', 'MockedNamedVlobService')

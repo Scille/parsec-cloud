@@ -3,6 +3,7 @@ from base64 import decodebytes
 from blinker import signal
 
 from parsec.exceptions import ParsecError
+from parsec.session import AnonymousSession
 
 
 class CmdWrap:
@@ -132,8 +133,12 @@ class BaseService(metaclass=MetaBaseService):
     def events(self):
         return self._events
 
-    async def dispatch_msg(self, msg):
+    async def dispatch_msg(self, msg, session=None):
+        session = session or AnonymousSession()
         try:
-            return await self.cmds[msg['cmd']](msg)
+            cmd_name = msg.get('cmd')
+            if not cmd_name:
+                return {'status': 'bad_msg', 'label': 'Missing cmd field.'}
+            return await self.cmds[msg['cmd']](session, msg)
         except ParsecError as exc:
             return exc.to_dict()

@@ -2,7 +2,8 @@ import json
 from uuid import uuid4
 from logbook import Logger
 
-from parsec.exceptions import ParsecError
+from parsec.exceptions import ParsecError, HandshakeError
+from parsec.session import anonymous_handshake
 
 
 class BaseClientContext:
@@ -15,11 +16,12 @@ class BaseClientContext:
 
 
 class BaseServer:
-    def __init__(self):
+    def __init__(self, handshake=anonymous_handshake):
         self._cmds = {
             'list_cmds': self.__cmd_LIST_CMDS
         }
         self._services = {}
+        self._handshake = handshake
 
     async def __cmd_LIST_CMDS(self, data):
         return {'status': 'ok', 'cmds': list(self._cmds.keys())}
@@ -62,9 +64,31 @@ class BaseServer:
         # Nothing worked :'-(
         return None
 
+    async def _handle_handshake(self, context):
+        if not self._require_auth:
+            return True
+        raw_cmd = await context.recv()
+        msg = self._load_raw_cmd(raw_cmd)
+        if msg is None:
+            await context.send(b'{"status": "bad_message", "label": "Message is not a valid JSON."}')
+            return False
+        self.cmds[self._auth_cmd](msg)
+        try:
+            resp = await cmd(msg)
+        except ParsecError as exc:
+            resp = exc.to_dict()
+        await self._auth_cmd
+        return False
+
     async def on_connection(self, context: BaseClientContext):
         conn_log = Logger('Connection ' + uuid4().hex)
         conn_log.debug('Connection started')
+        # Handle handshake if auth is required
+        try:
+            session = await self._handshake()
+        except HandshakeError as exc:
+            await context.send(exc.to_raw())
+            return
         while True:
             raw_cmd = await context.recv()
             if not raw_cmd:
@@ -80,7 +104,7 @@ class BaseServer:
                     resp = {"status": "badcmd", "label": "Unknown command `%s`" % msg['cmd']}
                 else:
                     try:
-                        resp = await cmd(msg)
+                        resp = await cmd(session, msg)
                     except ParsecError as exc:
                         resp = exc.to_dict()
             conn_log.debug('Replied: %r' % resp)

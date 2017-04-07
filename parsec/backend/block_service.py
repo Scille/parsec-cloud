@@ -1,8 +1,10 @@
 from datetime import datetime
 from uuid import uuid4
+from marshmallow import fields
 
 from parsec.service import BaseService, cmd, event, service
 from parsec.exceptions import ParsecError
+from parsec.tools import BaseCmdSchema
 
 
 class BlockError(ParsecError):
@@ -13,33 +15,50 @@ class BlockNotFound(BlockError):
     status = 'not_found'
 
 
+class cmd_CREATE_Schema(BaseCmdSchema):
+    content = fields.String(required=True)
+
+
+class cmd_READ_Schema(BaseCmdSchema):
+    id = fields.String(required=True)
+
+
 class BaseBlockService(BaseService):
 
     vlob_service = service('VlobService')
     on_vlob_updated = event('updated')
 
     @cmd('create')
-    async def _cmd_CREATE(self, msg):
+    async def _cmd_CREATE(self, session, msg):
+        msg = cmd_CREATE_Schema().load(msg)
         id = await self.create(msg['content'])
-        return {
-            'status': 'ok',
-            'id': id
-        }
+        return {'status': 'ok', 'id': id}
 
     @cmd('read')
-    async def _cmd_READ(self, msg):
+    async def _cmd_READ(self, session, msg):
+        msg = cmd_READ_Schema().load(msg)
         block = await self.read(msg['id'])
         block.update({'status': 'ok'})
         return block
 
     @cmd('stat')
-    async def _cmd_STAT(self, msg):
+    async def _cmd_STAT(self, session, msg):
+        msg = cmd_READ_Schema().load(msg)
         stat = await self.stat(msg['id'])
         stat.update({'status': 'ok'})
         return stat
 
+    async def create(self, content):
+        raise NotImplementedError()
 
-class BlockService(BaseBlockService):
+    async def read(self, id):
+        raise NotImplementedError()
+
+    async def stat(self, id):
+        raise NotImplementedError()
+
+
+class MockedBlockService(BaseBlockService):
     def __init__(self):
         super().__init__()
         self._blocks = {}
