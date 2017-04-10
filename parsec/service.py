@@ -81,47 +81,6 @@ class BaseService(metaclass=MetaBaseService):
             service = yield service_name
             setattr(self, key, service)
 
-    @staticmethod
-    def _get_field(msg, field, type_=str, **kwargs):
-        value = msg.get(field)
-        if value is None:
-            if 'default' in kwargs:
-                return kwargs.get('default')
-            raise ParsecError('bad_params', 'Param `%s` is required.' % field)
-        if type_ is bytes:
-            try:
-                value = decodebytes(value.encode())
-            except (TypeError, AttributeError):
-                raise ParsecError('bad_params', 'Param `%s` is not valid base64 data.' % field)
-        if not isinstance(value, type_):
-            raise ParsecError('bad_params', 'Param `%s` must be of type `%s`.' % (field, type_))
-        return value
-
-    @staticmethod
-    def _extract_params(raw_data, *types):
-        number = len(types)
-        splitted = raw_data.split(b' ', maxsplit=number - 1)
-        if len(splitted) != number:
-            raise ParsecError('bad_params', 'Invalid parameters')
-        try:
-            for i, tp in enumerate(types):
-                if tp is bytes:
-                    continue
-                elif tp is str:
-                    splitted[i] = splitted[i].decode()
-                else:
-                    splitted[i] = tp(splitted[i])
-        except TypeError:
-            raise ParsecError('bad_params', 'Parameter %s should be of type %s' % (i, tp))
-        return splitted
-
-    @staticmethod
-    def _pack_error(error):
-        if error.message:
-            return ('%s %s' % (error.status, error.message)).encode()
-        else:
-            return error.status.encode()
-
     @property
     def cmds(self):
         # Lazy load commands to get them binded to the self object
