@@ -64,22 +64,6 @@ class BaseServer:
         # Nothing worked :'-(
         return None
 
-    async def _handle_handshake(self, context):
-        if not self._require_auth:
-            return True
-        raw_cmd = await context.recv()
-        msg = self._load_raw_cmd(raw_cmd)
-        if msg is None:
-            await context.send(b'{"status": "bad_message", "label": "Message is not a valid JSON."}')
-            return False
-        self.cmds[self._auth_cmd](msg)
-        try:
-            resp = await cmd(msg)
-        except ParsecError as exc:
-            resp = exc.to_dict()
-        await self._auth_cmd
-        return False
-
     async def on_connection(self, context: BaseClientContext):
         conn_log = Logger('Connection ' + uuid4().hex)
         conn_log.debug('Connection started')
