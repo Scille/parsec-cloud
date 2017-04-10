@@ -2,12 +2,13 @@ from socket import socket, AF_UNIX, SOCK_STREAM
 import click
 
 from parsec.server import UnixSocketServer, WebSocketServer
-from parsec.backend import (InMemoryMessageService, MockedVlobService, MockedBlockService)
-from parsec.core.crypto_service import CryptoService
-from parsec.core.file_service import FileService
-from parsec.core.identity_service import IdentityService
-from parsec.core.pub_keys_service import PubKeysService
-from parsec.core.user_manifest_service import UserManifestService
+from parsec.backend import (InMemoryMessageService, MockedVlobService,
+                            MockedNamedVlobService, MockedBlockService)
+# from parsec.core.crypto_service import CryptoService
+# from parsec.core.file_service import FileService
+# from parsec.core.identity_service import IdentityService
+from parsec.core.pub_keys_service import GNUPGPubKeysService
+# from parsec.core.user_manifest_service import UserManifestService
 from parsec.ui.shell import start_shell
 
 
@@ -76,14 +77,16 @@ def core(socket, backend_host, backend_port):
 
 
 @click.command()
+@click.option('--gnupg-homedir', default='~/.gnupg')
 @click.option('--host', '-H', default='localhost')
 @click.option('--port', '-P', default=6777, type=int)
-def backend(host, port):
-    server = WebSocketServer()
-    server.register_service(CryptoService())
-    server.register_service(PubKeysService())
+def backend(host, port, gnupg_homedir):
+    pub_keys_service = GNUPGPubKeysService(gnupg_homedir)
+    server = WebSocketServer(pub_keys_service.handshake)
+    server.register_service(pub_keys_service)
     server.register_service(InMemoryMessageService())
     server.register_service(MockedVlobService())
+    server.register_service(MockedNamedVlobService())
     server.register_service(MockedBlockService())
     server.start(host, port)
 

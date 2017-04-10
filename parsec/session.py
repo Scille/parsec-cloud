@@ -14,6 +14,7 @@ class AnonymousSession(BaseSession):
 
 
 class AuthSession(BaseSession):
+    identity = None
 
     def __init__(self, context, identity):
         super().__init__(context)
