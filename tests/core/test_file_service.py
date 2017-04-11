@@ -1,16 +1,14 @@
 from freezegun import freeze_time
 import pytest
 
-from parsec.core.file_service import FileService
+from parsec.backend import MockedVlobService
+from parsec.core import (CryptoService, FileService, IdentityService, PubKeysService,
+                         UserManifestService)
+from parsec.server import BaseServer, WebSocketServer
 
 
 class BaseTestFileService:
 
-    # Helpers
-
-    # Tests
-
-    @pytest.mark.xfail
     @pytest.mark.asyncio
     async def test_create_file(self):
         ret = await self.service.dispatch_msg({'cmd': 'create_file'})
@@ -133,4 +131,15 @@ class BaseTestFileService:
 class TestFileService(BaseTestFileService):
 
     def setup_method(self):
+        backend_server = WebSocketServer()
+        backend_server.register_service(MockedVlobService())
+        backend_server.bootstrap_services()
+        backend_server.start('localhost', 6777)  # TODO
         self.service = FileService('localhost', 6777)
+        server = BaseServer()
+        server.register_service(self.service)
+        server.register_service(CryptoService())
+        server.register_service(IdentityService('localhost', 6777))
+        server.register_service(PubKeysService())
+        server.register_service(UserManifestService('localhost', 6777))
+        server.bootstrap_services()

@@ -69,7 +69,7 @@ class BaseServer:
         conn_log.debug('Connection started')
         # Handle handshake if auth is required
         try:
-            session = await self._handshake()
+            session = await self._handshake(context)
         except HandshakeError as exc:
             await context.send(exc.to_raw())
             return

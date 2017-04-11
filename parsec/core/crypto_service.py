@@ -29,16 +29,16 @@ class cmd_SYM_DECRYPT_Schema(BaseCmdSchema):
 
 class cmd_ASYM_DECRYPT_Schema(BaseCmdSchema):
     data = fields.String(required=True)
-    passphrase = fields.String(missing=None)
 
 
 class CryptoService(BaseService):
 
-    pub_keys_service = service('PubKeysService')
+    pub_keys_service = service('GNUPGPubKeysService')
 
-    def __init__(self):
+    def __init__(self, homedir='~/.gnupg'):
         super().__init__()
-        self.gpg = gnupg.GPG(binary='/usr/bin/gpg', homedir='~/.gnupg')  # TODO default params?
+        self.gnupg = gnupg.GPG(homedir=homedir, use_agent=True)
+        self.gnupg_agentless = gnupg.GPG(homedir=homedir, use_agent=False)  # Cleaner way?
 
     @cmd('sym_encrypt')
     async def _cmd_SYM_ENCRYPT(self, session, msg):
@@ -63,46 +63,46 @@ class CryptoService(BaseService):
     @cmd('asym_decrypt')
     async def _cmd_ASYM_DECRYPT(self, session, msg):
         msg = cmd_ASYM_DECRYPT_Schema().load(msg)
-        decrypted_data = await self.asym_decrypt(msg['data'], msg['passphrase'])
+        decrypted_data = await self.asym_decrypt(msg['data'])
         return {'status': 'ok', 'data': decrypted_data.decode()}
 
     async def sym_encrypt(self, data):
         passphrase = urandom(32)
-        encrypted = self.gpg.encrypt(data, passphrase=passphrase, encrypt=False, symmetric=True)
+        encrypted = self.gnupg_agentless.encrypt(data,
+                                                 passphrase=passphrase,
+                                                 encrypt=False,
+                                                 symmetric=True)
         assert encrypted.status == 'encryption ok'
         return passphrase, encrypted.data
 
     async def asym_encrypt(self, data, recipient):
-        try:
-            await self.pub_keys_service.get_pub_key(recipient)
-        except Exception:
+        encrypted = self.gnupg.encrypt(data, recipient)
+        if encrypted.status != 'encryption ok':
             raise CryptoError('Encryption failure.')
-        encrypted = self.gpg.encrypt(data, recipient)
-        assert encrypted.status == 'encryption ok'
         return encrypted.data
 
     async def sym_decrypt(self, data, key):
-        decrypted = self.gpg.decrypt(data, passphrase=key)
+        decrypted = self.gnupg_agentless.decrypt(data, passphrase=key)
         if decrypted.status == 'decryption ok':
             return decrypted.data
         else:
             raise CryptoError('Decryption failure.')
 
-    async def asym_decrypt(self, data, passphrase=None):
-        decrypted = self.gpg.decrypt(data, passphrase=passphrase)
+    async def asym_decrypt(self, data):
+        decrypted = self.gnupg.decrypt(data)
         if decrypted.status == 'decryption ok':
             return decrypted.data
         else:
             raise CryptoError('Decryption failure.')
 
     async def list_identities(self, identity, secret=False):
-        return [key['fingerprint'] for key in self.gpg.list_keys(secret)]
+        return [key['fingerprint'] for key in self.gnupg.list_keys(secret)]
 
     async def identity_exists(self, identity, secret=False):
         return identity in await self.list_identities(identity, secret)
 
     async def import_keys(self, keys):
-        self.gpg.import_keys(keys)
+        self.gnupg.import_keys(keys)
 
     async def export_keys(self, identity):
-        return self.gpg.export_keys(identity)
+        return self.gnupg.export_keys(identity)

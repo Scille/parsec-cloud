@@ -45,11 +45,11 @@ def _generate_challenge():
 
 class BasePubKeysService(BaseService):
 
-    @cmd('get_pub_key')
-    async def _cmd_GET_PUB_KEY(self, session, msg):
-        msg = cmd_GET_PUB_KEY_Schema().load(msg)
-        user_key = await self.get_pub_key(msg['identity'])
-        return {'status': 'ok', 'pub_key': user_key}
+    # @cmd('get_pub_key')
+    # async def _cmd_GET_PUB_KEY(self, session, msg):
+    #     msg = cmd_GET_PUB_KEY_Schema().load(msg)
+    #     user_key = await self.get_pub_key(msg['identity'])
+    #     return {'status': 'ok', 'pub_key': user_key}
 
     @cmd('encrypt')
     async def _cmd_ENCRYPT(self, session, msg):
@@ -79,10 +79,10 @@ class GNUPGPubKeysService(BasePubKeysService):
         import gnupg
         self.gnupg = gnupg.GPG(homedir=homedir, use_agent=True)
 
-    async def get_pub_key(self, identity):
-        key = await self.gnupg.get_pub_key(identity)
-        if not key:
-            raise PubKeysNotFound()
+    # async def get_pub_key(self, identity):
+    #     key = await self.gnupg.get_pub_key(identity)
+    #     if not key:
+    #         raise PubKeysNotFound()
 
     async def encrypt(self, identity, content):
         key = await self.get_pub_key(identity)
@@ -103,11 +103,14 @@ class GNUPGPubKeysService(BasePubKeysService):
         claimed_identity = resp['identity']
         answer = resp['answer']
         # TODO: find a cleaner way to extract the clear text from the signature
+        begin_pgp_message = '-----BEGIN PGP SIGNED MESSAGE-----'
+        end_pgp_message = '-----BEGIN PGP SIGNATURE-----'
         claimed_challenge = re.match(
-            r'^-----BEGIN PGP SIGNED MESSAGE-----\nHash: .*?\n\n((?:.*)+\n?)\n-----BEGIN PGP SIGNATURE-----',
+            r'^' + begin_pgp_message + '\nHash: .*?\n\n((?:.*)+\n?)\n' + end_pgp_message,
             answer, flags=re.MULTILINE).group(1)
         sign_result = self.gnupg.verify(answer.encode())
-        if challenge == claimed_challenge and sign_result.valid and sign_result.key_id == claimed_identity:
+        if (challenge == claimed_challenge and sign_result.valid and
+                sign_result.key_id == claimed_identity):
             return AuthSession(context, claimed_identity)
         else:
             raise HandshakeError('Invalid signature, challenge or identity')

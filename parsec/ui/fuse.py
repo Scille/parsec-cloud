@@ -233,14 +233,12 @@ class FuseOperations(LoggingMixIn, Operations):
 def start_fuse(socket_path: str,
                mountpoint: str,
                identity: str,
-               passphrase: str,
                debug: bool=False,
                nothreads: bool=False):
     StreamHandler(sys.stdout, format_string=LOG_FORMAT).push_application()
     operations = FuseOperations(socket_path)
-    response = operations.send_cmd(cmd='IdentityService:load_user_identity',
-                                   identity=identity,
-                                   passphrase=passphrase)
+    response = operations.send_cmd(cmd='IdentityService:load_identity',
+                                   identity=identity)
     if response['status'] != 'ok':
         raise FuseOSError(ENOENT)  # TODO change error message
     # TODO call this automatically

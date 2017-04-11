@@ -9,10 +9,6 @@ from parsec.core import CryptoService, IdentityService, PubKeysService
 
 class BaseTestIdentityService:
 
-    # Helpers
-
-    # Tests
-
     @pytest.mark.asyncio
     async def test_load_identity(self):
         # Default identity not found

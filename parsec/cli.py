@@ -4,11 +4,8 @@ import click
 from parsec.server import UnixSocketServer, WebSocketServer
 from parsec.backend import (InMemoryMessageService, MockedVlobService,
                             MockedNamedVlobService, MockedBlockService)
-# from parsec.core.crypto_service import CryptoService
-# from parsec.core.file_service import FileService
-# from parsec.core.identity_service import IdentityService
-from parsec.core.pub_keys_service import GNUPGPubKeysService
-# from parsec.core.user_manifest_service import UserManifestService
+from parsec.core import (BackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
+                         IdentityService, UserManifestService)
 from parsec.ui.shell import start_shell
 
 
@@ -45,19 +42,14 @@ def shell(socket):
 @click.command()
 @click.argument('mountpoint', type=click.Path(exists=True, file_okay=False))
 @click.option('--identity', type=click.STRING, default=None)
-@click.option('--passphrase',
-              type=click.STRING,
-              default='',
-              prompt="GPG passphrase",
-              hide_input=True)
 @click.option('--debug', '-d', is_flag=True, default=False)
 @click.option('--nothreads', is_flag=True, default=False)
 @click.option('--socket', '-s', default=CORE_UNIX_SOCKET,
               help='Path to the UNIX socket (default: %s).' % CORE_UNIX_SOCKET)
-def fuse(mountpoint, identity, passphrase, debug, nothreads, socket):
+def fuse(mountpoint, identity, debug, nothreads, socket):
     # Do the import here in case fuse is not an available dependency
     from parsec.ui.fuse import start_fuse
-    start_fuse(socket, mountpoint, identity, passphrase, debug=debug, nothreads=nothreads)
+    start_fuse(socket, mountpoint, identity, debug=debug, nothreads=nothreads)
 
 
 @click.command()
@@ -68,11 +60,17 @@ def fuse(mountpoint, identity, passphrase, debug, nothreads, socket):
 @click.option('--backend-port', '-P', default=6777, type=int)
 def core(socket, backend_host, backend_port):
     server = UnixSocketServer()
+    server.register_service(BackendAPIService(backend_host, backend_port))
     server.register_service(CryptoService())
-    server.register_service(FileService(backend_host, backend_port))
-    server.register_service(IdentityService(backend_host, backend_port))
-    server.register_service(PubKeysService())
-    server.register_service(UserManifestService(backend_host, backend_port))
+    server.register_service(FileService())
+    server.register_service(GNUPGPubKeysService())
+    server.register_service(IdentityService())
+    server.register_service(UserManifestService())
+    # Dependencies for the BackendAPIService
+    server.register_service(InMemoryMessageService())
+    server.register_service(MockedVlobService())
+    server.register_service(MockedNamedVlobService())
+    server.register_service(MockedBlockService())
     server.start(socket)
 
 

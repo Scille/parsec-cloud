@@ -1,12 +1,10 @@
 from base64 import encodebytes
-import json
 import sys
 
 from cryptography.hazmat.backends.openssl import backend as openssl
 from cryptography.hazmat.primitives import hashes
 from logbook import Logger, StreamHandler
 from marshmallow import fields
-import websockets
 
 from parsec.service import BaseService, cmd, service
 from parsec.exceptions import ParsecError
@@ -29,7 +27,6 @@ class IdentityNotFound(IdentityError):
 
 class cmd_LOAD_IDENTITY_Schema(BaseCmdSchema):
     identity = fields.String(missing=None)
-    passphrase = fields.String(missing=None)
 
 
 class cmd_ENCRYPT_Schema(BaseCmdSchema):
@@ -43,34 +40,21 @@ class cmd_DECRYPT_Schema(BaseCmdSchema):
 class IdentityService(BaseService):
 
     crypto_service = service('CryptoService')
-    pub_keys_service = service('PubKeysService')
+    pub_keys_service = service('GNUPGPubKeysService')
 
-    def __init__(self, backend_host, backend_port):
+    def __init__(self):
         super().__init__()
-        self._backend_host = backend_host
-        self._backend_port = backend_port
         self.identity = None
-        self.passphrase = None
-
-    async def send_cmd(self, **msg):
-        req = json.dumps(msg).encode() + b'\n'
-        log.debug('Send: %r' % req)
-        websocket_path = 'ws://' + self._backend_host + ':' + str(self._backend_port)
-        async with websockets.connect(websocket_path) as websocket:
-            await websocket.send(req)
-            raw_reps = await websocket.recv()
-            log.debug('Received: %r' % raw_reps)
-            return json.loads(raw_reps.decode())
 
     @cmd('load_identity')
     async def _cmd_LOAD_IDENTITY(self, session, msg):
         msg = cmd_LOAD_IDENTITY_Schema().load(msg)
-        await self.load_user_identity(msg['identity'], msg['passphrase'])
+        await self.load_identity(msg['identity'])
         return {'status': 'ok'}
 
     @cmd('get_identity')
     async def _cmd_GET_IDENTITY(self, session, msg):
-        identity = await self.get_user_identity()
+        identity = await self.get_identity()
         return {'status': 'ok', 'identity': identity}
 
     @cmd('encrypt')
@@ -85,7 +69,7 @@ class IdentityService(BaseService):
         decrypted_data = await self.decrypt(msg['data'])
         return {'status': 'ok', 'data': decrypted_data.decode()}
 
-    async def load_user_identity(self, identity=None, passphrase=None):
+    async def load_identity(self, identity=None):
         if identity:
             if await self.crypto_service.identity_exists(identity, secret=True):
                 self.identity = identity
@@ -99,37 +83,31 @@ class IdentityService(BaseService):
                 raise IdentityError('Multiple identities found.')
             else:
                 raise IdentityNotFound('Default identity not found.')
-        self.passphrase = passphrase
-        encrypted = await self.encrypt('foo', self.identity)
-        try:
-            await self.decrypt(encrypted)
-        except Exception:
-            raise IdentityError('Bad passphrase.')
 
-    async def get_user_identity(self):  # TODO identity=fingerprint?
+    async def get_identity(self):  # TODO identity=fingerprint?
         return self.identity
 
     async def encrypt(self, data, recipient=None):
         if not self.identity:
             raise(IdentityNotFound('No identity loaded.'))
         if not recipient:
-            recipient = await self.get_user_identity()
+            recipient = await self.get_identity()
         return await self.crypto_service.asym_encrypt(data, recipient)
 
     async def decrypt(self, data):
         if not self.identity:
             raise(IdentityNotFound('No identity loaded.'))
-        return await self.crypto_service.asym_decrypt(data, self.passphrase)
+        return await self.crypto_service.asym_decrypt(data)
 
     async def compute_sign_challenge(self):
-        user_identity = await self.get_user_identity()
-        response = await self.send_cmd(cmd='VlobService:get_sign_challenge', id=user_identity)
+        identity = await self.get_identity()
+        response = await self.send_cmd(cmd='VlobService:get_sign_challenge', id=identity)
         if response['status'] != 'ok':
             raise IdentityError('Cannot get sign challenge.')
         # TODO should be decrypted by vblob service public key?
         encrypted_challenge = response['challenge']
-        challenge = await self.crypto_service.asym_decrypt(encrypted_challenge, self.passphrase)
-        return user_identity, challenge
+        challenge = await self.crypto_service.asym_decrypt(encrypted_challenge)
+        return identity, challenge
 
     async def compute_seed_challenge(self, id, trust_seed):
         response = await self.send_cmd(cmd='VlobService:get_seed_challenge', id=id)

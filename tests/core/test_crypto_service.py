@@ -16,10 +16,6 @@ class AsyncMock(MagicMock):
 
 class BaseTestCryptoService:
 
-    # Helpers
-
-    # Tests
-
     @pytest.mark.asyncio
     @mock.patch('parsec.core.crypto_service.urandom', return_value=b'123456789')
     async def test_sym_encrypt(self, urandom_function):

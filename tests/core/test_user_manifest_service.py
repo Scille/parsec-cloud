@@ -1,48 +1,37 @@
+from asynctest import mock, MagicMock
 import pytest
 
 from parsec.server import BaseServer
-from parsec.core.user_manifest_service import UserManifestService
-from parsec.core.file_service import FileService
+from parsec.core import (CryptoService, FileService, IdentityService, PubKeysService,
+                         UserManifestService)
+
+
+class AsyncMock(MagicMock):
+    async def __call__(self, *args, **kwargs):
+        return super(AsyncMock, self).__call__(*args, **kwargs)
 
 
 class BaseTestUserManifestService:
 
-    # Helpers
-
-    async def mkdir(self, path):
-        return await self.service.make_dir(path=path)
-
-    async def mkfile(self, path):
-        return await self.service.create_file(path=path)
-
-    async def rmfile(self, path):
-        return await self.service.delete_file(path=path)
-
-    async def rmdir(self, path):
-        return await self.service.remove_dir(path=path)
-
-    # Tests
-
-    @pytest.mark.xfail
     @pytest.mark.asyncio
     async def test_create_dir(self):
+        # Working
         ret = await self.service.dispatch_msg({'cmd': 'make_dir', 'path': '/test_dir'})
         assert ret['status'] == 'ok'
-        # Make sure target has been created
+        # Already exist
         ret = await self.service.dispatch_msg({'cmd': 'make_dir', 'path': '/test_dir'})
         assert ret == {'status': 'already_exist', 'label': 'Target already exists.'}
 
-    @pytest.mark.xfail
     @pytest.mark.asyncio
     async def test_remove_dir(self):
-        await self.mkdir('/test_dir')
+        # Working
+        await self.service.make_dir('/test_dir')
         ret = await self.service.dispatch_msg({'cmd': 'remove_dir', 'path': '/test_dir'})
         assert ret == {'status': 'ok'}
-        # Cannot remove already destroyed directory
+        # Not found
         ret = await self.service.dispatch_msg({'cmd': 'remove_dir', 'path': '/test_dir'})
         assert ret == {'status': 'not_found', 'label': 'Directory not found.'}
 
-    @pytest.mark.xfail
     @pytest.mark.asyncio
     async def test_cant_remove_root_dir(self):
         ret = await self.service.dispatch_msg({'cmd': 'remove_dir', 'path': '/'})
@@ -51,11 +40,12 @@ class BaseTestUserManifestService:
     @pytest.mark.xfail
     @pytest.mark.asyncio
     async def test_remove_not_empty_dir(self):
-        await self.mkdir('/test_dir')
-        await self.mkfile('/test_dir/test')
+        # Not empty
+        await self.service.make_dir('/test_dir')
+        await self.service.create_file('/test_dir/test')
         ret = await self.service.dispatch_msg({'cmd': 'remove_dir', 'path': '/test_dir'})
         assert ret == {'status': 'directory_not_empty', 'label': 'Directory not empty.'}
-        # Delete file so we can remove the folder
+        # Empty
         ret = await self.service.dispatch_msg({'cmd': 'delete_file', 'path': '/test_dir/test'})
         assert ret == {'status': 'ok'}
         ret = await self.service.dispatch_msg({'cmd': 'remove_dir', 'path': '/test_dir'})
@@ -65,16 +55,16 @@ class BaseTestUserManifestService:
     @pytest.mark.asyncio
     async def test_list_dir(self):
         # Create folders
-        await self.mkdir('/countries')
-        await self.mkdir('/countries/France')
-        await self.mkdir('/countries/France/cities')
-        await self.mkdir('/countries/Belgium')
-        await self.mkdir('/countries/Belgium/cities')
+        await self.service.make_dir('/countries')
+        await self.service.make_dir('/countries/France')
+        await self.service.make_dir('/countries/France/cities')
+        await self.mkservice.make_dirdir('/countries/Belgium')
+        await self.service.make_dir('/countries/Belgium/cities')
         # Create multiple files
-        await self.mkfile('/.root')
-        await self.mkfile('/countries/index')
-        await self.mkfile('/countries/France/info')
-        await self.mkfile('/countries/Belgium/info')
+        await self.service.create_file('/.root')
+        await self.service.create_file('/countries/index')
+        await self.service.create_file('/countries/France/info')
+        await self.service.create_file('/countries/Belgium/info')
 
         # Finally do some lookup
         async def assert_ls(path, expected_childrens):
@@ -99,13 +89,9 @@ class BaseTestUserManifestService:
 
     @pytest.mark.xfail
     @pytest.mark.asyncio
-    async def test_create_file(self):
+    @pytest.mark.parametrize('path', ('/test', '/test_dir/test'))
+    async def test_create_file(self, path):
         ret = await self.service.dispatch_msg({'cmd': 'create_file', 'path': '/test'})
-        assert ret['status'] == 'ok'
-        assert ret['file']['id'] is not None
-        # Try to create file inside directory as well
-        await self.mkdir('/test_dir')
-        ret = await self.service.dispatch_msg({'cmd': 'create_file', 'path': '/test_dir/test'})
         assert ret['status'] == 'ok'
         assert ret['file']['id'] is not None
 
@@ -125,15 +111,15 @@ class BaseTestUserManifestService:
         assert ret == {'status': 'ok'}
 
     @pytest.mark.xfail
-    @pytest.mark.parametrize('path', ('/test', '/test_dir/test'))
     @pytest.mark.asyncio
+    @pytest.mark.parametrize('path', ('/test', '/test_dir/test'))
     async def test_delete_file(self, path):
-        await self.mkfile('/test')
-        await self.mkdir('/test_dir')
-        await self.mkfile('/test_dir/test')
+        await self.service.create_file('/test')
+        await self.service.make_dir('/test_dir')
+        await self.service.create_file('/test_dir/test')
         ret = await self.service.dispatch_msg({'cmd': 'delete_file', 'path': path})
         assert ret == {'status': 'ok'}
-        # Make sure the file is no longer there
+        # File not found
         ret = await self.service.dispatch_msg({'cmd': 'delete_file', 'path': path})
         assert ret == {'status': 'not_found', 'label': 'File not found.'}
 
@@ -148,9 +134,12 @@ class BaseTestUserManifestService:
 class TestUserManifestService(BaseTestUserManifestService):
 
     def setup_method(self):
-        self.file_service = FileService('localhost', 6777)
         self.service = UserManifestService('localhost', 6777)
-        self.server = BaseServer()
-        self.server.register_service(self.file_service)
-        self.server.register_service(self.service)
-        self.server.bootstrap_services()
+        mock.patch.object(self.service, 'save_user_manifest', new=AsyncMock()).start()  # remove?
+        server = BaseServer()
+        server.register_service(self.service)
+        server.register_service(CryptoService())
+        server.register_service(FileService('localhost', 6777))
+        server.register_service(IdentityService('localhost', 6777))
+        server.register_service(PubKeysService())
+        server.bootstrap_services()

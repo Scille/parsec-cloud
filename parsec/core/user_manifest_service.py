@@ -4,7 +4,6 @@ import sys
 
 from logbook import Logger, StreamHandler
 from marshmallow import fields
-import websockets
 
 from parsec.service import BaseService, cmd, service
 from parsec.exceptions import ParsecError
@@ -56,72 +55,61 @@ class cmd_HISTORY_Schema(BaseCmdSchema):
 
 class UserManifestService(BaseService):
 
+    backend_api_service = service('BackendAPIService')
     file_service = service('FileService')
     identity_service = service('IdentityService')
 
-    def __init__(self, backend_host, backend_port):
+    def __init__(self):
         super().__init__()
         self.manifest = {}
-        self._backend_host = backend_host
-        self._backend_port = backend_port
         self.version = 0
 
-    async def send_cmd(self, **msg):
-        req = json.dumps(msg).encode() + b'\n'
-        log.debug('Send: %r' % req)
-        websocket_path = 'ws://' + self._backend_host + ':' + str(self._backend_port)
-        async with websockets.connect(websocket_path) as websocket:
-            await websocket.send(req)
-            raw_reps = await websocket.recv()
-            log.debug('Received: %r' % raw_reps)
-            return json.loads(raw_reps.decode())
-
     @cmd('create_file')
-    async def _cmd_CREATE_FILE(self, msg):
+    async def _cmd_CREATE_FILE(self, session, msg):
         msg = cmd_CREATE_FILE_Schema().load(msg)
         file = await self.create_file(msg['path'])
         file.update({'status': 'ok'})
         return file
 
     @cmd('rename_file')
-    async def _cmd_RENAME_FILE(self, msg):
+    async def _cmd_RENAME_FILE(self, session, msg):
         msg = cmd_CREATE_FILE_Schema().load(msg)
         await self.rename_file(msg['old_path'], msg['new_path'])
         return {'status': 'ok'}
 
     @cmd('delete_file')
-    async def _cmd_DELETE_FILE(self, msg):
+    async def _cmd_DELETE_FILE(self, session, msg):
         msg = cmd_CREATE_FILE_Schema().load(msg)
         await self.delete_file(msg['path'])
         return {'status': 'ok'}
 
     @cmd('list_dir')
-    async def _cmd_LIST_DIR(self, msg):
+    async def _cmd_LIST_DIR(self, session, msg):
         msg = cmd_CREATE_FILE_Schema().load(msg)
         current, childrens = await self.list_dir(msg['path'])
         return {'status': 'ok', 'current': current, 'childrens': childrens}
 
     @cmd('make_dir')
-    async def _cmd_MAKE_DIR(self, msg):
+    async def _cmd_MAKE_DIR(self, session, msg):
         msg = cmd_CREATE_FILE_Schema().load(msg)
         await self.make_dir(msg['path'])
         return {'status': 'ok'}
 
     @cmd('remove_dir')
-    async def _cmd_REMOVE_DIR(self, msg):
+    async def _cmd_REMOVE_DIR(self, session, msg):
         msg = cmd_CREATE_FILE_Schema().load(msg)
         await self.remove_dir(msg['path'])
         return {'status': 'ok'}
 
     @cmd('history')
-    async def _cmd_HISTORY(self, msg):
+    async def _cmd_HISTORY(self, session, msg):
         msg = cmd_CREATE_FILE_Schema().load(msg)
         history = await self.history(msg['path'])
         return {'status': 'ok', 'history': history}
 
     @cmd('load_user_manifest')
     # TODO event when new identity loaded in indentity service
-    async def _cmd_LOAD_USER_MANIFEST(self, msg):
+    async def _cmd_LOAD_USER_MANIFEST(self, session, msg):
         await self.load_user_manifest()
         return {'status': 'ok'}
 
@@ -183,28 +171,15 @@ class UserManifestService(BaseService):
             raise UserManifestNotFound('Directory not found.')
 
     async def load_user_manifest(self):
-        user_identity, challenge = await self.identity_service.compute_sign_challenge()
+        identity = await self.identity_service.get_identity()
         try:
-            response = await self.send_cmd(cmd='VlobService:read',
-                                           id=user_identity,
-                                           challenge=challenge)
+            vlob = await self.backend_api_service.named_vlob_service.read(id=identity)
         except Exception:
-            response = await self.send_cmd(cmd='VlobService:create',
-                                           id=user_identity,
-                                           read_trust_seed=user_identity,
-                                           write_trust_seed=user_identity)
-            if response['status'] != 'ok':
-                raise UserManifestError('Cannot create vlob.')
+            vlob = await self.backend_api_service.named_vlob_service.create(id=identity)
             await self.make_dir('/')
-        user_identity, challenge = await self.identity_service.compute_sign_challenge()
-        try:
-            response = await self.send_cmd(cmd='VlobService:read',
-                                           id=user_identity,
-                                           challenge=challenge.decode())
-        except Exception:
-            raise UserManifestError('Unable to load newly created user manifest.')
-        self.version = response['version']
-        blob = response['blob']
+            vlob = await self.backend_api_service.named_vlob_service.read(id=identity)
+        self.version = len(vlob.blob_versions)
+        blob = vlob.blob_versions[self.version - 1]
         content = await self.identity_service.decrypt(blob)
         content = content.decode()
         manifest = json.loads(content)
@@ -214,18 +189,15 @@ class UserManifestService(BaseService):
         return consistency
 
     async def save_user_manifest(self):
-        user_identity, challenge = await self.identity_service.compute_sign_challenge()
+        identity = await self.identity_service.get_identity()
         blob = json.dumps(self.manifest)
         blob = blob.encode()
         encrypted_blob = await self.identity_service.encrypt(blob)
         self.version += 1
-        response = await self.send_cmd(cmd='VlobService:update',
-                                       id=user_identity,
-                                       version=self.version,
-                                       blob=encrypted_blob.decode(),
-                                       challenge=challenge.decode())
-        if response['status'] != 'ok':
-            raise UserManifestError('Cannot update vlob.')
+        await self.backend_api_service.named_vlob_service.update(
+            id=identity,
+            next_version=self.version,
+            blob=encrypted_blob.decode())
 
     async def check_consistency(self, manifest):
         for _, entry in manifest.items():
