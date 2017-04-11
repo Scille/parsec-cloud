@@ -12,22 +12,10 @@ from parsec.session import AuthSession
 from parsec.core import CryptoService, GNUPGPubKeysService
 from parsec.exceptions import HandshakeError
 
+from tests.common import MockedContext
+
 
 GNUPG_HOME = path.dirname(path.abspath(__file__)) + '/../gnupg_env'
-
-
-class MockedContext(BaseClientContext):
-    def __init__(self, on_recv=None, on_send=None):
-        self._on_recv = on_recv
-        self._on_send = on_send
-
-    async def recv(self):
-        if self._on_recv:
-            return self._on_recv()
-
-    async def send(self, body):
-        if self._on_send:
-            self._on_send(body)
 
 
 @pytest.fixture
@@ -49,7 +37,7 @@ class TestGNUPGPubKeysHandshake:
         answer = 'not computed yet...'
         events = []
 
-        def on_send(body):
+        async def on_send(body):
             # 1) Backend send challenge
             msg = json.loads(body.decode())
             assert msg['handshake'] == 'challenge'
@@ -58,7 +46,7 @@ class TestGNUPGPubKeysHandshake:
             nonlocal answer
             answer = alice_gpg.sign(msg['challenge']).data.decode()
 
-        def on_recv():
+        async def on_recv():
             # 2) Client respond to the challenge
             msg = {'handshake': 'answer', 'answer': answer, 'identity': alice_gpg.identity}
             events.append(('recv', msg))
@@ -90,7 +78,7 @@ class TestGNUPGPubKeysHandshake:
         bad_answer = alice_gpg.sign('DummyStuff').data.replace(b'\n', b'\\n')
         cooked = cooked.replace(b'<bad_answer>', bad_answer)
 
-        def on_recv():
+        async def on_recv():
             return cooked
 
         context = MockedContext(on_recv)
