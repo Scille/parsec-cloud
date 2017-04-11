@@ -66,11 +66,6 @@ def core(socket, backend_host, backend_port):
     server.register_service(GNUPGPubKeysService())
     server.register_service(IdentityService())
     server.register_service(UserManifestService())
-    # Dependencies for the BackendAPIService
-    server.register_service(InMemoryMessageService())
-    server.register_service(MockedVlobService())
-    server.register_service(MockedNamedVlobService())
-    server.register_service(MockedBlockService())
     server.start(socket)
 
 

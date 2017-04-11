@@ -60,24 +60,6 @@ class TestVlobServiceAPI:
         }
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize('bad_msg', [
-        {'cmd': 'read', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>', 'bad_field': 'foo'},
-        {'cmd': 'read', 'id': '<id-here>'},
-        {'cmd': 'read', 'id': '<id-here>', 'trust_seed': 42},
-        {'cmd': 'read', 'id': '<id-here>', 'trust_seed': None},
-        {'cmd': 'read', 'id': 42, 'trust_seed': '<trust_seed-here>'},
-        {'cmd': 'read', 'id': None, 'trust_seed': '<trust_seed-here>'},
-        {'cmd': 'read', 'id': '1234567890', 'trust_seed': '<trust_seed-here>'},
-        {'cmd': 'read'}, {}])
-    async def test_bad_msg_read(self, vlob_svc, bad_msg, vlob):
-        if bad_msg.get('id') == '<id-here>':
-            bad_msg['id'] = vlob.id
-        if bad_msg.get('trust_seed') == '<trust_seed-here>':
-            bad_msg['trust_seed'] = vlob.read_trust_seed
-        ret = await vlob_svc.dispatch_msg(bad_msg)
-        assert ret['status'] == 'bad_msg'
-
-    @pytest.mark.asyncio
     async def test_update_not_found(self, vlob_svc, vlob):
         blob = 'Next version.'
         ret = await vlob_svc.dispatch_msg({
@@ -156,7 +138,10 @@ class TestVlobServiceAPI:
     @pytest.mark.asyncio
     async def test_read_bad_version(self, vlob_svc, vlob):
         bad_version = 111
-        msg = {'cmd': 'read', 'id': vlob.id, 'trust_seed': vlob.read_trust_seed, 'version': bad_version}
+        msg = {'cmd': 'read',
+               'id': vlob.id,
+               'trust_seed': vlob.read_trust_seed,
+               'version': bad_version}
         ret = await vlob_svc.dispatch_msg(msg)
         assert ret['status'] == 'bad_version'
 

@@ -72,37 +72,37 @@ class UserManifestService(BaseService):
 
     @cmd('rename_file')
     async def _cmd_RENAME_FILE(self, session, msg):
-        msg = cmd_CREATE_FILE_Schema().load(msg)
+        msg = cmd_RENAME_FILE_Schema().load(msg)
         await self.rename_file(msg['old_path'], msg['new_path'])
         return {'status': 'ok'}
 
     @cmd('delete_file')
     async def _cmd_DELETE_FILE(self, session, msg):
-        msg = cmd_CREATE_FILE_Schema().load(msg)
+        msg = cmd_DELETE_FILE_Schema().load(msg)
         await self.delete_file(msg['path'])
         return {'status': 'ok'}
 
     @cmd('list_dir')
     async def _cmd_LIST_DIR(self, session, msg):
-        msg = cmd_CREATE_FILE_Schema().load(msg)
+        msg = cmd_LIST_DIR_Schema().load(msg)
         current, childrens = await self.list_dir(msg['path'])
         return {'status': 'ok', 'current': current, 'childrens': childrens}
 
     @cmd('make_dir')
     async def _cmd_MAKE_DIR(self, session, msg):
-        msg = cmd_CREATE_FILE_Schema().load(msg)
+        msg = cmd_MAKE_DIR_Schema().load(msg)
         await self.make_dir(msg['path'])
         return {'status': 'ok'}
 
     @cmd('remove_dir')
     async def _cmd_REMOVE_DIR(self, session, msg):
-        msg = cmd_CREATE_FILE_Schema().load(msg)
+        msg = cmd_REMOVE_DIR_Schema().load(msg)
         await self.remove_dir(msg['path'])
         return {'status': 'ok'}
 
     @cmd('history')
     async def _cmd_HISTORY(self, session, msg):
-        msg = cmd_CREATE_FILE_Schema().load(msg)
+        msg = cmd_HISTORY_Schema().load(msg)
         history = await self.history(msg['path'])
         return {'status': 'ok', 'history': history}
 

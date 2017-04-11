@@ -106,7 +106,7 @@ class GNUPGPubKeysService(BasePubKeysService):
         begin_pgp_message = '-----BEGIN PGP SIGNED MESSAGE-----'
         end_pgp_message = '-----BEGIN PGP SIGNATURE-----'
         claimed_challenge = re.match(
-            r'^' + begin_pgp_message + '\nHash: .*?\n\n((?:.*)+\n?)\n' + end_pgp_message,
+            r'^' + begin_pgp_message + r'\nHash: .*?\n\n((?:.*)+\n?)\n' + end_pgp_message,
             answer, flags=re.MULTILINE).group(1)
         sign_result = self.gnupg.verify(answer.encode())
         if (challenge == claimed_challenge and sign_result.valid and

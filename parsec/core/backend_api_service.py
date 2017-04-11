@@ -2,7 +2,8 @@ import sys
 
 from logbook import Logger, StreamHandler
 
-from parsec.service import BaseService, cmd, service
+from parsec.backend import MockedVlobService, MockedNamedVlobService, MockedBlockService
+from parsec.service import BaseService
 from parsec.exceptions import ParsecError
 
 
@@ -16,22 +17,13 @@ class BackendAPIError(ParsecError):
     pass
 
 
-class BaseBackendAPIService(BaseService):
-
-    gnupg_pub_keys_service = service('GNUPGPubKeysService')
-    named_vlob_service = service('MockedNamedVlobService')
-    vlob_service = service('MockedVlobService')
-    block_service = service('MockedBlockService')
-
-    @cmd('send_message')
-    async def _cmd_SEND_MESSAGE(self, session, msg):
-        return await self.send_cmd(**msg)
-
-
-class BackendAPIService(BaseBackendAPIService):
+class BackendAPIService(BaseService):
 
     def __init__(self, backend_host, backend_port):
         super().__init__()
+        self.named_vlob_service = MockedNamedVlobService()
+        self.vlob_service = MockedVlobService()
+        self.block_service = MockedBlockService()
 
     async def send_cmd(self, msg):
         pass

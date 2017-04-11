@@ -1,145 +1,132 @@
+from os import path
+
 from freezegun import freeze_time
+import gnupg
 import pytest
 
-from parsec.backend import MockedVlobService
-from parsec.core import (CryptoService, FileService, IdentityService, PubKeysService,
-                         UserManifestService)
-from parsec.server import BaseServer, WebSocketServer
+from parsec.core import (BackendAPIService, CryptoService, FileService, IdentityService,
+                         GNUPGPubKeysService, UserManifestService)
+from parsec.server import BaseServer
 
 
-class BaseTestFileService:
+GNUPG_HOME = path.dirname(path.abspath(__file__)) + '/../gnupg_env'
+
+
+@pytest.fixture
+def user_manifest_svc():
+    return UserManifestService()
+
+
+@pytest.fixture
+def file_svc(event_loop, user_manifest_svc):
+    service = FileService()
+    crypto_service = CryptoService()
+    crypto_service.gnupg = gnupg.GPG(homedir=GNUPG_HOME + '/alice')
+    identity_service = IdentityService()
+    server = BaseServer()
+    server.register_service(service)
+    server.register_service(crypto_service)
+    server.register_service(identity_service)
+    server.register_service(user_manifest_svc)
+    server.register_service(BackendAPIService('localhost', 6777))
+    server.register_service(GNUPGPubKeysService())
+    server.bootstrap_services()
+    event_loop.run_until_complete(identity_service.load_identity())
+    event_loop.run_until_complete(user_manifest_svc.load_user_manifest())
+    return service
+
+
+class TestFileService:
 
     @pytest.mark.asyncio
-    async def test_create_file(self):
-        ret = await self.service.dispatch_msg({'cmd': 'create_file'})
+    async def test_create_file(self, file_svc):
+        ret = await file_svc.dispatch_msg({'cmd': 'create_file'})
         assert ret['status'] == 'ok'
         # assert ret['file']['id'] # TODO check id
 
-    @pytest.mark.xfail
     @pytest.mark.asyncio
-    async def test_read_file(self):
-        ret = await self.service.dispatch_msg({'cmd': 'create_file'})
-        id = ret['file']['id']
-        read_trust_seed = ret['file']['read_trust_seed']
-        write_trust_seed = ret['file']['write_trust_seed']
+    async def test_read_file(self, file_svc, user_manifest_svc):
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'create_file', 'path': '/test'})
+        id = ret['id']
         # Empty file
-        ret = await self.service.dispatch_msg({'cmd':
-                                               'read_file',
-                                               'id': id,
-                                               'trust_seed': read_trust_seed})
-        assert ret == {'status': 'ok', 'content': '', 'version': 1}
+        ret = await file_svc.dispatch_msg({'cmd': 'read_file', 'id': id})
+        assert ret == {'status': 'ok', 'content': '', 'version': 0}
         # Not empty file
-        ret = await self.service.dispatch_msg({'cmd': 'write_file',
-                                               'id': id,
-                                               'trust_seed': write_trust_seed,
-                                               'version': 2,
-                                               'content': 'foo'})
-        ret = await self.service.dispatch_msg({'cmd': 'read_file',
-                                               'id': id,
-                                               'trust_seed': read_trust_seed})
-        assert ret == {'status': 'ok', 'content': 'foo', 'version': 2}
+        ret = await file_svc.dispatch_msg({'cmd': 'write_file',
+                                           'id': id,
+                                           'version': 1,
+                                           'content': 'foo'})
+        ret = await file_svc.dispatch_msg({'cmd': 'read_file', 'id': id})
+        assert ret == {'status': 'ok', 'content': 'foo', 'version': 1}
         # Unknown file
-        ret = await self.service.dispatch_msg({'cmd': 'read_file',
-                                               'id': '5ea26ae2479c49f58ede248cdca1a3ca',
-                                               'trust_seed': read_trust_seed})
-        assert ret == {'status': 'not_found', 'label': 'File not found.'}
+        ret = await file_svc.dispatch_msg({'cmd': 'read_file',
+                                           'id': '5ea26ae2479c49f58ede248cdca1a3ca'})
+        assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
-    @pytest.mark.xfail
     @pytest.mark.asyncio
-    async def test_write_file(self):
-        ret = await self.service.dispatch_msg({'cmd': 'create_file'})
-        id = ret['file']['id']
-        read_trust_seed = ret['file']['read_trust_seed']
-        write_trust_seed = ret['file']['write_trust_seed']
+    async def test_write_file(self, file_svc, user_manifest_svc):
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'create_file', 'path': '/test'})
+        id = ret['id']
         # Check with empty and not empty file
         content = ['foo', 'bar']
         for value in content:
-            ret = await self.service.dispatch_msg({'cmd': 'write_file',
-                                                   'id': id,
-                                                   'trust_seed': write_trust_seed,
-                                                   'version': content.index(value) + 2,
-                                                   'content': value})
+            ret = await file_svc.dispatch_msg({'cmd': 'write_file',
+                                               'id': id,
+                                               'version': content.index(value) + 1,
+                                               'content': value})
             assert ret == {'status': 'ok'}
-            ret = await self.service.dispatch_msg({'cmd': 'read_file',
-                                                   'id': id,
-                                                   'trust_seed': read_trust_seed})
-            assert ret == {'status': 'ok', 'content': value, 'version': content.index(value) + 2}
+            ret = await file_svc.dispatch_msg({'cmd': 'read_file', 'id': id})
+            assert ret == {'status': 'ok', 'content': value, 'version': content.index(value) + 1}
         # Unknown file
-        ret = await self.service.dispatch_msg({'cmd': 'write_file',
-                                               'id': '1234',
-                                               'trust_seed': write_trust_seed,
-                                               'version': 1,
-                                               'content': 'foo'})
-        assert ret == {'status': 'not_found', 'label': 'File not found.'}
+        ret = await file_svc.dispatch_msg({'cmd': 'write_file',
+                                           'id': '1234',
+                                           'version': 1,
+                                           'content': 'foo'})
+        assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
-    @pytest.mark.xfail
     @pytest.mark.asyncio
     # @freeze_time("2012-01-01")
-    async def test_stat_file(self):
+    async def test_stat_file(self, file_svc, user_manifest_svc):
             # Good file
             with freeze_time('2012-01-01') as frozen_datetime:
-                ret = await self.service.dispatch_msg({'cmd': 'create_file'})
-                id = ret['file']['id']
-                read_trust_seed = ret['file']['read_trust_seed']
-                write_trust_seed = ret['file']['write_trust_seed']
-                ret = await self.service.dispatch_msg({'cmd': 'stat_file', 'id': id})
+                ret = await user_manifest_svc.dispatch_msg({'cmd': 'create_file', 'path': '/test'})
+                id = ret['id']
+                ret = await file_svc.dispatch_msg({'cmd': 'stat_file', 'id': id})
                 ctime = frozen_datetime().timestamp()
-                assert ret == {'status': 'ok', 'stats': {'id': id,
-                                                         'ctime': ctime,
-                                                         'mtime': ctime,
-                                                         'atime': ctime,
-                                                         'size': 0}}
+                assert ret == {'status': 'ok',
+                               'id': id,
+                               'ctime': ctime,
+                               'mtime': ctime,
+                               'atime': ctime,
+                               'size': 0}
                 frozen_datetime.tick()
                 mtime = frozen_datetime().timestamp()
-                ret = await self.service.dispatch_msg({'cmd': 'write_file',
-                                                       'id': id,
-                                                       'trust_seed': write_trust_seed,
-                                                       'version': 2,
-                                                       'content': 'foo'})
-                ret = await self.service.dispatch_msg({'cmd': 'stat_file', 'id': id})
-                assert ret == {'status': 'ok', 'stats': {'id': id,
-                                                         'ctime': ctime,
-                                                         'mtime': mtime,
-                                                         'atime': ctime,
-                                                         'size': 3}}
-
-                frozen_datetime.tick()
-                atime = frozen_datetime().timestamp()
-                ret = await self.service.dispatch_msg({'cmd': 'read_file',
-                                                       'id': id,
-                                                       'trust_seed': read_trust_seed})
-                ret = await self.service.dispatch_msg({'cmd': 'stat_file', 'id': id})
-                assert ret == {'status': 'ok', 'stats': {'id': id,
-                                                         'ctime': ctime,
-                                                         'mtime': mtime,
-                                                         'atime': atime,
-                                                         'size': 3}}
-            # Unknown file
-            ret = await self.service.dispatch_msg({'cmd': 'write_file',
-                                                   'id': '1234',
-                                                   'trust_seed': write_trust_seed,
+                ret = await file_svc.dispatch_msg({'cmd': 'write_file',
+                                                   'id': id,
                                                    'version': 1,
                                                    'content': 'foo'})
-            assert ret == {'status': 'not_found', 'label': 'File not found.'}
+                ret = await file_svc.dispatch_msg({'cmd': 'stat_file', 'id': id})
+                assert ret == {'status': 'ok',
+                               'id': id,
+                               'ctime': mtime,
+                               'mtime': mtime,
+                               'atime': mtime,
+                               'size': 3}
+                frozen_datetime.tick()
+                atime = frozen_datetime().timestamp()
+                ret = await file_svc.dispatch_msg({'cmd': 'read_file', 'id': id})
+                ret = await file_svc.dispatch_msg({'cmd': 'stat_file', 'id': id})
+                assert ret == {'status': 'ok',
+                               'id': id,
+                               'ctime': mtime,
+                               'mtime': mtime,
+                               'atime': atime,
+                               'size': 3}
+            # Unknown file
+            ret = await file_svc.dispatch_msg({'cmd': 'stat_file', 'id': '1234'})
+            assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.xfail
     @pytest.mark.asyncio
-    async def test_history(self):
+    async def test_history(self, file_svc):
         raise NotImplementedError()
-
-
-class TestFileService(BaseTestFileService):
-
-    def setup_method(self):
-        backend_server = WebSocketServer()
-        backend_server.register_service(MockedVlobService())
-        backend_server.bootstrap_services()
-        backend_server.start('localhost', 6777)  # TODO
-        self.service = FileService('localhost', 6777)
-        server = BaseServer()
-        server.register_service(self.service)
-        server.register_service(CryptoService())
-        server.register_service(IdentityService('localhost', 6777))
-        server.register_service(PubKeysService())
-        server.register_service(UserManifestService('localhost', 6777))
-        server.bootstrap_services()

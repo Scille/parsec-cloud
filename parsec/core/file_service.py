@@ -57,8 +57,9 @@ class FileService(BaseService):
 
     @cmd('create_file')
     async def _cmd_CREATE(self, session, msg):
-        id = await self.create()
-        return {'status': 'ok', 'file': id}
+        file = await self.create()
+        file.update({'status': 'ok'})
+        return file
 
     @cmd('read_file')
     async def _cmd_READ(self, session, msg):
@@ -76,9 +77,9 @@ class FileService(BaseService):
     @cmd('stat_file')
     async def _cmd_STAT(self, session, msg):
         msg = cmd_STAT_Schema().load(msg)
-        stats = await self.stat(msg['id'])
-        stats.update({'status': 'ok'})
-        return stats
+        stat = await self.stat(msg['id'])
+        stat.update({'status': 'ok'})
+        return stat
 
     @cmd('history')
     async def _cmd_HISTORY(self, session, msg):
@@ -122,12 +123,11 @@ class FileService(BaseService):
 
     async def write(self, id, version, content):
         try:
-            properties = await self.user_manifest_service.get_properties(id)
+            await self.user_manifest_service.get_properties(id)
         except Exception:
             raise FileNotFound('Vlob not found.')
-        key = decodebytes(properties['key'].encode()) if properties['key'] else None
         content = content.encode()
-        size = len(decodebytes(content))
+        size = len(content)
         # Digest
         digest = hashes.Hash(hashes.SHA512(), backend=openssl)
         digest.update(content)
