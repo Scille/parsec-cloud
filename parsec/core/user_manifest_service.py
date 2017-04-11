@@ -68,8 +68,7 @@ class UserManifestService(BaseService):
     async def _cmd_CREATE_FILE(self, session, msg):
         msg = cmd_CREATE_FILE_Schema().load(msg)
         file = await self.create_file(msg['path'])
-        file.update({'status': 'ok'})
-        return file
+        return {'status': 'ok', **file}
 
     @cmd('rename_file')
     async def _cmd_RENAME_FILE(self, session, msg):

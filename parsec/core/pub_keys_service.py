@@ -57,7 +57,7 @@ class BasePubKeysService(BaseService):
         cyphertext = await self.encrypt(msg['identity'], msg['content'])
         return {'status': 'ok', 'cyphertext': cyphertext}
 
-    @cmd('check_signature')
+    @cmd('verify')
     async def _cmd_VERIFY(self, session, msg):
         msg = cmd_VERIFY_Schema().load(msg)
         user_key = await self.get_pub_key(msg['identity'])

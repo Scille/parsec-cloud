@@ -1,6 +1,10 @@
+from asyncio import Queue
+
+
 class BaseSession:
     def __init__(self, context=None):
         self.context = context
+        self.received_events = Queue()
 
     @property
     def identity(self):
@@ -14,7 +18,7 @@ class AnonymousSession(BaseSession):
 
 
 class AuthSession(BaseSession):
-    identity = None
+    identity = None  # Shadow the parent property
 
     def __init__(self, context, identity):
         super().__init__(context)
