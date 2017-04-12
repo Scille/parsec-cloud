@@ -1,3 +1,4 @@
+from base64 import encodebytes
 from os import path
 
 from freezegun import freeze_time
@@ -45,43 +46,50 @@ class TestFileService:
         # assert ret['file']['id'] # TODO check id
 
     @pytest.mark.asyncio
-    async def test_read_file(self, file_svc, user_manifest_svc):
-        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file', 'path': '/test'})
+    async def test_file_read(self, file_svc, user_manifest_svc):
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
+                                                    'path': '/test'})
         id = ret['id']
         # Empty file
         ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
         assert ret == {'status': 'ok', 'content': '', 'version': 0}
         # Not empty file
+        content = encodebytes('foo'.encode()).decode()
         ret = await file_svc.dispatch_msg({'cmd': 'file_write',
                                            'id': id,
                                            'version': 1,
-                                           'content': 'foo'})
+                                           'content': content})
         ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
-        assert ret == {'status': 'ok', 'content': 'foo', 'version': 1}
+        assert ret == {'status': 'ok', 'content': content, 'version': 1}
         # Unknown file
         ret = await file_svc.dispatch_msg({'cmd': 'file_read',
                                            'id': '5ea26ae2479c49f58ede248cdca1a3ca'})
         assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.asyncio
-    async def test_write_file(self, file_svc, user_manifest_svc):
-        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file', 'path': '/test'})
+    async def test_file_write(self, file_svc, user_manifest_svc):
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
+                                                    'path': '/test'})
         id = ret['id']
         # Check with empty and not empty file
         content = ['foo', 'bar']
         for value in content:
+            encoded_value = encodebytes(value.encode()).decode()
             ret = await file_svc.dispatch_msg({'cmd': 'file_write',
                                                'id': id,
                                                'version': content.index(value) + 1,
-                                               'content': value})
+                                               'content': encoded_value})
             assert ret == {'status': 'ok'}
             ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
-            assert ret == {'status': 'ok', 'content': value, 'version': content.index(value) + 1}
+            assert ret == {'status': 'ok',
+                           'content': encoded_value,
+                           'version': content.index(value) + 1}
         # Unknown file
+        content = encodebytes('foo'.encode()).decode()
         ret = await file_svc.dispatch_msg({'cmd': 'file_write',
                                            'id': '1234',
                                            'version': 1,
-                                           'content': 'foo'})
+                                           'content': content})
         assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.asyncio
@@ -89,7 +97,8 @@ class TestFileService:
     async def test_stat_file(self, file_svc, user_manifest_svc):
             # Good file
             with freeze_time('2012-01-01') as frozen_datetime:
-                ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file', 'path': '/test'})
+                ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
+                                                            'path': '/test'})
                 id = ret['id']
                 ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
                 ctime = frozen_datetime().timestamp()
@@ -101,10 +110,11 @@ class TestFileService:
                                'size': 0}
                 frozen_datetime.tick()
                 mtime = frozen_datetime().timestamp()
+                content = encodebytes('foo'.encode()).decode()
                 ret = await file_svc.dispatch_msg({'cmd': 'file_write',
                                                    'id': id,
                                                    'version': 1,
-                                                   'content': 'foo'})
+                                                   'content': content})
                 ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
                 assert ret == {'status': 'ok',
                                'id': id,

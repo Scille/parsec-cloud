@@ -4,7 +4,7 @@ from os import urandom
 import gnupg
 from marshmallow import fields
 
-from parsec.service import BaseService, cmd, service
+from parsec.service import BaseService, cmd
 from parsec.exceptions import ParsecError
 from parsec.tools import BaseCmdSchema
 
@@ -87,8 +87,6 @@ class BaseCryptoService(BaseService):
 
 
 class CryptoService(BaseCryptoService):
-
-    pub_keys_service = service('PubKeysService')
 
     def __init__(self, homedir='~/.gnupg'):
         super().__init__()

@@ -4,8 +4,8 @@ import click
 from parsec.server import UnixSocketServer, WebSocketServer
 from parsec.backend import (InMemoryMessageService, MockedVlobService,
                             MockedNamedVlobService, MockedBlockService)
-from parsec.core import (BackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
-                         IdentityService, UserManifestService)
+from parsec.core import (MockedBackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
+                         IdentityService, ShareService, UserManifestService)
 from parsec.ui.shell import start_shell
 
 
@@ -60,11 +60,12 @@ def fuse(mountpoint, identity, debug, nothreads, socket):
 @click.option('--backend-port', '-P', default=6777, type=int)
 def core(socket, backend_host, backend_port):
     server = UnixSocketServer()
-    server.register_service(BackendAPIService(backend_host, backend_port))
+    server.register_service(MockedBackendAPIService())
     server.register_service(CryptoService())
     server.register_service(FileService())
     server.register_service(GNUPGPubKeysService())
     server.register_service(IdentityService())
+    server.register_service(ShareService())
     server.register_service(UserManifestService())
     server.start(socket)
 

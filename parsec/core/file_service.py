@@ -104,7 +104,7 @@ class FileService(BaseFileService):
 
     async def read(self, id):
         try:
-            properties = await self.user_manifest_service.get_properties(id)
+            properties = await self.user_manifest_service.get_properties(id=id)
         except Exception:
             raise FileNotFound('Vlob not found.')
         key = decodebytes(properties['key'].encode()) if properties['key'] else None
@@ -132,11 +132,11 @@ class FileService(BaseFileService):
 
     async def write(self, id, version, content):
         try:
-            await self.user_manifest_service.get_properties(id)
+            await self.user_manifest_service.get_properties(id=id)
         except Exception:
             raise FileNotFound('Vlob not found.')
         content = content.encode()
-        size = len(content)
+        size = len(decodebytes(content))
         # Digest
         digest = hashes.Hash(hashes.SHA512(), backend=openssl)
         digest.update(content)
@@ -165,7 +165,7 @@ class FileService(BaseFileService):
 
     async def stat(self, id):
         try:
-            properties = await self.user_manifest_service.get_properties(id)
+            properties = await self.user_manifest_service.get_properties(id=id)
         except Exception:
             raise FileNotFound('Vlob not found.')
         key = decodebytes(properties['key'].encode()) if properties['key'] else None

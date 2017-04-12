@@ -2,7 +2,7 @@ import json
 from base64 import encodebytes
 from marshmallow import fields
 
-from parsec.service import BaseService, cmd, service
+from parsec.service import BaseService, service, cmd
 from parsec.exceptions import ParsecError
 from parsec.tools import BaseCmdSchema
 
@@ -202,6 +202,7 @@ class UserManifestService(BaseUserManifestService):
             raise UserManifestNotFound('Directory not found.')
 
     async def load_user_manifest(self):
+        self.backend_api_service.on_msg_arrived.connect(self.file_shared)
         identity = await self.identity_service.get_identity()
         try:
             vlob = await self.backend_api_service.named_vlob_read(id=identity)
@@ -230,6 +231,20 @@ class UserManifestService(BaseUserManifestService):
             next_version=self.version,
             blob=encrypted_blob.decode())
 
+    async def import_vlob(self):
+        identity = await self.identity_service.get_identity()
+        messages = await self.backend_api_service.message_get(identity)  # TODO get last
+        vlob = await self.identity_service.decrypt(messages[-1])
+        vlob = json.loads(vlob.decode())
+        self.manifest['/share-' + vlob['id']] = vlob
+        await self.save_user_manifest()
+
+    def file_shared(self, sender):
+        # id, read_trust_seed, write_trust_seed_key
+        import asyncio
+        loop = asyncio.get_event_loop()
+        loop.call_soon(asyncio.ensure_future, self.import_vlob())
+
     async def check_consistency(self, manifest):
         for _, entry in manifest.items():
             if entry['id']:
@@ -239,13 +254,17 @@ class UserManifestService(BaseUserManifestService):
                     return False
         return True
 
-    async def get_properties(self, id):
-        for entry in self.manifest.values():  # TODO bad complexity
-            if entry['id'] == id:
-                key = entry['key']
-                entry['key'] = key if key else None
-                return entry
-        raise(UserManifestNotFound('File not found.'))
+    async def get_properties(self, path=None, id=None):  # TODO refactor?
+        if path:
+            try:
+                return self.manifest[path]
+            except Exception:
+                raise(UserManifestNotFound('File not found.'))
+        elif id:
+            for entry in self.manifest.values():  # TODO bad complexity
+                if entry['id'] == id:
+                    return entry
+            raise(UserManifestNotFound('File not found.'))
 
     async def update_key(self, id, new_key):  # TODO don't call when update manifest
         for key, values in self.manifest.items():

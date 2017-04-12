@@ -1,5 +1,6 @@
-from parsec.backend import MockedVlobService, MockedNamedVlobService, MockedBlockService
-from parsec.service import BaseService
+from parsec.backend import (GroupService, InMemoryMessageService, MockedVlobService,
+                            MockedNamedVlobService, MockedBlockService)
+from parsec.service import BaseService, event
 
 
 class BaseBackendAPIService(BaseService):
@@ -15,8 +16,12 @@ class BackendAPIService(BaseBackendAPIService):
 
 class MockedBackendAPIService(BaseBackendAPIService):
 
+    on_msg_arrived = event('arrived')
+
     def __init__(self):
         super().__init__()
+        self._group_service = GroupService()
+        self._message_service = InMemoryMessageService()
         self._named_vlob_service = MockedNamedVlobService()
         self._vlob_service = MockedVlobService()
         self._block_service = MockedBlockService()
