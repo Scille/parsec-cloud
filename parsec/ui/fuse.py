@@ -27,7 +27,7 @@ class File:
 
     def get_content(self, force=False):
         if not self._content or force:
-            response = self._operations.send_cmd(cmd='FileService:read_file', id=self.id)
+            response = self._operations.send_cmd(cmd='file_read', id=self.id)
             if response['status'] != 'ok':
                 raise FuseOSError(ENOENT)
             self._content = decodebytes(response['content'].encode())
@@ -55,7 +55,7 @@ class File:
         if self._need_flush:
             self.version += 1
             response = self._operations.send_cmd(
-                cmd='FileService:write_file',
+                cmd='file_write',
                 id=self.id,
                 version=self.version,
                 content=encodebytes(self._content).decode())
@@ -101,18 +101,18 @@ class FuseOperations(LoggingMixIn, Operations):
             raise FuseOSError(EBADFD)
 
     def _get_file_id(self, path):
-        response = self.send_cmd(cmd='UserManifestService:list_dir', path=path)
+        response = self.send_cmd(cmd='user_manifest_list_dir', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         return response['current']['id']
 
     def getattr(self, path, fh=None):
-        response = self.send_cmd(cmd='UserManifestService:list_dir', path=path)
+        response = self.send_cmd(cmd='user_manifest_list_dir', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         id = response['current']['id']
         if id:
-            response = self.send_cmd(cmd='FileService:stat_file', id=id)
+            response = self.send_cmd(cmd='file_stat', id=id)
             if response['status'] != 'ok':
                 raise FuseOSError(ENOENT)
             stat = response
@@ -139,13 +139,13 @@ class FuseOperations(LoggingMixIn, Operations):
         return fuse_stat
 
     def readdir(self, path, fh):
-        response = self.send_cmd(cmd='UserManifestService:list_dir', path=path)
+        response = self.send_cmd(cmd='user_manifest_list_dir', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         return ['.', '..'] + list(response['childrens'].keys())
 
     def create(self, path, mode):
-        response = self.send_cmd(cmd='UserManifestService:create_file', path=path)
+        response = self.send_cmd(cmd='user_manifest_create_file', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         return self.open(path)
@@ -153,11 +153,11 @@ class FuseOperations(LoggingMixIn, Operations):
     def open(self, path, flags=0):
         fd_id = self.next_fd_id
         id = self._get_file_id(path)
-        response = self.send_cmd(cmd='UserManifestService:list_dir', path=path)
+        response = self.send_cmd(cmd='user_manifest_list_dir', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         id = response['current']['id']
-        response = self.send_cmd(cmd='FileService:read_file', id=id)
+        response = self.send_cmd(cmd='file_read', id=id)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         version = response['version']
@@ -194,24 +194,24 @@ class FuseOperations(LoggingMixIn, Operations):
                 self.release(path, fh)
 
     def unlink(self, path):
-        response = self.send_cmd(cmd='UserManifestService:delete_file', path=path)
+        response = self.send_cmd(cmd='user_manifest_delete_file', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
 
     def mkdir(self, path, mode):
-        response = self.send_cmd(cmd='UserManifestService:make_dir', path=path)
+        response = self.send_cmd(cmd='user_manifest_make_dir', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         return 0
 
     def rmdir(self, path):
-        response = self.send_cmd(cmd='UserManifestService:remove_dir', path=path)
+        response = self.send_cmd(cmd='user_manifest_remove_dir', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         return 0
 
     def rename(self, old_path, new_path):
-        response = self.send_cmd(cmd='UserManifestService:rename_file',
+        response = self.send_cmd(cmd='user_manifest_rename_file',
                                  old_path=old_path,
                                  new_path=new_path)
         if response['status'] != 'ok':
@@ -237,12 +237,12 @@ def start_fuse(socket_path: str,
                nothreads: bool=False):
     StreamHandler(sys.stdout, format_string=LOG_FORMAT).push_application()
     operations = FuseOperations(socket_path)
-    response = operations.send_cmd(cmd='IdentityService:load_identity',
+    response = operations.send_cmd(cmd='identity_load',
                                    identity=identity)
     if response['status'] != 'ok':
         raise FuseOSError(ENOENT)  # TODO change error message
     # TODO call this automatically
-    response = operations.send_cmd(cmd='UserManifestService:load_user_manifest')
+    response = operations.send_cmd(cmd='user_manifest_load')
     if response['status'] != 'ok':
         raise FuseOSError(ENOENT)  # TODO change error message
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)
