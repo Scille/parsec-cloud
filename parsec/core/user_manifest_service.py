@@ -1,19 +1,10 @@
-from base64 import encodebytes
 import json
-import sys
-
-from logbook import Logger, StreamHandler
+from base64 import encodebytes
 from marshmallow import fields
 
 from parsec.service import BaseService, cmd, service
 from parsec.exceptions import ParsecError
 from parsec.tools import BaseCmdSchema
-
-
-LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name})' \
-             ' {record.level_name}: {record.channel}: {record.message}'
-log = Logger('Parsec-File-Service')
-StreamHandler(sys.stdout, format_string=LOG_FORMAT).push_application()
 
 
 class UserManifestError(ParsecError):
@@ -53,7 +44,96 @@ class cmd_HISTORY_Schema(BaseCmdSchema):
     path = fields.String(required=True)
 
 
-class UserManifestService(BaseService):
+class BaseUserManifestService(BaseService):
+
+    name = 'UserManifestService'
+
+    @cmd('user_manifest_create_file')
+    async def _cmd_CREATE_FILE(self, session, msg):
+        msg = cmd_CREATE_FILE_Schema().load(msg)
+        file = await self.create_file(msg['path'])
+        return {'status': 'ok', **file}
+
+    @cmd('user_manifest_rename_file')
+    async def _cmd_RENAME_FILE(self, session, msg):
+        msg = cmd_RENAME_FILE_Schema().load(msg)
+        await self.rename_file(msg['old_path'], msg['new_path'])
+        return {'status': 'ok'}
+
+    @cmd('user_manifest_delete_file')
+    async def _cmd_DELETE_FILE(self, session, msg):
+        msg = cmd_DELETE_FILE_Schema().load(msg)
+        await self.delete_file(msg['path'])
+        return {'status': 'ok'}
+
+    @cmd('user_manifest_list_dir')
+    async def _cmd_LIST_DIR(self, session, msg):
+        msg = cmd_LIST_DIR_Schema().load(msg)
+        current, childrens = await self.list_dir(msg['path'])
+        return {'status': 'ok', 'current': current, 'childrens': childrens}
+
+    @cmd('user_manifest_make_dir')
+    async def _cmd_MAKE_DIR(self, session, msg):
+        msg = cmd_MAKE_DIR_Schema().load(msg)
+        await self.make_dir(msg['path'])
+        return {'status': 'ok'}
+
+    @cmd('user_manifest_remove_dir')
+    async def _cmd_REMOVE_DIR(self, session, msg):
+        msg = cmd_REMOVE_DIR_Schema().load(msg)
+        await self.remove_dir(msg['path'])
+        return {'status': 'ok'}
+
+    @cmd('user_manifest_history')
+    async def _cmd_HISTORY(self, session, msg):
+        msg = cmd_HISTORY_Schema().load(msg)
+        history = await self.history(msg['path'])
+        return {'status': 'ok', 'history': history}
+
+    @cmd('user_manifest_load')
+    # TODO event when new identity loaded in indentity service
+    async def _cmd_LOAD_USER_MANIFEST(self, session, msg):
+        await self.load_user_manifest()
+        return {'status': 'ok'}
+
+    async def create_file(self, path):
+        raise NotImplementedError()
+
+    async def rename_file(self, old_path, new_path):
+        raise NotImplementedError()
+
+    async def delete_file(self, path):
+        raise NotImplementedError()
+
+    async def list_dir(self, path):
+        raise NotImplementedError()
+
+    async def make_dir(self, path):
+        raise NotImplementedError()
+
+    async def remove_dir(self, path):
+        raise NotImplementedError()
+
+    async def load_user_manifest(self):
+        raise NotImplementedError()
+
+    async def save_user_manifest(self):
+        raise NotImplementedError()
+
+    async def check_consistency(self, manifest):
+        raise NotImplementedError()
+
+    async def get_properties(self, id):
+        raise NotImplementedError()
+
+    async def update_key(self, id, new_key):
+        raise NotImplementedError()
+
+    async def history(self):
+        raise NotImplementedError()
+
+
+class UserManifestService(BaseUserManifestService):
 
     backend_api_service = service('BackendAPIService')
     file_service = service('FileService')
@@ -63,54 +143,6 @@ class UserManifestService(BaseService):
         super().__init__()
         self.manifest = {}
         self.version = 0
-
-    @cmd('create_file')
-    async def _cmd_CREATE_FILE(self, session, msg):
-        msg = cmd_CREATE_FILE_Schema().load(msg)
-        file = await self.create_file(msg['path'])
-        return {'status': 'ok', **file}
-
-    @cmd('rename_file')
-    async def _cmd_RENAME_FILE(self, session, msg):
-        msg = cmd_RENAME_FILE_Schema().load(msg)
-        await self.rename_file(msg['old_path'], msg['new_path'])
-        return {'status': 'ok'}
-
-    @cmd('delete_file')
-    async def _cmd_DELETE_FILE(self, session, msg):
-        msg = cmd_DELETE_FILE_Schema().load(msg)
-        await self.delete_file(msg['path'])
-        return {'status': 'ok'}
-
-    @cmd('list_dir')
-    async def _cmd_LIST_DIR(self, session, msg):
-        msg = cmd_LIST_DIR_Schema().load(msg)
-        current, childrens = await self.list_dir(msg['path'])
-        return {'status': 'ok', 'current': current, 'childrens': childrens}
-
-    @cmd('make_dir')
-    async def _cmd_MAKE_DIR(self, session, msg):
-        msg = cmd_MAKE_DIR_Schema().load(msg)
-        await self.make_dir(msg['path'])
-        return {'status': 'ok'}
-
-    @cmd('remove_dir')
-    async def _cmd_REMOVE_DIR(self, session, msg):
-        msg = cmd_REMOVE_DIR_Schema().load(msg)
-        await self.remove_dir(msg['path'])
-        return {'status': 'ok'}
-
-    @cmd('history')
-    async def _cmd_HISTORY(self, session, msg):
-        msg = cmd_HISTORY_Schema().load(msg)
-        history = await self.history(msg['path'])
-        return {'status': 'ok', 'history': history}
-
-    @cmd('load_user_manifest')
-    # TODO event when new identity loaded in indentity service
-    async def _cmd_LOAD_USER_MANIFEST(self, session, msg):
-        await self.load_user_manifest()
-        return {'status': 'ok'}
 
     async def create_file(self, path):
         if path in self.manifest:
@@ -172,11 +204,11 @@ class UserManifestService(BaseService):
     async def load_user_manifest(self):
         identity = await self.identity_service.get_identity()
         try:
-            vlob = await self.backend_api_service.named_vlob_service.read(id=identity)
+            vlob = await self.backend_api_service.named_vlob_read(id=identity)
         except Exception:
-            vlob = await self.backend_api_service.named_vlob_service.create(id=identity)
+            vlob = await self.backend_api_service.named_vlob_create(id=identity)
             await self.make_dir('/')
-            vlob = await self.backend_api_service.named_vlob_service.read(id=identity)
+            vlob = await self.backend_api_service.named_vlob_read(id=identity)
         self.version = len(vlob.blob_versions)
         blob = vlob.blob_versions[self.version - 1]
         content = await self.identity_service.decrypt(blob)
@@ -193,7 +225,7 @@ class UserManifestService(BaseService):
         blob = blob.encode()
         encrypted_blob = await self.identity_service.encrypt(blob)
         self.version += 1
-        await self.backend_api_service.named_vlob_service.update(
+        await self.backend_api_service.named_vlob_update(
             id=identity,
             next_version=self.version,
             blob=encrypted_blob.decode())

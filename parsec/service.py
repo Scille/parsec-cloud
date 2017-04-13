@@ -73,8 +73,9 @@ class MetaBaseService(type):
 class BaseService(metaclass=MetaBaseService):
     def __init__(self, name=None):
         super().__init__()
-        self._cmds = {}
-        self.name = name or type(self).__name__
+        self._cmds = None
+        self.name = name or getattr(self, 'name', None)
+        assert self.name, 'Unnamed service is not allowed.'
 
     def bootstrap(self):
         for key, service_name in self._service_keys.items():

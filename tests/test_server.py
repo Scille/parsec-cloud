@@ -16,15 +16,18 @@ def server():
 @pytest.fixture
 def services():
     class RootService(BaseService):
-        pass
+        name = 'RootService'
 
     class NodeAService(BaseService):
+        name = 'NodeAService'
         _root = service('RootService')
 
     class NodeBService(BaseService):
+        name = 'NodeBService'
         _root = service('RootService')
 
     class LeafService(BaseService):
+        name = 'LeafService'
         _nodea = service('NodeAService')
         _nodeb = service('NodeBService')
 
@@ -84,6 +87,7 @@ def test_services_dependencies_child(server, services):
     RootService, NodeAService, _, _ = services
 
     class ChildService(NodeAService):
+        name = 'ChildService'
         _nodea = service('NodeAService')
 
     schild = ChildService()
@@ -101,6 +105,7 @@ def test_services_dependencies_child(server, services):
 @pytest.fixture
 def server_pingpong(server):
     class PingPongService(BaseService):
+        name = 'PingPongService'
         on_ping = event('on_ping')
 
         @cmd('ping')
@@ -131,8 +136,8 @@ async def test_register_event(server_pingpong):
 
     recv_msgs = [
         {'cmd': 'subscribe', 'event': 'on_ping', 'sender': 'foo'},
-        {'cmd': 'PingPongService:ping', 'ping': 'bar'},
-        {'cmd': 'PingPongService:ping', 'ping': 'foo'}
+        {'cmd': 'ping', 'ping': 'bar'},
+        {'cmd': 'ping', 'ping': 'foo'}
     ]
     recv_msgs.reverse()
 
@@ -152,10 +157,20 @@ async def test_register_event(server_pingpong):
     assert history == [
         ('recv', {'sender': 'foo', 'cmd': 'subscribe', 'event': 'on_ping'}),
         ('send', {'status': 'ok'}),
-        ('recv', {'cmd': 'PingPongService:ping', 'ping': 'bar'}),
+        ('recv', {'cmd': 'ping', 'ping': 'bar'}),
         ('send', {'pong': 'bar', 'status': 'ok'}),
-        ('recv', {'cmd': 'PingPongService:ping', 'ping': 'foo'}),
+        ('recv', {'cmd': 'ping', 'ping': 'foo'}),
         ('send', {'pong': 'foo', 'status': 'ok'}),
         ('send', {'event': 'on_ping', 'sender': 'foo'}),
         ('recv', None)
     ]
+
+
+def test_service_with_no_name():
+    class UnamedService(BaseService):
+        pass
+    with pytest.raises(AssertionError) as exc:
+        UnamedService()
+    assert str(exc.value) == 'Unnamed service is not allowed.'
+    srv = UnamedService(name='foo')
+    assert srv.name == 'foo'

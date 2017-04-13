@@ -1,6 +1,15 @@
+import sys
 from marshmallow import Schema, fields, validates_schema, ValidationError
+from logbook import Logger, StreamHandler
 
 from parsec.exceptions import BadMessageError
+
+
+# TODO: useful ?
+LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name})' \
+             ' {record.level_name}: {record.channel}: {record.message}'
+logger = Logger('Parsec')
+StreamHandler(sys.stdout, format_string=LOG_FORMAT).push_application()
 
 
 class UnknownCheckedSchema(Schema):

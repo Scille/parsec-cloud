@@ -1,29 +1,55 @@
-import sys
-
-from logbook import Logger, StreamHandler
-
 from parsec.backend import MockedVlobService, MockedNamedVlobService, MockedBlockService
 from parsec.service import BaseService
-from parsec.exceptions import ParsecError
 
 
-LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name})' \
-             ' {record.level_name}: {record.channel}: {record.message}'
-log = Logger('Parsec-File-Service')
-StreamHandler(sys.stdout, format_string=LOG_FORMAT).push_application()
+class BaseBackendAPIService(BaseService):
+
+    name = 'BackendAPIService'
 
 
-class BackendAPIError(ParsecError):
-    pass
-
-
-class BackendAPIService(BaseService):
-
+class BackendAPIService(BaseBackendAPIService):
     def __init__(self, backend_host, backend_port):
-        super().__init__()
-        self.named_vlob_service = MockedNamedVlobService()
-        self.vlob_service = MockedVlobService()
-        self.block_service = MockedBlockService()
-
-    async def send_cmd(self, msg):
+        # TODO
         pass
+
+
+class MockedBackendAPIService(BaseBackendAPIService):
+
+    def __init__(self):
+        super().__init__()
+        self._named_vlob_service = MockedNamedVlobService()
+        self._vlob_service = MockedVlobService()
+        self._block_service = MockedBlockService()
+
+    async def block_create(self, *args, **kwargs):
+        return await self._block_service.create(*args, **kwargs)
+
+    async def block_read(self, *args, **kwargs):
+        return await self._block_service.read(*args, **kwargs)
+
+    async def block_stat(self, *args, **kwargs):
+        return await self._block_service.stat(*args, **kwargs)
+
+    async def message_new(self, *args, **kwargs):
+        return await self._message_service.new(*args, **kwargs)
+
+    async def message_get(self, *args, **kwargs):
+        return await self._message_service.get(*args, **kwargs)
+
+    async def named_vlob_create(self, *args, **kwargs):
+        return await self._named_vlob_service.create(*args, **kwargs)
+
+    async def named_vlob_read(self, *args, **kwargs):
+        return await self._named_vlob_service.read(*args, **kwargs)
+
+    async def named_vlob_update(self, *args, **kwargs):
+        return await self._named_vlob_service.update(*args, **kwargs)
+
+    async def vlob_create(self, *args, **kwargs):
+        return await self._vlob_service.create(*args, **kwargs)
+
+    async def vlob_read(self, *args, **kwargs):
+        return await self._vlob_service.read(*args, **kwargs)
+
+    async def vlob_update(self, *args, **kwargs):
+        return await self._vlob_service.update(*args, **kwargs)

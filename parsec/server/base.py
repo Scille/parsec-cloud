@@ -53,15 +53,15 @@ class BaseServer:
 
     def register_service(self, service):
         self._services[service.name] = service
-        for cmdid, cb in service.cmds.items():
-            self.register_cmd('%s:%s' % (service.name, cmdid), cb)
+        for cmd_name, cb in service.cmds.items():
+            self.register_cmd(cmd_name, cb)
         for event_name, event in service.events.items():
             self.register_event(event_name, event)
 
-    def register_cmd(self, cmd, cb):
-        if cmd in self._cmds:
-            raise RuntimeError('Command `%s` already registered.' % cmd)
-        self._cmds[cmd] = cb
+    def register_cmd(self, name, cb):
+        if name in self._cmds:
+            raise RuntimeError('Command `%s` already registered.' % name)
+        self._cmds[name] = cb
 
     def register_event(self, name, event):
         if name in self._events:

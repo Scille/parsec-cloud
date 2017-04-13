@@ -3,18 +3,11 @@ import sys
 
 from cryptography.hazmat.backends.openssl import backend as openssl
 from cryptography.hazmat.primitives import hashes
-from logbook import Logger, StreamHandler
 from marshmallow import fields
 
 from parsec.service import BaseService, cmd, service
 from parsec.exceptions import ParsecError
 from parsec.tools import BaseCmdSchema
-
-
-LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name})' \
-             ' {record.level_name}: {record.channel}: {record.message}'
-log = Logger('Parsec-File-Service')
-StreamHandler(sys.stdout, format_string=LOG_FORMAT).push_application()
 
 
 class IdentityError(ParsecError):
@@ -37,37 +30,60 @@ class cmd_DECRYPT_Schema(BaseCmdSchema):
     data = fields.String(required=True)
 
 
-class IdentityService(BaseService):
+class BaseIdentityService(BaseService):
 
-    crypto_service = service('CryptoService')
-    pub_keys_service = service('GNUPGPubKeysService')
+    name = 'IdentityService'
 
-    def __init__(self):
-        super().__init__()
-        self.identity = None
-
-    @cmd('load_identity')
+    @cmd('identity_load')
     async def _cmd_LOAD_IDENTITY(self, session, msg):
         msg = cmd_LOAD_IDENTITY_Schema().load(msg)
         await self.load_identity(msg['identity'])
         return {'status': 'ok'}
 
-    @cmd('get_identity')
+    @cmd('identity_get')
     async def _cmd_GET_IDENTITY(self, session, msg):
         identity = await self.get_identity()
         return {'status': 'ok', 'identity': identity}
 
-    @cmd('encrypt')
+    @cmd('identity_encrypt')
     async def _cmd_ENCRYPT(self, session, msg):
         msg = cmd_ENCRYPT_Schema().load(msg)
         encrypted_data = await self.encrypt(msg['data'])
         return {'status': 'ok', 'data': encrypted_data.decode()}
 
-    @cmd('decrypt')
+    @cmd('identity_decrypt')
     async def _cmd_DECRYPT(self, session, msg):
         msg = cmd_DECRYPT_Schema().load(msg)
         decrypted_data = await self.decrypt(msg['data'])
         return {'status': 'ok', 'data': decrypted_data.decode()}
+
+    async def load_identity(self, identity=None):
+        raise NotImplementedError()
+
+    async def get_identity(self):
+        raise NotImplementedError()
+
+    async def encrypt(self, data, recipient=None):
+        raise NotImplementedError()
+
+    async def decrypt(self, data):
+        raise NotImplementedError()
+
+    async def compute_sign_challenge(self):
+        raise NotImplementedError()
+
+    async def compute_seed_challenge(self, id, trust_seed):
+        raise NotImplementedError()
+
+
+class IdentityService(BaseIdentityService):
+
+    crypto_service = service('CryptoService')
+    pub_keys_service = service('PubKeysService')
+
+    def __init__(self):
+        super().__init__()
+        self.identity = None
 
     async def load_identity(self, identity=None):
         if identity:

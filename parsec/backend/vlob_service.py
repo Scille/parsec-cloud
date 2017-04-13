@@ -54,9 +54,11 @@ class cmd_UPDATE_Schema(BaseCmdSchema):
 
 class BaseVlobService(BaseService):
 
-    on_vlob_updated = event('updated')
+    name = 'VlobService'
 
-    @cmd('create')
+    on_updated = event('vlob_on_updated')
+
+    @cmd('vlob_create')
     async def _cmd_CREATE(self, session, msg):
         msg = cmd_CREATE_Schema().load(msg)
         vlob = await self.create(msg['blob'])
@@ -67,7 +69,7 @@ class BaseVlobService(BaseService):
             'write_trust_seed': vlob.write_trust_seed
         }
 
-    @cmd('read')
+    @cmd('vlob_read')
     async def _cmd_READ(self, session, msg):
         msg = cmd_READ_Schema().load(msg)
         vlob = await self.read(msg['id'])
@@ -80,7 +82,7 @@ class BaseVlobService(BaseService):
         blob = vlob.blob_versions[version - 1]
         return {'status': 'ok', 'blob': blob, 'version': version}
 
-    @cmd('update')
+    @cmd('vlob_update')
     async def _cmd_UPDATE(self, session, msg):
         msg = cmd_UPDATE_Schema().load(msg)
         vlob = await self.read(msg['id'])
@@ -88,6 +90,15 @@ class BaseVlobService(BaseService):
             raise TrustSeedError()
         await self.update(msg['id'], msg['version'], msg['blob'])
         return {'status': 'ok'}
+
+    async def create(self, blob=None):
+        raise NotImplementedError()
+
+    async def read(self, id):
+        raise NotImplementedError()
+
+    async def update(self, id, next_version, blob):
+        raise NotImplementedError()
 
 
 class Vlob:
@@ -125,4 +136,4 @@ class MockedVlobService(BaseVlobService):
             vlob.blob_versions.append(blob)
         else:
             raise VlobBadVersionError('Wrong blob version.')
-        self.on_vlob_updated.send(id)
+        self.on_updated.send(id)

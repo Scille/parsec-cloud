@@ -20,7 +20,7 @@ class TestVlobServiceAPI:
         {},
         {'blob': 'Initial commit.'}])
     async def test_create(self, vlob_svc, vlob_payload):
-        ret = await vlob_svc.dispatch_msg({'cmd': 'create', **vlob_payload})
+        ret = await vlob_svc.dispatch_msg({'cmd': 'vlob_create', **vlob_payload})
         assert ret['status'] == 'ok'
         assert ret['id']
         assert ret['read_trust_seed']
@@ -28,10 +28,10 @@ class TestVlobServiceAPI:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
-        {'cmd': 'create', 'content': '...', 'bad_field': 'foo'},
-        {'cmd': 'create', 'content': 42},
-        {'cmd': 'create', 'content': None},
-        {'cmd': 'create', 'content': '...', 'id': '1234567890'},
+        {'cmd': 'vlob_create', 'content': '...', 'bad_field': 'foo'},
+        {'cmd': 'vlob_create', 'content': 42},
+        {'cmd': 'vlob_create', 'content': None},
+        {'cmd': 'vlob_create', 'content': '...', 'id': '1234567890'},
         {}])
     async def test_bad_msg_create(self, vlob_svc, bad_msg):
         ret = await vlob_svc.dispatch_msg(bad_msg)
@@ -40,7 +40,7 @@ class TestVlobServiceAPI:
     @pytest.mark.asyncio
     async def test_read_not_found(self, vlob_svc, vlob):
         ret = await vlob_svc.dispatch_msg({
-            'cmd': 'read',
+            'cmd': 'vlob_read',
             'id': '1234',
             'trust_seed': vlob.read_trust_seed,
         })
@@ -49,7 +49,7 @@ class TestVlobServiceAPI:
     @pytest.mark.asyncio
     async def test_read(self, vlob_svc, vlob):
         ret = await vlob_svc.dispatch_msg({
-            'cmd': 'read',
+            'cmd': 'vlob_read',
             'id': vlob.id,
             'trust_seed': vlob.read_trust_seed,
         })
@@ -63,7 +63,7 @@ class TestVlobServiceAPI:
     async def test_update_not_found(self, vlob_svc, vlob):
         blob = 'Next version.'
         ret = await vlob_svc.dispatch_msg({
-            'cmd': 'update',
+            'cmd': 'vlob_update',
             'id': '1234',
             'trust_seed': vlob.write_trust_seed,
             'version': 2,
@@ -80,9 +80,9 @@ class TestVlobServiceAPI:
             called_with = args
 
         blob = 'Next version.'
-        vlob_svc.on_vlob_updated.connect(on_event, sender=vlob.id)
+        vlob_svc.on_updated.connect(on_event, sender=vlob.id)
         ret = await vlob_svc.dispatch_msg({
-            'cmd': 'update',
+            'cmd': 'vlob_update',
             'id': vlob.id,
             'trust_seed': vlob.write_trust_seed,
             'version': 2,
@@ -94,37 +94,37 @@ class TestVlobServiceAPI:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
-        {'cmd': 'update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
+        {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
          'version': '<version-here>', 'blob': '...', 'bad_field': 'foo'},
-        {'cmd': 'update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
+        {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
          'version': '<version-here>', 'blob': None},
-        {'cmd': 'update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
+        {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
          'version': '<version-here>', 'blob': 42},
-        {'cmd': 'update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
+        {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
          'version': '<version-here>'},
-        {'cmd': 'update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
+        {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
          'version': None, 'blob': '...'},
-        {'cmd': 'update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
+        {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
          'version': -1, 'blob': '...'},
-        {'cmd': 'update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
+        {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
          'version': 'zero', 'blob': '...'},
-        {'cmd': 'update', 'id': '<id-here>', 'trust_seed': 'dummy_seed',
+        {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': 'dummy_seed',
          'version': '<version-here>', 'blob': '...'},
-        {'cmd': 'update', 'id': '<id-here>', 'trust_seed': None,
+        {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': None,
          'version': '<version-here>', 'blob': '...'},
-        {'cmd': 'update', 'id': '<id-here>', 'trust_seed': 42,
+        {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': 42,
          'version': '<version-here>', 'blob': '...'},
-        {'cmd': 'update', 'id': '<id-here>',
+        {'cmd': 'vlob_update', 'id': '<id-here>',
          'version': '<version-here>', 'blob': '...'},
-        {'cmd': 'update', 'id': 42, 'trust_seed': '<trust_seed-here>',
+        {'cmd': 'vlob_update', 'id': 42, 'trust_seed': '<trust_seed-here>',
          'version': '<version-here>', 'blob': '...'},
-        {'cmd': 'update', 'id': None, 'trust_seed': '<trust_seed-here>',
+        {'cmd': 'vlob_update', 'id': None, 'trust_seed': '<trust_seed-here>',
          'version': '<version-here>', 'blob': '...'},
-        {'cmd': 'update', 'trust_seed': '<trust_seed-here>',
+        {'cmd': 'vlob_update', 'trust_seed': '<trust_seed-here>',
          'version': '<version-here>', 'blob': '...'},
-        {'cmd': 'update', 'id': 'dummy-id', 'trust_seed': '<trust_seed-here>',
+        {'cmd': 'vlob_update', 'id': 'dummy-id', 'trust_seed': '<trust_seed-here>',
          'version': '<version-here>', 'blob': '...'},
-        {'cmd': 'update'}, {}])
+        {'cmd': 'vlob_update'}, {}])
     async def test_bad_msg_read(self, vlob_svc, bad_msg, vlob):
         if bad_msg.get('id') == '<id-here>':
             bad_msg['id'] = vlob.id
@@ -138,7 +138,7 @@ class TestVlobServiceAPI:
     @pytest.mark.asyncio
     async def test_read_bad_version(self, vlob_svc, vlob):
         bad_version = 111
-        msg = {'cmd': 'read',
+        msg = {'cmd': 'vlob_read',
                'id': vlob.id,
                'trust_seed': vlob.read_trust_seed,
                'version': bad_version}
@@ -148,7 +148,7 @@ class TestVlobServiceAPI:
     @pytest.mark.asyncio
     async def test_update_bad_version(self, vlob_svc, vlob):
         bad_version = 111
-        msg = {'cmd': 'update', 'id': vlob.id, 'trust_seed': vlob.write_trust_seed,
+        msg = {'cmd': 'vlob_update', 'id': vlob.id, 'trust_seed': vlob.write_trust_seed,
                'version': bad_version, 'blob': 'Next version.'}
         ret = await vlob_svc.dispatch_msg(msg)
         assert ret['status'] == 'bad_version'

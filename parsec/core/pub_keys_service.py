@@ -45,19 +45,21 @@ def _generate_challenge():
 
 class BasePubKeysService(BaseService):
 
+    name = 'PubKeysService'
+
     # @cmd('get_pub_key')
     # async def _cmd_GET_PUB_KEY(self, session, msg):
     #     msg = cmd_GET_PUB_KEY_Schema().load(msg)
     #     user_key = await self.get_pub_key(msg['identity'])
     #     return {'status': 'ok', 'pub_key': user_key}
 
-    @cmd('encrypt')
+    @cmd('pub_key_encrypt')
     async def _cmd_ENCRYPT(self, session, msg):
         msg = cmd_ENCRYPT_Schema().load(msg)
         cyphertext = await self.encrypt(msg['identity'], msg['content'])
         return {'status': 'ok', 'cyphertext': cyphertext}
 
-    @cmd('verify')
+    @cmd('pub_key_verify')
     async def _cmd_VERIFY(self, session, msg):
         msg = cmd_VERIFY_Schema().load(msg)
         user_key = await self.get_pub_key(msg['identity'])

@@ -25,23 +25,25 @@ class cmd_READ_Schema(BaseCmdSchema):
 
 class BaseBlockService(BaseService):
 
+    name = 'BlockService'
+
     vlob_service = service('MockedVlobService')
     on_vlob_updated = event('updated')
 
-    @cmd('create')
+    @cmd('block_create')
     async def _cmd_CREATE(self, session, msg):
         msg = cmd_CREATE_Schema().load(msg)
         id = await self.create(msg['content'])
         return {'status': 'ok', 'id': id}
 
-    @cmd('read')
+    @cmd('block_read')
     async def _cmd_READ(self, session, msg):
         msg = cmd_READ_Schema().load(msg)
         block = await self.read(msg['id'])
         block.update({'status': 'ok'})
         return block
 
-    @cmd('stat')
+    @cmd('block_stat')
     async def _cmd_STAT(self, session, msg):
         msg = cmd_READ_Schema().load(msg)
         stat = await self.stat(msg['id'])

@@ -31,14 +31,9 @@ class cmd_ASYM_DECRYPT_Schema(BaseCmdSchema):
     data = fields.String(required=True)
 
 
-class CryptoService(BaseService):
+class BaseCryptoService(BaseService):
 
-    pub_keys_service = service('GNUPGPubKeysService')
-
-    def __init__(self, homedir='~/.gnupg'):
-        super().__init__()
-        self.gnupg = gnupg.GPG(homedir=homedir, use_agent=True)
-        self.gnupg_agentless = gnupg.GPG(homedir=homedir, use_agent=False)  # Cleaner way?
+    name = 'CryptoService'
 
     @cmd('sym_encrypt')
     async def _cmd_SYM_ENCRYPT(self, session, msg):
@@ -65,6 +60,40 @@ class CryptoService(BaseService):
         msg = cmd_ASYM_DECRYPT_Schema().load(msg)
         decrypted_data = await self.asym_decrypt(msg['data'])
         return {'status': 'ok', 'data': decrypted_data.decode()}
+
+    async def sym_encrypt(self, data):
+        raise NotImplementedError()
+
+    async def asym_encrypt(self, data, recipient):
+        raise NotImplementedError()
+
+    async def sym_decrypt(self, data, key):
+        raise NotImplementedError()
+
+    async def asym_decrypt(self, data):
+        raise NotImplementedError()
+
+    async def list_identities(self, identity, secret=False):
+        raise NotImplementedError()
+
+    async def identity_exists(self, identity, secret=False):
+        raise NotImplementedError()
+
+    async def import_keys(self, keys):
+        raise NotImplementedError()
+
+    async def export_keys(self, identity):
+        raise NotImplementedError()
+
+
+class CryptoService(BaseCryptoService):
+
+    pub_keys_service = service('PubKeysService')
+
+    def __init__(self, homedir='~/.gnupg'):
+        super().__init__()
+        self.gnupg = gnupg.GPG(homedir=homedir, use_agent=True)
+        self.gnupg_agentless = gnupg.GPG(homedir=homedir, use_agent=False)  # Cleaner way?
 
     async def sym_encrypt(self, data):
         passphrase = urandom(32)

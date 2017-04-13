@@ -17,18 +17,20 @@ class cmd_GET_Schema(BaseCmdSchema):
 
 class BaseMessageService(BaseService):
 
+    name = 'MessageService'
+
     on_msg_arrived = event('arrived')
 
-    @cmd('new')
+    @cmd('message_new')
     async def _cmd_NEW(self, session, msg):
         msg = cmd_NEW_Schema().load(msg)
         await self.new(msg['recipient'], msg['body'])
         return {'status': 'ok'}
 
-    @cmd('get')
+    @cmd('message_get')
     async def _cmd_GET(self, session, msg):
         msg = cmd_GET_Schema().load(msg)
-        # TODO: use session.identity to get retrieve recipient ?
+        # TODO: use session.identity to retrieve recipient ?
         offset = msg['offset']
         messages = [{'count': i, 'body': msg} for i, msg in enumerate(
             await self.get(msg['recipient'], offset), 1 + offset)]
