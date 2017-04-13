@@ -1,5 +1,4 @@
 from base64 import encodebytes
-import sys
 
 from cryptography.hazmat.backends.openssl import backend as openssl
 from cryptography.hazmat.primitives import hashes
