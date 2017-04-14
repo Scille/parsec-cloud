@@ -146,7 +146,7 @@ class UserManifestService(BaseUserManifestService):
 
     async def create_file(self, path):
         if path in self.manifest:
-            raise UserManifestError('already_exist', 'Target already exists.')
+            raise UserManifestError('already_exist', 'File already exists.')
         else:
             ret = await self.file_service.create()
             file = {}
@@ -180,7 +180,7 @@ class UserManifestService(BaseUserManifestService):
 
     async def make_dir(self, path):
         if path in self.manifest:
-            raise UserManifestError('already_exist', 'Target already exists.')
+            raise UserManifestError('already_exist', 'Directory already exists.')
         else:
             self.manifest[path] = {'id': None,
                                    'read_trust_seed': None,
@@ -202,7 +202,7 @@ class UserManifestService(BaseUserManifestService):
             raise UserManifestNotFound('Directory not found.')
 
     async def load_user_manifest(self):
-        self.backend_api_service.on_msg_arrived.connect(self.file_shared)
+        self.backend_api_service.on_message_arrived.connect(self.file_shared)  # TODO here?
         identity = await self.identity_service.get_identity()
         try:
             vlob = await self.backend_api_service.named_vlob_read(id=identity)
