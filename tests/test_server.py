@@ -180,3 +180,34 @@ def test_service_with_no_name():
     assert str(exc.value) == 'Unnamed service is not allowed.'
     srv = UnamedService(name='foo')
     assert srv.name == 'foo'
+
+
+@pytest.mark.asyncio
+async def test_service_bootstrap_teardown_called(server):
+
+    class BootstrapTeardownService(BaseService):
+        name = 'BootstrapTeardownService'
+
+        def __init__(self):
+            super().__init__()
+            self.boostrap_called = False
+            self.teardown_called = False
+
+        async def bootstrap(self):
+            self.boostrap_called = True
+
+        async def teardown(self):
+            self.teardown_called = True
+
+    srv = BootstrapTeardownService()
+    server.register_service(srv)
+    assert not srv.boostrap_called
+    assert not srv.teardown_called
+
+    await server.bootstrap_services()
+    assert srv.boostrap_called
+    assert not srv.teardown_called
+
+    await server.teardown_services()
+    assert srv.boostrap_called
+    assert srv.teardown_called
