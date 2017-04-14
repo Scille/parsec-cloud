@@ -41,7 +41,7 @@ class TestUserManifestService:
         # Already exist
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_make_dir',
                                                     'path': '/test_dir'})
-        assert ret == {'status': 'already_exist', 'label': 'Target already exists.'}
+        assert ret == {'status': 'already_exist', 'label': 'Directory already exists.'}
 
     @pytest.mark.asyncio
     async def test_remove_dir(self, user_manifest_svc):
@@ -124,7 +124,7 @@ class TestUserManifestService:
         # Already exist
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
                                                     'path': '/test'})
-        assert ret == {'status': 'already_exist', 'label': 'Target already exists.'}
+        assert ret == {'status': 'already_exist', 'label': 'File already exists.'}
 
     @pytest.mark.asyncio
     async def test_rename_file(self, user_manifest_svc):

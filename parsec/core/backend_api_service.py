@@ -1,4 +1,4 @@
-from parsec.backend import (GroupService, InMemoryMessageService, MockedVlobService,
+from parsec.backend import (MockedGroupService, InMemoryMessageService, MockedVlobService,
                             MockedNamedVlobService, MockedBlockService)
 from parsec.service import BaseService, event
 
@@ -20,7 +20,7 @@ class MockedBackendAPIService(BaseBackendAPIService):
 
     def __init__(self):
         super().__init__()
-        self._group_service = GroupService()
+        self._group_service = MockedGroupService()
         self._message_service = InMemoryMessageService()
         self._named_vlob_service = MockedNamedVlobService()
         self._vlob_service = MockedVlobService()
@@ -34,6 +34,18 @@ class MockedBackendAPIService(BaseBackendAPIService):
 
     async def block_stat(self, *args, **kwargs):
         return await self._block_service.stat(*args, **kwargs)
+
+    async def group_create(self, *args, **kwargs):
+        return await self._group_service.create(*args, **kwargs)
+
+    async def group_read(self, *args, **kwargs):
+        return await self._group_service.read(*args, **kwargs)
+
+    async def group_add_identities(self, *args, **kwargs):
+        return await self._group_service.add_identities(*args, **kwargs)
+
+    async def group_remove_identities(self, *args, **kwargs):
+        return await self._group_service.remove_identities(*args, **kwargs)
 
     async def message_new(self, *args, **kwargs):
         return await self._message_service.new(*args, **kwargs)
