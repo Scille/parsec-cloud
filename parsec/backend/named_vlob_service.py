@@ -14,7 +14,7 @@ class BaseNamedVlobService(BaseService):
 
     name = 'NamedVlobService'
 
-    on_updated = event('named_vlob_on_updated')
+    on_updated = event('on_named_vlob_updated')
 
     @cmd('named_vlob_create')
     async def _cmd_CREATE(self, session, msg):

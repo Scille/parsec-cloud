@@ -28,7 +28,6 @@ class BaseBlockService(BaseService):
     name = 'BlockService'
 
     vlob_service = service('MockedVlobService')
-    on_vlob_updated = event('updated')
 
     @cmd('block_create')
     async def _cmd_CREATE(self, session, msg):

@@ -30,13 +30,15 @@ class UnixSocketServer(BaseServer):
         await super().on_connection(context)
 
     def start(self, socket_path: str, loop=None):
-        self.bootstrap_services()
         loop = loop or asyncio.get_event_loop()
+        loop.run_until_complete(self.bootstrap_services())
         try:
             connect_coro = asyncio.start_unix_server(
                 self.on_connection, path=socket_path, loop=loop)
             loop.run_until_complete(connect_coro)
             loop.run_forever()
+        except KeyboardInterrupt:
+            loop.run_until_complete(self.teardown_services())
         finally:
             loop.close()
             os.remove(socket_path)

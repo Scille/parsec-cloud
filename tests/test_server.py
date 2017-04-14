@@ -34,7 +34,8 @@ def services():
     return RootService, NodeAService, NodeBService, LeafService
 
 
-def test_services_dependencies_good(server, services):
+@pytest.mark.asyncio
+async def test_services_dependencies_good(server, services):
     RootService, NodeAService, NodeBService, LeafService = services
 
     sroot = RootService()
@@ -46,26 +47,30 @@ def test_services_dependencies_good(server, services):
     server.register_service(snodeb)
     server.register_service(sleaf)
 
-    server.bootstrap_services()
+    await server.bootstrap_services()
 
     assert snodea._root is sroot
     assert snodeb._root is sroot
     assert sleaf._nodea is snodea
     assert sleaf._nodeb is snodeb
 
+    await server.teardown_services()
 
-def test_services_dependencies_missing_dep(server, services):
+
+@pytest.mark.asyncio
+async def test_services_dependencies_missing_dep(server, services):
     _, NodeAService, _, _ = services
 
     snodea = NodeAService()
     server.register_service(snodea)
 
     with pytest.raises(RuntimeError) as exc:
-        server.bootstrap_services()
+        await server.bootstrap_services()
     assert exc.value.args[0] == ['Service `NodeAService` required unknown service `RootService`']
 
 
-def test_services_dependencies_missing_multi_dep(server, services):
+@pytest.mark.asyncio
+async def test_services_dependencies_missing_multi_dep(server, services):
     _, NodeAService, NodeBService, LeafService = services
 
     snodea = NodeAService()
@@ -76,14 +81,15 @@ def test_services_dependencies_missing_multi_dep(server, services):
     server.register_service(sleaf)
 
     with pytest.raises(RuntimeError) as exc:
-        server.bootstrap_services()
+        await server.bootstrap_services()
     assert sorted(exc.value.args[0]) == sorted([
         'Service `NodeAService` required unknown service `RootService`',
         'Service `NodeBService` required unknown service `RootService`'
     ])
 
 
-def test_services_dependencies_child(server, services):
+@pytest.mark.asyncio
+async def test_services_dependencies_child(server, services):
     RootService, NodeAService, _, _ = services
 
     class ChildService(NodeAService):
@@ -97,7 +103,7 @@ def test_services_dependencies_child(server, services):
     server.register_service(sroot)
     server.register_service(snodea)
 
-    server.bootstrap_services()
+    await server.bootstrap_services()
     assert schild._root is sroot
     assert schild._nodea is snodea
 

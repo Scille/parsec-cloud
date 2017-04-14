@@ -24,10 +24,11 @@ def user_manifest_svc(event_loop):
     server.register_service(MockedBackendAPIService())
     server.register_service(FileService())
     server.register_service(GNUPGPubKeysService())
-    server.bootstrap_services()
+    event_loop.run_until_complete(server.bootstrap_services())
     event_loop.run_until_complete(identity_service.load_identity())
     event_loop.run_until_complete(service.load_user_manifest())
-    return service
+    yield service
+    event_loop.run_until_complete(server.teardown_services())
 
 
 class TestUserManifestService:

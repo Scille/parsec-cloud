@@ -77,10 +77,19 @@ class BaseService(metaclass=MetaBaseService):
         self.name = name or getattr(self, 'name', None)
         assert self.name, 'Unnamed service is not allowed.'
 
-    def bootstrap(self):
+    async def teardown(self):
+        pass
+
+    async def bootstrap(self):
+        pass
+
+    def inject_services(self):
         for key, service_name in self._service_keys.items():
             service = yield service_name
             setattr(self, key, service)
+
+    async def init_service(self):
+        pass
 
     @property
     def cmds(self):

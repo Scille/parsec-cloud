@@ -31,10 +31,11 @@ def file_svc(event_loop, user_manifest_svc):
     server.register_service(user_manifest_svc)
     server.register_service(MockedBackendAPIService())
     server.register_service(GNUPGPubKeysService())
-    server.bootstrap_services()
+    event_loop.run_until_complete(server.bootstrap_services())
     event_loop.run_until_complete(identity_service.load_identity())
     event_loop.run_until_complete(user_manifest_svc.load_user_manifest())
-    return service
+    yield service
+    event_loop.run_until_complete(server.teardown_services())
 
 
 class TestFileService:

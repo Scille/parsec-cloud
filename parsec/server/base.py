@@ -1,6 +1,7 @@
 import json
 import asyncio
-from uuid import uuid4
+import random
+import string
 from marshmallow import fields
 from marshmallow.validate import OneOf
 from logbook import Logger
@@ -17,6 +18,12 @@ class BaseClientContext:
 
     async def send(self, body):
         raise NotImplementedError()
+
+
+def _unique_enough_id():
+    # Colision risk is high, but this is pretty fine (and much more readable
+    # than a uuid4) for giving id to connections
+    return ''.join([random.choice(string.ascii_letters + string.digits) for ch in range(8)])
 
 
 class BaseServer:
@@ -97,7 +104,7 @@ class BaseServer:
         return None
 
     async def on_connection(self, context: BaseClientContext):
-        conn_log = Logger('Connection ' + uuid4().hex)
+        conn_log = Logger('Connection ' + _unique_enough_id())
         conn_log.debug('Connection started')
         # Handle handshake if auth is required
         try:
@@ -144,11 +151,11 @@ class BaseServer:
                 # Restart watch on incoming messages
                 get_cmd = asyncio.ensure_future(context.recv())
 
-    def bootstrap_services(self):
+    async def bootstrap_services(self):
         errors = []
         for service in self._services.values():
             try:
-                boot = service.bootstrap()
+                boot = service.inject_services()
                 dep = next(boot)
                 while True:
                     if dep not in self._services:
@@ -160,6 +167,12 @@ class BaseServer:
                 pass
         if errors:
             raise RuntimeError(errors)
+        for service in self._services.values():
+            await service.bootstrap()
+
+    async def teardown_services(self):
+        for service in self._services.values():
+            await service.teardown()
 
     def start(self):
         raise NotImplementedError()

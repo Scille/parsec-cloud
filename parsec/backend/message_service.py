@@ -19,7 +19,7 @@ class BaseMessageService(BaseService):
 
     name = 'MessageService'
 
-    on_msg_arrived = event('arrived')
+    on_arrived = event('on_message_arrived')
 
     @cmd('message_new')
     async def _cmd_NEW(self, session, msg):
@@ -44,7 +44,7 @@ class InMemoryMessageService(BaseMessageService):
 
     async def new(self, recipient, body):
         self._messages[recipient].append(body)
-        self.on_msg_arrived.send(recipient)
+        self.on_arrived.send(recipient)
 
     async def get(self, recipient, offset=0):
         return self._messages[recipient][offset:]

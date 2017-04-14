@@ -16,5 +16,7 @@ class WebSocketServer(BaseServer):
             start_server = websockets.serve(self.on_connection, domain, port)
             loop.run_until_complete(start_server)
             loop.run_forever()
+        except KeyboardInterrupt:
+            self.teardown_services(loop)
         finally:
             loop.close()
