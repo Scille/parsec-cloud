@@ -35,13 +35,13 @@ class cmd_GROUP_READ_Schema(BaseCmdSchema):
 
 class cmd_GROUP_ADD_IDENTITIES_Schema(BaseCmdSchema):
     name = fields.String(required=True)
-    identities = fields.List(fields.String())
+    identities = fields.List(fields.String(), required=True)
     admin = fields.Boolean(missing=False)
 
 
 class cmd_GROUP_REMOVE_IDENTITIES_Schema(BaseCmdSchema):
     name = fields.String(required=True)
-    identities = fields.List(fields.String())
+    identities = fields.List(fields.String(), required=True)
     admin = fields.Boolean(missing=False)
 
 
@@ -76,7 +76,7 @@ class BaseShareService(BaseService):
     async def _cmd_GROUP_READ(self, session, msg):
         msg = cmd_GROUP_READ_Schema().load(msg)
         group = await self.group_read(msg['name'])
-        return {'status': 'ok', 'group': group}
+        return {'status': 'ok', 'admins': group['admins'], 'users': group['users']}
 
     @cmd('group_add_identities')
     async def _cmd_GROUP_ADD_IDENTITIES(self, session, msg):

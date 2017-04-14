@@ -125,13 +125,13 @@ class MockedVlobService(BaseVlobService):
         try:
             return self._vlobs[id]
         except KeyError:
-            raise VlobNotFound('Cannot find vlob.')
+            raise VlobNotFound('Vlob not found.')
 
     async def update(self, id, next_version, blob):
         try:
             vlob = self._vlobs[id]
         except KeyError:
-            raise VlobNotFound('Cannot find vlob.')
+            raise VlobNotFound('Vlob not found.')
         if next_version == len(vlob.blob_versions) + 1:
             vlob.blob_versions.append(blob)
         else:

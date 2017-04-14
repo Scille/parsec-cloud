@@ -44,7 +44,7 @@ class TestVlobServiceAPI:
             'id': '1234',
             'trust_seed': vlob.read_trust_seed,
         })
-        assert ret == {'status': 'not_found', 'label': 'Cannot find vlob.'}
+        assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.asyncio
     async def test_read(self, vlob_svc, vlob):
@@ -60,6 +60,25 @@ class TestVlobServiceAPI:
         }
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'vlob_read', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
+         'bad_field': 'foo'},
+        {'cmd': 'vlob_read', 'id': '<id-here>'},
+        {'cmd': 'vlob_read', 'id': '<id-here>', 'trust_seed': 42},
+        {'cmd': 'vlob_read', 'id': '<id-here>', 'trust_seed': None},
+        {'cmd': 'vlob_read', 'id': 42, 'trust_seed': '<trust_seed-here>'},
+        {'cmd': 'vlob_read', 'id': None, 'trust_seed': '<trust_seed-here>'},
+        # {'cmd': 'vlob_read', 'id': '1234567890', 'trust_seed': '<trust_seed-here>'},  # TODO bad?
+        {'cmd': 'vlob_read'}, {}])
+    async def test_bad_msg_read(self, vlob_svc, bad_msg, vlob):
+        if bad_msg.get('id') == '<id-here>':
+            bad_msg['id'] = vlob.id
+        if bad_msg.get('trust_seed') == '<trust_seed-here>':
+            bad_msg['trust_seed'] = vlob.read_trust_seed
+        ret = await vlob_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
     async def test_update_not_found(self, vlob_svc, vlob):
         blob = 'Next version.'
         ret = await vlob_svc.dispatch_msg({
@@ -69,7 +88,7 @@ class TestVlobServiceAPI:
             'version': 2,
             'blob': blob
         })
-        assert ret == {'status': 'not_found', 'label': 'Cannot find vlob.'}
+        assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.asyncio
     async def test_update(self, vlob_svc, vlob):
@@ -125,7 +144,7 @@ class TestVlobServiceAPI:
         {'cmd': 'vlob_update', 'id': 'dummy-id', 'trust_seed': '<trust_seed-here>',
          'version': '<version-here>', 'blob': '...'},
         {'cmd': 'vlob_update'}, {}])
-    async def test_bad_msg_read(self, vlob_svc, bad_msg, vlob):
+    async def test_bad_msg_update(self, vlob_svc, bad_msg, vlob):
         if bad_msg.get('id') == '<id-here>':
             bad_msg['id'] = vlob.id
         if bad_msg.get('trust_seed') == '<trust_seed-here>':

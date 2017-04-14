@@ -23,13 +23,13 @@ class cmd_READ_Schema(BaseCmdSchema):
 
 class cmd_ADD_IDENTITIES_Schema(BaseCmdSchema):
     name = fields.String(required=True)
-    identities = fields.List(fields.String())
+    identities = fields.List(fields.String(), required=True)
     admin = fields.Boolean(missing=False)
 
 
 class cmd_REMOVE_IDENTITIES_Schema(BaseCmdSchema):
     name = fields.String(required=True)
-    identities = fields.List(fields.String())
+    identities = fields.List(fields.String(), required=True)
     admin = fields.Boolean(missing=False)
 
 
@@ -47,7 +47,7 @@ class BaseGroupService(BaseService):
     async def _cmd__READ(self, session, msg):
         msg = cmd_READ_Schema().load(msg)
         group = await self.read(msg['name'])
-        return {'status': 'ok', 'group': group}
+        return {'status': 'ok', 'admins': group['admins'], 'users': group['users']}
 
     @cmd('group_add_identities')
     async def _cmd_ADD_IDENTITIES(self, session, msg):
@@ -97,8 +97,6 @@ class MockedGroupService(BaseGroupService):
             group = self.groups[name][subgroup]
         except Exception:
             raise(GroupNotFound('Group not found.'))
-        if not isinstance(identities, list):
-            identities = [identities]
         group += identities
         group = list(set(group))
         self.groups[name][subgroup] = group
@@ -109,6 +107,4 @@ class MockedGroupService(BaseGroupService):
             group = self.groups[name][subgroup]
         except Exception:
             raise(GroupNotFound('Group not found.'))
-        if not isinstance(identities, list):
-            identities = [identities]
         self.groups[name][subgroup] = [identity for identity in group if identity not in identities]
