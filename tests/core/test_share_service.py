@@ -21,7 +21,7 @@ def backend_api_svc():
 @pytest.fixture
 def crypto_svc():
     service = CryptoService()
-    service.gnupg = gnupg.GPG(homedir=GNUPG_HOME + '/alice')
+    service.gnupg = gnupg.GPG(homedir=GNUPG_HOME + '/secret_env')
     return service
 
 
@@ -32,6 +32,7 @@ def user_manifest_svc():
 
 @pytest.fixture(params=[ShareService, ])
 def share_svc(request, event_loop, backend_api_svc, crypto_svc, user_manifest_svc):
+    identity = '81DBCF6EB9C8B2965A65ACE5520D903047D69DC9'
     service = request.param()
     identity_service = IdentityService()
     server = BaseServer()
@@ -43,7 +44,7 @@ def share_svc(request, event_loop, backend_api_svc, crypto_svc, user_manifest_sv
     server.register_service(FileService())
     server.register_service(GNUPGPubKeysService())
     event_loop.run_until_complete(server.bootstrap_services())
-    event_loop.run_until_complete(identity_service.load_identity())
+    event_loop.run_until_complete(identity_service.load_identity(identity=identity))
     event_loop.run_until_complete(user_manifest_svc.load_user_manifest())
     event_loop.run_until_complete(user_manifest_svc.create_file('/foo'))
     yield service
@@ -54,6 +55,7 @@ def share_svc(request, event_loop, backend_api_svc, crypto_svc, user_manifest_sv
 def group(share_svc, event_loop, crypto_svc, name='foo_communiy'):
     event_loop.run_until_complete(share_svc.group_create(name=name))
     identities = [key['fingerprint'] for key in crypto_svc.gnupg.list_keys(secret=True)]
+    identities = identities[-2:]
     result = event_loop.run_until_complete(share_svc.group_add_identities(name=name,
                                                                           identities=identities))
     result = event_loop.run_until_complete(share_svc.group_read(name=name))
@@ -65,7 +67,7 @@ class TestShareServiceAPI:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('payload', [
-        {'path': '/unknown', 'identity': 'E73A094CC24558DD89C6770668283612E84ECD55'}])
+        {'path': '/unknown', 'identity': '81DBCF6EB9C8B2965A65ACE5520D903047D69DC9'}])
     async def test_share_with_identity_and_file_not_found(self, share_svc, payload):
         ret = await share_svc.dispatch_msg({'cmd': 'share_with_identity', **payload})
         assert ret == {'status': 'not_found', 'label': 'File not found.'}
@@ -78,7 +80,7 @@ class TestShareServiceAPI:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('payload', [
-        {'path': '/foo', 'identity': 'E73A094CC24558DD89C6770668283612E84ECD55'}])
+        {'path': '/foo', 'identity': '81DBCF6EB9C8B2965A65ACE5520D903047D69DC9'}])
     async def test_share_with_identity(self,
                                        backend_api_svc,
                                        share_svc,
@@ -205,7 +207,7 @@ class TestShareServiceAPI:
     @pytest.mark.parametrize('admin', [True, False])
     @pytest.mark.parametrize('identities', [
         [],
-        ['id-1', 'id-2']])
+        ['81DBCF6EB9C8B2965A65ACE5520D903047D69DC9', '3C3FA85FB9736362497EB23DC0485AC10E6274C7']])
     async def test_add_identities(self, share_svc, group, identities, admin):
         origin_group = copy.deepcopy(group)
         # Adding duplicates identities should not raise errors
@@ -220,10 +222,10 @@ class TestShareServiceAPI:
             if admin:
                 assert ret == {'status': 'ok',
                                'admins': sorted(identities + origin_group['admins']),
-                               'users': origin_group['users']}
+                               'users': sorted(origin_group['users'])}
             else:
                 assert ret == {'status': 'ok',
-                               'admins': origin_group['admins'],
+                               'admins': sorted(origin_group['admins']),
                                'users': sorted(identities + origin_group['users'])}
 
     @pytest.mark.asyncio
@@ -231,7 +233,7 @@ class TestShareServiceAPI:
         {'cmd': 'group_add_identities', 'name': '<name-here>', 'identities': ['id'],
          'bad_field': 'foo'},
         {'cmd': 'group_add_identities', 'name': '<name-here>', 'identities': ['id'],
-        'admin': 42},
+         'admin': 42},
         {'cmd': 'group_add_identities', 'name': 42, 'identities': ['id']},
         {'cmd': 'group_add_identities', 'name': None, 'identities': ['id']},
         {'cmd': 'group_add_identities', 'name': '<name-here>', 'identities': 'id'},
@@ -257,7 +259,7 @@ class TestShareServiceAPI:
     @pytest.mark.parametrize('admin', [True, False])
     @pytest.mark.parametrize('identities', [
         [],
-        ['id-1', 'id-2']])
+        ['81DBCF6EB9C8B2965A65ACE5520D903047D69DC9', '3C3FA85FB9736362497EB23DC0485AC10E6274C7']])
     async def test_remove_identities(self, share_svc, group, identities, admin):
         origin_group = copy.deepcopy(group)
         # Initial identity that should not be erased further
@@ -277,19 +279,19 @@ class TestShareServiceAPI:
             ret['admins'] = sorted(ret['admins'])
             if admin:
                 assert ret == {'status': 'ok',
-                               'admins': origin_group['admins'],
-                               'users': origin_group['users']}
+                               'admins': sorted(origin_group['admins']),
+                               'users': sorted(origin_group['users'])}
             else:
                 assert ret == {'status': 'ok',
-                               'admins': origin_group['admins'],
-                               'users': origin_group['users']}
+                               'admins': sorted(origin_group['admins']),
+                               'users': sorted(origin_group['users'])}
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
         {'cmd': 'group_remove_identities', 'name': '<name-here>', 'identities': ['id'],
          'bad_field': 'foo'},
         {'cmd': 'group_remove_identities', 'name': '<name-here>', 'identities': ['id'],
-        'admin': 42},
+         'admin': 42},
         {'cmd': 'group_remove_identities', 'name': 42, 'identities': ['id']},
         {'cmd': 'group_remove_identities', 'name': None, 'identities': ['id']},
         {'cmd': 'group_remove_identities', 'name': '<name-here>', 'identities': 'id'},

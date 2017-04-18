@@ -93,8 +93,9 @@ class CryptoService(BaseCryptoService):
         self.gnupg = gnupg.GPG(homedir=homedir, use_agent=True)
         self.gnupg_agentless = gnupg.GPG(homedir=homedir, use_agent=False)  # Cleaner way?
 
-    async def sym_encrypt(self, data):
-        passphrase = urandom(32)
+    async def sym_encrypt(self, data, passphrase=None):
+        if not passphrase:
+            passphrase = urandom(32)
         encrypted = self.gnupg_agentless.encrypt(data,
                                                  passphrase=passphrase,
                                                  encrypt=False,

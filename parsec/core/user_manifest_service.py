@@ -1,5 +1,5 @@
 import json
-from base64 import encodebytes
+from base64 import encodebytes, decodebytes
 from marshmallow import fields
 
 from parsec.service import BaseService, service, cmd
@@ -117,16 +117,13 @@ class BaseUserManifestService(BaseService):
     async def load_user_manifest(self):
         raise NotImplementedError()
 
-    async def save_user_manifest(self):
+    async def save_manifest(self):
         raise NotImplementedError()
 
     async def check_consistency(self, manifest):
         raise NotImplementedError()
 
     async def get_properties(self, id):
-        raise NotImplementedError()
-
-    async def update_key(self, id, new_key):
         raise NotImplementedError()
 
     async def history(self):
@@ -136,73 +133,113 @@ class BaseUserManifestService(BaseService):
 class UserManifestService(BaseUserManifestService):
 
     backend_api_service = service('BackendAPIService')
+    crypto_service = service('CryptoService')
     file_service = service('FileService')
     identity_service = service('IdentityService')
+    share_service = service('ShareService')
 
     def __init__(self):
         super().__init__()
-        self.manifest = {}
-        self.version = 0
+        self.user_manifest = {}
+        self.group_manifests = {}
+        self.groups = {}
+        self.versions = {None: 0}
 
-    async def create_file(self, path):
-        if path in self.manifest:
+    async def get_manifest(self, group=None):
+        if group:
+            try:
+                return self.group_manifests[group]
+            except Exception:
+                raise UserManifestNotFound('Group manifest not found.')
+        else:
+            return self.user_manifest
+
+    async def create_group_manifest(self, group):
+        if group in self.groups:
+            raise(UserManifestError('Group already exists.'))
+        self.group_manifests[group] = {}
+        vlob = await self.backend_api_service.vlob_create()
+        key, _ = await self.crypto_service.sym_encrypt('')
+        self.groups[group] = {'id': vlob.id,
+                              'key': encodebytes(key).decode(),
+                              'read_trust_seed': vlob.read_trust_seed,
+                              'write_trust_seed': vlob.write_trust_seed}
+        self.versions[group] = 0
+        await self.make_dir('/', group)
+        vlob = await self.backend_api_service.vlob_read(id=vlob.id)
+        self.versions[group] = len(vlob.blob_versions)
+        blob = vlob.blob_versions[self.versions[group] - 1]
+        content = await self.crypto_service.sym_decrypt(blob, key)
+        content = content.decode()
+        manifest = json.loads(content)
+        self.group_manifests[group] = manifest
+
+    async def create_file(self, path, group=None):
+        manifest = await self.get_manifest(group)
+        if path in manifest:
             raise UserManifestError('already_exist', 'File already exists.')
         else:
             ret = await self.file_service.create()
             file = {}
             for key in ['id', 'read_trust_seed', 'write_trust_seed']:
                 file[key] = ret[key]
-            file['key'] = None  # TODO set value
-            self.manifest[path] = file
-            await self.save_user_manifest()
-        return self.manifest[path]
+            key, _ = await self.crypto_service.sym_encrypt('')
+            file['key'] = encodebytes(key).decode()
+            manifest[path] = file
+            await self.save_manifest(group)
+        return manifest[path]
 
-    async def rename_file(self, old_path, new_path):
-        self.manifest[new_path] = self.manifest[old_path]
-        del self.manifest[old_path]
-        await self.save_user_manifest()
+    async def rename_file(self, old_path, new_path, group=None):
+        manifest = await self.get_manifest(group)
+        manifest[new_path] = manifest[old_path]
+        del manifest[old_path]
+        await self.save_manifest(group)
 
-    async def delete_file(self, path):
+    async def delete_file(self, path, group=None):
+        manifest = await self.get_manifest(group)
         try:
-            del self.manifest[path]
-            await self.save_user_manifest()
+            del manifest[path]
+            await self.save_manifest(group)
         except KeyError:
             raise UserManifestNotFound('File not found.')
 
-    async def list_dir(self, path):
-        if path != '/' and path not in self.manifest:
+    async def list_dir(self, path, group=None):
+        manifest = await self.get_manifest(group)
+        if path != '/' and path not in manifest:
             raise UserManifestNotFound('Directory not found.')
         results = {}
-        for entry in self.manifest:
+        for entry in manifest:
             if entry != path and entry.startswith(path) and entry.count('/', len(path) + 1) == 0:
-                results[entry.split('/')[-1]] = self.manifest[entry]
-        return self.manifest[path], results
+                results[entry.split('/')[-1]] = manifest[entry]
+        return manifest[path], results
 
-    async def make_dir(self, path):
-        if path in self.manifest:
+    async def make_dir(self, path, group=None):
+        manifest = await self.get_manifest(group)
+        if path in manifest:
             raise UserManifestError('already_exist', 'Directory already exists.')
         else:
-            self.manifest[path] = {'id': None,
-                                   'read_trust_seed': None,
-                                   'write_trust_seed': None,
-                                   'key': None}  # TODO set correct values
-            await self.save_user_manifest()
-        return self.manifest[path]
+            manifest[path] = {'id': None,
+                              'read_trust_seed': None,
+                              'write_trust_seed': None,
+                              'key': None}  # TODO set correct values
+            await self.save_manifest(group)
+        return manifest[path]
 
-    async def remove_dir(self, path):
+    async def remove_dir(self, path, group=None):
+        manifest = await self.get_manifest(group)
         if path == '/':
             raise UserManifestError('cannot_remove_root', 'Cannot remove root directory.')
-        for entry in self.manifest:
+        for entry in manifest:
             if entry != path and entry.startswith(path):
                 raise UserManifestError('directory_not_empty', 'Directory not empty.')
         try:
-            del self.manifest[path]
-            await self.save_user_manifest()
+            del manifest[path]
+            await self.save_manifest(group)
         except KeyError:
             raise UserManifestNotFound('Directory not found.')
 
     async def load_user_manifest(self):
-        self.backend_api_service.on_message_arrived.connect(self.file_shared)  # TODO here?
+        await self.share_service.listen_shared_vlob()
         identity = await self.identity_service.get_identity()
         try:
             vlob = await self.backend_api_service.named_vlob_read(id=identity)
@@ -210,42 +247,81 @@ class UserManifestService(BaseUserManifestService):
             vlob = await self.backend_api_service.named_vlob_create(id=identity)
             await self.make_dir('/')
             vlob = await self.backend_api_service.named_vlob_read(id=identity)
-        self.version = len(vlob.blob_versions)
-        blob = vlob.blob_versions[self.version - 1]
+        self.versions[None] = len(vlob.blob_versions)
+        blob = vlob.blob_versions[self.versions[None] - 1]
         content = await self.identity_service.decrypt(blob)
         content = content.decode()
         manifest = json.loads(content)
-        consistency = await self.check_consistency(manifest)
-        if consistency:
-            self.manifest = manifest
-        return consistency
+        if await self.check_user_manifest_consistency(manifest):
+            self.user_manifest = manifest['user_manifest']
+        else:
+            raise(UserManifestError('User manifest not consistent.'))
+        for group in manifest['groups']:
+            await self.load_group_manifest(group)
+
+    async def load_group_manifest(self, group):
+        properties = await self.get_properties(group=group)
+        vlob = await self.backend_api_service.vlob_read(id=properties['id'])
+        self.versions[group] = len(vlob.blob_versions)
+        blob = vlob.blob_versions[self.versions[group] - 1]
+        key = decodebytes(properties['key'].encode())
+        content = await self.crypto_service.sym_decrypt(blob, key)
+        content = content.decode()
+        manifest = json.loads(content)
+        if await self.check_group_manifest_consistency(manifest):
+            self.group_manifests[group] = manifest
+        else:
+            raise(UserManifestError('Group manifest not consistent.'))
+
+    async def save_manifest(self, group):
+        if group:
+            await self.save_group_manifest(group)
+        else:
+            await self.save_user_manifest()
 
     async def save_user_manifest(self):
         identity = await self.identity_service.get_identity()
-        blob = json.dumps(self.manifest)
-        blob = blob.encode()
+        self.versions[None] += 1
+        blob = json.dumps({'user_manifest': self.user_manifest, 'groups': self.groups}).encode()
         encrypted_blob = await self.identity_service.encrypt(blob)
-        self.version += 1
         await self.backend_api_service.named_vlob_update(
             id=identity,
-            next_version=self.version,
+            next_version=self.versions[None],
             blob=encrypted_blob.decode())
 
-    async def import_vlob(self):
-        identity = await self.identity_service.get_identity()
-        messages = await self.backend_api_service.message_get(identity)  # TODO get last
-        vlob = await self.identity_service.decrypt(messages[-1])
-        vlob = json.loads(vlob.decode())
-        self.manifest['/share-' + vlob['id']] = vlob
-        await self.save_user_manifest()
+    async def save_group_manifest(self, group):
+        manifest = await self.get_manifest(group)
+        self.versions[group] += 1
+        blob = json.dumps(manifest)
+        blob = blob.encode()
+        key = decodebytes(self.groups[group]['key'].encode())
+        _, encrypted_blob = await self.crypto_service.sym_encrypt(blob, key)
+        await self.backend_api_service.vlob_update(
+            id=self.groups[group]['id'],
+            next_version=self.versions[group],
+            blob=encrypted_blob.decode())
 
-    def file_shared(self, sender):
-        # id, read_trust_seed, write_trust_seed_key
-        import asyncio
-        loop = asyncio.get_event_loop()
-        loop.call_soon(asyncio.ensure_future, self.import_vlob())
+    async def import_vlob(self, vlob, path=None, group=None):
+        # TODO check vlob is manifest if group
+        # TODO check path
+        if group:
+            self.groups[group] = vlob
+            await self.load_group_manifest(group)
+        else:
+            self.user_manifest[path] = vlob
+        await self.save_manifest(group)
 
-    async def check_consistency(self, manifest):
+    async def check_user_manifest_consistency(self, manifest):
+        for category in ['user_manifest', 'groups']:
+            for _, entry in manifest[category].items():
+                if entry['id']:
+                    try:
+                        await self.file_service.stat(entry['id'], entry['read_trust_seed'])
+                    except Exception:
+                        return False
+        return True
+
+    async def check_group_manifest_consistency(self, manifest):
         for _, entry in manifest.items():
             if entry['id']:
                 try:
@@ -254,25 +330,20 @@ class UserManifestService(BaseUserManifestService):
                     return False
         return True
 
-    async def get_properties(self, path=None, id=None):  # TODO refactor?
+    async def get_properties(self, path=None, id=None, group=None):  # TODO refactor?
+        manifest = await self.get_manifest(group)
         if path:
             try:
-                return self.manifest[path]
+                return manifest[path]
             except Exception:
                 raise(UserManifestNotFound('File not found.'))
         elif id:
-            for entry in self.manifest.values():  # TODO bad complexity
+            for entry in manifest.values():  # TODO bad complexity
                 if entry['id'] == id:
                     return entry
             raise(UserManifestNotFound('File not found.'))
-
-    async def update_key(self, id, new_key):  # TODO don't call when update manifest
-        for key, values in self.manifest.items():
-            if values['id'] == id:
-                values['key'] = encodebytes(new_key).decode()
-                self.manifest[key] = values
-                break
-        await self.save_user_manifest()
+        elif group:
+            return self.groups[group]
 
     async def history(self):
         # TODO raise ParsecNotImplementedError

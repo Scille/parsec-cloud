@@ -5,7 +5,7 @@ import pytest
 
 from parsec.server import BaseServer
 from parsec.core import (MockedBackendAPIService, CryptoService, FileService, IdentityService,
-                         GNUPGPubKeysService, UserManifestService)
+                         GNUPGPubKeysService, ShareService, UserManifestService)
 
 
 GNUPG_HOME = path.dirname(path.abspath(__file__)) + '/../gnupg_env'
@@ -13,9 +13,10 @@ GNUPG_HOME = path.dirname(path.abspath(__file__)) + '/../gnupg_env'
 
 @pytest.fixture
 def user_manifest_svc(event_loop):
+    identity = '81DBCF6EB9C8B2965A65ACE5520D903047D69DC9'
     service = UserManifestService()
     crypto_service = CryptoService()
-    crypto_service.gnupg = gnupg.GPG(homedir=GNUPG_HOME + '/alice')
+    crypto_service.gnupg = gnupg.GPG(homedir=GNUPG_HOME + '/secret_env')
     identity_service = IdentityService()
     server = BaseServer()
     server.register_service(service)
@@ -24,8 +25,9 @@ def user_manifest_svc(event_loop):
     server.register_service(MockedBackendAPIService())
     server.register_service(FileService())
     server.register_service(GNUPGPubKeysService())
+    server.register_service(ShareService())
     event_loop.run_until_complete(server.bootstrap_services())
-    event_loop.run_until_complete(identity_service.load_identity())
+    event_loop.run_until_complete(identity_service.load_identity(identity=identity))
     event_loop.run_until_complete(service.load_user_manifest())
     yield service
     event_loop.run_until_complete(server.teardown_services())

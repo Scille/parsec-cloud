@@ -1,5 +1,6 @@
 import json
 
+import asyncio
 from marshmallow import fields
 
 from parsec.service import BaseService, cmd, service
@@ -116,6 +117,7 @@ class ShareService(BaseShareService):
 
     backend_api_service = service('BackendAPIService')
     crypto_service = service('CryptoService')
+    identity_service = service('IdentityService')
     pub_keys_service = service('PubKeysService')
     user_manifest_service = service('UserManifestService')
 
@@ -142,14 +144,41 @@ class ShareService(BaseShareService):
         #     await self.backend_api_service.message_service.new(identity, vlob)
         pass
 
+    async def listen_shared_vlob(self):
+        self.backend_api_service.on_message_arrived.connect(self.vlob_shared_event)  # TODO here?
+
+    def vlob_shared_event(self, sender):
+        loop = asyncio.get_event_loop()
+        loop.call_soon(asyncio.ensure_future, self.import_shared_vlob())
+
+    async def import_shared_vlob(self):
+        identity = await self.identity_service.get_identity()
+        messages = await self.backend_api_service.message_get(identity)  # TODO get last
+        if not messages:
+            raise(ShareError('No shared vlob in messages queue.'))
+        message = await self.identity_service.decrypt(messages[-1])
+        message = json.loads(message.decode())
+        if 'group' in message and not isinstance(message['group'], dict):  # TODO message format?
+            await self.user_manifest_service.import_vlob(message['vlob'], group=message['group'])
+        else:
+            path = '/share-' + message['id']
+            await self.user_manifest_service.import_vlob(message, path=path)
+
     async def group_create(self, name):
         await self.backend_api_service.group_create(name)
+        await self.user_manifest_service.create_group_manifest(name)
 
     async def group_read(self, name):
         return await self.backend_api_service.group_read(name)
 
     async def group_add_identities(self, name, identities, admin=False):
         await self.backend_api_service.group_add_identities(name, identities, admin)
+        vlob = await self.user_manifest_service.get_properties(group=name)
+        message = {'group': name, 'vlob': vlob}
+        for identity in identities:
+            # TODO use pub key service ?
+            encrypted_msg = await self.crypto_service.asym_encrypt(json.dumps(message), identity)
+            await self.backend_api_service.message_new(identity, encrypted_msg)
 
     async def group_remove_identities(self, name, identities, admin=False):
         await self.backend_api_service.group_remove_identities(name, identities, admin)

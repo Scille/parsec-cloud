@@ -107,22 +107,22 @@ class FileService(BaseFileService):
             properties = await self.user_manifest_service.get_properties(id=id)
         except Exception:
             raise FileNotFound('Vlob not found.')
-        key = decodebytes(properties['key'].encode()) if properties['key'] else None
-        if not key:
-            return {'content': '', 'version': 0}
         vlob = await self.backend_api_service.vlob_read(id=id)
         version = len(vlob.blob_versions)
+        if version == 0:
+            return {'content': '', 'version': 0}
         blob = vlob.blob_versions[version - 1]
         encrypted_blob = decodebytes(blob.encode())
-        blob = await self.crypto_service.sym_decrypt(encrypted_blob, key)
+        blob_key = decodebytes(properties['key'].encode()) if properties['key'] else None
+        blob = await self.crypto_service.sym_decrypt(encrypted_blob, blob_key)
         blob = json.loads(blob.decode())
-        key = decodebytes(blob['key'].encode())
+        block_key = decodebytes(blob['key'].encode())
         old_digest = decodebytes(blob['digest'].encode())
         # Get content
         block = await self.backend_api_service.block_read(id=blob['block'])
         # Decrypt
         encrypted_content = block['content'].encode()
-        content = await self.crypto_service.sym_decrypt(encrypted_content, key)
+        content = await self.crypto_service.sym_decrypt(encrypted_content, block_key)
         # Check integrity
         digest = hashes.Hash(hashes.SHA512(), backend=openssl)
         digest.update(content)
@@ -132,7 +132,7 @@ class FileService(BaseFileService):
 
     async def write(self, id, version, content):
         try:
-            await self.user_manifest_service.get_properties(id=id)
+            properties = await self.user_manifest_service.get_properties(id=id)
         except Exception:
             raise FileNotFound('Vlob not found.')
         content = content.encode()
@@ -143,41 +143,42 @@ class FileService(BaseFileService):
         content_digest = digest.finalize()  # TODO replace with hexdigest ?
         content_digest = encodebytes(content_digest).decode()
         # Encrypt block
-        key, data = await self.crypto_service.sym_encrypt(content)
-        key = encodebytes(key).decode()
+        block_key, data = await self.crypto_service.sym_encrypt(content)
+        block_key = encodebytes(block_key).decode()
         data = data.decode()
         # Store block
         block_id = await self.backend_api_service.block_create(content=data)
         # Update vlob
         blob = {'block': block_id,
                 'size': size,
-                'key': key,
+                'key': block_key,
                 'digest': content_digest}
         # Encrypt blob
         blob = json.dumps(blob)
         blob = blob.encode()
-        key, encrypted_blob = await self.crypto_service.sym_encrypt(blob)
+        blob_key = decodebytes(properties['key'].encode())
+        _, encrypted_blob = await self.crypto_service.sym_encrypt(blob, blob_key)
         encrypted_blob = encodebytes(encrypted_blob).decode()
         await self.backend_api_service.vlob_update(
             id=id, next_version=version, blob=encrypted_blob)
-        await self.user_manifest_service.update_key(id, key)  # TODO use event
-        return key
+        return block_key
 
     async def stat(self, id):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
         except Exception:
             raise FileNotFound('Vlob not found.')
-        key = decodebytes(properties['key'].encode()) if properties['key'] else None
-        if not key:
+        vlob = await self.backend_api_service.vlob_read(id=id)
+        version = len(vlob.blob_versions)
+        if version == 0:
             return {'id': id,
                     'ctime': datetime.utcnow().timestamp(),
                     'mtime': datetime.utcnow().timestamp(),
                     'atime': datetime.utcnow().timestamp(),
                     'size': 0}
-        vlob = await self.backend_api_service.vlob_read(id=id)
-        encrypted_blob = vlob.blob_versions[-1]
+        encrypted_blob = vlob.blob_versions[version - 1]
         encrypted_blob = decodebytes(encrypted_blob.encode())
+        key = decodebytes(properties['key'].encode()) if properties['key'] else None
         blob = await self.crypto_service.sym_decrypt(encrypted_blob, key)
         blob = json.loads(blob.decode())
         stat = await self.backend_api_service.block_stat(id=blob['block'])

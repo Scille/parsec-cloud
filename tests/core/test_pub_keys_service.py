@@ -19,14 +19,14 @@ GNUPG_HOME = path.dirname(path.abspath(__file__)) + '/../gnupg_env'
 
 @pytest.fixture
 def alice_gpg():
-    gpg = gnupg.GPG(homedir=GNUPG_HOME + '/alice')
+    gpg = gnupg.GPG(homedir=GNUPG_HOME + '/secret_env')
     gpg.identity = gpg.list_keys(secret=True)[0]['keyid']
     return gpg
 
 
 @pytest.fixture
 def bob_pubkey_srv():
-    return GNUPGPubKeysService(homedir=GNUPG_HOME + '/bob')
+    return GNUPGPubKeysService(homedir=GNUPG_HOME + '/pub_env')
 
 
 class TestGNUPGPubKeysHandshake:

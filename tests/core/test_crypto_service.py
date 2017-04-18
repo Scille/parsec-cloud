@@ -12,8 +12,8 @@ GNUPG_HOME = path.dirname(path.abspath(__file__)) + '/../gnupg_env'
 
 @pytest.fixture
 def alice_gpg():
-    gpg = gnupg.GPG(homedir=GNUPG_HOME + '/alice')
-    gpg.identity = gpg.list_keys(secret=True)[0]['keyid']
+    gpg = gnupg.GPG(homedir=GNUPG_HOME + '/secret_env')
+    gpg.identity = gpg.list_keys(secret=True)[0]['fingerprint']
     return gpg
 
 
