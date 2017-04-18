@@ -1,5 +1,3 @@
-# from base64 import decodebytes
-
 from blinker import signal
 
 from parsec.exceptions import ParsecError
@@ -87,9 +85,6 @@ class BaseService(metaclass=MetaBaseService):
         for key, service_name in self._service_keys.items():
             service = yield service_name
             setattr(self, key, service)
-
-    async def init_service(self):
-        pass
 
     @property
     def cmds(self):

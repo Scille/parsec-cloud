@@ -6,6 +6,7 @@ from blinker import signal
 from parsec.backend import (MockedGroupService, InMemoryMessageService, MockedVlobService,
                             MockedNamedVlobService, MockedBlockService)
 from parsec.service import BaseService, event
+from parsec.tools import logger
 
 
 class BaseBackendAPIService(BaseService):
@@ -26,11 +27,11 @@ class BackendAPIService(BaseBackendAPIService):
         self._backend_url = backend_url
         self._websocket = None
 
-    async def start(self):
+    async def bootstrap(self):
         self._websocket = await websockets.connect(self._backend_url)
         self._ws_recv_handler_task = asyncio.call_soon(self._ws_recv_handler)
 
-    async def stop(self):
+    async def teardown(self):
         self._ws_recv_handler_task.cancel()
 
     async def _ws_recv_handler(self):
