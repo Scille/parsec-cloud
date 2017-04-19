@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import uuid4
 from marshmallow import fields
 
-from parsec.service import BaseService, cmd, event, service
+from parsec.service import BaseService, cmd, service
 from parsec.exceptions import ParsecError
 from parsec.tools import BaseCmdSchema
 

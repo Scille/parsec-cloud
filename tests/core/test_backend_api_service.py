@@ -1,4 +1,3 @@
-from freezegun import freeze_time
 import pytest
 
 from parsec.backend.vlob_service import Vlob

@@ -100,16 +100,16 @@ class BaseShareService(BaseService):
     async def stop_share(self, path):
         raise NotImplementedError()
 
-    async def create_group(self, name):
+    async def group_create(self, name):
         raise NotImplementedError()
 
-    async def read_group(self, name):
+    async def group_read(self, name):
         raise NotImplementedError()
 
-    async def add_identities_to_group(self, name, identities, admin=False):
+    async def group_add_identities(self, name, identities, admin=False):
         raise NotImplementedError()
 
-    async def remove_identities_from_group(self, name, identities, admin=False):
+    async def group_remove_identities(self, name, identities, admin=False):
         raise NotImplementedError()
 
 
@@ -172,6 +172,7 @@ class ShareService(BaseShareService):
         return await self.backend_api_service.group_read(name)
 
     async def group_add_identities(self, name, identities, admin=False):
+        # TODO check admin
         await self.backend_api_service.group_add_identities(name, identities, admin)
         vlob = await self.user_manifest_service.get_properties(group=name)
         message = {'group': name, 'vlob': vlob}
@@ -181,4 +182,5 @@ class ShareService(BaseShareService):
             await self.backend_api_service.message_new(identity, encrypted_msg)
 
     async def group_remove_identities(self, name, identities, admin=False):
+        # TODO check admin
         await self.backend_api_service.group_remove_identities(name, identities, admin)
