@@ -5,6 +5,7 @@ from blinker import signal
 
 from parsec.backend import (MockedGroupService, InMemoryMessageService, MockedVlobService,
                             MockedNamedVlobService, MockedBlockService)
+from parsec.backend.vlob_service import Vlob, VlobError
 from parsec.service import BaseService, event
 from parsec.tools import logger
 
@@ -26,13 +27,20 @@ class BackendAPIService(BaseBackendAPIService):
         assert backend_url.startswith('ws://') or backend_url.startswith('wss://')
         self._backend_url = backend_url
         self._websocket = None
+        self._ws_recv_handler_task = None
 
     async def bootstrap(self):
+        assert not self._websocket, "Service already bootstraped"
         self._websocket = await websockets.connect(self._backend_url)
-        self._ws_recv_handler_task = asyncio.call_soon(self._ws_recv_handler)
+        self._ws_recv_handler_task = asyncio.ensure_future(self._ws_recv_handler())
 
     async def teardown(self):
+        assert self._websocket, "Service hasn't been bootstraped"
         self._ws_recv_handler_task.cancel()
+        try:
+            await self._ws_recv_handler_task
+        except asyncio.CancelledError:
+            pass
 
     async def _ws_recv_handler(self):
         # Given command responses and notifications are all send through the
@@ -41,6 +49,8 @@ class BackendAPIService(BaseBackendAPIService):
         while True:
             raw = await self._websocket.recv()
             try:
+                if isinstance(raw, bytes):
+                    raw = raw.decode()
                 recv = json.loads(raw)
                 if 'status' in recv:
                     # Message response
@@ -52,59 +62,78 @@ class BackendAPIService(BaseBackendAPIService):
                 # Dummy ???
                 logger.warning('Backend server send invalid message: %s' % recv)
 
-    async def _send_cmd(self):
-        # To avoid concurrency on message reception, we have to cancel
-        self._notification_listener_task.cancel()
-        await self._websocket.send(msg)
-        resp = await self._resp_queue.get()
+    async def _send_cmd(self, msg):
+        await self._websocket.send(json.dumps(msg))
+        return await self._resp_queue.get()
 
     async def _listen_for_notification(self):
         raw = await self._websocket.recv()
         notif = json.loads(raw)
 
     async def block_create(self, *args, **kwargs):
-        await self._init_connection()
+        raise NotImplementedError()
         return await self._block_service.create(*args, **kwargs)
 
     async def block_read(self, *args, **kwargs):
-        await self._init_connection()
+        raise NotImplementedError()
         return await self._block_service.read(*args, **kwargs)
 
     async def block_stat(self, *args, **kwargs):
-        await self._init_connection()
+        raise NotImplementedError()
         return await self._block_service.stat(*args, **kwargs)
 
     async def message_new(self, *args, **kwargs):
-        await self._init_connection()
+        raise NotImplementedError()
         return await self._message_service.new(*args, **kwargs)
 
     async def message_get(self, *args, **kwargs):
-        await self._init_connection()
+        raise NotImplementedError()
         return await self._message_service.get(*args, **kwargs)
 
     async def named_vlob_create(self, *args, **kwargs):
-        await self._init_connection()
+        raise NotImplementedError()
         return await self._named_vlob_service.create(*args, **kwargs)
 
     async def named_vlob_read(self, *args, **kwargs):
-        await self._init_connection()
+        raise NotImplementedError()
         return await self._named_vlob_service.read(*args, **kwargs)
 
     async def named_vlob_update(self, *args, **kwargs):
-        await self._init_connection()
+        raise NotImplementedError()
         return await self._named_vlob_service.update(*args, **kwargs)
 
-    async def vlob_create(self, *args, **kwargs):
-        await self._init_connection()
-        return await self._vlob_service.create(*args, **kwargs)
+    async def vlob_create(self, blob=None):
+        msg = {'cmd': 'vlob_create', 'blob': blob or ''}
+        ret = await self._send_cmd(msg)
+        status = ret.pop('status')
+        if status == 'ok':
+            return Vlob(**ret)
+        else:
+            raise VlobError(**ret)
 
-    async def vlob_read(self, *args, **kwargs):
-        await self._init_connection()
-        return await self._vlob_service.read(*args, **kwargs)
+    async def vlob_read(self, id):
+        msg = {'cmd': 'vlob_read', 'id': id}
+        ret = await self._send_cmd(msg)
+        status = ret.pop('status')
+        if status == 'ok':
+            return Vlob(**ret)
+        else:
+            raise VlobError(**ret)
 
-    async def vlob_update(self, *args, **kwargs):
-        await self._init_connection()
-        return await self._vlob_service.update(*args, **kwargs)
+    async def vlob_update(self, id, version, trust_seed, blob=''):
+        msg = {
+            'cmd': 'vlob_update',
+            'id': id,
+            'version': version,
+            'trust_seed': trust_seed,
+            'blob': blob
+        }
+        ret = await self._send_cmd(msg)
+        status = ret.pop('status')
+        if status == 'ok':
+            return Vlob(**ret)
+        else:
+            raise VlobError(status, ret['label'])
 
 
 class MockedBackendAPIService(BaseBackendAPIService):

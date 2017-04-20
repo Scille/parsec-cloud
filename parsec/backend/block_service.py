@@ -27,8 +27,6 @@ class BaseBlockService(BaseService):
 
     name = 'BlockService'
 
-    vlob_service = service('MockedVlobService')
-
     @cmd('block_create')
     async def _cmd_CREATE(self, session, msg):
         msg = cmd_CREATE_Schema().load(msg)

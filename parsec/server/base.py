@@ -80,7 +80,9 @@ class BaseServer:
         if not raw:
             return None
         try:
-            msg = json.loads(raw.decode())
+            if isinstance(raw, bytes):
+                raw = raw.decode()
+            msg = json.loads(raw)
             if isinstance(msg.get('cmd'), str):
                 return msg
             else:
@@ -114,42 +116,46 @@ class BaseServer:
             return
         get_event = asyncio.ensure_future(session.received_events.get())
         get_cmd = asyncio.ensure_future(context.recv())
-        while True:
-            # Wait for two things:
-            # - User's command
-            # - Event subscribed by user
-            # Note user's command should have been replied before sending an event notification
-            done, pending = await asyncio.wait((get_event, get_cmd), return_when='FIRST_COMPLETED')
-            if get_event in done:
-                event, sender = get_event.result()
-                conn_log.debug('Got event: %s@%s' % (event, sender))
-                resp = {'event': event, 'sender': sender}
-                await context.send(json.dumps(resp).encode())
-                # Restart watch on incoming notifications
-                get_event = asyncio.ensure_future(session.received_events.get())
-            else:
-                raw_cmd = get_cmd.result()
-                if not raw_cmd:
-                    get_event.cancel()
-                    conn_log.debug('Connection stopped')
-                    return
-                conn_log.debug('Received: %r' % raw_cmd)
-                msg = self._load_raw_cmd(raw_cmd)
-                if msg is None:
-                    resp = {"status": "bad_message", "label": "Message is not a valid JSON."}
+        try:
+            while True:
+                # Wait for two things:
+                # - User's command
+                # - Event subscribed by user
+                # Note user's command should have been replied before sending an event notification
+                done, pending = await asyncio.wait((get_event, get_cmd), return_when='FIRST_COMPLETED')
+                if get_event in done:
+                    event, sender = get_event.result()
+                    conn_log.debug('Got event: %s@%s' % (event, sender))
+                    resp = {'event': event, 'sender': sender}
+                    await context.send(json.dumps(resp).encode())
+                    # Restart watch on incoming notifications
+                    get_event = asyncio.ensure_future(session.received_events.get())
                 else:
-                    cmd = self._cmds.get(msg['cmd'])
-                    if not cmd:
-                        resp = {"status": "badcmd", "label": "Unknown command `%s`" % msg['cmd']}
+                    raw_cmd = get_cmd.result()
+                    if not raw_cmd:
+                        get_event.cancel()
+                        conn_log.debug('Connection stopped')
+                        return
+                    conn_log.debug('Received: %r' % raw_cmd)
+                    msg = self._load_raw_cmd(raw_cmd)
+                    if msg is None:
+                        resp = {"status": "bad_message", "label": "Message is not a valid JSON."}
                     else:
-                        try:
-                            resp = await cmd(session, msg)
-                        except ParsecError as exc:
-                            resp = exc.to_dict()
-                conn_log.debug('Replied: %r' % resp)
-                await context.send(json.dumps(resp).encode())
-                # Restart watch on incoming messages
-                get_cmd = asyncio.ensure_future(context.recv())
+                        cmd = self._cmds.get(msg['cmd'])
+                        if not cmd:
+                            resp = {"status": "badcmd", "label": "Unknown command `%s`" % msg['cmd']}
+                        else:
+                            try:
+                                resp = await cmd(session, msg)
+                            except ParsecError as exc:
+                                resp = exc.to_dict()
+                    conn_log.debug('Replied: %r' % resp)
+                    await context.send(json.dumps(resp).encode())
+                    # Restart watch on incoming messages
+                    get_cmd = asyncio.ensure_future(context.recv())
+        finally:
+            get_event.cancel()
+            get_cmd.cancel()
 
     async def bootstrap_services(self):
         errors = []

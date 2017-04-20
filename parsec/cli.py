@@ -67,7 +67,10 @@ def core(socket, backend_host, backend_port):
     server.register_service(IdentityService())
     server.register_service(ShareService())
     server.register_service(UserManifestService())
+    print('Starting parsec core on %s (connecting to backend %s:%s)' %
+          (socket, backend_host, backend_port))
     server.start(socket)
+    print('Bye ;-)')
 
 
 @click.command()
@@ -82,7 +85,9 @@ def backend(host, port, gnupg_homedir):
     server.register_service(MockedVlobService())
     server.register_service(MockedNamedVlobService())
     server.register_service(MockedBlockService())
+    print('Starting parsec backend on %s:%s' % (host, port))
     server.start(host, port)
+    print('Bye ;-)')
 
 
 cli.add_command(cmd)
