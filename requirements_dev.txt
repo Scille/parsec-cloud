@@ -1,18 +1,21 @@
 # No version number as these are dev tools
 asynctest
-bumpversion
 blinker
-wheel
+bumpversion
+coverage
+dropbox
 flake8
 freezegun
 gnupg
 keybaseio-api
 marshmallow
-tox
-coverage
-Sphinx
+pydrive
 pytest
 pytest-cov
 pytest-mock
 pytest-asyncio
+python-dateutil
+Sphinx
+tox
+wheel
 websockets

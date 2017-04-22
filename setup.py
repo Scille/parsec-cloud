@@ -3,9 +3,9 @@
 
 
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
 except ImportError:
-    from distutils.core import setup
+    from distutils.core import setup, find_packages
 
 
 with open('README.rst') as readme_file:
@@ -21,7 +21,9 @@ requirements = [
     "pyaml==16.12.2",
     "click==6.7",
     "blinker==1.4",
-    "websockets==3.2"
+    "websockets==3.3",
+    "marshmallow==2.13.5",
+    "gnupg==2.2.0"
 ]
 
 test_requirements = [
@@ -36,18 +38,11 @@ setup(
     author="Scille SAS",
     author_email='contact@scille.fr',
     url='https://github.com/Scille/parsec-cloud',
-    packages=[
-        'parsec',
-    ],
+    packages=find_packages(),
     package_data={'parsec': ['resources']},
     package_dir={'parsec': 'parsec'},
     include_package_data=True,
     install_requires=requirements,
-    extras_require={
-        'sftp': ['asyncssh==1.8.1'],
-        'fuse': ['fusepy==2.0.4'],
-        'gdrive': ['google-api-python-client==1.5.3'],
-    },
     entry_points={
         'console_scripts': [
             'parsec = parsec.cli:cli',
@@ -61,8 +56,6 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
     ],
     test_suite='tests',
