@@ -96,7 +96,7 @@ class TestFileService:
         assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.asyncio
-    # @freeze_time("2012-01-01")
+    @freeze_time("2012-01-01")
     async def test_stat_file(self, file_svc, user_manifest_svc):
             # Good file
             with freeze_time('2012-01-01') as frozen_datetime:

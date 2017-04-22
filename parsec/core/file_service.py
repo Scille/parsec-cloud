@@ -119,10 +119,13 @@ class FileService(BaseFileService):
         block_key = decodebytes(blob['key'].encode())
         old_digest = decodebytes(blob['digest'].encode())
         # Get content
-        block = await self.backend_api_service.block_read(id=blob['block'])
-        # Decrypt
-        encrypted_content = block['content'].encode()
-        content = await self.crypto_service.sym_decrypt(encrypted_content, block_key)
+        content = b''
+        for block_id in blob['blocks']:
+            block = await self.backend_api_service.block_read(id=block_id)
+            # Decrypt
+            encrypted_content = block['content'].encode()
+            chunck_content = await self.crypto_service.sym_decrypt(encrypted_content, block_key)
+            content += chunck_content
         # Check integrity
         digest = hashes.Hash(hashes.SHA512(), backend=openssl)
         digest.update(content)
@@ -142,14 +145,21 @@ class FileService(BaseFileService):
         digest.update(content)
         content_digest = digest.finalize()  # TODO replace with hexdigest ?
         content_digest = encodebytes(content_digest).decode()
-        # Encrypt block
-        block_key, data = await self.crypto_service.sym_encrypt(content)
-        block_key = encodebytes(block_key).decode()
-        data = data.decode()
-        # Store block
-        block_id = await self.backend_api_service.block_create(content=data)
+        # Create chuncks
+        chunk_size = 4096  # TODO modify size
+        chuncks = [content[i:i + chunk_size] for i in range(0, len(content), chunk_size)]
+        block_key, _ = await self.crypto_service.sym_encrypt('')
+        blocks = []
+        for chunck in chuncks:
+            # Encrypt block
+            block_key, data = await self.crypto_service.sym_encrypt(chunck, block_key)
+            data = data.decode()
+            # Store block
+            block_id = await self.backend_api_service.block_create(content=data)
+            blocks.append(block_id)
         # Update vlob
-        blob = {'block': block_id,
+        block_key = encodebytes(block_key).decode()
+        blob = {'blocks': blocks,
                 'size': size,
                 'key': block_key,
                 'digest': content_digest}
@@ -181,7 +191,7 @@ class FileService(BaseFileService):
         key = decodebytes(properties['key'].encode()) if properties['key'] else None
         blob = await self.crypto_service.sym_decrypt(encrypted_blob, key)
         blob = json.loads(blob.decode())
-        stat = await self.backend_api_service.block_stat(id=blob['block'])
+        stat = await self.backend_api_service.block_stat(id=blob['blocks'][0])
         return {'id': id,
                 'ctime': stat['creation_timestamp'],
                 'mtime': stat['creation_timestamp'],
