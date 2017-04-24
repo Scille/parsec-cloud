@@ -116,7 +116,8 @@ class BackendAPIService(BaseBackendAPIService):
 
     async def message_get(self, recipient, offset=0):
         msg = {'cmd': 'message_get', 'recipient': recipient, 'offset': offset}
-        return await self._send_cmd(msg)
+        ret = await self._send_cmd(msg)
+        return [msg['body'] for msg in ret['messages']]
 
     async def named_vlob_create(self, id, blob=''):
         assert isinstance(blob, str)
@@ -210,7 +211,8 @@ class MockedBackendAPIService(BaseBackendAPIService):
 
     async def message_get(self, recipient, offset=0):
         msg = {'cmd': 'message_get', 'recipient': recipient, 'offset': offset}
-        return await self._message_service._cmd_GET(None, msg)
+        ret = await self._message_service._cmd_GET(None, msg)
+        return [msg['body'] for msg in ret['messages']]
 
     async def named_vlob_create(self, id, blob=''):
         assert isinstance(blob, str)
