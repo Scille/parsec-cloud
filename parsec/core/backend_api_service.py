@@ -177,12 +177,12 @@ class MockedBackendAPIService(BaseBackendAPIService):
 
     async def block_create(self, content):
         msg = {'cmd': 'block_create', 'content': content}
-        ret = await self._message_service._cmd_NEW(None, msg)
+        ret = await self._block_service._cmd_NEW(None, msg)
         return ret['id']
 
     async def block_read(self, id):
         msg = {'cmd': 'block_read', 'id': id}
-        return await self._message_service._cmd_NEW(None, msg)
+        return await self._block_service._cmd_NEW(None, msg)
 
     async def block_stat(self, id):
         msg = {'cmd': 'block_stat', 'id': id}
