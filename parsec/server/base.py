@@ -138,6 +138,10 @@ class BaseServer:
                         return
                     conn_log.debug('Received: %r' % raw_cmd)
                     msg = self._load_raw_cmd(raw_cmd)
+                    request_id = None
+                    if 'request_id' in msg:
+                        request_id = msg['request_id']
+                        del msg['request_id']
                     if msg is None:
                         resp = {"status": "bad_message", "label": "Message is not a valid JSON."}
                     else:
@@ -149,6 +153,8 @@ class BaseServer:
                                 resp = await cmd(session, msg)
                             except ParsecError as exc:
                                 resp = exc.to_dict()
+                    if request_id:
+                        resp['request_id'] = request_id
                     conn_log.debug('Replied: %r' % resp)
                     await context.send(json.dumps(resp).encode())
                     # Restart watch on incoming messages
