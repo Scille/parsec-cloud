@@ -5,6 +5,7 @@ import string
 from marshmallow import fields
 from marshmallow.validate import OneOf
 from logbook import Logger
+from websockets import ConnectionClosed
 
 from parsec.exceptions import ParsecError, HandshakeError
 from parsec.session import anonymous_handshake
@@ -107,12 +108,16 @@ class BaseServer:
 
     async def on_connection(self, context: BaseClientContext):
         conn_log = Logger('Connection ' + _unique_enough_id())
-        conn_log.debug('Connection started')
+        conn_log.info('Connection started')
         # Handle handshake if auth is required
         try:
             session = await self._handshake(context)
+        except ConnectionClosed:
+            conn_log.info('Connection closed by client')
+            return
         except HandshakeError as exc:
             await context.send(exc.to_raw())
+            conn_log.info('Connection closed due to bad handshake')
             return
         get_event = asyncio.ensure_future(session.received_events.get())
         get_cmd = asyncio.ensure_future(context.recv())
@@ -159,6 +164,8 @@ class BaseServer:
                     await context.send(json.dumps(resp).encode())
                     # Restart watch on incoming messages
                     get_cmd = asyncio.ensure_future(context.recv())
+        except ConnectionClosed:
+            conn_log.info('Connection closed')
         finally:
             get_event.cancel()
             get_cmd.cancel()
