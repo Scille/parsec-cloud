@@ -142,7 +142,7 @@ async def test_register_event(server_pingpong):
 
     recv_msgs = [
         {'cmd': 'subscribe', 'event': 'on_ping', 'sender': 'foo'},
-        {'cmd': 'ping', 'ping': 'bar'},
+        {'cmd': 'ping', 'ping': 'bar', 'request_id': '1234'},
         {'cmd': 'ping', 'ping': 'foo'}
     ]
     recv_msgs.reverse()
@@ -163,8 +163,8 @@ async def test_register_event(server_pingpong):
     assert history == [
         ('recv', {'sender': 'foo', 'cmd': 'subscribe', 'event': 'on_ping'}),
         ('send', {'status': 'ok'}),
-        ('recv', {'cmd': 'ping', 'ping': 'bar'}),
-        ('send', {'pong': 'bar', 'status': 'ok'}),
+        ('recv', {'cmd': 'ping', 'ping': 'bar', 'request_id': '1234'}),
+        ('send', {'pong': 'bar', 'status': 'ok', 'request_id': '1234'}),
         ('recv', {'cmd': 'ping', 'ping': 'foo'}),
         ('send', {'pong': 'foo', 'status': 'ok'}),
         ('send', {'event': 'on_ping', 'sender': 'foo'}),

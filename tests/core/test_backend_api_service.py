@@ -1,7 +1,6 @@
 import pytest
 
 from parsec.server import WebSocketServer
-from parsec.backend.vlob_service import Vlob
 from parsec.backend import MockedVlobService
 from parsec.core import MockedBackendAPIService, BackendAPIService
 
