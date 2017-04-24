@@ -23,7 +23,9 @@ requirements = [
     "blinker==1.4",
     "websockets==3.3",
     "marshmallow==2.13.5",
-    "gnupg==2.2.0"
+    "gnupg==2.2.0",
+    "dropbox==7.2.1",
+    "pydrive==1.3.1"
 ]
 
 test_requirements = [
