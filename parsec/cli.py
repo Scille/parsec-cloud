@@ -1,3 +1,4 @@
+from os import environ
 from socket import socket, AF_UNIX, SOCK_STREAM
 import click
 
@@ -73,11 +74,13 @@ def core(socket, backend_host):
 
 @click.command()
 @click.option('--gnupg-homedir', default='~/.gnupg')
-@click.option('--host', '-H', default='localhost')
-@click.option('--port', '-P', default=6777, type=int)
+@click.option('--host', '-H', default=None, help='Host to listen on (default: localhost)')
+@click.option('--port', '-P', default=None, type=int, help=('Port to listen on (default: 6777)'))
 @click.option('--no-client-auth', is_flag=True,
     help='Disable authentication handshake on client connection (default: false)')
 def backend(host, port, gnupg_homedir, no_client_auth):
+    host = host or environ.get('HOST', 'localhost')
+    port = port or int(environ.get('PORT', 6777))
     pub_keys_service = GNUPGPubKeysService(gnupg_homedir)
     if no_client_auth:
         server = WebSocketServer()
