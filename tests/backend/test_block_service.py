@@ -1,12 +1,12 @@
 from freezegun import freeze_time
 import pytest
 
-from parsec.backend import MockedBlockService
+from parsec.backend import MetaBlockService, MockedBlockService
 
 
-@pytest.fixture(params=[MockedBlockService, ])
+@pytest.fixture(params=[[MockedBlockService], ])
 def block_svc(request):
-    return request.param()
+    return MetaBlockService(request.param)
 
 
 @pytest.fixture
@@ -22,6 +22,12 @@ class TestBlockServiceAPI:
         ret = await block_svc.dispatch_msg({'cmd': 'block_create', 'content': 'Foo.'})
         assert ret['status'] == 'ok'
         assert ret['id']
+
+    @pytest.mark.asyncio
+    async def test_create_with_id(self, block_svc):
+        ret = await block_svc.dispatch_msg({'cmd': 'block_create', 'content': 'Foo.', 'id': '1234'})
+        assert ret['status'] == 'ok'
+        assert ret['id'] == '1234'
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
@@ -48,7 +54,8 @@ class TestBlockServiceAPI:
                     'content': block_content} == ret
         # Unknown block
         ret = await block_svc.dispatch_msg({'cmd': 'block_read', 'id': '1234'})
-        assert {'label': 'Block not found.', 'status': 'not_found'} == ret
+        assert {'status': 'block_error',
+                'label': 'All backends failed to complete read operation.'} == ret
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
@@ -75,7 +82,8 @@ class TestBlockServiceAPI:
                     'creation_timestamp': creation_timestamp} == ret
         # Unknown block
         ret = await block_svc.dispatch_msg({'cmd': 'block_stat', 'id': '1234'})
-        assert {'label': 'Block not found.', 'status': 'not_found'} == ret
+        assert {'status': 'block_error',
+                'label': 'All backends failed to complete stat operation.'} == ret
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [

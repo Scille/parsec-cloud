@@ -72,7 +72,7 @@ class BaseFileService(BaseService):
         history = await self.history(msg['id'])
         return {'status': 'ok', 'history': history}
 
-    async def create(self):
+    async def create(self, content=''):
         raise NotImplementedError()
 
     async def read(self, id):

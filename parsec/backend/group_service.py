@@ -38,13 +38,13 @@ class BaseGroupService(BaseService):
     name = 'GroupService'
 
     @cmd('group_create')
-    async def _cmd__CREATE(self, session, msg):
+    async def _cmd_CREATE(self, session, msg):
         msg = cmd_CREATE_Schema().load(msg)
         await self.create(msg['name'])
         return {'status': 'ok'}
 
     @cmd('group_read')
-    async def _cmd__READ(self, session, msg):
+    async def _cmd_READ(self, session, msg):
         msg = cmd_READ_Schema().load(msg)
         group = await self.read(msg['name'])
         return {'status': 'ok', 'admins': group['admins'], 'users': group['users']}
@@ -56,7 +56,7 @@ class BaseGroupService(BaseService):
         return {'status': 'ok'}
 
     @cmd('group_remove_identities')
-    async def _cmd__REMOVE_IDENTITIES(self, session, msg):
+    async def _cmd_REMOVE_IDENTITIES(self, session, msg):
         msg = cmd_REMOVE_IDENTITIES_Schema().load(msg)
         await self.remove_identities(msg['name'], msg['identities'], msg['admin'])
         return {'status': 'ok'}

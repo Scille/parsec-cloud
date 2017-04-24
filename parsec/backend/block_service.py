@@ -28,6 +28,7 @@ class BlockNotFound(BlockError):
 
 class cmd_CREATE_Schema(BaseCmdSchema):
     content = fields.String(required=True)
+    id = fields.String(missing=None)
 
 
 class cmd_READ_Schema(BaseCmdSchema):
@@ -41,7 +42,7 @@ class BaseBlockService(BaseService):
     @cmd('block_create')
     async def _cmd_CREATE(self, session, msg):
         msg = cmd_CREATE_Schema().load(msg)
-        id = await self.create(msg['content'])
+        id = await self.create(msg['content'], msg['id'])
         return {'status': 'ok', 'id': id}
 
     @cmd('block_read')
@@ -58,7 +59,7 @@ class BaseBlockService(BaseService):
         stat.update({'status': 'ok'})
         return stat
 
-    async def create(self, content):
+    async def create(self, content, id=None):
         raise NotImplementedError()
 
     async def read(self, id):
@@ -66,39 +67,6 @@ class BaseBlockService(BaseService):
 
     async def stat(self, id):
         raise NotImplementedError()
-
-
-class MetaBlockService(BaseBlockService):
-
-    def __init__(self):
-        # TODO set method preference for results and call others methods in background
-        self.block_services = {
-            'MockedBlockService': MockedBlockService(),
-            'DropboxBlockService': DropboxBlockService(),
-            'GoogleDriveBlockService': GoogleDriveBlockService(),
-        }
-
-    async def _do_operation(self, operation, *args, **kwargs):
-        result = None
-        for _, block_service in self.block_services.items():
-            try:
-                result = await getattr(block_service, operation)(*args, **kwargs)
-            except Exception:
-                log.warning('%s backend failed to complete %s operation.' %
-                            (block_service.__class__.__name__, operation))
-        if not result:
-            raise(BlockError('All backends failed to complete %s operation' % operation))
-        return result
-
-    async def create(self, content):
-        id = uuid4().hex  # TODO uuid4 or trust seed?
-        return await self._do_operation('create', content, id)
-
-    async def read(self, id):
-        return await self._do_operation('read', id)
-
-    async def stat(self, id):
-        return await self._do_operation('stat', id)
 
 
 class MockedBlockService(BaseBlockService):
@@ -214,3 +182,35 @@ class GoogleDriveBlockService(BaseBlockService):
         file = await self._get_file(id)
         return {'access_timestamp': parser.parse(file['lastViewedByMeDate']).timestamp(),
                 'creation_timestamp': parser.parse(file['createdDate']).timestamp()}
+
+
+class MetaBlockService(BaseBlockService):
+
+    def __init__(self, backends=[MockedBlockService, DropboxBlockService, GoogleDriveBlockService]):
+        super().__init__()
+        # TODO set method preference for results and call others methods in background
+        self.block_services = {}
+        for backend in backends:
+            self.block_services[backend.__class__.__name__] = backend()
+
+    async def _do_operation(self, operation, *args, **kwargs):
+        result = None
+        for _, block_service in self.block_services.items():
+            try:
+                result = await getattr(block_service, operation)(*args, **kwargs)
+            except Exception:
+                log.warning('%s backend failed to complete %s operation.' %
+                            (block_service.__class__.__name__, operation))
+        if not result:
+            raise(BlockError('All backends failed to complete %s operation.' % operation))
+        return result
+
+    async def create(self, content, id=None):
+        id = id if id else uuid4().hex  # TODO uuid4 or trust seed?
+        return await self._do_operation('create', content, id)
+
+    async def read(self, id):
+        return await self._do_operation('read', id)
+
+    async def stat(self, id):
+        return await self._do_operation('stat', id)
