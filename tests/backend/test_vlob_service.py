@@ -55,6 +55,7 @@ class TestVlobServiceAPI:
         })
         assert ret == {
             'status': 'ok',
+            'id': vlob.id,
             'blob': vlob.blob_versions[-1],
             'version': len(vlob.blob_versions)
         }

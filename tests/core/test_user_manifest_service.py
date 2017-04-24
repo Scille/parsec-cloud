@@ -79,7 +79,7 @@ class TestUserManifestService:
     async def test_remove_not_empty_dir(self, user_manifest_svc, group):
         # Not empty
         await user_manifest_svc.make_dir('/test_dir', group)
-        await user_manifest_svc.create_file('/test_dir/test', group)
+        await user_manifest_svc.create_file('/test_dir/test', group=group)
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_remove_dir',
                                                     'path': '/test_dir',
                                                     'group': group})
@@ -104,21 +104,21 @@ class TestUserManifestService:
         await user_manifest_svc.make_dir('/countries/Belgium', group)
         await user_manifest_svc.make_dir('/countries/Belgium/cities', group)
         # Create multiple files
-        await user_manifest_svc.create_file('/.root', group)
-        await user_manifest_svc.create_file('/countries/index', group)
-        await user_manifest_svc.create_file('/countries/France/info', group)
-        await user_manifest_svc.create_file('/countries/Belgium/info', group)
+        await user_manifest_svc.create_file('/.root', group=group)
+        await user_manifest_svc.create_file('/countries/index', group=group)
+        await user_manifest_svc.create_file('/countries/France/info', group=group)
+        await user_manifest_svc.create_file('/countries/Belgium/info', group=group)
 
         # Finally do some lookup
-        async def assert_ls(path, expected_childrens):
+        async def assert_ls(path, expected_children):
             ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_list_dir',
                                                         'path': path,
                                                         'group': group})
             assert ret['status'] == 'ok'
-            for name in expected_childrens:
+            for name in expected_children:
                 keys = ['id', 'read_trust_seed', 'write_trust_seed', 'key']
                 assert list(sorted(keys)) == list(sorted(ret['current'].keys()))
-                assert list(sorted(keys)) == list(sorted(ret['childrens'][name].keys()))
+                assert list(sorted(keys)) == list(sorted(ret['children'][name].keys()))
 
         await assert_ls('/', ['.root', 'countries'])
         await assert_ls('/countries', ['index', 'Belgium', 'France'])
@@ -179,9 +179,9 @@ class TestUserManifestService:
     async def test_delete_file(self, user_manifest_svc, group, path):
         await user_manifest_svc.make_dir('/test_dir', group)
         for persistent_path in ['/persistent', '/test_dir/persistent']:
-            await user_manifest_svc.create_file(persistent_path, group)
+            await user_manifest_svc.create_file(persistent_path, group=group)
         for i in [1, 2]:
-            await user_manifest_svc.create_file(path, group)
+            await user_manifest_svc.create_file(path, group=group)
             ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_delete_file',
                                                         'path': path,
                                                         'group': group})
@@ -203,11 +203,11 @@ class TestUserManifestService:
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_show_dustbin',
                                                     'group': group})
         assert ret == {'status': 'ok', 'dustbin': []}
-        await user_manifest_svc.create_file('/foo', group)
+        await user_manifest_svc.create_file('/foo', group=group)
         await user_manifest_svc.delete_file('/foo', group)
         await user_manifest_svc.make_dir('/test_dir', group)
         for i in [1, 2]:
-            await user_manifest_svc.create_file(path, group)
+            await user_manifest_svc.create_file(path, group=group)
             await user_manifest_svc.delete_file(path, group)
             # Global dustbin with one additional file
             ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_show_dustbin',
@@ -231,7 +231,7 @@ class TestUserManifestService:
     @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
     async def test_restore(self, user_manifest_svc, group, path):
         await user_manifest_svc.make_dir('/test_dir', group)
-        await user_manifest_svc.create_file(path, group)
+        await user_manifest_svc.create_file(path, group=group)
         current, _ = await user_manifest_svc.list_dir(path, group)
         vlob_id = current['id']
         await user_manifest_svc.delete_file(path, group)
@@ -248,7 +248,7 @@ class TestUserManifestService:
         assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
         # Restoration path already used
         await user_manifest_svc.delete_file(path, group)
-        await user_manifest_svc.create_file(path, group)
+        await user_manifest_svc.create_file(path, group=group)
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore',
                                                     'vlob': vlob_id,
                                                     'group': group})

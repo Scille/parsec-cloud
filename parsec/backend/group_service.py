@@ -6,7 +6,7 @@ from parsec.tools import BaseCmdSchema
 
 
 class GroupError(ParsecError):
-    pass
+    status = 'group_error'
 
 
 class GroupNotFound(GroupError):

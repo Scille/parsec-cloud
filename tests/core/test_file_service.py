@@ -52,18 +52,19 @@ class TestFileService:
     async def test_file_read(self, file_svc, user_manifest_svc):
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
                                                     'path': '/test'})
+        assert ret['status'] == 'ok'
         id = ret['id']
         # Empty file
         ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
-        assert ret == {'status': 'ok', 'content': '', 'version': 0}
+        assert ret == {'status': 'ok', 'content': '', 'version': 1}
         # Not empty file
         content = encodebytes('foo'.encode()).decode()
         ret = await file_svc.dispatch_msg({'cmd': 'file_write',
                                            'id': id,
-                                           'version': 1,
+                                           'version': 2,
                                            'content': content})
         ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
-        assert ret == {'status': 'ok', 'content': content, 'version': 1}
+        assert ret == {'status': 'ok', 'content': content, 'version': 2}
         # Unknown file
         ret = await file_svc.dispatch_msg({'cmd': 'file_read',
                                            'id': '5ea26ae2479c49f58ede248cdca1a3ca'})
@@ -73,20 +74,20 @@ class TestFileService:
     async def test_file_write(self, file_svc, user_manifest_svc):
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
                                                     'path': '/test'})
+        assert ret['status'] == 'ok'
         id = ret['id']
         # Check with empty and not empty file
-        content = ['foo', 'bar']
-        for value in content:
-            encoded_value = encodebytes(value.encode()).decode()
+        for version, content in enumerate(('this is v2', 'this is v3'), 2):
+            encoded_content = encodebytes(content.encode()).decode()
             ret = await file_svc.dispatch_msg({'cmd': 'file_write',
                                                'id': id,
-                                               'version': content.index(value) + 1,
-                                               'content': encoded_value})
+                                               'version': version,
+                                               'content': encoded_content})
             assert ret == {'status': 'ok'}
             ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
             assert ret == {'status': 'ok',
-                           'content': encoded_value,
-                           'version': content.index(value) + 1}
+                           'content': encoded_content,
+                           'version': version}
         # Unknown file
         content = encodebytes('foo'.encode()).decode()
         ret = await file_svc.dispatch_msg({'cmd': 'file_write',
@@ -102,6 +103,7 @@ class TestFileService:
             with freeze_time('2012-01-01') as frozen_datetime:
                 ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
                                                             'path': '/test'})
+                assert ret['status'] == 'ok'
                 id = ret['id']
                 ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
                 ctime = frozen_datetime().timestamp()
@@ -116,7 +118,7 @@ class TestFileService:
                 content = encodebytes('foo'.encode()).decode()
                 ret = await file_svc.dispatch_msg({'cmd': 'file_write',
                                                    'id': id,
-                                                   'version': 1,
+                                                   'version': 2,
                                                    'content': content})
                 ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
                 assert ret == {'status': 'ok',

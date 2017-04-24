@@ -18,6 +18,7 @@ class UserManifestNotFound(UserManifestError):
 
 class cmd_CREATE_FILE_Schema(BaseCmdSchema):
     path = fields.String(required=True)
+    content = fields.String(missing='')
     group = fields.String(missing=None)
 
 
@@ -69,7 +70,7 @@ class BaseUserManifestService(BaseService):
     @cmd('user_manifest_create_file')
     async def _cmd_CREATE_FILE(self, session, msg):
         msg = cmd_CREATE_FILE_Schema().load(msg)
-        file = await self.create_file(msg['path'], msg['group'])
+        file = await self.create_file(msg['path'], msg['content'], msg['group'])
         return {'status': 'ok', **file}
 
     @cmd('user_manifest_rename_file')
@@ -87,8 +88,8 @@ class BaseUserManifestService(BaseService):
     @cmd('user_manifest_list_dir')
     async def _cmd_LIST_DIR(self, session, msg):
         msg = cmd_LIST_DIR_Schema().load(msg)
-        current, childrens = await self.list_dir(msg['path'], msg['group'])
-        return {'status': 'ok', 'current': current, 'childrens': childrens}
+        current, children = await self.list_dir(msg['path'], msg['group'])
+        return {'status': 'ok', 'current': current, 'children': children}
 
     @cmd('user_manifest_make_dir')
     async def _cmd_MAKE_DIR(self, session, msg):
@@ -182,7 +183,7 @@ class UserManifestService(BaseUserManifestService):
         self.groups = {}
         self.entries = {'user_manifest': {}, 'group_manifests': {}}
         self.dustbins = {'user_manifest': [], 'group_manifests': {}}
-        self.versions = {'user_manifest': 0, 'group_manifests': {}}
+        self.versions = {'user_manifest': 1, 'group_manifests': {}}
 
     async def get_manifests(self, group=None):
         subcategory = 'group_manifests' if group else 'user_manifest'
@@ -199,28 +200,22 @@ class UserManifestService(BaseUserManifestService):
             raise(UserManifestError('Group already exists.'))
         self.entries['group_manifests'][group] = {}
         self.dustbins['group_manifests'][group] = []
-        self.versions['group_manifests'][group] = 0
+        self.versions['group_manifests'][group] = 1
         vlob = await self.backend_api_service.vlob_create()
         key, _ = await self.crypto_service.sym_encrypt('')
-        self.groups[group] = {'id': vlob.id,
+        self.groups[group] = {'id': vlob['id'],
                               'key': encodebytes(key).decode(),
-                              'read_trust_seed': vlob.read_trust_seed,
-                              'write_trust_seed': vlob.write_trust_seed}
+                              'read_trust_seed': vlob['read_trust_seed'],
+                              'write_trust_seed': vlob['write_trust_seed']}
         await self.make_dir('/', group)
         await self.load_group_manifest(group)
 
-    async def create_file(self, path, group=None):
+    async def create_file(self, path, content='', group=None):
         manifest, _ = await self.get_manifests(group)
         if path in manifest:
             raise UserManifestError('already_exist', 'File already exists.')
         else:
-            ret = await self.file_service.create()
-            file = {}
-            for key in ['id', 'read_trust_seed', 'write_trust_seed']:
-                file[key] = ret[key]
-            key, _ = await self.crypto_service.sym_encrypt('')
-            file['key'] = encodebytes(key).decode()
-            manifest[path] = file
+            manifest[path] = await self.file_service.create(content)
             await self.save_manifest(group)
         return manifest[path]
 
@@ -308,8 +303,7 @@ class UserManifestService(BaseUserManifestService):
             vlob = await self.backend_api_service.named_vlob_create(id=identity)
             await self.make_dir('/')
             vlob = await self.backend_api_service.named_vlob_read(id=identity)
-        version = len(vlob.blob_versions)
-        blob = vlob.blob_versions[version - 1]
+        blob = vlob.blob_versions[-1]
         content = await self.identity_service.decrypt(blob)
         content = content.decode()
         manifest = json.loads(content)
@@ -325,9 +319,10 @@ class UserManifestService(BaseUserManifestService):
 
     async def load_group_manifest(self, group):
         properties = await self.get_properties(group=group)
-        vlob = await self.backend_api_service.vlob_read(id=properties['id'])
-        version = len(vlob.blob_versions)
-        blob = vlob.blob_versions[version - 1]
+        vlob = await self.backend_api_service.vlob_read(
+            id=properties['id'], trust_seed=properties['read_trust_seed'])
+        blob = vlob['blob']
+        version = vlob['version']
         key = decodebytes(properties['key'].encode())
         content = await self.crypto_service.sym_decrypt(blob, key)
         content = content.decode()
@@ -354,7 +349,7 @@ class UserManifestService(BaseUserManifestService):
         encrypted_blob = await self.identity_service.encrypt(blob)
         await self.backend_api_service.named_vlob_update(
             id=identity,
-            next_version=self.versions['user_manifest'],
+            version=self.versions['user_manifest'],
             blob=encrypted_blob.decode())
 
     async def save_group_manifest(self, group):
@@ -366,8 +361,10 @@ class UserManifestService(BaseUserManifestService):
         _, encrypted_blob = await self.crypto_service.sym_encrypt(blob, key)
         await self.backend_api_service.vlob_update(
             id=self.groups[group]['id'],
-            next_version=self.versions['group_manifests'][group],
-            blob=encrypted_blob.decode())
+            version=self.versions['group_manifests'][group],
+            trust_seed=self.groups[group]['write_trust_seed'],
+            blob=encrypted_blob.decode()
+        )
 
     async def import_vlob(self, vlob, path=None, group=None):
         # TODO check vlob is manifest if group

@@ -49,6 +49,7 @@ class TestNamedVlobServiceAPI:
         })
         assert ret == {
             'status': 'ok',
+            'id': 'jdoe@test.com',
             'blob': vlob.blob_versions[-1],
             'version': len(vlob.blob_versions)
         }

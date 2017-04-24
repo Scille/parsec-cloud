@@ -39,7 +39,7 @@ class TestBackendAPIService:
     @pytest.mark.asyncio
     async def test_cmd(self, backend_api_svc):
         vlob = await backend_api_svc.vlob_create('foo')
-        assert isinstance(vlob, Vlob)
+        assert isinstance(vlob, dict)
 
     @pytest.mark.asyncio
     async def test_event(self, backend_api_svc):
@@ -52,5 +52,5 @@ class TestBackendAPIService:
             is_callback_called = sender
 
         backend_api_svc.on_vlob_updated.connect(_on_vlob_updated)
-        await backend_api_svc.vlob_update(vlob.id, 2, vlob.write_trust_seed, 'Next version')
-        assert is_callback_called == vlob.id
+        await backend_api_svc.vlob_update(vlob['id'], 2, vlob['write_trust_seed'], 'Next version')
+        assert is_callback_called == vlob['id']

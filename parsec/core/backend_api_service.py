@@ -3,8 +3,11 @@ import asyncio
 import websockets
 from blinker import signal
 
-from parsec.backend import (MockedGroupService, InMemoryMessageService, MockedVlobService,
-                            MockedNamedVlobService, MockedBlockService)
+from parsec.backend import (
+    MockedGroupService, InMemoryMessageService, MockedVlobService,
+    MockedNamedVlobService, MockedBlockService,
+    VlobNotFound, VlobBadVersionError
+)
 from parsec.backend.vlob_service import Vlob, VlobError
 from parsec.service import BaseService, event
 from parsec.tools import logger
@@ -102,23 +105,27 @@ class BackendAPIService(BaseBackendAPIService):
         raise NotImplementedError()
         return await self._named_vlob_service.update(*args, **kwargs)
 
-    async def vlob_create(self, blob=None):
-        msg = {'cmd': 'vlob_create', 'blob': blob or ''}
+    async def vlob_create(self, blob=''):
+        assert isinstance(blob, str)
+        msg = {'cmd': 'vlob_create', 'blob': blob}
         ret = await self._send_cmd(msg)
-        status = ret.pop('status')
+        status = ret['status']
         if status == 'ok':
-            return Vlob(**ret)
+            return ret
         else:
             raise VlobError(**ret)
 
-    async def vlob_read(self, id):
-        msg = {'cmd': 'vlob_read', 'id': id}
+    async def vlob_read(self, id, trust_seed):
+        assert isinstance(id, str)
+        msg = {'cmd': 'vlob_read', 'id': id, 'trust_seed': trust_seed}
         ret = await self._send_cmd(msg)
-        status = ret.pop('status')
+        status = ret['status']
         if status == 'ok':
-            return Vlob(**ret)
+            return ret
+        elif status == 'not_found':
+            raise VlobNotFound(ret['label'])
         else:
-            raise VlobError(**ret)
+            raise VlobError(ret['label'])
 
     async def vlob_update(self, id, version, trust_seed, blob=''):
         msg = {
@@ -131,9 +138,13 @@ class BackendAPIService(BaseBackendAPIService):
         ret = await self._send_cmd(msg)
         status = ret.pop('status')
         if status == 'ok':
-            return Vlob(**ret)
+            return
+        elif status == 'not_found':
+            raise VlobNotFound(ret['label'])
+        elif status == 'bad_version':
+            raise VlobBadVersionError(ret['label'])
         else:
-            raise VlobError(status, ret['label'])
+            raise VlobError(ret['label'])
 
 
 class MockedBackendAPIService(BaseBackendAPIService):
@@ -188,11 +199,21 @@ class MockedBackendAPIService(BaseBackendAPIService):
     async def named_vlob_update(self, *args, **kwargs):
         return await self._named_vlob_service.update(*args, **kwargs)
 
-    async def vlob_create(self, *args, **kwargs):
-        return await self._vlob_service.create(*args, **kwargs)
+    async def vlob_create(self, blob=''):
+        assert isinstance(blob, str)
+        msg = {'cmd': 'vlob_create', 'blob': blob}
+        return await self._vlob_service._cmd_CREATE(None, msg)
 
-    async def vlob_read(self, *args, **kwargs):
-        return await self._vlob_service.read(*args, **kwargs)
+    async def vlob_read(self, id, trust_seed):
+        msg = {'cmd': 'vlob_read', 'id': id, 'trust_seed': trust_seed}
+        return await self._vlob_service._cmd_READ(None, msg)
 
-    async def vlob_update(self, *args, **kwargs):
-        return await self._vlob_service.update(*args, **kwargs)
+    async def vlob_update(self, id, version, trust_seed, blob=''):
+        msg = {
+            'cmd': 'vlob_update',
+            'id': id,
+            'version': version,
+            'trust_seed': trust_seed,
+            'blob': blob
+        }
+        await self._vlob_service._cmd_UPDATE(None, msg)

@@ -13,7 +13,7 @@ from parsec.tools import BaseCmdSchema
 
 
 class BlockError(ParsecError):
-    pass
+    status = 'block_error'
 
 
 class BlockNotFound(BlockError):

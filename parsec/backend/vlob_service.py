@@ -18,12 +18,11 @@ def generate_trust_seed():
 
 
 class VlobError(ParsecError):
-    pass
+    status = 'vlob_error'
 
 
 class TrustSeedError(ParsecError):
     status = 'trust_seed_error'
-    label = 'Invalid trust seed.'
 
 
 class VlobNotFound(VlobError):
@@ -32,7 +31,6 @@ class VlobNotFound(VlobError):
 
 class VlobBadVersionError(VlobError):
     status = 'bad_version'
-    label = 'Invalid blob version.'
 
 
 class cmd_CREATE_Schema(BaseCmdSchema):
@@ -41,7 +39,7 @@ class cmd_CREATE_Schema(BaseCmdSchema):
 
 class cmd_READ_Schema(BaseCmdSchema):
     id = fields.String(required=True)
-    version = fields.Int(validate=lambda n: n > 1)
+    version = fields.Int(validate=lambda n: n >= 1)
     trust_seed = fields.String(required=True)
 
 
@@ -72,22 +70,23 @@ class BaseVlobService(BaseService):
     @cmd('vlob_read')
     async def _cmd_READ(self, session, msg):
         msg = cmd_READ_Schema().load(msg)
-        vlob = await self.read(msg['id'])
+        id = msg['id']
+        vlob = await self.read(id)
         if vlob.read_trust_seed != msg['trust_seed']:
-            raise TrustSeedError()
+            raise TrustSeedError('Invalid read trust seed.')
         max_version = len(vlob.blob_versions)
         version = msg.get('version', max_version)
         if version > max_version:
-            raise VlobBadVersionError()
+            raise VlobBadVersionError('Invalid blob version.')
         blob = vlob.blob_versions[version - 1]
-        return {'status': 'ok', 'blob': blob, 'version': version}
+        return {'status': 'ok', 'id': id, 'blob': blob, 'version': version}
 
     @cmd('vlob_update')
     async def _cmd_UPDATE(self, session, msg):
         msg = cmd_UPDATE_Schema().load(msg)
         vlob = await self.read(msg['id'])
         if vlob.write_trust_seed != msg['trust_seed']:
-            raise TrustSeedError()
+            raise TrustSeedError('Invalid write trust seed.')
         await self.update(msg['id'], msg['version'], msg['blob'])
         return {'status': 'ok'}
 
@@ -97,7 +96,7 @@ class BaseVlobService(BaseService):
     async def read(self, id):
         raise NotImplementedError()
 
-    async def update(self, id, next_version, blob):
+    async def update(self, id, version, blob):
         raise NotImplementedError()
 
 
@@ -107,7 +106,7 @@ class Vlob:
         self.id = id or uuid4().hex  # TODO uuid4 or trust seed?
         self.read_trust_seed = read_trust_seed or generate_trust_seed()
         self.write_trust_seed = write_trust_seed or generate_trust_seed()
-        self.blob_versions = [blob] if blob else []
+        self.blob_versions = [blob] if blob else ['']
 
 
 class MockedVlobService(BaseVlobService):
@@ -127,12 +126,12 @@ class MockedVlobService(BaseVlobService):
         except KeyError:
             raise VlobNotFound('Vlob not found.')
 
-    async def update(self, id, next_version, blob):
+    async def update(self, id, version, blob):
         try:
             vlob = self._vlobs[id]
         except KeyError:
             raise VlobNotFound('Vlob not found.')
-        if next_version == len(vlob.blob_versions) + 1:
+        if version - 1 == len(vlob.blob_versions):
             vlob.blob_versions.append(blob)
         else:
             raise VlobBadVersionError('Wrong blob version.')
