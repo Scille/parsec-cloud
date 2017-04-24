@@ -4,8 +4,9 @@ import gnupg
 import pytest
 
 from parsec.server import BaseServer
-from parsec.core import (MockedBackendAPIService, CryptoService, FileService, IdentityService,
-                         GNUPGPubKeysService, ShareService, UserManifestService)
+from parsec.core import (CryptoService, FileService, IdentityService, GNUPGPubKeysService,
+                         MetaBlockService, MockedBackendAPIService, MockedBlockService,
+                         ShareService, UserManifestService)
 
 
 GNUPG_HOME = path.dirname(path.abspath(__file__)) + '/../gnupg_env'
@@ -15,12 +16,14 @@ GNUPG_HOME = path.dirname(path.abspath(__file__)) + '/../gnupg_env'
 def user_manifest_svc(event_loop):
     identity = '81DBCF6EB9C8B2965A65ACE5520D903047D69DC9'
     service = UserManifestService()
+    block_service = MetaBlockService(backends=[MockedBlockService, MockedBlockService])
     crypto_service = CryptoService()
     crypto_service.gnupg = gnupg.GPG(homedir=GNUPG_HOME + '/secret_env')
     identity_service = IdentityService()
     share_service = ShareService()
     server = BaseServer()
     server.register_service(service)
+    server.register_service(block_service)
     server.register_service(crypto_service)
     server.register_service(identity_service)
     server.register_service(MockedBackendAPIService())

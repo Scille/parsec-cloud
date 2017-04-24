@@ -91,6 +91,7 @@ class BaseFileService(BaseService):
 class FileService(BaseFileService):
 
     backend_api_service = service('BackendAPIService')
+    block_service = service('BlockService')
     crypto_service = service('CryptoService')
     identity_service = service('IdentityService')
     user_manifest_service = service('UserManifestService')
@@ -124,7 +125,7 @@ class FileService(BaseFileService):
         # Get content
         content = b''
         for block_id in blob['blocks']:
-            block = await self.backend_api_service.block_read(id=block_id)
+            block = await self.block_service.read(id=block_id)
             # Decrypt
             encrypted_content = block['content'].encode()
             chunk_content = await self.crypto_service.sym_decrypt(encrypted_content, block_key)
@@ -174,7 +175,7 @@ class FileService(BaseFileService):
             _, cypher_chunk = await self.crypto_service.sym_encrypt(chunk, block_key)
             cypher_chunk = cypher_chunk.decode()
             # Store block
-            block_id = await self.backend_api_service.block_create(content=cypher_chunk)
+            block_id = await self.block_service.create(content=cypher_chunk)
             blocks.append(block_id)
         # New vlob atom
         block_key = encodebytes(block_key).decode()
@@ -196,7 +197,7 @@ class FileService(BaseFileService):
         key = decodebytes(properties['key'].encode()) if properties['key'] else None
         blob = await self.crypto_service.sym_decrypt(encrypted_blob, key)
         blob = json.loads(blob.decode())
-        stat = await self.backend_api_service.block_stat(id=blob['blocks'][0])
+        stat = await self.block_service.stat(id=blob['blocks'][0])
         return {'id': id,
                 'ctime': stat['creation_timestamp'],
                 'mtime': stat['creation_timestamp'],

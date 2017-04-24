@@ -3,10 +3,10 @@ from socket import socket, AF_UNIX, SOCK_STREAM
 import click
 
 from parsec.server import UnixSocketServer, WebSocketServer
-from parsec.backend import (InMemoryMessageService, MockedVlobService,
-                            MockedNamedVlobService, MockedBlockService)
+from parsec.backend import (InMemoryMessageService, MockedVlobService, MockedNamedVlobService)
 from parsec.core import (BackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
-                         IdentityService, ShareService, UserManifestService)
+                         IdentityService, MetaBlockService, ShareService,
+                         UserManifestService)
 from parsec.ui.shell import start_shell
 
 
@@ -61,6 +61,7 @@ def fuse(mountpoint, identity, debug, nothreads, socket):
 def core(socket, backend_host):
     server = UnixSocketServer()
     server.register_service(BackendAPIService(backend_host))
+    server.register_service(MetaBlockService())
     server.register_service(CryptoService())
     server.register_service(FileService())
     server.register_service(GNUPGPubKeysService())
@@ -90,7 +91,6 @@ def backend(host, port, gnupg_homedir, no_client_auth):
     server.register_service(InMemoryMessageService())
     server.register_service(MockedVlobService())
     server.register_service(MockedNamedVlobService())
-    server.register_service(MockedBlockService())
     print('Starting parsec backend on %s:%s' % (host, port))
     server.start(host, port)
     print('Bye ;-)')

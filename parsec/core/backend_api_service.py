@@ -4,8 +4,8 @@ import websockets
 from blinker import signal
 
 from parsec.backend import (
-    MockedGroupService, InMemoryMessageService, MetaBlockService, MockedBlockService,
-    MockedVlobService, MockedNamedVlobService, VlobNotFound, VlobBadVersionError
+    MockedGroupService, InMemoryMessageService, MockedVlobService, MockedNamedVlobService,
+    VlobNotFound, VlobBadVersionError
 )
 from parsec.backend.vlob_service import VlobError
 from parsec.service import BaseService, event
@@ -76,23 +76,6 @@ class BackendAPIService(BaseBackendAPIService):
             raise VlobBadVersionError(ret['label'])
         else:
             raise VlobError(ret['label'])
-
-    async def _listen_for_notification(self):
-        raw = await self._websocket.recv()
-        notif = json.loads(raw)
-
-    async def block_create(self, content):
-        msg = {'cmd': 'block_create', 'content': content}
-        ret = await self._send_cmd(msg)
-        return ret['id']
-
-    async def block_read(self, id):
-        msg = {'cmd': 'block_read', 'id': id}
-        return await self._send_cmd(msg)
-
-    async def block_stat(self, id):
-        msg = {'cmd': 'block_stat', 'id': id}
-        return await self._send_cmd(msg)
 
     async def group_create(self, name):
         msg = {'cmd': 'group_create', 'name': name}
@@ -170,24 +153,10 @@ class MockedBackendAPIService(BaseBackendAPIService):
         self._message_service = InMemoryMessageService()
         self._named_vlob_service = MockedNamedVlobService()
         self._vlob_service = MockedVlobService()
-        self._block_service = MetaBlockService(backends=[MockedBlockService, MockedBlockService])
         # Events
         self.on_vlob_updated = self._vlob_service.on_updated
         self.on_named_vlob_updated = self._named_vlob_service.on_updated
         self.on_message_arrived = self._message_service.on_arrived
-
-    async def block_create(self, content):
-        msg = {'cmd': 'block_create', 'content': content}
-        ret = await self._block_service._cmd_CREATE(None, msg)
-        return ret['id']
-
-    async def block_read(self, id):
-        msg = {'cmd': 'block_read', 'id': id}
-        return await self._block_service._cmd_READ(None, msg)
-
-    async def block_stat(self, id):
-        msg = {'cmd': 'block_stat', 'id': id}
-        return await self._block_service._cmd_STAT(None, msg)
 
     async def group_create(self, name):
         msg = {'cmd': 'group_create', 'name': name}

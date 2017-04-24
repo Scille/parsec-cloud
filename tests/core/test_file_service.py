@@ -5,9 +5,10 @@ from freezegun import freeze_time
 import gnupg
 import pytest
 
-from parsec.backend import MetaBlockService, MockedBlockService
-from parsec.core import (MockedBackendAPIService, CryptoService, FileService, IdentityService,
-                         GNUPGPubKeysService, ShareService, UserManifestService)
+from parsec.core import (CryptoService, FileService,
+                         IdentityService, GNUPGPubKeysService, MetaBlockService,
+                         MockedBackendAPIService, MockedBlockService, ShareService,
+                         UserManifestService)
 from parsec.server import BaseServer
 
 
@@ -23,17 +24,17 @@ def user_manifest_svc():
 def file_svc(event_loop, user_manifest_svc):
     identity = '81DBCF6EB9C8B2965A65ACE5520D903047D69DC9'
     service = FileService()
-    backend_api_service = MockedBackendAPIService()
-    backend_api_service._block_service = MetaBlockService(backends=[MockedBlockService])
+    block_service = MetaBlockService(backends=[MockedBlockService, MockedBlockService])
     crypto_service = CryptoService()
     crypto_service.gnupg = gnupg.GPG(homedir=GNUPG_HOME + '/secret_env')
     identity_service = IdentityService()
     server = BaseServer()
     server.register_service(service)
-    server.register_service(backend_api_service)
+    server.register_service(block_service)
     server.register_service(crypto_service)
     server.register_service(identity_service)
     server.register_service(user_manifest_svc)
+    server.register_service(MockedBackendAPIService())
     server.register_service(GNUPGPubKeysService())
     server.register_service(ShareService())
     event_loop.run_until_complete(server.bootstrap_services())
