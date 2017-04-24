@@ -25,7 +25,8 @@ requirements = [
     "marshmallow==2.13.5",
     "gnupg==2.2.0",
     "dropbox==7.2.1",
-    "pydrive==1.3.1"
+    "pydrive==1.3.1",
+    "python-dateutil==2.6.0"
 ]
 
 test_requirements = [
