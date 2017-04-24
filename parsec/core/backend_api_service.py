@@ -212,9 +212,9 @@ class MockedBackendAPIService(BaseBackendAPIService):
         msg = {'cmd': 'message_new', 'recipient': recipient, 'offset': offset}
         return await self._message_service._cmd_GET(None, msg)
 
-    async def named_vlob_create(self, blob=''):
+    async def named_vlob_create(self, id, blob=''):
         assert isinstance(blob, str)
-        msg = {'cmd': 'named_vlob_create', 'blob': blob}
+        msg = {'cmd': 'named_vlob_create', 'id': id, 'blob': blob}
         return await self._named_vlob_service._cmd_CREATE(None, msg)
 
     async def named_vlob_read(self, id, trust_seed):
