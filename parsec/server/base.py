@@ -127,7 +127,8 @@ class BaseServer:
                 # - User's command
                 # - Event subscribed by user
                 # Note user's command should have been replied before sending an event notification
-                done, pending = await asyncio.wait((get_event, get_cmd), return_when='FIRST_COMPLETED')
+                done, pending = await asyncio.wait((get_event, get_cmd),
+                                                   return_when='FIRST_COMPLETED')
                 if get_event in done:
                     event, sender = get_event.result()
                     conn_log.debug('Got event: %s@%s' % (event, sender))
@@ -148,11 +149,12 @@ class BaseServer:
                         request_id = msg['request_id']
                         del msg['request_id']
                     if msg is None:
-                        resp = {"status": "bad_message", "label": "Message is not a valid JSON."}
+                        resp = {'status': 'bad_message', 'label': 'Message is not a valid JSON.'}
                     else:
                         cmd = self._cmds.get(msg['cmd'])
                         if not cmd:
-                            resp = {"status": "badcmd", "label": "Unknown command `%s`" % msg['cmd']}
+                            resp = {'status': 'badcmd',
+                                    'label': 'Unknown command `%s`' % msg['cmd']}
                         else:
                             try:
                                 resp = await cmd(session, msg)
@@ -178,7 +180,7 @@ class BaseServer:
                 dep = next(boot)
                 while True:
                     if dep not in self._services:
-                        errors.append("Service `%s` required unknown service `%s`" %
+                        errors.append('Service `%s` required unknown service `%s`' %
                             (service.name, dep))
                         break
                     dep = boot.send(self._services[dep])

@@ -125,7 +125,7 @@ class TopologyLoader:
             module = import_module(module_path)
             return getattr(module, name)
         except (ImportError, AttributeError):
-            msg = "Unknown ressource `%s`." % path
+            msg = 'Unknown ressource `%s`.' % path
             if self.verbose:
                 msg += '\nError:\n' + traceback.format_exc()
             raise ConfigError(msg)
@@ -157,9 +157,9 @@ class TopologyLoader:
         Config example::
 
             {
-                "id": "vfs-server-01",
-                "class": "vfs.VFSServer",
-                "params": {"mount_point": "/tmp/foo"}
+                'id': 'vfs-server-01',
+                'class': 'vfs.VFSServer',
+                'params': {'mount_point': '/tmp/foo'}
             }
 
         """

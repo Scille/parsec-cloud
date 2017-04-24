@@ -10,7 +10,7 @@ async def repl(socket_path):
     reader, writer = await asyncio.open_unix_connection(path=socket_path)
     quit = False
     while not quit:
-        data = input(">>> ")
+        data = input('>>> ')
         if data in ('quit', 'q'):
             writer.close()
             return

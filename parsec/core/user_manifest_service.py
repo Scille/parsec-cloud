@@ -379,16 +379,18 @@ class UserManifestService(BaseUserManifestService):
         await self.save_manifest(group)
 
     async def check_consistency(self, manifest):
-        for _, entry in manifest['entries'].items():
+        entries = list(manifest['entries'].values())
+        entries += manifest['dustbin']
+        for entry in entries:
             if entry['id']:
                 try:
-                    await self.file_service.stat(entry['id'])
-                except Exception:
-                    return False
-        for entry in manifest['dustbin']:
-            if entry['id']:
-                try:
-                    await self.file_service.stat(entry['id'])
+                    vlob = await self.backend_api_service.vlob_read(
+                        id=entry['id'],
+                        trust_seed=entry['read_trust_seed'])
+                    encrypted_blob = vlob['blob']
+                    encrypted_blob = decodebytes(encrypted_blob.encode())
+                    key = decodebytes(entry['key'].encode()) if entry['key'] else None
+                    await self.crypto_service.sym_decrypt(encrypted_blob, key)
                 except Exception:
                     return False
         return True

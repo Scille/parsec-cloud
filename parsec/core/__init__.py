@@ -19,6 +19,7 @@ __all__ = (
     'GNUPGPubKeysService',
     'MetaBlockService',
     'MockedBackendAPIService',
+    'MockedBlockService',
     'ShareService',
     'UserManifestService',
 )

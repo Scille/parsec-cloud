@@ -86,11 +86,17 @@ class BackendAPIService(BaseBackendAPIService):
         return await self._send_cmd(msg)
 
     async def group_add_identities(self, name, identities, admin=False):
-        msg = {'cmd': 'group_add_identities', 'name': name, 'identities': identities, 'admin': admin}
+        msg = {'cmd': 'group_add_identities',
+               'name': name,
+               'identities': identities,
+               'admin': admin}
         return await self._send_cmd(msg)
 
     async def group_remove_identities(self, name, identities, admin=False):
-        msg = {'cmd': 'group_remove_identities', 'name': name, 'identities': identities, 'admin': admin}
+        msg = {'cmd': 'group_remove_identities',
+               'name': name,
+               'identities': identities,
+               'admin': admin}
         return await self._send_cmd(msg)
 
     async def message_new(self, recipient, body):
@@ -167,11 +173,17 @@ class MockedBackendAPIService(BaseBackendAPIService):
         return await self._group_service._cmd_READ(None, msg)
 
     async def group_add_identities(self, name, identities, admin=False):
-        msg = {'cmd': 'group_add_identities', 'name': name, 'identities': identities, 'admin': admin}
+        msg = {'cmd': 'group_add_identities',
+               'name': name,
+               'identities': identities,
+               'admin': admin}
         return await self._group_service._cmd_ADD_IDENTITIES(None, msg)
 
     async def group_remove_identities(self, name, identities, admin=False):
-        msg = {'cmd': 'group_remove_identities', 'name': name, 'identities': identities, 'admin': admin}
+        msg = {'cmd': 'group_remove_identities',
+               'name': name,
+               'identities': identities,
+               'admin': admin}
         return await self._group_service._cmd_REMOVE_IDENTITIES(None, msg)
 
     async def message_new(self, recipient, body):

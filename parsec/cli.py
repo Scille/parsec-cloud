@@ -78,7 +78,7 @@ def core(socket, backend_host):
 @click.option('--host', '-H', default=None, help='Host to listen on (default: localhost)')
 @click.option('--port', '-P', default=None, type=int, help=('Port to listen on (default: 6777)'))
 @click.option('--no-client-auth', is_flag=True,
-    help='Disable authentication handshake on client connection (default: false)')
+              help='Disable authentication handshake on client connection (default: false)')
 def backend(host, port, gnupg_homedir, no_client_auth):
     host = host or environ.get('HOST', 'localhost')
     port = port or int(environ.get('PORT', 6777))

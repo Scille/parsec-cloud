@@ -59,7 +59,7 @@ class BaseBlockService(BaseService):
         stat.update({'status': 'ok'})
         return stat
 
-    async def create(self, content, id=None):
+    async def create(self, content, id):
         raise NotImplementedError()
 
     async def read(self, id):

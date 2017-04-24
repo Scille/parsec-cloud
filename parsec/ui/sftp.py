@@ -34,7 +34,7 @@ class SFTPUIServer(BaseServer):
 
     # async def _recv_and_process(self):
     #     sock = ctx.socket(zmq.PULL)
-    #     sock.bind("%s:%s" % (self.host, self.port))
+    #     sock.bind('%s:%s' % (self.host, self.port))
     #     msg = await sock.recv_multipart() # waits for msg to be ready
     #     reply = await async_process(msg)
     #     yield from sock.send_multipart(reply)
@@ -68,13 +68,13 @@ class FileObj(IOBase):
 
     def read(self, size):
         if not self._can_read:
-            raise OSError("[Errno 9] Bad file descriptor")
+            raise OSError('[Errno 9] Bad file descriptor')
         content = self._get_content()
         return content[self._offset:self._offset + size]
 
     def write(self, data):
         if not self._can_write:
-            raise OSError("[Errno 9] Bad file descriptor")
+            raise OSError('[Errno 9] Bad file descriptor')
         if self._offset == 0 and not self._append:
             content = b''
         else:

@@ -1,7 +1,7 @@
 from freezegun import freeze_time
 import pytest
 
-from parsec.backend import MetaBlockService, MockedBlockService
+from parsec.core import MetaBlockService, MockedBlockService
 
 
 @pytest.fixture(params=[[MockedBlockService], ])
