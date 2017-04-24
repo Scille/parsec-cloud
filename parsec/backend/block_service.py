@@ -4,12 +4,18 @@ from marshmallow import fields
 
 from dateutil import parser
 import dropbox
+from logbook import Logger
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
 from parsec.service import BaseService, cmd
 from parsec.exceptions import ParsecError
 from parsec.tools import BaseCmdSchema
+
+
+LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name})' \
+             ' {record.level_name}: {record.channel}: {record.message}'
+log = Logger('Parsec-BlockService')
 
 
 class BlockError(ParsecError):
@@ -62,13 +68,46 @@ class BaseBlockService(BaseService):
         raise NotImplementedError()
 
 
+class MetaBlockService(BaseBlockService):
+
+    def __init__(self):
+        # TODO set method preference for results and call others methods in background
+        self.block_services = {
+            'MockedBlockService': MockedBlockService(),
+            'DropboxBlockService': DropboxBlockService(),
+            'GoogleDriveBlockService': GoogleDriveBlockService(),
+        }
+
+    async def _do_operation(self, operation, *args, **kwargs):
+        result = None
+        for _, block_service in self.block_services.items():
+            try:
+                result = await getattr(block_service, operation)(*args, **kwargs)
+            except Exception:
+                log.warning('%s backend failed to complete %s operation.' %
+                            (block_service.__class__.__name__, operation))
+        if not result:
+            raise(BlockError('All backends failed to complete %s operation' % operation))
+        return result
+
+    async def create(self, content):
+        id = uuid4().hex  # TODO uuid4 or trust seed?
+        return await self._do_operation('create', content, id)
+
+    async def read(self, id):
+        return await self._do_operation('read', id)
+
+    async def stat(self, id):
+        return await self._do_operation('stat', id)
+
+
 class MockedBlockService(BaseBlockService):
     def __init__(self):
         super().__init__()
         self._blocks = {}
 
-    async def create(self, content):
-        id = uuid4().hex  # TODO uuid4 or trust seed?
+    async def create(self, content, id=None):
+        id = id if id else uuid4().hex  # TODO uuid4 or trust seed?
         timestamp = datetime.utcnow().timestamp()
         self._blocks[id] = {'content': content,
                             'access_timestamp': timestamp,
@@ -92,11 +131,12 @@ class MockedBlockService(BaseBlockService):
 
 class DropboxBlockService(BaseBlockService):
     def __init__(self, directory='parsec-storage'):
+        super().__init__()
         token = 'SECRET'  # TODO load token
         self.dbx = dropbox.client.DropboxClient(token)
 
-    async def create(self, content):
-        id = uuid4().hex  # TODO uuid4 or trust seed?
+    async def create(self, content, id=None):
+        id = id if id else uuid4().hex  # TODO uuid4 or trust seed?
         self.dbx.put_file(id, content)
         return id
 
@@ -117,6 +157,7 @@ class DropboxBlockService(BaseBlockService):
 
 class GoogleDriveBlockService(BaseBlockService):
     def __init__(self, directory='parsec-storage'):
+        super().__init__()
         credentials_path = '/tmp/parsec-googledrive-credentials.txt'
         gauth = GoogleAuth()
         gauth.LoadCredentialsFile(credentials_path)  # TODO other path?
@@ -153,8 +194,8 @@ class GoogleDriveBlockService(BaseBlockService):
             raise(BlockError(message))
         return self.drive.CreateFile({'id': file_list[0]['id']})
 
-    async def create(self, content):
-        id = uuid4().hex  # TODO uuid4 or trust seed?
+    async def create(self, content, id=None):
+        id = id if id else uuid4().hex  # TODO uuid4 or trust seed?
         file = self.drive.CreateFile({'title': id,
                                       'parents': [{'id': self.base_directory}]})
         file.SetContentString(content)

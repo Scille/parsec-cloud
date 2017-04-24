@@ -142,7 +142,7 @@ class FuseOperations(LoggingMixIn, Operations):
         response = self.send_cmd(cmd='user_manifest_list_dir', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
-        return ['.', '..'] + list(response['childrens'].keys())
+        return ['.', '..'] + list(response['children'].keys())
 
     def create(self, path, mode):
         response = self.send_cmd(cmd='user_manifest_create_file', path=path)

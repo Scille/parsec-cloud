@@ -1,5 +1,4 @@
 from base64 import decodebytes, encodebytes
-from datetime import datetime
 import json
 
 from cryptography.hazmat.backends.openssl import backend as openssl
@@ -190,7 +189,8 @@ class FileService(BaseFileService):
             properties = await self.user_manifest_service.get_properties(id=id)
         except Exception:
             raise FileNotFound('Vlob not found.')
-        vlob = await self.backend_api_service.vlob_read(id=id, trust_seed=properties['read_trust_seed'])
+        vlob = await self.backend_api_service.vlob_read(id=id,
+                                                        trust_seed=properties['read_trust_seed'])
         encrypted_blob = vlob['blob']
         encrypted_blob = decodebytes(encrypted_blob.encode())
         key = decodebytes(properties['key'].encode()) if properties['key'] else None

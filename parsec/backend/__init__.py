@@ -1,5 +1,5 @@
 from parsec.backend.block_service import (
-    DropboxBlockService, GoogleDriveBlockService, MockedBlockService)
+    DropboxBlockService, GoogleDriveBlockService, MetaBlockService, MockedBlockService)
 from parsec.backend.group_service import MockedGroupService
 from parsec.backend.message_service import InMemoryMessageService
 from parsec.backend.vlob_service import (
@@ -9,7 +9,6 @@ from parsec.backend.named_vlob_service import MockedNamedVlobService
 
 __all__ = (
     'DropboxBlockService', 'GoogleDriveBlockService', 'InMemoryMessageService',
-    'MockedGroupService', 'MockedVlobService', 'MockedBlockService',
-    'VlobError', 'TrustSeedError', 'VlobNotFound', 'VlobBadVersionError',
-    'MockedNamedVlobService'
+    'MetaBlockService', 'MockedBlockService', 'MockedGroupService', 'MockedNamedVlobService',
+    'MockedVlobService', 'TrustSeedError', 'VlobError', 'VlobNotFound', 'VlobBadVersionError'
 )

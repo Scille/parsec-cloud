@@ -392,20 +392,25 @@ class UserManifestService(BaseUserManifestService):
         return True
 
     async def get_properties(self, path=None, id=None, group=None, dustbin=False):  # TODO refactor?
-        manifest, manifest_dustbin = await self.get_manifests(group)
-        item = manifest_dustbin if dustbin else manifest
-        if path:
-            try:
-                return item[path]
-            except Exception:
+        if group:
+            targets = [group]
+        else:
+            targets = [None] + list(self.groups.keys())
+        for current_group in targets:
+            manifest, manifest_dustbin = await self.get_manifests(current_group)
+            item = manifest_dustbin if dustbin else manifest
+            if path:
+                try:
+                    return item[path]
+                except Exception:
+                    raise(UserManifestNotFound('File not found.'))
+            elif id:
+                for entry in item.values():  # TODO bad complexity
+                    if entry['id'] == id:
+                        return entry
                 raise(UserManifestNotFound('File not found.'))
-        elif id:
-            for entry in item.values():  # TODO bad complexity
-                if entry['id'] == id:
-                    return entry
-            raise(UserManifestNotFound('File not found.'))
-        elif group:
-            return self.groups[group]
+            elif group:
+                return self.groups[group]
 
     async def history(self):
         # TODO raise ParsecNotImplementedError

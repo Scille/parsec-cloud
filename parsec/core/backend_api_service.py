@@ -4,11 +4,10 @@ import websockets
 from blinker import signal
 
 from parsec.backend import (
-    MockedGroupService, InMemoryMessageService, MockedVlobService,
-    MockedNamedVlobService, MockedBlockService,
-    VlobNotFound, VlobBadVersionError
+    MockedGroupService, InMemoryMessageService, MetaBlockService, MockedVlobService,
+    MockedNamedVlobService, VlobNotFound, VlobBadVersionError
 )
-from parsec.backend.vlob_service import Vlob, VlobError
+from parsec.backend.vlob_service import VlobError
 from parsec.service import BaseService, event
 from parsec.tools import logger
 
@@ -157,7 +156,7 @@ class MockedBackendAPIService(BaseBackendAPIService):
         self._message_service = InMemoryMessageService()
         self._named_vlob_service = MockedNamedVlobService()
         self._vlob_service = MockedVlobService()
-        self._block_service = MockedBlockService()
+        self._block_service = MetaBlockService()
         # Events
         self.on_vlob_updated = self._vlob_service.on_updated
         self.on_named_vlob_updated = self._named_vlob_service.on_updated
