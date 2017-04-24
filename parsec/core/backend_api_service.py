@@ -66,65 +66,87 @@ class BackendAPIService(BaseBackendAPIService):
 
     async def _send_cmd(self, msg):
         await self._websocket.send(json.dumps(msg))
-        return await self._resp_queue.get()
-
-    async def _listen_for_notification(self):
-        raw = await self._websocket.recv()
-        notif = json.loads(raw)
-
-    async def block_create(self, *args, **kwargs):
-        raise NotImplementedError()
-        return await self._block_service.create(*args, **kwargs)
-
-    async def block_read(self, *args, **kwargs):
-        raise NotImplementedError()
-        return await self._block_service.read(*args, **kwargs)
-
-    async def block_stat(self, *args, **kwargs):
-        raise NotImplementedError()
-        return await self._block_service.stat(*args, **kwargs)
-
-    async def message_new(self, *args, **kwargs):
-        raise NotImplementedError()
-        return await self._message_service.new(*args, **kwargs)
-
-    async def message_get(self, *args, **kwargs):
-        raise NotImplementedError()
-        return await self._message_service.get(*args, **kwargs)
-
-    async def named_vlob_create(self, *args, **kwargs):
-        raise NotImplementedError()
-        return await self._named_vlob_service.create(*args, **kwargs)
-
-    async def named_vlob_read(self, *args, **kwargs):
-        raise NotImplementedError()
-        return await self._named_vlob_service.read(*args, **kwargs)
-
-    async def named_vlob_update(self, *args, **kwargs):
-        raise NotImplementedError()
-        return await self._named_vlob_service.update(*args, **kwargs)
-
-    async def vlob_create(self, blob=''):
-        assert isinstance(blob, str)
-        msg = {'cmd': 'vlob_create', 'blob': blob}
-        ret = await self._send_cmd(msg)
-        status = ret['status']
-        if status == 'ok':
-            return ret
-        else:
-            raise VlobError(**ret)
-
-    async def vlob_read(self, id, trust_seed):
-        assert isinstance(id, str)
-        msg = {'cmd': 'vlob_read', 'id': id, 'trust_seed': trust_seed}
-        ret = await self._send_cmd(msg)
+        ret = await self._resp_queue.get()
         status = ret['status']
         if status == 'ok':
             return ret
         elif status == 'not_found':
             raise VlobNotFound(ret['label'])
+        elif status == 'bad_version':
+            raise VlobBadVersionError(ret['label'])
         else:
             raise VlobError(ret['label'])
+
+    async def _listen_for_notification(self):
+        raw = await self._websocket.recv()
+        notif = json.loads(raw)
+
+    async def block_create(self, content):
+        msg = {'cmd': 'block_create', 'content': content}
+        ret = await self._send_cmd(msg)
+        return ret['id']
+
+    async def block_read(self, id):
+        msg = {'cmd': 'block_read', 'id': id}
+        return await self._send_cmd(msg)
+
+    async def block_stat(self, id):
+        msg = {'cmd': 'block_stat', 'id': id}
+        return await self._send_cmd(msg)
+
+    async def group_create(self, name):
+        msg = {'cmd': 'group_create', 'name': name}
+        return await self._send_cmd(msg)
+
+    async def group_read(self, name):
+        msg = {'cmd': 'group_read', 'name': name}
+        return await self._send_cmd(msg)
+
+    async def group_add_identities(self, name, identities, admin=False):
+        msg = {'cmd': 'group_add_identities', 'name': name, 'identities': identities, 'admin': admin}
+        return await self._send_cmd(msg)
+
+    async def group_remove_identities(self, name, identities, admin=False):
+        msg = {'cmd': 'group_remove_identities', 'name': name, 'identities': identities, 'admin': admin}
+        return await self._send_cmd(msg)
+
+    async def message_new(self, recipient, body):
+        msg = {'cmd': 'message_new', 'recipient': recipient, 'body': body}
+        return await self._send_cmd(msg)
+
+    async def message_get(self, recipient, offset=0):
+        msg = {'cmd': 'message_new', 'recipient': recipient, 'offset': offset}
+        return await self._send_cmd(msg)
+
+    async def named_vlob_create(self, id, blob=''):
+        assert isinstance(blob, str)
+        msg = {'cmd': 'named_vlob_create', 'id': id, 'blob': blob}
+        return await self._send_cmd(msg)
+
+    async def named_vlob_read(self, id, trust_seed):
+        assert isinstance(id, str)
+        msg = {'cmd': 'named_vlob_read', 'id': id, 'trust_seed': trust_seed}
+        return await self._send_cmd(msg)
+
+    async def named_vlob_update(self, id, version, trust_seed, blob=''):
+        msg = {
+            'cmd': 'named_vlob_update',
+            'id': id,
+            'version': version,
+            'trust_seed': trust_seed,
+            'blob': blob
+        }
+        return await self._send_cmd(msg)
+
+    async def vlob_create(self, blob=''):
+        assert isinstance(blob, str)
+        msg = {'cmd': 'vlob_create', 'blob': blob}
+        return await self._send_cmd(msg)
+
+    async def vlob_read(self, id, trust_seed):
+        assert isinstance(id, str)
+        msg = {'cmd': 'vlob_read', 'id': id, 'trust_seed': trust_seed}
+        return await self._send_cmd(msg)
 
     async def vlob_update(self, id, version, trust_seed, blob=''):
         msg = {
@@ -134,16 +156,7 @@ class BackendAPIService(BaseBackendAPIService):
             'trust_seed': trust_seed,
             'blob': blob
         }
-        ret = await self._send_cmd(msg)
-        status = ret.pop('status')
-        if status == 'ok':
-            return
-        elif status == 'not_found':
-            raise VlobNotFound(ret['label'])
-        elif status == 'bad_version':
-            raise VlobBadVersionError(ret['label'])
-        else:
-            raise VlobError(ret['label'])
+        return await self._send_cmd(msg)
 
 
 class MockedBackendAPIService(BaseBackendAPIService):
@@ -162,41 +175,61 @@ class MockedBackendAPIService(BaseBackendAPIService):
         self.on_named_vlob_updated = self._named_vlob_service.on_updated
         self.on_message_arrived = self._message_service.on_arrived
 
-    async def block_create(self, *args, **kwargs):
-        return await self._block_service.create(*args, **kwargs)
+    async def block_create(self, content):
+        msg = {'cmd': 'message_new', 'content': content}
+        ret = await self._message_service._cmd_NEW(None, msg)
+        return ret['id']
 
-    async def block_read(self, *args, **kwargs):
-        return await self._block_service.read(*args, **kwargs)
+    async def block_read(self, id):
+        msg = {'cmd': 'message_new', 'id': id}
+        return await self._message_service._cmd_NEW(None, msg)
 
-    async def block_stat(self, *args, **kwargs):
-        return await self._block_service.stat(*args, **kwargs)
+    async def block_stat(self, id):
+        msg = {'cmd': 'message_new', 'id': id}
+        return await self._block_service.stat(None, msg)
 
-    async def group_create(self, *args, **kwargs):
-        return await self._group_service.create(*args, **kwargs)
+    async def group_create(self, name):
+        msg = {'cmd': 'message_new', 'name': name}
+        return await self._group_service._cmd_CREATE(None, msg)
 
-    async def group_read(self, *args, **kwargs):
-        return await self._group_service.read(*args, **kwargs)
+    async def group_read(self, name):
+        msg = {'cmd': 'message_new', 'name': name}
+        return await self._group_service._cmd_READ(None, msg)
 
-    async def group_add_identities(self, *args, **kwargs):
-        return await self._group_service.add_identities(*args, **kwargs)
+    async def group_add_identities(self, name, identities, admin=False):
+        msg = {'cmd': 'message_new', 'name': name, 'identities': identities, 'admin': admin}
+        return await self._group_service._cmd_ADD_IDENTITIES(None, msg)
 
-    async def group_remove_identities(self, *args, **kwargs):
-        return await self._group_service.remove_identities(*args, **kwargs)
+    async def group_remove_identities(self, name, identities, admin=False):
+        msg = {'cmd': 'message_new', 'name': name, 'identities': identities, 'admin': admin}
+        return await self._group_service._cmd_REMOVE_IDENTITIES(None, msg)
 
-    async def message_new(self, *args, **kwargs):
-        return await self._message_service.new(*args, **kwargs)
+    async def message_new(self, recipient, body):
+        msg = {'cmd': 'message_new', 'recipient': recipient, 'body': body}
+        return await self._message_service._cmd_NEW(None, msg)
 
-    async def message_get(self, *args, **kwargs):
-        return await self._message_service.get(*args, **kwargs)
+    async def message_get(self, recipient, offset=0):
+        msg = {'cmd': 'message_new', 'recipient': recipient, 'offset': offset}
+        return await self._message_service._cmd_GET(None, msg)
 
-    async def named_vlob_create(self, *args, **kwargs):
-        return await self._named_vlob_service.create(*args, **kwargs)
+    async def named_vlob_create(self, blob=''):
+        assert isinstance(blob, str)
+        msg = {'cmd': 'named_vlob_create', 'blob': blob}
+        return await self._named_vlob_service._cmd_CREATE(None, msg)
 
-    async def named_vlob_read(self, *args, **kwargs):
-        return await self._named_vlob_service.read(*args, **kwargs)
+    async def named_vlob_read(self, id, trust_seed):
+        msg = {'cmd': 'named_vlob_read', 'id': id, 'trust_seed': trust_seed}
+        return await self._named_vlob_service._cmd_READ(None, msg)
 
-    async def named_vlob_update(self, *args, **kwargs):
-        return await self._named_vlob_service.update(*args, **kwargs)
+    async def named_vlob_update(self, id, version, trust_seed, blob=''):
+        msg = {
+            'cmd': 'named_vlob_update',
+            'id': id,
+            'version': version,
+            'trust_seed': trust_seed,
+            'blob': blob
+        }
+        await self._named_vlob_service._cmd_UPDATE(None, msg)
 
     async def vlob_create(self, blob=''):
         assert isinstance(blob, str)

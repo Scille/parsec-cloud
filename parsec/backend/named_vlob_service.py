@@ -40,7 +40,8 @@ class MockedNamedVlobService(BaseNamedVlobService):
         self._vlobs = {}
 
     async def create(self, id, blob=None):
-        vlob = Vlob(id=id, blob=blob)
+        # TODO: use identity handshake instead of trust_seed
+        vlob = Vlob(id=id, blob=blob, read_trust_seed='42', write_trust_seed='42')
         # TODO: who cares about hash collision ?
         self._vlobs[vlob.id] = vlob
         return vlob

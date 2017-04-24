@@ -127,7 +127,9 @@ class CryptoService(BaseCryptoService):
         return [key['fingerprint'] for key in self.gnupg.list_keys(secret)]
 
     async def identity_exists(self, identity, secret=False):
-        return identity in await self.list_identities(identity, secret)
+        ids = await self.list_identities(identity, secret)
+        # Handle both short and long identity format
+        return any(id for id in ids if id == identity or id.endswith(identity))
 
     async def import_keys(self, keys):
         self.gnupg.import_keys(keys)

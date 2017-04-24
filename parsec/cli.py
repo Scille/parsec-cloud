@@ -4,7 +4,7 @@ import click
 from parsec.server import UnixSocketServer, WebSocketServer
 from parsec.backend import (InMemoryMessageService, MockedVlobService,
                             MockedNamedVlobService, MockedBlockService)
-from parsec.core import (MockedBackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
+from parsec.core import (BackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
                          IdentityService, ShareService, UserManifestService)
 from parsec.ui.shell import start_shell
 
@@ -56,19 +56,17 @@ def fuse(mountpoint, identity, debug, nothreads, socket):
 @click.option('--socket', '-s', default=CORE_UNIX_SOCKET,
               help='Path to the UNIX socket exposing the core API (default: %s).' %
               CORE_UNIX_SOCKET)
-@click.option('--backend-host', '-H', default='localhost')
-@click.option('--backend-port', '-P', default=6777, type=int)
-def core(socket, backend_host, backend_port):
+@click.option('--backend-host', '-H', default='ws://localhost:6777')
+def core(socket, backend_host):
     server = UnixSocketServer()
-    server.register_service(MockedBackendAPIService())
+    server.register_service(BackendAPIService(backend_host))
     server.register_service(CryptoService())
     server.register_service(FileService())
     server.register_service(GNUPGPubKeysService())
     server.register_service(IdentityService())
     server.register_service(ShareService())
     server.register_service(UserManifestService())
-    print('Starting parsec core on %s (connecting to backend %s:%s)' %
-          (socket, backend_host, backend_port))
+    print('Starting parsec core on %s (connecting to backend %s)' % (socket, backend_host))
     server.start(socket)
     print('Bye ;-)')
 
@@ -77,9 +75,14 @@ def core(socket, backend_host, backend_port):
 @click.option('--gnupg-homedir', default='~/.gnupg')
 @click.option('--host', '-H', default='localhost')
 @click.option('--port', '-P', default=6777, type=int)
-def backend(host, port, gnupg_homedir):
+@click.option('--no-client-auth', is_flag=True,
+    help='Disable authentication handshake on client connection (default: false)')
+def backend(host, port, gnupg_homedir, no_client_auth):
     pub_keys_service = GNUPGPubKeysService(gnupg_homedir)
-    server = WebSocketServer(pub_keys_service.handshake)
+    if no_client_auth:
+        server = WebSocketServer()
+    else:
+        server = WebSocketServer(pub_keys_service.handshake)
     server.register_service(pub_keys_service)
     server.register_service(InMemoryMessageService())
     server.register_service(MockedVlobService())

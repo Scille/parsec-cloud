@@ -297,13 +297,14 @@ class UserManifestService(BaseUserManifestService):
     async def load_user_manifest(self):
         await self.share_service.listen_shared_vlob()
         identity = await self.identity_service.get_identity()
+        # TODO: Named vlob should use private key handshake instead of trust_seed
         try:
-            vlob = await self.backend_api_service.named_vlob_read(id=identity)
+            vlob = await self.backend_api_service.named_vlob_read(id=identity, trust_seed='42')
         except Exception:
             vlob = await self.backend_api_service.named_vlob_create(id=identity)
             await self.make_dir('/')
-            vlob = await self.backend_api_service.named_vlob_read(id=identity)
-        blob = vlob.blob_versions[-1]
+            vlob = await self.backend_api_service.named_vlob_read(id=identity, trust_seed='42')
+        blob = vlob['blob']
         content = await self.identity_service.decrypt(blob)
         content = content.decode()
         manifest = json.loads(content)
@@ -311,7 +312,7 @@ class UserManifestService(BaseUserManifestService):
             self.entries['user_manifest'] = manifest['entries']
             self.groups = manifest['groups']
             self.dustbins['user_manifest'] = manifest['dustbin']
-            self.versions = {'user_manifest': len(vlob.blob_versions), 'group_manifests': {}}
+            self.versions = {'user_manifest': vlob['version'], 'group_manifests': {}}
         else:
             raise(UserManifestError('User manifest not consistent.'))
         for group in manifest['groups']:
@@ -350,7 +351,8 @@ class UserManifestService(BaseUserManifestService):
         await self.backend_api_service.named_vlob_update(
             id=identity,
             version=self.versions['user_manifest'],
-            blob=encrypted_blob.decode())
+            blob=encrypted_blob.decode(),
+            trust_seed='42')
 
     async def save_group_manifest(self, group):
         manifest, dustbin = await self.get_manifests(group)
