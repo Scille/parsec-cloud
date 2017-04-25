@@ -1,15 +1,27 @@
 import json
 import asyncio
 import websockets
-from blinker import signal
+import blinker
 
 from parsec.backend import (
     MockedGroupService, InMemoryMessageService, MockedVlobService, MockedNamedVlobService,
     VlobNotFound, VlobBadVersionError
 )
 from parsec.backend.vlob_service import VlobError
-from parsec.service import BaseService, event
+from parsec.service import BaseService
 from parsec.tools import logger
+
+
+def _patch_service_event_namespace(service, ns):
+    """
+    By default, service's events uses blinker's global namespace.
+    This function patch the given service to use another events namespace.
+    """
+    for k in dir(service):
+        v = getattr(service, k)
+        if isinstance(v, blinker.Signal):
+            setattr(service, k, ns.signal(v.name))
+    service._events = {k: ns.signal(v.name) for k, v in service._events.items()}
 
 
 class BaseBackendAPIService(BaseService):
@@ -19,10 +31,6 @@ class BaseBackendAPIService(BaseService):
 
 class BackendAPIService(BaseBackendAPIService):
 
-    on_vlob_updated = signal('on_vlob_updated')
-    on_named_vlob_updated = signal('on_named_vlob_updated')
-    on_message_arrived = signal('on_message_arrived')
-
     def __init__(self, backend_url):
         super().__init__()
         self._resp_queue = asyncio.Queue()
@@ -30,6 +38,12 @@ class BackendAPIService(BaseBackendAPIService):
         self._backend_url = backend_url
         self._websocket = None
         self._ws_recv_handler_task = None
+
+    async def connect_event(self, event, sender, cb):
+        assert event in ('on_vlob_updated', 'on_named_vlob_updated', 'on_message_arrived')
+        msg = {'cmd': 'subscribe', 'event': event, 'sender': sender}
+        await self._send_cmd(msg)
+        blinker.signal(event).connect(cb, sender=sender)
 
     async def bootstrap(self):
         assert not self._websocket, "Service already bootstraped"
@@ -59,7 +73,7 @@ class BackendAPIService(BaseBackendAPIService):
                     self._resp_queue.put_nowait(recv)
                 else:
                     # Event
-                    signal(recv['event']).send(recv['sender'])
+                    blinker.signal(recv['event']).send(recv['sender'])
             except (KeyError, TypeError, json.JSONDecodeError):
                 # Dummy ???
                 logger.warning('Backend server send invalid message: %s' % recv)
@@ -151,18 +165,23 @@ class BackendAPIService(BaseBackendAPIService):
 
 class MockedBackendAPIService(BaseBackendAPIService):
 
-    on_msg_arrived = event('arrived')
-
     def __init__(self):
         super().__init__()
         self._group_service = MockedGroupService()
         self._message_service = InMemoryMessageService()
         self._named_vlob_service = MockedNamedVlobService()
         self._vlob_service = MockedVlobService()
-        # Events
-        self.on_vlob_updated = self._vlob_service.on_updated
-        self.on_named_vlob_updated = self._named_vlob_service.on_updated
-        self.on_message_arrived = self._message_service.on_arrived
+        # Backend services should not share the same event namespace than
+        # core ones
+        self._backend_event_ns = blinker.Namespace()
+        _patch_service_event_namespace(self._group_service, self._backend_event_ns)
+        _patch_service_event_namespace(self._message_service, self._backend_event_ns)
+        _patch_service_event_namespace(self._named_vlob_service, self._backend_event_ns)
+        _patch_service_event_namespace(self._vlob_service, self._backend_event_ns)
+
+    async def connect_event(self, event, sender, cb):
+        assert event in ('on_vlob_updated', 'on_named_vlob_updated', 'on_message_arrived')
+        self._backend_event_ns.signal(event).connect(cb, sender=sender)
 
     async def group_create(self, name):
         msg = {'cmd': 'group_create', 'name': name}

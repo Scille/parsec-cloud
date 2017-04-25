@@ -145,7 +145,7 @@ class ShareService(BaseShareService):
         pass
 
     async def listen_shared_vlob(self):
-        self.backend_api_service.on_message_arrived.connect(self.vlob_shared_event)  # TODO here?
+        self.backend_api_service.connect_event('on_message_arrived', '<TODO SENDER>', self.vlob_shared_event)  # TODO here?
 
     def vlob_shared_event(self, sender):
         loop = asyncio.get_event_loop()
