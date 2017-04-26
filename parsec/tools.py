@@ -14,9 +14,9 @@ logger = Logger('Parsec')
 StreamHandler(sys.stdout, format_string=LOG_FORMAT).push_application()
 
 
-def event_handler(callback, sender):
+def event_handler(callback, sender, *args):
     loop = asyncio.get_event_loop()
-    loop.call_soon(asyncio.ensure_future, callback())
+    loop.call_soon(asyncio.ensure_future, callback(*args))
 
 
 class UnknownCheckedSchema(Schema):

@@ -78,6 +78,7 @@ class IdentityService(BaseIdentityService):
     backend_api_service = service('BackendAPIService')
     crypto_service = service('CryptoService')
     share_service = service('ShareService')
+    user_manifest_service = service('UserManifestService')
 
     def __init__(self):
         super().__init__()
@@ -101,7 +102,9 @@ class IdentityService(BaseIdentityService):
                 raise IdentityNotFound('Default identity not found.')
         event_handlers = {
             'on_message_arrived': self.share_service.import_shared_vlob,
+            'on_named_vlob_updated': self.user_manifest_service.load_user_manifest
         }
+        self.handlers = []
         for event, handler in event_handlers.items():
             self.handlers.append(partial(event_handler, handler))
             await self.backend_api_service.connect_event(event, self.identity, self.handlers[-1])
