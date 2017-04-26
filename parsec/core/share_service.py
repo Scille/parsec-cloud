@@ -177,3 +177,11 @@ class ShareService(BaseShareService):
     async def group_remove_identities(self, name, identities, admin=False):
         # TODO check admin
         await self.backend_api_service.group_remove_identities(name, identities, admin)
+        group = await self.backend_api_service.group_read(name)
+        old_identities = group['admins'] if admin else group['users']
+        await self.user_manifest_service.reencrypt_group_manifest(name)
+        vlob = await self.user_manifest_service.get_properties(group=name)
+        message = {'group': name, 'vlob': vlob}
+        for identity in [identity for identity in old_identities if identity not in identities]:
+            encrypted_msg = await self.crypto_service.asym_encrypt(json.dumps(message), identity)
+            await self.backend_api_service.message_new(identity, encrypted_msg.decode())

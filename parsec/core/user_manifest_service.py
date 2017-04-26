@@ -212,6 +212,25 @@ class UserManifestService(BaseUserManifestService):
         await self.make_dir('/', group)
         await self.load_group_manifest(group)
 
+    async def reencrypt_group_manifest(self, group):
+        vlob = await self.get_properties(group=group)
+        # Retrieve manifest
+        manifest_vlob = await self.backend_api_service.vlob_read(
+            id=vlob['id'],
+            trust_seed=vlob['read_trust_seed'])
+        manifest_blob = manifest_vlob['blob']
+        manifest_key = decodebytes(vlob['key'].encode())
+        manifest_content = await self.crypto_service.sym_decrypt(manifest_blob, manifest_key)
+        # Re-encrypt manifest
+        blob_key, encrypted_manifest_blob = await self.crypto_service.sym_encrypt(manifest_content)
+        ret = await self.backend_api_service.vlob_create(encrypted_manifest_blob.decode())
+        del ret['status']
+        ret['key'] = encodebytes(blob_key).decode()
+        self.groups[group] = ret
+        self.versions['group_manifests'][group] = 1
+        await self.load_group_manifest(group)
+        await self.save_user_manifest()
+
     async def create_file(self, path, content='', group=None):
         manifest, _ = await self.get_entries_and_dustbin(group)
         if path in manifest:
@@ -390,7 +409,6 @@ class UserManifestService(BaseUserManifestService):
         )
 
     async def import_group_manifest_vlob(self, vlob, group):
-        # Import group manifest
         manifest_vlob = await self.backend_api_service.vlob_read(
             id=vlob['id'],
             trust_seed=vlob['read_trust_seed'])
@@ -423,7 +441,7 @@ class UserManifestService(BaseUserManifestService):
     async def reload_vlob(self, vlob_id):
         # vlob = get_properties(vlob_id)
         # TODO invalidate old cache
-        print('RELOAD ', vlob_id)
+        pass
 
     async def check_consistency(self, manifest):
         entries = list(manifest['entries'].values())
@@ -453,12 +471,12 @@ class UserManifestService(BaseUserManifestService):
                 try:
                     return item[path]
                 except Exception:
-                    raise(UserManifestNotFound('File not found.'))
+                    pass
             elif id:
                 for entry in item.values():  # TODO bad complexity
                     if entry['id'] == id:
                         return entry
-                raise(UserManifestNotFound('File not found.'))
+        raise(UserManifestNotFound('File not found.'))
 
     async def history(self):
         # TODO raise ParsecNotImplementedError
