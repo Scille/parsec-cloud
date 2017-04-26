@@ -1,8 +1,10 @@
+from functools import partial
+
 from marshmallow import fields
 
 from parsec.service import BaseService, cmd, service
 from parsec.exceptions import ParsecError
-from parsec.tools import BaseCmdSchema
+from parsec.tools import BaseCmdSchema, event_handler
 
 
 class IdentityError(ParsecError):
@@ -73,14 +75,17 @@ class BaseIdentityService(BaseService):
 
 class IdentityService(BaseIdentityService):
 
+    backend_api_service = service('BackendAPIService')
     crypto_service = service('CryptoService')
-    pub_keys_service = service('PubKeysService')
+    share_service = service('ShareService')
 
     def __init__(self):
         super().__init__()
         self.identity = None
+        self.handlers = []
 
     async def load_identity(self, identity=None):
+
         if identity:
             if await self.crypto_service.identity_exists(identity, secret=True):
                 self.identity = identity
@@ -94,6 +99,12 @@ class IdentityService(BaseIdentityService):
                 raise IdentityError('Multiple identities found.')
             else:
                 raise IdentityNotFound('Default identity not found.')
+        event_handlers = {
+            'on_message_arrived': self.share_service.import_shared_vlob,
+        }
+        for event, handler in event_handlers.items():
+            self.handlers.append(partial(event_handler, handler))
+            await self.backend_api_service.connect_event(event, self.identity, self.handlers[-1])
 
     async def get_identity(self):  # TODO identity=fingerprint?
         return self.identity

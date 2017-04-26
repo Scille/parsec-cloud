@@ -81,8 +81,10 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def _init_socket(self):
         sock = socket.socket(socket.AF_UNIX, type=socket.SOCK_STREAM)
-        if not os.path.exists(self._socket_path) or not stat.S_ISSOCK(os.stat(self._socket_path).st_mode):
-            log.error("%s doesn't exist or isn't a socket. Is Parsec Core running?" % self._socket_path)
+        if (not os.path.exists(self._socket_path) or
+                not stat.S_ISSOCK(os.stat(self._socket_path).st_mode)):
+            log.error("File %s doesn't exist or isn't a socket. Is Parsec Core running?" %
+                      self._socket_path)
             sys.exit(1)
         sock.connect(self._socket_path)
         log.debug('Init socket')

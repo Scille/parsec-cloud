@@ -1,6 +1,5 @@
 import json
 
-import asyncio
 from marshmallow import fields
 
 from parsec.service import BaseService, cmd, service
@@ -128,7 +127,7 @@ class ShareService(BaseShareService):
         vlob = await self.user_manifest_service.get_properties(path=path)
         # TODO use pub key service ?
         encrypted_vlob = await self.crypto_service.asym_encrypt(json.dumps(vlob), identity)
-        await self.backend_api_service.message_new(identity, encrypted_vlob)
+        await self.backend_api_service.message_new(identity, encrypted_vlob.decode())
 
     async def share_with_group(self, path, group):
         group = await self.backend_api_service.group_read(group)
@@ -143,13 +142,6 @@ class ShareService(BaseShareService):
         # for identity in identities:
         #     await self.backend_api_service.message_service.new(identity, vlob)
         pass
-
-    async def listen_shared_vlob(self):
-        self.backend_api_service.connect_event('on_message_arrived', '<TODO SENDER>', self.vlob_shared_event)  # TODO here?
-
-    def vlob_shared_event(self, sender):
-        loop = asyncio.get_event_loop()
-        loop.call_soon(asyncio.ensure_future, self.import_shared_vlob())
 
     async def import_shared_vlob(self):
         identity = await self.identity_service.get_identity()
@@ -179,7 +171,7 @@ class ShareService(BaseShareService):
         for identity in identities:
             # TODO use pub key service ?
             encrypted_msg = await self.crypto_service.asym_encrypt(json.dumps(message), identity)
-            await self.backend_api_service.message_new(identity, encrypted_msg)
+            await self.backend_api_service.message_new(identity, encrypted_msg.decode())
 
     async def group_remove_identities(self, name, identities, admin=False):
         # TODO check admin

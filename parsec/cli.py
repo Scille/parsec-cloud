@@ -3,10 +3,10 @@ from socket import socket, AF_UNIX, SOCK_STREAM
 import click
 
 from parsec.server import UnixSocketServer, WebSocketServer
-from parsec.backend import (InMemoryMessageService, MockedVlobService, MockedNamedVlobService)
+from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedNamedVlobService,
+                            MockedVlobService)
 from parsec.core import (BackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
-                         IdentityService, MetaBlockService, ShareService,
-                         UserManifestService)
+                         IdentityService, MetaBlockService, ShareService, UserManifestService)
 from parsec.ui.shell import start_shell
 
 
@@ -42,7 +42,7 @@ def shell(socket):
 
 @click.command()
 @click.argument('mountpoint', type=click.Path(exists=True, file_okay=False))
-@click.option('--identity', type=click.STRING, default=None)
+@click.option('--identity', '-i', type=click.STRING, default=None)
 @click.option('--debug', '-d', is_flag=True, default=False)
 @click.option('--nothreads', is_flag=True, default=False)
 @click.option('--socket', '-s', default=CORE_UNIX_SOCKET,
@@ -89,8 +89,9 @@ def backend(host, port, gnupg_homedir, no_client_auth):
         server = WebSocketServer(pub_keys_service.handshake)
     server.register_service(pub_keys_service)
     server.register_service(InMemoryMessageService())
-    server.register_service(MockedVlobService())
+    server.register_service(MockedGroupService())
     server.register_service(MockedNamedVlobService())
+    server.register_service(MockedVlobService())
     print('Starting parsec backend on %s:%s' % (host, port))
     server.start(host, port)
     print('Bye ;-)')

@@ -295,7 +295,6 @@ class UserManifestService(BaseUserManifestService):
         raise(UserManifestNotFound('Vlob not found.'))
 
     async def load_user_manifest(self):
-        await self.share_service.listen_shared_vlob()
         identity = await self.identity_service.get_identity()
         # TODO: Named vlob should use private key handshake instead of trust_seed
         try:
