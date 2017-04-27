@@ -103,6 +103,12 @@ cli.add_command(shell)
 cli.add_command(core)
 cli.add_command(backend)
 
+try:
+    from parsec.backend.postgresql import cli as postgresql_cli
+    cli.add_command(postgresql_cli, 'postgresql')
+except ImportError:
+    raise
+
 
 if __name__ == '__main__':
     cli()

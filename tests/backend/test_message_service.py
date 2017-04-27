@@ -1,11 +1,30 @@
 import pytest
 
 from parsec.backend import InMemoryMessageService
+from .common import postgresql_url
 
 
-@pytest.fixture(params=[InMemoryMessageService, ])
-def message_svc(request):
-    return request.param()
+async def bootstrap_PostgreSQLMessageService(request, event_loop):
+    module = pytest.importorskip('parsec.backend.postgresql')
+    await module._init_db(postgresql_url(), force=True)
+    svc = module.PostgreSQLMessageService(postgresql_url())
+    await svc.bootstrap()
+
+    def finalize():
+        event_loop.run_until_complete(svc.teardown())
+
+    request.addfinalizer(finalize)
+    svc.__name__ = 'bam !'
+    return svc
+
+
+def bootstrap_InMemoryMessageService(request, event_loop):
+    return InMemoryMessageService()
+
+
+@pytest.fixture(params=[bootstrap_InMemoryMessageService, bootstrap_PostgreSQLMessageService], ids=['in_memory', 'postgresql'])
+def message_svc(request, event_loop):
+    return request.param(request, event_loop)
 
 
 class TestMessageServiceAPI:
