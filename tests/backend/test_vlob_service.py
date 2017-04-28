@@ -1,11 +1,34 @@
 import pytest
+import asyncio
 
 from parsec.backend import MockedVlobService
 
+from .common import postgresql_url
 
-@pytest.fixture(params=[MockedVlobService, ])
-def vlob_svc(request):
-    return request.param()
+
+async def bootstrap_PostgreSQLVlobService(request, event_loop):
+    module = pytest.importorskip('parsec.backend.postgresql')
+    await module._init_db(postgresql_url(), force=True)
+    svc = module.PostgreSQLVlobService(postgresql_url())
+    await svc.bootstrap()
+
+    def finalize():
+        event_loop.run_until_complete(svc.teardown())
+
+    request.addfinalizer(finalize)
+    return svc
+
+
+def bootstrap_MockedVlobService(request, event_loop):
+    return MockedVlobService()
+
+
+@pytest.fixture(params=[MockedVlobService, bootstrap_PostgreSQLVlobService, ], ids=['mocked', 'postgresql'])
+def vlob_svc(request, event_loop):
+    if asyncio.iscoroutinefunction(request.param):
+        return event_loop.run_until_complete(request.param(request, event_loop))
+    else:
+        return request.param()
 
 
 @pytest.fixture
@@ -167,7 +190,7 @@ class TestVlobServiceAPI:
                'trust_seed': vlob.read_trust_seed,
                'version': bad_version}
         ret = await vlob_svc.dispatch_msg(msg)
-        assert ret['status'] == 'bad_version'
+        assert ret['status'] == 'not_found'
 
     @pytest.mark.asyncio
     async def test_update_bad_version(self, vlob_svc, vlob):
@@ -175,4 +198,4 @@ class TestVlobServiceAPI:
         msg = {'cmd': 'vlob_update', 'id': vlob.id, 'trust_seed': vlob.write_trust_seed,
                'version': bad_version, 'blob': 'Next version.'}
         ret = await vlob_svc.dispatch_msg(msg)
-        assert ret['status'] == 'bad_version'
+        assert ret['status'] == 'not_found'

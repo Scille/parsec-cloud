@@ -2,7 +2,7 @@ import pytest
 import os
 
 
-DEFAULT_POSTGRESQL_TEST_URL = 'postgres://localhost:5740/parsec-test'
+DEFAULT_POSTGRESQL_TEST_URL = '/parsec_test'
 
 
 @pytest.fixture

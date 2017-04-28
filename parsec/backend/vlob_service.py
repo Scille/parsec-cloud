@@ -29,10 +29,6 @@ class VlobNotFound(VlobError):
     status = 'not_found'
 
 
-class VlobBadVersionError(VlobError):
-    status = 'bad_version'
-
-
 class cmd_CREATE_Schema(BaseCmdSchema):
     blob = fields.String(missing='')
 
@@ -140,7 +136,7 @@ class MockedVlobService(BaseVlobService):
                             blob=vlob.blob_versions[version - 1],
                             version=version)
         except IndexError:
-            raise VlobBadVersionError('Invalid blob version.')
+            raise VlobNotFound('Wrong blob version.')
 
     async def update(self, id, version, blob, check_trust_seed=False):
         try:
@@ -152,5 +148,5 @@ class MockedVlobService(BaseVlobService):
         if version - 1 == len(vlob.blob_versions):
             vlob.blob_versions.append(blob)
         else:
-            raise VlobBadVersionError('Wrong blob version.')
+            raise VlobNotFound('Wrong blob version.')
         self.on_updated.send(id)

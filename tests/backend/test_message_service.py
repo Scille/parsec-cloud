@@ -14,7 +14,6 @@ async def bootstrap_PostgreSQLMessageService(request, event_loop):
         event_loop.run_until_complete(svc.teardown())
 
     request.addfinalizer(finalize)
-    svc.__name__ = 'bam !'
     return svc
 
 
