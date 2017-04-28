@@ -2,7 +2,7 @@ from marshmallow import fields
 
 from parsec.service import BaseService, cmd, event
 from parsec.tools import BaseCmdSchema
-from parsec.backend.vlob_service import BaseVlobService, MockedVlobService, Vlob
+from parsec.backend.vlob_service import BaseVlobService, MockedVlobService, MockedVlob, VlobAtom
 
 
 class cmd_CREATE_Schema(BaseCmdSchema):
@@ -41,10 +41,13 @@ class MockedNamedVlobService(BaseNamedVlobService):
 
     async def create(self, id, blob=None):
         # TODO: use identity handshake instead of trust_seed
-        vlob = Vlob(id=id, blob=blob, read_trust_seed='42', write_trust_seed='42')
-        # TODO: who cares about hash collision ?
+        vlob = MockedVlob(blob=blob)
+        vlob.write_trust_seed = vlob.read_trust_seed = '42'
         self._vlobs[vlob.id] = vlob
-        return vlob
+        return VlobAtom(id=vlob.id,
+                        read_trust_seed=vlob.read_trust_seed,
+                        write_trust_seed=vlob.write_trust_seed,
+                        blob=vlob.blob_versions[0])
 
     read = MockedVlobService.read
     update = MockedVlobService.update

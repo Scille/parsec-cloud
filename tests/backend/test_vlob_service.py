@@ -56,8 +56,8 @@ class TestVlobServiceAPI:
         assert ret == {
             'status': 'ok',
             'id': vlob.id,
-            'blob': vlob.blob_versions[-1],
-            'version': len(vlob.blob_versions)
+            'blob': vlob.blob,
+            'version': vlob.version
         }
 
     @pytest.mark.asyncio
@@ -109,8 +109,12 @@ class TestVlobServiceAPI:
             'blob': blob
         })
         assert ret == {'status': 'ok'}
-        assert vlob.blob_versions == ['Initial commit.', 'Next version.']
         assert called_with == (vlob.id, )
+        v1 = await vlob_svc.read(vlob.id, 1)
+        assert v1.blob == 'Initial commit.'
+        v2 = await vlob_svc.read(vlob.id, 2)
+        last = await vlob_svc.read(vlob.id)
+        assert last.blob == v2.blob == 'Next version.'
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
@@ -151,7 +155,7 @@ class TestVlobServiceAPI:
         if bad_msg.get('trust_seed') == '<trust_seed-here>':
             bad_msg['trust_seed'] = vlob.write_trust_seed
         if bad_msg.get('version') == '<version-here>':
-            bad_msg['version'] = len(vlob.blob_versions)
+            bad_msg['version'] = vlob.version
         ret = await vlob_svc.dispatch_msg(bad_msg)
         assert ret['status'] == 'bad_msg'
 

@@ -59,27 +59,19 @@ class BaseVlobService(BaseService):
     @cmd('vlob_create')
     async def _cmd_CREATE(self, session, msg):
         msg = cmd_CREATE_Schema().load(msg)
-        vlob = await self.create(msg['blob'])
+        atom = await self.create(msg['blob'])
         return {
             'status': 'ok',
-            'id': vlob.id,
-            'read_trust_seed': vlob.read_trust_seed,
-            'write_trust_seed': vlob.write_trust_seed
+            'id': atom.id,
+            'read_trust_seed': atom.read_trust_seed,
+            'write_trust_seed': atom.write_trust_seed
         }
 
     @cmd('vlob_read')
     async def _cmd_READ(self, session, msg):
         msg = cmd_READ_Schema().load(msg)
-        id = msg['id']
-        vlob = await self.read(id)
-        if vlob.read_trust_seed != msg['trust_seed']:
-            raise TrustSeedError('Invalid read trust seed.')
-        max_version = len(vlob.blob_versions)
-        version = msg.get('version', max_version)
-        if version > max_version:
-            raise VlobBadVersionError('Invalid blob version.')
-        blob = vlob.blob_versions[version - 1]
-        return {'status': 'ok', 'id': id, 'blob': blob, 'version': version}
+        atom = await self.read(msg['id'], msg.get('version'), check_trust_seed=msg['trust_seed'])
+        return {'status': 'ok', 'id': atom.id, 'blob': atom.blob, 'version': atom.version}
 
     @cmd('vlob_update')
     async def _cmd_UPDATE(self, session, msg):
@@ -87,7 +79,7 @@ class BaseVlobService(BaseService):
         vlob = await self.read(msg['id'])
         if vlob.write_trust_seed != msg['trust_seed']:
             raise TrustSeedError('Invalid write trust seed.')
-        await self.update(msg['id'], msg['version'], msg['blob'])
+        await self.update(msg['id'], msg['version'], msg['blob'], check_trust_seed=msg['trust_seed'])
         return {'status': 'ok'}
 
     async def create(self, blob=None):
@@ -100,13 +92,23 @@ class BaseVlobService(BaseService):
         raise NotImplementedError()
 
 
-class Vlob:
-    def __init__(self, id=None, blob=None, read_trust_seed=None, write_trust_seed=None):
+class VlobAtom:
+    def __init__(self, id=None, version=1, blob=None, read_trust_seed=None, write_trust_seed=None):
         # Generate opaque id if not provided
         self.id = id or uuid4().hex  # TODO uuid4 or trust seed?
         self.read_trust_seed = read_trust_seed or generate_trust_seed()
         self.write_trust_seed = write_trust_seed or generate_trust_seed()
-        self.blob_versions = [blob] if blob else ['']
+        self.blob = blob or ''
+        self.version = version
+
+
+class MockedVlob:
+    def __init__(self, *args, **kwargs):
+        atom = VlobAtom(*args, **kwargs)
+        self.id = atom.id
+        self.read_trust_seed = atom.read_trust_seed
+        self.write_trust_seed = atom.write_trust_seed
+        self.blob_versions = [atom.blob]
 
 
 class MockedVlobService(BaseVlobService):
@@ -115,20 +117,36 @@ class MockedVlobService(BaseVlobService):
         self._vlobs = {}
 
     async def create(self, blob=None):
-        vlob = Vlob(blob=blob)
-        # TODO: who cares about hash collision ?
+        vlob = MockedVlob(blob=blob)
         self._vlobs[vlob.id] = vlob
-        return vlob
+        return VlobAtom(id=vlob.id,
+                        read_trust_seed=vlob.read_trust_seed,
+                        write_trust_seed=vlob.write_trust_seed,
+                        blob=vlob.blob_versions[0])
 
-    async def read(self, id):
-        try:
-            return self._vlobs[id]
-        except KeyError:
-            raise VlobNotFound('Vlob not found.')
-
-    async def update(self, id, version, blob):
+    async def read(self, id, version=None, check_trust_seed=False):
         try:
             vlob = self._vlobs[id]
+            if check_trust_seed and vlob.read_trust_seed != check_trust_seed:
+                raise TrustSeedError('Invalid read trust seed.')
+        except KeyError:
+            raise VlobNotFound('Vlob not found.')
+        if not version:
+            version = len(vlob.blob_versions)
+        try:
+            return VlobAtom(id=vlob.id,
+                            read_trust_seed=vlob.read_trust_seed,
+                            write_trust_seed=vlob.write_trust_seed,
+                            blob=vlob.blob_versions[version - 1],
+                            version=version)
+        except IndexError:
+            raise VlobBadVersionError('Invalid blob version.')
+
+    async def update(self, id, version, blob, check_trust_seed=False):
+        try:
+            vlob = self._vlobs[id]
+            if check_trust_seed and vlob.write_trust_seed != check_trust_seed:
+                raise TrustSeedError('Invalid write trust seed.')
         except KeyError:
             raise VlobNotFound('Vlob not found.')
         if version - 1 == len(vlob.blob_versions):
