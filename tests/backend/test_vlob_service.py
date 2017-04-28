@@ -3,13 +3,12 @@ import asyncio
 
 from parsec.backend import MockedVlobService
 
-from .common import postgresql_url
+from .common import init_or_skip_parsec_postgresql
 
 
 async def bootstrap_PostgreSQLVlobService(request, event_loop):
-    module = pytest.importorskip('parsec.backend.postgresql')
-    await module._init_db(postgresql_url(), force=True)
-    svc = module.PostgreSQLVlobService(postgresql_url())
+    module, url = init_or_skip_parsec_postgresql()
+    svc = module.PostgreSQLVlobService(url)
     await svc.bootstrap()
 
     def finalize():
