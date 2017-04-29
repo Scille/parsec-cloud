@@ -67,7 +67,7 @@ class TestUserManifestService:
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_remove_dir',
                                                     'path': '/test_dir',
                                                     'group': group})
-        assert ret == {'status': 'not_found', 'label': 'Directory not found.'}
+        assert ret == {'status': 'not_found', 'label': 'Directory or file not found.'}
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
@@ -132,12 +132,12 @@ class TestUserManifestService:
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_list_dir',
                                                     'path': '/dummy',
                                                     'group': group})
-        assert ret == {'status': 'not_found', 'label': 'Directory not found.'}
+        assert ret == {'status': 'not_found', 'label': 'Directory or file not found.'}
 
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_list_dir',
                                                     'path': '/countries/dummy',
                                                     'group': group})
-        assert ret == {'status': 'not_found', 'label': 'Directory not found.'}
+        assert ret == {'status': 'not_found', 'label': 'Directory or file not found.'}
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
@@ -232,27 +232,27 @@ class TestUserManifestService:
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
     @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
-    async def test_restore(self, user_manifest_svc, group, path):
+    async def test_restore_file(self, user_manifest_svc, group, path):
         await user_manifest_svc.make_dir('/test_dir', group)
         await user_manifest_svc.create_file(path, group=group)
         current, _ = await user_manifest_svc.list_dir(path, group)
         vlob_id = current['id']
         await user_manifest_svc.delete_file(path, group)
         # Working
-        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore',
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore_file',
                                                     'vlob': vlob_id,
                                                     'group': group})
         assert ret['status'] == 'ok'
         await user_manifest_svc.list_dir(path, group)
         # Not found
-        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore',
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore_file',
                                                     'vlob': vlob_id,
                                                     'group': group})
         assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
         # Restoration path already used
         await user_manifest_svc.delete_file(path, group)
         await user_manifest_svc.create_file(path, group=group)
-        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore',
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore_file',
                                                     'vlob': vlob_id,
                                                     'group': group})
         assert ret == {'status': 'not_found', 'label': 'Restoration path already used.'}

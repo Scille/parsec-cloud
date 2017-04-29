@@ -1,8 +1,10 @@
 # No version number as these are dev tools
+aiopg
 asynctest
 blinker
 bumpversion
 coverage
+dictdiffer
 dropbox
 flake8
 freezegun

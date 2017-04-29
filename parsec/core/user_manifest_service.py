@@ -1,8 +1,11 @@
+from copy import deepcopy
 import json
 from functools import partial
 from base64 import encodebytes, decodebytes
 from datetime import datetime
 from marshmallow import fields
+
+from dictdiffer import diff, patch
 
 from parsec.service import BaseService, service, cmd
 from parsec.exceptions import ParsecError
@@ -34,6 +37,11 @@ class cmd_DELETE_FILE_Schema(BaseCmdSchema):
     group = fields.String(missing=None)
 
 
+class cmd_RESTORE_FILE_Schema(BaseCmdSchema):
+    vlob = fields.String(required=True)
+    group = fields.String(missing=None)
+
+
 class cmd_LIST_DIR_Schema(BaseCmdSchema):
     path = fields.String(required=True)
     group = fields.String(missing=None)
@@ -51,11 +59,6 @@ class cmd_REMOVE_DIR_Schema(BaseCmdSchema):
 
 class cmd_SHOW_dustbin_Schema(BaseCmdSchema):
     path = fields.String(missing=None)
-    group = fields.String(missing=None)
-
-
-class cmd_RESTORE_Schema(BaseCmdSchema):
-    vlob = fields.String(required=True)
     group = fields.String(missing=None)
 
 
@@ -86,6 +89,12 @@ class BaseUserManifestService(BaseService):
         await self.delete_file(msg['path'], msg['group'])
         return {'status': 'ok'}
 
+    @cmd('user_manifest_restore_file')
+    async def _cmd_RESTORE(self, session, msg):
+        msg = cmd_RESTORE_FILE_Schema().load(msg)
+        await self.restore_file(msg['vlob'], msg['group'])
+        return {'status': 'ok'}
+
     @cmd('user_manifest_list_dir')
     async def _cmd_LIST_DIR(self, session, msg):
         msg = cmd_LIST_DIR_Schema().load(msg)
@@ -110,12 +119,6 @@ class BaseUserManifestService(BaseService):
         dustbin = await self.show_dustbin(msg['path'], msg['group'])
         return {'status': 'ok', 'dustbin': dustbin}
 
-    @cmd('user_manifest_restore')
-    async def _cmd_RESTORE(self, session, msg):
-        msg = cmd_RESTORE_Schema().load(msg)
-        await self.restore(msg['vlob'], msg['group'])
-        return {'status': 'ok'}
-
     @cmd('user_manifest_history')
     async def _cmd_HISTORY(self, session, msg):
         msg = cmd_HISTORY_Schema().load(msg)
@@ -125,7 +128,7 @@ class BaseUserManifestService(BaseService):
     @cmd('user_manifest_load')
     # TODO event when new identity loaded in indentity service
     async def _cmd_LOAD_USER_MANIFEST(self, session, msg):
-        await self.load_user_manifest()
+        await self.load_user_manifest(reset=True)
         return {'status': 'ok'}
 
     async def create_file(self, path, group):
@@ -135,6 +138,9 @@ class BaseUserManifestService(BaseService):
         raise NotImplementedError()
 
     async def delete_file(self, path, group):
+        raise NotImplementedError()
+
+    async def restore_file(self, vlob, group):
         raise NotImplementedError()
 
     async def list_dir(self, path, group):
@@ -149,10 +155,7 @@ class BaseUserManifestService(BaseService):
     async def show_dustbin(self, path, group):
         raise NotImplementedError()
 
-    async def restore(self, vlob, group):
-        raise NotImplementedError()
-
-    async def load_user_manifest(self):
+    async def load_user_manifest(self, reset):
         raise NotImplementedError()
 
     async def load_group_manifest(self):
@@ -171,307 +174,422 @@ class BaseUserManifestService(BaseService):
         raise NotImplementedError()
 
 
+class Manifest:
+
+    def __init__(self, service, id=None, key=None, read_trust_seed=None, write_trust_seed=None):
+        self.service = service
+        self.id = id
+        self.key = key
+        self.read_trust_seed = read_trust_seed
+        self.write_trust_seed = write_trust_seed
+        self.version = 1
+        self.entries = {'/': {'id': None,
+                              'key': None,
+                              'read_trust_seed': None,
+                              'write_trust_seed': None}}
+        self.dustbin = []
+        self.original_manifest = {'entries': deepcopy(self.entries),
+                                  'dustbin': deepcopy(self.dustbin)}
+        self.handler = partial(event_handler, self.reload, self)
+
+    async def add_file(self, vlob, path):
+        if path in self.entries and vlob != self.entries[path]:
+            await self.delete_file(path)
+        self.entries[path] = vlob
+
+    async def rename_file(self, old_path, new_path, group=None):
+        if new_path in self.entries:
+            await self.delete_file(new_path)
+        if old_path not in self.entries:
+            raise(UserManifestNotFound('File not found.'))
+        self.entries[new_path] = self.entries[old_path]
+        del self.entries[old_path]
+
+    async def delete_file(self, path):
+        try:
+            entry = self.entries[path]
+        except KeyError:
+            raise UserManifestNotFound('File not found.')
+        dustbin_entry = {'removed_date': datetime.utcnow().timestamp(), 'path': path}
+        dustbin_entry.update(entry)
+        self.dustbin.append(dustbin_entry)
+        del self.entries[path]
+
+    async def restore_file(self, vlob, group=None):
+        for entry in self.dustbin:
+            if entry['id'] == vlob:
+                path = entry['path']
+                if path in self.entries:
+                    raise UserManifestNotFound('Restoration path already used.')
+                del entry['path']
+                del entry['removed_date']
+                self.dustbin[:] = [item for item in self.dustbin if item['id'] != vlob]
+                self.entries[path] = entry  # TODO recreate subdirs if deleted since deletion
+                return True
+        raise(UserManifestNotFound('Vlob not found.'))
+
+    async def list_dir(self, path, children=True):
+        if path != '/' and path not in self.entries:
+            raise UserManifestNotFound('Directory or file not found.')
+        if not children:
+            return self.entries[path]
+        results = {}
+        for entry in self.entries:
+            if entry != path and entry.startswith(path) and entry.count('/', len(path) + 1) == 0:
+                results[entry.split('/')[-1]] = self.entries[entry]
+        return results
+
+    async def make_dir(self, path):
+        if path in self.entries:
+            raise UserManifestError('already_exist', 'Directory already exists.')
+        self.entries[path] = {'id': None,
+                              'read_trust_seed': None,
+                              'write_trust_seed': None,
+                              'key': None}  # TODO set correct values
+        return self.entries[path]
+
+    async def remove_dir(self, path):
+        if path == '/':
+            raise UserManifestError('cannot_remove_root', 'Cannot remove root directory.')
+        for entry in self.entries:
+            if entry != path and entry.startswith(path):
+                raise UserManifestError('directory_not_empty', 'Directory not empty.')
+        try:
+            del self.entries[path]
+        except KeyError:
+            raise(UserManifestNotFound('Directory not found.'))
+
+    async def show_dustbin(self, path):
+        if not path:
+            return self.dustbin
+        results = [entry for entry in self.dustbin if entry['path'] == path]
+        if not results:
+            raise(UserManifestNotFound('Path not found.'))
+        return results
+
+    async def get_vlob(self):
+        return {'id': self.id,
+                'key': self.key,
+                'read_trust_seed': self.read_trust_seed,
+                'write_trust_seed': self.write_trust_seed}
+
+    async def reload_vlob(self, vlob_id):
+        # TODO invalidate old cache
+        pass
+
+    async def check_consistency(self, manifest):
+        entries = [entry for entry in list(manifest['entries'].values()) if entry['id']]
+        entries += manifest['dustbin']
+        for entry in entries:
+            try:
+                vlob = await self.service.backend_api_service.vlob_read(
+                    id=entry['id'],
+                    trust_seed=entry['read_trust_seed'])
+                encrypted_blob = vlob['blob']
+                encrypted_blob = decodebytes(encrypted_blob.encode())
+                key = decodebytes(entry['key'].encode()) if entry['key'] else None
+                await self.service.crypto_service.sym_decrypt(encrypted_blob, key)
+            except Exception:
+                return False
+        return True
+
+
+class GroupManifest(Manifest):
+
+    def __init__(self, service, id=None, key=None, read_trust_seed=None, write_trust_seed=None):
+        super().__init__(service, id, key, read_trust_seed, write_trust_seed)
+
+    async def get_delta(self):
+        manifest = {'entries': self.entries,
+                    'dustbin': self.dustbin}
+        return diff(self.original_manifest, manifest)
+
+    async def dumps(self):
+        return json.dumps({'entries': self.entries,
+                           'dustbin': self.dustbin})
+
+    async def reload(self, reset=False):
+        vlob = await self.service.backend_api_service.vlob_read(id=self.id,
+                                                                trust_seed=self.read_trust_seed)
+        key = decodebytes(self.key.encode())
+        content = await self.service.crypto_service.sym_decrypt(vlob['blob'], key)
+        if vlob['version'] <= self.version:
+            return
+        new_manifest = json.loads(content.decode())
+        if not await self.check_consistency(new_manifest):
+            raise(UserManifestError('Group manifest not consistent.'))
+        self.original_manifest = new_manifest
+        if not reset:
+            delta = await self.get_delta()
+            new_manifest = patch(delta, new_manifest)
+        self.entries = new_manifest['entries']
+        self.dustbin = new_manifest['dustbin']
+        self.version = vlob['version']
+        # Subscribe to events
+        await self.service.backend_api_service.connect_event('on_vlob_updated',
+                                                             self.id,
+                                                             self.handler)
+
+    async def save(self):
+        if self.id and not list(await self.get_delta()):
+            return
+        blob = await self.dumps()
+        if self.key:
+            key = key = decodebytes(self.key.encode())
+        else:
+            key = None
+        key, encrypted_blob = await self.service.crypto_service.sym_encrypt(blob.encode(), key)
+        if self.id:
+            self.version += 1
+            await self.service.backend_api_service.vlob_update(
+                id=self.id,
+                version=self.version,
+                trust_seed=self.write_trust_seed,
+                blob=encrypted_blob.decode()
+            )
+        else:
+            vlob = await self.service.backend_api_service.vlob_create(blob=encrypted_blob.decode())
+            self.id = vlob['id']
+            self.key = encodebytes(key).decode()
+            self.read_trust_seed = vlob['read_trust_seed']
+            self.write_trust_seed = vlob['write_trust_seed']
+
+    async def reencrypt(self):
+        blob = await self.dumps()
+        key, encrypted_blob = await self.service.crypto_service.sym_encrypt(blob.encode())
+        new_vlob = await self.service.backend_api_service.vlob_create(
+            blob=encrypted_blob.decode()
+        )
+        self.id = new_vlob['id']
+        self.key = encodebytes(key).decode()
+        self.read_trust_seed = new_vlob['read_trust_seed']
+        self.write_trust_seed = new_vlob['write_trust_seed']
+        self.version = 1
+
+
+class UserManifest(Manifest):
+
+    def __init__(self, service, id):
+        super().__init__(service, id)
+        self.group_manifests = {}
+        self.original_manifest = {'entries': deepcopy(self.entries),
+                                  'dustbin': deepcopy(self.dustbin),
+                                  'groups': deepcopy(self.group_manifests)}
+
+    async def get_delta(self):
+        manifest = {'entries': self.entries,
+                    'dustbin': self.dustbin,
+                    'groups': await self.get_group_vlobs()}
+        return diff(self.original_manifest, manifest)
+
+    async def dumps(self):
+        return json.dumps({'entries': self.entries,
+                           'dustbin': self.dustbin,
+                           'groups': await self.get_group_vlobs()})
+
+    async def get_group_vlobs(self, group=None):
+        if group:
+            groups = [group]
+        else:
+            groups = self.group_manifests.keys()
+        results = {}
+        try:
+            for group in groups:
+                results[group] = await self.group_manifests[group].get_vlob()
+        except Exception:
+            raise(UserManifestNotFound('Group not found.'))
+        return results
+
+    async def get_group_manifest(self, group):
+        try:
+            return self.group_manifests[group]
+        except Exception:
+            raise(UserManifestNotFound('Group not found.'))
+
+    async def reencrypt_group_manifest(self, group):
+        try:
+            group_manifest = self.group_manifests[group]
+        except Exception:
+            raise(UserManifestNotFound('Group not found.'))
+        await group_manifest.reencrypt()
+
+    async def create_group_manifest(self, group):
+        if group in self.group_manifests:
+            raise(UserManifestError('Group already exists.'))
+        group_manifest = GroupManifest(self.service)
+        self.group_manifests[group] = group_manifest
+
+    async def import_group_vlob(self, group, vlob):
+        if group in self.group_manifests and vlob != await self.group_manifests[group].get_vlob():
+            await self.remove_group(group)
+        group_manifest = GroupManifest(self.service, **vlob)
+        await group_manifest.reload(reset=True)
+        self.group_manifests[group] = group_manifest
+
+    async def remove_group(self, group):
+        # TODO deleted group is not moved in dusbin, but hackers could continue to read/write files
+        try:
+            del self.group_manifests[group]
+        except Exception:
+            raise(UserManifestNotFound('Group not found.'))
+
+    async def reload(self, reset=False):
+        # TODO: Named vlob should use private key handshake instead of trust_seed
+        try:
+            vlob = await self.service.backend_api_service.named_vlob_read(id=self.id,
+                                                                          trust_seed='42')
+        except Exception:
+            vlob = await self.service.backend_api_service.named_vlob_create(id=self.id)
+            await self.save()
+            return  # TODO return or reload manually? Triggered events should reload automatically
+        content = await self.service.identity_service.decrypt(vlob['blob'])
+        if vlob['version'] <= self.version:
+            return
+        new_manifest = json.loads(content.decode())
+        if not await self.check_consistency(new_manifest):
+            raise(UserManifestError('User manifest not consistent.'))
+        self.original_manifest = new_manifest
+        if not reset:
+            delta = await self.get_delta()
+            new_manifest = patch(delta, new_manifest)
+        self.entries = new_manifest['entries']
+        self.dustbin = new_manifest['dustbin']
+        self.version = vlob['version']
+        for group, group_vlob in new_manifest['groups'].items():
+            await self.import_group_vlob(group, group_vlob)
+        # Update event subscriptions
+        # TODO update events subscriptions
+        # Subscribe to events
+        # TODO where to unsubscribe?
+        # await self.service.backend_api_service.connect_event('on_named_vlob_updated',
+        #                                                      self.id,
+        #                                                      self.handler)
+
+    async def save(self, recursive=True):
+        if self.id and not await self.get_delta():
+            return
+        if recursive:
+            for group_manifest in self.group_manifests.values():
+                await group_manifest.save()
+        self.version += 1
+        blob = json.dumps({'entries': self.entries,
+                           'dustbin': self.dustbin,
+                           'groups': await self.get_group_vlobs(),
+                           }).encode()
+        encrypted_blob = await self.service.identity_service.encrypt(blob)
+        await self.service.backend_api_service.named_vlob_update(
+            id=self.id,
+            version=self.version,
+            blob=encrypted_blob.decode(),
+            trust_seed='42')
+
+
 class UserManifestService(BaseUserManifestService):
 
     backend_api_service = service('BackendAPIService')
     crypto_service = service('CryptoService')
     file_service = service('FileService')
     identity_service = service('IdentityService')
-    share_service = service('ShareService')
 
     def __init__(self):
         super().__init__()
-        self.groups = {}
-        self.entries = {'user_manifest': {}, 'group_manifests': {}}
-        self.dustbins = {'user_manifest': [], 'group_manifests': {}}
-        self.versions = {'user_manifest': 1, 'group_manifests': {}}
+        self.user_manifest = None
         self.handler = None
 
-    async def get_entries_and_dustbin(self, group=None):
-        subcategory = 'group_manifests' if group else 'user_manifest'
-        try:
-            if group:
-                return self.entries[subcategory][group], self.dustbins[subcategory][group]
-            else:
-                return self.entries[subcategory], self.dustbins[subcategory]
-        except Exception:
-            raise UserManifestNotFound('Entries and dustbin not found.')
-
     async def create_group_manifest(self, group):
-        if group in self.groups:
-            raise(UserManifestError('Group already exists.'))
-        self.entries['group_manifests'][group] = {}
-        self.dustbins['group_manifests'][group] = []
-        self.versions['group_manifests'][group] = 1
-        vlob = await self.backend_api_service.vlob_create()
-        key, _ = await self.crypto_service.sym_encrypt('')
-        self.groups[group] = {'id': vlob['id'],
-                              'key': encodebytes(key).decode(),
-                              'read_trust_seed': vlob['read_trust_seed'],
-                              'write_trust_seed': vlob['write_trust_seed']}
-        await self.make_dir('/', group)
-        await self.load_group_manifest(group)
+        manifest = await self.get_manifest()
+        vlob = await manifest.create_group_manifest(group)
+        await manifest.save()
+        return vlob
 
     async def reencrypt_group_manifest(self, group):
-        vlob = await self.get_properties(group=group)
-        # Retrieve manifest
-        manifest_vlob = await self.backend_api_service.vlob_read(
-            id=vlob['id'],
-            trust_seed=vlob['read_trust_seed'])
-        manifest_blob = manifest_vlob['blob']
-        manifest_key = decodebytes(vlob['key'].encode())
-        manifest_content = await self.crypto_service.sym_decrypt(manifest_blob, manifest_key)
-        # Re-encrypt manifest
-        blob_key, encrypted_manifest_blob = await self.crypto_service.sym_encrypt(manifest_content)
-        ret = await self.backend_api_service.vlob_create(encrypted_manifest_blob.decode())
-        del ret['status']
-        ret['key'] = encodebytes(blob_key).decode()
-        self.groups[group] = ret
-        self.versions['group_manifests'][group] = 1
-        await self.load_group_manifest(group)
-        await self.save_user_manifest()
+        manifest = await self.get_manifest()
+        await manifest.reencrypt_group_manifest(group)
 
     async def create_file(self, path, content='', group=None):
-        manifest, _ = await self.get_entries_and_dustbin(group)
-        if path in manifest:
-            raise UserManifestError('already_exist', 'File already exists.')
+        manifest = await self.get_manifest(group)
+        try:
+            await manifest.list_dir(path, children=False)
+        except Exception:
+            vlob = await self.file_service.create(content)
+            await manifest.add_file(vlob, path)
+            await manifest.save()
+            return vlob
         else:
-            manifest[path] = await self.file_service.create(content)
-            await self.save_manifest(group)
-        return manifest[path]
+            raise(UserManifestError('already_exist', 'File already exists.'))
 
     async def rename_file(self, old_path, new_path, group=None):
-        manifest, _ = await self.get_entries_and_dustbin(group)
-        manifest[new_path] = manifest[old_path]
-        del manifest[old_path]
-        await self.save_manifest(group)
+        manifest = await self.get_manifest(group)
+        await manifest.rename_file(old_path, new_path)
+        await manifest.save()
 
     async def delete_file(self, path, group=None):
-        manifest, dustbin = await self.get_entries_and_dustbin(group)
-        try:
-            entry = {'removed_date': datetime.utcnow().timestamp(), 'path': path}
-            entry.update(manifest[path])
-            dustbin.append(entry)
-            del manifest[path]
-            await self.save_manifest(group)
-        except KeyError:
-            raise UserManifestNotFound('File not found.')
+        manifest = await self.get_manifest(group)
+        await manifest.delete_file(path)
+        await manifest.save()
+
+    async def restore_file(self, vlob, group=None):
+        manifest = await self.get_manifest(group)
+        await manifest.restore_file(vlob)
 
     async def list_dir(self, path, group=None):
-        manifest, _ = await self.get_entries_and_dustbin(group)
-        if path != '/' and path not in manifest:
-            raise UserManifestNotFound('Directory not found.')
-        results = {}
-        for entry in manifest:
-            if entry != path and entry.startswith(path) and entry.count('/', len(path) + 1) == 0:
-                results[entry.split('/')[-1]] = manifest[entry]
-        return manifest[path], results
+        manifest = await self.get_manifest(group)
+        directory = await manifest.list_dir(path, children=False)
+        children = await manifest.list_dir(path, children=True)
+        return directory, children
 
     async def make_dir(self, path, group=None):
-        manifest, _ = await self.get_entries_and_dustbin(group)
-        if path in manifest:
-            raise UserManifestError('already_exist', 'Directory already exists.')
-        else:
-            manifest[path] = {'id': None,
-                              'read_trust_seed': None,
-                              'write_trust_seed': None,
-                              'key': None}  # TODO set correct values
-            await self.save_manifest(group)
-        return manifest[path]
+        manifest = await self.get_manifest(group)
+        await manifest.make_dir(path)
+        await manifest.save()
 
     async def remove_dir(self, path, group=None):
-        manifest, _ = await self.get_entries_and_dustbin(group)
-        if path == '/':
-            raise UserManifestError('cannot_remove_root', 'Cannot remove root directory.')
-        for entry in manifest:
-            if entry != path and entry.startswith(path):
-                raise UserManifestError('directory_not_empty', 'Directory not empty.')
-        try:
-            del manifest[path]
-            await self.save_manifest(group)
-        except KeyError:
-            raise(UserManifestNotFound('Directory not found.'))
+        manifest = await self.get_manifest(group)
+        await manifest.remove_dir(path)
+        await manifest.save()
 
-    async def show_dustbin(self, path, group=None):
-        _, dustbin = await self.get_entries_and_dustbin(group)
-        if not path:
-            return dustbin
-        results = [entry for entry in dustbin if entry['path'] == path]
-        if not results:
-            raise(UserManifestNotFound('Path not found.'))
-        return results
+    async def show_dustbin(self, path=None, group=None):
+        manifest = await self.get_manifest(group)
+        return await manifest.show_dustbin(path)
 
-    async def restore(self, vlob, group=None):
-        manifest, dustbin = await self.get_entries_and_dustbin(group)
-        for entry in dustbin:
-            if entry['id'] == vlob:
-                path = entry['path']
-                if path in manifest:
-                    raise UserManifestNotFound('Restoration path already used.')
-                del entry['path']
-                del entry['removed_date']
-                dustbin[:] = [item for item in dustbin if item['id'] != vlob]
-                manifest[path] = entry  # TODO recreate subdirs if deleted since deletion
-                return True
-        raise(UserManifestNotFound('Vlob not found.'))
-
-    async def load_user_manifest(self):
-        if not self.handler:
-            self.handler = partial(event_handler, self.reload_vlob, self)
+    async def load_user_manifest(self, reset=False):
         identity = await self.identity_service.get_identity()
-        # TODO: Named vlob should use private key handshake instead of trust_seed
-        try:
-            vlob = await self.backend_api_service.named_vlob_read(id=identity, trust_seed='42')
-        except Exception:
-            vlob = await self.backend_api_service.named_vlob_create(id=identity)
-            await self.make_dir('/')
-            vlob = await self.backend_api_service.named_vlob_read(id=identity, trust_seed='42')
-        blob = vlob['blob']
-        content = await self.identity_service.decrypt(blob)
-        content = content.decode()
-        manifest = json.loads(content)
-        if await self.check_consistency(manifest):
-            self.entries['user_manifest'] = manifest['entries']
-            self.groups = manifest['groups']
-            self.dustbins['user_manifest'] = manifest['dustbin']
-            self.versions = {'user_manifest': vlob['version'], 'group_manifests': {}}
-            # Subscribe to events
-            vlobs = list(self.groups.values())
-            vlobs += list(self.entries['user_manifest'].values())
-            vlobs += self.dustbins['user_manifest']
-            # TODO where to unsubscribe?
-            for vlob in vlobs:
-                if vlob['id']:
-                    await self.backend_api_service.connect_event('on_vlob_updated',
-                                                                 vlob['id'],
-                                                                 self.handler)
-        else:
-            raise(UserManifestError('User manifest not consistent.'))
-        for group in manifest['groups']:
-            await self.load_group_manifest(group)
+        if not self.user_manifest:
+            self.user_manifest = UserManifest(self, identity)
+            reset = True
+        await self.user_manifest.reload(reset)
 
-    async def load_group_manifest(self, group):
-        if not self.handler:
-            self.handler = partial(event_handler, self.reload_vlob, self)
-        properties = await self.get_properties(group=group)
-        vlob = await self.backend_api_service.vlob_read(id=properties['id'],
-                                                        trust_seed=properties['read_trust_seed'])
-        blob = vlob['blob']
-        version = vlob['version']
-        key = decodebytes(properties['key'].encode())
-        content = await self.crypto_service.sym_decrypt(blob, key)
-        content = content.decode()
-        manifest = json.loads(content)
-        if await self.check_consistency(manifest):
-            self.entries['group_manifests'][group] = manifest['entries']
-            self.dustbins['group_manifests'][group] = manifest['dustbin']
-            self.versions['group_manifests'][group] = version
-            # Subscribe to events
-            for vlob in list(manifest['entries'].values()) + manifest['dustbin']:
-                if vlob['id']:
-                    await self.backend_api_service.connect_event('on_vlob_updated',
-                                                                 vlob['id'],
-                                                                 self.handler)
-        else:
-            raise(UserManifestError('Group manifest not consistent.'))
-
-    async def save_manifest(self, group):
-        if group:
-            await self.save_group_manifest(group)
-        else:
-            await self.save_user_manifest()
-
-    async def save_user_manifest(self):
-        identity = await self.identity_service.get_identity()
-        self.versions['user_manifest'] += 1
-        blob = json.dumps({'entries': self.entries['user_manifest'],
-                           'groups': self.groups,
-                           'dustbin': self.dustbins['user_manifest']}).encode()
-        encrypted_blob = await self.identity_service.encrypt(blob)
-        await self.backend_api_service.named_vlob_update(
-            id=identity,
-            version=self.versions['user_manifest'],
-            blob=encrypted_blob.decode(),
-            trust_seed='42')
-
-    async def save_group_manifest(self, group):
-        manifest, dustbin = await self.get_entries_and_dustbin(group)
-        self.versions['group_manifests'][group] += 1
-        blob = json.dumps({'entries': manifest,
-                           'dustbin': dustbin}).encode()
-        key = decodebytes(self.groups[group]['key'].encode())
-        _, encrypted_blob = await self.crypto_service.sym_encrypt(blob, key)
-        await self.backend_api_service.vlob_update(
-            id=self.groups[group]['id'],
-            version=self.versions['group_manifests'][group],
-            trust_seed=self.groups[group]['write_trust_seed'],
-            blob=encrypted_blob.decode()
-        )
-
-    async def import_group_manifest_vlob(self, vlob, group):
-        manifest_vlob = await self.backend_api_service.vlob_read(
-            id=vlob['id'],
-            trust_seed=vlob['read_trust_seed'])
-        manifest_blob = manifest_vlob['blob']
-        manifest_key = decodebytes(vlob['key'].encode())
-        manifest_content = await self.crypto_service.sym_decrypt(manifest_blob, manifest_key)
-        manifest_content = manifest_content.decode()
-        manifest = json.loads(manifest_content)
-        try:
-            consistent = await self.check_consistency(manifest)
-        except Exception:
-            raise(UserManifestError('Invalid imported group manifest format.'))
-        if not consistent:
-            raise(UserManifestError('Group manifest not consistent.'))
-        self.groups[group] = vlob
-        await self.load_group_manifest(group)
-        await self.save_user_manifest()
+    async def import_group_vlob(self, vlob, group):
+        manifest = await self.get_manifest()
+        await manifest.import_group_vlob(group, vlob)
+        await manifest.save(recursive=False)
 
     async def import_file_vlob(self, vlob, path, group=None):
+        manifest = await self.get_manifest(group)
+        await manifest.add_file(path, vlob)
         if group:
-            # Import a file in group manifest
-            # TODO check path already exist
-            self.entries['group_manifests'][group][path] = vlob
+            await manifest.save()
         else:
-            # Import a file in user manifest
-            # TODO check path already exist
-            self.entries['user_manifest'][path] = vlob
-        await self.save_manifest(group)
+            await manifest.save(recursive=False)
 
-    async def reload_vlob(self, vlob_id):
-        # vlob = get_properties(vlob_id)
-        # TODO invalidate old cache
-        pass
-
-    async def check_consistency(self, manifest):
-        entries = list(manifest['entries'].values())
-        entries += manifest['dustbin']
-        for entry in entries:
-            if entry['id']:
-                try:
-                    vlob = await self.backend_api_service.vlob_read(
-                        id=entry['id'],
-                        trust_seed=entry['read_trust_seed'])
-                    encrypted_blob = vlob['blob']
-                    encrypted_blob = decodebytes(encrypted_blob.encode())
-                    key = decodebytes(entry['key'].encode()) if entry['key'] else None
-                    await self.crypto_service.sym_decrypt(encrypted_blob, key)
-                except Exception:
-                    return False
-        return True
+    async def get_manifest(self, group=None):
+        if not self.user_manifest:
+            raise(UserManifestNotFound('User manifest not found.'))
+        if group:
+            return await self.user_manifest.get_group_manifest(group)
+        else:
+            return self.user_manifest
 
     async def get_properties(self, path=None, id=None, group=None, dustbin=False):  # TODO refactor?
         if group and not id and not path:
-            return self.groups[group]
-        groups = [group] if group else [None] + list(self.groups.keys())
+            manifest = await self.get_manifest(group)
+            return await manifest.get_vlob()
+        groups = [group] if group else [None] + list(await self.user_manifest.get_group_vlobs())
         for current_group in groups:
-            manifest, manifest_dustbin = await self.get_entries_and_dustbin(current_group)
-            item = manifest_dustbin if dustbin else manifest
-            if path:
-                try:
-                    return item[path]
-                except Exception:
-                    pass
+            manifest = await self.get_manifest(current_group)
+            item = manifest.dustbin if dustbin else manifest.entries
+            if path in item:
+                return item[path]
             elif id:
                 for entry in item.values():  # TODO bad complexity
                     if entry['id'] == id:
