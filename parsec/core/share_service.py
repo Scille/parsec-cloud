@@ -155,7 +155,7 @@ class ShareService(BaseShareService):
                                                                group=message['group'])
         else:
             path = '/share-' + message['id']
-            await self.user_manifest_service.import_file_vlob(message, path=path)
+            await self.user_manifest_service.import_file_vlob(path, message)
 
     async def group_create(self, name):
         await self.backend_api_service.group_create(name)

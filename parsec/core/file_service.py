@@ -96,7 +96,7 @@ class FileService(BaseFileService):
     identity_service = service('IdentityService')
     user_manifest_service = service('UserManifestService')
 
-    async def create(self, content=''):
+    async def create(self, content=b''):
         blob = await self._build_file_blocks(content)
         # Encrypt blob
         blob = json.dumps(blob)
