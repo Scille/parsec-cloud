@@ -151,11 +151,11 @@ class ShareService(BaseShareService):
         message = await self.identity_service.decrypt(messages[-1])
         message = json.loads(message.decode())
         if 'group' in message and not isinstance(message['group'], dict):  # TODO message format?
-            await self.user_manifest_service.import_group_manifest_vlob(message['vlob'],
-                                                                        group=message['group'])
+            await self.user_manifest_service.import_group_vlob(message['vlob'],
+                                                               group=message['group'])
         else:
             path = '/share-' + message['id']
-            await self.user_manifest_service.import_file_vlob(message, path=path)
+            await self.user_manifest_service.import_file_vlob(path, message)
 
     async def group_create(self, name):
         await self.backend_api_service.group_create(name)

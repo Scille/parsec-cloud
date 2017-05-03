@@ -96,7 +96,7 @@ class FileService(BaseFileService):
     identity_service = service('IdentityService')
     user_manifest_service = service('UserManifestService')
 
-    async def create(self, content=''):
+    async def create(self, content=b''):
         blob = await self._build_file_blocks(content)
         # Encrypt blob
         blob = json.dumps(blob)
@@ -112,7 +112,7 @@ class FileService(BaseFileService):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
         except Exception:
-            raise FileNotFound('Vlob not found.')
+            raise(FileNotFound('Vlob not found.'))
         vlob = await self.backend_api_service.vlob_read(id, properties['read_trust_seed'])
         version = vlob['version']
         blob = vlob['blob']
