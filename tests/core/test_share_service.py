@@ -211,7 +211,14 @@ class TestShareServiceAPI:
     @pytest.mark.parametrize('identities', [
         [],
         ['81DBCF6EB9C8B2965A65ACE5520D903047D69DC9', '3C3FA85FB9736362497EB23DC0485AC10E6274C7']])
-    async def test_add_identities(self, share_svc, group, identities, admin):
+    async def test_add_identities(self,
+                                  backend_api_svc,
+                                  crypto_svc,
+                                  share_svc,
+                                  user_manifest_svc,
+                                  group,
+                                  identities,
+                                  admin):
         origin_group = copy.deepcopy(group)
         # Adding duplicates identities should not raise errors
         for i in range(0, 2):
@@ -230,6 +237,14 @@ class TestShareServiceAPI:
                 assert ret == {'status': 'ok',
                                'admins': sorted(origin_group['admins']),
                                'users': sorted(identities + origin_group['users'])}
+            group_manifest = await user_manifest_svc.get_manifest(origin_group['name'])
+            shared_vlob = await group_manifest.get_vlob()
+            for identity in identities:  # TODO try with more users?
+                messages = await backend_api_svc.message_get(identity)
+                encrypted_vlob = messages[-1]
+                received_vlob = await crypto_svc.asym_decrypt(encrypted_vlob)
+                received_vlob = json.loads(received_vlob.decode())
+                assert shared_vlob == received_vlob['vlob']
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
@@ -263,9 +278,16 @@ class TestShareServiceAPI:
     @pytest.mark.parametrize('identities', [
         [],
         ['81DBCF6EB9C8B2965A65ACE5520D903047D69DC9', '3C3FA85FB9736362497EB23DC0485AC10E6274C7']])
-    async def test_remove_identities(self, share_svc, group, identities, admin):
+    async def test_remove_identities(self,
+                                     backend_api_svc,
+                                     crypto_svc,
+                                     share_svc,
+                                     user_manifest_svc,
+                                     group,
+                                     identities,
+                                     admin):
         origin_group = copy.deepcopy(group)
-        # Initial identity that should not be erased further
+        # Identities that will be removed
         ret = await share_svc.dispatch_msg({'cmd': 'group_add_identities',
                                             'name': origin_group['name'],
                                             'identities': identities,
@@ -273,6 +295,7 @@ class TestShareServiceAPI:
         assert ret['status'] == 'ok'
         # Removing non-existant identities should not raise errors
         for i in range(0, 2):
+            initial_vlob = await user_manifest_svc.get_properties(group=origin_group['name'])
             ret = await share_svc.dispatch_msg({'cmd': 'group_remove_identities',
                                                 'name': origin_group['name'],
                                                 'identities': identities,
@@ -288,6 +311,21 @@ class TestShareServiceAPI:
                 assert ret == {'status': 'ok',
                                'admins': sorted(origin_group['admins']),
                                'users': sorted(origin_group['users'])}
+            new_vlob = await user_manifest_svc.get_properties(group=origin_group['name'])
+            assert initial_vlob != new_vlob
+            remaining_identities = origin_group['admins'] if admin else origin_group['users']
+            # Remaining identities should receive the new vlob
+            for identity in remaining_identities:  # TODO try with more users?
+                messages = await backend_api_svc.message_get(identity)
+                assert len(messages) == 2 + i
+                encrypted_vlob = messages[-1]
+                received_vlob = await crypto_svc.asym_decrypt(encrypted_vlob)
+                received_vlob = json.loads(received_vlob.decode())
+                assert received_vlob['vlob'] == new_vlob
+            # Removed identities should not receive the new vlob
+            for identity in identities:  # TODO try with more users?
+                messages = await backend_api_svc.message_get(identity)
+                assert len(messages) == 1
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [

@@ -334,9 +334,19 @@ class GroupManifest(Manifest):
     def __init__(self, service, id=None, key=None, read_trust_seed=None, write_trust_seed=None):
         super().__init__(service, id, key, read_trust_seed, write_trust_seed)
 
+    async def update_vlob(self, new_vlob):
+        self.id = new_vlob['id']
+        self.key = new_vlob['key']
+        self.read_trust_seed = new_vlob['read_trust_seed']
+        self.write_trust_seed = new_vlob['write_trust_seed']
+
     async def reload(self, reset=False):
         if not self.id:
             raise(UserManifestError('missing_id', 'Group manifest has no ID.'))
+        # Subscribe to events
+        await self.service.backend_api_service.connect_event('on_vlob_updated',
+                                                             self.id,
+                                                             self.handler)
         vlob = await self.service.backend_api_service.vlob_read(id=self.id,
                                                                 trust_seed=self.read_trust_seed)
         key = decodebytes(self.key.encode())
@@ -355,10 +365,6 @@ class GroupManifest(Manifest):
         self.dustbin = patched_new_manifest['dustbin']
         self.version = vlob['version']
         self.original_manifest = deepcopy(new_manifest)
-        # Subscribe to events
-        await self.service.backend_api_service.connect_event('on_vlob_updated',
-                                                             self.id,
-                                                             self.handler)
 
     async def save(self):
         if self.id and not await self.is_dirty():
@@ -369,19 +375,18 @@ class GroupManifest(Manifest):
         else:
             key = None
         key, encrypted_blob = await self.service.crypto_service.sym_encrypt(blob.encode(), key)
-        if self.id:
-            self.version += 1
-            await self.service.backend_api_service.vlob_update(
-                id=self.id,
-                version=self.version,
-                trust_seed=self.write_trust_seed,
-                blob=encrypted_blob.decode())
-        else:
-            vlob = await self.service.backend_api_service.vlob_create(blob=encrypted_blob.decode())
+        if not self.id:
+            vlob = await self.service.backend_api_service.vlob_create()
             self.id = vlob['id']
             self.key = encodebytes(key).decode()
             self.read_trust_seed = vlob['read_trust_seed']
             self.write_trust_seed = vlob['write_trust_seed']
+        self.version += 1
+        await self.service.backend_api_service.vlob_update(
+            id=self.id,
+            version=self.version,
+            trust_seed=self.write_trust_seed,
+            blob=encrypted_blob.decode())
         self.original_manifest = json.loads(blob)
 
     async def reencrypt(self):
@@ -450,14 +455,12 @@ class UserManifest(Manifest):
         group_manifest = GroupManifest(self.service)
         self.group_manifests[group] = group_manifest
 
-    async def import_group_vlob(self, group, vlob, replace=False):
+    async def import_group_vlob(self, group, vlob):
         if group in self.group_manifests:
-            if replace:
-                await self.remove_group(group)
-            else:
-                raise(UserManifestError('already_exists', 'Group already exists.'))
+            await self.group_manifests[group].update_vlob(vlob)
+            await self.group_manifests[group].reload(reset=False)
         group_manifest = GroupManifest(self.service, **vlob)
-        await group_manifest.reload(reset=False)
+        await group_manifest.reload(reset=True)
         self.group_manifests[group] = group_manifest
 
     async def remove_group(self, group):
@@ -491,7 +494,7 @@ class UserManifest(Manifest):
         self.dustbin = patched_new_manifest['dustbin']
         self.version = vlob['version']
         for group, group_vlob in patched_new_manifest['groups'].items():
-            await self.import_group_vlob(group, group_vlob, replace=True)
+            await self.import_group_vlob(group, group_vlob)
         self.original_manifest = deepcopy(new_manifest)
         # Update event subscriptions
         # TODO update events subscriptions
@@ -560,9 +563,9 @@ class UserManifestService(BaseUserManifestService):
         await manifest.reencrypt_group_manifest(group)
         await manifest.save(recursive=False)
 
-    async def import_group_vlob(self, group, vlob, replace=False):
+    async def import_group_vlob(self, group, vlob):
         manifest = await self.get_manifest()
-        await manifest.import_group_vlob(group, vlob, replace)
+        await manifest.import_group_vlob(group, vlob)
         await manifest.save(recursive=False)
 
     async def import_file_vlob(self, path, vlob, group=None):
@@ -621,10 +624,11 @@ class UserManifestService(BaseUserManifestService):
 
     async def load_user_manifest(self):
         identity = await self.identity_service.get_identity()
-        if self.user_manifest and (await self.user_manifest.get_vlob())['id'] == identity:
-            raise(UserManifestError('already_loaded', 'User manifest is already loaded.'))
-        self.user_manifest = UserManifest(self, identity)
-        await self.user_manifest.reload(reset=True)
+        reset = False
+        if not self.user_manifest or (await self.user_manifest.get_vlob())['id'] != identity:
+            self.user_manifest = UserManifest(self, identity)
+            reset = True
+        await self.user_manifest.reload(reset)
 
     async def get_manifest(self, group=None):
         if not self.user_manifest:

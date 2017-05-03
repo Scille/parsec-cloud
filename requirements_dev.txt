@@ -4,7 +4,6 @@ asynctest
 blinker
 bumpversion
 coverage
-dictdiffer
 dropbox
 flake8
 freezegun
