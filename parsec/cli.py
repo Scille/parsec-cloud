@@ -79,7 +79,8 @@ def core(socket, backend_host):
 @click.option('--port', '-P', default=None, type=int, help=('Port to listen on (default: 6777)'))
 @click.option('--no-client-auth', is_flag=True,
               help='Disable authentication handshake on client connection (default: false)')
-def backend(host, port, gnupg_homedir, no_client_auth):
+@click.option('--store', '-s', default=None, help="Store configuration (default: in memory)")
+def backend(host, port, gnupg_homedir, no_client_auth, store):
     host = host or environ.get('HOST', 'localhost')
     port = port or int(environ.get('PORT', 6777))
     pub_keys_service = GNUPGPubKeysService(gnupg_homedir)
@@ -88,11 +89,24 @@ def backend(host, port, gnupg_homedir, no_client_auth):
     else:
         server = WebSocketServer(pub_keys_service.handshake)
     server.register_service(pub_keys_service)
-    server.register_service(InMemoryMessageService())
-    server.register_service(MockedGroupService())
-    server.register_service(MockedNamedVlobService())
-    server.register_service(MockedVlobService())
-    print('Starting parsec backend on %s:%s' % (host, port))
+    if store:
+        if store.startswith('postgres://'):
+            store_type = 'PostgreSQL'
+            from parsec.backend import postgresql
+            server.register_service(postgresql.PostgreSQLService(store))
+            server.register_service(postgresql.PostgreSQLMessageService())
+            server.register_service(postgresql.PostgreSQLGroupService())
+            server.register_service(postgresql.PostgreSQLNamedVlobService())
+            server.register_service(postgresql.PostgreSQLVlobService())
+        else:
+            raise SystemExit('Unknown store `%s` (should be a postgresql db url).' % store)
+    else:
+        store_type = 'mocked in memory'
+        server.register_service(InMemoryMessageService())
+        server.register_service(MockedGroupService())
+        server.register_service(MockedNamedVlobService())
+        server.register_service(MockedVlobService())
+    print('Starting parsec backend on %s:%s with store %s' % (host, port, store_type))
     server.start(host, port)
     print('Bye ;-)')
 

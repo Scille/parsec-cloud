@@ -1,12 +1,35 @@
 import copy
 import pytest
+import asyncio
 
+from parsec.server import BaseServer
 from parsec.backend import MockedGroupService
 
+from .common import init_or_skiptest_parsec_postgresql
 
-@pytest.fixture(params=[MockedGroupService, ])
-def group_svc(request):
-    return request.param()
+
+async def bootstrap_PostgreSQLGroupService(request, event_loop):
+    module, url = await init_or_skiptest_parsec_postgresql()
+
+    server = BaseServer()
+    server.register_service(module.PostgreSQLService(url))
+    svc = module.PostgreSQLGroupService(url)
+    server.register_service(svc)
+    await server.bootstrap_services()
+
+    def finalize():
+        event_loop.run_until_complete(server.teardown_services())
+
+    request.addfinalizer(finalize)
+    return svc
+
+
+@pytest.fixture(params=[MockedGroupService, bootstrap_PostgreSQLGroupService, ], ids=['mocked', 'postgresql'])
+def group_svc(request, event_loop):
+    if asyncio.iscoroutinefunction(request.param):
+        return event_loop.run_until_complete(request.param(request, event_loop))
+    else:
+        return request.param()
 
 
 @pytest.fixture

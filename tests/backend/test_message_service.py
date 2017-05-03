@@ -1,29 +1,34 @@
 import pytest
+import asyncio
 
+from parsec.server import BaseServer
 from parsec.backend import InMemoryMessageService
-from .common import postgresql_url
+
+from .common import init_or_skiptest_parsec_postgresql
 
 
 async def bootstrap_PostgreSQLMessageService(request, event_loop):
-    module = pytest.importorskip('parsec.backend.postgresql')
-    await module._init_db(postgresql_url(), force=True)
-    svc = module.PostgreSQLMessageService(postgresql_url())
-    await svc.bootstrap()
+    module, url = await init_or_skiptest_parsec_postgresql()
+
+    server = BaseServer()
+    server.register_service(module.PostgreSQLService(url))
+    msg_svc = module.PostgreSQLMessageService()
+    server.register_service(msg_svc)
+    await server.bootstrap_services()
 
     def finalize():
-        event_loop.run_until_complete(svc.teardown())
+        event_loop.run_until_complete(server.teardown_services())
 
     request.addfinalizer(finalize)
-    return svc
+    return msg_svc
 
 
-def bootstrap_InMemoryMessageService(request, event_loop):
-    return InMemoryMessageService()
-
-
-@pytest.fixture(params=[bootstrap_InMemoryMessageService, bootstrap_PostgreSQLMessageService], ids=['in_memory', 'postgresql'])
+@pytest.fixture(params=[InMemoryMessageService, bootstrap_PostgreSQLMessageService], ids=['in_memory', 'postgresql'])
 def message_svc(request, event_loop):
-    return request.param(request, event_loop)
+    if asyncio.iscoroutinefunction(request.param):
+        return event_loop.run_until_complete(request.param(request, event_loop))
+    else:
+        return request.param()
 
 
 class TestMessageServiceAPI:
@@ -89,3 +94,22 @@ class TestMessageServiceAPI:
     async def test_bad_msg_get(self, message_svc, bad_msg):
         ret = await message_svc.dispatch_msg(bad_msg)
         assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
+    async def test_on_arrived_event(self, message_svc):
+        called_with = '<not called>'
+
+        def on_event(*args):
+            nonlocal called_with
+            called_with = args
+
+        message_svc.on_arrived.connect(on_event, 'alice@test.com')
+        # Message to wrong person doesn't trigger event
+        ret = await message_svc.dispatch_msg({
+            'cmd': 'message_new', 'recipient': 'bob@test.com', 'body': 'Hi dude !'})
+        assert ret == {'status': 'ok'}
+        assert called_with == '<not called>'
+        ret = await message_svc.dispatch_msg({
+            'cmd': 'message_new', 'recipient': 'alice@test.com', 'body': 'Hi dude !'})
+        assert ret == {'status': 'ok'}
+        assert called_with == ('alice@test.com', )

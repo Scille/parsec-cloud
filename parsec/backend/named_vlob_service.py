@@ -29,7 +29,9 @@ class BaseNamedVlobService(BaseService):
     _cmd_READ = cmd('named_vlob_read')(BaseVlobService._cmd_READ)
     _cmd_UPDATE = cmd('named_vlob_update')(BaseVlobService._cmd_UPDATE)
 
-    create = BaseVlobService.create
+    async def create(self, id, blob=None):
+        raise NotImplementedError()
+
     read = BaseVlobService.read
     update = BaseVlobService.update
 
@@ -41,7 +43,7 @@ class MockedNamedVlobService(BaseNamedVlobService):
 
     async def create(self, id, blob=None):
         # TODO: use identity handshake instead of trust_seed
-        vlob = MockedVlob(blob=blob)
+        vlob = MockedVlob(id=id, blob=blob)
         vlob.write_trust_seed = vlob.read_trust_seed = '42'
         self._vlobs[vlob.id] = vlob
         return VlobAtom(id=vlob.id,

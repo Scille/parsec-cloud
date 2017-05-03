@@ -5,7 +5,7 @@ import blinker
 
 from parsec.backend import (
     MockedGroupService, InMemoryMessageService, MockedVlobService, MockedNamedVlobService,
-    VlobNotFound, VlobBadVersionError
+    VlobNotFound
 )
 from parsec.backend.vlob_service import VlobError
 from parsec.service import BaseService
@@ -86,8 +86,6 @@ class BackendAPIService(BaseBackendAPIService):
             return ret
         elif status == 'not_found':
             raise VlobNotFound(ret['label'])
-        elif status == 'bad_version':
-            raise VlobBadVersionError(ret['label'])
         else:
             raise VlobError(ret['label'])
 

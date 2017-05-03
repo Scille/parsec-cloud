@@ -3,23 +3,24 @@ import asyncio
 
 from parsec.backend import MockedVlobService
 
-from .common import init_or_skip_parsec_postgresql
+from parsec.server import BaseServer
+from .common import init_or_skiptest_parsec_postgresql
 
 
 async def bootstrap_PostgreSQLVlobService(request, event_loop):
-    module, url = init_or_skip_parsec_postgresql()
+    module, url = await init_or_skiptest_parsec_postgresql()
+
+    server = BaseServer()
+    server.register_service(module.PostgreSQLService(url))
     svc = module.PostgreSQLVlobService(url)
-    await svc.bootstrap()
+    server.register_service(svc)
+    await server.bootstrap_services()
 
     def finalize():
-        event_loop.run_until_complete(svc.teardown())
+        event_loop.run_until_complete(server.teardown_services())
 
     request.addfinalizer(finalize)
     return svc
-
-
-def bootstrap_MockedVlobService(request, event_loop):
-    return MockedVlobService()
 
 
 @pytest.fixture(params=[MockedVlobService, bootstrap_PostgreSQLVlobService, ], ids=['mocked', 'postgresql'])
@@ -122,7 +123,7 @@ class TestVlobServiceAPI:
             called_with = args
 
         blob = 'Next version.'
-        vlob_svc.on_updated.connect(on_event, sender=vlob.id)
+        vlob_svc.on_updated.connect(on_event, vlob.id)
         ret = await vlob_svc.dispatch_msg({
             'cmd': 'vlob_update',
             'id': vlob.id,

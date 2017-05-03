@@ -78,33 +78,33 @@ class MockedGroupService(BaseGroupService):
 
     def __init__(self):
         super().__init__()
-        self.groups = {}
+        self._groups = {}
 
     async def create(self, name):
-        if name in self.groups:
-            raise(GroupError('already_exist', 'Group already exist.'))
-        self.groups[name] = {'admins': [], 'users': []}
+        if name in self._groups:
+            raise GroupError('already_exist', 'Group already exist.')
+        self._groups[name] = {'admins': [], 'users': []}
 
     async def read(self, name):
         try:
-            return self.groups[name]
-        except Exception:
-            raise(GroupNotFound('Group not found.'))
+            return self._groups[name]
+        except KeyError:
+            raise GroupNotFound('Group not found.')
 
     async def add_identities(self, name, identities, admin=False):
         subgroup = 'admins' if admin else 'users'
         try:
-            group = self.groups[name][subgroup]
-        except Exception:
-            raise(GroupNotFound('Group not found.'))
+            group = self._groups[name][subgroup]
+        except KeyError:
+            raise GroupNotFound('Group not found.')
         group += identities
         group = list(set(group))
-        self.groups[name][subgroup] = group
+        self._groups[name][subgroup] = group
 
     async def remove_identities(self, name, identities, admin=False):
         subgroup = 'admins' if admin else 'users'
         try:
-            group = self.groups[name][subgroup]
-        except Exception:
-            raise(GroupNotFound('Group not found.'))
-        self.groups[name][subgroup] = [identity for identity in group if identity not in identities]
+            group = self._groups[name][subgroup]
+        except KeyError:
+            raise GroupNotFound('Group not found.')
+        self._groups[name][subgroup] = [identity for identity in group if identity not in identities]

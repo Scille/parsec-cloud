@@ -1,11 +1,34 @@
 import pytest
+import asyncio
 
+from parsec.server import BaseServer
 from parsec.backend import MockedNamedVlobService
 
+from .common import init_or_skiptest_parsec_postgresql
 
-@pytest.fixture(params=[MockedNamedVlobService, ])
-def named_vlob_svc(request):
-    return request.param()
+
+async def bootstrap_PostgreSQLNamedVlobService(request, event_loop):
+    module, url = await init_or_skiptest_parsec_postgresql()
+
+    server = BaseServer()
+    server.register_service(module.PostgreSQLService(url))
+    svc = module.PostgreSQLNamedVlobService()
+    server.register_service(svc)
+    await server.bootstrap_services()
+
+    def finalize():
+        event_loop.run_until_complete(server.teardown_services())
+
+    request.addfinalizer(finalize)
+    return svc
+
+
+@pytest.fixture(params=[MockedNamedVlobService, bootstrap_PostgreSQLNamedVlobService, ], ids=['mocked', 'postgresql'])
+def named_vlob_svc(request, event_loop):
+    if asyncio.iscoroutinefunction(request.param):
+        return event_loop.run_until_complete(request.param(request, event_loop))
+    else:
+        return request.param()
 
 
 @pytest.fixture
@@ -50,8 +73,8 @@ class TestNamedVlobServiceAPI:
         assert ret == {
             'status': 'ok',
             'id': 'jdoe@test.com',
-            'blob': vlob.blob_versions[-1],
-            'version': len(vlob.blob_versions)
+            'blob': vlob.blob,
+            'version': vlob.version
         }
 
     @pytest.mark.asyncio
@@ -72,8 +95,12 @@ class TestNamedVlobServiceAPI:
             'blob': blob
         })
         assert ret == {'status': 'ok'}
-        assert vlob.blob_versions == ['Initial commit.', 'Next version.']
         assert called_with == (vlob.id, )
+        v1 = await named_vlob_svc.read(vlob.id, 1)
+        assert v1.blob == 'Initial commit.'
+        v2 = await named_vlob_svc.read(vlob.id, 2)
+        last = await named_vlob_svc.read(vlob.id)
+        assert last.blob == v2.blob == 'Next version.'
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
@@ -114,7 +141,7 @@ class TestNamedVlobServiceAPI:
         if bad_msg.get('trust_seed') == '<trust_seed-here>':
             bad_msg['trust_seed'] = vlob.write_trust_seed
         if bad_msg.get('version') == '<version-here>':
-            bad_msg['version'] = len(vlob.blob_versions)
+            bad_msg['version'] = vlob.version
         ret = await named_vlob_svc.dispatch_msg(bad_msg)
         assert ret['status'] == 'bad_msg'
 
@@ -126,7 +153,7 @@ class TestNamedVlobServiceAPI:
                'trust_seed': vlob.read_trust_seed,
                'version': bad_version}
         ret = await named_vlob_svc.dispatch_msg(msg)
-        assert ret['status'] == 'bad_version'
+        assert ret['status'] == 'not_found'
 
     @pytest.mark.asyncio
     async def test_update_bad_version(self, named_vlob_svc, vlob):
@@ -134,4 +161,4 @@ class TestNamedVlobServiceAPI:
         msg = {'cmd': 'named_vlob_update', 'id': vlob.id, 'trust_seed': vlob.write_trust_seed,
                'version': bad_version, 'blob': 'Next version.'}
         ret = await named_vlob_svc.dispatch_msg(msg)
-        assert ret['status'] == 'bad_version'
+        assert ret['status'] == 'not_found'
