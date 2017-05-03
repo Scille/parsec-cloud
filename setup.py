@@ -27,7 +27,9 @@ requirements = [
     "gnupg==2.2.0",
     "dropbox==7.2.1",
     "pydrive==1.3.1",
-    "python-dateutil==2.6.0"
+    "python-dateutil==2.6.0",
+    "psycopg2==2.7.1",
+    "aiopg==0.13.0"
 ]
 
 test_requirements = [
