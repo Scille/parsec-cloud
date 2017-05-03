@@ -151,8 +151,7 @@ class ShareService(BaseShareService):
         message = await self.identity_service.decrypt(messages[-1])
         message = json.loads(message.decode())
         if 'group' in message and not isinstance(message['group'], dict):  # TODO message format?
-            await self.user_manifest_service.import_group_vlob(message['vlob'],
-                                                               group=message['group'])
+            await self.user_manifest_service.import_group_vlob(message['group'], message['vlob'])
         else:
             path = '/share-' + message['id']
             await self.user_manifest_service.import_file_vlob(path, message)
@@ -176,9 +175,9 @@ class ShareService(BaseShareService):
 
     async def group_remove_identities(self, name, identities, admin=False):
         # TODO check admin
-        await self.backend_api_service.group_remove_identities(name, identities, admin)
         group = await self.backend_api_service.group_read(name)
         old_identities = group['admins'] if admin else group['users']
+        await self.backend_api_service.group_remove_identities(name, identities, admin)
         await self.user_manifest_service.reencrypt_group_manifest(name)
         vlob = await self.user_manifest_service.get_properties(group=name)
         message = {'group': name, 'vlob': vlob}

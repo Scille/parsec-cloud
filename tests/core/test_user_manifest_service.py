@@ -375,7 +375,7 @@ class TestGroupManifest:
         await group_manifest_2.add_file('/bar', file_vlob_2)
         assert await group_manifest_2.get_version() == 1
         await group_manifest_2.reload(reset=True)
-        assert await group_manifest_2.get_version() == 2
+        assert await group_manifest_2.get_version() == 3
         delta = await group_manifest_2.get_delta()
         assert list(delta) == []
         manifest = await group_manifest_2.dumps()
@@ -394,9 +394,9 @@ class TestGroupManifest:
         await group_manifest.save()
         file_vlob_2 = await file_svc.create(content)
         await group_manifest.add_file('/bar', file_vlob_2)
-        assert await group_manifest.get_version() == 2
+        assert await group_manifest.get_version() == 3
         await group_manifest.reload(reset=True)
-        assert await group_manifest.get_version() == 2
+        assert await group_manifest.get_version() == 3
         delta = await group_manifest.get_delta()
         assert list(delta) == []
         manifest = await group_manifest.dumps()
@@ -420,7 +420,7 @@ class TestGroupManifest:
         await group_manifest_2.add_file('/bar', file_vlob_2)
         assert await group_manifest_2.get_version() == 1
         await group_manifest_2.reload(reset=False)
-        assert await group_manifest_2.get_version() == 2
+        assert await group_manifest_2.get_version() == 3
         delta = await group_manifest_2.get_delta()
         assert list(delta) == [('add', 'entries', [('/bar', file_vlob_2)])]
         manifest = await group_manifest_2.dumps()
@@ -439,9 +439,9 @@ class TestGroupManifest:
         await group_manifest.save()
         file_vlob_2 = await file_svc.create(content)
         await group_manifest.add_file('/bar', file_vlob_2)
-        assert await group_manifest.get_version() == 2
+        assert await group_manifest.get_version() == 3
         await group_manifest.reload(reset=False)
-        assert await group_manifest.get_version() == 2
+        assert await group_manifest.get_version() == 3
         delta = await group_manifest.get_delta()
         assert list(delta) == [('add', 'entries', [('/bar', file_vlob_2)])]
         manifest = await group_manifest.dumps()
@@ -467,10 +467,10 @@ class TestGroupManifest:
         await group_manifest.add_file('/foo', file_vlob)
         await group_manifest.save()
         assert await group_manifest.get_vlob() == manifest_vlob
-        assert await group_manifest.get_version() == 2
+        assert await group_manifest.get_version() == 3
         # Save without modifications
         await group_manifest.save()
-        assert await group_manifest.get_version() == 2
+        assert await group_manifest.get_version() == 3
         # TODO assert called methods
 
     @pytest.mark.asyncio
@@ -479,7 +479,7 @@ class TestGroupManifest:
         vlob = await file_svc.create(content)
         await group_manifest.add_file('/foo', vlob)
         await group_manifest.save()
-        assert group_manifest.version == 2
+        assert group_manifest.version == 3
         dump = await group_manifest.dumps()
         dump = json.loads(dump)
         old_id = group_manifest.id
@@ -631,11 +631,9 @@ class TestUserManifest:
         assert await retrieved_manifest.get_vlob() == vlob
         await group_manifest.reencrypt()
         new_vlob = await group_manifest.get_vlob()
-        await user_manifest.import_group_vlob('share', new_vlob, replace=True)
+        await user_manifest.import_group_vlob('share', new_vlob)
         retrieved_manifest = await user_manifest.get_group_manifest('share')
         assert await retrieved_manifest.get_vlob() == new_vlob
-        with pytest.raises(UserManifestError):
-            await user_manifest.import_group_vlob('share', new_vlob, replace=False)
 
     @pytest.mark.asyncio
     async def test_remove_group(self, user_manifest):
@@ -824,12 +822,10 @@ class TestUserManifestService:
         assert await retrieved_manifest.get_vlob() == vlob
         await group_manifest.reencrypt()
         new_vlob = await group_manifest.get_vlob()
-        await user_manifest_svc.import_group_vlob('share', new_vlob, replace=True)
+        await user_manifest_svc.import_group_vlob('share', new_vlob)
         await user_manifest.reload(reset=True)
         retrieved_manifest = await user_manifest.get_group_manifest('share')
         assert await retrieved_manifest.get_vlob() == new_vlob
-        with pytest.raises(UserManifestError):
-            await user_manifest_svc.import_group_vlob('share', new_vlob, replace=False)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
@@ -1083,7 +1079,8 @@ class TestUserManifestService:
         await user_manifest_svc.create_file('test')
         await user_manifest_svc.list_dir('test')
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_load'})
-        assert ret == {'status': 'already_loaded', 'label': 'User manifest is already loaded.'}
+        assert ret == {'status': 'ok'}
+        await user_manifest_svc.list_dir('test')
         identity = '3C3FA85FB9736362497EB23DC0485AC10E6274C7'
         manifest = await user_manifest_svc.get_manifest()
         assert manifest.id != identity
