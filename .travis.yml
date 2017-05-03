@@ -6,10 +6,14 @@ matrix:
     include:
         - python: 3.5
           env: OPENSSL=1.1.0c
+services:
+  - postgresql
 install:
 - bash ./.travis/install.sh
 - pip install -U coveralls
 - pip install -Ur requirements_dev.txt
+before_script:
+  - psql -c 'create database parsec_test;' -U postgres
 script:
 - bash ./.travis/run.sh
 after_success:
