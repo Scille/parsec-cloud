@@ -5,8 +5,6 @@ from base64 import encodebytes, decodebytes
 from datetime import datetime
 from marshmallow import fields
 
-from dictdiffer import diff, patch
-
 from parsec.service import BaseService, service, cmd
 from parsec.exceptions import ParsecError
 from parsec.tools import BaseCmdSchema, event_handler
@@ -206,12 +204,76 @@ class Manifest(object):
         raise NotImplementedError()
 
     async def is_dirty(self):
-        return list(await self.get_delta()) != []
+        dirty = False
+        delta = await self.get_delta()
+        for category in delta.keys():
+            for operation in delta[category].keys():
+                if delta[category][operation]:
+                    dirty = True
+        return dirty
 
     async def get_delta(self):
-        manifest = {'entries': self.entries,
-                    'dustbin': self.dustbin}
-        return diff(self.original_manifest, manifest)
+        # Entries
+        added_entries = {}
+        changed_entries = {}
+        removed_entries = {}
+        for path, vlob in self.entries.items():
+            try:
+                ori_vlob = self.original_manifest['entries'][path]
+                if ori_vlob != vlob:
+                    changed_entries[path] = (ori_vlob, vlob)
+            except KeyError:
+                added_entries[path] = vlob
+        for path, vlob in self.original_manifest['entries'].items():
+            try:
+                self.entries[path]
+            except KeyError:
+                removed_entries[path] = vlob
+        # Dustbin
+        added_dust_entries = []
+        removed_dust_entries = []
+        for vlob in self.dustbin:
+            if vlob not in self.original_manifest['dustbin']:
+                added_dust_entries.append(vlob)
+        for vlob in self.original_manifest['dustbin']:
+            if vlob not in self.dustbin:
+                removed_dust_entries.append(vlob)
+        return {'entries': {'added': added_entries,
+                            'changed': changed_entries,
+                            'removed': removed_entries},
+                'dustbin': {'added': added_dust_entries,
+                            'removed': removed_dust_entries}}
+
+    async def patch(self, manifest, delta):
+        new_manifest = deepcopy(manifest)
+        for category in delta.keys():
+            if category == 'dustbin':
+                continue
+            for path, entry in delta[category]['added'].items():
+                if path in new_manifest[category] and new_manifest[category][path] != entry:
+                    new_manifest[category][path + '-conflict'] = new_manifest[category][path]
+                new_manifest[category][path] = entry
+            for path, entries in delta[category]['changed'].items():
+                old_entry, new_entry = entries
+                if path in new_manifest[category]:
+                    current_entry = new_manifest[category][path]
+                    if current_entry not in [old_entry, new_entry]:
+                        new_manifest[category][path + '-conflict'] = current_entry
+                    new_manifest[category][path] = new_entry
+                else:
+                    new_manifest[category][path + '-deleted'] = new_entry
+            for path, entry in delta[category]['removed'].items():
+                if path in new_manifest[category]:
+                    if new_manifest[category][path] != entry:
+                        new_manifest[category][path + '-recreated'] = new_manifest[category][path]
+                    del new_manifest[category][path]
+        for entry in delta['dustbin']['added']:
+            if entry not in new_manifest['dustbin']:
+                new_manifest['dustbin'].append(entry)
+        for entry in delta['dustbin']['removed']:
+            if entry in new_manifest['dustbin']:
+                new_manifest['dustbin'].remove(entry)
+        return new_manifest
 
     async def get_vlob(self):
         return {'id': self.id,
@@ -354,17 +416,16 @@ class GroupManifest(Manifest):
         if not reset and vlob['version'] <= self.version:
             return
         new_manifest = json.loads(content.decode())
+        backup_new_manifest = deepcopy(new_manifest)
         if not await self.check_consistency(new_manifest):
             raise(UserManifestError('not_consistent', 'Group manifest not consistent.'))
-        if reset:
-            patched_new_manifest = new_manifest
-        else:
+        if not reset:
             delta = await self.get_delta()
-            patched_new_manifest = patch(delta, new_manifest)
-        self.entries = patched_new_manifest['entries']
-        self.dustbin = patched_new_manifest['dustbin']
+            new_manifest = await self.patch(new_manifest, delta)
+        self.entries = new_manifest['entries']
+        self.dustbin = new_manifest['dustbin']
         self.version = vlob['version']
-        self.original_manifest = deepcopy(new_manifest)
+        self.original_manifest = backup_new_manifest
 
     async def save(self):
         if self.id and not await self.is_dirty():
@@ -410,10 +471,29 @@ class UserManifest(Manifest):
                                   'groups': deepcopy(self.group_manifests)}
 
     async def get_delta(self):
-        manifest = {'entries': self.entries,
-                    'dustbin': self.dustbin,
-                    'groups': await self.get_group_vlobs()}
-        return diff(self.original_manifest, manifest)
+        delta = await super().get_delta()
+        # Groups
+        added_groups = {}
+        changed_groups = {}
+        removed_groups = {}
+        for group, manifest in self.group_manifests.items():
+            vlob = await manifest.get_vlob()
+            try:
+                ori_vlob = self.original_manifest['groups'][group]
+                if ori_vlob != vlob:
+                    changed_groups[group] = (ori_vlob, vlob)
+            except KeyError:
+                added_groups[group] = vlob
+        for group, ori_vlob in self.original_manifest['groups'].items():
+            try:
+                self.group_manifests[group]
+            except KeyError:
+                removed_groups[group] = vlob
+        delta['groups'] = {}
+        delta['groups']['added'] = added_groups
+        delta['groups']['changed'] = changed_groups
+        delta['groups']['removed'] = removed_groups
+        return delta
 
     async def dumps(self, original_manifest=False):
         if original_manifest:
@@ -483,19 +563,18 @@ class UserManifest(Manifest):
         if not reset and vlob['version'] <= self.version:
             return
         new_manifest = json.loads(content.decode())
+        backup_new_manifest = deepcopy(new_manifest)
         if not await self.check_consistency(new_manifest):
             raise(UserManifestError('not_consistent', 'User manifest not consistent.'))
-        if reset:
-            patched_new_manifest = new_manifest
-        else:
+        if not reset:
             delta = await self.get_delta()
-            patched_new_manifest = patch(delta, new_manifest)
-        self.entries = patched_new_manifest['entries']
-        self.dustbin = patched_new_manifest['dustbin']
+            new_manifest = await self.patch(new_manifest, delta)
+        self.entries = new_manifest['entries']
+        self.dustbin = new_manifest['dustbin']
         self.version = vlob['version']
-        for group, group_vlob in patched_new_manifest['groups'].items():
+        for group, group_vlob in new_manifest['groups'].items():
             await self.import_group_vlob(group, group_vlob)
-        self.original_manifest = deepcopy(new_manifest)
+        self.original_manifest = backup_new_manifest
         # Update event subscriptions
         # TODO update events subscriptions
         # Subscribe to events

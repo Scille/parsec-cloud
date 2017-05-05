@@ -20,7 +20,6 @@ requirements = [
     "simplejson==3.10.0",
     "pyaml==16.12.2",
     "click==6.7",
-    "dictdiffer==0.6.1",
     "blinker==1.4",
     "websockets==3.3",
     "marshmallow==2.13.5",

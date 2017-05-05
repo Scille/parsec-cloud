@@ -98,19 +98,108 @@ class TestManifest:
     async def test_get_delta(self, manifest):
         # Empty delta
         delta = await manifest.get_delta()
-        assert list(delta) == []
+        assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                         'dustbin': {'added': [], 'removed': []}}
         # Delta new entry in entries
         vlob = {'id': 'i123', 'key': 'k123', 'read_trust_seed': 'r123', 'write_trust_seed': 'w123'}
         await manifest.add_file('/foo', vlob)
         delta = await manifest.get_delta()
-        assert list(delta) == [('add', 'entries', [('/foo', vlob)])]
+        assert delta == {'entries': {'added': {'/foo': vlob}, 'changed': {}, 'removed': {}},
+                         'dustbin': {'added': [], 'removed': []}}
         # Delta new entry in dustbin
         with freeze_time('2012-01-01') as frozen_datetime:
             await manifest.delete_file('/foo')
             delta = await manifest.get_delta()
             dustbin_entry = {'path': '/foo', 'removed_date': frozen_datetime().timestamp()}
             dustbin_entry.update(vlob)
-            assert list(delta) == [('add', 'dustbin', [(0, dustbin_entry)])]
+            assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                             'dustbin': {'added': [dustbin_entry], 'removed': []}}
+        # TODO too intrusive?
+        vlob_1 = {'id': 'vlob_1'}
+        vlob_2 = {'id': 'vlob_2'}
+        vlob_3 = {'id': 'vlob_3'}
+        vlob_4 = {'id': 'vlob_4'}
+        vlob_5 = {'id': 'vlob_5'}
+        vlob_6 = {'id': 'vlob_6'}
+        vlob_7 = {'id': 'vlob_7'}
+        vlob_8 = {'id': 'vlob_8'}
+        vlob_9 = {'id': 'vlob_9'}
+        manifest.original_manifest = {
+            'entries': {'/a': vlob_1, '/b': vlob_2, '/c': vlob_3},
+            'dustbin': [vlob_5, vlob_6, vlob_7]
+        }
+        manifest.entries = {'/a': vlob_6, '/b': vlob_2, '/d': vlob_4}
+        manifest.dustbin = [vlob_7, vlob_8, vlob_9]
+        delta = await manifest.get_delta()
+        assert delta == {
+            'entries': {'added': {'/d': vlob_4},
+                        'changed': {'/a': (vlob_1, vlob_6)},
+                        'removed': {'/c': vlob_3}},
+            'dustbin': {'added': [vlob_8, vlob_9],
+                        'removed': [vlob_5, vlob_6]}
+        }
+
+    @pytest.mark.asyncio
+    async def test_patch(self, manifest):
+        # TODO too intrusive?
+        vlob_1 = {'id': 'vlob_1'}
+        vlob_2 = {'id': 'vlob_2'}
+        vlob_3 = {'id': 'vlob_3'}
+        vlob_4 = {'id': 'vlob_4'}
+        vlob_5 = {'id': 'vlob_5'}
+        vlob_6 = {'id': 'vlob_6'}
+        vlob_7 = {'id': 'vlob_7'}
+        vlob_8 = {'id': 'vlob_8'}
+        vlob_9 = {'id': 'vlob_9'}
+        manifest.original_manifest = {
+            'entries': {'/A-B-C': vlob_1,  # Conflict between B and C, save C-conflict
+                        '/A-B-nil': vlob_2,  # Recover B, save B-deleted
+                        '/A-A-nil': vlob_4,  # Delete A
+                        '/A-A-A': vlob_5,
+                        '/A-nil-A': vlob_6,
+                        '/A-nil-B': vlob_7},  # Recover B, save B-recreated
+            'dustbin': [vlob_4, vlob_5, vlob_6]
+        }
+        manifest.entries = {'/A-B-C': vlob_2,
+                            '/A-B-nil': vlob_3,
+                            '/A-A-nil': vlob_4,
+                            '/A-A-A': vlob_5,
+                            '/nil-A-A': vlob_6,  # Resolve conflict silently
+                            '/nil-A-B': vlob_7,  # Conflict between A and B, save B-conflict
+                            '/nil-A-nil': vlob_9}  # Recover A, save A-deleted
+        manifest.dustbin = [vlob_6, vlob_7, vlob_8]
+        # Recreate entries and dustbin from original manifest
+        backup_original = deepcopy(manifest.original_manifest)
+        delta = await manifest.get_delta()
+        patched_manifest = await manifest.patch(backup_original, delta)
+        assert backup_original == manifest.original_manifest
+        assert patched_manifest['entries'] == manifest.entries
+        assert patched_manifest['dustbin'] == manifest.dustbin
+        # Reapply patch on already patched manifest
+        patched_manifest_2 = await manifest.patch(patched_manifest, delta)
+        assert patched_manifest == patched_manifest_2
+        # Apply patch on a different source manifest
+        new_manifest = {
+            'entries': {'/A-B-C': vlob_3,
+                        '/A-A-A': vlob_5,
+                        '/nil-A-A': vlob_6,
+                        '/nil-A-B': vlob_8,
+                        '/A-nil-A': vlob_6,
+                        '/A-nil-B': vlob_8},
+            'dustbin': [vlob_5, vlob_6, vlob_7]
+        }
+        patched_manifest = await manifest.patch(new_manifest, delta)
+        assert patched_manifest == {
+            'entries': {'/A-B-C-conflict': vlob_3,
+                        '/A-B-C': vlob_2,
+                        '/A-B-nil-deleted': vlob_3,
+                        '/A-A-A': vlob_5,
+                        '/A-nil-B-recreated': vlob_8,
+                        '/nil-A-A': vlob_6,
+                        '/nil-A-B-conflict': vlob_8,
+                        '/nil-A-B': vlob_7,
+                        '/nil-A-nil': vlob_9},
+            'dustbin': [{'id': 'vlob_6'}, {'id': 'vlob_7'}, {'id': 'vlob_8'}]}
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('payload', [
@@ -377,7 +466,8 @@ class TestGroupManifest:
         await group_manifest_2.reload(reset=True)
         assert await group_manifest_2.get_version() == 3
         delta = await group_manifest_2.get_delta()
-        assert list(delta) == []
+        assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                         'dustbin': {'added': [], 'removed': []}}
         manifest = await group_manifest_2.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -398,7 +488,8 @@ class TestGroupManifest:
         await group_manifest.reload(reset=True)
         assert await group_manifest.get_version() == 3
         delta = await group_manifest.get_delta()
-        assert list(delta) == []
+        assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                         'dustbin': {'added': [], 'removed': []}}
         manifest = await group_manifest.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -422,7 +513,8 @@ class TestGroupManifest:
         await group_manifest_2.reload(reset=False)
         assert await group_manifest_2.get_version() == 3
         delta = await group_manifest_2.get_delta()
-        assert list(delta) == [('add', 'entries', [('/bar', file_vlob_2)])]
+        assert delta == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
+                         'dustbin': {'added': [], 'removed': []}}
         manifest = await group_manifest_2.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -443,7 +535,8 @@ class TestGroupManifest:
         await group_manifest.reload(reset=False)
         assert await group_manifest.get_version() == 3
         delta = await group_manifest.get_delta()
-        assert list(delta) == [('add', 'entries', [('/bar', file_vlob_2)])]
+        assert delta == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
+                         'dustbin': {'added': [], 'removed': []}}
         manifest = await group_manifest.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -520,7 +613,9 @@ class TestUserManifest:
     async def test_get_delta(self, user_manifest_svc, user_manifest):
         # Empty delta
         delta = await user_manifest.get_delta()
-        assert list(delta) == []
+        assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                         'dustbin': {'added': [], 'removed': []},
+                         'groups': {'added': {}, 'changed': {}, 'removed': {}}}
         # Delta new entry in entries
         vlob = {'id': 'i123', 'key': 'k123', 'read_trust_seed': 'r123', 'write_trust_seed': 'w123'}
         await user_manifest.add_file('/foo', vlob)
@@ -529,10 +624,9 @@ class TestUserManifest:
         group_vlob = await group_manifest.get_vlob()
         await user_manifest.import_group_vlob('share', group_vlob)
         delta = await user_manifest.get_delta()
-        delta_list = list(delta)
-        assert len(delta_list) == 2
-        assert ('add', 'entries', [('/foo', vlob)]) in delta_list
-        assert ('add', 'groups', [('share', group_vlob)]) in delta_list
+        assert delta == {'entries': {'added': {'/foo': vlob}, 'changed': {}, 'removed': {}},
+                         'dustbin': {'added': [], 'removed': []},
+                         'groups': {'added': {'share': group_vlob}, 'changed': {}, 'removed': {}}}
         await user_manifest.remove_group('share')
         # Delta new entry in dustbin
         with freeze_time('2012-01-01') as frozen_datetime:
@@ -540,7 +634,9 @@ class TestUserManifest:
             delta = await user_manifest.get_delta()
             dustbin_entry = {'path': '/foo', 'removed_date': frozen_datetime().timestamp()}
             dustbin_entry.update(vlob)
-            assert list(delta) == [('add', 'dustbin', [(0, dustbin_entry)])]
+            assert delta == {'entries': {'changed': {}, 'added': {}, 'removed': {}},
+                             'dustbin': {'added': [dustbin_entry], 'removed': []},
+                             'groups': {'changed': {}, 'added': {}, 'removed': {}}}
 
     @pytest.mark.asyncio
     async def test_dumps_current_manifest(self, file_svc, user_manifest):
@@ -676,7 +772,9 @@ class TestUserManifest:
         await user_manifest_2.reload(reset=True)
         assert await user_manifest_2.get_version() == 3
         delta = await user_manifest_2.get_delta()
-        assert list(delta) == []
+        assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                         'dustbin': {'added': [], 'removed': []},
+                         'groups': {'added': {}, 'changed': {}, 'removed': {}}}
         manifest = await user_manifest_2.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -697,7 +795,9 @@ class TestUserManifest:
         await user_manifest.reload(reset=True)
         assert await user_manifest.get_version() == 3
         delta = await user_manifest.get_delta()
-        assert list(delta) == []
+        assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                         'dustbin': {'added': [], 'removed': []},
+                         'groups': {'added': {}, 'changed': {}, 'removed': {}}}
         manifest = await user_manifest.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -721,7 +821,9 @@ class TestUserManifest:
         await user_manifest_2.reload(reset=False)
         assert await user_manifest_2.get_version() == 3
         delta = await user_manifest_2.get_delta()
-        assert list(delta) == [('add', 'entries', [('/bar', file_vlob_2)])]
+        assert delta == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
+                         'dustbin': {'added': [], 'removed': []},
+                         'groups': {'added': {}, 'changed': {}, 'removed': {}}}
         manifest = await user_manifest_2.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -742,7 +844,9 @@ class TestUserManifest:
         await user_manifest.reload(reset=False)
         assert await user_manifest.get_version() == 3
         delta = await user_manifest.get_delta()
-        assert list(delta) == [('add', 'entries', [('/bar', file_vlob_2)])]
+        assert delta == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
+                         'dustbin': {'added': [], 'removed': []},
+                         'groups': {'added': {}, 'changed': {}, 'removed': {}}}
         manifest = await user_manifest.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
