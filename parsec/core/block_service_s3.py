@@ -57,7 +57,6 @@ class S3BlockService(BaseBlockService):
             raise BlockNotFound(str(exc))
         return {
             'content': obj['Body'].read().decode(),
-            'access_timestamp': float(obj['Metadata']['created']),
             'creation_timestamp': float(obj['Metadata']['created'])
         }
 
@@ -69,7 +68,4 @@ class S3BlockService(BaseBlockService):
             obj = await get_event_loop().run_in_executor(None, func)
         except (S3ClientError, S3EndpointConnectionError) as exc:
             raise BlockNotFound(str(exc))
-        return {
-            'access_timestamp': float(obj['Metadata']['created']),
-            'creation_timestamp': float(obj['Metadata']['created'])
-        }
+        return {'creation_timestamp': float(obj['Metadata']['created'])}

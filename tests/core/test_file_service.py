@@ -132,14 +132,13 @@ class TestFileService:
                                'atime': mtime,
                                'size': 3}
                 frozen_datetime.tick()
-                atime = frozen_datetime().timestamp()
                 ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
                 ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
                 assert ret == {'status': 'ok',
                                'id': id,
                                'ctime': mtime,
                                'mtime': mtime,
-                               'atime': atime,
+                               'atime': mtime,
                                'size': 3}
             # Unknown file
             ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': '1234'})

@@ -201,7 +201,7 @@ class FileService(BaseFileService):
         return {'id': id,
                 'ctime': stat['creation_timestamp'],
                 'mtime': stat['creation_timestamp'],
-                'atime': stat['access_timestamp'],
+                'atime': stat['creation_timestamp'],  # TODO: don't provide this field if we don't know it ?
                 'size': blob['size']}
 
     async def history(self, id):

@@ -108,10 +108,8 @@ class TestBlockServiceAPI:
         with freeze_time('2012-01-01') as frozen_datetime:
             creation_timestamp = frozen_datetime().timestamp()
             frozen_datetime.tick()
-            access_timestamp = frozen_datetime().timestamp()
             ret = await block_svc.dispatch_msg({'cmd': 'block_read', 'id': block_id})
             assert {'status': 'ok',
-                    'access_timestamp': access_timestamp,
                     'creation_timestamp': creation_timestamp,
                     'content': block_content} == ret
         # Unknown block
@@ -139,7 +137,6 @@ class TestBlockServiceAPI:
             creation_timestamp = frozen_datetime().timestamp()
             ret = await block_svc.dispatch_msg({'cmd': 'block_stat', 'id': block_id})
             assert {'status': 'ok',
-                    'access_timestamp': creation_timestamp,
                     'creation_timestamp': creation_timestamp} == ret
         # Unknown block
         ret = await block_svc.dispatch_msg({'cmd': 'block_stat', 'id': '1234'})
