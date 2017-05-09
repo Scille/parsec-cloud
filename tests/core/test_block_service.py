@@ -53,7 +53,7 @@ class MockedS3Client:
 async def bootstrap_S3BlockService(request, event_loop):
     module = pytest.importorskip('parsec.core.block_service_s3')
     svc = module.S3BlockService()
-    await svc.init('region-1', 'parsec-test', '<dummy-s3-key>', '<dummy-s3-secret>')
+    svc.init('region-1', 'parsec-test', '<dummy-s3-key>', '<dummy-s3-secret>')
     svc._s3 = MockedS3Client()
     return svc
 

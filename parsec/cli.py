@@ -6,7 +6,7 @@ from parsec.server import UnixSocketServer, WebSocketServer
 from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedNamedVlobService,
                             MockedVlobService)
 from parsec.core import (BackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
-                         IdentityService, MetaBlockService, ShareService, UserManifestService)
+                         IdentityService, MockedBlockService, ShareService, UserManifestService)
 from parsec.ui.shell import start_shell
 
 
@@ -58,17 +58,36 @@ def fuse(mountpoint, identity, debug, nothreads, socket):
               help='Path to the UNIX socket exposing the core API (default: %s).' %
               CORE_UNIX_SOCKET)
 @click.option('--backend-host', '-H', default='ws://localhost:6777')
-def core(socket, backend_host):
+@click.option('--block-store', '-B')
+def core(socket, backend_host, block_store):
     server = UnixSocketServer()
     server.register_service(BackendAPIService(backend_host))
-    server.register_service(MetaBlockService())
+    if block_store:
+        if block_store.startswith('s3:'):
+            try:
+                from parsec.core.block_service_s3 import S3BlockService
+                _, region, bucket, key_id, key_secret = block_store.split(':')
+            except ImportError as exc:
+                raise SystemExit('Parsec needs boto3 to support S3 block storage (error: %s).' % exc)
+            except ValueError:
+                raise SystemExit('Invalid --block-store value (should be `s3:<region>:<bucket>:<id>:<secret>`.')
+            block_svc = S3BlockService()
+            block_svc.init(region, bucket, key_id, key_secret)
+            store_type = 's3:%s:%s' % (region, bucket)
+        else:
+            raise SystemExit('Unknown block store `%s` (only `s3:<region>:<bucket>:<id>:<secret>`'
+                             ' is supported so far.' % block_store)
+    else:
+        store_type = 'mocked in memory'
+        block_svc = MockedBlockService()
+    server.register_service(block_svc)
     server.register_service(CryptoService())
     server.register_service(FileService())
     server.register_service(GNUPGPubKeysService())
     server.register_service(IdentityService())
     server.register_service(ShareService())
     server.register_service(UserManifestService())
-    print('Starting parsec core on %s (connecting to backend %s)' % (socket, backend_host))
+    print('Starting parsec core on %s (connecting to backend %s and block store %s)' % (socket, backend_host, store_type))
     server.start(socket)
     print('Bye ;-)')
 

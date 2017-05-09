@@ -28,10 +28,10 @@ class S3BlockService(BaseBlockService):
     @cmd('block_init')
     async def _cmd_INIT(self, session, msg):
         msg = cmd_INIT_Schema().load(msg)
-        await self.init(**msg)
+        self.init(**msg)
         return {'status': 'ok'}
 
-    async def init(self, s3_region, s3_bucket, s3_key, s3_secret):
+    def init(self, s3_region, s3_bucket, s3_key, s3_secret):
         self._s3 = boto3.client('s3', region_name=s3_region, aws_access_key_id=s3_key, aws_secret_access_key=s3_secret)
         self._s3_bucket = s3_bucket
 
@@ -40,7 +40,7 @@ class S3BlockService(BaseBlockService):
             raise BlockError('S3 block service is not initialized')
         id = id if id else uuid4().hex
         created = datetime.utcnow().timestamp()
-        func = partial(self._s3.put_object, Bucket=self._s3_bucket, Key=id, Body=content, Metadata={'created': created})
+        func = partial(self._s3.put_object, Bucket=self._s3_bucket, Key=id, Body=content, Metadata={'created': str(created)})
         try:
             await get_event_loop().run_in_executor(None, func)
         except (S3ClientError, S3EndpointConnectionError) as exc:
