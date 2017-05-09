@@ -24,12 +24,17 @@ requirements = [
     "websockets==3.3",
     "marshmallow==2.13.5",
     "gnupg==2.2.0",
-    "dropbox==7.2.1",
-    "pydrive==1.3.1",
     "python-dateutil==2.6.0",
-    "psycopg2==2.7.1",
-    "aiopg==0.13.0"
 ]
+
+extra_requirements = {
+    's3': ['boto3==1.4.4', 'botocore==1.5.46'],
+    'drive': ["pydrive==1.3.1"],
+    'dropbox': ["dropbox==7.2.1"],
+    'postgresql': ["psycopg2==2.7.1", "aiopg==0.13.0"]
+}
+extra_requirements['all'] = sum(extra_requirements.values(), [])
+extra_requirements['oeuf-jambon-fromage'] = extra_requirements['all']
 
 test_requirements = [
     # TODO: put package test requirements here
@@ -48,6 +53,7 @@ setup(
     package_dir={'parsec': 'parsec'},
     include_package_data=True,
     install_requires=requirements,
+    extras_require=extra_requirements,
     entry_points={
         'console_scripts': [
             'parsec = parsec.cli:cli',
