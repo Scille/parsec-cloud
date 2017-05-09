@@ -143,7 +143,7 @@ class GoogleDriveBlockService(BaseBlockService):
         query += "title='" + directory + "'"
         file_list = self.drive.ListFile({'q': query}).GetList()
         if len(file_list) > 1:
-            raise(BlockError('Multiple base directories found'))
+            raise BlockError('Multiple base directories found')
         elif len(file_list) == 1:
             self.base_directory = file_list[0]['id']
         else:
@@ -159,7 +159,7 @@ class GoogleDriveBlockService(BaseBlockService):
         file_list = self.drive.ListFile({'q': query}).GetList()
         if len(file_list) != 1:
             message = 'Multiple blocks found.' if file_list else 'Block not found.'
-            raise(BlockError(message))
+            raise BlockError(message)
         return self.drive.CreateFile({'id': file_list[0]['id']})
 
     async def create(self, content, id=None):
@@ -202,7 +202,7 @@ class MetaBlockService(BaseBlockService):
                 log.warning('%s backend failed to complete %s operation.' %
                             (block_service.__class__.__name__, operation))
         if not result:
-            raise(BlockError('All backends failed to complete %s operation.' % operation))
+            raise BlockError('All backends failed to complete %s operation.' % operation)
         return result
 
     async def create(self, content, id=None):
