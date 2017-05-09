@@ -12,7 +12,6 @@ install:
 - bash ./.travis/install.sh
 - pip install -U coveralls
 - pip install -Ur requirements_dev.txt
-- pip install .[all]
 before_script:
   - psql -c 'create database parsec_test;' -U postgres
 script:
