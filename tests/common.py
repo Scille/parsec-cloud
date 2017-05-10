@@ -1,3 +1,4 @@
+import pytest
 from base64 import encodebytes
 
 from parsec.server.base import BaseClientContext
@@ -20,3 +21,8 @@ class MockedContext(BaseClientContext):
     async def send(self, body):
         if self._on_send:
             await self._on_send(body)
+
+
+def can_side_effect_or_skip():
+    if pytest.config.getoption('tx'):
+        pytest.skip('Cannot run test with side effects with xdist concurrency')

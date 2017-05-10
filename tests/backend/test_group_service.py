@@ -5,10 +5,12 @@ import asyncio
 from parsec.server import BaseServer
 from parsec.backend import MockedGroupService
 
-from .common import init_or_skiptest_parsec_postgresql
+from tests.common import can_side_effect_or_skip
+from tests.backend.common import init_or_skiptest_parsec_postgresql
 
 
 async def bootstrap_PostgreSQLGroupService(request, event_loop):
+    can_side_effect_or_skip()
     module, url = await init_or_skiptest_parsec_postgresql()
 
     server = BaseServer()

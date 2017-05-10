@@ -1,24 +1,16 @@
 # No version number as these are dev tools
-aiopg
 asynctest
-blinker
 bumpversion
 coverage
-dropbox
 flake8
 freezegun
-gnupg
-keybaseio-api
-marshmallow
-pydrive
 pytest
 pytest-cov
 pytest-mock
 # Wait for pytest-asyncio 0.6 to be released...
 #pytest-asyncio
 git+https://github.com/pytest-dev/pytest-asyncio.git@f6d84f6c52d422b1b3df0001850ef50dad0f443d
-python-dateutil
+pytest-xdist
 Sphinx
 tox
 wheel
-websockets
