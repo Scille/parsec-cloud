@@ -147,7 +147,7 @@ class ShareService(BaseShareService):
         identity = await self.identity_service.get_identity()
         messages = await self.backend_api_service.message_get(identity)  # TODO get last
         if not messages:
-            raise(ShareError('No shared vlob in messages queue.'))
+            raise ShareError('No shared vlob in messages queue.')
         message = await self.identity_service.decrypt(messages[-1])
         message = json.loads(message.decode())
         if 'group' in message and not isinstance(message['group'], dict):  # TODO message format?

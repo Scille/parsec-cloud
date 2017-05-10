@@ -125,9 +125,11 @@ class BackendAPIService(BaseBackendAPIService):
         msg = {'cmd': 'named_vlob_create', 'id': id, 'blob': blob}
         return await self._send_cmd(msg)
 
-    async def named_vlob_read(self, id, trust_seed):
+    async def named_vlob_read(self, id, trust_seed, version=None):
         assert isinstance(id, str)
         msg = {'cmd': 'named_vlob_read', 'id': id, 'trust_seed': trust_seed}
+        if version:
+            msg['version'] = version
         return await self._send_cmd(msg)
 
     async def named_vlob_update(self, id, version, trust_seed, blob=''):
@@ -145,9 +147,11 @@ class BackendAPIService(BaseBackendAPIService):
         msg = {'cmd': 'vlob_create', 'blob': blob}
         return await self._send_cmd(msg)
 
-    async def vlob_read(self, id, trust_seed):
+    async def vlob_read(self, id, trust_seed, version=None):
         assert isinstance(id, str)
         msg = {'cmd': 'vlob_read', 'id': id, 'trust_seed': trust_seed}
+        if version:
+            msg['version'] = version
         return await self._send_cmd(msg)
 
     async def vlob_update(self, id, version, trust_seed, blob=''):
@@ -217,8 +221,10 @@ class MockedBackendAPIService(BaseBackendAPIService):
         msg = {'cmd': 'named_vlob_create', 'id': id, 'blob': blob}
         return await self._named_vlob_service._cmd_CREATE(None, msg)
 
-    async def named_vlob_read(self, id, trust_seed):
+    async def named_vlob_read(self, id, trust_seed, version=None):
         msg = {'cmd': 'named_vlob_read', 'id': id, 'trust_seed': trust_seed}
+        if version:
+            msg['version'] = version
         return await self._named_vlob_service._cmd_READ(None, msg)
 
     async def named_vlob_update(self, id, version, trust_seed, blob=''):
@@ -236,8 +242,10 @@ class MockedBackendAPIService(BaseBackendAPIService):
         msg = {'cmd': 'vlob_create', 'blob': blob}
         return await self._vlob_service._cmd_CREATE(None, msg)
 
-    async def vlob_read(self, id, trust_seed):
+    async def vlob_read(self, id, trust_seed, version=None):
         msg = {'cmd': 'vlob_read', 'id': id, 'trust_seed': trust_seed}
+        if version:
+            msg['version'] = version
         return await self._vlob_service._cmd_READ(None, msg)
 
     async def vlob_update(self, id, version, trust_seed, blob=''):

@@ -101,50 +101,158 @@ class TestFileService:
         assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.asyncio
-    @freeze_time("2012-01-01")
     async def test_stat_file(self, file_svc, user_manifest_svc):
-            # Good file
-            with freeze_time('2012-01-01') as frozen_datetime:
-                ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
-                                                            'path': '/test'})
-                assert ret['status'] == 'ok'
-                id = ret['id']
-                ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
-                ctime = frozen_datetime().timestamp()
-                assert ret == {'status': 'ok',
-                               'id': id,
-                               'ctime': ctime,
-                               'mtime': ctime,
-                               'atime': ctime,
-                               'size': 0}
+        # Good file
+        with freeze_time('2012-01-01') as frozen_datetime:
+            ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
+                                                        'path': '/test'})
+            assert ret['status'] == 'ok'
+            id = ret['id']
+            ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
+            ctime = frozen_datetime().timestamp()
+            assert ret == {'status': 'ok',
+                           'id': id,
+                           'ctime': ctime,
+                           'mtime': ctime,
+                           'atime': ctime,
+                           'size': 0,
+                           'version': 1}
+            frozen_datetime.tick()
+            mtime = frozen_datetime().timestamp()
+            content = encodebytes('foo'.encode()).decode()
+            ret = await file_svc.dispatch_msg({'cmd': 'file_write',
+                                               'id': id,
+                                               'version': 2,
+                                               'content': content})
+            ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
+            assert ret == {'status': 'ok',
+                           'id': id,
+                           'ctime': mtime,
+                           'mtime': mtime,
+                           'atime': mtime,
+                           'size': 3,
+                           'version': 2}
+            frozen_datetime.tick()
+            ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
+            ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
+            assert ret == {'status': 'ok',
+                           'id': id,
+                           'ctime': mtime,
+                           'mtime': mtime,
+                           'atime': mtime,
+                           'size': 3,
+                           'version': 2}
+        # Unknown file
+        ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': '1234'})
+        assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
+
+    @pytest.mark.asyncio
+    async def test_history(self, file_svc, user_manifest_svc):
+        with freeze_time('2012-01-01') as frozen_datetime:
+            ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
+                                                        'path': '/test'})
+            assert ret['status'] == 'ok'
+            id = ret['id']
+            original_time = frozen_datetime().timestamp()
+            for version, content in enumerate(('this is v2', 'this is v3...'), 2):
                 frozen_datetime.tick()
-                mtime = frozen_datetime().timestamp()
-                content = encodebytes('foo'.encode()).decode()
+                encoded_content = encodebytes(content.encode()).decode()
                 ret = await file_svc.dispatch_msg({'cmd': 'file_write',
                                                    'id': id,
-                                                   'version': 2,
-                                                   'content': content})
-                ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
-                assert ret == {'status': 'ok',
-                               'id': id,
-                               'ctime': mtime,
-                               'mtime': mtime,
-                               'atime': mtime,
-                               'size': 3}
-                frozen_datetime.tick()
-                ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
-                ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
-                assert ret == {'status': 'ok',
-                               'id': id,
-                               'ctime': mtime,
-                               'mtime': mtime,
-                               'atime': mtime,
-                               'size': 3}
-            # Unknown file
-            ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': '1234'})
-            assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
-
-    @pytest.mark.xfail
-    @pytest.mark.asyncio
-    async def test_history(self, file_svc):
-        raise NotImplementedError()
+                                                   'version': version,
+                                                   'content': encoded_content})
+                assert ret == {'status': 'ok'}
+        # Full history
+        ret = await file_svc.dispatch_msg({'cmd': 'file_history', 'id': id})
+        assert ret == {
+            'status': 'ok',
+            'history': [
+                {
+                    'version': 1,
+                    'ctime': original_time,
+                    'mtime': original_time,
+                    'atime': original_time,
+                    'size': 0
+                },
+                {
+                    'version': 2,
+                    'ctime': original_time + 1,
+                    'mtime': original_time + 1,
+                    'atime': original_time + 1,
+                    'size': 10
+                },
+                {
+                    'version': 3,
+                    'ctime': original_time + 2,
+                    'mtime': original_time + 2,
+                    'atime': original_time + 2,
+                    'size': 13
+                }
+            ]
+        }
+        # Partial history starting at version 2
+        ret = await file_svc.dispatch_msg({'cmd': 'file_history', 'id': id, 'first_version': 2})
+        assert ret == {
+            'status': 'ok',
+            'history': [
+                {
+                    'version': 2,
+                    'ctime': original_time + 1,
+                    'mtime': original_time + 1,
+                    'atime': original_time + 1,
+                    'size': 10
+                },
+                {
+                    'version': 3,
+                    'ctime': original_time + 2,
+                    'mtime': original_time + 2,
+                    'atime': original_time + 2,
+                    'size': 13
+                }
+            ]
+        }
+        # Partial history ending at version 2
+        ret = await file_svc.dispatch_msg({'cmd': 'file_history', 'id': id, 'last_version': 2})
+        assert ret == {
+            'status': 'ok',
+            'history': [
+                {
+                    'version': 1,
+                    'ctime': original_time,
+                    'mtime': original_time,
+                    'atime': original_time,
+                    'size': 0
+                },
+                {
+                    'version': 2,
+                    'ctime': original_time + 1,
+                    'mtime': original_time + 1,
+                    'atime': original_time + 1,
+                    'size': 10
+                }
+            ]
+        }
+        # First version = last version
+        ret = await file_svc.dispatch_msg({'cmd': 'file_history',
+                                           'id': id,
+                                           'first_version': 2,
+                                           'last_version': 2})
+        assert ret == {
+            'status': 'ok',
+            'history': [
+                {
+                    'version': 2,
+                    'ctime': original_time + 1,
+                    'mtime': original_time + 1,
+                    'atime': original_time + 1,
+                    'size': 10
+                }
+            ]
+        }
+        # First version > last version
+        ret = await file_svc.dispatch_msg({'cmd': 'file_history',
+                                           'id': id,
+                                           'first_version': 3,
+                                           'last_version': 2})
+        assert ret == {'status': 'bad_versions',
+                       'label': 'First version number greater than second version number.'}

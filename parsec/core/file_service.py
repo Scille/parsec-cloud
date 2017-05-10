@@ -34,6 +34,8 @@ class cmd_STAT_Schema(BaseCmdSchema):
 
 class cmd_HISTORY_Schema(BaseCmdSchema):
     id = fields.String(required=True)
+    first_version = fields.Integer(missing=1)
+    last_version = fields.Integer(missing=None)
 
 
 class BaseFileService(BaseService):
@@ -68,8 +70,8 @@ class BaseFileService(BaseService):
 
     @cmd('file_history')
     async def _cmd_HISTORY(self, session, msg):
-        msg = cmd_STAT_Schema().load(msg)
-        history = await self.history(msg['id'])
+        msg = cmd_HISTORY_Schema().load(msg)
+        history = await self.history(msg['id'], msg['first_version'], msg['last_version'])
         return {'status': 'ok', 'history': history}
 
     async def create(self, content=''):
@@ -84,7 +86,7 @@ class BaseFileService(BaseService):
     async def stat(self, id):
         raise NotImplementedError()
 
-    async def history(self, id):
+    async def history(self, id, first_version, last_version):
         raise NotImplementedError()
 
 
@@ -108,12 +110,12 @@ class FileService(BaseFileService):
         ret['key'] = encodebytes(blob_key).decode()
         return ret
 
-    async def read(self, id):
+    async def read(self, id, version=None):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
         except Exception:
-            raise(FileNotFound('Vlob not found.'))
-        vlob = await self.backend_api_service.vlob_read(id, properties['read_trust_seed'])
+            raise FileNotFound('Vlob not found.')
+        vlob = await self.backend_api_service.vlob_read(id, properties['read_trust_seed'], version)
         version = vlob['version']
         blob = vlob['blob']
         encrypted_blob = decodebytes(blob.encode())
@@ -185,13 +187,12 @@ class FileService(BaseFileService):
                 'digest': content_digest}
         return blob
 
-    async def stat(self, id):
+    async def stat(self, id, version=None):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
         except Exception:
             raise FileNotFound('Vlob not found.')
-        vlob = await self.backend_api_service.vlob_read(id=id,
-                                                        trust_seed=properties['read_trust_seed'])
+        vlob = await self.backend_api_service.vlob_read(id, properties['read_trust_seed'], version)
         encrypted_blob = vlob['blob']
         encrypted_blob = decodebytes(encrypted_blob.encode())
         key = decodebytes(properties['key'].encode()) if properties['key'] else None
@@ -202,8 +203,19 @@ class FileService(BaseFileService):
                 'ctime': stat['creation_timestamp'],
                 'mtime': stat['creation_timestamp'],
                 'atime': stat['creation_timestamp'],  # TODO: don't provide this field if we don't know it ?
-                'size': blob['size']}
+                'size': blob['size'],
+                'version': vlob['version']}
 
-    async def history(self, id):
-        # TODO raise ParsecNotImplementedError
-        pass
+    async def history(self, id, first_version=1, last_version=None):
+        if first_version and last_version and first_version > last_version:
+            raise FileError('bad_versions',
+                            'First version number greater than second version number.')
+        history = []
+        if not last_version:
+            stat = await self.stat(id)
+            last_version = stat['version']
+        for current_version in range(first_version, last_version + 1):
+            stat = await self.stat(id, current_version)
+            del stat['id']
+            history.append(stat)
+        return history

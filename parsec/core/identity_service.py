@@ -114,14 +114,14 @@ class IdentityService(BaseIdentityService):
 
     async def encrypt(self, data, recipient=None):
         if not self.identity:
-            raise(IdentityNotFound('No identity loaded.'))
+            raise IdentityNotFound('No identity loaded.')
         if not recipient:
             recipient = await self.get_identity()
         return await self.crypto_service.asym_encrypt(data, recipient)
 
     async def decrypt(self, data):
         if not self.identity:
-            raise(IdentityNotFound('No identity loaded.'))
+            raise IdentityNotFound('No identity loaded.')
         return await self.crypto_service.asym_decrypt(data)
 
     # async def compute_sign_challenge(self):

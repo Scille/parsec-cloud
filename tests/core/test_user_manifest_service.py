@@ -7,12 +7,12 @@ from freezegun import freeze_time
 import gnupg
 import pytest
 
-from parsec.server import BaseServer
 from parsec.core import (CryptoService, FileService, IdentityService, GNUPGPubKeysService,
                          MetaBlockService, MockedBackendAPIService, MockedBlockService,
                          ShareService, UserManifestService)
 from parsec.core.user_manifest_service import (GroupManifest, Manifest, UserManifest,
                                                UserManifestError, UserManifestNotFound)
+from parsec.server import BaseServer
 
 
 GNUPG_HOME = path.dirname(path.abspath(__file__)) + '/../gnupg_env'
@@ -39,6 +39,13 @@ def user_manifest(event_loop, user_manifest_svc):
 
 
 @pytest.fixture
+def user_manifest_with_group(event_loop, share_svc, user_manifest):
+    event_loop.run_until_complete(share_svc.group_create('foo_community'))
+    event_loop.run_until_complete(user_manifest.reload(reset=True))
+    return user_manifest
+
+
+@pytest.fixture
 def file_svc():
     return FileService()
 
@@ -49,26 +56,29 @@ def identity_svc():
 
 
 @pytest.fixture
-def user_manifest_svc(event_loop, file_svc, identity_svc):
+def share_svc():
+    return ShareService()
+
+
+@pytest.fixture
+def user_manifest_svc(event_loop, file_svc, identity_svc, share_svc):
     identity = '81DBCF6EB9C8B2965A65ACE5520D903047D69DC9'
     service = UserManifestService()
     block_service = MetaBlockService(backends=[MockedBlockService, MockedBlockService])
     crypto_service = CryptoService()
     crypto_service.gnupg = gnupg.GPG(homedir=GNUPG_HOME + '/secret_env')
-    share_service = ShareService()
     server = BaseServer()
     server.register_service(service)
     server.register_service(block_service)
     server.register_service(crypto_service)
     server.register_service(file_svc)
     server.register_service(identity_svc)
-    server.register_service(share_service)
+    server.register_service(share_svc)
     server.register_service(GNUPGPubKeysService())
     server.register_service(MockedBackendAPIService())
     event_loop.run_until_complete(server.bootstrap_services())
     event_loop.run_until_complete(identity_svc.load_identity(identity=identity))
     event_loop.run_until_complete(service.load_user_manifest())
-    event_loop.run_until_complete(share_service.group_create('foo_community'))
     yield service
     event_loop.run_until_complete(server.teardown_services())
 
@@ -95,26 +105,7 @@ class TestManifest:
 
     @pytest.mark.asyncio
     @freeze_time("2012-01-01")
-    async def test_get_delta(self, manifest):
-        # Empty delta
-        delta = await manifest.get_delta()
-        assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
-                         'dustbin': {'added': [], 'removed': []}}
-        # Delta new entry in entries
-        vlob = {'id': 'i123', 'key': 'k123', 'read_trust_seed': 'r123', 'write_trust_seed': 'w123'}
-        await manifest.add_file('/foo', vlob)
-        delta = await manifest.get_delta()
-        assert delta == {'entries': {'added': {'/foo': vlob}, 'changed': {}, 'removed': {}},
-                         'dustbin': {'added': [], 'removed': []}}
-        # Delta new entry in dustbin
-        with freeze_time('2012-01-01') as frozen_datetime:
-            await manifest.delete_file('/foo')
-            delta = await manifest.get_delta()
-            dustbin_entry = {'path': '/foo', 'removed_date': frozen_datetime().timestamp()}
-            dustbin_entry.update(vlob)
-            assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
-                             'dustbin': {'added': [dustbin_entry], 'removed': []}}
-        # TODO too intrusive?
+    async def test_diff(self, manifest):
         vlob_1 = {'id': 'vlob_1'}
         vlob_2 = {'id': 'vlob_2'}
         vlob_3 = {'id': 'vlob_3'}
@@ -124,14 +115,33 @@ class TestManifest:
         vlob_7 = {'id': 'vlob_7'}
         vlob_8 = {'id': 'vlob_8'}
         vlob_9 = {'id': 'vlob_9'}
-        manifest.original_manifest = {
-            'entries': {'/a': vlob_1, '/b': vlob_2, '/c': vlob_3},
-            'dustbin': [vlob_5, vlob_6, vlob_7]
+        # Empty diff
+        diff = await manifest.diff(
+            {
+                'entries': {'/a': vlob_1, '/b': vlob_2, '/c': vlob_3},
+                'dustbin': [vlob_5, vlob_6, vlob_7]
+            },
+            {
+                'entries': {'/a': vlob_1, '/b': vlob_2, '/c': vlob_3},
+                'dustbin': [vlob_5, vlob_6, vlob_7]
+            }
+        )
+        assert diff == {
+            'entries': {'added': {}, 'changed': {}, 'removed': {}},
+            'dustbin': {'added': [], 'removed': []}
         }
-        manifest.entries = {'/a': vlob_6, '/b': vlob_2, '/d': vlob_4}
-        manifest.dustbin = [vlob_7, vlob_8, vlob_9]
-        delta = await manifest.get_delta()
-        assert delta == {
+        # Not empty diff
+        diff = await manifest.diff(
+            {
+                'entries': {'/a': vlob_1, '/b': vlob_2, '/c': vlob_3},
+                'dustbin': [vlob_5, vlob_6, vlob_7]
+            },
+            {
+                'entries': {'/a': vlob_6, '/b': vlob_2, '/d': vlob_4},
+                'dustbin': [vlob_7, vlob_8, vlob_9]
+            }
+        )
+        assert diff == {
             'entries': {'added': {'/d': vlob_4},
                         'changed': {'/a': (vlob_1, vlob_6)},
                         'removed': {'/c': vlob_3}},
@@ -170,13 +180,14 @@ class TestManifest:
         manifest.dustbin = [vlob_6, vlob_7, vlob_8]
         # Recreate entries and dustbin from original manifest
         backup_original = deepcopy(manifest.original_manifest)
-        delta = await manifest.get_delta()
-        patched_manifest = await manifest.patch(backup_original, delta)
+        new_manifest = json.loads(await manifest.dumps())
+        diff = await manifest.diff(backup_original, new_manifest)
+        patched_manifest = await manifest.patch(backup_original, diff)
         assert backup_original == manifest.original_manifest
         assert patched_manifest['entries'] == manifest.entries
         assert patched_manifest['dustbin'] == manifest.dustbin
         # Reapply patch on already patched manifest
-        patched_manifest_2 = await manifest.patch(patched_manifest, delta)
+        patched_manifest_2 = await manifest.patch(patched_manifest, diff)
         assert patched_manifest == patched_manifest_2
         # Apply patch on a different source manifest
         new_manifest = {
@@ -188,7 +199,7 @@ class TestManifest:
                         '/A-nil-B': vlob_8},
             'dustbin': [vlob_5, vlob_6, vlob_7]
         }
-        patched_manifest = await manifest.patch(new_manifest, delta)
+        patched_manifest = await manifest.patch(new_manifest, diff)
         assert patched_manifest == {
             'entries': {'/A-B-C-conflict': vlob_3,
                         '/A-B-C': vlob_2,
@@ -211,7 +222,7 @@ class TestManifest:
 
     @pytest.mark.asyncio
     async def test_get_version(self, manifest):
-        assert await manifest.get_version() == 1
+        assert await manifest.get_version() == 0
 
     @pytest.mark.asyncio
     async def test_dumps_current_manifest(self, file_svc, manifest):
@@ -434,13 +445,71 @@ class TestManifest:
 class TestGroupManifest:
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize('payload', [
+        {'id': 'i123', 'key': '123', 'read_trust_seed': '123', 'write_trust_seed': '123'},
+        {'id': None, 'key': None, 'read_trust_seed': None, 'write_trust_seed': None}])
+    async def test_init(self, user_manifest_svc, payload):
+        manifest = GroupManifest(user_manifest_svc, **payload)
+        assert await manifest.get_vlob() == payload
+
+    @pytest.mark.asyncio
+    async def test_update_vlob(self, group_manifest):
+        new_vlob = {'id': '123', 'key': '123', 'read_trust_seed': '123', 'write_trust_seed': '123'}
+        await group_manifest.update_vlob(new_vlob)
+        assert await group_manifest.get_vlob() == new_vlob
+
+    @pytest.mark.asyncio
+    async def test_diff_versions(self, user_manifest_svc, group_manifest):
+        # Old version (0) and new version (0) of non-saved manifest
+        manifest = GroupManifest(group_manifest.service)
+        diff = await manifest.diff_versions(0, 0)
+        assert diff == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'removed': [], 'added': []}}
+        # No old version (use original) and no new version (dump current)
+        file_vlob = {'id': '123', 'key': '123', 'read_trust_seed': '123', 'write_trust_seed': '123'}
+        await group_manifest.add_file('/foo', file_vlob)
+        diff = await group_manifest.diff_versions()
+        assert diff == {'entries': {'added': {'/foo': file_vlob}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'removed': [], 'added': []}}
+        # Old version (2) and no new version (dump current)
+        await group_manifest.save()
+        await group_manifest.add_file('/bar', file_vlob)
+        diff = await group_manifest.diff_versions(2)
+        assert diff == {'entries': {'added': {'/bar': file_vlob}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'removed': [], 'added': []}}
+        # Old version (3) and new version (5)
+        await group_manifest.save()
+        await group_manifest.add_file('/dir/foo', file_vlob)
+        await group_manifest.save()
+        await group_manifest.add_file('/dir/bar', file_vlob)
+        await group_manifest.save()
+        await group_manifest.add_file('/dir/last', file_vlob)
+        diff = await group_manifest.diff_versions(3, 5)
+        assert diff == {'entries': {'added': {'/dir/bar': file_vlob, '/dir/foo': file_vlob},
+                                    'changed': {},
+                                    'removed': {}},
+                        'dustbin': {'removed': [], 'added': []}}
+        # Old version (6) and new version (4)
+        diff = await group_manifest.diff_versions(5, 3)
+        assert diff == {'entries': {'added': {},
+                                    'changed': {},
+                                    'removed': {'/dir/bar': file_vlob, '/dir/foo': file_vlob}},
+                        'dustbin': {'removed': [], 'added': []}}
+        # No old version (use original) and new version (4)
+        diff = await group_manifest.diff_versions(None, 4)
+        assert diff == {'entries': {'added': {},
+                                    'changed': {},
+                                    'removed': {'/dir/bar': file_vlob}},
+                        'dustbin': {'removed': [], 'added': []}}
+
+    @pytest.mark.asyncio
     async def test_reload_not_saved_manifest(self, user_manifest_svc):
         group_manifest = GroupManifest(user_manifest_svc)
         with pytest.raises(UserManifestError):
             await group_manifest.reload()
 
     @pytest.mark.asyncio
-    async def test_reload_not_consistent(self, user_manifest_svc, file_svc, group_manifest):
+    async def test_reload_not_consistent(self, user_manifest_svc, group_manifest):
         file_vlob = {'id': '123', 'key': '123', 'read_trust_seed': '123', 'write_trust_seed': '123'}
         await group_manifest.add_file('/foo', file_vlob)
         await group_manifest.save()
@@ -462,12 +531,12 @@ class TestGroupManifest:
         group_manifest_2 = GroupManifest(user_manifest_svc, **vlob)
         file_vlob_2 = await file_svc.create(content)
         await group_manifest_2.add_file('/bar', file_vlob_2)
-        assert await group_manifest_2.get_version() == 1
+        assert await group_manifest_2.get_version() == 0
         await group_manifest_2.reload(reset=True)
-        assert await group_manifest_2.get_version() == 3
-        delta = await group_manifest_2.get_delta()
-        assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
-                         'dustbin': {'added': [], 'removed': []}}
+        assert await group_manifest_2.get_version() == 2
+        diff = await group_manifest_2.diff_versions()
+        assert diff == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'added': [], 'removed': []}}
         manifest = await group_manifest_2.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -484,12 +553,12 @@ class TestGroupManifest:
         await group_manifest.save()
         file_vlob_2 = await file_svc.create(content)
         await group_manifest.add_file('/bar', file_vlob_2)
-        assert await group_manifest.get_version() == 3
+        assert await group_manifest.get_version() == 2
         await group_manifest.reload(reset=True)
-        assert await group_manifest.get_version() == 3
-        delta = await group_manifest.get_delta()
-        assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
-                         'dustbin': {'added': [], 'removed': []}}
+        assert await group_manifest.get_version() == 2
+        diff = await group_manifest.diff_versions()
+        assert diff == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'added': [], 'removed': []}}
         manifest = await group_manifest.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -509,12 +578,12 @@ class TestGroupManifest:
         group_manifest_2 = GroupManifest(user_manifest_svc, **vlob)
         file_vlob_2 = await file_svc.create(content)
         await group_manifest_2.add_file('/bar', file_vlob_2)
-        assert await group_manifest_2.get_version() == 1
+        assert await group_manifest_2.get_version() == 0
         await group_manifest_2.reload(reset=False)
-        assert await group_manifest_2.get_version() == 3
-        delta = await group_manifest_2.get_delta()
-        assert delta == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
-                         'dustbin': {'added': [], 'removed': []}}
+        assert await group_manifest_2.get_version() == 2
+        diff = await group_manifest_2.diff_versions()
+        assert diff == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'added': [], 'removed': []}}
         manifest = await group_manifest_2.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -531,12 +600,12 @@ class TestGroupManifest:
         await group_manifest.save()
         file_vlob_2 = await file_svc.create(content)
         await group_manifest.add_file('/bar', file_vlob_2)
-        assert await group_manifest.get_version() == 3
+        assert await group_manifest.get_version() == 2
         await group_manifest.reload(reset=False)
-        assert await group_manifest.get_version() == 3
-        delta = await group_manifest.get_delta()
-        assert delta == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
-                         'dustbin': {'added': [], 'removed': []}}
+        assert await group_manifest.get_version() == 2
+        diff = await group_manifest.diff_versions()
+        assert diff == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'added': [], 'removed': []}}
         manifest = await group_manifest.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -560,10 +629,10 @@ class TestGroupManifest:
         await group_manifest.add_file('/foo', file_vlob)
         await group_manifest.save()
         assert await group_manifest.get_vlob() == manifest_vlob
-        assert await group_manifest.get_version() == 3
+        assert await group_manifest.get_version() == 2
         # Save without modifications
         await group_manifest.save()
-        assert await group_manifest.get_version() == 3
+        assert await group_manifest.get_version() == 2
         # TODO assert called methods
 
     @pytest.mark.asyncio
@@ -572,7 +641,7 @@ class TestGroupManifest:
         vlob = await file_svc.create(content)
         await group_manifest.add_file('/foo', vlob)
         await group_manifest.save()
-        assert group_manifest.version == 3
+        assert group_manifest.version == 2
         dump = await group_manifest.dumps()
         dump = json.loads(dump)
         old_id = group_manifest.id
@@ -609,41 +678,67 @@ class TestUserManifest:
         assert await manifest.get_vlob() == payload
 
     @pytest.mark.asyncio
-    @freeze_time("2012-01-01")
-    async def test_get_delta(self, user_manifest_svc, user_manifest):
-        # Empty delta
-        delta = await user_manifest.get_delta()
-        assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
-                         'dustbin': {'added': [], 'removed': []},
-                         'groups': {'added': {}, 'changed': {}, 'removed': {}}}
-        # Delta new entry in entries
-        vlob = {'id': 'i123', 'key': 'k123', 'read_trust_seed': 'r123', 'write_trust_seed': 'w123'}
-        await user_manifest.add_file('/foo', vlob)
-        group_manifest = GroupManifest(user_manifest_svc)
-        await group_manifest.save()
-        group_vlob = await group_manifest.get_vlob()
-        await user_manifest.import_group_vlob('share', group_vlob)
-        delta = await user_manifest.get_delta()
-        assert delta == {'entries': {'added': {'/foo': vlob}, 'changed': {}, 'removed': {}},
-                         'dustbin': {'added': [], 'removed': []},
-                         'groups': {'added': {'share': group_vlob}, 'changed': {}, 'removed': {}}}
-        await user_manifest.remove_group('share')
-        # Delta new entry in dustbin
-        with freeze_time('2012-01-01') as frozen_datetime:
-            await user_manifest.delete_file('/foo')
-            delta = await user_manifest.get_delta()
-            dustbin_entry = {'path': '/foo', 'removed_date': frozen_datetime().timestamp()}
-            dustbin_entry.update(vlob)
-            assert delta == {'entries': {'changed': {}, 'added': {}, 'removed': {}},
-                             'dustbin': {'added': [dustbin_entry], 'removed': []},
-                             'groups': {'changed': {}, 'added': {}, 'removed': {}}}
-
-    @pytest.mark.asyncio
-    async def test_dumps_current_manifest(self, file_svc, user_manifest):
+    async def test_diff_versions(self, file_svc, user_manifest):
+        # Old version (0) and new version (0) of non-saved manifest
+        manifest = UserManifest(user_manifest.service, 'i123')
+        diff = await manifest.diff_versions(0, 0)
+        assert diff == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                        'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'removed': [], 'added': []}}
+        # No old version (use original) and no new version (dump current)
         content = encodebytes('foo'.encode()).decode()
         file_vlob = await file_svc.create(content)
         await user_manifest.add_file('/foo', file_vlob)
-        dump = await user_manifest.dumps(original_manifest=False)
+        group_manifest = GroupManifest(user_manifest.service)
+        await group_manifest.save()
+        group_vlob = await group_manifest.get_vlob()
+        await user_manifest.import_group_vlob('share', group_vlob)
+        diff = await user_manifest.diff_versions()
+        await user_manifest.remove_group('share')
+        assert diff == {'entries': {'added': {'/foo': file_vlob}, 'changed': {}, 'removed': {}},
+                        'groups': {'added': {'share': group_vlob}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'removed': [], 'added': []}}
+        # Old version (2) and no new version (dump current)
+        await user_manifest.save()
+        await user_manifest.add_file('/bar', file_vlob)
+        diff = await user_manifest.diff_versions(2)
+        assert diff == {'entries': {'added': {'/bar': file_vlob}, 'changed': {}, 'removed': {}},
+                        'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'removed': [], 'added': []}}
+        # Old version (3) and new version (5)
+        await user_manifest.save()
+        await user_manifest.add_file('/dir/foo', file_vlob)
+        await user_manifest.save()
+        await user_manifest.add_file('/dir/bar', file_vlob)
+        await user_manifest.save()
+        await user_manifest.add_file('/dir/last', file_vlob)
+        diff = await user_manifest.diff_versions(3, 5)
+        assert diff == {'entries': {'added': {'/dir/bar': file_vlob, '/dir/foo': file_vlob},
+                                    'changed': {},
+                                    'removed': {}},
+                        'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'removed': [], 'added': []}}
+        # Old version (5) and new version (3)
+        diff = await user_manifest.diff_versions(5, 3)
+        assert diff == {'entries': {'added': {},
+                                    'changed': {},
+                                    'removed': {'/dir/bar': file_vlob, '/dir/foo': file_vlob}},
+                        'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'removed': [], 'added': []}}
+        # No old version (use original) and new version (4)
+        diff = await user_manifest.diff_versions(None, 4)
+        assert diff == {'entries': {'added': {},
+                                    'changed': {},
+                                    'removed': {'/dir/bar': file_vlob}},
+                        'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'removed': [], 'added': []}}
+
+    @pytest.mark.asyncio
+    async def test_dumps_current_manifest(self, file_svc, user_manifest_with_group):
+        content = encodebytes('foo'.encode()).decode()
+        file_vlob = await file_svc.create(content)
+        await user_manifest_with_group.add_file('/foo', file_vlob)
+        dump = await user_manifest_with_group.dumps(original_manifest=False)
         dump = json.loads(dump)
         group_vlob = dump['groups']['foo_community']
         assert dump == {'entries': {'/': {'id': None,
@@ -655,11 +750,11 @@ class TestUserManifest:
                         'groups': {'foo_community': group_vlob}}
 
     @pytest.mark.asyncio
-    async def test_dumps_original_manifest(self, file_svc, user_manifest):
+    async def test_dumps_original_manifest(self, file_svc, user_manifest_with_group):
         content = encodebytes('foo'.encode()).decode()
         file_vlob = await file_svc.create(content)
-        await user_manifest.add_file('/foo', file_vlob)
-        dump = await user_manifest.dumps(original_manifest=True)
+        await user_manifest_with_group.add_file('/foo', file_vlob)
+        dump = await user_manifest_with_group.dumps(original_manifest=True)
         dump = json.loads(dump)
         group_vlob = dump['groups']['foo_community']
         assert dump == {'entries': {'/': {'id': None,
@@ -672,9 +767,9 @@ class TestUserManifest:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'share'])
-    async def test_get_group_vlobs(self, user_manifest, group):
-        await user_manifest.create_group_manifest('share')
-        group_vlobs = await user_manifest.get_group_vlobs(group)
+    async def test_get_group_vlobs(self, user_manifest_with_group, group):
+        await user_manifest_with_group.create_group_manifest('share')
+        group_vlobs = await user_manifest_with_group.get_group_vlobs(group)
         if group:
             keys = [group]
         else:
@@ -685,26 +780,26 @@ class TestUserManifest:
             assert list(sorted(keys)) == list(sorted(group_vlob.keys()))
         # Not found
         with pytest.raises(UserManifestNotFound):
-            await user_manifest.get_group_vlobs('unknown')
+            await user_manifest_with_group.get_group_vlobs('unknown')
 
     @pytest.mark.asyncio
-    async def test_get_group_manifest(self, user_manifest):
-        group_manifest = await user_manifest.get_group_manifest('foo_community')
+    async def test_get_group_manifest(self, user_manifest_with_group):
+        group_manifest = await user_manifest_with_group.get_group_manifest('foo_community')
         assert isinstance(group_manifest, GroupManifest)
         # Not found
         with pytest.raises(UserManifestNotFound):
-            await user_manifest.get_group_manifest('unknown')
+            await user_manifest_with_group.get_group_manifest('unknown')
 
     @pytest.mark.asyncio
-    async def test_reencrypt_group_manifest(self, user_manifest):
-        group_manifest = await user_manifest.get_group_manifest('foo_community')
-        await user_manifest.reencrypt_group_manifest('foo_community')
-        new_group_manifest = await user_manifest.get_group_manifest('foo_community')
+    async def test_reencrypt_group_manifest(self, user_manifest_with_group):
+        group_manifest = await user_manifest_with_group.get_group_manifest('foo_community')
+        await user_manifest_with_group.reencrypt_group_manifest('foo_community')
+        new_group_manifest = await user_manifest_with_group.get_group_manifest('foo_community')
         assert group_manifest.get_vlob() != new_group_manifest.get_vlob()
         assert isinstance(group_manifest, GroupManifest)
         # Not found
         with pytest.raises(UserManifestNotFound):
-            await user_manifest.reencrypt_group_manifest('unknown')
+            await user_manifest_with_group.reencrypt_group_manifest('unknown')
 
     @pytest.mark.asyncio
     async def test_create_group_manifest(self, user_manifest):
@@ -732,20 +827,16 @@ class TestUserManifest:
         assert await retrieved_manifest.get_vlob() == new_vlob
 
     @pytest.mark.asyncio
-    async def test_remove_group(self, user_manifest):
-        await user_manifest.remove_group('foo_community')
-        with pytest.raises(UserManifestError):
-            await user_manifest.remove_group('foo_community')
+    async def test_remove_group(self, user_manifest_with_group):
+        await user_manifest_with_group.remove_group('foo_community')
+        with pytest.raises(UserManifestNotFound):
+            await user_manifest_with_group.remove_group('foo_community')
 
     @pytest.mark.asyncio
     async def test_reload_not_exists(self, user_manifest_svc, file_svc):
         user_manifest = UserManifest(user_manifest_svc, '3C3FA85FB9736362497EB23DC0485AC10E6274C7')
-        await user_manifest.reload(reset=True)
-        vlob = await user_manifest.get_vlob()
-        assert vlob == {'id': '3C3FA85FB9736362497EB23DC0485AC10E6274C7',
-                        'key': None,
-                        'read_trust_seed': None,
-                        'write_trust_seed': None, }
+        with pytest.raises(UserManifestError):
+            await user_manifest.reload(reset=True)
 
     @pytest.mark.asyncio
     async def test_reload_not_consistent(self, user_manifest_svc, file_svc, user_manifest):
@@ -768,13 +859,13 @@ class TestUserManifest:
         user_manifest_2 = UserManifest(user_manifest_svc, vlob['id'])
         file_vlob_2 = await file_svc.create(content)
         await user_manifest_2.add_file('/bar', file_vlob_2)
-        assert await user_manifest_2.get_version() == 1
+        assert await user_manifest_2.get_version() == 0
         await user_manifest_2.reload(reset=True)
-        assert await user_manifest_2.get_version() == 3
-        delta = await user_manifest_2.get_delta()
-        assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
-                         'dustbin': {'added': [], 'removed': []},
-                         'groups': {'added': {}, 'changed': {}, 'removed': {}}}
+        assert await user_manifest_2.get_version() == 2
+        diff = await user_manifest_2.diff_versions()
+        assert diff == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'added': [], 'removed': []},
+                        'groups': {'added': {}, 'changed': {}, 'removed': {}}}
         manifest = await user_manifest_2.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -791,13 +882,13 @@ class TestUserManifest:
         await user_manifest.save()
         file_vlob_2 = await file_svc.create(content)
         await user_manifest.add_file('/bar', file_vlob_2)
-        assert await user_manifest.get_version() == 3
+        assert await user_manifest.get_version() == 2
         await user_manifest.reload(reset=True)
-        assert await user_manifest.get_version() == 3
-        delta = await user_manifest.get_delta()
-        assert delta == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
-                         'dustbin': {'added': [], 'removed': []},
-                         'groups': {'added': {}, 'changed': {}, 'removed': {}}}
+        assert await user_manifest.get_version() == 2
+        diff = await user_manifest.diff_versions()
+        assert diff == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'added': [], 'removed': []},
+                        'groups': {'added': {}, 'changed': {}, 'removed': {}}}
         manifest = await user_manifest.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -817,13 +908,13 @@ class TestUserManifest:
         user_manifest_2 = UserManifest(user_manifest_svc, vlob['id'])
         file_vlob_2 = await file_svc.create(content)
         await user_manifest_2.add_file('/bar', file_vlob_2)
-        assert await user_manifest_2.get_version() == 1
+        assert await user_manifest_2.get_version() == 0
         await user_manifest_2.reload(reset=False)
-        assert await user_manifest_2.get_version() == 3
-        delta = await user_manifest_2.get_delta()
-        assert delta == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
-                         'dustbin': {'added': [], 'removed': []},
-                         'groups': {'added': {}, 'changed': {}, 'removed': {}}}
+        assert await user_manifest_2.get_version() == 2
+        diff = await user_manifest_2.diff_versions()
+        assert diff == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'added': [], 'removed': []},
+                        'groups': {'added': {}, 'changed': {}, 'removed': {}}}
         manifest = await user_manifest_2.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -840,13 +931,13 @@ class TestUserManifest:
         await user_manifest.save()
         file_vlob_2 = await file_svc.create(content)
         await user_manifest.add_file('/bar', file_vlob_2)
-        assert await user_manifest.get_version() == 3
+        assert await user_manifest.get_version() == 2
         await user_manifest.reload(reset=False)
-        assert await user_manifest.get_version() == 3
-        delta = await user_manifest.get_delta()
-        assert delta == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
-                         'dustbin': {'added': [], 'removed': []},
-                         'groups': {'added': {}, 'changed': {}, 'removed': {}}}
+        assert await user_manifest.get_version() == 2
+        diff = await user_manifest.diff_versions()
+        assert diff == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
+                        'dustbin': {'added': [], 'removed': []},
+                        'groups': {'added': {}, 'changed': {}, 'removed': {}}}
         manifest = await user_manifest.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -862,10 +953,10 @@ class TestUserManifest:
         await user_manifest.add_file('/foo', file_vlob)
         await user_manifest.save()
         assert await user_manifest.get_vlob() == manifest_vlob
-        assert await user_manifest.get_version() == 3
+        assert await user_manifest.get_version() == 2
         # Save without modifications
         await user_manifest.save()
-        assert await user_manifest.get_version() == 3
+        assert await user_manifest.get_version() == 2
         # TODO assert called methods
 
     @pytest.mark.asyncio
@@ -905,10 +996,10 @@ class TestUserManifestService:
             await user_manifest.create_group_manifest('share')
 
     @pytest.mark.asyncio
-    async def test_reencrypt_group_manifest(self, user_manifest_svc, user_manifest):
-        group_manifest = await user_manifest.get_group_manifest('foo_community')
+    async def test_reencrypt_group_manifest(self, user_manifest_svc, user_manifest_with_group):
+        group_manifest = await user_manifest_with_group.get_group_manifest('foo_community')
         await user_manifest_svc.reencrypt_group_manifest('foo_community')
-        new_group_manifest = await user_manifest.get_group_manifest('foo_community')
+        new_group_manifest = await user_manifest_with_group.get_group_manifest('foo_community')
         assert group_manifest.get_vlob() != new_group_manifest.get_vlob()
         assert isinstance(group_manifest, GroupManifest)
         # Not found
@@ -933,7 +1024,11 @@ class TestUserManifestService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
-    async def test_import_file_vlob(self, user_manifest_svc, file_svc, user_manifest, group):
+    async def test_import_file_vlob(self,
+                                    user_manifest_svc,
+                                    file_svc,
+                                    user_manifest_with_group,
+                                    group):
         file_vlob = {'id': '123', 'key': '123', 'read_trust_seed': '123', 'write_trust_seed': '123'}
         await user_manifest_svc.import_file_vlob('/test', file_vlob, group)
         with pytest.raises(UserManifestError):
@@ -942,7 +1037,7 @@ class TestUserManifestService:
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
     @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
-    async def test_create_file(self, user_manifest_svc, group, path):
+    async def test_create_file(self, user_manifest_svc, user_manifest_with_group, group, path):
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
                                                     'path': '/test',
                                                     'group': group})
@@ -956,7 +1051,7 @@ class TestUserManifestService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
-    async def test_rename_file(self, user_manifest_svc, group):
+    async def test_rename_file(self, user_manifest_svc, user_manifest_with_group, group):
         await user_manifest_svc.create_file('/test', group=group)
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_rename_file',
                                                     'old_path': '/test',
@@ -969,7 +1064,10 @@ class TestUserManifestService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
-    async def test_rename_file_and_target_exist(self, user_manifest_svc, group):
+    async def test_rename_file_and_target_exist(self,
+                                                user_manifest_svc,
+                                                user_manifest_with_group,
+                                                group):
         await user_manifest_svc.create_file('/test', group=group)
         await user_manifest_svc.create_file('/foo', group=group)
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_rename_file',
@@ -983,7 +1081,7 @@ class TestUserManifestService:
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
     @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
-    async def test_delete_file(self, user_manifest_svc, group, path):
+    async def test_delete_file(self, user_manifest_svc, user_manifest_with_group, group, path):
         await user_manifest_svc.make_dir('/test_dir', group)
         for persistent_path in ['/persistent', '/test_dir/persistent']:
             await user_manifest_svc.create_file(persistent_path, group=group)
@@ -1004,7 +1102,7 @@ class TestUserManifestService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
-    async def test_delete_not_file(self, user_manifest_svc, group):
+    async def test_delete_not_file(self, user_manifest_svc, user_manifest_with_group, group):
         await user_manifest_svc.make_dir('/test', group=group)
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_delete_file',
                                                     'path': '/test',
@@ -1014,7 +1112,7 @@ class TestUserManifestService:
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
     @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
-    async def test_restore_file(self, user_manifest_svc, group, path):
+    async def test_restore_file(self, user_manifest_svc, user_manifest_with_group, group, path):
         await user_manifest_svc.make_dir('/test_dir', group)
         await user_manifest_svc.create_file(path, group=group)
         current, _ = await user_manifest_svc.list_dir(path, group)
@@ -1041,7 +1139,7 @@ class TestUserManifestService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
-    async def test_list_dir(self, user_manifest_svc, group):
+    async def test_list_dir(self, user_manifest_svc, user_manifest_with_group, group):
         # Create folders
         await user_manifest_svc.make_dir('/countries', group)
         await user_manifest_svc.make_dir('/countries/France', group)
@@ -1083,7 +1181,7 @@ class TestUserManifestService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
-    async def test_create_dir(self, user_manifest_svc, group):
+    async def test_create_dir(self, user_manifest_svc, user_manifest_with_group, group):
         # Working
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_make_dir',
                                                     'path': '/test_dir',
@@ -1097,7 +1195,7 @@ class TestUserManifestService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
-    async def test_remove_dir(self, user_manifest_svc, group):
+    async def test_remove_dir(self, user_manifest_svc, user_manifest_with_group, group):
         # Working
         await user_manifest_svc.make_dir('/test_dir', group)
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_remove_dir',
@@ -1112,7 +1210,7 @@ class TestUserManifestService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
-    async def test_cant_remove_root_dir(self, user_manifest_svc, group):
+    async def test_cant_remove_root_dir(self, user_manifest_svc, user_manifest_with_group, group):
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_remove_dir',
                                                     'path': '/',
                                                     'group': group})
@@ -1120,7 +1218,7 @@ class TestUserManifestService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
-    async def test_remove_not_empty_dir(self, user_manifest_svc, group):
+    async def test_remove_not_empty_dir(self, user_manifest_svc, user_manifest_with_group, group):
         # Not empty
         await user_manifest_svc.make_dir('/test_dir', group)
         await user_manifest_svc.create_file('/test_dir/test', group=group)
@@ -1140,7 +1238,7 @@ class TestUserManifestService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
-    async def test_remove_not_dir(self, user_manifest_svc, group):
+    async def test_remove_not_dir(self, user_manifest_svc, user_manifest_with_group, group):
         await user_manifest_svc.create_file('/test_dir', group=group)
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_remove_dir',
                                                     'path': '/test_dir',
@@ -1150,7 +1248,7 @@ class TestUserManifestService:
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
     @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
-    async def test_show_dustbin(self, user_manifest_svc, group, path):
+    async def test_show_dustbin(self, user_manifest_svc, user_manifest_with_group, group, path):
         # Empty dustbin
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_show_dustbin',
                                                     'group': group})
@@ -1197,7 +1295,7 @@ class TestUserManifestService:
             await user_manifest_svc.list_dir('test')
 
     @pytest.mark.asyncio
-    async def test_get_manifest(self, user_manifest_svc):
+    async def test_get_manifest(self, user_manifest_svc, user_manifest_with_group):
         manifest = await user_manifest_svc.get_manifest()
         assert manifest.id == await user_manifest_svc.identity_service.get_identity()
         group_manifest = await user_manifest_svc.get_manifest('foo_community')
@@ -1210,7 +1308,7 @@ class TestUserManifestService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
-    async def test_get_properties(self, user_manifest_svc, group):
+    async def test_get_properties(self, user_manifest_svc, user_manifest_with_group, group):
         foo_vlob = await user_manifest_svc.create_file('/foo', group=group)
         bar_vlob = await user_manifest_svc.create_file('/bar', group=group)
         await user_manifest_svc.delete_file('/bar', group)
@@ -1245,7 +1343,242 @@ class TestUserManifestService:
         with pytest.raises(UserManifestNotFound):
             await user_manifest_svc.get_properties(id=bar_vlob['id'], dustbin=False, group=group)
 
-    @pytest.mark.xfail
     @pytest.mark.asyncio
-    async def test_history(self, user_manifest_svc):
-        raise NotImplementedError()
+    async def test_user_manifest_history(self, user_manifest_svc):
+        foo_vlob = await user_manifest_svc.create_file('/foo')
+        bar_vlob = await user_manifest_svc.create_file('/bar')
+        baz_vlob = await user_manifest_svc.create_file('/baz')
+        # Full history
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history'})
+        assert ret == {
+            'status': 'ok',
+            'detailed_history': [
+                {
+                    'version': 1,
+                    'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                    'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'added': [], 'removed': []}
+                },
+                {
+                    'version': 2,
+                    'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
+                    'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'added': [], 'removed': []}
+                },
+                {
+                    'version': 3,
+                    'entries': {'added': {'/bar': bar_vlob}, 'changed': {}, 'removed': {}},
+                    'groups': {'removed': {}, 'added': {}, 'changed': {}},
+                    'dustbin': {'removed': [], 'added': []}
+                },
+                {
+                    'version': 4,
+                    'entries': {'added': {'/baz': baz_vlob}, 'changed': {}, 'removed': {}},
+                    'groups': {'removed': {}, 'added': {}, 'changed': {}},
+                    'dustbin': {'removed': [], 'added': []}
+                }
+            ]
+        }
+        # Partial history starting at version 2
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history',
+                                                    'first_version': 2})
+        assert ret == {
+            'status': 'ok',
+            'detailed_history': [
+                {
+                    'version': 2,
+                    'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
+                    'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'added': [], 'removed': []}
+                },
+                {
+                    'version': 3,
+                    'entries': {'added': {'/bar': bar_vlob}, 'changed': {}, 'removed': {}},
+                    'groups': {'removed': {}, 'added': {}, 'changed': {}},
+                    'dustbin': {'removed': [], 'added': []}
+                },
+                {
+                    'version': 4,
+                    'entries': {'added': {'/baz': baz_vlob}, 'changed': {}, 'removed': {}},
+                    'groups': {'removed': {}, 'added': {}, 'changed': {}},
+                    'dustbin': {'removed': [], 'added': []}
+                }
+            ]
+        }
+        # Partial history ending at version 2
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history',
+                                                    'last_version': 2})
+        assert ret == {
+            'status': 'ok',
+            'detailed_history': [
+                {
+                    'version': 1,
+                    'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                    'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'added': [], 'removed': []}
+                },
+                {
+                    'version': 2,
+                    'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
+                    'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'added': [], 'removed': []}
+                }
+            ]
+        }
+        # Summary of full history
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history',
+                                                    'summary': True})
+
+        assert ret == {
+            'status': 'ok',
+            'summary_history': {
+                'entries': {'added': {'/foo': foo_vlob,
+                                      '/bar': bar_vlob,
+                                      '/baz': baz_vlob},
+                            'changed': {},
+                            'removed': {}},
+                'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                'dustbin': {'added': [], 'removed': []}
+            }
+        }
+        # Summary of partial history
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history',
+                                                    'first_version': 2,
+                                                    'last_version': 4,
+                                                    'summary': True})
+        assert ret == {
+            'status': 'ok',
+            'summary_history': {
+                'entries': {'added': {'/bar': bar_vlob,
+                                      '/baz': baz_vlob},
+                            'changed': {},
+                            'removed': {}},
+                'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                'dustbin': {'added': [], 'removed': []}
+            }
+        }
+        # First version > last version
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history',
+                                                    'first_version': 4,
+                                                    'last_version': 2,
+                                                    'summary': True})
+        assert ret == {'status': 'bad_versions',
+                       'label': 'First version number greater than second version number.'}
+
+    @pytest.mark.asyncio
+    async def test_group_manifest_history(self, user_manifest_svc, user_manifest_with_group):
+        group = 'foo_community'
+        foo_vlob = await user_manifest_svc.create_file('/foo', group=group)
+        bar_vlob = await user_manifest_svc.create_file('/bar', group=group)
+        baz_vlob = await user_manifest_svc.create_file('/baz', group=group)
+        # Full history
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history',
+                                                    'group': group})
+        assert ret == {
+            'status': 'ok',
+            'detailed_history': [
+                {
+                    'version': 1,
+                    'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'added': [], 'removed': []}
+                },
+                {
+                    'version': 2,
+                    'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'added': [], 'removed': []}
+                },
+                {
+                    'version': 3,
+                    'entries': {'added': {'/bar': bar_vlob}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'removed': [], 'added': []}
+                },
+                {
+                    'version': 4,
+                    'entries': {'added': {'/baz': baz_vlob}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'removed': [], 'added': []}
+                }
+            ]
+        }
+        # Partial history starting at version 2
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history',
+                                                    'first_version': 2,
+                                                    'group': group})
+        assert ret == {
+            'status': 'ok',
+            'detailed_history': [
+                {
+                    'version': 2,
+                    'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'added': [], 'removed': []}
+                },
+                {
+                    'version': 3,
+                    'entries': {'added': {'/bar': bar_vlob}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'removed': [], 'added': []}
+                },
+                {
+                    'version': 4,
+                    'entries': {'added': {'/baz': baz_vlob}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'removed': [], 'added': []}
+                }
+            ]
+        }
+        # Partial history ending at version 2
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history',
+                                                    'last_version': 2,
+                                                    'group': group})
+        assert ret == {
+            'status': 'ok',
+            'detailed_history': [
+                {
+                    'version': 1,
+                    'entries': {'added': {}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'added': [], 'removed': []}
+                },
+                {
+                    'version': 2,
+                    'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
+                    'dustbin': {'added': [], 'removed': []}
+                }
+            ]
+        }
+        # Summary of full history
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history',
+                                                    'summary': True,
+                                                    'group': group})
+
+        assert ret == {
+            'status': 'ok',
+            'summary_history': {
+                'entries': {'added': {'/foo': foo_vlob,
+                                      '/bar': bar_vlob,
+                                      '/baz': baz_vlob},
+                            'changed': {},
+                            'removed': {}},
+                'dustbin': {'added': [], 'removed': []}
+            }
+        }
+        # Summary of partial history
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history',
+                                                    'first_version': 2,
+                                                    'last_version': 4,
+                                                    'summary': True,
+                                                    'group': group})
+        assert ret == {
+            'status': 'ok',
+            'summary_history': {
+                'entries': {'added': {'/bar': bar_vlob,
+                                      '/baz': baz_vlob},
+                            'changed': {},
+                            'removed': {}},
+                'dustbin': {'added': [], 'removed': []}
+            }
+        }
+        # First version > last version
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history',
+                                                    'first_version': 4,
+                                                    'last_version': 2,
+                                                    'summary': True,
+                                                    'group': group})
+        assert ret == {'status': 'bad_versions',
+                       'label': 'First version number greater than second version number.'}
