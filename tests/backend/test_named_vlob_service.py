@@ -52,6 +52,13 @@ class TestNamedVlobServiceAPI:
         assert ret['write_trust_seed']
 
     @pytest.mark.asyncio
+    async def test_duplicated_create(self, named_vlob_svc):
+        ret = await named_vlob_svc.dispatch_msg({'cmd': 'named_vlob_create', 'id': '42', 'blob': ''})
+        assert ret['status'] == 'ok'
+        ret = await named_vlob_svc.dispatch_msg({'cmd': 'named_vlob_create', 'id': '42', 'blob': ''})
+        assert ret['status'] == 'id_already_exists'
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
         {'cmd': 'named_vlob_create', 'id': 'id42', 'content': '...', 'bad_field': 'foo'},
         {'cmd': 'named_vlob_create', 'id': None, 'content': '...'},

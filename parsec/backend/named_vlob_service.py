@@ -2,7 +2,12 @@ from marshmallow import fields
 
 from parsec.service import BaseService, cmd, event
 from parsec.tools import BaseCmdSchema
-from parsec.backend.vlob_service import BaseVlobService, MockedVlobService, MockedVlob, VlobAtom
+from parsec.backend.vlob_service import (
+    BaseVlobService, MockedVlobService, MockedVlob, VlobAtom, VlobError)
+
+
+class NamedVlobDuplicatedIdError(VlobError):
+    status = 'id_already_exists'
 
 
 class cmd_CREATE_Schema(BaseCmdSchema):
@@ -45,6 +50,8 @@ class MockedNamedVlobService(BaseNamedVlobService):
         # TODO: use identity handshake instead of trust_seed
         vlob = MockedVlob(id=id, blob=blob)
         vlob.write_trust_seed = vlob.read_trust_seed = '42'
+        if vlob.id in self._vlobs:
+            raise NamedVlobDuplicatedIdError('Id `%s` already exists.' % id)
         self._vlobs[vlob.id] = vlob
         return VlobAtom(id=vlob.id,
                         read_trust_seed=vlob.read_trust_seed,

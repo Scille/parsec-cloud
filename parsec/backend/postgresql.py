@@ -10,7 +10,7 @@ from parsec.service import BaseService, service
 from parsec.backend.message_service import BaseMessageService
 from parsec.backend.vlob_service import (
     BaseVlobService, VlobAtom, VlobNotFound, TrustSeedError)
-from parsec.backend.named_vlob_service import BaseNamedVlobService
+from parsec.backend.named_vlob_service import BaseNamedVlobService, NamedVlobDuplicatedIdError
 from parsec.backend.group_service import GroupError, GroupNotFound, BaseGroupService
 
 
@@ -201,11 +201,15 @@ class PostgreSQLNamedVlobService(BaseNamedVlobService):
     _ON_UPDATED_NOTIFY_CMD = "NOTIFY %s, %%s;" % BaseNamedVlobService.on_updated.name
 
     async def create(self, id, blob=None):
-        atom = VlobAtom(id=id, blob=blob)
+        # TODO: use identity handshake instead of trust_seed
+        atom = VlobAtom(id=id, blob=blob, read_trust_seed=42, write_trust_seed=42)
         async with self.postgresql.acquire() as conn:
             async with conn.cursor() as cur:
-                await cur.execute("INSERT INTO vlobs VALUES (%s, 1, %s, %s, %s);",
-                    (atom.id, atom.read_trust_seed, atom.write_trust_seed, atom.blob))
+                try:
+                    await cur.execute("INSERT INTO vlobs VALUES (%s, 1, %s, %s, %s);",
+                        (atom.id, atom.read_trust_seed, atom.write_trust_seed, atom.blob))
+                except IntegrityError:
+                    raise NamedVlobDuplicatedIdError('Id `%s` already exists.' % id)
         return atom
 
     read = PostgreSQLVlobService.read
