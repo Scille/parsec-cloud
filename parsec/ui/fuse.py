@@ -68,16 +68,17 @@ class File:
 class FuseOperations(LoggingMixIn, Operations):
 
     def __init__(self, socket_path):
-        self.perthread = threading.local()
         self.fds = {}
         self.next_fd_id = 0
         self._socket_path = socket_path
+        self._socket_lock = threading.Lock()
+        self._socket = None
 
     @property
     def sock(self):
-        if not hasattr(self.perthread, 'sock'):
+        if not self._socket:
             self._init_socket()
-        return self.perthread.sock
+        return self._socket
 
     def _init_socket(self):
         sock = socket.socket(socket.AF_UNIX, type=socket.SOCK_STREAM)
@@ -88,17 +89,18 @@ class FuseOperations(LoggingMixIn, Operations):
             sys.exit(1)
         sock.connect(self._socket_path)
         log.debug('Init socket')
-        self.perthread.sock = sock
+        self._socket = sock
 
     def send_cmd(self, **msg):
-        req = json.dumps(msg).encode() + b'\n'
-        log.debug('Send: %r' % req)
-        self.sock.send(req)
-        raw_reps = self.sock.recv(4096)
-        while raw_reps[-1] != ord(b'\n'):
-            raw_reps += self.sock.recv(4096)
-        log.debug('Received: %r' % raw_reps)
-        return json.loads(raw_reps.decode())
+        with self._socket_lock:
+            req = json.dumps(msg).encode() + b'\n'
+            log.debug('Send: %r' % req)
+            self.sock.send(req)
+            raw_reps = self.sock.recv(4096)
+            while raw_reps[-1] != ord(b'\n'):
+                raw_reps += self.sock.recv(4096)
+            log.debug('Received: %r' % raw_reps)
+            return json.loads(raw_reps[:-1].decode())
 
     def _get_fd(self, fh):
         try:
