@@ -9,18 +9,22 @@ class UnixSocketClientContext(BaseClientContext):
         super().__init__()
         self.reader = reader
         self.writer = writer
+        self._buffer = b''
 
     async def recv(self):
-        raw_line = b''
         while True:
-            raw_line += await self.reader.read(65536)
-            if not raw_line or raw_line[-1] == ord(b'\n'):
-                break
-        if not raw_line:
-            return
-        else:
+            buf = await self.reader.read(65536)
+            if not buf:
+                buf = self._buffer
+                self._buffer = b''
+                return buf
+            self._buffer += buf
             # raw_line is raw cmd and a trailing '\n'
-            return raw_line[:-1]
+            msgs = self._buffer.split(b'\n', 1)
+            if len(msgs) == 2:
+                # If message is followed by more data, keep it for the next processing
+                self._buffer = msgs[1]
+                return msgs[0]
 
     async def send(self, body):
         self.writer.write(body)
