@@ -38,7 +38,7 @@ class BaseServer:
         self._handshake = handshake
 
     async def __cmd_LIST_CMDS(self, session, msg):
-        return {'status': 'ok', 'cmds': list(self._cmds.keys())}
+        return {'status': 'ok', 'cmds': list(sorted(self._cmds.keys()))}
 
     async def __cmd_SUBSCRIBE(self, session, msg):
 
@@ -91,7 +91,7 @@ class BaseServer:
         except json.decoder.JSONDecodeError:
             pass
         # Not a JSON payload, try cmdline mode
-        splitted = raw.decode().strip().split(' ')
+        splitted = raw.strip().split(' ')
         cmd = splitted[0]
         raw_msg = '{"cmd": "%s"' % cmd
         for data in splitted[1:]:
