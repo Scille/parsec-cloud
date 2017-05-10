@@ -35,27 +35,27 @@ class BaseCryptoService(BaseService):
 
     name = 'CryptoService'
 
-    @cmd('sym_encrypt')
+    @cmd('crypto_sym_encrypt')
     async def _cmd_SYM_ENCRYPT(self, session, msg):
         msg = cmd_SYM_ENCRYPT_Schema().load(msg)
         key, encrypted_data = await self.sym_encrypt(msg['data'])
         key = encodebytes(key).decode()
         return {'status': 'ok', 'key': key, 'data': encrypted_data.decode()}
 
-    @cmd('asym_encrypt')
+    @cmd('crypto_asym_encrypt')
     async def _cmd_ASYM_ENCRYPT(self, session, msg):
         msg = cmd_ASYM_ENCRYPT_Schema().load(msg)
         encrypted_signed_data = await self.asym_encrypt(msg['data'], msg['recipient'])
         return {'status': 'ok', 'data': encrypted_signed_data.decode()}
 
-    @cmd('sym_decrypt')
+    @cmd('crypto_sym_decrypt')
     async def _cmd_SYM_DECRYPT(self, session, msg):
         msg = cmd_SYM_DECRYPT_Schema().load(msg)
         msg['key'] = decodebytes(msg['key'].encode())  # TODO use marshmallow
         decrypted_data = await self.sym_decrypt(msg['data'], msg['key'])
         return {'status': 'ok', 'data': decrypted_data.decode()}
 
-    @cmd('asym_decrypt')
+    @cmd('crypto_asym_decrypt')
     async def _cmd_ASYM_DECRYPT(self, session, msg):
         msg = cmd_ASYM_DECRYPT_Schema().load(msg)
         decrypted_data = await self.asym_decrypt(msg['data'])

@@ -33,7 +33,7 @@ class TestCryptoService:
 
     @pytest.mark.asyncio
     async def test_sym_encrypt(self, crypto_svc):
-        ret = await crypto_svc.dispatch_msg({'cmd': 'sym_encrypt', 'data': 'foo'})
+        ret = await crypto_svc.dispatch_msg({'cmd': 'crypto_sym_encrypt', 'data': 'foo'})
         assert ret['status'] == 'ok'
         assert '-----BEGIN PGP MESSAGE-----' in ret['data']
         assert '-----END PGP MESSAGE-----' in ret['data']
@@ -43,14 +43,14 @@ class TestCryptoService:
     async def test_asym_encrypt(self, crypto_svc):
         # Bad recipient
         ret = await crypto_svc.dispatch_msg(
-            {'cmd': 'asym_encrypt',
+            {'cmd': 'crypto_asym_encrypt',
              'recipient': 'wrong',
              'data': 'foo'})
         assert ret == {'status': 'error', 'label': 'Encryption failure.'}
         # Working
         fingerprint = crypto_svc.gnupg.list_keys()[0]['fingerprint']
         ret = await crypto_svc.dispatch_msg(
-            {'cmd': 'asym_encrypt',
+            {'cmd': 'crypto_asym_encrypt',
              'recipient': fingerprint,
              'data': 'foo'})
         assert ret['status'] == 'ok'
@@ -59,22 +59,22 @@ class TestCryptoService:
 
     @pytest.mark.asyncio
     async def test_sym_decrypt(self, crypto_svc):
-        original = await crypto_svc.dispatch_msg({'cmd': 'sym_encrypt', 'data': 'foo'})
+        original = await crypto_svc.dispatch_msg({'cmd': 'crypto_sym_encrypt', 'data': 'foo'})
         # Bad data
         ret = await crypto_svc.dispatch_msg(
-            {'cmd': 'sym_decrypt',
+            {'cmd': 'crypto_sym_decrypt',
              'data': 'bad',
              'key': original['key']})
         assert ret == {'status': 'error', 'label': 'Decryption failure.'}
         # Wrong key
         ret = await crypto_svc.dispatch_msg(
-            {'cmd': 'sym_decrypt',
+            {'cmd': 'crypto_sym_decrypt',
              'data': original['data'],
              'key': 'd3Jvbmc=\n'})
         assert ret == {'status': 'error', 'label': 'Decryption failure.'}
         # Good key
         ret = await crypto_svc.dispatch_msg(
-            {'cmd': 'sym_decrypt',
+            {'cmd': 'crypto_sym_decrypt',
              'data': original['data'],
              'key': original['key']})
         assert ret == {'status': 'ok', 'data': 'foo'}
@@ -83,16 +83,16 @@ class TestCryptoService:
     async def test_asym_decrypt(self, crypto_svc):
         fingerprint = crypto_svc.gnupg.list_keys()[0]['fingerprint']
         original = await crypto_svc.dispatch_msg(
-            {'cmd': 'asym_encrypt',
+            {'cmd': 'crypto_asym_encrypt',
              'recipient': fingerprint,
              'data': 'foo'})
         # Bad data
         ret = await crypto_svc.dispatch_msg(
-            {'cmd': 'asym_decrypt',
+            {'cmd': 'crypto_asym_decrypt',
              'data': 'bad'})
         assert ret == {'status': 'error', 'label': 'Decryption failure.'}
         # Working
         ret = await crypto_svc.dispatch_msg(
-            {'cmd': 'asym_decrypt',
+            {'cmd': 'crypto_asym_decrypt',
              'data': original['data']})
         assert ret == {'status': 'ok', 'data': 'foo'}

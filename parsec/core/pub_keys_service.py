@@ -47,12 +47,6 @@ class BasePubKeysService(BaseService):
 
     name = 'PubKeysService'
 
-    # @cmd('get_pub_key')
-    # async def _cmd_GET_PUB_KEY(self, session, msg):
-    #     msg = cmd_GET_PUB_KEY_Schema().load(msg)
-    #     user_key = await self.get_pub_key(msg['identity'])
-    #     return {'status': 'ok', 'pub_key': user_key}
-
     @cmd('pub_key_encrypt')
     async def _cmd_ENCRYPT(self, session, msg):
         msg = cmd_ENCRYPT_Schema().load(msg)
@@ -74,17 +68,10 @@ class BasePubKeysService(BaseService):
 
 class GNUPGPubKeysService(BasePubKeysService):
 
-    # gnupg = service('GNUPGService')
-
     def __init__(self, homedir='~/.gnupg'):
         super().__init__()
         import gnupg
         self.gnupg = gnupg.GPG(homedir=homedir, use_agent=True)
-
-    # async def get_pub_key(self, identity):
-    #     key = await self.gnupg.get_pub_key(identity)
-    #     if not key:
-    #         raise PubKeysNotFound()
 
     async def encrypt(self, identity, content):
         key = await self.get_pub_key(identity)
