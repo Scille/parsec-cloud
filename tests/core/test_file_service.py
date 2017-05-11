@@ -295,3 +295,34 @@ class TestFileService:
         for version in [0, 10]:
             ret = await file_svc.dispatch_msg({'cmd': 'file_restore', 'id': id, 'version': version})
             assert ret == {'status': 'bad_version', 'label': 'Bad version number.'}
+
+    @pytest.mark.asyncio
+    async def test_reencrypt(self, file_svc, user_manifest_svc):
+        encoded_content_initial = encodebytes('initial'.encode()).decode()
+        encoded_content_final = encodebytes('final'.encode()).decode()
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
+                                                    'path': '/foo',
+                                                    'content': encoded_content_initial})
+        assert ret['status'] == 'ok'
+        del ret['status']
+        old_vlob = ret
+        ret = await file_svc.dispatch_msg({'cmd': 'file_reencrypt', 'id': old_vlob['id']})
+        assert ret['status'] == 'ok'
+        del ret['status']
+        new_vlob = ret
+        for property in old_vlob.keys():
+            assert old_vlob[property] != new_vlob[property]
+        await user_manifest_svc.import_file_vlob('/bar', new_vlob)
+        ret = await file_svc.dispatch_msg({'cmd': 'file_write',
+                                           'id': new_vlob['id'],
+                                           'content': encoded_content_final,
+                                           'version': 2})
+        assert ret == {'status': 'ok'}
+        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': old_vlob['id']})
+        assert ret == {'status': 'ok',
+                       'content': encoded_content_initial,
+                       'version': 1}
+        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': new_vlob['id']})
+        assert ret == {'status': 'ok',
+                       'content': encoded_content_final,
+                       'version': 2}

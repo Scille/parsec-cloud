@@ -43,6 +43,10 @@ class cmd_RESTORE_Schema(BaseCmdSchema):
     version = fields.Integer(missing=None)
 
 
+class cmd_REENCRYPT_Schema(BaseCmdSchema):
+    id = fields.String(required=True)
+
+
 class BaseFileService(BaseService):
 
     name = 'FileService'
@@ -85,6 +89,13 @@ class BaseFileService(BaseService):
         await self.restore(msg['id'], msg['version'])
         return {'status': 'ok'}
 
+    @cmd('file_reencrypt')
+    async def _cmd_REENCRYPT(self, session, msg):
+        msg = cmd_REENCRYPT_Schema().load(msg)
+        file = await self.reencrypt(msg['id'])
+        file.update({'status': 'ok'})
+        return file
+
     async def create(self, content=''):
         raise NotImplementedError()
 
@@ -101,6 +112,9 @@ class BaseFileService(BaseService):
         raise NotImplementedError()
 
     async def restore(self, id, version):
+        raise NotImplementedError()
+
+    async def reencrypt(self, id):
         raise NotImplementedError()
 
 
@@ -255,3 +269,26 @@ class FileService(BaseFileService):
                 trust_seed=properties['write_trust_seed'])
         elif version < 1 or version > stat['version']:
             raise FileError('bad_version', 'Bad version number.')
+
+    async def reencrypt(self, id):
+        try:
+            properties = await self.user_manifest_service.get_properties(id=id)
+        except Exception:
+            try:
+                properties = await self.user_manifest_service.get_properties(id=id, dustbin=True)
+            except Exception:
+                raise FileNotFound('Vlob not found.')
+        old_vlob = await self.backend_api_service.vlob_read(
+            id=properties['id'],
+            trust_seed=properties['read_trust_seed'])
+        old_blob = old_vlob['blob']
+        old_encrypted_blob = decodebytes(old_blob.encode())
+        old_blob_key = decodebytes(properties['key'].encode())
+        new_blob = await self.crypto_service.sym_decrypt(old_encrypted_blob, old_blob_key)
+        new_key, new_encrypted_blob = await self.crypto_service.sym_encrypt(new_blob)
+        new_encrypted_blob = encodebytes(new_encrypted_blob).decode()
+        new_key = encodebytes(new_key).decode()
+        new_vlob = await self.backend_api_service.vlob_create(new_encrypted_blob)
+        del new_vlob['status']
+        new_vlob['key'] = new_key
+        return new_vlob

@@ -343,6 +343,14 @@ class Manifest(object):
                 return True
         raise UserManifestNotFound('Vlob not found.')
 
+    async def reencrypt_file(self, path):
+        try:
+            entry = self.entries[path]
+        except KeyError:
+            raise UserManifestNotFound('File not found.')
+        new_vlob = await self.service.file_service.reencrypt(entry['id'])
+        self.entries[path] = new_vlob
+
     async def list_dir(self, path, children=True):
         if path != '/' and path not in self.entries:
             raise UserManifestNotFound('Directory or file not found.')
@@ -495,6 +503,19 @@ class GroupManifest(Manifest):
         self.original_manifest = json.loads(blob)
 
     async def reencrypt(self):
+        # Reencrypt files
+        for path, entry in self.entries.items():
+            if entry['id']:
+                new_vlob = await self.service.file_service.reencrypt(entry['id'])
+                self.entries[path] = new_vlob
+        for index, entry in enumerate(self.dustbin):
+            path = entry['path']
+            removed_date = entry['removed_date']
+            new_vlob = await self.service.file_service.reencrypt(entry['id'])
+            new_vlob['path'] = path
+            new_vlob['removed_date'] = removed_date
+            self.dustbin[index] = new_vlob
+        # Reencrypt manifest
         blob = await self.dumps()
         key, encrypted_blob = await self.service.crypto_service.sym_encrypt(blob.encode())
         new_vlob = await self.service.backend_api_service.vlob_create(blob=encrypted_blob.decode())

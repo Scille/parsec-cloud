@@ -328,6 +328,23 @@ class TestManifest:
             await manifest.restore_file(file_vlob['id'])
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
+    async def test_reencrypt_file(self, file_svc, user_manifest_svc, path):
+        encoded_content_initial = encodebytes('initial'.encode()).decode()
+        encoded_content_final = encodebytes('final'.encode()).decode()
+        file_vlob = await user_manifest_svc.create_file(path, encoded_content_initial)
+        manifest = await user_manifest_svc.get_manifest()
+        old_vlob = await user_manifest_svc.get_properties(path=path)
+        assert old_vlob == file_vlob
+        await manifest.reencrypt_file(path)
+        new_vlob = await user_manifest_svc.get_properties(path=path)
+        for property in old_vlob.keys():
+            assert new_vlob[property] != old_vlob[property]
+        await file_svc.write(id=new_vlob['id'], version=2, content=encoded_content_final)
+        new_file = await file_svc.read(new_vlob['id'])
+        assert new_file == {'content': encoded_content_final, 'version': 2}
+
+    @pytest.mark.asyncio
     async def test_list_dir(self, manifest):
         file_vlob = {'id': '123', 'key': '123', 'read_trust_seed': '123', 'write_trust_seed': '123'}
         # Create folders
@@ -639,10 +656,16 @@ class TestGroupManifest:
         # TODO assert called methods
 
     @pytest.mark.asyncio
-    async def test_reencrypt(self, user_manifest_svc, file_svc, group_manifest):
-        content = encodebytes('foo'.encode()).decode()
-        vlob = await file_svc.create(content)
-        await group_manifest.add_file('/foo', vlob)
+    async def test_reencrypt(self, user_manifest_svc, file_svc):
+        await user_manifest_svc.create_group_manifest('foo_community')
+        group_manifest = await user_manifest_svc.get_manifest('foo_community')
+        foo_content = encodebytes('foo'.encode()).decode()
+        bar_content = encodebytes('foo'.encode()).decode()
+        foo_vlob = await file_svc.create(foo_content)
+        bar_vlob = await file_svc.create(bar_content)
+        await group_manifest.add_file('/foo', foo_vlob)
+        await group_manifest.add_file('/bar', bar_vlob)
+        await group_manifest.delete_file('/bar')
         await group_manifest.save()
         assert await group_manifest.get_version() == 2
         dump = await group_manifest.dumps()
@@ -666,7 +689,16 @@ class TestGroupManifest:
         assert await new_group_manifest.get_version() == 1
         new_dump = await new_group_manifest.dumps()
         new_dump = json.loads(new_dump)
-        assert new_dump == dump
+        for file_path, entry in new_dump['entries'].items():
+            if entry['id']:
+                for property in entry.keys():
+                    assert entry[property] != dump['entries'][file_path][property]
+        for index, entry in enumerate(new_dump['dustbin']):
+            for property in entry.keys():
+                if property in ['path', 'removed_date']:
+                    assert entry[property] == dump['dustbin'][index][property]
+                else:
+                    assert entry[property] != dump['dustbin'][index][property]
 
     @pytest.mark.asyncio
     async def test_restore_manifest(self, user_manifest_svc, file_svc, group_manifest):
