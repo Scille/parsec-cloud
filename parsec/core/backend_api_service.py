@@ -31,13 +31,15 @@ class BaseBackendAPIService(BaseService):
 
 class BackendAPIService(BaseBackendAPIService):
 
-    def __init__(self, backend_url):
+    def __init__(self, backend_url, watchdog=None):
         super().__init__()
         self._resp_queue = asyncio.Queue()
         assert backend_url.startswith('ws://') or backend_url.startswith('wss://')
         self._backend_url = backend_url
         self._websocket = None
         self._ws_recv_handler_task = None
+        self._watchdog_task = None
+        self._watchdog_time = watchdog
 
     async def connect_event(self, event, sender, cb):
         assert event in ('on_vlob_updated', 'on_named_vlob_updated', 'on_message_arrived')
@@ -49,14 +51,25 @@ class BackendAPIService(BaseBackendAPIService):
         assert not self._websocket, "Service already bootstraped"
         self._websocket = await websockets.connect(self._backend_url)
         self._ws_recv_handler_task = asyncio.ensure_future(self._ws_recv_handler())
+        if self._watchdog_time:
+            self._watchdog_task = asyncio.ensure_future(self._watchdog())
 
     async def teardown(self):
         assert self._websocket, "Service hasn't been bootstraped"
-        self._ws_recv_handler_task.cancel()
-        try:
-            await self._ws_recv_handler_task
-        except asyncio.CancelledError:
-            pass
+        for task in (self._ws_recv_handler_task, self._watchdog_task):
+            if not task:
+                continue
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
+    async def _watchdog(self):
+        while True:
+            await asyncio.sleep(self._watchdog_time)
+            logger.debug('Watchdog ping to backend.')
+            await self._websocket.ping()
 
     async def _ws_recv_handler(self):
         # Given command responses and notifications are all send through the

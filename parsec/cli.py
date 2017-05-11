@@ -1,4 +1,5 @@
 from os import environ
+from importlib import import_module
 from socket import socket, AF_UNIX, SOCK_STREAM
 import click
 
@@ -58,10 +59,11 @@ def fuse(mountpoint, identity, debug, nothreads, socket):
               help='Path to the UNIX socket exposing the core API (default: %s).' %
               CORE_UNIX_SOCKET)
 @click.option('--backend-host', '-H', default='ws://localhost:6777')
+@click.option('--backend-watchdog', '-W', type=click.INT, default=None)
 @click.option('--block-store', '-B')
-def core(socket, backend_host, block_store):
+def core(socket, backend_host, backend_watchdog, block_store):
     server = UnixSocketServer()
-    server.register_service(BackendAPIService(backend_host))
+    server.register_service(BackendAPIService(backend_host, backend_watchdog))
     if block_store:
         if block_store.startswith('s3:'):
             try:
@@ -135,6 +137,16 @@ cli.add_command(fuse)
 cli.add_command(shell)
 cli.add_command(core)
 cli.add_command(backend)
+
+
+def _add_command_if_can_import(path, name=None):
+    module_path, field = path.rsplit('.', 1)
+    module = import_module(module_path)
+    cli.add_command(getattr(module, field), name=name)
+
+
+_add_command_if_can_import('parsec.backend.postgresql.cli', 'postgresql')
+
 
 try:
     from parsec.backend.postgresql import cli as postgresql_cli

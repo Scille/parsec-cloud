@@ -24,6 +24,7 @@ def cli():
 @click.argument('url')
 @click.option('--force', '-f', is_flag=True, default=False)
 def init(url, force):
+    """Create the tables in database."""
     loop = asyncio.get_event_loop()
     try:
         loop.run_until_complete(_init_db(url, force=force))
