@@ -38,7 +38,7 @@ class BaseServer:
         self._handshake = handshake
 
     async def __cmd_LIST_CMDS(self, session, msg):
-        return {'status': 'ok', 'cmds': list(sorted(self._cmds.keys()))}
+        return {'status': 'ok', 'cmds': sorted(self._cmds.keys())}
 
     async def __cmd_SUBSCRIBE(self, session, msg):
 

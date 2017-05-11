@@ -344,10 +344,13 @@ class TestManifest:
 
         # Finally do some lookup
         async def assert_ls(path, expected_children):
-            expected_children = await manifest.list_dir(path, children=True)
-            for children in expected_children.values():
-                keys = ['id', 'read_trust_seed', 'write_trust_seed', 'key']
-                assert list(sorted(keys)) == list(sorted(children.keys()))
+            returned_children = await manifest.list_dir(path, children=True)
+            assert sorted(expected_children) == sorted(returned_children.keys())
+            keys = ['id', 'key', 'read_trust_seed', 'write_trust_seed']
+            for children in returned_children.values():
+                assert keys == sorted(children.keys())
+            file = await manifest.list_dir(path, children=False)
+            assert keys == sorted(file.keys())
 
         await assert_ls('/', ['.root', 'countries'])
         await assert_ls('/countries', ['index', 'Belgium', 'France'])
@@ -641,7 +644,7 @@ class TestGroupManifest:
         vlob = await file_svc.create(content)
         await group_manifest.add_file('/foo', vlob)
         await group_manifest.save()
-        assert group_manifest.version == 2
+        assert await group_manifest.get_version() == 2
         dump = await group_manifest.dumps()
         dump = json.loads(dump)
         old_id = group_manifest.id
@@ -653,17 +656,55 @@ class TestGroupManifest:
         assert group_manifest.key != old_key
         assert group_manifest.read_trust_seed != old_read_trust_seed
         assert group_manifest.write_trust_seed != old_write_trust_seed
-        assert group_manifest.version == 1
+        assert await group_manifest.get_version() == 1
         new_group_manifest = GroupManifest(user_manifest_svc,
                                            group_manifest.id,
                                            group_manifest.key,
                                            group_manifest.read_trust_seed,
                                            group_manifest.write_trust_seed)
         await new_group_manifest.reload(reset=True)
-        assert new_group_manifest.version == 1
+        assert await new_group_manifest.get_version() == 1
         new_dump = await new_group_manifest.dumps()
         new_dump = json.loads(new_dump)
         assert new_dump == dump
+
+    @pytest.mark.asyncio
+    async def test_restore_manifest(self, user_manifest_svc, file_svc, group_manifest):
+        content = encodebytes('foo'.encode()).decode()
+        vlob = await file_svc.create(content)
+        # Restore dirty manifest with version 1
+        await group_manifest.add_file('/tmp', vlob)
+        assert await group_manifest.get_version() == 1
+        await group_manifest.restore()
+        assert await group_manifest.get_version() == 1
+        children = await group_manifest.list_dir('/')
+        assert sorted(children.keys()) == []
+        # Restore previous version
+        await group_manifest.add_file('/foo', vlob)
+        await group_manifest.save()
+        await group_manifest.add_file('/bar', vlob)
+        await group_manifest.save()
+        await group_manifest.add_file('/baz', vlob)
+        await group_manifest.save()
+        assert await group_manifest.get_version() == 4
+        await group_manifest.restore()
+        assert await group_manifest.get_version() == 5
+        children = await group_manifest.list_dir('/')
+        assert sorted(children.keys()) == ['bar', 'foo']
+        # Restore old version
+        await group_manifest.restore(4)
+        assert await group_manifest.get_version() == 6
+        children = await group_manifest.list_dir('/')
+        assert sorted(children.keys()) == ['bar', 'baz', 'foo']
+        # Bad version
+        for version in [0, 10]:
+            with pytest.raises(UserManifestError):
+                await group_manifest.restore(version)
+        # Restore not saved manifest
+        new_group_manifest = GroupManifest(group_manifest.service)
+        with pytest.raises(UserManifestError):
+            await new_group_manifest.restore()
+        # TODO restore file versions
 
 
 class TestUserManifest:
@@ -777,7 +818,7 @@ class TestUserManifest:
         assert keys == sorted(list(group_vlobs.keys()))
         for group_vlob in group_vlobs.values():
             keys = ['id', 'read_trust_seed', 'write_trust_seed', 'key']
-            assert list(sorted(keys)) == list(sorted(group_vlob.keys()))
+            assert sorted(keys) == sorted(group_vlob.keys())
         # Not found
         with pytest.raises(UserManifestNotFound):
             await user_manifest_with_group.get_group_vlobs('unknown')
@@ -873,9 +914,7 @@ class TestUserManifest:
         assert '/bar' not in entries
 
     @pytest.mark.asyncio
-    async def test_reload_with_reset_no_new_version(self,
-                                                    file_svc,
-                                                    user_manifest):
+    async def test_reload_with_reset_no_new_version(self, file_svc, user_manifest):
         content = encodebytes('foo'.encode()).decode()
         file_vlob = await file_svc.create(content)
         await user_manifest.add_file('/foo', file_vlob)
@@ -922,9 +961,7 @@ class TestUserManifest:
         assert '/bar' in entries and entries['/bar'] == file_vlob_2
 
     @pytest.mark.asyncio
-    async def test_reload_without_reset_and_no_new_version(self,
-                                                           file_svc,
-                                                           user_manifest):
+    async def test_reload_without_reset_and_no_new_version(self, file_svc, user_manifest):
         content = encodebytes('foo'.encode()).decode()
         file_vlob = await file_svc.create(content)
         await user_manifest.add_file('/foo', file_vlob)
@@ -958,6 +995,45 @@ class TestUserManifest:
         await user_manifest.save()
         assert await user_manifest.get_version() == 2
         # TODO assert called methods
+
+    @pytest.mark.asyncio
+    async def test_restore_manifest(self, file_svc, user_manifest):
+        content = encodebytes('foo'.encode()).decode()
+        vlob = await file_svc.create(content)
+        # Restore dirty manifest with version 1
+        await user_manifest.add_file('/tmp', vlob)
+        assert await user_manifest.get_version() == 1
+        await user_manifest.restore()
+        assert await user_manifest.get_version() == 1
+        children = await user_manifest.list_dir('/')
+        assert sorted(children.keys()) == []
+        # Restore previous version
+        await user_manifest.add_file('/foo', vlob)
+        await user_manifest.save()
+        await user_manifest.add_file('/bar', vlob)
+        await user_manifest.save()
+        await user_manifest.add_file('/baz', vlob)
+        await user_manifest.save()
+        assert await user_manifest.get_version() == 4
+        await user_manifest.restore()
+        assert await user_manifest.get_version() == 5
+        children = await user_manifest.list_dir('/')
+        assert sorted(children.keys()) == ['bar', 'foo']
+        # Restore old version
+        await user_manifest.restore(4)
+        assert await user_manifest.get_version() == 6
+        children = await user_manifest.list_dir('/')
+        assert sorted(children.keys()) == ['bar', 'baz', 'foo']
+        # Bad version
+        for version in [0, 10]:
+            with pytest.raises(UserManifestError):
+                await user_manifest.restore(version)
+        # Restore not saved manifest
+        vlob = await user_manifest.get_vlob()
+        new_user_manifest = UserManifest(user_manifest.service, vlob['id'])
+        with pytest.raises(UserManifestError):
+            await new_user_manifest.restore()
+        # TODO restore file versions
 
     @pytest.mark.asyncio
     async def test_check_consistency(self, user_manifest_svc, file_svc, user_manifest):
@@ -1160,8 +1236,8 @@ class TestUserManifestService:
             assert ret['status'] == 'ok'
             for name in expected_children:
                 keys = ['id', 'read_trust_seed', 'write_trust_seed', 'key']
-                assert list(sorted(keys)) == list(sorted(ret['current'].keys()))
-                assert list(sorted(keys)) == list(sorted(ret['children'][name].keys()))
+                assert sorted(keys) == sorted(ret['current'].keys())
+                assert sorted(keys) == sorted(ret['children'][name].keys())
 
         await assert_ls('/', ['.root', 'countries'])
         await assert_ls('/countries', ['index', 'Belgium', 'France'])
@@ -1472,8 +1548,7 @@ class TestUserManifestService:
         bar_vlob = await user_manifest_svc.create_file('/bar', group=group)
         baz_vlob = await user_manifest_svc.create_file('/baz', group=group)
         # Full history
-        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history',
-                                                    'group': group})
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_history', 'group': group})
         assert ret == {
             'status': 'ok',
             'detailed_history': [
@@ -1582,3 +1657,30 @@ class TestUserManifestService:
                                                     'group': group})
         assert ret == {'status': 'bad_versions',
                        'label': 'First version number greater than second version number.'}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('group', [None, 'foo_community'])
+    async def test_restore_manifest(self, user_manifest_svc, user_manifest_with_group, group):
+        group = 'foo_community'
+        await user_manifest_svc.create_file('/foo', group=group)
+        await user_manifest_svc.create_file('/bar', group=group)
+        await user_manifest_svc.create_file('/baz', group=group)
+        # Previous version
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore', 'group': group})
+        assert ret == {'status': 'ok'}
+        listing = await user_manifest_svc.list_dir('/', group)
+        assert sorted(listing[1].keys()) == ['bar', 'foo']
+        # Restore old version
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore',
+                                                    'version': 2,
+                                                    'group': group})
+        assert ret == {'status': 'ok'}
+        listing = await user_manifest_svc.list_dir('/', group)
+        assert sorted(listing[1].keys()) == ['foo']
+        # Bad version
+        for version in [0, 10]:
+            ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore',
+                                                        'version': version,
+                                                        'group': group})
+            assert ret == {'status': 'bad_version', 'label': 'Bad version number.'}
+        # TODO restore file versions

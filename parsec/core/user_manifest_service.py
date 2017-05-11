@@ -71,6 +71,11 @@ class cmd_HISTORY_Schema(BaseCmdSchema):
     group = fields.String(missing=None)
 
 
+class cmd_RESTORE_MANIFEST_Schema(BaseCmdSchema):
+    version = fields.Integer(missing=None)
+    group = fields.String(missing=None)
+
+
 class BaseUserManifestService(BaseService):
 
     name = 'UserManifestService'
@@ -139,6 +144,12 @@ class BaseUserManifestService(BaseService):
         history['status'] = 'ok'
         return history
 
+    @cmd('user_manifest_restore')
+    async def _cmd_RESTORE_MANIFEST(self, session, msg):
+        msg = cmd_RESTORE_MANIFEST_Schema().load(msg)
+        await self.restore_manifest(msg['version'], msg['group'])
+        return {'status': 'ok'}
+
     @cmd('user_manifest_load')
     # TODO event when new identity loaded in indentity service
     async def _cmd_LOAD_USER_MANIFEST(self, session, msg):
@@ -169,19 +180,13 @@ class BaseUserManifestService(BaseService):
     async def show_dustbin(self, path, group):
         raise NotImplementedError()
 
-    async def load_user_manifest(self):
-        raise NotImplementedError()
-
-    async def save_manifest(self):
-        raise NotImplementedError()
-
-    async def check_consistency(self, manifest):
-        raise NotImplementedError()
-
-    async def get_properties(self, path, id, dustbin, group):
-        raise NotImplementedError()
-
     async def history(self, first_version, last_version, summary, group):
+        raise NotImplementedError()
+
+    async def restore_manifest(self, version, group):
+        raise NotImplementedError()
+
+    async def load_user_manifest(self):
         raise NotImplementedError()
 
 
@@ -499,6 +504,22 @@ class GroupManifest(Manifest):
         self.write_trust_seed = new_vlob['write_trust_seed']
         self.version = 1
 
+    async def restore(self, version=None):
+        if version is None:
+            version = self.version - 1 if self.version > 1 else 1
+        if version > 0 and version < self.version:
+            vlob = await self.service.backend_api_service.vlob_read(id=self.id,
+                                                                    trust_seed=self.read_trust_seed,
+                                                                    version=version)
+            await self.service.backend_api_service.vlob_update(
+                id=self.id,
+                version=self.version + 1,
+                blob=vlob['blob'],
+                trust_seed=self.write_trust_seed)
+        elif version < 1 or version > self.version:
+            raise UserManifestError('bad_version', 'Bad version number.')
+        await self.reload(reset=True)
+
 
 class UserManifest(Manifest):
 
@@ -650,6 +671,22 @@ class UserManifest(Manifest):
                 blob=encrypted_blob.decode())
         self.original_manifest = json.loads(blob)
 
+    async def restore(self, version=None):
+        if version is None:
+            version = self.version - 1 if self.version > 1 else 1
+        if version > 0 and version < self.version:
+            vlob = await self.service.backend_api_service.named_vlob_read(id=self.id,
+                                                                          trust_seed='42',
+                                                                          version=version)
+            await self.service.backend_api_service.named_vlob_update(
+                id=self.id,
+                version=self.version + 1,
+                blob=vlob['blob'],
+                trust_seed='42')
+        elif version < 1 or version > self.version:
+            raise UserManifestError('bad_version', 'Bad version number.')
+        await self.reload(reset=True)
+
     async def check_consistency(self, manifest):
         if await super().check_consistency(manifest) is False:
             return False
@@ -688,12 +725,12 @@ class UserManifestService(BaseUserManifestService):
     async def reencrypt_group_manifest(self, group):
         manifest = await self.get_manifest()
         await manifest.reencrypt_group_manifest(group)
-        await manifest.save(recursive=False)
+        await manifest.save()
 
     async def import_group_vlob(self, group, vlob):
         manifest = await self.get_manifest()
         await manifest.import_group_vlob(group, vlob)
-        await manifest.save(recursive=False)
+        await manifest.save()
 
     async def import_file_vlob(self, path, vlob, group=None):
         manifest = await self.get_manifest(group)
@@ -701,7 +738,7 @@ class UserManifestService(BaseUserManifestService):
         if group:
             await manifest.save()
         else:
-            await manifest.save(recursive=False)
+            await manifest.save()
 
     async def create_file(self, path, content=b'', group=None):
         manifest = await self.get_manifest(group)
@@ -749,6 +786,27 @@ class UserManifestService(BaseUserManifestService):
         manifest = await self.get_manifest(group)
         return await manifest.show_dustbin(path)
 
+    async def history(self, first_version=1, last_version=None, summary=False, group=None):
+        if first_version and last_version and first_version > last_version:
+            raise UserManifestError('bad_versions', 'First version number greater than second one.')
+        manifest = await self.get_manifest(group)
+        if summary:
+            diff = await manifest.diff_versions(first_version, last_version)
+            return {'summary_history': diff}
+        else:
+            if not last_version:
+                last_version = await manifest.get_version()
+            history = []
+            for current_version in range(first_version, last_version + 1):
+                diff = await manifest.diff_versions(current_version - 1, current_version)
+                diff['version'] = current_version
+                history.append(diff)
+            return {'detailed_history': history}
+
+    async def restore_manifest(self, version=None, group=None):
+        manifest = await self.get_manifest(group)
+        await manifest.restore(version)
+
     async def load_user_manifest(self):
         identity = await self.identity_service.get_identity()
         self.user_manifest = UserManifest(self, identity)
@@ -785,21 +843,3 @@ class UserManifestService(BaseUserManifestService):
                         if entry['id'] == id:
                             return entry
         raise UserManifestNotFound('File not found.')
-
-    async def history(self, first_version=1, last_version=None, summary=False, group=None):
-        if first_version and last_version and first_version > last_version:
-            raise UserManifestError('bad_versions',
-                                    'First version number greater than second version number.')
-        manifest = await self.get_manifest(group)
-        if summary:
-            diff = await manifest.diff_versions(first_version, last_version)
-            return {'summary_history': diff}
-        else:
-            if not last_version:
-                last_version = await manifest.get_version()
-            history = []
-            for current_version in range(first_version, last_version + 1):
-                diff = await manifest.diff_versions(current_version - 1, current_version)
-                diff['version'] = current_version
-                history.append(diff)
-            return {'detailed_history': history}
