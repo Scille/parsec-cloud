@@ -65,6 +65,7 @@ class BackendAPIService(BaseBackendAPIService):
                 await task
             except asyncio.CancelledError:
                 pass
+        await self._websocket.close()
 
     async def _watchdog(self):
         while True:
