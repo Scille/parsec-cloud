@@ -38,6 +38,11 @@ class cmd_HISTORY_Schema(BaseCmdSchema):
     last_version = fields.Integer(missing=None)
 
 
+class cmd_RESTORE_Schema(BaseCmdSchema):
+    id = fields.String(required=True)
+    version = fields.Integer(missing=None)
+
+
 class BaseFileService(BaseService):
 
     name = 'FileService'
@@ -74,6 +79,12 @@ class BaseFileService(BaseService):
         history = await self.history(msg['id'], msg['first_version'], msg['last_version'])
         return {'status': 'ok', 'history': history}
 
+    @cmd('file_restore')
+    async def _cmd_RESTORE(self, session, msg):
+        msg = cmd_RESTORE_Schema().load(msg)
+        await self.restore(msg['id'], msg['version'])
+        return {'status': 'ok'}
+
     async def create(self, content=''):
         raise NotImplementedError()
 
@@ -87,6 +98,9 @@ class BaseFileService(BaseService):
         raise NotImplementedError()
 
     async def history(self, id, first_version, last_version):
+        raise NotImplementedError()
+
+    async def restore(self, id, version):
         raise NotImplementedError()
 
 
@@ -219,3 +233,25 @@ class FileService(BaseFileService):
             del stat['id']
             history.append(stat)
         return history
+
+    async def restore(self, id, version=None):
+        try:
+            properties = await self.user_manifest_service.get_properties(id=id)
+        except Exception:
+            raise FileNotFound('Vlob not found.')
+        stat = await self.stat(id)
+        if version is None:
+            version = stat['version'] - 1 if stat['version'] > 1 else 1
+        if version > 0 and version < stat['version']:
+
+            vlob = await self.backend_api_service.vlob_read(
+                id,
+                properties['read_trust_seed'],
+                version)
+            await self.backend_api_service.vlob_update(
+                id=id,
+                version=stat['version'] + 1,
+                blob=vlob['blob'],
+                trust_seed=properties['write_trust_seed'])
+        elif version < 1 or version > stat['version']:
+            raise FileError('bad_version', 'Bad version number.')

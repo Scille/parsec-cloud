@@ -256,3 +256,42 @@ class TestFileService:
                                            'last_version': 2})
         assert ret == {'status': 'bad_versions',
                        'label': 'First version number greater than second version number.'}
+
+    @pytest.mark.asyncio
+    async def test_restore(self, file_svc, user_manifest_svc):
+        encoded_content = encodebytes('initial'.encode()).decode()
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
+                                                    'path': '/test',
+                                                    'content': encoded_content})
+        assert ret['status'] == 'ok'
+        id = ret['id']
+        # Restore file with version 1
+        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
+        assert ret == {'status': 'ok', 'version': 1, 'content': encoded_content}
+        ret = await file_svc.dispatch_msg({'cmd': 'file_restore', 'id': id})
+        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
+        assert ret == {'status': 'ok', 'version': 1, 'content': encoded_content}
+        # Restore previous version
+        for version, content in enumerate(('this is v2', 'this is v3', 'this is v4'), 2):
+            encoded_content = encodebytes(content.encode()).decode()
+            ret = await file_svc.dispatch_msg({'cmd': 'file_write',
+                                               'id': id,
+                                               'version': version,
+                                               'content': encoded_content})
+            assert ret == {'status': 'ok'}
+        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
+        encoded_content = encodebytes('this is v4'.encode()).decode()
+        assert ret == {'status': 'ok', 'version': 4, 'content': encoded_content}
+        ret = await file_svc.dispatch_msg({'cmd': 'file_restore', 'id': id})
+        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
+        encoded_content = encodebytes('this is v3'.encode()).decode()
+        assert ret == {'status': 'ok', 'version': 5, 'content': encoded_content}
+        # Restore old version
+        ret = await file_svc.dispatch_msg({'cmd': 'file_restore', 'id': id, 'version': 2})
+        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
+        encoded_content = encodebytes('this is v2'.encode()).decode()
+        assert ret == {'status': 'ok', 'version': 6, 'content': encoded_content}
+        # Bad version
+        for version in [0, 10]:
+            ret = await file_svc.dispatch_msg({'cmd': 'file_restore', 'id': id, 'version': version})
+            assert ret == {'status': 'bad_version', 'label': 'Bad version number.'}
