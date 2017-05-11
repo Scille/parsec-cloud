@@ -202,7 +202,7 @@ class PostgreSQLNamedVlobService(BaseNamedVlobService):
 
     async def create(self, id, blob=None):
         # TODO: use identity handshake instead of trust_seed
-        atom = VlobAtom(id=id, blob=blob, read_trust_seed=42, write_trust_seed=42)
+        atom = VlobAtom(id=id, blob=blob, read_trust_seed='42', write_trust_seed='42')
         async with self.postgresql.acquire() as conn:
             async with conn.cursor() as cur:
                 try:
