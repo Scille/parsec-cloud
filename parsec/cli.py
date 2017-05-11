@@ -1,8 +1,11 @@
 from os import environ
 from importlib import import_module
 from socket import socket, AF_UNIX, SOCK_STREAM
+import asyncio
 import click
+from logbook import WARNING
 
+from parsec.tools import logger_stream
 from parsec.server import UnixSocketServer, WebSocketServer
 from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedNamedVlobService,
                             MockedVlobService)
@@ -61,7 +64,8 @@ def fuse(mountpoint, identity, debug, nothreads, socket):
 @click.option('--backend-host', '-H', default='ws://localhost:6777')
 @click.option('--backend-watchdog', '-W', type=click.INT, default=None)
 @click.option('--block-store', '-B')
-def core(socket, backend_host, backend_watchdog, block_store):
+@click.option('--debug', '-d', is_flag=True)
+def core(socket, backend_host, backend_watchdog, block_store, debug):
     server = UnixSocketServer()
     server.register_service(BackendAPIService(backend_host, backend_watchdog))
     if block_store:
@@ -89,8 +93,13 @@ def core(socket, backend_host, backend_watchdog, block_store):
     server.register_service(IdentityService())
     server.register_service(ShareService())
     server.register_service(UserManifestService())
+    loop = asyncio.get_event_loop()
+    if debug:
+        loop.set_debug(True)
+    else:
+        logger_stream.level = WARNING
     print('Starting parsec core on %s (connecting to backend %s and block store %s)' % (socket, backend_host, store_type))
-    server.start(socket)
+    server.start(socket, loop=loop)
     print('Bye ;-)')
 
 
@@ -101,7 +110,8 @@ def core(socket, backend_host, backend_watchdog, block_store):
 @click.option('--no-client-auth', is_flag=True,
               help='Disable authentication handshake on client connection (default: false)')
 @click.option('--store', '-s', default=None, help="Store configuration (default: in memory)")
-def backend(host, port, gnupg_homedir, no_client_auth, store):
+@click.option('--debug', '-d', is_flag=True)
+def backend(host, port, gnupg_homedir, no_client_auth, store, debug):
     host = host or environ.get('HOST', 'localhost')
     port = port or int(environ.get('PORT', 6777))
     pub_keys_service = GNUPGPubKeysService(gnupg_homedir)
@@ -127,8 +137,13 @@ def backend(host, port, gnupg_homedir, no_client_auth, store):
         server.register_service(MockedGroupService())
         server.register_service(MockedNamedVlobService())
         server.register_service(MockedVlobService())
+    loop = asyncio.get_event_loop()
+    if debug:
+        loop.set_debug(True)
+    else:
+        logger_stream.level = WARNING
     print('Starting parsec backend on %s:%s with store %s' % (host, port, store_type))
-    server.start(host, port)
+    server.start(host, port, loop=loop)
     print('Bye ;-)')
 
 

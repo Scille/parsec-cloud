@@ -11,7 +11,8 @@ from parsec.exceptions import BadMessageError
 LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name})' \
              ' {record.level_name}: {record.channel}: {record.message}'
 logger = Logger('Parsec')
-StreamHandler(sys.stdout, format_string=LOG_FORMAT).push_application()
+logger_stream = StreamHandler(sys.stdout, format_string=LOG_FORMAT)
+logger_stream.push_application()
 
 
 def event_handler(callback, sender, *args):

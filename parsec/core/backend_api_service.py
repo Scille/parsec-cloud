@@ -53,6 +53,7 @@ class BackendAPIService(BaseBackendAPIService):
         self._ws_recv_handler_task = asyncio.ensure_future(self._ws_recv_handler())
         if self._watchdog_time:
             self._watchdog_task = asyncio.ensure_future(self._watchdog())
+        await super().bootstrap()
 
     async def teardown(self):
         assert self._websocket, "Service hasn't been bootstraped"

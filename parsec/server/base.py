@@ -180,16 +180,15 @@ class BaseServer:
                 dep = next(boot)
                 while True:
                     if dep not in self._services:
-                        errors.append('Service `%s` required unknown service `%s`' %
-                            (service.name, dep))
+                        errors.append(
+                            'Service `%s` required unknown service `%s`' % (service.name, dep))
                         break
                     dep = boot.send(self._services[dep])
             except StopIteration:
                 pass
         if errors:
             raise RuntimeError(errors)
-        for service in self._services.values():
-            await service.bootstrap()
+        await asyncio.wait([s.bootstrap() for s in self._services.values()])
 
     async def teardown_services(self):
         for service in self._services.values():

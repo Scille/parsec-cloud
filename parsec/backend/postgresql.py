@@ -104,6 +104,7 @@ class PostgreSQLService(BaseService):
         assert not self._pool, "Service already bootstraped"
         self._pool = await _connect(self._url)
         self._notification_handler_task = asyncio.ensure_future(self._notification_handler())
+        await super().bootstrap()
 
     async def teardown(self):
         assert self._pool, "Service hasn't been bootstraped"

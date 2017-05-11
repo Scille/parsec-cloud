@@ -1,3 +1,4 @@
+import asyncio
 from blinker import signal
 
 from parsec.exceptions import ParsecError
@@ -72,6 +73,7 @@ class BaseService(metaclass=MetaBaseService):
     def __init__(self, name=None):
         super().__init__()
         self._cmds = None
+        self._bootstrapped = asyncio.Future()
         self.name = name or getattr(self, 'name', None)
         assert self.name, 'Unnamed service is not allowed.'
 
@@ -79,7 +81,10 @@ class BaseService(metaclass=MetaBaseService):
         pass
 
     async def bootstrap(self):
-        pass
+        self._bootstrapped.set_result(None)
+
+    async def wait_bootstrapped(self):
+        await self._bootstrapped
 
     def inject_services(self):
         for key, service_name in self._service_keys.items():
