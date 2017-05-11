@@ -3,17 +3,29 @@ import stat
 import sys
 import socket
 import json
+import click
 import threading
 from base64 import decodebytes, encodebytes
 from errno import ENOENT, EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
-from logbook import Logger, StreamHandler
+
+from parsec.tools import logger
 
 
-LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name})' \
-             ' {record.level_name}: {record.channel}: {record.message}'
-log = Logger('Parsec-FUSE')
+CORE_UNIX_SOCKET = '/tmp/parsec'
+
+
+@click.command()
+@click.argument('mountpoint', type=click.Path(exists=True, file_okay=False))
+@click.option('--identity', '-i', type=click.STRING, default=None)
+@click.option('--debug', '-d', is_flag=True, default=False)
+@click.option('--nothreads', is_flag=True, default=False)
+@click.option('--socket', '-s', default=CORE_UNIX_SOCKET,
+              help='Path to the UNIX socket (default: %s).' % CORE_UNIX_SOCKET)
+def cli(mountpoint, identity, debug, nothreads, socket):
+    # Do the import here in case fuse is not an available dependency
+    start_fuse(socket, mountpoint, identity, debug=debug, nothreads=nothreads)
 
 
 class File:
@@ -84,22 +96,22 @@ class FuseOperations(LoggingMixIn, Operations):
         sock = socket.socket(socket.AF_UNIX, type=socket.SOCK_STREAM)
         if (not os.path.exists(self._socket_path) or
                 not stat.S_ISSOCK(os.stat(self._socket_path).st_mode)):
-            log.error("File %s doesn't exist or isn't a socket. Is Parsec Core running?" %
+            logger.error("File %s doesn't exist or isn't a socket. Is Parsec Core running?" %
                       self._socket_path)
             sys.exit(1)
         sock.connect(self._socket_path)
-        log.debug('Init socket')
+        logger.debug('Init socket')
         self._socket = sock
 
     def send_cmd(self, **msg):
         with self._socket_lock:
             req = json.dumps(msg).encode() + b'\n'
-            log.debug('Send: %r' % req)
+            logger.debug('Send: %r' % req)
             self.sock.send(req)
             raw_reps = self.sock.recv(4096)
             while raw_reps[-1] != ord(b'\n'):
                 raw_reps += self.sock.recv(4096)
-            log.debug('Received: %r' % raw_reps)
+            logger.debug('Received: %r' % raw_reps)
             return json.loads(raw_reps[:-1].decode())
 
     def _get_fd(self, fh):
@@ -243,7 +255,6 @@ def start_fuse(socket_path: str,
                identity: str,
                debug: bool=False,
                nothreads: bool=False):
-    StreamHandler(sys.stdout, format_string=LOG_FORMAT).push_application()
     operations = FuseOperations(socket_path)
     response = operations.send_cmd(cmd='identity_load',
                                    identity=identity)

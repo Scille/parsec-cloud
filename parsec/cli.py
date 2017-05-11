@@ -45,19 +45,6 @@ def shell(socket):
 
 
 @click.command()
-@click.argument('mountpoint', type=click.Path(exists=True, file_okay=False))
-@click.option('--identity', '-i', type=click.STRING, default=None)
-@click.option('--debug', '-d', is_flag=True, default=False)
-@click.option('--nothreads', is_flag=True, default=False)
-@click.option('--socket', '-s', default=CORE_UNIX_SOCKET,
-              help='Path to the UNIX socket (default: %s).' % CORE_UNIX_SOCKET)
-def fuse(mountpoint, identity, debug, nothreads, socket):
-    # Do the import here in case fuse is not an available dependency
-    from parsec.ui.fuse import start_fuse
-    start_fuse(socket, mountpoint, identity, debug=debug, nothreads=nothreads)
-
-
-@click.command()
 @click.option('--socket', '-s', default=CORE_UNIX_SOCKET,
               help='Path to the UNIX socket exposing the core API (default: %s).' %
               CORE_UNIX_SOCKET)
@@ -148,7 +135,6 @@ def backend(host, port, gnupg_homedir, no_client_auth, store, debug):
 
 
 cli.add_command(cmd)
-cli.add_command(fuse)
 cli.add_command(shell)
 cli.add_command(core)
 cli.add_command(backend)
@@ -161,6 +147,7 @@ def _add_command_if_can_import(path, name=None):
 
 
 _add_command_if_can_import('parsec.backend.postgresql.cli', 'postgresql')
+_add_command_if_can_import('parsec.ui.fuse.cli', 'fuse')
 
 
 try:
