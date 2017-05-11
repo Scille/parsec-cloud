@@ -165,13 +165,39 @@ class TestShareServiceAPI:
         ret = await share_svc.dispatch_msg(bad_msg)
         assert ret['status'] == 'bad_msg'
 
+    @pytest.mark.asyncio
+    async def test_share_stop(self, backend_api_svc, share_svc, user_manifest_svc):
+        shared_vlob = await user_manifest_svc.get_properties(path='/foo')
+        ret = await share_svc.dispatch_msg({'cmd': 'share_stop', 'path': '/foo'})
+        assert ret == {'status': 'ok'}
+        new_vlob = await user_manifest_svc.get_properties(path='/foo')
+        for property in shared_vlob.keys():
+            assert shared_vlob[property] != new_vlob[property]
+        ret = await share_svc.dispatch_msg({'cmd': 'share_stop', 'path': '/unknown'})
+        assert ret == {'status': 'not_found', 'label': 'File not found.'}
+
+    @pytest.mark.asyncio
+    async def test_share_stop_not_found(self, share_svc):
+        ret = await share_svc.dispatch_msg({'cmd': 'share_stop', 'path': '/unknown'})
+        assert ret == {'status': 'not_found', 'label': 'File not found.'}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'share_stop', 'path': '/foo', 'bad_field': 'foo'},
+        {'cmd': 'share_stop', 'path': 42},
+        {'cmd': 'share_stop', 'path': None},
+        {}])
+    async def test_bad_msg_share_stop_with_group(self, share_svc, bad_msg):
+        ret = await share_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
     # TODO Remove tests bellow as they are duplicated in test_group_service?
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group_payload', [
         {'name': 'foo_community'},
         {'name': 'Foo community'}])
-    async def test_create(self, share_svc, group_payload):
+    async def test_group_create(self, share_svc, group_payload):
         # Working
         ret = await share_svc.dispatch_msg({'cmd': 'group_create', **group_payload})
         assert ret == {'status': 'ok'}
@@ -185,22 +211,22 @@ class TestShareServiceAPI:
         {'cmd': 'group_create', 'name': 42},
         {'cmd': 'group_create', 'name': None},
         {}])
-    async def test_bad_msg_create(self, share_svc, bad_msg):
+    async def test_bad_msg_group_create(self, share_svc, bad_msg):
         ret = await share_svc.dispatch_msg(bad_msg)
         assert ret['status'] == 'bad_msg'
 
     @pytest.mark.asyncio
-    async def test_read_not_found(self, share_svc, group):
+    async def test_group_read_not_found(self, share_svc, group):
         ret = await share_svc.dispatch_msg({'cmd': 'group_read', 'name': 'unknown'})
         assert ret == {'status': 'not_found', 'label': 'Group not found.'}
 
     @pytest.mark.asyncio
-    async def test_read(self, share_svc, group):
+    async def test_group_read(self, share_svc, group):
         ret = await share_svc.dispatch_msg({'cmd': 'group_read', 'name': group['name']})
         assert ret == {'status': 'ok', 'admins': group['admins'], 'users': group['users']}
 
     @pytest.mark.asyncio
-    async def test_add_identities_not_found(self, share_svc, group):
+    async def test_group_add_identities_not_found(self, share_svc, group):
         ret = await share_svc.dispatch_msg({'cmd': 'group_add_identities',
                                             'name': 'unknown',
                                             'identities': group['users']})
@@ -211,14 +237,14 @@ class TestShareServiceAPI:
     @pytest.mark.parametrize('identities', [
         [],
         ['81DBCF6EB9C8B2965A65ACE5520D903047D69DC9', '3C3FA85FB9736362497EB23DC0485AC10E6274C7']])
-    async def test_add_identities(self,
-                                  backend_api_svc,
-                                  crypto_svc,
-                                  share_svc,
-                                  user_manifest_svc,
-                                  group,
-                                  identities,
-                                  admin):
+    async def test_group_add_identities(self,
+                                        backend_api_svc,
+                                        crypto_svc,
+                                        share_svc,
+                                        user_manifest_svc,
+                                        group,
+                                        identities,
+                                        admin):
         origin_group = copy.deepcopy(group)
         # Adding duplicates identities should not raise errors
         for i in range(0, 2):
@@ -260,14 +286,14 @@ class TestShareServiceAPI:
         {'cmd': 'group_add_identities', 'identities': ['id']},
         {'cmd': 'group_add_identities', 'name': '<name-here>'},
         {'cmd': 'group_add_identities'}, {}])
-    async def test_bad_add_identities(self, share_svc, bad_msg, group):
+    async def test_bad_group_add_identities(self, share_svc, bad_msg, group):
         if bad_msg.get('name') == '<name-here>':
             bad_msg['name'] = group['name']
         ret = await share_svc.dispatch_msg(bad_msg)
         assert ret['status'] == 'bad_msg'
 
     @pytest.mark.asyncio
-    async def test_remove_identities_not_found(self, share_svc, group):
+    async def test_gorup_remove_identities_not_found(self, share_svc, group):
         ret = await share_svc.dispatch_msg({'cmd': 'group_remove_identities',
                                             'name': 'unknown',
                                             'identities': group['users']})
@@ -278,14 +304,14 @@ class TestShareServiceAPI:
     @pytest.mark.parametrize('identities', [
         [],
         ['81DBCF6EB9C8B2965A65ACE5520D903047D69DC9', '3C3FA85FB9736362497EB23DC0485AC10E6274C7']])
-    async def test_remove_identities(self,
-                                     backend_api_svc,
-                                     crypto_svc,
-                                     share_svc,
-                                     user_manifest_svc,
-                                     group,
-                                     identities,
-                                     admin):
+    async def test_group_remove_identities(self,
+                                           backend_api_svc,
+                                           crypto_svc,
+                                           share_svc,
+                                           user_manifest_svc,
+                                           group,
+                                           identities,
+                                           admin):
         origin_group = copy.deepcopy(group)
         # Identities that will be removed
         ret = await share_svc.dispatch_msg({'cmd': 'group_add_identities',
@@ -341,7 +367,7 @@ class TestShareServiceAPI:
         {'cmd': 'group_remove_identities', 'identities': ['id']},
         {'cmd': 'group_remove_identities', 'name': '<name-here>'},
         {'cmd': 'group_remove_identities'}, {}])
-    async def test_bad_remove_identities(self, share_svc, bad_msg, group):
+    async def test_bad_group_remove_identities(self, share_svc, bad_msg, group):
         if bad_msg.get('name') == '<name-here>':
             bad_msg['name'] = group['name']
         ret = await share_svc.dispatch_msg(bad_msg)

@@ -54,19 +54,14 @@ class TestFileService:
 
     @pytest.mark.asyncio
     async def test_file_read(self, file_svc, user_manifest_svc):
-        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
-                                                    'path': '/test'})
-        assert ret['status'] == 'ok'
-        id = ret['id']
+        file_vlob = await user_manifest_svc.create_file('/test')
+        id = file_vlob['id']
         # Empty file
         ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
         assert ret == {'status': 'ok', 'content': '', 'version': 1}
         # Not empty file
         content = encodebytes('foo'.encode()).decode()
-        ret = await file_svc.dispatch_msg({'cmd': 'file_write',
-                                           'id': id,
-                                           'version': 2,
-                                           'content': content})
+        await file_svc.write(id, 2, content)
         ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
         assert ret == {'status': 'ok', 'content': content, 'version': 2}
         # Unknown file
@@ -76,10 +71,8 @@ class TestFileService:
 
     @pytest.mark.asyncio
     async def test_file_write(self, file_svc, user_manifest_svc):
-        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
-                                                    'path': '/test'})
-        assert ret['status'] == 'ok'
-        id = ret['id']
+        file_vlob = await user_manifest_svc.create_file('/test')
+        id = file_vlob['id']
         # Check with empty and not empty file
         for version, content in enumerate(('this is v2', 'this is v3'), 2):
             encoded_content = encodebytes(content.encode()).decode()
@@ -88,10 +81,8 @@ class TestFileService:
                                                'version': version,
                                                'content': encoded_content})
             assert ret == {'status': 'ok'}
-            ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
-            assert ret == {'status': 'ok',
-                           'content': encoded_content,
-                           'version': version}
+            file = await file_svc.read(id)
+            assert file == {'content': encoded_content, 'version': version}
         # Unknown file
         content = encodebytes('foo'.encode()).decode()
         ret = await file_svc.dispatch_msg({'cmd': 'file_write',
@@ -101,13 +92,11 @@ class TestFileService:
         assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.asyncio
-    async def test_stat_file(self, file_svc, user_manifest_svc):
+    async def test_file_stat(self, file_svc, user_manifest_svc):
         # Good file
         with freeze_time('2012-01-01') as frozen_datetime:
-            ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
-                                                        'path': '/test'})
-            assert ret['status'] == 'ok'
-            id = ret['id']
+            file_vlob = await user_manifest_svc.create_file('/test')
+            id = file_vlob['id']
             ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
             ctime = frozen_datetime().timestamp()
             assert ret == {'status': 'ok',
@@ -120,10 +109,7 @@ class TestFileService:
             frozen_datetime.tick()
             mtime = frozen_datetime().timestamp()
             content = encodebytes('foo'.encode()).decode()
-            ret = await file_svc.dispatch_msg({'cmd': 'file_write',
-                                               'id': id,
-                                               'version': 2,
-                                               'content': content})
+            await file_svc.write(id, 2, content)
             ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
             assert ret == {'status': 'ok',
                            'id': id,
@@ -133,7 +119,7 @@ class TestFileService:
                            'size': 3,
                            'version': 2}
             frozen_datetime.tick()
-            ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
+            await file_svc.read(id)  # TODO useless if atime is not modified
             ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': id})
             assert ret == {'status': 'ok',
                            'id': id,
@@ -149,19 +135,13 @@ class TestFileService:
     @pytest.mark.asyncio
     async def test_history(self, file_svc, user_manifest_svc):
         with freeze_time('2012-01-01') as frozen_datetime:
-            ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
-                                                        'path': '/test'})
-            assert ret['status'] == 'ok'
-            id = ret['id']
+            file_vlob = await user_manifest_svc.create_file('/test')
+            id = file_vlob['id']
             original_time = frozen_datetime().timestamp()
             for version, content in enumerate(('this is v2', 'this is v3...'), 2):
                 frozen_datetime.tick()
                 encoded_content = encodebytes(content.encode()).decode()
-                ret = await file_svc.dispatch_msg({'cmd': 'file_write',
-                                                   'id': id,
-                                                   'version': version,
-                                                   'content': encoded_content})
-                assert ret == {'status': 'ok'}
+                await file_svc.write(id, version, encoded_content)
         # Full history
         ret = await file_svc.dispatch_msg({'cmd': 'file_history', 'id': id})
         assert ret == {
@@ -255,42 +235,35 @@ class TestFileService:
                                            'first_version': 3,
                                            'last_version': 2})
         assert ret == {'status': 'bad_versions',
-                       'label': 'First version number greater than second version number.'}
+                       'label': 'First version number higher than the second one.'}
 
     @pytest.mark.asyncio
     async def test_restore(self, file_svc, user_manifest_svc):
         encoded_content = encodebytes('initial'.encode()).decode()
-        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
-                                                    'path': '/test',
-                                                    'content': encoded_content})
-        assert ret['status'] == 'ok'
-        id = ret['id']
+        file_vlob = await user_manifest_svc.create_file('/test', encoded_content)
+        id = file_vlob['id']
         # Restore file with version 1
-        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
-        assert ret == {'status': 'ok', 'version': 1, 'content': encoded_content}
+        file = await file_svc.read(id)
+        assert file == {'content': encoded_content, 'version': 1}
         ret = await file_svc.dispatch_msg({'cmd': 'file_restore', 'id': id})
-        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
-        assert ret == {'status': 'ok', 'version': 1, 'content': encoded_content}
+        file = await file_svc.read(id)
+        assert file == {'content': encoded_content, 'version': 1}
         # Restore previous version
         for version, content in enumerate(('this is v2', 'this is v3', 'this is v4'), 2):
             encoded_content = encodebytes(content.encode()).decode()
-            ret = await file_svc.dispatch_msg({'cmd': 'file_write',
-                                               'id': id,
-                                               'version': version,
-                                               'content': encoded_content})
-            assert ret == {'status': 'ok'}
-        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
+            await file_svc.write(id, version, encoded_content)
+        file = await file_svc.read(id)
         encoded_content = encodebytes('this is v4'.encode()).decode()
-        assert ret == {'status': 'ok', 'version': 4, 'content': encoded_content}
+        assert file == {'content': encoded_content, 'version': 4}
         ret = await file_svc.dispatch_msg({'cmd': 'file_restore', 'id': id})
-        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
+        file = await file_svc.read(id)
         encoded_content = encodebytes('this is v3'.encode()).decode()
-        assert ret == {'status': 'ok', 'version': 5, 'content': encoded_content}
+        assert file == {'content': encoded_content, 'version': 5}
         # Restore old version
         ret = await file_svc.dispatch_msg({'cmd': 'file_restore', 'id': id, 'version': 2})
-        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': id})
+        file = await file_svc.read(id)
         encoded_content = encodebytes('this is v2'.encode()).decode()
-        assert ret == {'status': 'ok', 'version': 6, 'content': encoded_content}
+        assert file == {'content': encoded_content, 'version': 6}
         # Bad version
         for version in [0, 10]:
             ret = await file_svc.dispatch_msg({'cmd': 'file_restore', 'id': id, 'version': version})
@@ -300,12 +273,7 @@ class TestFileService:
     async def test_reencrypt(self, file_svc, user_manifest_svc):
         encoded_content_initial = encodebytes('initial'.encode()).decode()
         encoded_content_final = encodebytes('final'.encode()).decode()
-        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_create_file',
-                                                    'path': '/foo',
-                                                    'content': encoded_content_initial})
-        assert ret['status'] == 'ok'
-        del ret['status']
-        old_vlob = ret
+        old_vlob = await user_manifest_svc.create_file('/foo', encoded_content_initial)
         ret = await file_svc.dispatch_msg({'cmd': 'file_reencrypt', 'id': old_vlob['id']})
         assert ret['status'] == 'ok'
         del ret['status']
@@ -313,16 +281,8 @@ class TestFileService:
         for property in old_vlob.keys():
             assert old_vlob[property] != new_vlob[property]
         await user_manifest_svc.import_file_vlob('/bar', new_vlob)
-        ret = await file_svc.dispatch_msg({'cmd': 'file_write',
-                                           'id': new_vlob['id'],
-                                           'content': encoded_content_final,
-                                           'version': 2})
-        assert ret == {'status': 'ok'}
-        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': old_vlob['id']})
-        assert ret == {'status': 'ok',
-                       'content': encoded_content_initial,
-                       'version': 1}
-        ret = await file_svc.dispatch_msg({'cmd': 'file_read', 'id': new_vlob['id']})
-        assert ret == {'status': 'ok',
-                       'content': encoded_content_final,
-                       'version': 2}
+        await file_svc.write(new_vlob['id'], 2, encoded_content_final)
+        file = await file_svc.read(old_vlob['id'])
+        assert file == {'content': encoded_content_initial, 'version': 1}
+        file = await file_svc.read(new_vlob['id'])
+        assert file == {'content': encoded_content_final, 'version': 2}

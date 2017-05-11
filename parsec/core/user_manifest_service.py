@@ -809,7 +809,8 @@ class UserManifestService(BaseUserManifestService):
 
     async def history(self, first_version=1, last_version=None, summary=False, group=None):
         if first_version and last_version and first_version > last_version:
-            raise UserManifestError('bad_versions', 'First version number greater than second one.')
+            raise UserManifestError('bad_versions',
+                                    'First version number higher than the second one.')
         manifest = await self.get_manifest(group)
         if summary:
             diff = await manifest.diff_versions(first_version, last_version)

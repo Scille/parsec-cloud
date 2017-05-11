@@ -64,7 +64,8 @@ class BaseShareService(BaseService):
     @cmd('share_stop')
     async def _cmd_SHARE_STOP(self, session, msg):
         msg = cmd_SHARE_STOP_Schema().load(msg)
-        # TODO
+        await self.share_stop(msg['path'])
+        return {'status': 'ok'}
 
     @cmd('group_create')
     async def _cmd_GROUP_CREATE(self, session, msg):
@@ -135,13 +136,8 @@ class ShareService(BaseShareService):
             await self.share_with_identity(path, identity)  # TODO bug everyone notified
 
     async def share_stop(self, path):
-        # vlob = await self.user_manifest_service.get_properties(path=path)
-        # # TODO create a new group manifest
-        # identities = []  # TODO users in group
-        # vlob = None  # TODO create group manifest
-        # for identity in identities:
-        #     await self.backend_api_service.message_service.new(identity, vlob)
-        pass
+        user_manifest = await self.user_manifest_service.get_manifest()
+        await user_manifest.reencrypt_file(path)
 
     async def import_shared_vlob(self):
         identity = await self.identity_service.get_identity()

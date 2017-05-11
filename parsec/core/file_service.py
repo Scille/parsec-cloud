@@ -181,7 +181,6 @@ class FileService(BaseFileService):
         encrypted_blob = encodebytes(encrypted_blob).decode()
         await self.backend_api_service.vlob_update(
             id=id, version=version, blob=encrypted_blob, trust_seed=properties['write_trust_seed'])
-        return blob_key
 
     async def _build_file_blocks(self, content):
         if isinstance(content, str):
@@ -237,7 +236,7 @@ class FileService(BaseFileService):
     async def history(self, id, first_version=1, last_version=None):
         if first_version and last_version and first_version > last_version:
             raise FileError('bad_versions',
-                            'First version number greater than second version number.')
+                            'First version number higher than the second one.')
         history = []
         if not last_version:
             stat = await self.stat(id)

@@ -343,6 +343,8 @@ class TestManifest:
         await file_svc.write(id=new_vlob['id'], version=2, content=encoded_content_final)
         new_file = await file_svc.read(new_vlob['id'])
         assert new_file == {'content': encoded_content_final, 'version': 2}
+        with pytest.raises(UserManifestNotFound):
+            await manifest.reencrypt_file('/unknown')
 
     @pytest.mark.asyncio
     async def test_list_dir(self, manifest):
@@ -1571,7 +1573,7 @@ class TestUserManifestService:
                                                     'last_version': 2,
                                                     'summary': True})
         assert ret == {'status': 'bad_versions',
-                       'label': 'First version number greater than second version number.'}
+                       'label': 'First version number higher than the second one.'}
 
     @pytest.mark.asyncio
     async def test_group_manifest_history(self, user_manifest_svc, user_manifest_with_group):
@@ -1688,7 +1690,7 @@ class TestUserManifestService:
                                                     'summary': True,
                                                     'group': group})
         assert ret == {'status': 'bad_versions',
-                       'label': 'First version number greater than second version number.'}
+                       'label': 'First version number higher than the second one.'}
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
