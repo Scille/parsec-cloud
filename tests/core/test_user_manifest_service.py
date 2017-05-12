@@ -1388,21 +1388,26 @@ class TestUserManifestService:
 
     @pytest.mark.asyncio
     async def test_load_user_manifest(self, user_manifest_svc, identity_svc):
-        await user_manifest_svc.create_file('test')
-        await user_manifest_svc.list_dir('test')
+        await user_manifest_svc.create_file('/test')
+        await user_manifest_svc.list_dir('/test')
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_load'})
         assert ret == {'status': 'ok'}
-        await user_manifest_svc.list_dir('test')
+        await user_manifest_svc.list_dir('/test')
         identity = '3C3FA85FB9736362497EB23DC0485AC10E6274C7'
         manifest = await user_manifest_svc.get_manifest()
-        assert manifest.id != identity
+        old_identity = manifest.id
+        assert old_identity != identity
         await identity_svc.load_identity(identity)
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_load'})
         assert ret == {'status': 'ok'}
         manifest = await user_manifest_svc.get_manifest()
         assert manifest.id == identity
         with pytest.raises(UserManifestNotFound):
-            await user_manifest_svc.list_dir('test')
+            await user_manifest_svc.list_dir('/test')
+        await identity_svc.load_identity(old_identity)
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_load'})
+        assert ret == {'status': 'ok'}
+        await user_manifest_svc.list_dir('/test')
 
     @pytest.mark.asyncio
     async def test_get_manifest(self, user_manifest_svc, user_manifest_with_group):

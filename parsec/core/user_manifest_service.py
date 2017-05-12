@@ -831,7 +831,8 @@ class UserManifestService(BaseUserManifestService):
 
     async def load_user_manifest(self):
         identity = await self.identity_service.get_identity()
-        self.user_manifest = UserManifest(self, identity)
+        if not self.user_manifest or (await self.user_manifest.get_vlob())['id'] != identity:
+            self.user_manifest = UserManifest(self, identity)
         try:
             await self.user_manifest.reload(False)
         except UserManifestNotFound:
