@@ -35,13 +35,15 @@ def group_manifest(event_loop, user_manifest_svc):
 def user_manifest(event_loop, user_manifest_svc):
     manifest = UserManifest(user_manifest_svc, '81DBCF6EB9C8B2965A65ACE5520D903047D69DC9')
     event_loop.run_until_complete(manifest.reload(reset=True))
+    user_manifest_svc.user_manifest = manifest
     return manifest
 
 
 @pytest.fixture
-def user_manifest_with_group(event_loop, share_svc, user_manifest):
+def user_manifest_with_group(event_loop, share_svc, user_manifest_svc, user_manifest):
     event_loop.run_until_complete(share_svc.group_create('foo_community'))
     event_loop.run_until_complete(user_manifest.reload(reset=True))
+    user_manifest_svc.user_manifest = user_manifest
     return user_manifest
 
 
@@ -119,26 +121,31 @@ class TestManifest:
         diff = await manifest.diff(
             {
                 'entries': {'/a': vlob_1, '/b': vlob_2, '/c': vlob_3},
-                'dustbin': [vlob_5, vlob_6, vlob_7]
+                'dustbin': [vlob_5, vlob_6, vlob_7],
+                'versions': {'vlob_1': 1, 'vlob_2': 1, 'vlob_3': 1, 'vlob_4': None}
             },
             {
                 'entries': {'/a': vlob_1, '/b': vlob_2, '/c': vlob_3},
-                'dustbin': [vlob_5, vlob_6, vlob_7]
+                'dustbin': [vlob_5, vlob_6, vlob_7],
+                'versions': {'vlob_1': 1, 'vlob_2': 1, 'vlob_3': 1, 'vlob_4': None}
             }
         )
         assert diff == {
             'entries': {'added': {}, 'changed': {}, 'removed': {}},
-            'dustbin': {'added': [], 'removed': []}
+            'dustbin': {'added': [], 'removed': []},
+            'versions': {'added': {}, 'changed': {}, 'removed': {}}
         }
         # Not empty diff
         diff = await manifest.diff(
             {
                 'entries': {'/a': vlob_1, '/b': vlob_2, '/c': vlob_3},
-                'dustbin': [vlob_5, vlob_6, vlob_7]
+                'dustbin': [vlob_5, vlob_6, vlob_7],
+                'versions': {'vlob_1': 1, 'vlob_2': 1, 'vlob_3': 1, 'vlob_4': None}
             },
             {
                 'entries': {'/a': vlob_6, '/b': vlob_2, '/d': vlob_4},
-                'dustbin': [vlob_7, vlob_8, vlob_9]
+                'dustbin': [vlob_7, vlob_8, vlob_9],
+                'versions': {'vlob_1': 2, 'vlob_3': 1, 'vlob_5': 2, 'vlob_4': None}
             }
         )
         assert diff == {
@@ -146,7 +153,10 @@ class TestManifest:
                         'changed': {'/a': (vlob_1, vlob_6)},
                         'removed': {'/c': vlob_3}},
             'dustbin': {'added': [vlob_8, vlob_9],
-                        'removed': [vlob_5, vlob_6]}
+                        'removed': [vlob_5, vlob_6]},
+            'versions': {'added': {'vlob_5': 2},
+                         'changed': {'vlob_1': (1, 2)},
+                         'removed': {'vlob_2': 1}}
         }
 
     @pytest.mark.asyncio
@@ -168,7 +178,8 @@ class TestManifest:
                         '/A-A-A': vlob_5,
                         '/A-nil-A': vlob_6,
                         '/A-nil-B': vlob_7},  # Recover B, save B-recreated
-            'dustbin': [vlob_4, vlob_5, vlob_6]
+            'dustbin': [vlob_4, vlob_5, vlob_6],
+            'versions': {}
         }
         manifest.entries = {'/A-B-C': vlob_2,
                             '/A-B-nil': vlob_3,
@@ -197,7 +208,8 @@ class TestManifest:
                         '/nil-A-B': vlob_8,
                         '/A-nil-A': vlob_6,
                         '/A-nil-B': vlob_8},
-            'dustbin': [vlob_5, vlob_6, vlob_7]
+            'dustbin': [vlob_5, vlob_6, vlob_7],
+            'versions': {}
         }
         patched_manifest = await manifest.patch(new_manifest, diff)
         assert patched_manifest == {
@@ -210,7 +222,9 @@ class TestManifest:
                         '/nil-A-B-conflict': vlob_8,
                         '/nil-A-B': vlob_7,
                         '/nil-A-nil': vlob_9},
-            'dustbin': [{'id': 'vlob_6'}, {'id': 'vlob_7'}, {'id': 'vlob_8'}]}
+            'dustbin': [{'id': 'vlob_6'}, {'id': 'vlob_7'}, {'id': 'vlob_8'}],
+            'versions': {}
+        }
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('payload', [
@@ -225,6 +239,29 @@ class TestManifest:
         assert await manifest.get_version() == 0
 
     @pytest.mark.asyncio
+    async def test_get_vlobs_versions(self, file_svc, share_svc, user_manifest_svc):
+        content = encodebytes('foo'.encode()).decode()
+        await share_svc.group_create('foo_community')
+        manifest = await user_manifest_svc.get_manifest()
+        versions = await manifest.get_vlobs_versions()
+        assert versions == {}
+        foo_vlob = await user_manifest_svc.create_file('/foo')
+        bar_vlob = await user_manifest_svc.create_file('/bar')
+        await user_manifest_svc.create_file('/shared', group='foo_community')
+        versions = await manifest.get_vlobs_versions()
+        assert versions == {foo_vlob['id']: 1, bar_vlob['id']: 1}
+        await file_svc.write(foo_vlob['id'], 2, content)
+        versions = await manifest.get_vlobs_versions()
+        assert versions == {foo_vlob['id']: 2, bar_vlob['id']: 1}
+        await user_manifest_svc.delete_file('/foo')
+        versions = await manifest.get_vlobs_versions()
+        assert versions == {foo_vlob['id']: 2, bar_vlob['id']: 1}
+        vlob = {'id': 'i123', 'key': 'k123', 'read_trust_seed': 'r123', 'write_trust_seed': 'w123'}
+        user_manifest_svc.user_manifest.entries['/baz'] = vlob
+        versions = await manifest.get_vlobs_versions()
+        assert versions == {foo_vlob['id']: 2, bar_vlob['id']: 1, vlob['id']: None}
+
+    @pytest.mark.asyncio
     async def test_dumps_current_manifest(self, file_svc, manifest):
         content = encodebytes('foo'.encode()).decode()
         file_vlob = await file_svc.create(content)
@@ -236,7 +273,8 @@ class TestManifest:
                                           'read_trust_seed': None,
                                           'write_trust_seed': None},
                                     '/foo': file_vlob},
-                        'dustbin': []}
+                        'dustbin': [],
+                        'versions': {file_vlob['id']: 1}}
 
     @pytest.mark.asyncio
     async def test_dumps_original_manifest(self, file_svc, manifest):
@@ -250,7 +288,8 @@ class TestManifest:
                                           'read_trust_seed': None,
                                           'write_trust_seed': None}
                                     },
-                        'dustbin': []}
+                        'dustbin': [],
+                        'versions': {}}
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
@@ -486,19 +525,22 @@ class TestGroupManifest:
         manifest = GroupManifest(group_manifest.service)
         diff = await manifest.diff_versions(0, 0)
         assert diff == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
-                        'dustbin': {'removed': [], 'added': []}}
+                        'dustbin': {'removed': [], 'added': []},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
         # No old version (use original) and no new version (dump current)
         file_vlob = {'id': '123', 'key': '123', 'read_trust_seed': '123', 'write_trust_seed': '123'}
         await group_manifest.add_file('/foo', file_vlob)
         diff = await group_manifest.diff_versions()
         assert diff == {'entries': {'added': {'/foo': file_vlob}, 'changed': {}, 'removed': {}},
-                        'dustbin': {'removed': [], 'added': []}}
+                        'dustbin': {'removed': [], 'added': []},
+                        'versions': {'added': {file_vlob['id']: None}, 'changed': {}, 'removed': {}}}
         # Old version (2) and no new version (dump current)
         await group_manifest.save()
         await group_manifest.add_file('/bar', file_vlob)
         diff = await group_manifest.diff_versions(2)
         assert diff == {'entries': {'added': {'/bar': file_vlob}, 'changed': {}, 'removed': {}},
-                        'dustbin': {'removed': [], 'added': []}}
+                        'dustbin': {'removed': [], 'added': []},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
         # Old version (3) and new version (5)
         await group_manifest.save()
         await group_manifest.add_file('/dir/foo', file_vlob)
@@ -510,19 +552,22 @@ class TestGroupManifest:
         assert diff == {'entries': {'added': {'/dir/bar': file_vlob, '/dir/foo': file_vlob},
                                     'changed': {},
                                     'removed': {}},
-                        'dustbin': {'removed': [], 'added': []}}
+                        'dustbin': {'removed': [], 'added': []},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
         # Old version (6) and new version (4)
         diff = await group_manifest.diff_versions(5, 3)
         assert diff == {'entries': {'added': {},
                                     'changed': {},
                                     'removed': {'/dir/bar': file_vlob, '/dir/foo': file_vlob}},
-                        'dustbin': {'removed': [], 'added': []}}
+                        'dustbin': {'removed': [], 'added': []},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
         # No old version (use original) and new version (4)
         diff = await group_manifest.diff_versions(None, 4)
         assert diff == {'entries': {'added': {},
                                     'changed': {},
                                     'removed': {'/dir/bar': file_vlob}},
-                        'dustbin': {'removed': [], 'added': []}}
+                        'dustbin': {'removed': [], 'added': []},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
 
     @pytest.mark.asyncio
     async def test_reload_not_saved_manifest(self, user_manifest_svc):
@@ -544,7 +589,8 @@ class TestGroupManifest:
     async def test_reload_with_reset_and_new_version(self,
                                                      user_manifest_svc,
                                                      file_svc,
-                                                     group_manifest):
+                                                     user_manifest_with_group):
+        group_manifest = await user_manifest_with_group.get_group_manifest('foo_community')
         content = encodebytes('foo'.encode()).decode()
         file_vlob = await file_svc.create(content)
         await group_manifest.add_file('/foo', file_vlob)
@@ -558,7 +604,8 @@ class TestGroupManifest:
         assert await group_manifest_2.get_version() == 2
         diff = await group_manifest_2.diff_versions()
         assert diff == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
-                        'dustbin': {'added': [], 'removed': []}}
+                        'dustbin': {'added': [], 'removed': []},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
         manifest = await group_manifest_2.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -568,7 +615,8 @@ class TestGroupManifest:
     @pytest.mark.asyncio
     async def test_reload_with_reset_no_new_version(self,
                                                     file_svc,
-                                                    group_manifest):
+                                                    user_manifest_with_group):
+        group_manifest = await user_manifest_with_group.get_group_manifest('foo_community')
         content = encodebytes('foo'.encode()).decode()
         file_vlob = await file_svc.create(content)
         await group_manifest.add_file('/foo', file_vlob)
@@ -580,7 +628,8 @@ class TestGroupManifest:
         assert await group_manifest.get_version() == 2
         diff = await group_manifest.diff_versions()
         assert diff == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
-                        'dustbin': {'added': [], 'removed': []}}
+                        'dustbin': {'added': [], 'removed': []},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
         manifest = await group_manifest.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -591,7 +640,8 @@ class TestGroupManifest:
     async def test_reload_without_reset_and_new_version(self,
                                                         user_manifest_svc,
                                                         file_svc,
-                                                        group_manifest):
+                                                        user_manifest_with_group):
+        group_manifest = await user_manifest_with_group.get_group_manifest('foo_community')
         content = encodebytes('foo'.encode()).decode()
         file_vlob = await file_svc.create(content)
         await group_manifest.add_file('/foo', file_vlob)
@@ -605,7 +655,8 @@ class TestGroupManifest:
         assert await group_manifest_2.get_version() == 2
         diff = await group_manifest_2.diff_versions()
         assert diff == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
-                        'dustbin': {'added': [], 'removed': []}}
+                        'dustbin': {'added': [], 'removed': []},
+                        'versions': {'added': {file_vlob_2['id']: 1}, 'changed': {}, 'removed': {}}}
         manifest = await group_manifest_2.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -615,7 +666,8 @@ class TestGroupManifest:
     @pytest.mark.asyncio
     async def test_reload_without_reset_and_no_new_version(self,
                                                            file_svc,
-                                                           group_manifest):
+                                                           user_manifest_with_group):
+        group_manifest = await user_manifest_with_group.get_group_manifest('foo_community')
         content = encodebytes('foo'.encode()).decode()
         file_vlob = await file_svc.create(content)
         await group_manifest.add_file('/foo', file_vlob)
@@ -627,7 +679,8 @@ class TestGroupManifest:
         assert await group_manifest.get_version() == 2
         diff = await group_manifest.diff_versions()
         assert diff == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
-                        'dustbin': {'added': [], 'removed': []}}
+                        'dustbin': {'added': [], 'removed': []},
+                        'versions': {'added': {file_vlob_2['id']: 1}, 'changed': {}, 'removed': {}}}
         manifest = await group_manifest.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -677,59 +730,92 @@ class TestGroupManifest:
         old_read_trust_seed = group_manifest.read_trust_seed
         old_write_trust_seed = group_manifest.write_trust_seed
         await group_manifest.reencrypt()
+        await group_manifest.save()
         assert group_manifest.id != old_id
         assert group_manifest.key != old_key
         assert group_manifest.read_trust_seed != old_read_trust_seed
         assert group_manifest.write_trust_seed != old_write_trust_seed
-        assert await group_manifest.get_version() == 1
+        assert await group_manifest.get_version() == 2
         new_group_manifest = GroupManifest(user_manifest_svc,
                                            group_manifest.id,
                                            group_manifest.key,
                                            group_manifest.read_trust_seed,
                                            group_manifest.write_trust_seed)
+        new_group_manifest_vlob = await new_group_manifest.get_vlob()
+        await user_manifest_svc.import_group_vlob('new_foo_community', new_group_manifest_vlob)
         await new_group_manifest.reload(reset=True)
-        assert await new_group_manifest.get_version() == 1
+        assert await new_group_manifest.get_version() == 2
         new_dump = await new_group_manifest.dumps()
         new_dump = json.loads(new_dump)
-        for file_path, entry in new_dump['entries'].items():
+        for file_path, entry in dump['entries'].items():
             if entry['id']:
                 for property in entry.keys():
-                    assert entry[property] != dump['entries'][file_path][property]
-        for index, entry in enumerate(new_dump['dustbin']):
+                    assert entry[property] != new_dump['entries'][file_path][property]
+        for index, entry in enumerate(dump['dustbin']):
             for property in entry.keys():
                 if property in ['path', 'removed_date']:
-                    assert entry[property] == dump['dustbin'][index][property]
+                    assert entry[property] == new_dump['dustbin'][index][property]
                 else:
-                    assert entry[property] != dump['dustbin'][index][property]
+                    assert entry[property] != new_dump['dustbin'][index][property]
 
     @pytest.mark.asyncio
-    async def test_restore_manifest(self, user_manifest_svc, file_svc, group_manifest):
-        content = encodebytes('foo'.encode()).decode()
-        vlob = await file_svc.create(content)
+    async def test_restore_manifest(self, user_manifest_svc, file_svc):
+
+        def encode_content(content):
+            return encodebytes(content.encode()).decode()
+
+        await user_manifest_svc.create_group_manifest('foo_community')
+        group_manifest = await user_manifest_svc.get_manifest('foo_community')
+        dust_vlob = await file_svc.create(encode_content('v1'))
+        tmp_vlob = await file_svc.create(encode_content('v1'))
+        foo_vlob = await file_svc.create(encode_content('v1'))
+        bar_vlob = await file_svc.create(encode_content('v1'))
+        baz_vlob = await file_svc.create(encode_content('v1'))
         # Restore dirty manifest with version 1
-        await group_manifest.add_file('/tmp', vlob)
+        await group_manifest.add_file('/tmp', tmp_vlob)
         assert await group_manifest.get_version() == 1
         await group_manifest.restore()
         assert await group_manifest.get_version() == 1
         children = await group_manifest.list_dir('/')
         assert sorted(children.keys()) == []
         # Restore previous version
-        await group_manifest.add_file('/foo', vlob)
+        await group_manifest.add_file('/foo', foo_vlob)
+        await group_manifest.add_file('/dust', dust_vlob)
+        await group_manifest.delete_file('/dust')
         await group_manifest.save()
-        await group_manifest.add_file('/bar', vlob)
+        await group_manifest.add_file('/bar', bar_vlob)
+        await file_svc.write(foo_vlob['id'], 2, encode_content('v2'))
         await group_manifest.save()
-        await group_manifest.add_file('/baz', vlob)
+        await group_manifest.add_file('/baz', baz_vlob)
+        await group_manifest.restore_file(dust_vlob['id'])
+        await file_svc.write(dust_vlob['id'], 2, encode_content('v2'))
+        await file_svc.write(foo_vlob['id'], 3, encode_content('v3'))
+        await file_svc.write(bar_vlob['id'], 2, encode_content('v2'))
         await group_manifest.save()
         assert await group_manifest.get_version() == 4
         await group_manifest.restore()
         assert await group_manifest.get_version() == 5
         children = await group_manifest.list_dir('/')
         assert sorted(children.keys()) == ['bar', 'foo']
+        file = await file_svc.read(dust_vlob['id'])
+        assert file == {'content': encode_content('v1'), 'version': 3}
+        file = await file_svc.read(bar_vlob['id'])
+        assert file == {'content': encode_content('v1'), 'version': 3}
+        file = await file_svc.read(foo_vlob['id'])
+        assert file == {'content': encode_content('v2'), 'version': 4}
         # Restore old version
         await group_manifest.restore(4)
         assert await group_manifest.get_version() == 6
         children = await group_manifest.list_dir('/')
-        assert sorted(children.keys()) == ['bar', 'baz', 'foo']
+        assert sorted(children.keys()) == ['bar', 'baz', 'dust', 'foo']
+        file = await file_svc.read(dust_vlob['id'])
+        assert file == {'content': encode_content('v2'), 'version': 4}
+        file = await file_svc.read(bar_vlob['id'])
+        assert file == {'content': encode_content('v2'), 'version': 4}
+        file = await file_svc.read(baz_vlob['id'])
+        assert file == {'content': encode_content('v1'), 'version': 1}
+        file = await file_svc.read(foo_vlob['id'])
+        assert file == {'content': encode_content('v3'), 'version': 5}
         # Bad version
         for version in [0, 10]:
             with pytest.raises(UserManifestError):
@@ -738,7 +824,6 @@ class TestGroupManifest:
         new_group_manifest = GroupManifest(group_manifest.service)
         with pytest.raises(UserManifestError):
             await new_group_manifest.restore()
-        # TODO restore file versions
 
 
 class TestUserManifest:
@@ -759,7 +844,8 @@ class TestUserManifest:
         diff = await manifest.diff_versions(0, 0)
         assert diff == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
                         'groups': {'added': {}, 'changed': {}, 'removed': {}},
-                        'dustbin': {'removed': [], 'added': []}}
+                        'dustbin': {'removed': [], 'added': []},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
         # No old version (use original) and no new version (dump current)
         content = encodebytes('foo'.encode()).decode()
         file_vlob = await file_svc.create(content)
@@ -772,14 +858,16 @@ class TestUserManifest:
         await user_manifest.remove_group('share')
         assert diff == {'entries': {'added': {'/foo': file_vlob}, 'changed': {}, 'removed': {}},
                         'groups': {'added': {'share': group_vlob}, 'changed': {}, 'removed': {}},
-                        'dustbin': {'removed': [], 'added': []}}
+                        'dustbin': {'removed': [], 'added': []},
+                        'versions': {'added': {file_vlob['id']: 1}, 'changed': {}, 'removed': {}}}
         # Old version (2) and no new version (dump current)
         await user_manifest.save()
         await user_manifest.add_file('/bar', file_vlob)
         diff = await user_manifest.diff_versions(2)
         assert diff == {'entries': {'added': {'/bar': file_vlob}, 'changed': {}, 'removed': {}},
                         'groups': {'added': {}, 'changed': {}, 'removed': {}},
-                        'dustbin': {'removed': [], 'added': []}}
+                        'dustbin': {'removed': [], 'added': []},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
         # Old version (3) and new version (5)
         await user_manifest.save()
         await user_manifest.add_file('/dir/foo', file_vlob)
@@ -792,21 +880,24 @@ class TestUserManifest:
                                     'changed': {},
                                     'removed': {}},
                         'groups': {'added': {}, 'changed': {}, 'removed': {}},
-                        'dustbin': {'removed': [], 'added': []}}
+                        'dustbin': {'removed': [], 'added': []},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
         # Old version (5) and new version (3)
         diff = await user_manifest.diff_versions(5, 3)
         assert diff == {'entries': {'added': {},
                                     'changed': {},
                                     'removed': {'/dir/bar': file_vlob, '/dir/foo': file_vlob}},
                         'groups': {'added': {}, 'changed': {}, 'removed': {}},
-                        'dustbin': {'removed': [], 'added': []}}
+                        'dustbin': {'removed': [], 'added': []},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
         # No old version (use original) and new version (4)
         diff = await user_manifest.diff_versions(None, 4)
         assert diff == {'entries': {'added': {},
                                     'changed': {},
                                     'removed': {'/dir/bar': file_vlob}},
                         'groups': {'added': {}, 'changed': {}, 'removed': {}},
-                        'dustbin': {'removed': [], 'added': []}}
+                        'dustbin': {'removed': [], 'added': []},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
 
     @pytest.mark.asyncio
     async def test_dumps_current_manifest(self, file_svc, user_manifest_with_group):
@@ -822,7 +913,8 @@ class TestUserManifest:
                                           'write_trust_seed': None},
                                     '/foo': file_vlob},
                         'dustbin': [],
-                        'groups': {'foo_community': group_vlob}}
+                        'groups': {'foo_community': group_vlob},
+                        'versions': {file_vlob['id']: 1}}
 
     @pytest.mark.asyncio
     async def test_dumps_original_manifest(self, file_svc, user_manifest_with_group):
@@ -838,7 +930,8 @@ class TestUserManifest:
                                           'write_trust_seed': None}
                                     },
                         'dustbin': [],
-                        'groups': {'foo_community': group_vlob}}
+                        'groups': {'foo_community': group_vlob},
+                        'versions': {}}
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'share'])
@@ -940,7 +1033,8 @@ class TestUserManifest:
         diff = await user_manifest_2.diff_versions()
         assert diff == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
                         'dustbin': {'added': [], 'removed': []},
-                        'groups': {'added': {}, 'changed': {}, 'removed': {}}}
+                        'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
         manifest = await user_manifest_2.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -961,7 +1055,8 @@ class TestUserManifest:
         diff = await user_manifest.diff_versions()
         assert diff == {'entries': {'added': {}, 'changed': {}, 'removed': {}},
                         'dustbin': {'added': [], 'removed': []},
-                        'groups': {'added': {}, 'changed': {}, 'removed': {}}}
+                        'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                        'versions': {'added': {}, 'changed': {}, 'removed': {}}}
         manifest = await user_manifest.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -987,7 +1082,8 @@ class TestUserManifest:
         diff = await user_manifest_2.diff_versions()
         assert diff == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
                         'dustbin': {'added': [], 'removed': []},
-                        'groups': {'added': {}, 'changed': {}, 'removed': {}}}
+                        'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                        'versions': {'added': {file_vlob_2['id']: 1}, 'changed': {}, 'removed': {}}}
         manifest = await user_manifest_2.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -1008,7 +1104,8 @@ class TestUserManifest:
         diff = await user_manifest.diff_versions()
         assert diff == {'entries': {'added': {'/bar': file_vlob_2}, 'changed': {}, 'removed': {}},
                         'dustbin': {'added': [], 'removed': []},
-                        'groups': {'added': {}, 'changed': {}, 'removed': {}}}
+                        'groups': {'added': {}, 'changed': {}, 'removed': {}},
+                        'versions': {'added': {file_vlob_2['id']: 1}, 'changed': {}, 'removed': {}}}
         manifest = await user_manifest.dumps()
         manifest = json.loads(manifest)
         entries = manifest['entries']
@@ -1032,32 +1129,60 @@ class TestUserManifest:
 
     @pytest.mark.asyncio
     async def test_restore_manifest(self, file_svc, user_manifest):
-        content = encodebytes('foo'.encode()).decode()
-        vlob = await file_svc.create(content)
+
+        def encode_content(content):
+            return encodebytes(content.encode()).decode()
+
+        dust_vlob = await file_svc.create(encode_content('v1'))
+        tmp_vlob = await file_svc.create(encode_content('v1'))
+        foo_vlob = await file_svc.create(encode_content('v1'))
+        bar_vlob = await file_svc.create(encode_content('v1'))
+        baz_vlob = await file_svc.create(encode_content('v1'))
         # Restore dirty manifest with version 1
-        await user_manifest.add_file('/tmp', vlob)
+        await user_manifest.add_file('/tmp', tmp_vlob)
         assert await user_manifest.get_version() == 1
         await user_manifest.restore()
         assert await user_manifest.get_version() == 1
         children = await user_manifest.list_dir('/')
         assert sorted(children.keys()) == []
         # Restore previous version
-        await user_manifest.add_file('/foo', vlob)
+        await user_manifest.add_file('/foo', foo_vlob)
+        await user_manifest.add_file('/dust', dust_vlob)
+        await user_manifest.delete_file('/dust')
         await user_manifest.save()
-        await user_manifest.add_file('/bar', vlob)
+        await user_manifest.add_file('/bar', bar_vlob)
+        await file_svc.write(foo_vlob['id'], 2, encode_content('v2'))
         await user_manifest.save()
-        await user_manifest.add_file('/baz', vlob)
+        await user_manifest.add_file('/baz', baz_vlob)
+        await user_manifest.restore_file(dust_vlob['id'])
+        await file_svc.write(dust_vlob['id'], 2, encode_content('v2'))
+        await file_svc.write(foo_vlob['id'], 3, encode_content('v3'))
+        await file_svc.write(bar_vlob['id'], 2, encode_content('v2'))
         await user_manifest.save()
         assert await user_manifest.get_version() == 4
         await user_manifest.restore()
         assert await user_manifest.get_version() == 5
         children = await user_manifest.list_dir('/')
         assert sorted(children.keys()) == ['bar', 'foo']
+        file = await file_svc.read(dust_vlob['id'])
+        assert file == {'content': encode_content('v1'), 'version': 3}
+        file = await file_svc.read(bar_vlob['id'])
+        assert file == {'content': encode_content('v1'), 'version': 3}
+        file = await file_svc.read(foo_vlob['id'])
+        assert file == {'content': encode_content('v2'), 'version': 4}
         # Restore old version
         await user_manifest.restore(4)
         assert await user_manifest.get_version() == 6
         children = await user_manifest.list_dir('/')
-        assert sorted(children.keys()) == ['bar', 'baz', 'foo']
+        assert sorted(children.keys()) == ['bar', 'baz', 'dust', 'foo']
+        file = await file_svc.read(dust_vlob['id'])
+        assert file == {'content': encode_content('v2'), 'version': 4}
+        file = await file_svc.read(bar_vlob['id'])
+        assert file == {'content': encode_content('v2'), 'version': 4}
+        file = await file_svc.read(baz_vlob['id'])
+        assert file == {'content': encode_content('v1'), 'version': 1}
+        file = await file_svc.read(foo_vlob['id'])
+        assert file == {'content': encode_content('v3'), 'version': 5}
         # Bad version
         for version in [0, 10]:
             with pytest.raises(UserManifestError):
@@ -1067,7 +1192,6 @@ class TestUserManifest:
         new_user_manifest = UserManifest(user_manifest.service, vlob['id'])
         with pytest.raises(UserManifestError):
             await new_user_manifest.restore()
-        # TODO restore file versions
 
     @pytest.mark.asyncio
     async def test_check_consistency(self, user_manifest_svc, file_svc, user_manifest):
@@ -1472,25 +1596,30 @@ class TestUserManifestService:
                     'version': 1,
                     'entries': {'added': {}, 'changed': {}, 'removed': {}},
                     'groups': {'added': {}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'added': [], 'removed': []}
+                    'dustbin': {'added': [], 'removed': []},
+                    'versions': {'added': {}, 'changed': {}, 'removed': {}}
+
                 },
                 {
                     'version': 2,
                     'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
                     'groups': {'added': {}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'added': [], 'removed': []}
+                    'dustbin': {'added': [], 'removed': []},
+                    'versions': {'added': {foo_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 },
                 {
                     'version': 3,
                     'entries': {'added': {'/bar': bar_vlob}, 'changed': {}, 'removed': {}},
                     'groups': {'removed': {}, 'added': {}, 'changed': {}},
-                    'dustbin': {'removed': [], 'added': []}
+                    'dustbin': {'removed': [], 'added': []},
+                    'versions': {'added': {bar_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 },
                 {
                     'version': 4,
                     'entries': {'added': {'/baz': baz_vlob}, 'changed': {}, 'removed': {}},
                     'groups': {'removed': {}, 'added': {}, 'changed': {}},
-                    'dustbin': {'removed': [], 'added': []}
+                    'dustbin': {'removed': [], 'added': []},
+                    'versions': {'added': {baz_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 }
             ]
         }
@@ -1504,19 +1633,22 @@ class TestUserManifestService:
                     'version': 2,
                     'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
                     'groups': {'added': {}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'added': [], 'removed': []}
+                    'dustbin': {'added': [], 'removed': []},
+                    'versions': {'added': {foo_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 },
                 {
                     'version': 3,
                     'entries': {'added': {'/bar': bar_vlob}, 'changed': {}, 'removed': {}},
                     'groups': {'removed': {}, 'added': {}, 'changed': {}},
-                    'dustbin': {'removed': [], 'added': []}
+                    'dustbin': {'removed': [], 'added': []},
+                    'versions': {'added': {bar_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 },
                 {
                     'version': 4,
                     'entries': {'added': {'/baz': baz_vlob}, 'changed': {}, 'removed': {}},
                     'groups': {'removed': {}, 'added': {}, 'changed': {}},
-                    'dustbin': {'removed': [], 'added': []}
+                    'dustbin': {'removed': [], 'added': []},
+                    'versions': {'added': {baz_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 }
             ]
         }
@@ -1530,13 +1662,15 @@ class TestUserManifestService:
                     'version': 1,
                     'entries': {'added': {}, 'changed': {}, 'removed': {}},
                     'groups': {'added': {}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'added': [], 'removed': []}
+                    'dustbin': {'added': [], 'removed': []},
+                    'versions': {'added': {}, 'changed': {}, 'removed': {}}
                 },
                 {
                     'version': 2,
                     'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
                     'groups': {'added': {}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'added': [], 'removed': []}
+                    'dustbin': {'added': [], 'removed': []},
+                    'versions': {'added': {foo_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 }
             ]
         }
@@ -1553,7 +1687,10 @@ class TestUserManifestService:
                             'changed': {},
                             'removed': {}},
                 'groups': {'added': {}, 'changed': {}, 'removed': {}},
-                'dustbin': {'added': [], 'removed': []}
+                'dustbin': {'added': [], 'removed': []},
+                'versions': {'added': {foo_vlob['id']: 1, bar_vlob['id']: 1, baz_vlob['id']: 1},
+                             'changed': {},
+                             'removed': {}}
             }
         }
         # Summary of partial history
@@ -1569,7 +1706,10 @@ class TestUserManifestService:
                             'changed': {},
                             'removed': {}},
                 'groups': {'added': {}, 'changed': {}, 'removed': {}},
-                'dustbin': {'added': [], 'removed': []}
+                'dustbin': {'added': [], 'removed': []},
+                'versions': {'added': {bar_vlob['id']: 1, baz_vlob['id']: 1},
+                             'changed': {},
+                             'removed': {}}
             }
         }
         # First version > last version
@@ -1594,22 +1734,26 @@ class TestUserManifestService:
                 {
                     'version': 1,
                     'entries': {'added': {}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'added': [], 'removed': []}
+                    'dustbin': {'added': [], 'removed': []},
+                    'versions': {'added': {}, 'changed': {}, 'removed': {}}
                 },
                 {
                     'version': 2,
                     'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'added': [], 'removed': []}
+                    'dustbin': {'added': [], 'removed': []},
+                    'versions': {'added': {foo_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 },
                 {
                     'version': 3,
                     'entries': {'added': {'/bar': bar_vlob}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'removed': [], 'added': []}
+                    'dustbin': {'removed': [], 'added': []},
+                    'versions': {'added': {bar_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 },
                 {
                     'version': 4,
                     'entries': {'added': {'/baz': baz_vlob}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'removed': [], 'added': []}
+                    'dustbin': {'removed': [], 'added': []},
+                    'versions': {'added': {baz_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 }
             ]
         }
@@ -1623,17 +1767,20 @@ class TestUserManifestService:
                 {
                     'version': 2,
                     'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'added': [], 'removed': []}
+                    'dustbin': {'added': [], 'removed': []},
+                    'versions': {'added': {foo_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 },
                 {
                     'version': 3,
                     'entries': {'added': {'/bar': bar_vlob}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'removed': [], 'added': []}
+                    'dustbin': {'removed': [], 'added': []},
+                    'versions': {'added': {bar_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 },
                 {
                     'version': 4,
                     'entries': {'added': {'/baz': baz_vlob}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'removed': [], 'added': []}
+                    'dustbin': {'removed': [], 'added': []},
+                    'versions': {'added': {baz_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 }
             ]
         }
@@ -1647,12 +1794,14 @@ class TestUserManifestService:
                 {
                     'version': 1,
                     'entries': {'added': {}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'added': [], 'removed': []}
+                    'dustbin': {'added': [], 'removed': []},
+                    'versions': {'added': {}, 'changed': {}, 'removed': {}}
                 },
                 {
                     'version': 2,
                     'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
-                    'dustbin': {'added': [], 'removed': []}
+                    'dustbin': {'added': [], 'removed': []},
+                    'versions': {'added': {foo_vlob['id']: 1}, 'changed': {}, 'removed': {}}
                 }
             ]
         }
@@ -1669,7 +1818,10 @@ class TestUserManifestService:
                                       '/baz': baz_vlob},
                             'changed': {},
                             'removed': {}},
-                'dustbin': {'added': [], 'removed': []}
+                'dustbin': {'added': [], 'removed': []},
+                'versions': {'added': {foo_vlob['id']: 1, bar_vlob['id']: 1, baz_vlob['id']: 1},
+                             'changed': {},
+                             'removed': {}}
             }
         }
         # Summary of partial history
@@ -1685,7 +1837,10 @@ class TestUserManifestService:
                                       '/baz': baz_vlob},
                             'changed': {},
                             'removed': {}},
-                'dustbin': {'added': [], 'removed': []}
+                'dustbin': {'added': [], 'removed': []},
+                'versions': {'added': {bar_vlob['id']: 1, baz_vlob['id']: 1},
+                             'changed': {},
+                             'removed': {}}
             }
         }
         # First version > last version
@@ -1699,27 +1854,42 @@ class TestUserManifestService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
-    async def test_restore_manifest(self, user_manifest_svc, user_manifest_with_group, group):
+    async def test_restore_manifest(self,
+                                    file_svc,
+                                    user_manifest_svc,
+                                    user_manifest_with_group,
+                                    group):
+
+        def encode_content(content):
+            return encodebytes(content.encode()).decode()
+
         group = 'foo_community'
-        await user_manifest_svc.create_file('/foo', group=group)
-        await user_manifest_svc.create_file('/bar', group=group)
-        await user_manifest_svc.create_file('/baz', group=group)
+        dust_vlob = await user_manifest_svc.create_file('/dust', encode_content('v1'), group=group)
+        await user_manifest_svc.delete_file('/dust', group=group)
+        await user_manifest_svc.create_file('/foo', encode_content('v1'), group=group)
+        await user_manifest_svc.create_file('/bar', encode_content('v1'), group=group)
+        await user_manifest_svc.restore_file(dust_vlob['id'], group=group)
+        await file_svc.write(dust_vlob['id'], 2, encode_content('v2'))
+        await user_manifest_svc.create_file('/baz', encode_content('v1'), group=group)
         # Previous version
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore', 'group': group})
         assert ret == {'status': 'ok'}
         listing = await user_manifest_svc.list_dir('/', group)
         assert sorted(listing[1].keys()) == ['bar', 'foo']
+        file = await file_svc.read(dust_vlob['id'])
+        assert file == {'content': encode_content('v1'), 'version': 3}
         # Restore old version
         ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore',
-                                                    'version': 2,
+                                                    'version': 4,
                                                     'group': group})
         assert ret == {'status': 'ok'}
         listing = await user_manifest_svc.list_dir('/', group)
         assert sorted(listing[1].keys()) == ['foo']
+        file = await file_svc.read(dust_vlob['id'])
+        assert file == {'content': encode_content('v1'), 'version': 4}
         # Bad version
         for version in [0, 10]:
             ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore',
                                                         'version': version,
                                                         'group': group})
             assert ret == {'status': 'bad_version', 'label': 'Bad version number.'}
-        # TODO restore file versions

@@ -142,7 +142,10 @@ class FileService(BaseFileService):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
         except Exception:
-            raise FileNotFound('Vlob not found.')
+            try:
+                properties = await self.user_manifest_service.get_properties(id=id, dustbin=True)
+            except Exception:
+                raise FileNotFound('Vlob not found.')
         vlob = await self.backend_api_service.vlob_read(id, properties['read_trust_seed'], version)
         version = vlob['version']
         blob = vlob['blob']
@@ -171,7 +174,10 @@ class FileService(BaseFileService):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
         except Exception:
-            raise FileNotFound('Vlob not found.')
+            try:
+                properties = await self.user_manifest_service.get_properties(id=id, dustbin=True)
+            except Exception:
+                raise FileNotFound('Vlob not found.')
         blob = await self._build_file_blocks(content)
         # Encrypt blob
         blob = json.dumps(blob)
@@ -218,7 +224,10 @@ class FileService(BaseFileService):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
         except Exception:
-            raise FileNotFound('Vlob not found.')
+            try:
+                properties = await self.user_manifest_service.get_properties(id=id, dustbin=True)
+            except Exception:
+                raise FileNotFound('Vlob not found.')
         vlob = await self.backend_api_service.vlob_read(id, properties['read_trust_seed'], version)
         encrypted_blob = vlob['blob']
         encrypted_blob = decodebytes(encrypted_blob.encode())
@@ -251,7 +260,10 @@ class FileService(BaseFileService):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
         except Exception:
-            raise FileNotFound('Vlob not found.')
+            try:
+                properties = await self.user_manifest_service.get_properties(id=id, dustbin=True)
+            except Exception:
+                raise FileNotFound('Vlob not found.')
         stat = await self.stat(id)
         if version is None:
             version = stat['version'] - 1 if stat['version'] > 1 else 1

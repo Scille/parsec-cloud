@@ -205,7 +205,8 @@ class Manifest(object):
                               'write_trust_seed': None}}
         self.dustbin = []
         self.original_manifest = {'entries': deepcopy(self.entries),
-                                  'dustbin': deepcopy(self.dustbin)}
+                                  'dustbin': deepcopy(self.dustbin),
+                                  'versions': {}}
         self.handler = partial(event_handler, self.reload, self)
 
     async def reload(self):
@@ -224,23 +225,23 @@ class Manifest(object):
     async def diff(self, old_manifest, new_manifest):
         diff = {}
         for category in new_manifest.keys():
-            if category == 'dustbin':
+            if category in ['dustbin']:
                 continue
             added = {}
             changed = {}
             removed = {}
-            for path, vlob in new_manifest[category].items():
+            for key, value in new_manifest[category].items():
                 try:
-                    ori_vlob = old_manifest[category][path]
-                    if ori_vlob != vlob:
-                        changed[path] = (ori_vlob, vlob)
+                    ori_value = old_manifest[category][key]
+                    if ori_value != value:
+                        changed[key] = (ori_value, value)
                 except KeyError:
-                    added[path] = vlob
-            for path, vlob in old_manifest[category].items():
+                    added[key] = value
+            for key, value in old_manifest[category].items():
                 try:
-                    new_manifest[category][path]
+                    new_manifest[category][key]
                 except KeyError:
-                    removed[path] = vlob
+                    removed[key] = value
             diff.update({category: {'added': added, 'changed': changed, 'removed': removed}})
         # Dustbin
         added = []
@@ -257,7 +258,7 @@ class Manifest(object):
     async def patch(self, manifest, diff):
         new_manifest = deepcopy(manifest)
         for category in diff.keys():
-            if category == 'dustbin':
+            if category in ['dustbin', 'versions']:
                 continue
             for path, entry in diff[category]['added'].items():
                 if path in new_manifest[category] and new_manifest[category][path] != entry:
@@ -294,12 +295,27 @@ class Manifest(object):
     async def get_version(self):
         return self.version
 
+    async def get_vlobs_versions(self):
+        versions = {}
+        for entry in list(self.entries.values()) + self.dustbin:
+            if entry['id']:
+                try:
+                    vlob = await self.service.backend_api_service.vlob_read(
+                        entry['id'],
+                        entry['read_trust_seed'])
+                except Exception:
+                    versions[entry['id']] = None
+                else:
+                    versions[entry['id']] = vlob['version']
+        return versions
+
     async def dumps(self, original_manifest=False):
         if original_manifest:
             return json.dumps(self.original_manifest)
         else:
             return json.dumps({'entries': self.entries,
-                               'dustbin': self.dustbin})
+                               'dustbin': self.dustbin,
+                               'versions': await self.get_vlobs_versions()})
 
     async def reload_vlob(self, vlob_id):
         # TODO invalidate old cache
@@ -399,7 +415,8 @@ class Manifest(object):
             try:
                 vlob = await self.service.backend_api_service.vlob_read(
                     id=entry['id'],
-                    trust_seed=entry['read_trust_seed'])
+                    trust_seed=entry['read_trust_seed'],
+                    version=manifest['versions'][entry['id']])
                 encrypted_blob = vlob['blob']
                 encrypted_blob = decodebytes(encrypted_blob.encode())
                 key = decodebytes(entry['key'].encode()) if entry['key'] else None
@@ -425,6 +442,7 @@ class GroupManifest(Manifest):
                                'key': None,
                                'read_trust_seed': None,
                                'write_trust_seed': None}}
+        empty_manifest = {'entries': empty_entries, 'dustbin': [], 'versions': {}}
         # Old manifest
         if old_version and old_version > 0:
             old_vlob = await self.service.backend_api_service.vlob_read(
@@ -435,7 +453,7 @@ class GroupManifest(Manifest):
             content = await self.service.crypto_service.sym_decrypt(old_vlob['blob'], key)
             old_manifest = json.loads(content.decode())
         elif old_version == 0:
-            old_manifest = {'entries': empty_entries, 'dustbin': []}
+            old_manifest = empty_manifest
         else:
             old_manifest = self.original_manifest
         # New manifest
@@ -448,7 +466,7 @@ class GroupManifest(Manifest):
             content = await self.service.crypto_service.sym_decrypt(new_vlob['blob'], key)
             new_manifest = json.loads(content.decode())
         elif new_version == 0:
-            new_manifest = {'entries': empty_entries, 'dustbin': []}
+            new_manifest = empty_manifest
         else:
             new_manifest = json.loads(await self.dumps())
         return await self.diff(old_manifest, new_manifest)
@@ -477,6 +495,9 @@ class GroupManifest(Manifest):
         self.dustbin = new_manifest['dustbin']
         self.version = vlob['version']
         self.original_manifest = backup_new_manifest
+        versions = new_manifest['versions']
+        for vlob_id, version in versions.items():
+            await self.service.file_service.restore(vlob_id, version)
 
     async def save(self):
         if self.id and not await self.is_dirty():
@@ -549,13 +570,15 @@ class UserManifest(Manifest):
         self.group_manifests = {}
         self.original_manifest = {'entries': deepcopy(self.entries),
                                   'dustbin': deepcopy(self.dustbin),
-                                  'groups': deepcopy(self.group_manifests)}
+                                  'groups': deepcopy(self.group_manifests),
+                                  'versions': {}}
 
     async def diff_versions(self, old_version=None, new_version=None):
         empty_entries = {'/': {'id': None,
                                'key': None,
                                'read_trust_seed': None,
                                'write_trust_seed': None}}
+        empty_manifest = {'entries': empty_entries, 'groups': {}, 'dustbin': [], 'versions': {}}
         # Old manifest
         if old_version and old_version > 0:
             old_vlob = await self.service.backend_api_service.named_vlob_read(
@@ -565,7 +588,7 @@ class UserManifest(Manifest):
             content = await self.service.identity_service.decrypt(old_vlob['blob'])
             old_manifest = json.loads(content.decode())
         elif old_version == 0:
-            old_manifest = {'entries': empty_entries, 'groups': {}, 'dustbin': []}
+            old_manifest = empty_manifest
         else:
             old_manifest = self.original_manifest
         # New manifest
@@ -577,7 +600,7 @@ class UserManifest(Manifest):
             content = await self.service.identity_service.decrypt(new_vlob['blob'])
             new_manifest = json.loads(content.decode())
         elif new_version == 0:
-            new_manifest = {'entries': empty_entries, 'groups': {}, 'dustbin': []}
+            new_manifest = empty_manifest
         else:
             new_manifest = json.loads(await self.dumps())
         return await self.diff(old_manifest, new_manifest)
@@ -588,7 +611,8 @@ class UserManifest(Manifest):
         else:
             return json.dumps({'entries': self.entries,
                                'dustbin': self.dustbin,
-                               'groups': await self.get_group_vlobs()})
+                               'groups': await self.get_group_vlobs(),
+                               'versions': await self.get_vlobs_versions()})
 
     async def get_group_vlobs(self, group=None):
         if group:
@@ -660,13 +684,13 @@ class UserManifest(Manifest):
         for group, group_vlob in new_manifest['groups'].items():
             await self.import_group_vlob(group, group_vlob)
         self.original_manifest = backup_new_manifest
+        versions = new_manifest['versions']
+        for vlob_id, version in versions.items():
+            await self.service.file_service.restore(vlob_id, version)
         # Update event subscriptions
         # TODO update events subscriptions
         # Subscribe to events
         # TODO where to unsubscribe?
-        # await self.service.backend_api_service.connect_event('on_named_vlob_updated',
-        #                                                      self.id,
-        #                                                      self.handler)
 
     async def save(self, recursive=True):
         if self.version and not await self.is_dirty():
@@ -674,10 +698,7 @@ class UserManifest(Manifest):
         if recursive:
             for group_manifest in self.group_manifests.values():
                 await group_manifest.save()
-        blob = json.dumps({'entries': self.entries,
-                           'dustbin': self.dustbin,
-                           'groups': await self.get_group_vlobs(),
-                           })
+        blob = await self.dumps()
         encrypted_blob = await self.service.identity_service.encrypt(blob.encode())
         self.version += 1
         try:
