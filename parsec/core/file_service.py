@@ -5,6 +5,7 @@ from cryptography.hazmat.backends.openssl import backend as openssl
 from cryptography.hazmat.primitives import hashes
 from marshmallow import fields
 
+from parsec.core.user_manifest_service import UserManifestNotFound
 from parsec.service import BaseService, cmd, service
 from parsec.exceptions import ParsecError
 from parsec.tools import BaseCmdSchema
@@ -141,10 +142,10 @@ class FileService(BaseFileService):
     async def read(self, id, version=None):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
-        except Exception:
+        except UserManifestNotFound:
             try:
                 properties = await self.user_manifest_service.get_properties(id=id, dustbin=True)
-            except Exception:
+            except UserManifestNotFound:
                 raise FileNotFound('Vlob not found.')
         vlob = await self.backend_api_service.vlob_read(id, properties['read_trust_seed'], version)
         version = vlob['version']
@@ -173,10 +174,10 @@ class FileService(BaseFileService):
     async def write(self, id, version, content):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
-        except Exception:
+        except UserManifestNotFound:
             try:
                 properties = await self.user_manifest_service.get_properties(id=id, dustbin=True)
-            except Exception:
+            except UserManifestNotFound:
                 raise FileNotFound('Vlob not found.')
         blob = await self._build_file_blocks(content)
         # Encrypt blob
@@ -223,10 +224,10 @@ class FileService(BaseFileService):
     async def stat(self, id, version=None):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
-        except Exception:
+        except UserManifestNotFound:
             try:
                 properties = await self.user_manifest_service.get_properties(id=id, dustbin=True)
-            except Exception:
+            except UserManifestNotFound:
                 raise FileNotFound('Vlob not found.')
         vlob = await self.backend_api_service.vlob_read(id, properties['read_trust_seed'], version)
         encrypted_blob = vlob['blob']
@@ -259,10 +260,10 @@ class FileService(BaseFileService):
     async def restore(self, id, version=None):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
-        except Exception:
+        except UserManifestNotFound:
             try:
                 properties = await self.user_manifest_service.get_properties(id=id, dustbin=True)
-            except Exception:
+            except UserManifestNotFound:
                 raise FileNotFound('Vlob not found.')
         stat = await self.stat(id)
         if version is None:
@@ -284,10 +285,10 @@ class FileService(BaseFileService):
     async def reencrypt(self, id):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
-        except Exception:
+        except UserManifestNotFound:
             try:
                 properties = await self.user_manifest_service.get_properties(id=id, dustbin=True)
-            except Exception:
+            except UserManifestNotFound:
                 raise FileNotFound('Vlob not found.')
         old_vlob = await self.backend_api_service.vlob_read(
             id=properties['id'],

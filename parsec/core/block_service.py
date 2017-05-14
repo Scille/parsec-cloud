@@ -96,7 +96,7 @@ class MetaBlockService(BaseBlockService):
         for _, block_service in self.block_services.items():
             try:
                 result = await getattr(block_service, operation)(*args, **kwargs)
-            except Exception:
+            except BlockError:
                 logger.warning('%s backend failed to complete %s operation.' %
                                (block_service.__class__.__name__, operation))
         if not result:

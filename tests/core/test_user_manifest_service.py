@@ -89,7 +89,7 @@ class TestManifest:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('payload', [
-        {'id': 'i123', 'key': 'k123', 'read_trust_seed': 'r123', 'write_trust_seed': 'w123'},
+        {'id': 'i123', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'},
         {'id': None, 'key': None, 'read_trust_seed': None, 'write_trust_seed': None}])
     async def test_init(self, user_manifest_svc, payload):
         manifest = GroupManifest(user_manifest_svc, **payload)
@@ -99,7 +99,7 @@ class TestManifest:
     @freeze_time("2012-01-01")
     async def test_is_dirty(self, manifest):
         assert await manifest.is_dirty() is False
-        vlob = {'id': 'i123', 'key': 'k123', 'read_trust_seed': 'r123', 'write_trust_seed': 'w123'}
+        vlob = {'id': 'i123', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
         await manifest.add_file('/foo', vlob)
         assert await manifest.is_dirty() is True
         await manifest.delete_file('/foo')
@@ -162,15 +162,15 @@ class TestManifest:
     @pytest.mark.asyncio
     async def test_patch(self, manifest):
         # TODO too intrusive?
-        vlob_1 = {'id': 'vlob_1'}
-        vlob_2 = {'id': 'vlob_2'}
-        vlob_3 = {'id': 'vlob_3'}
-        vlob_4 = {'id': 'vlob_4'}
-        vlob_5 = {'id': 'vlob_5'}
-        vlob_6 = {'id': 'vlob_6'}
-        vlob_7 = {'id': 'vlob_7'}
-        vlob_8 = {'id': 'vlob_8'}
-        vlob_9 = {'id': 'vlob_9'}
+        vlob_1 = {'id': 'vlob_1', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
+        vlob_2 = {'id': 'vlob_2', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
+        vlob_3 = {'id': 'vlob_3', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
+        vlob_4 = {'id': 'vlob_4', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
+        vlob_5 = {'id': 'vlob_5', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
+        vlob_6 = {'id': 'vlob_6', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
+        vlob_7 = {'id': 'vlob_7', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
+        vlob_8 = {'id': 'vlob_8', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
+        vlob_9 = {'id': 'vlob_9', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
         manifest.original_manifest = {
             'entries': {'/A-B-C': vlob_1,  # Conflict between B and C, save C-conflict
                         '/A-B-nil': vlob_2,  # Recover B, save B-deleted
@@ -222,13 +222,13 @@ class TestManifest:
                         '/nil-A-B-conflict': vlob_8,
                         '/nil-A-B': vlob_7,
                         '/nil-A-nil': vlob_9},
-            'dustbin': [{'id': 'vlob_6'}, {'id': 'vlob_7'}, {'id': 'vlob_8'}],
+            'dustbin': [vlob_6, vlob_7, vlob_8],
             'versions': {}
         }
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('payload', [
-        {'id': 'i123', 'key': 'k123', 'read_trust_seed': 'r123', 'write_trust_seed': 'w123'},
+        {'id': 'i123', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'},
         {'id': None, 'key': None, 'read_trust_seed': None, 'write_trust_seed': None}])
     async def test_get_vlob(self, payload):
         manifest = GroupManifest(user_manifest_svc, **payload)
@@ -256,7 +256,7 @@ class TestManifest:
         await user_manifest_svc.delete_file('/foo')
         versions = await manifest.get_vlobs_versions()
         assert versions == {foo_vlob['id']: 2, bar_vlob['id']: 1}
-        vlob = {'id': 'i123', 'key': 'k123', 'read_trust_seed': 'r123', 'write_trust_seed': 'w123'}
+        vlob = {'id': 'i123', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
         user_manifest_svc.user_manifest.entries['/baz'] = vlob
         versions = await manifest.get_vlobs_versions()
         assert versions == {foo_vlob['id']: 2, bar_vlob['id']: 1, vlob['id']: None}
@@ -1003,7 +1003,7 @@ class TestUserManifest:
     @pytest.mark.asyncio
     async def test_reload_not_exists(self, user_manifest_svc, file_svc):
         user_manifest = UserManifest(user_manifest_svc, '3C3FA85FB9736362497EB23DC0485AC10E6274C7')
-        with pytest.raises(UserManifestError):
+        with pytest.raises(UserManifestNotFound):
             await user_manifest.reload(reset=True)
 
     @pytest.mark.asyncio

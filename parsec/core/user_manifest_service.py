@@ -5,8 +5,10 @@ from base64 import encodebytes, decodebytes
 from datetime import datetime
 from marshmallow import fields
 
+from parsec.core.crypto_service import CryptoError
+from parsec.backend.vlob_service import VlobNotFound
 from parsec.service import BaseService, service, cmd
-from parsec.exceptions import ParsecError
+from parsec.exceptions import ParsecError, BadMessageError
 from parsec.tools import BaseCmdSchema, event_handler
 
 
@@ -225,7 +227,7 @@ class Manifest(object):
     async def diff(self, old_manifest, new_manifest):
         diff = {}
         for category in new_manifest.keys():
-            if category in ['dustbin']:
+            if category == 'dustbin':
                 continue
             added = {}
             changed = {}
@@ -303,7 +305,7 @@ class Manifest(object):
                     vlob = await self.service.backend_api_service.vlob_read(
                         entry['id'],
                         entry['read_trust_seed'])
-                except Exception:
+                except VlobNotFound:
                     versions[entry['id']] = None
                 else:
                     versions[entry['id']] = vlob['version']
@@ -421,7 +423,7 @@ class Manifest(object):
                 encrypted_blob = decodebytes(encrypted_blob.encode())
                 key = decodebytes(entry['key'].encode()) if entry['key'] else None
                 await self.service.crypto_service.sym_decrypt(encrypted_blob, key)
-            except Exception:
+            except (VlobNotFound, CryptoError):
                 return False
         return True
 
@@ -478,8 +480,11 @@ class GroupManifest(Manifest):
         await self.service.backend_api_service.connect_event('on_vlob_updated',
                                                              self.id,
                                                              self.handler)
-        vlob = await self.service.backend_api_service.vlob_read(id=self.id,
-                                                                trust_seed=self.read_trust_seed)
+        try:
+            vlob = await self.service.backend_api_service.vlob_read(id=self.id,
+                                                                    trust_seed=self.read_trust_seed)
+        except VlobNotFound:
+            raise UserManifestNotFound('Group manifest not found.')
         key = decodebytes(self.key.encode())
         content = await self.service.crypto_service.sym_decrypt(vlob['blob'], key)
         if not reset and vlob['version'] <= self.version:
@@ -623,20 +628,20 @@ class UserManifest(Manifest):
         try:
             for group in groups:
                 results[group] = await self.group_manifests[group].get_vlob()
-        except Exception:
+        except KeyError:
             raise UserManifestNotFound('Group not found.')
         return results
 
     async def get_group_manifest(self, group):
         try:
             return self.group_manifests[group]
-        except Exception:
+        except KeyError:
             raise UserManifestNotFound('Group not found.')
 
     async def reencrypt_group_manifest(self, group):
         try:
             group_manifest = self.group_manifests[group]
-        except Exception:
+        except KeyError:
             raise UserManifestNotFound('Group not found.')
         await group_manifest.reencrypt()
 
@@ -658,7 +663,7 @@ class UserManifest(Manifest):
         # TODO deleted group is not moved in dusbin, but hackers could continue to read/write files
         try:
             del self.group_manifests[group]
-        except Exception:
+        except KeyError:
             raise UserManifestNotFound('Group not found.')
 
     async def reload(self, reset=False):
@@ -666,7 +671,7 @@ class UserManifest(Manifest):
         try:
             vlob = await self.service.backend_api_service.named_vlob_read(id=self.id,
                                                                           trust_seed='42')
-        except Exception:
+        except VlobNotFound:
             raise UserManifestNotFound('User manifest not found.')
         content = await self.service.identity_service.decrypt(vlob['blob'])
         if not reset and vlob['version'] <= self.version:
@@ -707,7 +712,7 @@ class UserManifest(Manifest):
                 version=self.version,
                 blob=encrypted_blob.decode(),
                 trust_seed='42')
-        except Exception:
+        except BadMessageError:
             await self.service.backend_api_service.named_vlob_create(
                 id=self.id,
                 blob=encrypted_blob.decode())
@@ -741,7 +746,7 @@ class UserManifest(Manifest):
                 encrypted_blob = vlob['blob']
                 key = decodebytes(entry['key'].encode()) if entry['key'] else None
                 await self.service.crypto_service.sym_decrypt(encrypted_blob, key)
-            except Exception:
+            except (VlobNotFound, CryptoError):
                 return False
         return True
 
@@ -786,7 +791,7 @@ class UserManifestService(BaseUserManifestService):
         manifest = await self.get_manifest(group)
         try:
             await manifest.list_dir(path, children=False)
-        except Exception:
+        except UserManifestNotFound:
             vlob = await self.file_service.create(content)
             await manifest.add_file(path, vlob)
             await manifest.save()
@@ -856,7 +861,7 @@ class UserManifestService(BaseUserManifestService):
             self.user_manifest = UserManifest(self, identity)
         try:
             await self.user_manifest.reload(False)
-        except UserManifestNotFound:
+        except (UserManifestError, VlobNotFound):
             await self.user_manifest.save()
             await self.user_manifest.reload(True)
 
