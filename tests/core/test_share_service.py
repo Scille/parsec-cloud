@@ -8,7 +8,7 @@ import pytest
 from parsec.server import BaseServer
 from parsec.core import (CryptoService, FileService, GNUPGPubKeysService, IdentityService,
                          MetaBlockService, MockedBackendAPIService, MockedBlockService,
-                         ShareService, UserManifestService)
+                         MockedCacheService, ShareService, UserManifestService)
 
 
 GNUPG_HOME = path.dirname(path.abspath(__file__)) + '/../gnupg_env'
@@ -46,6 +46,7 @@ def share_svc(request, event_loop, backend_api_svc, crypto_svc, user_manifest_sv
     server.register_service(backend_api_svc)
     server.register_service(FileService())
     server.register_service(GNUPGPubKeysService())
+    server.register_service(MockedCacheService())
     event_loop.run_until_complete(server.bootstrap_services())
     event_loop.run_until_complete(identity_service.load_identity(identity=identity))
     event_loop.run_until_complete(user_manifest_svc.load_user_manifest())

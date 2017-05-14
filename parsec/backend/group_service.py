@@ -107,4 +107,4 @@ class MockedGroupService(BaseGroupService):
             group = self._groups[name][subgroup]
         except KeyError:
             raise GroupNotFound('Group not found.')
-        self._groups[name][subgroup] = [identity for identity in group if identity not in identities]
+        self._groups[name][subgroup] = [id for id in group if id not in identities]

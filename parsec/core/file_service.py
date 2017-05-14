@@ -236,10 +236,11 @@ class FileService(BaseFileService):
         blob = await self.crypto_service.sym_decrypt(encrypted_blob, key)
         blob = json.loads(blob.decode())
         stat = await self.block_service.stat(id=blob['blocks'][0])
+        # TODO: don't provide atime field if we don't know it?
         return {'id': id,
                 'ctime': stat['creation_timestamp'],
                 'mtime': stat['creation_timestamp'],
-                'atime': stat['creation_timestamp'],  # TODO: don't provide this field if we don't know it ?
+                'atime': stat['creation_timestamp'],
                 'size': blob['size'],
                 'version': vlob['version']}
 

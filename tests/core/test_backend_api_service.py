@@ -36,7 +36,8 @@ async def bootstrap_MockedBackendAPIService(request, event_loop, unused_tcp_port
     return MockedBackendAPIService()
 
 
-@pytest.fixture(params=[bootstrap_MockedBackendAPIService, bootstrap_BackendAPIService], ids=['mocked', 'backend'])
+@pytest.fixture(params=[bootstrap_MockedBackendAPIService, bootstrap_BackendAPIService],
+                ids=['mocked', 'backend'])
 async def backend_api_svc(request, event_loop, unused_tcp_port):
     return await request.param(request, event_loop, unused_tcp_port)
 

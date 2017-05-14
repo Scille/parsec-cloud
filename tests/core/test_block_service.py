@@ -6,7 +6,7 @@ from freezegun import freeze_time
 from datetime import datetime, timezone
 from collections import defaultdict
 
-from parsec.core import MetaBlockService, MockedBlockService
+from parsec.core import MetaBlockService, MockedBlockService, MockedCacheService
 
 
 class MockedS3Client:
@@ -22,18 +22,21 @@ class MockedS3Client:
         try:
             body, meta, last_modified = self._buckets[Bucket][Key]
         except KeyError:
-            raise botocore.exceptions.ClientError({'Error': {'Code': 'AccessDenied', 'Message': 'Access Denied'}}, 'GetObject')
+            message = {'Error': {'Code': 'AccessDenied', 'Message': 'Access Denied'}}
+            raise botocore.exceptions.ClientError(message, 'GetObject')
+        host_id = 'Qfa4CPJGv8GA12/GFbkDivaE3ehoYpkZUUElRSUdphYlIgZ2Mma5z2kzwOpeLQNkbhj8X+cYInk='
+        x_amz_id_2 = 'Qfa4CPJGv8GA12/GFbkDivaE3ehoYpkZUUElRSUdphYlIgZ2Mma5z2kzwOpeLQNkbhj8X+cYInk='
         return {
             'ContentLength': 8,
             'LastModified': last_modified,
             'Metadata': meta,
             'ResponseMetadata': {
-                'HostId': 'Qfa4CPJGv8GA12/GFbkDivaE3ehoYpkZUUElRSUdphYlIgZ2Mma5z2kzwOpeLQNkbhj8X+cYInk=',
+                'HostId': host_id,
                 'HTTPStatusCode': 200,
                 'RequestId': 'FADF5D8DC3E1BC10',
                 'RetryAttempts': 0,
                 'HTTPHeaders': {
-                    'x-amz-id-2': 'Qfa4CPJGv8GA12/GFbkDivaE3ehoYpkZUUElRSUdphYlIgZ2Mma5z2kzwOpeLQNkbhj8X+cYInk=',
+                    'x-amz-id-2': x_amz_id_2,
                     'accept-ranges': 'bytes',
                     'content-length': '8',
                     'content-type': 'binary/octet-stream',
@@ -63,12 +66,15 @@ async def bootstrap_MetaBlockService(request, event_loop):
     return MetaBlockService([MockedBlockService, MockedBlockService])
 
 
-@pytest.fixture(params=[MockedBlockService, bootstrap_S3BlockService, bootstrap_MetaBlockService], ids=['mocked', 's3', 'metablock'])
+@pytest.fixture(params=[MockedBlockService, bootstrap_S3BlockService, bootstrap_MetaBlockService],
+                ids=['mocked', 's3', 'metablock'])
 def block_svc(request, event_loop):
     if asyncio.iscoroutinefunction(request.param):
-        return event_loop.run_until_complete(request.param(request, event_loop))
+        block_svc = event_loop.run_until_complete(request.param(request, event_loop))
     else:
-        return request.param()
+        block_svc = request.param()
+    block_svc.cache_service = MockedCacheService()
+    return block_svc
 
 
 @pytest.fixture

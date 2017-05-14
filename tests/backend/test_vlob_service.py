@@ -25,7 +25,8 @@ async def bootstrap_PostgreSQLVlobService(request, event_loop):
     return svc
 
 
-@pytest.fixture(params=[MockedVlobService, bootstrap_PostgreSQLVlobService, ], ids=['mocked', 'postgresql'])
+@pytest.fixture(params=[MockedVlobService, bootstrap_PostgreSQLVlobService, ],
+                ids=['mocked', 'postgresql'])
 def vlob_svc(request, event_loop):
     if asyncio.iscoroutinefunction(request.param):
         return event_loop.run_until_complete(request.param(request, event_loop))

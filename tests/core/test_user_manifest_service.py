@@ -9,7 +9,7 @@ import pytest
 
 from parsec.core import (CryptoService, FileService, IdentityService, GNUPGPubKeysService,
                          MetaBlockService, MockedBackendAPIService, MockedBlockService,
-                         ShareService, UserManifestService)
+                         MockedCacheService, ShareService, UserManifestService)
 from parsec.core.user_manifest_service import (GroupManifest, Manifest, UserManifest,
                                                UserManifestError, UserManifestNotFound)
 from parsec.server import BaseServer
@@ -78,6 +78,7 @@ def user_manifest_svc(event_loop, file_svc, identity_svc, share_svc):
     server.register_service(share_svc)
     server.register_service(GNUPGPubKeysService())
     server.register_service(MockedBackendAPIService())
+    server.register_service(MockedCacheService())
     event_loop.run_until_complete(server.bootstrap_services())
     event_loop.run_until_complete(identity_svc.load_identity(identity=identity))
     event_loop.run_until_complete(service.load_user_manifest())
@@ -533,7 +534,9 @@ class TestGroupManifest:
         diff = await group_manifest.diff_versions()
         assert diff == {'entries': {'added': {'/foo': file_vlob}, 'changed': {}, 'removed': {}},
                         'dustbin': {'removed': [], 'added': []},
-                        'versions': {'added': {file_vlob['id']: None}, 'changed': {}, 'removed': {}}}
+                        'versions': {'added': {file_vlob['id']: None},
+                                     'changed': {},
+                                     'removed': {}}}
         # Old version (2) and no new version (dump current)
         await group_manifest.save()
         await group_manifest.add_file('/bar', file_vlob)

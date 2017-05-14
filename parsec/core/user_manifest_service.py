@@ -8,7 +8,7 @@ from marshmallow import fields
 from parsec.core.crypto_service import CryptoError
 from parsec.backend.vlob_service import VlobNotFound
 from parsec.service import BaseService, service, cmd
-from parsec.exceptions import ParsecError, BadMessageError
+from parsec.exceptions import ParsecError
 from parsec.tools import BaseCmdSchema, event_handler
 
 
@@ -707,12 +707,13 @@ class UserManifest(Manifest):
         encrypted_blob = await self.service.identity_service.encrypt(blob.encode())
         self.version += 1
         try:
+            patched_version = 2 if self.version == 1 else self.version
             await self.service.backend_api_service.named_vlob_update(
                 id=self.id,
-                version=self.version,
+                version=patched_version,
                 blob=encrypted_blob.decode(),
                 trust_seed='42')
-        except BadMessageError:
+        except VlobNotFound:
             await self.service.backend_api_service.named_vlob_create(
                 id=self.id,
                 blob=encrypted_blob.decode())

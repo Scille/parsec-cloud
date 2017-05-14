@@ -4,10 +4,15 @@ from dateutil import parser
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
+from parsec.service import service
 from parsec.core.block_service import BaseBlockService, BlockError
+from parsec.core.cache_service import CacheNotFound
 
 
 class GoogleDriveBlockService(BaseBlockService):
+
+    cache_service = service('CacheService')
+
     def __init__(self, directory='parsec-storage'):
         super().__init__()
         credentials_path = '/tmp/parsec-googledrive-credentials.txt'
@@ -55,11 +60,22 @@ class GoogleDriveBlockService(BaseBlockService):
         return id
 
     async def read(self, id):
-        file = await self._get_file(id)
-        file['lastViewedByMeDate'] = datetime.utcnow().isoformat()
-        file.Upload()
-        return {'content': file.GetContentString(), 'creation_timestamp': file['createdDate']}
+        try:
+            response = await self.cache_service.get(('read', id))
+        except CacheNotFound:
+            file = await self._get_file(id)
+            file['lastViewedByMeDate'] = datetime.utcnow().isoformat()
+            file.Upload()
+            response = {'content': file.GetContentString(),
+                        'creation_timestamp': file['createdDate']}
+            await self.cache_service.set(('read', id), response)
+        return response
 
     async def stat(self, id):
-        file = await self._get_file(id)
-        return {'creation_timestamp': parser.parse(file['createdDate']).timestamp()}
+        try:
+            response = await self.cache_service.get(('stat', id))
+        except CacheNotFound:
+            file = await self._get_file(id)
+            response = {'creation_timestamp': parser.parse(file['createdDate']).timestamp()}
+            await self.cache_service.set(('stat', id), response)
+        return response

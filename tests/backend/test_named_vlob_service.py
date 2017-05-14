@@ -25,7 +25,9 @@ async def bootstrap_PostgreSQLNamedVlobService(request, event_loop):
     return svc
 
 
-@pytest.fixture(params=[MockedNamedVlobService, bootstrap_PostgreSQLNamedVlobService, ], ids=['mocked', 'postgresql'])
+@pytest.fixture(params=[MockedNamedVlobService,
+                        bootstrap_PostgreSQLNamedVlobService],
+                ids=['mocked', 'postgresql'])
 def named_vlob_svc(request, event_loop):
     if asyncio.iscoroutinefunction(request.param):
         return event_loop.run_until_complete(request.param(request, event_loop))
@@ -53,9 +55,10 @@ class TestNamedVlobServiceAPI:
 
     @pytest.mark.asyncio
     async def test_duplicated_create(self, named_vlob_svc):
-        ret = await named_vlob_svc.dispatch_msg({'cmd': 'named_vlob_create', 'id': '42', 'blob': ''})
+        cmd = {'cmd': 'named_vlob_create', 'id': '42', 'blob': ''}
+        ret = await named_vlob_svc.dispatch_msg(cmd)
         assert ret['status'] == 'ok'
-        ret = await named_vlob_svc.dispatch_msg({'cmd': 'named_vlob_create', 'id': '42', 'blob': ''})
+        ret = await named_vlob_svc.dispatch_msg(cmd)
         assert ret['status'] == 'id_already_exists'
 
     @pytest.mark.asyncio

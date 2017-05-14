@@ -7,8 +7,8 @@ import pytest
 
 from parsec.core import (CryptoService, FileService,
                          IdentityService, GNUPGPubKeysService, MetaBlockService,
-                         MockedBackendAPIService, MockedBlockService, ShareService,
-                         UserManifestService)
+                         MockedBackendAPIService, MockedBlockService, MockedCacheService,
+                         ShareService, UserManifestService)
 from parsec.server import BaseServer
 
 
@@ -34,8 +34,9 @@ def file_svc(event_loop, user_manifest_svc):
     server.register_service(crypto_service)
     server.register_service(identity_service)
     server.register_service(user_manifest_svc)
-    server.register_service(MockedBackendAPIService())
     server.register_service(GNUPGPubKeysService())
+    server.register_service(MockedBackendAPIService())
+    server.register_service(MockedCacheService())
     server.register_service(ShareService())
     event_loop.run_until_complete(server.bootstrap_services())
     event_loop.run_until_complete(identity_service.load_identity(identity=identity))

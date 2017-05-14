@@ -25,7 +25,8 @@ async def bootstrap_PostgreSQLMessageService(request, event_loop):
     return msg_svc
 
 
-@pytest.fixture(params=[InMemoryMessageService, bootstrap_PostgreSQLMessageService], ids=['in_memory', 'postgresql'])
+@pytest.fixture(params=[InMemoryMessageService, bootstrap_PostgreSQLMessageService],
+                ids=['in_memory', 'postgresql'])
 def message_svc(request, event_loop):
     if asyncio.iscoroutinefunction(request.param):
         return event_loop.run_until_complete(request.param(request, event_loop))

@@ -1,3 +1,4 @@
+from parsec.core.cache_service import MockedCacheService  # TODO import order?
 from parsec.core.backend_api_service import MockedBackendAPIService, BackendAPIService
 from parsec.core.block_service import MetaBlockService, MockedBlockService
 from parsec.core.crypto_service import CryptoService
@@ -17,6 +18,7 @@ __all__ = (
     'MetaBlockService',
     'MockedBackendAPIService',
     'MockedBlockService',
+    'MockedCacheService',
     'ShareService',
     'UserManifestService',
 )

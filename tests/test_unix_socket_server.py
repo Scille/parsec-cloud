@@ -47,7 +47,8 @@ async def test_socket_communication(unix_socket_server):
     reader, writer = await asyncio.open_unix_connection(socket_path)
     writer.write(b'{"cmd": "list_cmds"}\n')
     resp = await reader.readline()
-    assert json.loads(resp[:-1].decode()) == {"status": "ok", "cmds": ["list_cmds", "ping", "subscribe"]}
+    assert json.loads(resp[:-1].decode()) == {"status": "ok",
+                                              "cmds": ["list_cmds", "ping", "subscribe"]}
     writer.close()
 
 

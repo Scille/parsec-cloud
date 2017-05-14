@@ -2,7 +2,8 @@ from datetime import datetime
 from uuid import uuid4
 from marshmallow import fields
 
-from parsec.service import BaseService, cmd
+from parsec.core.cache_service import CacheNotFound
+from parsec.service import BaseService, service, cmd
 from parsec.exceptions import ParsecError
 from parsec.tools import BaseCmdSchema, logger
 
@@ -84,6 +85,8 @@ class MockedBlockService(BaseBlockService):
 
 class MetaBlockService(BaseBlockService):
 
+    cache_service = service('CacheService')
+
     def __init__(self, backends):
         super().__init__()
         # TODO set method preference for results and call others methods in background
@@ -105,10 +108,21 @@ class MetaBlockService(BaseBlockService):
 
     async def create(self, content, id=None):
         id = id if id else uuid4().hex  # TODO uuid4 or trust seed?
+        # TODO cache
         return await self._do_operation('create', content, id)
 
     async def read(self, id):
-        return await self._do_operation('read', id)
+        try:
+            response = await self.cache_service.get(('read', id))
+        except CacheNotFound:
+            response = await self._do_operation('read', id)
+            await self.cache_service.set(('read', id), response)
+        return response
 
     async def stat(self, id):
-        return await self._do_operation('stat', id)
+        try:
+            response = await self.cache_service.get(('stat', id))
+        except CacheNotFound:
+            response = await self._do_operation('stat', id)
+            await self.cache_service.set(('stat', id), response)
+        return response

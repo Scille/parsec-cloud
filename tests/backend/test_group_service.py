@@ -26,7 +26,8 @@ async def bootstrap_PostgreSQLGroupService(request, event_loop):
     return svc
 
 
-@pytest.fixture(params=[MockedGroupService, bootstrap_PostgreSQLGroupService, ], ids=['mocked', 'postgresql'])
+@pytest.fixture(params=[MockedGroupService, bootstrap_PostgreSQLGroupService, ],
+                ids=['mocked', 'postgresql'])
 def group_svc(request, event_loop):
     if asyncio.iscoroutinefunction(request.param):
         return event_loop.run_until_complete(request.param(request, event_loop))

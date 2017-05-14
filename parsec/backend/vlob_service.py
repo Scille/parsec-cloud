@@ -75,7 +75,10 @@ class BaseVlobService(BaseService):
         vlob = await self.read(msg['id'])
         if vlob.write_trust_seed != msg['trust_seed']:
             raise TrustSeedError('Invalid write trust seed.')
-        await self.update(msg['id'], msg['version'], msg['blob'], check_trust_seed=msg['trust_seed'])
+        await self.update(msg['id'],
+                          msg['version'],
+                          msg['blob'],
+                          check_trust_seed=msg['trust_seed'])
         return {'status': 'ok'}
 
     async def create(self, blob=None):

@@ -10,7 +10,8 @@ from parsec.server import UnixSocketServer, WebSocketServer
 from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedNamedVlobService,
                             MockedVlobService)
 from parsec.core import (BackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
-                         IdentityService, MockedBlockService, ShareService, UserManifestService)
+                         IdentityService, MockedBlockService, MockedCacheService, ShareService,
+                         UserManifestService)
 from parsec.ui.shell import start_shell
 
 
@@ -61,9 +62,11 @@ def core(socket, backend_host, backend_watchdog, block_store, debug):
                 from parsec.core.block_service_s3 import S3BlockService
                 _, region, bucket, key_id, key_secret = block_store.split(':')
             except ImportError as exc:
-                raise SystemExit('Parsec needs boto3 to support S3 block storage (error: %s).' % exc)
+                raise SystemExit('Parsec needs boto3 to support S3 block storage (error: %s).' %
+                                 exc)
             except ValueError:
-                raise SystemExit('Invalid --block-store value (should be `s3:<region>:<bucket>:<id>:<secret>`.')
+                raise SystemExit('Invalid --block-store value '
+                                 ' (should be `s3:<region>:<bucket>:<id>:<secret>`.')
             block_svc = S3BlockService()
             block_svc.init(region, bucket, key_id, key_secret)
             store_type = 's3:%s:%s' % (region, bucket)
@@ -78,6 +81,7 @@ def core(socket, backend_host, backend_watchdog, block_store, debug):
     server.register_service(FileService())
     server.register_service(GNUPGPubKeysService())
     server.register_service(IdentityService())
+    server.register_service(MockedCacheService())
     server.register_service(ShareService())
     server.register_service(UserManifestService())
     loop = asyncio.get_event_loop()
@@ -85,7 +89,8 @@ def core(socket, backend_host, backend_watchdog, block_store, debug):
         loop.set_debug(True)
     else:
         logger_stream.level = WARNING
-    print('Starting parsec core on %s (connecting to backend %s and block store %s)' % (socket, backend_host, store_type))
+    print('Starting parsec core on %s (connecting to backend %s and block store %s)' %
+          (socket, backend_host, store_type))
     server.start(socket, loop=loop)
     print('Bye ;-)')
 
