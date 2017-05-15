@@ -143,7 +143,10 @@ class BackendAPIService(BaseBackendAPIService):
     async def named_vlob_create(self, id, blob=''):
         assert isinstance(blob, str)
         msg = {'cmd': 'named_vlob_create', 'id': id, 'blob': blob}
-        return await self._send_cmd(msg)
+        response = await self._send_cmd(msg)
+        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': 1}
+        await self.cache_service.set((id, 1), content)
+        return response
 
     async def named_vlob_read(self, id, trust_seed, version=None):
         assert isinstance(id, str)
@@ -167,12 +170,18 @@ class BackendAPIService(BaseBackendAPIService):
             'trust_seed': trust_seed,
             'blob': blob
         }
-        return await self._send_cmd(msg)
+        response = await self._send_cmd(msg)
+        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': version}
+        await self.cache_service.set((id, version), content)
+        return response
 
     async def vlob_create(self, blob=''):
         assert isinstance(blob, str)
         msg = {'cmd': 'vlob_create', 'blob': blob}
-        return await self._send_cmd(msg)
+        response = await self._send_cmd(msg)
+        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': 1}
+        await self.cache_service.set((id, 1), content)
+        return response
 
     async def vlob_read(self, id, trust_seed, version=None):
         assert isinstance(id, str)
@@ -196,7 +205,10 @@ class BackendAPIService(BaseBackendAPIService):
             'trust_seed': trust_seed,
             'blob': blob
         }
-        return await self._send_cmd(msg)
+        response = await self._send_cmd(msg)
+        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': version}
+        await self.cache_service.set((id, version), content)
+        return response
 
 
 class MockedBackendAPIService(BaseBackendAPIService):
@@ -255,7 +267,10 @@ class MockedBackendAPIService(BaseBackendAPIService):
     async def named_vlob_create(self, id, blob=''):
         assert isinstance(blob, str)
         msg = {'cmd': 'named_vlob_create', 'id': id, 'blob': blob}
-        return await self._named_vlob_service._cmd_CREATE(None, msg)
+        response = await self._named_vlob_service._cmd_CREATE(None, msg)
+        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': 1}
+        await self._cache_service.set((response['id'], 1), content)
+        return response
 
     async def named_vlob_read(self, id, trust_seed, version=None):
         msg = {'cmd': 'named_vlob_read', 'id': id, 'trust_seed': trust_seed}
@@ -279,11 +294,16 @@ class MockedBackendAPIService(BaseBackendAPIService):
             'blob': blob
         }
         await self._named_vlob_service._cmd_UPDATE(None, msg)
+        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': version}
+        await self._cache_service.set((id, version), content)
 
     async def vlob_create(self, blob=''):
         assert isinstance(blob, str)
         msg = {'cmd': 'vlob_create', 'blob': blob}
-        return await self._vlob_service._cmd_CREATE(None, msg)
+        response = await self._vlob_service._cmd_CREATE(None, msg)
+        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': 1}
+        await self._cache_service.set((response['id'], 1), content)
+        return response
 
     async def vlob_read(self, id, trust_seed, version=None):
         msg = {'cmd': 'vlob_read', 'id': id, 'trust_seed': trust_seed}
@@ -307,3 +327,5 @@ class MockedBackendAPIService(BaseBackendAPIService):
             'blob': blob
         }
         await self._vlob_service._cmd_UPDATE(None, msg)
+        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': version}
+        await self._cache_service.set((id, version), content)

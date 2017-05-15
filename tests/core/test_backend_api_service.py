@@ -5,7 +5,8 @@ import blinker
 from parsec.server import WebSocketServer
 from parsec.backend import MockedVlobService
 from parsec.core.backend_api_service import _patch_service_event_namespace
-from parsec.core import MockedBackendAPIService, BackendAPIService
+from parsec.core import BackendAPIService, MockedBackendAPIService, MockedCacheService
+from parsec.server import BaseServer
 
 
 async def bootstrap_BackendAPIService(request, event_loop, unused_tcp_port):
@@ -22,6 +23,11 @@ async def bootstrap_BackendAPIService(request, event_loop, unused_tcp_port):
     # ...then create a BackendAPIService which will connect to
     backend_api_svc = BackendAPIService('ws://localhost:%s' % unused_tcp_port)
     await backend_api_svc.bootstrap()
+    # Create base core server
+    server = BaseServer()
+    server.register_service(backend_api_svc)
+    server.register_service(MockedCacheService())
+    await server.bootstrap_services()
 
     def finalize():
         event_loop.run_until_complete(backend_api_svc.teardown())
