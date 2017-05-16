@@ -147,19 +147,15 @@ cli.add_command(backend)
 
 def _add_command_if_can_import(path, name=None):
     module_path, field = path.rsplit('.', 1)
-    module = import_module(module_path)
-    cli.add_command(getattr(module, field), name=name)
+    try:
+        module = import_module(module_path)
+        cli.add_command(getattr(module, field), name=name)
+    except (ImportError, AttributeError):
+        pass
 
 
 _add_command_if_can_import('parsec.backend.postgresql.cli', 'postgresql')
 _add_command_if_can_import('parsec.ui.fuse.cli', 'fuse')
-
-
-try:
-    from parsec.backend.postgresql import cli as postgresql_cli
-    cli.add_command(postgresql_cli, 'postgresql')
-except ImportError:
-    raise
 
 
 if __name__ == '__main__':
