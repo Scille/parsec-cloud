@@ -151,15 +151,16 @@ class BackendAPIService(BaseBackendAPIService):
     async def named_vlob_read(self, id, trust_seed, version=None):
         assert isinstance(id, str)
         msg = {'cmd': 'named_vlob_read', 'id': id, 'trust_seed': trust_seed}
+        response = None
         if version:
             msg['version'] = version
             try:
                 response = await self.cache_service.get((id, version))
             except CacheNotFound:
-                response = await self._send_cmd(msg)
-                await self.cache_service.set((id, version), response)
-        else:
+                pass
+        if not response:
             response = await self._send_cmd(msg)
+            await self.cache_service.set((id, response['version']), response)
         return response
 
     async def named_vlob_update(self, id, version, trust_seed, blob=''):
@@ -186,15 +187,16 @@ class BackendAPIService(BaseBackendAPIService):
     async def vlob_read(self, id, trust_seed, version=None):
         assert isinstance(id, str)
         msg = {'cmd': 'vlob_read', 'id': id, 'trust_seed': trust_seed}
+        response = None
         if version:
             msg['version'] = version
             try:
                 response = await self.cache_service.get((id, version))
             except CacheNotFound:
-                response = await self._send_cmd(msg)
-                await self.cache_service.set((id, version), response)
-        else:
+                pass
+        if not response:
             response = await self._send_cmd(msg)
+            await self.cache_service.set((id, response['version']), response)
         return response
 
     async def vlob_update(self, id, version, trust_seed, blob=''):
@@ -274,15 +276,16 @@ class MockedBackendAPIService(BaseBackendAPIService):
 
     async def named_vlob_read(self, id, trust_seed, version=None):
         msg = {'cmd': 'named_vlob_read', 'id': id, 'trust_seed': trust_seed}
+        response = None
         if version:
             msg['version'] = version
             try:
                 response = await self._cache_service.get((id, version))
             except CacheNotFound:
-                response = await self._named_vlob_service._cmd_READ(None, msg)
-                await self._cache_service.set((id, version), response)
-        else:
+                pass
+        if not response:
             response = await self._named_vlob_service._cmd_READ(None, msg)
+            await self._cache_service.set((id, response['version']), response)
         return response
 
     async def named_vlob_update(self, id, version, trust_seed, blob=''):
@@ -307,15 +310,16 @@ class MockedBackendAPIService(BaseBackendAPIService):
 
     async def vlob_read(self, id, trust_seed, version=None):
         msg = {'cmd': 'vlob_read', 'id': id, 'trust_seed': trust_seed}
+        response = None
         if version:
             msg['version'] = version
             try:
                 response = await self._cache_service.get((id, version))
             except CacheNotFound:
-                response = await self._vlob_service._cmd_READ(None, msg)
-                await self._cache_service.set((id, version), response)
-        else:
+                pass
+        if not response:
             response = await self._vlob_service._cmd_READ(None, msg)
+            await self._cache_service.set((id, response['version']), response)
         return response
 
     async def vlob_update(self, id, version, trust_seed, blob=''):

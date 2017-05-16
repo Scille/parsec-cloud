@@ -60,6 +60,9 @@ class BaseBlockService(BaseService):
 
 
 class MockedBlockService(BaseBlockService):
+
+    cache_service = service('CacheService')
+
     def __init__(self):
         super().__init__()
         self._blocks = {}
@@ -68,19 +71,34 @@ class MockedBlockService(BaseBlockService):
         id = id if id else uuid4().hex  # TODO uuid4 or trust seed?
         timestamp = datetime.utcnow().timestamp()
         self._blocks[id] = {'content': content, 'creation_timestamp': timestamp}
+        await self.cache_service.set(('read', id), {'content': content,
+                                                    'creation_timestamp': timestamp,
+                                                    'status': 'ok'})
+        await self.cache_service.set(('stat', id), {'creation_timestamp': timestamp,
+                                                    'status': 'ok'})
         return id
 
     async def read(self, id):
         try:
-            return self._blocks[id]
-        except KeyError:
-            raise BlockNotFound('Block not found.')
+            response = await self.cache_service.get(('read', id))
+        except CacheNotFound:
+            try:
+                response = self._blocks[id]
+            except KeyError:
+                raise BlockNotFound('Block not found.')
+            await self.cache_service.set(('read', id), response)
+        return response
 
     async def stat(self, id):
         try:
-            return {'creation_timestamp': self._blocks[id]['creation_timestamp']}
-        except KeyError:
-            raise BlockNotFound('Block not found.')
+            response = await self.cache_service.get(('stat', id))
+        except CacheNotFound:
+            try:
+                response = {'creation_timestamp': self._blocks[id]['creation_timestamp']}
+            except KeyError:
+                raise BlockNotFound('Block not found.')
+            await self.cache_service.set(('stat', id), response)
+        return response
 
 
 class MetaBlockService(BaseBlockService):
@@ -102,14 +120,24 @@ class MetaBlockService(BaseBlockService):
             except BlockError:
                 logger.warning('%s backend failed to complete %s operation.' %
                                (block_service.__class__.__name__, operation))
+            if result and operation in ['read', 'stat']:
+                break
+            # TODO continue creation operation in background for others backends?
         if not result:
             raise BlockError('All backends failed to complete %s operation.' % operation)
         return result
 
     async def create(self, content, id=None):
         id = id if id else uuid4().hex  # TODO uuid4 or trust seed?
-        # TODO cache
-        return await self._do_operation('create', content, id)
+        response = await self._do_operation('create', content, id)
+        stat = await self.stat(id)
+        timestamp = stat['creation_timestamp']
+        await self.cache_service.set(('read', id), {'content': content,
+                                                    'creation_timestamp': timestamp,
+                                                    'status': 'ok'})
+        await self.cache_service.set(('stat', id), {'creation_timestamp': timestamp,
+                                                    'status': 'ok'})
+        return response
 
     async def read(self, id):
         try:

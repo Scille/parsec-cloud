@@ -15,12 +15,15 @@ class BaseCacheService(BaseService):
     name = 'CacheService'
 
 
-# TODO subscribe to events in order to invalidate named_vlob_manifests
 class MockedCacheService(BaseCacheService):
 
     def __init__(self):
         super().__init__()
         self.cache = {}
+        # TODO subscribe to events in order to invalidate named_vlob_manifests
+        # TODO max number of elements
+        # TODO timestamp elements
+        # TODO delete oldest elements
 
     async def get(self, id):
         try:

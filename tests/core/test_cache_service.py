@@ -12,10 +12,18 @@ def cache_svc():
 class TestCacheService:
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize('params', [('i1234', 'r1234')])
-    async def test_get_and_set(self, cache_svc, params):
+    async def test_get_and_set(self, cache_svc):
+        id = 'i1234'
+        content = 'r1234'
+        # Not in cache
         with pytest.raises(CacheNotFound):
-            await cache_svc.get(params[0])
-        await cache_svc.set(params[0], params[1])
-        response = await cache_svc.get(params[0])
-        assert params[1] == response
+            await cache_svc.get(id)
+        # Set cache
+        await cache_svc.set(id, content)
+        response = await cache_svc.get(id)
+        assert content == response
+        # Update cache
+        content = 'r5678'
+        await cache_svc.set(id, content)
+        response = await cache_svc.get(id)
+        assert content == response

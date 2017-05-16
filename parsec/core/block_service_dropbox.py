@@ -19,6 +19,13 @@ class DropboxBlockService(BaseBlockService):
     async def create(self, content, id=None):
         id = id if id else uuid4().hex  # TODO uuid4 or trust seed?
         self.dbx.put_file(id, content)
+        stat = await self.stat(id)
+        timestamp = stat['creation_timestamp']
+        await self.cache_service.set(('read', id), {'content': content,
+                                                    'creation_timestamp': timestamp,
+                                                    'status': 'ok'})
+        await self.cache_service.set(('stat', id), {'creation_timestamp': timestamp,
+                                                    'status': 'ok'})
         return id
 
     async def read(self, id):
