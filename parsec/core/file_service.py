@@ -1,5 +1,6 @@
 from base64 import decodebytes, encodebytes
 import json
+import sys
 
 from cryptography.hazmat.backends.openssl import backend as openssl
 from cryptography.hazmat.primitives import hashes
@@ -21,27 +22,38 @@ class FileNotFound(FileError):
 
 class cmd_READ_Schema(BaseCmdSchema):
     id = fields.String(required=True)
+    version = fields.Integer(missing=None)
+    size = fields.Integer(missing=None, validate=lambda n: n >= 1)
+    offset = fields.Integer(missing=0, validate=lambda n: n >= 0)
 
 
 class cmd_WRITE_Schema(BaseCmdSchema):
     id = fields.String(required=True)
     version = fields.Integer(required=True)
     content = fields.String(required=True)
+    offset = fields.Integer(missing=0, validate=lambda n: n >= 0)
+
+
+class cmd_TRUNCATE_Schema(BaseCmdSchema):
+    id = fields.String(required=True)
+    version = fields.Integer(required=True)
+    length = fields.Integer(validate=lambda n: n >= 0)
 
 
 class cmd_STAT_Schema(BaseCmdSchema):
     id = fields.String(required=True)
+    version = fields.Integer(missing=None, validate=lambda n: n >= 1)
 
 
 class cmd_HISTORY_Schema(BaseCmdSchema):
     id = fields.String(required=True)
-    first_version = fields.Integer(missing=1)
-    last_version = fields.Integer(missing=None)
+    first_version = fields.Integer(missing=1, validate=lambda n: n >= 1)
+    last_version = fields.Integer(missing=None, validate=lambda n: n >= 1)
 
 
 class cmd_RESTORE_Schema(BaseCmdSchema):
     id = fields.String(required=True)
-    version = fields.Integer(missing=None)
+    version = fields.Integer(missing=None, validate=lambda n: n >= 1)
 
 
 class cmd_REENCRYPT_Schema(BaseCmdSchema):
@@ -61,20 +73,26 @@ class BaseFileService(BaseService):
     @cmd('file_read')
     async def _cmd_READ(self, session, msg):
         msg = cmd_READ_Schema().load(msg)
-        file = await self.read(msg['id'])
+        file = await self.read(msg['id'], msg['version'], msg['size'], msg['offset'])
         file.update({'status': 'ok'})
         return file
 
     @cmd('file_write')
     async def _cmd_WRITE(self, session, msg):
         msg = cmd_WRITE_Schema().load(msg)
-        await self.write(msg['id'], msg['version'], msg['content'])
+        await self.write(msg['id'], msg['version'], msg['content'], msg['offset'])
+        return {'status': 'ok'}
+
+    @cmd('file_truncate')
+    async def _cmd_TRUNCATE(self, session, msg):
+        msg = cmd_TRUNCATE_Schema().load(msg)
+        await self.truncate(msg['id'], msg['version'], msg['length'])
         return {'status': 'ok'}
 
     @cmd('file_stat')
     async def _cmd_STAT(self, session, msg):
         msg = cmd_STAT_Schema().load(msg)
-        stat = await self.stat(msg['id'])
+        stat = await self.stat(msg['id'], msg['version'])
         stat.update({'status': 'ok'})
         return stat
 
@@ -100,13 +118,16 @@ class BaseFileService(BaseService):
     async def create(self, content=''):
         raise NotImplementedError()
 
-    async def read(self, id):
+    async def read(self, id, version, size, offset):
         raise NotImplementedError()
 
-    async def write(self, id, version, content):
+    async def write(self, id, version, content, offset):
         raise NotImplementedError()
 
-    async def stat(self, id):
+    async def truncate(self, id, version, length):
+        raise NotImplementedError()
+
+    async def stat(self, id, version):
         raise NotImplementedError()
 
     async def history(self, id, first_version, last_version):
@@ -128,7 +149,7 @@ class FileService(BaseFileService):
     user_manifest_service = service('UserManifestService')
 
     async def create(self, content=b''):
-        blob = await self._build_file_blocks(content)
+        blob = [await self._build_file_blocks(content)]
         # Encrypt blob
         blob = json.dumps(blob)
         blob = blob.encode()
@@ -139,7 +160,7 @@ class FileService(BaseFileService):
         ret['key'] = encodebytes(blob_key).decode()
         return ret
 
-    async def read(self, id, version=None):
+    async def read(self, id, version=None, size=None, offset=0):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
         except UserManifestNotFound:
@@ -151,27 +172,33 @@ class FileService(BaseFileService):
         version = vlob['version']
         blob = vlob['blob']
         encrypted_blob = decodebytes(blob.encode())
-        blob_key = decodebytes(properties['key'].encode()) if properties['key'] else None
+        blob_key = decodebytes(properties['key'].encode())
         blob = await self.crypto_service.sym_decrypt(encrypted_blob, blob_key)
         blob = json.loads(blob.decode())
-        block_key = decodebytes(blob['key'].encode())
-        old_digest = decodebytes(blob['digest'].encode())
         # Get content
+        matching_blocks = await self._find_matching_blocks(id, version, size, offset)
         content = b''
-        for block_id in blob['blocks']:
-            block = await self.block_service.read(id=block_id)
-            # Decrypt
-            encrypted_content = block['content'].encode()
-            chunk_content = await self.crypto_service.sym_decrypt(encrypted_content, block_key)
-            content += chunk_content
-        # Check integrity
-        digest = hashes.Hash(hashes.SHA512(), backend=openssl)
-        digest.update(content)
-        new_digest = digest.finalize()
-        assert new_digest == old_digest
-        return {'content': content.decode(), 'version': version}
+        content += decodebytes(matching_blocks['pre_included_content'].encode())
+        for blocks_and_key in matching_blocks['included_blocks']:
+            block_key = blocks_and_key['key']
+            block_key = decodebytes(block_key.encode())
+            for block_properties in blocks_and_key['blocks']:
+                block = await self.block_service.read(id=block_properties['block'])
+                # Decrypt
+                chunk_content = await self.crypto_service.sym_decrypt(block['content'].encode(),
+                                                                      block_key)
+                chunk_content = decodebytes(chunk_content)
+                # Check integrity
+                digest = hashes.Hash(hashes.SHA512(), backend=openssl)
+                digest.update(chunk_content)
+                new_digest = digest.finalize()
+                assert new_digest == decodebytes(block_properties['digest'].encode())
+                content += chunk_content
+        content += decodebytes(matching_blocks['post_included_content'].encode())
+        content = encodebytes(content).decode()
+        return {'content': content, 'version': version}
 
-    async def write(self, id, version, content):
+    async def write(self, id, version, content, offset=0):
         try:
             properties = await self.user_manifest_service.get_properties(id=id)
         except UserManifestNotFound:
@@ -179,47 +206,43 @@ class FileService(BaseFileService):
                 properties = await self.user_manifest_service.get_properties(id=id, dustbin=True)
             except UserManifestNotFound:
                 raise FileNotFound('Vlob not found.')
-        blob = await self._build_file_blocks(content)
-        # Encrypt blob
+        blob_key = decodebytes(properties['key'].encode())
+        content = decodebytes(content.encode())
+        matching_blocks = await self._find_matching_blocks(id, version - 1, len(content), offset)
+        new_content = decodebytes(matching_blocks['pre_excluded_content'].encode())
+        new_content += content
+        new_content += decodebytes(matching_blocks['post_excluded_content'].encode())
+        new_content = encodebytes(new_content).decode()
+        blob = []
+        blob += matching_blocks['pre_excluded_blocks']
+        blob.append(await self._build_file_blocks(new_content))
+        blob += matching_blocks['post_excluded_blocks']
         blob = json.dumps(blob)
         blob = blob.encode()
-        blob_key = decodebytes(properties['key'].encode())
         _, encrypted_blob = await self.crypto_service.sym_encrypt(blob, blob_key)
         encrypted_blob = encodebytes(encrypted_blob).decode()
         await self.backend_api_service.vlob_update(
             id=id, version=version, blob=encrypted_blob, trust_seed=properties['write_trust_seed'])
 
-    async def _build_file_blocks(self, content):
-        if isinstance(content, str):
-            content = content.encode()
-        size = len(decodebytes(content))
-        # Digest
-        digest = hashes.Hash(hashes.SHA512(), backend=openssl)
-        digest.update(content)
-        content_digest = digest.finalize()  # TODO replace with hexdigest ?
-        content_digest = encodebytes(content_digest).decode()
-        # Create chunks
-        chunk_size = 4096  # TODO modify size
-        chunks = [content[i:i + chunk_size] for i in range(0, len(content), chunk_size)]
-        # Force a chunk even if the content is empty
-        if not chunks:
-            chunks = ['']
-        block_key, _ = await self.crypto_service.sym_encrypt('')
-        blocks = []
-        for chunk in chunks:
-            # Encrypt block
-            _, cypher_chunk = await self.crypto_service.sym_encrypt(chunk, block_key)
-            cypher_chunk = cypher_chunk.decode()
-            # Store block
-            block_id = await self.block_service.create(content=cypher_chunk)
-            blocks.append(block_id)
-        # New vlob atom
-        block_key = encodebytes(block_key).decode()
-        blob = {'blocks': blocks,
-                'size': size,
-                'key': block_key,
-                'digest': content_digest}
-        return blob
+    async def truncate(self, id, version, length):
+        try:
+            properties = await self.user_manifest_service.get_properties(id=id)
+        except UserManifestNotFound:
+            try:
+                properties = await self.user_manifest_service.get_properties(id=id, dustbin=True)
+            except UserManifestNotFound:
+                raise FileNotFound('Vlob not found.')
+        blob_key = decodebytes(properties['key'].encode())
+        matching_blocks = await self._find_matching_blocks(id, version - 1, length, 0)
+        blob = []
+        blob += matching_blocks['included_blocks']
+        blob.append(await self._build_file_blocks(matching_blocks['post_included_content']))
+        blob = json.dumps(blob)
+        blob = blob.encode()
+        _, encrypted_blob = await self.crypto_service.sym_encrypt(blob, blob_key)
+        encrypted_blob = encodebytes(encrypted_blob).decode()
+        await self.backend_api_service.vlob_update(
+            id=id, version=version, blob=encrypted_blob, trust_seed=properties['write_trust_seed'])
 
     async def stat(self, id, version=None):
         try:
@@ -232,16 +255,21 @@ class FileService(BaseFileService):
         vlob = await self.backend_api_service.vlob_read(id, properties['read_trust_seed'], version)
         encrypted_blob = vlob['blob']
         encrypted_blob = decodebytes(encrypted_blob.encode())
-        key = decodebytes(properties['key'].encode()) if properties['key'] else None
+        key = decodebytes(properties['key'].encode())
         blob = await self.crypto_service.sym_decrypt(encrypted_blob, key)
         blob = json.loads(blob.decode())
-        stat = await self.block_service.stat(id=blob['blocks'][0])
+        # TODO which block index? Or add timestamp in vlob_service ?
+        stat = await self.block_service.stat(id=blob[-1]['blocks'][-1]['block'])
+        size = 0
+        for blocks_and_key in blob:
+            for block in blocks_and_key['blocks']:
+                size += block['size']
         # TODO: don't provide atime field if we don't know it?
         return {'id': id,
                 'ctime': stat['creation_timestamp'],
                 'mtime': stat['creation_timestamp'],
                 'atime': stat['creation_timestamp'],
-                'size': blob['size'],
+                'size': size,
                 'version': vlob['version']}
 
     async def history(self, id, first_version=1, last_version=None):
@@ -305,3 +333,117 @@ class FileService(BaseFileService):
         del new_vlob['status']
         new_vlob['key'] = new_key
         return new_vlob
+
+    async def _build_file_blocks(self, content):
+        if isinstance(content, str):
+            content = content.encode()
+        content = decodebytes(content)
+        # Create chunks
+        chunk_size = 4096  # TODO modify size
+        chunks = [content[i:i + chunk_size] for i in range(0, len(content), chunk_size)]
+        # Force a chunk even if the content is empty
+        if not chunks:
+            chunks = [b'']
+        block_key, _ = await self.crypto_service.sym_encrypt('')
+        blocks = []
+        for chunk in chunks:
+            # Digest
+            digest = hashes.Hash(hashes.SHA512(), backend=openssl)
+            digest.update(chunk)
+            chunk_digest = digest.finalize()  # TODO replace with hexdigest ?
+            chunk_digest = encodebytes(chunk_digest).decode()
+            # Encrypt block
+            encoded_chunk = encodebytes(chunk).decode()
+            _, cypher_chunk = await self.crypto_service.sym_encrypt(encoded_chunk, block_key)
+            cypher_chunk = cypher_chunk.decode()
+            # Store block
+            block_id = await self.block_service.create(content=cypher_chunk)
+            blocks.append({'block': block_id,
+                           'digest': chunk_digest,
+                           'size': len(chunk)})
+        # New vlob atom
+        block_key = encodebytes(block_key).decode()
+        blob = {'blocks': blocks,
+                'key': block_key}
+        return blob
+
+    async def _find_matching_blocks(self, id, version=None, size=None, offset=0):
+        try:
+            properties = await self.user_manifest_service.get_properties(id=id)
+        except UserManifestNotFound:
+            try:
+                properties = await self.user_manifest_service.get_properties(id=id, dustbin=True)
+            except UserManifestNotFound:
+                raise FileNotFound('Vlob not found.')
+        if size is None:
+            size = sys.maxsize
+        pre_excluded_blocks = []
+        post_excluded_blocks = []
+        vlob = await self.backend_api_service.vlob_read(id, properties['read_trust_seed'], version)
+        blob = vlob['blob']
+        encrypted_blob = decodebytes(blob.encode())
+        blob_key = decodebytes(properties['key'].encode())
+        blob = await self.crypto_service.sym_decrypt(encrypted_blob, blob_key)
+        blob = json.loads(blob.decode())
+        pre_excluded_blocks = []
+        included_blocks = []
+        post_excluded_blocks = []
+        cursor = 0
+        pre_excluded_content = ''
+        pre_included_content = ''
+        post_included_content = ''
+        post_excluded_content = ''
+        for blocks_and_key in blob:
+            block_key = blocks_and_key['key']
+            decoded_block_key = decodebytes(block_key.encode())
+            for block_properties in blocks_and_key['blocks']:
+                cursor += block_properties['size']
+                if cursor <= offset:
+                    if len(pre_excluded_blocks) and pre_excluded_blocks[-1]['key'] == block_key:
+                        pre_excluded_blocks[-1]['blocks'].append(block_properties)
+                    else:
+                        pre_excluded_blocks.append({'blocks': [block_properties], 'key': block_key})
+                elif cursor > offset and cursor - block_properties['size'] < offset:
+                    delta = cursor - offset
+                    block = await self.block_service.read(block_properties['block'])
+                    block_content = await self.crypto_service.sym_decrypt(
+                        block['content'].encode(),
+                        decoded_block_key)
+                    block_content = decodebytes(block_content).decode()
+                    pre_excluded_content = block_content[:-delta]
+                    pre_included_content = block_content[-delta:][:size]
+                    if size < len(block_content[-delta:]):
+                        post_excluded_content = block_content[-delta:][size:]
+                elif cursor > offset and cursor <= offset + size:
+                    if len(included_blocks) and included_blocks[-1]['key'] == block_key:
+                        included_blocks[-1]['blocks'].append(block_properties)
+                    else:
+                        included_blocks.append({'blocks': [block_properties], 'key': block_key})
+                elif cursor > offset + size and cursor - block_properties['size'] < offset + size:
+                    delta = offset + size - (cursor - block_properties['size'])
+                    block = await self.block_service.read(block_properties['block'])
+                    block_content = await self.crypto_service.sym_decrypt(
+                        block['content'].encode(),
+                        decoded_block_key)
+                    block_content = decodebytes(block_content).decode()
+                    post_included_content = block_content[:delta]
+                    post_excluded_content = block_content[delta:]
+                else:
+                    if len(post_excluded_blocks) and post_excluded_blocks[-1]['key'] == block_key:
+                        post_excluded_blocks[-1]['blocks'].append(block_properties)
+                    else:
+                        post_excluded_blocks.append({'blocks': [block_properties],
+                                                     'key': block_key})
+        pre_included_content = encodebytes(pre_included_content.encode()).decode()
+        pre_excluded_content = encodebytes(pre_excluded_content.encode()).decode()
+        post_included_content = encodebytes(post_included_content.encode()).decode()
+        post_excluded_content = encodebytes(post_excluded_content.encode()).decode()
+        return {
+            'pre_excluded_blocks': pre_excluded_blocks,
+            'pre_excluded_content': pre_excluded_content,
+            'pre_included_content': pre_included_content,
+            'included_blocks': included_blocks,
+            'post_included_content': post_included_content,
+            'post_excluded_content': post_excluded_content,
+            'post_excluded_blocks': post_excluded_blocks
+        }

@@ -34,47 +34,42 @@ class File:
         self.id = id
         self.version = version
         self._operations = operations
-        self._need_flush = False
         self.flags = flags
-        self._content = None
-
-    def get_content(self, force=False):
-        if not self._content or force:
-            response = self._operations.send_cmd(cmd='file_read', id=self.id)
-            if response['status'] != 'ok':
-                raise FuseOSError(ENOENT)
-            self._content = decodebytes(response['content'].encode())
-            self.version = response['version']
-        return self._content
 
     def read(self, size=None, offset=0):
         # TODO use flags
-        content = self.get_content()
-        if size is not None:
-            return content[offset:offset + size]
-        else:
-            return content
+        response = self._operations.send_cmd(cmd='file_read',
+                                             id=self.id,
+                                             size=size,
+                                             offset=offset)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
+        self.version = response['version']
+        return decodebytes(response['content'].encode())
 
     def write(self, data, offset=0):
         # TODO use flags
-        if offset == 0:
-            content = b''
-        else:
-            content = self.get_content()
-        self._content = content[:offset] + data
-        self._need_flush = True
+        self.version += 1
+        response = self._operations.send_cmd(
+            cmd='file_write',
+            id=self.id,
+            version=self.version,
+            content=encodebytes(data).decode(),
+            offset=offset)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
+
+    def truncate(self, length):
+        self.version += 1
+        response = self._operations.send_cmd(cmd='file_truncate',
+                                             id=self.id,
+                                             version=self.version,
+                                             length=length)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
 
     def flush(self):
-        if self._need_flush:
-            self.version += 1
-            response = self._operations.send_cmd(
-                cmd='file_write',
-                id=self.id,
-                version=self.version,
-                content=encodebytes(self._content).decode())
-            if response['status'] != 'ok':
-                raise FuseOSError(ENOENT)
-            self._need_flush = False
+        pass
 
 
 class FuseOperations(LoggingMixIn, Operations):
@@ -97,7 +92,7 @@ class FuseOperations(LoggingMixIn, Operations):
         if (not os.path.exists(self._socket_path) or
                 not stat.S_ISSOCK(os.stat(self._socket_path).st_mode)):
             logger.error("File %s doesn't exist or isn't a socket. Is Parsec Core running?" %
-                      self._socket_path)
+                         self._socket_path)
             sys.exit(1)
         sock.connect(self._socket_path)
         logger.debug('Init socket')
@@ -208,7 +203,10 @@ class FuseOperations(LoggingMixIn, Operations):
             release_fh = True
         try:
             fd = self._get_fd(fh)
-            return fd.write(fd.read(length))
+            fd.truncate(length)
+            for file in self.fds.values():
+                if file.id == fd.id and file.version < fd.version:
+                    file.version += 1
         finally:
             if release_fh:
                 self.release(path, fh)

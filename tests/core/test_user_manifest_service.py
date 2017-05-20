@@ -370,8 +370,8 @@ class TestManifest:
     @pytest.mark.asyncio
     @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
     async def test_reencrypt_file(self, file_svc, user_manifest_svc, path):
-        encoded_content_initial = encodebytes('initial'.encode()).decode()
-        encoded_content_final = encodebytes('final'.encode()).decode()
+        encoded_content_initial = encodebytes('content 1'.encode()).decode()
+        encoded_content_final = encodebytes('content 2'.encode()).decode()
         file_vlob = await user_manifest_svc.create_file(path, encoded_content_initial)
         manifest = await user_manifest_svc.get_manifest()
         old_vlob = await user_manifest_svc.get_properties(path=path)
