@@ -53,7 +53,7 @@ class BackendAPIService(BaseBackendAPIService):
         blinker.signal(event).connect(cb, sender=sender)
 
     async def bootstrap(self):
-        assert not self._websocket, "Service already bootstraped"
+        assert not self._websocket, "Service already bootstrapped"
         self._websocket = await websockets.connect(self._backend_url)
         self._ws_recv_handler_task = asyncio.ensure_future(self._ws_recv_handler())
         if self._watchdog_time:
@@ -61,7 +61,7 @@ class BackendAPIService(BaseBackendAPIService):
         await super().bootstrap()
 
     async def teardown(self):
-        assert self._websocket, "Service hasn't been bootstraped"
+        assert self._websocket, "Service hasn't been bootstrapped"
         for task in (self._ws_recv_handler_task, self._watchdog_task):
             if not task:
                 continue
@@ -96,7 +96,7 @@ class BackendAPIService(BaseBackendAPIService):
                     blinker.signal(recv['event']).send(recv['sender'])
             except (KeyError, TypeError, json.JSONDecodeError):
                 # Dummy ???
-                logger.warning('Backend server send invalid message: %s' % recv)
+                logger.warning('Backend server sent invalid message: %s' % recv)
 
     async def _send_cmd(self, msg):
         await self._websocket.send(json.dumps(msg))
@@ -104,10 +104,8 @@ class BackendAPIService(BaseBackendAPIService):
         status = ret['status']
         if status == 'ok':
             return ret
-        elif status == 'not_found':
-            raise VlobNotFound(ret['label'])
         else:
-            raise VlobError(ret['label'])
+            raise exception_from_status(status)(ret['label'])
 
     async def group_create(self, name):
         msg = {'cmd': 'group_create', 'name': name}
