@@ -70,7 +70,7 @@ class TestFileService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
-        {'cmd': 'file_create', 'id': '1234'},
+        {'cmd': 'file_create', 'bad_field': 'foo'},
         {}])
     async def test_bad_msg_create(self, file_svc, bad_msg):
         ret = await file_svc.dispatch_msg(bad_msg)
@@ -113,11 +113,13 @@ class TestFileService:
     @pytest.mark.parametrize('bad_msg', [
         {'cmd': 'file_read', 'id': 42},
         {'cmd': 'file_read', 'id': None},
-        {'cmd': 'file_read', 'id': '<id-here>', 'version': -1},
+        {'cmd': 'file_read', 'id': '<id-here>', 'version': 0},
         {'cmd': 'file_read', 'id': '<id-here>', 'version': '<version-here>', 'size': 0},
         {'cmd': 'file_read', 'id': '<id-here>', 'version': '<version-here>', 'offset': -1},
         {'cmd': 'file_read', 'id': '<id-here>', 'version': '<version-here>', 'size': 1,
          'offset': -1},
+        {'cmd': 'file_read', 'id': '<id-here>', 'version': '<version-here>', 'size': 1,
+         'offset': 0, 'bad_field': 'foo'},
         {'cmd': 'file_read'}, {}])
     async def test_bad_msg_read(self, file_svc, user_manifest_svc, bad_msg):
         file_vlob = await user_manifest_svc.create_file('/test')
@@ -170,9 +172,11 @@ class TestFileService:
         {'cmd': 'file_write', 'id': 42},
         {'cmd': 'file_write', 'id': None},
         {'cmd': 'file_write', 'id': '<id-here>', 'content': 'foo'},
-        {'cmd': 'file_write', 'id': '<id-here>', 'version': -1, 'content': 'foo'},
+        {'cmd': 'file_write', 'id': '<id-here>', 'version': 0, 'content': 'foo'},
         {'cmd': 'file_write', 'id': '<id-here>', 'version': '<version-here>', 'content': 'foo',
          'offset': -1},
+        {'cmd': 'file_write', 'id': '<id-here>', 'version': '<version-here>', 'content': 'foo',
+         'offset': 0, 'bad_field': 'foo'},
         {'cmd': 'file_write'}, {}])
     async def test_bad_msg_write(self, file_svc, user_manifest_svc, bad_msg):
         file_vlob = await user_manifest_svc.create_file('/test')
@@ -256,6 +260,8 @@ class TestFileService:
         {'cmd': 'file_truncate', 'id': None},
         {'cmd': 'file_truncate', 'id': '<id-here>', 'length': -1},
         {'cmd': 'file_truncate', 'id': '<id-here>', 'version': '<version-here>', 'length': -1},
+        {'cmd': 'file_truncate', 'id': '<id-here>', 'version': '<version-here>', 'length': 0,
+         'bad_field': 'foo'},
         {'cmd': 'file_truncate'}, {}])
     async def test_bad_msg_truncate(self, file_svc, user_manifest_svc, bad_msg):
         file_vlob = await user_manifest_svc.create_file('/test')
@@ -312,10 +318,11 @@ class TestFileService:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
-        {'cmd': 'file_truncate', 'id': 42},
-        {'cmd': 'file_truncate', 'id': None},
-        {'cmd': 'file_truncate', 'id': '<id-here>', 'version': -1},
-        {'cmd': 'file_truncate'}, {}])
+        {'cmd': 'file_stat', 'id': 42},
+        {'cmd': 'file_stat', 'id': None},
+        {'cmd': 'file_stat', 'id': '<id-here>', 'version': 0},
+        {'cmd': 'file_stat', 'id': '<id-here>', 'version': 1, 'bad_field': 'foo'},
+        {'cmd': 'file_stat'}, {}])
     async def test_bad_msg_stat(self, file_svc, bad_msg):
         file_vlob = await file_svc.create()
         if bad_msg.get('id') == '<id-here>':
@@ -436,8 +443,10 @@ class TestFileService:
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
         {'cmd': 'file_history', 'id': 42},
-        {'cmd': 'file_history', 'id': '<id-here>', 'first_version': -1},
-        {'cmd': 'file_history', 'id': '<id-here>', 'last_version': -1},
+        {'cmd': 'file_history', 'id': '<id-here>', 'first_version': 0},
+        {'cmd': 'file_history', 'id': '<id-here>', 'last_version': 0},
+        {'cmd': 'file_history', 'id': '<id-here>', 'first_version': 1, 'last_version': 1,
+         'bad_field': 'foo'},
         {'cmd': 'file_history'}, {}])
     async def test_bad_msg_history(self, file_svc, user_manifest_svc, bad_msg):
         file_vlob = await user_manifest_svc.create_file('/test')
@@ -486,6 +495,7 @@ class TestFileService:
     @pytest.mark.parametrize('bad_msg', [
         {'cmd': 'file_restore', 'id': 42},
         {'cmd': 'file_restore', 'id': '<id-here>', 'version': 0},
+        {'cmd': 'file_restore', 'id': '<id-here>', 'version': 1, 'bad_field': 'foo'},
         {'cmd': 'file_restore'}, {}])
     async def test_bad_msg_restore(self, file_svc, user_manifest_svc, bad_msg):
         file_vlob = await user_manifest_svc.create_file('/test')
@@ -520,6 +530,7 @@ class TestFileService:
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
         {'cmd': 'file_reencrypt', 'id': 42},
+        {'cmd': 'file_reencrypt', 'id': '<id-here>', 'bad_field': 'foo'},
         {'cmd': 'file_reencrypt'}, {}])
     async def test_bad_msg_reencrypt(self, file_svc, user_manifest_svc, bad_msg):
         file_vlob = await user_manifest_svc.create_file('/test')

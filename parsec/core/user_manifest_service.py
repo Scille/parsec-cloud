@@ -67,14 +67,14 @@ class cmd_SHOW_dustbin_Schema(BaseCmdSchema):
 
 
 class cmd_HISTORY_Schema(BaseCmdSchema):
-    first_version = fields.Integer(missing=1)
-    last_version = fields.Integer(missing=None)
+    first_version = fields.Integer(missing=1, validate=lambda n: n >= 1)
+    last_version = fields.Integer(missing=None, validate=lambda n: n >= 1)
     summary = fields.Boolean(missing=False)
     group = fields.String(missing=None)
 
 
 class cmd_RESTORE_MANIFEST_Schema(BaseCmdSchema):
-    version = fields.Integer(missing=None)
+    version = fields.Integer(missing=None, validate=lambda n: n >= 1)
     group = fields.String(missing=None)
 
 

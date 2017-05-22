@@ -67,18 +67,20 @@ def user_manifest_svc(event_loop, file_svc, identity_svc, share_svc):
     identity = '81DBCF6EB9C8B2965A65ACE5520D903047D69DC9'
     service = UserManifestService()
     block_service = MetaBlockService(backends=[MockedBlockService, MockedBlockService])
+    cache_svc = MockedCacheService()
+    MockedBlockService.cache_service = cache_svc
     crypto_service = CryptoService()
     crypto_service.gnupg = gnupg.GPG(homedir=GNUPG_HOME + '/secret_env')
     server = BaseServer()
     server.register_service(service)
     server.register_service(block_service)
+    server.register_service(cache_svc)
     server.register_service(crypto_service)
     server.register_service(file_svc)
     server.register_service(identity_svc)
     server.register_service(share_svc)
     server.register_service(GNUPGPubKeysService())
     server.register_service(MockedBackendAPIService())
-    server.register_service(MockedCacheService())
     event_loop.run_until_complete(server.bootstrap_services())
     event_loop.run_until_complete(identity_svc.load_identity(identity=identity))
     event_loop.run_until_complete(service.load_user_manifest())
@@ -820,9 +822,8 @@ class TestGroupManifest:
         file = await file_svc.read(foo_vlob['id'])
         assert file == {'content': encode_content('v3'), 'version': 5}
         # Bad version
-        for version in [0, 10]:
-            with pytest.raises(UserManifestError):
-                await group_manifest.restore(version)
+        with pytest.raises(UserManifestError):
+            await group_manifest.restore(10)
         # Restore not saved manifest
         new_group_manifest = GroupManifest(group_manifest.service)
         with pytest.raises(UserManifestError):
@@ -1187,9 +1188,8 @@ class TestUserManifest:
         file = await file_svc.read(foo_vlob['id'])
         assert file == {'content': encode_content('v3'), 'version': 5}
         # Bad version
-        for version in [0, 10]:
-            with pytest.raises(UserManifestError):
-                await user_manifest.restore(version)
+        with pytest.raises(UserManifestError):
+            await user_manifest.restore(10)
         # Restore not saved manifest
         vlob = await user_manifest.get_vlob()
         new_user_manifest = UserManifest(user_manifest.service, vlob['id'])
@@ -1287,6 +1287,16 @@ class TestUserManifestService:
         assert ret == {'status': 'already_exists', 'label': 'File already exists.'}
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'user_manifest_create_file', 'group': 'share'},
+        {'cmd': 'user_manifest_create_file', 'path': 42},
+        {'cmd': 'user_manifest_create_file', 'path': '/foo', 'group': 'share', 'bad_field': 'foo'},
+        {'cmd': 'user_manifest_create_file'}, {}])
+    async def test_bad_msg_create_file(self, user_manifest_svc, bad_msg):
+        ret = await user_manifest_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
     async def test_rename_file(self, user_manifest_svc, user_manifest_with_group, group):
         await user_manifest_svc.create_file('/test', group=group)
@@ -1314,6 +1324,18 @@ class TestUserManifestService:
         assert ret == {'status': 'already_exists', 'label': 'File already exists.'}
         await user_manifest_svc.list_dir('/test', group=group)
         await user_manifest_svc.list_dir('/foo', group=group)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'user_manifest_rename_file', 'path': '/foo', 'new_path': '/bar', 'group': 'share',
+         'bad_field': 'foo'},
+        {'cmd': 'user_manifest_rename_file', 'path': '/foo', 'new_path': '/bar', 'group': 42},
+        {'cmd': 'user_manifest_rename_file', 'old_path': '/foo', 'new_path': 42},
+        {'cmd': 'user_manifest_rename_file', 'old_path': 42, 'new_path': '/bar'},
+        {'cmd': 'user_manifest_rename_file'}, {}])
+    async def test_bad_msg_rename_file(self, user_manifest_svc, bad_msg):
+        ret = await user_manifest_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
@@ -1347,6 +1369,16 @@ class TestUserManifestService:
         assert ret == {'status': 'path_is_not_file', 'label': 'Path is not a file.'}
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'user_manifest_delete_file', 'path': '/foo', 'group': 'share', 'bad_field': 'foo'},
+        {'cmd': 'user_manifest_delete_file', 'path': '/foo', 'group': 42},
+        {'cmd': 'user_manifest_delete_file', 'path': 42},
+        {'cmd': 'user_manifest_delete_file'}, {}])
+    async def test_bad_msg_delete_file(self, user_manifest_svc, bad_msg):
+        ret = await user_manifest_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
     @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
     async def test_restore_file(self, user_manifest_svc, user_manifest_with_group, group, path):
@@ -1373,6 +1405,16 @@ class TestUserManifestService:
                                                     'vlob': vlob_id,
                                                     'group': group})
         assert ret == {'status': 'already_exists', 'label': 'Restore path already used.'}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'user_manifest_restore_file', 'vlob': '/foo', 'group': 'share', 'bad_field': 'foo'},
+        {'cmd': 'user_manifest_restore_file', 'vlob': '/foo', 'group': 42},
+        {'cmd': 'user_manifest_restore_file', 'vlob': 42},
+        {'cmd': 'user_manifest_restore_file'}, {}])
+    async def test_bad_msg_restore_file(self, user_manifest_svc, bad_msg):
+        ret = await user_manifest_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
@@ -1417,6 +1459,16 @@ class TestUserManifestService:
         assert ret == {'status': 'not_found', 'label': 'Directory or file not found.'}
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'user_manifest_list_dir', 'path': '/foo', 'group': 'share', 'bad_field': 'foo'},
+        {'cmd': 'user_manifest_list_dir', 'path': '/foo', 'group': 42},
+        {'cmd': 'user_manifest_list_dir', 'path': 42},
+        {'cmd': 'user_manifest_list_dir'}, {}])
+    async def test_bad_msg_list_dir(self, user_manifest_svc, bad_msg):
+        ret = await user_manifest_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
     async def test_create_dir(self, user_manifest_svc, user_manifest_with_group, group):
         # Working
@@ -1429,6 +1481,16 @@ class TestUserManifestService:
                                                     'path': '/test_dir',
                                                     'group': group})
         assert ret == {'status': 'already_exists', 'label': 'Directory already exists.'}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'user_manifest_make_dir', 'path': '/foo', 'group': 'share', 'bad_field': 'foo'},
+        {'cmd': 'user_manifest_make_dir', 'path': '/foo', 'group': 42},
+        {'cmd': 'user_manifest_make_dir', 'path': 42},
+        {'cmd': 'user_manifest_make_dir'}, {}])
+    async def test_bad_msg_make_dir(self, user_manifest_svc, bad_msg):
+        ret = await user_manifest_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
@@ -1483,6 +1545,16 @@ class TestUserManifestService:
         assert ret == {'status': 'path_is_not_dir', 'label': 'Path is not a directory.'}
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'user_manifest_remove_dir', 'path': '/foo', 'group': 'share', 'bad_field': 'foo'},
+        {'cmd': 'user_manifest_remove_dir', 'path': '/foo', 'group': 42},
+        {'cmd': 'user_manifest_remove_dir', 'path': 42},
+        {'cmd': 'user_manifest_remove_dir'}, {}])
+    async def test_bad_msg_remove_dir(self, user_manifest_svc, bad_msg):
+        ret = await user_manifest_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
     @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
     async def test_show_dustbin(self, user_manifest_svc, user_manifest_with_group, group, path):
@@ -1512,6 +1584,16 @@ class TestUserManifestService:
                                                         'path': '/unknown',
                                                         'group': group})
             assert ret == {'status': 'not_found', 'label': 'Path not found.'}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'user_manifest_show_dustbin', 'path': '/foo', 'group': 'share', 'bad_field': 'foo'},
+        {'cmd': 'user_manifest_show_dustbin', 'path': '/foo', 'group': 42},
+        {'cmd': 'user_manifest_show_dustbin', 'path': 42},
+        {}])
+    async def test_bad_msg_show_dustbin(self, user_manifest_svc, bad_msg):
+        ret = await user_manifest_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
 
     @pytest.mark.asyncio
     async def test_load_user_manifest(self, user_manifest_svc, identity_svc):
@@ -1856,6 +1938,18 @@ class TestUserManifestService:
                        'label': 'First version number higher than the second one.'}
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'user_manifest_history', 'first_version': 0},
+        {'cmd': 'user_manifest_history', 'last_version': 0},
+        {'cmd': 'user_manifest_history', 'summary': 'foo'},
+        {'cmd': 'user_manifest_history', 'group': 42},
+        {'cmd': 'user_manifest_history', 'bad_field': 'foo'},
+        {}])
+    async def test_bad_msg_history(self, user_manifest_svc, bad_msg):
+        ret = await user_manifest_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize('group', [None, 'foo_community'])
     async def test_restore_manifest(self,
                                     file_svc,
@@ -1891,8 +1985,17 @@ class TestUserManifestService:
         file = await file_svc.read(dust_vlob['id'])
         assert file == {'content': encode_content('v1'), 'version': 4}
         # Bad version
-        for version in [0, 10]:
-            ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore',
-                                                        'version': version,
-                                                        'group': group})
-            assert ret == {'status': 'bad_version', 'label': 'Bad version number.'}
+        ret = await user_manifest_svc.dispatch_msg({'cmd': 'user_manifest_restore',
+                                                    'version': 10,
+                                                    'group': group})
+        assert ret == {'status': 'bad_version', 'label': 'Bad version number.'}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'user_manifest_restore', 'version': 1, 'group': 'share', 'bad_field': 'foo'},
+        {'cmd': 'user_manifest_restore', 'version': 1, 'group': 42},
+        {'cmd': 'user_manifest_restore', 'version': '42a'},
+        {}])
+    async def test_bad_msg_restore(self, user_manifest_svc, bad_msg):
+        ret = await user_manifest_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
