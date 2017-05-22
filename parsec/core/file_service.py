@@ -20,23 +20,27 @@ class FileNotFound(FileError):
     status = 'not_found'
 
 
+class cmd_CREATE_Schema(BaseCmdSchema):
+    pass
+
+
 class cmd_READ_Schema(BaseCmdSchema):
     id = fields.String(required=True)
-    version = fields.Integer(missing=None)
+    version = fields.Integer(missing=None, validate=lambda n: n >= 1)
     size = fields.Integer(missing=None, validate=lambda n: n >= 1)
     offset = fields.Integer(missing=0, validate=lambda n: n >= 0)
 
 
 class cmd_WRITE_Schema(BaseCmdSchema):
     id = fields.String(required=True)
-    version = fields.Integer(required=True)
+    version = fields.Integer(required=True, validate=lambda n: n >= 1)
     content = fields.String(required=True)
     offset = fields.Integer(missing=0, validate=lambda n: n >= 0)
 
 
 class cmd_TRUNCATE_Schema(BaseCmdSchema):
     id = fields.String(required=True)
-    version = fields.Integer(required=True)
+    version = fields.Integer(required=True, validate=lambda n: n >= 1)
     length = fields.Integer(validate=lambda n: n >= 0)
 
 
@@ -66,6 +70,7 @@ class BaseFileService(BaseService):
 
     @cmd('file_create')
     async def _cmd_CREATE(self, session, msg):
+        msg = cmd_CREATE_Schema().load(msg)
         file = await self.create()
         file.update({'status': 'ok'})
         return file

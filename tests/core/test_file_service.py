@@ -14,6 +14,7 @@ from parsec.core import (CryptoService, FileService,
                          IdentityService, GNUPGPubKeysService, MetaBlockService,
                          MockedBackendAPIService, MockedBlockService, MockedCacheService,
                          ShareService, UserManifestService)
+from parsec.core.file_service import FileNotFound
 from parsec.server import BaseServer
 
 
@@ -60,7 +61,7 @@ def file_svc(event_loop, user_manifest_svc, crypto_svc):
 class TestFileService:
 
     @pytest.mark.asyncio
-    async def test_create_file(self, file_svc):
+    async def test_create(self, file_svc):
         ret = await file_svc.dispatch_msg({'cmd': 'file_create'})
         assert ret['status'] == 'ok'
         ret_2 = await file_svc.dispatch_msg({'cmd': 'file_create'})
@@ -68,7 +69,21 @@ class TestFileService:
         assert ret['id'] != ret_2['id']
 
     @pytest.mark.asyncio
-    async def test_file_read(self, file_svc, user_manifest_svc):
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'file_create', 'id': '1234'},
+        {}])
+    async def test_bad_msg_create(self, file_svc, bad_msg):
+        ret = await file_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
+    async def test_read_not_found(self, file_svc):
+        ret = await file_svc.dispatch_msg({'cmd': 'file_read',
+                                           'id': '5ea26ae2479c49f58ede248cdca1a3ca'})
+        assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
+
+    @pytest.mark.asyncio
+    async def test_read(self, file_svc, user_manifest_svc):
         file_vlob = await user_manifest_svc.create_file('/test')
         id = file_vlob['id']
         # Empty file
@@ -93,13 +108,38 @@ class TestFileService:
                                            'size': size,
                                            'offset': offset})
         assert ret == {'status': 'ok', 'content': encoded_content, 'version': 2}
-        # Unknown file
-        ret = await file_svc.dispatch_msg({'cmd': 'file_read',
-                                           'id': '5ea26ae2479c49f58ede248cdca1a3ca'})
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'file_read', 'id': 42},
+        {'cmd': 'file_read', 'id': None},
+        {'cmd': 'file_read', 'id': '<id-here>', 'version': -1},
+        {'cmd': 'file_read', 'id': '<id-here>', 'version': '<version-here>', 'size': 0},
+        {'cmd': 'file_read', 'id': '<id-here>', 'version': '<version-here>', 'offset': -1},
+        {'cmd': 'file_read', 'id': '<id-here>', 'version': '<version-here>', 'size': 1,
+         'offset': -1},
+        {'cmd': 'file_read'}, {}])
+    async def test_bad_msg_read(self, file_svc, user_manifest_svc, bad_msg):
+        file_vlob = await user_manifest_svc.create_file('/test')
+        file_vlob = await file_svc.stat(file_vlob['id'])
+        if bad_msg.get('id') == '<id-here>':
+            bad_msg['id'] = file_vlob['id']
+        if bad_msg.get('version') == '<version-here>':
+            bad_msg['version'] = file_vlob['version']
+        ret = await file_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
+    async def test_write_not_found(self, file_svc):
+        content = encodebytes('foo'.encode()).decode()
+        ret = await file_svc.dispatch_msg({'cmd': 'file_write',
+                                           'id': '1234',
+                                           'version': 1,
+                                           'content': content})
         assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.asyncio
-    async def test_file_write(self, file_svc, user_manifest_svc):
+    async def test_write(self, file_svc, user_manifest_svc):
         file_vlob = await user_manifest_svc.create_file('/test')
         id = file_vlob['id']
         # Check with empty and not empty file
@@ -124,16 +164,36 @@ class TestFileService:
         file = await file_svc.read(id)
         encoded_content = encodebytes('this is v4 content'.encode()).decode()
         assert file == {'content': encoded_content, 'version': version}
-        # Unknown file
-        content = encodebytes('foo'.encode()).decode()
-        ret = await file_svc.dispatch_msg({'cmd': 'file_write',
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'file_write', 'id': 42},
+        {'cmd': 'file_write', 'id': None},
+        {'cmd': 'file_write', 'id': '<id-here>', 'content': 'foo'},
+        {'cmd': 'file_write', 'id': '<id-here>', 'version': -1, 'content': 'foo'},
+        {'cmd': 'file_write', 'id': '<id-here>', 'version': '<version-here>', 'content': 'foo',
+         'offset': -1},
+        {'cmd': 'file_write'}, {}])
+    async def test_bad_msg_write(self, file_svc, user_manifest_svc, bad_msg):
+        file_vlob = await user_manifest_svc.create_file('/test')
+        file_vlob = await file_svc.stat(file_vlob['id'])
+        if bad_msg.get('id') == '<id-here>':
+            bad_msg['id'] = file_vlob['id']
+        if bad_msg.get('version') == '<version-here>':
+            bad_msg['version'] = file_vlob['version']
+        ret = await file_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
+    async def test_truncate_not_found(self, file_svc):
+        ret = await file_svc.dispatch_msg({'cmd': 'file_truncate',
                                            'id': '1234',
                                            'version': 1,
-                                           'content': content})
+                                           'length': 7})
         assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.asyncio
-    async def test_file_truncate(self, file_svc, user_manifest_svc, crypto_svc):
+    async def test_truncate(self, file_svc, user_manifest_svc, crypto_svc):
         # Encoded contents
         block_size = 4096
         content = b''.join([str(random.randint(1, 9)).encode() for i in range(0, block_size + 1)])
@@ -189,15 +249,31 @@ class TestFileService:
         assert ret == {'status': 'ok'}
         file = await file_svc.read(id)
         assert file == {'content': '', 'version': 6}
-        # Unknown file
-        ret = await file_svc.dispatch_msg({'cmd': 'file_truncate',
-                                           'id': '1234',
-                                           'version': 1,
-                                           'length': 7})
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'file_truncate', 'id': 42},
+        {'cmd': 'file_truncate', 'id': None},
+        {'cmd': 'file_truncate', 'id': '<id-here>', 'length': -1},
+        {'cmd': 'file_truncate', 'id': '<id-here>', 'version': '<version-here>', 'length': -1},
+        {'cmd': 'file_truncate'}, {}])
+    async def test_bad_msg_truncate(self, file_svc, user_manifest_svc, bad_msg):
+        file_vlob = await user_manifest_svc.create_file('/test')
+        file_vlob = await file_svc.stat(file_vlob['id'])
+        if bad_msg.get('id') == '<id-here>':
+            bad_msg['id'] = file_vlob['id']
+        if bad_msg.get('version') == '<version-here>':
+            bad_msg['version'] = file_vlob['version']
+        ret = await file_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
+    async def test_stat_not_found(self, file_svc):
+        ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': '1234'})
         assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.asyncio
-    async def test_file_stat(self, file_svc, user_manifest_svc):
+    async def test_stat(self, file_svc, user_manifest_svc):
         # Good file
         with freeze_time('2012-01-01') as frozen_datetime:
             file_vlob = await user_manifest_svc.create_file('/test')
@@ -233,8 +309,23 @@ class TestFileService:
                            'atime': mtime,
                            'size': 3,
                            'version': 2}
-        # Unknown file
-        ret = await file_svc.dispatch_msg({'cmd': 'file_stat', 'id': '1234'})
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'file_truncate', 'id': 42},
+        {'cmd': 'file_truncate', 'id': None},
+        {'cmd': 'file_truncate', 'id': '<id-here>', 'version': -1},
+        {'cmd': 'file_truncate'}, {}])
+    async def test_bad_msg_stat(self, file_svc, bad_msg):
+        file_vlob = await file_svc.create()
+        if bad_msg.get('id') == '<id-here>':
+            bad_msg['id'] = file_vlob['id']
+        ret = await file_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
+    async def test_history_not_found(self, file_svc):
+        ret = await file_svc.dispatch_msg({'cmd': 'file_history', 'id': '1234'})
         assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.asyncio
@@ -343,6 +434,24 @@ class TestFileService:
                        'label': 'First version number higher than the second one.'}
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'file_history', 'id': 42},
+        {'cmd': 'file_history', 'id': '<id-here>', 'first_version': -1},
+        {'cmd': 'file_history', 'id': '<id-here>', 'last_version': -1},
+        {'cmd': 'file_history'}, {}])
+    async def test_bad_msg_history(self, file_svc, user_manifest_svc, bad_msg):
+        file_vlob = await user_manifest_svc.create_file('/test')
+        if bad_msg.get('id') == '<id-here>':
+            bad_msg['id'] = file_vlob['id']
+        ret = await file_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
+    async def test_restore_not_found(self, file_svc):
+        ret = await file_svc.dispatch_msg({'cmd': 'file_restore', 'id': '1234', 'version': 10})
+        assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
+
+    @pytest.mark.asyncio
     async def test_restore(self, file_svc, user_manifest_svc):
         encoded_content = encodebytes('initial'.encode()).decode()
         file_vlob = await user_manifest_svc.create_file('/test', encoded_content)
@@ -374,6 +483,23 @@ class TestFileService:
         assert ret == {'status': 'bad_version', 'label': 'Bad version number.'}
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'file_restore', 'id': 42},
+        {'cmd': 'file_restore', 'id': '<id-here>', 'version': 0},
+        {'cmd': 'file_restore'}, {}])
+    async def test_bad_msg_restore(self, file_svc, user_manifest_svc, bad_msg):
+        file_vlob = await user_manifest_svc.create_file('/test')
+        if bad_msg.get('id') == '<id-here>':
+            bad_msg['id'] = file_vlob['id']
+        ret = await file_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
+
+    @pytest.mark.asyncio
+    async def test_reencrypt_not_found(self, file_svc):
+        ret = await file_svc.dispatch_msg({'cmd': 'file_reencrypt', 'id': '1234'})
+        assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
+
+    @pytest.mark.asyncio
     async def test_reencrypt(self, file_svc, user_manifest_svc):
         encoded_content_initial = encodebytes('content 1'.encode()).decode()
         encoded_content_final = encodebytes('content 2'.encode()).decode()
@@ -390,6 +516,17 @@ class TestFileService:
         assert file == {'content': encoded_content_initial, 'version': 1}
         file = await file_svc.read(new_vlob['id'])
         assert file == {'content': encoded_content_final, 'version': 2}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('bad_msg', [
+        {'cmd': 'file_reencrypt', 'id': 42},
+        {'cmd': 'file_reencrypt'}, {}])
+    async def test_bad_msg_reencrypt(self, file_svc, user_manifest_svc, bad_msg):
+        file_vlob = await user_manifest_svc.create_file('/test')
+        if bad_msg.get('id') == '<id-here>':
+            bad_msg['id'] = file_vlob['id']
+        ret = await file_svc.dispatch_msg(bad_msg)
+        assert ret['status'] == 'bad_msg'
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('length', [0, 4095, 4096, 4097])
@@ -419,6 +556,11 @@ class TestFileService:
             length = block_size if length > block_size else length
             assert block['size'] == length
             assert block['digest'] == digest(content[index * block_size:index + 1 * block_size])
+
+    @pytest.mark.asyncio
+    async def test_find_matching_blocks_not_found(self, file_svc):
+        with pytest.raises(FileNotFound):
+            await file_svc._find_matching_blocks('1234')
 
     @pytest.mark.asyncio
     async def test_find_matching_blocks(self, file_svc, crypto_svc, user_manifest_svc):
