@@ -12,6 +12,7 @@ from parsec.backend.vlob_service import (
     BaseVlobService, VlobAtom, VlobNotFound, TrustSeedError)
 from parsec.backend.named_vlob_service import BaseNamedVlobService, NamedVlobDuplicatedIdError
 from parsec.backend.group_service import GroupError, GroupNotFound, BaseGroupService
+from parsec.backend.pubkey_service import BasePubKeyService, PubKeyError, PubKeyNotFound
 
 
 @click.group()
@@ -36,7 +37,7 @@ async def _init_db(url, force=False):
     async with _connect(url) as pool:
         with await pool.cursor() as cur:
             if force:
-                await cur.execute("DROP TABLE IF EXISTS vlobs, named_vlobs, messages, groups;")
+                await cur.execute("DROP TABLE IF EXISTS vlobs, named_vlobs, messages, groups, pubkeys;")
             # messages
             await cur.execute("""
                 CREATE TABLE messages (
@@ -70,6 +71,12 @@ async def _init_db(url, force=False):
                 CREATE TABLE groups (
                 id               text PRIMARY KEY,
                 body             text
+            );""")
+            # pubkeys
+            await cur.execute("""
+                CREATE TABLE pubkeys (
+                id               text PRIMARY KEY,
+                key              text
             );""")
 
 
@@ -264,3 +271,25 @@ class PostgreSQLGroupService(BaseGroupService):
                 group[group_entry] = [identity for identity in group[group_entry]
                                       if identity not in identities]
                 await cur.execute('UPDATE groups SET body=%s WHERE id=%s', (json.dumps(group), name))
+
+
+class PostgreSQLPubKeyService(BasePubKeyService):
+
+    postgresql = service('PostgreSQLService')
+
+    async def add_pubkey(self, id, key):
+        async with self.postgresql.acquire() as conn:
+            async with conn.cursor() as cur:
+                try:
+                    await cur.execute("INSERT INTO pubkeys VALUES (%s, %s);", (id, key))
+                except IntegrityError:
+                    raise PubKeyError('Identity `%s` already has a public key' % id)
+
+    async def get_pubkey(self, id):
+        async with self.postgresql.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute('SELECT key FROM pubkeys WHERE id=%s', (id, ))
+                ret = await cur.fetchone()
+                if ret is None:
+                    raise PubKeyNotFound('No public key for identity `%s`' % id)
+                return ret[0]

@@ -52,3 +52,11 @@ class BadMessageError(ParsecError):
 class HandshakeError(ParsecError):
     status = 'bad_handshake'
     label = 'Session handshake failed.'
+
+
+class PubKeyError(ParsecError):
+    status = 'pubkey_error'
+
+
+class PubKeyNotFound(PubKeyError):
+    status = 'pubkey_not_found'
