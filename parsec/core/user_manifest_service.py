@@ -813,6 +813,7 @@ class UserManifestService(BaseUserManifestService):
     async def restore_file(self, vlob, group=None):
         manifest = await self.get_manifest(group)
         await manifest.restore_file(vlob)
+        await manifest.save()
 
     async def list_dir(self, path, group=None):
         manifest = await self.get_manifest(group)
