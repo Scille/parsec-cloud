@@ -70,7 +70,7 @@ class TestGroupServiceAPI:
     @pytest.mark.asyncio
     async def test_read_not_found(self, group_svc, group):
         ret = await group_svc.dispatch_msg({'cmd': 'group_read', 'name': 'unknown'})
-        assert ret == {'status': 'not_found', 'label': 'Group not found.'}
+        assert ret == {'status': 'group_not_found', 'label': 'Group not found.'}
 
     @pytest.mark.asyncio
     async def test_read(self, group_svc, group):
@@ -82,7 +82,7 @@ class TestGroupServiceAPI:
         ret = await group_svc.dispatch_msg({'cmd': 'group_add_identities',
                                             'name': 'unknown',
                                             'identities': group['users']})
-        assert ret == {'status': 'not_found', 'label': 'Group not found.'}
+        assert ret == {'status': 'group_not_found', 'label': 'Group not found.'}
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('admin', [True, False])
@@ -134,7 +134,7 @@ class TestGroupServiceAPI:
         ret = await group_svc.dispatch_msg({'cmd': 'group_remove_identities',
                                             'name': 'unknown',
                                             'identities': group['users']})
-        assert ret == {'status': 'not_found', 'label': 'Group not found.'}
+        assert ret == {'status': 'group_not_found', 'label': 'Group not found.'}
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('admin', [True, False])

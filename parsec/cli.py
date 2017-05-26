@@ -6,7 +6,7 @@ from logbook import WARNING
 
 from parsec.tools import logger_stream
 from parsec.server import UnixSocketServer, WebSocketServer
-from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedNamedVlobService,
+from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedUserVlobService,
                             MockedVlobService, InMemoryPubKeyService)
 # from parsec.core import (BackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
 #                          IdentityService, MockedBlockService, MockedCacheService, ShareService,
@@ -153,7 +153,7 @@ def backend(host, port, pubkeys, no_client_auth, store, debug):
             server.register_service(postgresql.PostgreSQLService(store))
             server.register_service(postgresql.PostgreSQLMessageService())
             server.register_service(postgresql.PostgreSQLGroupService())
-            server.register_service(postgresql.PostgreSQLNamedVlobService())
+            server.register_service(postgresql.PostgreSQLUserVlobService())
             server.register_service(postgresql.PostgreSQLVlobService())
         else:
             raise SystemExit('Unknown store `%s` (should be a postgresql db url).' % store)
@@ -161,7 +161,7 @@ def backend(host, port, pubkeys, no_client_auth, store, debug):
         store_type = 'mocked in memory'
         server.register_service(InMemoryMessageService())
         server.register_service(MockedGroupService())
-        server.register_service(MockedNamedVlobService())
+        server.register_service(MockedUserVlobService())
         server.register_service(MockedVlobService())
     loop = asyncio.get_event_loop()
 

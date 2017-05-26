@@ -5,7 +5,7 @@ import blinker
 
 from parsec.service import service
 from parsec.backend import (
-    MockedGroupService, InMemoryMessageService, MockedVlobService, MockedNamedVlobService
+    MockedGroupService, InMemoryMessageService, MockedVlobService, MockedUserVlobService
 )
 from parsec.service import BaseService
 from parsec.tools import logger, to_jsonb64, async_callback
@@ -44,7 +44,7 @@ class BackendAPIService(BaseBackendAPIService):
         self._watchdog_time = watchdog
 
     async def connect_event(self, event, sender, cb):
-        assert event in ('on_vlob_updated', 'on_named_vlob_updated', 'on_message_arrived')
+        assert event in ('on_vlob_updated', 'on_user_vlob_updated', 'on_message_arrived')
         msg = {'cmd': 'subscribe', 'event': event, 'sender': sender}
         await self._send_cmd(msg)
         blinker.signal(event).connect(cb, sender=sender)
@@ -164,29 +164,14 @@ class BackendAPIService(BaseBackendAPIService):
         ret = await self._send_cmd(msg)
         return [msg['body'] for msg in ret['messages']]
 
-    async def named_vlob_create(self, id, blob=''):
-        assert isinstance(blob, str)
-        msg = {'cmd': 'named_vlob_create', 'id': id, 'blob': blob}
-        return await self._send_cmd(msg)
-
-    async def named_vlob_read(self, id, trust_seed, version=None):
-        assert isinstance(id, str)
-        msg = {'cmd': 'named_vlob_read', 'id': id, 'trust_seed': trust_seed}
-        response = None
+    async def user_vlob_read(self, version=None):
+        msg = {'cmd': 'user_vlob_read'}
         if version:
             msg['version'] = version
-        if not response:
-            response = await self._send_cmd(msg)
-        return response
+        return await self._send_cmd(msg)
 
-    async def named_vlob_update(self, id, version, trust_seed, blob=''):
-        msg = {
-            'cmd': 'named_vlob_update',
-            'id': id,
-            'version': version,
-            'trust_seed': trust_seed,
-            'blob': blob
-        }
+    async def user_vlob_update(self, version, blob=''):
+        msg = {'cmd': 'user_vlob_update', 'version': version, 'blob': blob}
         return await self._send_cmd(msg)
 
     async def vlob_create(self, blob=''):
@@ -221,18 +206,18 @@ class MockedBackendAPIService(BaseBackendAPIService):
         super().__init__()
         self._group_service = MockedGroupService()
         self._message_service = InMemoryMessageService()
-        self._named_vlob_service = MockedNamedVlobService()
+        self._user_vlob_service = MockedUserVlobService()
         self._vlob_service = MockedVlobService()
         # Backend services should not share the same event namespace than
         # core ones
         self._backend_event_ns = blinker.Namespace()
         _patch_service_event_namespace(self._group_service, self._backend_event_ns)
         _patch_service_event_namespace(self._message_service, self._backend_event_ns)
-        _patch_service_event_namespace(self._named_vlob_service, self._backend_event_ns)
+        _patch_service_event_namespace(self._user_vlob_service, self._backend_event_ns)
         _patch_service_event_namespace(self._vlob_service, self._backend_event_ns)
 
     async def connect_event(self, event, sender, cb):
-        assert event in ('on_vlob_updated', 'on_named_vlob_updated', 'on_message_arrived')
+        assert event in ('on_vlob_updated', 'on_user_vlob_updated', 'on_message_arrived')
         self._backend_event_ns.signal(event).connect(cb, sender=sender)
 
     async def group_create(self, name):
@@ -266,29 +251,19 @@ class MockedBackendAPIService(BaseBackendAPIService):
         ret = await self._message_service._cmd_GET(None, msg)
         return [msg['body'] for msg in ret['messages']]
 
-    async def named_vlob_create(self, id, blob=''):
-        assert isinstance(blob, str)
-        msg = {'cmd': 'named_vlob_create', 'id': id, 'blob': blob}
-        return await self._named_vlob_service._cmd_CREATE(None, msg)
-
-    async def named_vlob_read(self, id, trust_seed, version=None):
-        msg = {'cmd': 'named_vlob_read', 'id': id, 'trust_seed': trust_seed}
-        response = None
+    async def user_vlob_read(self, version=None):
+        msg = {'cmd': 'user_vlob_read'}
         if version:
             msg['version'] = version
-        if not response:
-            response = await self._named_vlob_service._cmd_READ(None, msg)
-        return response
+        return await self._user_vlob_service._cmd_READ(None, msg)
 
-    async def named_vlob_update(self, id, version, trust_seed, blob=''):
+    async def user_vlob_update(self, version, blob=''):
         msg = {
-            'cmd': 'named_vlob_update',
-            'id': id,
+            'cmd': 'user_vlob_update',
             'version': version,
-            'trust_seed': trust_seed,
             'blob': blob
         }
-        await self._named_vlob_service._cmd_UPDATE(None, msg)
+        await self._user_vlob_service._cmd_UPDATE(None, msg)
 
     async def vlob_create(self, blob=''):
         assert isinstance(blob, str)
@@ -297,12 +272,9 @@ class MockedBackendAPIService(BaseBackendAPIService):
 
     async def vlob_read(self, id, trust_seed, version=None):
         msg = {'cmd': 'vlob_read', 'id': id, 'trust_seed': trust_seed}
-        response = None
         if version:
             msg['version'] = version
-        if not response:
-            response = await self._vlob_service._cmd_READ(None, msg)
-        return response
+        return await self._vlob_service._cmd_READ(None, msg)
 
     async def vlob_update(self, id, version, trust_seed, blob=''):
         msg = {

@@ -4,7 +4,7 @@ from unittest.mock import patch
 import asyncio
 
 from parsec.server import BaseServer, BaseClientContext
-from parsec.backend import MockedPubKeyService
+from parsec.backend import InMemoryPubKeyService
 from parsec.crypto import RSAPrivateKey, RSAPublicKey
 from parsec.session import AuthSession
 from parsec.exceptions import PubKeyError, PubKeyNotFound
@@ -56,8 +56,8 @@ class MockedContext(BaseClientContext):
 
 
     def __init__(self, expected_send=[], to_recv=[]):
-        self.expected_send = expected_send
-        self.to_recv = to_recv
+        self.expected_send = list(reversed(expected_send))
+        self.to_recv = list(reversed(to_recv))
 
     async def recv(self):
         assert self.to_recv, 'No more message should be received'
@@ -66,7 +66,7 @@ class MockedContext(BaseClientContext):
     async def send(self, body):
         assert self.expected_send, 'Unexpected message %s (no more should be send)' % body
         expected = self.expected_send.pop()
-        assert json.loads(body.decode()) == json.loads(expected.decode())
+        assert json.loads(body) == json.loads(expected)
 
 
 async def bootstrap_PostgreSQLPubKeyService(request, event_loop):
@@ -86,7 +86,7 @@ async def bootstrap_PostgreSQLPubKeyService(request, event_loop):
     return msg_svc
 
 
-@pytest.fixture(params=[MockedPubKeyService, bootstrap_PostgreSQLPubKeyService],
+@pytest.fixture(params=[InMemoryPubKeyService, bootstrap_PostgreSQLPubKeyService],
                 ids=['in_memory', 'postgresql'])
 def pubkey_svc(request, event_loop):
     if asyncio.iscoroutinefunction(request.param):
@@ -98,7 +98,7 @@ def pubkey_svc(request, event_loop):
 @pytest.fixture
 @pytest.mark.asyncio
 async def alice(pubkey_svc):
-    pubkey_svc.add_pubkey('alice', ALICE_PUBLIC_RSA)
+    await pubkey_svc.add_pubkey('alice', ALICE_PUBLIC_RSA)
     return {
         'id': 'alice',
         'private_key': RSAPrivateKey(ALICE_PRIVATE_RSA),
@@ -111,8 +111,10 @@ class TestPubKeyService:
     @pytest.mark.asyncio
     async def test_add_and_get(self, pubkey_svc):
         await pubkey_svc.add_pubkey('alice', ALICE_PUBLIC_RSA)
-        key = await pubkey_svc.get_pubkey('alice')
+        key = await pubkey_svc.get_pubkey('alice', raw=True)
         assert key == ALICE_PUBLIC_RSA
+        key = await pubkey_svc.get_pubkey('alice')
+        assert isinstance(key, RSAPublicKey)
 
     @pytest.mark.asyncio
     async def test_multiple_add(self, pubkey_svc):
@@ -129,17 +131,19 @@ class TestPubKeyService:
     async def test_handshake(self, pubkey_svc, alice):
         with patch('parsec.backend.pubkey_service._generate_challenge', new=lambda: "DUMMY_CHALLENGE"):
             expected_send = [
-                b'{"handshake": "challenge", "challenge": "DUMMY_CHALLENGE"}',
+                '{"handshake": "challenge", "challenge": "DUMMY_CHALLENGE"}',
+                '{"status": "ok", "handshake": "done"}',
             ]
-            challenge_signature = alice['private_key'].sign(b"DUMMY_CHALLENGE")
             to_recv = [
-                b'{"handshake": "answer", "identity": "alice", "answer": "%s"}' % challenge_signature
+                '{"handshake": "answer", "identity": "alice", '
+                '"answer": "K3nbe2JM80BnaamMFXK4+p2sZsfWp6vJCFi2Xvo8mljkw9qkqrvGXCgFW+F8XeBRv3fpMdeZVyS35nJ7HE32Bw=="}'
             ]
             context = MockedContext(expected_send=expected_send, to_recv=to_recv)
             session = await pubkey_svc.handshake(context)
             assert isinstance(session, AuthSession)
             assert session.identity == 'alice'
 
+    # TODO: test bad handshake as well
 
 class TestPubKeyServiceAPI:
     @pytest.mark.asyncio

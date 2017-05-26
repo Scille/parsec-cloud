@@ -44,7 +44,9 @@ class TestVlobServiceAPI:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("vlob_payload", [
         {},
-        {'blob': 'Initial commit.'}])
+        {'blob': 'Initial commit.'},
+        {'id': 'foo'},
+        {'id': 'bar', 'blob': 'Initial commit.'}])
     async def test_create(self, vlob_svc, vlob_payload):
         ret = await vlob_svc.dispatch_msg({'cmd': 'vlob_create', **vlob_payload})
         assert ret['status'] == 'ok'
@@ -58,6 +60,11 @@ class TestVlobServiceAPI:
         {'cmd': 'vlob_create', 'content': 42},
         {'cmd': 'vlob_create', 'content': None},
         {'cmd': 'vlob_create', 'content': '...', 'id': '1234567890'},
+
+        {'cmd': 'vlob_create', 'id': None, 'content': '...'},
+        {'cmd': 'vlob_create', 'id': 42, 'content': '...'},
+        {'cmd': 'vlob_create', 'id': '', 'content': '...'},  # Id is 1 long min
+        {'cmd': 'vlob_create', 'id': 'X' * 33, 'content': '...'},  # Id is 32 long max
         {}])
     async def test_bad_msg_create(self, vlob_svc, bad_msg):
         ret = await vlob_svc.dispatch_msg(bad_msg)
@@ -70,7 +77,7 @@ class TestVlobServiceAPI:
             'id': '1234',
             'trust_seed': vlob.read_trust_seed,
         })
-        assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
+        assert ret == {'status': 'vlob_not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.asyncio
     async def test_read(self, vlob_svc, vlob):
@@ -115,7 +122,7 @@ class TestVlobServiceAPI:
             'version': 2,
             'blob': blob
         })
-        assert ret == {'status': 'not_found', 'label': 'Vlob not found.'}
+        assert ret == {'status': 'vlob_not_found', 'label': 'Vlob not found.'}
 
     @pytest.mark.asyncio
     async def test_update(self, vlob_svc, vlob):
@@ -193,7 +200,7 @@ class TestVlobServiceAPI:
                'trust_seed': vlob.read_trust_seed,
                'version': bad_version}
         ret = await vlob_svc.dispatch_msg(msg)
-        assert ret['status'] == 'not_found'
+        assert ret['status'] == 'vlob_not_found'
 
     @pytest.mark.asyncio
     async def test_update_bad_version(self, vlob_svc, vlob):
@@ -201,4 +208,4 @@ class TestVlobServiceAPI:
         msg = {'cmd': 'vlob_update', 'id': vlob.id, 'trust_seed': vlob.write_trust_seed,
                'version': bad_version, 'blob': 'Next version.'}
         ret = await vlob_svc.dispatch_msg(msg)
-        assert ret['status'] == 'not_found'
+        assert ret['status'] == 'vlob_not_found'

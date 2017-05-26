@@ -192,7 +192,8 @@ class BaseServer:
         if errors:
             raise RuntimeError(errors)
         await asyncio.wait([s.bootstrap() for s in self._services.values()])
-        await asyncio.wait([cb() for cb in self._post_bootstrap_cbs])
+        if self._post_bootstrap_cbs:
+            await asyncio.wait([cb() for cb in self._post_bootstrap_cbs])
 
     async def teardown_services(self):
         for service in self._services.values():

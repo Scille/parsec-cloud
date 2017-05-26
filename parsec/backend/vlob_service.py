@@ -18,6 +18,7 @@ def generate_trust_seed():
 
 
 class cmd_CREATE_Schema(BaseCmdSchema):
+    id = fields.String(missing=None, validate=lambda n: 0 < len(n) <= 32)
     blob = fields.String(missing='')
 
 
@@ -43,7 +44,7 @@ class BaseVlobService(BaseService):
     @cmd('vlob_create')
     async def _cmd_CREATE(self, session, msg):
         msg = cmd_CREATE_Schema().load(msg)
-        atom = await self.create(msg['blob'])
+        atom = await self.create(msg['id'], msg['blob'])
         return {
             'status': 'ok',
             'id': atom.id,
@@ -103,8 +104,8 @@ class MockedVlobService(BaseVlobService):
         super().__init__()
         self._vlobs = {}
 
-    async def create(self, blob=None):
-        vlob = MockedVlob(blob=blob)
+    async def create(self, id=None, blob=None):
+        vlob = MockedVlob(id=id, blob=blob)
         self._vlobs[vlob.id] = vlob
         return VlobAtom(id=vlob.id,
                         read_trust_seed=vlob.read_trust_seed,

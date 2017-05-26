@@ -61,7 +61,7 @@ class BasePubKeyService(BaseService):
                 answer = from_jsonb64(resp['answer'])
                 pubkey = await self.get_pubkey(claimed_identity)
                 pubkey.verify(answer, challenge.encode())
-                await context.send('{"status": "ok"}')
+                await context.send('{"status": "ok", "handshake": "done"}')
                 return AuthSession(context, claimed_identity)
             except (TypeError, PubKeyNotFound, InvalidSignature):
                 error = HandshakeError('Invalid signature, challenge or identity')

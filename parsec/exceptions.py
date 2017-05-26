@@ -89,8 +89,9 @@ class VlobNotFound(VlobError):
 class TrustSeedError(ParsecError):
     status = 'trust_seed_error'
 
-class NamedVlobDuplicatedIdError(VlobError):
-    status = 'named_vlob_duplicated'
+
+class UserVlobError(ParsecError):
+    status = 'user_vlob_error'
 
 
 class GroupError(ParsecError):
