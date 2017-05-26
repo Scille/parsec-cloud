@@ -95,8 +95,7 @@ def core(socket, backend_host, backend_watchdog, block_store, debug, identity, i
             except ValueError:
                 raise SystemExit('Invalid --block-store value '
                                  ' (should be `s3:<region>:<bucket>:<id>:<secret>`.')
-            block_svc = S3BlockService()
-            block_svc.init(region, bucket, key_id, key_secret)
+            block_svc = S3BlockService(region, bucket, key_id, key_secret)
             store_type = 's3:%s:%s' % (region, bucket)
         else:
             raise SystemExit('Unknown block store `%s` (only `s3:<region>:<bucket>:<id>:<secret>`'

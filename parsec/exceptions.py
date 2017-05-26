@@ -99,3 +99,11 @@ class GroupError(ParsecError):
 
 class GroupNotFound(GroupError):
     status = 'group_not_found'
+
+
+class BlockError(ParsecError):
+    status = 'block_error'
+
+
+class BlockNotFound(BlockError):
+    status = 'block_not_found'

@@ -11,3 +11,4 @@ class CoreService(BaseService, FileAPIMixin, FolderAPIMixin):
 
     identity = service('IdentityService')
     backend = service('BackendAPIService')
+    block = service('BlockService')

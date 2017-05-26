@@ -3,16 +3,8 @@ from uuid import uuid4
 from marshmallow import fields
 
 from parsec.service import BaseService, cmd
-from parsec.exceptions import ParsecError
+from parsec.exceptions import BlockError, BlockNotFound
 from parsec.tools import BaseCmdSchema, logger
-
-
-class BlockError(ParsecError):
-    status = 'block_error'
-
-
-class BlockNotFound(BlockError):
-    status = 'not_found'
 
 
 class cmd_CREATE_Schema(BaseCmdSchema):
