@@ -4,7 +4,7 @@ from uuid import uuid4
 from marshmallow import fields
 
 from parsec.service import BaseService, cmd, event
-from parsec.exceptions import ParsecError
+from parsec.exceptions import VlobNotFound, TrustSeedError
 from parsec.tools import BaseCmdSchema
 
 
@@ -15,18 +15,6 @@ def generate_trust_seed():
     # Use SystemRandom to get cryptographically secure seeds
     return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
                    for _ in range(TRUST_SEED_LENGTH))
-
-
-class VlobError(ParsecError):
-    status = 'vlob_error'
-
-
-class TrustSeedError(ParsecError):
-    status = 'trust_seed_error'
-
-
-class VlobNotFound(VlobError):
-    status = 'not_found'
 
 
 class cmd_CREATE_Schema(BaseCmdSchema):

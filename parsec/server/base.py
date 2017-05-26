@@ -5,10 +5,9 @@ import string
 from marshmallow import fields
 from marshmallow.validate import OneOf
 from logbook import Logger
-from websockets import ConnectionClosed
 
-from parsec.exceptions import ParsecError, HandshakeError
-from parsec.session import anonymous_handshake
+from parsec.exceptions import ParsecError
+from parsec.session import anonymous_handshake, ConnectionClosed
 from parsec.tools import BaseCmdSchema
 
 
@@ -24,7 +23,7 @@ class BaseClientContext:
 def _unique_enough_id():
     # Colision risk is high, but this is pretty fine (and much more readable
     # than a uuid4) for giving id to connections
-    return ''.join([random.choice(string.ascii_letters + string.digits) for ch in range(8)])
+    return ''.join([random.choice(string.ascii_letters + string.digits) for ch in range(4)])
 
 
 class BaseServer:
@@ -33,6 +32,7 @@ class BaseServer:
             'list_cmds': self.__cmd_LIST_CMDS,
             'subscribe': self.__cmd_SUBSCRIBE
         }
+        self._post_bootstrap_cbs = []
         self._events = {}
         self._services = {}
         self._handshake = handshake
@@ -110,13 +110,8 @@ class BaseServer:
         conn_log = Logger('Connection ' + _unique_enough_id())
         conn_log.info('Connection started')
         # Handle handshake if auth is required
-        try:
-            session = await self._handshake(context)
-        except ConnectionClosed:
-            conn_log.info('Connection closed by client')
-            return
-        except HandshakeError as exc:
-            await context.send(exc.to_raw())
+        session = await self._handshake(context)
+        if not session:
             conn_log.info('Connection closed due to bad handshake')
             return
         get_event = asyncio.ensure_future(session.received_events.get())
@@ -172,6 +167,14 @@ class BaseServer:
             get_event.cancel()
             get_cmd.cancel()
 
+    def post_bootstrap(self, callback):
+        """"
+        Decorator registering an async callback to run after boostrap but
+        before server is started.
+        """
+        self._post_bootstrap_cbs.append(callback)
+        return callback
+
     async def bootstrap_services(self):
         errors = []
         for service in self._services.values():
@@ -189,6 +192,7 @@ class BaseServer:
         if errors:
             raise RuntimeError(errors)
         await asyncio.wait([s.bootstrap() for s in self._services.values()])
+        await asyncio.wait([cb() for cb in self._post_bootstrap_cbs])
 
     async def teardown_services(self):
         for service in self._services.values():

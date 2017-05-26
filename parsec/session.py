@@ -1,4 +1,6 @@
+import random
 from asyncio import Queue
+from websockets import ConnectionClosed  # noqa: use this exception as our own
 
 
 class BaseSession:
@@ -27,3 +29,7 @@ class AuthSession(BaseSession):
 
 async def anonymous_handshake(context):
     return AnonymousSession(context)
+
+
+__all__ = ('ConnectionClosed', 'BaseSession', 'AnonymousSession',
+           'AuthSession', 'anonymous_handshake')

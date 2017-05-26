@@ -1,6 +1,5 @@
 from os import environ
 from importlib import import_module
-from socket import socket, AF_UNIX, SOCK_STREAM
 import asyncio
 import click
 from logbook import WARNING
@@ -8,14 +7,36 @@ from logbook import WARNING
 from parsec.tools import logger_stream
 from parsec.server import UnixSocketServer, WebSocketServer
 from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedNamedVlobService,
-                            MockedVlobService)
-from parsec.core import (BackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
-                         IdentityService, MockedBlockService, MockedCacheService, ShareService,
-                         UserManifestService)
+                            MockedVlobService, InMemoryPubKeyService)
+# from parsec.core import (BackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
+#                          IdentityService, MockedBlockService, MockedCacheService, ShareService,
+#                          UserManifestService)
+from parsec.core2 import CoreService, BackendAPIService, MockedBlockService, IdentityService
 from parsec.ui.shell import start_shell
 
 
-CORE_UNIX_SOCKET = '/tmp/parsec'
+# TODO: remove me once RSA key loading and backend handling are easier
+JOHN_DOE_IDENTITY = 'John_Doe'
+JOHN_DOE_PRIVATE_KEY = b"""
+-----BEGIN PRIVATE KEY-----
+MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEAsSle/x4jtr+kaxiv
+9BYlL+gffH/VLC+Q/WTTB+1FIU1fdmgdZVGaIlAWJHqr9qEZBfwXYzlQv8pIMn+W
+5pqvHQICAQECQDv5FjKAvWW1a3Twc1ia67eQUmDugu8VFTDsV2BRUS0jlxJ0yCL+
+TEBpOwH95TFgvfRBYee97APHjhvLLlzmEyECIQDZdjMg/j9N7sw602DER0ciERPI
+Ps9rU8RqRXaWPYtWOQIhANCO1h/z7iFjlpENbKDOCinfsXd9ulVsoNYWhKm58gAF
+AiEAzMT3XdKFUlljq+/hl/Nt0GPA8lkHDGjG5ZAaAAYnj/ECIQCB125lkuHy61LH
+4INhH6azeFaUGnn7aHwJxE6beL6BgQIhALbajJWsBf5LmeO190adM2jAVN94YqVD
+aOrHGFFqrjJ3
+-----END PRIVATE KEY-----
+"""
+JOHN_DOE_PUBLIC_KEY = b"""
+-----BEGIN PUBLIC KEY-----
+MFswDQYJKoZIhvcNAQEBBQADSgAwRwJBALEpXv8eI7a/pGsYr/QWJS/oH3x/1Swv
+kP1k0wftRSFNX3ZoHWVRmiJQFiR6q/ahGQX8F2M5UL/KSDJ/luaarx0CAgEB
+-----END PUBLIC KEY-----
+"""
+
+DEFAULT_CORE_UNIX_SOCKET = '/tmp/parsec'
 
 
 @click.group()
@@ -26,9 +47,12 @@ def cli():
 @click.command()
 @click.argument('id')
 @click.argument('args', nargs=-1)
-def cmd(id, args):
+@click.option('socket_path', '--socket', '-s', default=DEFAULT_CORE_UNIX_SOCKET,
+              help='Path to the UNIX socket (default: %s).' % DEFAULT_CORE_UNIX_SOCKET)
+def cmd(id, args, socket_path):
+    from socket import socket, AF_UNIX, SOCK_STREAM
     sock = socket(AF_UNIX, SOCK_STREAM)
-    sock.connect(CORE_UNIX_SOCKET)
+    sock.connect(socket)
     try:
         msg = '%s %s' % (id, args)
         sock.send(msg.encode())
@@ -39,21 +63,25 @@ def cmd(id, args):
 
 
 @click.command()
-@click.option('--socket', '-s', default=CORE_UNIX_SOCKET,
-              help='Path to the UNIX socket (default: %s).' % CORE_UNIX_SOCKET)
+@click.option('--socket', '-s', default=DEFAULT_CORE_UNIX_SOCKET,
+              help='Path to the UNIX socket (default: %s).' % DEFAULT_CORE_UNIX_SOCKET)
 def shell(socket):
     start_shell(socket)
 
 
 @click.command()
-@click.option('--socket', '-s', default=CORE_UNIX_SOCKET,
+@click.option('--socket', '-s', default=DEFAULT_CORE_UNIX_SOCKET,
               help='Path to the UNIX socket exposing the core API (default: %s).' %
-              CORE_UNIX_SOCKET)
+              DEFAULT_CORE_UNIX_SOCKET)
 @click.option('--backend-host', '-H', default='ws://localhost:6777')
 @click.option('--backend-watchdog', '-W', type=click.INT, default=None)
 @click.option('--block-store', '-B')
 @click.option('--debug', '-d', is_flag=True)
-def core(socket, backend_host, backend_watchdog, block_store, debug):
+@click.option('--identity', '-i', default=None)
+@click.option('--identity-key', '-I', type=click.File(), default=None)
+@click.option('--I-am-John', is_flag=True, help='Log as dummy John Doe user')
+def core(socket, backend_host, backend_watchdog, block_store, debug, identity, identity_key, i_am_john):
+    loop = asyncio.get_event_loop()
     server = UnixSocketServer()
     server.register_service(BackendAPIService(backend_host, backend_watchdog))
     if block_store:
@@ -77,14 +105,20 @@ def core(socket, backend_host, backend_watchdog, block_store, debug):
         store_type = 'mocked in memory'
         block_svc = MockedBlockService()
     server.register_service(block_svc)
-    server.register_service(CryptoService())
-    server.register_service(FileService())
-    server.register_service(GNUPGPubKeysService())
-    server.register_service(IdentityService())
-    server.register_service(MockedCacheService())
-    server.register_service(ShareService())
-    server.register_service(UserManifestService())
-    loop = asyncio.get_event_loop()
+    identity_svc = IdentityService()
+    server.register_service(identity_svc)
+    if (identity or identity_key) and (not identity or not identity_key):
+        raise SystemExit('--identity and --identity-key params should be provided together.')
+    # TODO: remove me once RSA key loading and backend handling are easier
+    if i_am_john:
+        identity = JOHN_DOE_IDENTITY
+        from io import BytesIO
+        identity_key = BytesIO(JOHN_DOE_PRIVATE_KEY)
+    if identity:
+        @server.post_bootstrap
+        async def post_bootstrap():
+            await identity_svc.load(identity, identity_key.read())
+    server.register_service(CoreService())
     if debug:
         loop.set_debug(True)
     else:
@@ -96,22 +130,23 @@ def core(socket, backend_host, backend_watchdog, block_store, debug):
 
 
 @click.command()
-@click.option('--gnupg-homedir', default='~/.gnupg')
+@click.option('--pubkeys', default=None)
 @click.option('--host', '-H', default=None, help='Host to listen on (default: localhost)')
 @click.option('--port', '-P', default=None, type=int, help=('Port to listen on (default: 6777)'))
 @click.option('--no-client-auth', is_flag=True,
               help='Disable authentication handshake on client connection (default: false)')
 @click.option('--store', '-s', default=None, help="Store configuration (default: in memory)")
 @click.option('--debug', '-d', is_flag=True)
-def backend(host, port, gnupg_homedir, no_client_auth, store, debug):
+def backend(host, port, pubkeys, no_client_auth, store, debug):
     host = host or environ.get('HOST', 'localhost')
     port = port or int(environ.get('PORT', 6777))
-    pub_keys_service = GNUPGPubKeysService(gnupg_homedir)
+    # TODO load pubkeys attribute
+    pubkey_svc = InMemoryPubKeyService()
     if no_client_auth:
         server = WebSocketServer()
     else:
-        server = WebSocketServer(pub_keys_service.handshake)
-    server.register_service(pub_keys_service)
+        server = WebSocketServer(pubkey_svc.handshake)
+    server.register_service(pubkey_svc)
     if store:
         if store.startswith('postgres://'):
             store_type = 'PostgreSQL'
@@ -130,6 +165,11 @@ def backend(host, port, gnupg_homedir, no_client_auth, store, debug):
         server.register_service(MockedNamedVlobService())
         server.register_service(MockedVlobService())
     loop = asyncio.get_event_loop()
+
+    # TODO: remove me once RSA key loading and backend handling are easier
+    @server.post_bootstrap
+    async def post_boostrap():
+        await pubkey_svc.add_pubkey(JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY)
     if debug:
         loop.set_debug(True)
     else:

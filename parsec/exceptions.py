@@ -1,17 +1,17 @@
 import json
 
 
+
 class ExceptionsMap:
     def __init__(self):
         self.map = {}
 
-    def register(self, name, bases, nmspc):
-        kls = type(name, bases, nmspc)
+    def register(self, kls):
         already_exists = self.map.get(kls.status)
         if already_exists:
-            raise RuntimeError('Exceptions %s already has status %s' % (already_exists, already_exists.status))
+            raise RuntimeError('Exceptions %s conflicts with %s (both has status %s)' %
+                (kls, already_exists, already_exists.status))
         self.map[kls.status] = kls
-        return kls
 
     def retrieve(self, status):
         try:
@@ -20,11 +20,19 @@ class ExceptionsMap:
             raise RuntimeError('No parsec exception with status %s' % status)
 
 
+class MetaParsecError(type):
+
+    def __new__(cls, name, bases, nmspc):
+        kls = type.__new__(cls, name, bases, nmspc)
+        _parsec_exceptions_map.register(kls)
+        return kls
+
+
 _parsec_exceptions_map = ExceptionsMap()
 exception_from_status = _parsec_exceptions_map.retrieve
 
 
-class ParsecError(Exception, metaclass=_parsec_exceptions_map.register):
+class ParsecError(Exception, metaclass=MetaParsecError):
     status = 'error'
 
     def __init__(self, *args):
@@ -38,7 +46,7 @@ class ParsecError(Exception, metaclass=_parsec_exceptions_map.register):
         return {'status': self.status, 'label': self.label}
 
     def to_raw(self):
-        return json.dumps(self.to_dict).encode()
+        return json.dumps(self.to_dict())
 
 
 class ServiceNotReadyError(ParsecError):
@@ -60,3 +68,34 @@ class PubKeyError(ParsecError):
 
 class PubKeyNotFound(PubKeyError):
     status = 'pubkey_not_found'
+
+
+class IdentityError(ParsecError):
+    status = 'identity_error'
+
+
+class IdentityNotLoadedError(IdentityError):
+    status = 'identity_not_loaded'
+
+
+class VlobError(ParsecError):
+    status = 'vlob_error'
+
+
+class VlobNotFound(VlobError):
+    status = 'vlob_not_found'
+
+
+class TrustSeedError(ParsecError):
+    status = 'trust_seed_error'
+
+class NamedVlobDuplicatedIdError(VlobError):
+    status = 'named_vlob_duplicated'
+
+
+class GroupError(ParsecError):
+    status = 'group_error'
+
+
+class GroupNotFound(GroupError):
+    status = 'group_not_found'

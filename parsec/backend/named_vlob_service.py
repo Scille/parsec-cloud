@@ -2,12 +2,9 @@ from marshmallow import fields
 
 from parsec.service import BaseService, cmd, event
 from parsec.tools import BaseCmdSchema
+from parsec.exceptions import NamedVlobDuplicatedIdError
 from parsec.backend.vlob_service import (
-    BaseVlobService, MockedVlobService, MockedVlob, VlobAtom, VlobError)
-
-
-class NamedVlobDuplicatedIdError(VlobError):
-    status = 'id_already_exists'
+    BaseVlobService, MockedVlobService, MockedVlob, VlobAtom)
 
 
 class cmd_CREATE_Schema(BaseCmdSchema):

@@ -2,6 +2,7 @@ import os
 import asyncio
 
 from parsec.server.base import BaseClientContext, BaseServer
+from parsec.session import ConnectionClosed
 
 
 class UnixSocketClientContext(BaseClientContext):
@@ -27,8 +28,13 @@ class UnixSocketClientContext(BaseClientContext):
                 return msgs[0]
 
     async def send(self, body):
-        self.writer.write(body)
-        self.writer.write(b'\n')
+        if isinstance(body, str):
+            body = body.encode()
+        try:
+            self.writer.write(body)
+            self.writer.write(b'\n')
+        except BrokenPipeError:
+            raise ConnectionClosed()
 
 
 class UnixSocketServer(BaseServer):

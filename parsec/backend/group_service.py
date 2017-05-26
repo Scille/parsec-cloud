@@ -1,16 +1,8 @@
 from marshmallow import fields
 
 from parsec.service import BaseService, cmd
-from parsec.exceptions import ParsecError
+from parsec.exceptions import GroupError, GroupNotFound
 from parsec.tools import BaseCmdSchema
-
-
-class GroupError(ParsecError):
-    status = 'group_error'
-
-
-class GroupNotFound(GroupError):
-    status = 'not_found'
 
 
 class cmd_CREATE_Schema(BaseCmdSchema):

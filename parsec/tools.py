@@ -1,5 +1,6 @@
 import asyncio
 import sys
+import base64
 
 from marshmallow import Schema, fields, validates_schema, ValidationError
 from logbook import Logger, StreamHandler
@@ -13,6 +14,21 @@ LOG_FORMAT = '[{record.time:%Y-%m-%d %H:%M:%S.%f%z}] ({record.thread_name})' \
 logger = Logger('Parsec')
 logger_stream = StreamHandler(sys.stdout, format_string=LOG_FORMAT)
 logger_stream.push_application()
+
+
+def to_jsonb64(raw: bytes):
+    return base64.encodebytes(raw).decode()
+
+
+def from_jsonb64(msg: str):
+    return base64.decodebytes(msg.encode())
+
+
+def async_callback(callback, *args, **kwargs):
+    def event_handler(sender):
+        loop = asyncio.get_event_loop()
+        loop.call_soon(asyncio.ensure_future, callback(sender, *args, **kwargs))
+    return event_handler
 
 
 def event_handler(callback, sender, *args):

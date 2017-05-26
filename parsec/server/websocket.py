@@ -20,8 +20,8 @@ class WebSocketServer(BaseServer):
 
             return asyncio.ensure_future(boostrap(), loop=loop)
         else:
+            loop.run_until_complete(self.bootstrap_services())
             try:
-                loop.run_until_complete(self.bootstrap_services())
                 server = loop.run_until_complete(start_server)
                 loop.run_forever()
             except KeyboardInterrupt:

@@ -13,19 +13,18 @@ from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 from parsec.tools import logger
 
 
-CORE_UNIX_SOCKET = '/tmp/parsec'
+DEFAULT_CORE_UNIX_SOCKET = '/tmp/parsec'
 
 
 @click.command()
 @click.argument('mountpoint', type=click.Path(exists=True, file_okay=False))
-@click.option('--identity', '-i', type=click.STRING, default=None)
 @click.option('--debug', '-d', is_flag=True, default=False)
 @click.option('--nothreads', is_flag=True, default=False)
-@click.option('--socket', '-s', default=CORE_UNIX_SOCKET,
-              help='Path to the UNIX socket (default: %s).' % CORE_UNIX_SOCKET)
-def cli(mountpoint, identity, debug, nothreads, socket):
+@click.option('--socket', '-s', default=DEFAULT_CORE_UNIX_SOCKET,
+              help='Path to the UNIX socket (default: %s).' % DEFAULT_CORE_UNIX_SOCKET)
+def cli(mountpoint, debug, nothreads, socket):
     # Do the import here in case fuse is not an available dependency
-    start_fuse(socket, mountpoint, identity, debug=debug, nothreads=nothreads)
+    start_fuse(socket, mountpoint, debug=debug, nothreads=nothreads)
 
 
 class File:
@@ -116,13 +115,13 @@ class FuseOperations(LoggingMixIn, Operations):
             raise FuseOSError(EBADFD)
 
     def _get_file_id(self, path):
-        response = self.send_cmd(cmd='user_manifest_list_dir', path=path)
+        response = self.send_cmd(cmd='list_dir', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         return response['current']['id']
 
     def getattr(self, path, fh=None):
-        response = self.send_cmd(cmd='user_manifest_list_dir', path=path)
+        response = self.send_cmd(cmd='path_info', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         id = response['current']['id']
@@ -137,7 +136,7 @@ class FuseOperations(LoggingMixIn, Operations):
             stat = {'is_dir': True, 'size': 0, 'ctime': 0, 'mtime': 0, 'atime': 0}
         fuse_stat = {
             'st_size': stat['size'],
-            'st_ctime': stat['ctime'],  # TOTO change to local timezone
+            'st_ctime': stat['ctime'],  # TODO change to local timezone
             'st_mtime': stat['mtime'],
             'st_atime': stat['atime'],
         }
@@ -248,18 +247,6 @@ class FuseOperations(LoggingMixIn, Operations):
         return 0  # TODO
 
 
-def start_fuse(socket_path: str,
-               mountpoint: str,
-               identity: str,
-               debug: bool=False,
-               nothreads: bool=False):
+def start_fuse(socket_path: str, mountpoint: str, debug: bool=False, nothreads: bool=False):
     operations = FuseOperations(socket_path)
-    response = operations.send_cmd(cmd='identity_load',
-                                   identity=identity)
-    if response['status'] != 'ok':
-        raise FuseOSError(ENOENT)  # TODO change error message
-    # TODO call this automatically
-    response = operations.send_cmd(cmd='user_manifest_load')
-    if response['status'] != 'ok':
-        raise FuseOSError(ENOENT)  # TODO change error message
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)
