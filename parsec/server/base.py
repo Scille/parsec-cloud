@@ -30,6 +30,7 @@ class BaseServer:
     def __init__(self, handshake=anonymous_handshake):
         self._cmds = {
             'list_cmds': self.__cmd_LIST_CMDS,
+            'list_events': self.__cmd_LIST_EVENTS,
             'subscribe': self.__cmd_SUBSCRIBE
         }
         self._post_bootstrap_cbs = []
@@ -39,6 +40,9 @@ class BaseServer:
 
     async def __cmd_LIST_CMDS(self, session, msg):
         return {'status': 'ok', 'cmds': sorted(self._cmds.keys())}
+
+    async def __cmd_LIST_EVENTS(self, session, msg):
+        return {'status': 'ok', 'events': sorted(self._events.keys())}
 
     async def __cmd_SUBSCRIBE(self, session, msg):
 

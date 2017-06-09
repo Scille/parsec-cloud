@@ -48,7 +48,7 @@ async def test_socket_communication(unix_socket_server):
     writer.write(b'{"cmd": "list_cmds"}\n')
     resp = await reader.readline()
     assert json.loads(resp[:-1].decode()) == {"status": "ok",
-                                              "cmds": ["list_cmds", "ping", "subscribe"]}
+                                              "cmds": ["list_cmds", 'list_events', "ping", "subscribe"]}
     writer.close()
 
 
@@ -84,4 +84,19 @@ async def test_notification(unix_socket_server):
     # Should receive a notification
     notif = await reader.readline()
     assert json.loads(notif[:-1].decode()) == {'event': 'on_ping', 'sender': 'hello'}
+    writer.close()
+
+
+@pytest.mark.asyncio
+async def test_base_cmds(unix_socket_server):
+    server, socket_path = unix_socket_server
+    reader, writer = await asyncio.open_unix_connection(socket_path)
+
+    writer.write(b'{"cmd": "list_cmds"}\n')
+    resp = await reader.readline()
+    assert json.loads(resp[:-1].decode()) == {"status": "ok", "cmds": ['list_cmds', 'list_events', 'ping', 'subscribe']}
+
+    writer.write(b'{"cmd": "list_events"}\n')
+    resp = await reader.readline()
+    assert json.loads(resp[:-1].decode()) == {"status": "ok", "events": ['on_ping']}
     writer.close()
