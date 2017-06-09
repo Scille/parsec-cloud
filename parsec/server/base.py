@@ -1,3 +1,4 @@
+import re
 import json
 import asyncio
 import random
@@ -31,7 +32,8 @@ class BaseServer:
         self._cmds = {
             'list_cmds': self.__cmd_LIST_CMDS,
             'list_events': self.__cmd_LIST_EVENTS,
-            'subscribe': self.__cmd_SUBSCRIBE
+            'subscribe': self.__cmd_SUBSCRIBE,
+            'unsubscribe': self.__cmd_UNSUBSCRIBE
         }
         self._post_bootstrap_cbs = []
         self._events = {}
@@ -44,11 +46,27 @@ class BaseServer:
     async def __cmd_LIST_EVENTS(self, session, msg):
         return {'status': 'ok', 'events': sorted(self._events.keys())}
 
+    async def __cmd_UNSUBSCRIBE(self, session, msg):
+
+        class cmd_UNSUBSCRIBE_Schema(BaseCmdSchema):
+            event = fields.String(required=True, validate=OneOf(self._events.keys()))
+            sender = fields.String(
+                required=True, validate=lambda x: re.match(r'[A-Za-z0-9]{0,32}', x))
+
+        msg = cmd_UNSUBSCRIBE_Schema().load(msg)
+        try:
+            delattr(session, '_cb_{event}_{sender}'.format(**msg))
+        except AttributeError:
+            # TODO send error if event/sender wasn't subscribed ?
+            pass
+        return {'status': 'ok'}
+
     async def __cmd_SUBSCRIBE(self, session, msg):
 
         class cmd_SUBSCRIBE_Schema(BaseCmdSchema):
             event = fields.String(required=True, validate=OneOf(self._events.keys()))
-            sender = fields.String(required=True)
+            sender = fields.String(
+                required=True, validate=lambda x: re.match(r'[A-Za-z0-9]{0,32}', x))
 
         msg = cmd_SUBSCRIBE_Schema().load(msg)
 
@@ -59,7 +77,7 @@ class BaseServer:
 
         # Attach the callback to the session to make them have the same
         # lifetime given event registration expires when callback is destroyed
-        setattr(session, '_cb_%s' % event, on_event)
+        setattr(session, '_cb_%s_%s' % (event, msg['sender']), on_event)
         self._events[event].connect(on_event, sender=msg['sender'])
         return {'status': 'ok'}
 
