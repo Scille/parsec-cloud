@@ -1,14 +1,17 @@
 from marshmallow import fields
 
 from parsec.service import BaseService, service
-from parsec.core2.file_api import FileAPIMixin
-from parsec.core2.folder_api import FolderAPIMixin
+from parsec.core2.fs_api import MockedFSAPIMixin
 
 
-class CoreService(BaseService, FileAPIMixin, FolderAPIMixin):
+def core_service_factory(mixins):
+    nmspc = {
+        'name': 'CoreService',
+        'identity': service('IdentityService'),
+        'backend': service('BackendAPIService'),
+        'block': service('BlockService'),
+    }
+    return type('CoreService', (BaseService, ) + tuple(mixins), nmspc)
 
-    name = 'CoreService'
 
-    identity = service('IdentityService')
-    backend = service('BackendAPIService')
-    block = service('BlockService')
+CoreService = core_service_factory([MockedFSAPIMixin])

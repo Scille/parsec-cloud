@@ -62,20 +62,15 @@ class HandshakeError(ParsecError):
     label = 'Session handshake failed.'
 
 
+# Backend errors
+
+
 class PubKeyError(ParsecError):
     status = 'pubkey_error'
 
 
 class PubKeyNotFound(PubKeyError):
     status = 'pubkey_not_found'
-
-
-class IdentityError(ParsecError):
-    status = 'identity_error'
-
-
-class IdentityNotLoadedError(IdentityError):
-    status = 'identity_not_loaded'
 
 
 class VlobError(ParsecError):
@@ -108,3 +103,18 @@ class BlockError(ParsecError):
 
 class BlockNotFound(BlockError):
     status = 'block_not_found'
+
+
+# Core errors
+
+
+class IdentityError(ParsecError):
+    status = 'identity_error'
+
+
+class IdentityNotLoadedError(IdentityError):
+    status = 'identity_not_loaded'
+
+
+class InvalidPath(ParsecError):
+    status = 'invalid_path'

@@ -1,6 +1,9 @@
 import asyncio
 import sys
+import json
 import base64
+from functools import partial
+from datetime import date, datetime
 
 from marshmallow import Schema, fields, validates_schema, ValidationError
 from logbook import Logger, StreamHandler
@@ -23,6 +26,19 @@ def to_jsonb64(raw: bytes):
 def from_jsonb64(msg: str):
     return base64.decodebytes(msg.encode())
 
+
+# TODO: monkeypatch is ugly but I'm in a hurry...
+def _b64_serialize(obj):
+    try:
+        return to_jsonb64(obj)
+    except:
+        raise ValidationError('Invalid bytes')
+def _b64_deserialize(value):
+    try:
+        return from_jsonb64(value)
+    except:
+        raise ValidationError('Invalid base64 encoded data')
+fields.Base64Bytes = partial(fields.Function, serialize=_b64_serialize, deserialize=_b64_deserialize)
 
 def async_callback(callback, *args, **kwargs):
     def event_handler(sender):
@@ -57,3 +73,16 @@ class BaseCmdSchema(UnknownCheckedSchema):
         if errors:
             raise BadMessageError(errors)
         return parsed_msg
+
+
+def _json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+
+    if isinstance(obj, (datetime, date)):
+        serial = obj.isoformat()
+        return serial
+    raise TypeError ("Type %s not serializable" % type(obj))
+
+
+def json_dumps(obj):
+    return json.dumps(obj, default=_json_serial)

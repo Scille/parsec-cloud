@@ -9,7 +9,7 @@ from logbook import Logger
 
 from parsec.exceptions import ParsecError
 from parsec.session import anonymous_handshake, ConnectionClosed
-from parsec.tools import BaseCmdSchema
+from parsec.tools import BaseCmdSchema, json_dumps
 
 
 class BaseClientContext:
@@ -150,7 +150,7 @@ class BaseServer:
                     event, sender = get_event.result()
                     conn_log.debug('Got event: %s@%s' % (event, sender))
                     resp = {'event': event, 'sender': sender}
-                    await context.send(json.dumps(resp).encode())
+                    await context.send(json_dumps(resp).encode())
                     # Restart watch on incoming notifications
                     get_event = asyncio.ensure_future(session.received_events.get())
                 else:
@@ -180,7 +180,7 @@ class BaseServer:
                         if request_id:
                             resp['request_id'] = request_id
                     conn_log.debug('Replied: %r' % resp)
-                    await context.send(json.dumps(resp).encode())
+                    await context.send(json_dumps(resp).encode())
                     # Restart watch on incoming messages
                     get_cmd = asyncio.ensure_future(context.recv())
         except ConnectionClosed:
