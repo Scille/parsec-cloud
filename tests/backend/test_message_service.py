@@ -115,4 +115,10 @@ class TestMessageServiceAPI:
         ret = await message_svc.dispatch_msg({
             'cmd': 'message_new', 'recipient': 'alice@test.com', 'body': 'Hi dude !'})
         assert ret == {'status': 'ok'}
+        # Given events are asynchronous, we cannot know when they will arrive
+        # and have to wait for them
+        for _ in range(10):
+            if called_with != '<not called>':
+                break
+            await asyncio.sleep(0.1)
         assert called_with == ('alice@test.com', )
