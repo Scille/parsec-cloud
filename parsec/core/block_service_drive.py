@@ -1,17 +1,13 @@
 from datetime import datetime
 from uuid import uuid4
-from dateutil import parser
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
-from parsec.service import service
+from parsec.core.cache import cached_block
 from parsec.core.block_service import BaseBlockService, BlockError
-from parsec.core.cache_service import CacheNotFound
 
 
 class GoogleDriveBlockService(BaseBlockService):
-
-    cache_service = service('CacheService')
 
     def __init__(self, directory='parsec-storage'):
         super().__init__()
@@ -51,38 +47,24 @@ class GoogleDriveBlockService(BaseBlockService):
             raise BlockError(message)
         return self.drive.CreateFile({'id': file_list[0]['id']})
 
+    @cached_block
     async def create(self, content, id=None):
         id = id if id else uuid4().hex  # TODO uuid4 or trust seed?
         file = self.drive.CreateFile({'title': id,
                                       'parents': [{'id': self.base_directory}]})
         file.SetContentString(content)
         file.Upload()
-        stat = await self.stat(id)
-        timestamp = stat['creation_timestamp']
-        await self.cache_service.set(('read', id), {'content': content,
-                                                    'creation_timestamp': timestamp,
-                                                    'status': 'ok'})
-        await self.cache_service.set(('stat', id), {'creation_timestamp': timestamp,
-                                                    'status': 'ok'})
         return id
 
+    @cached_block
     async def read(self, id):
-        try:
-            response = await self.cache_service.get(('read', id))
-        except CacheNotFound:
-            file = await self._get_file(id)
-            file['lastViewedByMeDate'] = datetime.utcnow().isoformat()
-            file.Upload()
-            response = {'content': file.GetContentString(),
-                        'creation_timestamp': file['createdDate']}
-            await self.cache_service.set(('read', id), response)
-        return response
+        file = await self._get_file(id)
+        file['lastViewedByMeDate'] = datetime.utcnow().isoformat()
+        file.Upload()
+        return {'content': file.GetContentString(),
+                'creation_date': file['createdDate']}
 
+    @cached_block
     async def stat(self, id):
-        try:
-            response = await self.cache_service.get(('stat', id))
-        except CacheNotFound:
-            file = await self._get_file(id)
-            response = {'creation_timestamp': parser.parse(file['createdDate']).timestamp()}
-            await self.cache_service.set(('stat', id), response)
-        return response
+        file = await self._get_file(id)
+        return {'creation_date': file['createdDate']}

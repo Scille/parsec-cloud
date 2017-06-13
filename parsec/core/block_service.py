@@ -2,18 +2,10 @@ from datetime import datetime
 from uuid import uuid4
 from marshmallow import fields
 
-from parsec.core.cache_service import CacheNotFound
-from parsec.service import BaseService, service, cmd
-from parsec.exceptions import ParsecError
+from parsec.core.cache import cached_block
+from parsec.service import BaseService, cmd
+from parsec.exceptions import BlockError, BlockNotFound
 from parsec.tools import BaseCmdSchema, logger
-
-
-class BlockError(ParsecError):
-    status = 'block_error'
-
-
-class BlockNotFound(BlockError):
-    status = 'not_found'
 
 
 class cmd_CREATE_Schema(BaseCmdSchema):
@@ -61,49 +53,35 @@ class BaseBlockService(BaseService):
 
 class MockedBlockService(BaseBlockService):
 
-    cache_service = service('CacheService')
-
     def __init__(self):
         super().__init__()
         self._blocks = {}
 
+    @cached_block
     async def create(self, content, id=None):
         id = id if id else uuid4().hex  # TODO uuid4 or trust seed?
-        timestamp = datetime.utcnow().timestamp()
-        self._blocks[id] = {'content': content, 'creation_timestamp': timestamp}
-        await self.cache_service.set(('read', id), {'content': content,
-                                                    'creation_timestamp': timestamp,
-                                                    'status': 'ok'})
-        await self.cache_service.set(('stat', id), {'creation_timestamp': timestamp,
-                                                    'status': 'ok'})
+        date = datetime.utcnow().isoformat()
+        self._blocks[id] = {'content': content, 'creation_date': date}
         return id
 
+    @cached_block
     async def read(self, id):
         try:
-            response = await self.cache_service.get(('read', id))
-        except CacheNotFound:
-            try:
-                response = self._blocks[id]
-            except KeyError:
-                raise BlockNotFound('Block not found.')
-            await self.cache_service.set(('read', id), response)
+            response = self._blocks[id]
+        except KeyError:
+            raise BlockNotFound('Block not found.')
         return response
 
+    @cached_block
     async def stat(self, id):
         try:
-            response = await self.cache_service.get(('stat', id))
-        except CacheNotFound:
-            try:
-                response = {'creation_timestamp': self._blocks[id]['creation_timestamp']}
-            except KeyError:
-                raise BlockNotFound('Block not found.')
-            await self.cache_service.set(('stat', id), response)
+            response = {'creation_date': self._blocks[id]['creation_date']}
+        except KeyError:
+            raise BlockNotFound('Block not found.')
         return response
 
 
 class MetaBlockService(BaseBlockService):
-
-    cache_service = service('CacheService')
 
     def __init__(self, backends):
         super().__init__()
@@ -127,30 +105,15 @@ class MetaBlockService(BaseBlockService):
             raise BlockError('All backends failed to complete %s operation.' % operation)
         return result
 
+    @cached_block
     async def create(self, content, id=None):
         id = id if id else uuid4().hex  # TODO uuid4 or trust seed?
-        response = await self._do_operation('create', content, id)
-        stat = await self.stat(id)
-        timestamp = stat['creation_timestamp']
-        await self.cache_service.set(('read', id), {'content': content,
-                                                    'creation_timestamp': timestamp,
-                                                    'status': 'ok'})
-        await self.cache_service.set(('stat', id), {'creation_timestamp': timestamp,
-                                                    'status': 'ok'})
-        return response
+        return await self._do_operation('create', content, id)
 
+    @cached_block
     async def read(self, id):
-        try:
-            response = await self.cache_service.get(('read', id))
-        except CacheNotFound:
-            response = await self._do_operation('read', id)
-            await self.cache_service.set(('read', id), response)
-        return response
+        return await self._do_operation('read', id)
 
+    @cached_block
     async def stat(self, id):
-        try:
-            response = await self.cache_service.get(('stat', id))
-        except CacheNotFound:
-            response = await self._do_operation('stat', id)
-            await self.cache_service.set(('stat', id), response)
-        return response
+        return await self._do_operation('stat', id)

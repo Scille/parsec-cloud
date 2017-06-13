@@ -4,15 +4,15 @@ import websockets
 import blinker
 
 from parsec.service import service
+from parsec.session import AuthSession
 from parsec.backend import (
-    MockedGroupService, InMemoryMessageService, MockedVlobService, MockedNamedVlobService,
-    VlobNotFound
+    MockedGroupService, InMemoryMessageService, InMemoryPubKeyService, MockedVlobService,
+    MockedUserVlobService
 )
-from parsec.core import MockedCacheService
-from parsec.core.cache_service import CacheNotFound
-from parsec.backend.vlob_service import VlobError
+from parsec.core.cache import cached_vlob
 from parsec.service import BaseService
-from parsec.tools import logger
+from parsec.tools import logger, to_jsonb64, async_callback
+from parsec.exceptions import exception_from_status, IdentityNotLoadedError
 
 
 def _patch_service_event_namespace(service, ns):
@@ -34,7 +34,7 @@ class BaseBackendAPIService(BaseService):
 
 class BackendAPIService(BaseBackendAPIService):
 
-    cache_service = service('CacheService')
+    identity = service('IdentityService')
 
     def __init__(self, backend_url, watchdog=None):
         super().__init__()
@@ -47,21 +47,33 @@ class BackendAPIService(BaseBackendAPIService):
         self._watchdog_time = watchdog
 
     async def connect_event(self, event, sender, cb):
-        assert event in ('on_vlob_updated', 'on_named_vlob_updated', 'on_message_arrived')
+        assert event in ('on_vlob_updated', 'on_user_vlob_updated', 'on_message_arrived')
         msg = {'cmd': 'subscribe', 'event': event, 'sender': sender}
         await self._send_cmd(msg)
         blinker.signal(event).connect(cb, sender=sender)
 
-    async def bootstrap(self):
-        assert not self._websocket, "Service already bootstrapped"
+    async def _open_connection(self):
+        logger.debug('Connection to backend oppened')
+        assert not self._websocket, "Connection to backend already opened"
         self._websocket = await websockets.connect(self._backend_url)
+        # Handle handshake
+        challenge = json.loads(await self._websocket.recv())
+        answer = self.identity.private_key.sign(challenge['challenge'].encode())
+        await self._websocket.send(json.dumps({
+            'handshake': 'answer',
+            'identity': self.identity.id,
+            'answer': to_jsonb64(answer)
+        }))
+        resp = json.loads(await self._websocket.recv())
+        if resp['status'] != 'ok':
+            await self._close_connection()
+            raise exception_from_status(resp['status'])(resp['label'])
         self._ws_recv_handler_task = asyncio.ensure_future(self._ws_recv_handler())
         if self._watchdog_time:
             self._watchdog_task = asyncio.ensure_future(self._watchdog())
-        await super().bootstrap()
 
-    async def teardown(self):
-        assert self._websocket, "Service hasn't been bootstrapped"
+    async def _close_connection(self):
+        assert self._websocket, "Connection to backend not opened"
         for task in (self._ws_recv_handler_task, self._watchdog_task):
             if not task:
                 continue
@@ -71,6 +83,21 @@ class BackendAPIService(BaseBackendAPIService):
             except asyncio.CancelledError:
                 pass
         await self._websocket.close()
+        self._websocket = None
+        self._ws_recv_handler_task = None
+        self._watchdog_task = None
+        logger.debug('Connection to backend closed')
+
+    async def bootstrap(self):
+        await super().bootstrap()
+        self.identity.on_identity_loaded.connect(
+            async_callback(lambda x: self._open_connection()), weak=False)
+        self.identity.on_identity_unloaded.connect(
+            async_callback(lambda x: self._close_connection()), weak=False)
+
+    async def teardown(self):
+        if self._websocket:
+            await self._close_connection()
 
     async def _watchdog(self):
         while True:
@@ -99,6 +126,8 @@ class BackendAPIService(BaseBackendAPIService):
                 logger.warning('Backend server sent invalid message: %s' % recv)
 
     async def _send_cmd(self, msg):
+        if not self._websocket:
+            raise IdentityNotLoadedError('BackendAPIService cannot send command in current state')
         await self._websocket.send(json.dumps(msg))
         ret = await self._resp_queue.get()
         status = ret['status']
@@ -138,65 +167,40 @@ class BackendAPIService(BaseBackendAPIService):
         ret = await self._send_cmd(msg)
         return [msg['body'] for msg in ret['messages']]
 
-    async def named_vlob_create(self, id, blob=''):
-        assert isinstance(blob, str)
-        msg = {'cmd': 'named_vlob_create', 'id': id, 'blob': blob}
-        response = await self._send_cmd(msg)
-        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': 1}
-        await self.cache_service.set((id, 1), content)
-        return response
+    async def pubkey_get(self, id):
+        msg = {'cmd': 'pubkey_get', 'id': id}
+        return await self._send_cmd(msg)
 
-    async def named_vlob_read(self, id, trust_seed, version=None):
-        assert isinstance(id, str)
-        msg = {'cmd': 'named_vlob_read', 'id': id, 'trust_seed': trust_seed}
-        response = None
+    @cached_vlob
+    async def user_vlob_read(self, version=None):
+        msg = {'cmd': 'user_vlob_read'}
         if version:
             msg['version'] = version
-            try:
-                response = await self.cache_service.get((id, version))
-            except CacheNotFound:
-                pass
-        if not response:
-            response = await self._send_cmd(msg)
-            await self.cache_service.set((id, response['version']), response)
-        return response
+        return await self._send_cmd(msg)
 
-    async def named_vlob_update(self, id, version, trust_seed, blob=''):
-        msg = {
-            'cmd': 'named_vlob_update',
-            'id': id,
-            'version': version,
-            'trust_seed': trust_seed,
-            'blob': blob
-        }
-        response = await self._send_cmd(msg)
-        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': version}
-        await self.cache_service.set((id, version), content)
-        return response
+    @cached_vlob
+    async def user_vlob_update(self, version, blob=''):
+        msg = {'cmd': 'user_vlob_update', 'version': version, 'blob': blob}
+        return await self._send_cmd(msg)
 
+    @cached_vlob
     async def vlob_create(self, blob=''):
         assert isinstance(blob, str)
         msg = {'cmd': 'vlob_create', 'blob': blob}
-        response = await self._send_cmd(msg)
-        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': 1}
-        await self.cache_service.set((id, 1), content)
-        return response
+        return await self._send_cmd(msg)
 
+    @cached_vlob
     async def vlob_read(self, id, trust_seed, version=None):
         assert isinstance(id, str)
         msg = {'cmd': 'vlob_read', 'id': id, 'trust_seed': trust_seed}
         response = None
         if version:
             msg['version'] = version
-            try:
-                response = await self.cache_service.get((id, version))
-            except CacheNotFound:
-                pass
         if not response:
             response = await self._send_cmd(msg)
-            await self.cache_service.set((id, response['version']), response)
         return response
 
+    @cached_vlob
     async def vlob_update(self, id, version, trust_seed, blob=''):
         msg = {
             'cmd': 'vlob_update',
@@ -205,32 +209,28 @@ class BackendAPIService(BaseBackendAPIService):
             'trust_seed': trust_seed,
             'blob': blob
         }
-        response = await self._send_cmd(msg)
-        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': version}
-        await self.cache_service.set((id, version), content)
-        return response
+        return await self._send_cmd(msg)
 
 
 class MockedBackendAPIService(BaseBackendAPIService):
 
     def __init__(self):
         super().__init__()
-        self._cache_service = MockedCacheService()
         self._group_service = MockedGroupService()
         self._message_service = InMemoryMessageService()
-        self._named_vlob_service = MockedNamedVlobService()
+        self._pubkey_service = InMemoryPubKeyService()
+        self._user_vlob_service = MockedUserVlobService()
         self._vlob_service = MockedVlobService()
         # Backend services should not share the same event namespace than
         # core ones
         self._backend_event_ns = blinker.Namespace()
-        _patch_service_event_namespace(self._cache_service, self._backend_event_ns)
         _patch_service_event_namespace(self._group_service, self._backend_event_ns)
         _patch_service_event_namespace(self._message_service, self._backend_event_ns)
-        _patch_service_event_namespace(self._named_vlob_service, self._backend_event_ns)
+        _patch_service_event_namespace(self._user_vlob_service, self._backend_event_ns)
         _patch_service_event_namespace(self._vlob_service, self._backend_event_ns)
 
     async def connect_event(self, event, sender, cb):
-        assert event in ('on_vlob_updated', 'on_named_vlob_updated', 'on_message_arrived')
+        assert event in ('on_vlob_updated', 'on_user_vlob_updated', 'on_message_arrived')
         self._backend_event_ns.signal(event).connect(cb, sender=sender)
 
     async def group_create(self, name):
@@ -264,62 +264,39 @@ class MockedBackendAPIService(BaseBackendAPIService):
         ret = await self._message_service._cmd_GET(None, msg)
         return [msg['body'] for msg in ret['messages']]
 
-    async def named_vlob_create(self, id, blob=''):
-        assert isinstance(blob, str)
-        msg = {'cmd': 'named_vlob_create', 'id': id, 'blob': blob}
-        response = await self._named_vlob_service._cmd_CREATE(None, msg)
-        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': 1}
-        await self._cache_service.set((response['id'], 1), content)
-        return response
+    async def pubkey_get(self, id):
+        return await self._pubkey_service.get_pubkey(id, raw=True)
 
-    async def named_vlob_read(self, id, trust_seed, version=None):
-        msg = {'cmd': 'named_vlob_read', 'id': id, 'trust_seed': trust_seed}
-        response = None
+    @cached_vlob
+    async def user_vlob_read(self, version=None):
+        msg = {'cmd': 'user_vlob_read'}
         if version:
             msg['version'] = version
-            try:
-                response = await self._cache_service.get((id, version))
-            except CacheNotFound:
-                pass
-        if not response:
-            response = await self._named_vlob_service._cmd_READ(None, msg)
-            await self._cache_service.set((id, response['version']), response)
-        return response
+        return await self._user_vlob_service._cmd_READ(AuthSession(None, 'jdoe@test.com'), msg)
 
-    async def named_vlob_update(self, id, version, trust_seed, blob=''):
+    @cached_vlob
+    async def user_vlob_update(self, version, blob=''):
         msg = {
-            'cmd': 'named_vlob_update',
-            'id': id,
+            'cmd': 'user_vlob_update',
             'version': version,
-            'trust_seed': trust_seed,
             'blob': blob
         }
-        await self._named_vlob_service._cmd_UPDATE(None, msg)
-        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': version}
-        await self._cache_service.set((id, version), content)
+        await self._user_vlob_service._cmd_UPDATE(AuthSession(None, 'jdoe@test.com'), msg)
 
+    @cached_vlob
     async def vlob_create(self, blob=''):
         assert isinstance(blob, str)
         msg = {'cmd': 'vlob_create', 'blob': blob}
-        response = await self._vlob_service._cmd_CREATE(None, msg)
-        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': 1}
-        await self._cache_service.set((response['id'], 1), content)
-        return response
+        return await self._vlob_service._cmd_CREATE(None, msg)
 
+    @cached_vlob
     async def vlob_read(self, id, trust_seed, version=None):
         msg = {'cmd': 'vlob_read', 'id': id, 'trust_seed': trust_seed}
-        response = None
         if version:
             msg['version'] = version
-            try:
-                response = await self._cache_service.get((id, version))
-            except CacheNotFound:
-                pass
-        if not response:
-            response = await self._vlob_service._cmd_READ(None, msg)
-            await self._cache_service.set((id, response['version']), response)
-        return response
+        return await self._vlob_service._cmd_READ(None, msg)
 
+    @cached_vlob
     async def vlob_update(self, id, version, trust_seed, blob=''):
         msg = {
             'cmd': 'vlob_update',
@@ -329,5 +306,3 @@ class MockedBackendAPIService(BaseBackendAPIService):
             'blob': blob
         }
         await self._vlob_service._cmd_UPDATE(None, msg)
-        content = {'status': 'ok', 'id': id, 'blob': blob, 'version': version}
-        await self._cache_service.set((id, version), content)
