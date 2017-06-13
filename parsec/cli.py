@@ -117,6 +117,7 @@ def core(socket, backend_host, backend_watchdog, block_store, debug, identity, i
         @server.post_bootstrap
         async def post_bootstrap():
             await identity_svc.load(identity, identity_key.read())
+            print('Welcome back M. Doe')
     server.register_service(CoreService())
     if debug:
         loop.set_debug(True)

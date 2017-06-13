@@ -47,26 +47,37 @@ class MetaBaseService(type):
         events = {}
         service_keys = {}
         cooked_nmspc = {'_cmd_keys': cmd_keys, '_events': events, '_service_keys': service_keys}
+
+        def scan_nmspc(nmspc):
+            for k, v in nmspc.items():
+                if isinstance(v, CmdWrap):
+                    cmd_keys[k] = v.name
+                    cooked_nmspc[k] = v.callback
+                elif isinstance(v, EventWrap):
+                    events[v.name] = v.event
+                    cooked_nmspc[k] = v.event
+                elif isinstance(v, ServiceWrap):
+                    service_keys[k] = v.name
+                    cooked_nmspc[k] = None
+                else:
+                    cooked_nmspc[k] = v
+
+        # Retrieve parents' cmds&events
         for b in bases:
-            cmd_keys.update(getattr(b, '_cmd_keys', {}))
-            events.update(getattr(b, '_events', {}))
-            service_keys.update(getattr(b, '_service_keys', {}))
+            if issubclass(b, (BaseService, ServiceMixin)):
+                cmd_keys.update(getattr(b, '_cmd_keys', {}))
+                events.update(getattr(b, '_events', {}))
+                service_keys.update(getattr(b, '_service_keys', {}))
         # Retrieve new cmd and event here
         # TODO: check for overwritten cmd/events ?
-        for k, v in nmspc.items():
-            if isinstance(v, CmdWrap):
-                cmd_keys[k] = v.name
-                cooked_nmspc[k] = v.callback
-            elif isinstance(v, EventWrap):
-                events[v.name] = v.event
-                cooked_nmspc[k] = v.event
-            elif isinstance(v, ServiceWrap):
-                service_keys[k] = v.name
-                cooked_nmspc[k] = None
-            else:
-                cooked_nmspc[k] = v
+
+        scan_nmspc(nmspc)
         # Build the actual type and register the list of events&cmds
         return type.__new__(cls, name, bases, cooked_nmspc)
+
+
+class ServiceMixin(metaclass=MetaBaseService):
+    pass
 
 
 class BaseService(metaclass=MetaBaseService):
