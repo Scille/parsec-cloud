@@ -135,7 +135,7 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
                 return
         dirpath, leafname = path.rsplit('/', 1)
         try:
-            obj = self._retrieve_path(dirpath or '/')
+            obj = self._retrieve_path(dirpath)
             if obj['type'] != 'folder':
                 raise InvalidPath("Path `%s` is not a folder" % path)
             try:
@@ -151,6 +151,8 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
             raise InvalidPath("Path `%s` doesn't exist" % (path if should_exists else dirpath))
 
     def _retrieve_path(self, path):
+        if not path:
+            return self._fs
         if not path.startswith('/'):
             raise InvalidPath("Path must start with `/`")
         cur_dir = self._fs
@@ -170,7 +172,7 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
     async def file_create(self, path: str):
         self._check_path(path, should_exists=False)
         dirpath, name = path.rsplit('/', 1)
-        dirobj = self._retrieve_path(dirpath or '/')
+        dirobj = self._retrieve_path(dirpath)
         now = datetime.now(timezone.utc)
         dirobj['children'][name] = {
             'type': 'file', 'data': b'', 'stat': {'created': now, 'updated': now}
@@ -199,7 +201,7 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
     async def folder_create(self, path: str):
         self._check_path(path, should_exists=False)
         dirpath, name = path.rsplit('/', 1)
-        dirobj = self._retrieve_path(dirpath or '/')
+        dirobj = self._retrieve_path(dirpath)
         now = datetime.now(timezone.utc)
         dirobj['children'][name] = {
             'type': 'folder', 'children': {}, 'stat': {'created': now, 'updated': now}}
