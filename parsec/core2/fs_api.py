@@ -1,9 +1,9 @@
 from marshmallow import fields, validate
-from datetime import datetime, timezone
+import arrow
 
 from parsec.core2.workspace import Workspace, Reader, Writer
-from parsec.service import event, cmd, ServiceMixin
-from parsec.tools import BaseCmdSchema, to_jsonb64
+from parsec.service import event, cmd, service, ServiceMixin
+from parsec.tools import BaseCmdSchema, to_jsonb64, async_callback
 from parsec.exceptions import InvalidPath
 
 
@@ -115,7 +115,7 @@ class BaseFSAPIMixin(ServiceMixin):
 class MockedFSAPIMixin(BaseFSAPIMixin):
 
     def __init__(self):
-        now = datetime.now(timezone.utc)
+        now = arrow.get()
         self._fs = {
             'type': 'folder',
             'children': {},
@@ -174,7 +174,7 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
         self._check_path(path, should_exists=False)
         dirpath, name = path.rsplit('/', 1)
         dirobj = self._retrieve_path(dirpath)
-        now = datetime.now(timezone.utc)
+        now = arrow.get()
         dirobj['children'][name] = {
             'type': 'file', 'data': b'', 'stat': {'created': now, 'updated': now}
         }
@@ -184,12 +184,15 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
         fileobj = self._retrieve_file(path)
         fileobj['data'] = (fileobj['data'][:offset] + content +
                            fileobj['data'][offset + len(content):])
-        fileobj['stat']['updated'] = datetime.now(timezone.utc)
+        fileobj['stat']['updated'] = arrow.get()
 
     async def file_read(self, path: str, offset: int=0, size: int=-1):
         self._check_path(path, should_exists=True, type='file')
         fileobj = self._retrieve_file(path)
-        return fileobj['data'][offset:offset + size]
+        if size < 0:
+            return fileobj['data'][offset:]
+        else:
+            return fileobj['data'][offset:offset + size]
 
     async def stat(self, path: str):
         self._check_path(path, should_exists=True)
@@ -203,7 +206,7 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
         self._check_path(path, should_exists=False)
         dirpath, name = path.rsplit('/', 1)
         dirobj = self._retrieve_path(dirpath)
-        now = datetime.now(timezone.utc)
+        now = arrow.get()
         dirobj['children'][name] = {
             'type': 'folder', 'children': {}, 'stat': {'created': now, 'updated': now}}
 
@@ -229,36 +232,53 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
         self._check_path(path, should_exists=True, type='file')
         fileobj = self._retrieve_file(path)
         fileobj['data'] = fileobj['data'][:length]
-        fileobj['stat']['updated'] = datetime.now(timezone.utc)
+        fileobj['stat']['updated'] = arrow.get()
 
 
 class FSAPIMixin(BaseFSAPIMixin):
 
+    identity = service('IdentityService')
+    backend = service('BackendAPIService')
+
     def __init__(self):
-        self._fs = Workspace()
+        self._workspace = Workspace()
         self._reader = Reader()
         self._writer = Writer()
 
+    async def bootstrap(self):
+        await super().bootstrap()
+        self.identity.on_identity_loaded.connect(
+            async_callback(self._load_workspace), weak=False)
+        self.identity.on_identity_unloaded.connect(
+            async_callback(self._unload_workspace), weak=False)
+
+    async def _load_workspace(self):
+        self._workspace = workspace_factory()
+        pass
+
+    async def _unload_workspace(self):
+        pass
+
     async def file_create(self, path: str):
-        await self._writer.file_create(self._fs, path)
+        await self._writer.file_create(self._workspace, path)
 
     async def file_write(self, path: str, content: bytes, offset: int=0):
-        await self._writer.file_write(self._fs, path, content, offset)
+        await self._writer.file_write(self._workspace, path, content, offset)
 
     async def file_read(self, path: str, offset: int=0, size: int=-1):
-        return await self._reader.file_read(self._fs, path, offset, size)
+        return await self._reader.file_read(self._workspace, path, offset, size)
 
     async def stat(self, path: str):
-        return await self._reader.stat(self._fs, path)
+        return await self._reader.stat(self._workspace, path)
 
     async def folder_create(self, path: str):
-        await self._writer.folder_create(self._fs, path)
+        await self._writer.folder_create(self._workspace, path)
 
     async def move(self, src: str, dst: str):
-        await self._writer.move(self._fs, src, dst)
+        await self._writer.move(self._workspace, src, dst)
 
     async def delete(self, path: str):
-        await self._writer.delete(self._fs, path)
+        await self._writer.delete(self._workspace, path)
 
     async def file_truncate(self, path: str, length: int):
-        await self._writer.file_truncate(self._fs, path, length)
+        await self._writer.file_truncate(self._workspace, path, length)
