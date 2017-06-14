@@ -66,4 +66,4 @@ class IdentityService(BaseIdentityService):
             raise IdentityNotLoadedError('Identity not loaded')
         self.id = None
         self.private_key = None
-        self.on_identity_unloaded.send(id)
+        self.on_identity_unloaded.send(self.id)

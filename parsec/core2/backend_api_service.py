@@ -42,6 +42,10 @@ class BackendAPIService(BaseBackendAPIService):
         self._ws_recv_handler_task = None
         self._watchdog_task = None
         self._watchdog_time = watchdog
+        self._connection_ready_future = asyncio.futures.Future()
+
+    async def wait_for_connection_ready(self):
+        await self._connection_ready_future
 
     async def connect_event(self, event, sender, cb):
         assert event in ('on_vlob_updated', 'on_user_vlob_updated', 'on_message_arrived')
@@ -68,8 +72,10 @@ class BackendAPIService(BaseBackendAPIService):
         self._ws_recv_handler_task = asyncio.ensure_future(self._ws_recv_handler())
         if self._watchdog_time:
             self._watchdog_task = asyncio.ensure_future(self._watchdog())
+        self._connection_ready_future.set_result(None)
 
     async def _close_connection(self):
+        self._connection_ready_future = asyncio.futures.Future()
         assert self._websocket, "Connection to backend not opened"
         for task in (self._ws_recv_handler_task, self._watchdog_task):
             if not task:
@@ -202,6 +208,8 @@ class BackendAPIService(BaseBackendAPIService):
 
 class MockedBackendAPIService(BaseBackendAPIService):
 
+    identity = service('IdentityService')
+
     def __init__(self):
         super().__init__()
         self._group_service = MockedGroupService()
@@ -216,19 +224,25 @@ class MockedBackendAPIService(BaseBackendAPIService):
         _patch_service_event_namespace(self._user_vlob_service, self._backend_event_ns)
         _patch_service_event_namespace(self._vlob_service, self._backend_event_ns)
 
+    async def wait_for_connection_ready(self):
+        pass
+
     async def connect_event(self, event, sender, cb):
         assert event in ('on_vlob_updated', 'on_user_vlob_updated', 'on_message_arrived')
         self._backend_event_ns.signal(event).connect(cb, sender=sender)
 
     async def group_create(self, name):
+        self.identity.id  # Trigger exception if identity is not loaded
         msg = {'cmd': 'group_create', 'name': name}
         return await self._group_service._cmd_CREATE(None, msg)
 
     async def group_read(self, name):
+        self.identity.id  # Trigger exception if identity is not loaded
         msg = {'cmd': 'group_read', 'name': name}
         return await self._group_service._cmd_READ(None, msg)
 
     async def group_add_identities(self, name, identities, admin=False):
+        self.identity.id  # Trigger exception if identity is not loaded
         msg = {'cmd': 'group_add_identities',
                'name': name,
                'identities': identities,
@@ -236,6 +250,7 @@ class MockedBackendAPIService(BaseBackendAPIService):
         return await self._group_service._cmd_ADD_IDENTITIES(None, msg)
 
     async def group_remove_identities(self, name, identities, admin=False):
+        self.identity.id  # Trigger exception if identity is not loaded
         msg = {'cmd': 'group_remove_identities',
                'name': name,
                'identities': identities,
@@ -243,21 +258,25 @@ class MockedBackendAPIService(BaseBackendAPIService):
         return await self._group_service._cmd_REMOVE_IDENTITIES(None, msg)
 
     async def message_new(self, recipient, body):
+        self.identity.id  # Trigger exception if identity is not loaded
         msg = {'cmd': 'message_new', 'recipient': recipient, 'body': body}
         return await self._message_service._cmd_NEW(None, msg)
 
     async def message_get(self, recipient, offset=0):
+        self.identity.id  # Trigger exception if identity is not loaded
         msg = {'cmd': 'message_get', 'recipient': recipient, 'offset': offset}
         ret = await self._message_service._cmd_GET(None, msg)
         return [msg['body'] for msg in ret['messages']]
 
     async def user_vlob_read(self, version=None):
+        self.identity.id  # Trigger exception if identity is not loaded
         msg = {'cmd': 'user_vlob_read'}
         if version:
             msg['version'] = version
         return await self._user_vlob_service._cmd_READ(None, msg)
 
     async def user_vlob_update(self, version, blob=''):
+        self.identity.id  # Trigger exception if identity is not loaded
         msg = {
             'cmd': 'user_vlob_update',
             'version': version,
@@ -266,17 +285,20 @@ class MockedBackendAPIService(BaseBackendAPIService):
         await self._user_vlob_service._cmd_UPDATE(None, msg)
 
     async def vlob_create(self, blob=''):
+        self.identity.id  # Trigger exception if identity is not loaded
         assert isinstance(blob, str)
         msg = {'cmd': 'vlob_create', 'blob': blob}
         return await self._vlob_service._cmd_CREATE(None, msg)
 
     async def vlob_read(self, id, trust_seed, version=None):
+        self.identity.id  # Trigger exception if identity is not loaded
         msg = {'cmd': 'vlob_read', 'id': id, 'trust_seed': trust_seed}
         if version:
             msg['version'] = version
         return await self._vlob_service._cmd_READ(None, msg)
 
     async def vlob_update(self, id, version, trust_seed, blob=''):
+        self.identity.id  # Trigger exception if identity is not loaded
         msg = {
             'cmd': 'vlob_update',
             'id': id,
