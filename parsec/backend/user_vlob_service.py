@@ -2,7 +2,7 @@ from marshmallow import fields
 from collections import defaultdict
 
 from parsec.service import BaseService, cmd, event
-from parsec.tools import BaseCmdSchema
+from parsec.tools import BaseCmdSchema, to_jsonb64
 from parsec.exceptions import UserVlobError
 
 
@@ -12,7 +12,7 @@ class cmd_READ_Schema(BaseCmdSchema):
 
 class cmd_UPDATE_Schema(BaseCmdSchema):
     version = fields.Int(validate=lambda n: n >= 1)
-    blob = fields.String(required=True)
+    blob = fields.Base64Bytes(required=True)
 
 
 class BaseUserVlobService(BaseService):
@@ -25,7 +25,7 @@ class BaseUserVlobService(BaseService):
     async def _cmd_READ(self, session, msg):
         msg = cmd_READ_Schema().load(msg)
         atom = await self.read(session.identity, msg.get('version'))
-        return {'status': 'ok', 'blob': atom.blob, 'version': atom.version}
+        return {'status': 'ok', 'blob': to_jsonb64(atom.blob), 'version': atom.version}
 
     @cmd('user_vlob_update')
     async def _cmd_UPDATE(self, session, msg):
@@ -33,10 +33,10 @@ class BaseUserVlobService(BaseService):
         await self.update(session.identity, msg['version'], msg['blob'])
         return {'status': 'ok'}
 
-    async def read(self, id, version=None):
+    async def read(self, id: str, version: int=None) -> bytes:
         raise NotImplementedError()
 
-    async def update(self, id, version, blob):
+    async def update(self, id: str, version: int, blob: bytes):
         raise NotImplementedError()
 
 
@@ -44,7 +44,7 @@ class UserVlobAtom:
     def __init__(self, id, version=0, blob=None):
         # Generate opaque id if not provided
         self.id = id
-        self.blob = blob or ''
+        self.blob = blob or b''
         self.version = version
 
 

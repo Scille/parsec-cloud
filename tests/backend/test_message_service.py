@@ -3,6 +3,7 @@ import asyncio
 
 from parsec.server import BaseServer
 from parsec.backend import InMemoryMessageService
+from parsec.tools import to_jsonb64
 
 from tests.common import can_side_effect_or_skip
 from tests.backend.common import init_or_skiptest_parsec_postgresql
@@ -39,17 +40,20 @@ class TestMessageServiceAPI:
     @pytest.mark.asyncio
     async def test_new(self, message_svc):
         ret = await message_svc.dispatch_msg({
-            'cmd': 'message_new', 'recipient': 'jdoe@test.com', 'body': 'Hi dude !'})
+            'cmd': 'message_new', 'recipient': 'jdoe@test.com', 'body': to_jsonb64(b'Hi dude !')})
         assert ret == {'status': 'ok'}
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
-        {'cmd': 'message_new', 'recipient': 'jdoe@test.com', 'body': '...', 'bad_field': 'foo'},
+        {'cmd': 'message_new', 'recipient': 'jdoe@test.com',
+         'body': to_jsonb64(b'...'), 'bad_field': 'foo'},
         {'cmd': 'message_new', 'recipient': 'jdoe@test.com', 'body': 42},
         {'cmd': 'message_new', 'recipient': 'jdoe@test.com', 'body': None},
-        {'cmd': 'message_new', 'recipient': 42, 'body': '...'},
-        {'cmd': 'message_new', 'recipient': None, 'body': '...'},
-        {'cmd': 'message_new'}, {'recipient': 'jdoe@test.com', 'body': '...'}, {}])
+        {'cmd': 'message_new', 'recipient': 42, 'body': to_jsonb64(b'...')},
+        {'cmd': 'message_new', 'recipient': None, 'body': to_jsonb64(b'...')},
+        {'cmd': 'message_new'},
+        {'recipient': 'jdoe@test.com', 'body': to_jsonb64(b'...')},
+        {}])
     async def test_bad_msg_new(self, message_svc, bad_msg):
         ret = await message_svc.dispatch_msg(bad_msg)
         assert ret['status'] == 'bad_msg'
@@ -63,26 +67,26 @@ class TestMessageServiceAPI:
     @pytest.mark.asyncio
     async def test_ordered(self, message_svc):
         for recipient, body in (
-                ('alice@test.com', 'Alice1'),
-                ('bob@test.com', 'Bob1'),
-                ('foo@test.com', 'Foo1'),
-                ('alice@test.com', 'Alice2'),
-                ('alice@test.com', 'Alice3'),
-                ('bob@test.com', 'Bob2')):
+                ('alice@test.com', b'Alice1'),
+                ('bob@test.com', b'Bob1'),
+                ('foo@test.com', b'Foo1'),
+                ('alice@test.com', b'Alice2'),
+                ('alice@test.com', b'Alice3'),
+                ('bob@test.com', b'Bob2')):
             ret = await message_svc.dispatch_msg({
-                'cmd': 'message_new', 'recipient': recipient, 'body': body})
+                'cmd': 'message_new', 'recipient': recipient, 'body': to_jsonb64(body)})
         assert ret == {'status': 'ok'}
         ret = await message_svc.dispatch_msg({
             'cmd': 'message_get', 'recipient': 'alice@test.com'})
         assert ret == {'status': 'ok', 'messages': [
-            {'count': 1, 'body': 'Alice1'},
-            {'count': 2, 'body': 'Alice2'},
-            {'count': 3, 'body': 'Alice3'}
+            {'count': 1, 'body': to_jsonb64(b'Alice1')},
+            {'count': 2, 'body': to_jsonb64(b'Alice2')},
+            {'count': 3, 'body': to_jsonb64(b'Alice3')}
         ]}
         ret = await message_svc.dispatch_msg({
             'cmd': 'message_get', 'recipient': 'alice@test.com', 'offset': 2})
         assert ret == {'status': 'ok', 'messages': [
-            {'count': 3, 'body': 'Alice3'}
+            {'count': 3, 'body': to_jsonb64(b'Alice3')}
         ]}
 
     @pytest.mark.asyncio
@@ -109,11 +113,11 @@ class TestMessageServiceAPI:
         message_svc.on_arrived.connect(on_event, 'alice@test.com')
         # Message to wrong person doesn't trigger event
         ret = await message_svc.dispatch_msg({
-            'cmd': 'message_new', 'recipient': 'bob@test.com', 'body': 'Hi dude !'})
+            'cmd': 'message_new', 'recipient': 'bob@test.com', 'body': to_jsonb64(b'Hi dude !')})
         assert ret == {'status': 'ok'}
         assert called_with == '<not called>'
         ret = await message_svc.dispatch_msg({
-            'cmd': 'message_new', 'recipient': 'alice@test.com', 'body': 'Hi dude !'})
+            'cmd': 'message_new', 'recipient': 'alice@test.com', 'body': to_jsonb64(b'Hi dude !')})
         assert ret == {'status': 'ok'}
         # Given events are asynchronous, we cannot know when they will arrive
         # and have to wait for them

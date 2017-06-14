@@ -5,7 +5,7 @@ from marshmallow import fields
 
 from parsec.service import BaseService, cmd, event
 from parsec.exceptions import VlobNotFound, TrustSeedError
-from parsec.tools import BaseCmdSchema
+from parsec.tools import BaseCmdSchema, to_jsonb64
 
 
 TRUST_SEED_LENGTH = 12
@@ -19,7 +19,7 @@ def generate_trust_seed():
 
 class cmd_CREATE_Schema(BaseCmdSchema):
     id = fields.String(missing=None, validate=lambda n: 0 < len(n) <= 32)
-    blob = fields.String(missing='')
+    blob = fields.Base64Bytes(missing=to_jsonb64(b''))
 
 
 class cmd_READ_Schema(BaseCmdSchema):
@@ -32,7 +32,7 @@ class cmd_UPDATE_Schema(BaseCmdSchema):
     id = fields.String(required=True)
     version = fields.Int(validate=lambda n: n > 1)
     trust_seed = fields.String(required=True)
-    blob = fields.String(required=True)
+    blob = fields.Base64Bytes(required=True)
 
 
 class BaseVlobService(BaseService):
@@ -56,7 +56,8 @@ class BaseVlobService(BaseService):
     async def _cmd_READ(self, session, msg):
         msg = cmd_READ_Schema().load(msg)
         atom = await self.read(msg['id'], msg.get('version'), check_trust_seed=msg['trust_seed'])
-        return {'status': 'ok', 'id': atom.id, 'blob': atom.blob, 'version': atom.version}
+        return {'status': 'ok', 'id': atom.id,
+                'blob': to_jsonb64(atom.blob), 'version': atom.version}
 
     @cmd('vlob_update')
     async def _cmd_UPDATE(self, session, msg):
@@ -70,13 +71,13 @@ class BaseVlobService(BaseService):
                           check_trust_seed=msg['trust_seed'])
         return {'status': 'ok'}
 
-    async def create(self, blob=None):
+    async def create(self, blob: bytes=None):
         raise NotImplementedError()
 
-    async def read(self, id):
+    async def read(self, id: str) -> bytes:
         raise NotImplementedError()
 
-    async def update(self, id, version, blob):
+    async def update(self, id: str, version: int, blob: bytes):
         raise NotImplementedError()
 
 
@@ -86,7 +87,7 @@ class VlobAtom:
         self.id = id or uuid4().hex  # TODO uuid4 or trust seed?
         self.read_trust_seed = read_trust_seed or generate_trust_seed()
         self.write_trust_seed = write_trust_seed or generate_trust_seed()
-        self.blob = blob or ''
+        self.blob = blob or b''
         self.version = version
 
 

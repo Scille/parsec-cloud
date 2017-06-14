@@ -100,16 +100,16 @@ class TestBackendAPIService:
     @pytest.mark.asyncio
     async def test_before_identity_load(self, backend_api_svc):
         with pytest.raises(IdentityNotLoadedError):
-            await backend_api_svc.vlob_create('Impossible yet !')
+            await backend_api_svc.vlob_create(b'Impossible yet !')
         await backend_api_svc.identity.load()
         await backend_api_svc.wait_for_ready()
-        await backend_api_svc.vlob_create("Now it's ok")
+        await backend_api_svc.vlob_create(b"Now it's ok")
 
     @pytest.mark.asyncio
     async def test_cmd(self, backend_api_svc):
         await backend_api_svc.identity.load()
         await backend_api_svc.wait_for_ready()
-        vlob = await backend_api_svc.vlob_create('foo')
+        vlob = await backend_api_svc.vlob_create(b'foo')
         assert isinstance(vlob, dict)
 
     @pytest.mark.asyncio
@@ -120,19 +120,19 @@ class TestBackendAPIService:
         # event loop for the tests, however in reality they are not supposed
         # to share the same events module.
 
-        vlob = await backend_api_svc.vlob_create('First version')
+        vlob = await backend_api_svc.vlob_create(b'First version')
 
         def _on_vlob_updated(sender):
             assert False, 'Backend callback should not have been called'
 
         blinker.signal('on_vlob_updated').connect(_on_vlob_updated)
-        await backend_api_svc.vlob_update(vlob['id'], 2, vlob['write_trust_seed'], 'Next version')
+        await backend_api_svc.vlob_update(vlob['id'], 2, vlob['write_trust_seed'], b'Next version')
 
     @pytest.mark.asyncio
     async def test_event(self, backend_api_svc):
         await backend_api_svc.identity.load()
         await backend_api_svc.wait_for_ready()
-        vlob = await backend_api_svc.vlob_create('First version')
+        vlob = await backend_api_svc.vlob_create(b'First version')
 
         is_callback_called = asyncio.Future()
 
@@ -141,6 +141,6 @@ class TestBackendAPIService:
             is_callback_called.set_result(sender)
 
         await backend_api_svc.connect_event('on_vlob_updated', vlob['id'], _on_vlob_updated)
-        await backend_api_svc.vlob_update(vlob['id'], 2, vlob['write_trust_seed'], 'Next version')
+        await backend_api_svc.vlob_update(vlob['id'], 2, vlob['write_trust_seed'], b'Next version')
         ret = await is_callback_called
         assert ret == vlob['id']

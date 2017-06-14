@@ -44,7 +44,7 @@ async def _init_db(url, force=False):
                 CREATE TABLE messages (
                 recipient text,
                 count     integer NOT NULL,
-                body      text,
+                body      bytea,
                 PRIMARY KEY(recipient, count)
             );""")
             # vlobs
@@ -54,7 +54,7 @@ async def _init_db(url, force=False):
                 version          integer NOT NULL,
                 read_trust_seed  text,
                 write_trust_seed text,
-                blob             text,
+                blob             bytea,
                 PRIMARY KEY(id, version)
             );""")
             # vlobs
@@ -62,7 +62,7 @@ async def _init_db(url, force=False):
                 CREATE TABLE user_vlobs (
                 id               text,
                 version          integer NOT NULL,
-                blob             text,
+                blob             bytea,
                 PRIMARY KEY(id, version)
             );""")
             # groups
@@ -74,8 +74,8 @@ async def _init_db(url, force=False):
             # pubkeys
             await cur.execute("""
                 CREATE TABLE pubkeys (
-                id               text PRIMARY KEY,
-                key              text
+                identity         text PRIMARY KEY,
+                key              bytea
             );""")
 
 
@@ -144,17 +144,21 @@ class PostgreSQLMessageService(BaseMessageService):
     async def new(self, recipient, body):
         async with self.postgresql.acquire() as conn:
             async with conn.cursor() as cur:
-                await cur.execute("SELECT max(count) FROM messages WHERE recipient=%s;", (recipient, ))
+                await cur.execute(
+                    "SELECT max(count) FROM messages WHERE recipient=%s;", (recipient, ))
                 count, = await cur.fetchone()
                 count = 0 if count is None else count + 1
-                await cur.execute("INSERT INTO messages VALUES (%s, %s, %s);", (recipient, count, body))
+                await cur.execute("INSERT INTO messages VALUES (%s, %s, %s);",
+                    (recipient, count, body))
                 await cur.execute(self._ON_ARRIVED_NOTIFY_CMD, (recipient, ))
 
     async def get(self, recipient, offset=0):
         async with self.postgresql.acquire() as conn:
             async with conn.cursor() as cur:
-                await cur.execute("SELECT body FROM messages WHERE recipient=%s AND count>=%s ORDER BY count;", (recipient, offset))
-                return [x[0] for x in await cur.fetchall()]
+                await cur.execute(
+                    "SELECT body FROM messages WHERE recipient=%s AND count>=%s ORDER BY count;",
+                    (recipient, offset))
+                return [bytes(x[0]) for x in await cur.fetchall()]
 
 
 class PostgreSQLVlobService(BaseVlobService):
@@ -175,21 +179,25 @@ class PostgreSQLVlobService(BaseVlobService):
         async with self.postgresql.acquire() as conn:
             async with conn.cursor() as cur:
                 if version:
-                    await cur.execute("SELECT * FROM vlobs WHERE id=%s AND version=%s;", (id, version))
+                    await cur.execute("SELECT * FROM vlobs WHERE "
+                                      "id=%s AND version=%s;", (id, version))
                 else:
-                    await cur.execute("SELECT * FROM vlobs WHERE id=%s ORDER BY version DESC;", (id, ))
+                    await cur.execute("SELECT * FROM vlobs WHERE "
+                                      "id=%s ORDER BY version DESC;", (id, ))
                 ret = await cur.fetchone()
         if not ret:
             raise VlobNotFound('Vlob not found.')
         _, version, rts, wts, blob = ret
         if check_trust_seed and rts != check_trust_seed:
             raise TrustSeedError('Invalid read trust seed.')
-        return VlobAtom(id=id, version=version, read_trust_seed=rts, write_trust_seed=wts, blob=blob)
+        return VlobAtom(id=id, version=version, read_trust_seed=rts,
+                        write_trust_seed=wts, blob=bytes(blob))
 
     async def update(self, id, version, blob, check_trust_seed=False):
         async with self.postgresql.acquire() as conn:
             async with conn.cursor() as cur:
-                await cur.execute("SELECT version, read_trust_seed, write_trust_seed FROM vlobs WHERE id=%s ORDER BY version DESC;", (id, ))
+                await cur.execute("SELECT version, read_trust_seed, write_trust_seed FROM "
+                                  "vlobs WHERE id=%s ORDER BY version DESC;", (id, ))
                 ret = await cur.fetchone()
                 if ret is None:
                     raise VlobNotFound('Vlob not found.')
@@ -199,7 +207,8 @@ class PostgreSQLVlobService(BaseVlobService):
                 if version != last_version + 1:
                     raise VlobNotFound('Wrong blob version.')
                 # TODO: insertion doesn't do atomic check of version
-                await cur.execute("INSERT INTO vlobs VALUES (%s, %s, %s, %s, %s);", (id, version, rts, wts, blob))
+                await cur.execute("INSERT INTO vlobs VALUES (%s, %s, %s, %s, %s);",
+                    (id, version, rts, wts, blob))
                 await cur.execute(self._ON_UPDATED_NOTIFY_CMD, (id, ))
 
 
@@ -210,49 +219,34 @@ class PostgreSQLUserVlobService(BaseUserVlobService):
     _ON_UPDATED_NOTIFY_CMD = "NOTIFY %s, %%s;" % BaseUserVlobService.on_updated.name
 
     async def read(self, id, version=None):
-        vlobs = self._vlobs[id]
-        if version == 0 or (version is None and not vlobs):
-            return UserVlobAtom(id=id)
-        try:
-            if version is None:
-                return vlobs[-1]
-            else:
-                return vlobs[version - 1]
-        except KeyError:
-            raise UserVlobError('Wrong blob version.')
-
-    async def update(self, id, version, blob):
-        vlobs = self._vlobs[id]
-        if len(vlobs) != version - 1:
-            raise UserVlobError('Wrong blob version.')
-        vlobs.append(UserVlobAtom(id=id, version=version, blob=blob))
-        self.on_updated.send(id)
-
-    async def read(self, id, version=None):
         async with self.postgresql.acquire() as conn:
             async with conn.cursor() as cur:
                 if version:
-                    await cur.execute("SELECT * FROM user_vlobs WHERE id=%s AND version=%s;", (id, version))
+                    await cur.execute("SELECT * FROM user_vlobs WHERE "
+                                      "id=%s AND version=%s;", (id, version))
                 else:
-                    await cur.execute("SELECT * FROM user_vlobs WHERE id=%s ORDER BY version DESC;", (id, ))
+                    await cur.execute("SELECT * FROM user_vlobs WHERE "
+                                      "id=%s ORDER BY version DESC;", (id, ))
                 ret = await cur.fetchone()
         if version == 0 or (version is None and not ret):
             return UserVlobAtom(id=id)
         if not ret:
             raise UserVlobError('Wrong blob version.')
         _, version, blob = ret
-        return UserVlobAtom(id=id, version=version, blob=blob)
+        return UserVlobAtom(id=id, version=version, blob=bytes(blob))
 
     async def update(self, id, version, blob, check_trust_seed=False):
         async with self.postgresql.acquire() as conn:
             async with conn.cursor() as cur:
-                await cur.execute("SELECT version FROM user_vlobs WHERE id=%s ORDER BY version DESC;", (id, ))
+                await cur.execute("SELECT version FROM user_vlobs WHERE "
+                                  "id=%s ORDER BY version DESC;", (id, ))
                 ret = await cur.fetchone()
                 last_version = ret[0] if ret else 0
                 if version != last_version + 1:
                     raise UserVlobError('Wrong blob version.')
                 # TODO: insertion doesn't do atomic check of version
-                await cur.execute("INSERT INTO user_vlobs VALUES (%s, %s, %s);", (id, version, blob))
+                await cur.execute("INSERT INTO user_vlobs VALUES (%s, %s, %s);",
+                    (id, version, blob))
                 await cur.execute(self._ON_UPDATED_NOTIFY_CMD, (id, ))
 
 
@@ -308,20 +302,21 @@ class PostgreSQLPubKeyService(BasePubKeyService):
 
     postgresql = service('PostgreSQLService')
 
-    async def add_pubkey(self, id, key):
+    async def add_pubkey(self, identity, key):
         async with self.postgresql.acquire() as conn:
             async with conn.cursor() as cur:
                 try:
-                    await cur.execute("INSERT INTO pubkeys VALUES (%s, %s);", (id, key.decode()))
+                    await cur.execute("INSERT INTO pubkeys VALUES (%s, %s);",
+                        (identity, key.decode()))
                 except IntegrityError:
-                    raise PubKeyError('Identity `%s` already has a public key' % id)
+                    raise PubKeyError('Identity `%s` already has a public key' % identity)
 
-    async def get_pubkey(self, id, raw=False):
+    async def get_pubkey(self, identity, raw=False):
         async with self.postgresql.acquire() as conn:
             async with conn.cursor() as cur:
-                await cur.execute('SELECT key FROM pubkeys WHERE id=%s', (id, ))
+                await cur.execute('SELECT key FROM pubkeys WHERE identity=%s', (identity, ))
                 ret = await cur.fetchone()
                 if ret is None:
-                    raise PubKeyNotFound('No public key for identity `%s`' % id)
-                key = ret[0].encode()
+                    raise PubKeyNotFound('No public key for identity `%s`' % identity)
+                key = bytes(ret[0])
         return key if raw else load_public_key(key)

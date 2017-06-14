@@ -3,6 +3,7 @@ import asyncio
 
 from parsec.backend import MockedVlobService
 from parsec.server import BaseServer
+from parsec.tools import to_jsonb64
 
 from tests.common import can_side_effect_or_skip
 from tests.backend.common import init_or_skiptest_parsec_postgresql
@@ -35,7 +36,7 @@ def vlob_svc(request, event_loop):
 
 
 @pytest.fixture
-def vlob(vlob_svc, event_loop, blob='Initial commit.'):
+def vlob(vlob_svc, event_loop, blob=b'Initial commit.'):
     return event_loop.run_until_complete(vlob_svc.create(blob=blob))
 
 
@@ -44,9 +45,9 @@ class TestVlobServiceAPI:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("vlob_payload", [
         {},
-        {'blob': 'Initial commit.'},
+        {'blob': to_jsonb64(b'Initial commit.')},
         {'id': 'foo'},
-        {'id': 'bar', 'blob': 'Initial commit.'}])
+        {'id': 'bar', 'blob': to_jsonb64(b'Initial commit.')}])
     async def test_create(self, vlob_svc, vlob_payload):
         ret = await vlob_svc.dispatch_msg({'cmd': 'vlob_create', **vlob_payload})
         assert ret['status'] == 'ok'
@@ -56,15 +57,12 @@ class TestVlobServiceAPI:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
-        {'cmd': 'vlob_create', 'content': '...', 'bad_field': 'foo'},
-        {'cmd': 'vlob_create', 'content': 42},
-        {'cmd': 'vlob_create', 'content': None},
-        {'cmd': 'vlob_create', 'content': '...', 'id': '1234567890'},
-
-        {'cmd': 'vlob_create', 'id': None, 'content': '...'},
-        {'cmd': 'vlob_create', 'id': 42, 'content': '...'},
-        {'cmd': 'vlob_create', 'id': '', 'content': '...'},  # Id is 1 long min
-        {'cmd': 'vlob_create', 'id': 'X' * 33, 'content': '...'},  # Id is 32 long max
+        {'cmd': 'vlob_create', 'blob': to_jsonb64(b'...'), 'bad_field': 'foo'},
+        {'cmd': 'vlob_create', 'blob': 42},
+        {'cmd': 'vlob_create', 'blob': None},
+        {'cmd': 'vlob_create', 'id': 42, 'blob': to_jsonb64(b'...')},
+        {'cmd': 'vlob_create', 'id': '', 'blob': to_jsonb64(b'...')},  # Id is 1 long min
+        {'cmd': 'vlob_create', 'id': 'X' * 33, 'blob': to_jsonb64(b'...')},  # Id is 32 long max
         {}])
     async def test_bad_msg_create(self, vlob_svc, bad_msg):
         ret = await vlob_svc.dispatch_msg(bad_msg)
@@ -89,7 +87,7 @@ class TestVlobServiceAPI:
         assert ret == {
             'status': 'ok',
             'id': vlob.id,
-            'blob': vlob.blob,
+            'blob': to_jsonb64(vlob.blob),
             'version': vlob.version
         }
 
@@ -114,7 +112,7 @@ class TestVlobServiceAPI:
 
     @pytest.mark.asyncio
     async def test_update_not_found(self, vlob_svc, vlob):
-        blob = 'Next version.'
+        blob = to_jsonb64(b'Next version.')
         ret = await vlob_svc.dispatch_msg({
             'cmd': 'vlob_update',
             'id': '1234',
@@ -132,7 +130,7 @@ class TestVlobServiceAPI:
             nonlocal called_with
             called_with = args
 
-        blob = 'Next version.'
+        blob = to_jsonb64(b'Next version.')
         vlob_svc.on_updated.connect(on_event, vlob.id)
         ret = await vlob_svc.dispatch_msg({
             'cmd': 'vlob_update',
@@ -150,15 +148,15 @@ class TestVlobServiceAPI:
             await asyncio.sleep(0.1)
         assert called_with == (vlob.id, )
         v1 = await vlob_svc.read(vlob.id, 1)
-        assert v1.blob == 'Initial commit.'
+        assert v1.blob == b'Initial commit.'
         v2 = await vlob_svc.read(vlob.id, 2)
         last = await vlob_svc.read(vlob.id)
-        assert last.blob == v2.blob == 'Next version.'
+        assert last.blob == v2.blob == b'Next version.'
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('bad_msg', [
         {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
-         'version': '<version-here>', 'blob': '...', 'bad_field': 'foo'},
+         'version': '<version-here>', 'blob': to_jsonb64(b'...'), 'bad_field': 'foo'},
         {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
          'version': '<version-here>', 'blob': None},
         {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
@@ -166,27 +164,27 @@ class TestVlobServiceAPI:
         {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
          'version': '<version-here>'},
         {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
-         'version': None, 'blob': '...'},
+         'version': None, 'blob': to_jsonb64(b'...')},
         {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
-         'version': -1, 'blob': '...'},
+         'version': -1, 'blob': to_jsonb64(b'...')},
         {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': '<trust_seed-here>',
-         'version': 'zero', 'blob': '...'},
+         'version': 'zero', 'blob': to_jsonb64(b'...')},
         {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': 'dummy_seed',
-         'version': '<version-here>', 'blob': '...'},
+         'version': '<version-here>', 'blob': to_jsonb64(b'...')},
         {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': None,
-         'version': '<version-here>', 'blob': '...'},
+         'version': '<version-here>', 'blob': to_jsonb64(b'...')},
         {'cmd': 'vlob_update', 'id': '<id-here>', 'trust_seed': 42,
-         'version': '<version-here>', 'blob': '...'},
+         'version': '<version-here>', 'blob': to_jsonb64(b'...')},
         {'cmd': 'vlob_update', 'id': '<id-here>',
-         'version': '<version-here>', 'blob': '...'},
+         'version': '<version-here>', 'blob': to_jsonb64(b'...')},
         {'cmd': 'vlob_update', 'id': 42, 'trust_seed': '<trust_seed-here>',
-         'version': '<version-here>', 'blob': '...'},
+         'version': '<version-here>', 'blob': to_jsonb64(b'...')},
         {'cmd': 'vlob_update', 'id': None, 'trust_seed': '<trust_seed-here>',
-         'version': '<version-here>', 'blob': '...'},
+         'version': '<version-here>', 'blob': to_jsonb64(b'...')},
         {'cmd': 'vlob_update', 'trust_seed': '<trust_seed-here>',
-         'version': '<version-here>', 'blob': '...'},
+         'version': '<version-here>', 'blob': to_jsonb64(b'...')},
         {'cmd': 'vlob_update', 'id': 'dummy-id', 'trust_seed': '<trust_seed-here>',
-         'version': '<version-here>', 'blob': '...'},
+         'version': '<version-here>', 'blob': to_jsonb64(b'...')},
         {'cmd': 'vlob_update'}, {}])
     async def test_bad_msg_update(self, vlob_svc, bad_msg, vlob):
         if bad_msg.get('id') == '<id-here>':
@@ -212,6 +210,6 @@ class TestVlobServiceAPI:
     async def test_update_bad_version(self, vlob_svc, vlob):
         bad_version = 111
         msg = {'cmd': 'vlob_update', 'id': vlob.id, 'trust_seed': vlob.write_trust_seed,
-               'version': bad_version, 'blob': 'Next version.'}
+               'version': bad_version, 'blob': to_jsonb64(b'Next version.')}
         ret = await vlob_svc.dispatch_msg(msg)
         assert ret['status'] == 'vlob_not_found'

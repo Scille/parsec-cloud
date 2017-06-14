@@ -37,10 +37,10 @@ class BasePubKeyService(BaseService):
         key = await self.get_pubkey(msg['id'], raw=True)
         return {'status': 'ok', 'key': key}
 
-    async def get_pubkey(self, identity):
+    async def get_pubkey(self, identity: str, raw=False):
         raise NotImplementedError()
 
-    async def add_pubkey(self, identity):
+    async def add_pubkey(self, identity: str, key: bytes):
         raise NotImplementedError()
 
     async def handshake(self, context):
@@ -75,16 +75,16 @@ class InMemoryPubKeyService(BasePubKeyService):
         super().__init__()
         self._keys = {}
 
-    async def add_pubkey(self, id, key: bytes):
+    async def add_pubkey(self, identity, key):
         assert isinstance(key, (bytes, bytearray))
-        if id in self._keys:
-            raise PubKeyError('Identity `%s` already has a public key' % id)
+        if identity in self._keys:
+            raise PubKeyError('Identity `%s` already has a public key' % identity)
         else:
-            self._keys[id] = key
+            self._keys[identity] = key
 
-    async def get_pubkey(self, id, raw=False):
+    async def get_pubkey(self, identity, raw=False):
         try:
-            key = self._keys[id]
+            key = self._keys[identity]
             return key if raw else load_public_key(key)
         except KeyError:
-            raise PubKeyNotFound('No public key for identity `%s`' % id)
+            raise PubKeyNotFound('No public key for identity `%s`' % identity)
