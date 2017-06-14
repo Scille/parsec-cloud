@@ -1,5 +1,6 @@
-from marshmallow import fields, validate
+import asyncio
 import arrow
+from marshmallow import fields, validate
 
 from parsec.core2.workspace import Workspace, Reader, Writer
 from parsec.service import event, cmd, service, ServiceMixin
@@ -87,6 +88,9 @@ class BaseFSAPIMixin(ServiceMixin):
         await self.file_truncate(msg['path'], msg['length'])
         return {'status': 'ok'}
 
+    async def wait_for_ready(self):
+        raise NotImplementedError()
+
     async def file_create(self, path: str):
         raise NotImplementedError()
 
@@ -114,6 +118,8 @@ class BaseFSAPIMixin(ServiceMixin):
 
 class MockedFSAPIMixin(BaseFSAPIMixin):
 
+    identity = service('IdentityService')
+
     def __init__(self):
         now = arrow.get()
         self._fs = {
@@ -121,6 +127,9 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
             'children': {},
             'stat': {'created': now, 'updated': now}
         }
+
+    async def wait_for_ready(self):
+        return
 
     def _retrieve_file(self, path):
         fileobj = self._retrieve_path(path)
@@ -171,6 +180,7 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
         return cur_dir
 
     async def file_create(self, path: str):
+        self.identity.id  # Trigger exception if identity is not loaded
         self._check_path(path, should_exists=False)
         dirpath, name = path.rsplit('/', 1)
         dirobj = self._retrieve_path(dirpath)
@@ -180,6 +190,7 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
         }
 
     async def file_write(self, path: str, content: bytes, offset: int=0):
+        self.identity.id  # Trigger exception if identity is not loaded
         self._check_path(path, should_exists=True, type='file')
         fileobj = self._retrieve_file(path)
         fileobj['data'] = (fileobj['data'][:offset] + content +
@@ -187,6 +198,7 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
         fileobj['stat']['updated'] = arrow.get()
 
     async def file_read(self, path: str, offset: int=0, size: int=-1):
+        self.identity.id  # Trigger exception if identity is not loaded
         self._check_path(path, should_exists=True, type='file')
         fileobj = self._retrieve_file(path)
         if size < 0:
@@ -195,6 +207,7 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
             return fileobj['data'][offset:offset + size]
 
     async def stat(self, path: str):
+        self.identity.id  # Trigger exception if identity is not loaded
         self._check_path(path, should_exists=True)
         obj = self._retrieve_path(path)
         if obj['type'] == 'folder':
@@ -203,6 +216,7 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
             return {**obj['stat'], 'type': obj['type'], 'size': len(obj['data'])}
 
     async def folder_create(self, path: str):
+        self.identity.id  # Trigger exception if identity is not loaded
         self._check_path(path, should_exists=False)
         dirpath, name = path.rsplit('/', 1)
         dirobj = self._retrieve_path(dirpath)
@@ -211,6 +225,7 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
             'type': 'folder', 'children': {}, 'stat': {'created': now, 'updated': now}}
 
     async def move(self, src: str, dst: str):
+        self.identity.id  # Trigger exception if identity is not loaded
         self._check_path(src, should_exists=True)
         self._check_path(dst, should_exists=False)
 
@@ -223,12 +238,14 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
         del srcobj['children'][scrfilename]
 
     async def delete(self, path: str):
+        self.identity.id  # Trigger exception if identity is not loaded
         self._check_path(path, should_exists=True)
         dirpath, leafname = path.rsplit('/', 1)
         obj = self._retrieve_path(dirpath)
         del obj['children'][leafname]
 
     async def file_truncate(self, path: str, length: int):
+        self.identity.id  # Trigger exception if identity is not loaded
         self._check_path(path, should_exists=True, type='file')
         fileobj = self._retrieve_file(path)
         fileobj['data'] = fileobj['data'][:length]
@@ -241,23 +258,30 @@ class FSAPIMixin(BaseFSAPIMixin):
     backend = service('BackendAPIService')
 
     def __init__(self):
-        self._workspace = Workspace()
-        self._reader = Reader()
-        self._writer = Writer()
+        self._workspace = None
+        self._reader = None
+        self._writer = None
+        self._ready_future = asyncio.futures.Future()
+
+    async def wait_for_ready(self):
+        await self._ready_future
 
     async def bootstrap(self):
-        await super().bootstrap()
+        self._reader = Reader(self.identity, self.backend)
+        self._writer = Writer(self.identity, self.backend)
         self.identity.on_identity_loaded.connect(
-            async_callback(self._load_workspace), weak=False)
+            async_callback(lambda x: self._load_workspace()), weak=False)
         self.identity.on_identity_unloaded.connect(
-            async_callback(self._unload_workspace), weak=False)
+            async_callback(lambda x: self._unload_workspace()), weak=False)
 
     async def _load_workspace(self):
-        self._workspace = workspace_factory()
-        pass
+        # self._workspace = workspace_factory()
+        self._workspace = Workspace()
+        self._ready_future.set_result(None)
 
     async def _unload_workspace(self):
-        pass
+        self._ready_future = asyncio.futures.Future()
+        self._workspace = None
 
     async def file_create(self, path: str):
         await self._writer.file_create(self._workspace, path)

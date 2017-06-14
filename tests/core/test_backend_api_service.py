@@ -102,20 +102,20 @@ class TestBackendAPIService:
         with pytest.raises(IdentityNotLoadedError):
             await backend_api_svc.vlob_create('Impossible yet !')
         await backend_api_svc.identity.load()
-        await backend_api_svc.wait_for_connection_ready()
+        await backend_api_svc.wait_for_ready()
         await backend_api_svc.vlob_create("Now it's ok")
 
     @pytest.mark.asyncio
     async def test_cmd(self, backend_api_svc):
         await backend_api_svc.identity.load()
-        await backend_api_svc.wait_for_connection_ready()
+        await backend_api_svc.wait_for_ready()
         vlob = await backend_api_svc.vlob_create('foo')
         assert isinstance(vlob, dict)
 
     @pytest.mark.asyncio
     async def test_no_backend_leak_event(self, backend_api_svc):
         await backend_api_svc.identity.load()
-        await backend_api_svc.wait_for_connection_ready()
+        await backend_api_svc.wait_for_ready()
         # Backend and core both run in the same interpreter and on the same
         # event loop for the tests, however in reality they are not supposed
         # to share the same events module.
@@ -131,7 +131,7 @@ class TestBackendAPIService:
     @pytest.mark.asyncio
     async def test_event(self, backend_api_svc):
         await backend_api_svc.identity.load()
-        await backend_api_svc.wait_for_connection_ready()
+        await backend_api_svc.wait_for_ready()
         vlob = await backend_api_svc.vlob_create('First version')
 
         is_callback_called = asyncio.Future()

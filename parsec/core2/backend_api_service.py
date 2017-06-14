@@ -44,7 +44,7 @@ class BackendAPIService(BaseBackendAPIService):
         self._watchdog_time = watchdog
         self._connection_ready_future = asyncio.futures.Future()
 
-    async def wait_for_connection_ready(self):
+    async def wait_for_ready(self):
         await self._connection_ready_future
 
     async def connect_event(self, event, sender, cb):
@@ -224,7 +224,7 @@ class MockedBackendAPIService(BaseBackendAPIService):
         _patch_service_event_namespace(self._user_vlob_service, self._backend_event_ns)
         _patch_service_event_namespace(self._vlob_service, self._backend_event_ns)
 
-    async def wait_for_connection_ready(self):
+    async def wait_for_ready(self):
         pass
 
     async def connect_event(self, event, sender, cb):

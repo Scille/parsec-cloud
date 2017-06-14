@@ -130,8 +130,12 @@ def _retrieve_path(workspace, path):
 
 
 class Reader:
+    def __init__(self, identity, backend):
+        self._identity = identity
+        self._backend = backend
 
     async def file_read(self, workspace: Workspace, path: str, offset: int=0, size: int=-1):
+        self._identity.id
         _check_path(workspace, path, should_exists=True, type='file')
         fileobj = _retrieve_file(workspace, path)
         if size < 0:
@@ -140,6 +144,7 @@ class Reader:
             return fileobj.data[offset:offset + size]
 
     async def stat(self, workspace: Workspace, path: str):
+        self._identity.id
         _check_path(workspace, path, should_exists=True)
         obj = _retrieve_path(workspace, path)
         if isinstance(obj, Folder):
@@ -151,14 +156,19 @@ class Reader:
 
 
 class Writer:
+    def __init__(self, identity, backend):
+        self._identity = identity
+        self._backend = backend
 
     async def file_create(self, workspace, path: str):
+        self._identity.id
         _check_path(workspace, path, should_exists=False)
         dirpath, name = path.rsplit('/', 1)
         dirobj = _retrieve_path(workspace, dirpath)
         dirobj.children[name] = File()
 
     async def file_write(self, workspace, path: str, content: bytes, offset: int=0):
+        self._identity.id
         _check_path(workspace, path, should_exists=True, type='file')
         fileobj = _retrieve_file(workspace, path)
         fileobj.data = (fileobj.data[:offset] + content +
@@ -166,12 +176,14 @@ class Writer:
         fileobj.updated = arrow.get()
 
     async def folder_create(self, workspace, path: str):
+        self._identity.id
         _check_path(workspace, path, should_exists=False)
         dirpath, name = path.rsplit('/', 1)
         dirobj = _retrieve_path(workspace, dirpath)
         dirobj.children[name] = Folder()
 
     async def move(self, workspace, src: str, dst: str):
+        self._identity.id
         _check_path(workspace, src, should_exists=True)
         _check_path(workspace, dst, should_exists=False)
 
@@ -184,12 +196,14 @@ class Writer:
         del srcobj.children[scrfilename]
 
     async def delete(self, workspace, path: str):
+        self._identity.id
         _check_path(workspace, path, should_exists=True)
         dirpath, leafname = path.rsplit('/', 1)
         obj = _retrieve_path(workspace, dirpath)
         del obj.children[leafname]
 
     async def file_truncate(self, workspace, path: str, length: int):
+        self._identity.id
         _check_path(workspace, path, should_exists=True, type='file')
         fileobj = _retrieve_file(workspace, path)
         fileobj.data = fileobj.data[:length]

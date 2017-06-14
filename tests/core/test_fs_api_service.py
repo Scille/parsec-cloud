@@ -1,7 +1,6 @@
 import pytest
-import asyncio
-from unittest.mock import Mock
 
+from parsec.exceptions import IdentityNotLoadedError
 from parsec.core2.backend_api_service import MockedBackendAPIService
 from parsec.core2.fs_api import MockedFSAPIMixin, FSAPIMixin
 
@@ -12,13 +11,14 @@ async def bootstrap_FSAPIMixin(request, event_loop, unused_tcp_port):
     fs_api = FSAPIMixin()
     fs_api.identity = MockedIdentityService()
     fs_api.backend = MockedBackendAPIService()
-    await fs_api.identity.load()
-    await fs_api.backend.wait_for_connection_ready()
+    await fs_api.bootstrap()
     return fs_api
 
 
 async def bootstrap_MockedFSAPIMixin(request, event_loop, unused_tcp_port):
-    return MockedFSAPIMixin()
+    fs_api = MockedFSAPIMixin()
+    fs_api.identity = MockedIdentityService()
+    return fs_api
 
 
 @pytest.fixture(params=[bootstrap_MockedFSAPIMixin, bootstrap_FSAPIMixin],
@@ -28,9 +28,18 @@ async def fs_api_svc(request, event_loop, unused_tcp_port):
 
 
 class TestBackendAPIService:
+    @pytest.mark.asyncio
+    async def test_before_identity_load(self, fs_api_svc):
+        with pytest.raises(IdentityNotLoadedError):
+            await fs_api_svc.file_create('/foo')
+        await fs_api_svc.identity.load()
+        await fs_api_svc.wait_for_ready()
+        await fs_api_svc.file_create('/foo')
 
     @pytest.mark.asyncio
     async def test_file(self, fs_api_svc):
+        await fs_api_svc.identity.load()
+        await fs_api_svc.wait_for_ready()
         await fs_api_svc.file_create('/foo')
         ret = await fs_api_svc.stat('/')
         assert ret['children'] == ['foo']
@@ -68,6 +77,8 @@ class TestBackendAPIService:
 
     @pytest.mark.asyncio
     async def test_folder(self, fs_api_svc):
+        await fs_api_svc.identity.load()
+        await fs_api_svc.wait_for_ready()
         await fs_api_svc.folder_create('/foo')
         await fs_api_svc.folder_create('/foo/foo')
         await fs_api_svc.file_create('/foo/bar')
