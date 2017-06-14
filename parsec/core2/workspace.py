@@ -148,7 +148,49 @@ class Reader:
 
 
 class Writer:
-    pass
+
+    async def file_create(self, workspace, path: str):
+        _check_path(workspace, path, should_exists=False)
+        dirpath, name = path.rsplit('/', 1)
+        dirobj = _retrieve_path(workspace, dirpath)
+        dirobj.children[name] = File()
+
+    async def file_write(self, workspace, path: str, content: bytes, offset: int=0):
+        _check_path(workspace, path, should_exists=True, type='file')
+        fileobj = _retrieve_file(workspace, path)
+        fileobj.data = (fileobj.data[:offset] + content +
+                           fileobj.data[offset + len(content):])
+        fileobj.updated = arrow.get()
+
+    async def folder_create(self, workspace, path: str):
+        _check_path(workspace, path, should_exists=False)
+        dirpath, name = path.rsplit('/', 1)
+        dirobj = _retrieve_path(workspace, dirpath)
+        dirobj.children[name] = Folder()
+
+    async def move(self, workspace, src: str, dst: str):
+        _check_path(workspace, src, should_exists=True)
+        _check_path(workspace, dst, should_exists=False)
+
+        srcdirpath, scrfilename = src.rsplit('/', 1)
+        dstdirpath, dstfilename = dst.rsplit('/', 1)
+
+        srcobj = _retrieve_path(workspace, srcdirpath)
+        dstobj = _retrieve_path(workspace, dstdirpath)
+        dstobj.children[dstfilename] = srcobj.children[scrfilename]
+        del srcobj.children[scrfilename]
+
+    async def delete(self, workspace, path: str):
+        _check_path(workspace, path, should_exists=True)
+        dirpath, leafname = path.rsplit('/', 1)
+        obj = _retrieve_path(workspace, dirpath)
+        del obj.children[leafname]
+
+    async def file_truncate(self, workspace, path: str, length: int):
+        _check_path(workspace, path, should_exists=True, type='file')
+        fileobj = _retrieve_file(workspace, path)
+        fileobj.data = fileobj.data[:length]
+        fileobj.updated = arrow.get()
 
 
 class BaseWorkspaceSerializer:
