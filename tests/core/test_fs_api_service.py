@@ -1,55 +1,28 @@
 import pytest
 import asyncio
-import blinker
-import random
 from unittest.mock import Mock
-from string import ascii_lowercase
 
-from parsec.server import WebSocketServer
-from parsec.backend import MockedVlobService
-from parsec.core2.fs_api import MockedFSAPIMixin
-from parsec.server import BaseServer
+from parsec.core2.backend_api_service import MockedBackendAPIService
+from parsec.core2.fs_api import MockedFSAPIMixin, FSAPIMixin
+
+from tests.core.test_backend_api_service import MockedIdentityService
 
 
-# async def bootstrap_FSAPIMixin(request, event_loop, unused_tcp_port):
-#     event_loop.set_debug(True)
-#     # Start a minimal backend server...
-#     server = WebSocketServer()
-#     vlob_service = MockedVlobService()
-#     # Patch our server not to share it signals with the core (given they should
-#     # not share the same interpreter)
-#     backend_signal_namespace = blinker.Namespace()
-#     _patch_service_event_namespace(vlob_service, backend_signal_namespace)
-#     server.register_service(vlob_service)
-#     server_task = await server.start('localhost', unused_tcp_port, loop=event_loop, block=False)
-#     # ...then create a FSAPIMixin which will connect to
-#     backend_api_svc = FSAPIMixin('ws://localhost:%s' % unused_tcp_port)
-#     backend_api_svc.identity = MockedIdentityService()
-#     await backend_api_svc.bootstrap()
-#     # Create base core server
-#     # server = BaseServer()
-#     # server.register_service(backend_api_svc)
-#     # server.register_service(IdentityService())
-#     # await server.bootstrap_services()
-    
-
-#     def finalize():
-#         event_loop.run_until_complete(backend_api_svc.teardown())
-#         server_task.close()
-#         event_loop.run_until_complete(server_task.wait_closed())
-
-#     request.addfinalizer(finalize)
-#     return backend_api_svc
+async def bootstrap_FSAPIMixin(request, event_loop, unused_tcp_port):
+    fs_api = FSAPIMixin()
+    fs_api.identity = MockedIdentityService()
+    fs_api.backend = MockedBackendAPIService()
+    await fs_api.identity.load()
+    await fs_api.backend.wait_for_connection_ready()
+    return fs_api
 
 
 async def bootstrap_MockedFSAPIMixin(request, event_loop, unused_tcp_port):
     return MockedFSAPIMixin()
 
 
-# @pytest.fixture(params=[bootstrap_MockedFSAPIMixin, bootstrap_FSAPIMixin],
-#                 ids=['mocked', 'backend'])
-@pytest.fixture(params=[bootstrap_MockedFSAPIMixin],
-                ids=['mocked'])
+@pytest.fixture(params=[bootstrap_MockedFSAPIMixin, bootstrap_FSAPIMixin],
+                ids=['mocked', 'backend'])
 async def fs_api_svc(request, event_loop, unused_tcp_port):
     return await request.param(request, event_loop, unused_tcp_port)
 

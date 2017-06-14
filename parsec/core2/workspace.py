@@ -134,7 +134,10 @@ class Reader:
     async def file_read(self, workspace: Workspace, path: str, offset: int=0, size: int=-1):
         _check_path(workspace, path, should_exists=True, type='file')
         fileobj = _retrieve_file(workspace, path)
-        return fileobj.data[offset:offset + size]
+        if size < 0:
+            return fileobj.data[offset:]
+        else:
+            return fileobj.data[offset:offset + size]
 
     async def stat(self, workspace: Workspace, path: str):
         _check_path(workspace, path, should_exists=True)
@@ -198,5 +201,6 @@ class BaseWorkspaceSerializer:
 
 
 def workspace_factory(user_manifest):
+    # TODO
     pass
 
