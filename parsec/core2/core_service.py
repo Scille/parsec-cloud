@@ -2,6 +2,7 @@ from marshmallow import fields
 
 from parsec.service import BaseService, service
 from parsec.core2.fs_api import MockedFSAPIMixin
+from parsec.core2.fs_api_impl import FSAPIMixin
 
 
 def core_service_factory(mixins):
@@ -14,4 +15,5 @@ def core_service_factory(mixins):
     return type('CoreService', (BaseService, ) + tuple(mixins), nmspc)
 
 
-CoreService = core_service_factory([MockedFSAPIMixin])
+CoreService = core_service_factory([FSAPIMixin])
+MockedCoreService = core_service_factory([MockedFSAPIMixin])
