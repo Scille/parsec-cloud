@@ -1,14 +1,15 @@
-from datetime import datetime, timezone
+import arrow
 
 from parsec.core2.fs_api import BaseFSAPIMixin
-from parsec.core2.workspace import Directory, File
+from parsec.core2.workspace import Folder, File, Reader
 from parsec.exceptions import InvalidPath
 
 
 class FSAPIMixin(BaseFSAPIMixin):
 
     def __init__(self):
-        self._fs = Directory()
+        self._fs = Folder()
+        self._reader = Reader()
 
     def _retrieve_file(self, path):
         fileobj = self._retrieve_path(path)
@@ -25,14 +26,14 @@ class FSAPIMixin(BaseFSAPIMixin):
         dirpath, leafname = path.rsplit('/', 1)
         try:
             obj = self._retrieve_path(dirpath)
-            if not isinstance(obj, Directory):
+            if not isinstance(obj, Folder):
                 raise InvalidPath("Path `%s` is not a folder" % path)
             try:
                 leafobj = obj.children[leafname]
                 if not should_exists:
                     raise InvalidPath("Path `%s` already exist" % path)
                 if (type == 'file' and not isinstance(leafobj, File) or
-                        type == 'folder' and not isinstance(leafobj, Directory)):
+                        type == 'folder' and not isinstance(leafobj, Folder)):
                     raise InvalidPath("Path `%s` is not a %s" % (path, type))
             except KeyError:
                 if should_exists:
@@ -70,28 +71,19 @@ class FSAPIMixin(BaseFSAPIMixin):
         fileobj = self._retrieve_file(path)
         fileobj.data = (fileobj.data[:offset] + content +
                            fileobj.data[offset + len(content):])
-        fileobj.updated = datetime.now(timezone.utc)
+        fileobj.updated = arrow.get()
 
     async def file_read(self, path: str, offset: int=0, size: int=-1):
-        self._check_path(path, should_exists=True, type='file')
-        fileobj = self._retrieve_file(path)
-        return fileobj.data[offset:offset + size]
+        return await self._reader.file_read(self._fs, path, offset, size)
 
     async def stat(self, path: str):
-        self._check_path(path, should_exists=True)
-        obj = self._retrieve_path(path)
-        if isinstance(obj, Directory):
-            return {'created': obj.created, 'updated': obj.updated,
-                    'type': 'folder', 'children': list(obj.children.keys())}
-        else:
-            return {'created': obj.created, 'updated': obj.updated,
-                    'type': 'file', 'size': len(obj.data)}
+        return await self._reader.stat(self._fs, path)
 
     async def folder_create(self, path: str):
         self._check_path(path, should_exists=False)
         dirpath, name = path.rsplit('/', 1)
         dirobj = self._retrieve_path(dirpath)
-        dirobj.children[name] = Directory()
+        dirobj.children[name] = Folder()
 
     async def move(self, src: str, dst: str):
         self._check_path(src, should_exists=True)
@@ -115,4 +107,4 @@ class FSAPIMixin(BaseFSAPIMixin):
         self._check_path(path, should_exists=True, type='file')
         fileobj = self._retrieve_file(path)
         fileobj.data = fileobj.data[:length]
-        fileobj.updated = datetime.now(timezone.utc)
+        fileobj.updated = arrow.get()

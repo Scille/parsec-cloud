@@ -3,7 +3,7 @@ import sys
 import json
 import base64
 from functools import partial
-from datetime import date, datetime
+from arrow import Arrow
 
 from marshmallow import Schema, fields, validates_schema, ValidationError
 from logbook import Logger, StreamHandler
@@ -78,7 +78,7 @@ class BaseCmdSchema(UnknownCheckedSchema):
 def _json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
 
-    if isinstance(obj, (datetime, date)):
+    if isinstance(obj, Arrow):
         serial = obj.isoformat()
         return serial
     raise TypeError ("Type %s not serializable" % type(obj))

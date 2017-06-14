@@ -186,7 +186,7 @@ class FuseOperations(LoggingMixIn, Operations):
                 fd = self._get_fd(fh)
                 fd.truncate(length)
             finally:
-                self.release(fh)
+                self.release(path, fh)
         else:
             fd = self._get_fd(fh)
             fd.truncate(length)
