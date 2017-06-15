@@ -52,6 +52,7 @@ class IdentityService(BaseIdentityService):
         # TODO raise exception if accessing id/private_key before doing a `load`
         self.id = None
         self.private_key = None
+        self.public_key = None
 
     async def load(self, id, raw_key):
         # TODO encrypt private key
@@ -59,6 +60,7 @@ class IdentityService(BaseIdentityService):
             raise IdentityError('User already logged in')
         self.id = id
         self.private_key = load_private_key(raw_key)
+        self.public_key = self.private_key.pub_key
         self.on_identity_loaded.send(id)
 
     async def unload(self):
@@ -66,4 +68,5 @@ class IdentityService(BaseIdentityService):
             raise IdentityNotLoadedError('Identity not loaded')
         self.id = None
         self.private_key = None
+        self.public_key = None
         self.on_identity_unloaded.send(self.id)
