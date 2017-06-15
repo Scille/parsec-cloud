@@ -54,7 +54,6 @@ sYdo9JQwZx2ihAkd8tN7i1By/NRxRLL2hCuvH8C/KTpzAF2Kvtd+/0sCAgEB
 
 class MockedContext(BaseClientContext):
 
-
     def __init__(self, expected_send=[], to_recv=[]):
         self.expected_send = list(reversed(expected_send))
         self.to_recv = list(reversed(to_recv))
@@ -144,6 +143,7 @@ class TestPubKeyService:
             assert session.identity == 'alice'
 
     # TODO: test bad handshake as well
+
 
 class TestPubKeyServiceAPI:
     @pytest.mark.asyncio

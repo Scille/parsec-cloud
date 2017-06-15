@@ -35,7 +35,7 @@ class BasePubKeyService(BaseService):
     async def _cmd_PUBKEY_GET(self, session, msg):
         msg = cmd_PUBKEY_GET_Schema().load(msg)
         key = await self.get_pubkey(msg['id'], raw=True)
-        return {'status': 'ok', 'key': key}
+        return {'status': 'ok', 'key': key.decode()}
 
     async def get_pubkey(self, identity):
         raise NotImplementedError()
