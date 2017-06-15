@@ -1,3 +1,5 @@
+from datetime import datetime
+from dateutil import parser, tz
 import os
 import stat
 import sys
@@ -5,10 +7,8 @@ import socket
 import json
 import click
 import threading
-from dateutil.parser import parse as dateparse
 from itertools import count
-from base64 import decodebytes, encodebytes
-from errno import ENOENT, EBADFD
+from errno import ENOENT
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 
@@ -29,42 +29,12 @@ def cli(mountpoint, debug, nothreads, socket):
     start_fuse(socket, mountpoint, debug=debug, nothreads=nothreads)
 
 
-class File:
-
-    def __init__(self, operations, path, fd, flags=0):
-        self.fd = fd
-        self.path = path
-        self._operations = operations
-        self.flags = flags
-
-    def read(self, size=None, offset=0):
-        # TODO use flags
-        response = self._operations.send_cmd(
-            cmd='file_read', path=self.path, size=size, offset=offset)
-        if response['status'] != 'ok':
-            raise FuseOSError(ENOENT)
-        return from_jsonb64(response['content'])
-
-    def write(self, data, offset=0):
-        # TODO use flags
-        response = self._operations.send_cmd(
-            cmd='file_write',
-            path=self.path,
-            content=to_jsonb64(data),
-            offset=offset)
-        if response['status'] != 'ok':
-            raise FuseOSError(ENOENT)
-
-    def truncate(self, length):
-        response = self._operations.send_cmd(
-            cmd='file_truncate', path=self.path, length=length)
-        if response['status'] != 'ok':
-            raise FuseOSError(ENOENT)
-
-    def flush(self):
-        # TODO: operations should be buffered then flushed instead of
-        # being directly executed
-        pass
+def convert_utc_time_to_local_timestamp(utc_time):
+    from_zone = tz.tzutc()
+    to_zone = tz.tzlocal()
+    utc = parser.parse(utc_time)
+    utc = utc.replace(tzinfo=from_zone)
+    return utc.astimezone(to_zone).timestamp()
 
 
 class FuseOperations(LoggingMixIn, Operations):
@@ -107,31 +77,28 @@ class FuseOperations(LoggingMixIn, Operations):
             logger.debug('Received: %r' % raw_reps)
             return json.loads(raw_reps[:-1].decode())
 
-    def _get_fd(self, fh):
-        try:
-            return self.fds[fh]
-        except KeyError:
-            raise FuseOSError(EBADFD)
-
-    def _get_file_id(self, path):
-        response = self.send_cmd(cmd='list_dir', path=path)
+    def getattr(self, path, fh=None):
+        response = self.send_cmd(cmd='stat', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
-        return response['current']['id']
-
-    def getattr(self, path, fh=None):
-        stat = self.send_cmd(cmd='stat', path=path)
-        if stat['status'] != 'ok':
-            raise FuseOSError(ENOENT)
+        if response['type'] == 'file':
+            stat = response
+            stat['is_dir'] = False  # TODO remove this ?
+        else:
+            # TODO remove this?
+            local_time = datetime.now().isoformat()
+            stat = {'is_dir': True,
+                    'size': 0,
+                    'created': local_time,
+                    'updated': local_time}
         fuse_stat = {
-            'st_size': stat.get('size', 0),
-            'st_ctime': dateparse(stat['created']).timestamp(),  # TODO change to local timezone
-            'st_mtime': dateparse(stat['updated']).timestamp(),
-            'st_atime': dateparse(stat['updated']).timestamp(),  # TODO not supported ?
+            'st_size': stat['size'],
+            'st_ctime': convert_utc_time_to_local_timestamp(stat['created']),  # TODO change to local timezone
+            'st_mtime': convert_utc_time_to_local_timestamp(stat['updated']),
         }
         # Set it to 777 access
         fuse_stat['st_mode'] = 0
-        if stat['type'] == 'folder':
+        if stat['is_dir']:
             fuse_stat['st_mode'] |= S_IFDIR
         else:
             fuse_stat['st_mode'] |= S_IFREG
@@ -142,54 +109,42 @@ class FuseOperations(LoggingMixIn, Operations):
         return fuse_stat
 
     def readdir(self, path, fh):
-        resp = self.send_cmd(cmd='stat', path=path)
-        # TODO: make sure error code for path is not a folder is ENOENT
-        if resp['status'] != 'ok' or resp['type'] != 'folder':
+        response = self.send_cmd(cmd='stat', path=path)
+        if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
-        return ['.', '..'] + list(resp['children'])
+        return ['.', '..'] + response['children']
 
     def create(self, path, mode):
         response = self.send_cmd(cmd='file_create', path=path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
-        return self.open(path)
-
-    def open(self, path, flags=0):
-        fd_id = self.get_fd_id()
-        resp = self.send_cmd(cmd='stat', path=path)
-        if resp['status'] != 'ok' or resp['type'] != 'file':
-            raise FuseOSError(ENOENT)
-        file = File(self, path, fd_id, flags)
-        self.fds[fd_id] = file
-        return fd_id
-
-    def release(self, path, fh):
-        try:
-            file = self.fds.pop(fh)
-            file.flush()
-        except KeyError:
-            raise FuseOSError(EBADFD)
+        return 0
 
     def read(self, path, size, offset, fh):
-        fd = self._get_fd(fh)
-        return fd.read(size, offset)
+        response = self.send_cmd(cmd='file_read', path=path, size=size, offset=offset)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
+        return from_jsonb64(response['content'])
 
     def write(self, path, data, offset, fh):
-        fd = self._get_fd(fh)
-        fd.write(data, offset)
-        return len(data)
+        length = len(data)
+        data = to_jsonb64(data)
+        response = self.send_cmd(cmd='file_write', path=path, content=data, offset=offset)
+        if response['status'] != 'ok':
+            raise FuseOSError(ENOENT)
+        return length
 
     def truncate(self, path, length, fh=None):
         if not fh:
-            try:
-                fh = self.open(path, flags=0)
-                fd = self._get_fd(fh)
-                fd.truncate(length)
-            finally:
-                self.release(fh)
-        else:
-            fd = self._get_fd(fh)
-            fd.truncate(length)
+            fh = self.open(path, flags=0)
+            release_fh = True
+        try:
+            response = self.send_cmd(cmd='file_truncate', path=path, length=length)
+            if response['status'] != 'ok':
+                raise FuseOSError(ENOENT)
+        finally:
+            if release_fh:
+                self.release(path, fh)
 
     def unlink(self, path):
         # TODO: check path is a file
@@ -211,22 +166,11 @@ class FuseOperations(LoggingMixIn, Operations):
             raise FuseOSError(ENOENT)
         return 0
 
-    def rename(self, src, dst):
-        response = self.send_cmd(cmd='move', src=src, dst=dst)
+    def rename(self, old_path, new_path):
+        response = self.send_cmd(cmd='move', old_path=old_path, new_path=new_path)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
         return 0
-
-    def flush(self, path, fh):
-        fd = self._get_fd(fh)
-        fd.flush()
-        return 0
-
-    def fsync(self, path, datasync, fh):
-        return 0  # TODO
-
-    def fsyncdir(self, path, datasync, fh):
-        return 0  # TODO
 
 
 def start_fuse(socket_path: str, mountpoint: str, debug: bool=False, nothreads: bool=False):
