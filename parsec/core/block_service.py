@@ -3,43 +3,14 @@ from uuid import uuid4
 from marshmallow import fields
 
 from parsec.core.cache import cached_block
-from parsec.service import BaseService, cmd
+from parsec.service import BaseService
 from parsec.exceptions import BlockError, BlockNotFound
-from parsec.tools import BaseCmdSchema, logger
-
-
-class cmd_CREATE_Schema(BaseCmdSchema):
-    content = fields.String(required=True)
-    id = fields.String(missing=None)
-
-
-class cmd_READ_Schema(BaseCmdSchema):
-    id = fields.String(required=True)
+from parsec.tools import logger
 
 
 class BaseBlockService(BaseService):
 
     name = 'BlockService'
-
-    @cmd('block_create')
-    async def _cmd_CREATE(self, session, msg):
-        msg = cmd_CREATE_Schema().load(msg)
-        id = await self.create(msg['content'], msg['id'])
-        return {'status': 'ok', 'id': id}
-
-    @cmd('block_read')
-    async def _cmd_READ(self, session, msg):
-        msg = cmd_READ_Schema().load(msg)
-        block = await self.read(msg['id'])
-        block.update({'status': 'ok'})
-        return block
-
-    @cmd('block_stat')
-    async def _cmd_STAT(self, session, msg):
-        msg = cmd_READ_Schema().load(msg)
-        stat = await self.stat(msg['id'])
-        stat.update({'status': 'ok'})
-        return stat
 
     async def create(self, content, id):
         raise NotImplementedError()

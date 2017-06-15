@@ -65,7 +65,7 @@ class S3BlockService(BaseBlockService):
             raise BlockNotFound(str(exc))
         return {
             'content': obj['Body'].read().decode(),
-            'creation_date': float(obj['Metadata']['created'])
+            'creation_date': obj['Metadata']['created']
         }
 
     @cached_block
@@ -77,4 +77,4 @@ class S3BlockService(BaseBlockService):
             obj = await get_event_loop().run_in_executor(None, func)
         except (S3ClientError, S3EndpointConnectionError) as exc:
             raise BlockNotFound(str(exc))
-        return {'creation_date': float(obj['Metadata']['created'])}
+        return {'creation_date': obj['Metadata']['created']}
