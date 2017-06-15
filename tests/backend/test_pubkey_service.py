@@ -8,46 +8,60 @@ from parsec.backend import InMemoryPubKeyService
 from parsec.crypto import RSAPrivateKey, RSAPublicKey
 from parsec.session import AuthSession
 from parsec.exceptions import PubKeyError, PubKeyNotFound
+from parsec.tools import to_jsonb64
 
 from tests.common import can_side_effect_or_skip
 from tests.backend.common import init_or_skiptest_parsec_postgresql
 
 
 ALICE_PRIVATE_RSA = b"""
------BEGIN PRIVATE KEY-----
-MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEAsSle/x4jtr+kaxiv
-9BYlL+gffH/VLC+Q/WTTB+1FIU1fdmgdZVGaIlAWJHqr9qEZBfwXYzlQv8pIMn+W
-5pqvHQICAQECQDv5FjKAvWW1a3Twc1ia67eQUmDugu8VFTDsV2BRUS0jlxJ0yCL+
-TEBpOwH95TFgvfRBYee97APHjhvLLlzmEyECIQDZdjMg/j9N7sw602DER0ciERPI
-Ps9rU8RqRXaWPYtWOQIhANCO1h/z7iFjlpENbKDOCinfsXd9ulVsoNYWhKm58gAF
-AiEAzMT3XdKFUlljq+/hl/Nt0GPA8lkHDGjG5ZAaAAYnj/ECIQCB125lkuHy61LH
-4INhH6azeFaUGnn7aHwJxE6beL6BgQIhALbajJWsBf5LmeO190adM2jAVN94YqVD
-aOrHGFFqrjJ3
------END PRIVATE KEY-----
+-----BEGIN RSA PRIVATE KEY-----
+MIICWgIBAAKBgGITzwWRxv+mTAwqQd9pmQ8qqUO04KJSq1cH87KtmkqI3qewvXtW
+qFsHP6ZNOT6wba7lrohJh1rDLU98GjorL4D/eX/mG/U9gURDi4aTTXT02RbHESBp
+yMpeBUCzPTq1OgAk9OaawpV48vNkQifuT743hK49SLhqGNmNAnH2E3lxAgMBAAEC
+gYBY2S0QFJG8AwCdfKKUK+t2q+UO6wscwdtqSk/grBg8MWXTb+8XjteRLy3gD9Eu
+E1IpwPStjj7KYEnp2blAvOKY0E537d2a4NLrDbSi84q8kXqvv0UeGMC0ZB2r4C89
+/6BTZii4mjIlg3iPtkbRdLfexjqmtELliPkHKJIIMH3fYQJBAKd/k1hhnoxEx4sq
+GRKueAX7orR9iZHraoR9nlV69/0B23Na0Q9/mP2bLphhDS4bOyR8EXF3y6CjSVO4
+LBDPOmUCQQCV5hr3RxGPuYi2n2VplocLK/6UuXWdrz+7GIqZdQhvhvYSKbqZ5tvK
+Ue8TYK3Dn4K/B+a7wGTSx3soSY3RBqwdAkAv94jqtooBAXFjmRq1DuGwVO+zYIAV
+GaXXa2H8eMqr2exOjKNyHMhjWB1v5dswaPv25tDX/caCqkBFiWiVJ8NBAkBnEnqo
+Xe3tbh5btO7+08q4G+BKU9xUORURiaaELr1GMv8xLhBpkxy+2egS4v+Y7C3zPXOi
+1oB9jz1YTnt9p6DhAkBy0qgscOzo4hAn062MAYWA6hZOTkvzRbRpnyTRctKwZPSC
++tnlGk8FAkuOm/oKabDOY1WZMkj5zWAXrW4oR3Q2
+-----END RSA PRIVATE KEY-----
 """
 ALICE_PUBLIC_RSA = b"""
 -----BEGIN PUBLIC KEY-----
-MFswDQYJKoZIhvcNAQEBBQADSgAwRwJBALEpXv8eI7a/pGsYr/QWJS/oH3x/1Swv
-kP1k0wftRSFNX3ZoHWVRmiJQFiR6q/ahGQX8F2M5UL/KSDJ/luaarx0CAgEB
+MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgGITzwWRxv+mTAwqQd9pmQ8qqUO0
+4KJSq1cH87KtmkqI3qewvXtWqFsHP6ZNOT6wba7lrohJh1rDLU98GjorL4D/eX/m
+G/U9gURDi4aTTXT02RbHESBpyMpeBUCzPTq1OgAk9OaawpV48vNkQifuT743hK49
+SLhqGNmNAnH2E3lxAgMBAAE=
 -----END PUBLIC KEY-----
 """
-
 BOB_PRIVATE_RSA = b"""
------BEGIN PRIVATE KEY-----
-MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEAyKLdYjpibsnTCBcw
-eEPZF0n+VemdLrmxh2j0lDBnHaKECR3y03uLUHL81HFEsvaEK68fwL8pOnMAXYq+
-137/SwICAQECQQCKLmykRhf2ougAl3ESFNRE1VOF4KUIRh2g/pKH7YnBumgyh0cp
-I57woQBc6rviSTRdK5oFNpNLDiUJpez0rLbZAiEA+C85pI1TGy+JoXcaYqKqFfuj
-qr96DC8IlEmXdd5V7xUCIQDO9FKBtRdt3wEIZZzP0GoYCDiffsM/8lL95K0ID2PM
-3wIhAL81UUQBTPoMt7sm93DY9pZqNl+wZ/1u8bD/6znwBnB5AiACanKFAB8nInqI
-kKA2OTgGQdbTC3DY5vAI8L1Jzl/LmwIhALEV7Xb8MqhT/Li7PgkBzEmjxgZWBX8w
-jrL/lrN8BM6W
------END PRIVATE KEY-----
+-----BEGIN RSA PRIVATE KEY-----
+MIICXQIBAAKBgQDCqVQVdVhJqW9rrbObvDZ4ET6FoIyVn6ldWhOJaycMeFYBN3t+
+cGr9/xHPGrYXK63nc8x4IVxhfXZ7JwrQ+AJv935S3rAV6JhDKDfDFrkzUVZmcc/g
+HhjiP7rTAt4RtACvhZwrDuj3Pc4miCpGN/T3tbOKG889JN85nABKR9WkdwIDAQAB
+AoGBAJFU3Dr9FgJA5rfMwpiV51CzByu61trqjgbtNkLVZhzwRr23z5Jxmd+yLHik
+J6ia6sYvdUuHFLKQegGt/2xOjXn8UBpa725gLojHn2umtJDL7amTlBwiJfNXuZrF
+BSKK9+xZnNDWMq1IuCqPeintbve+MNSc62JYuGGtXSz9L5f5AkEA/xBkUksBfEUl
+65oEPgxvMKHNjLq48otRmCaG+i3MuQqTYQ+c8Z/l26yQL4OV2b36a8/tTaLhwhAZ
+Ibtv05NKfQJBAMNgMbOsUWpY8A1Cec79Oj6RVe79E5ciZ4mW3lx5tjJRyNxwlQag
+u+T6SwBIa6xMfLBQeizzxqXqxAyW/riQ6QMCQQCadUu7Re6tWZaAGTGufYsr8R/v
+s/dh8ZpEwDgG8otCFzRul6zb6Y+huttJ2q55QIGQnka/N/7srSD6+23Zux1lAkBx
+P30PzL6UimD7DqFUnev5AH1zPjbwz/x8AHt71wEJQebQAGIhqWHAZGS9ET14bg2I
+ld172QI4glCJi6yyhyzJAkBzfmHZEE8FyLCz4z6b+Z2ghMds2Xz7RwgVqCIXt9Ku
+P7Bq0eXXgyaBo+jpr3h4K7QnPh+PaHSlGqSfczZ6GIpx
+-----END RSA PRIVATE KEY-----
 """
 BOB_PUBLIC_RSA = b"""
 -----BEGIN PUBLIC KEY-----
-MFswDQYJKoZIhvcNAQEBBQADSgAwRwJBAMii3WI6Ym7J0wgXMHhD2RdJ/lXpnS65
-sYdo9JQwZx2ihAkd8tN7i1By/NRxRLL2hCuvH8C/KTpzAF2Kvtd+/0sCAgEB
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDCqVQVdVhJqW9rrbObvDZ4ET6F
+oIyVn6ldWhOJaycMeFYBN3t+cGr9/xHPGrYXK63nc8x4IVxhfXZ7JwrQ+AJv935S
+3rAV6JhDKDfDFrkzUVZmcc/gHhjiP7rTAt4RtACvhZwrDuj3Pc4miCpGN/T3tbOK
+G889JN85nABKR9WkdwIDAQAB
 -----END PUBLIC KEY-----
 """
 
@@ -136,7 +150,8 @@ class TestPubKeyService:
             ]
             to_recv = [
                 '{"handshake": "answer", "identity": "alice", '
-                '"answer": "K3nbe2JM80BnaamMFXK4+p2sZsfWp6vJCFi2Xvo8mljkw9qkqrvGXCgFW+F8XeBRv3fpMdeZVyS35nJ7HE32Bw=="}'
+                '"answer": "R2MF9UXaBEFPeG/HVPV9k9jputDnJXwOm5JzfAehPZfAzJsR48ailp6mfnTl5kGvTN3nCvyiX0DZMUm1JyWv/puOTbQGJk66S/uQtSuA+zOgeLwnynC9hbuj16OkUuAUg7oyqSATihFvudGpPWLHWR6rlhtUeON1sbcedg3vRzA="}'
+
             ]
             context = MockedContext(expected_send=expected_send, to_recv=to_recv)
             session = await pubkey_svc.handshake(context)

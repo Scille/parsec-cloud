@@ -20,7 +20,7 @@ logger_stream.push_application()
 
 
 def to_jsonb64(raw: bytes):
-    return base64.encodebytes(raw).decode()
+    return base64.encodebytes(raw).decode().replace('\\n', '')
 
 
 def from_jsonb64(msg: str):
