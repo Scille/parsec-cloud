@@ -85,6 +85,8 @@ class RSAPublicKey(BasePublicAsymKey):
             self._hazmat_public_key = public_key
         else:
             self._hazmat_public_key = key
+        if self._hazmat_public_key.key_size < 1023:
+            raise RuntimeError('Minimal key size is 1024bits')
 
     def verify(self, signature: bytes, message: bytes):
         return self._hazmat_public_key.verify(
@@ -132,6 +134,8 @@ class RSAPrivateKey(BasePrivateAsymKey):
             self._hazmat_private_key = private_key
         else:
             self._hazmat_public_key = key
+        if self._hazmat_private_key.key_size < 1023:
+            raise RuntimeError('Minimal key size is 1024bits')
 
     def sign(self, message: bytes):
         return self._hazmat_private_key.sign(

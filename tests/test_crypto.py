@@ -57,6 +57,24 @@ oIyVn6ldWhOJaycMeFYBN3t+cGr9/xHPGrYXK63nc8x4IVxhfXZ7JwrQ+AJv935S
 G889JN85nABKR9WkdwIDAQAB
 -----END PUBLIC KEY-----
 """
+TOO_SMALL_PRIVATE_RSA = b"""
+-----BEGIN PRIVATE KEY-----
+MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEAsSle/x4jtr+kaxiv
+9BYlL+gffH/VLC+Q/WTTB+1FIU1fdmgdZVGaIlAWJHqr9qEZBfwXYzlQv8pIMn+W
+5pqvHQICAQECQDv5FjKAvWW1a3Twc1ia67eQUmDugu8VFTDsV2BRUS0jlxJ0yCL+
+TEBpOwH95TFgvfRBYee97APHjhvLLlzmEyECIQDZdjMg/j9N7sw602DER0ciERPI
+Ps9rU8RqRXaWPYtWOQIhANCO1h/z7iFjlpENbKDOCinfsXd9ulVsoNYWhKm58gAF
+AiEAzMT3XdKFUlljq+/hl/Nt0GPA8lkHDGjG5ZAaAAYnj/ECIQCB125lkuHy61LH
+4INhH6azeFaUGnn7aHwJxE6beL6BgQIhALbajJWsBf5LmeO190adM2jAVN94YqVD
+aOrHGFFqrjJ3
+-----END PRIVATE KEY-----
+"""
+TOO_SMALL_PUBLIC_RSA = b"""
+-----BEGIN PUBLIC KEY-----
+MFswDQYJKoZIhvcNAQEBBQADSgAwRwJBALEpXv8eI7a/pGsYr/QWJS/oH3x/1Swv
+kP1k0wftRSFNX3ZoHWVRmiJQFiR6q/ahGQX8F2M5UL/KSDJ/luaarx0CAgEB
+-----END PUBLIC KEY-----
+"""
 
 
 @pytest.fixture
@@ -83,6 +101,12 @@ class TestRSAAsymCrypto:
     def test_load_private_key(self):
         key = load_private_key(ALICE_PRIVATE_RSA)
         assert isinstance(key, BasePrivateAsymKey)
+
+    def test_load_too_small_key(self):
+        with pytest.raises(RuntimeError):
+            key = load_public_key(TOO_SMALL_PUBLIC_RSA)
+        with pytest.raises(RuntimeError):
+            key = load_private_key(TOO_SMALL_PRIVATE_RSA)
 
     @pytest.mark.parametrize('badkey', [
         ALICE_PUBLIC_RSA,
