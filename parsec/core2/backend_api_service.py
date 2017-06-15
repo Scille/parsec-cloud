@@ -133,12 +133,16 @@ class BackendAPIService(BaseBackendAPIService):
 
     async def bootstrap(self):
         await super().bootstrap()
-        self.identity.on_identity_loaded.connect(
-            async_callback(lambda x: self._open_connection()), weak=False)
-        self.identity.on_identity_unloaded.connect(
-            async_callback(lambda x: self._close_connection()), weak=False)
+        # Must store the callback in the object given the are weak referenced
+        # when registered as signal callback
+        self._on_identity_loaded_cb = async_callback(lambda x: self._open_connection())
+        self._on_identity_unloaded_cb = async_callback(lambda x: self._close_connection())
+        self.identity.on_identity_loaded.connect(self._on_identity_loaded_cb)
+        self.identity.on_identity_unloaded.connect(self._on_identity_unloaded_cb)
 
     async def teardown(self):
+        self.identity.on_identity_loaded.disconnect(self._on_identity_loaded_cb)
+        self.identity.on_identity_unloaded.disconnect(self._on_identity_unloaded_cb)
         if self._websocket:
             await self._close_connection()
 

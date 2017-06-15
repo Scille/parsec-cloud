@@ -281,6 +281,11 @@ class FSAPIService(BaseFSAPIService):
         self.identity.on_identity_loaded.connect(self._on_identity_loaded_cb)
         self.identity.on_identity_unloaded.connect(self._on_identity_unloaded_cb)
 
+    async def teardown(self):
+        await super().teardown()
+        self.identity.on_identity_loaded.disconnect(self._on_identity_loaded_cb)
+        self.identity.on_identity_unloaded.disconnect(self._on_identity_unloaded_cb)
+
     async def _load_workspace(self):
         await self.backend.wait_for_ready()
         self._workspace = await load_or_create_workspace(self.identity, self.backend)
