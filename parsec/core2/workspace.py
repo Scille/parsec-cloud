@@ -264,3 +264,26 @@ def workspace_factory(user_manifest=None):
     assert isinstance(user_manifest, dict)
     assert user_manifest['type'] == 'folder'
     return _load_folder(user_manifest, folder_cls=Workspace)
+
+
+class Dumper:
+    def _dump(self, item):
+        if isinstance(item, File):
+            return {
+                'type': 'file',
+                'updated': item.updated.isoformat(),
+                'created': item.created.isoformat(),
+            }
+        elif isinstance(item, Folder):
+            return {
+                'type': 'folder',
+                'updated': item.updated.isoformat(),
+                'created': item.created.isoformat(),
+                'children': {k: self._dump(v) for k, v in item.children.items()}
+            }
+        else:
+            raise RuntimeError('Invalid node type %s' % item)
+
+    def dump(self, workspace):
+        assert isinstance(workspace, Workspace)
+        return self._dump(workspace)

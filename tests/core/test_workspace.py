@@ -1,13 +1,13 @@
 import pytest
 import arrow
 
-from parsec.core2.workspace import workspace_factory, Workspace, File, Folder
+from parsec.core2.workspace import workspace_factory, Workspace, File, Folder, Dumper
 
 
 def test_workspace_factory_load_simple():
     payload = {
-        'type': 'folder', 'created': '2017-03-22T12:32:02.993+00',
-        'updated': '2017-03-22T12:32:10.872+00', 'children': {}
+        'type': 'folder', 'created': '2017-03-22T12:32:02.993128+00:00',
+        'updated': '2017-03-22T12:32:10.872905+00:00', 'children': {}
     }
     wksp = workspace_factory(payload)
     assert isinstance(wksp, Workspace)
@@ -18,22 +18,22 @@ def test_workspace_factory_load_simple():
 
 def test_workspace_factory_load_complexe():
     payload = {
-        'type': 'folder', 'created': '2017-03-22T12:32:02.993+00',
-        'updated': '2017-03-22T12:32:10.872+00', 'children': {
+        'type': 'folder', 'created': '2017-03-22T12:32:02.993128+00:00',
+        'updated': '2017-03-22T12:32:10.872905+00:00', 'children': {
             'foo_file': {
-                'type': 'file', 'created': '2017-03-22T12:32:02.993+00',
-                'updated': '2017-03-22T12:32:10.872+00'
+                'type': 'file', 'created': '2017-03-22T12:32:02.993128+00:00',
+                'updated': '2017-03-22T12:32:10.872905+00:00'
             },
             'bar_folder': {
-                'type': 'folder', 'created': '2017-03-22T12:32:02.993+00',
-                'updated': '2017-03-22T12:32:10.872+00', 'children': {
+                'type': 'folder', 'created': '2017-03-22T12:32:02.993128+00:00',
+                'updated': '2017-03-22T12:32:10.872905+00:00', 'children': {
                     'sub_bar_file': {
-                        'type': 'file', 'created': '2017-03-22T12:32:02.993+00',
-                        'updated': '2017-03-22T12:32:10.872+00'
+                        'type': 'file', 'created': '2017-03-22T12:32:02.993128+00:00',
+                        'updated': '2017-03-22T12:32:10.872905+00:00'
                     },
                     'sub_bar_folder': {
-                        'type': 'folder', 'created': '2017-03-22T12:32:02.993+00',
-                        'updated': '2017-03-22T12:32:10.872+00', 'children': {}
+                        'type': 'folder', 'created': '2017-03-22T12:32:02.993128+00:00',
+                        'updated': '2017-03-22T12:32:10.872905+00:00', 'children': {}
                     }
                 }
             }
@@ -66,3 +66,32 @@ def test_workspace_factory_load_complexe():
     assert isinstance(sub_bar_folder.created, arrow.Arrow)
     assert isinstance(sub_bar_folder.updated, arrow.Arrow)
     assert sub_bar_folder.children == {}
+
+
+def test_workspace_dump():
+    payload = {
+        'type': 'folder', 'created': '2017-03-22T12:32:02.993128+00:00',
+        'updated': '2017-03-22T12:32:10.872905+00:00', 'children': {
+            'foo_file': {
+                'type': 'file', 'created': '2017-03-22T12:32:02.993128+00:00',
+                'updated': '2017-03-22T12:32:10.872905+00:00'
+            },
+            'bar_folder': {
+                'type': 'folder', 'created': '2017-03-22T12:32:02.993128+00:00',
+                'updated': '2017-03-22T12:32:10.872905+00:00', 'children': {
+                    'sub_bar_file': {
+                        'type': 'file', 'created': '2017-03-22T12:32:02.993128+00:00',
+                        'updated': '2017-03-22T12:32:10.872905+00:00'
+                    },
+                    'sub_bar_folder': {
+                        'type': 'folder', 'created': '2017-03-22T12:32:02.993128+00:00',
+                        'updated': '2017-03-22T12:32:10.872905+00:00', 'children': {}
+                    }
+                }
+            }
+        }
+    }
+    wksp = workspace_factory(payload)
+    dumper = Dumper()
+    dumped = dumper.dump(wksp)
+    assert dumped == payload
