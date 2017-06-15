@@ -6,6 +6,7 @@ from cryptography.hazmat.backends.openssl import backend as openssl
 from cryptography.hazmat.primitives import hashes
 
 from parsec.crypto import generate_sym_key, load_sym_key
+from parsec.exceptions import BlockNotFound, VlobNotFound
 
 
 class File:
@@ -25,6 +26,7 @@ class File:
         self.read_trust_seed = vlob['read_trust_seed']
         self.write_trust_seed = vlob['write_trust_seed']
         self.version = 0
+        self.dirty = False
         return self
 
     @classmethod
@@ -37,6 +39,7 @@ class File:
         self.encryptor = load_sym_key(decodebytes(key.encode()))
         vlob = await self.synchronizer.vlob_read(self.id, self.read_trust_seed, version)
         self.version = vlob['version']
+        self.dirty = False
         return self
 
     async def get_vlob(self):
@@ -48,7 +51,8 @@ class File:
         return vlob
 
     async def get_blocks(self):
-        vlob = await self.synchronizer.vlob_read(self.id, self.read_trust_seed, self.version)
+        version = await self.get_version()
+        vlob = await self.synchronizer.vlob_read(self.id, self.read_trust_seed, version)
         encrypted_blob = decodebytes(vlob['blob'].encode())
         blob = self.encryptor.decrypt(encrypted_blob)
         blob = json.loads(blob.decode())
@@ -59,12 +63,11 @@ class File:
         return block_ids
 
     async def get_version(self):
-        return self.version
+        return self.version + 1 if self.dirty else self.version
 
     async def read(self, size=None, offset=0):
-        vlob = await self.synchronizer.vlob_read(id=self.id,
-                                                 version=self.version,
-                                                 trust_seed=self.read_trust_seed)
+        version = await self.get_version()
+        vlob = await self.synchronizer.vlob_read(self.id, self.read_trust_seed, version)
         encrypted_blob = decodebytes(vlob['blob'].encode())
         blob = self.encryptor.decrypt(encrypted_blob)
         blob = json.loads(blob.decode())
@@ -122,7 +125,11 @@ class File:
                 current_blocks_ids.append(block_properties['block'])
         for block_id in previous_blocks_ids:
             if block_id not in current_blocks_ids:
-                await self.synchronizer.block_delete(block_id)
+                try:
+                    await self.synchronizer.block_delete(block_id)
+                except BlockNotFound:
+                    pass
+        self.dirty = True
 
     async def truncate(self, length):
         previous_blocks = await self._find_matching_blocks()
@@ -149,7 +156,11 @@ class File:
                 current_blocks_ids.append(block_properties['block'])
         for block_id in previous_blocks_ids:
             if block_id not in current_blocks_ids:
-                await self.synchronizer.block_delete(block_id)
+                try:
+                    await self.synchronizer.block_delete(block_id)
+                except BlockNotFound:
+                    pass
+        self.dirty = True
 
     # async def stat(self):
     #     # TODO ?
@@ -167,42 +178,35 @@ class File:
     #     # TODO ?
     #     pass
 
-    # async def commit(self):
-    #     vlob = await self.synchronizer.vlob_read(id=self.id,
-    #                                                      version=self.version,
-    #                                                      trust_seed=self.read_trust_seed)
-    #     encrypted_blob = decodebytes(vlob['blob'].encode())
-    #     blob = self.encryptor.decrypt(encrypted_blob)
-    #     blob = json.loads(blob.decode())
-    #     block_ids = []
-    #     for block_and_key in blob:
-    #         for block in block_and_key['blocks']:
-    #             block_ids.append(block['block'])
-    #     for block_id in block_ids:
-    #         try:
-    #             await self.synchronizer.synchronize(block_id)
-    #         except Exception:  # TODO change type
-    #             pass
-    #     await self.synchronizer.synchronize(self.id)
+    async def commit(self):
+        block_ids = await self.get_blocks()
+        for block_id in block_ids:
+            await self.synchronizer.block_synchronize(block_id)
+        new_vlob = await self.synchronizer.vlob_synchronize(self.id)
+        if new_vlob:
+            if new_vlob is not True:
+                self.id = new_vlob['id']
+                self.read_trust_seed = new_vlob['read_trust_seed']
+                self.write_trust_seed = new_vlob['write_trust_seed']
+                new_vlob = await self.get_vlob()
+            self.version += 1
+        self.dirty = False
+        return new_vlob
 
-    # async def discard(self):
-    #     vlob = await self.synchronizer.vlob_read(id=self.id,
-    #                                                      version=self.version,
-    #                                                      trust_seed=self.read_trust_seed)
-    #     blob = vlob['blob']
-    #     encrypted_blob = decodebytes(blob.encode())
-    #     blob = self.encryptor.decrypt(encrypted_blob)
-    #     blob = json.loads(blob.decode())
-    #     block_ids = []
-    #     for block_and_key in blob:
-    #         for block in block_and_key['blocks']:
-    #             block_ids.append(block['block'])
-    #     for block_id in block_ids:
-    #         try:
-    #             await self.synchronizer.block_delete(block_id)
-    #         except Exception:  # TODO change type
-    #             pass
-    #     await self.synchronizer.block_delete(self.id)
+    async def discard(self):
+        already_synchronized = False
+        block_ids = await self.get_blocks()
+        for block_id in block_ids:
+            try:
+                await self.synchronizer.block_delete(block_id)
+            except BlockNotFound:
+                already_synchronized = True
+        try:
+            await self.synchronizer.vlob_delete(self.id)
+        except VlobNotFound:
+            already_synchronized = True
+        self.dirty = False
+        return not already_synchronized
 
     async def _build_file_blocks(self, data):
         if isinstance(data, str):
@@ -234,6 +238,7 @@ class File:
         block_key = encodebytes(encryptor.key).decode()
         blob = {'blocks': blocks,
                 'key': block_key}
+        self.dirty = True
         return blob
 
     async def _find_matching_blocks(self, size=None, offset=0):
@@ -241,9 +246,10 @@ class File:
             size = sys.maxsize
         pre_excluded_blocks = []
         post_excluded_blocks = []
+        version = await self.get_version()
         vlob = await self.synchronizer.vlob_read(self.id,
                                                  self.read_trust_seed,
-                                                 self.version)
+                                                 version)
         blob = vlob['blob']
         encrypted_blob = decodebytes(blob.encode())
         blob = self.encryptor.decrypt(encrypted_blob)

@@ -18,6 +18,7 @@ from parsec.core import (MockedBackendAPIService, MetaBlockService, MockedBlockS
                          SynchronizerService)
 from parsec.core.file import File
 from parsec.crypto import generate_sym_key, load_sym_key
+from parsec.exceptions import BlockNotFound, VlobNotFound
 # from parsec.exceptions import UserManifestError, UserManifestNotFound, FileNotFound, VlobNotFound
 from parsec.server import BaseServer
 
@@ -76,8 +77,12 @@ class TestFile:
     @pytest.mark.asyncio
     async def test_create_file(self, synchronizer_svc):
         file = await File.create(synchronizer_svc)
-        assert file.version == 0
-        vlob = await synchronizer_svc.vlob_read(file.id, file.read_trust_seed, file.version)
+        version = await file.get_version()
+        assert version == 0
+        file_vlob = await file.get_vlob()
+        vlob = await synchronizer_svc.vlob_read(file_vlob['id'],
+                                                file_vlob['read_trust_seed'],
+                                                version)
         file_vlob = await file.get_vlob()
         key = file_vlob['key']
         key = decodebytes(key.encode())
@@ -89,7 +94,10 @@ class TestFile:
         assert len(blocks) == 1
         assert len(blocks[0]['blocks']) == 1
         assert blocks[0]['blocks'][0]['size'] == 0
-        await synchronizer_svc.vlob_update(file.id, file.version + 1, file.write_trust_seed, 'foo')
+        await synchronizer_svc.vlob_update(vlob['id'],
+                                           version + 1,
+                                           file_vlob['write_trust_seed'],
+                                           'foo')
 
     @pytest.mark.asyncio
     async def test_load_file(self, synchronizer_svc):
@@ -206,10 +214,15 @@ class TestFile:
     @pytest.mark.asyncio
     async def test_write(self, synchronizer_svc):
         file = await File.create(synchronizer_svc)
+        block_ids = await file.get_blocks()
         # Check with empty and not empty file
         for content in ['this is v2 content', 'this is v3 content']:
             encoded_data = encodebytes(content.encode()).decode()
             await file.write(encoded_data, 0)
+            synchronizer_block_list = await synchronizer_svc.block_list()
+            for block_id in block_ids[1:]:
+                assert block_id not in synchronizer_block_list
+            block_ids = await file.get_blocks()
             read_content = await file.read()
             assert read_content == encoded_data
         # Offset
@@ -218,6 +231,7 @@ class TestFile:
         read_content = await file.read()
         encoded_data = encodebytes('this is v4 content'.encode()).decode()
         assert read_content == encoded_data
+        assert await file.get_version() == 1
 
     @pytest.mark.asyncio
     async def test_truncate(self, synchronizer_svc):
@@ -238,25 +252,100 @@ class TestFile:
         encrypted_blob = encodebytes(encrypted_blob).decode()
         id = file_vlob['id']
         await synchronizer_svc.vlob_update(id, 1, file_vlob['write_trust_seed'], encrypted_blob)
+        block_ids = await file.get_blocks()
         # Truncate full length
         await file.truncate(block_size + 1)
         read_content = await file.read()
         encoded_content = encodebytes(content[:block_size + 1]).decode()
         assert read_content == encoded_content
+        synchronizer_block_list = await synchronizer_svc.block_list()
+        for block_id in block_ids:
+            assert block_id in synchronizer_block_list
         # Truncate block length
         await file.truncate(block_size)
         read_content = await file.read()
         encoded_content = encodebytes(content[:block_size]).decode()
         assert read_content == encoded_content
+        synchronizer_block_list = await synchronizer_svc.block_list()
+        for block_id in block_ids[:-1]:
+            assert block_id in synchronizer_block_list
+        assert block_ids[-1] not in synchronizer_block_list
         # Truncate shorter than block length
         await file.truncate(block_size - 1)
         read_content = await file.read()
         encoded_content = encodebytes(content[:block_size - 1]).decode()
         assert read_content == encoded_content
+        new_synchronizer_block_list = await synchronizer_svc.block_list()
+        new_blocks = [block_id for block_id in new_synchronizer_block_list if block_id not in synchronizer_block_list]
+        assert len(new_blocks) == 1
+        synchronizer_block_list = await synchronizer_svc.block_list()
+        for block_id in block_ids:
+            assert block_id not in synchronizer_block_list
         # Truncate empty
         await file.truncate(0)
         read_content = await file.read()
         assert read_content == ''
+        synchronizer_block_list = await synchronizer_svc.block_list()
+        for block_id in block_ids + new_blocks:
+            assert block_id not in synchronizer_block_list
+        assert await file.get_version() == 1
+
+    @pytest.mark.asyncio
+    async def test_commit(self, synchronizer_svc):
+        file = await File.create(synchronizer_svc)
+        vlob = await file.get_vlob()
+        encoded_data = encodebytes('foo'.encode()).decode()
+        await file.write(encoded_data, 0)
+        block_ids = await file.get_blocks()
+        synchronizer_block_list = await synchronizer_svc.block_list()
+        for block_id in block_ids:
+            assert block_id in synchronizer_block_list
+        assert await file.get_version() == 1
+        new_vlob = await file.commit()
+        assert new_vlob != vlob
+        assert sorted(list(new_vlob.keys())) == ['id', 'key', 'read_trust_seed', 'write_trust_seed']
+        synchronizer_block_list = await synchronizer_svc.block_list()
+        for block_id in block_ids:
+            assert block_id not in synchronizer_block_list
+        encoded_data = encodebytes('bar'.encode()).decode()
+        await file.write(encoded_data, 0)
+        assert await file.get_version() == 2
+        new_vlob = await file.commit()
+        assert new_vlob is True
+        block_ids = await file.get_blocks()
+        synchronizer_block_list = await synchronizer_svc.block_list()
+        for block_id in block_ids:
+            assert block_id not in synchronizer_block_list
+        assert await file.get_version() == 2
+        ret = await file.commit()
+        assert ret is False
+
+    @pytest.mark.asyncio
+    async def test_discard(self, synchronizer_svc):
+        # Not synchronized
+        file = await File.create(synchronizer_svc)
+        vlob = await file.get_vlob()
+        encoded_data = encodebytes('foo'.encode()).decode()
+        await file.write(encoded_data, 0)
+        block_ids = await file.get_blocks()
+        synchronizer_block_list = await synchronizer_svc.block_list()
+        for block_id in block_ids:
+            assert block_id in synchronizer_block_list
+        assert await file.get_version() == 1
+        ret = await file.discard()
+        assert ret is True
+        with pytest.raises(VlobNotFound):
+            await synchronizer_svc.vlob_read(vlob['id'], vlob['read_trust_seed'])
+        synchronizer_block_list = await synchronizer_svc.block_list()
+        for block_id in block_ids:
+            with pytest.raises(BlockNotFound):
+                await synchronizer_svc.block_read(block_id)
+        assert await file.get_version() == 0
+        # Synchronized
+        file = await File.create(synchronizer_svc)
+        ret = await file.commit()
+        ret = await file.discard()
+        assert ret is False
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize('length', [0, 4095, 4096, 4097])
@@ -287,6 +376,7 @@ class TestFile:
             length = block_size if length > block_size else length
             assert block['size'] == length
             assert block['digest'] == digest(content[index * block_size:index + 1 * block_size])
+        assert await file.get_version() == 1
 
     @pytest.mark.asyncio
     async def test_find_matching_blocks(self, synchronizer_svc):
