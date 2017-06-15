@@ -136,6 +136,32 @@ class TestFile:
         assert file.version == 1
 
     @pytest.mark.asyncio
+    async def test_get_blocks(self, synchronizer_svc):
+        file = await File.create(synchronizer_svc)
+        # Encoded contents
+        block_size = 10000
+        content = b''.join([str(random.randint(1, 9)).encode() for i in range(0, block_size + 1)])
+        encoded_content = encodebytes(content).decode()
+        # Blocks
+        block_ids = []
+        blob = []
+        blob.append(await file._build_file_blocks(encoded_content))
+        for blocks_and_key in blob:
+            for block_properties in blocks_and_key['blocks']:
+                block_ids.append(block_properties['block'])
+        blob = json.dumps(blob)
+        blob = blob.encode()
+        encrypted_blob = file.encryptor.encrypt(blob)
+        encrypted_blob = encodebytes(encrypted_blob).decode()
+        vlob = await file.get_vlob()
+        await synchronizer_svc.vlob_update(vlob['id'],
+                                           1,
+                                           vlob['write_trust_seed'],
+                                           encrypted_blob)
+        ret = await file.get_blocks()
+        assert ret == block_ids
+
+    @pytest.mark.asyncio
     async def test_get_version(self, synchronizer_svc):
         encryptor = generate_sym_key()
         key = encodebytes(encryptor.key).decode()

@@ -47,6 +47,17 @@ class File:
         vlob['key'] = encodebytes(self.encryptor.key).decode()
         return vlob
 
+    async def get_blocks(self):
+        vlob = await self.synchronizer.vlob_read(self.id, self.read_trust_seed, self.version)
+        encrypted_blob = decodebytes(vlob['blob'].encode())
+        blob = self.encryptor.decrypt(encrypted_blob)
+        blob = json.loads(blob.decode())
+        block_ids = []
+        for block_and_key in blob:
+            for block in block_and_key['blocks']:
+                block_ids.append(block['block'])
+        return block_ids
+
     async def get_version(self):
         return self.version
 
