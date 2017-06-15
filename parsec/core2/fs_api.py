@@ -2,9 +2,9 @@ import asyncio
 import arrow
 from marshmallow import fields, validate
 
-from parsec.core2.workspace import Workspace, Reader, Writer
-from parsec.service import event, cmd, service, ServiceMixin
-from parsec.tools import BaseCmdSchema, to_jsonb64, async_callback
+from parsec.core2.workspace import SyncReader, SyncWriter, load_or_create_workspace, pretty_print_workspace
+from parsec.service import event, cmd, service, BaseService
+from parsec.tools import BaseCmdSchema, to_jsonb64, async_callback, logger
 from parsec.exceptions import InvalidPath
 
 
@@ -35,7 +35,9 @@ class cmd_FILE_TRUNCATE_Schema(BaseCmdSchema):
     length = fields.Int(required=True, validate=validate.Range(min=0))
 
 
-class BaseFSAPIMixin(ServiceMixin):
+class BaseFSAPIService(BaseService):
+
+    name = 'FSAPIService'
 
     on_file_changed = event('file_changed')
     on_folder_changed = event('folder_changed')
@@ -116,11 +118,12 @@ class BaseFSAPIMixin(ServiceMixin):
         raise NotImplementedError()
 
 
-class MockedFSAPIMixin(BaseFSAPIMixin):
+class MockedFSAPIService(BaseFSAPIService):
 
     identity = service('IdentityService')
 
     def __init__(self):
+        super().__init__()
         now = arrow.get()
         self._fs = {
             'type': 'folder',
@@ -252,12 +255,13 @@ class MockedFSAPIMixin(BaseFSAPIMixin):
         fileobj['stat']['updated'] = arrow.get()
 
 
-class FSAPIMixin(BaseFSAPIMixin):
+class FSAPIService(BaseFSAPIService):
 
     identity = service('IdentityService')
     backend = service('BackendAPIService')
 
     def __init__(self):
+        super().__init__()
         self._workspace = None
         self._reader = None
         self._writer = None
@@ -267,19 +271,24 @@ class FSAPIMixin(BaseFSAPIMixin):
         await self._ready_future
 
     async def bootstrap(self):
-        self._reader = Reader(self.identity, self.backend)
-        self._writer = Writer(self.identity, self.backend)
-        self.identity.on_identity_loaded.connect(
-            async_callback(lambda x: self._load_workspace()), weak=False)
-        self.identity.on_identity_unloaded.connect(
-            async_callback(lambda x: self._unload_workspace()), weak=False)
+        await super().bootstrap()
+        self._reader = SyncReader(self.identity, self.backend)
+        self._writer = SyncWriter(self.identity, self.backend)
+        # Must store the callback in the object given the are weak referenced
+        # when registered as signal callback
+        self._on_identity_loaded_cb = async_callback(lambda x: self._load_workspace())
+        self._on_identity_unloaded_cb = async_callback(lambda x: self._unload_workspace())
+        self.identity.on_identity_loaded.connect(self._on_identity_loaded_cb)
+        self.identity.on_identity_unloaded.connect(self._on_identity_unloaded_cb)
 
     async def _load_workspace(self):
-        # self._workspace = workspace_factory()
-        self._workspace = Workspace()
+        await self.backend.wait_for_ready()
+        self._workspace = await load_or_create_workspace(self.identity, self.backend)
+        print('Workspace loaded:\n%s' % pretty_print_workspace(self._workspace))
         self._ready_future.set_result(None)
 
     async def _unload_workspace(self):
+        # TODO: do we need to flush the workspace before closing it ?
         self._ready_future = asyncio.futures.Future()
         self._workspace = None
 

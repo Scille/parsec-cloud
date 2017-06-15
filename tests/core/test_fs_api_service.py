@@ -1,27 +1,73 @@
 import pytest
+from unittest.mock import Mock
 
 from parsec.exceptions import IdentityNotLoadedError
 from parsec.core2.backend_api_service import MockedBackendAPIService
-from parsec.core2.fs_api import MockedFSAPIMixin, FSAPIMixin
+from parsec.core2.fs_api import MockedFSAPIService, FSAPIService
+from parsec.core2.identity_service import BaseIdentityService
 
-from tests.core.test_backend_api_service import MockedIdentityService
+
+class MockedIdentityService(BaseIdentityService):
+
+    def __init__(self):
+        super().__init__()
+        self._loaded = False
+        self._id = 'mocked_user'
+        self._private_key = Mock()
+        self._private_key.sign.return_value = b'<mocked_signature>'
+        self._private_key.decrypt = lambda x: x
+        self._public_key = Mock()
+        self._public_key.encrypt = lambda x: x
+        self._public_key.verify.return_value = True
+
+    @property
+    def id(self):
+        if not self._loaded:
+            raise IdentityNotLoadedError('Identity not loaded')
+        return self._id
+
+    @property
+    def private_key(self):
+        if not self._loaded:
+            raise IdentityNotLoadedError('Identity not loaded')
+        return self._private_key
+
+    @property
+    def public_key(self):
+        if not self._loaded:
+            raise IdentityNotLoadedError('Identity not loaded')
+        return self._public_key
+
+    async def load(self, *args):
+        self._loaded = True
+        self.on_identity_loaded.send(self.id)
+
+    async def unload(self):
+        self._loaded = False
+        self.on_identity_unloaded.send(self.id)
 
 
-async def bootstrap_FSAPIMixin(request, event_loop, unused_tcp_port):
-    fs_api = FSAPIMixin()
+async def bootstrap_FSAPIService(request, event_loop, unused_tcp_port):
+    fs_api = FSAPIService()
     fs_api.identity = MockedIdentityService()
     fs_api.backend = MockedBackendAPIService()
+    fs_api.backend.identity = fs_api.identity
     await fs_api.bootstrap()
+
+    def finalize():
+        event_loop.run_until_complete(fs_api.teardown())
+
+    request.addfinalizer(finalize)
     return fs_api
 
 
-async def bootstrap_MockedFSAPIMixin(request, event_loop, unused_tcp_port):
-    fs_api = MockedFSAPIMixin()
+async def bootstrap_MockedFSAPIService(request, event_loop, unused_tcp_port):
+    fs_api = MockedFSAPIService()
     fs_api.identity = MockedIdentityService()
     return fs_api
 
 
-@pytest.fixture(params=[bootstrap_MockedFSAPIMixin, bootstrap_FSAPIMixin],
+@pytest.fixture(params=[bootstrap_MockedFSAPIService, bootstrap_FSAPIService],
                 ids=['mocked', 'backend'])
 async def fs_api_svc(request, event_loop, unused_tcp_port):
     return await request.param(request, event_loop, unused_tcp_port)

@@ -1,47 +1,29 @@
 import arrow
 import json
+import struct
 
 from parsec.exceptions import InvalidPath
-from parsec.tools import to_jsonb64, from_jsonb64
+from parsec.tools import to_jsonb64, from_jsonb64, json_dumps
+from parsec.crypto import generate_sym_key, load_sym_key
 
 
-class UserManifest:
-    def __init__(self):
-        pass
-
-
-class FileManifest:
-    def __init__(self):
-        pass
-
-
-class FileBlock:
-    def __init__(self):
-        pass
+class VlobAccess:
+    def __init__(self, id, key, signature, read_trust_seed, write_trust_seed):
+        self.id = id
+        self.key = key
+        self.signature = signature
+        self.read_trust_seed = read_trust_seed
+        self.write_trust_seed = write_trust_seed
 
 
 class File:
-    def __init__(self, created=None, updated=None, data=None):
+    def __init__(self, created=None, updated=None, data=None, version=1, vlob_access=None):
         self.data = data or b''
         now = arrow.get()
+        self.version = version
         self.created = created or now
         self.updated = updated or now
-
-    def dump(self):
-        return json.dumps({
-            'data': to_jsonb64(self.data),
-            'created': self.created.toisoformat(),
-            'updated': self.updated.toisoformat()
-        })
-
-    @classmethod
-    def load(cls, payload):
-        jsonpayload = json.loads(payload)
-        return cls(
-            created=arrow.get(jsonpayload['created']),
-            updated=arrow.get(jsonpayload['updated']),
-            data=from_jsonb64(jsonpayload['data'])
-        )
+        self.vlob_access = vlob_access
 
 
 class Folder:
@@ -51,29 +33,11 @@ class Folder:
         self.created = created or now
         self.updated = updated or now
 
-    # def dump(self):
-    #     return json.dumps({
-    #         'children': {k: v.dump() for k, v in },
-    #         'created': self.created.toisoformat(),
-    #         'updated': self.updated.toisoformat()
-    #     })
-
-    # @classmethod
-    # def load(cls, payload):
-    #     jsonpayload = json.loads(payload)
-    #     return cls(
-    #         created=arrow.get(jsonpayload['created']),
-    #         updated=arrow.get(jsonpayload['updated']),
-    #         data=from_jsonb64(jsonpayload['data'])
-    #     )
 
 class Workspace(Folder):
-    pass
-    # def dump(self):
-    #     pass
-
-    # def load(self):
-    #     pass
+    def __init__(self, created=None, updated=None, children=None, version=0):
+        super().__init__(created, updated, children)
+        self.version = version
 
 
 def _retrieve_file(workspace, path):
@@ -210,40 +174,85 @@ class Writer:
         fileobj.updated = arrow.get()
 
 
-class JournalizedWriter(Writer):
-    def __init__(self):
-        super().__init__()
-        # TODO: journal should be persisted in disk
-        self._journal = []
+class SyncWriter(Writer):
+    """Writer that directly synchronize with the backend"""
 
     async def file_create(self, workspace, path: str):
-        self._journal.append(('file_create', path))
-        return await super().file_create(workspace, path)
+        await super().file_create(workspace, path)
+        ret = await self._backend.vlob_create(b'')
+        obj = _retrieve_file(workspace, path)
+        key = generate_sym_key()
+        obj.vlob_access = VlobAccess(
+            id=ret['id'],
+            key=key,
+            signature=self._identity.private_key.sign(b''),
+            read_trust_seed=ret['read_trust_seed'],
+            write_trust_seed=ret['write_trust_seed']
+        )
 
     async def file_write(self, workspace, path: str, content: bytes, offset: int=0):
-        self._journal.append('file_write', path, content, offset)
-        return await super().file_write(self, workspace, path, content, offset)
+        await super().file_write(workspace, path, content, offset)
+        await self._save_file_manifest(workspace, path)
 
-    async def folder_create(self, workspace, path: str):
-        self._journal.append('folder_create', path)
-        return await super().folder_create(self, workspace, path)
-
-    async def move(self, workspace, src: str, dst: str):
-        self._journal.append('move', src, dst)
-        return await super().move(self, workspace, src, dst)
-
-    async def delete(self, workspace, path: str):
-        self._journal.append('delete', path)
-        return await super().delete(self, workspace, path)
+    async def _save_file_manifest(self, workspace, path):
+        obj = _retrieve_file(workspace, path)
+        assert obj.vlob_access is not None
+        signature = self._identity.private_key.sign(obj.data)
+        raw = _serialize_data_and_signature(obj.data, signature)
+        ciphered = obj.vlob_access.key.encrypt(raw)
+        await self._backend.vlob_update(
+            obj.vlob_access.id, obj.version + 1,
+            obj.vlob_access.write_trust_seed, ciphered)
+        obj.version += 1
 
     async def file_truncate(self, workspace, path: str, length: int):
-        self._journal.append('file_truncate', path, length)
-        return await super().file_truncate(self, workspace, path, length)
+        await super().file_truncate(workspace, path, length)
+        await self._save_file_manifest(workspace, path)
+
+    async def folder_create(self, workspace, path: str):
+        await super().folder_create(workspace, path)
+        await save_workspace(self._identity, self._backend, workspace)
+
+    async def move(self, workspace, src: str, dst: str):
+        await super().move(workspace, src, dst)
+        await save_workspace(self._identity, self._backend, workspace)
+
+    async def delete(self, workspace, path: str):
+        await super().delete(workspace, path)
+        await save_workspace(self._identity, self._backend, workspace)
+
+
+class SyncReader(Reader):
+
+    async def file_read(self, workspace: Workspace, path: str, offset: int=0, size: int=-1):
+        obj = _retrieve_file(workspace, path)
+        assert obj.vlob_access is not None
+        ret = await self._backend.vlob_read(obj.vlob_access.id, obj.vlob_access.read_trust_seed)
+        ciphered = from_jsonb64(ret['blob'])
+        raw = obj.vlob_access.key.decrypt(ciphered)
+        data, signature = _deserialize_data_and_signature(raw)
+        # TODO: use pubkey service to get the key to verify
+        self._identity.public_key.verify(signature, data)
+        obj.data = data
+        obj.version = ret['version']
+        return await super().file_read(workspace, path, offset, size)
+
+    async def stat(self, workspace: Workspace, path: str):
+        return await super().stat(workspace, path)
 
 
 def _load_file(entry):
     assert isinstance(entry, dict)
-    return File(arrow.get(entry['created']), arrow.get(entry['updated']))
+    vlob_access = VlobAccess(
+        id=entry['id'],
+        key=load_sym_key(from_jsonb64(entry['key'])),
+        signature=from_jsonb64(entry['signature']),
+        read_trust_seed=entry['read_trust_seed'],
+        write_trust_seed=entry['write_trust_seed']
+    )
+    return File(
+        vlob_access=vlob_access
+    )
 
 
 def _load_folder(entry, folder_cls=Folder):
@@ -258,32 +267,83 @@ def _load_folder(entry, folder_cls=Folder):
     return folder_cls(arrow.get(entry['created']), arrow.get(entry['updated']), children)
 
 
-def workspace_factory(user_manifest=None):
-    if user_manifest is None:
-        return Workspace()
+def workspace_factory(user_manifest):
     assert isinstance(user_manifest, dict)
     assert user_manifest['type'] == 'folder'
     return _load_folder(user_manifest, folder_cls=Workspace)
 
 
-class Dumper:
-    def _dump(self, item):
+def _dump_user_manifest(workspace):
+
+    def _dump(item):
         if isinstance(item, File):
             return {
                 'type': 'file',
-                'updated': item.updated.isoformat(),
-                'created': item.created.isoformat(),
+                'id': item.vlob_access.id,
+                'key': to_jsonb64(item.vlob_access.key.key),
+                'signature': to_jsonb64(item.vlob_access.signature),
+                'read_trust_seed': item.vlob_access.read_trust_seed,
+                'write_trust_seed': item.vlob_access.write_trust_seed
             }
         elif isinstance(item, Folder):
             return {
                 'type': 'folder',
                 'updated': item.updated.isoformat(),
                 'created': item.created.isoformat(),
-                'children': {k: self._dump(v) for k, v in item.children.items()}
+                'children': {k: _dump(v) for k, v in item.children.items()}
             }
         else:
             raise RuntimeError('Invalid node type %s' % item)
 
-    def dump(self, workspace):
-        assert isinstance(workspace, Workspace)
-        return self._dump(workspace)
+    assert isinstance(workspace, Workspace)
+    return _dump(workspace)
+
+
+def _serialize_data_and_signature(data, signature):
+    return struct.pack('>I', len(signature)) + signature + data
+
+
+def _deserialize_data_and_signature(raw):
+    sign_len, = struct.unpack('>I', raw[:4])
+    signature = raw[4:sign_len + 4]
+    data = raw[sign_len + 4:]
+    return data, signature
+
+
+def pretty_print_workspace(workspace):
+    out = []
+
+    def _pretty_print(item, path):
+        out.append('/' + path)
+        if isinstance(item, Folder):
+            for k, v in item.children.items():
+                _pretty_print(v, '%s/%s' % (path, k))
+
+    _pretty_print(workspace, '')
+    return '\n'.join(out)
+
+
+async def save_workspace(identity, backend, workspace):
+    wksp_data = json_dumps(_dump_user_manifest(workspace)).encode()
+    signature = identity.private_key.sign(wksp_data)
+    vlobatom_data = _serialize_data_and_signature(wksp_data, signature)
+    vlobatom_ciphered_data = identity.public_key.encrypt(vlobatom_data)
+    await backend.user_vlob_update(workspace.version + 1, vlobatom_ciphered_data)
+    workspace.version += 1
+
+
+async def load_or_create_workspace(identity, backend):
+    # TODO: concurrency and error handling not done
+    vlobatom = await backend.user_vlob_read()
+    if vlobatom['version'] == 0:
+        # Create the workspace
+        workspace = Workspace()
+        await save_workspace(identity, backend, workspace)
+        return workspace
+    else:
+        # TODO: backend_api_service should return cooked objects
+        vlobatom_ciphered_data = from_jsonb64(vlobatom['blob'])
+        vlobatom_data = identity.private_key.decrypt(vlobatom_ciphered_data)
+        wksp_data, signature = _deserialize_data_and_signature(vlobatom_data)
+        identity.public_key.verify(signature, wksp_data)
+        return workspace_factory(json.loads(wksp_data.decode()))
