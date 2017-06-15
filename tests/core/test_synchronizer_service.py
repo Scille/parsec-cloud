@@ -86,12 +86,16 @@ class TestSynchronizerService:
         block_id = await synchronizer_svc.block_create(content)
         with pytest.raises(BlockNotFound):
             await block_svc.read(block_id)
-        await synchronizer_svc.block_synchronize(block_id)
+        ret = await synchronizer_svc.block_synchronize(block_id)
+        assert ret is True
         ret = await block_svc.read(block_id)
         assert sorted(list(ret.keys())) == ['content', 'creation_date']
         assert ret['content'] == content
         ret = await synchronizer_svc.block_list()
         assert ret == []
+        # Do nothing
+        ret = await synchronizer_svc.block_synchronize(block_id)
+        assert ret is False
 
     @pytest.mark.asyncio
     async def test_user_vlob_read(self, backend_svc, synchronizer_svc):
@@ -136,7 +140,8 @@ class TestSynchronizerService:
         assert ret['version'] == 0
         blob = 'foo'
         await synchronizer_svc.user_vlob_update(1, blob)
-        await synchronizer_svc.user_vlob_synchronize()
+        ret = await synchronizer_svc.user_vlob_synchronize()
+        assert ret is True
         ret = await synchronizer_svc.user_vlob_read()
         assert sorted(list(ret.keys())) == ['blob', 'version']
         assert ret['blob'] == blob
@@ -144,7 +149,8 @@ class TestSynchronizerService:
         ret = await synchronizer_svc.user_vlob()
         assert ret is False
         # Do nothing
-        await synchronizer_svc.user_vlob_synchronize()
+        ret = await synchronizer_svc.user_vlob_synchronize()
+        assert ret is False
 
     @pytest.mark.asyncio
     async def test_vlob_create(self, backend_svc, synchronizer_svc):
@@ -159,6 +165,7 @@ class TestSynchronizerService:
 
     @pytest.mark.asyncio
     async def test_vlob_read(self, backend_svc, synchronizer_svc):
+        # Read local vlob
         local_blob = 'foo'
         local_vlob = await synchronizer_svc.vlob_create(local_blob)
         ret = await synchronizer_svc.vlob_read(local_vlob['id'], local_vlob['read_trust_seed'])
@@ -166,6 +173,7 @@ class TestSynchronizerService:
         assert ret['id'] == local_vlob['id']
         assert ret['blob'] == local_blob
         assert ret['version'] == 1
+        # Read remote vlob
         remote_blob = 'bar'
         remote_vlob = await backend_svc.vlob_create(remote_blob)
         ret = await synchronizer_svc.vlob_read(remote_vlob['id'], remote_vlob['read_trust_seed'])
@@ -173,6 +181,10 @@ class TestSynchronizerService:
         assert ret['id'] == remote_vlob['id']
         assert ret['blob'] == remote_blob
         assert ret['version'] == 1
+        # Read commited and updated vlob
+        new_vlob = await synchronizer_svc.vlob_synchronize(local_vlob['id'])
+        await synchronizer_svc.vlob_update(new_vlob['id'], 2, new_vlob['write_trust_seed'], 'foo')
+        ret = await synchronizer_svc.vlob_read(new_vlob['id'], new_vlob['read_trust_seed'])
 
     @pytest.mark.asyncio
     async def test_vlob_update(self, backend_svc, synchronizer_svc):
@@ -218,14 +230,16 @@ class TestSynchronizerService:
         assert ret == []
         blob = 'bar'
         await synchronizer_svc.vlob_update(new_vlob['id'], 2, new_vlob['write_trust_seed'], blob)
-        await synchronizer_svc.vlob_synchronize(new_vlob['id'])
+        ret = await synchronizer_svc.vlob_synchronize(new_vlob['id'])
+        assert ret is True
         ret = await synchronizer_svc.vlob_read(new_vlob['id'], new_vlob['read_trust_seed'])
         assert sorted(list(ret.keys())) == ['blob', 'id', 'version']
         assert ret['id'] == new_vlob['id']
         assert ret['blob'] == blob
         assert ret['version'] == 2
         # Do nothing
-        await synchronizer_svc.vlob_synchronize(new_vlob['id'])
+        ret = await synchronizer_svc.vlob_synchronize(new_vlob['id'])
+        assert ret is False
 
     @pytest.mark.asyncio
     async def test_synchronize(self, synchronizer_svc):

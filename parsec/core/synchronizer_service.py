@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from parsec.core.cache import cache
-from parsec.exceptions import BlockNotFound, UserVlobNotFound, VlobNotFound
+from parsec.exceptions import BlockError, BlockNotFound, UserVlobNotFound, VlobNotFound
 from parsec.service import BaseService, service
 
 
@@ -107,7 +107,10 @@ class SynchronizerService(BaseService):
         try:
             return await self.buffered_blocks[id].read()
         except KeyError:
-            return await self.block.read(id)
+            try:
+                return await self.block.read(id)
+            except (BlockNotFound, BlockError):
+                raise BlockNotFound('Block not found.')
 
     async def block_stat(self, id):
         try:
@@ -126,9 +129,12 @@ class SynchronizerService(BaseService):
         return list(self.buffered_blocks.keys())
 
     async def block_synchronize(self, id):
-        block = await self.buffered_blocks[id].read()
-        await self.block.create(block['content'], id)
-        await self.block_delete(id)
+        if id in self.buffered_blocks:
+            block = await self.buffered_blocks[id].read()
+            await self.block.create(block['content'], id)
+            await self.block_delete(id)
+            return True
+        return False
 
     async def user_vlob_read(self, version=None):
         if self.buffered_user_vlob and (not version or version == self.buffered_user_vlob.version):
@@ -160,6 +166,8 @@ class SynchronizerService(BaseService):
             user_vlob = await self.user_vlob_read()
             await self.backend.user_vlob_update(self.buffered_user_vlob.version, user_vlob['blob'])
             await self.user_vlob_delete()
+            return True
+        return False
 
     async def vlob_create(self, blob=''):
         buffered_vlob = await BufferedVlob.init(blob=blob,
@@ -173,6 +181,8 @@ class SynchronizerService(BaseService):
     async def vlob_read(self, id, trust_seed, version=None):
         if (id in self.buffered_vlobs and
                 (not version or version == self.buffered_vlobs[id].version)):
+            if self.buffered_vlobs[id].read_trust_seed == '42':
+                self.buffered_vlobs[id].read_trust_seed = trust_seed
             assert trust_seed == self.buffered_vlobs[id].read_trust_seed
             vlob = await self.buffered_vlobs[id].read()
         else:
@@ -200,7 +210,7 @@ class SynchronizerService(BaseService):
 
     async def vlob_synchronize(self, id):
         if id in self.buffered_vlobs:
-            vlob = await self.vlob_read(id, '42')
+            vlob = await self.buffered_vlobs[id].read()
             if self.buffered_vlobs[id].version == 1:
                 new_vlob = await self.backend.vlob_create(vlob['blob'])
                 del new_vlob['status']
@@ -212,6 +222,8 @@ class SynchronizerService(BaseService):
             await self.vlob_delete(id)
             if vlob['version'] == 1:
                 return new_vlob
+            return True
+        return False
 
     async def synchronize(self):
         for vlob_id in await self.vlob_list():
