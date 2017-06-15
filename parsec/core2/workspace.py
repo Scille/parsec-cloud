@@ -210,11 +210,57 @@ class Writer:
         fileobj.updated = arrow.get()
 
 
-class BaseWorkspaceSerializer:
-    pass
+class JournalizedWriter(Writer):
+    def __init__(self):
+        super().__init__()
+        # TODO: journal should be persisted in disk
+        self._journal = []
+
+    async def file_create(self, workspace, path: str):
+        self._journal.append(('file_create', path))
+        return await super().file_create(workspace, path)
+
+    async def file_write(self, workspace, path: str, content: bytes, offset: int=0):
+        self._journal.append('file_write', path, content, offset)
+        return await super().file_write(self, workspace, path, content, offset)
+
+    async def folder_create(self, workspace, path: str):
+        self._journal.append('folder_create', path)
+        return await super().folder_create(self, workspace, path)
+
+    async def move(self, workspace, src: str, dst: str):
+        self._journal.append('move', src, dst)
+        return await super().move(self, workspace, src, dst)
+
+    async def delete(self, workspace, path: str):
+        self._journal.append('delete', path)
+        return await super().delete(self, workspace, path)
+
+    async def file_truncate(self, workspace, path: str, length: int):
+        self._journal.append('file_truncate', path, length)
+        return await super().file_truncate(self, workspace, path, length)
 
 
-def workspace_factory(user_manifest):
-    # TODO
-    pass
+def _load_file(entry):
+    assert isinstance(entry, dict)
+    return File(arrow.get(entry['created']), arrow.get(entry['updated']))
 
+
+def _load_folder(entry, folder_cls=Folder):
+    assert isinstance(entry, dict)
+    assert isinstance(entry['children'], dict)
+    children = {}
+    for name, child in entry['children'].items():
+        if child['type'] == 'file':
+            children[name] = _load_file(child)
+        else:
+            children[name] = _load_folder(child)
+    return folder_cls(arrow.get(entry['created']), arrow.get(entry['updated']), children)
+
+
+def workspace_factory(user_manifest=None):
+    if user_manifest is None:
+        return Workspace()
+    assert isinstance(user_manifest, dict)
+    assert user_manifest['type'] == 'folder'
+    return _load_folder(user_manifest, folder_cls=Workspace)
