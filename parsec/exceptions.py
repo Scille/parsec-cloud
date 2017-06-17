@@ -118,3 +118,7 @@ class IdentityNotLoadedError(IdentityError):
 
 class InvalidPath(ParsecError):
     status = 'invalid_path'
+
+
+class InvalidManifest(ParsecError):
+    status = 'invalid_manifest'

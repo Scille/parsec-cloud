@@ -2,9 +2,9 @@ import asyncio
 import arrow
 from marshmallow import fields, validate
 
-from parsec.core2.workspace import SyncReader, SyncWriter, load_or_create_workspace, pretty_print_workspace
+from parsec.core2.fs import FS
 from parsec.service import event, cmd, service, BaseService
-from parsec.tools import BaseCmdSchema, to_jsonb64, async_callback, logger
+from parsec.tools import BaseCmdSchema, to_jsonb64, async_callback
 from parsec.exceptions import InvalidPath
 
 
@@ -259,12 +259,11 @@ class FSAPIService(BaseFSAPIService):
 
     identity = service('IdentityService')
     backend = service('BackendAPIService')
+    block = service('BlockService')
 
     def __init__(self):
         super().__init__()
-        self._workspace = None
-        self._reader = None
-        self._writer = None
+        self._fs = None
         self._ready_future = asyncio.futures.Future()
 
     async def wait_for_ready(self):
@@ -272,12 +271,11 @@ class FSAPIService(BaseFSAPIService):
 
     async def bootstrap(self):
         await super().bootstrap()
-        self._reader = SyncReader(self.identity, self.backend)
-        self._writer = SyncWriter(self.identity, self.backend)
+        self._fs = FS(self.backend, self.block, self.identity)
         # Must store the callback in the object given the are weak referenced
         # when registered as signal callback
-        self._on_identity_loaded_cb = async_callback(lambda x: self._load_workspace())
-        self._on_identity_unloaded_cb = async_callback(lambda x: self._unload_workspace())
+        self._on_identity_loaded_cb = async_callback(lambda x: self._load_fs())
+        self._on_identity_unloaded_cb = async_callback(lambda x: self._unload_fs())
         self.identity.on_identity_loaded.connect(self._on_identity_loaded_cb)
         self.identity.on_identity_unloaded.connect(self._on_identity_unloaded_cb)
 
@@ -286,37 +284,36 @@ class FSAPIService(BaseFSAPIService):
         self.identity.on_identity_loaded.disconnect(self._on_identity_loaded_cb)
         self.identity.on_identity_unloaded.disconnect(self._on_identity_unloaded_cb)
 
-    async def _load_workspace(self):
+    async def _load_fs(self):
         await self.backend.wait_for_ready()
-        self._workspace = await load_or_create_workspace(self.identity, self.backend)
-        print('Workspace loaded:\n%s' % pretty_print_workspace(self._workspace))
+        await self._fs.init()
         self._ready_future.set_result(None)
 
-    async def _unload_workspace(self):
+    async def _unload_fs(self):
         # TODO: do we need to flush the workspace before closing it ?
         self._ready_future = asyncio.futures.Future()
-        self._workspace = None
+        self._fs = None
 
     async def file_create(self, path: str):
-        await self._writer.file_create(self._workspace, path)
+        await self._fs.file_create(path)
 
     async def file_write(self, path: str, content: bytes, offset: int=0):
-        await self._writer.file_write(self._workspace, path, content, offset)
+        await self._fs.file_write(path, content, offset)
 
     async def file_read(self, path: str, offset: int=0, size: int=-1):
-        return await self._reader.file_read(self._workspace, path, offset, size)
+        return await self._fs.file_read(path, offset, size)
 
     async def stat(self, path: str):
-        return await self._reader.stat(self._workspace, path)
+        return await self._fs.stat(path)
 
     async def folder_create(self, path: str):
-        await self._writer.folder_create(self._workspace, path)
+        await self._fs.folder_create(path)
 
     async def move(self, src: str, dst: str):
-        await self._writer.move(self._workspace, src, dst)
+        await self._fs.move(src, dst)
 
     async def delete(self, path: str):
-        await self._writer.delete(self._workspace, path)
+        await self._fs.delete(path)
 
     async def file_truncate(self, path: str, length: int):
-        await self._writer.file_truncate(self._workspace, path, length)
+        await self._fs.file_truncate(path, length)

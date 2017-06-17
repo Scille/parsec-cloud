@@ -5,6 +5,7 @@ from parsec.exceptions import IdentityNotLoadedError
 from parsec.core2.backend_api_service import MockedBackendAPIService
 from parsec.core2.fs_api import MockedFSAPIService, FSAPIService
 from parsec.core2.identity_service import BaseIdentityService
+from parsec.core2.block_service import MockedBlockService
 
 
 class MockedIdentityService(BaseIdentityService):
@@ -50,6 +51,7 @@ class MockedIdentityService(BaseIdentityService):
 async def bootstrap_FSAPIService(request, event_loop, unused_tcp_port):
     fs_api = FSAPIService()
     fs_api.identity = MockedIdentityService()
+    fs_api.block = MockedBlockService()
     fs_api.backend = MockedBackendAPIService()
     fs_api.backend.identity = fs_api.identity
     await fs_api.bootstrap()
