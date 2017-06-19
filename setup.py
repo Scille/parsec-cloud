@@ -25,6 +25,8 @@ requirements = [
     "marshmallow==2.13.5",
     "gnupg==2.2.0",
     "python-dateutil==2.6.0",
+    "arrow==0.10.0",
+    "attrs==17.2.0",
 ]
 
 extra_requirements = {
