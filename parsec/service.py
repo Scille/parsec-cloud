@@ -81,8 +81,9 @@ class ServiceMixin(metaclass=MetaBaseService):
 
 
 class BaseService(metaclass=MetaBaseService):
-    def __init__(self, name=None):
+    def __init__(self, dispatcher=None, name=None):
         super().__init__()
+        self.dispatcher = dispatcher
         self._cmds = None
         self._bootstrapped = asyncio.Future()
         self.name = name or getattr(self, 'name', None)

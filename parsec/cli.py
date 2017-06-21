@@ -8,10 +8,10 @@ from parsec.tools import logger_stream
 from parsec.server import UnixSocketServer, WebSocketServer
 from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedUserVlobService,
                             MockedVlobService, InMemoryPubKeyService)
-# from parsec.core import (BackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
-#                          IdentityService, MockedBlockService, MockedCacheService, ShareService,
-#                          UserManifestService)
-from parsec.core2 import CoreService, BackendAPIService, MockedBlockService, IdentityService
+from parsec.core2 import CoreService
+from parsec.core2.bbbackend_api_service import backend_api_service_factory
+from parsec.core2.block_service import s3_block_service_factory, in_memory_block_service_factory
+from parsec.core2.identity_service import identity_service_factory
 from parsec.ui.shell import start_shell
 
 
@@ -90,11 +90,13 @@ def shell(socket):
 def core(socket, backend_host, backend_watchdog, block_store, debug, identity, identity_key, i_am_john):
     loop = asyncio.get_event_loop()
     server = UnixSocketServer()
-    server.register_service(BackendAPIService(backend_host, backend_watchdog))
+    backend_svc = loop.run_until_complete(
+        backend_api_service_factory(backend_host, backend_watchdog))
+    server.register_service(backend_svc)
     if block_store:
         if block_store.startswith('s3:'):
             try:
-                from parsec.core.block_service_s3 import S3BlockService
+                # from parsec.core.block_service_s3 import S3BlockService
                 _, region, bucket, key_id, key_secret = block_store.split(':')
             except ImportError as exc:
                 raise SystemExit('Parsec needs boto3 to support S3 block storage (error: %s).' %
@@ -102,16 +104,16 @@ def core(socket, backend_host, backend_watchdog, block_store, debug, identity, i
             except ValueError:
                 raise SystemExit('Invalid --block-store value '
                                  ' (should be `s3:<region>:<bucket>:<id>:<secret>`.')
-            block_svc = S3BlockService(region, bucket, key_id, key_secret)
+            block_svc = s3_block_service_factory(region, bucket, key_id, key_secret)
             store_type = 's3:%s:%s' % (region, bucket)
         else:
             raise SystemExit('Unknown block store `%s` (only `s3:<region>:<bucket>:<id>:<secret>`'
                              ' is supported so far.' % block_store)
     else:
         store_type = 'mocked in memory'
-        block_svc = MockedBlockService()
+        block_svc = in_memory_block_service_factory()
     server.register_service(block_svc)
-    identity_svc = IdentityService()
+    identity_svc = identity_service_factory()
     server.register_service(identity_svc)
     if (identity or identity_key) and (not identity or not identity_key):
         raise SystemExit('--identity and --identity-key params should be provided together.')

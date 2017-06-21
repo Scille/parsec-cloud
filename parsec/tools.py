@@ -66,7 +66,7 @@ class UnknownCheckedSchema(Schema):
 
 
 class BaseCmdSchema(UnknownCheckedSchema):
-    cmd = fields.String(required=True)
+    cmd = fields.String()
 
     def load(self, msg):
         parsed_msg, errors = super().load(msg)

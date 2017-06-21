@@ -2,6 +2,8 @@ import asyncio
 import arrow
 from marshmallow import fields, validate
 
+from aioeffect import perform as asyncio_perform
+
 from parsec.core2.fs import FS
 from parsec.service import event, cmd, service, BaseService
 from parsec.tools import BaseCmdSchema, to_jsonb64, async_callback
@@ -295,25 +297,25 @@ class FSAPIService(BaseFSAPIService):
         self._fs = None
 
     async def file_create(self, path: str):
-        await self._fs.file_create(path)
+        return await asyncio_perform(self.dispatcher, self._fs.file_create(path))
 
     async def file_write(self, path: str, content: bytes, offset: int=0):
-        await self._fs.file_write(path, content, offset)
+        return await asyncio_perform(self.dispatcher, self._fs.file_write(path, content, offset))
 
     async def file_read(self, path: str, offset: int=0, size: int=-1):
-        return await self._fs.file_read(path, offset, size)
+        return await asyncio_perform(self.dispatcher, self._fs.file_read(path, offset, size))
 
     async def stat(self, path: str):
-        return await self._fs.stat(path)
+        return await asyncio_perform(self.dispatcher, self._fs.stat(path))
 
     async def folder_create(self, path: str):
-        await self._fs.folder_create(path)
+        return await asyncio_perform(self.dispatcher, self._fs.folder_create(path))
 
     async def move(self, src: str, dst: str):
-        await self._fs.move(src, dst)
+        return await asyncio_perform(self.dispatcher, self._fs.move(src, dst))
 
     async def delete(self, path: str):
-        await self._fs.delete(path)
+        return await asyncio_perform(self.dispatcher, self._fs.delete(path))
 
     async def file_truncate(self, path: str, length: int):
-        await self._fs.file_truncate(path, length)
+        return await asyncio_perform(self.dispatcher, self._fs.file_truncate(path, length))
