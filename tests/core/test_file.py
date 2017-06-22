@@ -324,6 +324,26 @@ class TestFile:
         assert content == encoded_content_2
 
     @pytest.mark.asyncio
+    async def test_reencrypt(self, synchronizer_svc):
+        encoded_content_1 = encodebytes('This is content 1.'.encode()).decode()
+        encoded_content_2 = encodebytes('This is content 2.'.encode()).decode()
+        file = await File.create(synchronizer_svc)
+        await file.write(encoded_content_1, 0)
+        await file.commit()
+        old_vlob = await file.get_vlob()
+        await file.reencrypt()
+        new_vlob = await file.get_vlob()
+        for property in old_vlob.keys():
+            assert old_vlob[property] != new_vlob[property]
+        old_file = await File.load(synchronizer_svc, **old_vlob)
+        await old_file.write(encoded_content_2, 0)
+        await old_file.commit()
+        assert await file.get_version() == 2
+        file = await File.load(synchronizer_svc, **new_vlob)
+        content = await file.read()
+        assert content == encoded_content_1
+        assert await file.get_version() == 1
+
     async def test_commit(self, synchronizer_svc):
         file = await File.create(synchronizer_svc)
         vlob = await file.get_vlob()

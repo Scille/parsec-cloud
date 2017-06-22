@@ -184,9 +184,19 @@ class File:
             raise FileError('bad_version', 'Bad version number.')
         self.dirty = True
 
-    # async def reencrypt(self):
-    #     # TODO ?
-    #     pass
+    async def reencrypt(self):
+        old_vlob = await self.synchronizer.vlob_read(self.id, self.read_trust_seed, self.version)
+        old_blob = old_vlob['blob']
+        old_encrypted_blob = decodebytes(old_blob.encode())
+        new_blob = self.encryptor.decrypt(old_encrypted_blob)
+        self.encryptor = generate_sym_key()
+        new_encrypted_blob = self.encryptor.encrypt(new_blob)
+        new_encrypted_blob = encodebytes(new_encrypted_blob).decode()
+        new_vlob = await self.synchronizer.vlob_create(new_encrypted_blob)
+        self.id = new_vlob['id']
+        self.read_trust_seed = new_vlob['read_trust_seed']
+        self.write_trust_seed = new_vlob['write_trust_seed']
+        self.dirty = True
 
     async def commit(self):
         block_ids = await self.get_blocks()
