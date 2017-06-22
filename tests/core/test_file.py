@@ -18,7 +18,7 @@ from parsec.core import (MockedBackendAPIService, MetaBlockService, MockedBlockS
                          SynchronizerService)
 from parsec.core.file import File
 from parsec.crypto import generate_sym_key, load_sym_key
-from parsec.exceptions import BlockNotFound, VlobNotFound
+from parsec.exceptions import BlockNotFound, FileError, FileNotFound, VlobNotFound
 # from parsec.exceptions import UserManifestError, UserManifestNotFound, FileNotFound, VlobNotFound
 from parsec.server import BaseServer
 
@@ -289,6 +289,39 @@ class TestFile:
         for block_id in block_ids + new_blocks:
             assert block_id not in synchronizer_block_list
         assert await file.get_version() == 1
+
+    @pytest.mark.asyncio
+    async def test_restore(self, synchronizer_svc):
+        # Restore not commited initial file
+        content = 'This is content 1.'
+        encoded_content_1 = encodebytes(content.encode()).decode()
+        file = await File.create(synchronizer_svc)
+        await file.write(encoded_content_1, 0)
+        with pytest.raises(FileError):
+            await file.restore()
+        # Restore dirty file to previous version
+        await file.commit()
+        content = 'This is content 2.'
+        encoded_content_2 = encodebytes(content.encode()).decode()
+        await file.write(encoded_content_2, 0)
+        await file.commit()
+        content = 'This is content 3.'
+        encoded_content_3 = encodebytes(content.encode()).decode()
+        await file.write(encoded_content_3, 0)
+        block_ids = await file.get_blocks()
+        await file.restore()
+        assert await file.get_version() == 3
+        content = await file.read()
+        assert content == encoded_content_1
+        synchronizer_block_list = await synchronizer_svc.block_list()
+        for block_id in block_ids:
+            assert block_id not in synchronizer_block_list
+        # Restore file to specific version
+        await file.commit()
+        await file.restore(2)
+        assert await file.get_version() == 4
+        content = await file.read()
+        assert content == encoded_content_2
 
     @pytest.mark.asyncio
     async def test_commit(self, synchronizer_svc):

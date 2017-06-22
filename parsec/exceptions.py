@@ -1,7 +1,6 @@
 import json
 
 
-
 class ExceptionsMap:
     def __init__(self):
         self.map = {}
@@ -89,6 +88,10 @@ class UserVlobError(ParsecError):
     status = 'user_vlob_error'
 
 
+class UserVlobNotFound(ParsecError):
+    status = 'user_vlob_not_found'
+
+
 class GroupError(ParsecError):
     status = 'group_error'
 
@@ -108,6 +111,14 @@ class BlockNotFound(BlockError):
 # Core errors
 
 
+class FileError(ParsecError):
+    status = 'file_error'
+
+
+class FileNotFound(FileError):
+    status = 'File_not_found'
+
+
 class IdentityError(ParsecError):
     status = 'identity_error'
 
@@ -118,3 +129,11 @@ class IdentityNotLoadedError(IdentityError):
 
 class InvalidPath(ParsecError):
     status = 'invalid_path'
+
+
+class ManifestError(ParsecError):
+    status = 'manifest_error'
+
+
+class ManifestNotFound(ParsecError):
+    status = 'manifest_not_found'

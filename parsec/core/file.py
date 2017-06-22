@@ -6,7 +6,7 @@ from cryptography.hazmat.backends.openssl import backend as openssl
 from cryptography.hazmat.primitives import hashes
 
 from parsec.crypto import generate_sym_key, load_sym_key
-from parsec.exceptions import BlockNotFound, VlobNotFound
+from parsec.exceptions import BlockNotFound, FileError, VlobNotFound
 
 
 class File:
@@ -170,9 +170,19 @@ class File:
     #     # TODO ?
     #     pass
 
-    # async def restore(self):
-    #     # TODO ?
-    #     pass
+    async def restore(self, version=None):
+        if version is None:
+            version = self.version - 1 if self.version > 1 else 1
+        if version > 0 and version < await self.get_version():
+            await self.discard()
+            vlob = await self.synchronizer.vlob_read(self.id, self.read_trust_seed, version)
+            await self.synchronizer.vlob_update(self.id,
+                                                self.version + 1,
+                                                self.write_trust_seed,
+                                                vlob['blob'])
+        elif version < 1 or version > self.version:
+            raise FileError('bad_version', 'Bad version number.')
+        self.dirty = True
 
     # async def reencrypt(self):
     #     # TODO ?
