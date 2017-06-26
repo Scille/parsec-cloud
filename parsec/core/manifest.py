@@ -234,28 +234,8 @@ class Manifest:
             raise ManifestNotFound('Folder or file not found.')
         entry = self.entries[path]
         if entry:
-            vlob = await self.core.synchronizer.vlob_read(entry['id'], entry['read_trust_seed'])
-            encrypted_blob = vlob['blob']
-            encrypted_blob = from_jsonb64(encrypted_blob)
-            key = from_jsonb64(entry['key'])
-            encryptor = load_sym_key(key)
-            blob = encryptor.decrypt(encrypted_blob)
-            blob = json.loads(blob.decode())
-            # TODO which block index? Or add date in vlob_service ?
-            block_stat = await self.core.synchronizer.block_stat(id=blob[-1]['blocks'][-1]['block'])
-            size = 0
-            for blocks_and_key in blob:
-                for block in blocks_and_key['blocks']:
-                    size += block['size']
-            # TODO: don't provide atime field if we don't know it?
-            return {
-                'id': entry['id'],
-                'type': 'file',
-                'created': block_stat['creation_date'],
-                'updated': block_stat['creation_date'],
-                'size': size,
-                'version': vlob['version']
-            }
+            file = await File.load(self.core.synchronizer, **entry)
+            return await file.stat()
         else:
             # Skip mtime and size given that they are too complicated to provide for folder
             # TODO time except mtime
