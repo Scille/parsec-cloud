@@ -1,24 +1,22 @@
-from parsec.core.cache_service import MockedCacheService  # TODO import order?
-from parsec.core.backend_api_service import MockedBackendAPIService, BackendAPIService
+from parsec.core.core_service import CoreService
+from parsec.core.backend_api_service import BackendAPIService, MockedBackendAPIService
 from parsec.core.block_service import MetaBlockService, MockedBlockService
-from parsec.core.crypto_service import CryptoService
-from parsec.core.file_service import FileService
+# from parsec.core.block_service_drive import GoogleDriveBlockService
+# from parsec.core.block_service_dropbox import DropboxBlockService
+from parsec.core.block_service_s3 import S3BlockService
 from parsec.core.identity_service import IdentityService
-from parsec.core.pub_keys_service import GNUPGPubKeysService
-from parsec.core.share_service import ShareService
-from parsec.core.user_manifest_service import UserManifestService
+from parsec.core.synchronizer_service import SynchronizerService
 
 
 __all__ = (
+    'CoreService',
     'BackendAPIService',
-    'CryptoService',
-    'FileService',
+    # 'DropboxBlockService',
+    # 'GoogleDriveBlockService',
     'IdentityService',
-    'GNUPGPubKeysService',
-    'MetaBlockService',
     'MockedBackendAPIService',
+    'MetaBlockService',
     'MockedBlockService',
-    'MockedCacheService',
-    'ShareService',
-    'UserManifestService',
+    'S3BlockService',
+    'SynchronizerService'
 )

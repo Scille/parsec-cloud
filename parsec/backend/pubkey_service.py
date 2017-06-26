@@ -20,7 +20,7 @@ class HandshakeAnswerSchema(UnknownCheckedSchema):
 def _generate_challenge():
     # Use SystemRandom to get cryptographically secure seeds
     return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
-                        for _ in range(12))
+                   for _ in range(12))
 
 
 class cmd_PUBKEY_GET_Schema(BaseCmdSchema):

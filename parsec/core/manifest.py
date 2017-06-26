@@ -228,7 +228,7 @@ class Manifest:
         new_vlob = await self.core.reencrypt(entry['id'])
         self.entries[path] = new_vlob
 
-    async def stat(self, path):
+    async def stat(self, path, version):
         path = '/' + path.strip('/')
         if path != '/' and path not in self.entries:
             raise ManifestNotFound('Folder or file not found.')

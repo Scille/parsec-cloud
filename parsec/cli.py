@@ -8,31 +8,36 @@ from parsec.tools import logger_stream
 from parsec.server import UnixSocketServer, WebSocketServer
 from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedUserVlobService,
                             MockedVlobService, InMemoryPubKeyService)
-# from parsec.core import (BackendAPIService, CryptoService, FileService, GNUPGPubKeysService,
-#                          IdentityService, MockedBlockService, MockedCacheService, ShareService,
-#                          UserManifestService)
-from parsec.core2 import CoreService, BackendAPIService, MockedBlockService, IdentityService
+from parsec.core import (CoreService, BackendAPIService, MockedBlockService, IdentityService,
+                         SynchronizerService)
 from parsec.ui.shell import start_shell
 
 
 # TODO: remove me once RSA key loading and backend handling are easier
 JOHN_DOE_IDENTITY = 'John_Doe'
 JOHN_DOE_PRIVATE_KEY = b"""
------BEGIN PRIVATE KEY-----
-MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEAsSle/x4jtr+kaxiv
-9BYlL+gffH/VLC+Q/WTTB+1FIU1fdmgdZVGaIlAWJHqr9qEZBfwXYzlQv8pIMn+W
-5pqvHQICAQECQDv5FjKAvWW1a3Twc1ia67eQUmDugu8VFTDsV2BRUS0jlxJ0yCL+
-TEBpOwH95TFgvfRBYee97APHjhvLLlzmEyECIQDZdjMg/j9N7sw602DER0ciERPI
-Ps9rU8RqRXaWPYtWOQIhANCO1h/z7iFjlpENbKDOCinfsXd9ulVsoNYWhKm58gAF
-AiEAzMT3XdKFUlljq+/hl/Nt0GPA8lkHDGjG5ZAaAAYnj/ECIQCB125lkuHy61LH
-4INhH6azeFaUGnn7aHwJxE6beL6BgQIhALbajJWsBf5LmeO190adM2jAVN94YqVD
-aOrHGFFqrjJ3
------END PRIVATE KEY-----
+-----BEGIN RSA PRIVATE KEY-----
+MIICWgIBAAKBgGITzwWRxv+mTAwqQd9pmQ8qqUO04KJSq1cH87KtmkqI3qewvXtW
+qFsHP6ZNOT6wba7lrohJh1rDLU98GjorL4D/eX/mG/U9gURDi4aTTXT02RbHESBp
+yMpeBUCzPTq1OgAk9OaawpV48vNkQifuT743hK49SLhqGNmNAnH2E3lxAgMBAAEC
+gYBY2S0QFJG8AwCdfKKUK+t2q+UO6wscwdtqSk/grBg8MWXTb+8XjteRLy3gD9Eu
+E1IpwPStjj7KYEnp2blAvOKY0E537d2a4NLrDbSi84q8kXqvv0UeGMC0ZB2r4C89
+/6BTZii4mjIlg3iPtkbRdLfexjqmtELliPkHKJIIMH3fYQJBAKd/k1hhnoxEx4sq
+GRKueAX7orR9iZHraoR9nlV69/0B23Na0Q9/mP2bLphhDS4bOyR8EXF3y6CjSVO4
+LBDPOmUCQQCV5hr3RxGPuYi2n2VplocLK/6UuXWdrz+7GIqZdQhvhvYSKbqZ5tvK
+Ue8TYK3Dn4K/B+a7wGTSx3soSY3RBqwdAkAv94jqtooBAXFjmRq1DuGwVO+zYIAV
+GaXXa2H8eMqr2exOjKNyHMhjWB1v5dswaPv25tDX/caCqkBFiWiVJ8NBAkBnEnqo
+Xe3tbh5btO7+08q4G+BKU9xUORURiaaELr1GMv8xLhBpkxy+2egS4v+Y7C3zPXOi
+1oB9jz1YTnt9p6DhAkBy0qgscOzo4hAn062MAYWA6hZOTkvzRbRpnyTRctKwZPSC
++tnlGk8FAkuOm/oKabDOY1WZMkj5zWAXrW4oR3Q2
+-----END RSA PRIVATE KEY-----
 """
 JOHN_DOE_PUBLIC_KEY = b"""
 -----BEGIN PUBLIC KEY-----
-MFswDQYJKoZIhvcNAQEBBQADSgAwRwJBALEpXv8eI7a/pGsYr/QWJS/oH3x/1Swv
-kP1k0wftRSFNX3ZoHWVRmiJQFiR6q/ahGQX8F2M5UL/KSDJ/luaarx0CAgEB
+MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgGITzwWRxv+mTAwqQd9pmQ8qqUO0
+4KJSq1cH87KtmkqI3qewvXtWqFsHP6ZNOT6wba7lrohJh1rDLU98GjorL4D/eX/m
+G/U9gURDi4aTTXT02RbHESBpyMpeBUCzPTq1OgAk9OaawpV48vNkQifuT743hK49
+SLhqGNmNAnH2E3lxAgMBAAE=
 -----END PUBLIC KEY-----
 """
 
@@ -80,7 +85,13 @@ def shell(socket):
 @click.option('--identity', '-i', default=None)
 @click.option('--identity-key', '-I', type=click.File(), default=None)
 @click.option('--I-am-John', is_flag=True, help='Log as dummy John Doe user')
-def core(socket, backend_host, backend_watchdog, block_store, debug, identity, identity_key, i_am_john):
+def core(socket,
+         backend_host,
+         backend_watchdog,
+         block_store, debug,
+         identity,
+         identity_key,
+         i_am_john):
     loop = asyncio.get_event_loop()
     server = UnixSocketServer()
     server.register_service(BackendAPIService(backend_host, backend_watchdog))
@@ -119,6 +130,7 @@ def core(socket, backend_host, backend_watchdog, block_store, debug, identity, i
             await identity_svc.load(identity, identity_key.read())
             print('Welcome back M. Doe')
     server.register_service(CoreService())
+    server.register_service(SynchronizerService())
     if debug:
         loop.set_debug(True)
     else:

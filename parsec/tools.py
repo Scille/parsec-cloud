@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import sys
 import json
 import base64
@@ -47,9 +48,23 @@ def async_callback(callback, *args, **kwargs):
     return event_handler
 
 
-def event_handler(callback, sender, *args):
+def event_handler(callback, sender, **kwargs):
     loop = asyncio.get_event_loop()
-    loop.call_soon(asyncio.ensure_future, callback(*args))
+    loop.call_soon(asyncio.ensure_future, callback(**kwargs))
+
+
+def get_arg(method, arg, args, kwargs):
+    try:
+        return kwargs[arg]
+    except KeyError:
+        properties = inspect.getargspec(method)
+        arg_index = properties.args.index(arg)
+        try:
+            return args[arg_index]
+        except IndexError:
+            defaults_values = dict(zip(reversed(properties.args),
+                                       reversed(properties.defaults)))
+            return defaults_values[arg]
 
 
 class UnknownCheckedSchema(Schema):

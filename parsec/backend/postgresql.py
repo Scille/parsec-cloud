@@ -168,7 +168,7 @@ class PostgreSQLVlobService(BaseVlobService):
         async with self.postgresql.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute("INSERT INTO vlobs VALUES (%s, 1, %s, %s, %s);",
-                    (atom.id, atom.read_trust_seed, atom.write_trust_seed, atom.blob))
+                                  (atom.id, atom.read_trust_seed, atom.write_trust_seed, atom.blob))
         return atom
 
     async def read(self, id, version=None, check_trust_seed=False):

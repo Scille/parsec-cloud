@@ -116,7 +116,7 @@ class FileError(ParsecError):
 
 
 class FileNotFound(FileError):
-    status = 'File_not_found'
+    status = 'file_not_found'
 
 
 class IdentityError(ParsecError):
