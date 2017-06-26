@@ -1,5 +1,6 @@
 import asyncio
 import json
+from functools import partial
 import readline  # noqa: side effect powaaa !
 
 
@@ -7,7 +8,8 @@ async def repl(socket_path):
     from parsec import __version__
     print('Parsec shell version: %s' % __version__)
     print('Connecting to: %s' % socket_path)
-    reader, writer = await asyncio.open_unix_connection(path=socket_path)
+    open_conn = partial(asyncio.open_unix_connection, path=socket_path)
+    reader, writer = await open_conn()
     quit = False
     while not quit:
         data = input('>>> ')
@@ -16,6 +18,10 @@ async def repl(socket_path):
             return
         elif data in ('help', 'h'):
             print('No help for the braves !')
+            continue
+        elif data in ('reload', 'r'):
+            writer.close()
+            reader, writer = await open_conn()
             continue
         writer.write(data.encode())
         writer.write(b'\n')
