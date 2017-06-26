@@ -1,4 +1,3 @@
-import attr
 import json
 from marshmallow import Schema, fields
 from effect2 import Effect, do
@@ -8,6 +7,7 @@ from parsec.core import privkey_api
 from parsec.core.client_connection import EClientSubscribeEvent, EClientUnsubscribeEvent
 from parsec.core.backend import EBackendStatus
 from parsec.core.identity import EIdentityLoad, EIdentityUnload, EIdentityGet
+from parsec.core.privkey import EPrivkeyAdd, EPrivkeyGet, EPrivkeyLoad
 from parsec.exceptions import ParsecError, BadMessageError
 
 
@@ -41,6 +41,9 @@ def execute_cmd(cmd, params):
     except ParsecError as exc:
         resp = exc.to_dict()
     return resp
+
+
+# Identity
 
 
 class cmd_IDENTITY_LOAD_Schema(Schema):

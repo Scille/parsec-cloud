@@ -1,4 +1,3 @@
-import asyncio
 import attr
 from effect2 import TypeDispatcher
 
