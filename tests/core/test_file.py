@@ -4,7 +4,7 @@ import json
 # from io import BytesIO
 import random
 
-# from freezegun import freeze_time
+from freezegun import freeze_time
 import pytest
 
 from cryptography.hazmat.backends.openssl import backend as openssl
@@ -98,7 +98,7 @@ class TestFile:
             'read_trust_seed': vlob['read_trust_seed'],
             'write_trust_seed': vlob['write_trust_seed']
         } == file_vlob
-        assert file.version == 1
+        assert await file.get_version() == 1
 
     @pytest.mark.asyncio
     async def test_get_blocks(self, synchronizer_svc):
@@ -236,6 +236,40 @@ class TestFile:
         for block_id in block_ids + new_blocks:
             assert block_id not in synchronizer_block_list
         assert await file.get_version() == 1
+
+    @pytest.mark.asyncio
+    async def test_stat(self, synchronizer_svc):
+        # Good file
+        with freeze_time('2012-01-01') as frozen_datetime:
+            file = await File.create(synchronizer_svc)
+            file_vlob = await file.get_vlob()
+            ret = await file.stat()
+            ctime = frozen_datetime().isoformat()
+            assert ret == {'type': 'file',
+                           'id': file_vlob['id'],
+                           'created': ctime,
+                           'updated': ctime,
+                           'size': 0,
+                           'version': 1}
+            frozen_datetime.tick()
+            mtime = frozen_datetime().isoformat()
+            await file.write(b'foo', 0)
+            ret = await file.stat()
+            assert ret == {'type': 'file',
+                           'id': file_vlob['id'],
+                           'created': mtime,  # TODO ctime?
+                           'updated': mtime,
+                           'size': 3,
+                           'version': 1}
+            frozen_datetime.tick()
+            await file.read()  # TODO useless if atime is not modified
+            ret = await file.stat()
+            assert ret == {'type': 'file',
+                           'id': file_vlob['id'],
+                           'created': mtime,
+                           'updated': mtime,
+                           'size': 3,
+                           'version': 1}
 
     @pytest.mark.asyncio
     async def test_restore(self, synchronizer_svc):

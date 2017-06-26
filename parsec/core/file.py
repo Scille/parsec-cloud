@@ -1,4 +1,3 @@
-from base64 import decodebytes, encodebytes
 import json
 import sys
 
@@ -7,6 +6,7 @@ from cryptography.hazmat.primitives import hashes
 
 from parsec.crypto import generate_sym_key, load_sym_key
 from parsec.exceptions import BlockNotFound, FileError, VlobNotFound
+from parsec.tools import from_jsonb64, to_jsonb64
 
 
 class File:
@@ -20,7 +20,7 @@ class File:
         blob = blob.encode()
         self.encryptor = generate_sym_key()
         encrypted_blob = self.encryptor.encrypt(blob)
-        encrypted_blob = encodebytes(encrypted_blob).decode()
+        encrypted_blob = to_jsonb64(encrypted_blob)
         vlob = await self.synchronizer.vlob_create(encrypted_blob)
         self.id = vlob['id']
         self.read_trust_seed = vlob['read_trust_seed']
@@ -36,7 +36,7 @@ class File:
         self.id = id
         self.read_trust_seed = read_trust_seed
         self.write_trust_seed = write_trust_seed
-        self.encryptor = load_sym_key(decodebytes(key.encode()))
+        self.encryptor = load_sym_key(from_jsonb64(key))
         vlob = await self.synchronizer.vlob_read(self.id, self.read_trust_seed, version)
         self.version = vlob['version']
         self.dirty = False
@@ -50,13 +50,13 @@ class File:
         vlob['id'] = self.id
         vlob['read_trust_seed'] = self.read_trust_seed
         vlob['write_trust_seed'] = self.write_trust_seed
-        vlob['key'] = encodebytes(self.encryptor.key).decode()
+        vlob['key'] = to_jsonb64(self.encryptor.key)
         return vlob
 
     async def get_blocks(self):
         version = await self.get_version()
         vlob = await self.synchronizer.vlob_read(self.id, self.read_trust_seed, version)
-        encrypted_blob = decodebytes(vlob['blob'].encode())
+        encrypted_blob = from_jsonb64(vlob['blob'])
         blob = self.encryptor.decrypt(encrypted_blob)
         blob = json.loads(blob.decode())
         block_ids = []
@@ -71,7 +71,7 @@ class File:
     async def read(self, size=None, offset=0):
         version = await self.get_version()
         vlob = await self.synchronizer.vlob_read(self.id, self.read_trust_seed, version)
-        encrypted_blob = decodebytes(vlob['blob'].encode())
+        encrypted_blob = from_jsonb64(vlob['blob'])
         blob = self.encryptor.decrypt(encrypted_blob)
         blob = json.loads(blob.decode())
         # Get data
@@ -79,18 +79,18 @@ class File:
         data = matching_blocks['pre_included_data']
         for blocks_and_key in matching_blocks['included_blocks']:
             block_key = blocks_and_key['key']
-            decoded_block_key = decodebytes(block_key.encode())
+            decoded_block_key = from_jsonb64(block_key)
             encryptor = load_sym_key(decoded_block_key)
             for block_properties in blocks_and_key['blocks']:
                 block = await self.synchronizer.block_read(block_properties['block'])
                 # Decrypt
-                block_content = decodebytes(block['content'].encode())
+                block_content = from_jsonb64(block['content'])
                 chunk_data = encryptor.decrypt(block_content)
                 # Check integrity
                 digest = hashes.Hash(hashes.SHA512(), backend=openssl)
                 digest.update(chunk_data)
                 new_digest = digest.finalize()
-                assert new_digest == decodebytes(block_properties['digest'].encode())
+                assert new_digest == from_jsonb64(block_properties['digest'])
                 data += chunk_data
         data += matching_blocks['post_included_data']
         return data
@@ -112,7 +112,7 @@ class File:
         blob = json.dumps(blob)
         blob = blob.encode()
         encrypted_blob = self.encryptor.encrypt(blob)
-        encrypted_blob = encodebytes(encrypted_blob).decode()
+        encrypted_blob = to_jsonb64(encrypted_blob)
         await self.synchronizer.vlob_update(self.id,
                                             self.version + 1,
                                             self.write_trust_seed,
@@ -143,7 +143,7 @@ class File:
         blob = json.dumps(blob)
         blob = blob.encode()
         encrypted_blob = self.encryptor.encrypt(blob)
-        encrypted_blob = encodebytes(encrypted_blob).decode()
+        encrypted_blob = to_jsonb64(encrypted_blob)
         await self.synchronizer.vlob_update(self.id,
                                             self.version + 1,
                                             self.write_trust_seed,
@@ -161,9 +161,30 @@ class File:
                     pass
         self.dirty = True
 
-    # async def stat(self):
-    #     # TODO ?
-    #     pass
+    async def stat(self):
+        version = await self.get_version()
+        vlob = await self.synchronizer.vlob_read(self.id,
+                                                 self.read_trust_seed,
+                                                 version)
+        encrypted_blob = vlob['blob']
+        encrypted_blob = from_jsonb64(encrypted_blob)
+        blob = self.encryptor.decrypt(encrypted_blob)
+        blob = json.loads(blob.decode())
+        # TODO which block index? Or add date in vlob_service ?
+        block_stat = await self.synchronizer.block_stat(id=blob[-1]['blocks'][-1]['block'])
+        size = 0
+        for blocks_and_key in blob:
+            for block in blocks_and_key['blocks']:
+                size += block['size']
+        # TODO: don't provide atime field if we don't know it?
+        return {
+            'id': self.id,
+            'type': 'file',
+            'created': block_stat['creation_date'],
+            'updated': block_stat['creation_date'],
+            'size': size,
+            'version': vlob['version']
+        }
 
     # async def history(self):
     #     # TODO ?
@@ -186,11 +207,11 @@ class File:
     async def reencrypt(self):
         old_vlob = await self.synchronizer.vlob_read(self.id, self.read_trust_seed, self.version)
         old_blob = old_vlob['blob']
-        old_encrypted_blob = decodebytes(old_blob.encode())
+        old_encrypted_blob = from_jsonb64(old_blob)
         new_blob = self.encryptor.decrypt(old_encrypted_blob)
         self.encryptor = generate_sym_key()
         new_encrypted_blob = self.encryptor.encrypt(new_blob)
-        new_encrypted_blob = encodebytes(new_encrypted_blob).decode()
+        new_encrypted_blob = to_jsonb64(new_encrypted_blob)
         new_vlob = await self.synchronizer.vlob_create(new_encrypted_blob)
         self.id = new_vlob['id']
         self.read_trust_seed = new_vlob['read_trust_seed']
@@ -243,17 +264,17 @@ class File:
             digest = hashes.Hash(hashes.SHA512(), backend=openssl)
             digest.update(chunk)
             chunk_digest = digest.finalize()  # TODO replace with hexdigest ?
-            chunk_digest = encodebytes(chunk_digest).decode()
+            chunk_digest = to_jsonb64(chunk_digest)
             # Encrypt block
             cypher_chunk = encryptor.encrypt(chunk)
             # Store block
-            cypher_chunk = encodebytes(cypher_chunk).decode()
+            cypher_chunk = to_jsonb64(cypher_chunk)
             block_id = await self.synchronizer.block_create(content=cypher_chunk)
             blocks.append({'block': block_id,
                            'digest': chunk_digest,
                            'size': len(chunk)})
         # New vlob atom
-        block_key = encodebytes(encryptor.key).decode()
+        block_key = to_jsonb64(encryptor.key)
         blob = {'blocks': blocks,
                 'key': block_key}
         self.dirty = True
@@ -269,7 +290,7 @@ class File:
                                                  self.read_trust_seed,
                                                  version)
         blob = vlob['blob']
-        encrypted_blob = decodebytes(blob.encode())
+        encrypted_blob = from_jsonb64(blob)
         blob = self.encryptor.decrypt(encrypted_blob)
         blob = json.loads(blob.decode())
         pre_excluded_blocks = []
@@ -282,7 +303,7 @@ class File:
         post_excluded_data = b''
         for blocks_and_key in blob:
             block_key = blocks_and_key['key']
-            decoded_block_key = decodebytes(block_key.encode())
+            decoded_block_key = from_jsonb64(block_key)
             encryptor = load_sym_key(decoded_block_key)
             for block_properties in blocks_and_key['blocks']:
                 cursor += block_properties['size']
@@ -294,7 +315,7 @@ class File:
                 elif cursor > offset and cursor - block_properties['size'] < offset:
                     delta = cursor - offset
                     block = await self.synchronizer.block_read(block_properties['block'])
-                    content = decodebytes(block['content'].encode())
+                    content = from_jsonb64(block['content'])
                     block_data = encryptor.decrypt(content)
                     pre_excluded_data = block_data[:-delta]
                     pre_included_data = block_data[-delta:][:size]
@@ -308,7 +329,7 @@ class File:
                 elif cursor > offset + size and cursor - block_properties['size'] < offset + size:
                     delta = offset + size - (cursor - block_properties['size'])
                     block = await self.synchronizer.block_read(block_properties['block'])
-                    content = decodebytes(block['content'].encode())
+                    content = from_jsonb64(block['content'])
                     block_data = encryptor.decrypt(content)
                     post_included_data = block_data[:delta]
                     post_excluded_data = block_data[delta:]
