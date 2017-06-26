@@ -40,6 +40,9 @@ class File:
         vlob = await self.synchronizer.vlob_read(self.id, self.read_trust_seed, version)
         self.version = vlob['version']
         self.dirty = False
+        if vlob['id'] in await self.synchronizer.vlob_list():
+            self.version -= 1
+            self.dirty = True
         return self
 
     async def get_vlob(self):

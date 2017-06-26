@@ -59,28 +59,27 @@ class TestFile:
 
     @pytest.mark.asyncio
     async def test_load_file(self, synchronizer_svc):
-        encryptor = generate_sym_key()
-        key = encodebytes(encryptor.key).decode()
-        vlob = await synchronizer_svc.vlob_create('foo')
-        new_vlob = await synchronizer_svc.vlob_synchronize(vlob['id'])
-        new_vlob_id = new_vlob['id']
-        read_trust_seed = new_vlob['read_trust_seed']
-        write_trust_seed = new_vlob['write_trust_seed']
-        await synchronizer_svc.vlob_update(new_vlob_id, 2, write_trust_seed, 'bar')
-        await synchronizer_svc.vlob_synchronize(new_vlob_id)
+        # Reload commited file
+        file = await File.create(synchronizer_svc)
+        await file.write(b'bar', 0)
+        file_vlob = await file.commit()
         file = await File.load(synchronizer_svc,
-                               new_vlob_id,
-                               key,
-                               read_trust_seed,
-                               write_trust_seed)
+                               file_vlob['id'],
+                               file_vlob['key'],
+                               file_vlob['read_trust_seed'],
+                               file_vlob['write_trust_seed'])
+        assert await file.read() == b'bar'
+        await file.write(b'foo', 0)
+        # Reload not commited file
+        file = await File.create(synchronizer_svc)
         file_vlob = await file.get_vlob()
-        assert {
-            'id': new_vlob_id,
-            'key': key,
-            'read_trust_seed': read_trust_seed,
-            'write_trust_seed': write_trust_seed
-        } == file_vlob
-        assert file.version == 2
+        await file.write(b'foo', 0)
+        file = await File.load(synchronizer_svc,
+                               file_vlob['id'],
+                               file_vlob['key'],
+                               file_vlob['read_trust_seed'],
+                               file_vlob['write_trust_seed'])
+        await file.write(b'foo', 0)
 
     @pytest.mark.asyncio
     async def test_get_vlob(self, synchronizer_svc):
