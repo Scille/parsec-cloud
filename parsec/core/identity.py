@@ -18,7 +18,7 @@ class Identity:
 class EIdentityLoad:
     id = attr.ib()
     key = attr.ib()
-    password = attr.ib()
+    password = attr.ib(default=None)
 
 
 @attr.s

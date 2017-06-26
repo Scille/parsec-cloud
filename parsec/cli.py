@@ -1,17 +1,18 @@
 from os import environ
 from importlib import import_module
+from getpass import getpass
 import asyncio
 import click
 from logbook import WARNING
+from effect import Effect
+from effect.do import do
 
 from parsec.tools import logger_stream
-from parsec.server import UnixSocketServer, WebSocketServer
+from parsec.server import WebSocketServer
 from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedUserVlobService,
                             MockedVlobService, InMemoryPubKeyService)
-from parsec.core2 import CoreService
-from parsec.core2.bbbackend_api_service import backend_api_service_factory
-from parsec.core2.block_service import s3_block_service_factory, in_memory_block_service_factory
-from parsec.core2.identity_service import identity_service_factory
+from parsec.core import app_factory, run_app
+from parsec.core.identity import EIdentityLoad
 from parsec.ui.shell import start_shell
 
 
@@ -56,7 +57,7 @@ def cli():
 @click.argument('args', nargs=-1)
 @click.option('socket_path', '--socket', '-s', default=DEFAULT_CORE_UNIX_SOCKET,
               help='Path to the UNIX socket (default: %s).' % DEFAULT_CORE_UNIX_SOCKET)
-def cmd(id, args, socket_path):
+def cmd(id, args, socket_path, per_cmd_connection):
     from socket import socket, AF_UNIX, SOCK_STREAM
     sock = socket(AF_UNIX, SOCK_STREAM)
     sock.connect(socket)
@@ -85,14 +86,10 @@ def shell(socket):
 @click.option('--block-store', '-B')
 @click.option('--debug', '-d', is_flag=True)
 @click.option('--identity', '-i', default=None)
-@click.option('--identity-key', '-I', type=click.File(), default=None)
+@click.option('--identity-key', '-I', type=click.File('rb'), default=None)
 @click.option('--I-am-John', is_flag=True, help='Log as dummy John Doe user')
 def core(socket, backend_host, backend_watchdog, block_store, debug, identity, identity_key, i_am_john):
     loop = asyncio.get_event_loop()
-    server = UnixSocketServer()
-    backend_svc = loop.run_until_complete(
-        backend_api_service_factory(backend_host, backend_watchdog))
-    server.register_service(backend_svc)
     if block_store:
         if block_store.startswith('s3:'):
             try:
@@ -104,37 +101,39 @@ def core(socket, backend_host, backend_watchdog, block_store, debug, identity, i
             except ValueError:
                 raise SystemExit('Invalid --block-store value '
                                  ' (should be `s3:<region>:<bucket>:<id>:<secret>`.')
-            block_svc = s3_block_service_factory(region, bucket, key_id, key_secret)
-            store_type = 's3:%s:%s' % (region, bucket)
+            raise NotImplementedError('Not yet :-(')
+            # block_svc = s3_block_service_factory(region, bucket, key_id, key_secret)
+            # store_type = 's3:%s:%s' % (region, bucket)
         else:
             raise SystemExit('Unknown block store `%s` (only `s3:<region>:<bucket>:<id>:<secret>`'
                              ' is supported so far.' % block_store)
     else:
         store_type = 'mocked in memory'
-        block_svc = in_memory_block_service_factory()
-    server.register_service(block_svc)
-    identity_svc = identity_service_factory()
-    server.register_service(identity_svc)
+        # block_svc = in_memory_block_service_factory()
+    app = app_factory()
     if (identity or identity_key) and (not identity or not identity_key):
         raise SystemExit('--identity and --identity-key params should be provided together.')
     # TODO: remove me once RSA key loading and backend handling are easier
     if i_am_john:
-        identity = JOHN_DOE_IDENTITY
-        from io import BytesIO
-        identity_key = BytesIO(JOHN_DOE_PRIVATE_KEY)
-    if identity:
-        @server.post_bootstrap
-        async def post_bootstrap():
-            await identity_svc.load(identity, identity_key.read())
+        @do
+        def load_identity():
+            yield Effect(EIdentityLoad(JOHN_DOE_IDENTITY, JOHN_DOE_PRIVATE_KEY))
             print('Welcome back M. Doe')
-    server.register_service(CoreService())
+        loop.run_until_complete(app.async_perform(load_identity()))
+    elif identity:
+        @do
+        def load_identity():
+            password = getpass()
+            yield Effect(EIdentityLoad(identity, identity_key.read(), password))
+            print('Connected as %s' % identity)
+        loop.run_until_complete(app.async_perform(load_identity()))
     if debug:
         loop.set_debug(True)
     else:
         logger_stream.level = WARNING
     print('Starting parsec core on %s (connecting to backend %s and block store %s)' %
           (socket, backend_host, store_type))
-    server.start(socket, loop=loop)
+    run_app(socket, app=app, loop=loop)
     print('Bye ;-)')
 
 

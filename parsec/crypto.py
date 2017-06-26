@@ -13,7 +13,6 @@ from cryptography.exceptions import InvalidSignature, InvalidTag
 
 
 def load_private_key(raw_key, password=None):
-    import pdb; pdb.set_trace()
     if password:
         raise NotImplementedError('Cannot protect key with password yet !')
     # Only support RSA so far
