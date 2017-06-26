@@ -81,8 +81,16 @@ def _json_serial(obj):
     if isinstance(obj, Arrow):
         serial = obj.isoformat()
         return serial
-    raise TypeError ("Type %s not serializable" % type(obj))
+    raise TypeError("Type %s not serializable" % type(obj))
 
 
 def json_dumps(obj):
     return json.dumps(obj, default=_json_serial)
+
+
+def ejson_dumps(obj):
+    return json.dumps(obj, default=_json_serial)
+
+
+def ejson_loads(raw):
+    return json.loads(raw)

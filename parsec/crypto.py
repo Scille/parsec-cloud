@@ -12,7 +12,10 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.exceptions import InvalidSignature, InvalidTag
 
 
-def load_private_key(raw_key):
+def load_private_key(raw_key, password=None):
+    import pdb; pdb.set_trace()
+    if password:
+        raise NotImplementedError('Cannot protect key with password yet !')
     # Only support RSA so far
     return RSAPrivateKey(raw_key)
 
@@ -133,7 +136,7 @@ class RSAPrivateKey(BasePrivateAsymKey):
             )
             self._hazmat_private_key = private_key
         else:
-            self._hazmat_public_key = key
+            self._hazmat_private_key = key
         if self._hazmat_private_key.key_size < 1023:
             raise RuntimeError('Minimal key size is 1024bits')
 
