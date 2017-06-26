@@ -73,8 +73,7 @@ class File:
         blob = json.loads(blob.decode())
         # Get data
         matching_blocks = await self._find_matching_blocks(size, offset)
-        data = b''
-        data += decodebytes(matching_blocks['pre_included_data'].encode())
+        data = matching_blocks['pre_included_data']
         for blocks_and_key in matching_blocks['included_blocks']:
             block_key = blocks_and_key['key']
             decoded_block_key = decodebytes(block_key.encode())
@@ -90,8 +89,7 @@ class File:
                 new_digest = digest.finalize()
                 assert new_digest == decodebytes(block_properties['digest'].encode())
                 data += chunk_data
-        data += decodebytes(matching_blocks['post_included_data'].encode())
-        data = encodebytes(data).decode()
+        data += matching_blocks['post_included_data']
         return data
 
     async def write(self, data, offset):
@@ -100,12 +98,10 @@ class File:
         for blocks_and_key in previous_blocks['included_blocks']:
             for block_properties in blocks_and_key['blocks']:
                 previous_blocks_ids.append(block_properties['block'])
-        data = decodebytes(data.encode())
         matching_blocks = await self._find_matching_blocks(len(data), offset)
-        new_data = decodebytes(matching_blocks['pre_excluded_data'].encode())
+        new_data = matching_blocks['pre_excluded_data']
         new_data += data
-        new_data += decodebytes(matching_blocks['post_excluded_data'].encode())
-        new_data = encodebytes(new_data).decode()
+        new_data += matching_blocks['post_excluded_data']
         blob = []
         blob += matching_blocks['pre_excluded_blocks']
         blob.append(await self._build_file_blocks(new_data))
@@ -231,7 +227,6 @@ class File:
     async def _build_file_blocks(self, data):
         if isinstance(data, str):
             data = data.encode()
-        data = decodebytes(data)
         # Create chunks
         chunk_size = 4096  # TODO modify size
         chunks = [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
@@ -320,10 +315,6 @@ class File:
                     else:
                         post_excluded_blocks.append({'blocks': [block_properties],
                                                      'key': block_key})
-        pre_included_data = encodebytes(pre_included_data).decode()
-        pre_excluded_data = encodebytes(pre_excluded_data).decode()
-        post_included_data = encodebytes(post_included_data).decode()
-        post_excluded_data = encodebytes(post_excluded_data).decode()
         return {
             'pre_excluded_blocks': pre_excluded_blocks,
             'pre_excluded_data': pre_excluded_data,
