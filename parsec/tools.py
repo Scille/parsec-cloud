@@ -64,10 +64,6 @@ class UnknownCheckedSchema(Schema):
             if key not in self.fields or self.fields[key].dump_only:
                 raise ValidationError('Unknown field name {}'.format(key))
 
-
-class BaseCmdSchema(UnknownCheckedSchema):
-    cmd = fields.String()
-
     def load(self, msg):
         parsed_msg, errors = super().load(msg)
         if errors:

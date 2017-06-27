@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import Mock
 from effect2.testing import perform_sequence, const
 
