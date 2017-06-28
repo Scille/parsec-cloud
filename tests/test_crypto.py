@@ -1,9 +1,10 @@
 import pytest
+from unittest.mock import patch
 
 from parsec.crypto import (
-    load_private_key, load_public_key, load_sym_key,
+    load_private_key, load_public_key, load_sym_key, generate_sym_key,
     BasePrivateAsymKey, BasePublicAsymKey, InvalidSignature,
-    InvalidTag
+    RSAPublicKey, RSAPrivateKey, AESKey, InvalidTag
 )
 
 
@@ -75,6 +76,27 @@ MFswDQYJKoZIhvcNAQEBBQADSgAwRwJBALEpXv8eI7a/pGsYr/QWJS/oH3x/1Swv
 kP1k0wftRSFNX3ZoHWVRmiJQFiR6q/ahGQX8F2M5UL/KSDJ/luaarx0CAgEB
 -----END PUBLIC KEY-----
 """
+
+
+@pytest.fixture
+def mock_crypto_passthrough():
+    with patch.object(RSAPublicKey, 'encrypt', new=lambda _, txt: txt), \
+            patch.object(RSAPublicKey, 'verify', new=lambda _, sign, txt: None), \
+            patch.object(RSAPrivateKey, 'decrypt', new=lambda _, txt: txt), \
+            patch.object(RSAPrivateKey, 'sign', new=lambda _, txt: '<mock-signature>'), \
+            patch.object(AESKey, 'encrypt', new=lambda _, txt: txt), \
+            patch.object(AESKey, 'decrypt', new=lambda _, txt: txt):
+        yield
+
+
+def test_mocked_crypto(mock_crypto_passthrough, alice):
+    assert alice.pub_key.encrypt(b'foo') == b'foo'
+    assert alice.decrypt(b'foo') == b'foo'
+    assert alice.sign(b'foo') == '<mock-signature>'
+    alice.pub_key.verify(b'dummy-signature', b'foo')  # Should not raise error
+    symkey = generate_sym_key()
+    assert symkey.encrypt(b'foo') == b'foo'
+    assert symkey.decrypt(b'foo') == b'foo'
 
 
 @pytest.fixture
