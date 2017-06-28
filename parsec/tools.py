@@ -89,7 +89,7 @@ def json_dumps(obj):
 
 
 def ejson_dumps(obj):
-    return json.dumps(obj, default=_json_serial)
+    return json.dumps(obj, default=_json_serial, sort_keys=True)
 
 
 def ejson_loads(raw):

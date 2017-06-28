@@ -48,7 +48,7 @@ class TestRawCMD:
         sequence = [
         ]
         resp = perform_sequence(sequence, eff)
-        assert b'"status": "bad_message"' in resp
+        assert resp == b'{"label": "Message is not a valid JSON.", "status": "bad_message"}'
 
 
 class Test_api_identity_load:
