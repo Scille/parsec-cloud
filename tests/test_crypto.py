@@ -80,12 +80,24 @@ kP1k0wftRSFNX3ZoHWVRmiJQFiR6q/ahGQX8F2M5UL/KSDJ/luaarx0CAgEB
 
 @pytest.fixture
 def mock_crypto_passthrough():
+    count = 0
+
+    def mocked_urandom(size):
+        nonlocal count
+        count += 1
+        if size > 16:
+            template = '<dummy-key-{:0>%s}>' % (size - 12)
+        else:
+            template = '{:0>%s}' % size
+        return template.format(count).encode()
+
     with patch.object(RSAPublicKey, 'encrypt', new=lambda _, txt: txt), \
             patch.object(RSAPublicKey, 'verify', new=lambda _, sign, txt: None), \
             patch.object(RSAPrivateKey, 'decrypt', new=lambda _, txt: txt), \
             patch.object(RSAPrivateKey, 'sign', new=lambda _, txt: '<mock-signature>'), \
             patch.object(AESKey, 'encrypt', new=lambda _, txt: txt), \
-            patch.object(AESKey, 'decrypt', new=lambda _, txt: txt):
+            patch.object(AESKey, 'decrypt', new=lambda _, txt: txt), \
+            patch('parsec.crypto.urandom', new=mocked_urandom):
         yield
 
 
@@ -97,6 +109,11 @@ def test_mocked_crypto(mock_crypto_passthrough, alice):
     symkey = generate_sym_key()
     assert symkey.encrypt(b'foo') == b'foo'
     assert symkey.decrypt(b'foo') == b'foo'
+    symkey2 = generate_sym_key()
+    symkey3 = generate_sym_key()
+    assert symkey.key == b'<dummy-key-00000000000000000001>'
+    assert symkey2.key == b'<dummy-key-00000000000000000002>'
+    assert symkey3.key == b'<dummy-key-00000000000000000003>'
 
 
 @pytest.fixture
