@@ -10,13 +10,13 @@ from parsec.core.core_api import execute_raw_cmd
 from parsec.core.identity import identity_dispatcher_factory, IdentityMixin
 
 
-def app_factory():
+def app_factory(*additional_dispatchers):
     app = App()
     dispatcher = ComposedDispatcher([
         base_dispatcher,
         make_asyncio_dispatcher(),
         identity_dispatcher_factory(app)
-    ])
+    ] + list(additional_dispatchers))
     on_connection = on_connection_factory(execute_raw_cmd, dispatcher)
     app.on_connection = on_connection
     app.dispatcher = dispatcher

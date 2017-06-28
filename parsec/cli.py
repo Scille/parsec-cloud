@@ -12,6 +12,7 @@ from parsec.server import WebSocketServer
 from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedUserVlobService,
                             MockedVlobService, InMemoryPubKeyService)
 from parsec.core import app_factory, run_app
+from parsec.core.block import in_memory_block_dispatcher_factory, s3_block_dispatcher_factory
 from parsec.core.identity import EIdentityLoad
 from parsec.ui.shell import start_shell
 
@@ -102,15 +103,15 @@ def core(socket, backend_host, backend_watchdog, block_store, debug, identity, i
                 raise SystemExit('Invalid --block-store value '
                                  ' (should be `s3:<region>:<bucket>:<id>:<secret>`.')
             raise NotImplementedError('Not yet :-(')
-            # block_svc = s3_block_service_factory(region, bucket, key_id, key_secret)
-            # store_type = 's3:%s:%s' % (region, bucket)
+            block_dispatcher = s3_block_dispatcher_factory(region, bucket, key_id, key_secret)
+            store_type = 's3:%s:%s' % (region, bucket)
         else:
             raise SystemExit('Unknown block store `%s` (only `s3:<region>:<bucket>:<id>:<secret>`'
                              ' is supported so far.' % block_store)
     else:
         store_type = 'mocked in memory'
-        # block_svc = in_memory_block_service_factory()
-    app = app_factory()
+        block_dispatcher = in_memory_block_dispatcher_factory()
+    app = app_factory(block_dispatcher)
     if (identity or identity_key) and (not identity or not identity_key):
         raise SystemExit('--identity and --identity-key params should be provided together.')
     # TODO: remove me once RSA key loading and backend handling are easier
