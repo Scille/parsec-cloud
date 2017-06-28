@@ -13,6 +13,7 @@ class UnixSocketServer:
     async def stop(self):
         self.server_task.close()
         await self.server_task.wait_closed()
+        os.remove(self.socket_path)
 
 
 def run_unix_socket_server(on_connection, socket_path=None):

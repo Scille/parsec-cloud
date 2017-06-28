@@ -33,7 +33,6 @@ def run_app(socket_path, app=None, loop=None):
         loop.run_until_complete(server.stop())
     finally:
         loop.close()
-        os.remove(socket_path)
 
 
 @attr.s
