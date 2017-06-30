@@ -55,9 +55,6 @@ class BasePrivateAsymKey:
     def sign(self, message):
         raise NotImplementedError()
 
-    def signer(self):
-        raise NotImplementedError()
-
     def decrypt(self, message):
         raise NotImplementedError()
 
@@ -71,9 +68,6 @@ class BasePublicAsymKey:
         raise NotImplementedError()
 
     def verify(self, signature, message):
-        raise NotImplementedError()
-
-    def verifier(self, signature):
         raise NotImplementedError()
 
     def encrypt(self, message):
@@ -94,16 +88,6 @@ class RSAPublicKey(BasePublicAsymKey):
         return self._hazmat_public_key.verify(
             signature,
             message,
-            padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH
-            ),
-            hashes.SHA256()
-        )
-
-    def verifier(self, signature: bytes):
-        return self._hazmat_public_key.verifier(
-            signature,
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()),
                 salt_length=padding.PSS.MAX_LENGTH
@@ -142,15 +126,6 @@ class RSAPrivateKey(BasePrivateAsymKey):
     def sign(self, message: bytes):
         return self._hazmat_private_key.sign(
             message,
-            padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH
-            ),
-            hashes.SHA256()
-        )
-
-    def signer(self):
-        return self._hazmat_private_key.signer(
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()),
                 salt_length=padding.PSS.MAX_LENGTH
