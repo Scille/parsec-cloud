@@ -27,7 +27,6 @@ requirements = [
     "python-dateutil==2.6.0",
     "arrow==0.10.0",
     "attrs==17.2.0",
-    "aioeffect==1.0.0",
 ]
 
 extra_requirements = {
