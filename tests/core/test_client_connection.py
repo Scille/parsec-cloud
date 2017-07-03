@@ -1,8 +1,8 @@
 import pytest
 import attr
 from unittest.mock import Mock
-from effect import Effect, Constant
-from effect.do import do
+from effect2 import Effect, Constant, do, TypeDispatcher
+# from effect.do import do
 
 from parsec.core.client_connection import (
     on_connection_factory, EPushClientMsg, EClientSubscribeEvent)
@@ -30,7 +30,7 @@ async def test_no_command():
     reader = MockedReader()
     writer = MockedWriter()
     perform_cmd = Mock()
-    on_connection = on_connection_factory(perform_cmd, Mock())
+    on_connection = on_connection_factory(perform_cmd)
     await on_connection(reader, writer)
     perform_cmd.assert_not_called()
 

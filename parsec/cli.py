@@ -4,8 +4,7 @@ from getpass import getpass
 import asyncio
 import click
 from logbook import WARNING
-from effect import Effect
-from effect.do import do
+from effect2 import Effect, do
 
 from parsec.tools import logger_stream
 from parsec.server import WebSocketServer

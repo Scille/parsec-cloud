@@ -1,7 +1,6 @@
 import asyncio
 import attr
-from effect import TypeDispatcher
-from aioeffect import performer as asyncio_performer
+from effect2 import TypeDispatcher
 
 from parsec.exceptions import IdentityNotLoadedError, IdentityError
 from parsec.crypto import load_private_key
@@ -35,8 +34,7 @@ class EIdentityGet:
 class IdentityMixin:
     identity = attr.ib(default=None)
 
-    @asyncio_performer
-    async def perform_identity_load(self, dispatcher, intent):
+    async def perform_identity_load(self, intent):
         if self.identity:
             raise IdentityError('Identity already loaded')
         # TODO: handle invalid key with more precise exception
@@ -47,14 +45,12 @@ class IdentityMixin:
         self.identity = Identity(intent.id, private_key, private_key.pub_key)
         return self.identity
 
-    @asyncio_performer
-    async def perform_identity_unload(self, dispatcher, intent):
+    async def perform_identity_unload(self, intent):
         if not self.identity:
             raise IdentityNotLoadedError('Identity not loaded')
         self.identity = None
 
-    @asyncio_performer
-    async def perform_identity_get(self, dispatcher, intent):
+    async def perform_identity_get(self, intent):
         if not self.identity:
             return None
         return self.identity

@@ -122,3 +122,11 @@ class InvalidPath(ParsecError):
 
 class InvalidManifest(ParsecError):
     status = 'invalid_manifest'
+
+
+class PrivKeyError(ParsecError):
+    status = 'privkey_error'
+
+
+class PrivKeyNotFound(PubKeyError):
+    status = 'privkey_not_found'

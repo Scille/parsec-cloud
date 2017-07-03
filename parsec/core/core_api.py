@@ -1,10 +1,10 @@
 import attr
 import json
 from marshmallow import Schema, fields
-from effect import Effect
-from effect.do import do
+from effect2 import Effect, do
 
 from parsec.tools import ejson_dumps, ejson_loads
+from parsec.core import privkey_api
 from parsec.core.identity import EIdentityLoad, EIdentityUnload, EIdentityGet
 from parsec.exceptions import ParsecError, BadMessageError
 
@@ -75,4 +75,7 @@ API_CMDS_ROUTER = {
     'identity_load': api_identity_load,
     'identity_unload': api_identity_unload,
     'identity_info': api_identity_info,
+    'privkey_add': privkey_api.api_privkey_add,
+    'privkey_get': privkey_api.api_privkey_get,
+    'privkey_load': privkey_api.api_privkey_load,
 }

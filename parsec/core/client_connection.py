@@ -5,8 +5,7 @@ import asyncio
 from logbook import Logger
 from blinker import signal
 from websockets import ConnectionClosed
-from effect import sync_performer, TypeDispatcher, ComposedDispatcher
-from aioeffect import perform as asyncio_perform
+from effect2 import TypeDispatcher, ComposedDispatcher, asyncio_perform
 
 from parsec.tools import ejson_dumps
 from parsec.core.base import base_dispatcher
@@ -61,22 +60,21 @@ class ClientConnectionContext:
 
 
 def client_dispatcher_factory(client_context):
-    @sync_performer
-    def perform_push_client_msg(dispatcher, push_client_msg):
-        client_context.queued_pushed_events.put_nowait(push_client_msg.payload)
+    def perform_push_client_msg(intent):
+        client_context.queued_pushed_events.put_nowait(intent.payload)
 
-    @sync_performer
-    def perform_client_subscribe_event(dispatcher, subscribe_event):
-        key = (subscribe_event.event, subscribe_event.sender)
+    def perform_client_subscribe_event(intent):
+        key = (intent.event, intent.sender)
 
         def on_event(sender):
-            payload = ejson_dumps({'event': subscribe_event.event, 'sender': sender})
+            payload = ejson_dumps({'event': intent.event, 'sender': sender})
             client_context.queued_pushed_events.put_nowait(payload)
 
         # Attach the callbacks to the client context to make them have the same
         # lifetime given event registration expires when callback is destroyed
+        # TODO: allow a subset of the possible events
         client_context.subscribed_events[key] = on_event
-        signal(subscribe_event.event).connect(on_event, sender=subscribe_event.sender)
+        signal(intent.event).connect(on_event, sender=intent.sender)
 
     return TypeDispatcher({
         EPushClientMsg: perform_push_client_msg,

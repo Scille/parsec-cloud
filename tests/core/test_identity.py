@@ -1,6 +1,6 @@
 import pytest
-from effect import Effect
-from aioeffect import perform as asyncio_perform
+from effect2 import Effect
+from effect2.asyncio import asyncio_perform
 from parsec.core.identity import IdentityMixin, Identity, EIdentityLoad, identity_dispatcher_factory
 
 from tests.test_crypto import ALICE_PRIVATE_RSA

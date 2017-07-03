@@ -1,7 +1,7 @@
 import attr
 from blinker import signal
 
-from effect import sync_performer, TypeDispatcher, base_dispatcher
+from effect2 import ComposedDispatcher, TypeDispatcher, base_dispatcher, base_asyncio_dispatcher
 
 
 @attr.s
@@ -10,9 +10,12 @@ class EEvent:
     sender = attr.ib()
 
 
-@sync_performer
-def perform_event(dispatcher, intent):
+def perform_event(intent):
     signal(intent.event).send(intent.sender)
 
 
-base_dispatcher = TypeDispatcher({**base_dispatcher.mapping, EEvent: perform_event})
+base_dispatcher = ComposedDispatcher([
+    base_dispatcher,
+    base_asyncio_dispatcher,
+    TypeDispatcher({EEvent: perform_event})
+])

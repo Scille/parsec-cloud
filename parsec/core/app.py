@@ -1,21 +1,23 @@
 import os
 import asyncio
 import attr
-from effect import ComposedDispatcher, base_dispatcher
-from aioeffect import make_asyncio_dispatcher, perform as asyncio_perform
+from effect2 import ComposedDispatcher, asyncio_perform
 
+from parsec.core.base import base_dispatcher
 from parsec.core.server import run_unix_socket_server
 from parsec.core.client_connection import on_connection_factory
 from parsec.core.core_api import execute_raw_cmd
 from parsec.core.identity import identity_dispatcher_factory, IdentityMixin
+from parsec.core.privkey import PrivKeyComponent
 
 
 def app_factory(*additional_dispatchers):
     app = App()
+    privkey = PrivKeyComponent()
     dispatcher = ComposedDispatcher([
         base_dispatcher,
-        make_asyncio_dispatcher(),
-        identity_dispatcher_factory(app)
+        identity_dispatcher_factory(app),
+        privkey.get_dispatcher(),
     ] + list(additional_dispatchers))
     on_connection = on_connection_factory(execute_raw_cmd, dispatcher)
     app.on_connection = on_connection

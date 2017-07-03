@@ -1,5 +1,5 @@
 import pytest
-from effect.testing import perform_sequence, raise_
+from effect2.testing import perform_sequence, raise_
 from unittest.mock import Mock
 
 from parsec.core.core_api import execute_cmd, execute_raw_cmd, api_identity_load
