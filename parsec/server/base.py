@@ -6,7 +6,7 @@ import string
 from marshmallow import fields
 from marshmallow.validate import OneOf
 from logbook import Logger
-from effect import base_dispatcher, ComposedDispatcher
+from effect2 import base_dispatcher, ComposedDispatcher
 
 from parsec.exceptions import ParsecError
 from parsec.session import anonymous_handshake, ConnectionClosed

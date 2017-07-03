@@ -1,7 +1,6 @@
 import pytest
 import io
 from effect2 import Effect, asyncio_perform
-# from aioeffect import perform as asyncio_perform
 from unittest.mock import patch
 from botocore.exceptions import (
     ClientError as S3ClientError, EndpointConnectionError as S3EndpointConnectionError
