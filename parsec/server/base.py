@@ -6,7 +6,6 @@ import string
 from marshmallow import fields
 from marshmallow.validate import OneOf
 from logbook import Logger
-from effect2 import base_dispatcher, ComposedDispatcher
 
 from parsec.exceptions import ParsecError
 from parsec.session import anonymous_handshake, ConnectionClosed
@@ -200,12 +199,8 @@ class BaseServer:
 
     async def bootstrap_services(self):
         # TODO: clean this hack
-        global_dispatchers = ComposedDispatcher([base_dispatcher])
         errors = []
         for service in self._services.values():
-            if service.dispatcher:
-                global_dispatchers.dispatchers.append(service.dispatcher)
-                service.dispatcher = global_dispatchers
             try:
                 boot = service.inject_services()
                 dep = next(boot)
