@@ -14,6 +14,8 @@ from parsec.server import WebSocketServer
 from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedUserVlobService,
                             MockedVlobService, InMemoryPubKeyService)
 from parsec.core import app_factory, run_app
+from parsec.core.backend import BackendComponent
+from parsec.core.privkey import PrivKeyComponent
 from parsec.core.block import in_memory_block_dispatcher_factory, s3_block_dispatcher_factory
 from parsec.core.identity import EIdentityLoad
 from parsec.ui.shell import start_shell
@@ -148,7 +150,10 @@ def _core(socket, backend_host, backend_watchdog, block_store, debug, identity, 
     else:
         store_type = 'mocked in memory'
         block_dispatcher = in_memory_block_dispatcher_factory()
-    app = app_factory(block_dispatcher)
+    privkey_component = PrivKeyComponent()
+    backend_component = BackendComponent(backend_host, backend_watchdog)
+    app = app_factory(
+        privkey_component.get_dispatcher(), backend_component.get_dispatcher(), block_dispatcher)
     if (identity or identity_key) and (not identity or not identity_key):
         raise SystemExit('--identity and --identity-key params should be provided together.')
     # TODO: remove me once RSA key loading and backend handling are easier
