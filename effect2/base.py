@@ -4,6 +4,10 @@ import inspect
 from functools import wraps
 
 
+class UnknownIntent(Exception):
+    pass
+
+
 @attr.s
 class ChainedIntent:
     generator = attr.ib()
@@ -38,7 +42,7 @@ class TypeDispatcher:
         try:
             return self.mapping[type(intent)]
         except KeyError:
-            raise RuntimeError('No performer for intent `%s`' % intent)
+            raise UnknownIntent('No performer for intent `%s`' % intent)
 
 
 class ComposedDispatcher(TypeDispatcher):
@@ -46,12 +50,6 @@ class ComposedDispatcher(TypeDispatcher):
         self.mapping = {}
         for d in dispatchers:
             self.mapping.update(d.mapping)
-
-    # def __call__(self, intent):
-    #     try:
-    #         return next(filter(None, (d(intent) for d in self.dispatchers)))
-    #     except StopIteration:
-    #         raise RuntimeError('No performer for intent `%s`' % intent)
 
 
 def raise_(exception):

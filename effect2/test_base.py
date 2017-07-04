@@ -275,3 +275,24 @@ class TestAsynIOPerform:
         effect = Effect(EDoA())
         ret = await asyncio_perform(dispatcher, effect)
         assert ret == 'bar'
+
+    @pytest.mark.xfail
+    @pytest.mark.asyncio
+    async def test_asyncio_performer_await_effect(self):
+        class EDoA:
+            pass
+
+        class EDoB:
+            pass
+
+        async def performer(intent):
+            await asyncio.sleep(0)
+            return await Effect(EDoB)
+
+        dispatcher = TypeDispatcher({
+            EDoA: performer,
+            EDoB: lambda intent: 'bar'
+        })
+        effect = Effect(EDoA())
+        ret = await asyncio_perform(dispatcher, effect)
+        assert ret == 'bar'

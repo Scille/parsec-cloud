@@ -1,7 +1,7 @@
 import attr
 from contextlib import contextmanager
 
-from . import Effect, sync_perform, raise_
+from . import Effect, sync_perform, raise_, UnknownIntent
 from .intents import base_dispatcher
 
 
@@ -22,11 +22,11 @@ def perform_sequence(seq, effect, fallback_dispatcher=None):
         if p is not None:
             log.append(("sequence", intent))
             return p
-        p = fallback_dispatcher(intent)
-        if p is not None:
+        try:
+            p = fallback_dispatcher(intent)
             log.append(("fallback", intent))
             return p
-        else:
+        except UnknownIntent:
             log.append(("NOT FOUND", intent))
             raise AssertionError(
                 "Performer not found: %s! Log follows:\n%s" % (
