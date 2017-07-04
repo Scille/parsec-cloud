@@ -1,4 +1,7 @@
 from os import environ
+import pdb
+import sys
+import traceback
 from importlib import import_module
 from getpass import getpass
 import asyncio
@@ -77,6 +80,33 @@ def shell(socket):
     start_shell(socket)
 
 
+def run_with_pdb(cmd, *args, **kwargs):
+    # Stolen from pdb.main
+    pdb_context = pdb.Pdb()
+    try:
+        ret = pdb_context.runcall(cmd, **kwargs)
+        print("The program finished")
+        return ret
+    except pdb.Restart:
+        print("Restarting %s with arguments: %s, %s" % (cmd.__name__, args, kwargs))
+        # Yes, that's a hack
+        return run_with_pdb(cmd, *args, **kwargs)
+    except SystemExit:
+        # In most cases SystemExit does not warrant a post-mortem session.
+        print("The program exited via sys.exit(). Exit status:", end=' ')
+        print(sys.exc_info()[1])
+    except SyntaxError:
+        traceback.print_exc()
+        sys.exit(1)
+    except:
+        traceback.print_exc()
+        print("Uncaught exception. Entering post mortem debugging")
+        print("Running 'cont' or 'step' will restart the program")
+        t = sys.exc_info()[2]
+        pdb_context.interaction(None, t)
+        print("Post mortem debugger finished.")
+
+
 @click.command()
 @click.option('--socket', '-s', default=DEFAULT_CORE_UNIX_SOCKET,
               help='Path to the UNIX socket exposing the core API (default: %s).' %
@@ -85,10 +115,18 @@ def shell(socket):
 @click.option('--backend-watchdog', '-W', type=click.INT, default=None)
 @click.option('--block-store', '-B')
 @click.option('--debug', '-d', is_flag=True)
+@click.option('--pdb', is_flag=True)
 @click.option('--identity', '-i', default=None)
 @click.option('--identity-key', '-I', type=click.File('rb'), default=None)
 @click.option('--I-am-John', is_flag=True, help='Log as dummy John Doe user')
-def core(socket, backend_host, backend_watchdog, block_store, debug, identity, identity_key, i_am_john):
+def core(**kwargs):
+    if kwargs.pop('pdb'):
+        return run_with_pdb(_core, **kwargs)
+    else:
+        return _core(**kwargs)
+
+
+def _core(socket, backend_host, backend_watchdog, block_store, debug, identity, identity_key, i_am_john):
     loop = asyncio.get_event_loop()
     if block_store:
         if block_store.startswith('s3:'):
@@ -145,7 +183,15 @@ def core(socket, backend_host, backend_watchdog, block_store, debug, identity, i
               help='Disable authentication handshake on client connection (default: false)')
 @click.option('--store', '-s', default=None, help="Store configuration (default: in memory)")
 @click.option('--debug', '-d', is_flag=True)
-def backend(host, port, pubkeys, no_client_auth, store, debug):
+@click.option('--pdb', is_flag=True)
+def backend(**kwargs):
+    if kwargs.pop('pdb'):
+        return run_with_pdb(_backend, **kwargs)
+    else:
+        return _backend(**kwargs)
+
+
+def _backend(host, port, pubkeys, no_client_auth, store, debug):
     host = host or environ.get('HOST', 'localhost')
     port = port or int(environ.get('PORT', 6777))
     # TODO load pubkeys attribute
