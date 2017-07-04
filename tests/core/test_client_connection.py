@@ -5,7 +5,7 @@ from effect2 import Effect, Constant, do, TypeDispatcher
 # from effect.do import do
 
 from parsec.core.client_connection import (
-    on_connection_factory, EPushClientMsg, EClientSubscribeEvent)
+    on_connection_factory, EPushClientMsg, EClientSubscribeEvent, EClientUnsubscribeEvent)
 from parsec.core.base import EEvent
 
 
@@ -84,6 +84,29 @@ async def test_events():
     on_connection = on_connection_factory(perform_cmd)
     await on_connection(reader, writer)
 
-    expected_possibilities = (b'cmd_resp\n{"sender": "sender1", "event": "eventA"}\n',
-                              b'cmd_resp\n{"event": "eventA", "sender": "sender1"}\n')
-    assert writer.written in expected_possibilities
+    assert writer.written == b'cmd_resp\n{"event": "eventA", "sender": "sender1"}\n'
+
+
+@pytest.mark.asyncio
+async def test_unsubscribe_events():
+    reader = MockedReader(b'cmd\n')
+    writer = MockedWriter()
+
+    @do
+    def perform_cmd(cmd):
+        yield Effect(EClientSubscribeEvent('eventA', 'sender1'))
+        yield Effect(EClientSubscribeEvent('eventA', 'sender2'))
+        yield Effect(EClientSubscribeEvent('eventB', 'sender1'))
+        yield Effect(EClientUnsubscribeEvent('eventA', 'sender1'))
+        yield Effect(EEvent('eventA', 'sender1'))
+        yield Effect(EEvent('eventA', 'sender2'))
+        yield Effect(EEvent('eventB', 'sender1'))
+        return b'cmd_resp'
+
+    on_connection = on_connection_factory(perform_cmd)
+    await on_connection(reader, writer)
+
+    assert writer.written == (
+        b'cmd_resp\n'
+        b'{"event": "eventA", "sender": "sender2"}\n'
+        b'{"event": "eventB", "sender": "sender1"}\n')

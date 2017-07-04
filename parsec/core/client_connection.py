@@ -22,6 +22,12 @@ class EClientSubscribeEvent:
     sender = attr.ib()
 
 
+@attr.s
+class EClientUnsubscribeEvent:
+    event = attr.ib()
+    sender = attr.ib()
+
+
 def _unique_enough_id():
     # Colision risk is high, but this is pretty fine (and much more readable
     # than a uuid4) for giving id to connections
@@ -76,9 +82,17 @@ def client_dispatcher_factory(client_context):
         client_context.subscribed_events[key] = on_event
         signal(intent.event).connect(on_event, sender=intent.sender)
 
+    def perform_client_unsubscribe_event(intent):
+        key = (intent.event, intent.sender)
+        try:
+            del client_context.subscribed_events[key]
+        except KeyError:
+            pass
+
     return TypeDispatcher({
         EPushClientMsg: perform_push_client_msg,
-        EClientSubscribeEvent: perform_client_subscribe_event
+        EClientSubscribeEvent: perform_client_subscribe_event,
+        EClientUnsubscribeEvent: perform_client_unsubscribe_event
     })
 
 

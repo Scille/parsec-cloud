@@ -5,6 +5,7 @@ from effect2 import Effect, do
 
 from parsec.tools import ejson_dumps, ejson_loads
 from parsec.core import privkey_api
+from parsec.core.client_connection import EClientSubscribeEvent, EClientUnsubscribeEvent
 from parsec.core.identity import EIdentityLoad, EIdentityUnload, EIdentityGet
 from parsec.exceptions import ParsecError, BadMessageError
 
@@ -71,7 +72,32 @@ def api_identity_info(msg):
         return {'status': 'ok', 'loaded': False}
 
 
+class cmd_EVENT_Schema(Schema):
+    event = fields.String(required=True)
+    sender = fields.Base64Bytes(required=True)
+
+
+@do
+def api_subscribe_event(msg):
+    msg, errors = cmd_EVENT_Schema().load(msg)
+    if errors:
+        raise BadMessageError(errors)
+    yield Effect(EClientSubscribeEvent(**msg))
+    return {'status': 'ok'}
+
+
+@do
+def api_unsubscribe_event(msg):
+    msg, errors = cmd_EVENT_Schema().load(msg)
+    if errors:
+        raise BadMessageError(errors)
+    yield Effect(EClientUnsubscribeEvent(**msg))
+    return {'status': 'ok'}
+
+
 API_CMDS_ROUTER = {
+    'subscribe_event': api_subscribe_event,
+    'unsubscribe_event': api_unsubscribe_event,
     'identity_load': api_identity_load,
     'identity_unload': api_identity_unload,
     'identity_info': api_identity_info,
