@@ -130,3 +130,7 @@ class PrivKeyError(ParsecError):
 
 class PrivKeyNotFound(PubKeyError):
     status = 'privkey_not_found'
+
+
+class BackendConnectionError(ParsecError):
+    status = 'backend_connection_error'

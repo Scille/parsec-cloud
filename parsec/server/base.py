@@ -170,7 +170,7 @@ class BaseServer:
                             del msg['request_id']
                         cmd = self._cmds.get(msg['cmd'])
                         if not cmd:
-                            resp = {'status': 'badcmd',
+                            resp = {'status': 'bad_msg',
                                     'label': 'Unknown command `%s`' % msg['cmd']}
                         else:
                             try:

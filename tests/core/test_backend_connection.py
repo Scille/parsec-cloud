@@ -16,8 +16,8 @@ class TestBackendConnection:
         identity = Mock()
         identity.private_key.sign.return_value = b'456'
         identity.id = 'John'
-        with patch('parsec.core.backend.websockets', new_callable=AsyncMock) as mocked_websockets:
-            mocked_websocket = mocked_websockets.connect.return_value
+        with patch('parsec.core.backend.websockets.connect', new_callable=AsyncMock) as mocked_connect:
+            mocked_websocket = mocked_connect.return_value
             pushed_event_future1 = asyncio.Future()
             pushed_event_future2 = asyncio.Future()
             to_recv = iter([
@@ -68,7 +68,7 @@ class TestBackendConnection:
 
             conn = BackendConnection('ws://foo')
             await conn.open_connection(identity)
-            mocked_websockets.connect.assert_called_once_with('ws://foo')
+            mocked_connect.assert_called_once_with('ws://foo')
 
             ret = await conn.send_cmd({'cmd': 'ping', 'ping': 1})
             assert ret == {'status': 'ok', 'pong': 1}

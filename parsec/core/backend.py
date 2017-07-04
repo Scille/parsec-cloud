@@ -5,14 +5,14 @@ import blinker
 import websockets
 from effect2 import TypeDispatcher, do, Effect
 
-from parsec.exceptions import ParsecError, exception_from_status
+from parsec.exceptions import BackendConnectionError, exception_from_status
 from parsec.tools import logger, ejson_loads, ejson_dumps, to_jsonb64
 
 
 @attr.s
 class BackendCmd:
     cmd = attr.ib()
-    msg = attr.ib(default=dict)
+    msg = attr.ib(default=attr.Factory(dict))
 
 
 @attr.s
@@ -20,16 +20,21 @@ class EBackendCloseConnection:
     pass
 
 
+@attr.s
+class EBackendStatus:
+    pass
+
+
 class BackendConnection:
 
-    def __init__(self, backend_url, watchdog=None):
+    def __init__(self, url, watchdog=None):
         self._resp_queue = asyncio.Queue()
-        assert backend_url.startswith('ws://') or backend_url.startswith('wss://')
-        self._backend_url = backend_url
+        assert url.startswith('ws://') or url.startswith('wss://')
+        self.url = url
         self._websocket = None
         self._ws_recv_handler_task = None
         self._watchdog_task = None
-        self._watchdog_time = watchdog
+        self.watchdog_time = watchdog
         self._signal_ns = blinker.Namespace()
 
     async def connect_event(self, event, sender, cb):
@@ -40,7 +45,7 @@ class BackendConnection:
     async def open_connection(self, identity):
         logger.debug('Connection to backend oppened')
         assert not self._websocket, "Connection to backend already opened"
-        self._websocket = await websockets.connect(self._backend_url)
+        self._websocket = await websockets.connect(self.url)
         # Handle handshake
         challenge = ejson_loads(await self._websocket.recv())
         answer = identity.private_key.sign(challenge['challenge'].encode())
@@ -54,8 +59,12 @@ class BackendConnection:
             await self._close_connection()
             raise exception_from_status(resp['status'])(resp['label'])
         self._ws_recv_handler_task = asyncio.ensure_future(self._ws_recv_handler())
-        if self._watchdog_time:
+        if self.watchdog_time:
             self._watchdog_task = asyncio.ensure_future(self._watchdog())
+
+    async def ping(self):
+        assert self._websocket, "Connection to backend not opened"
+        await self._websocket.ping()
 
     async def close_connection(self):
         assert self._websocket, "Connection to backend not opened"
@@ -65,9 +74,12 @@ class BackendConnection:
             task.cancel()
             try:
                 await task
-            except asyncio.CancelledError:
+            except (asyncio.CancelledError, websockets.exceptions.ConnectionClosed):
                 pass
-        await self._websocket.close()
+        try:
+            await self._websocket.close()
+        except websockets.exceptions.ConnectionClosed:
+            pass
         self._websocket = None
         self._ws_recv_handler_task = None
         self._watchdog_task = None
@@ -75,7 +87,7 @@ class BackendConnection:
 
     async def _watchdog(self):
         while True:
-            await asyncio.sleep(self._watchdog_time)
+            await asyncio.sleep(self.watchdog_time)
             logger.debug('Watchdog ping to backend.')
             await self._websocket.ping()
 
@@ -101,7 +113,7 @@ class BackendConnection:
 
     async def send_cmd(self, msg):
         if not self._websocket:
-            raise ParsecError('BackendAPIService cannot send command in current state')
+            raise BackendConnectionError('BackendAPIService cannot send command in current state')
         await self._websocket.send(ejson_dumps(msg))
         ret = await self._resp_queue.get()
         status = ret['status']
@@ -113,9 +125,9 @@ class BackendConnection:
 
 class BackendComponent:
 
-    def __init__(self, backend_url, watchdog=None):
+    def __init__(self, url, watchdog=None):
         self.app = None
-        self.backend_url = backend_url
+        self.url = url
         self.watchdog = watchdog
         self.connection = None
         blinker.signal('app_start').connect(self.on_app_start)
@@ -129,22 +141,47 @@ class BackendComponent:
     def on_app_stop(self, app):
         yield Effect(EBackendCloseConnection())
 
-    async def perform_backend_close_connection(self, intent):
+    async def open_connection(self):
+        if not self.connection:
+            if not self.app.identity:
+                raise BackendConnectionError('Identity must be loaded to connect to backend')
+            connection = BackendConnection(self.url, self.watchdog)
+            try:
+                await connection.open_connection(self.app.identity)
+            except ConnectionRefusedError as exc:
+                raise BackendConnectionError('Cannot connect to backend (%s)' % exc)
+            self.connection = connection
+
+    async def close_connection(self):
         if self.connection:
             await self.connection.close_connection()
             self.connection = None
 
+    async def perform_backend_close_connection(self, intent):
+        await self.close_connection()
+
+    async def perform_backend_status(self, intent):
+        await self.open_connection()
+        try:
+            await self.connection.ping()
+        except websockets.exceptions.ConnectionClosed as exc:
+            await self.close_connection()
+            raise BackendConnectionError('Cannot connect to the backend (%s)' % exc)
+
     async def perform_backend_cmd(self, intent):
-        if not self.connection:
-            self.connection = BackendConnection()
-            await self.connection.open_connection(self.app.identity)
+        await self.open_connection()
         payload = {'cmd': intent.cmd, **intent.msg}
-        return await self.connection.send_cmd(payload)
+        try:
+            return await self.connection.send_cmd(payload)
+        except BackendConnectionError:
+            await self.close_connection()
+            raise
 
     def get_dispatcher(self):
         from parsec.core import backend_group, backend_message, backend_user_vlob, backend_vlob
         return TypeDispatcher({
             BackendCmd: self.perform_backend_cmd,
+            EBackendStatus: self.perform_backend_status,
             EBackendCloseConnection: self.perform_backend_close_connection,
             backend_vlob.EBackendVlobCreate: backend_vlob.perform_vlob_create,
             backend_vlob.EBackendVlobUpdate: backend_vlob.perform_vlob_update,

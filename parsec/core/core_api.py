@@ -6,6 +6,7 @@ from effect2 import Effect, do
 from parsec.tools import ejson_dumps, ejson_loads
 from parsec.core import privkey_api
 from parsec.core.client_connection import EClientSubscribeEvent, EClientUnsubscribeEvent
+from parsec.core.backend import EBackendStatus
 from parsec.core.identity import EIdentityLoad, EIdentityUnload, EIdentityGet
 from parsec.exceptions import ParsecError, BadMessageError
 
@@ -95,9 +96,16 @@ def api_unsubscribe_event(msg):
     return {'status': 'ok'}
 
 
+@do
+def api_backend_status(msg):
+    yield Effect(EBackendStatus())
+    return {'status': 'ok'}
+
+
 API_CMDS_ROUTER = {
     'subscribe_event': api_subscribe_event,
     'unsubscribe_event': api_unsubscribe_event,
+    'backend_status': api_backend_status,
     'identity_load': api_identity_load,
     'identity_unload': api_identity_unload,
     'identity_info': api_identity_info,
