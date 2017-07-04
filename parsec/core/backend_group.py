@@ -1,5 +1,5 @@
 import attr
-from effect2 import Effect, do, TypeDispatcher
+from effect2 import Effect, do
 
 from parsec.exceptions import exception_from_status
 from parsec.core.backend import BackendCmd
@@ -71,12 +71,3 @@ def perform_group_remove_identities(intent):
     status = ret['status']
     if status != 'ok':
         raise exception_from_status(status)(ret['label'])
-
-
-def backend_message_dispatcher_factory():
-    return TypeDispatcher({
-        EBackendGroupRead: perform_group_read,
-        EBackendGroupCreate: perform_group_create,
-        EBackendGroupAddIdentities: perform_group_add_identities,
-        EBackendGroupRemoveIdentities: perform_group_remove_identities
-    })

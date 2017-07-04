@@ -1,5 +1,5 @@
 import attr
-from effect2 import Effect, do, TypeDispatcher
+from effect2 import Effect, do
 
 from parsec.tools import to_jsonb64, from_jsonb64
 from parsec.exceptions import exception_from_status
@@ -41,10 +41,3 @@ def perform_message_get(intent):
     if status != 'ok':
         raise exception_from_status(status)(ret['label'])
     return [Message(msg['count'], from_jsonb64(msg['body'])) for msg in ret['messages']]
-
-
-def backend_message_dispatcher_factory():
-    return TypeDispatcher({
-        EBackendMessageGet: perform_message_get,
-        EBackendMessageNew: perform_message_new
-    })

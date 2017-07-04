@@ -1,5 +1,5 @@
 import attr
-from effect2 import Effect, do, TypeDispatcher
+from effect2 import Effect, do
 
 from parsec.tools import to_jsonb64, from_jsonb64
 from parsec.exceptions import exception_from_status
@@ -45,10 +45,3 @@ def perform_user_vlob_update(intent):
     status = ret['status']
     if status != 'ok':
         raise exception_from_status(status)(ret['label'])
-
-
-def backend_vlob_dispatcher_factory():
-    return TypeDispatcher({
-        EBackendUserVlobUpdate: perform_user_vlob_update,
-        EBackendUserVlobRead: perform_user_vlob_read
-    })
