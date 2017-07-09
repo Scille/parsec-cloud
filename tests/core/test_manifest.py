@@ -449,47 +449,47 @@ class TestManifest:
         manifest.add_file('/test_dir/test', vlob)
 
     @pytest.mark.parametrize('final_slash', ['', '/'])
-    def test_rename_file(self, final_slash):
+    def test_move(self, final_slash):
         vlob = {'id': 'vlob_1', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
         manifest = Manifest()
         manifest.create_folder('/test')
         manifest.add_file('/test/test', vlob)
-        # Rename file
-        manifest.rename_file('/test/test' + final_slash, '/test/foo' + final_slash)
+        # Move file
+        manifest.move('/test/test' + final_slash, '/test/foo' + final_slash)
         with pytest.raises(KeyError):
             manifest.entries['/test/test']
         assert manifest.entries['/test/foo']
-        # Rename dir
-        manifest.rename_file('/test' + final_slash, '/foo' + final_slash)
+        # Move dir
+        manifest.move('/test' + final_slash, '/foo' + final_slash)
         with pytest.raises(KeyError):
             manifest.entries['/test']
         with pytest.raises(KeyError):
             manifest.entries['/test/foo']
         assert manifest.entries['/foo'] is None
         assert manifest.entries['/foo/foo']
-        # Rename parent and parent not found
+        # Move parent and parent not found
         with pytest.raises(ManifestNotFound):
-            manifest.rename_file('/foo/foo' + final_slash, '/test/test' + final_slash)
+            manifest.move('/foo/foo' + final_slash, '/test/test' + final_slash)
         assert manifest.entries['/foo'] is None
         assert manifest.entries['/foo/foo']
-        # Rename parent and parent found
+        # Move parent and parent found
         manifest.create_folder('/test')
-        manifest.rename_file('/foo/foo' + final_slash, '/test/test' + final_slash)
+        manifest.move('/foo/foo' + final_slash, '/test/test' + final_slash)
         assert manifest.entries['/test'] is None
         assert manifest.entries['/test/test']
 
-    def test_rename_file_and_source_not_exists(self):
+    def test_move_and_source_not_exists(self):
         manifest = Manifest()
         with pytest.raises(ManifestNotFound):
-            manifest.rename_file('/test', '/foo')
+            manifest.move('/test', '/foo')
 
-    def test_rename_file_and_target_exists(self):
+    def test_move_and_target_exists(self):
         vlob = {'id': 'vlob_1', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
         manifest = Manifest()
         manifest.add_file('/test', vlob)
         manifest.add_file('/foo', vlob)
         with pytest.raises(ManifestError):
-            manifest.rename_file('/test', '/foo')
+            manifest.move('/test', '/foo')
         manifest.stat('/test')
         manifest.stat('/foo')
 

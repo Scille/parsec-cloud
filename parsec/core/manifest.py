@@ -162,7 +162,7 @@ class Manifest:
             raise ManifestError('already_exists', 'File already exists.')
         self.entries[path] = vlob
 
-    def rename_file(self, old_path, new_path):
+    def move(self, old_path, new_path):
         old_path = '/' + old_path.strip('/')
         new_path = '/' + new_path.strip('/')
         new_parent_folder = os.path.dirname(new_path)
