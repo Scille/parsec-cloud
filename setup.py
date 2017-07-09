@@ -16,6 +16,7 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     "Logbook==1.0.0",
+    "cachetools==2.0.0",
     "cryptography==1.7.1",
     "simplejson==3.10.0",
     "pyaml==16.12.2",
@@ -30,11 +31,11 @@ requirements = [
 ]
 
 extra_requirements = {
-    's3': ['boto3==1.4.4', 'botocore==1.5.46'],
     'drive': ["pydrive==1.3.1"],
     'dropbox': ["dropbox==7.2.1"],
+    'fuse': ['fusepy==2.0.4'],
     'postgresql': ["psycopg2==2.7.1", "aiopg==0.13.0"],
-    'fuse': ['fusepy==2.0.4']
+    's3': ['boto3==1.4.4', 'botocore==1.5.46'],
 }
 extra_requirements['all'] = sum(extra_requirements.values(), [])
 extra_requirements['oeuf-jambon-fromage'] = extra_requirements['all']
