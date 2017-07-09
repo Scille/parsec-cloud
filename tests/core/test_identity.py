@@ -6,9 +6,13 @@ from parsec.core.identity import IdentityMixin, Identity, EIdentityLoad, identit
 from tests.test_crypto import ALICE_PRIVATE_RSA
 
 
+@pytest.fixture
+def app():
+    return IdentityMixin()
+
+
 @pytest.mark.asyncio
-async def test_perform_identity_load():
-    app = IdentityMixin()
+async def test_perform_identity_load(app):
     dispatcher = identity_dispatcher_factory(app)
     assert app.identity is None
     intent = Effect(EIdentityLoad('Alice', ALICE_PRIVATE_RSA))

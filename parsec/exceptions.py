@@ -1,5 +1,4 @@
-import json
-
+from parsec import tools
 
 
 class ExceptionsMap:
@@ -46,7 +45,7 @@ class ParsecError(Exception, metaclass=MetaParsecError):
         return {'status': self.status, 'label': self.label}
 
     def to_raw(self):
-        return json.dumps(self.to_dict())
+        return tools.ejson_dumps(self.to_dict())
 
 
 class ServiceNotReadyError(ParsecError):
@@ -89,6 +88,10 @@ class UserVlobError(ParsecError):
     status = 'user_vlob_error'
 
 
+class UserVlobNotFound(ParsecError):
+    status = 'user_vlob_not_found'
+
+
 class GroupError(ParsecError):
     status = 'group_error'
 
@@ -108,6 +111,14 @@ class BlockNotFound(BlockError):
 # Core errors
 
 
+class FileError(ParsecError):
+    status = 'file_error'
+
+
+class FileNotFound(FileError):
+    status = 'file_not_found'
+
+
 class IdentityError(ParsecError):
     status = 'identity_error'
 
@@ -120,15 +131,19 @@ class InvalidPath(ParsecError):
     status = 'invalid_path'
 
 
-class InvalidManifest(ParsecError):
-    status = 'invalid_manifest'
+class ManifestError(ParsecError):
+    status = 'manifest_error'
+
+
+class ManifestNotFound(ParsecError):
+    status = 'manifest_not_found'
 
 
 class PrivKeyError(ParsecError):
     status = 'privkey_error'
 
 
-class PrivKeyNotFound(PubKeyError):
+class PrivKeyNotFound(PrivKeyError):
     status = 'privkey_not_found'
 
 

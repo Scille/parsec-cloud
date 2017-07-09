@@ -1,4 +1,3 @@
-import os
 import asyncio
 import attr
 from effect2 import ComposedDispatcher, asyncio_perform, Effect

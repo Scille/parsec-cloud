@@ -1,14 +1,17 @@
 import asyncio
 import sys
+import inspect
 import json
 import base64
 from functools import partial
 from arrow import Arrow
 
-from marshmallow import Schema, fields, validates_schema, ValidationError
+from cryptography.hazmat.backends.openssl import backend as openssl
+from cryptography.hazmat.primitives import hashes
 from logbook import Logger, StreamHandler
+from marshmallow import Schema, fields, validates_schema, ValidationError
 
-from parsec.exceptions import BadMessageError
+from parsec import exceptions
 
 
 # TODO: useful ?
@@ -52,6 +55,20 @@ def event_handler(callback, sender, *args):
     loop.call_soon(asyncio.ensure_future, callback(*args))
 
 
+def get_arg(method, arg, args, kwargs):
+    try:
+        return kwargs[arg]
+    except KeyError:
+        properties = inspect.getargspec(method)
+        arg_index = properties.args.index(arg)
+        try:
+            return args[arg_index]
+        except IndexError:
+            defaults_values = dict(zip(reversed(properties.args),
+                                       reversed(properties.defaults)))
+            return defaults_values[arg]
+
+
 class UnknownCheckedSchema(Schema):
 
     """
@@ -67,21 +84,22 @@ class UnknownCheckedSchema(Schema):
     def load(self, msg):
         parsed_msg, errors = super().load(msg)
         if errors:
-            raise BadMessageError(errors)
+            raise exceptions.BadMessageError(errors)
         return parsed_msg
+
+
+class BaseCmdSchema(UnknownCheckedSchema):
+    cmd = fields.String()
 
 
 def _json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
-
     if isinstance(obj, Arrow):
         serial = obj.isoformat()
         return serial
+    elif isinstance(obj, bytes):
+        return to_jsonb64(obj)
     raise TypeError("Type %s not serializable" % type(obj))
-
-
-def json_dumps(obj):
-    return json.dumps(obj, default=_json_serial)
 
 
 def ejson_dumps(obj):
@@ -90,3 +108,9 @@ def ejson_dumps(obj):
 
 def ejson_loads(raw):
     return json.loads(raw)
+
+
+def digest(data):
+    digest = hashes.Hash(hashes.SHA512(), backend=openssl)
+    digest.update(b'')
+    return to_jsonb64(digest.finalize())

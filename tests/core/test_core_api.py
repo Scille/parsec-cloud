@@ -2,9 +2,8 @@ import pytest
 from effect2.testing import perform_sequence, raise_
 from unittest.mock import Mock
 
-from parsec.core.core_api import (execute_cmd, execute_raw_cmd, api_identity_load, api_privkey_add)
+from parsec.core.core_api import execute_cmd, execute_raw_cmd
 from parsec.core.identity import EIdentityLoad, Identity
-from parsec.core.privkey import EPrivkeyAdd, PrivKey
 from parsec.exceptions import ParsecError
 
 
@@ -50,73 +49,3 @@ class TestRawCMD:
         ]
         resp = perform_sequence(sequence, eff)
         assert resp == b'{"label": "Message is not a valid JSON.", "status": "bad_message"}'
-
-
-class Test_api_identity_load:
-    def test_call_execute_cmd(self):
-        eff = execute_cmd('identity_load', {'id': 'JohnDoe', 'key': 'MTIzNDU=\n'})
-        sequence = [
-            (EIdentityLoad('JohnDoe', b'12345', None),
-                lambda _: Identity('JohnDoe', Mock(), Mock())),
-        ]
-        resp = perform_sequence(sequence, eff)
-        assert resp == {"status": "ok"}
-
-    def test_call_api_identity_load(self):
-        eff = api_identity_load({'id': 'JohnDoe', 'key': 'MTIzNDU=\n'})
-        sequence = [
-            (EIdentityLoad('JohnDoe', b'12345', None),
-                lambda _: Identity('JohnDoe', Mock(), Mock())),
-        ]
-        resp = perform_sequence(sequence, eff)
-        assert resp == {"status": "ok"}
-
-    @pytest.mark.parametrize('bad_params', [
-        {},
-        {'id': 42, 'key': 'MTIzNDU=\n', 'password': 'secret'},
-        {'id': 'JohnDoe', 'key': 42, 'password': 'secret'},
-        {'id': 'JohnDoe', 'key': 'MTIzNDU=\n', 'password': 42},
-        {'key': 'MTIzNDU=\n', 'password': 'secret'},
-        {'id': 'JohnDoe', 'password': 'secret'},
-    ])
-    def test_api_identity_load_error(self, bad_params):
-        eff = execute_cmd('identity_load', bad_params)
-        sequence = [
-        ]
-        resp = perform_sequence(sequence, eff)
-        assert resp['status'] == 'bad_msg'
-
-
-class Test_api_privkey_add:
-    def test_call_execute_cmd(self):
-        eff = execute_cmd('privkey_add', {'id': 'JohnDoe', 'password': 'secret', 'key': 'MTIzNDU=\n'})
-        sequence = [
-            (EPrivkeyAdd('JohnDoe', 'secret', b'12345'),
-                lambda _: PrivKey(b'12345')),
-        ]
-        resp = perform_sequence(sequence, eff)
-        assert resp == {"status": "ok"}
-
-    def test_call_api_add_privkey(self):
-        eff = api_privkey_add({'id': 'JohnDoe', 'password': 'secret', 'key': 'MTIzNDU=\n'})
-        sequence = [
-            (EPrivkeyAdd('JohnDoe', 'secret', b'12345'),
-                lambda _: PrivKey(b'12345')),
-        ]
-        resp = perform_sequence(sequence, eff)
-        assert resp == {"status": "ok"}
-
-    @pytest.mark.parametrize('bad_params', [
-        {},
-        {'id': 42, 'key': 'MTIzNDU=\n', 'password': 'secret'},
-        {'id': 'JohnDoe', 'key': 42, 'password': 'secret'},
-        {'id': 'JohnDoe', 'key': 'MTIzNDU=\n', 'password': 42},
-        {'key': 'MTIzNDU=\n', 'password': 'secret'},
-        {'id': 'JohnDoe', 'password': 'secret'},
-    ])
-    def test_api_add_privkey_error(self, bad_params):
-        eff = execute_cmd('privkey_add', bad_params)
-        sequence = [
-        ]
-        resp = perform_sequence(sequence, eff)
-        assert resp['status'] == 'bad_msg'

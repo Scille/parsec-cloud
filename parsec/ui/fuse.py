@@ -12,7 +12,7 @@ from errno import ENOENT, EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 
-from parsec.tools import logger, from_jsonb64, to_jsonb64
+from parsec.tools import logger, from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 
 
 DEFAULT_CORE_UNIX_SOCKET = '/tmp/parsec'
@@ -98,14 +98,14 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def send_cmd(self, **msg):
         with self._socket_lock:
-            req = json.dumps(msg).encode() + b'\n'
+            req = ejson_dumps(msg).encode() + b'\n'
             logger.debug('Send: %r' % req)
             self.sock.send(req)
             raw_reps = self.sock.recv(4096)
             while raw_reps[-1] != ord(b'\n'):
                 raw_reps += self.sock.recv(4096)
             logger.debug('Received: %r' % raw_reps)
-            return json.loads(raw_reps[:-1].decode())
+            return ejson_loads(raw_reps[:-1].decode())
 
     def _get_fd(self, fh):
         try:
@@ -123,18 +123,17 @@ class FuseOperations(LoggingMixIn, Operations):
         stat = self.send_cmd(cmd='stat', path=path)
         if stat['status'] != 'ok':
             raise FuseOSError(ENOENT)
-        fuse_stat = {
-            'st_size': stat.get('size', 0),
-            'st_ctime': dateparse(stat['created']).timestamp(),  # TODO change to local timezone
-            'st_mtime': dateparse(stat['updated']).timestamp(),
-            'st_atime': dateparse(stat['updated']).timestamp(),  # TODO not supported ?
-        }
+        fuse_stat = {}
         # Set it to 777 access
         fuse_stat['st_mode'] = 0
         if stat['type'] == 'folder':
             fuse_stat['st_mode'] |= S_IFDIR
         else:
             fuse_stat['st_mode'] |= S_IFREG
+            fuse_stat['st_size'] = stat.get('size', 0)
+            fuse_stat['st_ctime'] = dateparse(stat['created']).timestamp()  # TODO change to local timezone
+            fuse_stat['st_mtime'] = dateparse(stat['updated']).timestamp()
+            fuse_stat['st_atime'] = dateparse(stat['updated']).timestamp()  # TODO not supported ?
         fuse_stat['st_mode'] |= S_IRWXU | S_IRWXG | S_IRWXO
         fuse_stat['st_nlink'] = 1
         fuse_stat['st_uid'] = os.getuid()
@@ -146,7 +145,7 @@ class FuseOperations(LoggingMixIn, Operations):
         # TODO: make sure error code for path is not a folder is ENOENT
         if resp['status'] != 'ok' or resp['type'] != 'folder':
             raise FuseOSError(ENOENT)
-        return ['.', '..'] + list(resp['children'])
+        return ['.', '..'] + list(resp['items'])
 
     def create(self, path, mode):
         response = self.send_cmd(cmd='file_create', path=path)
