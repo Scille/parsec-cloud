@@ -73,7 +73,8 @@ class EFileHistory:
 
 @attr.s
 class EFileRestore:
-    version = attr.ib()
+    path = attr.ib()
+    version = attr.ib(default=None)
 
 
 @attr.s
@@ -115,8 +116,7 @@ class FSComponent:
 
     @do
     def perform_synchronize(self, intent):
-        yield self.user_manifest.commit()
-        yield Effect(ESynchronizerSynchronize())
+        yield self.user_manifest.commit(recursive=True)
 
     @do
     def perform_group_create(self, intent):
@@ -124,19 +124,18 @@ class FSComponent:
 
     @do
     def perform_dustbin_show(self, intent):
-        dustbin = yield self.user_manifest.show_dustbin(intent.path)
-        return dustbin
+        return self.user_manifest.show_dustbin(intent.path)
 
     @do
     def perform_manifest_history(self, intent):
-        history = self.user_manifest.history(intent.first_version,
-                                             intent.last_version,
-                                             intent.summary)
+        history = yield self.user_manifest.history(intent.first_version,
+                                                   intent.last_version,
+                                                   intent.summary)
         return history
 
     @do
     def perform_manifest_restore(self, intent):
-        yield self.user_manifest.history(intent.version)
+        yield self.user_manifest.restore(intent.version)
 
     @do
     def perform_file_create(self, intent):
@@ -186,7 +185,7 @@ class FSComponent:
 
     @do
     def perform_move(self, intent):
-        yield self.user_manifest.stat(intent.src, intent.dst)
+        self.user_manifest.move(intent.src, intent.dst)
 
     @do
     def perform_delete(self, intent):
@@ -194,7 +193,7 @@ class FSComponent:
 
     @do
     def perform_undelete(self, intent):
-        yield self.user_manifest.undelete(intent.vlob)
+        self.user_manifest.undelete_file(intent.vlob)
 
     @do
     def _get_file(self, path, group=None):
