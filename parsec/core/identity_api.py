@@ -1,6 +1,5 @@
 from marshmallow import fields
-from effect import Effect
-from effect.do import do
+from effect2 import Effect, do
 
 from parsec.core.identity import EIdentityLoad, EIdentityUnload, EIdentityGet
 from parsec.tools import UnknownCheckedSchema

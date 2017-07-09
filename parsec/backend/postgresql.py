@@ -1,6 +1,5 @@
 import asyncio
 import aiopg
-import json
 from psycopg2 import ProgrammingError, IntegrityError
 import click
 from blinker import signal
@@ -14,6 +13,7 @@ from parsec.backend.vlob_service import (
 from parsec.backend.user_vlob_service import BaseUserVlobService, UserVlobAtom, UserVlobError
 from parsec.backend.group_service import GroupError, GroupNotFound, BaseGroupService
 from parsec.backend.pubkey_service import BasePubKeyService, PubKeyError, PubKeyNotFound
+from parsec.tools import ejson_dumps, ejson_loads
 
 
 @click.group()
@@ -270,7 +270,7 @@ class PostgreSQLGroupService(BaseGroupService):
                 ret = await cur.fetchone()
                 if ret is None:
                     raise GroupNotFound('Group not found.')
-                return json.loads(ret[0])
+                return ejson_loads(ret[0])
 
     async def add_identities(self, name, identities, admin=False):
         async with self.postgresql.acquire() as conn:
@@ -279,10 +279,10 @@ class PostgreSQLGroupService(BaseGroupService):
                 ret = await cur.fetchone()
                 if ret is None:
                     raise GroupNotFound('Group not found.')
-                group = json.loads(ret[0])
+                group = ejson_loads(ret[0])
                 group_entry = 'admins' if admin else 'users'
                 group[group_entry] = list(set(group[group_entry]) | set(identities))
-                await cur.execute('UPDATE groups SET body=%s WHERE id=%s', (json.dumps(group), name))
+                await cur.execute('UPDATE groups SET body=%s WHERE id=%s', (ejson_dumps(group), name))
 
     async def remove_identities(self, name, identities, admin=False):
         async with self.postgresql.acquire() as conn:
@@ -291,11 +291,11 @@ class PostgreSQLGroupService(BaseGroupService):
                 ret = await cur.fetchone()
                 if ret is None:
                     raise GroupNotFound('Group not found.')
-                group = json.loads(ret[0])
+                group = ejson_loads(ret[0])
                 group_entry = 'admins' if admin else 'users'
                 group[group_entry] = [identity for identity in group[group_entry]
                                       if identity not in identities]
-                await cur.execute('UPDATE groups SET body=%s WHERE id=%s', (json.dumps(group), name))
+                await cur.execute('UPDATE groups SET body=%s WHERE id=%s', (ejson_dumps(group), name))
 
 
 class PostgreSQLPubKeyService(BasePubKeyService):

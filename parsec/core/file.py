@@ -1,11 +1,10 @@
 import sys
 
-from effect import Effect
-from effect.do import do
+from effect2 import Effect, do
 
 from parsec.crypto import generate_sym_key, load_sym_key
 from parsec.core.synchronizer import (EVlobCreate, EVlobList, EVlobRead, EVlobUpdate, EVlobDelete, EVlobSynchronize,
-                                      EBlockCreate, EBlockSynchronize, EBlockRead, EBlockStat, EBlockDelete)
+                                      EBlockCreate, EBlockSynchronize, EBlockRead, EBlockDelete)
 from parsec.exceptions import BlockNotFound, FileError, VlobNotFound
 from parsec.tools import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads, digest
 
@@ -145,8 +144,7 @@ class File:
         encrypted_blob = from_jsonb64(encrypted_blob)
         blob = self.encryptor.decrypt(encrypted_blob)
         blob = ejson_loads(blob.decode())
-        # TODO which block index? Or add date in vlob_service ?
-        block_stat = yield Effect(EBlockStat(blob[-1]['blocks'][-1]['block']))
+        block_stat = {'creation_date': '2012-01-01T00:00:00'}  # TODO real date
         size = 0
         for blocks_and_key in blob:
             for block in blocks_and_key['blocks']:

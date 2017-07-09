@@ -9,7 +9,7 @@ from logbook import Logger
 
 from parsec.exceptions import ParsecError
 from parsec.session import anonymous_handshake, ConnectionClosed
-from parsec.tools import BaseCmdSchema, json_dumps
+from parsec.tools import BaseCmdSchema, ejson_dumps, ejson_loads
 
 
 class BaseClientContext:
@@ -105,7 +105,7 @@ class BaseServer:
         try:
             if isinstance(raw, bytes):
                 raw = raw.decode()
-            msg = json.loads(raw)
+            msg = ejson_loads(raw)
             if isinstance(msg.get('cmd'), str):
                 return msg
             else:
@@ -122,7 +122,7 @@ class BaseServer:
             raw_msg += ', "%s": %s' % tuple(data.split('=', maxsplit=1))
         raw_msg += '}'
         try:
-            return json.loads(raw_msg)
+            return ejson_loads(raw_msg)
         except json.decoder.JSONDecodeError:
             pass
         # Nothing worked :'-(
@@ -150,7 +150,7 @@ class BaseServer:
                     event, sender = get_event.result()
                     conn_log.debug('Got event: %s@%s' % (event, sender))
                     resp = {'event': event, 'sender': sender}
-                    await context.send(json_dumps(resp).encode())
+                    await context.send(ejson_dumps(resp).encode())
                     # Restart watch on incoming notifications
                     get_event = asyncio.ensure_future(session.received_events.get())
                 else:
@@ -180,7 +180,7 @@ class BaseServer:
                         if request_id:
                             resp['request_id'] = request_id
                     conn_log.debug('Replied: %r' % resp)
-                    await context.send(json_dumps(resp).encode())
+                    await context.send(ejson_dumps(resp).encode())
                     # Restart watch on incoming messages
                     get_cmd = asyncio.ensure_future(context.recv())
         except ConnectionClosed:

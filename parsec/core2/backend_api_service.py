@@ -8,7 +8,7 @@ from parsec.service import BaseService, service
 from parsec.backend import (
     MockedGroupService, InMemoryMessageService, MockedVlobService, MockedUserVlobService
 )
-from parsec.tools import logger, to_jsonb64, async_callback
+from parsec.tools import logger, to_jsonb64, ejson_dumps, ejson_loads, async_callback
 from parsec.exceptions import exception_from_status, IdentityNotLoadedError
 from parsec.session import AuthSession
 
@@ -98,14 +98,14 @@ class BackendAPIService(BaseBackendAPIService):
         assert not self._websocket, "Connection to backend already opened"
         self._websocket = await websockets.connect(self._backend_url)
         # Handle handshake
-        challenge = json.loads(await self._websocket.recv())
+        challenge = ejson_loads(await self._websocket.recv())
         answer = self.identity.private_key.sign(challenge['challenge'].encode())
-        await self._websocket.send(json.dumps({
+        await self._websocket.send(ejson_dumps({
             'handshake': 'answer',
             'identity': self.identity.id,
             'answer': to_jsonb64(answer)
         }))
-        resp = json.loads(await self._websocket.recv())
+        resp = ejson_loads(await self._websocket.recv())
         if resp['status'] != 'ok':
             await self._close_connection()
             raise exception_from_status(resp['status'])(resp['label'])
@@ -161,7 +161,7 @@ class BackendAPIService(BaseBackendAPIService):
             try:
                 if isinstance(raw, bytes):
                     raw = raw.decode()
-                recv = json.loads(raw)
+                recv = ejson_loads(raw)
                 if 'status' in recv:
                     # Message response
                     self._resp_queue.put_nowait(recv)
@@ -175,7 +175,7 @@ class BackendAPIService(BaseBackendAPIService):
     async def _send_cmd(self, msg):
         if not self._websocket:
             raise IdentityNotLoadedError('BackendAPIService cannot send command in current state')
-        await self._websocket.send(json.dumps(msg))
+        await self._websocket.send(ejson_dumps(msg))
         ret = await self._resp_queue.get()
         status = ret['status']
         if status == 'ok':

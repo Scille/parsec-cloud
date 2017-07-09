@@ -4,7 +4,7 @@ import arrow
 
 from parsec.exceptions import InvalidManifest
 from parsec.crypto import load_sym_key
-from parsec.tools import from_jsonb64, to_jsonb64, json_dumps
+from parsec.tools import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 
 
 @attr.s
@@ -117,7 +117,7 @@ def load_user_manifest(raw: bytes):
     if not raw:
         return UserManifest()
     try:
-        wksp = json.loads(raw.decode())
+        wksp = ejson_loads(raw.decode())
     except json.JSONDecodeError as exc:
         raise InvalidManifest(str(exc))
     return _load_folder('/', wksp, folder_cls=UserManifest)
@@ -146,12 +146,12 @@ def dump_user_manifest(wksp: UserManifest):
             raise RuntimeError('Invalid node type %s' % item)
 
     wksp_as_dict = _dump(wksp)
-    return json_dumps(wksp_as_dict).encode()
+    return ejson_dumps(wksp_as_dict).encode()
 
 
 def load_file_manifest(raw: bytes):
     try:
-        data = json.loads(raw.decode())
+        data = ejson_loads(raw.decode())
     except json.JSONDecodeError as exc:
         raise InvalidManifest(str(exc))
     blocks = []
@@ -183,4 +183,4 @@ def dump_file_manifest(fm: FileManifest):
         'updated': fm.updated,
         'blocks': blocks_data
     }
-    return json_dumps(data).encode()
+    return ejson_dumps(data).encode()

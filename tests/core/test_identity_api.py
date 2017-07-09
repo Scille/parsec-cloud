@@ -1,5 +1,5 @@
 import pytest
-from effect.testing import perform_sequence
+from effect2.testing import perform_sequence
 from unittest.mock import Mock
 
 from parsec.core.core_api import execute_cmd

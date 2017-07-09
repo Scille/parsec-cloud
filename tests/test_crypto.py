@@ -143,9 +143,9 @@ class TestRSAAsymCrypto:
 
     def test_load_too_small_key(self):
         with pytest.raises(RuntimeError):
-            key = load_public_key(TOO_SMALL_PUBLIC_RSA)
+            load_public_key(TOO_SMALL_PUBLIC_RSA)
         with pytest.raises(RuntimeError):
-            key = load_private_key(TOO_SMALL_PRIVATE_RSA)
+            load_private_key(TOO_SMALL_PRIVATE_RSA)
 
     @pytest.mark.parametrize('badkey', [
         ALICE_PUBLIC_RSA,

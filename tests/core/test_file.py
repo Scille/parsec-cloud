@@ -1,7 +1,7 @@
 from copy import deepcopy
 import random
 
-from effect.testing import perform_sequence
+from effect2.testing import perform_sequence
 import pytest
 
 from parsec.core.file import File
@@ -134,11 +134,11 @@ class TestFile:
             (EVlobRead(vlob_id, '42', 1),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
             (EBlockRead(block_ids[0]),
-                lambda _: {'content': to_jsonb64(chunk_1), 'creation_date': 'foo'}),
+                lambda _: {'content': to_jsonb64(chunk_1), 'creation_date': '2012-01-01T00:00:00'}),
             (EBlockRead(block_ids[1]),
-                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': 'foo'}),
+                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'}),
             (EBlockRead(block_ids[2]),
-                lambda _: {'content': to_jsonb64(chunk_3), 'creation_date': 'foo'})
+                lambda _: {'content': to_jsonb64(chunk_3), 'creation_date': '2012-01-01T00:00:00'})
         ]
         read_content = perform_sequence(sequence, file.read())
         assert read_content == content
@@ -148,9 +148,9 @@ class TestFile:
             (EVlobRead(vlob_id, '42', 1),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
             (EBlockRead(block_ids[1]),
-                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': 'foo'}),
+                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'}),
             (EBlockRead(block_ids[2]),
-                lambda _: {'content': to_jsonb64(chunk_3), 'creation_date': 'foo'})
+                lambda _: {'content': to_jsonb64(chunk_3), 'creation_date': '2012-01-01T00:00:00'})
         ]
         read_content = perform_sequence(sequence, file.read(offset=offset))
         assert read_content == content[offset:]
@@ -160,7 +160,7 @@ class TestFile:
             (EVlobRead(vlob_id, '42', 1),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
             (EBlockRead(block_ids[1]),
-                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': 'foo'})
+                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'})
         ]
         read_content = perform_sequence(sequence, file.read(offset=offset, size=size))
         assert read_content == content[offset:][:size]
@@ -216,7 +216,7 @@ class TestFile:
             (EVlobRead(vlob_id, '42', 2),  # Matching blocks
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 2}),
             (EBlockRead(block_ids[1]),
-                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': 'foo'}),
+                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'}),
             (EBlockCreate(to_jsonb64(new_chuck_2)),
                 lambda _: new_block_id),
             (EVlobUpdate(vlob_id, '43', 3, new_blob),
@@ -273,7 +273,7 @@ class TestFile:
             (EVlobRead(vlob_id, '42', 2),  # Matching blocks
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 2}),
             (EBlockRead(block_ids[1]),
-                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': 'foo'}),
+                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'}),
             (EBlockCreate(to_jsonb64(new_chuck_2)),
                 lambda _: new_block_id),
             (EVlobUpdate(vlob_id, '43', 3, new_blob),
@@ -315,13 +315,13 @@ class TestFile:
             (EVlobRead(vlob_id, '42', 1),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
             (EBlockStat('6789'),
-                lambda _: {'creation_date': 'foo'})
+                lambda _: {'creation_date': '2012-01-01T00:00:00'})
         ]
         ret = perform_sequence(sequence, file.stat())
         assert ret == {'type': 'file',
                        'id': vlob_id,
-                       'created': 'foo',
-                       'updated': 'foo',
+                       'created': '2012-01-01T00:00:00',
+                       'updated': '2012-01-01T00:00:00',
                        'size': 23,
                        'version': 1}
         # TODO check created and updated time are different
@@ -648,7 +648,7 @@ class TestFile:
             (EVlobRead(vlob_id, '42', 1),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
             (EBlockRead('2003'),
-                lambda _: {'content': block_contents['2003'], 'creation_date': 'foo'})
+                lambda _: {'content': block_contents['2003'], 'creation_date': '2012-01-01T00:00:00'})
         ]
         matching_blocks = perform_sequence(sequence, file._find_matching_blocks(None, offset))
         pre_excluded_data = contents[2][:blocks[2]['blocks'][0]['size'] - delta]
@@ -670,7 +670,7 @@ class TestFile:
             (EVlobRead(vlob_id, '42', 1),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
             (EBlockRead(id='2003'),
-                lambda _: {'content': block_contents['2003'], 'creation_date': 'foo'})
+                lambda _: {'content': block_contents['2003'], 'creation_date': '2012-01-01T00:00:00'})
         ]
         matching_blocks = perform_sequence(sequence, file._find_matching_blocks(size, offset))
         pre_excluded_data = contents[2][:blocks[2]['blocks'][0]['size'] - delta]
@@ -697,9 +697,9 @@ class TestFile:
             (EVlobRead(vlob_id, '42', 1),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
             (EBlockRead('2003'),
-                lambda _: {'content': block_contents['2003'], 'creation_date': 'foo'}),
+                lambda _: {'content': block_contents['2003'], 'creation_date': '2012-01-01T00:00:00'}),
             (EBlockRead('2007'),
-                lambda _: {'content': block_contents['2007'], 'creation_date': 'foo'})
+                lambda _: {'content': block_contents['2007'], 'creation_date': '2012-01-01T00:00:00'})
         ]
         matching_blocks = perform_sequence(sequence, file._find_matching_blocks(size, offset))
         pre_excluded_data = contents[2][:-delta]

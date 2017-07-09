@@ -1,7 +1,8 @@
 import asyncio
-import json
 from functools import partial
 import readline  # noqa: side effect powaaa !
+
+from parsec.tools import ejson_loads
 
 
 async def repl(socket_path):
@@ -26,7 +27,7 @@ async def repl(socket_path):
         writer.write(data.encode())
         writer.write(b'\n')
         raw_resp = await reader.readline()
-        resp = json.loads(raw_resp.decode())
+        resp = ejson_loads(raw_resp.decode())
         print('Received: %r' % resp)
 
 

@@ -8,7 +8,7 @@ from aioeffect import perform as asyncio_perform, performer as asyncio_performer
 
 from parsec.service import BaseService, service
 from parsec.core2.identity_service import Event, IdentityGet
-from parsec.tools import to_jsonb64, from_jsonb64, json_dumps, async_callback, logger
+from parsec.tools import to_jsonb64, from_jsonb64, ejson_dumps, ejson_loads, async_callback, logger
 from parsec.exceptions import exception_from_status
 
 
@@ -247,15 +247,15 @@ class BackendAPIService(BaseService):
         assert not self._websocket, "Connection to backend already opened"
         self._websocket = await websockets.connect(self._backend_url)
         # Handle handshake
-        challenge = json.loads(await self._websocket.recv())
+        challenge = ejson_loads(await self._websocket.recv())
         identity = await self.identity.get()
         answer = identity.private_key.sign(challenge['challenge'].encode())
-        await self._websocket.send(json.dumps({
+        await self._websocket.send(ejson_dumps({
             'handshake': 'answer',
             'identity': identity.id,
             'answer': to_jsonb64(answer)
         }))
-        resp = json.loads(await self._websocket.recv())
+        resp = ejson_loads(await self._websocket.recv())
         if resp['status'] != 'ok':
             await self._close_connection()
             raise exception_from_status(resp['status'])(resp['label'])
@@ -311,7 +311,7 @@ class BackendAPIService(BaseService):
             try:
                 if isinstance(raw, bytes):
                     raw = raw.decode()
-                recv = json.loads(raw)
+                recv = ejson_loads(raw)
                 if 'status' in recv:
                     # Message response
                     self._resp_queue.put_nowait(recv)

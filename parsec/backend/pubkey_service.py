@@ -7,7 +7,7 @@ from cryptography.exceptions import InvalidSignature
 from parsec.service import BaseService, cmd
 from parsec.session import AuthSession, ConnectionClosed
 from parsec.exceptions import PubKeyError, PubKeyNotFound, HandshakeError
-from parsec.tools import BaseCmdSchema, UnknownCheckedSchema
+from parsec.tools import BaseCmdSchema, UnknownCheckedSchema, ejson_dumps, ejson_loads
 from parsec.crypto import load_public_key
 
 
@@ -20,7 +20,7 @@ class HandshakeAnswerSchema(UnknownCheckedSchema):
 def _generate_challenge():
     # Use SystemRandom to get cryptographically secure seeds
     return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
-                        for _ in range(12))
+                   for _ in range(12))
 
 
 class cmd_PUBKEY_GET_Schema(BaseCmdSchema):
@@ -47,15 +47,13 @@ class BasePubKeyService(BaseService):
         try:
             challenge = _generate_challenge()
             query = {'handshake': 'challenge', 'challenge': challenge}
-            await context.send(json.dumps(query))
+            await context.send(ejson_dumps(query))
             raw_resp = await context.recv()
             try:
-                resp = json.loads(raw_resp)
+                resp = ejson_loads(raw_resp)
             except (TypeError, json.JSONDecodeError):
                 raise HandshakeError('Invalid challenge response format')
-            resp, errors = HandshakeAnswerSchema().load(resp)
-            if errors:
-                raise HandshakeError('Invalid challenge response format: %s' % errors)
+            resp = HandshakeAnswerSchema().load(resp)
             claimed_identity = resp['identity']
             try:
                 pubkey = await self.get_pubkey(claimed_identity)
