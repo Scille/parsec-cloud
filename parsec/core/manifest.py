@@ -3,8 +3,7 @@ from functools import partial
 from datetime import datetime
 import os
 
-from effect import Effect
-from effect.do import do
+from effect2 import Effect, do
 
 from parsec.core.file import File
 from parsec.core.synchronizer import (
@@ -196,24 +195,28 @@ class Manifest:
                 del self.entries[entry]
 
     @do
-    def delete_file(self, path):
+    def delete(self, path):
         path = '/' + path.strip('/')
-        try:
+        deleted_paths = []
+        for entry in self.entries:
+            if entry == path or entry.startswith(path + '/') or path == '/':
+                deleted_paths.append(entry)
+        for path in deleted_paths:
             entry = self.entries[path]
-        except KeyError:
-            raise ManifestNotFound('File not found.')
-        if not entry:
-            raise ManifestError('path_is_not_file', 'Path is not a file.')
-        file = yield File.load(entry['id'],
-                               entry['key'],
-                               entry['read_trust_seed'],
-                               entry['write_trust_seed'])
-        discarded = yield file.discard()  # TODO discard or not?
-        if not discarded:
-            dustbin_entry = {'removed_date': datetime.utcnow().isoformat(), 'path': path}
-            dustbin_entry.update(entry)
-            self.dustbin.append(dustbin_entry)
-        del self.entries[path]
+            if entry:
+                file = yield File.load(entry['id'],
+                                       entry['key'],
+                                       entry['read_trust_seed'],
+                                       entry['write_trust_seed'])
+                discarded = yield file.discard()  # TODO discard or not?
+                if not discarded:
+                    dustbin_entry = {'removed_date': datetime.utcnow().isoformat(), 'path': path}
+                    dustbin_entry.update(entry)
+                    self.dustbin.append(dustbin_entry)
+            if path != '/':
+                del self.entries[path]
+        if not deleted_paths:
+            raise ManifestNotFound('File or directory not found.')
 
     def undelete_file(self, vlob):
         for entry in self.dustbin:
@@ -226,7 +229,7 @@ class Manifest:
                 self.dustbin[:] = [item for item in self.dustbin if item['id'] != vlob]
                 self.entries[path] = entry
                 folder = os.path.dirname(path)
-                self.make_folder(folder, parents=True)
+                self.create_folder(folder, parents=True)
                 return
         raise ManifestNotFound('Vlob not found.')
 
@@ -265,7 +268,7 @@ class Manifest:
                 'items': sorted(list(children.keys()))
             }
 
-    def make_folder(self, path, parents=False):
+    def create_folder(self, path, parents=False):
         path = '/' + path.strip('/')
         if path in self.entries:
             if parents:
@@ -275,25 +278,11 @@ class Manifest:
         parent_folder = os.path.dirname(path)
         if parent_folder not in self.entries:
             if parents:
-                self.make_folder(parent_folder, parents=True)
+                self.create_folder(parent_folder, parents=True)
             else:
                 raise ManifestNotFound("Parent folder doesn't exists.")
         self.entries[path] = None
         return self.entries[path]
-
-    def remove_folder(self, path):
-        path = '/' + path.strip('/')
-        if path == '/':
-            raise ManifestError('cannot_remove_root', 'Cannot remove root folder.')
-        for entry, vlob in self.entries.items():
-            if entry != path and entry.startswith(path):
-                raise ManifestError('folder_not_empty', 'Folder not empty.')
-            elif entry == path and vlob:
-                raise ManifestError('path_is_not_folder', 'Path is not a folder.')
-        try:
-            del self.entries[path]
-        except KeyError:
-            raise ManifestNotFound('Folder not found.')
 
     def show_dustbin(self, path=None):
         if not path:

@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from effect.testing import perform_sequence
+from effect2.testing import perform_sequence
 from freezegun import freeze_time
 import pytest
 
@@ -100,7 +100,7 @@ class TestManifest:
             (EVlobDelete(vlob_id),
                 lambda _: None)
         ]
-        perform_sequence(sequence, manifest.delete_file('/foo'))
+        perform_sequence(sequence, manifest.delete('/foo'))
         ret = perform_sequence([], manifest.is_dirty())
         assert ret is False
 
@@ -383,7 +383,7 @@ class TestManifest:
 
     def test_get_vlobs_versions(self):
         manifest = Manifest()
-        manifest.make_folder('/dir')
+        manifest.create_folder('/dir')
         manifest.add_file('/dir/foo', {'id': 'vlob_1',
                                        'key': 'key',
                                        'read_trust_seed': 'rts',
@@ -445,14 +445,14 @@ class TestManifest:
         with pytest.raises(ManifestNotFound):
             manifest.add_file('/test_dir/test', vlob)
         # Parent found
-        manifest.make_folder('/test_dir')
+        manifest.create_folder('/test_dir')
         manifest.add_file('/test_dir/test', vlob)
 
     @pytest.mark.parametrize('final_slash', ['', '/'])
     def test_rename_file(self, final_slash):
         vlob = {'id': 'vlob_1', 'key': 'key', 'read_trust_seed': 'rts', 'write_trust_seed': 'wts'}
         manifest = Manifest()
-        manifest.make_folder('/test')
+        manifest.create_folder('/test')
         manifest.add_file('/test/test', vlob)
         # Rename file
         manifest.rename_file('/test/test' + final_slash, '/test/foo' + final_slash)
@@ -473,7 +473,7 @@ class TestManifest:
         assert manifest.entries['/foo'] is None
         assert manifest.entries['/foo/foo']
         # Rename parent and parent found
-        manifest.make_folder('/test')
+        manifest.create_folder('/test')
         manifest.rename_file('/foo/foo' + final_slash, '/test/test' + final_slash)
         assert manifest.entries['/test'] is None
         assert manifest.entries['/test/test']
@@ -496,8 +496,9 @@ class TestManifest:
     @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
     @pytest.mark.parametrize('final_slash', ['', '/'])
     @pytest.mark.parametrize('synchronize', [True, False])
-    def test_delete_file(self, mock_crypto_passthrough, path, final_slash, synchronize):
+    def test_delete(self, mock_crypto_passthrough, path, final_slash, synchronize):
         vlob_id = '1234'
+        persistent_vlob_id = '2345'
         block_id = '4567'
         blob = [{'blocks': [{'block': block_id, 'digest': digest(b''), 'size': 0}],
                  'key': to_jsonb64(b'<dummy-key-00000000000000000001>')}]
@@ -511,12 +512,22 @@ class TestManifest:
         ]
         file = perform_sequence(sequence, File.create())
         vlob = file.get_vlob()
-        persistent_vlob = {'id': 'vlob_1',
-                           'key': 'key',
-                           'read_trust_seed': 'rts',
-                           'write_trust_seed': 'wts'}
+        persistent_blob = [{'blocks': [{'block': block_id, 'digest': digest(b''), 'size': 0}],
+                            'key': to_jsonb64(b'<dummy-key-00000000000000000003>')}]
+        persistent_blob = ejson_dumps(persistent_blob).encode()
+        persistent_blob = to_jsonb64(persistent_blob)
+        sequence = [
+            (EBlockCreate(''),
+                lambda _: block_id),
+            (EVlobCreate(persistent_blob),
+                lambda _: {'id': persistent_vlob_id,
+                           'read_trust_seed': '42',
+                           'write_trust_seed': '43'}),
+        ]
+        persistent_file = perform_sequence(sequence, File.create())
+        persistent_vlob = persistent_file.get_vlob()
         manifest = Manifest()
-        manifest.make_folder('/test_dir')
+        manifest.create_folder('/test_dir')
         for persistent_path in ['/persistent', '/test_dir/persistent']:
             manifest.add_file(persistent_path, persistent_vlob)
         for i in range(1):
@@ -528,29 +539,47 @@ class TestManifest:
                     lambda _: [] if synchronize else [vlob_id]),
                 (EVlobRead(vlob_id, '42', 1),
                     lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
-                (EBlockDelete(id='4567'),
+                (EBlockDelete(block_id),
                     lambda _: raise_(BlockNotFound('Block not found.')) if synchronize else None),
-                (EVlobDelete(id='1234'),
+                (EVlobDelete(vlob_id),
                     lambda _: raise_(VlobNotFound('Vlob not found.')) if synchronize else None)
             ]
-            ret = perform_sequence(sequence, manifest.delete_file(path + final_slash))
+            ret = perform_sequence(sequence, manifest.delete(path + final_slash))
             assert ret is None
             # File not found
             with pytest.raises(ManifestNotFound):
-                perform_sequence([], manifest.delete_file(path + final_slash))
+                perform_sequence([], manifest.delete(path + final_slash))
             # Persistent files
-            for persistent_path in ['/persistent', '/test_dir/persistent']:
-                assert manifest.entries[persistent_path]
+            for path in ['/persistent', '/test_dir/persistent']:
+                assert path in manifest.entries
         if synchronize:
             assert len(manifest.dustbin) == 1
         else:
             assert len(manifest.dustbin) == 0
-
-    def test_delete_not_file(self):
-        manifest = Manifest()
-        manifest.make_folder('/test')
-        with pytest.raises(ManifestError):  # TODO InvalidPath
-            perform_sequence([], manifest.delete_file('/test'))
+        # Remove not empty dir
+        sequence = [
+            (EVlobRead(persistent_vlob_id, '42'),
+                lambda _: {'id': persistent_vlob_id, 'blob': blob, 'version': 1}),
+            (EVlobList(),
+                lambda _: [] if synchronize else [persistent_vlob_id]),
+            (EVlobRead(persistent_vlob_id, '42', 1),
+                lambda _: {'id': persistent_vlob_id, 'blob': blob, 'version': 1}),
+            (EBlockDelete(block_id),
+                lambda _: raise_(BlockNotFound('Block not found.')) if synchronize else None),
+            (EVlobDelete(persistent_vlob_id),
+                lambda _: raise_(VlobNotFound('Vlob not found.')) if synchronize else None)
+        ]
+        perform_sequence(sequence, manifest.delete('/test_dir' + final_slash))
+        for path in ['/test_dir/persistent', '/test_dir']:
+            assert path not in manifest.entries
+        assert '/persistent' in manifest.entries
+        # Remove root
+        perform_sequence(sequence, manifest.delete('/'))
+        assert '/persistent' not in manifest.entries
+        assert '/' in manifest.entries
+        # Not found
+        with pytest.raises(ManifestNotFound):
+            perform_sequence(sequence, manifest.delete('/test_dir'))
 
     @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
     def test_undelete_file(self, mock_crypto_passthrough, path):
@@ -570,7 +599,7 @@ class TestManifest:
         vlob = file.get_vlob()
         manifest = Manifest()
         # Working
-        manifest.make_folder('/test_dir')
+        manifest.create_folder('/test_dir')
         manifest.add_file(path, vlob)
         sequence = [
             (EVlobRead(vlob_id, '42'),
@@ -584,8 +613,8 @@ class TestManifest:
             (EVlobDelete(id='1234'),
                 lambda _: raise_(VlobNotFound('Vlob not found.')))
         ]
-        perform_sequence(sequence, manifest.delete_file(path))
-        manifest.remove_folder('/test_dir')
+        perform_sequence(sequence, manifest.delete(path))
+        manifest.delete('/test_dir')
         # Working
         manifest.undelete_file(vlob['id'])
         assert manifest.entries[path]
@@ -607,7 +636,7 @@ class TestManifest:
             (EVlobDelete(id='1234'),
                 lambda _: raise_(VlobNotFound('Vlob not found.')))
         ]
-        perform_sequence(sequence, manifest.delete_file(path))
+        perform_sequence(sequence, manifest.delete(path))
         manifest.add_file(path, vlob)
         with pytest.raises(ManifestError):
             manifest.undelete_file(vlob['id'])
@@ -620,7 +649,7 @@ class TestManifest:
                      'key': to_jsonb64(b'<dummy-key-00000000000000000001>'),
                      'read_trust_seed': 'rts',
                      'write_trust_seed': 'wts'}
-        manifest.make_folder('/test_dir')
+        manifest.create_folder('/test_dir')
         manifest.add_file(path, file_vlob)
         sequence = [
             (EVlobRead(file_vlob['id'], file_vlob['read_trust_seed']),
@@ -661,11 +690,11 @@ class TestManifest:
         vlob = file.get_vlob()
         with freeze_time('2012-01-01') as frozen_datetime:
             # Create folders
-            manifest.make_folder('/countries')
-            manifest.make_folder('/countries/France')
-            manifest.make_folder('/countries/France/cities')
-            manifest.make_folder('/countries/Belgium')
-            manifest.make_folder('/countries/Belgium/cities')
+            manifest.create_folder('/countries')
+            manifest.create_folder('/countries/France')
+            manifest.create_folder('/countries/France/cities')
+            manifest.create_folder('/countries/Belgium')
+            manifest.create_folder('/countries/Belgium/cities')
             # Create multiple files
             manifest.add_file('/.root', vlob)
             manifest.add_file('/countries/index', vlob)
@@ -705,59 +734,22 @@ class TestManifest:
     @pytest.mark.parametrize('parents', ['/', '/parent_1/', '/parent_1/parent_2/'])
     @pytest.mark.parametrize('final_slash', ['', '/'])
     @pytest.mark.parametrize('create_parents', [False, True])
-    def test_make_folder(self, parents, final_slash, create_parents):
+    def test_create_folder(self, parents, final_slash, create_parents):
         manifest = Manifest()
         complete_path = parents + 'test_dir' + final_slash
         # Working
         if parents == '/' or create_parents:
-            manifest.make_folder(complete_path, parents=create_parents)
+            manifest.create_folder(complete_path, parents=create_parents)
         else:
             # Parents not found
             with pytest.raises(ManifestNotFound):
-                manifest.make_folder(complete_path, parents=create_parents)
+                manifest.create_folder(complete_path, parents=create_parents)
         # Already exist
         if create_parents:
-            manifest.make_folder(complete_path, parents=create_parents)
+            manifest.create_folder(complete_path, parents=create_parents)
         else:
             with pytest.raises((ManifestError, ManifestNotFound)):
-                manifest.make_folder(complete_path, parents=create_parents)
-
-    @pytest.mark.parametrize('final_slash', ['', '/'])
-    def test_remove_folder(self, final_slash):
-        manifest = Manifest()
-        # Working
-        manifest.make_folder('/test_dir')
-        manifest.remove_folder('/test_dir' + final_slash)
-        # Not found
-        with pytest.raises(ManifestNotFound):
-            manifest.remove_folder('/test_dir')
-        with pytest.raises(ManifestNotFound):
-            manifest.remove_folder('/test_dir/')
-
-    def test_cant_remove_root_dir(self):
-        manifest = Manifest()
-        with pytest.raises(ManifestError):
-            manifest.remove_folder('/')
-
-    @pytest.mark.parametrize('final_slash', ['', '/'])
-    def test_remove_not_empty_dir(self, final_slash):
-        manifest = Manifest()
-        # Not empty
-        manifest.make_folder('/test_dir')
-        manifest.make_folder('/test_dir/test')
-        with pytest.raises(ManifestError):
-            manifest.remove_folder('/test_dir' + final_slash)
-        # Empty
-        manifest.remove_folder('/test_dir/test' + final_slash)
-        manifest.remove_folder('/test_dir' + final_slash)
-
-    @pytest.mark.parametrize('final_slash', ['', '/'])
-    def test_remove_not_dir(self, final_slash):
-        vlob = {'id': '123', 'key': '123', 'read_trust_seed': '123', 'write_trust_seed': '123'}
-        manifest = Manifest()
-        manifest.add_file('/test_dir' + final_slash, vlob)
-        with pytest.raises(ManifestError):
-            manifest.remove_folder('/test_dir')
+                manifest.create_folder(complete_path, parents=create_parents)
 
     @pytest.mark.parametrize('path', ['/test', '/test_dir/test'])
     @pytest.mark.parametrize('final_slash', ['', '/'])
@@ -793,8 +785,8 @@ class TestManifest:
             (EVlobDelete(id='1234'),
                 lambda _: raise_(VlobNotFound('Vlob not found.')))
         ]
-        perform_sequence(sequence, manifest.delete_file('/foo'))
-        manifest.make_folder('/test_dir')
+        perform_sequence(sequence, manifest.delete('/foo'))
+        manifest.create_folder('/test_dir')
         for i in [1, 2]:
             manifest.add_file(path, vlob)
             sequence = [
@@ -809,7 +801,7 @@ class TestManifest:
                 (EVlobDelete(id='1234'),
                     lambda _: raise_(VlobNotFound('Vlob not found.')))
             ]
-            perform_sequence(sequence, manifest.delete_file(path))
+            perform_sequence(sequence, manifest.delete(path))
             # Global dustbin with one additional file
             dustbin = manifest.show_dustbin()
             assert len(dustbin) == i + 1
@@ -865,7 +857,7 @@ class TestManifest:
             (EVlobDelete('1234'),
                 lambda _: raise_(VlobNotFound('Vlob not found.')))
         ]
-        perform_sequence(sequence, manifest.delete_file('/foo'))
+        perform_sequence(sequence, manifest.delete('/foo'))
         sequence = [
             (EVlobRead(vlob_id, '42'),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1})
@@ -904,7 +896,7 @@ class TestManifest:
             (EVlobDelete(bad_vlob['id']),
                 lambda _: raise_(VlobNotFound('Vlob not found.')))
         ]
-        perform_sequence(sequence, manifest.delete_file('/bad'))
+        perform_sequence(sequence, manifest.delete('/bad'))
         sequence = [
             (EVlobRead(vlob_id, '42'),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
@@ -1612,7 +1604,7 @@ class TestUserManifest:
                      'read_trust_seed': 'rts',
                      'write_trust_seed': 'wts'}
         group_manifest = user_manifest_with_group.get_group_manifest('share')
-        group_manifest.make_folder('/test_dir')
+        group_manifest.create_folder('/test_dir')
         group_manifest.add_file('/foo', file_vlob)
         group_manifest_vlob = group_manifest.get_vlob()
         group_blob_dict = {'entries': {'/': None, '/foo': file_vlob}, 'dustbin': [], 'versions': {}}
