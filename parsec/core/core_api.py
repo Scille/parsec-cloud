@@ -2,12 +2,11 @@ import json
 from marshmallow import Schema, fields
 from effect2 import Effect, do
 
+from parsec.core import fs_api, identity_api, privkey_api
 from parsec.tools import ejson_dumps, ejson_loads
-from parsec.core import privkey_api
 from parsec.core.client_connection import EClientSubscribeEvent, EClientUnsubscribeEvent
 from parsec.core.backend import EBackendStatus
 from parsec.core.identity import EIdentityLoad, EIdentityUnload, EIdentityGet
-from parsec.core.privkey import EPrivkeyAdd, EPrivkeyGet, EPrivkeyLoad
 from parsec.exceptions import ParsecError, BadMessageError
 
 
@@ -109,10 +108,24 @@ API_CMDS_ROUTER = {
     'subscribe_event': api_subscribe_event,
     'unsubscribe_event': api_unsubscribe_event,
     'backend_status': api_backend_status,
-    'identity_load': api_identity_load,
-    'identity_unload': api_identity_unload,
-    'identity_info': api_identity_info,
+    'identity_load': identity_api.api_identity_load,
+    'identity_unload': identity_api.api_identity_unload,
+    'identity_info': identity_api.api_identity_info,
     'privkey_add': privkey_api.api_privkey_add,
     'privkey_get': privkey_api.api_privkey_get,
     'privkey_load': privkey_api.api_privkey_load,
+    'synchronize': fs_api.api_synchronize,
+    'group_create': fs_api.api_group_create,
+    'dustbin_show': fs_api.api_dustbin_show,
+    'history': fs_api.api_manifest_history,  # TODO Integrate api_file_history
+    'restore': fs_api.api_manifest_restore,  # TODO Integrate api_file_restore
+    'file_create': fs_api.api_file_create,
+    'file_read': fs_api.api_file_read,
+    'file_write': fs_api.api_file_write,
+    'file_truncate': fs_api.api_file_truncate,
+    'folder_create': fs_api.api_folder_create,
+    'stat': fs_api.api_stat,
+    'move': fs_api.api_move,
+    'delete': fs_api.api_delete,
+    'undelete': fs_api.api_undelete,
 }
