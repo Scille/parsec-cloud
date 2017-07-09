@@ -1,3 +1,4 @@
+import pytest
 from unittest.mock import Mock
 from effect2.testing import perform_sequence, const
 
@@ -7,32 +8,30 @@ from parsec.core.identity import EIdentityLoad, Identity
 from tests.test_crypto import ALICE_PRIVATE_RSA
 
 
-def test_perform_privkey_add():
-    app = PrivKeyComponent()
-    assert app._encrypted_keys == {}
+@pytest.fixture
+def app():
+    return PrivKeyComponent()
+
+
+def test_perform_privkey_add(app):
+    assert app.encrypted_keys == {}
     eff = app.perform_add_privkey(EPrivkeyAdd('Alice', 'secret', ALICE_PRIVATE_RSA))
-    sequence = [
-    ]
-    ret = perform_sequence(sequence, eff)
+    ret = perform_sequence([], eff)
     assert ret is None
-    assert len(app._encrypted_keys) == 1
+    assert len(app.encrypted_keys) == 1
 
 
-def test_perform_privkey_get():
-    app = PrivKeyComponent()
+def test_perform_privkey_get(app):
     # Add privkey
     eff = app.perform_add_privkey(EPrivkeyAdd('Alice', 'secret', ALICE_PRIVATE_RSA))
     perform_sequence([], eff)
     # Get loaded privkey
     eff = app.perform_get_privkey(EPrivkeyGet('Alice', 'secret'))
-    sequence = [
-    ]
-    ret = perform_sequence(sequence, eff)
+    ret = perform_sequence([], eff)
     assert ret == ALICE_PRIVATE_RSA
 
 
-def test_perform_privkey_load_identity():
-    app = PrivKeyComponent()
+def test_perform_privkey_load_identity(app):
     # Add privkey
     eff = app.perform_add_privkey(EPrivkeyAdd('Alice', 'secret', ALICE_PRIVATE_RSA))
     perform_sequence([], eff)
