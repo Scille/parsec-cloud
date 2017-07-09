@@ -144,17 +144,17 @@ class File:
         encrypted_blob = from_jsonb64(encrypted_blob)
         blob = self.encryptor.decrypt(encrypted_blob)
         blob = ejson_loads(blob.decode())
-        block_stat = {'creation_date': '2012-01-01T00:00:00'}  # TODO real date
         size = 0
         for blocks_and_key in blob:
             for block in blocks_and_key['blocks']:
                 size += block['size']
-        # TODO: don't provide atime field if we don't know it?
+        # TODO don't provide atime field if we don't know it?
+        # TODO real date
         return {
             'id': self.id,
             'type': 'file',
-            'created': block_stat['creation_date'],
-            'updated': block_stat['creation_date'],
+            'created': '2012-01-01T00:00:00',
+            'updated': '2012-01-01T00:00:00',
             'size': size,
             'version': vlob['version']
         }

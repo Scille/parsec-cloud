@@ -51,7 +51,7 @@ def test_perform_block_read(app):
     block = perform_sequence(sequence, eff)
     assert sorted(list(block.keys())) == ['content', 'id']
     assert block['id']
-    assert block['content'] == remote_content.decode()  # TODO decode?
+    assert block['content'] == remote_content
     # Not found
     eff = app.perform_block_read(EBlockRead('123'))
     sequence = [

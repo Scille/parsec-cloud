@@ -5,8 +5,9 @@ from effect2.testing import perform_sequence
 import pytest
 
 from parsec.core.file import File
-from parsec.core.synchronizer import (EVlobCreate, EVlobList, EVlobRead, EVlobUpdate, EVlobDelete, EVlobSynchronize,
-                                      EBlockCreate, EBlockSynchronize, EBlockRead, EBlockStat, EBlockDelete)
+from parsec.core.synchronizer import (EVlobCreate, EVlobList, EVlobRead, EVlobUpdate, EVlobDelete,
+                                      EVlobSynchronize, EBlockCreate, EBlockSynchronize, EBlockRead,
+                                      EBlockDelete)
 from parsec.exceptions import BlockNotFound, FileError, VlobNotFound
 from tests.test_crypto import mock_crypto_passthrough
 from parsec.tools import to_jsonb64, ejson_dumps, digest
@@ -313,9 +314,7 @@ class TestFile:
         blob = to_jsonb64(blob)
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
-            (EBlockStat('6789'),
-                lambda _: {'creation_date': '2012-01-01T00:00:00'})
+                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1})
         ]
         ret = perform_sequence(sequence, file.stat())
         assert ret == {'type': 'file',

@@ -7,8 +7,8 @@ from effect2 import Effect, do
 
 from parsec.core.file import File
 from parsec.core.synchronizer import (
-    EUserVlobSynchronize, EUserVlobRead, EUserVlobUpdate, EVlobCreate, EVlobRead, EVlobUpdate,
-    EVlobSynchronize)
+    EUserVlobSynchronize, EUserVlobRead, EUserVlobUpdate, EVlobCreate, EVlobList, EVlobRead,
+    EVlobUpdate, EVlobSynchronize)
 from parsec.crypto import generate_sym_key, load_private_key, load_sym_key
 from parsec.exceptions import FileError, ManifestError, ManifestNotFound, VlobNotFound
 from parsec.tools import event_handler, from_jsonb64, to_jsonb64, ejson_loads, ejson_dumps
@@ -153,10 +153,6 @@ class Manifest:
                                 'dustbin': self.dustbin,
                                 'versions': versions})
 
-    # def reload_vlob(self, vlob_id):
-    #     # TODO invalidate old cache
-    #     pass
-
     def add_file(self, path, vlob):
         path = '/' + path.strip('/')
         parent_folder = os.path.dirname(path)
@@ -165,18 +161,6 @@ class Manifest:
         if path in self.entries:
             raise ManifestError('already_exists', 'File already exists.')
         self.entries[path] = vlob
-
-    # def replace_file(self, path, new_vlob):
-    #     path = '/' + path.strip('/')
-    #     parent_folder = os.path.dirname(path)
-    #     if parent_folder not in self.entries:
-    #         raise ManifestNotFound('Destination Folder not found.')
-    #     if path not in self.entries:
-    #         raise ManifestNotFound('File not found.')
-    #     vlob = self.entries[path]
-    #     vlob['id'] = new_vlob
-    #     vlob['read_trust_seed'] = new_vlob['read_trust_seed']
-    #     vlob['write_trust_seed'] = new_vlob['write_trust_seed']
 
     def rename_file(self, old_path, new_path):
         old_path = '/' + old_path.strip('/')
@@ -431,6 +415,20 @@ class GroupManifest(Manifest):
         is_dirty = yield self.is_dirty()
         if self.version != 0 and not is_dirty:
             return
+        # Update manifest entries with new file vlobs (dustbin entries are already commited)
+        vlob_list = yield Effect(EVlobList())
+        for entry in self.entries.values():
+            if entry and entry['id'] in vlob_list:
+                file = yield File.load(entry['id'],
+                                       entry['key'],
+                                       entry['read_trust_seed'],
+                                       entry['write_trust_seed'])
+                new_vlob = yield file.commit()
+                if new_vlob and new_vlob is not True:
+                    entry['id'] = new_vlob['id']
+                    entry['read_trust_seed'] = new_vlob['read_trust_seed']
+                    entry['write_trust_seed'] = new_vlob['write_trust_seed']
+        # Commit manifest
         blob = yield self.dumps()
         encrypted_blob = self.encryptor.encrypt(blob.encode())
         encrypted_blob = to_jsonb64(encrypted_blob)
@@ -660,9 +658,28 @@ class UserManifest(Manifest):
         is_dirty = yield self.is_dirty()
         if self.version != 0 and not is_dirty:
             return
+        # Update manifest with new group vlobs
+        vlob_list = yield Effect(EVlobList())
         if recursive:
             for group_manifest in self.group_manifests.values():
-                yield group_manifest.commit()
+                new_vlob = yield group_manifest.commit()
+                if new_vlob and new_vlob is not True:
+                    old_vlob = group_manifest.get_vlob()
+                    new_vlob['key'] = old_vlob['key']
+                    group_manifest.update_vlob(new_vlob)
+        # Update manifest entries with new file vlobs (dustbin entries are already commited)
+        for entry in self.entries.values():
+            if entry and entry['id'] in vlob_list:
+                file = yield File.load(entry['id'],
+                                       entry['key'],
+                                       entry['read_trust_seed'],
+                                       entry['write_trust_seed'])
+                new_vlob = yield file.commit()
+                if new_vlob and new_vlob is not True:
+                    entry['id'] = new_vlob['id']
+                    entry['read_trust_seed'] = new_vlob['read_trust_seed']
+                    entry['write_trust_seed'] = new_vlob['write_trust_seed']
+        # Commit manifest
         blob = yield self.dumps()
         encrypted_blob = self.encryptor.pub_key.encrypt(blob.encode())
         encrypted_blob = to_jsonb64(encrypted_blob)

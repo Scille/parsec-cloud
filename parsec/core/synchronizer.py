@@ -185,7 +185,7 @@ class SynchronizerComponent:
         except KeyError:
             try:
                 block = yield Effect(EBackendBlockRead(intent.id))
-                return {'id': block.id, 'content': block.content.decode()}
+                return {'id': block.id, 'content': block.content}
             except (BlockNotFound, BlockError):
                 raise BlockNotFound('Block not found.')
 
@@ -319,6 +319,7 @@ class SynchronizerComponent:
 
     @do
     def perform_synchronize(self, intent):
+        # TODO dangerous method: new vlobs are not updated in manifest. Remove it?
         synchronization = False
         block_list = yield self.perform_block_list(EBlockList())
         for block_id in block_list:
