@@ -1,10 +1,14 @@
-import attr
-from datetime import datetime
 from uuid import uuid4
 
+import attr
+from effect import TypeDispatcher
+from effect2 import Effect, do
+
 from parsec.core.cache import cache
+from parsec.core.backend_vlob import EBackendVlobCreate, EBackendVlobUpdate, EBackendVlobRead
+from parsec.core.backend_user_vlob import EBackendUserVlobUpdate, EBackendUserVlobRead
+from parsec.core.block import EBlockCreate as EBackendBlockCreate, EBlockRead as EBackendBlockRead
 from parsec.exceptions import BlockError, BlockNotFound, UserVlobNotFound, VlobNotFound
-from parsec.service import BaseService, service
 
 
 @attr.s
@@ -14,11 +18,6 @@ class EBlockCreate:
 
 @attr.s
 class EBlockRead:
-    id = attr.ib()
-
-
-@attr.s
-class EBlockStat:
     id = attr.ib()
 
 
@@ -78,9 +77,9 @@ class EVlobRead:
 @attr.s
 class EVlobUpdate:
     id = attr.ib()
-    version = attr.ib(default=None)
     trust_seed = attr.ib()
-    blob = attr.ib(default='')
+    version = attr.ib()
+    blob = attr.ib()
 
 
 @attr.s
@@ -98,232 +97,260 @@ class EVlobSynchronize:
     id = attr.ib()
 
 
+@attr.s
+class ESynchronize:
+    pass
+
+
 class BufferedBlock:
 
     @classmethod
-    async def init(cls, content):
+    def init(cls, content):
         self = BufferedBlock()
         self.id = uuid4().hex
-        self.date = datetime.utcnow().isoformat()
-        await cache.set(self.id, content)
+        cache[self.id] = content
         return self
 
-    async def read(self):
-        content = await cache.get(self.id)
+    def read(self):
+        content = cache[self.id]
         content = content if content else ''
-        return {
-            'content': content,
-            'creation_date': self.date
-        }
+        return {'id': self.id, 'content': content}
 
-    async def stat(self):
-        return {
-            'creation_date': self.date
-        }
-
-    async def discard(self):
-        await cache.delete(self.id)
+    def discard(self):
+        del cache[self.id]
 
 
 class BufferedUserVlob:
 
     @classmethod
-    async def init(cls, version=1, blob=''):
+    def init(cls, version=1, blob=''):
         self = BufferedUserVlob()
         self.version = version
-        await cache.set('USER_VLOB', blob)
+        cache['USER_VLOB'] = blob
         return self
 
-    async def update(self, blob):
-        await cache.set('USER_VLOB', blob)
+    def update(self, blob):
+        cache['USER_VLOB'] = blob
 
-    async def read(self):
-        blob = await cache.get('USER_VLOB')
+    def read(self):
+        blob = cache['USER_VLOB']
         blob = blob if blob else ''
-        return {
-            'blob': blob,
-            'version': self.version
-        }
+        return {'blob': blob, 'version': self.version}
 
-    async def discard(self):
-        await cache.delete('USER_VLOB')
+    def discard(self):
+        del cache['USER_VLOB']
 
 
 class BufferedVlob:
 
     @classmethod
-    async def init(cls, id=None, version=1, blob='', read_trust_seed=None, write_trust_seed=None):
+    def init(cls, id=None, version=1, blob='', read_trust_seed=None, write_trust_seed=None):
         self = BufferedVlob()
         self.id = id if id else uuid4().hex
         self.read_trust_seed = read_trust_seed
         self.write_trust_seed = write_trust_seed
         self.version = version
-        await cache.set(self.id, blob)
+        cache[self.id] = blob
         return self
 
-    async def update(self, blob):
-        await cache.set(self.id, blob)
+    def update(self, blob):
+        cache[self.id] = blob
 
-    async def read(self):
-        blob = await cache.get(self.id)
+    def read(self):
+        blob = cache[self.id]
         blob = blob if blob else ''
-        return {
-            'id': self.id,
-            'blob': blob,
-            'version': self.version
-        }
+        return {'id': self.id, 'blob': blob, 'version': self.version}
 
-    async def discard(self):
-        await cache.delete(self.id)
+    def discard(self):
+        del cache[self.id]
 
 
-class SynchronizerService(BaseService):
-
-    name = 'SynchronizerService'
-
-    backend = service('BackendAPIService')
-    block = service('BlockService')
+class SynchronizerComponent:
 
     def __init__(self):
-        super().__init__()
         self.buffered_blocks = {}
         self.buffered_vlobs = {}
         self.buffered_user_vlob = None
 
-    async def block_create(self, content):
-        buffered_block = await BufferedBlock.init(content)
+    @do
+    def perform_block_create(self, intent):
+        buffered_block = BufferedBlock.init(intent.content)
         self.buffered_blocks[buffered_block.id] = buffered_block
         return buffered_block.id
 
-    async def block_read(self, id):
+    @do
+    def perform_block_read(self, intent):
         try:
-            return await self.buffered_blocks[id].read()
+            return self.buffered_blocks[intent.id].read()
         except KeyError:
             try:
-                return await self.block.read(id)
+                block = yield Effect(EBackendBlockRead(intent.id))
+                return {'id': block.id, 'content': block.content.decode()}
             except (BlockNotFound, BlockError):
                 raise BlockNotFound('Block not found.')
 
-    async def block_stat(self, id):
+    @do
+    def perform_block_delete(self, intent):
         try:
-            return await self.buffered_blocks[id].stat()
-        except KeyError:
-            return await self.block.stat(id)
-
-    async def block_delete(self, id):
-        try:
-            await self.buffered_blocks[id].discard()
-            del self.buffered_blocks[id]
+            self.buffered_blocks[intent.id].discard()
+            del self.buffered_blocks[intent.id]
         except KeyError:
             raise BlockNotFound('Block not found.')
 
-    async def block_list(self):
-        return list(self.buffered_blocks.keys())
+    @do
+    def perform_block_list(self, intent):
+        return sorted(list(self.buffered_blocks.keys()))
 
-    async def block_synchronize(self, id):
-        if id in self.buffered_blocks:
-            block = await self.buffered_blocks[id].read()
-            await self.block.create(block['content'], id)
-            await self.block_delete(id)
+    @do
+    def perform_block_synchronize(self, intent):
+        if intent.id in self.buffered_blocks:
+            block = self.buffered_blocks[intent.id].read()
+            yield Effect(EBackendBlockCreate(intent.id, block['content']))
+            yield self.perform_block_delete(EBlockDelete(intent.id))
             return True
         return False
 
-    async def user_vlob_read(self, version=None):
-        if self.buffered_user_vlob and (not version or version == self.buffered_user_vlob.version):
-            user_vlob = await self.buffered_user_vlob.read()
+    @do
+    def perform_user_vlob_read(self, intent):
+        if (self.buffered_user_vlob and
+                (not intent.version or intent.version == self.buffered_user_vlob.version)):
+            return self.buffered_user_vlob.read()
         else:
-            user_vlob = await self.backend.user_vlob_read(version)
-            del user_vlob['status']
-        return user_vlob
+            user_vlob = yield Effect(EBackendUserVlobRead(intent.version))
+            return {'blob': user_vlob.blob.decode(), 'version': user_vlob.version}
 
-    async def user_vlob_update(self, version, blob=''):
+    @do
+    def perform_user_vlob_update(self, intent):
         if self.buffered_user_vlob:
-            assert version == self.buffered_user_vlob.version
-            await self.buffered_user_vlob.update(blob)
+            assert intent.version == self.buffered_user_vlob.version
+            self.buffered_user_vlob.update(intent.blob)
         else:
-            self.buffered_user_vlob = await BufferedUserVlob.init(version, blob)
+            self.buffered_user_vlob = BufferedUserVlob.init(intent.version, intent.blob)
 
-    async def user_vlob(self):
-        return self.buffered_user_vlob is not None
-
-    async def user_vlob_delete(self):
+    @do
+    def perform_user_vlob_delete(self, intent):
         if self.buffered_user_vlob:
-            await self.buffered_user_vlob.discard()
+            self.buffered_user_vlob.discard()
             self.buffered_user_vlob = None
         else:
             raise UserVlobNotFound('User vlob not found.')
 
-    async def user_vlob_synchronize(self):
+    @do
+    def perform_user_vlob_exist(self, intent):
+        return self.buffered_user_vlob is not None
+
+    @do
+    def perform_user_vlob_synchronize(self, intent):
         if self.buffered_user_vlob:
-            user_vlob = await self.user_vlob_read()
-            await self.backend.user_vlob_update(self.buffered_user_vlob.version, user_vlob['blob'])
-            await self.user_vlob_delete()
+            user_vlob = yield self.perform_user_vlob_read(EUserVlobRead())
+            yield Effect(EBackendUserVlobUpdate(self.buffered_user_vlob.version,
+                                                user_vlob['blob'].encode()))
+            yield self.perform_user_vlob_delete(EUserVlobDelete())
             return True
         return False
 
-    async def vlob_create(self, blob=''):
-        buffered_vlob = await BufferedVlob.init(blob=blob,
-                                                read_trust_seed='42',
-                                                write_trust_seed='42')
+    @do
+    def perform_vlob_create(self, intent):
+        buffered_vlob = BufferedVlob.init(blob=intent.blob,
+                                          read_trust_seed='42',
+                                          write_trust_seed='42')
         self.buffered_vlobs[buffered_vlob.id] = buffered_vlob
         return {'id': buffered_vlob.id,
                 'read_trust_seed': buffered_vlob.read_trust_seed,
                 'write_trust_seed': buffered_vlob.write_trust_seed}
 
-    async def vlob_read(self, id, trust_seed, version=None):
-        if (id in self.buffered_vlobs and
-                (not version or version == self.buffered_vlobs[id].version)):
-            if self.buffered_vlobs[id].read_trust_seed == '42':
-                self.buffered_vlobs[id].read_trust_seed = trust_seed
-            assert trust_seed == self.buffered_vlobs[id].read_trust_seed
-            vlob = await self.buffered_vlobs[id].read()
+    @do
+    def perform_vlob_read(self, intent):
+        if (intent.id in self.buffered_vlobs and
+                (not intent.version or intent.version == self.buffered_vlobs[intent.id].version)):
+            if self.buffered_vlobs[intent.id].read_trust_seed == '42':
+                self.buffered_vlobs[intent.id].read_trust_seed = intent.trust_seed
+            assert intent.trust_seed == self.buffered_vlobs[intent.id].read_trust_seed
+            return self.buffered_vlobs[intent.id].read()
         else:
-            vlob = await self.backend.vlob_read(id, trust_seed, version)
-            del vlob['status']
-        return vlob
+            vlob = yield Effect(EBackendVlobRead(intent.id, intent.trust_seed, intent.version))
+            return {'id': vlob.id, 'blob': vlob.blob.decode(), 'version': vlob.version}
 
-    async def vlob_update(self, id, version, trust_seed, blob=''):
+    @do
+    def perform_vlob_update(self, intent):
         try:
-            assert version == self.buffered_vlobs[id].version
-            assert trust_seed == self.buffered_vlobs[id].write_trust_seed
-            await self.buffered_vlobs[id].update(blob)
+            assert intent.version == self.buffered_vlobs[intent.id].version
+            assert intent.trust_seed == self.buffered_vlobs[intent.id].write_trust_seed
+            self.buffered_vlobs[intent.id].update(intent.blob)
         except KeyError:
-            self.buffered_vlobs[id] = await BufferedVlob.init(id, version, blob, '42', trust_seed)
+            self.buffered_vlobs[intent.id] = BufferedVlob.init(intent.id,
+                                                               intent.version,
+                                                               intent.blob,
+                                                               '42',
+                                                               intent.trust_seed)
 
-    async def vlob_delete(self, id):
+    @do
+    def perform_vlob_delete(self, intent):
         try:
-            await self.buffered_vlobs[id].discard()
-            del self.buffered_vlobs[id]
+            self.buffered_vlobs[intent.id].discard()
+            del self.buffered_vlobs[intent.id]
         except KeyError:
             raise VlobNotFound('Vlob not found.')
 
-    async def vlob_list(self):
-        return list(self.buffered_vlobs.keys())
+    @do
+    def perform_vlob_list(self, intent):
+        return sorted(list(self.buffered_vlobs.keys()))
 
-    async def vlob_synchronize(self, id):
-        if id in self.buffered_vlobs:
-            vlob = await self.buffered_vlobs[id].read()
-            if self.buffered_vlobs[id].version == 1:
-                new_vlob = await self.backend.vlob_create(vlob['blob'])
-                del new_vlob['status']
+    @do
+    def perform_vlob_synchronize(self, intent):
+        if intent.id in self.buffered_vlobs:
+            vlob = self.buffered_vlobs[intent.id].read()
+            new_vlob = None
+            if self.buffered_vlobs[intent.id].version == 1:
+                new_vlob = yield Effect(EBackendVlobCreate(vlob['blob'].encode()))
             else:
-                await self.backend.vlob_update(id,
-                                               self.buffered_vlobs[id].version,
-                                               self.buffered_vlobs[id].write_trust_seed,
-                                               vlob['blob'])
-            await self.vlob_delete(id)
-            if vlob['version'] == 1:
-                return new_vlob
-            return True
+                yield Effect(EBackendVlobUpdate(intent.id,
+                                                self.buffered_vlobs[intent.id].write_trust_seed,
+                                                self.buffered_vlobs[intent.id].version,
+                                                vlob['blob'].encode()))  # TODO encode is correct?
+            yield self.perform_vlob_delete(EVlobDelete(intent.id))
+            if new_vlob:
+                return {'id': new_vlob.id,
+                        'read_trust_seed': new_vlob.read_trust_seed,
+                        'write_trust_seed': new_vlob.write_trust_seed}
+            else:
+                return True
         return False
 
-    async def synchronize(self):
-        for vlob_id in await self.vlob_list():
-            await self.vlob_synchronize(vlob_id)
-        for block_id in await self.block_list():
-            await self.block_synchronize(block_id)
-        await self.user_vlob_synchronize()
+    @do
+    def perform_synchronize(self, intent):
+        synchronization = False
+        block_list = yield self.perform_block_list(EBlockList())
+        for block_id in block_list:
+            synchronization |= yield self.perform_block_synchronize(EBlockSynchronize(block_id))
+        vlob_list = yield self.perform_vlob_list(EVlobList())
+        for vlob_id in vlob_list:
+            new_vlob = yield self.perform_vlob_synchronize(EVlobSynchronize(vlob_id))
+            if new_vlob:
+                synchronization |= True
+        synchronization |= yield self.perform_user_vlob_synchronize(EUserVlobSynchronize())
+        return synchronization
 
-    async def periodic_synchronization(self):
-        # TODO
-        pass
+    def periodic_synchronization(self):
+        raise NotImplementedError()
+
+    def get_dispatcher(self):
+        return TypeDispatcher({
+            EBlockCreate: self.perform_block_create,
+            EBlockRead: self.perform_block_read,
+            EBlockDelete: self.perform_block_delete,
+            EBlockList: self.perform_block_list,
+            EBlockSynchronize: self.perform_block_synchronize,
+            EUserVlobRead: self.perform_user_vlob_read,
+            EUserVlobUpdate: self.perform_user_vlob_update,
+            EUserVlobDelete: self.perform_user_vlob_delete,
+            EUserVlobExist: self.perform_user_vlob_exist,
+            EUserVlobSynchronize: self.perform_user_vlob_synchronize,
+            EVlobCreate: self.perform_vlob_create,
+            EVlobRead: self.perform_vlob_read,
+            EVlobUpdate: self.perform_vlob_update,
+            EVlobDelete: self.perform_vlob_delete,
+            EVlobList: self.perform_vlob_list,
+            EVlobSynchronize: self.perform_vlob_synchronize,
+            ESynchronize: self.perform_synchronize
+        })
