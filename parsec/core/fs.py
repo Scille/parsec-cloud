@@ -2,13 +2,10 @@ from copy import deepcopy
 
 import attr
 import blinker
-from effect import TypeDispatcher
-from effect2 import Effect, do
+from effect2 import Effect, TypeDispatcher, do
 
-from parsec.core.identity import EIdentityGet
 from parsec.core.file import File
 from parsec.core.manifest import UserManifest
-from parsec.core.synchronizer import ESynchronize as ESynchronizerSynchronize
 from parsec.exceptions import FileNotFound, ManifestError, ManifestNotFound
 
 

@@ -28,7 +28,7 @@ class EPrivkeyLoad:
 
 @attr.s
 class PrivKeyComponent:
-    encrypted_keys = attr.ib(default={})  # TODO in __init__?
+    encrypted_keys = attr.ib(default=attr.Factory(dict))  # TODO in __init__?
 
     @do
     def perform_add_privkey(self, intent):
