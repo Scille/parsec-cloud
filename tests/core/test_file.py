@@ -4,7 +4,7 @@ import random
 from effect2.testing import perform_sequence
 import pytest
 
-from parsec.core.file import File
+from parsec.core.file import ContentBuilder, File
 from parsec.core.synchronizer import (EVlobCreate, EVlobList, EVlobRead, EVlobUpdate, EVlobDelete,
                                       EVlobSynchronize, EBlockCreate, EBlockSynchronize, EBlockRead,
                                       EBlockDelete)
@@ -33,6 +33,43 @@ def raise_(ex):
     raise ex
 
 
+class TestContentBuilder:
+
+    def test_init(self):
+        builder = ContentBuilder()
+        assert builder.contents == {}
+
+    def test_write(self):
+        builder = ContentBuilder()
+        builder.write(b'0123456789', 20)
+        assert builder.contents == {20: b'0123456789'}
+        # Insert just before
+        builder.write(b'cde', 17)
+        assert builder.contents == {17: b'cde0123456789'}
+        # Insert just febore and collision
+        builder.write(b'ABC', 15)
+        assert builder.contents == {15: b'ABCde0123456789'}
+        # Insert just after
+        builder.write(b'xyz', 30)
+        assert builder.contents == {15: b'ABCde0123456789xyz'}
+        # Insert inside
+        builder.write(b'XY', 30)
+        assert builder.contents == {15: b'ABCde0123456789XYz'}
+        # Insert before
+        builder.write(b'before', 8)
+        assert builder.contents == {8: b'before', 15: b'ABCde0123456789XYz'}
+        # Insert after
+        builder.write(b'after', 34)
+        assert builder.contents == {8: b'before', 15: b'ABCde0123456789XYz', 34: b'after'}
+
+    def test_truncate(self):
+        builder = ContentBuilder()
+        builder.write(b'0123456789', 20)
+        builder.write(b'abc', 40)
+        builder.truncate(25)
+        assert builder.contents == {20: b'01234'}
+
+
 class TestFile:
 
     def test_create_file(self, file):
@@ -43,11 +80,18 @@ class TestFile:
                                    'read_trust_seed': '42',
                                    'write_trust_seed': '43'}
 
-    def test_load_file(self):
+    def test_load_file(self, file):
         vlob_id = '1234'
         other_vlob_id = '5678'
         read_trust_seed = '42'
         version = 1
+        # Load from open files
+        file2 = perform_sequence([], File.load(vlob_id,
+                                               to_jsonb64(b'<dummy-key-00000000000000000001>'),
+                                               read_trust_seed,
+                                               '43'))
+        assert file == file2
+        File.files = {}
         # Test reloading commited and not commited file
         for synchronizer_vlob_list in [[vlob_id, other_vlob_id], [other_vlob_id]]:
             key = to_jsonb64(b'<dummy-key-00000000000000000001>')
@@ -60,6 +104,7 @@ class TestFile:
             file = perform_sequence(sequence, File.load(vlob_id, key, read_trust_seed, '43'))
             assert file.dirty is (vlob_id in synchronizer_vlob_list)
             assert file.version == (version - 1 if file.dirty else version)
+            File.files = {}
 
     def test_get_vlob(self, file):
         assert file.get_vlob() == {'id': '1234',
@@ -169,126 +214,23 @@ class TestFile:
         assert file.version == 1
 
     def test_write(self, file):
-        def raise_(ex):
-            raise ex
-
         file.dirty = False
         file.version = 2
-        vlob_id = '1234'
-        content = b'This is a test content.'
-        block_ids = ['4567', '5678', '6789']
-        # Original content
-        chunk_1 = content[:5]
-        chunk_2 = content[5:14]
-        chunk_3 = content[14:]
-        blob = [{'blocks': [{'block': block_ids[0],
-                             'digest': digest(chunk_1),
-                             'size': len(chunk_1)},
-                            {'block': block_ids[1],
-                             'digest': digest(chunk_2),
-                             'size': len(chunk_2)}],
-                 'key': to_jsonb64(b'<dummy-key-00000000000000000001>')},
-                {'blocks': [{'block': block_ids[2],
-                             'digest': digest(chunk_3),
-                             'size': len(chunk_3)}],
-                 'key': to_jsonb64(b'<dummy-key-00000000000000000002>')}]
-        blob = ejson_dumps(blob).encode()
-        blob = to_jsonb64(blob)
-        # New content
-        new_chuck_2 = b'is A test'
-        new_block_id = '7654'
-        new_blob = [{'blocks': [{'block': block_ids[0],
-                                 'digest': digest(chunk_1),
-                                 'size': len(chunk_1)}],
-                     'key': to_jsonb64(b'<dummy-key-00000000000000000001>')},
-                    {'blocks': [{'block': new_block_id,
-                                 'digest': digest(new_chuck_2),
-                                 'size': len(new_chuck_2)}],
-                     'key': to_jsonb64(b'<dummy-key-00000000000000000003>')},
-                    {'blocks': [{'block': block_ids[2],
-                                 'digest': digest(chunk_3),
-                                 'size': len(chunk_3)}],
-                     'key': to_jsonb64(b'<dummy-key-00000000000000000002>')}]
-        new_blob = ejson_dumps(new_blob).encode()
-        new_blob = to_jsonb64(new_blob)
-        sequence = [
-            (EVlobRead(vlob_id, '42', 2),  # Get blocks
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 2}),
-            (EVlobRead(vlob_id, '42', 2),  # Matching blocks
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 2}),
-            (EBlockRead(block_ids[1]),
-                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'}),
-            (EBlockCreate(to_jsonb64(new_chuck_2)),
-                lambda _: new_block_id),
-            (EVlobUpdate(vlob_id, '43', 3, new_blob),
-                lambda _: None),
-            (EVlobRead(vlob_id, '42', 3),  # Matching blocks
-                lambda _: {'id': vlob_id, 'blob': new_blob, 'version': 3}),
-            (EBlockDelete('5678'),
-                lambda _: raise_(BlockNotFound('Block not found.')))
-        ]
-        ret = perform_sequence(sequence, file.write(b'A', 8))
+        ret = file.write(b'foo', 0)
         assert ret is None
-        assert file.dirty is True
+        file.write(b'bar', 1)
+        assert file.modifications == [(file.write, b'foo', 0), (file.write, b'bar', 1)]
+        assert file.dirty is False
         assert file.version == 2
 
     def test_truncate(self, file):
         file.dirty = False
         file.version = 2
-        vlob_id = '1234'
-        content = b'This is a test content.'
-        block_ids = ['4567', '5678', '6789']
-        # Original content
-        chunk_1 = content[:5]
-        chunk_2 = content[5:14]
-        chunk_3 = content[14:]
-        blob = [{'blocks': [{'block': block_ids[0],
-                             'digest': digest(chunk_1),
-                             'size': len(chunk_1)},
-                            {'block': block_ids[1],
-                             'digest': digest(chunk_2),
-                             'size': len(chunk_2)}],
-                 'key': to_jsonb64(b'<dummy-key-00000000000000000001>')},
-                {'blocks': [{'block': block_ids[2],
-                             'digest': digest(chunk_3),
-                             'size': len(chunk_3)}],
-                 'key': to_jsonb64(b'<dummy-key-00000000000000000002>')}]
-        blob = ejson_dumps(blob).encode()
-        blob = to_jsonb64(blob)
-        # New content
-        new_chuck_2 = b'is a'
-        new_block_id = '7654'
-        new_blob = [{'blocks': [{'block': block_ids[0],
-                                 'digest': digest(chunk_1),
-                                 'size': len(chunk_1)}],
-                     'key': to_jsonb64(b'<dummy-key-00000000000000000001>')},
-                    {'blocks': [{'block': new_block_id,
-                                 'digest': digest(new_chuck_2),
-                                 'size': len(new_chuck_2)}],
-                     'key': to_jsonb64(b'<dummy-key-00000000000000000003>')}]
-        new_blob = ejson_dumps(new_blob).encode()
-        new_blob = to_jsonb64(new_blob)
-        sequence = [
-            (EVlobRead(vlob_id, '42', 2),  # Get blocks
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 2}),
-            (EVlobRead(vlob_id, '42', 2),  # Matching blocks
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 2}),
-            (EBlockRead(block_ids[1]),
-                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'}),
-            (EBlockCreate(to_jsonb64(new_chuck_2)),
-                lambda _: new_block_id),
-            (EVlobUpdate(vlob_id, '43', 3, new_blob),
-                lambda _: None),
-            (EVlobRead(vlob_id, '42', 3),  # Matching blocks
-                lambda _: {'id': vlob_id, 'blob': new_blob, 'version': 3}),
-            (EBlockDelete('5678'),
-                lambda _: raise_(BlockNotFound('Block not found.'))),
-            (EBlockDelete('6789'),
-                lambda _: None)
-        ]
-        ret = perform_sequence(sequence, file.truncate(9))
+        ret = file.truncate(0)
         assert ret is None
-        assert file.dirty is True
+        file.truncate(1)  # TODO should raise error?
+        assert file.modifications == [(file.truncate, 0), (file.truncate, 1)]
+        assert file.dirty is False
         assert file.version == 2
 
     def test_stat(self, file):
@@ -324,6 +266,24 @@ class TestFile:
                        'size': 23,
                        'version': 1}
         # TODO check created and updated time are different
+        # Truncate in buffer
+        file.truncate(20)
+        ret = perform_sequence(sequence, file.stat())
+        assert ret == {'type': 'file',
+                       'id': vlob_id,
+                       'created': '2012-01-01T00:00:00',
+                       'updated': '2012-01-01T00:00:00',
+                       'size': 20,
+                       'version': 1}
+        # Write in buffer
+        file.write(b'foo', 30)
+        ret = perform_sequence(sequence, file.stat())
+        assert ret == {'type': 'file',
+                       'id': vlob_id,
+                       'created': '2012-01-01T00:00:00',
+                       'updated': '2012-01-01T00:00:00',
+                       'size': 33,
+                       'version': 1}
 
     def test_restore(self, file):
         vlob_id = '1234'
@@ -464,7 +424,89 @@ class TestFile:
         for property in old_vlob.keys():
             assert old_vlob[property] != new_vlob[property]
 
+    def test_flush(self, file):
+        file.truncate(9)
+        file.write(b'IS', 5)
+        file.write(b'IS a nice test content.', 5)
+        file.dirty = False
+        file.version = 2
+        vlob_id = '1234'
+        content = b'This is a test content.'
+        block_ids = ['4567', '5678', '6789']
+        # Original content
+        chunk_1 = content[:5]
+        chunk_2 = content[5:14]
+        chunk_3 = content[14:]
+        blob = [{'blocks': [{'block': block_ids[0],
+                             'digest': digest(chunk_1),
+                             'size': len(chunk_1)},
+                            {'block': block_ids[1],
+                             'digest': digest(chunk_2),
+                             'size': len(chunk_2)}],
+                 'key': to_jsonb64(b'<dummy-key-00000000000000000001>')},
+                {'blocks': [{'block': block_ids[2],
+                             'digest': digest(chunk_3),
+                             'size': len(chunk_3)}],
+                 'key': to_jsonb64(b'<dummy-key-00000000000000000002>')}]
+        blob = ejson_dumps(blob).encode()
+        blob = to_jsonb64(blob)
+        # New content after truncate
+        new_chuck_2 = b'is a'
+        new_block_id = '7654'
+        new_blob = [{'blocks': [{'block': block_ids[0],
+                                 'digest': digest(chunk_1),
+                                 'size': len(chunk_1)}],
+                     'key': to_jsonb64(b'<dummy-key-00000000000000000001>')},
+                    {'blocks': [{'block': new_block_id,
+                                 'digest': digest(new_chuck_2),
+                                 'size': len(new_chuck_2)}],
+                     'key': to_jsonb64(b'<dummy-key-00000000000000000003>')}]
+        new_blob = ejson_dumps(new_blob).encode()
+        new_blob = to_jsonb64(new_blob)
+        # New content after write
+        new_block_2_id = '6543'
+        new_chunk_4 = b'IS a nice test content.'
+        new_blob_2 = [{'blocks': [{'block': block_ids[0],
+                                   'digest': digest(chunk_1),
+                                   'size': len(chunk_1)}],
+                       'key': to_jsonb64(b'<dummy-key-00000000000000000001>')},
+                      {'blocks': [{'block': new_block_2_id,
+                                   'digest': digest(new_chunk_4),
+                                   'size': len(new_chunk_4)}],
+                       'key': to_jsonb64(b'<dummy-key-00000000000000000004>')}]
+        new_blob_2 = ejson_dumps(new_blob_2).encode()
+        new_blob_2 = to_jsonb64(new_blob_2)
+        sequence = [
+            (EVlobRead(vlob_id, '42', 2),  # Get blocks
+                lambda _: {'id': vlob_id, 'blob': blob, 'version': 2}),
+            (EVlobRead(vlob_id, '42', 2),  # Matching blocks
+                lambda _: {'id': vlob_id, 'blob': blob, 'version': 2}),
+            (EBlockRead(block_ids[1]),
+                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'}),
+            (EBlockCreate(to_jsonb64(new_chuck_2)),
+                lambda _: new_block_id),
+            (EVlobUpdate(vlob_id, '43', 3, new_blob),
+                lambda _: None),
+            (EVlobRead(vlob_id, '42', 3),  # Matching blocks
+                lambda _: {'id': vlob_id, 'blob': new_blob, 'version': 3}),
+            (EBlockCreate(to_jsonb64(new_chunk_4)),
+                lambda _: new_block_2_id),
+            (EVlobUpdate(vlob_id, '43', 3, new_blob_2),
+                lambda _: None),
+            (EVlobRead(vlob_id, '42', 3),
+                lambda _: {'id': vlob_id, 'blob': new_blob_2, 'version': 3}),
+            (EBlockDelete('5678'),
+                lambda _: raise_(BlockNotFound('Block not found.'))),
+            (EBlockDelete('6789'),
+                lambda _: None),
+        ]
+        ret = perform_sequence(sequence, file.flush())
+        assert ret is None
+        assert file.dirty is True
+        assert file.version == 2
+
     def test_commit(self, file):
+        vlob_id = '1234'
         content = b'This is a test content.'
         block_ids = ['4567', '5678', '6789']
         new_vlob = {'id': '2345', 'read_trust_seed': 'ABC', 'write_trust_seed': 'DEF'}
@@ -485,14 +527,42 @@ class TestFile:
                  'key': to_jsonb64(b'<dummy-key-00000000000000000004>')}]
         blob = ejson_dumps(blob).encode()
         blob = to_jsonb64(blob)
+        # New content after truncate
+        new_chuck_2 = b'is a'
+        new_block_id = '7654'
+        new_blob = [{'blocks': [{'block': block_ids[0],
+                                 'digest': digest(chunk_1),
+                                 'size': len(chunk_1)}],
+                     'key': to_jsonb64(b'<dummy-key-00000000000000000003>')},
+                    {'blocks': [{'block': new_block_id,
+                                 'digest': digest(new_chuck_2),
+                                 'size': len(new_chuck_2)}],
+                     'key': to_jsonb64(b'<dummy-key-00000000000000000003>')}]
+        new_blob = ejson_dumps(new_blob).encode()
+        new_blob = to_jsonb64(new_blob)
+        file.truncate(9)
         sequence = [
             (EVlobRead('1234', '42', 1),
                 lambda _: {'id': '1234', 'blob': blob, 'version': 1}),
+            (EVlobRead('1234', '42', 1),
+                lambda _: {'id': '1234', 'blob': blob, 'version': 1}),
+            (EBlockRead(block_ids[1]),
+                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'}),
+            (EBlockCreate(to_jsonb64(new_chuck_2)),
+                lambda _: new_block_id),
+            (EVlobUpdate(vlob_id, '43', 1, new_blob),
+                lambda _: None),
+            (EVlobRead('1234', '42', 1),
+                lambda _: {'id': '1234', 'blob': new_blob, 'version': 1}),
+            (EBlockDelete('5678'),
+                lambda _: raise_(BlockNotFound('Block not found.'))),
+            (EBlockDelete('6789'),
+                lambda _: None),
+            (EVlobRead('1234', '42', 1),
+                lambda _: {'id': '1234', 'blob': new_blob, 'version': 1}),
             (EBlockSynchronize('4567'),
                 lambda _: True),
-            (EBlockSynchronize('5678'),
-                lambda _: False),
-            (EBlockSynchronize('6789'),
+            (EBlockSynchronize('7654'),
                 lambda _: False),
             (EVlobSynchronize('1234'),
                 lambda _: new_vlob)

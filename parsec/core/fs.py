@@ -153,12 +153,12 @@ class FSComponent:
     @do
     def perform_file_write(self, intent):
         file = yield self._get_file(intent.path)
-        yield file.write(intent.content, intent.offset)
+        file.write(intent.content, intent.offset)
 
     @do
     def perform_file_truncate(self, intent):
         file = yield self._get_file(intent.path)
-        yield file.truncate(intent.length)
+        file.truncate(intent.length)
 
     @do
     def perform_file_history(self, intent):
@@ -201,6 +201,8 @@ class FSComponent:
                 properties = yield self._get_properties(path=path, dustbin=True, group=group)
             except FileNotFound:
                 raise FileNotFound('Vlob not found.')
+        if not properties:
+            raise FileNotFound('Vlob not found.')
         file = yield File.load(properties['id'],
                                properties['key'],
                                properties['read_trust_seed'],

@@ -1,23 +1,23 @@
 import asyncio
 import pytest
-from unittest.mock import Mock
 from effect2 import do, Effect
-from effect2.testing import perform_sequence, const
+from effect2.testing import perform_sequence
 from freezegun import freeze_time
 
-from parsec.core.app import App, app_factory
+from parsec.core.app import app_factory
+from parsec.core.file import File
 from parsec.core.fs import (FSComponent, ESynchronize, EGroupCreate, EDustbinShow, EManifestHistory,
                             EManifestRestore, EFileCreate, EFileRead, EFileWrite, EFileTruncate,
                             EFileHistory, EFileRestore, EFolderCreate, EStat, EMove, EDelete,
                             EUndelete)
-from parsec.core.privkey import EPrivkeyAdd, EPrivkeyGet, EPrivkeyLoad, PrivKeyComponent
-from parsec.core.identity import EIdentityLoad, Identity
+from parsec.core.privkey import PrivKeyComponent
+from parsec.core.identity import EIdentityLoad
 from parsec.core.synchronizer import (
     EUserVlobSynchronize, EUserVlobRead, EUserVlobUpdate, EVlobCreate, EVlobList, EVlobRead,
-    EVlobUpdate, EVlobDelete, EVlobSynchronize, EBlockCreate, EBlockDelete, EBlockSynchronize,
-    SynchronizerComponent)
-from parsec.exceptions import ManifestError, ManifestNotFound, BlockNotFound, VlobNotFound
-from parsec.tools import ejson_dumps, ejson_loads, to_jsonb64, from_jsonb64, digest
+    EVlobUpdate, EVlobDelete, EBlockCreate, EBlockDelete, SynchronizerComponent)
+from parsec.exceptions import (
+    FileError, ManifestError, BlockNotFound, VlobNotFound)
+from parsec.tools import ejson_dumps, to_jsonb64, digest
 from tests.test_crypto import ALICE_PRIVATE_RSA, mock_crypto_passthrough
 
 
@@ -66,6 +66,7 @@ def file(app, mock_crypto_passthrough):
     ]
     ret = perform_sequence(sequence, eff)
     assert ret is None
+    File.files = {}
 
 
 def raise_(exception):
@@ -183,7 +184,7 @@ def test_perform_file_read(app, file):
         (EVlobList(),
             lambda _: [vlob['id']]),
         (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
+            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1})
     ]
     file = perform_sequence(sequence, eff)
     assert file == b''
@@ -195,32 +196,12 @@ def test_perform_file_write(app, file):
              'key': to_jsonb64(b'<dummy-key-00000000000000000001>')}]
     blob = ejson_dumps(blob).encode()
     blob = to_jsonb64(blob)
-    new_blob = [{'blocks': [{'block': '4567',
-                             'digest': digest(''),
-                             'size': len('')}],
-                 'key': to_jsonb64(b'<dummy-key-00000000000000000001>')},
-                {'blocks': [{'block': '5678',
-                             'digest': digest(to_jsonb64(b'foo')),
-                             'size': 3}],
-                 'key': to_jsonb64(b'<dummy-key-00000000000000000003>')}]
-    new_blob = ejson_dumps(new_blob).encode()
-    new_blob = to_jsonb64(new_blob)
     eff = app.perform_file_write(EFileWrite('/foo', b'foo', 0))
     sequence = [
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
             lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
         (EVlobList(),
-            lambda _: [vlob['id']]),
-        (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
-        (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
-        (EBlockCreate(to_jsonb64(b'foo')),
-            lambda _: '5678'),
-        (EVlobUpdate(vlob['id'], vlob['write_trust_seed'], 1, new_blob),
-            lambda _: None),
-        (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
-            lambda _: {'id': vlob['id'], 'blob': new_blob, 'version': 1})
+            lambda _: [vlob['id']])
     ]
     ret = perform_sequence(sequence, eff)
     assert ret is None
@@ -232,30 +213,12 @@ def test_perform_file_truncate(app, file):
              'key': to_jsonb64(b'<dummy-key-00000000000000000001>')}]
     blob = ejson_dumps(blob).encode()
     blob = to_jsonb64(blob)
-    new_blob = [{'blocks': [{'block': '5678',
-                             'digest': digest(''),
-                             'size': len('')}],
-                 'key': to_jsonb64(b'<dummy-key-00000000000000000003>')}]
-    new_blob = ejson_dumps(new_blob).encode()
-    new_blob = to_jsonb64(new_blob)
     eff = app.perform_file_truncate(EFileTruncate('/foo', 0))
     sequence = [
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
             lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
         (EVlobList(),
-            lambda _: [vlob['id']]),
-        (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
-        (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
-        (EBlockCreate(to_jsonb64(b'')),
-            lambda _: '5678'),
-        (EVlobUpdate(vlob['id'], vlob['write_trust_seed'], 1, new_blob),
-            lambda _: None),
-        (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
-            lambda _: {'id': vlob['id'], 'blob': new_blob, 'version': 1}),
-        (EBlockDelete('4567'),
-            lambda _: None)
+            lambda _: [vlob['id']])
     ]
     ret = perform_sequence(sequence, eff)
     assert ret is None
@@ -351,7 +314,7 @@ def test_perform_undelete(app, file):
         (EBlockDelete('4567'),
             lambda _: raise_(BlockNotFound('Block not found.'))),
         (EVlobDelete('2345'),
-            lambda _: raise_(VlobNotFound('Vlob not found.'))),
+            lambda _: raise_(VlobNotFound('Vlob not found.')))
     ]
     ret = perform_sequence(sequence, eff)
     eff = app.perform_undelete(EUndelete('2345'))

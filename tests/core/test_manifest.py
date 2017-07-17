@@ -88,6 +88,7 @@ class TestManifest:
         ]
         ret = perform_sequence(sequence, manifest.is_dirty())
         assert ret is True
+        File.files = {}
         sequence = [
             (EVlobRead(vlob_id, '42'),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
@@ -532,6 +533,7 @@ class TestManifest:
             manifest.add_file(persistent_path, persistent_vlob)
         for i in range(1):
             manifest.add_file(path, vlob)
+            File.files = {}
             sequence = [
                 (EVlobRead(vlob_id, '42'),
                     lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
@@ -574,6 +576,7 @@ class TestManifest:
             assert path not in manifest.entries
         assert '/persistent' in manifest.entries
         # Remove root
+        File.files = {}
         perform_sequence(sequence, manifest.delete('/'))
         assert '/persistent' not in manifest.entries
         assert '/' in manifest.entries
@@ -601,6 +604,7 @@ class TestManifest:
         # Working
         manifest.create_folder('/test_dir')
         manifest.add_file(path, vlob)
+        File.files = {}
         sequence = [
             (EVlobRead(vlob_id, '42'),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
@@ -624,6 +628,7 @@ class TestManifest:
         with pytest.raises(ManifestNotFound):
             manifest.undelete_file(vlob['id'])
         # Restore path already used
+        File.files = {}
         sequence = [
             (EVlobRead(vlob_id, '42'),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
@@ -707,6 +712,7 @@ class TestManifest:
                 assert ret == {'type': 'folder', 'items': ['Belgium', 'France', 'index']}
                 ret = perform_sequence([], manifest.stat('/countries/France/cities' + final_slash))
                 assert ret == {'type': 'folder', 'items': []}
+                File.files = {}
                 sequence = [
                     (EVlobRead(vlob_id, '42'),
                         lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
@@ -771,6 +777,7 @@ class TestManifest:
         dustbin = manifest.show_dustbin()
         assert dustbin == []
         manifest.add_file('/foo', vlob)
+        File.files = {}
         sequence = [
             (EVlobRead(vlob_id, '42'),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
@@ -787,6 +794,7 @@ class TestManifest:
         manifest.create_folder('/test_dir')
         for i in [1, 2]:
             manifest.add_file(path, vlob)
+            File.files = {}
             sequence = [
                 (EVlobRead(vlob_id, '42'),
                     lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
@@ -832,6 +840,7 @@ class TestManifest:
                     'write_trust_seed': '123'}
         # With good vlobs only
         manifest.add_file('/foo', good_vlob)
+        File.files = {}
         sequence = [
             (EVlobRead(vlob_id, '42'),
                 lambda _: {'id': vlob_id, 'blob': blob, 'version': 1})
@@ -1037,6 +1046,7 @@ class TestGroupManifest:
                          'versions': {'123': 1, '234': 1}}
         new_blob = ejson_dumps(new_blob_dict).encode()
         new_blob = to_jsonb64(new_blob)
+        File.files = {}
         sequence = [
             (EVlobRead('1234', '42'),
                 lambda _: {'id': '1234', 'blob': new_blob, 'version': 2}),
@@ -1082,6 +1092,7 @@ class TestGroupManifest:
                          'versions': {'123': 1, '234': 1}}
         new_blob = ejson_dumps(new_blob_dict).encode()
         new_blob = to_jsonb64(new_blob)
+        File.files = {}
         sequence = [
             (EVlobRead('1234', '42'),
                 lambda _: {'id': '1234', 'blob': new_blob, 'version': 1}),
@@ -1127,6 +1138,7 @@ class TestGroupManifest:
                          'versions': {'123': 1, '234': 1}}
         new_blob = ejson_dumps(new_blob_dict).encode()
         new_blob = to_jsonb64(new_blob)
+        File.files = {}
         sequence = [
             (EVlobRead('1234', '42'),
                 lambda _: {'id': '1234', 'blob': new_blob, 'version': 2}),
@@ -1236,6 +1248,7 @@ class TestGroupManifest:
                          'versions': {new_file_vlob['id']: 1}}
         manifest_blob = ejson_dumps(manifest_blob).encode()
         manifest_blob = to_jsonb64(manifest_blob)
+        File.files = {}
         sequence = [
             (EVlobRead(file_vlob_id, '42'),
                 lambda _: {'id': file_vlob_id, 'blob': file_blob, 'version': 1}),
@@ -1386,6 +1399,7 @@ class TestGroupManifest:
                      'versions': {'2345': 2}}
         blob = ejson_dumps(blob_dict).encode()
         blob = to_jsonb64(blob)
+        File.files = {}
         sequence = [
             (EVlobRead('1234', '42', 5),
                 lambda _: {'id': '1234', 'blob': blob, 'version': 5}),
@@ -1419,6 +1433,7 @@ class TestGroupManifest:
                      'versions': {'2345': 2}}
         blob = ejson_dumps(blob_dict).encode()
         blob = to_jsonb64(blob)
+        File.files = {}
         sequence = [
             (EVlobRead('1234', '42', 3),
                 lambda _: {'id': '1234', 'blob': blob, 'version': 3}),
@@ -1780,6 +1795,7 @@ class TestUserManifest:
         new_blob = ejson_dumps(new_blob_dict).encode()
         new_blob = to_jsonb64(new_blob)
         group_blob = to_jsonb64(b'{"dustbin": [], "entries": {"/": null}, "versions": {}}')
+        File.files = {}
         sequence = [
             (EUserVlobRead(),
                 lambda _: {'blob': new_blob, 'version': 2}),
@@ -1829,6 +1845,7 @@ class TestUserManifest:
         new_blob = ejson_dumps(new_blob_dict).encode()
         new_blob = to_jsonb64(new_blob)
         group_blob = to_jsonb64(b'{"dustbin": [], "entries": {"/": null}, "versions": {}}')
+        File.files = {}
         sequence = [
             (EUserVlobRead(),
                 lambda _: {'blob': new_blob, 'version': 1}),
@@ -1878,6 +1895,7 @@ class TestUserManifest:
         new_blob = ejson_dumps(new_blob_dict).encode()
         new_blob = to_jsonb64(new_blob)
         group_blob = to_jsonb64(b'{"dustbin": [], "entries": {"/": null}, "versions": {}}')
+        File.files = {}
         sequence = [
             (EUserVlobRead(),
                 lambda _: {'blob': new_blob, 'version': 2}),
@@ -1977,6 +1995,7 @@ class TestUserManifest:
         group_blob = {'entries': {'/': None}, 'dustbin': [], 'versions': {}}
         group_blob = ejson_dumps(group_blob).encode()
         group_blob = to_jsonb64(group_blob)
+        File.files = {}
         sequence = [
             (EVlobRead(file_vlob_id, '42'),
                 lambda _: {'id': file_vlob_id, 'blob': file_vlob, 'version': 1}),
@@ -2051,6 +2070,7 @@ class TestUserManifest:
                      'versions': {'2345': 2}}
         blob = ejson_dumps(blob_dict).encode()
         blob = to_jsonb64(blob)
+        File.files = {}
         sequence = [
             (EUserVlobRead(5),
                 lambda _: {'blob': blob, 'version': 5}),
@@ -2085,6 +2105,7 @@ class TestUserManifest:
                      'versions': {'2345': 2}}
         blob = ejson_dumps(blob_dict).encode()
         blob = to_jsonb64(blob)
+        File.files = {}
         sequence = [
             (EUserVlobRead(3),
                 lambda _: {'blob': blob, 'version': 3}),
