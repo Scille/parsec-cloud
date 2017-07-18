@@ -10,6 +10,7 @@ from errno import ENOENT, EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 
+from parsec.core.file import ContentBuilder
 from parsec.tools import logger, from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 
 
@@ -34,8 +35,10 @@ class File:
         self.path = path
         self._operations = operations
         self.flags = flags
+        self.modifications = []
 
     def read(self, size=None, offset=0):
+        self.flush()
         # TODO use flags
         response = self._operations.send_cmd(
             cmd='file_read', path=self.path, size=size, offset=offset)
@@ -44,25 +47,43 @@ class File:
         return from_jsonb64(response['content'])
 
     def write(self, data, offset=0):
-        # TODO use flags
-        response = self._operations.send_cmd(
-            cmd='file_write',
-            path=self.path,
-            content=to_jsonb64(data),
-            offset=offset)
-        if response['status'] != 'ok':
-            raise FuseOSError(ENOENT)
+        self.modifications.append((self.write, data, offset))
 
     def truncate(self, length):
-        response = self._operations.send_cmd(
-            cmd='file_truncate', path=self.path, length=length)
-        if response['status'] != 'ok':
-            raise FuseOSError(ENOENT)
+        self.modifications.append((self.truncate, length))
 
     def flush(self):
-        # TODO: operations should be buffered then flushed instead of
-        # being directly executed
-        pass
+        if not self.modifications:
+            return
+        # Merge all modifications to build final content
+        builder = ContentBuilder()
+        shortest_truncate = None
+        for modification in self.modifications:
+            if modification[0] == self.write:
+                builder.write(*modification[1:])
+            elif modification[0] == self.truncate:
+                builder.truncate(modification[1])
+                if not shortest_truncate or shortest_truncate > modification[1]:
+                    shortest_truncate = modification[1]
+            else:
+                raise NotImplementedError()
+        self.modifications = []
+        # Truncate file
+        if shortest_truncate is not None:
+            response = self._operations.send_cmd(
+                cmd='file_truncate', path=self.path, length=shortest_truncate)
+            if response['status'] != 'ok':
+                raise FuseOSError(ENOENT)
+        # Write new contents
+        for offset, content in builder.contents.items():
+            # TODO use flags
+            response = self._operations.send_cmd(
+                cmd='file_write',
+                path=self.path,
+                content=to_jsonb64(content),
+                offset=offset)
+            if response['status'] != 'ok':
+                raise FuseOSError(ENOENT)
 
 
 class FuseOperations(LoggingMixIn, Operations):
