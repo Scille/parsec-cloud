@@ -8,7 +8,6 @@ from parsec.backend import InMemoryPubKeyService
 from parsec.crypto import RSAPrivateKey, RSAPublicKey
 from parsec.session import AuthSession
 from parsec.exceptions import PubKeyError, PubKeyNotFound
-from parsec.tools import to_jsonb64
 
 from tests.common import can_side_effect_or_skip
 from tests.backend.common import init_or_skiptest_parsec_postgresql
@@ -67,7 +66,6 @@ G889JN85nABKR9WkdwIDAQAB
 
 
 class MockedContext(BaseClientContext):
-
 
     def __init__(self, expected_send=[], to_recv=[]):
         self.expected_send = list(reversed(expected_send))
@@ -159,6 +157,7 @@ class TestPubKeyService:
             assert session.identity == 'alice'
 
     # TODO: test bad handshake as well
+
 
 class TestPubKeyServiceAPI:
     @pytest.mark.asyncio

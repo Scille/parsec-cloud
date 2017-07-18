@@ -1,4 +1,3 @@
-import pytest
 from effect2.testing import perform_sequence, const
 
 from parsec.core.backend import BackendCmd
@@ -35,8 +34,8 @@ def test_perform_group_add_identities():
     backend_response = {'status': 'ok'}
     sequence = [
         (BackendCmd('group_add_identities',
-            {'name': 'teamA', 'identities': ['John'], 'admin': False}),
-            const(backend_response))
+                    {'name': 'teamA', 'identities': ['John'], 'admin': False}),
+         const(backend_response))
     ]
     ret = perform_sequence(sequence, eff)
     assert ret is None
@@ -47,8 +46,8 @@ def test_perform_group_remove_identities():
     backend_response = {'status': 'ok'}
     sequence = [
         (BackendCmd('group_remove_identities',
-            {'name': 'teamA', 'identities': ['John'], 'admin': False}),
-            const(backend_response))
+                    {'name': 'teamA', 'identities': ['John'], 'admin': False}),
+         const(backend_response))
     ]
     ret = perform_sequence(sequence, eff)
     assert ret is None

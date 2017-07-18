@@ -36,12 +36,19 @@ def _jsonb64_serialize(obj):
         return to_jsonb64(obj)
     except:
         raise ValidationError('Invalid bytes')
+
+
 def _jsonb64_deserialize(value):
     try:
         return from_jsonb64(value)
     except:
         raise ValidationError('Invalid base64 encoded data')
-fields.Base64Bytes = partial(fields.Function, serialize=_jsonb64_serialize, deserialize=_jsonb64_deserialize)
+
+
+fields.Base64Bytes = partial(fields.Function,
+                             serialize=_jsonb64_serialize,
+                             deserialize=_jsonb64_deserialize)
+
 
 def async_callback(callback, *args, **kwargs):
     def event_handler(sender):

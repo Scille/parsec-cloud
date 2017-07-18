@@ -52,7 +52,7 @@ class TestUserVlobServiceAPI:
     async def _push_version(self, user_vlob_svc, session, version, blob):
         msg = {'cmd': 'user_vlob_update', 'version': version, 'blob': blob}
         ret = await user_vlob_svc.dispatch_msg(msg, session=session)
-        assert ret == {'status': 'ok'}        
+        assert ret == {'status': 'ok'}
 
     @pytest.mark.asyncio
     async def test_read_not_existing(self, user_vlob_svc, session):
@@ -73,18 +73,22 @@ class TestUserVlobServiceAPI:
         await self._push_version(user_vlob_svc, session, 2, to_jsonb64(b'V2'))
         ret = await user_vlob_svc.dispatch_msg({'cmd': 'user_vlob_read'}, session=session)
         assert ret == {'status': 'ok', 'version': 2, 'blob': to_jsonb64(b'V2')}
-        ret = await user_vlob_svc.dispatch_msg({'cmd': 'user_vlob_read', 'version': 1}, session=session)
+        ret = await user_vlob_svc.dispatch_msg({'cmd': 'user_vlob_read', 'version': 1},
+                                               session=session)
         assert ret == {'status': 'ok', 'version': 1, 'blob': to_jsonb64(b'V1')}
-        ret = await user_vlob_svc.dispatch_msg({'cmd': 'user_vlob_read', 'version': 0}, session=session)
+        ret = await user_vlob_svc.dispatch_msg({'cmd': 'user_vlob_read', 'version': 0},
+                                               session=session)
         assert ret == {'status': 'ok', 'version': 0, 'blob': to_jsonb64(b'')}
 
     @pytest.mark.asyncio
     async def test_bad_version_read(self, user_vlob_svc, session):
         await self._push_version(user_vlob_svc, session, 1, to_jsonb64(b'V1'))
         await self._push_version(user_vlob_svc, session, 2, to_jsonb64(b'V2'))
-        ret = await user_vlob_svc.dispatch_msg({'cmd': 'user_vlob_read', 'version': 3}, session=session)
+        ret = await user_vlob_svc.dispatch_msg({'cmd': 'user_vlob_read', 'version': 3},
+                                                session=session)
         assert ret == {'status': 'user_vlob_error', 'label': 'Wrong blob version.'}
-        ret = await user_vlob_svc.dispatch_msg({'cmd': 'user_vlob_read', 'version': -1}, session=session)
+        ret = await user_vlob_svc.dispatch_msg({'cmd': 'user_vlob_read', 'version': -1},
+                                               session=session)
         assert ret == {'status': 'bad_msg', 'label': {'version': ['Invalid value.']}}
 
     @pytest.mark.asyncio

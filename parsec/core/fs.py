@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import attr
 import blinker
-from effect2 import Effect, TypeDispatcher, do
+from effect2 import TypeDispatcher, do
 
 from parsec.core.file import File
 from parsec.core.manifest import UserManifest

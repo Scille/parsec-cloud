@@ -1,4 +1,3 @@
-import random
 from asyncio import Queue
 from websockets import ConnectionClosed  # noqa: use this exception as our own
 

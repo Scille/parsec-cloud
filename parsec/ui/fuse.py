@@ -2,12 +2,10 @@ import os
 import stat
 import sys
 import socket
-import json
 import click
 import threading
 from dateutil.parser import parse as dateparse
 from itertools import count
-from base64 import decodebytes, encodebytes
 from errno import ENOENT, EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn

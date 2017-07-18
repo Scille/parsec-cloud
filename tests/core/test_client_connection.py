@@ -1,7 +1,7 @@
 import pytest
 import attr
 from unittest.mock import Mock
-from effect2 import Effect, Constant, do, TypeDispatcher
+from effect2 import Effect, Constant, do
 # from effect.do import do
 
 from parsec.core.client_connection import (
@@ -12,6 +12,7 @@ from parsec.core.base import EEvent
 @attr.s
 class MockedReader:
     to_read = attr.ib(default=b'')
+
     async def read(self, size):
         curr_read = self.to_read[:size]
         self.to_read = self.to_read[size:]
@@ -21,6 +22,7 @@ class MockedReader:
 @attr.s
 class MockedWriter:
     written = attr.ib(default=b'')
+
     def write(self, buff):
         self.written += buff
 

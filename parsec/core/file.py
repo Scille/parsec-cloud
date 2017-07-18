@@ -3,8 +3,9 @@ import sys
 from effect2 import Effect, do
 
 from parsec.crypto import generate_sym_key, load_sym_key
-from parsec.core.synchronizer import (EVlobCreate, EVlobList, EVlobRead, EVlobUpdate, EVlobDelete, EVlobSynchronize,
-                                      EBlockCreate, EBlockSynchronize, EBlockRead, EBlockDelete)
+from parsec.core.synchronizer import (
+    EVlobCreate, EVlobList, EVlobRead, EVlobUpdate, EVlobDelete, EVlobSynchronize, EBlockCreate,
+    EBlockSynchronize, EBlockRead, EBlockDelete)
 from parsec.exceptions import BlockNotFound, FileError, VlobNotFound
 from parsec.tools import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads, digest
 

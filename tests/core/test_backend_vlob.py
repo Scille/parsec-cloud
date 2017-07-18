@@ -1,4 +1,3 @@
-import pytest
 from effect2.testing import perform_sequence, const
 
 from parsec.tools import to_jsonb64
@@ -47,8 +46,8 @@ def test_perform_vlob_update():
         'status': 'ok',
     }
     sequence = [
-        (BackendCmd('vlob_update', 
-            {'id': '42', 'trust_seed': 'WTS42', 'version': 3, 'blob': to_jsonb64(b'bar')}),
+        (BackendCmd('vlob_update',
+                    {'id': '42', 'trust_seed': 'WTS42', 'version': 3, 'blob': to_jsonb64(b'bar')}),
             const(backend_response))
     ]
     ret = perform_sequence(sequence, eff)

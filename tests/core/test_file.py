@@ -1,7 +1,7 @@
 from copy import deepcopy
 import random
 
-from effect2.testing import perform_sequence
+from effect2.testing import const, noop, perform_sequence, raise_
 import pytest
 
 from parsec.core.file import ContentBuilder, File
@@ -22,15 +22,11 @@ def file(mock_crypto_passthrough):
         blob = to_jsonb64(blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(blob),
-                lambda _: {'id': '1234', 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': '1234', 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         return perform_sequence(sequence, File.create())
-
-
-def raise_(ex):
-    raise ex
 
 
 class TestContentBuilder:
@@ -97,9 +93,9 @@ class TestFile:
             key = to_jsonb64(b'<dummy-key-00000000000000000001>')
             sequence = [
                 (EVlobRead(vlob_id, read_trust_seed, None),
-                    lambda _: {'id': vlob_id, 'blob': 'foo', 'version': version}),
+                    const({'id': vlob_id, 'blob': 'foo', 'version': version})),
                 (EVlobList(),
-                    lambda _: synchronizer_vlob_list),
+                    const(synchronizer_vlob_list)),
             ]
             file = perform_sequence(sequence, File.load(vlob_id, key, read_trust_seed, '43'))
             assert file.dirty is (vlob_id in synchronizer_vlob_list)
@@ -127,7 +123,7 @@ class TestFile:
         blob = to_jsonb64(blob)
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
         ]
         ret = perform_sequence(sequence, file.get_blocks())
         assert ret == block_ids
@@ -153,7 +149,7 @@ class TestFile:
         blob = to_jsonb64(blob)
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
         ]
         read_content = perform_sequence(sequence, file.read())
         assert read_content == b''
@@ -178,13 +174,13 @@ class TestFile:
         blob = to_jsonb64(blob)
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EBlockRead(block_ids[0]),
-                lambda _: {'content': to_jsonb64(chunk_1), 'creation_date': '2012-01-01T00:00:00'}),
+                const({'content': to_jsonb64(chunk_1), 'creation_date': '2012-01-01T00:00:00'})),
             (EBlockRead(block_ids[1]),
-                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'}),
+                const({'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'})),
             (EBlockRead(block_ids[2]),
-                lambda _: {'content': to_jsonb64(chunk_3), 'creation_date': '2012-01-01T00:00:00'})
+                const({'content': to_jsonb64(chunk_3), 'creation_date': '2012-01-01T00:00:00'}))
         ]
         read_content = perform_sequence(sequence, file.read())
         assert read_content == content
@@ -192,11 +188,11 @@ class TestFile:
         offset = 5
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EBlockRead(block_ids[1]),
-                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'}),
+                const({'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'})),
             (EBlockRead(block_ids[2]),
-                lambda _: {'content': to_jsonb64(chunk_3), 'creation_date': '2012-01-01T00:00:00'})
+                const({'content': to_jsonb64(chunk_3), 'creation_date': '2012-01-01T00:00:00'}))
         ]
         read_content = perform_sequence(sequence, file.read(offset=offset))
         assert read_content == content[offset:]
@@ -204,9 +200,9 @@ class TestFile:
         size = 9
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EBlockRead(block_ids[1]),
-                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'})
+                const({'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'}))
         ]
         read_content = perform_sequence(sequence, file.read(offset=offset, size=size))
         assert read_content == content[offset:][:size]
@@ -256,7 +252,7 @@ class TestFile:
         blob = to_jsonb64(blob)
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1})
+                const({'id': vlob_id, 'blob': blob, 'version': 1}))
         ]
         ret = perform_sequence(sequence, file.stat())
         assert ret == {'type': 'file',
@@ -350,19 +346,19 @@ class TestFile:
         # Restore previous version
         sequence = [
             (EVlobRead(vlob_id, '42', 6),  # Discard
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 6}),
+                const({'id': vlob_id, 'blob': blob, 'version': 6})),
             (EBlockDelete('4567'),
                 lambda _: raise_(BlockNotFound('Block not found.'))),
             (EBlockDelete('5678'),
-                lambda _: None),
+                noop),
             (EBlockDelete('6789'),
-                lambda _: None),
+                noop),
             (EVlobDelete('1234'),
-                lambda _: None),
+                noop),
             (EVlobRead('1234', '42', 5),
-                lambda _: {'id': vlob_id, 'blob': new_blob, 'version': 5}),
+                const({'id': vlob_id, 'blob': new_blob, 'version': 5})),
             (EVlobUpdate(vlob_id, '43', 7, new_blob),
-                lambda _: None)
+                noop)
         ]
         ret = perform_sequence(sequence, file.restore())
         assert ret is None
@@ -371,19 +367,19 @@ class TestFile:
         # Restore specific version
         sequence = [
             (EVlobRead(vlob_id, '42', 7),
-                lambda _: {'id': vlob_id, 'blob': new_blob, 'version': 7}),
+                const({'id': vlob_id, 'blob': new_blob, 'version': 7})),
             (EBlockDelete('4567'),
                 lambda _: raise_(BlockNotFound('Block not found.'))),
             (EBlockDelete('7654'),
-                lambda _: None),
+                noop),
             (EBlockDelete('6789'),
-                lambda _: None),
+                noop),
             (EVlobDelete('1234'),
-                lambda _: None),
+                noop),
             (EVlobRead('1234', '42', 2),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 2}),
+                const({'id': vlob_id, 'blob': blob, 'version': 2})),
             (EVlobUpdate(vlob_id, '43', 7, blob),
-                lambda _: None)
+                noop)
         ]
         ret = perform_sequence(sequence, file.restore(2))
         assert ret is None
@@ -413,9 +409,9 @@ class TestFile:
         blob = to_jsonb64(blob)
         sequence = [
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1}),
+                const({'id': '1234', 'blob': blob, 'version': 1})),
             (EVlobCreate(blob),  # TODO check re-encryption
-                lambda _: {'id': '2345', 'read_trust_seed': '21', 'write_trust_seed': '22'})
+                const({'id': '2345', 'read_trust_seed': '21', 'write_trust_seed': '22'}))
         ]
         ret = perform_sequence(sequence, file.reencrypt())
         assert ret is None
@@ -478,27 +474,27 @@ class TestFile:
         new_blob_2 = to_jsonb64(new_blob_2)
         sequence = [
             (EVlobRead(vlob_id, '42', 2),  # Get blocks
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 2}),
+                const({'id': vlob_id, 'blob': blob, 'version': 2})),
             (EVlobRead(vlob_id, '42', 2),  # Matching blocks
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 2}),
+                const({'id': vlob_id, 'blob': blob, 'version': 2})),
             (EBlockRead(block_ids[1]),
-                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'}),
+                const({'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'})),
             (EBlockCreate(to_jsonb64(new_chuck_2)),
-                lambda _: new_block_id),
+                const(new_block_id)),
             (EVlobUpdate(vlob_id, '43', 3, new_blob),
-                lambda _: None),
+                noop),
             (EVlobRead(vlob_id, '42', 3),  # Matching blocks
-                lambda _: {'id': vlob_id, 'blob': new_blob, 'version': 3}),
+                const({'id': vlob_id, 'blob': new_blob, 'version': 3})),
             (EBlockCreate(to_jsonb64(new_chunk_4)),
-                lambda _: new_block_2_id),
+                const(new_block_2_id)),
             (EVlobUpdate(vlob_id, '43', 3, new_blob_2),
-                lambda _: None),
+                noop),
             (EVlobRead(vlob_id, '42', 3),
-                lambda _: {'id': vlob_id, 'blob': new_blob_2, 'version': 3}),
+                const({'id': vlob_id, 'blob': new_blob_2, 'version': 3})),
             (EBlockDelete('5678'),
                 lambda _: raise_(BlockNotFound('Block not found.'))),
             (EBlockDelete('6789'),
-                lambda _: None),
+                noop),
         ]
         ret = perform_sequence(sequence, file.flush())
         assert ret is None
@@ -543,29 +539,29 @@ class TestFile:
         file.truncate(9)
         sequence = [
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1}),
+                const({'id': '1234', 'blob': blob, 'version': 1})),
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1}),
+                const({'id': '1234', 'blob': blob, 'version': 1})),
             (EBlockRead(block_ids[1]),
-                lambda _: {'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'}),
+                const({'content': to_jsonb64(chunk_2), 'creation_date': '2012-01-01T00:00:00'})),
             (EBlockCreate(to_jsonb64(new_chuck_2)),
-                lambda _: new_block_id),
+                const(new_block_id)),
             (EVlobUpdate(vlob_id, '43', 1, new_blob),
-                lambda _: None),
+                noop),
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 1}),
+                const({'id': '1234', 'blob': new_blob, 'version': 1})),
             (EBlockDelete('5678'),
                 lambda _: raise_(BlockNotFound('Block not found.'))),
             (EBlockDelete('6789'),
-                lambda _: None),
+                noop),
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 1}),
+                const({'id': '1234', 'blob': new_blob, 'version': 1})),
             (EBlockSynchronize('4567'),
-                lambda _: True),
+                const(True)),
             (EBlockSynchronize('7654'),
-                lambda _: False),
+                const(False)),
             (EVlobSynchronize('1234'),
-                lambda _: new_vlob)
+                const(new_vlob))
         ]
         ret = perform_sequence(sequence, file.commit())
         new_vlob['key'] = to_jsonb64(b'<dummy-key-00000000000000000002>')
@@ -596,15 +592,15 @@ class TestFile:
         # Already synchronized
         sequence = [
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1}),
+                const({'id': '1234', 'blob': blob, 'version': 1})),
             (EBlockDelete('4567'),
                 lambda _: raise_(BlockNotFound('Block not found.'))),
             (EBlockDelete('5678'),
-                lambda _: None),
+                noop),
             (EBlockDelete('6789'),
-                lambda _: None),
+                noop),
             (EVlobDelete('1234'),
-                lambda _: raise_(VlobNotFound('Block not found.')))  # TODO vlob OR block exception
+                lambda _: raise_(VlobNotFound('Block not found.')))  # TODO vlob OR block exceptin
         ]
         ret = perform_sequence(sequence, file.discard())
         assert ret is False
@@ -613,15 +609,15 @@ class TestFile:
         file.version = 0
         sequence = [
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1}),
+                const({'id': '1234', 'blob': blob, 'version': 1})),
             (EBlockDelete('4567'),
-                lambda _: None),
+                noop),
             (EBlockDelete('5678'),
-                lambda _: None),
+                noop),
             (EBlockDelete('6789'),
-                lambda _: None),
+                noop),
             (EVlobDelete('1234'),
-                lambda _: None)
+                noop)
         ]
         ret = perform_sequence(sequence, file.discard())
         assert ret is True
@@ -637,7 +633,7 @@ class TestFile:
             chunks = [b'']
         sequence = []
         for chunk in chunks:
-            sequence.append((EBlockCreate(to_jsonb64(chunk)), lambda _: '4567'))
+            sequence.append((EBlockCreate(to_jsonb64(chunk)), const('4567')))
         blocks = perform_sequence(sequence, file._build_file_blocks(content))
         assert sorted(blocks.keys()) == ['blocks', 'key']
         assert isinstance(blocks['blocks'], list)
@@ -698,7 +694,7 @@ class TestFile:
         # All matching blocks
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1})
+                const({'id': vlob_id, 'blob': blob, 'version': 1}))
         ]
         matching_blocks = perform_sequence(sequence, file._find_matching_blocks())
         assert matching_blocks == {'pre_excluded_blocks': [],
@@ -715,9 +711,10 @@ class TestFile:
                   blocks[1]['blocks'][0]['size'] + blocks[2]['blocks'][0]['size'] - delta)
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EBlockRead('2003'),
-                lambda _: {'content': block_contents['2003'], 'creation_date': '2012-01-01T00:00:00'})
+                const({'content': block_contents['2003'],
+                           'creation_date': '2012-01-01T00:00:00'}))
         ]
         matching_blocks = perform_sequence(sequence, file._find_matching_blocks(None, offset))
         pre_excluded_data = contents[2][:blocks[2]['blocks'][0]['size'] - delta]
@@ -737,9 +734,10 @@ class TestFile:
                   blocks[1]['blocks'][0]['size'] + blocks[2]['blocks'][0]['size'] - delta)
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EBlockRead(id='2003'),
-                lambda _: {'content': block_contents['2003'], 'creation_date': '2012-01-01T00:00:00'})
+                const({'content': block_contents['2003'],
+                       'creation_date': '2012-01-01T00:00:00'}))
         ]
         matching_blocks = perform_sequence(sequence, file._find_matching_blocks(size, offset))
         pre_excluded_data = contents[2][:blocks[2]['blocks'][0]['size'] - delta]
@@ -764,11 +762,13 @@ class TestFile:
                   blocks[1]['blocks'][0]['size'] + blocks[2]['blocks'][0]['size'] - delta)
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EBlockRead('2003'),
-                lambda _: {'content': block_contents['2003'], 'creation_date': '2012-01-01T00:00:00'}),
+                const({'content': block_contents['2003'],
+                       'creation_date': '2012-01-01T00:00:00'})),
             (EBlockRead('2007'),
-                lambda _: {'content': block_contents['2007'], 'creation_date': '2012-01-01T00:00:00'})
+                const({'content': block_contents['2007'],
+                       'creation_date': '2012-01-01T00:00:00'}))
         ]
         matching_blocks = perform_sequence(sequence, file._find_matching_blocks(size, offset))
         pre_excluded_data = contents[2][:-delta]
@@ -793,7 +793,7 @@ class TestFile:
                   blocks[1]['blocks'][0]['size'] + blocks[2]['blocks'][0]['size'])
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
         ]
         matching_blocks = perform_sequence(sequence, file._find_matching_blocks(size, offset))
         assert matching_blocks == {'pre_excluded_blocks': [blocks[0], blocks[1], blocks[2]],
@@ -807,7 +807,7 @@ class TestFile:
         # With total size
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
         ]
         matching_blocks = perform_sequence(sequence, file._find_matching_blocks(total_length, 0))
         assert matching_blocks == {'pre_excluded_blocks': [],

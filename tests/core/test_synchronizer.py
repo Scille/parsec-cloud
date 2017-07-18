@@ -1,6 +1,6 @@
 import pytest
 
-from effect2.testing import perform_sequence
+from effect2.testing import const, noop, perform_sequence, raise_
 
 from parsec.core.backend_vlob import (EBackendVlobCreate, EBackendVlobUpdate, EBackendVlobRead,
                                       VlobAccess, VlobAtom)
@@ -31,9 +31,6 @@ def test_perform_block_create(app):
 
 
 def test_perform_block_read(app):
-    def raise_(exception):
-        raise exception
-
     local_content = 'foo'
     eff = app.perform_block_create(EBlockCreate(local_content))
     block_id = perform_sequence([], eff)
@@ -46,7 +43,7 @@ def test_perform_block_read(app):
     eff = app.perform_block_read(EBlockRead('123'))
     sequence = [
         (EBackendBlockRead('123'),
-            lambda _: Block('123', remote_content))
+            const(Block('123', remote_content)))
     ]
     block = perform_sequence(sequence, eff)
     assert sorted(list(block.keys())) == ['content', 'id']
@@ -99,9 +96,9 @@ def test_perform_block_synchronize(app):
     eff = app.perform_block_synchronize(EBlockSynchronize(block_id))
     sequence = [
         (EBackendBlockCreate(block_id, content),
-            lambda _: Block(block_id, content)),
+            const(Block(block_id, content))),
         # (EBlockDelete(block_id),
-        #     lambda _: None)  # TODO ok to call directly the perform method?
+        #     noop)  # TODO ok to call directly the perform method?
     ]
     synchronization = perform_sequence(sequence, eff)
     assert synchronization is True
@@ -123,7 +120,7 @@ def test_perform_user_vlob_read(app):
     eff = app.perform_user_vlob_read(EUserVlobRead(2))
     sequence = [
         (EBackendUserVlobRead(2),
-            lambda _: UserVlobAtom(2, remote_blob))
+            const(UserVlobAtom(2, remote_blob)))
     ]
     user_vlob = perform_sequence(sequence, eff)
     assert sorted(list(user_vlob.keys())) == ['blob', 'version']
@@ -178,7 +175,7 @@ def test_perform_user_vlob_synchronize(app):
     eff = app.perform_user_vlob_synchronize(EUserVlobSynchronize())
     sequence = [
         (EBackendUserVlobUpdate(1, blob.encode()),  # TODO encode ok ?
-            lambda _: None)
+            noop)
     ]
     synchronization = perform_sequence(sequence, eff)
     assert synchronization is True
@@ -212,7 +209,7 @@ def test_perform_vlob_read(app):
     eff = app.perform_vlob_read(EVlobRead('123', 'ABC', 2))
     sequence = [
         (EBackendVlobRead('123', 'ABC', 2),
-            lambda _: VlobAtom('123', 2, remote_blob))
+            const(VlobAtom('123', 2, remote_blob)))
     ]
     vlob = perform_sequence(sequence, eff)
     assert sorted(list(vlob.keys())) == ['blob', 'id', 'version']
@@ -274,7 +271,7 @@ def test_perform_vlob_synchronize(app):
     eff = app.perform_vlob_synchronize(EVlobSynchronize('123'))
     sequence = [
         (EBackendVlobCreate(blob.encode()),  # TODO encode ok ?
-            lambda _: VlobAccess('123', 'ABC', 'DEF'))
+            const(VlobAccess('123', 'ABC', 'DEF')))
     ]
     synchronization = perform_sequence(sequence, eff)
     assert synchronization == {'id': '123', 'read_trust_seed': 'ABC', 'write_trust_seed': 'DEF'}
@@ -288,7 +285,7 @@ def test_perform_vlob_synchronize(app):
     eff = app.perform_vlob_synchronize(EVlobSynchronize('123'))
     sequence = [
         (EBackendVlobUpdate('123', 'ABC', 2, blob.encode()),  # TODO encode ok ?
-            lambda _: None)
+            noop)
     ]
     synchronization = perform_sequence(sequence, eff)
     assert synchronization is True
@@ -316,13 +313,13 @@ def test_perform_synchronize(app):
     eff = app.perform_synchronize(ESynchronize())
     sequence = [
         (EBackendBlockCreate(block_ids[0], content),
-            lambda _: Block(block_ids[0], content)),
+            const(Block(block_ids[0], content))),
         (EBackendBlockCreate(block_ids[1], content),
-            lambda _: Block(block_ids[1], content)),
+            const(Block(block_ids[1], content))),
         (EBackendVlobCreate(blob.encode()),  # TODO encode correct?
-            lambda _: VlobAccess('345', 'ABC', 'DEF')),
+            const(VlobAccess('345', 'ABC', 'DEF'))),
         (EBackendVlobCreate(blob.encode()),  # TODO encode correct?
-            lambda _: VlobAccess('678', 'ABC', 'DEF')),
+            const(VlobAccess('678', 'ABC', 'DEF'))),
     ]
     synchronization = perform_sequence(sequence, eff)
     assert synchronization is True

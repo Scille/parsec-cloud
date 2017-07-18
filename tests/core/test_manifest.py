@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from effect2.testing import perform_sequence
+from effect2.testing import const, noop, perform_sequence, raise_
 from freezegun import freeze_time
 import pytest
 
@@ -22,9 +22,9 @@ def group_manifest(mock_crypto_passthrough):
     blob = to_jsonb64(b'{"dustbin": [], "entries": {"/": null}, "versions": {}}')
     sequence = [
         (EVlobCreate(),
-            lambda _: vlob),
+            const(vlob)),
         (EVlobUpdate(vlob['id'], vlob['write_trust_seed'], 1, blob),
-            lambda _: vlob),
+            const(vlob)),
     ]
     return perform_sequence(sequence, GroupManifest.create())
 
@@ -36,9 +36,9 @@ def user_manifest(mock_crypto_passthrough):
         blob = to_jsonb64(blob)
         sequence = [
             (EUserVlobRead(),
-                lambda _: {'blob': '', 'version': 1}),
+                const({'blob': '', 'version': 1})),
             (EUserVlobUpdate(1, blob),
-                lambda _: None)
+                noop)
         ]
         return perform_sequence(sequence, UserManifest.load(ALICE_PRIVATE_RSA))
 
@@ -47,10 +47,6 @@ def user_manifest(mock_crypto_passthrough):
 def user_manifest_with_group(user_manifest, group_manifest):
     user_manifest.group_manifests['share'] = group_manifest
     return user_manifest
-
-
-def raise_(ex):
-    raise ex
 
 
 class TestManifest:
@@ -75,31 +71,31 @@ class TestManifest:
         blob = to_jsonb64(blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(blob),
-                lambda _: {'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         file = perform_sequence(sequence, File.create())
         vlob = file.get_vlob()
         manifest.add_file('/foo', vlob)
         sequence = [
             (EVlobRead(vlob_id, '42'),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1})
+                const({'id': vlob_id, 'blob': blob, 'version': 1}))
         ]
         ret = perform_sequence(sequence, manifest.is_dirty())
         assert ret is True
         File.files = {}
         sequence = [
             (EVlobRead(vlob_id, '42'),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EVlobList(),
-                lambda _: [vlob_id]),
+                const([vlob_id])),
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EBlockDelete(block_id),
-                lambda _: None),
+                noop),
             (EVlobDelete(vlob_id),
-                lambda _: None)
+                noop)
         ]
         perform_sequence(sequence, manifest.delete('/foo'))
         ret = perform_sequence([], manifest.is_dirty())
@@ -193,25 +189,25 @@ class TestManifest:
         backup_original = deepcopy(manifest.original_manifest)
         sequence = [
             (EVlobRead('vlob_5', 'rts'),
-                lambda _: {'id': 'vlob_5', 'version': 1, 'blob': ''}),
+                const({'id': 'vlob_5', 'version': 1, 'blob': ''})),
             (EVlobRead('vlob_4', 'rts'),
-                lambda _: {'id': 'vlob_4', 'version': 1, 'blob': ''}),
+                const({'id': 'vlob_4', 'version': 1, 'blob': ''})),
             (EVlobRead('vlob_2', 'rts'),
-                lambda _: {'id': 'vlob_2', 'version': 1, 'blob': ''}),
+                const({'id': 'vlob_2', 'version': 1, 'blob': ''})),
             (EVlobRead('vlob_3', 'rts'),
-                lambda _: {'id': 'vlob_3', 'version': 1, 'blob': ''}),
+                const({'id': 'vlob_3', 'version': 1, 'blob': ''})),
             (EVlobRead('vlob_6', 'rts'),
-                lambda _: {'id': 'vlob_6', 'version': 1, 'blob': ''}),
+                const({'id': 'vlob_6', 'version': 1, 'blob': ''})),
             (EVlobRead('vlob_7', 'rts'),
-                lambda _: {'id': 'vlob_7', 'version': 1, 'blob': ''}),
+                const({'id': 'vlob_7', 'version': 1, 'blob': ''})),
             (EVlobRead('vlob_9', 'rts'),
-                lambda _: {'id': 'vlob_9', 'version': 1, 'blob': ''}),
+                const({'id': 'vlob_9', 'version': 1, 'blob': ''})),
             (EVlobRead('vlob_6', 'rts'),
-                lambda _: {'id': 'vlob_6', 'version': 1, 'blob': ''}),
+                const({'id': 'vlob_6', 'version': 1, 'blob': ''})),
             (EVlobRead('vlob_7', 'rts'),
-                lambda _: {'id': 'vlob_7', 'version': 1, 'blob': ''}),
+                const({'id': 'vlob_7', 'version': 1, 'blob': ''})),
             (EVlobRead('vlob_8', 'rts'),
-                lambda _: {'id': 'vlob_8', 'version': 1, 'blob': ''}),
+                const({'id': 'vlob_8', 'version': 1, 'blob': ''})),
         ]
         dump = perform_sequence(sequence, manifest.dumps())
         new_manifest = ejson_loads(dump)
@@ -271,23 +267,23 @@ class TestManifest:
         group_manifest.version = 5
         sequence = [
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': old_blob, 'version': 1}),
+                const({'id': '1234', 'blob': old_blob, 'version': 1})),
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': old_blob, 'version': 1}),
+                const({'id': '1234', 'blob': old_blob, 'version': 1})),
             (EVlobRead('1234', '42', 2),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 2}),
+                const({'id': '1234', 'blob': new_blob, 'version': 2})),
             (EVlobRead('1234', '42', 2),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 2}),
+                const({'id': '1234', 'blob': new_blob, 'version': 2})),
             (EVlobRead('1234', '42', 3),
-                lambda _: {'id': '1234', 'blob': old_blob, 'version': 3}),
+                const({'id': '1234', 'blob': old_blob, 'version': 3})),
             (EVlobRead('1234', '42', 3),
-                lambda _: {'id': '1234', 'blob': old_blob, 'version': 3}),
+                const({'id': '1234', 'blob': old_blob, 'version': 3})),
             (EVlobRead('1234', '42', 4),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 4}),
+                const({'id': '1234', 'blob': new_blob, 'version': 4})),
             (EVlobRead('1234', '42', 4),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 4}),
+                const({'id': '1234', 'blob': new_blob, 'version': 4})),
             (EVlobRead('1234', '42', 5),
-                lambda _: {'id': '1234', 'blob': old_blob, 'version': 5})
+                const({'id': '1234', 'blob': old_blob, 'version': 5}))
         ]
         history = perform_sequence(sequence, group_manifest.history(1))
         assert history == {
@@ -315,19 +311,19 @@ class TestManifest:
         # Detailed with last version
         sequence = [
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': old_blob, 'version': 1}),
+                const({'id': '1234', 'blob': old_blob, 'version': 1})),
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': old_blob, 'version': 1}),
+                const({'id': '1234', 'blob': old_blob, 'version': 1})),
             (EVlobRead('1234', '42', 2),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 2}),
+                const({'id': '1234', 'blob': new_blob, 'version': 2})),
             (EVlobRead('1234', '42', 2),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 2}),
+                const({'id': '1234', 'blob': new_blob, 'version': 2})),
             (EVlobRead('1234', '42', 3),
-                lambda _: {'id': '1234', 'blob': old_blob, 'version': 3}),
+                const({'id': '1234', 'blob': old_blob, 'version': 3})),
             (EVlobRead('1234', '42', 3),
-                lambda _: {'id': '1234', 'blob': old_blob, 'version': 3}),
+                const({'id': '1234', 'blob': old_blob, 'version': 3})),
             (EVlobRead('1234', '42', 4),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 4})
+                const({'id': '1234', 'blob': new_blob, 'version': 4}))
         ]
         history = perform_sequence(sequence, group_manifest.history(1, 4))
         assert history == {
@@ -351,9 +347,9 @@ class TestManifest:
         # Summary
         sequence = [
             (EVlobRead('1234', '42', 2),
-                lambda _: {'id': '1234', 'blob': old_blob, 'version': 2}),
+                const({'id': '1234', 'blob': old_blob, 'version': 2})),
             (EVlobRead('1234', '42', 4),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 4})
+                const({'id': '1234', 'blob': new_blob, 'version': 4}))
         ]
         history = perform_sequence(sequence, group_manifest.history(2, 4, summary=True))
         assert history == {
@@ -376,7 +372,7 @@ class TestManifest:
                                    'write_trust_seed': 'wts'})
         sequence = [
             (EVlobRead('vlob_1', 'rts'),
-                lambda _: {'id': 'vlob_1', 'version': 1, 'blob': ''}),
+                const({'id': 'vlob_1', 'version': 1, 'blob': ''})),
         ]
         ret = perform_sequence(sequence, manifest.get_version())
         assert ret == 1
@@ -403,9 +399,9 @@ class TestManifest:
             (EVlobRead('vlob_2', 'rts'),
                 lambda _: raise_(VlobNotFound('Vlob not found.'))),
             (EVlobRead('vlob_1', 'rts'),
-                lambda _: {'id': 'vlob_1', 'version': 2, 'blob': ''}),
+                const({'id': 'vlob_1', 'version': 2, 'blob': ''})),
             (EVlobRead('vlob_3', 'rts'),
-                lambda _: {'id': 'vlob_2', 'version': 1, 'blob': ''})
+                const({'id': 'vlob_2', 'version': 1, 'blob': ''}))
         ]
         vlobs_versions = perform_sequence(sequence, manifest.get_vlobs_versions())
         assert vlobs_versions == {'vlob_1': 2, 'vlob_2': None, 'vlob_3': 1}
@@ -416,7 +412,7 @@ class TestManifest:
         manifest.add_file('/foo', vlob)
         sequence = [
             (EVlobRead('vlob_1', 'rts'),
-                lambda _: {'id': vlob['id'], 'version': 2, 'blob': ''}),
+                const({'id': vlob['id'], 'version': 2, 'blob': ''})),
         ]
         dump = perform_sequence(sequence, manifest.dumps(original_manifest=False))
         dump = ejson_loads(dump)
@@ -507,9 +503,9 @@ class TestManifest:
         blob = to_jsonb64(blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(blob),
-                lambda _: {'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         file = perform_sequence(sequence, File.create())
         vlob = file.get_vlob()
@@ -519,11 +515,11 @@ class TestManifest:
         persistent_blob = to_jsonb64(persistent_blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(persistent_blob),
-                lambda _: {'id': persistent_vlob_id,
-                           'read_trust_seed': '42',
-                           'write_trust_seed': '43'}),
+                const({'id': persistent_vlob_id,
+                       'read_trust_seed': '42',
+                       'write_trust_seed': '43'})),
         ]
         persistent_file = perform_sequence(sequence, File.create())
         persistent_vlob = persistent_file.get_vlob()
@@ -536,11 +532,11 @@ class TestManifest:
             File.files = {}
             sequence = [
                 (EVlobRead(vlob_id, '42'),
-                    lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                    const({'id': vlob_id, 'blob': blob, 'version': 1})),
                 (EVlobList(),
-                    lambda _: [] if synchronize else [vlob_id]),
+                    const([] if synchronize else [vlob_id])),
                 (EVlobRead(vlob_id, '42', 1),
-                    lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                    const({'id': vlob_id, 'blob': blob, 'version': 1})),
                 (EBlockDelete(block_id),
                     lambda _: raise_(BlockNotFound('Block not found.')) if synchronize else None),
                 (EVlobDelete(vlob_id),
@@ -561,11 +557,11 @@ class TestManifest:
         # Remove not empty dir
         sequence = [
             (EVlobRead(persistent_vlob_id, '42'),
-                lambda _: {'id': persistent_vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': persistent_vlob_id, 'blob': blob, 'version': 1})),
             (EVlobList(),
-                lambda _: [] if synchronize else [persistent_vlob_id]),
+                const([] if synchronize else [persistent_vlob_id])),
             (EVlobRead(persistent_vlob_id, '42', 1),
-                lambda _: {'id': persistent_vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': persistent_vlob_id, 'blob': blob, 'version': 1})),
             (EBlockDelete(block_id),
                 lambda _: raise_(BlockNotFound('Block not found.')) if synchronize else None),
             (EVlobDelete(persistent_vlob_id),
@@ -594,9 +590,9 @@ class TestManifest:
         blob = to_jsonb64(blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(blob),
-                lambda _: {'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         file = perform_sequence(sequence, File.create())
         vlob = file.get_vlob()
@@ -607,11 +603,11 @@ class TestManifest:
         File.files = {}
         sequence = [
             (EVlobRead(vlob_id, '42'),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EBlockDelete(id='4567'),
                 lambda _: raise_(BlockNotFound('Block not found.'))),
             (EVlobDelete(id='1234'),
@@ -631,11 +627,11 @@ class TestManifest:
         File.files = {}
         sequence = [
             (EVlobRead(vlob_id, '42'),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EBlockDelete(id='4567'),
                 lambda _: raise_(BlockNotFound('Block not found.'))),
             (EVlobDelete(id='1234'),
@@ -658,16 +654,16 @@ class TestManifest:
         manifest.add_file(path, file_vlob)
         sequence = [
             (EVlobRead(file_vlob['id'], file_vlob['read_trust_seed']),
-                lambda _: {'id': file_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': file_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(file_vlob['id'], file_vlob['read_trust_seed'], 1),
-                lambda _: {'id': file_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': file_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobCreate(to_jsonb64(b'foo')),
-                lambda _: {'id': '234',
-                           'read_trust_seed': 'rtsnew',
-                           'write_trust_seed': 'wtsnew',
-                           'version': 1})
+                const({'id': '234',
+                       'read_trust_seed': 'rtsnew',
+                       'write_trust_seed': 'wtsnew',
+                       'version': 1}))
         ]
         ret = perform_sequence(sequence, manifest.reencrypt_file(path + final_slash))
         assert ret is None
@@ -687,9 +683,9 @@ class TestManifest:
         blob = to_jsonb64(blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(blob),
-                lambda _: {'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         file = perform_sequence(sequence, File.create())
         vlob = file.get_vlob()
@@ -715,11 +711,11 @@ class TestManifest:
                 File.files = {}
                 sequence = [
                     (EVlobRead(vlob_id, '42'),
-                        lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                        const({'id': vlob_id, 'blob': blob, 'version': 1})),
                     (EVlobList(),
-                        lambda _: []),
+                        const([])),
                     (EVlobRead(vlob_id, '42', 1),
-                        lambda _: {'id': vlob_id, 'blob': blob, 'version': 1})
+                        const({'id': vlob_id, 'blob': blob, 'version': 1}))
                 ]
                 ret = perform_sequence(sequence,
                                        manifest.stat('/countries/France/info' + final_slash))
@@ -767,9 +763,9 @@ class TestManifest:
         blob = to_jsonb64(blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(blob),
-                lambda _: {'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         file = perform_sequence(sequence, File.create())
         vlob = file.get_vlob()
@@ -780,11 +776,11 @@ class TestManifest:
         File.files = {}
         sequence = [
             (EVlobRead(vlob_id, '42'),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EBlockDelete(id='4567'),
                 lambda _: raise_(BlockNotFound('Block not found.'))),
             (EVlobDelete(id='1234'),
@@ -797,11 +793,11 @@ class TestManifest:
             File.files = {}
             sequence = [
                 (EVlobRead(vlob_id, '42'),
-                    lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                    const({'id': vlob_id, 'blob': blob, 'version': 1})),
                 (EVlobList(),
-                    lambda _: []),
+                    const([])),
                 (EVlobRead(vlob_id, '42', 1),
-                    lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                    const({'id': vlob_id, 'blob': blob, 'version': 1})),
                 (EBlockDelete(id='4567'),
                     lambda _: raise_(BlockNotFound('Block not found.'))),
                 (EVlobDelete(id='1234'),
@@ -828,9 +824,9 @@ class TestManifest:
         blob = to_jsonb64(blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(blob),
-                lambda _: {'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         file = perform_sequence(sequence, File.create())
         good_vlob = file.get_vlob()
@@ -843,22 +839,22 @@ class TestManifest:
         File.files = {}
         sequence = [
             (EVlobRead(vlob_id, '42'),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1})
+                const({'id': vlob_id, 'blob': blob, 'version': 1}))
         ]
         dump = perform_sequence(sequence, manifest.dumps())
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1})
+                const({'id': vlob_id, 'blob': blob, 'version': 1}))
         ]
         ret = perform_sequence(sequence, manifest.check_consistency(ejson_loads(dump)))
         assert ret is True
         sequence = [
             (EVlobRead(vlob_id, '42'),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EBlockDelete('4567'),
                 lambda _: raise_(BlockNotFound('Block not found.'))),
             (EVlobDelete('1234'),
@@ -867,12 +863,12 @@ class TestManifest:
         perform_sequence(sequence, manifest.delete('/foo'))
         sequence = [
             (EVlobRead(vlob_id, '42'),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1})
+                const({'id': vlob_id, 'blob': blob, 'version': 1}))
         ]
         dump = perform_sequence(sequence, manifest.dumps())
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1})
+                const({'id': vlob_id, 'blob': blob, 'version': 1}))
         ]
         ret = perform_sequence(sequence, manifest.check_consistency(ejson_loads(dump)))
         assert ret is True
@@ -882,7 +878,7 @@ class TestManifest:
             (EVlobRead(bad_vlob['id'], bad_vlob['read_trust_seed']),
                 lambda _: raise_(VlobNotFound('Vlob not found.'))),
             (EVlobRead(vlob_id, '42'),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1})
+                const({'id': vlob_id, 'blob': blob, 'version': 1}))
         ]
         dump = perform_sequence(sequence, manifest.dumps())
         sequence = [
@@ -893,11 +889,11 @@ class TestManifest:
         assert ret is False
         sequence = [
             (EVlobRead(bad_vlob['id'], bad_vlob['read_trust_seed']),
-                lambda _: {'id': bad_vlob['id'], 'blob': blob, 'version': 1}),
+                const({'id': bad_vlob['id'], 'blob': blob, 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(bad_vlob['id'], bad_vlob['read_trust_seed'], 1),
-                lambda _: {'id': bad_vlob['id'], 'blob': blob, 'version': 1}),
+                const({'id': bad_vlob['id'], 'blob': blob, 'version': 1})),
             (EBlockDelete('4567'),
                 lambda _: raise_(BlockNotFound('Block not found.'))),
             (EVlobDelete(bad_vlob['id']),
@@ -906,14 +902,14 @@ class TestManifest:
         perform_sequence(sequence, manifest.delete('/bad'))
         sequence = [
             (EVlobRead(vlob_id, '42'),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EVlobRead(bad_vlob['id'], bad_vlob['read_trust_seed'], None),
                 lambda _: raise_(VlobNotFound('Vlob not found.')))
         ]
         dump = perform_sequence(sequence, manifest.dumps())
         sequence = [
             (EVlobRead(vlob_id, '42', 1),
-                lambda _: {'id': vlob_id, 'blob': blob, 'version': 1}),
+                const({'id': vlob_id, 'blob': blob, 'version': 1})),
             (EVlobRead(bad_vlob['id'], bad_vlob['read_trust_seed']),
                 lambda _: raise_(VlobNotFound('Vlob not found.'))),
         ]
@@ -939,7 +935,7 @@ class TestGroupManifest:
         blob = to_jsonb64(blob)
         sequence = [
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1}),
+                const({'id': '1234', 'blob': blob, 'version': 1})),
         ]
         manifest = perform_sequence(sequence, GroupManifest.load(**vlob))
         version = perform_sequence([], manifest.get_version())
@@ -974,7 +970,7 @@ class TestGroupManifest:
         group_manifest.add_file('/foo', foo_vlob)
         sequence = [
             (EVlobRead(foo_vlob['id'], foo_vlob['read_trust_seed']),
-                lambda _: {'id': foo_vlob['id'], 'blob': '', 'version': 1})
+                const({'id': foo_vlob['id'], 'blob': '', 'version': 1}))
         ]
         diff = perform_sequence(sequence, group_manifest.diff_versions())
         assert diff == {'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
@@ -995,9 +991,9 @@ class TestGroupManifest:
         new_blob = to_jsonb64(new_blob)
         sequence = [
             (EVlobRead('1234', '42', 2),
-                lambda _: {'id': '1234', 'blob': old_blob, 'version': 2}),
+                const({'id': '1234', 'blob': old_blob, 'version': 2})),
             (EVlobRead('1234', '42', 4),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 4})
+                const({'id': '1234', 'blob': new_blob, 'version': 4}))
         ]
         diff = perform_sequence(sequence, group_manifest.diff_versions(2, 4))
         assert diff == {'entries': {'added': {'/bar': bar_vlob}, 'changed': {}, 'removed': {}},
@@ -1018,7 +1014,7 @@ class TestGroupManifest:
         with pytest.raises(ManifestError):
             sequence = [
                 (EVlobRead('1234', '42'),
-                    lambda _: {'id': '1234', 'blob': blob, 'version': 2}),
+                    const({'id': '1234', 'blob': blob, 'version': 2})),
                 (EVlobRead(file_vlob['id'], file_vlob['read_trust_seed'], 1),
                     lambda _: raise_(VlobNotFound('Vlob not found.'))),
             ]
@@ -1049,19 +1045,19 @@ class TestGroupManifest:
         File.files = {}
         sequence = [
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 2}),
+                const({'id': '1234', 'blob': new_blob, 'version': 2})),
             (EVlobRead(foo_vlob['id'], foo_vlob['read_trust_seed'], 1),
-                lambda _: {'id': foo_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': foo_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobRead(dust_vlob['id'], dust_vlob['read_trust_seed'], 1),
-                lambda _: {'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1}),
+                const({'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1})),
             (EVlobRead('123', '123'),
-                lambda _: {'id': '123', 'blob': new_blob, 'version': 1}),
+                const({'id': '123', 'blob': new_blob, 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(dust_vlob['id'], dust_vlob['read_trust_seed']),
-                lambda _: {'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1}),
+                const({'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1})),
             (EVlobList(),
-                lambda _: [])
+                const([]))
         ]
         ret = perform_sequence(sequence, group_manifest.reload(reset=True))
         assert ret is None
@@ -1095,19 +1091,19 @@ class TestGroupManifest:
         File.files = {}
         sequence = [
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 1}),
+                const({'id': '1234', 'blob': new_blob, 'version': 1})),
             (EVlobRead(foo_vlob['id'], foo_vlob['read_trust_seed'], 1),
-                lambda _: {'id': foo_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': foo_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobRead(dust_vlob['id'], dust_vlob['read_trust_seed'], 1),
-                lambda _: {'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1}),
+                const({'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1})),
             (EVlobRead('123', '123'),
-                lambda _: {'id': '123', 'blob': new_blob, 'version': 1}),
+                const({'id': '123', 'blob': new_blob, 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(dust_vlob['id'], dust_vlob['read_trust_seed']),
-                lambda _: {'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1}),
+                const({'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1})),
             (EVlobList(),
-                lambda _: [])
+                const([]))
         ]
         ret = perform_sequence(sequence, group_manifest.reload(reset=True))
         assert ret is None
@@ -1141,21 +1137,21 @@ class TestGroupManifest:
         File.files = {}
         sequence = [
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 2}),
+                const({'id': '1234', 'blob': new_blob, 'version': 2})),
             (EVlobRead(foo_vlob['id'], foo_vlob['read_trust_seed'], 1),
-                lambda _: {'id': foo_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': foo_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobRead(dust_vlob['id'], dust_vlob['read_trust_seed'], 1),
-                lambda _: {'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1}),
+                const({'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1})),
             (EVlobRead(bar_vlob['id'], bar_vlob['read_trust_seed']),
-                lambda _: {'id': bar_vlob['id'], 'blob': to_jsonb64(b'bar'), 'version': 1}),
+                const({'id': bar_vlob['id'], 'blob': to_jsonb64(b'bar'), 'version': 1})),
             (EVlobRead(foo_vlob['id'], foo_vlob['read_trust_seed']),
-                lambda _: {'id': foo_vlob['id'], 'blob': new_blob, 'version': 1}),
+                const({'id': foo_vlob['id'], 'blob': new_blob, 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(dust_vlob['id'], dust_vlob['read_trust_seed']),
-                lambda _: {'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1}),
+                const({'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1})),
             (EVlobList(),
-                lambda _: [])
+                const([]))
         ]
         ret = perform_sequence(sequence, group_manifest.reload(reset=False))
         assert ret is None
@@ -1189,7 +1185,7 @@ class TestGroupManifest:
         new_blob = to_jsonb64(new_blob)
         sequence = [
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 1})
+                const({'id': '1234', 'blob': new_blob, 'version': 1}))
         ]
         ret = perform_sequence(sequence, group_manifest.reload(reset=False))
         assert ret is None
@@ -1206,11 +1202,11 @@ class TestGroupManifest:
         manifest_blob = to_jsonb64(manifest_blob)
         sequence = [
             (EVlobList(),
-                lambda _: [manifest_vlob_id]),
+                const([manifest_vlob_id])),
             (EVlobUpdate(manifest_vlob_id, '43', 1, manifest_blob),
-                lambda _: None),
+                noop),
             (EVlobSynchronize(manifest_vlob_id),
-                lambda _: manifest_new_vlob),
+                const(manifest_new_vlob)),
         ]
         ret = perform_sequence(sequence, group_manifest.commit())
         manifest_new_vlob['key'] = to_jsonb64(b'<dummy-key-00000000000000000001>')
@@ -1229,9 +1225,9 @@ class TestGroupManifest:
         file_blob = to_jsonb64(file_blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(file_blob),
-                lambda _: {'id': file_vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': file_vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         file = perform_sequence(sequence, File.create())
         file_vlob = file.get_vlob()
@@ -1239,10 +1235,10 @@ class TestGroupManifest:
         group_manifest.add_file('/foo', file_vlob)
         manifest_blob = {'entries': {'/': None,
                                      '/foo': {
-                                        'id': new_file_vlob['id'],
-                                        'key': file_vlob['key'],
-                                        'read_trust_seed': new_file_vlob['read_trust_seed'],
-                                        'write_trust_seed': new_file_vlob['write_trust_seed']
+                                         'id': new_file_vlob['id'],
+                                         'key': file_vlob['key'],
+                                         'read_trust_seed': new_file_vlob['read_trust_seed'],
+                                         'write_trust_seed': new_file_vlob['write_trust_seed']
                                      }},
                          'dustbin': [],
                          'versions': {new_file_vlob['id']: 1}}
@@ -1251,34 +1247,34 @@ class TestGroupManifest:
         File.files = {}
         sequence = [
             (EVlobRead(file_vlob_id, '42'),
-                lambda _: {'id': file_vlob_id, 'blob': file_blob, 'version': 1}),
+                const({'id': file_vlob_id, 'blob': file_blob, 'version': 1})),
             (EVlobList(),
-                lambda _: [file_vlob_id]),
+                const([file_vlob_id])),
             (EVlobRead(file_vlob_id, '42'),
-                lambda _: {'id': file_vlob_id, 'blob': file_blob, 'version': 1}),
+                const({'id': file_vlob_id, 'blob': file_blob, 'version': 1})),
             (EVlobList(),
-                lambda _: [file_vlob_id]),
+                const([file_vlob_id])),
             (EVlobRead(file_vlob_id, '42', 1),
-                lambda _: {'id': file_vlob_id, 'blob': file_blob, 'version': 1}),
+                const({'id': file_vlob_id, 'blob': file_blob, 'version': 1})),
             (EBlockSynchronize(block_id),
-                lambda _: True),
+                const(True)),
             (EVlobSynchronize(file_vlob_id),
-                lambda _: new_file_vlob),
+                const(new_file_vlob)),
             (EVlobRead(new_file_vlob['id'], new_file_vlob['read_trust_seed']),
-                lambda _: {'id': new_file_vlob['id'], 'blob': file_blob, 'version': 1}),
+                const({'id': new_file_vlob['id'], 'blob': file_blob, 'version': 1})),
             (EVlobUpdate(manifest_new_vlob['id'],
                          manifest_new_vlob['write_trust_seed'],
                          2,
                          manifest_blob),
-                lambda _: None),
+                noop),
             (EVlobSynchronize(manifest_new_vlob['id']),
-                lambda _: True)
+                const(True))
         ]
         ret = perform_sequence(sequence, group_manifest.commit())
         assert group_manifest.get_vlob() == manifest_new_vlob
         sequence = [
             (EVlobRead(new_file_vlob['id'], new_file_vlob['read_trust_seed']),
-                lambda _: {'id': new_file_vlob['id'], 'blob': file_blob, 'version': 1})
+                const({'id': new_file_vlob['id'], 'blob': file_blob, 'version': 1}))
         ]
         version = perform_sequence(sequence, group_manifest.get_version())
         assert version == 2
@@ -1286,12 +1282,12 @@ class TestGroupManifest:
         # Save without modifications
         sequence = [
             (EVlobRead(new_file_vlob['id'], new_file_vlob['read_trust_seed']),
-                lambda _: {'id': new_file_vlob['id'], 'blob': file_blob, 'version': 1})
+                const({'id': new_file_vlob['id'], 'blob': file_blob, 'version': 1}))
         ]
         ret = perform_sequence(sequence, group_manifest.commit())
         sequence = [
             (EVlobRead(new_file_vlob['id'], new_file_vlob['read_trust_seed']),
-                lambda _: {'id': new_file_vlob['id'], 'blob': file_blob, 'version': 1})
+                const({'id': new_file_vlob['id'], 'blob': file_blob, 'version': 1}))
         ]
         version = perform_sequence(sequence, group_manifest.get_version())
         assert version == 2
@@ -1329,33 +1325,33 @@ class TestGroupManifest:
         new_blob = to_jsonb64(new_blob)
         sequence = [
             (EVlobRead('2345', 'rts'),
-                lambda _: {'id': '2345', 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': '2345', 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead('2345', 'rts', 1),
-                lambda _: {'id': '2345', 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': '2345', 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobCreate(to_jsonb64(b'foo')),
-                lambda _: {'id': '2345new',
-                           'read_trust_seed': 'rtsnew',
-                           'write_trust_seed': 'wtsnew'}),
+                const({'id': '2345new',
+                       'read_trust_seed': 'rtsnew',
+                       'write_trust_seed': 'wtsnew'})),
             (EVlobRead('3456', 'rts'),
-                lambda _: {'id': '3456', 'blob': to_jsonb64(b'bar'), 'version': 1}),
+                const({'id': '3456', 'blob': to_jsonb64(b'bar'), 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead('3456', 'rts', 1),
-                lambda _: {'id': '3456', 'blob': to_jsonb64(b'bar'), 'version': 1}),
+                const({'id': '3456', 'blob': to_jsonb64(b'bar'), 'version': 1})),
             (EVlobCreate(to_jsonb64(b'bar')),
-                lambda _: {'id': '3456new',
-                           'read_trust_seed': 'rtsnew',
-                           'write_trust_seed': 'wtsnew'}),
+                const({'id': '3456new',
+                       'read_trust_seed': 'rtsnew',
+                       'write_trust_seed': 'wtsnew'})),
             (EVlobRead('2345new', 'rtsnew'),
-                lambda _: {'id': '2345', 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': '2345', 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobRead('3456new', 'rtsnew'),
-                lambda _: {'id': '3456new', 'blob': to_jsonb64(b'bar'), 'version': 1}),
+                const({'id': '3456new', 'blob': to_jsonb64(b'bar'), 'version': 1})),
             (EVlobCreate(new_blob),
-                lambda _: {'id': '1234new',
-                           'read_trust_seed': 'rtsnew',
-                           'write_trust_seed': 'wtsnew'}),
+                const({'id': '1234new',
+                       'read_trust_seed': 'rtsnew',
+                       'write_trust_seed': 'wtsnew'})),
         ]
         ret = perform_sequence(sequence, group_manifest.reencrypt())
         assert ret is None
@@ -1373,9 +1369,9 @@ class TestGroupManifest:
         file_blob = to_jsonb64(file_blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(file_blob),
-                lambda _: {'id': '2345', 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': '2345', 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         file = perform_sequence(sequence, File.create())
         file_vlob = file.get_vlob()
@@ -1386,7 +1382,7 @@ class TestGroupManifest:
         blob = to_jsonb64(blob)
         sequence = [
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1})
+                const({'id': '1234', 'blob': blob, 'version': 1}))
         ]
         ret = perform_sequence(sequence, group_manifest.restore())
         assert ret is None
@@ -1402,27 +1398,27 @@ class TestGroupManifest:
         File.files = {}
         sequence = [
             (EVlobRead('1234', '42', 5),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 5}),
+                const({'id': '1234', 'blob': blob, 'version': 5})),
             (EVlobUpdate('1234', '43', 6, blob),
-                lambda _: None),
+                noop),
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 6}),
+                const({'id': '1234', 'blob': blob, 'version': 6})),
             (EVlobRead('2345', '42', 2),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 2}),
+                const({'id': '2345', 'blob': file_blob, 'version': 2})),
             (EVlobRead('2345', '42'),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 3}),
+                const({'id': '2345', 'blob': file_blob, 'version': 3})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead('2345', '42', 3),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 3}),
+                const({'id': '2345', 'blob': file_blob, 'version': 3})),
             (EBlockDelete('4567'),
-                lambda _: None),
+                noop),
             (EVlobDelete('2345'),
-                lambda _: None),
+                noop),
             (EVlobRead('2345', '42', 2),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 2}),
+                const({'id': '2345', 'blob': file_blob, 'version': 2})),
             (EVlobUpdate('2345', '43', 4, file_blob),  # TODO modify file_blob
-                lambda _: None),
+                noop),
         ]
         perform_sequence(sequence, group_manifest.restore())
         assert group_manifest.version == 6
@@ -1436,27 +1432,27 @@ class TestGroupManifest:
         File.files = {}
         sequence = [
             (EVlobRead('1234', '42', 3),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 3}),
+                const({'id': '1234', 'blob': blob, 'version': 3})),
             (EVlobUpdate('1234', '43', 6, blob),
-                lambda _: None),
+                noop),
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 6}),
+                const({'id': '1234', 'blob': blob, 'version': 6})),
             (EVlobRead('2345', '42', 2),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 2}),
+                const({'id': '2345', 'blob': file_blob, 'version': 2})),
             (EVlobRead('2345', '42'),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 3}),
+                const({'id': '2345', 'blob': file_blob, 'version': 3})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead('2345', '42', 3),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 3}),
+                const({'id': '2345', 'blob': file_blob, 'version': 3})),
             (EBlockDelete('4567'),
-                lambda _: None),
+                noop),
             (EVlobDelete('2345'),
-                lambda _: None),
+                noop),
             (EVlobRead('2345', '42', 2),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 2}),
+                const({'id': '2345', 'blob': file_blob, 'version': 2})),
             (EVlobUpdate('2345', '43', 4, file_blob),  # TODO modify file_blob
-                lambda _: None),
+                noop),
         ]
         perform_sequence(sequence, group_manifest.restore(3))
         assert group_manifest.version == 6
@@ -1481,7 +1477,7 @@ class TestUserManifest:
         blob = to_jsonb64(blob)
         sequence = [
             (EUserVlobRead(),
-                lambda _: {'blob': blob, 'version': 1})
+                const({'blob': blob, 'version': 1}))
         ]
         user_manifest = perform_sequence(sequence, UserManifest.load(ALICE_PRIVATE_RSA))
         version = perform_sequence([], user_manifest.get_version())
@@ -1507,12 +1503,12 @@ class TestUserManifest:
         blob = to_jsonb64(blob)
         sequence = [
             (EVlobRead(group_vlob['id'], group_vlob['read_trust_seed']),
-                lambda _: {'blob': blob, 'version': 1})
+                const({'blob': blob, 'version': 1}))
         ]
         perform_sequence(sequence, user_manifest.import_group_vlob('share', group_vlob))
         sequence = [
             (EVlobRead(foo_vlob['id'], foo_vlob['read_trust_seed']),
-                lambda _: {'id': foo_vlob['id'], 'blob': blob, 'version': 1})
+                const({'id': foo_vlob['id'], 'blob': blob, 'version': 1}))
         ]
         diff = perform_sequence(sequence, user_manifest.diff_versions())
         assert diff == {'entries': {'added': {'/foo': foo_vlob}, 'changed': {}, 'removed': {}},
@@ -1536,9 +1532,9 @@ class TestUserManifest:
         new_blob = to_jsonb64(new_blob)
         sequence = [
             (EUserVlobRead(2),
-                lambda _: {'id': '1234', 'blob': old_blob, 'version': 2}),
+                const({'id': '1234', 'blob': old_blob, 'version': 2})),
             (EUserVlobRead(4),
-                lambda _: {'id': '1234', 'blob': new_blob, 'version': 4})
+                const({'id': '1234', 'blob': new_blob, 'version': 4}))
         ]
         diff = perform_sequence(sequence, user_manifest.diff_versions(2, 4))
         assert diff == {'entries': {'added': {'/bar': bar_vlob}, 'changed': {}, 'removed': {}},
@@ -1555,16 +1551,16 @@ class TestUserManifest:
         file_blob = to_jsonb64(file_blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(file_blob),
-                lambda _: {'id': '1234', 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': '1234', 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         file = perform_sequence(sequence, File.create())
         file_vlob = file.get_vlob()
         user_manifest_with_group.add_file('/foo', file_vlob)
         sequence = [
             (EVlobRead(file_vlob['id'], '42'),
-                lambda _: {'id': file_vlob['id'], 'blob': file_blob, 'version': 1})
+                const({'id': file_vlob['id'], 'blob': file_blob, 'version': 1}))
         ]
         dump = perform_sequence(sequence, user_manifest_with_group.dumps(original_manifest=False))
         dump = ejson_loads(dump)
@@ -1583,9 +1579,9 @@ class TestUserManifest:
         file_blob = to_jsonb64(file_blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(file_blob),
-                lambda _: {'id': '1234', 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': '1234', 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         file = perform_sequence(sequence, File.create())
         file_vlob = file.get_vlob()
@@ -1609,11 +1605,11 @@ class TestUserManifest:
         group_blob = to_jsonb64(group_blob)
         sequence = [
             (EVlobCreate(''),
-                lambda _: {'id': group_vlob['id'],
-                           'read_trust_seed': group_vlob['read_trust_seed'],
-                           'write_trust_seed': group_vlob['write_trust_seed']}),
+                const({'id': group_vlob['id'],
+                       'read_trust_seed': group_vlob['read_trust_seed'],
+                       'write_trust_seed': group_vlob['write_trust_seed']})),
             (EVlobUpdate(group_vlob['id'], group_vlob['write_trust_seed'], 1, group_blob),
-                lambda _: None)
+                noop)
         ]
         perform_sequence(sequence, user_manifest_with_group.create_group_manifest('share2'))
         group_vlobs = user_manifest_with_group.get_group_vlobs(group)
@@ -1658,23 +1654,23 @@ class TestUserManifest:
         new_group_blob = to_jsonb64(new_group_blob)
         sequence = [
             (EVlobRead(file_vlob['id'], file_vlob['read_trust_seed']),
-                lambda _: {'id': file_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': file_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(file_vlob['id'], file_vlob['read_trust_seed'], 1),
-                lambda _: {'id': file_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': file_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobCreate(to_jsonb64(b'foo')),
-                lambda _: {'id': new_file_vlob['id'],
-                           'read_trust_seed': new_file_vlob['read_trust_seed'],
-                           'write_trust_seed': new_file_vlob['write_trust_seed'],
-                           'version': 1}),
+                const({'id': new_file_vlob['id'],
+                       'read_trust_seed': new_file_vlob['read_trust_seed'],
+                       'write_trust_seed': new_file_vlob['write_trust_seed'],
+                       'version': 1})),
             (EVlobRead('234', 'rtsnew'),
-                lambda _: {'id': '234', 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': '234', 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobCreate(new_group_blob),
-                lambda _: {'id': '2345',
-                           'read_trust_seed': 'rtsnew',
-                           'write_trust_seed': 'wtsnew',
-                           'version': 1})
+                const({'id': '2345',
+                       'read_trust_seed': 'rtsnew',
+                       'write_trust_seed': 'wtsnew',
+                       'version': 1}))
         ]
         ret = perform_sequence(sequence, user_manifest_with_group.reencrypt_group_manifest('share'))
         assert ret is None
@@ -1692,9 +1688,9 @@ class TestUserManifest:
         blob = to_jsonb64(b'{"dustbin": [], "entries": {"/": null}, "versions": {}}')
         sequence = [
             (EVlobCreate(),
-                lambda _: vlob),
+                const(vlob)),
             (EVlobUpdate(vlob['id'], vlob['write_trust_seed'], 1, blob),
-                lambda _: vlob)
+                const(vlob))
         ]
         ret = perform_sequence(sequence, user_manifest.create_group_manifest('share'))
         assert ret is None
@@ -1710,7 +1706,7 @@ class TestUserManifest:
         vlob = group_manifest.get_vlob()
         sequence = [
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1})
+                const({'id': '1234', 'blob': blob, 'version': 1}))
         ]
         ret = perform_sequence(sequence, user_manifest.import_group_vlob('share', vlob))
         assert ret is None
@@ -1722,9 +1718,9 @@ class TestUserManifest:
                     'write_trust_seed': 'wts'}
         sequence = [
             (EVlobRead('2345', 'rts'),
-                lambda _: {'id': '2345', 'blob': blob, 'version': 1}),
+                const({'id': '2345', 'blob': blob, 'version': 1})),
             (EVlobRead('2345', 'rts'),
-                lambda _: {'id': '2345', 'blob': blob, 'version': 1})
+                const({'id': '2345', 'blob': blob, 'version': 1}))
         ]
         ret = perform_sequence(sequence, user_manifest.import_group_vlob('share', new_vlob))
         retrieved_manifest = user_manifest.get_group_manifest('share')
@@ -1750,7 +1746,7 @@ class TestUserManifest:
         with pytest.raises(ManifestError):
             sequence = [
                 (EUserVlobRead(),
-                    lambda _: {'blob': blob, 'version': 2}),
+                    const({'blob': blob, 'version': 2})),
                 (EVlobRead(file_vlob['id'], file_vlob['read_trust_seed'], 1),
                     lambda _: raise_(VlobNotFound('Vlob not found.'))),
             ]
@@ -1769,7 +1765,7 @@ class TestUserManifest:
         with pytest.raises(ManifestError):
             sequence = [
                 (EUserVlobRead(),
-                    lambda _: {'blob': blob, 'version': 2}),
+                    const({'blob': blob, 'version': 2})),
                 (EVlobRead(group_vlob['id'], group_vlob['read_trust_seed']),
                     lambda _: raise_(VlobNotFound('Vlob not found.'))),
             ]
@@ -1798,21 +1794,21 @@ class TestUserManifest:
         File.files = {}
         sequence = [
             (EUserVlobRead(),
-                lambda _: {'blob': new_blob, 'version': 2}),
+                const({'blob': new_blob, 'version': 2})),
             (EVlobRead(file_vlob['id'], file_vlob['read_trust_seed'], 1),
-                lambda _: {'id': file_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': file_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobRead(file_vlob_2['id'], file_vlob_2['read_trust_seed'], 1),
-                lambda _: {'id': file_vlob_2['id'], 'blob': to_jsonb64(b'bar'), 'version': 1}),
+                const({'id': file_vlob_2['id'], 'blob': to_jsonb64(b'bar'), 'version': 1})),
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': group_blob, 'version': 1}),
+                const({'id': '1234', 'blob': group_blob, 'version': 1})),
             (EVlobRead(file_vlob['id'], file_vlob['read_trust_seed']),
-                lambda _: {'id': file_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': file_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(file_vlob_2['id'], file_vlob_2['read_trust_seed']),
-                lambda _: {'id': file_vlob_2['id'], 'blob': to_jsonb64(b'bar'), 'version': 1}),
+                const({'id': file_vlob_2['id'], 'blob': to_jsonb64(b'bar'), 'version': 1})),
             (EVlobList(),
-                lambda _: [])
+                const([]))
         ]
         ret = perform_sequence(sequence, user_manifest_with_group.reload(reset=True))
         assert ret is None
@@ -1848,21 +1844,21 @@ class TestUserManifest:
         File.files = {}
         sequence = [
             (EUserVlobRead(),
-                lambda _: {'blob': new_blob, 'version': 1}),
+                const({'blob': new_blob, 'version': 1})),
             (EVlobRead(foo_vlob['id'], foo_vlob['read_trust_seed'], 1),
-                lambda _: {'id': foo_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': foo_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobRead(dust_vlob['id'], dust_vlob['read_trust_seed'], 1),
-                lambda _: {'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1}),
+                const({'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1})),
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': group_blob, 'version': 1}),
+                const({'id': '1234', 'blob': group_blob, 'version': 1})),
             (EVlobRead(foo_vlob['id'], foo_vlob['read_trust_seed']),
-                lambda _: {'id': foo_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': foo_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(dust_vlob['id'], dust_vlob['read_trust_seed']),
-                lambda _: {'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1}),
+                const({'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1})),
             (EVlobList(),
-                lambda _: [])
+                const([]))
         ]
         ret = perform_sequence(sequence, user_manifest_with_group.reload(reset=True))
         assert ret is None
@@ -1898,23 +1894,23 @@ class TestUserManifest:
         File.files = {}
         sequence = [
             (EUserVlobRead(),
-                lambda _: {'blob': new_blob, 'version': 2}),
+                const({'blob': new_blob, 'version': 2})),
             (EVlobRead(foo_vlob['id'], foo_vlob['read_trust_seed'], 1),
-                lambda _: {'id': foo_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': foo_vlob['id'], 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobRead(dust_vlob['id'], dust_vlob['read_trust_seed'], 1),
-                lambda _: {'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1}),
+                const({'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1})),
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': group_blob, 'version': 1}),
+                const({'id': '1234', 'blob': group_blob, 'version': 1})),
             (EVlobRead('234', '234'),
-                lambda _: {'id': '234', 'blob': to_jsonb64(b'foo'), 'version': 1}),
+                const({'id': '234', 'blob': to_jsonb64(b'foo'), 'version': 1})),
             (EVlobRead('123', '123'),
-                lambda _: {'id': '123', 'blob': new_blob, 'version': 1}),
+                const({'id': '123', 'blob': new_blob, 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(dust_vlob['id'], dust_vlob['read_trust_seed']),
-                lambda _: {'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1}),
+                const({'id': dust_vlob['id'], 'blob': to_jsonb64(b'dust'), 'version': 1})),
             (EVlobList(),
-                lambda _: [])
+                const([]))
         ]
         ret = perform_sequence(sequence, user_manifest_with_group.reload(reset=False))
         assert ret is None
@@ -1951,7 +1947,7 @@ class TestUserManifest:
         new_blob = to_jsonb64(new_blob)
         sequence = [
             (EUserVlobRead(),
-                lambda _: {'blob': new_blob, 'version': 1}),
+                const({'blob': new_blob, 'version': 1})),
         ]
         ret = perform_sequence(sequence, user_manifest_with_group.reload(reset=False))
         assert ret is None
@@ -1969,9 +1965,9 @@ class TestUserManifest:
         file_blob = to_jsonb64(file_blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(file_blob),
-                lambda _: {'id': file_vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': file_vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         file = perform_sequence(sequence, File.create())
         file_vlob = file.get_vlob()
@@ -1998,31 +1994,31 @@ class TestUserManifest:
         File.files = {}
         sequence = [
             (EVlobRead(file_vlob_id, '42'),
-                lambda _: {'id': file_vlob_id, 'blob': file_vlob, 'version': 1}),
+                const({'id': file_vlob_id, 'blob': file_vlob, 'version': 1})),
             (EVlobList(),
-                lambda _: ['1234', file_vlob_id]),
+                const(['1234', file_vlob_id])),
             (EVlobList(),
-                lambda _: ['1234', file_vlob_id]),
+                const(['1234', file_vlob_id])),
             (EVlobUpdate('1234', '43', 1, group_blob),
-                lambda _: None),
+                noop),
             (EVlobSynchronize('1234'),
-                lambda _: new_group_vlob),
+                const(new_group_vlob)),
             (EVlobRead(file_vlob_id, '42'),
-                lambda _: {'id': file_vlob_id, 'blob': file_vlob, 'version': 1}),
+                const({'id': file_vlob_id, 'blob': file_vlob, 'version': 1})),
             (EVlobList(),
-                lambda _: ['1234', file_vlob_id]),
+                const(['1234', file_vlob_id])),
             (EVlobRead(file_vlob_id, '42', 1),
-                lambda _: {'id': file_vlob_id, 'blob': file_blob, 'version': 1}),
+                const({'id': file_vlob_id, 'blob': file_blob, 'version': 1})),
             (EBlockSynchronize(block_id),
-                lambda _: True),
+                const(True)),
             (EVlobSynchronize(file_vlob_id),
-                lambda _: new_file_vlob),
+                const(new_file_vlob)),
             (EVlobRead(new_file_vlob['id'], new_file_vlob['read_trust_seed']),
-                lambda _: {'id': new_file_vlob['id'], 'blob': file_blob, 'version': 1}),
+                const({'id': new_file_vlob['id'], 'blob': file_blob, 'version': 1})),
             (EUserVlobUpdate(1, blob),
-                lambda _: None),
+                noop),
             (EUserVlobSynchronize(),
-                lambda _: True)
+                const(True))
         ]
         ret = perform_sequence(sequence, user_manifest_with_group.commit(True))
         assert ret is None
@@ -2030,7 +2026,7 @@ class TestUserManifest:
         # Save without modifications
         sequence = [
             (EVlobRead(new_file_vlob['id'], new_file_vlob['read_trust_seed']),
-                lambda _: {'id': new_file_vlob['id'], 'blob': file_vlob, 'version': 1})
+                const({'id': new_file_vlob['id'], 'blob': file_vlob, 'version': 1}))
         ]
         ret = perform_sequence(sequence, user_manifest_with_group.commit())
         assert user_manifest_with_group.version == 1
@@ -2043,9 +2039,9 @@ class TestUserManifest:
         file_blob = to_jsonb64(file_blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(file_blob),
-                lambda _: {'id': '2345', 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': '2345', 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         file = perform_sequence(sequence, File.create())
         file_vlob = file.get_vlob()
@@ -2056,7 +2052,7 @@ class TestUserManifest:
         blob = to_jsonb64(blob)
         sequence = [
             (EUserVlobRead(),
-                lambda _: {'blob': blob, 'version': 1})
+                const({'blob': blob, 'version': 1}))
         ]
         ret = perform_sequence(sequence, user_manifest.restore())
         assert ret is None
@@ -2073,27 +2069,27 @@ class TestUserManifest:
         File.files = {}
         sequence = [
             (EUserVlobRead(5),
-                lambda _: {'blob': blob, 'version': 5}),
+                const({'blob': blob, 'version': 5})),
             (EUserVlobUpdate(6, blob),
-                lambda _: None),
+                noop),
             (EUserVlobRead(),
-                lambda _: {'blob': blob, 'version': 6}),
+                const({'blob': blob, 'version': 6})),
             (EVlobRead('2345', '42', 2),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 2}),
+                const({'id': '2345', 'blob': file_blob, 'version': 2})),
             (EVlobRead('2345', '42'),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 3}),
+                const({'id': '2345', 'blob': file_blob, 'version': 3})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead('2345', '42', 3),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 3}),
+                const({'id': '2345', 'blob': file_blob, 'version': 3})),
             (EBlockDelete('4567'),
-                lambda _: None),
+                noop),
             (EVlobDelete('2345'),
-                lambda _: None),
+                noop),
             (EVlobRead('2345', '42', 2),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 2}),
+                const({'id': '2345', 'blob': file_blob, 'version': 2})),
             (EVlobUpdate('2345', '43', 4, file_blob),  # TODO modify file_blob
-                lambda _: None),
+                noop),
         ]
         perform_sequence(sequence, user_manifest.restore())
         assert user_manifest.version == 6
@@ -2108,27 +2104,27 @@ class TestUserManifest:
         File.files = {}
         sequence = [
             (EUserVlobRead(3),
-                lambda _: {'blob': blob, 'version': 3}),
+                const({'blob': blob, 'version': 3})),
             (EUserVlobUpdate(6, blob),
-                lambda _: None),
+                noop),
             (EUserVlobRead(),
-                lambda _: {'blob': blob, 'version': 6}),
+                const({'blob': blob, 'version': 6})),
             (EVlobRead('2345', '42', 2),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 2}),
+                const({'id': '2345', 'blob': file_blob, 'version': 2})),
             (EVlobRead('2345', '42'),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 3}),
+                const({'id': '2345', 'blob': file_blob, 'version': 3})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead('2345', '42', 3),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 3}),
+                const({'id': '2345', 'blob': file_blob, 'version': 3})),
             (EBlockDelete('4567'),
-                lambda _: None),
+                noop),
             (EVlobDelete('2345'),
-                lambda _: None),
+                noop),
             (EVlobRead('2345', '42', 2),
-                lambda _: {'id': '2345', 'blob': file_blob, 'version': 2}),
+                const({'id': '2345', 'blob': file_blob, 'version': 2})),
             (EVlobUpdate('2345', '43', 4, file_blob),  # TODO modify file_blob
-                lambda _: None),
+                noop),
         ]
         perform_sequence(sequence, user_manifest.restore(3))
         assert user_manifest.version == 6
@@ -2149,9 +2145,9 @@ class TestUserManifest:
         blob = to_jsonb64(blob)
         sequence = [
             (EBlockCreate(''),
-                lambda _: block_id),
+                const(block_id)),
             (EVlobCreate(blob),
-                lambda _: {'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+                const({'id': vlob_id, 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         ]
         file = perform_sequence(sequence, File.create())
         good_vlob = file.get_vlob()
@@ -2164,7 +2160,7 @@ class TestUserManifest:
         user_manifest_with_group.add_file('/foo', good_vlob)
         sequence = [
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1})
+                const({'id': '1234', 'blob': blob, 'version': 1}))
         ]
         dump = perform_sequence(sequence, user_manifest_with_group.dumps())
         group_blob = {'entries': {'/': None}, 'dustbin': [], 'versions': {}}
@@ -2172,9 +2168,9 @@ class TestUserManifest:
         group_blob = to_jsonb64(group_blob)
         sequence = [
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1}),
+                const({'id': '1234', 'blob': blob, 'version': 1})),
             (EVlobRead('1234', '42', None),
-                lambda _: {'id': '1234', 'blob': group_blob, 'version': 1}),
+                const({'id': '1234', 'blob': group_blob, 'version': 1})),
         ]
         consistency = perform_sequence(
             sequence, user_manifest_with_group.check_consistency(ejson_loads(dump)))
@@ -2184,12 +2180,12 @@ class TestUserManifest:
         user_manifest_with_group.group_manifests['share'] = group_manifest
         sequence = [
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1})
+                const({'id': '1234', 'blob': blob, 'version': 1}))
         ]
         dump = perform_sequence(sequence, user_manifest_with_group.dumps())
         sequence = [
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1}),
+                const({'id': '1234', 'blob': blob, 'version': 1})),
             (EVlobRead(bad_vlob['id'], bad_vlob['read_trust_seed']),
                 lambda _: raise_(VlobNotFound('Vlob not found.')))
         ]
@@ -2199,12 +2195,12 @@ class TestUserManifest:
         user_manifest_with_group.remove_group('share')
         sequence = [
             (EVlobRead('1234', '42'),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1})
+                const({'id': '1234', 'blob': blob, 'version': 1}))
         ]
         dump = perform_sequence(sequence, user_manifest_with_group.dumps())
         sequence = [
             (EVlobRead('1234', '42', 1),
-                lambda _: {'id': '1234', 'blob': blob, 'version': 1})
+                const({'id': '1234', 'blob': blob, 'version': 1}))
         ]
         consistency = perform_sequence(
             sequence, user_manifest_with_group.check_consistency(ejson_loads(dump)))

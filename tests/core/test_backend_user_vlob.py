@@ -1,4 +1,3 @@
-import pytest
 from effect2.testing import perform_sequence, const
 
 from parsec.tools import to_jsonb64

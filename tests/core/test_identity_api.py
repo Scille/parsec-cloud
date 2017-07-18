@@ -1,5 +1,5 @@
 import pytest
-from effect2.testing import perform_sequence
+from effect2.testing import const, noop, perform_sequence
 from unittest.mock import Mock
 
 from parsec.core.core_api import execute_cmd
@@ -10,7 +10,7 @@ def test_api_identity_load():
     eff = execute_cmd('identity_load', {'id': 'JohnDoe', 'key': 'MTIzNDU=\n'})
     sequence = [
         (EIdentityLoad('JohnDoe', b'12345', None),
-            lambda _: Identity('JohnDoe', Mock(), Mock())),
+            const(Identity('JohnDoe', Mock(), Mock()))),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'ok'}
@@ -36,7 +36,7 @@ def test_api_identity_unload():
     eff = execute_cmd('identity_unload', {})
     sequence = [
         (EIdentityUnload(),
-            lambda _: None),
+            noop),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'ok'}
@@ -58,7 +58,7 @@ def test_api_identity_info():
     eff = execute_cmd('identity_info', {})
     sequence = [
         (EIdentityGet(),
-            lambda _: None),
+            noop),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'loaded': False, 'status': 'ok'}
@@ -66,7 +66,7 @@ def test_api_identity_info():
     eff = execute_cmd('identity_info', {})
     sequence = [
         (EIdentityGet(),
-            lambda _: Identity('JohnDoe', Mock(), Mock())),
+            const(Identity('JohnDoe', Mock(), Mock()))),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'id': 'JohnDoe', 'loaded': True, 'status': 'ok'}

@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 from effect2 import do, Effect
-from effect2.testing import perform_sequence
+from effect2.testing import const, noop, perform_sequence, raise_
 from freezegun import freeze_time
 
 from parsec.core.app import app_factory
@@ -16,7 +16,7 @@ from parsec.core.synchronizer import (
     EUserVlobSynchronize, EUserVlobRead, EUserVlobUpdate, EVlobCreate, EVlobList, EVlobRead,
     EVlobUpdate, EVlobDelete, EBlockCreate, EBlockDelete, SynchronizerComponent)
 from parsec.exceptions import (
-    FileError, ManifestError, BlockNotFound, VlobNotFound)
+    ManifestError, BlockNotFound, VlobNotFound)
 from parsec.tools import ejson_dumps, to_jsonb64, digest
 from tests.test_crypto import ALICE_PRIVATE_RSA, mock_crypto_passthrough
 
@@ -41,9 +41,9 @@ def app(mock_crypto_passthrough):
     blob = to_jsonb64(blob)
     sequence = [
         (EUserVlobRead(),
-            lambda _: {'blob': '', 'version': 0}),
+            const({'blob': '', 'version': 0})),
         (EUserVlobUpdate(1, blob),
-            lambda _: None)
+            noop)
     ]
     perform_sequence(sequence, fs_component.on_app_start(app))
     return fs_component
@@ -60,17 +60,13 @@ def file(app, mock_crypto_passthrough):
     eff = app.perform_file_create(EFileCreate('/foo'))
     sequence = [
         (EBlockCreate(''),
-            lambda _: block_id),
+            const(block_id)),
         (EVlobCreate(blob),
-            lambda _: vlob)
+            const(vlob))
     ]
     ret = perform_sequence(sequence, eff)
     assert ret is None
     File.files = {}
-
-
-def raise_(exception):
-    raise exception
 
 
 def test_perform_synchronize(app):
@@ -80,11 +76,11 @@ def test_perform_synchronize(app):
     eff = app.perform_synchronize(ESynchronize())
     sequence = [
         (EVlobList(),
-            lambda _: []),
+            const([])),
         (EUserVlobUpdate(1, blob),
-            lambda _: None),
+            noop),
         (EUserVlobSynchronize(),
-            lambda _: None)
+            noop)
     ]
     ret = perform_sequence(sequence, eff)
     assert ret is None
@@ -97,9 +93,9 @@ def test_perform_group_create(app):
     eff = app.perform_group_create(EGroupCreate('share'))
     sequence = [
         (EVlobCreate(),
-            lambda _: {'id': '1234', 'read_trust_seed': '42', 'write_trust_seed': '43'}),
+            const({'id': '1234', 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         (EVlobUpdate('1234', '43', 1, blob),
-            lambda _: None)
+            noop)
     ]
     ret = perform_sequence(sequence, eff)
     assert ret is None
@@ -115,11 +111,11 @@ def test_perform_dustbin_show(app, file):
         eff = app.perform_delete(EDelete('/foo'))
         sequence = [
             (EVlobRead(vlob['id'], vlob['read_trust_seed']),
-                lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
+                const({'id': vlob['id'], 'blob': blob, 'version': 1})),
             (EVlobList(),
-                lambda _: []),
+                const([])),
             (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
-                lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
+                const({'id': vlob['id'], 'blob': blob, 'version': 1})),
             (EBlockDelete('4567'),
                 lambda _: raise_(BlockNotFound('Block not found.'))),
             (EVlobDelete('2345'),
@@ -157,15 +153,15 @@ def test_perform_file_create(app, file):
     eff = app.perform_file_create(EFileCreate('/foo'))
     sequence = [
         (EBlockCreate(''),
-            lambda _: block_id),
+            const(block_id)),
         (EVlobCreate(blob),
-            lambda _: vlob),
+            const(vlob)),
         (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
+            const({'id': vlob['id'], 'blob': blob, 'version': 1})),
         (EBlockDelete(block_id),
-            lambda _: None),
+            noop),
         (EVlobDelete(vlob['id']),
-            lambda _: None)
+            noop)
     ]
     with pytest.raises(ManifestError):
         perform_sequence(sequence, eff)
@@ -180,11 +176,11 @@ def test_perform_file_read(app, file):
     eff = app.perform_file_read(EFileRead('/foo'))
     sequence = [
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
+            const({'id': vlob['id'], 'blob': blob, 'version': 1})),
         (EVlobList(),
-            lambda _: [vlob['id']]),
+            const([vlob['id']])),
         (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1})
+            const({'id': vlob['id'], 'blob': blob, 'version': 1}))
     ]
     file = perform_sequence(sequence, eff)
     assert file == b''
@@ -199,9 +195,9 @@ def test_perform_file_write(app, file):
     eff = app.perform_file_write(EFileWrite('/foo', b'foo', 0))
     sequence = [
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
+            const({'id': vlob['id'], 'blob': blob, 'version': 1})),
         (EVlobList(),
-            lambda _: [vlob['id']])
+            const([vlob['id']]))
     ]
     ret = perform_sequence(sequence, eff)
     assert ret is None
@@ -216,9 +212,9 @@ def test_perform_file_truncate(app, file):
     eff = app.perform_file_truncate(EFileTruncate('/foo', 0))
     sequence = [
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
+            const({'id': vlob['id'], 'blob': blob, 'version': 1})),
         (EVlobList(),
-            lambda _: [vlob['id']])
+            const([vlob['id']]))
     ]
     ret = perform_sequence(sequence, eff)
     assert ret is None
@@ -234,9 +230,9 @@ def test_perform_file_history(app, file):
     eff = app.perform_file_history(EFileHistory('/foo', 1, 1))
     sequence = [
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
+            const({'id': vlob['id'], 'blob': blob, 'version': 1})),
         (EVlobList(),
-            lambda _: []),
+            const([])),
     ]
     perform_sequence(sequence, eff)
 
@@ -250,19 +246,19 @@ def test_perform_file_restore(app, file):
     eff = app.perform_file_restore(EFileRestore('/foo'))
     sequence = [
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 2}),
+            const({'id': vlob['id'], 'blob': blob, 'version': 2})),
         (EVlobList(),
-            lambda _: []),
+            const([])),
         (EVlobRead(vlob['id'], vlob['read_trust_seed'], 2),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 2}),
+            const({'id': vlob['id'], 'blob': blob, 'version': 2})),
         (EBlockDelete('4567'),
-            lambda _: None),
+            noop),
         (EVlobDelete(vlob['id']),
-            lambda _: None),
+            noop),
         (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
+            const({'id': vlob['id'], 'blob': blob, 'version': 1})),
         (EVlobUpdate(vlob['id'], vlob['write_trust_seed'], 3, blob),
-            lambda _: None),
+            noop),
     ]
     perform_sequence(sequence, eff)
 
@@ -306,11 +302,11 @@ def test_perform_undelete(app, file):
     eff = app.perform_delete(EDelete('/foo'))
     sequence = [
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
+            const({'id': vlob['id'], 'blob': blob, 'version': 1})),
         (EVlobList(),
-            lambda _: []),
+            const([])),
         (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
-            lambda _: {'id': vlob['id'], 'blob': blob, 'version': 1}),
+            const({'id': vlob['id'], 'blob': blob, 'version': 1})),
         (EBlockDelete('4567'),
             lambda _: raise_(BlockNotFound('Block not found.'))),
         (EVlobDelete('2345'),
