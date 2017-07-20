@@ -66,7 +66,8 @@ class SequenceDispatcher:
         if len(self.sequence) == 0:
             return
         exp_intent, func = self.sequence[0]
-        if intent == exp_intent:
+        if intent == exp_intent or (isinstance(exp_intent, IntentType) and
+                                    isinstance(intent, exp_intent.type)):
             self.sequence = self.sequence[1:]
             return lambda i: func(i)
 
@@ -85,6 +86,11 @@ class SequenceDispatcher:
             raise AssertionError(
                 "Not all intents were performed: {0}".format(
                     [x[0] for x in self.sequence]))
+
+
+@attr.s
+class IntentType:
+    type = attr.ib()
 
 
 def noop(intent):

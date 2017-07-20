@@ -3,7 +3,8 @@ import asyncio
 import pytest
 
 from . import Effect, asyncio_perform, sync_perform, TypeDispatcher, ChainedIntent, do
-from .testing import perform_sequence, const, conste, noop
+from .testing import perform_sequence, const, conste, noop, IntentType
+
 
 @attr.s
 class EDo:
@@ -73,6 +74,29 @@ def test_bad_perform_sequence_wrong_effect():
     sequence = [
         (EDo(0), const(0)),
         (EDo(0), const('one')),
+    ]
+    with pytest.raises(AssertionError):
+        perform_sequence(sequence, effect)
+
+
+def test_use_intent_type():
+    effect = do_2_things()
+    sequence = [
+        (IntentType(EDo), const(0)),
+        (IntentType(EDo), const(1)),
+    ]
+    ret = perform_sequence(sequence, effect)
+    assert ret == [0, 1]
+
+
+def test_bad_use_intent_type():
+    class EBadDo:
+        pass
+
+    effect = do_2_things()
+    sequence = [
+        (IntentType(EBadDo), const(0)),
+        (IntentType(EDo), const(1)),
     ]
     with pytest.raises(AssertionError):
         perform_sequence(sequence, effect)
