@@ -702,12 +702,12 @@ class TestManifest:
             manifest.add_file('/countries/France/info', vlob)
             manifest.add_file('/countries/Belgium/info', vlob)
             ret = perform_sequence([], manifest.stat('/'))
-            assert ret == {'type': 'folder', 'items': ['.root', 'countries']}
+            assert ret == {'type': 'folder', 'children': ['.root', 'countries']}
             for final_slash in ['', '/']:
                 ret = perform_sequence([], manifest.stat('/countries' + final_slash))
-                assert ret == {'type': 'folder', 'items': ['Belgium', 'France', 'index']}
+                assert ret == {'type': 'folder', 'children': ['Belgium', 'France', 'index']}
                 ret = perform_sequence([], manifest.stat('/countries/France/cities' + final_slash))
-                assert ret == {'type': 'folder', 'items': []}
+                assert ret == {'type': 'folder', 'children': []}
                 File.files = {}
                 sequence = [
                     (EVlobRead(vlob_id, '42'),

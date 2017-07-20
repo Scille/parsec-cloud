@@ -164,7 +164,7 @@ class FuseOperations(LoggingMixIn, Operations):
         # TODO: make sure error code for path is not a folder is ENOENT
         if resp['status'] != 'ok' or resp['type'] != 'folder':
             raise FuseOSError(ENOENT)
-        return ['.', '..'] + list(resp['items'])
+        return ['.', '..'] + list(resp['children'])
 
     def create(self, path, mode):
         response = self.send_cmd(cmd='file_create', path=path)

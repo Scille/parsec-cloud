@@ -273,7 +273,7 @@ def test_perform_stat(app, file):
     ret = perform_sequence([], eff)
     eff = app.perform_stat(EStat('/dir'))
     ret = perform_sequence([], eff)
-    assert ret == {'items': [], 'type': 'folder'}
+    assert ret == {'children': [], 'type': 'folder'}
 
 
 def test_perform_move(app):

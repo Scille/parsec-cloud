@@ -249,7 +249,7 @@ class Manifest:
                     children[os.path.basename(entry)] = deepcopy(self.entries[entry])
             return {
                 'type': 'folder',
-                'items': sorted(list(children.keys()))
+                'children': sorted(list(children.keys()))
             }
 
     def create_folder(self, path, parents=False):
