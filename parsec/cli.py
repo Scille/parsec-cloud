@@ -15,6 +15,7 @@ from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedUs
                             MockedVlobService, InMemoryPubKeyService)
 from parsec.core import app_factory, run_app
 from parsec.core.backend import BackendComponent
+from parsec.core.identity import IdentityComponent
 from parsec.core.fs import FSComponent
 from parsec.core.privkey import PrivKeyComponent
 from parsec.core.synchronizer import SynchronizerComponent
@@ -155,10 +156,12 @@ def _core(socket, backend_host, backend_watchdog, block_store, debug, identity, 
     privkey_component = PrivKeyComponent()
     backend_component = BackendComponent(backend_host, backend_watchdog)
     fs_component = FSComponent()
+    identity_component = IdentityComponent()
     synchronizer_component = SynchronizerComponent()
     app = app_factory(
         privkey_component.get_dispatcher(), backend_component.get_dispatcher(),
-        fs_component.get_dispatcher(), synchronizer_component.get_dispatcher(), block_dispatcher)
+        fs_component.get_dispatcher(), synchronizer_component.get_dispatcher(),
+        identity_component.get_dispatcher(), block_dispatcher)
     if (identity or identity_key) and (not identity or not identity_key):
         raise SystemExit('--identity and --identity-key params should be provided together.')
     # TODO: remove me once RSA key loading and backend handling are easier

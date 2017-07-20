@@ -1,6 +1,7 @@
 import attr
-from effect2 import TypeDispatcher
+from effect2 import TypeDispatcher, Effect, do
 
+from parsec.core.base import EEvent
 from parsec.exceptions import IdentityNotLoadedError, IdentityError
 from parsec.crypto import load_private_key
 
@@ -30,10 +31,11 @@ class EIdentityGet:
 
 
 @attr.s
-class IdentityMixin:
+class IdentityComponent:
     identity = attr.ib(default=None)
 
-    async def perform_identity_load(self, intent):
+    @do
+    def perform_identity_load(self, intent):
         if self.identity:
             raise IdentityError('Identity already loaded')
         # TODO: handle invalid key with more precise exception
@@ -42,22 +44,24 @@ class IdentityMixin:
         except Exception as e:
             raise IdentityError('Invalid private key (%s)' % e)
         self.identity = Identity(intent.id, private_key, private_key.pub_key)
+        yield Effect(EEvent('identity_loaded', self.identity))
         return self.identity
 
-    async def perform_identity_unload(self, intent):
+    @do
+    def perform_identity_unload(self, intent):
         if not self.identity:
             raise IdentityNotLoadedError('Identity not loaded')
+        yield Effect(EEvent('identity_unloaded', None))
         self.identity = None
 
-    async def perform_identity_get(self, intent):
+    def perform_identity_get(self, intent):
         if not self.identity:
             return None
         return self.identity
 
-
-def identity_dispatcher_factory(app):
-    return TypeDispatcher({
-        EIdentityLoad: app.perform_identity_load,
-        EIdentityUnload: app.perform_identity_unload,
-        EIdentityGet: app.perform_identity_get,
-    })
+    def get_dispatcher(self):
+        return TypeDispatcher({
+            EIdentityLoad: self.perform_identity_load,
+            EIdentityUnload: self.perform_identity_unload,
+            EIdentityGet: self.perform_identity_get,
+        })

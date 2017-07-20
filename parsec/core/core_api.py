@@ -6,7 +6,6 @@ from parsec.core import fs_api, identity_api, privkey_api
 from parsec.tools import ejson_dumps, ejson_loads
 from parsec.core.client_connection import EClientSubscribeEvent, EClientUnsubscribeEvent
 from parsec.core.backend import EBackendStatus
-from parsec.core.identity import EIdentityLoad, EIdentityUnload, EIdentityGet
 from parsec.exceptions import ParsecError, BadMessageError
 
 
@@ -40,39 +39,6 @@ def execute_cmd(cmd, params):
     except ParsecError as exc:
         resp = exc.to_dict()
     return resp
-
-
-# Identity
-
-
-class cmd_IDENTITY_LOAD_Schema(Schema):
-    id = fields.String(required=True)
-    key = fields.Base64Bytes(required=True)
-    password = fields.String(missing=None)
-
-
-@do
-def api_identity_load(msg):
-    msg, errors = cmd_IDENTITY_LOAD_Schema().load(msg)
-    if errors:
-        raise BadMessageError(errors)
-    yield Effect(EIdentityLoad(**msg))
-    return {'status': 'ok'}
-
-
-@do
-def api_identity_unload(msg):
-    yield Effect(EIdentityUnload())
-    return {'status': 'ok'}
-
-
-@do
-def api_identity_info(msg):
-    identity = yield Effect(EIdentityGet())
-    if identity:
-        return {'status': 'ok', 'loaded': True, 'id': identity.id}
-    else:
-        return {'status': 'ok', 'loaded': False}
 
 
 class cmd_EVENT_Schema(Schema):

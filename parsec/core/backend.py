@@ -132,6 +132,8 @@ class BackendComponent:
         self.connection = None
         blinker.signal('app_start').connect(self.on_app_start)
         blinker.signal('app_stop').connect(self.on_app_stop)
+        blinker.signal('identity_loaded').connect(self.on_identity_loaded)
+        blinker.signal('identity_unloaded').connect(self.on_identity_unloaded)
 
     @do
     def on_app_start(self, app):
@@ -141,13 +143,19 @@ class BackendComponent:
     def on_app_stop(self, app):
         yield Effect(EBackendCloseConnection())
 
+    def on_identity_loaded(self, identity):
+        self.identity = identity
+
+    def on_identity_unloaded(self, _):
+        self.identity = None
+
     async def open_connection(self):
         if not self.connection:
-            if not self.app.identity:
+            if not self.identity:
                 raise BackendConnectionError('Identity must be loaded to connect to backend')
             connection = BackendConnection(self.url, self.watchdog)
             try:
-                await connection.open_connection(self.app.identity)
+                await connection.open_connection(self.identity)
             except ConnectionRefusedError as exc:
                 raise BackendConnectionError('Cannot connect to backend (%s)' % exc)
             self.connection = connection

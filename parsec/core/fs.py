@@ -2,10 +2,11 @@ from copy import deepcopy
 
 import attr
 import blinker
-from effect2 import TypeDispatcher, do
+from effect2 import TypeDispatcher, do, Effect
 
 from parsec.core.file import File
 from parsec.core.manifest import UserManifest
+from parsec.core.identity import EIdentityGet
 from parsec.exceptions import FileNotFound, ManifestError, ManifestNotFound
 
 
@@ -211,10 +212,11 @@ class FSComponent:
 
     @do
     def _get_manifest(self, group=None):
+        identity = yield Effect(EIdentityGet())
         if (not self.user_manifest or
             self.user_manifest.encryptor._hazmat_private_key !=
-                self.app.identity.private_key._hazmat_private_key):
-            manifest = yield UserManifest.load(self.app.identity.private_key._hazmat_private_key)
+                identity.private_key._hazmat_private_key):
+            manifest = yield UserManifest.load(identity.private_key._hazmat_private_key)
         else:
             manifest = self.user_manifest
         if group:
