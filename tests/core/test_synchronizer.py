@@ -1,6 +1,8 @@
 import pytest
 
+from arrow import Arrow
 from effect2.testing import const, noop, perform_sequence, raise_
+from freezegun import freeze_time
 
 from parsec.core.backend_vlob import (EBackendVlobCreate, EBackendVlobUpdate, EBackendVlobRead,
                                       VlobAccess, VlobAtom)
@@ -9,8 +11,8 @@ from parsec.core.backend_user_vlob import (EBackendUserVlobUpdate, EBackendUserV
 from parsec.core.block import (Block, EBlockCreate as EBackendBlockCreate,
                                EBlockRead as EBackendBlockRead)
 from parsec.core.synchronizer import (
-    EBlockCreate, EBlockRead, EBlockDelete, EBlockList,
-    EBlockSynchronize, EUserVlobRead, EUserVlobUpdate, EUserVlobExist, EUserVlobDelete,
+    EBlockCreate, EBlockRead, EBlockDelete, EBlockList, EBlockSynchronize, ECacheClean,
+    EUserVlobRead, EUserVlobUpdate, EUserVlobExist, EUserVlobDelete,
     EUserVlobSynchronize, EVlobCreate, EVlobRead, EVlobUpdate, EVlobDelete, EVlobList,
     EVlobSynchronize, ESynchronize, SynchronizerComponent)
 from parsec.exceptions import BlockError, BlockNotFound, UserVlobNotFound, VlobNotFound
@@ -23,8 +25,10 @@ def app():
 
 def test_perform_block_create(app):
     content = 'foo'
-    eff = app.perform_block_create(EBlockCreate(content))
-    block_id = perform_sequence([], eff)
+    with freeze_time('2012-01-01') as frozen_datetime:
+        eff = app.perform_block_create(EBlockCreate(content))
+        block_id = perform_sequence([], eff)
+        assert app.last_modified == Arrow.fromdatetime(frozen_datetime())
     eff = app.perform_block_read(EBlockRead(block_id))
     block = perform_sequence([], eff)
     assert block['content'] == content
@@ -34,12 +38,14 @@ def test_perform_block_read(app):
     local_content = 'foo'
     eff = app.perform_block_create(EBlockCreate(local_content))
     block_id = perform_sequence([], eff)
+    # With cache
     eff = app.perform_block_read(EBlockRead(block_id))
     block = perform_sequence([], eff)
     assert sorted(list(block.keys())) == ['content', 'id']
     assert block['id']
     assert block['content'] == local_content
     remote_content = b'bar'
+    # Without cache
     eff = app.perform_block_read(EBlockRead('123'))
     sequence = [
         (EBackendBlockRead('123'),
@@ -49,6 +55,9 @@ def test_perform_block_read(app):
     assert sorted(list(block.keys())) == ['content', 'id']
     assert block['id']
     assert block['content'] == remote_content
+    # Delete block from cache
+    eff = app.perform_block_delete(EBlockDelete('123'))
+    perform_sequence([], eff)
     # Not found
     eff = app.perform_block_read(EBlockRead('123'))
     sequence = [
@@ -70,8 +79,10 @@ def test_perform_block_delete(app):
     content = 'foo'
     eff = app.perform_block_create(EBlockCreate(content))
     block_id = perform_sequence([], eff)
-    eff = app.perform_block_delete(EBlockDelete(block_id))
-    perform_sequence([], eff)
+    with freeze_time('2012-01-01') as frozen_datetime:
+        eff = app.perform_block_delete(EBlockDelete(block_id))
+        perform_sequence([], eff)
+        assert app.last_modified == Arrow.fromdatetime(frozen_datetime())
     with pytest.raises(BlockNotFound):
         eff = app.perform_block_delete(EBlockDelete(block_id))
         perform_sequence([], eff)
@@ -87,6 +98,12 @@ def test_perform_block_list(app):
     block_list = perform_sequence([], eff)
     assert isinstance(block_list, list)
     assert set(block_list) == set([block_id, block_2_id])
+    # Synchronized blocks are excluded
+    app.buffered_blocks[block_2_id].synchronized = True
+    eff = app.perform_block_list(EBlockList())
+    block_list = perform_sequence([], eff)
+    assert isinstance(block_list, list)
+    assert set(block_list) == set([block_id])
 
 
 def test_perform_block_synchronize(app):
@@ -96,15 +113,14 @@ def test_perform_block_synchronize(app):
     eff = app.perform_block_synchronize(EBlockSynchronize(block_id))
     sequence = [
         (EBackendBlockCreate(block_id, content),
-            const(Block(block_id, content))),
-        # (EBlockDelete(block_id),
-        #     noop)  # TODO ok to call directly the perform method?
+            const(Block(block_id, content)))
     ]
     synchronization = perform_sequence(sequence, eff)
     assert synchronization is True
     eff = app.perform_block_list(EBlockList())
     block_list = perform_sequence([], eff)
     assert block_list == []
+    assert app.buffered_blocks[block_id].synchronized
     # Do nothing
     eff = app.perform_block_synchronize(EBlockSynchronize(block_id))
     synchronization = perform_sequence([], eff)
@@ -126,6 +142,9 @@ def test_perform_user_vlob_read(app):
     assert sorted(list(user_vlob.keys())) == ['blob', 'version']
     assert user_vlob['blob'] == remote_blob.decode()  # TODO decode?
     assert user_vlob['version'] == 2
+    # Delete user vlob from cache
+    eff = app.perform_user_vlob_delete(EUserVlobDelete(2))
+    perform_sequence([], eff)
     # Read local user vlob
     eff = app.perform_user_vlob_read(EUserVlobRead(1))
     user_vlob = perform_sequence([], eff)
@@ -135,8 +154,10 @@ def test_perform_user_vlob_read(app):
 
 
 def test_perform_user_vlob_update(app):
-    eff = app.perform_user_vlob_update(EUserVlobUpdate(1, 'foo'))
-    perform_sequence([], eff)
+    with freeze_time('2012-01-01') as frozen_datetime:
+        eff = app.perform_user_vlob_update(EUserVlobUpdate(1, 'foo'))
+        perform_sequence([], eff)
+        assert app.last_modified == Arrow.fromdatetime(frozen_datetime())
     blob = 'bar'
     eff = app.perform_user_vlob_update(EUserVlobUpdate(1, blob))
     perform_sequence([], eff)
@@ -150,8 +171,10 @@ def test_perform_user_vlob_update(app):
 def test_perform_user_vlob_delete(app):
     eff = app.perform_user_vlob_update(EUserVlobUpdate(1, 'foo'))
     perform_sequence([], eff)
-    eff = app.perform_user_vlob_delete(EUserVlobDelete())
-    perform_sequence([], eff)
+    with freeze_time('2012-01-01') as frozen_datetime:
+        eff = app.perform_user_vlob_delete(EUserVlobDelete())
+        perform_sequence([], eff)
+        assert app.last_modified == Arrow.fromdatetime(frozen_datetime())
     with pytest.raises(UserVlobNotFound):
         eff = app.perform_user_vlob_delete(EUserVlobDelete())
         perform_sequence([], eff)
@@ -190,8 +213,10 @@ def test_perform_user_vlob_synchronize(app):
 
 def test_perform_vlob_create(app):
     blob = 'foo'
-    eff = app.perform_vlob_create(EVlobCreate(blob))
-    vlob = perform_sequence([], eff)
+    with freeze_time('2012-01-01') as frozen_datetime:
+        eff = app.perform_vlob_create(EVlobCreate(blob))
+        vlob = perform_sequence([], eff)
+        assert app.last_modified == Arrow.fromdatetime(frozen_datetime())
     vlob_id = vlob['id']
     read_trust_seed = vlob['read_trust_seed']
     assert sorted(list(vlob.keys())) == ['id', 'read_trust_seed', 'write_trust_seed']
@@ -216,6 +241,9 @@ def test_perform_vlob_read(app):
     assert vlob['id'] == '123'
     assert vlob['blob'] == remote_blob.decode()  # TODO decode?
     assert vlob['version'] == 2
+    # Delete user vlob from cache
+    eff = app.perform_vlob_delete(EVlobDelete('123', 2))
+    perform_sequence([], eff)
     # Read local vlob
     eff = app.perform_vlob_read(EVlobRead('123', '43', 1))
     vlob = perform_sequence([], eff)
@@ -226,8 +254,10 @@ def test_perform_vlob_read(app):
 
 
 def test_perform_vlob_update(app):
-    eff = app.perform_vlob_update(EVlobUpdate('123', 'ABC', 1, 'foo'))
-    perform_sequence([], eff)
+    with freeze_time('2012-01-01') as frozen_datetime:
+        eff = app.perform_vlob_update(EVlobUpdate('123', 'ABC', 1, 'foo'))
+        perform_sequence([], eff)
+        assert app.last_modified == Arrow.fromdatetime(frozen_datetime())
     blob = 'bar'
     eff = app.perform_vlob_update(EVlobUpdate('123', 'ABC', 1, blob))
     perform_sequence([], eff)
@@ -261,6 +291,27 @@ def test_perform_vlob_list(app):
     vlob_list = perform_sequence([], eff)
     assert isinstance(vlob_list, list)
     assert set(vlob_list) == set([vlob_id, vlob_2_id])
+    # Synchronized vlobs are excluded
+    app.buffered_vlobs[vlob_2_id][1].synchronized = True
+    eff = app.perform_vlob_list(EVlobList())
+    vlob_list = perform_sequence([], eff)
+    assert isinstance(vlob_list, list)
+    assert set(vlob_list) == set([vlob_id])
+
+
+def test_get_current_vlob_version(app):
+    with pytest.raises(VlobNotFound):
+        app.get_current_vlob_version('123')
+    blob = 'bar'
+    eff = app.perform_vlob_update(EVlobUpdate('123', 'ABC', 1, blob))
+    perform_sequence([], eff)
+    eff = app.perform_vlob_update(EVlobUpdate('123', 'ABC', 2, blob))
+    perform_sequence([], eff)
+    current_version = app.get_current_vlob_version('123')
+    assert current_version == 2
+    app.buffered_vlobs['123'][2].synchronized = True
+    current_version = app.get_current_vlob_version('123')
+    assert current_version is 1
 
 
 def test_perform_vlob_synchronize(app):
@@ -292,7 +343,15 @@ def test_perform_vlob_synchronize(app):
     eff = app.perform_vlob_list(EVlobList())
     vlob_list = perform_sequence([], eff)
     assert vlob_list == []
-    # Do nothing
+    # Vlob synchronized
+    eff = app.perform_vlob_synchronize(EVlobSynchronize('123'))
+    synchronization = perform_sequence([], eff)
+    assert synchronization is False
+    # Delete user vlob from cache
+    for version in [1, 2]:
+        eff = app.perform_vlob_delete(EVlobDelete('123', version))
+        perform_sequence([], eff)
+    # Do nothing if vlob not found
     eff = app.perform_vlob_synchronize(EVlobSynchronize('123'))
     synchronization = perform_sequence([], eff)
     assert synchronization is False
@@ -336,3 +395,36 @@ def test_perform_synchronize(app):
     eff = app.perform_synchronize(ESynchronize())
     synchronization = perform_sequence([], eff)
     assert synchronization is False
+
+
+def test_perform_cache_clean(app):
+    content = 'foo'
+    eff = app.perform_block_create(EBlockCreate(content))
+    block_id = perform_sequence([], eff)
+    eff = app.perform_block_create(EBlockCreate(content))
+    block_2_id = perform_sequence([], eff)
+    app.buffered_blocks[block_2_id].synchronized = True
+    eff = app.perform_vlob_create(EVlobCreate(content))
+    vlob = perform_sequence([], eff)
+    eff = app.perform_vlob_create(EVlobCreate(content))
+    vlob_2 = perform_sequence([], eff)
+    app.buffered_vlobs[vlob_2['id']][1].synchronized = True
+    eff = app.perform_user_vlob_update(EUserVlobUpdate(1, content))
+    perform_sequence([], eff)
+    eff = app.perform_user_vlob_update(EUserVlobUpdate(2, content))
+    perform_sequence([], eff)
+    app.buffered_user_vlob[2].synchronized = True
+    eff = app.perform_cache_clean(ECacheClean())
+    ret = perform_sequence([], eff)
+    assert ret is None
+    assert block_id in app.buffered_blocks
+    assert block_2_id not in app.buffered_blocks
+    assert vlob['id'] in app.buffered_vlobs
+    assert vlob_2['id'] not in app.buffered_vlobs
+    assert 1 in app.buffered_user_vlob
+    assert 2 not in app.buffered_user_vlob
+
+
+def test_perform_periodic_synchronization(app):
+    # TODO
+    pass
