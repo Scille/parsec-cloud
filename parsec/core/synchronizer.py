@@ -1,3 +1,6 @@
+import arrow
+import asyncio
+import blinker
 from uuid import uuid4
 
 import attr
@@ -7,6 +10,7 @@ from parsec.core.cache import cache
 from parsec.core.backend_vlob import EBackendVlobCreate, EBackendVlobUpdate, EBackendVlobRead
 from parsec.core.backend_user_vlob import EBackendUserVlobUpdate, EBackendUserVlobRead
 from parsec.core.block import EBlockCreate as EBackendBlockCreate, EBlockRead as EBackendBlockRead
+from parsec.core import fs
 from parsec.exceptions import BlockError, BlockNotFound, UserVlobNotFound, VlobNotFound
 
 
@@ -170,9 +174,21 @@ class SynchronizerComponent:
         self.buffered_blocks = {}
         self.buffered_vlobs = {}
         self.buffered_user_vlob = None
+        self.synchronization_idle_interval = 10
+        self.last_modified = 0
+        blinker.signal('app_start').connect(self.on_app_start)
+        blinker.signal('app_stop').connect(self.on_app_stop)
+
+    def on_app_start(self, app):
+        self.synchronization_task = asyncio.ensure_future(self.periodic_synchronization(app))
+
+    def on_app_stop(self, app):
+        self.synchronization_task.cancel()
+        self.synchronization_task = None
 
     @do
     def perform_block_create(self, intent):
+        self.last_modified = arrow.utcnow()
         buffered_block = BufferedBlock.init(intent.content)
         self.buffered_blocks[buffered_block.id] = buffered_block
         return buffered_block.id
@@ -190,6 +206,7 @@ class SynchronizerComponent:
 
     @do
     def perform_block_delete(self, intent):
+        self.last_modified = arrow.utcnow()
         try:
             self.buffered_blocks[intent.id].discard()
             del self.buffered_blocks[intent.id]
@@ -220,6 +237,7 @@ class SynchronizerComponent:
 
     @do
     def perform_user_vlob_update(self, intent):
+        self.last_modified = arrow.utcnow()
         if self.buffered_user_vlob:
             assert intent.version == self.buffered_user_vlob.version
             self.buffered_user_vlob.update(intent.blob)
@@ -228,6 +246,7 @@ class SynchronizerComponent:
 
     @do
     def perform_user_vlob_delete(self, intent):
+        self.last_modified = arrow.utcnow()
         if self.buffered_user_vlob:
             self.buffered_user_vlob.discard()
             self.buffered_user_vlob = None
@@ -250,6 +269,7 @@ class SynchronizerComponent:
 
     @do
     def perform_vlob_create(self, intent):
+        self.last_modified = arrow.utcnow()
         buffered_vlob = BufferedVlob.init(blob=intent.blob,
                                           read_trust_seed='42',
                                           write_trust_seed='42')
@@ -272,6 +292,7 @@ class SynchronizerComponent:
 
     @do
     def perform_vlob_update(self, intent):
+        self.last_modified = arrow.utcnow()
         try:
             assert intent.version == self.buffered_vlobs[intent.id].version
             assert intent.trust_seed == self.buffered_vlobs[intent.id].write_trust_seed
@@ -285,6 +306,7 @@ class SynchronizerComponent:
 
     @do
     def perform_vlob_delete(self, intent):
+        self.last_modified = arrow.utcnow()
         try:
             self.buffered_vlobs[intent.id].discard()
             del self.buffered_vlobs[intent.id]
@@ -331,8 +353,12 @@ class SynchronizerComponent:
         synchronization |= yield self.perform_user_vlob_synchronize(EUserVlobSynchronize())
         return synchronization
 
-    def periodic_synchronization(self):
-        raise NotImplementedError()
+    async def periodic_synchronization(self, app):
+        while True:
+            await asyncio.sleep(self.synchronization_idle_interval)
+            if (arrow.utcnow().timestamp - self.last_modified.timestamp >
+                    self.synchronization_idle_interval):
+                await app.async_perform(Effect(fs.ESynchronize()))
 
     def get_dispatcher(self):
         return TypeDispatcher({
