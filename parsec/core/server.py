@@ -16,13 +16,14 @@ class UnixSocketServer:
         os.remove(self.socket_path)
 
 
-def run_unix_socket_server(on_connection, socket_path=None):
+def run_unix_socket_server(on_connection, socket_path=None, loop=None):
+    loop = loop or asyncio.get_event_loop()
     socket_path = socket_path or mktemp()
 
     class UnixSocketServerContextManager:
         async def __aenter__(self):
             server_task = await asyncio.start_unix_server(
-                on_connection, path=socket_path)
+                on_connection, path=socket_path, loop=loop)
             self.context = UnixSocketServer(socket_path, on_connection, server_task)
             return self.context
 
