@@ -2,7 +2,7 @@ import json
 from marshmallow import Schema, fields
 from effect2 import Effect, do
 
-from parsec.backend import vlob
+from parsec.backend import vlob, user_vlob
 # from parsec.core.client_connection import EClientSubscribeEvent, EClientUnsubscribeEvent
 from parsec.tools import ejson_dumps, ejson_loads
 from parsec.exceptions import ParsecError, BadMessageError
@@ -69,4 +69,6 @@ API_CMDS_ROUTER = {
     'vlob_create': vlob.api_vlob_create,
     'vlob_read': vlob.api_vlob_read,
     'vlob_update': vlob.api_vlob_update,
+    'user_vlob_read': user_vlob.api_user_vlob_read,
+    'user_vlob_update': user_vlob.api_user_vlob_update,
 }
