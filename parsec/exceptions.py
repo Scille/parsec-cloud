@@ -96,6 +96,10 @@ class GroupError(ParsecError):
     status = 'group_error'
 
 
+class GroupAlreadyExist(GroupError):
+    status = 'group_already_exists'
+
+
 class GroupNotFound(GroupError):
     status = 'group_not_found'
 

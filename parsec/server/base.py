@@ -163,7 +163,7 @@ class BaseServer:
                     msg = self._load_raw_cmd(raw_cmd)
                     request_id = None
                     if msg is None:
-                        resp = {'status': 'bad_message', 'label': 'Message is not a valid JSON.'}
+                        resp = {'status': 'bad_msg', 'label': 'Message is not a valid JSON.'}
                     else:
                         if 'request_id' in msg:
                             request_id = msg['request_id']

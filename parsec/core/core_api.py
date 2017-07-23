@@ -20,11 +20,11 @@ def parse_cmd(raw_cmd: bytes):
 def execute_raw_cmd(raw_cmd):
     params = parse_cmd(raw_cmd)
     if not params:
-        ret = {'status': 'bad_message', 'label': 'Message is not a valid JSON.'}
+        ret = {'status': 'bad_msg', 'label': 'Message is not a valid JSON.'}
     else:
         cmd_type = params.pop('cmd', None)
         if not isinstance(cmd_type, str):
-            ret = {'status': 'bad_message', 'label': '`cmd` string field is mandatory.'}
+            ret = {'status': 'bad_msg', 'label': '`cmd` string field is mandatory.'}
         else:
             ret = yield execute_cmd(cmd_type, params)
     return ejson_dumps(ret).encode('utf-8')
@@ -35,7 +35,7 @@ def execute_cmd(cmd, params):
     try:
         resp = yield API_CMDS_ROUTER[cmd](params)
     except KeyError:
-        resp = {'status': 'bad_message', 'label': 'Unknown command `%s`' % cmd}
+        resp = {'status': 'bad_msg', 'label': 'Unknown command `%s`' % cmd}
     except ParsecError as exc:
         resp = exc.to_dict()
     return resp

@@ -48,4 +48,4 @@ class TestRawCMD:
         sequence = [
         ]
         resp = perform_sequence(sequence, eff)
-        assert resp == b'{"label": "Message is not a valid JSON.", "status": "bad_message"}'
+        assert resp == b'{"label": "Message is not a valid JSON.", "status": "bad_msg"}'

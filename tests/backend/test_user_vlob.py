@@ -15,7 +15,7 @@ def component():
     return MockedUserVlobComponent()
 
 
-class TestVlobComponent:
+class TestUserVlobComponent:
 
     def test_user_vlob_read_ok(self, component):
         intent = EUserVlobRead()
