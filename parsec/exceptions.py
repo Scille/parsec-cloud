@@ -33,6 +33,7 @@ exception_from_status = _parsec_exceptions_map.retrieve
 
 class ParsecError(Exception, metaclass=MetaParsecError):
     status = 'error'
+    label = ''
 
     def __init__(self, *args):
         args_count = len(args)

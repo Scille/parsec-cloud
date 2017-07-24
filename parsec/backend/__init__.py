@@ -1,14 +1,5 @@
-# from parsec.backend.group_service import MockedGroupService
-# from parsec.backend.message_service import InMemoryMessageService
-# from parsec.backend.vlob_service import MockedVlobService
-# from parsec.backend.user_vlob_service import MockedUserVlobService
-# from parsec.backend.pubkey_service import InMemoryPubKeyService
+from parsec.backend.app import app_factory, run_app
+from parsec.backend.client_connection import on_connection_factory
 
 
-# __all__ = (
-#     'InMemoryMessageService',
-#     'MockedGroupService',
-#     'MockedUserVlobService',
-#     'MockedVlobService',
-#     'InMemoryPubKeyService'
-# )
+__all__ = ('app_factory', 'run_app', 'on_connection_factory', )

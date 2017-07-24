@@ -9,11 +9,13 @@ import click
 from logbook import WARNING
 from effect2 import Effect, do
 
-from parsec.tools import logger_stream
-from parsec.server import WebSocketServer
-from parsec.backend import (InMemoryMessageService, MockedGroupService, MockedUserVlobService,
-                            MockedVlobService, InMemoryPubKeyService)
-from parsec.core import app_factory, run_app
+from parsec.backend import app_factory as backend_app_factory, run_app as backend_run_app
+from parsec.backend.pubkey import MockedPubkeyComponent, EPubkeyAdd
+from parsec.backend.vlob import MockedVlobComponent
+from parsec.backend.user_vlob import MockedUserVlobComponent
+from parsec.backend.message import InMemoryMessageComponent
+from parsec.backend.group import MockedGroupComponent
+from parsec.core import app_factory as core_app_factory, run_app as core_run_app
 from parsec.core.backend import BackendComponent
 from parsec.core.identity import IdentityComponent
 from parsec.core.fs import FSComponent
@@ -22,6 +24,7 @@ from parsec.core.synchronizer import SynchronizerComponent
 from parsec.core.block import in_memory_block_dispatcher_factory, s3_block_dispatcher_factory
 from parsec.core.identity import EIdentityLoad
 from parsec.ui.shell import start_shell
+from parsec.tools import logger_stream
 
 
 # TODO: remove me once RSA key loading and backend handling are easier
@@ -131,7 +134,8 @@ def core(**kwargs):
         return _core(**kwargs)
 
 
-def _core(socket, backend_host, backend_watchdog, block_store, debug, identity, identity_key, i_am_john):
+def _core(socket, backend_host, backend_watchdog, block_store,
+          debug, identity, identity_key, i_am_john):
     loop = asyncio.get_event_loop()
     if block_store:
         if block_store.startswith('s3:'):
@@ -158,7 +162,7 @@ def _core(socket, backend_host, backend_watchdog, block_store, debug, identity, 
     fs_component = FSComponent()
     identity_component = IdentityComponent()
     synchronizer_component = SynchronizerComponent()
-    app = app_factory(
+    app = core_app_factory(
         privkey_component.get_dispatcher(), backend_component.get_dispatcher(),
         fs_component.get_dispatcher(), synchronizer_component.get_dispatcher(),
         identity_component.get_dispatcher(), block_dispatcher)
@@ -184,7 +188,7 @@ def _core(socket, backend_host, backend_watchdog, block_store, debug, identity, 
         logger_stream.level = WARNING
     print('Starting parsec core on %s (connecting to backend %s and block store %s)' %
           (socket, backend_host, store_type))
-    run_app(socket, app=app, loop=loop)
+    core_run_app(socket, app=app, loop=loop)
     print('Bye ;-)')
 
 
@@ -208,41 +212,44 @@ def _backend(host, port, pubkeys, no_client_auth, store, debug):
     host = host or environ.get('HOST', 'localhost')
     port = port or int(environ.get('PORT', 6777))
     # TODO load pubkeys attribute
-    pubkey_svc = InMemoryPubKeyService()
-    if no_client_auth:
-        server = WebSocketServer()
-    else:
-        server = WebSocketServer(pubkey_svc.handshake)
-    server.register_service(pubkey_svc)
     if store:
         if store.startswith('postgres://'):
             store_type = 'PostgreSQL'
-            from parsec.backend import postgresql
-            server.register_service(postgresql.PostgreSQLService(store))
-            server.register_service(postgresql.PostgreSQLMessageService())
-            server.register_service(postgresql.PostgreSQLGroupService())
-            server.register_service(postgresql.PostgreSQLUserVlobService())
-            server.register_service(postgresql.PostgreSQLVlobService())
+            raise NotImplementedError()
+            # from parsec.backend import postgresql
+            # server.register_service(postgresql.PostgreSQLService(store))
+            # server.register_service(postgresql.PostgreSQLMessageService())
+            # server.register_service(postgresql.PostgreSQLGroupService())
+            # server.register_service(postgresql.PostgreSQLUserVlobService())
+            # server.register_service(postgresql.PostgreSQLVlobService())
         else:
             raise SystemExit('Unknown store `%s` (should be a postgresql db url).' % store)
     else:
         store_type = 'mocked in memory'
-        server.register_service(InMemoryMessageService())
-        server.register_service(MockedGroupService())
-        server.register_service(MockedUserVlobService())
-        server.register_service(MockedVlobService())
+        message_component = InMemoryMessageComponent()
+        group_component = MockedGroupComponent()
+        user_vlob_component = MockedUserVlobComponent()
+        vlob_component = MockedVlobComponent()
+        pubkey_component = MockedPubkeyComponent()
     loop = asyncio.get_event_loop()
+    app = backend_app_factory(
+        message_component.get_dispatcher(),
+        group_component.get_dispatcher(),
+        user_vlob_component.get_dispatcher(),
+        vlob_component.get_dispatcher(),
+        pubkey_component.get_dispatcher()
+    )
 
     # TODO: remove me once RSA key loading and backend handling are easier
-    @server.post_bootstrap
-    async def post_boostrap():
-        await pubkey_svc.add_pubkey(JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY)
+    loop.run_until_complete(app.async_perform(
+        Effect(EPubkeyAdd(JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY))))
+
     if debug:
         loop.set_debug(True)
     else:
         logger_stream.level = WARNING
     print('Starting parsec backend on %s:%s with store %s' % (host, port, store_type))
-    server.start(host, port, loop=loop)
+    backend_run_app(host, port, app=app, loop=loop)
     print('Bye ;-)')
 
 
