@@ -26,19 +26,7 @@ from tests.test_crypto import mock_crypto_passthrough
 
 @pytest.fixture
 def app(mock_crypto_passthrough, alice_identity):
-    app = FSComponent()
-    identity_component = IdentityComponent()
-    privkey_component = PrivKeyComponent()
     fs_component = FSComponent()
-    synchronizer_component = SynchronizerComponent()
-    identity_component = IdentityComponent()
-    app = app_factory(
-        privkey_component.get_dispatcher(),
-        fs_component.get_dispatcher(),
-        synchronizer_component.get_dispatcher(),
-        identity_component.get_dispatcher()
-    )
-
     blob = {'dustbin': [], 'entries': {'/': None}, 'groups': {}, 'versions': {}}
     blob = ejson_dumps(blob).encode()
     blob = to_jsonb64(blob)
@@ -49,12 +37,12 @@ def app(mock_crypto_passthrough, alice_identity):
         (EUserVlobUpdate(1, blob),
             noop)
     ]
-    perform_sequence(sequence, fs_component.on_app_start(app))
+    perform_sequence(sequence, fs_component._get_manifest())
     return fs_component
 
 
 @pytest.fixture
-def file(app, mock_crypto_passthrough):
+def file(app, alice_identity, mock_crypto_passthrough):
     vlob = {'id': '2345', 'read_trust_seed': '42', 'write_trust_seed': '43'}
     block_id = '4567'
     blob = [{'blocks': [{'block': block_id, 'digest': digest(b''), 'size': 0}],
@@ -64,19 +52,21 @@ def file(app, mock_crypto_passthrough):
     eff = app.perform_file_create(EFileCreate('/foo'))
     sequence = [
         (EBlockCreate(''), const(block_id)),
-        (EVlobCreate(blob), const(vlob))
+        (EVlobCreate(blob), const(vlob)),
+        (EIdentityGet(), const(alice_identity))
     ]
     ret = perform_sequence(sequence, eff)
     assert ret is None
     File.files = {}
 
 
-def test_perform_synchronize(app):
+def test_perform_synchronize(app, alice_identity):
     blob = {'dustbin': [], 'entries': {'/': None}, 'groups': {}, 'versions': {}}
     blob = ejson_dumps(blob).encode()
     blob = to_jsonb64(blob)
     eff = app.perform_synchronize(ESynchronize())
     sequence = [
+        (EIdentityGet(), const(alice_identity)),
         (EVlobList(), const([])),
         (EUserVlobUpdate(1, blob), noop),
         (EUserVlobSynchronize(), noop)
@@ -85,12 +75,13 @@ def test_perform_synchronize(app):
     assert ret is None
 
 
-def test_perform_group_create(app):
+def test_perform_group_create(app, alice_identity):
     blob = {'dustbin': [], 'entries': {'/': None}, 'versions': {}}
     blob = ejson_dumps(blob).encode()
     blob = to_jsonb64(blob)
     eff = app.perform_group_create(EGroupCreate('share'))
     sequence = [
+        (EIdentityGet(), const(alice_identity)),
         (EVlobCreate(),
             const({'id': '1234', 'read_trust_seed': '42', 'write_trust_seed': '43'})),
         (EVlobUpdate('1234', '43', 1, blob),
@@ -100,7 +91,7 @@ def test_perform_group_create(app):
     assert ret is None
 
 
-def test_perform_dustbin_show(app, file):
+def test_perform_dustbin_show(app, alice_identity, file):
     with freeze_time('2012-01-01') as frozen_datetime:
         vlob = {'id': '2345', 'read_trust_seed': '42', 'write_trust_seed': '43'}
         blob = [{'blocks': [{'block': '4567', 'digest': digest(b''), 'size': 0}],
@@ -109,6 +100,7 @@ def test_perform_dustbin_show(app, file):
         blob = to_jsonb64(blob)
         eff = app.perform_delete(EDelete('/foo'))
         sequence = [
+            (EIdentityGet(), const(alice_identity)),
             (EVlobRead(vlob['id'], vlob['read_trust_seed']),
                 const({'id': vlob['id'], 'blob': blob, 'version': 1})),
             (EVlobList(), const([])),
@@ -121,26 +113,35 @@ def test_perform_dustbin_show(app, file):
         ]
         perform_sequence(sequence, eff)
         eff = app.perform_dustbin_show(EDustbinShow())
-        dustbin = perform_sequence([], eff)
+        sequence = [
+            (EIdentityGet(), const(alice_identity))
+        ]
+        dustbin = perform_sequence(sequence, eff)
         vlob['path'] = '/foo'
         vlob['removed_date'] = frozen_datetime().isoformat()
         vlob['key'] = to_jsonb64(b'<dummy-key-00000000000000000002>')
         assert dustbin == [vlob]
 
 
-def test_perform_manifest_history(app):
+def test_perform_manifest_history(app, alice_identity):
     eff = app.perform_manifest_history(EManifestHistory())
-    history = perform_sequence([], eff)
+    sequence = [
+        (EIdentityGet(), const(alice_identity))
+    ]
+    history = perform_sequence(sequence, eff)
     assert history == {'detailed_history': []}
 
 
-def test_perform_manifest_restore(app):
+def test_perform_manifest_restore(app, alice_identity):
     eff = app.perform_manifest_restore(EManifestRestore())
     with pytest.raises(ManifestError):
-        perform_sequence([], eff)
+        sequence = [
+            (EIdentityGet(), const(alice_identity))
+        ]
+        perform_sequence(sequence, eff)
 
 
-def test_perform_file_create(app, file):
+def test_perform_file_create(app, alice_identity, file):
     vlob = {'id': '2345', 'read_trust_seed': '42', 'write_trust_seed': '43'}
     block_id = '4567'
     # Already exist
@@ -152,10 +153,11 @@ def test_perform_file_create(app, file):
     sequence = [
         (EBlockCreate(''), const(block_id)),
         (EVlobCreate(blob), const(vlob)),
+        (EIdentityGet(), const(alice_identity)),
         (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
             const({'id': vlob['id'], 'blob': blob, 'version': 1})),
         (EBlockDelete(block_id), noop),
-        (EVlobDelete(vlob['id']), noop)
+        (EVlobDelete(vlob['id']), noop),
     ]
     with pytest.raises(ManifestError):
         perform_sequence(sequence, eff)
@@ -169,6 +171,7 @@ def test_perform_file_read(app, file, alice_identity):
     blob = to_jsonb64(blob)
     eff = app.perform_file_read(EFileRead('/foo'))
     sequence = [
+        (EIdentityGet(), const(alice_identity)),
         (EIdentityGet(), const(alice_identity)),
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
             const({'id': vlob['id'], 'blob': blob, 'version': 1})),
@@ -190,6 +193,7 @@ def test_perform_file_write(app, file, alice_identity):
     eff = app.perform_file_write(EFileWrite('/foo', b'foo', 0))
     sequence = [
         (EIdentityGet(), const(alice_identity)),
+        (EIdentityGet(), const(alice_identity)),
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
             const({'id': vlob['id'], 'blob': blob, 'version': 1})),
         (EVlobList(),
@@ -207,6 +211,7 @@ def test_perform_file_truncate(app, file, alice_identity):
     blob = to_jsonb64(blob)
     eff = app.perform_file_truncate(EFileTruncate('/foo', 0))
     sequence = [
+        (EIdentityGet(), const(alice_identity)),
         (EIdentityGet(), const(alice_identity)),
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
             const({'id': vlob['id'], 'blob': blob, 'version': 1})),
@@ -227,6 +232,7 @@ def test_perform_file_history(app, file, alice_identity):
     eff = app.perform_file_history(EFileHistory('/foo', 1, 1))
     sequence = [
         (EIdentityGet(), const(alice_identity)),
+        (EIdentityGet(), const(alice_identity)),
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
             const({'id': vlob['id'], 'blob': blob, 'version': 1})),
         (EVlobList(),
@@ -243,6 +249,7 @@ def test_perform_file_restore(app, file, alice_identity):
     blob = to_jsonb64(blob)
     eff = app.perform_file_restore(EFileRestore('/foo'))
     sequence = [
+        (EIdentityGet(), const(alice_identity)),
         (EIdentityGet(), const(alice_identity)),
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
             const({'id': vlob['id'], 'blob': blob, 'version': 2})),
@@ -262,37 +269,58 @@ def test_perform_file_restore(app, file, alice_identity):
     perform_sequence(sequence, eff)
 
 
-def test_perform_folder_create(app):
+def test_perform_folder_create(app, alice_identity):
     eff = app.perform_folder_create(EFolderCreate('/dir'))
-    ret = perform_sequence([], eff)
+    sequence = [
+        (EIdentityGet(), const(alice_identity))
+    ]
+    ret = perform_sequence(sequence, eff)
     assert ret is None
 
 
-def test_perform_stat(app, file):
+def test_perform_stat(app, alice_identity, file):
     eff = app.perform_folder_create(EFolderCreate('/dir'))
-    ret = perform_sequence([], eff)
+    sequence = [
+        (EIdentityGet(), const(alice_identity))
+    ]
+    ret = perform_sequence(sequence, eff)
     eff = app.perform_stat(EStat('/dir'))
-    ret = perform_sequence([], eff)
+    sequence = [
+        (EIdentityGet(), const(alice_identity))
+    ]
+    ret = perform_sequence(sequence, eff)
     assert ret == {'children': [], 'type': 'folder'}
 
 
-def test_perform_move(app):
+def test_perform_move(app, alice_identity):
     eff = app.perform_folder_create(EFolderCreate('/dir'))
-    ret = perform_sequence([], eff)
+    sequence = [
+        (EIdentityGet(), const(alice_identity))
+    ]
+    ret = perform_sequence(sequence, eff)
     eff = app.perform_move(EMove('/dir', '/dir2'))
-    ret = perform_sequence([], eff)
+    sequence = [
+        (EIdentityGet(), const(alice_identity))
+    ]
+    ret = perform_sequence(sequence, eff)
     assert ret is None
 
 
-def test_perform_delete(app):
+def test_perform_delete(app, alice_identity):
     eff = app.perform_folder_create(EFolderCreate('/dir'))
-    ret = perform_sequence([], eff)
+    sequence = [
+        (EIdentityGet(), const(alice_identity))
+    ]
+    ret = perform_sequence(sequence, eff)
     eff = app.perform_delete(EDelete('/dir'))
-    ret = perform_sequence([], eff)
+    sequence = [
+        (EIdentityGet(), const(alice_identity))
+    ]
+    ret = perform_sequence(sequence, eff)
     assert ret is None
 
 
-def test_perform_undelete(app, file):
+def test_perform_undelete(app, alice_identity, file):
     vlob = {'id': '2345', 'read_trust_seed': '42', 'write_trust_seed': '43'}
     blob = [{'blocks': [{'block': '4567', 'digest': digest(b''), 'size': 0}],
              'key': to_jsonb64(b'<dummy-key-00000000000000000001>')}]
@@ -300,6 +328,7 @@ def test_perform_undelete(app, file):
     blob = to_jsonb64(blob)
     eff = app.perform_delete(EDelete('/foo'))
     sequence = [
+        (EIdentityGet(), const(alice_identity)),
         (EVlobRead(vlob['id'], vlob['read_trust_seed']),
             const({'id': vlob['id'], 'blob': blob, 'version': 1})),
         (EVlobList(),
@@ -313,5 +342,8 @@ def test_perform_undelete(app, file):
     ]
     ret = perform_sequence(sequence, eff)
     eff = app.perform_undelete(EUndelete('2345'))
-    ret = perform_sequence([], eff)
+    sequence = [
+        (EIdentityGet(), const(alice_identity))
+    ]
+    ret = perform_sequence(sequence, eff)
     assert ret is None

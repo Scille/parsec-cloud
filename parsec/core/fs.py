@@ -1,13 +1,12 @@
 from copy import deepcopy
 
 import attr
-import blinker
 from effect2 import TypeDispatcher, do, Effect
 
 from parsec.core.file import File
 from parsec.core.manifest import UserManifest
 from parsec.core.identity import EIdentityGet
-from parsec.exceptions import FileNotFound, ManifestError, ManifestNotFound
+from parsec.exceptions import FileNotFound, IdentityNotLoadedError, ManifestError, ManifestNotFound
 
 
 @attr.s
@@ -105,42 +104,42 @@ class FSComponent:
 
     def __init__(self):
         self.user_manifest = None
-        blinker.signal('app_start').connect(self.on_app_start)
-
-    @do
-    def on_app_start(self, app):
-        self.app = app
-        self.user_manifest = yield self._get_manifest()
 
     @do
     def perform_synchronize(self, intent):
-        yield self.user_manifest.commit(recursive=True)
+        user_manifest = yield self._get_manifest()
+        yield user_manifest.commit(recursive=True)
 
     @do
     def perform_group_create(self, intent):
-        yield self.user_manifest.create_group_manifest(intent.group)
+        user_manifest = yield self._get_manifest()
+        yield user_manifest.create_group_manifest(intent.group)
 
     @do
     def perform_dustbin_show(self, intent):
-        return self.user_manifest.show_dustbin(intent.path)
+        user_manifest = yield self._get_manifest()
+        return user_manifest.show_dustbin(intent.path)
 
     @do
     def perform_manifest_history(self, intent):
-        history = yield self.user_manifest.history(intent.first_version,
-                                                   intent.last_version,
-                                                   intent.summary)
+        user_manifest = yield self._get_manifest()
+        history = yield user_manifest.history(intent.first_version,
+                                              intent.last_version,
+                                              intent.summary)
         return history
 
     @do
     def perform_manifest_restore(self, intent):
-        yield self.user_manifest.restore(intent.version)
+        user_manifest = yield self._get_manifest()
+        yield user_manifest.restore(intent.version)
 
     @do
     def perform_file_create(self, intent):
         file = yield File.create()
         vlob = file.get_vlob()
+        user_manifest = yield self._get_manifest()
         try:
-            self.user_manifest.add_file(intent.path, vlob)
+            user_manifest.add_file(intent.path, vlob)
         except (ManifestError, ManifestNotFound) as ex:
             yield file.discard()
             raise ex
@@ -174,24 +173,29 @@ class FSComponent:
 
     @do
     def perform_folder_create(self, intent):
-        self.user_manifest.create_folder(intent.path)
+        user_manifest = yield self._get_manifest()
+        user_manifest.create_folder(intent.path)
 
     @do
     def perform_stat(self, intent):
-        stat = yield self.user_manifest.stat(intent.path)
+        user_manifest = yield self._get_manifest()
+        stat = yield user_manifest.stat(intent.path)
         return stat
 
     @do
     def perform_move(self, intent):
-        self.user_manifest.move(intent.src, intent.dst)
+        user_manifest = yield self._get_manifest()
+        user_manifest.move(intent.src, intent.dst)
 
     @do
     def perform_delete(self, intent):
-        yield self.user_manifest.delete(intent.path)
+        user_manifest = yield self._get_manifest()
+        yield user_manifest.delete(intent.path)
 
     @do
     def perform_undelete(self, intent):
-        self.user_manifest.undelete_file(intent.vlob)
+        user_manifest = yield self._get_manifest()
+        user_manifest.undelete_file(intent.vlob)
 
     @do
     def _get_file(self, path, group=None):
@@ -216,7 +220,10 @@ class FSComponent:
         if (not self.user_manifest or
             self.user_manifest.encryptor._hazmat_private_key !=
                 identity.private_key._hazmat_private_key):
+            if not identity:
+                raise IdentityNotLoadedError('Identity not loaded.')
             manifest = yield UserManifest.load(identity.private_key._hazmat_private_key)
+            self.user_manifest = manifest
         else:
             manifest = self.user_manifest
         if group:
@@ -229,7 +236,8 @@ class FSComponent:
         if group and not id and not path:
             manifest = yield self._get_manifest(group)
             return manifest.get_vlob()
-        groups = [group] if group else [None] + list(self.user_manifest.get_group_vlobs())
+        user_manifest = yield self._get_manifest()
+        groups = [group] if group else [None] + list(user_manifest.get_group_vlobs())
         for current_group in groups:
             manifest = yield self._get_manifest(current_group)
             if dustbin:
