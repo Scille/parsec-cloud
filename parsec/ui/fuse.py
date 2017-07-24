@@ -37,6 +37,8 @@ class File:
         self._operations = operations
         self.flags = flags
         self.modifications = []
+        self.written_data = 0
+        self.max_written_data = 500000
 
     def read(self, size=None, offset=0):
         self.flush()
@@ -49,6 +51,10 @@ class File:
 
     def write(self, data, offset=0):
         self.modifications.append((self.write, data, offset))
+        self.written_data += len(data)
+        if self.written_data > self.max_written_data:
+            self.flush()
+            self.written_data = 0
 
     def truncate(self, length):
         self.modifications.append((self.truncate, length))
