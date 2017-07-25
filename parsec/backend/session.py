@@ -6,7 +6,7 @@ from marshmallow import fields
 from effect2 import do, Effect, TypeDispatcher
 from cryptography.exceptions import InvalidSignature
 
-from parsec.backend.pubkey import EPubkeyGet
+from parsec.backend.pubkey import EPubKeyGet
 from parsec.exceptions import PubKeyNotFound, HandshakeError
 from parsec.tools import UnknownCheckedSchema, ejson_dumps, ejson_loads
 
@@ -59,7 +59,7 @@ class SessionComponent:
         resp = HandshakeAnswerSchema().load(resp)
         claimed_identity = resp['identity']
         try:
-            pubkey = yield Effect(EPubkeyGet(claimed_identity))
+            pubkey = yield Effect(EPubKeyGet(claimed_identity))
             pubkey.verify(resp['answer'], challenge.encode())
             yield Effect(EHandshakeSend('{"status": "ok", "handshake": "done"}'))
             self.id = claimed_identity

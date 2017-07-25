@@ -1,5 +1,6 @@
 import pytest
-from effect2.testing import const, perform_sequence, raise_, noop
+import asyncio
+from effect2.testing import const, conste, noop, perform_sequence, asyncio_perform_sequence
 
 from parsec.backend.backend_api import execute_cmd
 from parsec.backend.group import (
@@ -8,105 +9,135 @@ from parsec.backend.group import (
 )
 from parsec.exceptions import GroupError, GroupAlreadyExist, GroupNotFound
 
+from tests.common import can_side_effect_or_skip
+from tests.backend.common import init_or_skiptest_parsec_postgresql
+
+
+async def bootstrap_PostgreSQLGroupComponent(request, event_loop):
+    can_side_effect_or_skip()
+    module, url = await init_or_skiptest_parsec_postgresql(event_loop)
+
+    conn = module.PostgreSQLConnection(url)
+    await conn.open_connection(event_loop)
+
+    def finalize():
+        event_loop.run_until_complete(conn.close_connection())
+
+    request.addfinalizer(finalize)
+    return module.PostgreSQLGroupComponent(conn)
+
+
+@pytest.fixture(params=[MockedGroupComponent, bootstrap_PostgreSQLGroupComponent],
+                ids=['mocked', 'postgresql'])
+def component(request, event_loop):
+    if asyncio.iscoroutinefunction(request.param):
+        return event_loop.run_until_complete(request.param(request, event_loop))
+    else:
+        return request.param()
+
 
 @pytest.fixture
-def component():
-    return MockedGroupComponent()
-
-
-@pytest.fixture
-def group(component, name='super adventure club'):
+def group(event_loop, component, name='super adventure club'):
     intent = EGroupCreate(name)
     eff = component.perform_group_create(intent)
-    perform_sequence([], eff)
+    event_loop.run_until_complete(asyncio_perform_sequence([], eff))
     return name
 
 
-def read_group(component, group_name):
+async def read_group(component, group_name):
     intent = EGroupRead(group_name)
     eff = component.perform_group_read(intent)
-    return perform_sequence([], eff)
+    return await asyncio_perform_sequence([], eff)
 
 
-def add_identities_group(component, group_name, identities, admin=False):
+async def add_identities_group(component, group_name, identities, admin=False):
     identities = set(identities)
     intent = EGroupAddIdentities(group_name, identities, admin)
     eff = component.perform_group_add_identities(intent)
-    perform_sequence([], eff)
+    await asyncio_perform_sequence([], eff)
 
 
-def remove_identities_group(component, group_name, identities, admin=False):
+async def remove_identities_group(component, group_name, identities, admin=False):
     identities = set(identities)
     intent = EGroupRemoveIdentities(group_name, identities, admin)
     eff = component.perform_group_remove_identities(intent)
-    perform_sequence([], eff)
+    await asyncio_perform_sequence([], eff)
 
 
 class TestGroupComponent:
-    def test_group_create(self, component):
+    @pytest.mark.asyncio
+    async def test_group_create(self, component):
         intent = EGroupCreate('super adventure club')
         eff = component.perform_group_create(intent)
         sequence = [
         ]
-        ret = perform_sequence(sequence, eff)
+        ret = await asyncio_perform_sequence(sequence, eff)
         assert ret is None
 
-    def test_group_create_already_exist(self, component, group):
+    @pytest.mark.asyncio
+    async def test_group_create_already_exist(self, component, group):
         intent = EGroupCreate(group)
         with pytest.raises(GroupAlreadyExist):
             eff = component.perform_group_create(intent)
             sequence = [
             ]
-            perform_sequence(sequence, eff)
+            await asyncio_perform_sequence(sequence, eff)
 
-    def test_group_read(self, component, group):
+    @pytest.mark.asyncio
+    async def test_group_read(self, component, group):
         intent = EGroupRead(group)
         eff = component.perform_group_read(intent)
         sequence = [
         ]
-        ret = perform_sequence(sequence, eff)
+        ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == Group(group)
 
-    def test_group_read_unknown(self, component):
+    @pytest.mark.asyncio
+    async def test_group_read_unknown(self, component):
         intent = EGroupRead('dummy group')
         with pytest.raises(GroupError):
             eff = component.perform_group_read(intent)
             sequence = [
             ]
-            perform_sequence(sequence, eff)
+            await asyncio_perform_sequence(sequence, eff)
 
-    def test_group_add_identity(self, component, group):
-        add_identities_group(component, group, {'zack@test.com'}, False)
+    @pytest.mark.asyncio
+    async def test_group_add_identity(self, component, group):
+        await add_identities_group(component, group, {'zack@test.com'}, False)
         # Add admins as well
-        add_identities_group(component, group, {'alice@test.com', 'bob@test.com'}, True)
-        assert read_group(component, group) == Group(
-            group, admins={'alice@test.com', 'bob@test.com'}, users={'zack@test.com'})
+        await add_identities_group(component, group, {'alice@test.com', 'bob@test.com'}, True)
+        res = await read_group(component, group)
+        assert res == Group(group, admins={'alice@test.com', 'bob@test.com'},
+                            users={'zack@test.com'})
 
-    def test_unknown_group_add_identity(self, component):
+    @pytest.mark.asyncio
+    async def test_unknown_group_add_identity(self, component):
         with pytest.raises(GroupNotFound):
             intent = EGroupAddIdentities('dummy-group', {'alice@test.com'}, False)
             eff = component.perform_group_add_identities(intent)
-            perform_sequence([], eff)
+            await asyncio_perform_sequence([], eff)
 
-    def test_unknown_group_remove_identity(self, component):
+    @pytest.mark.asyncio
+    async def test_unknown_group_remove_identity(self, component):
         with pytest.raises(GroupNotFound):
             intent = EGroupRemoveIdentities('dummy-group', {'alice@test.com'}, False)
             eff = component.perform_group_remove_identities(intent)
-            perform_sequence([], eff)
+            await asyncio_perform_sequence([], eff)
 
-    def test_group_remove_identity(self, component, group):
-        add_identities_group(component, group,
+    @pytest.mark.asyncio
+    async def test_group_remove_identity(self, component, group):
+        await add_identities_group(component, group,
             {'user1@test.com', 'user2@test.com', 'user3@test.com'}, False)
-        add_identities_group(component, group, {'adminA@test.com', 'adminB@test.com'}, True)
+        await add_identities_group(component, group, {'adminA@test.com', 'adminB@test.com'}, True)
         # Remove some users
-        remove_identities_group(component, group, {'user1@test.com', 'user3@test.com'}, False)
-        remove_identities_group(component, group, {'adminB@test.com'}, True)
+        await remove_identities_group(component, group, {'user1@test.com', 'user3@test.com'}, False)
+        await remove_identities_group(component, group, {'adminB@test.com'}, True)
         # Removing in wrong category does nothing
-        remove_identities_group(component, group, {'user2@test.com'}, True)
-        remove_identities_group(component, group, {'adminA@test.com'}, False)
+        await remove_identities_group(component, group, {'user2@test.com'}, True)
+        await remove_identities_group(component, group, {'adminA@test.com'}, False)
         # Check the result
-        assert read_group(component, group) == Group(
-            group, admins={'adminA@test.com'}, users={'user2@test.com'})
+        res = await read_group(component, group)
+        assert res == Group(group, admins={'adminA@test.com'}, users={'user2@test.com'})
 
 
 class TestGroupAPI:
@@ -123,7 +154,7 @@ class TestGroupAPI:
         eff = execute_cmd('group_create', {'name': 'super adventure club'})
         sequence = [
             (EGroupCreate('super adventure club'),
-                lambda x: raise_(GroupAlreadyExist('Group already exist.')))
+                conste(GroupAlreadyExist('Group already exist.')))
         ]
         ret = perform_sequence(sequence, eff)
         assert ret['status'] == 'group_already_exists'
@@ -171,7 +202,7 @@ class TestGroupAPI:
     def test_group_read_unknown(self):
         eff = execute_cmd('group_read', {'name': 'dummy-group'})
         sequence = [
-            (EGroupRead('dummy-group'), lambda x: raise_(GroupNotFound('Group not found.')))
+            (EGroupRead('dummy-group'), conste(GroupNotFound('Group not found.')))
         ]
         ret = perform_sequence(sequence, eff)
         assert ret['status'] == 'group_not_found'

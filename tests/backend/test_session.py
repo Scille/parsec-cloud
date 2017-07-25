@@ -4,7 +4,7 @@ from effect2.testing import const, perform_sequence, noop
 
 from parsec.backend.session import (
     SessionComponent, EHandshakeSend, EHandshakeRecv, EGetAuthenticatedUser)
-from parsec.backend.pubkey import EPubkeyGet
+from parsec.backend.pubkey import EPubKeyGet
 from parsec.exceptions import HandshakeError
 
 from tests.test_crypto import mock_crypto_passthrough, alice
@@ -24,7 +24,7 @@ def test_handshake(component, mock_crypto_passthrough, alice):
                 noop),
             (EHandshakeRecv(),
                 const('{"handshake": "answer", "answer": "bXktY2hhbGxlbmdlLWFuc3dlcg==", "identity": "alice@test.com"}')),
-            (EPubkeyGet('alice@test.com', raw=False), const(alice.pub_key)),
+            (EPubKeyGet('alice@test.com', raw=False), const(alice.pub_key)),
             (EHandshakeSend(payload='{"status": "ok", "handshake": "done"}'),
                 noop)
         ]

@@ -1,6 +1,6 @@
 import pytest
 
-from effect2.testing import const, noop, perform_sequence, raise_
+from effect2.testing import const, conste, noop, perform_sequence
 
 from parsec.core.backend_vlob import (EBackendVlobCreate, EBackendVlobUpdate, EBackendVlobRead,
                                       VlobAccess, VlobAtom)
@@ -52,15 +52,14 @@ def test_perform_block_read(app):
     # Not found
     eff = app.perform_block_read(EBlockRead('123'))
     sequence = [
-        (EBackendBlockRead('123'),
-            lambda _: raise_(BlockNotFound('Block not found.')))
+        (EBackendBlockRead('123'), conste(BlockNotFound('Block not found.')))
     ]
     with pytest.raises(BlockNotFound):
         block = perform_sequence(sequence, eff)
     eff = app.perform_block_read(EBlockRead('123'))
     sequence = [
         (EBackendBlockRead('123'),
-            lambda _: raise_(BlockError('Block error.')))  # TODO keep it? usefull with multiple backends...
+            conste(BlockError('Block error.')))  # TODO keep it? usefull with multiple backends...
     ]
     with pytest.raises(BlockNotFound):
         block = perform_sequence(sequence, eff)

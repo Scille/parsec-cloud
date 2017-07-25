@@ -1,5 +1,6 @@
 import pytest
-from effect2.testing import const, perform_sequence, noop
+import asyncio
+from effect2.testing import const, perform_sequence, asyncio_perform_sequence, noop
 
 from parsec.base import EEvent
 from parsec.backend.session import EGetAuthenticatedUser
@@ -8,52 +9,78 @@ from parsec.backend.message import (
     EMessageNew, EMessageGet, InMemoryMessageComponent)
 from parsec.tools import to_jsonb64
 
+from tests.common import can_side_effect_or_skip
+from tests.backend.common import init_or_skiptest_parsec_postgresql
 
-@pytest.fixture
-def component():
-    return InMemoryMessageComponent()
+
+async def bootstrap_PostgreSQLMessageComponent(request, event_loop):
+    can_side_effect_or_skip()
+    module, url = await init_or_skiptest_parsec_postgresql(event_loop)
+
+    conn = module.PostgreSQLConnection(url)
+    await conn.open_connection(event_loop)
+
+    def finalize():
+        event_loop.run_until_complete(conn.close_connection())
+
+    request.addfinalizer(finalize)
+    return module.PostgreSQLMessageComponent(conn)
+
+
+@pytest.fixture(params=[InMemoryMessageComponent, bootstrap_PostgreSQLMessageComponent],
+                ids=['in_memory', 'postgresql'])
+def component(request, event_loop):
+    if asyncio.iscoroutinefunction(request.param):
+        return event_loop.run_until_complete(request.param(request, event_loop))
+    else:
+        return request.param()
 
 
 class TestMessageComponent:
 
-    def test_message_get_empty(self, component):
+    @pytest.mark.asyncio
+    async def test_message_get_empty(self, component):
         intent = EMessageGet(offset=0)
         eff = component.perform_message_get(intent)
         sequence = [
             (EGetAuthenticatedUser(), const('alice@test.com'))
         ]
-        ret = perform_sequence(sequence, eff)
+        ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == []
 
-    def test_message_new(self, component):
+    @pytest.mark.asyncio
+    async def test_message_new(self, component):
         intent = EMessageNew(recipient='alice@test.com', body=b'This is for alice.')
         eff = component.perform_message_new(intent)
         sequence = [
-            (EEvent('on_message_arrived', 'alice@test.com'), noop)
+            (EEvent('message_arrived', 'alice@test.com'), noop)
         ]
-        ret = perform_sequence(sequence, eff)
+        ret = await asyncio_perform_sequence(sequence, eff)
         assert ret is None
 
-    def test_message_retreive(self, component):
-        def _recv_msg(recipient):
+    @pytest.mark.asyncio
+    async def test_message_retreive(self, component):
+        async def _recv_msg(recipient):
             intent = EMessageGet(offset=0)
             eff = component.perform_message_get(intent)
             sequence = [(EGetAuthenticatedUser(), const(recipient))]
-            return perform_sequence(sequence, eff)
+            return await asyncio_perform_sequence(sequence, eff)
 
-        def _send_msg(recipient):
+        async def _send_msg(recipient):
             intent = EMessageNew(recipient=recipient, body=b'for %s' % recipient.encode())
             eff = component.perform_message_new(intent)
-            sequence = [(EEvent('on_message_arrived', recipient), noop)]
-            perform_sequence(sequence, eff)
+            sequence = [(EEvent('message_arrived', recipient), noop)]
+            await asyncio_perform_sequence(sequence, eff)
 
-        _send_msg('alice')
-        _send_msg('bob')
-        _send_msg('alice')
-        _send_msg('bob')
+        await _send_msg('alice')
+        await _send_msg('bob')
+        await _send_msg('alice')
+        await _send_msg('bob')
 
-        assert _recv_msg('alice') == [b'for alice', b'for alice']
-        assert _recv_msg('bob') == [b'for bob', b'for bob']
+        alice_messages = await _recv_msg('alice')
+        assert alice_messages == [b'for alice', b'for alice']
+        bob_messages = await _recv_msg('bob')
+        assert bob_messages == [b'for bob', b'for bob']
 
 
 class TestMessageAPI:

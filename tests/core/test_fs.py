@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 from effect2 import do, Effect
-from effect2.testing import const, noop, perform_sequence, raise_
+from effect2.testing import const, conste, noop, perform_sequence
 from freezegun import freeze_time
 from unittest.mock import Mock
 
@@ -115,9 +115,9 @@ def test_perform_dustbin_show(app, file):
             (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
                 const({'id': vlob['id'], 'blob': blob, 'version': 1})),
             (EBlockDelete('4567'),
-                lambda _: raise_(BlockNotFound('Block not found.'))),
+                conste(BlockNotFound('Block not found.'))),
             (EVlobDelete('2345'),
-                lambda _: raise_(VlobNotFound('Vlob not found.'))),
+                conste(VlobNotFound('Vlob not found.'))),
         ]
         perform_sequence(sequence, eff)
         eff = app.perform_dustbin_show(EDustbinShow())
@@ -307,9 +307,9 @@ def test_perform_undelete(app, file):
         (EVlobRead(vlob['id'], vlob['read_trust_seed'], 1),
             const({'id': vlob['id'], 'blob': blob, 'version': 1})),
         (EBlockDelete('4567'),
-            lambda _: raise_(BlockNotFound('Block not found.'))),
+            conste(BlockNotFound('Block not found.'))),
         (EVlobDelete('2345'),
-            lambda _: raise_(VlobNotFound('Vlob not found.')))
+            conste(VlobNotFound('Vlob not found.')))
     ]
     ret = perform_sequence(sequence, eff)
     eff = app.perform_undelete(EUndelete('2345'))

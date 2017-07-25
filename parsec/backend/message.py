@@ -54,7 +54,7 @@ class InMemoryMessageComponent:
     @do
     def perform_message_new(self, intent):
         self._messages[intent.recipient].append(intent.body)
-        yield Effect(EEvent('on_message_arrived', intent.recipient))
+        yield Effect(EEvent('message_arrived', intent.recipient))
 
     @do
     def perform_message_get(self, intent):

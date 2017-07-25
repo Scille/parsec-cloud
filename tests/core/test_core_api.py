@@ -1,5 +1,5 @@
 import pytest
-from effect2.testing import const, perform_sequence, raise_
+from effect2.testing import const, conste, perform_sequence
 from unittest.mock import Mock
 
 from parsec.core.core_api import execute_cmd, execute_raw_cmd
@@ -20,8 +20,7 @@ def test_execute_cmd():
 def test_catch_parsec_exception():
     eff = execute_cmd('identity_load', {'id': 'JohnDoe', 'key': 'MTIzNDU=\n'})
     sequence = [
-        (EIdentityLoad('JohnDoe', b'12345', None),
-            lambda _: raise_(ParsecError('error', 'msg'))),
+        (EIdentityLoad('JohnDoe', b'12345', None), conste(ParsecError('error', 'msg'))),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'error', 'label': 'msg'}

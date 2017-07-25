@@ -2,15 +2,15 @@ import attr
 from marshmallow import fields
 from effect2 import TypeDispatcher, Effect, do
 
-from parsec.exceptions import GroupError, GroupAlreadyExist, GroupNotFound
+from parsec.exceptions import GroupAlreadyExist, GroupNotFound
 from parsec.tools import UnknownCheckedSchema
 
 
 @attr.s
 class Group:
     name = attr.ib()
-    admins = attr.ib(default=attr.Factory(set))
-    users = attr.ib(default=attr.Factory(set))
+    admins = attr.ib(default=attr.Factory(set), convert=set)
+    users = attr.ib(default=attr.Factory(set), convert=set)
 
 
 @attr.s

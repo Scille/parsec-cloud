@@ -1,5 +1,6 @@
 import pytest
-from effect2.testing import const, perform_sequence, raise_, noop
+import asyncio
+from effect2.testing import const, conste, noop, perform_sequence, asyncio_perform_sequence
 
 from parsec.base import EEvent
 from parsec.backend.backend_api import execute_cmd
@@ -7,130 +8,174 @@ from parsec.backend.vlob import EVlobCreate, EVlobRead, EVlobUpdate, VlobAtom, M
 from parsec.exceptions import VlobNotFound, TrustSeedError
 from parsec.tools import to_jsonb64
 
+from tests.common import can_side_effect_or_skip
+from tests.backend.common import init_or_skiptest_parsec_postgresql
+
+
+async def bootstrap_PostgreSQLVlobComponent(request, event_loop):
+    can_side_effect_or_skip()
+    module, url = await init_or_skiptest_parsec_postgresql(event_loop)
+
+    conn = module.PostgreSQLConnection(url)
+    await conn.open_connection(event_loop)
+
+    def finalize():
+        event_loop.run_until_complete(conn.close_connection())
+
+    request.addfinalizer(finalize)
+    return module.PostgreSQLVlobComponent(conn)
+
+
+@pytest.fixture(params=[MockedVlobComponent, bootstrap_PostgreSQLVlobComponent],
+                ids=['mocked', 'postgresql'])
+def component(request, event_loop):
+    if asyncio.iscoroutinefunction(request.param):
+        return event_loop.run_until_complete(request.param(request, event_loop))
+    else:
+        return request.param()
+
 
 @pytest.fixture
-def component():
-    return MockedVlobComponent()
-
-
-@pytest.fixture
-def vlob(component):
+def vlob(component, event_loop):
     intent = EVlobCreate('123', b'foo')
     eff = component.perform_vlob_create(intent)
-    return perform_sequence([], eff)
+    return event_loop.run_until_complete(asyncio_perform_sequence([], eff))
 
 
 class TestVlobComponent:
-    def test_vlob_create(self, component):
+    @pytest.mark.asyncio
+    async def test_vlob_create(self, component):
         intent = EVlobCreate('123', b'foo')
         eff = component.perform_vlob_create(intent)
         sequence = [
         ]
-        ret = perform_sequence(sequence, eff)
+        ret = await asyncio_perform_sequence(sequence, eff)
         assert isinstance(ret, VlobAtom)
         assert ret.id == '123'
         assert ret.read_trust_seed
         assert ret.write_trust_seed
         assert ret.version == 1
 
-    def test_vlob_read_ok(self, component, vlob):
+    @pytest.mark.asyncio
+    async def test_vlob_create_autoid(self, component):
+        intent = EVlobCreate(blob=b'foo')
+        eff = component.perform_vlob_create(intent)
+        sequence = [
+        ]
+        ret = await asyncio_perform_sequence(sequence, eff)
+        assert isinstance(ret, VlobAtom)
+        assert ret.id
+        assert ret.read_trust_seed
+        assert ret.write_trust_seed
+        assert ret.version == 1
+
+    @pytest.mark.asyncio
+    async def test_vlob_read_ok(self, component, vlob):
         intent = EVlobRead(vlob.id, vlob.read_trust_seed)
         eff = component.perform_vlob_read(intent)
         sequence = [
         ]
-        ret = perform_sequence(sequence, eff)
+        ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == vlob
 
-    def test_vlob_read_previous_version(self, component, vlob):
+    @pytest.mark.asyncio
+    async def test_vlob_read_previous_version(self, component, vlob):
         # Update vlob
         intent = EVlobUpdate(vlob.id, 2, vlob.write_trust_seed, b'Next version.')
         eff = component.perform_vlob_update(intent)
         sequence = [
             (EEvent('vlob_updated', vlob.id), noop)
         ]
-        perform_sequence(sequence, eff)
+        await asyncio_perform_sequence(sequence, eff)
         # Read previous version
         intent = EVlobRead(vlob.id, vlob.read_trust_seed, version=1)
         eff = component.perform_vlob_read(intent)
         sequence = [
         ]
-        ret = perform_sequence(sequence, eff)
+        ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == vlob
 
-    def test_vlob_read_missing(self, component, vlob):
+    @pytest.mark.asyncio
+    async def test_vlob_read_missing(self, component, vlob):
         intent = EVlobRead('dummy-id', vlob.read_trust_seed)
         with pytest.raises(VlobNotFound):
             eff = component.perform_vlob_read(intent)
             sequence = [
             ]
-            perform_sequence(sequence, eff)
+            await asyncio_perform_sequence(sequence, eff)
 
-    def test_vlob_read_wrong_seed(self, component, vlob):
+    @pytest.mark.asyncio
+    async def test_vlob_read_wrong_seed(self, component, vlob):
         intent = EVlobRead(vlob.id, 'dummy-seed')
         with pytest.raises(TrustSeedError):
             eff = component.perform_vlob_read(intent)
             sequence = [
             ]
-            perform_sequence(sequence, eff)
+            await asyncio_perform_sequence(sequence, eff)
         intent = EVlobRead(vlob.id, vlob.write_trust_seed)
         with pytest.raises(TrustSeedError):
             eff = component.perform_vlob_read(intent)
             sequence = [
             ]
-            perform_sequence(sequence, eff)
+            await asyncio_perform_sequence(sequence, eff)
 
-    def test_vlob_read_wrong_version(self, component, vlob):
+    @pytest.mark.asyncio
+    async def test_vlob_read_wrong_version(self, component, vlob):
         intent = EVlobRead(vlob.id, vlob.read_trust_seed, version=42)
         with pytest.raises(VlobNotFound):
             eff = component.perform_vlob_read(intent)
             sequence = [
             ]
-            perform_sequence(sequence, eff)
+            await asyncio_perform_sequence(sequence, eff)
 
-    def test_vlob_update_ok(self, component, vlob):
+    @pytest.mark.asyncio
+    async def test_vlob_update_ok(self, component, vlob):
         intent = EVlobUpdate(vlob.id, 2, vlob.write_trust_seed, b'Next version.')
         eff = component.perform_vlob_update(intent)
         sequence = [
             (EEvent('vlob_updated', vlob.id), noop)
         ]
-        perform_sequence(sequence, eff)
+        await asyncio_perform_sequence(sequence, eff)
         # Check back the value
         intent = EVlobRead(vlob.id, vlob.read_trust_seed, version=2)
         eff = component.perform_vlob_read(intent)
-        ret = perform_sequence([], eff)
+        ret = await asyncio_perform_sequence([], eff)
         assert ret.id == vlob.id
         assert ret.version == 2
         assert ret.blob == b'Next version.'
 
-    def test_vlob_update_missing(self, component, vlob):
+    @pytest.mark.asyncio
+    async def test_vlob_update_missing(self, component, vlob):
         intent = EVlobUpdate('dummy-id', 2, vlob.read_trust_seed, b'Next version.')
         with pytest.raises(VlobNotFound):
             eff = component.perform_vlob_update(intent)
             sequence = [
             ]
-            perform_sequence(sequence, eff)
+            await asyncio_perform_sequence(sequence, eff)
 
-    def test_vlob_update_wrong_seed(self, component, vlob):
+    @pytest.mark.asyncio
+    async def test_vlob_update_wrong_seed(self, component, vlob):
         intent = EVlobUpdate(vlob.id, 2, 'dummy-seed', b'Next version.')
         with pytest.raises(TrustSeedError):
             eff = component.perform_vlob_update(intent)
             sequence = [
             ]
-            perform_sequence(sequence, eff)
+            await asyncio_perform_sequence(sequence, eff)
         intent = EVlobUpdate(vlob.id, 2, vlob.read_trust_seed, b'Next version.')
         with pytest.raises(TrustSeedError):
             eff = component.perform_vlob_update(intent)
             sequence = [
             ]
-            perform_sequence(sequence, eff)
+            await asyncio_perform_sequence(sequence, eff)
 
-    def test_vlob_update_wrong_version(self, component, vlob):
+    @pytest.mark.asyncio
+    async def test_vlob_update_wrong_version(self, component, vlob):
         intent = EVlobUpdate(vlob.id, 42, vlob.write_trust_seed, b'Next version.')
         with pytest.raises(VlobNotFound):
             eff = component.perform_vlob_update(intent)
             sequence = [
             ]
-            perform_sequence(sequence, eff)
+            await asyncio_perform_sequence(sequence, eff)
 
 
 class TestVlobAPI:
@@ -185,7 +230,7 @@ class TestVlobAPI:
     def test_vlob_read_not_found(self):
         eff = execute_cmd('vlob_read', {'id': '1234', 'trust_seed': 'TS4242'})
         sequence = [
-            (EVlobRead('1234', 'TS4242'), lambda x: raise_(VlobNotFound('Vlob not found.')))
+            (EVlobRead('1234', 'TS4242'), conste(VlobNotFound('Vlob not found.')))
         ]
         ret = perform_sequence(sequence, eff)
         assert ret == {'status': 'vlob_not_found', 'label': 'Vlob not found.'}
@@ -230,7 +275,7 @@ class TestVlobAPI:
         eff = execute_cmd('vlob_read', msg)
         sequence = [
             (EVlobRead('123', 'TS42', 2),
-                lambda x: raise_(VlobNotFound('Vlob not found.')))
+                conste(VlobNotFound('Vlob not found.')))
         ]
         ret = perform_sequence(sequence, eff)
         assert ret['status'] == 'vlob_not_found'
@@ -251,7 +296,7 @@ class TestVlobAPI:
             {'id': '1234', 'trust_seed': 'WTS4242', 'version': 2, 'blob': blob})
         sequence = [
             (EVlobUpdate('1234', 2, 'WTS4242', b'Next version.'),
-                lambda x: raise_(VlobNotFound('Vlob not found.')))
+                conste(VlobNotFound('Vlob not found.')))
         ]
         ret = perform_sequence(sequence, eff)
         assert ret == {'status': 'vlob_not_found', 'label': 'Vlob not found.'}
@@ -300,7 +345,7 @@ class TestVlobAPI:
         eff = execute_cmd('vlob_update', msg)
         sequence = [
             (EVlobUpdate('123', 2, 'WTS42', b'Next version.'),
-                lambda x: raise_(VlobNotFound('Vlob not found.')))
+                conste(VlobNotFound('Vlob not found.')))
         ]
         ret = perform_sequence(sequence, eff)
         assert ret['status'] == 'vlob_not_found'
@@ -315,7 +360,7 @@ class TestVlobAPI:
         eff = execute_cmd('vlob_update', msg)
         sequence = [
             (EVlobUpdate('123', 2, 'dummy_seed', b'Next version.'),
-                lambda x: raise_(TrustSeedError('Bad trust seed.')))
+                conste(TrustSeedError('Bad trust seed.')))
         ]
         ret = perform_sequence(sequence, eff)
         assert ret['status'] == 'trust_seed_error'

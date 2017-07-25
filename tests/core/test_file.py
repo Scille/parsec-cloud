@@ -1,7 +1,7 @@
 from copy import deepcopy
 import random
 
-from effect2.testing import const, noop, perform_sequence, raise_
+from effect2.testing import const, conste, noop, perform_sequence
 import pytest
 
 from parsec.core.file import ContentBuilder, File
@@ -348,7 +348,7 @@ class TestFile:
             (EVlobRead(vlob_id, '42', 6),  # Discard
                 const({'id': vlob_id, 'blob': blob, 'version': 6})),
             (EBlockDelete('4567'),
-                lambda _: raise_(BlockNotFound('Block not found.'))),
+                conste(BlockNotFound('Block not found.'))),
             (EBlockDelete('5678'),
                 noop),
             (EBlockDelete('6789'),
@@ -369,7 +369,7 @@ class TestFile:
             (EVlobRead(vlob_id, '42', 7),
                 const({'id': vlob_id, 'blob': new_blob, 'version': 7})),
             (EBlockDelete('4567'),
-                lambda _: raise_(BlockNotFound('Block not found.'))),
+                conste(BlockNotFound('Block not found.'))),
             (EBlockDelete('7654'),
                 noop),
             (EBlockDelete('6789'),
@@ -492,7 +492,7 @@ class TestFile:
             (EVlobRead(vlob_id, '42', 3),
                 const({'id': vlob_id, 'blob': new_blob_2, 'version': 3})),
             (EBlockDelete('5678'),
-                lambda _: raise_(BlockNotFound('Block not found.'))),
+                conste(BlockNotFound('Block not found.'))),
             (EBlockDelete('6789'),
                 noop),
         ]
@@ -551,7 +551,7 @@ class TestFile:
             (EVlobRead('1234', '42', 1),
                 const({'id': '1234', 'blob': new_blob, 'version': 1})),
             (EBlockDelete('5678'),
-                lambda _: raise_(BlockNotFound('Block not found.'))),
+                conste(BlockNotFound('Block not found.'))),
             (EBlockDelete('6789'),
                 noop),
             (EVlobRead('1234', '42', 1),
@@ -594,13 +594,13 @@ class TestFile:
             (EVlobRead('1234', '42', 1),
                 const({'id': '1234', 'blob': blob, 'version': 1})),
             (EBlockDelete('4567'),
-                lambda _: raise_(BlockNotFound('Block not found.'))),
+                conste(BlockNotFound('Block not found.'))),
             (EBlockDelete('5678'),
                 noop),
             (EBlockDelete('6789'),
                 noop),
             (EVlobDelete('1234'),
-                lambda _: raise_(VlobNotFound('Block not found.')))  # TODO vlob OR block exceptin
+                conste(VlobNotFound('Block not found.')))  # TODO vlob OR block exceptin
         ]
         ret = perform_sequence(sequence, file.discard())
         assert ret is False

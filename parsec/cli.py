@@ -10,7 +10,7 @@ from logbook import WARNING
 from effect2 import Effect, do
 
 from parsec.backend import app_factory as backend_app_factory, run_app as backend_run_app
-from parsec.backend.pubkey import MockedPubkeyComponent, EPubkeyAdd
+from parsec.backend.pubkey import MockedPubKeyComponent, EPubKeyAdd, EPubKeyGet
 from parsec.backend.vlob import MockedVlobComponent
 from parsec.backend.user_vlob import MockedUserVlobComponent
 from parsec.backend.message import InMemoryMessageComponent
@@ -23,6 +23,7 @@ from parsec.core.privkey import PrivKeyComponent
 from parsec.core.synchronizer import SynchronizerComponent
 from parsec.core.block import in_memory_block_dispatcher_factory, s3_block_dispatcher_factory
 from parsec.core.identity import EIdentityLoad
+from parsec.exceptions import PubKeyNotFound
 from parsec.ui.shell import start_shell
 from parsec.tools import logger_stream
 
@@ -211,17 +212,19 @@ def backend(**kwargs):
 def _backend(host, port, pubkeys, no_client_auth, store, debug):
     host = host or environ.get('HOST', 'localhost')
     port = port or int(environ.get('PORT', 6777))
+    loop = asyncio.get_event_loop()
     # TODO load pubkeys attribute
     if store:
         if store.startswith('postgres://'):
             store_type = 'PostgreSQL'
-            raise NotImplementedError()
-            # from parsec.backend import postgresql
-            # server.register_service(postgresql.PostgreSQLService(store))
-            # server.register_service(postgresql.PostgreSQLMessageService())
-            # server.register_service(postgresql.PostgreSQLGroupService())
-            # server.register_service(postgresql.PostgreSQLUserVlobService())
-            # server.register_service(postgresql.PostgreSQLVlobService())
+            from parsec.backend import postgresql
+            conn = postgresql.PostgreSQLConnection(store)
+            loop.run_until_complete(conn.open_connection())
+            message_component = postgresql.PostgreSQLMessageComponent(conn)
+            group_component = postgresql.PostgreSQLGroupComponent(conn)
+            user_vlob_component = postgresql.PostgreSQLUserVlobComponent(conn)
+            vlob_component = postgresql.PostgreSQLVlobComponent(conn)
+            pubkey_component = postgresql.PostgreSQLPubKeyComponent(conn)
         else:
             raise SystemExit('Unknown store `%s` (should be a postgresql db url).' % store)
     else:
@@ -230,8 +233,7 @@ def _backend(host, port, pubkeys, no_client_auth, store, debug):
         group_component = MockedGroupComponent()
         user_vlob_component = MockedUserVlobComponent()
         vlob_component = MockedVlobComponent()
-        pubkey_component = MockedPubkeyComponent()
-    loop = asyncio.get_event_loop()
+        pubkey_component = MockedPubKeyComponent()
     app = backend_app_factory(
         message_component.get_dispatcher(),
         group_component.get_dispatcher(),
@@ -241,8 +243,13 @@ def _backend(host, port, pubkeys, no_client_auth, store, debug):
     )
 
     # TODO: remove me once RSA key loading and backend handling are easier
-    loop.run_until_complete(app.async_perform(
-        Effect(EPubkeyAdd(JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY))))
+    @do
+    def insert_john():
+        try:
+            yield Effect(EPubKeyGet(JOHN_DOE_IDENTITY))
+        except PubKeyNotFound:
+            yield Effect(EPubKeyAdd(JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY))
+    loop.run_until_complete(app.async_perform(insert_john()))
 
     if debug:
         loop.set_debug(True)

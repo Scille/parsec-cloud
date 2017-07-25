@@ -5,5 +5,5 @@ __email__ = 'emmanuel.leblond@gmail.com'
 
 from .base import ChainedIntent, Effect, do, TypeDispatcher, ComposedDispatcher, raise_, UnknownIntent
 from .sync import sync_perform, base_sync_dispatcher
-from .asyncio import asyncio_perform, base_asyncio_dispatcher
+from .asyncio import asyncio_perform, base_asyncio_dispatcher, AsyncFunc, async_do
 from .intents import Delay, Constant, Error, Func, base_dispatcher

@@ -1,8 +1,43 @@
 import attr
 from contextlib import contextmanager
 
-from . import Effect, sync_perform, raise_, UnknownIntent
+from . import Effect, AsyncFunc, sync_perform, asyncio_perform, raise_, UnknownIntent
 from .intents import base_dispatcher
+
+
+async def asyncio_perform_sequence(seq, effect, fallback_dispatcher=None):
+    assert isinstance(effect, (Effect, AsyncFunc))
+    seq = list(seq)
+
+    def fmt_log():
+        next_item = ''
+        if len(sequence.sequence) > 0:
+            next_item = '\nNEXT EXPECTED: %s' % (sequence.sequence[0][0],)
+        return '{{{\n%s%s\n}}}' % (
+            '\n'.join('%s: %s' % x for x in log),
+            next_item)
+
+    def dispatcher(intent):
+        p = sequence(intent)
+        if p is not None:
+            log.append(("sequence", intent))
+            return p
+        try:
+            p = fallback_dispatcher(intent)
+            log.append(("fallback", intent))
+            return p
+        except UnknownIntent:
+            log.append(("NOT FOUND", intent))
+            raise AssertionError(
+                "Performer not found: %s! Log follows:\n%s" % (
+                    intent, fmt_log()))
+
+    if fallback_dispatcher is None:
+        fallback_dispatcher = base_dispatcher
+    sequence = SequenceDispatcher(seq)
+    log = []
+    with sequence.consume():
+        return await asyncio_perform(dispatcher, effect)
 
 
 def perform_sequence(seq, effect, fallback_dispatcher=None):

@@ -21,8 +21,7 @@ def generate_trust_seed():
 
 @attr.s
 class VlobAtom:
-    # Generate opaque id if not provided
-    id = attr.ib(default=attr.Factory(lambda: uuid4().hex))
+    id = attr.ib()
     read_trust_seed = attr.ib(default=attr.Factory(generate_trust_seed))
     write_trust_seed = attr.ib(default=attr.Factory(generate_trust_seed))
     blob = attr.ib(default=b'')
@@ -31,8 +30,8 @@ class VlobAtom:
 
 @attr.s
 class EVlobCreate:
-    id = attr.ib()
-    blob = attr.ib()
+    id = attr.ib(default=None)
+    blob = attr.ib(default=b'')
 
 
 @attr.s
@@ -114,6 +113,9 @@ class MockedVlobComponent:
 
     @do
     def perform_vlob_create(self, intent):
+        # Generate opaque id if not provided
+        if not intent.id:
+            intent.id = uuid4().hex
         vlob = MockedVlob(id=intent.id, blob=intent.blob)
         self.vlobs[vlob.id] = vlob
         return VlobAtom(id=vlob.id,

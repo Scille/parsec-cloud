@@ -75,8 +75,7 @@ class TestSynPerform:
         assert exc.value.args[0].startswith(
             '`ChainedIntent` generator must only yield `Effect` objects (got')
 
-    @pytest.mark.asyncio
-    async def test_chained_intent_raise_exception(self):
+    def test_chained_intent_raise_exception(self):
         class DoError(Exception):
             pass
 
@@ -96,8 +95,7 @@ class TestSynPerform:
         with pytest.raises(DoError):
             sync_perform(dispatcher, effect)
 
-    @pytest.mark.asyncio
-    async def test_chained_intent_raise_exception_and_catch_it(self):
+    def test_chained_intent_raise_exception_and_catch_it(self):
         class DoError(Exception):
             pass
 

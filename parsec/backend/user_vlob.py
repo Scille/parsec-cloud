@@ -29,11 +29,11 @@ class EUserVlobUpdate:
 
 
 class cmd_READ_Schema(UnknownCheckedSchema):
-    version = fields.Int(validate=lambda n: n >= 1)
+    version = fields.Int(validate=lambda n: n >= 0)
 
 
 class cmd_UPDATE_Schema(UnknownCheckedSchema):
-    version = fields.Int(validate=lambda n: n > 1)
+    version = fields.Int(validate=lambda n: n > 0)
     blob = fields.Base64Bytes(required=True)
 
 

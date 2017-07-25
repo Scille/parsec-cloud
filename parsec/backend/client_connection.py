@@ -98,6 +98,7 @@ def on_connection_factory(execute_cmd, base_dispatcher=base_dispatcher):
             await asyncio_perform(handshake_dispatcher, session.handshake())
         except HandshakeError:
             return
+        context.logger.debug('Handshake done, `%s` is authenticated.' % session.id)
         # Wait for two things:
         # - User's command (incomming request)
         # - Event subscribed by user (pushed to client requests)
