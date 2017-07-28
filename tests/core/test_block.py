@@ -7,9 +7,9 @@ from botocore.exceptions import (
 )
 
 from parsec.core.block import (
-    EBlockCreate, EBlockRead, Block, in_memory_block_dispatcher_factory,
-    s3_block_dispatcher_factory
+    EBlockCreate, EBlockRead, Block, in_memory_block_dispatcher_factory
 )
+from parsec.core.block_s3 import s3_block_dispatcher_factory
 from parsec.exceptions import BlockError, BlockNotFound
 
 
