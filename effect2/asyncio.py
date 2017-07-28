@@ -27,12 +27,17 @@ class AsyncFunc:
         self.coroutine = coroutine
 
 
-async def perform_delay(dispatcher, intent):
+async def perform_delay(intent):
     await asyncio.sleep(intent.delay)
 
 
+async def perform_async_func(intent):
+    return await intent.coroutine
+
+
 base_asyncio_dispatcher = TypeDispatcher({
-    Delay: perform_delay
+    Delay: perform_delay,
+    AsyncFunc: perform_async_func
 })
 
 
