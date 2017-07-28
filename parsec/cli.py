@@ -21,7 +21,7 @@ from parsec.core.identity import IdentityComponent
 from parsec.core.fs import FSComponent
 from parsec.core.privkey import PrivKeyComponent
 from parsec.core.synchronizer import SynchronizerComponent
-from parsec.core.block import in_memory_block_dispatcher_factory, s3_block_dispatcher_factory
+from parsec.core.block import in_memory_block_dispatcher_factory
 from parsec.core.identity import EIdentityLoad
 from parsec.exceptions import PubKeyNotFound
 from parsec.ui.shell import start_shell
@@ -141,7 +141,7 @@ def _core(socket, backend_host, backend_watchdog, block_store,
     if block_store:
         if block_store.startswith('s3:'):
             try:
-                # from parsec.core.block_service_s3 import S3BlockService
+                from parsec.core.block_s3 import s3_block_dispatcher_factory
                 _, region, bucket, key_id, key_secret = block_store.split(':')
             except ImportError as exc:
                 raise SystemExit('Parsec needs boto3 to support S3 block storage (error: %s).' %
