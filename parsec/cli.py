@@ -213,34 +213,32 @@ def _backend(host, port, pubkeys, no_client_auth, store, debug):
     host = host or environ.get('HOST', 'localhost')
     port = port or int(environ.get('PORT', 6777))
     loop = asyncio.get_event_loop()
+    components = []
     # TODO load pubkeys attribute
     if store:
         if store.startswith('postgres://'):
             store_type = 'PostgreSQL'
             from parsec.backend import postgresql
-            conn = postgresql.PostgreSQLConnection(store)
-            loop.run_until_complete(conn.open_connection())
-            message_component = postgresql.PostgreSQLMessageComponent(conn)
-            group_component = postgresql.PostgreSQLGroupComponent(conn)
-            user_vlob_component = postgresql.PostgreSQLUserVlobComponent(conn)
-            vlob_component = postgresql.PostgreSQLVlobComponent(conn)
-            pubkey_component = postgresql.PostgreSQLPubKeyComponent(conn)
+            conn = loop.run_until_complete(postgresql.postgresql_connection_factory(store))
+            components = [
+                postgresql.PostgreSQLMessageComponent(conn),
+                postgresql.PostgreSQLGroupComponent(conn),
+                postgresql.PostgreSQLUserVlobComponent(conn),
+                postgresql.PostgreSQLVlobComponent(conn),
+                postgresql.PostgreSQLPubKeyComponent(conn)
+            ]
         else:
             raise SystemExit('Unknown store `%s` (should be a postgresql db url).' % store)
     else:
+        components = [
+            InMemoryMessageComponent(),
+            MockedGroupComponent(),
+            MockedUserVlobComponent(),
+            MockedVlobComponent(),
+            MockedPubKeyComponent()
+        ]
         store_type = 'mocked in memory'
-        message_component = InMemoryMessageComponent()
-        group_component = MockedGroupComponent()
-        user_vlob_component = MockedUserVlobComponent()
-        vlob_component = MockedVlobComponent()
-        pubkey_component = MockedPubKeyComponent()
-    app = backend_app_factory(
-        message_component.get_dispatcher(),
-        group_component.get_dispatcher(),
-        user_vlob_component.get_dispatcher(),
-        vlob_component.get_dispatcher(),
-        pubkey_component.get_dispatcher()
-    )
+    app = backend_app_factory(*[x.get_dispatcher() for x in components])
 
     # TODO: remove me once RSA key loading and backend handling are easier
     @do

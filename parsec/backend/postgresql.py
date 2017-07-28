@@ -3,6 +3,7 @@ import asyncio
 import aiopg
 from uuid import uuid4
 from psycopg2 import ProgrammingError, IntegrityError
+import blinker
 import click
 from blinker import signal
 from urllib import parse
@@ -138,6 +139,18 @@ class PostgreSQLConnection:
     def acquire(self):
         assert self._pool, "Service hasn't been bootstraped"
         return self._pool.acquire()
+
+
+async def postgresql_connection_factory(url):
+    conn = PostgreSQLConnection(url)
+    await conn.open_connection()
+
+    @do
+    def on_app_stop(app):
+        yield Effect(AsyncFunc(conn.close_connection()))
+
+    blinker.signal('app_stop').connect(on_app_stop, weak=False)
+    return conn
 
 
 @attr.s
