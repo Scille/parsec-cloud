@@ -64,6 +64,17 @@ class HandshakeError(ParsecError):
 
 # Backend errors
 
+class PrivKeyError(ParsecError):
+    status = 'privkey_error'
+
+
+class PrivKeyHashCollision(PrivKeyError):
+    status = 'privkey_hash_collision'
+
+
+class PrivKeyNotFound(PrivKeyError):
+    status = 'privkey_not_found'
+
 
 class PubKeyError(ParsecError):
     status = 'pubkey_error'
@@ -142,14 +153,6 @@ class ManifestError(ParsecError):
 
 class ManifestNotFound(ParsecError):
     status = 'manifest_not_found'
-
-
-class PrivKeyError(ParsecError):
-    status = 'privkey_error'
-
-
-class PrivKeyNotFound(PrivKeyError):
-    status = 'privkey_not_found'
 
 
 class BackendConnectionError(ParsecError):

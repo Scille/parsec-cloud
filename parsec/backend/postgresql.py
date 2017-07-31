@@ -19,10 +19,11 @@ from parsec.backend.group import (
     EGroupCreate, EGroupRead, EGroupAddIdentities, EGroupRemoveIdentities, Group
 )
 from parsec.backend.pubkey import EPubKeyGet, EPubKeyAdd
+from parsec.backend.privkey import EPrivKeyGet, EPrivKeyAdd
 from parsec.backend.session import EGetAuthenticatedUser
 from parsec.exceptions import (
     VlobNotFound, TrustSeedError, UserVlobError, GroupAlreadyExist,
-    GroupNotFound, PubKeyNotFound, PubKeyError
+    GroupNotFound, PubKeyNotFound, PubKeyError, PrivKeyNotFound, PrivKeyHashCollision
 )
 
 
@@ -49,7 +50,7 @@ async def _init_db(url, force=False, loop=None):
         with await pool.cursor() as cur:
             if force:
                 await cur.execute(
-                    "DROP TABLE IF EXISTS vlobs, user_vlobs, messages, groups, pubkeys;")
+                    "DROP TABLE IF EXISTS vlobs, user_vlobs, messages, groups, pubkeys, privkeys;")
             # messages
             await cur.execute("""
                 CREATE TABLE messages (
@@ -87,6 +88,12 @@ async def _init_db(url, force=False, loop=None):
                 CREATE TABLE pubkeys (
                 identity         text PRIMARY KEY,
                 key              bytea
+            );""")
+            # privkeys
+            await cur.execute("""
+                CREATE TABLE privkeys (
+                hash         text PRIMARY KEY,
+                cipherkey    bytea
             );""")
 
 
@@ -405,4 +412,35 @@ class PostgreSQLPubKeyComponent:
         return TypeDispatcher({
             EPubKeyAdd: self.perform_pubkey_add,
             EPubKeyGet: self.perform_pubkey_get
+        })
+
+
+@attr.s
+class PostgreSQLPrivKeyComponent:
+    connection = attr.ib()
+
+    @async_do
+    async def perform_privkey_add(self, intent):
+        async with self.connection.acquire() as conn:
+            async with conn.cursor() as cur:
+                try:
+                    await cur.execute("INSERT INTO privkeys VALUES (%s, %s);",
+                        (intent.hash, intent.cipherkey))
+                except IntegrityError:
+                    raise PrivKeyHashCollision('Hash collision, change your password and retry.')
+
+    @async_do
+    async def perform_privkey_get(self, intent):
+        async with self.connection.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute('SELECT cipherkey FROM privkeys WHERE hash=%s', (intent.hash, ))
+                ret = await cur.fetchone()
+                if ret is None:
+                    raise PrivKeyNotFound('No entry with this hash')
+                return bytes(ret[0])
+
+    def get_dispatcher(self):
+        return TypeDispatcher({
+            EPrivKeyAdd: self.perform_privkey_add,
+            EPrivKeyGet: self.perform_privkey_get
         })

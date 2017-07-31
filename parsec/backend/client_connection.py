@@ -92,12 +92,14 @@ def on_connection_factory(execute_cmd, base_dispatcher=base_dispatcher):
             base_dispatcher, client_dispatcher, session.get_dispatcher()])
         context.logger.info('Connection started')
         # Handshake
-        try:
-            handshake_dispatcher = ComposedDispatcher([
-                dispatcher, handshake_io_dispatcher_factory(context)])
-            await asyncio_perform(handshake_dispatcher, session.handshake())
-        except HandshakeError:
-            return
+        # TODO: big hack to be able to use privkey without connection, REMOVE ME ASAP !!!
+        if path != '/privkey':
+            try:
+                handshake_dispatcher = ComposedDispatcher([
+                    dispatcher, handshake_io_dispatcher_factory(context)])
+                await asyncio_perform(handshake_dispatcher, session.handshake())
+            except HandshakeError:
+                return
         context.logger.debug('Handshake done, `%s` is authenticated.' % session.id)
         # Wait for two things:
         # - User's command (incomming request)

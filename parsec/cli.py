@@ -11,6 +11,7 @@ from effect2 import Effect, do
 
 from parsec.backend import app_factory as backend_app_factory, run_app as backend_run_app
 from parsec.backend.pubkey import MockedPubKeyComponent, EPubKeyAdd, EPubKeyGet
+from parsec.backend.privkey import MockedPrivKeyComponent
 from parsec.backend.vlob import MockedVlobComponent
 from parsec.backend.user_vlob import MockedUserVlobComponent
 from parsec.backend.message import InMemoryMessageComponent
@@ -225,7 +226,8 @@ def _backend(host, port, pubkeys, no_client_auth, store, debug):
                 postgresql.PostgreSQLGroupComponent(conn),
                 postgresql.PostgreSQLUserVlobComponent(conn),
                 postgresql.PostgreSQLVlobComponent(conn),
-                postgresql.PostgreSQLPubKeyComponent(conn)
+                postgresql.PostgreSQLPubKeyComponent(conn),
+                postgresql.PostgreSQLPrivKeyComponent(conn)
             ]
         else:
             raise SystemExit('Unknown store `%s` (should be a postgresql db url).' % store)
@@ -235,7 +237,8 @@ def _backend(host, port, pubkeys, no_client_auth, store, debug):
             MockedGroupComponent(),
             MockedUserVlobComponent(),
             MockedVlobComponent(),
-            MockedPubKeyComponent()
+            MockedPubKeyComponent(),
+            MockedPrivKeyComponent()
         ]
         store_type = 'mocked in memory'
     app = backend_app_factory(*[x.get_dispatcher() for x in components])
