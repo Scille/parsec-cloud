@@ -6,12 +6,13 @@ import click
 import threading
 from dateutil.parser import parse as dateparse
 from itertools import count
+from logbook import WARNING
 from errno import ENOENT, EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 
 from parsec.core.file import ContentBuilder
-from parsec.tools import logger, from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
+from parsec.tools import logger, logger_stream, from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 
 
 DEFAULT_CORE_UNIX_SOCKET = '/tmp/parsec'
@@ -36,6 +37,8 @@ class File:
         self._operations = operations
         self.flags = flags
         self.modifications = []
+        self.written_data = 0
+        self.max_written_data = 500000
 
     def read(self, size=None, offset=0):
         self.flush()
@@ -48,6 +51,10 @@ class File:
 
     def write(self, data, offset=0):
         self.modifications.append((self.write, data, offset))
+        self.written_data += len(data)
+        if self.written_data > self.max_written_data:
+            self.flush()
+            self.written_data = 0
 
     def truncate(self, length):
         self.modifications.append((self.truncate, length))
@@ -249,4 +256,6 @@ class FuseOperations(LoggingMixIn, Operations):
 
 def start_fuse(socket_path: str, mountpoint: str, debug: bool=False, nothreads: bool=False):
     operations = FuseOperations(socket_path)
+    if not debug:
+        logger_stream.level = WARNING
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)

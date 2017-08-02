@@ -130,8 +130,8 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option('--pdb', is_flag=True)
 @click.option('--identity', '-i', default=None)
 @click.option('--identity-key', '-I', type=click.File('rb'), default=None)
-@click.option('--identity-password', '-P', default=None)
 @click.option('--I-am-John', is_flag=True, help='Log as dummy John Doe user')
+@click.option('--cache-size', help='Max number of elements in cache', default=1000)
 def core(**kwargs):
     if kwargs.pop('pdb'):
         return run_with_pdb(_core, **kwargs)
@@ -140,7 +140,7 @@ def core(**kwargs):
 
 
 def _core(socket, backend_host, backend_watchdog, block_store,
-          debug, identity, identity_key, identity_password, i_am_john):
+          debug, identity, identity_key, i_am_john, cache_size):
     loop = asyncio.get_event_loop()
     if block_store:
         if block_store.startswith('s3:'):
@@ -166,7 +166,7 @@ def _core(socket, backend_host, backend_watchdog, block_store,
     backend_component = BackendComponent(backend_host, backend_watchdog)
     fs_component = FSComponent()
     identity_component = IdentityComponent()
-    synchronizer_component = SynchronizerComponent()
+    synchronizer_component = SynchronizerComponent(cache_size)
     app = core_app_factory(
         privkey_component.get_dispatcher(), backend_component.get_dispatcher(),
         fs_component.get_dispatcher(), synchronizer_component.get_dispatcher(),
