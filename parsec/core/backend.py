@@ -43,7 +43,7 @@ class BackendConnection:
         self._signal_ns.signal(event).connect(cb, sender=sender)
 
     async def open_connection(self, identity):
-        logger.debug('Connection to backend oppened')
+        logger.debug('Connection to backend opened')
         assert not self._websocket, "Connection to backend already opened"
         self._websocket = await websockets.connect(self.url)
         # Handle handshake
@@ -56,7 +56,7 @@ class BackendConnection:
         }))
         resp = ejson_loads(await self._websocket.recv())
         if resp['status'] != 'ok':
-            await self._close_connection()
+            await self.close_connection()
             raise exception_from_status(resp['status'])(resp['label'])
         self._ws_recv_handler_task = asyncio.ensure_future(self._ws_recv_handler())
         if self.watchdog_time:

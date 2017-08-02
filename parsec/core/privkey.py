@@ -1,68 +1,65 @@
 import attr
-from effect2 import TypeDispatcher, Effect, do
+from effect2 import Effect, TypeDispatcher, do
 import hashlib
+import websockets
 
-from parsec.exceptions import PrivKeyNotFound
-from parsec.crypto import load_sym_key
-from parsec.core.identity import EIdentityLoad
-
-
-@attr.s
-class EPrivkeyAdd:
-    id = attr.ib()
-    password = attr.ib()
-    key = attr.ib()
+from parsec.core.identity import EIdentityLoad, EIdentityGet
+from parsec.exceptions import exception_from_status
+from parsec.tools import ejson_dumps, ejson_loads
 
 
 @attr.s
-class EPrivkeyGet:
-    id = attr.ib()
-    password = attr.ib()
+class EPrivKeyBackendCmd:
+    cmd = attr.ib()
+    msg = attr.ib(default=attr.Factory(dict))
 
 
 @attr.s
-class EPrivkeyLoad:
-    id = attr.ib()
+class EPrivKeyExport:
     password = attr.ib()
 
 
 @attr.s
-class PrivKeyComponent:
-    encrypted_keys = attr.ib(default=attr.Factory(dict))  # TODO in __init__?
+class EPrivKeyLoad:
+    id = attr.ib()
+    password = attr.ib()
+
+
+@attr.s
+class PrivKeyBackendComponent:
+    url = attr.ib()
 
     @do
-    def perform_add_privkey(self, intent):
-        assert isinstance(intent.key, (bytes, bytearray))
+    def perform_privkey_export(self, intent):
+        identity = yield Effect(EIdentityGet())
+        id_password_hash = hashlib.sha256((identity.id + ':' + intent.password).encode()).digest()
+        cipherkey = identity.private_key.export(intent.password)
+        yield Effect(EPrivKeyBackendCmd(
+            'privkey_add', {'hash': id_password_hash, 'cipherkey': cipherkey}))
+
+    @do
+    def perform_privkey_load(self, intent):
         id_password_hash = hashlib.sha256((intent.id + ':' + intent.password).encode()).digest()
-        # if id_password_hash in self.encrypted_keys:
-        #     raise PrivKeyError('Identity already has an encrypted private key.')
-        password_digest = hashlib.sha256(intent.password.encode()).digest()
-        encryptor = load_sym_key(password_digest)
-        encrypted_key = encryptor.encrypt(intent.key)
-        self.encrypted_keys[id_password_hash] = encrypted_key
+        cipherkey = yield Effect(EPrivKeyBackendCmd('privkey_get', {'hash': id_password_hash}))
+        yield Effect(EIdentityLoad(intent.id, cipherkey, intent.password))
 
-    @do
-    def perform_get_privkey(self, intent):
-        return self._fetch_privkey(intent.id, intent.password)
-
-    @do
-    def perform_privkey_load_identity(self, intent):
-        privkey = self._fetch_privkey(intent.id, intent.password)
-        yield Effect(EIdentityLoad(intent.id, privkey))
-
-    def _fetch_privkey(self, id, password):
-        id_password_hash = hashlib.sha256(('%s:%s' % (id, password)).encode()).digest()
-        try:
-            encrypted_privkey = self.encrypted_keys[id_password_hash]
-        except KeyError:
-            raise PrivKeyNotFound('Private key not found.')
-        password_digest = hashlib.sha256(password.encode()).digest()
-        encryptor = load_sym_key(password_digest)
-        return encryptor.decrypt(encrypted_privkey)
+    async def perform_privkey_backend_cmd(self, intent):
+        msg = {'cmd': intent.cmd, **intent.msg}
+        async with websockets.connect(self.url) as ws:
+            await ws.send(ejson_dumps(msg))
+            raw = await ws.recv()
+            if isinstance(raw, bytes):
+                raw = raw.decode()
+            ret = ejson_loads(raw)
+            status = ret['status']
+            if status == 'ok':
+                return ret
+            else:
+                raise exception_from_status(status)(ret['label'])
 
     def get_dispatcher(self):
         return TypeDispatcher({
-            EPrivkeyAdd: self.perform_add_privkey,
-            EPrivkeyGet: self.perform_get_privkey,
-            EPrivkeyLoad: self.perform_privkey_load_identity,
+            EPrivKeyExport: self.perform_privkey_export,
+            EPrivKeyLoad: self.perform_privkey_load,
+            EPrivKeyBackendCmd: self.perform_privkey_backend_cmd
         })

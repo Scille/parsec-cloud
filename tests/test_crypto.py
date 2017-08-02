@@ -95,6 +95,8 @@ def mock_crypto_passthrough():
             patch.object(RSAPublicKey, 'verify', new=lambda _, sign, txt: None), \
             patch.object(RSAPrivateKey, 'decrypt', new=lambda _, txt: txt), \
             patch.object(RSAPrivateKey, 'sign', new=lambda _, txt: '<mock-signature>'), \
+            patch.object(RSAPrivateKey, 'export',
+                new=lambda _, pwd: ('<mock-exported-key with password %s>' % pwd).encode()), \
             patch.object(AESKey, 'encrypt', new=lambda _, txt: txt), \
             patch.object(AESKey, 'decrypt', new=lambda _, txt: txt), \
             patch('parsec.crypto.urandom', new=mocked_urandom):

@@ -9,14 +9,13 @@ from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.exceptions import InvalidSignature, InvalidTag
 
 
 def load_private_key(raw_key, password=None):
-    if password:
-        raise NotImplementedError('Cannot protect key with password yet !')
     # Only support RSA so far
-    return RSAPrivateKey(raw_key)
+    return RSAPrivateKey(raw_key, password=password)
 
 
 def load_public_key(raw_key):
@@ -30,6 +29,16 @@ def load_sym_key(raw_key: bytes):
 def generate_sym_key():
     raw_key = urandom(32)  # 256bits long key
     return AESKey(raw_key)
+
+
+def generate_asym_key(size):
+    assert size > 1023
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+        backend=default_backend()
+    )
+    return RSAPrivateKey(private_key)
 
 
 class BaseSymKey:
@@ -110,11 +119,11 @@ class RSAPublicKey(BasePublicAsymKey):
 
 
 class RSAPrivateKey(BasePrivateAsymKey):
-    def __init__(self, key: bytes):
+    def __init__(self, key: bytes, password: str=None):
         if isinstance(key, bytes):
             private_key = serialization.load_pem_private_key(
                 key,
-                password=None,
+                password=password.encode() if password else None,
                 backend=default_backend()
             )
             self._hazmat_private_key = private_key
@@ -147,6 +156,13 @@ class RSAPrivateKey(BasePrivateAsymKey):
             )
         ))
         return symkey.decrypt(ciphertext)
+
+    def export(self, password: str):
+        return self._hazmat_private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.BestAvailableEncryption(password.encode())
+        )
 
     @property
     def pub_key(self):

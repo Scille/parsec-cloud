@@ -11,7 +11,6 @@ from parsec.core.fs import (FSComponent, ESynchronize, EGroupCreate, EDustbinSho
                             EManifestRestore, EFileCreate, EFileRead, EFileWrite, EFileTruncate,
                             EFileHistory, EFileRestore, EFolderCreate, EStat, EMove, EDelete,
                             EUndelete)
-from parsec.core.privkey import PrivKeyComponent
 from parsec.core.identity import EIdentityGet, IdentityComponent, Identity
 from parsec.core.synchronizer import (
     EUserVlobSynchronize, EUserVlobRead, EUserVlobUpdate, EVlobCreate, EVlobList, EVlobRead,
@@ -28,12 +27,10 @@ from tests.test_crypto import mock_crypto_passthrough
 def app(mock_crypto_passthrough, alice_identity):
     app = FSComponent()
     identity_component = IdentityComponent()
-    privkey_component = PrivKeyComponent()
     fs_component = FSComponent()
     synchronizer_component = SynchronizerComponent()
     identity_component = IdentityComponent()
     app = app_factory(
-        privkey_component.get_dispatcher(),
         fs_component.get_dispatcher(),
         synchronizer_component.get_dispatcher(),
         identity_component.get_dispatcher()

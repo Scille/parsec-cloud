@@ -17,15 +17,17 @@ from parsec.backend.user_vlob import MockedUserVlobComponent
 from parsec.backend.message import InMemoryMessageComponent
 from parsec.backend.group import MockedGroupComponent
 from parsec.core import app_factory as core_app_factory, run_app as core_run_app
+from parsec.core.base import EEvent
 from parsec.core.backend import BackendComponent
 from parsec.core.identity import IdentityComponent
 from parsec.core.fs import FSComponent
-from parsec.core.privkey import PrivKeyComponent
+from parsec.core.privkey import PrivKeyBackendComponent, EPrivKeyLoad, EPrivKeyExport
 from parsec.core.synchronizer import SynchronizerComponent
 from parsec.core.block import in_memory_block_dispatcher_factory
 from parsec.core.identity import EIdentityLoad
-from parsec.exceptions import PubKeyNotFound
+from parsec.exceptions import PubKeyNotFound, PrivKeyNotFound
 from parsec.ui.shell import start_shell
+from parsec.crypto import generate_asym_key
 from parsec.tools import logger_stream
 
 
@@ -128,6 +130,7 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option('--pdb', is_flag=True)
 @click.option('--identity', '-i', default=None)
 @click.option('--identity-key', '-I', type=click.File('rb'), default=None)
+@click.option('--identity-password', '-P', default=None)
 @click.option('--I-am-John', is_flag=True, help='Log as dummy John Doe user')
 def core(**kwargs):
     if kwargs.pop('pdb'):
@@ -137,7 +140,7 @@ def core(**kwargs):
 
 
 def _core(socket, backend_host, backend_watchdog, block_store,
-          debug, identity, identity_key, i_am_john):
+          debug, identity, identity_key, identity_password, i_am_john):
     loop = asyncio.get_event_loop()
     if block_store:
         if block_store.startswith('s3:'):
@@ -159,7 +162,7 @@ def _core(socket, backend_host, backend_watchdog, block_store,
     else:
         store_type = 'mocked in memory'
         block_dispatcher = in_memory_block_dispatcher_factory()
-    privkey_component = PrivKeyComponent()
+    privkey_component = PrivKeyBackendComponent(backend_host + '/privkey')
     backend_component = BackendComponent(backend_host, backend_watchdog)
     fs_component = FSComponent()
     identity_component = IdentityComponent()
@@ -168,8 +171,6 @@ def _core(socket, backend_host, backend_watchdog, block_store,
         privkey_component.get_dispatcher(), backend_component.get_dispatcher(),
         fs_component.get_dispatcher(), synchronizer_component.get_dispatcher(),
         identity_component.get_dispatcher(), block_dispatcher)
-    if (identity or identity_key) and (not identity or not identity_key):
-        raise SystemExit('--identity and --identity-key params should be provided together.')
     # TODO: remove me once RSA key loading and backend handling are easier
     if i_am_john:
         @do
@@ -180,10 +181,20 @@ def _core(socket, backend_host, backend_watchdog, block_store,
     elif identity:
         @do
         def load_identity():
-            password = getpass()
-            yield Effect(EIdentityLoad(identity, identity_key.read(), password))
+            if identity_key:
+                print("Reading %s's key from `%s`" % (identity, identity_key))
+                password = getpass()
+                yield Effect(EIdentityLoad(identity, identity_key.read(), password))
+            else:
+                print("Fetching %s's key from backend privkey store." % (identity))
+                password = getpass()
+                yield Effect(EPrivKeyLoad(identity, password))
             print('Connected as %s' % identity)
-        loop.run_until_complete(app.async_perform(load_identity()))
+        try:
+            loop.run_until_complete(app.async_perform(load_identity()))
+        except PrivKeyNotFound:
+            print('No privkey with this identity/password in the backend store.')
+            return
     if debug:
         loop.set_debug(True)
     else:
@@ -261,10 +272,47 @@ def _backend(host, port, pubkeys, no_client_auth, store, debug):
     print('Bye ;-)')
 
 
+@click.command()
+@click.option('--debug', '-d', is_flag=True)
+@click.option('--identity', '-i', required=True)
+@click.option('--key-size', '-S', default=2048)
+@click.option('--export-to-backend', is_flag=True)
+@click.option('--backend-host', '-H', default='ws://localhost:6777')
+@click.option('--export-to-file', type=click.File('wb'))
+def register(debug, identity, key_size, export_to_backend, backend_host, export_to_file):
+    if not export_to_backend and not export_to_file:
+        raise SystemExit('Must specify `--export-to-backend` and/or `--export-to-file`')
+    key = generate_asym_key(key_size)
+    pwd = getpass()
+    exported_key = key.export(pwd)
+    # From now on we need an app connected to the backend
+    privkey_component = PrivKeyBackendComponent(backend_host + '/privkey')
+    identity_component = IdentityComponent()
+    backend_component = BackendComponent(backend_host)
+    app = core_app_factory(privkey_component.get_dispatcher(),
+                           identity_component.get_dispatcher(),
+                           backend_component.get_dispatcher())
+
+    async def run():
+        await app.async_perform(Effect(EEvent('app_start', app)))
+        app.async_perform(Effect(EIdentityLoad(identity, exported_key, pwd)))
+        if export_to_backend:
+            app.async_perform(Effect(EPrivKeyExport(pwd)))
+        if export_to_file:
+            export_to_file.write(exported_key)
+        print('Exporting public key to backend...', flush=True, endl='')
+        await app.async_perform(Effect(EPubKeyAdd(pwd)))
+        print(' Done !')
+        await app.async_perform(Effect(EEvent('app_stop', app)))
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(run())
+
 cli.add_command(cmd)
 cli.add_command(shell)
 cli.add_command(core)
 cli.add_command(backend)
+cli.add_command(register)
 
 
 def _add_command_if_can_import(path, name=None):

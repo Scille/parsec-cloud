@@ -30,6 +30,13 @@ def api_pubkey_get(msg):
     return {'status': 'ok', 'id': msg['id'], 'key': key}
 
 
+@do
+def api_pubkey_add(msg):
+    msg = cmd_PUBKEY_ADD_Schema().load(msg)
+    key = yield Effect(EPubKeyGet(**msg, raw=True))
+    return {'status': 'ok', 'id': msg['id'], 'key': key}
+
+
 @attr.s
 class MockedPubKeyComponent:
     _keys = attr.ib(default=attr.Factory(dict))
