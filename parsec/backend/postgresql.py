@@ -122,7 +122,7 @@ class PostgreSQLConnection:
     async def open_connection(self, loop=None):
         assert not self._pool, "Service already bootstraped"
         self._pool = await _connect(self._url, loop=loop)
-        self._notification_handler_task = asyncio.ensure_future(self._notification_handler())
+        self._notification_handler_task = asyncio.ensure_future(self._notification_handler(), loop=loop)
 
     async def close_connection(self):
         assert self._pool, "Service hasn't been bootstraped"
