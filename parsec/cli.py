@@ -7,15 +7,14 @@ from getpass import getpass
 import asyncio
 import click
 from logbook import WARNING
-from effect2 import Effect, do
+from aiohttp import web
+from effect2 import Effect, do, asyncio_perform
 
-from parsec.backend import app_factory as backend_app_factory, run_app as backend_run_app
-from parsec.backend.pubkey import MockedPubKeyComponent, EPubKeyAdd, EPubKeyGet
-from parsec.backend.privkey import MockedPrivKeyComponent
-from parsec.backend.vlob import MockedVlobComponent
-from parsec.backend.user_vlob import MockedUserVlobComponent
-from parsec.backend.message import InMemoryMessageComponent
-from parsec.backend.group import MockedGroupComponent
+from parsec.backend import (
+    postgresql_components_factory, mocked_components_factory,
+    register_backend_api, register_privkey_api
+)
+from parsec.backend.pubkey import EPubKeyGet, EPubKeyAdd
 from parsec.core import app_factory as core_app_factory, run_app as core_run_app
 from parsec.core.base import EEvent
 from parsec.core.backend import BackendComponent
@@ -225,34 +224,24 @@ def _backend(host, port, pubkeys, no_client_auth, store, debug):
     host = host or environ.get('HOST', 'localhost')
     port = port or int(environ.get('PORT', 6777))
     loop = asyncio.get_event_loop()
-    components = []
+    app = web.Application()
     # TODO load pubkeys attribute
     if store:
         if store.startswith('postgres://'):
             store_type = 'PostgreSQL'
-            from parsec.backend import postgresql
-            conn = loop.run_until_complete(postgresql.postgresql_connection_factory(store))
-            components = [
-                postgresql.PostgreSQLMessageComponent(conn),
-                postgresql.PostgreSQLGroupComponent(conn),
-                postgresql.PostgreSQLUserVlobComponent(conn),
-                postgresql.PostgreSQLVlobComponent(conn),
-                postgresql.PostgreSQLPubKeyComponent(conn),
-                postgresql.PostgreSQLPrivKeyComponent(conn)
-            ]
+            backend_components = postgresql_components_factory(store)
         else:
             raise SystemExit('Unknown store `%s` (should be a postgresql db url).' % store)
     else:
-        components = [
-            InMemoryMessageComponent(),
-            MockedGroupComponent(),
-            MockedUserVlobComponent(),
-            MockedVlobComponent(),
-            MockedPubKeyComponent(),
-            MockedPrivKeyComponent()
-        ]
         store_type = 'mocked in memory'
-    app = backend_app_factory(*[x.get_dispatcher() for x in components])
+        backend_components = mocked_components_factory()
+    register_backend_api(app, backend_components)
+    register_privkey_api(app, backend_components.privkey)
+
+    if debug:
+        loop.set_debug(True)
+    else:
+        logger_stream.level = WARNING
 
     # TODO: remove me once RSA key loading and backend handling are easier
     @do
@@ -261,14 +250,10 @@ def _backend(host, port, pubkeys, no_client_auth, store, debug):
             yield Effect(EPubKeyGet(JOHN_DOE_IDENTITY))
         except PubKeyNotFound:
             yield Effect(EPubKeyAdd(JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY))
-    loop.run_until_complete(app.async_perform(insert_john()))
+    loop.run_until_complete(asyncio_perform(backend_components.get_dispatcher(), insert_john()))
 
-    if debug:
-        loop.set_debug(True)
-    else:
-        logger_stream.level = WARNING
     print('Starting parsec backend on %s:%s with store %s' % (host, port, store_type))
-    backend_run_app(host, port, app=app, loop=loop)
+    web.run_app(app, host=host, port=port)
     print('Bye ;-)')
 
 
@@ -300,7 +285,7 @@ def register(debug, identity, key_size, export_to_backend, backend_host, export_
             app.async_perform(Effect(EPrivKeyExport(pwd)))
         if export_to_file:
             export_to_file.write(exported_key)
-        print('Exporting public key to backend...', flush=True, endl='')
+        print('Exporting public key to backend...', flush=True, end='')
         await app.async_perform(Effect(EPubKeyAdd(pwd)))
         print(' Done !')
         await app.async_perform(Effect(EEvent('app_stop', app)))

@@ -259,6 +259,7 @@ class SynchronizerComponent:
                     'blob': self.vlobs[intent.id]['blob'],
                     'version': self.vlobs[intent.id]['version']}
         else:
+            # TODO: if intent.version == None this is buggy !
             try:
                 cached_vlob = self.vlob_cache[(intent.id, intent.version)]
                 assert intent.trust_seed == cached_vlob['read_trust_seed']

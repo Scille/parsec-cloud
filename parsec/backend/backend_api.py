@@ -2,10 +2,17 @@ import json
 from marshmallow import Schema, fields
 from effect2 import Effect, do
 
+from parsec.backend.client_connection import websocket_route_factory
 from parsec.backend import vlob, user_vlob, group, message, pubkey, privkey
 from parsec.backend.client_connection import EClientSubscribeEvent, EClientUnsubscribeEvent
 from parsec.tools import ejson_dumps, ejson_loads
 from parsec.exceptions import ParsecError, BadMessageError
+
+
+def register_backend_api(app, components, route='/'):
+    backend_dispatcher = components.get_dispatcher()
+    api = websocket_route_factory(execute_raw_cmd, backend_dispatcher)
+    app.router.add_get(route, api)
 
 
 @do

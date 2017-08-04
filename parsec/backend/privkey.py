@@ -3,6 +3,7 @@ import json
 from marshmallow import fields
 from effect2 import TypeDispatcher, Effect, do
 
+from parsec.backend.client_connection import anonymous_websocket_route_factory
 from parsec.exceptions import PrivKeyHashCollision, PrivKeyNotFound
 from parsec.tools import UnknownCheckedSchema, ejson_dumps, ejson_loads
 from parsec.exceptions import ParsecError
@@ -99,3 +100,12 @@ API_CMDS_ROUTER = {
     'privkey_add': api_privkey_add,
     'privkey_get': api_privkey_get
 }
+
+
+def register_privkey_api(app, components, route='/privkey'):
+    backend_dispatcher = components.get_dispatcher()
+    api = anonymous_websocket_route_factory(execute_raw_cmd, backend_dispatcher)
+    app.router.add_get(route, api)
+    # TODO: convert this websocket base api to a regular HTTP REST API
+    # app.router.add_get(route, api_get_privkey)
+    # app.router.add_post(route, api_add_privkey)

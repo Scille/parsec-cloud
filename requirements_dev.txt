@@ -7,6 +7,7 @@ freezegun
 pytest
 pytest-cov
 pytest-mock
+pytest-aiohttp-0.1.3
 # Wait for pytest-asyncio 0.6 to be released...
 #pytest-asyncio
 git+https://github.com/pytest-dev/pytest-asyncio.git@f6d84f6c52d422b1b3df0001850ef50dad0f443d
