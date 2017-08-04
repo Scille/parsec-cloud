@@ -1,8 +1,11 @@
 import pytest
 import asyncio
+from aiohttp import web
 from effect2.testing import const, conste, noop, perform_sequence, asyncio_perform_sequence
 
-from parsec.backend.privkey import execute_cmd, EPrivKeyGet, EPrivKeyAdd, MockedPrivKeyComponent
+from parsec.backend.privkey import (
+    EPrivKeyGet, EPrivKeyAdd, MockedPrivKeyComponent,
+    api_privkey_get, api_privkey_add, register_privkey_api)
 from parsec.exceptions import PrivKeyHashCollision, PrivKeyNotFound
 from parsec.tools import to_jsonb64
 
@@ -62,15 +65,15 @@ G889JN85nABKR9WkdwIDAQAB
 """
 
 
-async def bootstrap_PostgreSQLPrivKeyComponent(request, event_loop):
+async def bootstrap_PostgreSQLPrivKeyComponent(request, loop):
     can_side_effect_or_skip()
-    module, url = await init_or_skiptest_parsec_postgresql(event_loop)
+    module, url = await init_or_skiptest_parsec_postgresql(loop)
 
     conn = module.PostgreSQLConnection(url)
-    await conn.open_connection(event_loop)
+    await conn.open_connection(loop)
 
     def finalize():
-        event_loop.run_until_complete(conn.close_connection())
+        loop.run_until_complete(conn.close_connection())
 
     request.addfinalizer(finalize)
     return module.PostgreSQLPrivKeyComponent(conn)
@@ -78,23 +81,22 @@ async def bootstrap_PostgreSQLPrivKeyComponent(request, event_loop):
 
 @pytest.fixture(params=[MockedPrivKeyComponent, bootstrap_PostgreSQLPrivKeyComponent],
                 ids=['mocked', 'postgresql'])
-def component(request, event_loop):
+def component(request, loop):
     if asyncio.iscoroutinefunction(request.param):
-        return event_loop.run_until_complete(request.param(request, event_loop))
+        return loop.run_until_complete(request.param(request, loop))
     else:
         return request.param()
 
 
 @pytest.fixture
-def privkeys_loaded(component, event_loop):
+def privkeys_loaded(component, loop):
     for intent in (EPrivKeyAdd("<Alice's hash>", b"<Alice's cipherkey>"),
                    EPrivKeyAdd("<Bob's hash>", b"<Bob's cipherkey>")):
         eff = component.perform_privkey_add(intent)
-        event_loop.run_until_complete(asyncio_perform_sequence([], eff))
+        loop.run_until_complete(asyncio_perform_sequence([], eff))
 
 
 class TestPrivKeyComponent:
-    @pytest.mark.asyncio
     async def test_privkey_get_ok(self, component, privkeys_loaded):
         intent = EPrivKeyGet("<Alice's hash>")
         eff = component.perform_privkey_get(intent)
@@ -103,7 +105,6 @@ class TestPrivKeyComponent:
         ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == b"<Alice's cipherkey>"
 
-    @pytest.mark.asyncio
     async def test_privkey_get_missing(self, component, privkeys_loaded):
         intent = EPrivKeyGet('<dummy hash>')
         with pytest.raises(PrivKeyNotFound):
@@ -112,7 +113,6 @@ class TestPrivKeyComponent:
             ]
             await asyncio_perform_sequence(sequence, eff)
 
-    @pytest.mark.asyncio
     async def test_privkey_add_ok(self, component):
         intent = EPrivKeyAdd("<Alice's hash>", b"<Alice's cipherkey>")
         eff = component.perform_privkey_add(intent)
@@ -128,7 +128,6 @@ class TestPrivKeyComponent:
         ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == b"<Alice's cipherkey>"
 
-    @pytest.mark.asyncio
     async def test_privkey_add_duplicated(self, component, privkeys_loaded):
         intent = EPrivKeyAdd("<Alice's hash>", b"<Bob's cipherkey>")
         with pytest.raises(PrivKeyHashCollision):
@@ -145,18 +144,29 @@ class TestPrivKeyComponent:
         assert ret == b"<Alice's cipherkey>"
 
 
+@pytest.fixture
+def component():
+    return MockedPrivKeyComponent()
+
+
+@pytest.fixture
+def client(loop, test_client, component):
+    app = web.Application()
+    register_privkey_api(app, component)
+    return loop.run_until_complete(test_client(app))
+
+
 class TestPrivKeyAPI:
 
-    def test_privkey_get_ok(self):
-        eff = execute_cmd('privkey_get', {'hash': "<Alice's hash>"})
-        sequence = [
-            (EPrivKeyGet("<Alice's hash>"), const(b"<Alice's private key>"))
-        ]
-        ret = perform_sequence(sequence, eff)
-        assert ret == {
+    async def test_privkey_get_ok(self, client, component):
+        component._keys["<Alice's hash>"] = b"<Alice's private key>"
+        ret = await client.get('/privkeys', json={'hash': "<Alice's hash>"})
+        assert ret.status == 200
+        body = await ret.json()
+        assert body == {
             'status': 'ok',
             'hash': "<Alice's hash>",
-            'cipherkey': b"<Alice's private key>"
+            'cipherkey': to_jsonb64(b"<Alice's private key>")
         }
 
     @pytest.mark.parametrize('bad_msg', [
@@ -165,28 +175,24 @@ class TestPrivKeyAPI:
         {'hash': "<Alice's hash>", 'unknown': 'field'},
         {}
     ])
-    def test_privkey_get_bad_msg(self, bad_msg):
-        eff = execute_cmd('privkey_get', bad_msg)
-        sequence = [
-        ]
-        ret = perform_sequence(sequence, eff)
-        assert ret['status'] == 'bad_msg'
+    async def test_privkey_get_bad_msg(self, client, bad_msg):
+        ret = await client.post('/privkeys', json=bad_msg)
+        assert ret.status == 400
+        body = await ret.json()
+        assert body['status'] == 'bad_msg'
 
-    def test_privkey_get_not_found(self):
-        eff = execute_cmd('privkey_get', {'hash': "<Alice's hash>"})
-        sequence = [
-            (EPrivKeyGet("<Alice's hash>"), conste(PrivKeyNotFound()))
-        ]
-        ret = perform_sequence(sequence, eff)
-        assert ret['status'] == 'privkey_not_found'
+    async def test_privkey_get_not_found(self, client):
+        ret = await client.get('/privkeys', json={'hash': "<Alice's hash>"})
+        assert ret.status == 404
+        body = await ret.json()
+        assert body['status'] == 'privkey_not_found'
 
-    def test_privkey_add_ok(self):
-        eff = execute_cmd('privkey_add', {'hash': "<Alice's hash>", 'cipherkey': to_jsonb64(b"<Alice's privkey>")})
-        sequence = [
-            (EPrivKeyAdd("<Alice's hash>", b"<Alice's privkey>"), noop)
-        ]
-        ret = perform_sequence(sequence, eff)
-        assert ret == {'status': 'ok'}
+    async def test_privkey_add_ok(self, client):
+        ret = await client.post('/privkeys',
+            json={'hash': "<Alice's hash>", 'cipherkey': to_jsonb64(b"<Alice's privkey>")})
+        assert ret.status == 200
+        body = await ret.json()
+        assert body == {'status': 'ok'}
 
     @pytest.mark.parametrize('bad_msg', [
         {'hash': None, 'cipherkey': to_jsonb64(b"<Alice's privkey>")},
@@ -198,17 +204,19 @@ class TestPrivKeyAPI:
         {'hash': "<Alice's hash>", 'cipherkey': to_jsonb64(b"<Alice's privkey>"), 'unknown': 'field'},
         {}
     ])
-    def test_privkey_add_bad_msg(self, bad_msg):
-        eff = execute_cmd('privkey_add', bad_msg)
-        sequence = [
-        ]
-        ret = perform_sequence(sequence, eff)
-        assert ret['status'] == 'bad_msg'
+    async def test_privkey_add_bad_msg(self, bad_msg, client):
+        ret = await client.post('/privkeys', json=bad_msg)
+        assert ret.status == 400
+        body = await ret.json()
+        assert body['status'] == 'bad_msg'
 
-    def test_privkey_add_hash_collision(self):
-        eff = execute_cmd('privkey_add', {'hash': "<Alice's hash>", 'cipherkey': to_jsonb64(b"<Alice's privkey>")})
-        sequence = [
-            (EPrivKeyAdd("<Alice's hash>", b"<Alice's privkey>"), conste(PrivKeyHashCollision()))
-        ]
-        ret = perform_sequence(sequence, eff)
-        assert ret['status'] == 'privkey_hash_collision'
+    async def test_privkey_add_hash_collision(self, client):
+        ret = await client.post('/privkeys',
+            json={'hash': "<Alice's hash>", 'cipherkey': to_jsonb64(b"<Alice's privkey>")})
+        assert ret.status == 200
+
+        ret = await client.post('/privkeys',
+            json={'hash': "<Alice's hash>", 'cipherkey': to_jsonb64(b"<Bob's privkey>")})
+        assert ret.status == 400
+        body = await ret.json()
+        assert body['status'] == 'privkey_hash_collision'

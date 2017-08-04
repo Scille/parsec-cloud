@@ -1,9 +1,9 @@
 import attr
 import json
 from marshmallow import fields
-from effect2 import TypeDispatcher, Effect, do
+from effect2 import TypeDispatcher, Effect, do, asyncio_perform
+from aiohttp import web
 
-from parsec.backend.client_connection import anonymous_websocket_route_factory
 from parsec.exceptions import PrivKeyHashCollision, PrivKeyNotFound
 from parsec.tools import UnknownCheckedSchema, ejson_dumps, ejson_loads
 from parsec.exceptions import ParsecError
@@ -70,42 +70,46 @@ class MockedPrivKeyComponent:
         })
 
 
-@do
-def execute_raw_cmd(raw_cmd: str):
+async def _load_json_body(request):
     try:
-        params = ejson_loads(raw_cmd)
+        return await request.json(loads=ejson_loads)
     except json.decoder.JSONDecodeError:
-        ret = {'status': 'bad_msg', 'label': 'Message is not a valid JSON.'}
-    else:
-        cmd_type = params.pop('cmd', None)
-        if not isinstance(cmd_type, str):
-            ret = {'status': 'bad_msg', 'label': '`cmd` string field is mandatory.'}
-        else:
-            ret = yield execute_cmd(cmd_type, params)
-    return ejson_dumps(ret).encode('utf-8')
+        raise web.HTTPBadRequest(
+            body=ejson_dumps({'status': 'bad_msg', 'label': 'Message is not a valid JSON.'}))
 
 
-@do
-def execute_cmd(cmd, params):
-    try:
-        resp = yield API_CMDS_ROUTER[cmd](params)
-    except KeyError:
-        resp = {'status': 'bad_msg', 'label': 'Unknown command `%s`' % cmd}
-    except ParsecError as exc:
-        resp = exc.to_dict()
-    return resp
+def HTTPBadRequestJson(jsonbody):
+    return web.HTTPBadRequest(
+        body=ejson_dumps(jsonbody).encode('utf-8'),
+        headers={'Content-type': 'application/json'})
 
 
-API_CMDS_ROUTER = {
-    'privkey_add': api_privkey_add,
-    'privkey_get': api_privkey_get
-}
+def HTTPNotFoundJson(jsonbody):
+    return web.HTTPNotFound(
+        body=ejson_dumps(jsonbody).encode('utf-8'),
+        headers={'Content-type': 'application/json'})
 
 
-def register_privkey_api(app, components, route='/privkey'):
-    backend_dispatcher = components.get_dispatcher()
-    api = anonymous_websocket_route_factory(execute_raw_cmd, backend_dispatcher)
-    app.router.add_get(route, api)
-    # TODO: convert this websocket base api to a regular HTTP REST API
-    # app.router.add_get(route, api_get_privkey)
-    # app.router.add_post(route, api_add_privkey)
+def register_privkey_api(app, components, route='/privkeys'):
+    dispatcher = components.get_dispatcher()
+
+    async def api_get_privkey(request):
+        reqjson = await _load_json_body(request)
+        try:
+            retjson = await asyncio_perform(dispatcher, api_privkey_get(reqjson))
+        except PrivKeyNotFound as exc:
+            raise HTTPNotFoundJson(exc.to_dict())
+        except ParsecError as exc:
+            raise HTTPBadRequestJson(exc.to_dict())
+        return web.json_response(retjson, dumps=ejson_dumps)
+
+    async def api_add_privkey(request):
+        reqjson = await _load_json_body(request)
+        try:
+            retjson = await asyncio_perform(dispatcher, api_privkey_add(reqjson))
+        except ParsecError as exc:
+            raise HTTPBadRequestJson(exc.to_dict())
+        return web.json_response(retjson, dumps=ejson_dumps)
+
+    app.router.add_get(route, api_get_privkey)
+    app.router.add_post(route, api_add_privkey)
