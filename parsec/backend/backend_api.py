@@ -3,15 +3,14 @@ from marshmallow import Schema, fields
 from effect2 import Effect, do
 
 from parsec.backend.client_connection import websocket_route_factory
-from parsec.backend import vlob, user_vlob, group, message, pubkey, privkey
+from parsec.backend import vlob, user_vlob, group, message, pubkey
 from parsec.backend.client_connection import EClientSubscribeEvent, EClientUnsubscribeEvent
 from parsec.tools import ejson_dumps, ejson_loads
 from parsec.exceptions import ParsecError, BadMessageError
 
 
-def register_backend_api(app, components, route='/'):
-    backend_dispatcher = components.get_dispatcher()
-    api = websocket_route_factory(execute_raw_cmd, backend_dispatcher)
+def register_backend_api(app, dispatcher, route='/'):
+    api = websocket_route_factory(execute_raw_cmd, dispatcher)
     app.router.add_get(route, api)
 
 
@@ -84,9 +83,4 @@ API_CMDS_ROUTER = {
     'message_new': message.api_message_new,
 
     'pubkey_get': pubkey.api_pubkey_get,
-
-    # TODO: remove me ASAP !
-    'privkey_add': privkey.api_privkey_add,
-    'privkey_get': privkey.api_privkey_get,
-    'pubkey_add': pubkey.api_pubkey_add,
 }

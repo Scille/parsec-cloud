@@ -11,7 +11,6 @@ class AsyncMock(Mock):
 
 
 class TestBackendConnection:
-    @pytest.mark.asyncio
     async def test_connection(self):
         identity = Mock()
         identity.private_key.sign.return_value = b'456'

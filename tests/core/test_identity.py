@@ -20,7 +20,6 @@ def alice_identity():
     )
 
 
-@pytest.mark.asyncio
 async def test_perform_identity_load():
     component = IdentityComponent()
     app = app_factory(component.get_dispatcher())

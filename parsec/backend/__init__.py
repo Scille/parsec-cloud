@@ -3,7 +3,7 @@ from effect2 import ComposedDispatcher
 
 from parsec.base import base_dispatcher
 from parsec.backend.backend_api import register_backend_api
-from parsec.backend.privkey import register_privkey_api
+from parsec.backend.start_api import register_start_api
 
 
 @attr.s
@@ -27,7 +27,7 @@ class BackendComponents:
         ])
 
 
-def mocked_components_factory():
+def mocked_components_factory(app):
     from parsec.backend.pubkey import MockedPubKeyComponent
     from parsec.backend.privkey import MockedPrivKeyComponent
     from parsec.backend.vlob import MockedVlobComponent
@@ -43,9 +43,19 @@ def mocked_components_factory():
         privkey=MockedPrivKeyComponent()
     )
 
-def postgresql_components_factory(store):
+def postgresql_components_factory(app, store):
     from parsec.backend import postgresql
-    conn = loop.run_until_complete(postgresql.postgresql_connection_factory(store))
+
+    conn = postgresql.PostgreSQLConnection(store)
+
+    async def on_startup(app):
+        await conn.open_connection()
+    app.on_startup.append(on_startup)
+
+    async def on_shutdown(app):
+        await conn.close_connection()
+    app.on_shutdown.append(on_shutdown)
+
     return BackendComponents(
         message=postgresql.PostgreSQLMessageComponent(conn),
         group=postgresql.PostgreSQLGroupComponent(conn),
@@ -55,5 +65,6 @@ def postgresql_components_factory(store):
         privkey=postgresql.PostgreSQLPrivKeyComponent(conn)
     )
 
-__all__ = ('register_backend_api', 'register_privkey_api',
+
+__all__ = ('register_backend_api', 'register_start_api',
            'postgresql_components_factory', 'mocked_components_factory')

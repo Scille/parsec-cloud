@@ -27,7 +27,6 @@ class MockedWriter:
         self.written += buff
 
 
-@pytest.mark.asyncio
 async def test_no_command():
     reader = MockedReader()
     writer = MockedWriter()
@@ -37,7 +36,6 @@ async def test_no_command():
     perform_cmd.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_simple():
     reader = MockedReader(b'foo\n')
     writer = MockedWriter()
@@ -49,7 +47,6 @@ async def test_simple():
     assert writer.written == b'bar\n'
 
 
-@pytest.mark.asyncio
 async def test_mix_cmds_and_pushed_msgs():
     reader = MockedReader(b'cmd1\ncmd2\ncmd3\n')
     writer = MockedWriter()
@@ -68,7 +65,6 @@ async def test_mix_cmds_and_pushed_msgs():
     assert writer.written == expected_written
 
 
-@pytest.mark.asyncio
 async def test_events():
     reader = MockedReader(b'cmd\n')
     writer = MockedWriter()
@@ -89,7 +85,6 @@ async def test_events():
     assert writer.written == b'cmd_resp\n{"event": "eventA", "sender": "sender1"}\n'
 
 
-@pytest.mark.asyncio
 async def test_unsubscribe_events():
     reader = MockedReader(b'cmd\n')
     writer = MockedWriter()

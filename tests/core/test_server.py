@@ -6,23 +6,21 @@ from unittest.mock import Mock
 from parsec.core.server import run_unix_socket_server
 
 
-@pytest.mark.asyncio
-async def test_socket_exists():
-    async with run_unix_socket_server(on_connection=Mock()) as server:
+async def test_socket_exists(loop):
+    async with run_unix_socket_server(on_connection=Mock(), loop=loop) as server:
         socket_path = server.socket_path
         assert os.path.stat.S_ISSOCK(os.stat(socket_path).st_mode)
     assert not os.path.exists(socket_path)
 
 
-@pytest.mark.asyncio
-async def test_socket_communication():
+async def test_socket_communication(loop):
     async def on_connection(reader, writer):
         cmd = await reader.readline()
         assert cmd == b'ping\n'
         writer.write(b'pong\n')
 
-    async with run_unix_socket_server(on_connection=on_connection) as server:
-        reader, writer = await asyncio.open_unix_connection(server.socket_path)
+    async with run_unix_socket_server(on_connection=on_connection, loop=loop) as server:
+        reader, writer = await asyncio.open_unix_connection(server.socket_path, loop=loop)
         try:
             writer.write(b'ping\n')
             resp = await reader.readline()
@@ -31,8 +29,7 @@ async def test_socket_communication():
             writer.close()
 
 
-@pytest.mark.asyncio
-async def test_big_socket_communication():
+async def test_big_socket_communication(loop):
     big_payload = b'X' * int(10e6)  # 10mo big payload
 
     async def big_read(reader):
@@ -47,8 +44,8 @@ async def test_big_socket_communication():
         cmd = await big_read(reader)
         writer.write(cmd)
 
-    async with run_unix_socket_server(on_connection=on_connection) as server:
-        reader, writer = await asyncio.open_unix_connection(server.socket_path)
+    async with run_unix_socket_server(on_connection=on_connection, loop=loop) as server:
+        reader, writer = await asyncio.open_unix_connection(server.socket_path, loop=loop)
         try:
             writer.write(big_payload)
             writer.write(b'\n')
@@ -58,7 +55,6 @@ async def test_big_socket_communication():
             writer.close()
 
 
-# @pytest.mark.asyncio
 # async def test_notification():
 #     async def on_connection(reader, writer):
 #         cmd = await reader.readline()
@@ -93,7 +89,6 @@ async def test_big_socket_communication():
 #         writer.close()
 
 
-# @pytest.mark.asyncio
 # async def test_unsubscribe_notification(unix_socket_server):
 #     server, socket_path = unix_socket_server
 #     reader, writer = await asyncio.open_unix_connection(socket_path)
@@ -140,7 +135,6 @@ async def test_big_socket_communication():
 #         writer.close()
 
 
-# @pytest.mark.asyncio
 # async def test_multi_sender_notification(unix_socket_server):
 #     server, socket_path = unix_socket_server
 #     reader, writer = await asyncio.open_unix_connection(socket_path)
@@ -187,7 +181,6 @@ async def test_big_socket_communication():
 #         writer.close()
 
 
-# @pytest.mark.asyncio
 # async def test_base_cmds(unix_socket_server):
 #     server, socket_path = unix_socket_server
 #     reader, writer = await asyncio.open_unix_connection(socket_path)

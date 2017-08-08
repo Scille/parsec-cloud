@@ -14,15 +14,15 @@ from tests.common import can_side_effect_or_skip
 from tests.backend.common import init_or_skiptest_parsec_postgresql
 
 
-async def bootstrap_PostgreSQLUserVlobComponent(request, event_loop):
+async def bootstrap_PostgreSQLUserVlobComponent(request, loop):
     can_side_effect_or_skip()
-    module, url = await init_or_skiptest_parsec_postgresql(event_loop)
+    module, url = await init_or_skiptest_parsec_postgresql()
 
     conn = module.PostgreSQLConnection(url)
-    await conn.open_connection(event_loop)
+    await conn.open_connection()
 
     def finalize():
-        event_loop.run_until_complete(conn.close_connection())
+        loop.run_until_complete(conn.close_connection())
 
     request.addfinalizer(finalize)
     return module.PostgreSQLUserVlobComponent(conn)
@@ -30,16 +30,15 @@ async def bootstrap_PostgreSQLUserVlobComponent(request, event_loop):
 
 @pytest.fixture(params=[MockedUserVlobComponent, bootstrap_PostgreSQLUserVlobComponent],
                 ids=['mocked', 'postgresql'])
-def component(request, event_loop):
+def component(request, loop):
     if asyncio.iscoroutinefunction(request.param):
-        return event_loop.run_until_complete(request.param(request, event_loop))
+        return loop.run_until_complete(request.param(request, loop))
     else:
         return request.param()
 
 
 class TestUserVlobComponent:
 
-    @pytest.mark.asyncio
     async def test_user_vlob_read_ok(self, component):
         intent = EUserVlobRead()
         eff = component.perform_user_vlob_read(intent)
@@ -49,7 +48,6 @@ class TestUserVlobComponent:
         ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == UserVlobAtom('alice@test.com', 0, b'')
 
-    @pytest.mark.asyncio
     async def test_user_vlob_read_previous_version(self, component):
         # Update user vlob
         intent = EUserVlobUpdate(1, b'Next version.')
@@ -68,7 +66,6 @@ class TestUserVlobComponent:
         ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == UserVlobAtom('alice@test.com', 0, b'')
 
-    @pytest.mark.asyncio
     async def test_user_vlob_read_wrong_version(self, component):
         intent = EUserVlobRead(version=42)
         with pytest.raises(UserVlobError):
@@ -78,7 +75,6 @@ class TestUserVlobComponent:
             ]
             await asyncio_perform_sequence(sequence, eff)
 
-    @pytest.mark.asyncio
     async def test_user_vlob_update_ok(self, component):
         intent = EUserVlobUpdate(1, b'Next version.')
         eff = component.perform_user_vlob_update(intent)
@@ -96,7 +92,6 @@ class TestUserVlobComponent:
         ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == UserVlobAtom('alice@test.com', 1, b'Next version.')
 
-    @pytest.mark.asyncio
     async def test_user_vlob_update_wrong_version(self, component):
         intent = EUserVlobUpdate(42, b'Next version.')
         with pytest.raises(UserVlobError):
@@ -106,7 +101,6 @@ class TestUserVlobComponent:
             ]
             await asyncio_perform_sequence(sequence, eff)
 
-    @pytest.mark.asyncio
     async def test_multiple_users(self, component):
         async def _update(user):
                 intent = EUserVlobUpdate(1, b'Next version for %s.' % user.encode())

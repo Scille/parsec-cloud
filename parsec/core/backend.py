@@ -27,8 +27,9 @@ class EBackendStatus:
 
 class BackendConnection:
 
-    def __init__(self, url, watchdog=None):
-        self._resp_queue = asyncio.Queue()
+    def __init__(self, url, watchdog=None, loop=None):
+        self._resp_queue = asyncio.Queue(loop=loop)
+        self.loop = loop
         assert url.startswith('ws://') or url.startswith('wss://')
         self.url = url
         self._websocket = None
@@ -58,9 +59,9 @@ class BackendConnection:
         if resp['status'] != 'ok':
             await self.close_connection()
             raise exception_from_status(resp['status'])(resp['label'])
-        self._ws_recv_handler_task = asyncio.ensure_future(self._ws_recv_handler())
+        self._ws_recv_handler_task = asyncio.ensure_future(self._ws_recv_handler(), loop=self.loop)
         if self.watchdog_time:
-            self._watchdog_task = asyncio.ensure_future(self._watchdog())
+            self._watchdog_task = asyncio.ensure_future(self._watchdog(), loop=self.loop)
 
     async def ping(self):
         assert self._websocket, "Connection to backend not opened"

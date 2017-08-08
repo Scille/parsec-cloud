@@ -29,27 +29,23 @@ class TestInMemory:
         intent = Effect(EBlockCreate(id=id, content=content))
         return await asyncio_perform(self.dispatcher, intent)
 
-    @pytest.mark.asyncio
     async def test_perform_block_create(self):
         intent = Effect(EBlockCreate(id='42', content=b'foo'))
         ret = await asyncio_perform(self.dispatcher, intent)
         assert ret == Block('42', b'foo')
 
-    @pytest.mark.asyncio
     async def test_perform_block_create_duplicate_id(self):
         block = await self.created_block()
         intent = Effect(EBlockCreate(id=block.id, content=b'bar'))
         with pytest.raises(BlockError):
             await asyncio_perform(self.dispatcher, intent)
 
-    @pytest.mark.asyncio
     async def test_perform_block_read(self):
         block = await self.created_block()
         intent = Effect(EBlockRead(id=block.id))
         ret = await asyncio_perform(self.dispatcher, intent)
         assert ret == block
 
-    @pytest.mark.asyncio
     async def test_perform_block_read_not_found(self):
         intent = Effect(EBlockRead(id='unknown_id'))
         with pytest.raises(BlockNotFound):
@@ -58,7 +54,6 @@ class TestInMemory:
 
 class TestS3:
 
-    @pytest.mark.asyncio
     async def test_perform_block_create(self, s3_block_dispatcher):
         intent = Effect(EBlockCreate(id='42', content=b'foo'))
         ret = await asyncio_perform(s3_block_dispatcher, intent)
@@ -66,7 +61,6 @@ class TestS3:
         s3_block_dispatcher.mocked_boto3_client.put_object.assert_called_once_with(
             Body=b'foo', Bucket='bucket', Key='42')
 
-    @pytest.mark.asyncio
     async def test_perform_block_create_duplicate_id(self, s3_block_dispatcher):
         s3_block_dispatcher.mocked_boto3_client.put_object.side_effect = \
             S3ClientError({'Error': {}}, 'put_object')
@@ -74,7 +68,6 @@ class TestS3:
         with pytest.raises(BlockError):
             await asyncio_perform(s3_block_dispatcher, intent)
 
-    @pytest.mark.asyncio
     async def test_perform_block_read(self, s3_block_dispatcher):
         s3_block_dispatcher.mocked_boto3_client.get_object.return_value = {
             'Body': io.BytesIO(b'bar')}
@@ -82,7 +75,6 @@ class TestS3:
         ret = await asyncio_perform(s3_block_dispatcher, intent)
         assert ret == Block(id='42', content=b'bar')
 
-    @pytest.mark.asyncio
     async def test_perform_block_read_not_found(self, s3_block_dispatcher):
         s3_block_dispatcher.mocked_boto3_client.get_object.side_effect = \
             S3ClientError({'Error': {}}, 'get_object')
@@ -90,7 +82,6 @@ class TestS3:
         with pytest.raises(BlockNotFound):
             await asyncio_perform(s3_block_dispatcher, intent)
 
-    @pytest.mark.asyncio
     async def test_perform_block_create_no_connection(self, s3_block_dispatcher):
         s3_block_dispatcher.mocked_boto3_client.put_object.side_effect = \
             S3EndpointConnectionError(endpoint_url='put_object')
@@ -98,7 +89,6 @@ class TestS3:
         with pytest.raises(BlockError):
             await asyncio_perform(s3_block_dispatcher, intent)
 
-    @pytest.mark.asyncio
     async def test_perform_block_read_no_connection(self, s3_block_dispatcher):
         s3_block_dispatcher.mocked_boto3_client.get_object.side_effect = \
             S3EndpointConnectionError(endpoint_url='get_object')

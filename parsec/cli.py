@@ -12,7 +12,7 @@ from effect2 import Effect, do, asyncio_perform
 
 from parsec.backend import (
     postgresql_components_factory, mocked_components_factory,
-    register_backend_api, register_privkey_api
+    register_backend_api, register_start_api
 )
 from parsec.backend.pubkey import EPubKeyGet, EPubKeyAdd
 from parsec.core import app_factory as core_app_factory, run_app as core_run_app
@@ -229,14 +229,15 @@ def _backend(host, port, pubkeys, no_client_auth, store, debug):
     if store:
         if store.startswith('postgres://'):
             store_type = 'PostgreSQL'
-            backend_components = postgresql_components_factory(store)
+            backend_components = postgresql_components_factory(app, store)
         else:
             raise SystemExit('Unknown store `%s` (should be a postgresql db url).' % store)
     else:
         store_type = 'mocked in memory'
-        backend_components = mocked_components_factory()
-    register_backend_api(app, backend_components)
-    register_privkey_api(app, backend_components.privkey)
+        backend_components = mocked_components_factory(app)
+    dispatcher = backend_components.get_dispatcher()
+    register_backend_api(app, dispatcher)
+    register_start_api(app, dispatcher)
 
     if debug:
         loop.set_debug(True)

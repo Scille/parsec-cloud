@@ -45,8 +45,8 @@ def init(url, force):
         raise SystemExit(exc)
 
 
-async def _init_db(url, force=False, loop=None):
-    async with _connect(url, loop=loop) as pool:
+async def _init_db(url, force=False):
+    async with _connect(url) as pool:
         with await pool.cursor() as cur:
             if force:
                 await cur.execute(
@@ -119,10 +119,10 @@ class PostgreSQLConnection:
     _url = attr.ib()
     _pool = attr.ib(default=None)
 
-    async def open_connection(self, loop=None):
+    async def open_connection(self):
         assert not self._pool, "Service already bootstraped"
-        self._pool = await _connect(self._url, loop=loop)
-        self._notification_handler_task = asyncio.ensure_future(self._notification_handler(), loop=loop)
+        self._pool = await _connect(self._url)
+        self._notification_handler_task = asyncio.ensure_future(self._notification_handler())
 
     async def close_connection(self):
         assert self._pool, "Service hasn't been bootstraped"
@@ -146,18 +146,6 @@ class PostgreSQLConnection:
     def acquire(self):
         assert self._pool, "Service hasn't been bootstraped"
         return self._pool.acquire()
-
-
-async def postgresql_connection_factory(url):
-    conn = PostgreSQLConnection(url)
-    await conn.open_connection()
-
-    @do
-    def on_app_stop(app):
-        yield Effect(AsyncFunc(conn.close_connection()))
-
-    blinker.signal('app_stop').connect(on_app_stop, weak=False)
-    return conn
 
 
 @attr.s

@@ -63,15 +63,15 @@ G889JN85nABKR9WkdwIDAQAB
 """
 
 
-async def bootstrap_PostgreSQLPubKeyComponent(request, event_loop):
+async def bootstrap_PostgreSQLPubKeyComponent(request, loop):
     can_side_effect_or_skip()
-    module, url = await init_or_skiptest_parsec_postgresql(event_loop)
+    module, url = await init_or_skiptest_parsec_postgresql()
 
     conn = module.PostgreSQLConnection(url)
-    await conn.open_connection(event_loop)
+    await conn.open_connection()
 
     def finalize():
-        event_loop.run_until_complete(conn.close_connection())
+        loop.run_until_complete(conn.close_connection())
 
     request.addfinalizer(finalize)
     return module.PostgreSQLPubKeyComponent(conn)
@@ -79,23 +79,22 @@ async def bootstrap_PostgreSQLPubKeyComponent(request, event_loop):
 
 @pytest.fixture(params=[MockedPubKeyComponent, bootstrap_PostgreSQLPubKeyComponent],
                 ids=['mocked', 'postgresql'])
-def component(request, event_loop):
+def component(request, loop):
     if asyncio.iscoroutinefunction(request.param):
-        return event_loop.run_until_complete(request.param(request, event_loop))
+        return loop.run_until_complete(request.param(request, loop))
     else:
         return request.param()
 
 
 @pytest.fixture
-def pubkeys_loaded(component, event_loop):
+def pubkeys_loaded(component, loop):
     for intent in (EPubKeyAdd('alice@test.com', ALICE_PUBLIC_RSA),
                    EPubKeyAdd('bob@test.com', BOB_PUBLIC_RSA)):
         eff = component.perform_pubkey_add(intent)
-        event_loop.run_until_complete(asyncio_perform_sequence([], eff))
+        loop.run_until_complete(asyncio_perform_sequence([], eff))
 
 
 class TestPubKeyComponent:
-    @pytest.mark.asyncio
     async def test_pubkey_get_raw_ok(self, component, pubkeys_loaded):
         intent = EPubKeyGet('alice@test.com', raw=True)
         eff = component.perform_pubkey_get(intent)
@@ -104,7 +103,6 @@ class TestPubKeyComponent:
         ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == ALICE_PUBLIC_RSA
 
-    @pytest.mark.asyncio
     async def test_pubkey_get_cooked_ok(self, component, pubkeys_loaded):
         intent = EPubKeyGet('alice@test.com', raw=False)
         eff = component.perform_pubkey_get(intent)
@@ -113,7 +111,6 @@ class TestPubKeyComponent:
         ret = await asyncio_perform_sequence(sequence, eff)
         assert isinstance(ret, RSAPublicKey)
 
-    @pytest.mark.asyncio
     async def test_pubkey_get_missing(self, component, pubkeys_loaded):
         intent = EPubKeyGet('unknown@test.com', raw=False)
         with pytest.raises(PubKeyNotFound):
@@ -122,7 +119,6 @@ class TestPubKeyComponent:
             ]
             await asyncio_perform_sequence(sequence, eff)
 
-    @pytest.mark.asyncio
     async def test_pubkey_add_ok(self, component):
         intent = EPubKeyAdd('alice@test.com', ALICE_PUBLIC_RSA)
         eff = component.perform_pubkey_add(intent)
@@ -138,7 +134,6 @@ class TestPubKeyComponent:
         ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == ALICE_PUBLIC_RSA
 
-    @pytest.mark.asyncio
     async def test_pubkey_add_duplicated(self, component, pubkeys_loaded):
         intent = EPubKeyAdd('alice@test.com', BOB_PUBLIC_RSA)
         with pytest.raises(PubKeyError):

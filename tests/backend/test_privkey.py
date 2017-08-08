@@ -1,13 +1,10 @@
 import pytest
 import asyncio
-from aiohttp import web
-from effect2.testing import const, conste, noop, perform_sequence, asyncio_perform_sequence
+from effect2.testing import asyncio_perform_sequence
 
 from parsec.backend.privkey import (
-    EPrivKeyGet, EPrivKeyAdd, MockedPrivKeyComponent,
-    api_privkey_get, api_privkey_add, register_privkey_api)
+    EPrivKeyGet, EPrivKeyAdd, MockedPrivKeyComponent)
 from parsec.exceptions import PrivKeyHashCollision, PrivKeyNotFound
-from parsec.tools import to_jsonb64
 
 from tests.common import can_side_effect_or_skip
 from tests.backend.common import init_or_skiptest_parsec_postgresql
@@ -67,10 +64,10 @@ G889JN85nABKR9WkdwIDAQAB
 
 async def bootstrap_PostgreSQLPrivKeyComponent(request, loop):
     can_side_effect_or_skip()
-    module, url = await init_or_skiptest_parsec_postgresql(loop)
+    module, url = await init_or_skiptest_parsec_postgresql()
 
     conn = module.PostgreSQLConnection(url)
-    await conn.open_connection(loop)
+    await conn.open_connection()
 
     def finalize():
         loop.run_until_complete(conn.close_connection())
@@ -142,81 +139,3 @@ class TestPrivKeyComponent:
         ]
         ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == b"<Alice's cipherkey>"
-
-
-@pytest.fixture
-def component():
-    return MockedPrivKeyComponent()
-
-
-@pytest.fixture
-def client(loop, test_client, component):
-    app = web.Application()
-    register_privkey_api(app, component)
-    return loop.run_until_complete(test_client(app))
-
-
-class TestPrivKeyAPI:
-
-    async def test_privkey_get_ok(self, client, component):
-        component._keys["<Alice's hash>"] = b"<Alice's private key>"
-        ret = await client.get('/privkeys', json={'hash': "<Alice's hash>"})
-        assert ret.status == 200
-        body = await ret.json()
-        assert body == {
-            'status': 'ok',
-            'hash': "<Alice's hash>",
-            'cipherkey': to_jsonb64(b"<Alice's private key>")
-        }
-
-    @pytest.mark.parametrize('bad_msg', [
-        {'hash': 42},
-        {'hash': None},
-        {'hash': "<Alice's hash>", 'unknown': 'field'},
-        {}
-    ])
-    async def test_privkey_get_bad_msg(self, client, bad_msg):
-        ret = await client.post('/privkeys', json=bad_msg)
-        assert ret.status == 400
-        body = await ret.json()
-        assert body['status'] == 'bad_msg'
-
-    async def test_privkey_get_not_found(self, client):
-        ret = await client.get('/privkeys', json={'hash': "<Alice's hash>"})
-        assert ret.status == 404
-        body = await ret.json()
-        assert body['status'] == 'privkey_not_found'
-
-    async def test_privkey_add_ok(self, client):
-        ret = await client.post('/privkeys',
-            json={'hash': "<Alice's hash>", 'cipherkey': to_jsonb64(b"<Alice's privkey>")})
-        assert ret.status == 200
-        body = await ret.json()
-        assert body == {'status': 'ok'}
-
-    @pytest.mark.parametrize('bad_msg', [
-        {'hash': None, 'cipherkey': to_jsonb64(b"<Alice's privkey>")},
-        {'hash': 42, 'cipherkey': to_jsonb64(b"<Alice's privkey>")},
-        {'hash': "<Alice's hash>", 'cipherkey': None},
-        {'hash': "<Alice's hash>", 'cipherkey': 42},
-        {'hash': "<Alice's hash>"},
-        {'cipherkey': to_jsonb64(b"<Alice's privkey>")},
-        {'hash': "<Alice's hash>", 'cipherkey': to_jsonb64(b"<Alice's privkey>"), 'unknown': 'field'},
-        {}
-    ])
-    async def test_privkey_add_bad_msg(self, bad_msg, client):
-        ret = await client.post('/privkeys', json=bad_msg)
-        assert ret.status == 400
-        body = await ret.json()
-        assert body['status'] == 'bad_msg'
-
-    async def test_privkey_add_hash_collision(self, client):
-        ret = await client.post('/privkeys',
-            json={'hash': "<Alice's hash>", 'cipherkey': to_jsonb64(b"<Alice's privkey>")})
-        assert ret.status == 200
-
-        ret = await client.post('/privkeys',
-            json={'hash': "<Alice's hash>", 'cipherkey': to_jsonb64(b"<Bob's privkey>")})
-        assert ret.status == 400
-        body = await ret.json()
-        assert body['status'] == 'privkey_hash_collision'

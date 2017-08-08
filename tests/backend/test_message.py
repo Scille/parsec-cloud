@@ -13,15 +13,15 @@ from tests.common import can_side_effect_or_skip
 from tests.backend.common import init_or_skiptest_parsec_postgresql
 
 
-async def bootstrap_PostgreSQLMessageComponent(request, event_loop):
+async def bootstrap_PostgreSQLMessageComponent(request, loop):
     can_side_effect_or_skip()
-    module, url = await init_or_skiptest_parsec_postgresql(event_loop)
+    module, url = await init_or_skiptest_parsec_postgresql()
 
     conn = module.PostgreSQLConnection(url)
-    await conn.open_connection(event_loop)
+    await conn.open_connection()
 
     def finalize():
-        event_loop.run_until_complete(conn.close_connection())
+        loop.run_until_complete(conn.close_connection())
 
     request.addfinalizer(finalize)
     return module.PostgreSQLMessageComponent(conn)
@@ -29,16 +29,15 @@ async def bootstrap_PostgreSQLMessageComponent(request, event_loop):
 
 @pytest.fixture(params=[InMemoryMessageComponent, bootstrap_PostgreSQLMessageComponent],
                 ids=['in_memory', 'postgresql'])
-def component(request, event_loop):
+def component(request, loop):
     if asyncio.iscoroutinefunction(request.param):
-        return event_loop.run_until_complete(request.param(request, event_loop))
+        return loop.run_until_complete(request.param(request, loop))
     else:
         return request.param()
 
 
 class TestMessageComponent:
 
-    @pytest.mark.asyncio
     async def test_message_get_empty(self, component):
         intent = EMessageGet(offset=0)
         eff = component.perform_message_get(intent)
@@ -48,7 +47,6 @@ class TestMessageComponent:
         ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == []
 
-    @pytest.mark.asyncio
     async def test_message_new(self, component):
         intent = EMessageNew(recipient='alice@test.com', body=b'This is for alice.')
         eff = component.perform_message_new(intent)
@@ -58,7 +56,6 @@ class TestMessageComponent:
         ret = await asyncio_perform_sequence(sequence, eff)
         assert ret is None
 
-    @pytest.mark.asyncio
     async def test_message_retreive(self, component):
         async def _recv_msg(recipient):
             intent = EMessageGet(offset=0)

@@ -12,15 +12,15 @@ from tests.common import can_side_effect_or_skip
 from tests.backend.common import init_or_skiptest_parsec_postgresql
 
 
-async def bootstrap_PostgreSQLVlobComponent(request, event_loop):
+async def bootstrap_PostgreSQLVlobComponent(request, loop):
     can_side_effect_or_skip()
-    module, url = await init_or_skiptest_parsec_postgresql(event_loop)
+    module, url = await init_or_skiptest_parsec_postgresql()
 
     conn = module.PostgreSQLConnection(url)
-    await conn.open_connection(event_loop)
+    await conn.open_connection()
 
     def finalize():
-        event_loop.run_until_complete(conn.close_connection())
+        loop.run_until_complete(conn.close_connection())
 
     request.addfinalizer(finalize)
     return module.PostgreSQLVlobComponent(conn)
@@ -28,22 +28,21 @@ async def bootstrap_PostgreSQLVlobComponent(request, event_loop):
 
 @pytest.fixture(params=[MockedVlobComponent, bootstrap_PostgreSQLVlobComponent],
                 ids=['mocked', 'postgresql'])
-def component(request, event_loop):
+def component(request, loop):
     if asyncio.iscoroutinefunction(request.param):
-        return event_loop.run_until_complete(request.param(request, event_loop))
+        return loop.run_until_complete(request.param(request, loop))
     else:
         return request.param()
 
 
 @pytest.fixture
-def vlob(component, event_loop):
+def vlob(component, loop):
     intent = EVlobCreate('123', b'foo')
     eff = component.perform_vlob_create(intent)
-    return event_loop.run_until_complete(asyncio_perform_sequence([], eff))
+    return loop.run_until_complete(asyncio_perform_sequence([], eff))
 
 
 class TestVlobComponent:
-    @pytest.mark.asyncio
     async def test_vlob_create(self, component):
         intent = EVlobCreate('123', b'foo')
         eff = component.perform_vlob_create(intent)
@@ -56,7 +55,6 @@ class TestVlobComponent:
         assert ret.write_trust_seed
         assert ret.version == 1
 
-    @pytest.mark.asyncio
     async def test_vlob_create_autoid(self, component):
         intent = EVlobCreate(blob=b'foo')
         eff = component.perform_vlob_create(intent)
@@ -69,7 +67,6 @@ class TestVlobComponent:
         assert ret.write_trust_seed
         assert ret.version == 1
 
-    @pytest.mark.asyncio
     async def test_vlob_read_ok(self, component, vlob):
         intent = EVlobRead(vlob.id, vlob.read_trust_seed)
         eff = component.perform_vlob_read(intent)
@@ -78,7 +75,6 @@ class TestVlobComponent:
         ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == vlob
 
-    @pytest.mark.asyncio
     async def test_vlob_read_previous_version(self, component, vlob):
         # Update vlob
         intent = EVlobUpdate(vlob.id, 2, vlob.write_trust_seed, b'Next version.')
@@ -95,7 +91,6 @@ class TestVlobComponent:
         ret = await asyncio_perform_sequence(sequence, eff)
         assert ret == vlob
 
-    @pytest.mark.asyncio
     async def test_vlob_read_missing(self, component, vlob):
         intent = EVlobRead('dummy-id', vlob.read_trust_seed)
         with pytest.raises(VlobNotFound):
@@ -104,7 +99,6 @@ class TestVlobComponent:
             ]
             await asyncio_perform_sequence(sequence, eff)
 
-    @pytest.mark.asyncio
     async def test_vlob_read_wrong_seed(self, component, vlob):
         intent = EVlobRead(vlob.id, 'dummy-seed')
         with pytest.raises(TrustSeedError):
@@ -119,7 +113,6 @@ class TestVlobComponent:
             ]
             await asyncio_perform_sequence(sequence, eff)
 
-    @pytest.mark.asyncio
     async def test_vlob_read_wrong_version(self, component, vlob):
         intent = EVlobRead(vlob.id, vlob.read_trust_seed, version=42)
         with pytest.raises(VlobNotFound):
@@ -128,7 +121,6 @@ class TestVlobComponent:
             ]
             await asyncio_perform_sequence(sequence, eff)
 
-    @pytest.mark.asyncio
     async def test_vlob_update_ok(self, component, vlob):
         intent = EVlobUpdate(vlob.id, 2, vlob.write_trust_seed, b'Next version.')
         eff = component.perform_vlob_update(intent)
@@ -144,7 +136,6 @@ class TestVlobComponent:
         assert ret.version == 2
         assert ret.blob == b'Next version.'
 
-    @pytest.mark.asyncio
     async def test_vlob_update_missing(self, component, vlob):
         intent = EVlobUpdate('dummy-id', 2, vlob.read_trust_seed, b'Next version.')
         with pytest.raises(VlobNotFound):
@@ -153,7 +144,6 @@ class TestVlobComponent:
             ]
             await asyncio_perform_sequence(sequence, eff)
 
-    @pytest.mark.asyncio
     async def test_vlob_update_wrong_seed(self, component, vlob):
         intent = EVlobUpdate(vlob.id, 2, 'dummy-seed', b'Next version.')
         with pytest.raises(TrustSeedError):
@@ -168,7 +158,6 @@ class TestVlobComponent:
             ]
             await asyncio_perform_sequence(sequence, eff)
 
-    @pytest.mark.asyncio
     async def test_vlob_update_wrong_version(self, component, vlob):
         intent = EVlobUpdate(vlob.id, 42, vlob.write_trust_seed, b'Next version.')
         with pytest.raises(VlobNotFound):
