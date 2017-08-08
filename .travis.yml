@@ -6,6 +6,8 @@ matrix:
     include:
         - python: 3.5
           env: OPENSSL=1.1.0c
+        - python: 3.6
+          env: OPENSSL=1.1.0c
 services:
   - postgresql
 install:
