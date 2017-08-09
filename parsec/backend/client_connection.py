@@ -2,15 +2,18 @@ import attr
 import random
 import string
 import asyncio
-from aiohttp import web
+from aiohttp import web, WSMsgType
 from logbook import Logger
 from blinker import signal
-from websockets import ConnectionClosed
 from effect2 import TypeDispatcher, ComposedDispatcher, asyncio_perform
 
 from parsec.tools import ejson_dumps
 from parsec.backend.session import SessionComponent, handshake_io_dispatcher_factory
 from parsec.exceptions import HandshakeError
+
+
+class WebsocketConnectionClosed(Exception):
+    pass
 
 
 @attr.s
@@ -45,7 +48,13 @@ class WebsocketClientConnectionContext:
     subscribed_events = attr.ib(default=attr.Factory(dict))
 
     async def recv(self):
-        return await self.ws.receive_str()
+        msg = await self.ws.receive()
+        if msg.type == WSMsgType.TEXT:
+            return msg.data
+        elif msg.type == WSMsgType.CLOSE:
+            raise WebsocketConnectionClosed(msg.data)
+        else:
+            raise RuntimeError('Wrong websocket message: %s' % msg)
 
     async def send(self, body):
         return await self.ws.send_str(body)
@@ -101,9 +110,6 @@ async def _on_connection_main_loop(execute_cmd, context, dispatcher):
                 get_event = asyncio.ensure_future(context.queued_pushed_events.get())
             else:
                 raw_cmd = get_cmd.result()
-                if not raw_cmd:
-                    context.logger.debug('Connection stopped')
-                    return
                 context.logger.debug('Received: %r' % raw_cmd)
                 intent = execute_cmd(raw_cmd)
                 raw_resp = await asyncio_perform(dispatcher, intent)
@@ -111,8 +117,8 @@ async def _on_connection_main_loop(execute_cmd, context, dispatcher):
                 await context.send(raw_resp)
                 # Restart watch on incoming messages
                 get_cmd = asyncio.ensure_future(context.recv())
-    except ConnectionClosed:
-        context.logger.info('Connection closed')
+    except WebsocketConnectionClosed:
+        pass
     finally:
         get_event.cancel()
         get_cmd.cancel()
@@ -148,10 +154,12 @@ def websocket_route_factory(execute_cmd, base_dispatcher):
             handshake_dispatcher = ComposedDispatcher([
                 dispatcher, handshake_io_dispatcher_factory(context)])
             await asyncio_perform(handshake_dispatcher, session.handshake())
-        except HandshakeError:
-            return
+        except (HandshakeError, WebsocketConnectionClosed):
+            context.logger.info('Bad handshake, closing connection')
+            return ws
         context.logger.debug('Handshake done, `%s` is authenticated.' % session.id)
         await _on_connection_main_loop(execute_cmd, context, dispatcher)
+        context.logger.info('Connection closed by client')
         return ws
 
     return on_connection
