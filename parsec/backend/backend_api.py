@@ -3,7 +3,7 @@ from marshmallow import Schema, fields
 from effect2 import Effect, do
 
 from parsec.backend.client_connection import websocket_route_factory
-from parsec.backend import vlob, user_vlob, group, message, pubkey
+from parsec.backend import vlob, user_vlob, group, message, pubkey, block_store
 from parsec.backend.client_connection import EClientSubscribeEvent, EClientUnsubscribeEvent
 from parsec.tools import ejson_dumps, ejson_loads
 from parsec.exceptions import ParsecError, BadMessageError
@@ -26,7 +26,7 @@ def execute_raw_cmd(raw_cmd: str):
             ret = {'status': 'bad_msg', 'label': '`cmd` string field is mandatory.'}
         else:
             ret = yield execute_cmd(cmd_type, params)
-    return ejson_dumps(ret).encode('utf-8')
+    return ejson_dumps(ret)
 
 
 @do
@@ -63,9 +63,17 @@ def api_unsubscribe_event(msg):
     return {'status': 'ok'}
 
 
+@do
+def api_blockstore_get_url(msg):
+    url = yield Effect(block_store.BlockStoreGetURL())
+    return {'status': 'ok', 'url': url}
+
+
 API_CMDS_ROUTER = {
     'subscribe_event': api_subscribe_event,
     'unsubscribe_event': api_unsubscribe_event,
+
+    'blockstore_get_url': api_blockstore_get_url,
 
     'vlob_create': vlob.api_vlob_create,
     'vlob_read': vlob.api_vlob_read,

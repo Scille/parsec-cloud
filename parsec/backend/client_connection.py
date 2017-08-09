@@ -127,7 +127,7 @@ def anonymous_websocket_route_factory(execute_cmd, base_dispatcher):
         client_dispatcher = client_dispatcher_factory(context)
         dispatcher = ComposedDispatcher([base_dispatcher, client_dispatcher])
         context.logger.info('Connection started (anonymous connection)')
-        _on_connection_main_loop(execute_cmd, context, dispatcher)
+        await _on_connection_main_loop(execute_cmd, context, dispatcher)
         return ws
 
     return on_connection
@@ -151,7 +151,7 @@ def websocket_route_factory(execute_cmd, base_dispatcher):
         except HandshakeError:
             return
         context.logger.debug('Handshake done, `%s` is authenticated.' % session.id)
-        _on_connection_main_loop(execute_cmd, context, dispatcher)
+        await _on_connection_main_loop(execute_cmd, context, dispatcher)
         return ws
 
     return on_connection

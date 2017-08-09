@@ -4,6 +4,7 @@ from effect2 import ComposedDispatcher
 from parsec.base import base_dispatcher
 from parsec.backend.backend_api import register_backend_api
 from parsec.backend.start_api import register_start_api
+from parsec.backend.block_store import register_in_memory_block_store_api
 
 
 @attr.s
@@ -14,6 +15,7 @@ class BackendComponents:
     vlob = attr.ib()
     pubkey = attr.ib()
     privkey = attr.ib()
+    block_store = attr.ib()
 
     def get_dispatcher(self):
         return ComposedDispatcher([
@@ -24,27 +26,31 @@ class BackendComponents:
             self.vlob.get_dispatcher(),
             self.pubkey.get_dispatcher(),
             self.privkey.get_dispatcher(),
+            self.block_store.get_dispatcher()
         ])
 
 
-def mocked_components_factory(app):
+def mocked_components_factory(block_store):
     from parsec.backend.pubkey import MockedPubKeyComponent
     from parsec.backend.privkey import MockedPrivKeyComponent
     from parsec.backend.vlob import MockedVlobComponent
     from parsec.backend.user_vlob import MockedUserVlobComponent
     from parsec.backend.message import InMemoryMessageComponent
     from parsec.backend.group import MockedGroupComponent
+    from parsec.backend.block_store import BlockStoreInfoComponent
     return BackendComponents(
         message=InMemoryMessageComponent(),
         group=MockedGroupComponent(),
         uservlob=MockedUserVlobComponent(),
         vlob=MockedVlobComponent(),
         pubkey=MockedPubKeyComponent(),
-        privkey=MockedPrivKeyComponent()
+        privkey=MockedPrivKeyComponent(),
+        block_store=BlockStoreInfoComponent(block_store)
     )
 
-def postgresql_components_factory(app, store):
+def postgresql_components_factory(app, store, block_store):
     from parsec.backend import postgresql
+    from parsec.backend.block_store import BlockStoreInfoComponent
 
     conn = postgresql.PostgreSQLConnection(store)
 
@@ -62,9 +68,11 @@ def postgresql_components_factory(app, store):
         uservlob=postgresql.PostgreSQLUserVlobComponent(conn),
         vlob=postgresql.PostgreSQLVlobComponent(conn),
         pubkey=postgresql.PostgreSQLPubKeyComponent(conn),
-        privkey=postgresql.PostgreSQLPrivKeyComponent(conn)
+        privkey=postgresql.PostgreSQLPrivKeyComponent(conn),
+        block_store=BlockStoreInfoComponent(block_store)
     )
 
 
 __all__ = ('register_backend_api', 'register_start_api',
-           'postgresql_components_factory', 'mocked_components_factory')
+           'postgresql_components_factory', 'mocked_components_factory',
+           'register_in_memory_block_store_api')
