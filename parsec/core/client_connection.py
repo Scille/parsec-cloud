@@ -8,7 +8,6 @@ from websockets import ConnectionClosed
 from effect2 import TypeDispatcher, ComposedDispatcher, asyncio_perform
 
 from parsec.tools import ejson_dumps
-from parsec.core.base import base_dispatcher
 
 
 @attr.s
@@ -96,7 +95,7 @@ def client_dispatcher_factory(client_context):
     })
 
 
-def on_connection_factory(execute_cmd, base_dispatcher=base_dispatcher):
+def on_connection_factory(execute_cmd, base_dispatcher):
 
     async def on_connection(reader, writer):
         context = ClientConnectionContext(reader, writer)
