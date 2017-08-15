@@ -1,8 +1,9 @@
 import pytest
 import asyncio
+from effect2.testing import perform_sequence, const
 from unittest.mock import Mock, patch
 
-from parsec.core.backend import BackendConnection
+from parsec.core.backend import BackendComponent, BackendConnection, BackendCmd
 
 
 class AsyncMock(Mock):
@@ -89,3 +90,20 @@ class TestBackendConnection:
             assert sender == 'good_sender'
 
             await conn.close_connection()
+
+
+@pytest.mark.parametrize('args', [
+    ('ws://localhost:5000/foo', 's3://localhost:5000/foo', 's3://localhost:5000/foo'),
+    ('ws://localhost:5000/foo', '/bar', 'http://localhost:5000/foo/bar'),
+    ('wss://localhost:5000/foo', '/bar', 'https://localhost:5000/foo/bar')
+])
+async def test_perform_blockstore_get_url_local_to_backend(args):
+    backend_url, raw_blockstore_url, cooked_blockstore_url = args
+    backend = BackendComponent(url=backend_url)
+    eff = backend.perform_blockstore_get_url(None)
+    sequence = [
+        (BackendCmd('blockstore_get_url'),
+            const({'status': 'ok', 'url': raw_blockstore_url}))
+    ]
+    ret = perform_sequence(sequence, eff)
+    assert ret == cooked_blockstore_url

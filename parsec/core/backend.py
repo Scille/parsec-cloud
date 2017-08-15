@@ -3,12 +3,15 @@ import json
 import asyncio
 import blinker
 import websockets
-from effect2 import TypeDispatcher, do, Effect
+from effect2 import TypeDispatcher, do, Effect, AsyncFunc
 
+from parsec.core.identity import EIdentityGet
+from parsec.base import ERegisterEvent
 from parsec.exceptions import BackendConnectionError, exception_from_status
 from parsec.tools import logger, ejson_loads, ejson_dumps, to_jsonb64
 
 
+# TODO rename to `EBackendCmd`
 @attr.s
 class BackendCmd:
     cmd = attr.ib()
@@ -16,7 +19,12 @@ class BackendCmd:
 
 
 @attr.s
-class EBackendCloseConnection:
+class EBackendBlockStoreGetURL:
+    pass
+
+
+@attr.s
+class EBackendReset:
     pass
 
 
@@ -46,26 +54,34 @@ class BackendConnection:
     async def open_connection(self, identity):
         logger.debug('Connection to backend opened')
         assert not self._websocket, "Connection to backend already opened"
-        self._websocket = await websockets.connect(self.url)
-        # Handle handshake
-        challenge = ejson_loads(await self._websocket.recv())
-        answer = identity.private_key.sign(challenge['challenge'].encode())
-        await self._websocket.send(ejson_dumps({
-            'handshake': 'answer',
-            'identity': identity.id,
-            'answer': to_jsonb64(answer)
-        }))
-        resp = ejson_loads(await self._websocket.recv())
-        if resp['status'] != 'ok':
-            await self.close_connection()
-            raise exception_from_status(resp['status'])(resp['label'])
-        self._ws_recv_handler_task = asyncio.ensure_future(self._ws_recv_handler(), loop=self.loop)
-        if self.watchdog_time:
-            self._watchdog_task = asyncio.ensure_future(self._watchdog(), loop=self.loop)
+        try:
+            self._websocket = await websockets.connect(self.url)
+            # Handle handshake
+            raw = await self._websocket.recv()
+            challenge = ejson_loads(raw)
+            answer = identity.private_key.sign(challenge['challenge'].encode())
+            await self._websocket.send(ejson_dumps({
+                'handshake': 'answer',
+                'identity': identity.id,
+                'answer': to_jsonb64(answer)
+            }))
+            resp = ejson_loads(await self._websocket.recv())
+            if resp['status'] != 'ok':
+                await self.close_connection()
+                raise exception_from_status(resp['status'])(resp['label'])
+            self._ws_recv_handler_task = asyncio.ensure_future(
+                self._ws_recv_handler(), loop=self.loop)
+            if self.watchdog_time:
+                self._watchdog_task = asyncio.ensure_future(self._watchdog(), loop=self.loop)
+        except (ConnectionRefusedError, websockets.exceptions.ConnectionClosed) as exc:
+            raise BackendConnectionError('Cannot connect to backend (%s)' % exc)
 
     async def ping(self):
         assert self._websocket, "Connection to backend not opened"
-        await self._websocket.ping()
+        try:
+            await self._websocket.ping()
+        except websockets.exceptions.ConnectionClosed as exc:
+            raise BackendConnectionError('Cannot connect to backend (%s)' % exc)
 
     async def close_connection(self):
         assert self._websocket, "Connection to backend not opened"
@@ -115,7 +131,10 @@ class BackendConnection:
     async def send_cmd(self, msg):
         if not self._websocket:
             raise BackendConnectionError('BackendAPIService cannot send command in current state')
-        await self._websocket.send(ejson_dumps(msg))
+        try:
+            await self._websocket.send(ejson_dumps(msg))
+        except websockets.exceptions.ConnectionClosed as exc:
+            raise BackendConnectionError('Cannot connect to backend (%s)' % exc)
         ret = await self._resp_queue.get()
         status = ret['status']
         if status == 'ok':
@@ -127,71 +146,76 @@ class BackendConnection:
 class BackendComponent:
 
     def __init__(self, url, watchdog=None):
-        self.app = None
+        assert url.startswith('ws://') or url.startswith('wss://')
         self.url = url
         self.watchdog = watchdog
         self.connection = None
-        blinker.signal('app_start').connect(self.on_app_start)
-        blinker.signal('app_stop').connect(self.on_app_stop)
-        blinker.signal('identity_loaded').connect(self.on_identity_loaded)
-        blinker.signal('identity_unloaded').connect(self.on_identity_unloaded)
 
-    @do
-    def on_app_start(self, app):
-        self.app = app
+    async def shutdown(self, app=None):
+        await self.perform_backend_reset()
 
-    @do
-    def on_app_stop(self, app):
-        yield Effect(EBackendCloseConnection())
-
-    def on_identity_loaded(self, identity):
-        self.identity = identity
-
-    def on_identity_unloaded(self, _):
-        self.identity = None
-
-    async def open_connection(self):
-        if not self.connection:
-            if not self.identity:
-                raise BackendConnectionError('Identity must be loaded to connect to backend')
-            connection = BackendConnection(self.url, self.watchdog)
+    def performer_with_connection_factory(self, async_performer):
+        @do
+        def performer_with_connection(intent):
             try:
-                await connection.open_connection(self.identity)
-            except ConnectionRefusedError as exc:
-                raise BackendConnectionError('Cannot connect to backend (%s)' % exc)
-            self.connection = connection
+                if self.connection:
+                    # Reuse already opened connection
+                    try:
+                        yield AsyncFunc(async_performer(intent))
+                    except BackendConnectionError:
+                        # The connection has been closed, try to reconnect
+                        # and rerun the performer
+                        yield AsyncFunc(self.connection.close_connection())
+                        self.connection = None
+                        return (yield performer_with_connection(intent))
+                else:
+                    # Open new connection and run command
+                    identity = yield Effect(EIdentityGet())
+                    connection = BackendConnection(self.url, self.watchdog)
+                    yield AsyncFunc(connection.open_connection(identity))
+                    self.connection = connection
+                    yield AsyncFunc(async_performer(intent))
+            except BackendConnectionError:
+                if self.connection:
+                    yield AsyncFunc(self.connection.close_connection())
+                    self.connection = None
+                raise
 
-    async def close_connection(self):
+        return performer_with_connection
+
+    @do
+    def perform_blockstore_get_url(self, intent):
+        ret = yield Effect(BackendCmd('blockstore_get_url'))
+        url = ret['url']
+        if url.startswith('/'):
+            if self.url.startswith('ws://'):
+                return self.url.replace('ws://', 'http://', 1) + url
+            else:  # wss://
+                return self.url.replace('wss://', 'https://', 1) + url
+        else:
+            return url
+
+    async def perform_backend_status(self, intent):
+        await self.connection.ping()
+
+    async def perform_backend_cmd(self, intent):
+        payload = {'cmd': intent.cmd, **intent.msg}
+        return await self.connection.send_cmd(payload)
+
+    async def perform_backend_reset(self, intent=None):
         if self.connection:
             await self.connection.close_connection()
             self.connection = None
 
-    async def perform_backend_close_connection(self, intent):
-        await self.close_connection()
-
-    async def perform_backend_status(self, intent):
-        await self.open_connection()
-        try:
-            await self.connection.ping()
-        except websockets.exceptions.ConnectionClosed as exc:
-            await self.close_connection()
-            raise BackendConnectionError('Cannot connect to the backend (%s)' % exc)
-
-    async def perform_backend_cmd(self, intent):
-        await self.open_connection()
-        payload = {'cmd': intent.cmd, **intent.msg}
-        try:
-            return await self.connection.send_cmd(payload)
-        except BackendConnectionError:
-            await self.close_connection()
-            raise
-
     def get_dispatcher(self):
         from parsec.core import backend_group, backend_message, backend_user_vlob, backend_vlob
         return TypeDispatcher({
-            BackendCmd: self.perform_backend_cmd,
-            EBackendStatus: self.perform_backend_status,
-            EBackendCloseConnection: self.perform_backend_close_connection,
+            BackendCmd: self.performer_with_connection_factory(self.perform_backend_cmd),
+
+            EBackendReset: self.perform_backend_reset,
+            EBackendStatus: self.performer_with_connection_factory(self.perform_backend_status),
+
+            EBackendBlockStoreGetURL: self.perform_blockstore_get_url,
             backend_vlob.EBackendVlobCreate: backend_vlob.perform_vlob_create,
             backend_vlob.EBackendVlobUpdate: backend_vlob.perform_vlob_update,
             backend_vlob.EBackendVlobRead: backend_vlob.perform_vlob_read,
