@@ -1,6 +1,8 @@
 from os import urandom
 import struct
+import base64
 
+from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.backends.openssl import backend as openssl
 from cryptography.hazmat.primitives.ciphers.algorithms import AES
@@ -10,6 +12,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.exceptions import InvalidSignature, InvalidTag
 
 
@@ -194,6 +197,28 @@ class AESKey(BaseSymKey):
         return self._hazmat_key.key
 
 
+def _fernet_from_password(password, salt):
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+        backend=default_backend()
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(password))
+    return Fernet(key)
+
+
+def encrypt_with_password(password: bytes, salt: bytes, text: bytes) -> bytes:
+    f = _fernet_from_password(password, salt)
+    return f.encrypt(text)
+
+
+def decrypt_with_password(password: bytes, salt: bytes, ciphertext: bytes) -> bytes:
+    f = _fernet_from_password(password, salt)
+    return f.decrypt(ciphertext)
+
+
 __all__ = (
     'InvalidSignature',
     'InvalidTag',
@@ -207,4 +232,6 @@ __all__ = (
     'RSAPublicKey',
     'RSAPrivateKey',
     'AESKey',
+    'encrypt_with_password',
+    'decrypt_with_password'
 )

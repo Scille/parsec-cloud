@@ -4,7 +4,8 @@ from unittest.mock import patch
 from parsec.crypto import (
     load_private_key, load_public_key, load_sym_key, generate_sym_key,
     BasePrivateAsymKey, BasePublicAsymKey, InvalidSignature,
-    RSAPublicKey, RSAPrivateKey, AESKey, InvalidTag
+    RSAPublicKey, RSAPrivateKey, AESKey, InvalidTag,
+    encrypt_with_password, decrypt_with_password
 )
 
 
@@ -99,7 +100,9 @@ def mock_crypto_passthrough():
                 new=lambda _, pwd: ('<mock-exported-key with password %s>' % pwd).encode()), \
             patch.object(AESKey, 'encrypt', new=lambda _, txt: txt), \
             patch.object(AESKey, 'decrypt', new=lambda _, txt: txt), \
-            patch('parsec.crypto.urandom', new=mocked_urandom):
+            patch('parsec.crypto.urandom', new=mocked_urandom), \
+            patch('parsec.crypto.encrypt_with_password', new=lambda p, s, t: t), \
+            patch('parsec.crypto.decrypt_with_password', new=lambda p, s, c: c):
         yield
 
 
@@ -235,3 +238,13 @@ class TestAESSymCrypto:
         badsymkey = load_sym_key(symkey.key[:31] + b'x')
         with pytest.raises(InvalidTag):
             badsymkey.decrypt(crypted)
+
+
+def test_encrypt_with_password():
+    password = b'foo'
+    salt = b'123'
+    plaintext = b'hello world !'
+    ciphertext = encrypt_with_password(password, salt, plaintext)
+    assert len(ciphertext) == 100
+    unciphertext = decrypt_with_password(password, salt, ciphertext)
+    assert unciphertext == plaintext
