@@ -3,7 +3,7 @@ import pytest
 import asyncio
 from unittest.mock import Mock
 
-from parsec.core.server import run_unix_socket_server
+from parsec.unix_socket_app import run_unix_socket_server
 
 
 async def test_socket_exists(loop):

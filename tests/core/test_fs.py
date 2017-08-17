@@ -5,7 +5,6 @@ from effect2.testing import const, conste, noop, perform_sequence
 from freezegun import freeze_time
 from unittest.mock import Mock
 
-from parsec.core.app import app_factory
 from parsec.core.file import File
 from parsec.core.fs import (FSComponent, ESynchronize, EGroupCreate, EDustbinShow, EManifestHistory,
                             EManifestRestore, EFileCreate, EFileRead, EFileWrite, EFileTruncate,

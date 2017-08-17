@@ -9,6 +9,7 @@ from parsec.core.identity import EIdentityGet
 from parsec.base import ERegisterEvent
 from parsec.exceptions import BackendConnectionError, exception_from_status
 from parsec.tools import logger, ejson_loads, ejson_dumps, to_jsonb64
+from parsec.core.backend_start_api import StartAPIComponent, backend_to_start_api_url
 
 
 # TODO rename to `EBackendCmd`
@@ -148,6 +149,7 @@ class BackendComponent:
     def __init__(self, url, watchdog=None):
         assert url.startswith('ws://') or url.startswith('wss://')
         self.url = url
+        self._start_api_component = StartAPIComponent(backend_to_start_api_url(url))
         self.watchdog = watchdog
         self.connection = None
 
@@ -161,7 +163,7 @@ class BackendComponent:
                 if self.connection:
                     # Reuse already opened connection
                     try:
-                        yield AsyncFunc(async_performer(intent))
+                        return (yield AsyncFunc(async_performer(intent)))
                     except BackendConnectionError:
                         # The connection has been closed, try to reconnect
                         # and rerun the performer
@@ -174,7 +176,7 @@ class BackendComponent:
                     connection = BackendConnection(self.url, self.watchdog)
                     yield AsyncFunc(connection.open_connection(identity))
                     self.connection = connection
-                    yield AsyncFunc(async_performer(intent))
+                    return (yield AsyncFunc(async_performer(intent)))
             except BackendConnectionError:
                 if self.connection:
                     yield AsyncFunc(self.connection.close_connection())
@@ -208,7 +210,8 @@ class BackendComponent:
             self.connection = None
 
     def get_dispatcher(self):
-        from parsec.core import backend_group, backend_message, backend_user_vlob, backend_vlob
+        from parsec.core import (backend_group, backend_message, backend_user_vlob,
+                                 backend_vlob, backend_start_api)
         return TypeDispatcher({
             BackendCmd: self.performer_with_connection_factory(self.perform_backend_cmd),
 
@@ -226,5 +229,8 @@ class BackendComponent:
             backend_group.EBackendGroupRead: backend_group.perform_group_read,
             backend_group.EBackendGroupCreate: backend_group.perform_group_create,
             backend_group.EBackendGroupAddIdentities: backend_group.perform_group_add_identities,
-            backend_group.EBackendGroupRemoveIdentities: backend_group.perform_group_remove_identities
+            backend_group.EBackendGroupRemoveIdentities: backend_group.perform_group_remove_identities,
+            backend_start_api.EBackendCipherKeyAdd: self._start_api_component.perform_cipherkey_add,
+            backend_start_api.EBackendCipherKeyGet: self._start_api_component.perform_cipherkey_get,
+            backend_start_api.EBackendIdentityRegister: self._start_api_component.perform_identity_register
         })

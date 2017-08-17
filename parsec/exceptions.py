@@ -120,6 +120,10 @@ class BlockError(ParsecError):
     status = 'block_error'
 
 
+class BlockConnectionError(ParsecError):
+    status = 'block_connection_error'
+
+
 class BlockNotFound(BlockError):
     status = 'block_not_found'
 
@@ -157,3 +161,7 @@ class ManifestNotFound(ParsecError):
 
 class BackendConnectionError(ParsecError):
     status = 'backend_connection_error'
+
+
+class BackendIdentityRegisterError(ParsecError):
+    status = 'backend_identity_register_error'

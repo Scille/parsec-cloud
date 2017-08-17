@@ -46,8 +46,10 @@ class TypeDispatcher:
 
 
 class ComposedDispatcher(TypeDispatcher):
-    def __init__(self, dispatchers):
+    def __init__(self, dispatchers, *args):
         self.mapping = {}
+        if args:
+            dispatchers = [dispatchers, *args]
         for d in dispatchers:
             self.mapping.update(d.mapping)
 

@@ -5,8 +5,9 @@ import asyncio
 from logbook import Logger
 from blinker import signal
 from websockets import ConnectionClosed
-from effect2 import TypeDispatcher, ComposedDispatcher, asyncio_perform
+from effect2 import TypeDispatcher, ComposedDispatcher, asyncio_perform, do, Effect
 
+from parsec.base import EEvent, ERegisterEvent, EUnregisterEvent
 from parsec.tools import ejson_dumps
 
 
@@ -23,6 +24,12 @@ class EClientSubscribeEvent:
 
 @attr.s
 class EClientUnsubscribeEvent:
+    event = attr.ib()
+    sender = attr.ib()
+
+
+@attr.s
+class EClientEvent:
     event = attr.ib()
     sender = attr.ib()
 
@@ -68,30 +75,39 @@ def client_dispatcher_factory(client_context):
     def perform_push_client_msg(intent):
         client_context.queued_pushed_events.put_nowait(intent.payload)
 
+    @do
     def perform_client_subscribe_event(intent):
-        key = (intent.event, intent.sender)
+        yield Effect(ERegisterEvent(EClientEvent, intent.event, intent.sender))
+        # key = (intent.event, intent.sender)
 
-        def on_event(sender):
-            payload = ejson_dumps({'event': intent.event, 'sender': sender})
-            client_context.queued_pushed_events.put_nowait(payload)
+        # def on_event(sender):
+        #     payload = ejson_dumps({'event': intent.event, 'sender': sender})
+        #     client_context.queued_pushed_events.put_nowait(payload)
 
-        # Attach the callbacks to the client context to make them have the same
-        # lifetime given event registration expires when callback is destroyed
-        # TODO: allow a subset of the possible events
-        client_context.subscribed_events[key] = on_event
-        signal(intent.event).connect(on_event, sender=intent.sender)
+        # # Attach the callbacks to the client context to make them have the same
+        # # lifetime given event registration expires when callback is destroyed
+        # # TODO: allow a subset of the possible events
+        # client_context.subscribed_events[key] = on_event
+        # signal(intent.event).connect(on_event, sender=intent.sender)
 
+    @do
     def perform_client_unsubscribe_event(intent):
-        key = (intent.event, intent.sender)
-        try:
-            del client_context.subscribed_events[key]
-        except KeyError:
-            pass
+        yield Effect(EUnregisterEvent(EClientEvent, intent.event, intent.sender))
+        # key = (intent.event, intent.sender)
+        # try:
+        #     del client_context.subscribed_events[key]
+        # except KeyError:
+        #     pass
+
+    def perform_client_event(intent):
+        payload = ejson_dumps({'event': intent.event, 'sender': intent.sender})
+        client_context.queued_pushed_events.put_nowait(payload)
 
     return TypeDispatcher({
         EPushClientMsg: perform_push_client_msg,
         EClientSubscribeEvent: perform_client_subscribe_event,
-        EClientUnsubscribeEvent: perform_client_unsubscribe_event
+        EClientUnsubscribeEvent: perform_client_unsubscribe_event,
+        EClientEvent: perform_client_event
     })
 
 

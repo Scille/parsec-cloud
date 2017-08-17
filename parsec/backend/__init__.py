@@ -1,7 +1,7 @@
 import attr
 from effect2 import ComposedDispatcher
 
-from parsec.base import base_dispatcher
+from parsec.base import base_dispatcher, EventComponent
 from parsec.backend.backend_api import register_backend_api
 from parsec.backend.start_api import register_start_api
 from parsec.backend.block_store import register_in_memory_block_store_api
@@ -16,6 +16,7 @@ class BackendComponents:
     pubkey = attr.ib()
     privkey = attr.ib()
     block_store = attr.ib()
+    event = attr.ib()
 
     def get_dispatcher(self):
         return ComposedDispatcher([
@@ -26,7 +27,8 @@ class BackendComponents:
             self.vlob.get_dispatcher(),
             self.pubkey.get_dispatcher(),
             self.privkey.get_dispatcher(),
-            self.block_store.get_dispatcher()
+            self.block_store.get_dispatcher(),
+            self.event.get_dispatcher()
         ])
 
 
@@ -45,7 +47,8 @@ def mocked_components_factory(block_store):
         vlob=MockedVlobComponent(),
         pubkey=MockedPubKeyComponent(),
         privkey=MockedPrivKeyComponent(),
-        block_store=BlockStoreInfoComponent(block_store)
+        block_store=BlockStoreInfoComponent(block_store),
+        event=EventComponent()
     )
 
 def postgresql_components_factory(app, store, block_store):

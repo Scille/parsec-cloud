@@ -1,8 +1,7 @@
 import pytest
 import io
-from effect2 import Effect
 from effect2.testing import const, asyncio_perform_sequence
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 from botocore.exceptions import (
     ClientError as S3ClientError, EndpointConnectionError as S3EndpointConnectionError
 )
@@ -13,41 +12,14 @@ from parsec.core.block import (
 from parsec.core.block_s3 import S3BlockConnection
 from parsec.exceptions import BlockError, BlockNotFound
 
-
-class AsyncMock(Mock):
-    async def __call__(self, *args, **kwargs):
-        return super().__call__(*args, **kwargs)
+from tests.common import AsyncMock
 
 
-# class MockBlockConnection:
-#     def __init__(self, *args, **kwargs):
-#         self.args = args
-#         self.kwargs = kwargs
-
-#     async def close_connection(self):
-#         pass
-
-#     async def read(self, id: str):
-#         func = partial(self.s3.get_object, Bucket=self.s3_bucket, Key=id)
-#         try:
-#             obj = await get_event_loop().run_in_executor(None, func)
-#         except (S3ClientError, S3EndpointConnectionError) as exc:
-#             raise BlockNotFound(str(exc))
-#         return Block(id=id, content=obj['Body'].read())
-
-#     async def create(self, id: str, content: bytes):
-#         func = partial(self.s3.put_object, Bucket=self.s3_bucket,
-#                        Key=id, Body=content)
-#         try:
-#             await get_event_loop().run_in_executor(None, func)
-#         except (S3ClientError, S3EndpointConnectionError) as exc:
-#             raise BlockError(str(exc))
-#         return Block(id=id, content=content)
-
-# @pytest.parametrize()
 async def test_create_lazy_connection():
-    with patch('parsec.core.block.block_connection_factory') as block_connection_factory_mock:
-        block_connection_factory_mock.return_value = AsyncMock()
+    with patch('parsec.core.block.block_connection_factory', new_callable=AsyncMock) \
+            as block_connection_factory_mock:
+        block_connection_factory_mock.return_value.create.set_asyncret()
+        block_connection_factory_mock.return_value.close_connection.set_asyncret()
         block_component = BlockComponent()
 
         intent = EBlockCreate('4242', b'<content>')
@@ -58,14 +30,19 @@ async def test_create_lazy_connection():
         resp = await asyncio_perform_sequence(sequence, eff)
         assert resp == Block('4242', b'<content>')
         block_connection_factory_mock.assert_called_once_with('http://foo')
+        block_connection_factory_mock.return_value.create.assert_called_once_with(
+            '4242', b'<content>')
         assert block_component.connection
 
         # Next create should not trigger the connection creation...
         block_connection_factory_mock.reset_mock()
+        block_connection_factory_mock.return_value.create.reset_mock()
         eff = block_component.get_dispatcher()(intent)(intent)
         resp = await asyncio_perform_sequence([], eff)
         assert resp == Block('4242', b'<content>')
         block_connection_factory_mock.assert_not_called()
+        block_connection_factory_mock.return_value.create.assert_called_once_with(
+            '4242', b'<content>')
 
         # ...unless we reset the collection
         await block_component.perform_block_reset()
@@ -81,10 +58,10 @@ async def test_create_lazy_connection():
 
 
 async def test_read_lazy_connection():
-    with patch('parsec.core.block.block_connection_factory') as block_connection_factory_mock:
-        block_connection_mock = AsyncMock()
-        block_connection_mock.read.return_value = b'<content>'
-        block_connection_factory_mock.return_value = block_connection_mock
+    with patch('parsec.core.block.block_connection_factory', new_callable=AsyncMock) \
+            as block_connection_factory_mock:
+        block_connection_factory_mock.return_value.read.set_asyncret(b'<content>')
+        block_connection_factory_mock.return_value.close_connection.set_asyncret()
 
         block_component = BlockComponent()
         intent = EBlockRead('4242')
@@ -95,14 +72,17 @@ async def test_read_lazy_connection():
         resp = await asyncio_perform_sequence(sequence, eff)
         assert resp == Block('4242', b'<content>')
         block_connection_factory_mock.assert_called_once_with('http://foo')
+        block_connection_factory_mock.return_value.read.assert_called_once_with('4242')
         assert block_component.connection
 
         # Next create should not trigger the connection creation...
         block_connection_factory_mock.reset_mock()
+        block_connection_factory_mock.return_value.read.reset_mock()
         eff = block_component.get_dispatcher()(intent)(intent)
         resp = await asyncio_perform_sequence([], eff)
         assert resp == Block('4242', b'<content>')
         block_connection_factory_mock.assert_not_called()
+        block_connection_factory_mock.return_value.read.assert_called_once_with('4242')
 
         # ...unless we reset the collection
         await block_component.perform_block_reset()

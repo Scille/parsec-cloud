@@ -1,7 +1,7 @@
 import attr
 from effect2 import TypeDispatcher, Effect, do
 
-from parsec.core.base import EEvent
+from parsec.base import EEvent
 from parsec.exceptions import IdentityNotLoadedError, IdentityError
 from parsec.crypto import load_private_key
 
@@ -44,19 +44,24 @@ class IdentityComponent:
         except Exception as e:
             raise IdentityError('Invalid private key (%s)' % e)
         self.identity = Identity(intent.id, private_key, private_key.pub_key)
-        yield Effect(EEvent('identity_loaded', self.identity))
+        yield Effect(EEvent('identity_loaded', self.identity.id))
         return self.identity
 
     @do
     def perform_identity_unload(self, intent):
+        from parsec.core.backend import EBackendReset
+        from parsec.core.block import EBlockReset
         if not self.identity:
             raise IdentityNotLoadedError('Identity not loaded')
+        # TODO: make block&backend reset event triggered
+        yield Effect(EBlockReset())
+        yield Effect(EBackendReset())
         yield Effect(EEvent('identity_unloaded', None))
         self.identity = None
 
     def perform_identity_get(self, intent):
         if not self.identity:
-            return None
+            raise IdentityNotLoadedError('Identity not loaded')
         return self.identity
 
     def get_dispatcher(self):

@@ -8,22 +8,17 @@ import asyncio
 import click
 from logbook import WARNING
 from aiohttp import web
-from effect2 import Effect, do, asyncio_perform
+from effect2 import Effect, asyncio_perform
 
+from parsec import unix_socket_app
 from parsec.backend import (
     postgresql_components_factory, mocked_components_factory,
-    register_backend_api, register_start_api
+    register_backend_api, register_start_api, register_in_memory_block_store_api
 )
-from parsec.backend.pubkey import EPubKeyGet, EPubKeyAdd
-from parsec.core import app_factory as core_app_factory, run_app as core_run_app
-from parsec.core.base import EEvent
-from parsec.core.backend import BackendComponent
-from parsec.core.identity import IdentityComponent
-from parsec.core.fs import FSComponent
-from parsec.core.privkey import PrivKeyBackendComponent, EPrivKeyLoad, EPrivKeyExport
-from parsec.core.synchronizer import SynchronizerComponent
-from parsec.core.block import in_memory_block_dispatcher_factory
-from parsec.core.identity import EIdentityLoad
+from parsec.core import (
+    components_factory as core_components_factory,
+    register_core_api
+)
 from parsec.exceptions import PubKeyNotFound, PrivKeyNotFound
 from parsec.ui.shell import start_shell
 from parsec.crypto import generate_asym_key
@@ -124,7 +119,6 @@ def run_with_pdb(cmd, *args, **kwargs):
               DEFAULT_CORE_UNIX_SOCKET)
 @click.option('--backend-host', '-H', default='ws://localhost:6777')
 @click.option('--backend-watchdog', '-W', type=click.INT, default=None)
-@click.option('--block-store', '-B')
 @click.option('--debug', '-d', is_flag=True)
 @click.option('--pdb', is_flag=True)
 @click.option('--identity', '-i', default=None)
@@ -138,69 +132,67 @@ def core(**kwargs):
         return _core(**kwargs)
 
 
-def _core(socket, backend_host, backend_watchdog, block_store,
+def _core(socket, backend_host, backend_watchdog,
           debug, identity, identity_key, i_am_john, cache_size):
-    loop = asyncio.get_event_loop()
-    if block_store:
-        if block_store.startswith('s3:'):
-            try:
-                from parsec.core.block_s3 import s3_block_dispatcher_factory
-                _, region, bucket, key_id, key_secret = block_store.split(':')
-            except ImportError as exc:
-                raise SystemExit('Parsec needs boto3 to support S3 block storage (error: %s).' %
-                                 exc)
-            except ValueError:
-                raise SystemExit('Invalid --block-store value '
-                                 ' (should be `s3:<region>:<bucket>:<id>:<secret>`.')
-            raise NotImplementedError('Not yet :-(')
-            block_dispatcher = s3_block_dispatcher_factory(region, bucket, key_id, key_secret)
-            store_type = 's3:%s:%s' % (region, bucket)
-        else:
-            raise SystemExit('Unknown block store `%s` (only `s3:<region>:<bucket>:<id>:<secret>`'
-                             ' is supported so far.' % block_store)
-    else:
-        store_type = 'mocked in memory'
-        block_dispatcher = in_memory_block_dispatcher_factory()
-    privkey_component = PrivKeyBackendComponent(backend_host + '/privkey')
-    backend_component = BackendComponent(backend_host, backend_watchdog)
-    fs_component = FSComponent()
-    identity_component = IdentityComponent()
-    synchronizer_component = SynchronizerComponent(cache_size)
-    app = core_app_factory(
-        privkey_component.get_dispatcher(), backend_component.get_dispatcher(),
-        fs_component.get_dispatcher(), synchronizer_component.get_dispatcher(),
-        identity_component.get_dispatcher(), block_dispatcher)
+    app = unix_socket_app.UnixSocketApplication()
+    components = core_components_factory(app, backend_host, backend_watchdog, cache_size)
+    dispatcher = components.get_dispatcher()
+    register_core_api(app, dispatcher)
+
+    # if block_store:
+    #     if block_store.startswith('s3:'):
+    #         try:
+    #             from parsec.core.block_s3 import s3_block_dispatcher_factory
+    #             _, region, bucket, key_id, key_secret = block_store.split(':')
+    #         except ImportError as exc:
+    #             raise SystemExit('Parsec needs boto3 to support S3 block storage (error: %s).' %
+    #                              exc)
+    #         except ValueError:
+    #             raise SystemExit('Invalid --block-store value '
+    #                              ' (should be `s3:<region>:<bucket>:<id>:<secret>`.')
+    #         raise NotImplementedError('Not yet :-(')
+    #         block_dispatcher = s3_block_dispatcher_factory(region, bucket, key_id, key_secret)
+    #         store_type = 's3:%s:%s' % (region, bucket)
+    #     else:
+    #         raise SystemExit('Unknown block store `%s` (only `s3:<region>:<bucket>:<id>:<secret>`'
+    #                          ' is supported so far.' % block_store)
+    # else:
+    #     store_type = 'mocked in memory'
+    #     block_dispatcher = in_memory_block_dispatcher_factory()
+
     # TODO: remove me once RSA key loading and backend handling are easier
     if i_am_john:
-        @do
-        def load_identity():
-            yield Effect(EIdentityLoad(JOHN_DOE_IDENTITY, JOHN_DOE_PRIVATE_KEY))
+        async def load_identity(app):
+            from parsec.core.identity import EIdentityLoad
+            eff = Effect(EIdentityLoad(JOHN_DOE_IDENTITY, JOHN_DOE_PRIVATE_KEY))
+            await asyncio_perform(dispatcher, eff)
             print('Welcome back M. Doe')
-        loop.run_until_complete(app.async_perform(load_identity()))
+        app.on_startup.append(load_identity)
     elif identity:
-        @do
-        def load_identity():
+        async def load_identity(app):
+            from parsec.core.identity import EIdentityLoad
+            from parsec.core.privkey import EPrivKeyLoad
             if identity_key:
                 print("Reading %s's key from `%s`" % (identity, identity_key))
                 password = getpass()
-                yield Effect(EIdentityLoad(identity, identity_key.read(), password))
+                eff = Effect(EIdentityLoad(identity, identity_key.read(), password))
+                await asyncio_perform(dispatcher, eff)
             else:
                 print("Fetching %s's key from backend privkey store." % (identity))
                 password = getpass()
-                yield Effect(EPrivKeyLoad(identity, password))
+                eff = Effect(EPrivKeyLoad(identity, password))
+                await asyncio_perform(dispatcher, eff)
             print('Connected as %s' % identity)
-        try:
-            loop.run_until_complete(app.async_perform(load_identity()))
-        except PrivKeyNotFound:
-            print('No privkey with this identity/password in the backend store.')
-            return
+        app.on_startup.append(load_identity)
+
     if debug:
+        loop = asyncio.get_event_loop()
         loop.set_debug(True)
     else:
         logger_stream.level = WARNING
-    print('Starting parsec core on %s (connecting to backend %s and block store %s)' %
-          (socket, backend_host, store_type))
-    core_run_app(socket, app=app, loop=loop)
+
+    print('Starting parsec core on %s (connecting to backend %s)' % (socket, backend_host))
+    unix_socket_app.run_app(app, path=socket)
     print('Bye ;-)')
 
 
@@ -211,6 +203,9 @@ def _core(socket, backend_host, backend_watchdog, block_store,
 @click.option('--no-client-auth', is_flag=True,
               help='Disable authentication handshake on client connection (default: false)')
 @click.option('--store', '-s', default=None, help="Store configuration (default: in memory)")
+@click.option('--block-store', '-b', default=None,
+    help="URL of the block store the clients should write into (default: "
+    "backend creates it own in-memory block store).")
 @click.option('--debug', '-d', is_flag=True)
 @click.option('--pdb', is_flag=True)
 def backend(**kwargs):
@@ -220,85 +215,90 @@ def backend(**kwargs):
         return _backend(**kwargs)
 
 
-def _backend(host, port, pubkeys, no_client_auth, store, debug):
+def _backend(host, port, pubkeys, no_client_auth, store, block_store, debug):
     host = host or environ.get('HOST', 'localhost')
     port = port or int(environ.get('PORT', 6777))
-    loop = asyncio.get_event_loop()
     app = web.Application()
-    # TODO load pubkeys attribute
+    if not block_store:
+        block_store = '/blockstore'
+        register_in_memory_block_store_api(app, prefix=block_store)
     if store:
         if store.startswith('postgres://'):
             store_type = 'PostgreSQL'
-            backend_components = postgresql_components_factory(app, store)
+            backend_components = postgresql_components_factory(app, store, block_store)
         else:
             raise SystemExit('Unknown store `%s` (should be a postgresql db url).' % store)
     else:
         store_type = 'mocked in memory'
-        backend_components = mocked_components_factory(app)
+        backend_components = mocked_components_factory(block_store)
+
     dispatcher = backend_components.get_dispatcher()
     register_backend_api(app, dispatcher)
     register_start_api(app, dispatcher)
 
     if debug:
+        loop = asyncio.get_event_loop()
         loop.set_debug(True)
     else:
         logger_stream.level = WARNING
 
     # TODO: remove me once RSA key loading and backend handling are easier
-    @do
-    def insert_john():
+    async def insert_john(app):
+        from parsec.backend.pubkey import EPubKeyGet, EPubKeyAdd
+        dispatcher = backend_components.get_dispatcher()
         try:
-            yield Effect(EPubKeyGet(JOHN_DOE_IDENTITY))
+            await asyncio_perform(dispatcher, Effect(EPubKeyGet(JOHN_DOE_IDENTITY)))
         except PubKeyNotFound:
-            yield Effect(EPubKeyAdd(JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY))
-    loop.run_until_complete(asyncio_perform(backend_components.get_dispatcher(), insert_john()))
+            await asyncio_perform(
+                dispatcher, Effect(EPubKeyAdd(JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY)))
+    app.on_startup.append(insert_john)
 
     print('Starting parsec backend on %s:%s with store %s' % (host, port, store_type))
     web.run_app(app, host=host, port=port)
     print('Bye ;-)')
 
 
-@click.command()
-@click.option('--debug', '-d', is_flag=True)
-@click.option('--identity', '-i', required=True)
-@click.option('--key-size', '-S', default=2048)
-@click.option('--export-to-backend', is_flag=True)
-@click.option('--backend-host', '-H', default='ws://localhost:6777')
-@click.option('--export-to-file', type=click.File('wb'))
-def register(debug, identity, key_size, export_to_backend, backend_host, export_to_file):
-    if not export_to_backend and not export_to_file:
-        raise SystemExit('Must specify `--export-to-backend` and/or `--export-to-file`')
-    key = generate_asym_key(key_size)
-    pwd = getpass()
-    exported_key = key.export(pwd)
-    # From now on we need an app connected to the backend
-    privkey_component = PrivKeyBackendComponent(backend_host + '/privkey')
-    identity_component = IdentityComponent()
-    backend_component = BackendComponent(backend_host)
-    app = core_app_factory(privkey_component.get_dispatcher(),
-                           identity_component.get_dispatcher(),
-                           backend_component.get_dispatcher())
+# @click.command()
+# @click.option('--debug', '-d', is_flag=True)
+# @click.option('--identity', '-i', required=True)
+# @click.option('--key-size', '-S', default=2048)
+# @click.option('--export-to-backend', is_flag=True)
+# @click.option('--backend-host', '-H', default='ws://localhost:6777')
+# @click.option('--export-to-file', type=click.File('wb'))
+# def register(debug, identity, key_size, export_to_backend, backend_host, export_to_file):
+#     if not export_to_backend and not export_to_file:
+#         raise SystemExit('Must specify `--export-to-backend` and/or `--export-to-file`')
+#     key = generate_asym_key(key_size)
+#     pwd = getpass()
+#     exported_key = key.export(pwd)
+#     # From now on we need an app connected to the backend
+#     privkey_component = PrivKeyBackendComponent(backend_host + '/privkey')
+#     identity_component = IdentityComponent()
+#     backend_component = BackendComponent(backend_host)
+#     app = core_app_factory(privkey_component.get_dispatcher(),
+#                            identity_component.get_dispatcher(),
+#                            backend_component.get_dispatcher())
 
-    async def run():
-        await app.async_perform(Effect(EEvent('app_start', app)))
-        app.async_perform(Effect(EIdentityLoad(identity, exported_key, pwd)))
-        if export_to_backend:
-            app.async_perform(Effect(EPrivKeyExport(pwd)))
-        if export_to_file:
-            export_to_file.write(exported_key)
-        print('Exporting public key to backend...', flush=True, end='')
-        await app.async_perform(Effect(EPubKeyAdd(pwd)))
-        print(' Done !')
-        await app.async_perform(Effect(EEvent('app_stop', app)))
+#     async def run():
+#         await app.async_perform(Effect(EEvent('app_start', app)))
+#         app.async_perform(Effect(EIdentityLoad(identity, exported_key, pwd)))
+#         if export_to_backend:
+#             app.async_perform(Effect(EPrivKeyExport(pwd)))
+#         if export_to_file:
+#             export_to_file.write(exported_key)
+#         print('Exporting public key to backend...', flush=True, end='')
+#         await app.async_perform(Effect(EPubKeyAdd(pwd)))
+#         print(' Done !')
+#         await app.async_perform(Effect(EEvent('app_stop', app)))
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(run())
+#     loop = asyncio.get_event_loop()
+#     loop.run_until_complete(run())
 
 cli.add_command(cmd)
 cli.add_command(shell)
 cli.add_command(core)
 cli.add_command(backend)
-cli.add_command(register)
+# cli.add_command(register)
 
 
 def _add_command_if_can_import(path, name=None):

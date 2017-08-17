@@ -1,12 +1,11 @@
 import pytest
 import attr
 from unittest.mock import Mock
-from effect2 import Effect, Constant, do
-# from effect.do import do
+from effect2 import Effect, Constant, do, ComposedDispatcher
 
 from parsec.core.client_connection import (
     on_connection_factory, EPushClientMsg, EClientSubscribeEvent, EClientUnsubscribeEvent)
-from parsec.core.base import EEvent
+from parsec.base import EEvent, EventComponent, base_dispatcher
 
 
 @attr.s
@@ -27,27 +26,35 @@ class MockedWriter:
         self.written += buff
 
 
-async def test_no_command():
+@pytest.fixture
+def dispatcher():
+    return ComposedDispatcher(
+        base_dispatcher,
+        EventComponent().get_dispatcher()
+    )
+
+
+async def test_no_command(dispatcher):
     reader = MockedReader()
     writer = MockedWriter()
     perform_cmd = Mock()
-    on_connection = on_connection_factory(perform_cmd)
+    on_connection = on_connection_factory(perform_cmd, dispatcher)
     await on_connection(reader, writer)
     perform_cmd.assert_not_called()
 
 
-async def test_simple():
+async def test_simple(dispatcher):
     reader = MockedReader(b'foo\n')
     writer = MockedWriter()
     perform_cmd = Mock()
     perform_cmd.return_value = Effect(Constant(b'bar'))
-    on_connection = on_connection_factory(perform_cmd)
+    on_connection = on_connection_factory(perform_cmd, dispatcher)
     await on_connection(reader, writer)
     perform_cmd.assert_called_once_with(b'foo')
     assert writer.written == b'bar\n'
 
 
-async def test_mix_cmds_and_pushed_msgs():
+async def test_mix_cmds_and_pushed_msgs(dispatcher):
     reader = MockedReader(b'cmd1\ncmd2\ncmd3\n')
     writer = MockedWriter()
 
@@ -58,14 +65,14 @@ async def test_mix_cmds_and_pushed_msgs():
         yield Effect(EPushClientMsg(b'eventB' + id))
         return b'cmd_resp' + id
 
-    on_connection = on_connection_factory(perform_cmd)
+    on_connection = on_connection_factory(perform_cmd, dispatcher)
     await on_connection(reader, writer)
     template = b'cmd_respX\neventAX\neventBX\n'
     expected_written = b''.join([template.replace(b'X', id) for id in (b'1', b'2', b'3')])
     assert writer.written == expected_written
 
 
-async def test_events():
+async def test_events(dispatcher):
     reader = MockedReader(b'cmd\n')
     writer = MockedWriter()
 
@@ -79,13 +86,13 @@ async def test_events():
         yield Effect(EEvent('eventA', 'sender1'))
         return b'cmd_resp'
 
-    on_connection = on_connection_factory(perform_cmd)
+    on_connection = on_connection_factory(perform_cmd, dispatcher)
     await on_connection(reader, writer)
 
     assert writer.written == b'cmd_resp\n{"event": "eventA", "sender": "sender1"}\n'
 
 
-async def test_unsubscribe_events():
+async def test_unsubscribe_events(dispatcher):
     reader = MockedReader(b'cmd\n')
     writer = MockedWriter()
 
@@ -100,7 +107,7 @@ async def test_unsubscribe_events():
         yield Effect(EEvent('eventB', 'sender1'))
         return b'cmd_resp'
 
-    on_connection = on_connection_factory(perform_cmd)
+    on_connection = on_connection_factory(perform_cmd, dispatcher)
     await on_connection(reader, writer)
 
     assert writer.written == (

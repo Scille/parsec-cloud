@@ -4,9 +4,17 @@ from effect2 import Effect, do
 
 from parsec.core import fs_api, identity_api, privkey_api
 from parsec.tools import ejson_dumps, ejson_loads
-from parsec.core.client_connection import EClientSubscribeEvent, EClientUnsubscribeEvent
+from parsec.core.client_connection import (
+    on_connection_factory,
+    EClientSubscribeEvent, EClientUnsubscribeEvent
+)
 from parsec.core.backend import EBackendStatus
 from parsec.exceptions import ParsecError, BadMessageError
+
+
+def register_core_api(app, dispatcher):
+    on_connection = on_connection_factory(execute_raw_cmd, dispatcher)
+    app.on_connection = on_connection
 
 
 def parse_cmd(raw_cmd: bytes):
@@ -70,7 +78,13 @@ def api_backend_status(msg):
     return {'status': 'ok'}
 
 
+@do
+def api_ping(msg):
+    return {'status': 'ok', 'pong': msg.get('ping', '')}
+
+
 API_CMDS_ROUTER = {
+    'ping': api_ping,
     'subscribe_event': api_subscribe_event,
     'unsubscribe_event': api_unsubscribe_event,
     'backend_status': api_backend_status,

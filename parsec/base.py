@@ -50,7 +50,7 @@ class EventComponent:
         return TypeDispatcher({
             EEvent: self.perform_trigger_event,
             ERegisterEvent: self.perform_register_event,
-            EUnregisterEvent: self.perform_register_event
+            EUnregisterEvent: self.perform_unregister_event
         })
 
 

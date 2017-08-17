@@ -3,16 +3,17 @@ from effect2 import TypeDispatcher
 from aiohttp import web
 
 
+# TODO test perform_blockstore_get_url
 @attr.s
 class BlockStoreGetURL:
-    url = attr.ib()
+    pass
 
 
 @attr.s
 class BlockStoreInfoComponent:
     url = attr.ib()
 
-    def perform_blockstore_get_url(self):
+    def perform_blockstore_get_url(self, intent):
         return self.url
 
     def get_dispatcher(self):
