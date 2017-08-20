@@ -205,6 +205,20 @@ class TestRSAAsymCrypto:
         with pytest.raises(ValueError):
             bob.decrypt(crypted)
 
+    def test_export_private_key(self, alice):
+        cipherkey = alice.export('P@ssw0rd.')
+        assert isinstance(cipherkey, bytes)
+        privkey = load_private_key(cipherkey, 'P@ssw0rd.')
+        msg = privkey.sign(b'foo')
+        alice.pub_key.verify(msg, b'foo')
+
+    def test_export_public_key(self, alice):
+        raw_pubkey = alice.pub_key.export()
+        assert isinstance(raw_pubkey, bytes)
+        pubkey = load_public_key(raw_pubkey)
+        msg = alice.sign(b'foo')
+        pubkey.verify(msg, b'foo')
+
 
 class TestAESSymCrypto:
 

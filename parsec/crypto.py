@@ -74,6 +74,9 @@ class BasePrivateAsymKey:
     def pub_key(self):
         raise NotImplementedError()
 
+    def export(self, password: str):
+        raise NotImplementedError()
+
 
 class BasePublicAsymKey:
     def __init__(self, key: bytes):
@@ -83,6 +86,9 @@ class BasePublicAsymKey:
         raise NotImplementedError()
 
     def encrypt(self, message):
+        raise NotImplementedError()
+
+    def export(self):
         raise NotImplementedError()
 
 
@@ -120,13 +126,20 @@ class RSAPublicKey(BasePublicAsymKey):
         )
         return struct.pack(">I", len(ciphersymkey)) + ciphersymkey + ciphertext
 
+    def export(self):
+        return self._hazmat_public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+
 
 class RSAPrivateKey(BasePrivateAsymKey):
     def __init__(self, key: bytes, password: str=None):
+        self._pub_key = None
         if isinstance(key, bytes):
             private_key = serialization.load_pem_private_key(
                 key,
-                password=password.encode() if password else None,
+                password=password.encode('utf-8') if password else None,
                 backend=default_backend()
             )
             self._hazmat_private_key = private_key
@@ -164,12 +177,14 @@ class RSAPrivateKey(BasePrivateAsymKey):
         return self._hazmat_private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.BestAvailableEncryption(password.encode())
+            encryption_algorithm=serialization.BestAvailableEncryption(password.encode('utf-8'))
         )
 
     @property
     def pub_key(self):
-        return RSAPublicKey(self._hazmat_private_key.public_key())
+        if not self._pub_key:
+            self._pub_key = RSAPublicKey(self._hazmat_private_key.public_key())
+        return self._pub_key
 
 
 class AESKey(BaseSymKey):
