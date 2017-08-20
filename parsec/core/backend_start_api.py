@@ -3,7 +3,6 @@ import hashlib
 import aiohttp
 from base64 import urlsafe_b64encode
 
-from parsec.crypto import decrypt_with_password, encrypt_with_password
 from parsec.exceptions import (
     PrivKeyHashCollision, PrivKeyError, PrivKeyNotFound, BackendIdentityRegisterError)
 
@@ -21,7 +20,7 @@ def backend_to_start_api_url(url, prefix='start'):
 class EBackendCipherKeyAdd:
     id = attr.ib()
     password = attr.ib()
-    privkey = attr.ib()
+    cipherkey = attr.ib()
 
 
 @attr.s
@@ -57,9 +56,8 @@ class StartAPIComponent:
         m.update(password)
         hash = m.digest()
         route = '%s/cipherkey/%s' % (self.url, urlsafe_b64encode(hash).decode())
-        cipherkey = encrypt_with_password(password, id, intent.privkey)
         async with aiohttp.ClientSession() as session:
-            async with session.post(route, data=cipherkey) as resp:
+            async with session.post(route, data=intent.cipherkey) as resp:
                 if resp.status != 200:
                     error_msg = await resp.text()
                     if resp.status == 409:
@@ -79,8 +77,7 @@ class StartAPIComponent:
             async with session.get(route) as resp:
                 if resp.status == 200:
                     cipherkey = await resp.text()
-                    privkey = decrypt_with_password(password, id, cipherkey)
-                    return privkey
+                    return cipherkey
                 else:
                     error_msg = await resp.text()
                     if resp.status == 404:
