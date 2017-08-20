@@ -258,47 +258,48 @@ def _backend(host, port, pubkeys, no_client_auth, store, block_store, debug):
     print('Bye ;-)')
 
 
-# @click.command()
-# @click.option('--debug', '-d', is_flag=True)
-# @click.option('--identity', '-i', required=True)
-# @click.option('--key-size', '-S', default=2048)
-# @click.option('--export-to-backend', is_flag=True)
-# @click.option('--backend-host', '-H', default='ws://localhost:6777')
-# @click.option('--export-to-file', type=click.File('wb'))
-# def register(debug, identity, key_size, export_to_backend, backend_host, export_to_file):
-#     if not export_to_backend and not export_to_file:
-#         raise SystemExit('Must specify `--export-to-backend` and/or `--export-to-file`')
-#     key = generate_asym_key(key_size)
-#     pwd = getpass()
-#     exported_key = key.export(pwd)
-#     # From now on we need an app connected to the backend
-#     privkey_component = PrivKeyBackendComponent(backend_host + '/privkey')
-#     identity_component = IdentityComponent()
-#     backend_component = BackendComponent(backend_host)
-#     app = core_app_factory(privkey_component.get_dispatcher(),
-#                            identity_component.get_dispatcher(),
-#                            backend_component.get_dispatcher())
+@click.command()
+@click.option('--socket', '-s', default=DEFAULT_CORE_UNIX_SOCKET,
+              help='Path to the UNIX socket (default: %s).' % DEFAULT_CORE_UNIX_SOCKET)
+@click.option('--identity', '-i', required=True)
+@click.option('--key-size', '-S', type=int, default=2048)
+def signup(socket, identity, key_size):
+    while True:
+        password = getpass('Password:')
+        repassword = getpass('Confirm password:')
+        if password == repassword:
+            break
+        print('Passwords missmatch, please retry')
 
-#     async def run():
-#         await app.async_perform(Effect(EEvent('app_start', app)))
-#         app.async_perform(Effect(EIdentityLoad(identity, exported_key, pwd)))
-#         if export_to_backend:
-#             app.async_perform(Effect(EPrivKeyExport(pwd)))
-#         if export_to_file:
-#             export_to_file.write(exported_key)
-#         print('Exporting public key to backend...', flush=True, end='')
-#         await app.async_perform(Effect(EPubKeyAdd(pwd)))
-#         print(' Done !')
-#         await app.async_perform(Effect(EEvent('app_stop', app)))
+    import asyncio
+    from parsec.tools import ejson_loads, ejson_dumps
 
-#     loop = asyncio.get_event_loop()
-#     loop.run_until_complete(run())
+    async def run():
+        try:
+            reader, writer = await asyncio.open_unix_connection(path=socket)
+        except (FileNotFoundError, ConnectionRefusedError):
+            raise SystemExit('ERROR: Cannot connect to parsec core at %s' % socket)
+        msg = {
+            'cmd': 'identity_signup',
+            'id': identity,
+            'password': password,
+            'key_size': key_size
+        }
+        writer.write(ejson_dumps(msg).encode())
+        writer.write(b'\n')
+        raw_resp = await reader.readline()
+        resp = ejson_loads(raw_resp.decode())
+        writer.close()
+        print(resp)
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(run())
 
 cli.add_command(cmd)
 cli.add_command(shell)
 cli.add_command(core)
 cli.add_command(backend)
-# cli.add_command(register)
+cli.add_command(signup)
 
 
 def _add_command_if_can_import(path, name=None):

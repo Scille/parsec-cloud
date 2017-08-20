@@ -1,26 +1,23 @@
 import pytest
-from effect2.testing import const, conste, perform_sequence
-from unittest.mock import Mock
+from effect2.testing import conste, noop, perform_sequence
 
-from parsec.core.core_api import execute_cmd, execute_raw_cmd
-from parsec.core.identity import EIdentityLoad, Identity
+from parsec.core.core_api import execute_cmd, execute_raw_cmd, EClientSubscribeEvent
 from parsec.exceptions import ParsecError
 
 
 def test_execute_cmd():
-    eff = execute_cmd('identity_load', {'id': 'JohnDoe', 'key': 'MTIzNDU=\n'})
+    eff = execute_cmd('subscribe_event', {'event': 'foo', 'sender': 'bar'})
     sequence = [
-        (EIdentityLoad('JohnDoe', b'12345', None),
-            const(Identity('JohnDoe', Mock(), Mock()))),
+        (EClientSubscribeEvent('foo', 'bar'), noop)
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'ok'}
 
 
 def test_catch_parsec_exception():
-    eff = execute_cmd('identity_load', {'id': 'JohnDoe', 'key': 'MTIzNDU=\n'})
+    eff = execute_cmd('subscribe_event', {'event': 'foo', 'sender': 'bar'})
     sequence = [
-        (EIdentityLoad('JohnDoe', b'12345', None), conste(ParsecError('error', 'msg'))),
+        (EClientSubscribeEvent('foo', 'bar'), conste(ParsecError('error', 'msg'))),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'error', 'label': 'msg'}
@@ -28,11 +25,10 @@ def test_catch_parsec_exception():
 
 class TestRawCMD:
     def test_execute(self):
-        raw_cmd = b'{"cmd": "identity_load", "id": "JohnDoe", "key": "MTIzNDU=\\n"}'
+        raw_cmd = b'{"cmd": "subscribe_event", "event": "foo", "sender": "bar"}'
         eff = execute_raw_cmd(raw_cmd)
         sequence = [
-            (EIdentityLoad('JohnDoe', b'12345', None),
-                const(Identity('JohnDoe', Mock(), Mock()))),
+            (EClientSubscribeEvent('foo', 'bar'), noop)
         ]
         resp = perform_sequence(sequence, eff)
         assert resp == b'{"status": "ok"}'

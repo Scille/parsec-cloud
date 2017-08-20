@@ -78,6 +78,21 @@ def johndoe(loop, backend):
 
 
 @pytest.fixture
+def johndoe_cipherkey_in_backend(loop, backend, johndoe):
+    async def insert_privkey_in_backend():
+        from parsec.backend.privkey import EPrivKeyAdd
+        from parsec.crypto import load_private_key, hash_id_password
+        cipherkey = load_private_key(johndoe.privkey).export(johndoe.password)
+        await asyncio_perform(backend.app.dispatcher,
+            Effect(EPrivKeyAdd(
+                hash_id_password(johndoe.id, johndoe.password),
+                cipherkey)))
+
+    loop.run_until_complete(insert_privkey_in_backend())
+    return johndoe
+
+
+@pytest.fixture
 def backend_host(backend):
     return 'ws://localhost:%s' % backend.port
 

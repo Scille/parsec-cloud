@@ -1,6 +1,7 @@
 from os import urandom
 import struct
 import base64
+import hashlib
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
@@ -14,6 +15,11 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.exceptions import InvalidSignature, InvalidTag
+
+
+def hash_id_password(id, password):
+    raw_hash = hashlib.sha256((id + ':' + password).encode('utf-8')).digest()
+    return base64.urlsafe_b64encode(raw_hash).decode('utf-8')
 
 
 def load_private_key(raw_key, password=None):

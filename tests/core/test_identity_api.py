@@ -1,9 +1,10 @@
 import pytest
-from effect2.testing import const, noop, perform_sequence
+from effect2.testing import const, conste, noop, perform_sequence
 from unittest.mock import Mock
 
 from parsec.core.core_api import execute_cmd
 from parsec.core.identity import EIdentityGet, EIdentityLoad, EIdentityUnload, Identity
+from parsec.exceptions import IdentityNotLoadedError
 
 
 def test_api_identity_load():
@@ -57,11 +58,10 @@ def test_api_identity_info():
     # Not loaded
     eff = execute_cmd('identity_info', {})
     sequence = [
-        (EIdentityGet(),
-            noop),
+        (EIdentityGet(), conste(IdentityNotLoadedError())),
     ]
     resp = perform_sequence(sequence, eff)
-    assert resp == {'loaded': False, 'status': 'ok'}
+    assert resp == {'status': 'ok', 'loaded': False, 'id': None}
     # Loaded
     eff = execute_cmd('identity_info', {})
     sequence = [
@@ -69,7 +69,7 @@ def test_api_identity_info():
             const(Identity('JohnDoe', Mock(), Mock()))),
     ]
     resp = perform_sequence(sequence, eff)
-    assert resp == {'id': 'JohnDoe', 'loaded': True, 'status': 'ok'}
+    assert resp == {'status': 'ok', 'loaded': True, 'id': 'JohnDoe'}
 
 
 @pytest.mark.parametrize('bad_params', [

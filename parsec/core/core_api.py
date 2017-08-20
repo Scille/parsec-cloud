@@ -2,7 +2,7 @@ import json
 from marshmallow import Schema, fields
 from effect2 import Effect, do
 
-from parsec.core import fs_api, identity_api, privkey_api
+from parsec.core import fs_api, identity_api
 from parsec.tools import ejson_dumps, ejson_loads
 from parsec.core.client_connection import (
     on_connection_factory,
@@ -51,7 +51,7 @@ def execute_cmd(cmd, params):
 
 class cmd_EVENT_Schema(Schema):
     event = fields.String(required=True)
-    sender = fields.Base64Bytes(required=True)
+    sender = fields.String(required=True)
 
 
 @do
@@ -88,11 +88,13 @@ API_CMDS_ROUTER = {
     'subscribe_event': api_subscribe_event,
     'unsubscribe_event': api_unsubscribe_event,
     'backend_status': api_backend_status,
+
+    'identity_signup': identity_api.api_identity_signup,
+    'identity_login': identity_api.api_identity_login,
     'identity_load': identity_api.api_identity_load,
     'identity_unload': identity_api.api_identity_unload,
     'identity_info': identity_api.api_identity_info,
-    'privkey_export': privkey_api.api_privkey_export,
-    'privkey_load': privkey_api.api_privkey_load,
+
     'synchronize': fs_api.api_synchronize,
     'group_create': fs_api.api_group_create,
     'dustbin_show': fs_api.api_dustbin_show,
