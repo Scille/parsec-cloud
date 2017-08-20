@@ -1,21 +1,9 @@
-import pytest
 from effect2.testing import noop, perform_sequence
 
 from parsec.base import EEvent
 from parsec.core.identity import IdentityComponent, Identity, EIdentityLoad
 
 from tests.test_crypto import ALICE_PRIVATE_RSA
-
-
-@pytest.fixture
-def alice_identity():
-    component = IdentityComponent()
-    sequence = [
-        (EEvent('identity_loaded', 'Alice'), noop),
-    ]
-    return perform_sequence(sequence, component.perform_identity_load(
-        EIdentityLoad('Alice', ALICE_PRIVATE_RSA))
-    )
 
 
 async def test_perform_identity_load():

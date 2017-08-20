@@ -18,9 +18,6 @@ from parsec.exceptions import (
     ManifestError, BlockNotFound, VlobNotFound)
 from parsec.tools import ejson_dumps, to_jsonb64, digest
 
-from tests.core.test_identity import alice_identity
-from tests.test_crypto import mock_crypto_passthrough
-
 
 @pytest.fixture
 def app(mock_crypto_passthrough, alice_identity):
