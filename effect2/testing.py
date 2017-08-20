@@ -72,7 +72,12 @@ def perform_sequence(seq, effect, fallback_dispatcher=None):
     sequence = SequenceDispatcher(seq)
     log = []
     with sequence.consume():
-        return sync_perform(dispatcher, effect)
+        ret = sync_perform(dispatcher, effect)
+        sequence.returned_value = ret
+        return ret
+
+
+NOT_RETURNED_YET = object()
 
 
 @attr.s
@@ -96,6 +101,7 @@ class SequenceDispatcher:
     :param list sequence: Sequence of (intent, fn).
     """
     sequence = attr.ib()
+    returned_value = attr.ib(default=NOT_RETURNED_YET)
 
     def __call__(self, intent):
         if len(self.sequence) == 0:
@@ -118,9 +124,10 @@ class SequenceDispatcher:
         """
         yield
         if not self.consumed():
+            assert self.returned_value is not NOT_RETURNED_YET
             raise AssertionError(
-                "Not all intents were performed: {0}".format(
-                    [x[0] for x in self.sequence]))
+                "Returned `%s`, but not all intents were performed: %s" % (
+                    self.returned_value, [x[0] for x in self.sequence]))
 
 
 @attr.s
