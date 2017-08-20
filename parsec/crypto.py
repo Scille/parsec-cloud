@@ -38,7 +38,7 @@ def generate_asym_key(size):
     assert size > 1023
     private_key = rsa.generate_private_key(
         public_exponent=65537,
-        key_size=2048,
+        key_size=size,
         backend=default_backend()
     )
     return RSAPrivateKey(private_key)
