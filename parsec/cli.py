@@ -139,27 +139,6 @@ def _core(socket, backend_host, backend_watchdog,
     dispatcher = components.get_dispatcher()
     register_core_api(app, dispatcher)
 
-    # if block_store:
-    #     if block_store.startswith('s3:'):
-    #         try:
-    #             from parsec.core.block_s3 import s3_block_dispatcher_factory
-    #             _, region, bucket, key_id, key_secret = block_store.split(':')
-    #         except ImportError as exc:
-    #             raise SystemExit('Parsec needs boto3 to support S3 block storage (error: %s).' %
-    #                              exc)
-    #         except ValueError:
-    #             raise SystemExit('Invalid --block-store value '
-    #                              ' (should be `s3:<region>:<bucket>:<id>:<secret>`.')
-    #         raise NotImplementedError('Not yet :-(')
-    #         block_dispatcher = s3_block_dispatcher_factory(region, bucket, key_id, key_secret)
-    #         store_type = 's3:%s:%s' % (region, bucket)
-    #     else:
-    #         raise SystemExit('Unknown block store `%s` (only `s3:<region>:<bucket>:<id>:<secret>`'
-    #                          ' is supported so far.' % block_store)
-    # else:
-    #     store_type = 'mocked in memory'
-    #     block_dispatcher = in_memory_block_dispatcher_factory()
-
     # TODO: remove me once RSA key loading and backend handling are easier
     if i_am_john:
         async def load_identity(app):
