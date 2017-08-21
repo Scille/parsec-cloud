@@ -72,7 +72,8 @@ def postgresql_components_factory(app, store, block_store):
         vlob=postgresql.PostgreSQLVlobComponent(conn),
         pubkey=postgresql.PostgreSQLPubKeyComponent(conn),
         privkey=postgresql.PostgreSQLPrivKeyComponent(conn),
-        block_store=BlockStoreInfoComponent(block_store)
+        block_store=BlockStoreInfoComponent(block_store),
+        event=EventComponent()
     )
 
 
