@@ -237,6 +237,9 @@ class FuseOperations(LoggingMixIn, Operations):
         return 0
 
     def rename(self, src, dst):
+        # Unix allows to overwrite the destination, so make sure to have
+        # space before calling the move
+        self.send_cmd(cmd='delete', path=dst)
         response = self.send_cmd(cmd='move', src=src, dst=dst)
         if response['status'] != 'ok':
             raise FuseOSError(ENOENT)
