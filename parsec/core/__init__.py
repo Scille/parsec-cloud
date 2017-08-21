@@ -33,6 +33,10 @@ class CoreComponents:
     async def shutdown(self, app):
         await self.backend.shutdown(app)
         await self.block.shutdown(app)
+        await self.synchronizer.shutdown(app)
+
+    async def startup(self, app):
+        await self.synchronizer.startup(app)
 
 
 def components_factory(app, backend_host, backend_watchdog=False, cache_size=4000):
@@ -46,6 +50,8 @@ def components_factory(app, backend_host, backend_watchdog=False, cache_size=400
         identity=IdentityComponent(),
         synchronizer=SynchronizerComponent(cache_size)
     )
+    app.components = core_components
+    app.on_startup.append(core_components.startup)
     app.on_shutdown.append(core_components.shutdown)
     return core_components
 

@@ -130,7 +130,11 @@ class File:
             for block_properties in blocks_and_key['blocks']:
                 block = yield Effect(EBlockRead(block_properties['block']))
                 # Decrypt
-                block_content = from_jsonb64(block['content'])
+                # TODO: clean this hack
+                if isinstance(block['content'], str):
+                    block_content = from_jsonb64(block['content'])
+                else:
+                    block_content = from_jsonb64(block['content'].decode())
                 chunk_data = encryptor.decrypt(block_content)
                 # Check integrity
                 assert digest(chunk_data) == block_properties['digest']

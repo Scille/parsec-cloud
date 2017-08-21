@@ -1,11 +1,10 @@
 import arrow
 import asyncio
-import blinker
 from uuid import uuid4
 
 import attr
 from cachetools import LRUCache
-from effect2 import Effect, TypeDispatcher, do
+from effect2 import Effect, TypeDispatcher, do, asyncio_perform
 
 from parsec.core.backend_vlob import EBackendVlobCreate, EBackendVlobUpdate, EBackendVlobRead
 from parsec.core.backend_user_vlob import EBackendUserVlobUpdate, EBackendUserVlobRead
@@ -120,15 +119,13 @@ class SynchronizerComponent:
         self.blocks = {}
         self.vlobs = {}
         self.user_vlob = None
-        self.synchronization_idle_interval = 10
+        self.synchronization_idle_interval = 1
         self.last_modified = arrow.utcnow()
-        blinker.signal('app_start').connect(self.on_app_start)
-        blinker.signal('app_stop').connect(self.on_app_stop)
 
-    def on_app_start(self, app):
+    async def startup(self, app):
         self.synchronization_task = asyncio.ensure_future(self.periodic_synchronization(app))
 
-    def on_app_stop(self, app):
+    async def shutdown(self, app):
         self.synchronization_task.cancel()
         self.synchronization_task = None
 
@@ -252,6 +249,7 @@ class SynchronizerComponent:
     def perform_vlob_read(self, intent):
         if (intent.id in self.vlobs and
                 (not intent.version or intent.version == self.vlobs[intent.id]['version'])):
+            # TDOO: remove this mystic 42
             if self.vlobs[intent.id]['read_trust_seed'] == '42':
                 self.vlobs[intent.id]['read_trust_seed'] = intent.trust_seed
             assert intent.trust_seed == self.vlobs[intent.id]['read_trust_seed']
@@ -259,22 +257,24 @@ class SynchronizerComponent:
                     'blob': self.vlobs[intent.id]['blob'],
                     'version': self.vlobs[intent.id]['version']}
         else:
-            # TODO: if intent.version == None this is buggy !
-            try:
-                cached_vlob = self.vlob_cache[(intent.id, intent.version)]
-                assert intent.trust_seed == cached_vlob['read_trust_seed']
-                vlob = {'id': intent.id, 'blob': cached_vlob['blob'], 'version': intent.version}
-            except KeyError:
-                vlob = yield Effect(EBackendVlobRead(intent.id, intent.trust_seed, intent.version))
-                vlob = {'id': vlob.id, 'blob': vlob.blob.decode(), 'version': vlob.version}
+            if intent.version is not None:
                 try:
-                    cached_vlob = {'id': intent.id,
-                                   'read_trust_seed': intent.trust_seed,
-                                   'version': intent.version,
-                                   'blob': vlob['blob']}
-                    self.vlob_cache[(intent.id, intent.version)] = cached_vlob
-                except ValueError:
-                    pass  # Value too large if cache is disabled
+                    cached_vlob = self.vlob_cache[(intent.id, intent.version)]
+                    assert intent.trust_seed == cached_vlob['read_trust_seed']
+                    vlob = {'id': intent.id, 'blob': cached_vlob['blob'], 'version': intent.version}
+                    return vlob
+                except KeyError:
+                    pass  # cache miss
+            vlob = yield Effect(EBackendVlobRead(intent.id, intent.trust_seed, intent.version))
+            vlob = {'id': vlob.id, 'blob': vlob.blob.decode(), 'version': vlob.version}
+            try:
+                cached_vlob = {'id': intent.id,
+                               'read_trust_seed': intent.trust_seed,
+                               'version': intent.version,
+                               'blob': vlob['blob']}
+                self.vlob_cache[(intent.id, intent.version)] = cached_vlob
+            except ValueError:
+                pass  # Value too large if cache is disabled
             return vlob
 
     @do
@@ -358,11 +358,13 @@ class SynchronizerComponent:
             del self.vlob_cache[item]
 
     async def periodic_synchronization(self, app):
+        # TODO: find a better way to do this than using asyncio_perform...
         while True:
             await asyncio.sleep(self.synchronization_idle_interval)
             if (arrow.utcnow().timestamp - self.last_modified.timestamp >
                     self.synchronization_idle_interval):
-                await app.async_perform(Effect(fs.ESynchronize()))
+                await asyncio_perform(
+                    app.components.get_dispatcher(), Effect(fs.ESynchronize()))
 
     def get_dispatcher(self):
         return TypeDispatcher({
