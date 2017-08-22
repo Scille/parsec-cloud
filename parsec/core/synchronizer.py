@@ -120,14 +120,16 @@ class SynchronizerComponent:
         self.vlobs = {}
         self.user_vlob = None
         self.synchronization_idle_interval = 1
+        self.synchronization_task = None
         self.last_modified = arrow.utcnow()
 
     async def startup(self, app):
         self.synchronization_task = asyncio.ensure_future(self.periodic_synchronization(app))
 
     async def shutdown(self, app):
-        self.synchronization_task.cancel()
-        self.synchronization_task = None
+        if self.synchronization_task:
+            self.synchronization_task.cancel()
+            self.synchronization_task = None
 
     @do
     def perform_block_create(self, intent):
