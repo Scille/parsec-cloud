@@ -1,0 +1,2 @@
+# Helps heroku app
+-e .[all]
