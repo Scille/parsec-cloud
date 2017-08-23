@@ -285,7 +285,7 @@ def _add_command_if_can_import(path, name=None):
     try:
         module = import_module(module_path)
         cli.add_command(getattr(module, field), name=name)
-    except (ImportError, AttributeError):
+    except (ImportError, AttributeError, EnvironmentError):
         pass
 
 
