@@ -149,8 +149,7 @@ def _core(socket, backend_host, backend_watchdog,
         app.on_startup.append(load_identity)
     elif identity:
         async def load_identity(app):
-            from parsec.core.identity import EIdentityLoad
-            from parsec.core.privkey import EPrivKeyLoad
+            from parsec.core.identity import EIdentityLoad, EIdentityLogin
             if identity_key:
                 print("Reading %s's key from `%s`" % (identity, identity_key))
                 password = getpass()
@@ -159,7 +158,7 @@ def _core(socket, backend_host, backend_watchdog,
             else:
                 print("Fetching %s's key from backend privkey store." % (identity))
                 password = getpass()
-                eff = Effect(EPrivKeyLoad(identity, password))
+                eff = Effect(EIdentityLogin(identity, password))
                 await asyncio_perform(dispatcher, eff)
             print('Connected as %s' % identity)
         app.on_startup.append(load_identity)
