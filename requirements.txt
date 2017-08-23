@@ -1,2 +1,2 @@
 # Helps heroku app
--e .[all]
+-e .[postgresql,s3]
