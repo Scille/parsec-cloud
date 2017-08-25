@@ -135,6 +135,8 @@ def core(**kwargs):
 def _core(socket, backend_host, backend_watchdog,
           debug, identity, identity_key, i_am_john, cache_size):
     app = unix_socket_app.UnixSocketApplication()
+    if backend_host.endswith('/'):
+        backend_host = backend_host[:-1]
     components = core_components_factory(app, backend_host, backend_watchdog, cache_size)
     dispatcher = components.get_dispatcher()
     register_core_api(app, dispatcher)
@@ -159,7 +161,10 @@ def _core(socket, backend_host, backend_watchdog,
                 print("Fetching %s's key from backend privkey store." % (identity))
                 password = getpass()
                 eff = Effect(EIdentityLogin(identity, password))
-                await asyncio_perform(dispatcher, eff)
+                try:
+                    await asyncio_perform(dispatcher, eff)
+                except PrivKeyNotFound:
+                    raise SystemExit('ERROR: Unknown identity `%s` or bad password' % identity)
             print('Connected as %s' % identity)
         app.on_startup.append(load_identity)
 
