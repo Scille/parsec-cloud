@@ -5,8 +5,9 @@ from effect2 import TypeDispatcher, do, Effect
 
 from parsec.core.identity import EIdentityGet
 from parsec.core.backend_user_vlob import EBackendUserVlobRead, EBackendUserVlobUpdate
-from parsec.core.backend_vlob import EBackendVlobCreate, EBackendVlobUpdate, EBackendVlobRead
+from parsec.core.backend_vlob import EBackendVlobCreate, EBackendVlobUpdate, EBackendVlobRead, VlobAtom
 from parsec.core.block import EBlockRead, EBlockCreate
+from parsec.core.synchronizer import ESynchronizerPutJob
 from parsec.exceptions import (
     InvalidPath, FileNotFound, IdentityNotLoadedError, ManifestError, ManifestNotFound)
 from parsec.tools import ejson_loads, ejson_dumps, to_jsonb64, from_jsonb64
@@ -103,8 +104,44 @@ class FSComponent:
 
     def __init__(self):
         self._manifest = None
-        self._file_manifest_cache = {}
+        self._vlob_cache = {}
         self._block_cache = {}
+
+    @do
+    def _get_block(self, id):
+        try:
+            return self._block_cache[id]
+        except KeyError:
+            content = (yield Effect(EBlockRead(id))).content
+            self._block_cache[id] = content
+        return content
+
+    @do
+    def _create_block(self, id, content):
+        self._block_cache[id] = content
+        intent = EBlockCreate(id, content)
+        yield Effect(ESynchronizerPutJob(intent))
+
+    @do
+    def _get_vlob(self, id, trust_seed):
+        try:
+            return self._vlob_cache[id]
+        except KeyError:
+            vlob = yield Effect(EBackendVlobRead(id, trust_seed))
+            self._vlob_cache[id] = vlob
+        return vlob
+
+    @do
+    def _create_vlob(self, content):
+        vlob = yield Effect(EBackendVlobCreate(blob=content))
+        self._block_cache[id] = vlob
+        return vlob
+
+    @do
+    def _update_vlob(self, id, trust_seed, version, content):
+        intent = EBackendVlobUpdate(id, trust_seed, version, content)
+        yield Effect(ESynchronizerPutJob(intent))
+        self._vlob_cache[id] = VlobAtom(id, version, content)
 
     @do
     def perform_init(self, intent):
@@ -212,7 +249,7 @@ class FSComponent:
         }).encode()
         vlob_key = generate_sym_key()
         vlob_content = vlob_key.encrypt(raw_file_manifest)
-        vlob_access = yield Effect(EBackendVlobCreate(vlob_content))
+        vlob_access = yield self._create_vlob(vlob_content)
         dirpath, name = intent.path.rsplit('/', 1)
         dirobj = self._retrieve_path(dirpath)
         dirobj['children'][name] = {
@@ -231,16 +268,16 @@ class FSComponent:
 
         # Retrieve file manifest
         fileobj = self._retrieve_file(intent.path)
-        vlob = yield Effect(EBackendVlobRead(fileobj['id'], fileobj['read_trust_seed']))
+        vlob = yield self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
         vlob_key = load_sym_key(from_jsonb64(fileobj['key']))
         file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
 
         # Retrieve data
         blocks = []
         for block_access in file_manifest['blocks']:
-            cipherblock = yield Effect(EBlockRead(block_access['id']))
+            cipherblock = yield self._get_block(block_access['id'])
             block_key = load_sym_key(from_jsonb64(block_access['key']))
-            blocks.append(block_key.decrypt(cipherblock.content))
+            blocks.append(block_key.decrypt(cipherblock))
         data = b''.join(blocks)
 
         # Modify data
@@ -258,7 +295,7 @@ class FSComponent:
             block_id = uuid4().hex
             block_key = generate_sym_key()
             cipherblock = block_key.encrypt(chunk)
-            yield Effect(EBlockCreate(block_id, cipherblock))
+            yield self._create_block(block_id, cipherblock)
             file_manifest['blocks'].append({'id': block_id, 'key': to_jsonb64(block_key.key)})
 
             chunk_offset += chunk_size
@@ -266,10 +303,10 @@ class FSComponent:
 
         # Save file manifest and we're done ;-)
         ciphervlob = vlob_key.encrypt(ejson_dumps(file_manifest).encode())
-        yield Effect(EBackendVlobUpdate(
+        yield self._update_vlob(
             fileobj['id'], fileobj['write_trust_seed'],
             vlob.version + 1, ciphervlob
-        ))
+        )
 
     @do
     def perform_file_truncate(self, intent):
@@ -278,16 +315,16 @@ class FSComponent:
 
         # Retrieve file manifest
         fileobj = self._retrieve_file(intent.path)
-        vlob = yield Effect(EBackendVlobRead(fileobj['id'], fileobj['read_trust_seed']))
+        vlob = yield self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
         vlob_key = load_sym_key(from_jsonb64(fileobj['key']))
         file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
 
         # Retrieve data
         blocks = []
         for block_access in file_manifest['blocks']:
-            cipherblock = yield Effect(EBlockRead(block_access['id']))
+            cipherblock = yield self._get_block(block_access['id'])
             block_key = load_sym_key(from_jsonb64(block_access['key']))
-            blocks.append(block_key.decrypt(cipherblock.content))
+            blocks.append(block_key.decrypt(cipherblock))
         data = b''.join(blocks)
 
         # Modify data
@@ -304,7 +341,7 @@ class FSComponent:
             block_id = uuid4().hex
             block_key = generate_sym_key()
             cipherblock = block_key.encrypt(chunk)
-            yield Effect(EBlockCreate(block_id, cipherblock))
+            yield self._create_block(block_id, cipherblock)
             file_manifest['blocks'].append({'id': block_id, 'key': to_jsonb64(block_key.key)})
 
             chunk_offset += chunk_size
@@ -312,10 +349,10 @@ class FSComponent:
 
         # Save file manifest and we're done ;-)
         ciphervlob = vlob_key.encrypt(ejson_dumps(file_manifest).encode())
-        yield Effect(EBackendVlobUpdate(
+        yield self._update_vlob(
             fileobj['id'], fileobj['write_trust_seed'],
             vlob.version + 1, ciphervlob
-        ))
+        )
 
     @do
     def perform_file_read(self, intent):
@@ -324,16 +361,16 @@ class FSComponent:
 
         # Retrieve file manifest
         fileobj = self._retrieve_file(intent.path)
-        vlob = yield Effect(EBackendVlobRead(fileobj['id'], fileobj['read_trust_seed']))
+        vlob = yield self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
         vlob_key = load_sym_key(from_jsonb64(fileobj['key']))
         file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
 
         # Retrieve data
         blocks = []
         for block_access in file_manifest['blocks']:
-            cipherblock = yield Effect(EBlockRead(block_access['id']))
+            cipherblock = yield self._get_block(block_access['id'])
             block_key = load_sym_key(from_jsonb64(block_access['key']))
-            blocks.append(block_key.decrypt(cipherblock.content))
+            blocks.append(block_key.decrypt(cipherblock))
         data = b''.join(blocks)
 
         if intent.size is None:
@@ -351,7 +388,7 @@ class FSComponent:
             return {'type': obj['type'], 'children': list(obj['children'].keys())}
         else:
             # Retrieve file manifest
-            vlob = yield Effect(EBackendVlobRead(obj['id'], obj['read_trust_seed']))
+            vlob = yield self._get_vlob(obj['id'], obj['read_trust_seed'])
             vlob_key = load_sym_key(from_jsonb64(obj['key']))
             file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
             return {

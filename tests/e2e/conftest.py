@@ -106,6 +106,7 @@ def core(loop, test_server, tmpdir, backend_host):
     socket = str(tmpdir + '/parsec')
     server = loop.run_until_complete(
         run_unix_socket_server(app.on_connection, socket, loop=loop))
+    loop.run_until_complete(app.startup())
     yield server
     loop.run_until_complete(app.shutdown())
     loop.run_until_complete(server.stop())
