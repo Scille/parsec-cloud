@@ -8,8 +8,7 @@ from parsec.core.backend_user_vlob import EBackendUserVlobRead, EBackendUserVlob
 from parsec.core.backend_vlob import EBackendVlobCreate, EBackendVlobUpdate, EBackendVlobRead, VlobAtom
 from parsec.core.block import EBlockRead, EBlockCreate
 from parsec.core.synchronizer import ESynchronizerPutJob
-from parsec.exceptions import (
-    InvalidPath, FileNotFound, IdentityNotLoadedError, ManifestError, ManifestNotFound)
+from parsec.exceptions import (InvalidPath, IdentityNotLoadedError, ManifestError)
 from parsec.tools import ejson_loads, ejson_dumps, to_jsonb64, from_jsonb64
 from parsec.crypto import generate_sym_key, load_sym_key
 
@@ -145,7 +144,8 @@ class FSComponent:
 
     @do
     def perform_init(self, intent):
-        # TODO: check already initialized
+        if self._manifest:
+            raise ManifestError('Manifest already loaded')
         uservlob = yield Effect(EBackendUserVlobRead())
         if uservlob.version == 0:
             self._manifest = self._create_new_manifest()
@@ -288,7 +288,7 @@ class FSComponent:
 
         # Reupload data
         file_manifest['blocks'].clear()
-        chunk_size = 4096
+        chunk_size = 1024 * 1024  # 1mo chunks
         chunk_offset = 0
         chunk = data[:chunk_size]
         while chunk:
