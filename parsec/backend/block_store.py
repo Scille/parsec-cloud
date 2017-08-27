@@ -1,6 +1,10 @@
 import attr
 from effect2 import TypeDispatcher
 from aiohttp import web
+from logbook import Logger
+
+
+logger = Logger('block_store')
 
 
 # TODO test perform_blockstore_get_url
@@ -38,6 +42,7 @@ def register_in_memory_block_store_api(app, prefix='/blockstore'):
         if id in blocks:
             raise web.HTTPConflict()
         blocks[id] = await request.read()
+        logger.debug('Create new block: %s' % id)
         return web.Response()
 
     app.router.add_get(prefix + '/{id}', api_block_get)
