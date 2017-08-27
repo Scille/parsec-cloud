@@ -8,6 +8,7 @@ from parsec.core.backend import BackendCmd
 
 @attr.s
 class EBackendVlobCreate:
+    id = attr.ib(default=None)
     blob = attr.ib(default=b'')
 
 
@@ -43,6 +44,8 @@ class VlobAtom:
 @do
 def perform_vlob_create(intent):
     msg = {'blob': to_jsonb64(intent.blob)}
+    if intent.id:
+        msg['id'] = intent.id
     ret = yield Effect(BackendCmd('vlob_create', msg))
     status = ret['status']
     if status != 'ok':

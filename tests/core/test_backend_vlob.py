@@ -10,7 +10,7 @@ from parsec.core.backend_vlob import (
 
 
 def test_perform_vlob_create():
-    eff = perform_vlob_create(EBackendVlobCreate(b'fooo'))
+    eff = perform_vlob_create(EBackendVlobCreate('42', b'fooo'))
     backend_response = {
         'status': 'ok',
         'id': '42',
@@ -18,7 +18,8 @@ def test_perform_vlob_create():
         'write_trust_seed': 'WTS42',
     }
     sequence = [
-        (BackendCmd('vlob_create', {'blob': to_jsonb64(b'fooo')}), const(backend_response))
+        (BackendCmd('vlob_create', {'id': '42', 'blob': to_jsonb64(b'fooo')}),
+            const(backend_response))
     ]
     ret = perform_sequence(sequence, eff)
     assert ret == VlobAccess('42', 'RTS42', 'WTS42')
