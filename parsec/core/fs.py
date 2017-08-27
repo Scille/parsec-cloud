@@ -384,8 +384,7 @@ class FSComponent:
         self._check_path(intent.path, should_exists=True)
         obj = self._retrieve_path(intent.path)
         if obj['type'] == 'folder':
-            # return {**obj['stat'], 'type': obj['type'], 'children': list(obj['children'].keys())}
-            return {'type': obj['type'], 'children': list(obj['children'].keys())}
+            return {'type': obj['type'], 'children': list(sorted(obj['children'].keys()))}
         else:
             # Retrieve file manifest
             vlob = yield self._get_vlob(obj['id'], obj['read_trust_seed'])
