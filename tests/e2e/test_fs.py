@@ -20,42 +20,60 @@ async def test_stat(johndoe_client):
     assert ret == {'children': [], 'status': 'ok', 'type': 'folder'}
 
 
-@pytest.mark.xfail
 async def test_stat_file(johndoe_client):
     with freeze_time('2017-12-02T12:30:23'):
         path = await mk_file(johndoe_client, path='/foo.txt', data=b'x' * 32)
     ret = await johndoe_client.send_cmd('stat', path=path)
     assert ret == {
         'status': 'ok',
-        'path': path,
         'type': 'file',
-        'version': 1,
-        'created': '2017-12-02T12:30:23',
-        'updated': '2017-12-02T12:30:23',
+        'version': 2,
+        'created': '2017-12-02T12:30:23+00:00',
+        'updated': '2017-12-02T12:30:23+00:00',
         'size': 32
     }
 
 
 async def test_create_file(johndoe_client):
-    ret = await johndoe_client.send_cmd('file_create', path='/foo.txt')
+    with freeze_time('2017-12-02T12:30:23'):
+        ret = await johndoe_client.send_cmd('file_create', path='/foo.txt')
     assert ret == {'status': 'ok'}
     ret = await johndoe_client.send_cmd('stat', path='/')
     assert ret == {'children': ['foo.txt'], 'status': 'ok', 'type': 'folder'}
-
+    ret = await johndoe_client.send_cmd('stat', path='/foo.txt')
+    assert ret == {
+        'status': 'ok',
+        'type': 'file',
+        'version': 1,
+        'created': '2017-12-02T12:30:23+00:00',
+        'updated': '2017-12-02T12:30:23+00:00',
+        'size': 0
+    }
 
 async def test_create_duplicated_file(johndoe_client):
     path = await mk_file(johndoe_client)
     ret = await johndoe_client.send_cmd('file_create', path=path)
-    assert ret == {'status': 'already_exists', 'label': 'File already exists.'}
+    assert ret == {'status': 'invalid_path', 'label': 'Path `/foo.txt` already exist'}
 
 
 async def test_write_file(johndoe_client):
-    ret = await johndoe_client.send_cmd('file_create', path='/foo.txt')
+    with freeze_time('2017-12-02T01:00:00'):
+        ret = await johndoe_client.send_cmd('file_create', path='/foo.txt')
     assert ret == {'status': 'ok'}
-    ret = await johndoe_client.send_cmd('file_write', path='/foo.txt', content=b'fooo')
+    with freeze_time('2017-12-02T02:00:00'):
+        ret = await johndoe_client.send_cmd('file_write', path='/foo.txt', content=b'fooo')
     assert ret == {'status': 'ok'}
     ret = await johndoe_client.send_cmd('file_read', path='/foo.txt')
     assert ret == {'status': 'ok', 'content': to_jsonb64(b'fooo')}
+    ret = await johndoe_client.send_cmd('stat', path='/foo.txt')
+    assert ret == {
+        'status': 'ok',
+        'type': 'file',
+        'version': 2,
+        'created': '2017-12-02T01:00:00+00:00',
+        'updated': '2017-12-02T02:00:00+00:00',
+        'size': 4
+    }
 
 
 async def test_write_offset(johndoe_client):
@@ -68,7 +86,7 @@ async def test_write_offset(johndoe_client):
 
 async def test_write_unknown_file(johndoe_client):
     ret = await johndoe_client.send_cmd('file_write', path='/unknown', content=b'abcd')
-    assert ret == {'status': 'file_not_found', 'label': 'Vlob not found.'}
+    assert ret == {'status': 'invalid_path', 'label': "Path `/unknown` doesn't exist"}
 
 
 async def test_read_offset(johndoe_client):
@@ -79,7 +97,7 @@ async def test_read_offset(johndoe_client):
 
 async def test_read_unknown_file(johndoe_client):
     ret = await johndoe_client.send_cmd('file_read', path='/unknown')
-    assert ret == {'status': 'file_not_found', 'label': 'Vlob not found.'}
+    assert ret == {'status': 'invalid_path', 'label': "Path `/unknown` doesn't exist"}
 
 
 async def test_big_file(johndoe_client):
@@ -99,7 +117,7 @@ async def test_file_truncate(johndoe_client):
 
 async def test_truncate_unknown_file(johndoe_client):
     ret = await johndoe_client.send_cmd('file_truncate', path='/unknown', length=4)
-    assert ret == {'status': 'file_not_found', 'label': 'Vlob not found.'}
+    assert ret == {'status': 'invalid_path', 'label': "Path `/unknown` doesn't exist"}
 
 
 async def test_create_dir(johndoe_client):
@@ -112,7 +130,7 @@ async def test_create_dir(johndoe_client):
 async def test_create_duplicated_dir(johndoe_client):
     path = await mk_folder(johndoe_client)
     ret = await johndoe_client.send_cmd('folder_create', path=path)
-    assert ret == {'status': 'already_exists', 'label': 'Folder already exists.'}
+    assert ret == {'status': 'invalid_path', 'label': "Path `/bar` already exist"}
 
 
 async def test_nested_dir(johndoe_client):
@@ -132,10 +150,9 @@ async def test_move_file(johndoe_client):
     assert ret == {'children': ['v2'], 'status': 'ok', 'type': 'folder'}
 
 
-@pytest.mark.xfail
 async def test_move_unknown_file(johndoe_client):
     ret = await johndoe_client.send_cmd('move', src='/unknown', dst='/whatever')
-    assert ret == {'status': 'file_not_found', 'label': 'File not found.'}
+    assert ret == {'status': 'invalid_path', 'label': "Path `/unknown` doesn't exist"}
 
 
 async def test_move_folder(johndoe_client):

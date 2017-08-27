@@ -1,274 +1,263 @@
-from copy import deepcopy
-
 import attr
+import arrow
 from effect2 import TypeDispatcher, do, Effect
 
-from parsec.core.file import File
-from parsec.core.manifest import UserManifest
 from parsec.core.identity import EIdentityGet
-from parsec.exceptions import FileNotFound, IdentityNotLoadedError, ManifestError, ManifestNotFound
+from parsec.core.backend_user_vlob import EBackendUserVlobRead
+# from parsec.core.backend_vlob import EBackendVlobRead
+from parsec.exceptions import (
+    InvalidPath, FileNotFound, IdentityNotLoadedError, ManifestError, ManifestNotFound)
 
 
-@attr.s
-class ESynchronize:
+@attr.s(slots=True)
+class Folder:
+    entries = attr.ib(default=set)
+
+
+@attr.s(slots=True)
+class FileManifest:
+    id = attr.ib()
+    key = attr.ib()
+    read_trust_seed = attr.ib()
+    write_trust_seed = attr.ib()
+
+
+@attr.s(slots=True)
+class Manifest(Folder):
+    pass
+
+
+class VlobCache:
+    def get(self, id):
+        pass
+
+    def add(self, id):
+        pass
+
+
+class BlockCache:
     pass
 
 
 @attr.s
-class EGroupCreate:
-    group = attr.ib()
+class EFSInit:
+    pass
 
 
 @attr.s
-class EDustbinShow:
-    path = attr.ib(default=None)
+class EFSReset:
+    pass
 
 
 @attr.s
-class EManifestHistory:
-    first_version = attr.ib(default=1)
-    last_version = attr.ib(default=None)
-    summary = attr.ib(default=False)
-
-
-@attr.s
-class EManifestRestore:
-    version = attr.ib(default=None)
-
-
-@attr.s
-class EFileCreate:
+class EFSFileCreate:
     path = attr.ib()
 
 
 @attr.s
-class EFileRead:
+class EFSFileRead:
     path = attr.ib()
     offset = attr.ib(default=0)
-    size = attr.ib(default=None)
+    size = attr.ib(default=0)
 
 
 @attr.s
-class EFileWrite:
+class EFSFileWrite:
     path = attr.ib()
     content = attr.ib()
     offset = attr.ib()
 
 
 @attr.s
-class EFileTruncate:
+class EFSFileTruncate:
     path = attr.ib()
     length = attr.ib()
 
 
 @attr.s
-class EFileHistory:
-    path = attr.ib()
-    first_version = attr.ib()
-    last_version = attr.ib()
-
-
-@attr.s
-class EFileRestore:
-    path = attr.ib()
-    version = attr.ib(default=None)
-
-
-@attr.s
-class EFolderCreate:
+class EFSFolderCreate:
     path = attr.ib()
 
 
 @attr.s
-class EStat:
+class EFSStat:
     path = attr.ib()
 
 
 @attr.s
-class EMove:
+class EFSMove:
     src = attr.ib()
     dst = attr.ib()
 
 
 @attr.s
-class EDelete:
+class EFSDelete:
     path = attr.ib()
-
-
-@attr.s
-class EUndelete:
-    vlob = attr.ib()
 
 
 class FSComponent:
 
     def __init__(self):
-        self.user_manifest = None
+        self._manifest = None
 
     @do
-    def perform_synchronize(self, intent):
-        user_manifest = yield self._get_manifest()
-        yield user_manifest.commit(recursive=True)
+    def perform_init(self, intent):
+        # TODO: check already initialized
+        uservlob = yield Effect(EBackendUserVlobRead())
+        # TODO
+        self._manifest = self._create_new_manifest()
 
     @do
-    def perform_group_create(self, intent):
-        user_manifest = yield self._get_manifest()
-        yield user_manifest.create_group_manifest(intent.group)
+    def perform_reset(self, intent):
+        self._manifest = None
 
-    @do
-    def perform_dustbin_show(self, intent):
-        user_manifest = yield self._get_manifest()
-        return user_manifest.show_dustbin(intent.path)
+    def _create_new_manifest(self):
+        now = arrow.get()
+        return {
+            'type': 'folder',
+            'children': {},
+            'stat': {'created': now, 'updated': now}
+        }
 
-    @do
-    def perform_manifest_history(self, intent):
-        user_manifest = yield self._get_manifest()
-        history = yield user_manifest.history(intent.first_version,
-                                              intent.last_version,
-                                              intent.summary)
-        return history
+    def _retrieve_file(self, path):
+        fileobj = self._retrieve_path(path)
+        if fileobj['type'] != 'file':
+            raise InvalidPath("Path `%s` is not a file" % path)
+        return fileobj
 
-    @do
-    def perform_manifest_restore(self, intent):
-        user_manifest = yield self._get_manifest()
-        yield user_manifest.restore(intent.version)
+    def _check_path(self, path, should_exists=True, type=None):
+        if path == '/':
+            if not should_exists or type not in ('folder', None):
+                raise InvalidPath('Root `/` folder always exists')
+            else:
+                return
+        dirpath, leafname = path.rsplit('/', 1)
+        obj = self._retrieve_path(dirpath)
+        if obj['type'] != 'folder':
+            raise InvalidPath("Path `%s` is not a folder" % path)
+        try:
+            leafobj = obj['children'][leafname]
+            if not should_exists:
+                raise InvalidPath("Path `%s` already exist" % path)
+            if type is not None and leafobj['type'] != type:
+                raise InvalidPath("Path `%s` is not a %s" % (path, type))
+        except KeyError:
+            if should_exists:
+                raise InvalidPath("Path `%s` doesn't exist" % path)
+
+    def _retrieve_path(self, path):
+        if not path:
+            return self._manifest
+        if not path.startswith('/'):
+            raise InvalidPath("Path must start with `/`")
+        cur_dir = self._manifest
+        reps = path.split('/')
+        for rep in reps:
+            if not rep or rep == '.':
+                continue
+            elif rep == '..':
+                cur_dir = cur_dir['parent']
+            else:
+                try:
+                    cur_dir = cur_dir['children'][rep]
+                except KeyError:
+                    raise InvalidPath("Path `%s` doesn't exist" % path)
+        return cur_dir
 
     @do
     def perform_file_create(self, intent):
-        file = yield File.create()
-        vlob = file.get_vlob()
-        user_manifest = yield self._get_manifest()
-        try:
-            user_manifest.add_file(intent.path, vlob)
-        except (ManifestError, ManifestNotFound) as ex:
-            yield file.discard()
-            raise ex
-
-    @do
-    def perform_file_read(self, intent):
-        file = yield self._get_file(intent.path)
-        ret = yield file.read(intent.size, intent.offset)
-        return ret
+        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+        self._check_path(intent.path, should_exists=False)
+        dirpath, name = intent.path.rsplit('/', 1)
+        dirobj = self._retrieve_path(dirpath)
+        now = arrow.get()
+        dirobj['children'][name] = {
+            'type': 'file', 'data': b'', 'stat': {'created': now, 'updated': now, 'version': 1}
+        }
 
     @do
     def perform_file_write(self, intent):
-        file = yield self._get_file(intent.path)
-        file.write(intent.content, intent.offset)
+        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+        self._check_path(intent.path, should_exists=True, type='file')
+        fileobj = self._retrieve_file(intent.path)
+        fileobj['data'] = (fileobj['data'][:intent.offset] + intent.content +
+                           fileobj['data'][intent.offset + len(intent.content):])
+        fileobj['stat']['updated'] = arrow.get()
+        fileobj['stat']['version'] += 1
 
     @do
-    def perform_file_truncate(self, intent):
-        file = yield self._get_file(intent.path)
-        file.truncate(intent.length)
-
-    @do
-    def perform_file_history(self, intent):
-        file = yield self._get_file(intent.path)
-        history = yield file.history(intent.first_version, intent.last_version)
-        return history
-
-    @do
-    def perform_file_restore(self, intent):
-        file = yield self._get_file(intent.path)
-        yield file.restore(intent.version)
-
-    @do
-    def perform_folder_create(self, intent):
-        user_manifest = yield self._get_manifest()
-        user_manifest.create_folder(intent.path)
+    def perform_file_read(self, intent):
+        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+        self._check_path(intent.path, should_exists=True, type='file')
+        fileobj = self._retrieve_file(intent.path)
+        if intent.size is None:
+            return fileobj['data'][intent.offset:]
+        else:
+            return fileobj['data'][intent.offset:intent.offset + intent.size]
 
     @do
     def perform_stat(self, intent):
-        user_manifest = yield self._get_manifest()
-        stat = yield user_manifest.stat(intent.path)
-        return stat
+        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+        self._check_path(intent.path, should_exists=True)
+        obj = self._retrieve_path(intent.path)
+        if obj['type'] == 'folder':
+            # return {**obj['stat'], 'type': obj['type'], 'children': list(obj['children'].keys())}
+            return {'type': obj['type'], 'children': list(obj['children'].keys())}
+        else:
+            return {**obj['stat'], 'type': obj['type'], 'size': len(obj['data'])}
+
+    @do
+    def perform_folder_create(self, intent):
+        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+        self._check_path(intent.path, should_exists=False)
+        dirpath, name = intent.path.rsplit('/', 1)
+        dirobj = self._retrieve_path(dirpath)
+        now = arrow.get()
+        dirobj['children'][name] = {
+            'type': 'folder', 'children': {}, 'stat': {'created': now, 'updated': now}}
 
     @do
     def perform_move(self, intent):
-        user_manifest = yield self._get_manifest()
-        user_manifest.move(intent.src, intent.dst)
+        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+        self._check_path(intent.src, should_exists=True)
+        self._check_path(intent.dst, should_exists=False)
+
+        srcdirpath, scrfilename = intent.src.rsplit('/', 1)
+        dstdirpath, dstfilename = intent.dst.rsplit('/', 1)
+
+        srcobj = self._retrieve_path(srcdirpath)
+        dstobj = self._retrieve_path(dstdirpath)
+        dstobj['children'][dstfilename] = srcobj['children'][scrfilename]
+        del srcobj['children'][scrfilename]
 
     @do
     def perform_delete(self, intent):
-        user_manifest = yield self._get_manifest()
-        yield user_manifest.delete(intent.path)
+        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+        self._check_path(intent.path, should_exists=True)
+        dirpath, leafname = intent.path.rsplit('/', 1)
+        obj = self._retrieve_path(dirpath)
+        del obj['children'][leafname]
 
     @do
-    def perform_undelete(self, intent):
-        user_manifest = yield self._get_manifest()
-        user_manifest.undelete_file(intent.vlob)
+    def perform_file_truncate(self, intent):
+        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+        self._check_path(intent.path, should_exists=True, type='file')
+        fileobj = self._retrieve_file(intent.path)
+        fileobj['data'] = fileobj['data'][:intent.length]
+        fileobj['stat']['updated'] = arrow.get()
 
-    @do
-    def _get_file(self, path, group=None):
-        try:
-            properties = yield self._get_properties(path=path, group=group)
-        except FileNotFound:
-            try:
-                properties = yield self._get_properties(path=path, dustbin=True, group=group)
-            except FileNotFound:
-                raise FileNotFound('Vlob not found.')
-        if not properties:
-            raise FileNotFound('Vlob not found.')
-        file = yield File.load(properties['id'],
-                               properties['key'],
-                               properties['read_trust_seed'],
-                               properties['write_trust_seed'])
-        return file
-
-    @do
-    def _get_manifest(self, group=None):
-        identity = yield Effect(EIdentityGet())
-        if (not self.user_manifest or
-            self.user_manifest.encryptor._hazmat_private_key !=
-                identity.private_key._hazmat_private_key):
-            if not identity:
-                raise IdentityNotLoadedError('Identity not loaded.')
-            manifest = yield UserManifest.load(identity.private_key._hazmat_private_key)
-            self.user_manifest = manifest
-        else:
-            manifest = self.user_manifest
-        if group:
-            return manifest.get_group_manifest(group)
-        else:
-            return manifest
-
-    @do
-    def _get_properties(self, path=None, id=None, dustbin=False, group=None):  # TODO refactor?
-        if group and not id and not path:
-            manifest = yield self._get_manifest(group)
-            return manifest.get_vlob()
-        user_manifest = yield self._get_manifest()
-        groups = [group] if group else [None] + list(user_manifest.get_group_vlobs())
-        for current_group in groups:
-            manifest = yield self._get_manifest(current_group)
-            if dustbin:
-                for item in manifest.dustbin:
-                    if path == item['path'] or id == item['id']:
-                        return deepcopy(item)
-            else:
-                if path in manifest.entries:
-                    return deepcopy(manifest.entries[path])
-                elif id:
-                    for entry in manifest.entries.values():  # TODO bad complexity
-                        if entry and entry['id'] == id:
-                            return deepcopy(entry)
-        raise FileNotFound('File not found.')
 
     def get_dispatcher(self):
         return TypeDispatcher({
-            ESynchronize: self.perform_synchronize,
-            EGroupCreate: self.perform_group_create,
-            EDustbinShow: self.perform_dustbin_show,
-            EManifestHistory: self.perform_manifest_history,
-            EManifestRestore: self.perform_manifest_restore,
-            EFileCreate: self.perform_file_create,
-            EFileRead: self.perform_file_read,
-            EFileWrite: self.perform_file_write,
-            EFileTruncate: self.perform_file_truncate,
-            EFileHistory: self.perform_file_history,
-            EFileRestore: self.perform_file_restore,
-            EFolderCreate: self.perform_folder_create,
-            EStat: self.perform_stat,
-            EMove: self.perform_move,
-            EDelete: self.perform_delete,
-            EUndelete: self.perform_undelete
+            EFSFileCreate: self.perform_file_create,
+            EFSFileRead: self.perform_file_read,
+            EFSFileWrite: self.perform_file_write,
+            EFSFileTruncate: self.perform_file_truncate,
+            EFSFolderCreate: self.perform_folder_create,
+            EFSStat: self.perform_stat,
+            EFSMove: self.perform_move,
+            EFSDelete: self.perform_delete,
+
+            EFSReset: self.perform_reset,
+            EFSInit: self.perform_init,
         })

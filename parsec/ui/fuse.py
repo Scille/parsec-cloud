@@ -11,11 +11,51 @@ from errno import ENOENT, EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 
-from parsec.core.file import ContentBuilder
 from parsec.tools import logger, logger_stream, from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 
 
 DEFAULT_CORE_UNIX_SOCKET = '/tmp/parsec'
+
+
+class ContentBuilder:
+
+    def __init__(self):
+        self.contents = {}
+
+    def write(self, data, offset):
+        end_offset = offset + len(data)
+        offsets_to_delete = []
+        new_data = data
+        for current_offset in self.contents:
+            current_content = self.contents[current_offset]
+            # Insert inside
+            if offset >= current_offset and end_offset <= current_offset + len(current_content):
+                new_data = current_content[:offset - current_offset]
+                new_data += data
+                new_data += current_content[offset - current_offset + len(data):]
+                offset = current_offset
+            # Insert before and merge
+            elif offset <= current_offset and end_offset >= current_offset:
+                new_data = data + current_content[offset + len(data) - current_offset:]
+                offsets_to_delete.append(current_offset)
+            # Insert after
+            elif offset == current_offset + len(current_content):
+                new_data = current_content[:offset] + new_data
+                offset = current_offset
+        for offset_to_delete in offsets_to_delete:
+            del self.contents[offset_to_delete]
+        self.contents[offset] = new_data
+
+    def truncate(self, length):
+        offsets_to_delete = []
+        for current_offset in self.contents:
+            if current_offset > length:
+                offsets_to_delete.append(current_offset)
+            elif current_offset + len(self.contents[current_offset]) > length:
+                data = self.contents[current_offset][:length - current_offset]
+                self.contents[current_offset] = data
+        for offset_to_delete in offsets_to_delete:
+            del self.contents[offset_to_delete]
 
 
 @click.command()

@@ -6,7 +6,7 @@ from parsec.core.core_api import register_core_api
 from parsec.core.backend import BackendComponent
 from parsec.core.identity import IdentityComponent
 from parsec.core.fs import FSComponent
-from parsec.core.synchronizer import SynchronizerComponent
+# from parsec.core.synchronizer import SynchronizerComponent
 from parsec.core.block import BlockComponent
 
 
@@ -17,7 +17,7 @@ class CoreComponents:
     block = attr.ib()
     fs = attr.ib()
     identity = attr.ib()
-    synchronizer = attr.ib()
+    # synchronizer = attr.ib()
 
     def get_dispatcher(self):
         return ComposedDispatcher([
@@ -27,16 +27,17 @@ class CoreComponents:
             self.block.get_dispatcher(),
             self.fs.get_dispatcher(),
             self.identity.get_dispatcher(),
-            self.synchronizer.get_dispatcher()
+            # self.synchronizer.get_dispatcher()
         ])
 
     async def shutdown(self, app):
         await self.backend.shutdown(app)
         await self.block.shutdown(app)
-        await self.synchronizer.shutdown(app)
+        # await self.synchronizer.shutdown(app)
 
     async def startup(self, app):
-        await self.synchronizer.startup(app)
+        pass
+        # await self.synchronizer.startup(app)
 
 
 def components_factory(app, backend_host, backend_watchdog=False, cache_size=4000):
@@ -48,7 +49,7 @@ def components_factory(app, backend_host, backend_watchdog=False, cache_size=400
         backend=backend,
         fs=FSComponent(),
         identity=IdentityComponent(),
-        synchronizer=SynchronizerComponent(cache_size)
+        # synchronizer=SynchronizerComponent(cache_size)
     )
     app.components = core_components
     app.on_startup.append(core_components.startup)

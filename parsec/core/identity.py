@@ -51,6 +51,7 @@ class IdentityComponent:
 
     @do
     def perform_identity_load(self, intent):
+        from parsec.core.fs import EFSInit
         if self.identity:
             raise IdentityError('Identity already loaded')
         # TODO: handle invalid key with more precise exception
@@ -60,15 +61,18 @@ class IdentityComponent:
             raise IdentityError('Invalid private key (%s)' % e)
         self.identity = Identity(intent.id, private_key, private_key.pub_key)
         yield Effect(EEvent('identity_loaded', self.identity.id))
+        yield Effect(EFSInit())
         return self.identity
 
     @do
     def perform_identity_unload(self, intent):
         from parsec.core.backend import EBackendReset
         from parsec.core.block import EBlockReset
+        from parsec.core.fs import EFSReset
         if not self.identity:
             raise IdentityNotLoadedError('Identity not loaded')
         # TODO: make block&backend reset event triggered
+        yield Effect(EFSReset())
         yield Effect(EBlockReset())
         yield Effect(EBackendReset())
         yield Effect(EEvent('identity_unloaded', None))

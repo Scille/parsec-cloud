@@ -13,8 +13,7 @@ async def test_identity_info_not_loaded(client):
 
 @pytest.mark.parametrize('cmd', [
     'backend_status',
-    'identity_unload',
-    'synchronize'
+    'identity_unload'
 ])
 async def test_identity_not_loaded(client, cmd):
     ret = await client.send_cmd(cmd)

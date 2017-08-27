@@ -95,11 +95,10 @@ API_CMDS_ROUTER = {
     'identity_unload': identity_api.api_identity_unload,
     'identity_info': identity_api.api_identity_info,
 
-    'synchronize': fs_api.api_synchronize,
-    'group_create': fs_api.api_group_create,
-    'dustbin_show': fs_api.api_dustbin_show,
-    'history': fs_api.api_manifest_history,  # TODO Integrate api_file_history
-    'restore': fs_api.api_manifest_restore,  # TODO Integrate api_file_restore
+    # 'group_create': fs_api.api_group_create,
+    # 'dustbin_show': fs_api.api_dustbin_show,
+    # 'history': fs_api.api_manifest_history,  # TODO Integrate api_file_history
+    # 'restore': fs_api.api_manifest_restore,  # TODO Integrate api_file_restore
     'file_create': fs_api.api_file_create,
     'file_read': fs_api.api_file_read,
     'file_write': fs_api.api_file_write,
@@ -108,5 +107,5 @@ API_CMDS_ROUTER = {
     'stat': fs_api.api_stat,
     'move': fs_api.api_move,
     'delete': fs_api.api_delete,
-    'undelete': fs_api.api_undelete,
+    # 'undelete': fs_api.api_undelete,
 }
