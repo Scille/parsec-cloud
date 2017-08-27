@@ -3,10 +3,11 @@ import arrow
 from effect2 import TypeDispatcher, do, Effect
 
 from parsec.core.identity import EIdentityGet
-from parsec.core.backend_user_vlob import EBackendUserVlobRead
+from parsec.core.backend_user_vlob import EBackendUserVlobRead, EBackendUserVlobUpdate
 # from parsec.core.backend_vlob import EBackendVlobRead
 from parsec.exceptions import (
     InvalidPath, FileNotFound, IdentityNotLoadedError, ManifestError, ManifestNotFound)
+from parsec.tools import ejson_loads, ejson_dumps
 
 
 @attr.s(slots=True)
@@ -99,17 +100,34 @@ class FSComponent:
 
     def __init__(self):
         self._manifest = None
+        self._file_manifest_cache = {}
+        self._block_cache = {}
 
     @do
     def perform_init(self, intent):
         # TODO: check already initialized
         uservlob = yield Effect(EBackendUserVlobRead())
-        # TODO
-        self._manifest = self._create_new_manifest()
+        if uservlob.version == 0:
+            self._manifest = self._create_new_manifest()
+            self._manifest_version = 0
+        else:
+            identity = yield Effect(EIdentityGet())
+            self._manifest_version = uservlob.version
+            self._manifest = ejson_loads(identity.private_key.decrypt(uservlob.blob).decode())
+
+    @do
+    def _commit_manifest(self):
+        identity = yield Effect(EIdentityGet())
+        ciphermanifest = identity.public_key.encrypt(ejson_dumps(self._manifest).encode())
+        new_version = self._manifest_version + 1
+        yield Effect(EBackendUserVlobUpdate(new_version, ciphermanifest))
+        self._manifest_version = new_version
 
     @do
     def perform_reset(self, intent):
         self._manifest = None
+        self._file_manifest_cache = {}
+        self._block_cache = {}
 
     def _create_new_manifest(self):
         now = arrow.get()
@@ -186,6 +204,14 @@ class FSComponent:
         fileobj['stat']['version'] += 1
 
     @do
+    def perform_file_truncate(self, intent):
+        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+        self._check_path(intent.path, should_exists=True, type='file')
+        fileobj = self._retrieve_file(intent.path)
+        fileobj['data'] = fileobj['data'][:intent.length]
+        fileobj['stat']['updated'] = arrow.get()
+
+    @do
     def perform_file_read(self, intent):
         yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
         self._check_path(intent.path, should_exists=True, type='file')
@@ -215,6 +241,7 @@ class FSComponent:
         now = arrow.get()
         dirobj['children'][name] = {
             'type': 'folder', 'children': {}, 'stat': {'created': now, 'updated': now}}
+        yield self._commit_manifest()
 
     @do
     def perform_move(self, intent):
@@ -229,6 +256,7 @@ class FSComponent:
         dstobj = self._retrieve_path(dstdirpath)
         dstobj['children'][dstfilename] = srcobj['children'][scrfilename]
         del srcobj['children'][scrfilename]
+        yield self._commit_manifest()
 
     @do
     def perform_delete(self, intent):
@@ -237,15 +265,7 @@ class FSComponent:
         dirpath, leafname = intent.path.rsplit('/', 1)
         obj = self._retrieve_path(dirpath)
         del obj['children'][leafname]
-
-    @do
-    def perform_file_truncate(self, intent):
-        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
-        self._check_path(intent.path, should_exists=True, type='file')
-        fileobj = self._retrieve_file(intent.path)
-        fileobj['data'] = fileobj['data'][:intent.length]
-        fileobj['stat']['updated'] = arrow.get()
-
+        yield self._commit_manifest()
 
     def get_dispatcher(self):
         return TypeDispatcher({
