@@ -2,6 +2,8 @@ import attr
 import asyncio
 from effect2 import Effect, TypeDispatcher, do, AsyncFunc, asyncio_perform
 
+from parsec.tools import logger
+
 
 @attr.s
 class ESynchronizerPutJob:
@@ -53,8 +55,9 @@ class SynchronizerComponent:
         dispatcher = self._app.components.get_dispatcher()
         while True:
             intent = await self._job_queue.get()
-            print('Execute ====>', intent)
+            logger.debug('Synchronizing:', intent.intent)
             await asyncio_perform(dispatcher, Effect(intent.intent))
+            self._job_queue.task_done()
 
     @do
     def push_to_job_queue(self, intent):
