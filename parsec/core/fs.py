@@ -7,7 +7,7 @@ from parsec.core.identity import EIdentityGet
 from parsec.core.backend_user_vlob import EBackendUserVlobRead, EBackendUserVlobUpdate
 from parsec.core.backend_vlob import EBackendVlobCreate, EBackendVlobUpdate, EBackendVlobRead, VlobAtom
 from parsec.core.block import EBlockRead, EBlockCreate
-from parsec.core.synchronizer import ESynchronizerPutJob
+from parsec.core.synchronizer import ESynchronizerPutJob, ESynchronizerFlush
 from parsec.exceptions import (InvalidPath, IdentityNotLoadedError, ManifestError)
 from parsec.tools import ejson_loads, ejson_dumps, to_jsonb64, from_jsonb64
 from parsec.crypto import generate_sym_key, load_sym_key
@@ -168,6 +168,7 @@ class FSComponent:
         self._manifest = None
         self._file_manifest_cache = {}
         self._block_cache = {}
+        yield Effect(ESynchronizerFlush())
 
     def _create_new_manifest(self):
         now = arrow.get()
