@@ -106,6 +106,13 @@ class FSComponent:
         self._vlob_cache = {}
         self._block_cache = {}
 
+    def get_manifest(self):
+        # _manifest field can be set to None at any time by another coroutine
+        # doing a EFSReset, hence we must check it is valid
+        if not self._manifest:
+            raise ManifestError('Identity must be loaded to have a manifest')
+        return self._manifest
+
     @do
     def _get_block(self, id):
         try:
@@ -219,10 +226,10 @@ class FSComponent:
 
     def _retrieve_path(self, path):
         if not path:
-            return self._manifest
+            return self.get_manifest()
         if not path.startswith('/'):
             raise InvalidPath("Path must start with `/`")
-        cur_dir = self._manifest
+        cur_dir = self.get_manifest()
         reps = path.split('/')
         for rep in reps:
             if not rep or rep == '.':
