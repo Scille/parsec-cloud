@@ -55,8 +55,8 @@ class SynchronizerComponent:
         dispatcher = self._app.components.get_dispatcher()
         while True:
             intent = await self._job_queue.get()
-            logger.debug('Synchronizing:', intent.intent)
             await asyncio_perform(dispatcher, Effect(intent.intent))
+            logger.debug('Synchronized: %s' % intent.intent)
             self._job_queue.task_done()
 
     @do

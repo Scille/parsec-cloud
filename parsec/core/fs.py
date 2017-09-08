@@ -3,7 +3,7 @@ import arrow
 from uuid import uuid4
 from effect2 import TypeDispatcher, do, Effect
 
-from parsec.core.identity import EIdentityGet
+from parsec.core.identity import EIdentityGet, EIdentityUnload
 from parsec.core.backend_user_vlob import EBackendUserVlobRead, EBackendUserVlobUpdate
 from parsec.core.backend_vlob import EBackendVlobCreate, EBackendVlobUpdate, EBackendVlobRead, VlobAtom
 from parsec.core.block import EBlockRead, EBlockCreate
@@ -160,7 +160,12 @@ class FSComponent:
         else:
             identity = yield Effect(EIdentityGet())
             self._manifest_version = uservlob.version
-            self._manifest = ejson_loads(identity.private_key.decrypt(uservlob.blob).decode())
+            try:
+                self._manifest = ejson_loads(identity.private_key.decrypt(uservlob.blob).decode())
+            except Exception as exc:
+                # Avoid being in an inconsistent state
+                yield Effect(EIdentityUnload())
+                raise ManifestError('Impossible to load manifest: %s' % exc)
 
     @do
     def _commit_manifest(self):
