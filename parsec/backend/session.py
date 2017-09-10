@@ -3,7 +3,7 @@ import random
 import string
 import json
 from marshmallow import fields
-from effect2 import do, Effect, TypeDispatcher
+from effect2 import Effect, TypeDispatcher
 from cryptography.exceptions import InvalidSignature
 
 from parsec.backend.pubkey import EPubKeyGet
@@ -42,34 +42,32 @@ def _generate_challenge():
 class SessionComponent:
     id = attr.ib(default=None)
 
-    @do
-    def handshake(self):
+    async def handshake(self):
         if self.id:
             raise HandshakeError('Handshake already done.')
         challenge = _generate_challenge()
         query = {'handshake': 'challenge', 'challenge': challenge}
-        yield Effect(EHandshakeSend(ejson_dumps(query)))
-        raw_resp = yield Effect(EHandshakeRecv())
+        await Effect(EHandshakeSend(ejson_dumps(query)))
+        raw_resp = await Effect(EHandshakeRecv())
         try:
             resp = ejson_loads(raw_resp)
         except (TypeError, json.JSONDecodeError):
             error = HandshakeError('Invalid challenge response format')
-            yield Effect(EHandshakeSend(error.to_raw()))
+            await Effect(EHandshakeSend(error.to_raw()))
             raise error
         resp = HandshakeAnswerSchema().load(resp)
         claimed_identity = resp['identity']
         try:
-            pubkey = yield Effect(EPubKeyGet(claimed_identity))
+            pubkey = await Effect(EPubKeyGet(claimed_identity))
             pubkey.verify(resp['answer'], challenge.encode())
-            yield Effect(EHandshakeSend('{"status": "ok", "handshake": "done"}'))
+            await Effect(EHandshakeSend('{"status": "ok", "handshake": "done"}'))
             self.id = claimed_identity
         except (TypeError, PubKeyNotFound, InvalidSignature):
             error = HandshakeError('Invalid signature, challenge or identity')
-            yield Effect(EHandshakeSend(error.to_raw()))
+            await Effect(EHandshakeSend(error.to_raw()))
             raise error
 
-    @do
-    def perform_get_authenticated_user(self, intent):
+    async def perform_get_authenticated_user(self, intent):
         if not self.id:
             raise HandshakeError('Handshake not done, no authenticated user.')
         return self.id

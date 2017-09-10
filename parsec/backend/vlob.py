@@ -3,7 +3,7 @@ import random
 import string
 from uuid import uuid4
 from marshmallow import fields
-from effect2 import TypeDispatcher, Effect, do
+from effect2 import TypeDispatcher, Effect
 
 from parsec.base import EEvent
 from parsec.exceptions import VlobNotFound, TrustSeedError
@@ -67,10 +67,9 @@ class cmd_UPDATE_Schema(UnknownCheckedSchema):
     blob = fields.Base64Bytes(required=True)
 
 
-@do
-def api_vlob_create(msg):
+async def api_vlob_create(msg):
     msg = cmd_CREATE_Schema().load(msg)
-    atom = yield Effect(EVlobCreate(**msg))
+    atom = await Effect(EVlobCreate(**msg))
     return {
         'status': 'ok',
         'id': atom.id,
@@ -79,10 +78,9 @@ def api_vlob_create(msg):
     }
 
 
-@do
-def api_vlob_read(msg):
+async def api_vlob_read(msg):
     msg = cmd_READ_Schema().load(msg)
-    atom = yield Effect(EVlobRead(**msg))
+    atom = await Effect(EVlobRead(**msg))
     return {
         'status': 'ok',
         'id': atom.id,
@@ -91,10 +89,9 @@ def api_vlob_read(msg):
     }
 
 
-@do
-def api_vlob_update(msg):
+async def api_vlob_update(msg):
     msg = cmd_UPDATE_Schema().load(msg)
-    yield Effect(EVlobUpdate(**msg))
+    await Effect(EVlobUpdate(**msg))
     return {'status': 'ok'}
 
 
@@ -111,8 +108,7 @@ class MockedVlob:
 class MockedVlobComponent:
     vlobs = attr.ib(default=attr.Factory(dict))
 
-    @do
-    def perform_vlob_create(self, intent):
+    async def perform_vlob_create(self, intent):
         # Generate opaque id if not provided
         if not intent.id:
             intent.id = uuid4().hex
@@ -123,8 +119,7 @@ class MockedVlobComponent:
                         write_trust_seed=vlob.write_trust_seed,
                         blob=vlob.blob_versions[0])
 
-    @do
-    def perform_vlob_read(self, intent):
+    async def perform_vlob_read(self, intent):
         try:
             vlob = self.vlobs[intent.id]
             if vlob.read_trust_seed != intent.trust_seed:
@@ -141,8 +136,7 @@ class MockedVlobComponent:
         except IndexError:
             raise VlobNotFound('Wrong blob version.')
 
-    @do
-    def perform_vlob_update(self, intent):
+    async def perform_vlob_update(self, intent):
         try:
             vlob = self.vlobs[intent.id]
             if vlob.write_trust_seed != intent.trust_seed:
@@ -153,7 +147,7 @@ class MockedVlobComponent:
             vlob.blob_versions.append(intent.blob)
         else:
             raise VlobNotFound('Wrong blob version.')
-        yield Effect(EEvent('vlob_updated', intent.id))
+        await Effect(EEvent('vlob_updated', intent.id))
 
     def get_dispatcher(self):
         return TypeDispatcher({

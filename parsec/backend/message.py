@@ -1,7 +1,7 @@
 import attr
 from collections import defaultdict
 from marshmallow import fields
-from effect2 import TypeDispatcher, Effect, do
+from effect2 import TypeDispatcher, Effect
 
 from parsec.base import EEvent
 from parsec.backend.session import EGetAuthenticatedUser
@@ -28,17 +28,15 @@ class cmd_GET_Schema(UnknownCheckedSchema):
     offset = fields.Int(missing=0)
 
 
-@do
-def api_message_new(msg):
+async def api_message_new(msg):
     msg = cmd_NEW_Schema().load(msg)
-    yield Effect(EMessageNew(**msg))
+    await Effect(EMessageNew(**msg))
     return {'status': 'ok'}
 
 
-@do
-def api_message_get(msg):
+async def api_message_get(msg):
     msg = cmd_GET_Schema().load(msg)
-    messages = yield Effect(EMessageGet(**msg))
+    messages = await Effect(EMessageGet(**msg))
     offset = msg['offset']
     return {
         'status': 'ok',
@@ -51,14 +49,12 @@ def api_message_get(msg):
 class InMemoryMessageComponent:
     _messages = attr.ib(default=attr.Factory(lambda: defaultdict(list)))
 
-    @do
-    def perform_message_new(self, intent):
+    async def perform_message_new(self, intent):
         self._messages[intent.recipient].append(intent.body)
-        yield Effect(EEvent('message_arrived', intent.recipient))
+        await Effect(EEvent('message_arrived', intent.recipient))
 
-    @do
-    def perform_message_get(self, intent):
-        id = yield Effect(EGetAuthenticatedUser())
+    async def perform_message_get(self, intent):
+        id = await Effect(EGetAuthenticatedUser())
         return self._messages[id][intent.offset:]
 
     def get_dispatcher(self):

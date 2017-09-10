@@ -9,6 +9,29 @@ from parsec.core.fs import (
 from parsec.tools import to_jsonb64
 
 
+# TODO: remove me, only used to avoid import errors
+
+class EFSGroupCreate:
+    def __init__(self, *args):
+        pass
+
+class EFSDustbinShow:
+    def __init__(self, *args):
+        pass
+
+class EFSManifestHistory:
+    def __init__(self, *args):
+        pass
+
+class EFSManifestRestore:
+    def __init__(self, *args):
+        pass
+
+class EFSUndelete:
+    def __init__(self, *args):
+        pass
+
+
 @pytest.mark.xfail(reason='not implemented yet')
 def test_api_group_create():
     eff = execute_cmd('group_create', {'group': 'share'})
@@ -50,8 +73,7 @@ def test_api_manifest_history():
     }
     eff = execute_cmd('history', {})
     sequence = [
-        (EFSManifestHistory(1, None, False),
-            const(summary_history)),
+        (EFSManifestHistory(1, None, False), const(summary_history)),
     ]
     resp = perform_sequence(sequence, eff)
     summary_history['status'] = 'ok'
@@ -62,8 +84,7 @@ def test_api_manifest_history():
 def test_api_manifest_restore():
     eff = execute_cmd('restore', {})
     sequence = [
-        (EFSManifestRestore(None),
-            noop),
+        (EFSManifestRestore(None), noop),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'ok'}
@@ -72,8 +93,7 @@ def test_api_manifest_restore():
 def test_api_file_create():
     eff = execute_cmd('file_create', {'path': '/foo'})
     sequence = [
-        (EFSFileCreate('/foo'),
-            noop),
+        (EFSFileCreate('/foo'), noop),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'ok'}
@@ -92,8 +112,7 @@ def test_api_file_read():
 def test_api_file_write():
     eff = execute_cmd('file_write', {'path': '/foo', 'content': to_jsonb64(b'foo'), 'offset': 0})
     sequence = [
-        (EFSFileWrite('/foo', b'foo', 0),
-            noop),
+        (EFSFileWrite('/foo', b'foo', 0), noop),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'ok'}
@@ -102,8 +121,7 @@ def test_api_file_write():
 def test_api_file_truncate():
     eff = execute_cmd('file_truncate', {'path': '/foo', 'length': 5})
     sequence = [
-        (EFSFileTruncate('/foo', 5),
-            noop),
+        (EFSFileTruncate('/foo', 5), noop),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'ok'}
@@ -122,8 +140,7 @@ def test_api_file_restore():
 def test_api_folder_create():
     eff = execute_cmd('folder_create', {'path': '/dir'})
     sequence = [
-        (EFSFolderCreate('/dir'),
-            noop),
+        (EFSFolderCreate('/dir'), noop),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'ok'}
@@ -133,8 +150,7 @@ def test_api_stat():
     stat = {'type': 'file', 'id': '123'}
     eff = execute_cmd('stat', {'path': '/foo'})
     sequence = [
-        (EFSStat('/foo'),
-            const(stat)),
+        (EFSStat('/foo'), const(stat)),
     ]
     resp = perform_sequence(sequence, eff)
     stat['status'] = 'ok'
@@ -144,8 +160,7 @@ def test_api_stat():
 def test_api_move():
     eff = execute_cmd('move', {'src': '/foo', 'dst': '/bar'})
     sequence = [
-        (EFSMove('/foo', '/bar'),
-            noop),
+        (EFSMove('/foo', '/bar'), noop),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'ok'}
@@ -154,8 +169,7 @@ def test_api_move():
 def test_api_delete():
     eff = execute_cmd('delete', {'path': '/foo'})
     sequence = [
-        (EFSDelete('/foo'),
-            noop),
+        (EFSDelete('/foo'), noop),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'ok'}
@@ -165,8 +179,7 @@ def test_api_delete():
 def test_api_undelete():
     eff = execute_cmd('undelete', {'vlob': '123'})
     sequence = [
-        (EFSUndelete('123'),
-            noop),
+        (EFSUndelete('123'), noop),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'ok'}

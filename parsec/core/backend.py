@@ -3,7 +3,7 @@ import json
 import asyncio
 import blinker
 import websockets
-from effect2 import TypeDispatcher, do, Effect, AsyncFunc
+from effect2 import TypeDispatcher, Effect
 
 from parsec.core.identity import EIdentityGet
 from parsec.base import ERegisterEvent
@@ -157,37 +157,35 @@ class BackendComponent:
         await self.perform_backend_reset()
 
     def performer_with_connection_factory(self, async_performer):
-        @do
-        def performer_with_connection(intent):
+        async def performer_with_connection(intent):
             try:
                 if self.connection:
                     # Reuse already opened connection
                     try:
-                        return (yield AsyncFunc(async_performer(intent)))
+                        return (await async_performer(intent))
                     except BackendConnectionError:
                         # The connection has been closed, try to reconnect
                         # and rerun the performer
-                        yield AsyncFunc(self.connection.close_connection())
+                        await self.connection.close_connection()
                         self.connection = None
-                        return (yield performer_with_connection(intent))
+                        return (await performer_with_connection(intent))
                 else:
                     # Open new connection and run command
-                    identity = yield Effect(EIdentityGet())
+                    identity = await Effect(EIdentityGet())
                     connection = BackendConnection(self.url, self.watchdog)
-                    yield AsyncFunc(connection.open_connection(identity))
+                    await connection.open_connection(identity)
                     self.connection = connection
-                    return (yield AsyncFunc(async_performer(intent)))
+                    return (await async_performer(intent))
             except BackendConnectionError:
                 if self.connection:
-                    yield AsyncFunc(self.connection.close_connection())
+                    await self.connection.close_connection()
                     self.connection = None
                 raise
 
         return performer_with_connection
 
-    @do
-    def perform_blockstore_get_url(self, intent):
-        ret = yield Effect(BackendCmd('blockstore_get_url'))
+    async def perform_blockstore_get_url(self, intent):
+        ret = await Effect(BackendCmd('blockstore_get_url'))
         url = ret['url']
         if url.startswith('/'):
             if self.url.startswith('ws://'):

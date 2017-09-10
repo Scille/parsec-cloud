@@ -1,7 +1,7 @@
 import pytest
 import attr
 from unittest.mock import Mock
-from effect2 import Effect, Constant, do, ComposedDispatcher
+from effect2 import Effect, Constant, ComposedDispatcher
 
 from parsec.core.client_connection import (
     on_connection_factory, EPushClientMsg, EClientSubscribeEvent, EClientUnsubscribeEvent)
@@ -58,11 +58,10 @@ async def test_mix_cmds_and_pushed_msgs(dispatcher):
     reader = MockedReader(b'cmd1\ncmd2\ncmd3\n')
     writer = MockedWriter()
 
-    @do
-    def perform_cmd(cmd):
+    async def perform_cmd(cmd):
         id = cmd[-1:]
-        yield Effect(EPushClientMsg(b'eventA' + id))
-        yield Effect(EPushClientMsg(b'eventB' + id))
+        await Effect(EPushClientMsg(b'eventA' + id))
+        await Effect(EPushClientMsg(b'eventB' + id))
         return b'cmd_resp' + id
 
     on_connection = on_connection_factory(perform_cmd, dispatcher)
@@ -76,14 +75,13 @@ async def test_events(dispatcher):
     reader = MockedReader(b'cmd\n')
     writer = MockedWriter()
 
-    @do
-    def perform_cmd(cmd):
-        yield Effect(EClientSubscribeEvent('eventA', 'sender1'))
-        yield Effect(EClientSubscribeEvent('eventA', 'sender2'))
-        yield Effect(EClientSubscribeEvent('eventB', 'sender1'))
-        yield Effect(EEvent('eventC', 'sender1'))
-        yield Effect(EEvent('eventA', 'sender3'))
-        yield Effect(EEvent('eventA', 'sender1'))
+    async def perform_cmd(cmd):
+        await Effect(EClientSubscribeEvent('eventA', 'sender1'))
+        await Effect(EClientSubscribeEvent('eventA', 'sender2'))
+        await Effect(EClientSubscribeEvent('eventB', 'sender1'))
+        await Effect(EEvent('eventC', 'sender1'))
+        await Effect(EEvent('eventA', 'sender3'))
+        await Effect(EEvent('eventA', 'sender1'))
         return b'cmd_resp'
 
     on_connection = on_connection_factory(perform_cmd, dispatcher)
@@ -96,15 +94,14 @@ async def test_unsubscribe_events(dispatcher):
     reader = MockedReader(b'cmd\n')
     writer = MockedWriter()
 
-    @do
-    def perform_cmd(cmd):
-        yield Effect(EClientSubscribeEvent('eventA', 'sender1'))
-        yield Effect(EClientSubscribeEvent('eventA', 'sender2'))
-        yield Effect(EClientSubscribeEvent('eventB', 'sender1'))
-        yield Effect(EClientUnsubscribeEvent('eventA', 'sender1'))
-        yield Effect(EEvent('eventA', 'sender1'))
-        yield Effect(EEvent('eventA', 'sender2'))
-        yield Effect(EEvent('eventB', 'sender1'))
+    async def perform_cmd(cmd):
+        await Effect(EClientSubscribeEvent('eventA', 'sender1'))
+        await Effect(EClientSubscribeEvent('eventA', 'sender2'))
+        await Effect(EClientSubscribeEvent('eventB', 'sender1'))
+        await Effect(EClientUnsubscribeEvent('eventA', 'sender1'))
+        await Effect(EEvent('eventA', 'sender1'))
+        await Effect(EEvent('eventA', 'sender2'))
+        await Effect(EEvent('eventB', 'sender1'))
         return b'cmd_resp'
 
     on_connection = on_connection_factory(perform_cmd, dispatcher)

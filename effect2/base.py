@@ -1,7 +1,5 @@
 import six
 import attr
-import inspect
-from functools import wraps
 
 
 class UnknownIntent(Exception):
@@ -9,29 +7,11 @@ class UnknownIntent(Exception):
 
 
 @attr.s
-class ChainedIntent:
-    generator = attr.ib()
-
-
-@attr.s
 class Effect:
     intent = attr.ib()
 
-
-def do(f):
-
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        gen = f(*args, **kwargs)
-        if not inspect.isgenerator(gen):
-            res = gen
-            def generator_no_yield():
-                return res
-                yield
-            gen = generator_no_yield()
-        return Effect(ChainedIntent(gen))
-
-    return wrapper
+    def __await__(self):
+        return (yield self)
 
 
 @attr.s

@@ -1,6 +1,6 @@
 import attr
 import aiohttp
-from effect2 import TypeDispatcher, do, Effect, AsyncFunc
+from effect2 import TypeDispatcher, Effect
 
 from parsec.core.backend import EBackendBlockStoreGetURL
 from parsec.exceptions import BlockError, BlockNotFound, BlockConnectionError
@@ -85,12 +85,11 @@ class BlockComponent:
         await self.perform_block_reset()
 
     def performer_with_connection_factory(self, async_performer):
-        @do
-        def performer_with_connection(intent):
+        async def performer_with_connection(intent):
             if not self.connection:
-                url = yield Effect(EBackendBlockStoreGetURL())
+                url = await Effect(EBackendBlockStoreGetURL())
                 self.connection = block_connection_factory(url)
-            return (yield AsyncFunc(async_performer(intent)))
+            return (await async_performer(intent))
 
         return performer_with_connection
 

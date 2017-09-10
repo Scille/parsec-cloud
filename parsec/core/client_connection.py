@@ -3,9 +3,9 @@ import random
 import string
 import asyncio
 from logbook import Logger
-from blinker import signal
+# from blinker import signal
 from websockets import ConnectionClosed
-from effect2 import TypeDispatcher, ComposedDispatcher, asyncio_perform, do, Effect
+from effect2 import TypeDispatcher, ComposedDispatcher, asyncio_perform, Effect
 
 from parsec.base import EEvent, ERegisterEvent, EUnregisterEvent
 from parsec.tools import ejson_dumps
@@ -75,9 +75,8 @@ def client_dispatcher_factory(client_context):
     def perform_push_client_msg(intent):
         client_context.queued_pushed_events.put_nowait(intent.payload)
 
-    @do
-    def perform_client_subscribe_event(intent):
-        yield Effect(ERegisterEvent(EClientEvent, intent.event, intent.sender))
+    async def perform_client_subscribe_event(intent):
+        await Effect(ERegisterEvent(EClientEvent, intent.event, intent.sender))
         # key = (intent.event, intent.sender)
 
         # def on_event(sender):
@@ -90,16 +89,15 @@ def client_dispatcher_factory(client_context):
         # client_context.subscribed_events[key] = on_event
         # signal(intent.event).connect(on_event, sender=intent.sender)
 
-    @do
-    def perform_client_unsubscribe_event(intent):
-        yield Effect(EUnregisterEvent(EClientEvent, intent.event, intent.sender))
+    async def perform_client_unsubscribe_event(intent):
+        await Effect(EUnregisterEvent(EClientEvent, intent.event, intent.sender))
         # key = (intent.event, intent.sender)
         # try:
         #     del client_context.subscribed_events[key]
         # except KeyError:
         #     pass
 
-    def perform_client_event(intent):
+    async def perform_client_event(intent):
         payload = ejson_dumps({'event': intent.event, 'sender': intent.sender})
         client_context.queued_pushed_events.put_nowait(payload)
 

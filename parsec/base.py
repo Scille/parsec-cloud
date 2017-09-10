@@ -2,7 +2,7 @@ import attr
 from collections import defaultdict
 
 from effect2 import (
-    ComposedDispatcher, TypeDispatcher, base_dispatcher, base_asyncio_dispatcher, Effect, do
+    ComposedDispatcher, TypeDispatcher, base_dispatcher, base_asyncio_dispatcher, Effect
 )
 
 
@@ -30,19 +30,16 @@ class EUnregisterEvent:
 class EventComponent:
     listeners = attr.ib(default=attr.Factory(lambda: defaultdict(set)))
 
-    @do
-    def perform_trigger_event(self, intent):
+    async def perform_trigger_event(self, intent):
         key = (intent.event, intent.sender)
         for intent_factory in self.listeners[key]:
-            yield Effect(intent_factory(intent.event, intent.sender))
+            await Effect(intent_factory(intent.event, intent.sender))
 
-    @do
-    def perform_register_event(self, intent):
+    async def perform_register_event(self, intent):
         key = (intent.event, intent.sender)
         self.listeners[key].add(intent.intent_factory)
 
-    @do
-    def perform_unregister_event(self, intent):
+    async def perform_unregister_event(self, intent):
         key = (intent.event, intent.sender)
         self.listeners[key].remove(intent.intent_factory)
 

@@ -3,11 +3,10 @@ import asyncio
 import aiopg
 from uuid import uuid4
 from psycopg2 import ProgrammingError, IntegrityError
-import blinker
 import click
 from blinker import signal
 from urllib import parse
-from effect2 import do, async_do, Effect, AsyncFunc, TypeDispatcher
+from effect2 import Effect, TypeDispatcher
 
 from parsec.base import EEvent
 from parsec.crypto import load_public_key
@@ -152,12 +151,7 @@ class PostgreSQLConnection:
 class PostgreSQLMessageComponent:
     connection = attr.ib()
 
-    @do
-    def perform_message_new(self, intent):
-        yield AsyncFunc(self._perform_message_new(intent))
-        yield Effect(EEvent('message_arrived', intent.recipient))
-
-    async def _perform_message_new(self, intent):
+    async def perform_message_new(self, intent):
         async with self.connection.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
@@ -167,13 +161,10 @@ class PostgreSQLMessageComponent:
                 await cur.execute("INSERT INTO messages VALUES (%s, %s, %s);",
                     (intent.recipient, count, intent.body))
                 await cur.execute('NOTIFY message_arrived, %s;', (intent.recipient, ))
+        await Effect(EEvent('message_arrived', intent.recipient))
 
-    @do
-    def perform_message_get(self, intent):
-        id = yield Effect(EGetAuthenticatedUser())
-        return (yield AsyncFunc(self._perform_message_get(id, intent)))
-
-    async def _perform_message_get(self, id, intent):
+    async def perform_message_get(self, intent):
+        id = await Effect(EGetAuthenticatedUser())
         async with self.connection.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
@@ -192,7 +183,6 @@ class PostgreSQLMessageComponent:
 class PostgreSQLVlobComponent:
     connection = attr.ib()
 
-    @async_do
     async def perform_vlob_create(self, intent):
         # Generate opaque id if not provided
         if not intent.id:
@@ -204,7 +194,6 @@ class PostgreSQLVlobComponent:
                     (atom.id, atom.read_trust_seed, atom.write_trust_seed, atom.blob))
         return atom
 
-    @async_do
     async def perform_vlob_read(self, intent):
         async with self.connection.acquire() as conn:
             async with conn.cursor() as cur:
@@ -223,12 +212,7 @@ class PostgreSQLVlobComponent:
         return VlobAtom(id=intent.id, version=version, read_trust_seed=rts,
                         write_trust_seed=wts, blob=bytes(blob))
 
-    @do
-    def perform_vlob_update(self, intent):
-        yield AsyncFunc(self._perform_vlob_update(intent))
-        yield Effect(EEvent('vlob_updated', intent.id))
-
-    async def _perform_vlob_update(self, intent):
+    async def perform_vlob_update(self, intent):
         async with self.connection.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute("SELECT version, read_trust_seed, write_trust_seed FROM "
@@ -245,6 +229,7 @@ class PostgreSQLVlobComponent:
                 await cur.execute("INSERT INTO vlobs VALUES (%s, %s, %s, %s, %s);",
                     (intent.id, intent.version, rts, wts, intent.blob))
                 await cur.execute("NOTIFY vlob_updated, %s", (intent.id, ))
+        await Effect(EEvent('vlob_updated', intent.id))
 
     def get_dispatcher(self):
         return TypeDispatcher({
@@ -258,12 +243,9 @@ class PostgreSQLVlobComponent:
 class PostgreSQLUserVlobComponent:
     connection = attr.ib()
 
-    @do
-    def perform_user_vlob_read(self, intent):
-        id = yield Effect(EGetAuthenticatedUser())
-        return (yield AsyncFunc(self._perform_user_vlob_read(id, intent.version)))
-
-    async def _perform_user_vlob_read(self, id, version):
+    async def perform_user_vlob_read(self, intent):
+        id = await Effect(EGetAuthenticatedUser())
+        version = intent.version
         async with self.connection.acquire() as conn:
             async with conn.cursor() as cur:
                 if version:
@@ -280,25 +262,21 @@ class PostgreSQLUserVlobComponent:
         _, version, blob = ret
         return UserVlobAtom(id=id, version=version, blob=bytes(blob))
 
-    @do
-    def perform_user_vlob_update(self, intent):
-        id = yield Effect(EGetAuthenticatedUser())
-        yield AsyncFunc(self._perform_user_vlob_update(id, intent.version, intent.blob))
-        yield Effect(EEvent('user_vlob_updated', id))
-
-    async def _perform_user_vlob_update(self, id, version, blob):
+    async def perform_user_vlob_update(self, intent):
+        id = await Effect(EGetAuthenticatedUser())
         async with self.connection.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute("SELECT version FROM user_vlobs WHERE "
                                   "id=%s ORDER BY version DESC;", (id, ))
                 ret = await cur.fetchone()
                 last_version = ret[0] if ret else 0
-                if version != last_version + 1:
+                if intent.version != last_version + 1:
                     raise UserVlobError('Wrong blob version.')
                 # TODO: insertion doesn't do atomic check of version
                 await cur.execute("INSERT INTO user_vlobs VALUES (%s, %s, %s);",
-                    (id, version, blob))
+                    (id, intent.version, intent.blob))
                 await cur.execute('NOTIFY user_vlob_updated, %s', (id, ))
+        await Effect(EEvent('user_vlob_updated', id))
 
     def get_dispatcher(self):
         return TypeDispatcher({
@@ -311,7 +289,6 @@ class PostgreSQLUserVlobComponent:
 class PostgreSQLGroupComponent:
     connection = attr.ib()
 
-    @async_do
     async def perform_group_create(self, intent):
         payload = '{"admins": [], "users": []}'
         async with self.connection.acquire() as conn:
@@ -322,7 +299,6 @@ class PostgreSQLGroupComponent:
                 except IntegrityError:
                     raise GroupAlreadyExist('Group already exist.')
 
-    @async_do
     async def perform_group_read(self, intent):
         async with self.connection.acquire() as conn:
             async with conn.cursor() as cur:
@@ -333,7 +309,6 @@ class PostgreSQLGroupComponent:
                 data = ejson_loads(ret[0])
                 return Group(name=intent.name, **data)
 
-    @async_do
     async def perform_group_add_identities(self, intent):
         async with self.connection.acquire() as conn:
             async with conn.cursor() as cur:
@@ -347,7 +322,6 @@ class PostgreSQLGroupComponent:
                 await cur.execute('UPDATE groups SET body=%s WHERE id=%s',
                     (ejson_dumps(group), intent.name))
 
-    @async_do
     async def perform_group_remove_identities(self, intent):
         async with self.connection.acquire() as conn:
             async with conn.cursor() as cur:
@@ -375,7 +349,6 @@ class PostgreSQLGroupComponent:
 class PostgreSQLPubKeyComponent:
     connection = attr.ib()
 
-    @async_do
     async def perform_pubkey_add(self, intent):
         async with self.connection.acquire() as conn:
             async with conn.cursor() as cur:
@@ -385,7 +358,6 @@ class PostgreSQLPubKeyComponent:
                 except IntegrityError:
                     raise PubKeyError('Identity `%s` already has a public key' % intent.id)
 
-    @async_do
     async def perform_pubkey_get(self, intent):
         async with self.connection.acquire() as conn:
             async with conn.cursor() as cur:
@@ -407,7 +379,6 @@ class PostgreSQLPubKeyComponent:
 class PostgreSQLPrivKeyComponent:
     connection = attr.ib()
 
-    @async_do
     async def perform_privkey_add(self, intent):
         async with self.connection.acquire() as conn:
             async with conn.cursor() as cur:
@@ -417,7 +388,6 @@ class PostgreSQLPrivKeyComponent:
                 except IntegrityError:
                     raise PrivKeyHashCollision('Hash collision, change your password and retry.')
 
-    @async_do
     async def perform_privkey_get(self, intent):
         async with self.connection.acquire() as conn:
             async with conn.cursor() as cur:

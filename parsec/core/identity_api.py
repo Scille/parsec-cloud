@@ -1,5 +1,5 @@
 from marshmallow import fields, validate
-from effect2 import Effect, do
+from effect2 import Effect
 
 from parsec.core.identity import (
     EIdentityLoad, EIdentityUnload, EIdentityGet, EIdentityLogin, EIdentitySignup)
@@ -13,25 +13,22 @@ class cmd_IDENTITY_LOAD_Schema(UnknownCheckedSchema):
     password = fields.String(missing=None)
 
 
-@do
-def api_identity_load(msg):
+async def api_identity_load(msg):
     msg = cmd_IDENTITY_LOAD_Schema().load(msg)
-    yield Effect(EIdentityLoad(**msg))
+    await Effect(EIdentityLoad(**msg))
     return {'status': 'ok'}
 
 
-@do
-def api_identity_unload(msg):
+async def api_identity_unload(msg):
     UnknownCheckedSchema().load(msg)
-    yield Effect(EIdentityUnload())
+    await Effect(EIdentityUnload())
     return {'status': 'ok'}
 
 
-@do
-def api_identity_info(msg):
+async def api_identity_info(msg):
     UnknownCheckedSchema().load(msg)
     try:
-        identity = yield Effect(EIdentityGet())
+        identity = await Effect(EIdentityGet())
         return {'status': 'ok', 'loaded': True, 'id': identity.id}
     except IdentityNotLoadedError:
         return {'status': 'ok', 'loaded': False, 'id': None}
@@ -48,15 +45,13 @@ class cmd_LOGIN_Schema(UnknownCheckedSchema):
     password = fields.String(required=True)
 
 
-@do
-def api_identity_signup(msg):
+async def api_identity_signup(msg):
     msg = cmd_SIGNUP_Schema().load(msg)
-    yield Effect(EIdentitySignup(**msg))
+    await Effect(EIdentitySignup(**msg))
     return {'status': 'ok'}
 
 
-@do
-def api_identity_login(msg):
+async def api_identity_login(msg):
     msg = cmd_LOGIN_Schema().load(msg)
-    yield Effect(EIdentityLogin(**msg))
+    await Effect(EIdentityLogin(**msg))
     return {'status': 'ok'}

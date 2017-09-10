@@ -1,5 +1,5 @@
 import attr
-from effect2 import TypeDispatcher, Effect, do
+from effect2 import TypeDispatcher, Effect
 
 from parsec.core.backend_start_api import (
     EBackendCipherKeyGet, EBackendCipherKeyAdd, EBackendIdentityRegister)
@@ -49,8 +49,7 @@ class EIdentityLogin:
 class IdentityComponent:
     identity = attr.ib(default=None)
 
-    @do
-    def perform_identity_load(self, intent):
+    async def perform_identity_load(self, intent):
         from parsec.core.fs import EFSInit
         if self.identity:
             raise IdentityError('Identity already loaded')
@@ -60,44 +59,41 @@ class IdentityComponent:
         except Exception as e:
             raise IdentityError('Invalid private key (%s)' % e)
         self.identity = Identity(intent.id, private_key, private_key.pub_key)
-        yield Effect(EEvent('identity_loaded', self.identity.id))
-        yield Effect(EFSInit())
+        await Effect(EEvent('identity_loaded', self.identity.id))
+        await Effect(EFSInit())
         return self.identity
 
-    @do
-    def perform_identity_unload(self, intent):
+    async def perform_identity_unload(self, intent):
         from parsec.core.backend import EBackendReset
         from parsec.core.block import EBlockReset
         from parsec.core.fs import EFSReset
         if not self.identity:
             raise IdentityNotLoadedError('Identity not loaded')
         # TODO: make block&backend reset event triggered
-        yield Effect(EFSReset())
-        yield Effect(EBlockReset())
-        yield Effect(EBackendReset())
-        yield Effect(EEvent('identity_unloaded', None))
+        await Effect(EFSReset())
+        await Effect(EBlockReset())
+        await Effect(EBackendReset())
+        await Effect(EEvent('identity_unloaded', None))
         self.identity = None
 
-    def perform_identity_get(self, intent):
+    async def perform_identity_get(self, intent):
         if not self.identity:
             raise IdentityNotLoadedError('Identity not loaded')
         return self.identity
 
-    @do
-    def perform_identity_signup(self, intent):
+    async def perform_identity_signup(self, intent):
         private_key = generate_asym_key(intent.key_size)
         cipherkey = private_key.export(intent.password)
         pubkey = private_key.pub_key.export()
         # Saving the cipherkey first prevent us from registering a public key
         # then crashing without the corresponding private key saved somewhere
         # TODO: handle compute the hash here instead of in BackendCipherkeyAdd ?
-        yield Effect(EBackendCipherKeyAdd(intent.id, intent.password, cipherkey))
-        yield Effect(EBackendIdentityRegister(intent.id, pubkey))
+        await Effect(EBackendCipherKeyAdd(intent.id, intent.password, cipherkey))
+        await Effect(EBackendIdentityRegister(intent.id, pubkey))
 
-    @do
-    def perform_identity_login(self, intent):
-        cipherkey = yield Effect(EBackendCipherKeyGet(intent.id, intent.password))
-        yield Effect(EIdentityLoad(intent.id, cipherkey, intent.password))
+    async def perform_identity_login(self, intent):
+        cipherkey = await Effect(EBackendCipherKeyGet(intent.id, intent.password))
+        await Effect(EIdentityLoad(intent.id, cipherkey, intent.password))
 
     def get_dispatcher(self):
         return TypeDispatcher({

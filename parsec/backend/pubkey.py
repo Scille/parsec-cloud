@@ -1,6 +1,6 @@
 import attr
 from marshmallow import fields
-from effect2 import TypeDispatcher, Effect, do
+from effect2 import TypeDispatcher, Effect
 
 from parsec.exceptions import PubKeyError, PubKeyNotFound
 from parsec.crypto import load_public_key
@@ -23,17 +23,15 @@ class cmd_PUBKEY_GET_Schema(UnknownCheckedSchema):
     id = fields.String(required=True)
 
 
-@do
-def api_pubkey_get(msg):
+async def api_pubkey_get(msg):
     msg = cmd_PUBKEY_GET_Schema().load(msg)
-    key = yield Effect(EPubKeyGet(**msg, raw=True))
+    key = await Effect(EPubKeyGet(**msg, raw=True))
     return {'status': 'ok', 'id': msg['id'], 'key': key}
 
 
-@do
-def api_pubkey_add(msg):
+async def api_pubkey_add(msg):
     msg = cmd_PUBKEY_ADD_Schema().load(msg)
-    key = yield Effect(EPubKeyGet(**msg, raw=True))
+    key = await Effect(EPubKeyGet(**msg, raw=True))
     return {'status': 'ok', 'id': msg['id'], 'key': key}
 
 
@@ -41,16 +39,14 @@ def api_pubkey_add(msg):
 class MockedPubKeyComponent:
     _keys = attr.ib(default=attr.Factory(dict))
 
-    @do
-    def perform_pubkey_add(self, intent):
+    async def perform_pubkey_add(self, intent):
         assert isinstance(intent.key, (bytes, bytearray))
         if intent.id in self._keys:
             raise PubKeyError('Identity `%s` already has a public key' % intent.id)
         else:
             self._keys[intent.id] = intent.key
 
-    @do
-    def perform_pubkey_get(self, intent):
+    async def perform_pubkey_get(self, intent):
         try:
             key = self._keys[intent.id]
             return key if intent.raw else load_public_key(key)

@@ -1,9 +1,6 @@
 import pytest
 from unittest.mock import patch
-from effect2.testing import asyncio_perform_sequence, const, noop
 
-from parsec.tools import to_jsonb64
-from parsec.core.backend import BackendCmd
 from parsec.core.backend_start_api import (
     EBackendCipherKeyGet, EBackendCipherKeyAdd, StartAPIComponent,
     EBackendIdentityRegister

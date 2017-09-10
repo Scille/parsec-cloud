@@ -1,133 +1,54 @@
 import attr
-from contextlib import contextmanager
 
-from . import Effect, AsyncFunc, sync_perform, asyncio_perform, raise_, UnknownIntent
-from .intents import base_dispatcher
+from . import sync_perform, asyncio_perform, raise_
 
 
-async def asyncio_perform_sequence(seq, effect, fallback_dispatcher=None):
-    assert isinstance(effect, (Effect, AsyncFunc))
-    seq = list(seq)
+def _build_dispatcher(to_perform_seq):
+    logs = []
 
-    def fmt_log():
-        next_item = ''
-        if len(sequence.sequence) > 0:
-            next_item = '\nNEXT EXPECTED: %s' % (sequence.sequence[0][0],)
-        return '{{{\n%s%s\n}}}' % (
-            '\n'.join('%s: %s' % x for x in log),
-            next_item)
+    def fmt_logs():
+        return '\n'.join('%s: %s' % x for x in logs)
 
     def dispatcher(intent):
-        p = sequence(intent)
-        if p is not None:
-            log.append(("sequence", intent))
-            return p
         try:
-            p = fallback_dispatcher(intent)
-            log.append(("fallback", intent))
-            return p
-        except UnknownIntent:
-            log.append(("NOT FOUND", intent))
+            exp_intent, performer = next(to_perform_seq)
+        except StopIteration:
+            logs.append(('NOT FOUND', intent))
+            raise AssertionError("No more performer expected ! Log follows:\n%s" % fmt_logs())
+        if exp_intent != intent and (not isinstance(exp_intent, IntentType) or
+                                     not isinstance(intent, exp_intent.type)):
+            logs.append(('NOT FOUND', intent))
+            logs.append(('NEXT EXPECTED', exp_intent))
             raise AssertionError(
                 "Performer not found: %s! Log follows:\n%s" % (
-                    intent, fmt_log()))
+                    intent, fmt_logs()))
+        logs.append(('sequence', intent))
+        return performer
 
-    if fallback_dispatcher is None:
-        fallback_dispatcher = base_dispatcher
-    sequence = SequenceDispatcher(seq)
-    log = []
-    with sequence.consume():
-        return await asyncio_perform(dispatcher, effect)
+    return dispatcher
 
 
-def perform_sequence(seq, effect, fallback_dispatcher=None):
-    assert isinstance(effect, Effect)
-    seq = list(seq)
-
-    def fmt_log():
-        next_item = ''
-        if len(sequence.sequence) > 0:
-            next_item = '\nNEXT EXPECTED: %s' % (sequence.sequence[0][0],)
-        return '{{{\n%s%s\n}}}' % (
-            '\n'.join('%s: %s' % x for x in log),
-            next_item)
-
-    def dispatcher(intent):
-        p = sequence(intent)
-        if p is not None:
-            log.append(("sequence", intent))
-            return p
-        try:
-            p = fallback_dispatcher(intent)
-            log.append(("fallback", intent))
-            return p
-        except UnknownIntent:
-            log.append(("NOT FOUND", intent))
-            raise AssertionError(
-                "Performer not found: %s! Log follows:\n%s" % (
-                    intent, fmt_log()))
-
-    if fallback_dispatcher is None:
-        fallback_dispatcher = base_dispatcher
-    sequence = SequenceDispatcher(seq)
-    log = []
-    with sequence.consume():
-        ret = sync_perform(dispatcher, effect)
-        sequence.returned_value = ret
-        return ret
+def _check_for_unused_seq(to_perform_seq, ret):
+    unused_intents = [x for x, _ in to_perform_seq]
+    if unused_intents:
+        raise AssertionError(
+            "Returned `%s`, but not all intents were performed: %s" % (ret, unused_intents))
 
 
-NOT_RETURNED_YET = object()
+def perform_sequence(seq, effect):
+    to_perform_seq = iter(seq)
+    dispatcher = _build_dispatcher(to_perform_seq)
+    ret = sync_perform(dispatcher, effect)
+    _check_for_unused_seq(to_perform_seq, ret)
+    return ret
 
 
-@attr.s
-class SequenceDispatcher:
-    """
-    A dispatcher which steps through a sequence of (intent, func) tuples and
-    runs ``func`` to perform intents in strict sequence.
-
-    This is the dispatcher used by :func:`perform_sequence`. In general that
-    function should be used directly, instead of this dispatcher.
-
-    It's important to use `with sequence.consume():` to ensure that all of the
-    intents are performed. Otherwise, if your code has a bug that causes it to
-    return before all effects are performed, your test may not fail.
-
-    :obj:`None` is returned if the next intent in the sequence is not equal to
-    the intent being performed, or if there are no more items left in the
-    sequence (this is standard behavior for dispatchers that don't handle an
-    intent). This lets this dispatcher be composed easily with others.
-
-    :param list sequence: Sequence of (intent, fn).
-    """
-    sequence = attr.ib()
-    returned_value = attr.ib(default=NOT_RETURNED_YET)
-
-    def __call__(self, intent):
-        if len(self.sequence) == 0:
-            return
-        exp_intent, func = self.sequence[0]
-        if intent == exp_intent or (isinstance(exp_intent, IntentType) and
-                                    isinstance(intent, exp_intent.type)):
-            self.sequence = self.sequence[1:]
-            return lambda i: func(i)
-
-    def consumed(self):
-        """Return True if all of the steps were performed."""
-        return len(self.sequence) == 0
-
-    @contextmanager
-    def consume(self):
-        """
-        Return a context manager that can be used with the `with` syntax to
-        ensure that all steps are performed by the end.
-        """
-        yield
-        if not self.consumed():
-            assert self.returned_value is not NOT_RETURNED_YET
-            raise AssertionError(
-                "Returned `%s`, but not all intents were performed: %s" % (
-                    self.returned_value, [x[0] for x in self.sequence]))
+async def asyncio_perform_sequence(seq, effect):
+    to_perform_seq = iter(seq)
+    dispatcher = _build_dispatcher(to_perform_seq)
+    ret = await asyncio_perform(dispatcher, effect)
+    _check_for_unused_seq(to_perform_seq, ret)
+    return ret
 
 
 @attr.s

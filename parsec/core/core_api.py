@@ -1,6 +1,6 @@
 import json
 from marshmallow import Schema, fields
-from effect2 import Effect, do
+from effect2 import Effect
 
 from parsec.core import fs_api, identity_api
 from parsec.tools import ejson_dumps, ejson_loads
@@ -24,8 +24,7 @@ def parse_cmd(raw_cmd: bytes):
         pass
 
 
-@do
-def execute_raw_cmd(raw_cmd):
+async def execute_raw_cmd(raw_cmd):
     params = parse_cmd(raw_cmd)
     if not params:
         ret = {'status': 'bad_msg', 'label': 'Message is not a valid JSON.'}
@@ -34,14 +33,13 @@ def execute_raw_cmd(raw_cmd):
         if not isinstance(cmd_type, str):
             ret = {'status': 'bad_msg', 'label': '`cmd` string field is mandatory.'}
         else:
-            ret = yield execute_cmd(cmd_type, params)
+            ret = await execute_cmd(cmd_type, params)
     return ejson_dumps(ret).encode('utf-8')
 
 
-@do
-def execute_cmd(cmd, params):
+async def execute_cmd(cmd, params):
     try:
-        resp = yield API_CMDS_ROUTER[cmd](params)
+        resp = await API_CMDS_ROUTER[cmd](params)
     except KeyError:
         resp = {'status': 'bad_msg', 'label': 'Unknown command `%s`' % cmd}
     except ParsecError as exc:
@@ -54,32 +52,28 @@ class cmd_EVENT_Schema(Schema):
     sender = fields.String(required=True)
 
 
-@do
-def api_subscribe_event(msg):
+async def api_subscribe_event(msg):
     msg, errors = cmd_EVENT_Schema().load(msg)
     if errors:
         raise BadMessageError(errors)
-    yield Effect(EClientSubscribeEvent(**msg))
+    await Effect(EClientSubscribeEvent(**msg))
     return {'status': 'ok'}
 
 
-@do
-def api_unsubscribe_event(msg):
+async def api_unsubscribe_event(msg):
     msg, errors = cmd_EVENT_Schema().load(msg)
     if errors:
         raise BadMessageError(errors)
-    yield Effect(EClientUnsubscribeEvent(**msg))
+    await Effect(EClientUnsubscribeEvent(**msg))
     return {'status': 'ok'}
 
 
-@do
-def api_backend_status(msg):
-    yield Effect(EBackendStatus())
+async def api_backend_status(msg):
+    await Effect(EBackendStatus())
     return {'status': 'ok'}
 
 
-@do
-def api_ping(msg):
+async def api_ping(msg):
     return {'status': 'ok', 'pong': msg.get('ping', '')}
 
 

@@ -1,5 +1,5 @@
 import attr
-from effect2 import do, Effect
+from effect2 import Effect
 
 from parsec.tools import from_jsonb64
 from parsec.crypto import load_public_key
@@ -26,10 +26,9 @@ class EBackendPubKeyGet:
     raw = attr.ib(default=False)
 
 
-@do
-def perform_pubkey_get(intent):
+async def perform_pubkey_get(intent):
     msg = {'id': intent.id}
-    ret = yield Effect(BackendCmd('pubkey_get', msg))
+    ret = await Effect(BackendCmd('pubkey_get', msg))
     status = ret['status']
     if status != 'ok':
         raise exception_from_status(status)(ret['label'])

@@ -1,6 +1,6 @@
 import attr
 from marshmallow import fields
-from effect2 import TypeDispatcher, Effect, do
+from effect2 import TypeDispatcher, Effect
 
 from parsec.exceptions import GroupAlreadyExist, GroupNotFound
 from parsec.tools import UnknownCheckedSchema
@@ -57,17 +57,15 @@ class cmd_REMOVE_IDENTITIES_Schema(UnknownCheckedSchema):
     admin = fields.Boolean(missing=False)
 
 
-@do
-def api_group_create(msg):
+async def api_group_create(msg):
     msg = cmd_CREATE_Schema().load(msg)
-    yield Effect(EGroupCreate(**msg))
+    await Effect(EGroupCreate(**msg))
     return {'status': 'ok'}
 
 
-@do
-def api_group_read(msg):
+async def api_group_read(msg):
     msg = cmd_READ_Schema().load(msg)
-    group = yield Effect(EGroupRead(**msg))
+    group = await Effect(EGroupRead(**msg))
     return {
         'status': 'ok',
         'name': group.name,
@@ -76,19 +74,17 @@ def api_group_read(msg):
     }
 
 
-@do
-def api_group_add_identities(msg):
+async def api_group_add_identities(msg):
     msg = cmd_ADD_IDENTITIES_Schema().load(msg)
     msg['identities'] = set(msg['identities'])
-    yield Effect(EGroupAddIdentities(**msg))
+    await Effect(EGroupAddIdentities(**msg))
     return {'status': 'ok'}
 
 
-@do
-def api_group_remove_identities(msg):
+async def api_group_remove_identities(msg):
     msg = cmd_REMOVE_IDENTITIES_Schema().load(msg)
     msg['identities'] = set(msg['identities'])
-    yield Effect(EGroupRemoveIdentities(**msg))
+    await Effect(EGroupRemoveIdentities(**msg))
     return {'status': 'ok'}
 
 
@@ -96,21 +92,18 @@ def api_group_remove_identities(msg):
 class MockedGroupComponent:
     _groups = attr.ib(default=attr.Factory(dict))
 
-    @do
-    def perform_group_create(self, intent):
+    async def perform_group_create(self, intent):
         if intent.name in self._groups:
             raise GroupAlreadyExist('Group already exist.')
         self._groups[intent.name] = Group(intent.name)
 
-    @do
-    def perform_group_read(self, intent):
+    async def perform_group_read(self, intent):
         try:
             return self._groups[intent.name]
         except KeyError:
             raise GroupNotFound('Group not found.')
 
-    @do
-    def perform_group_add_identities(self, intent):
+    async def perform_group_add_identities(self, intent):
         try:
             group = self._groups[intent.name]
         except KeyError:
@@ -121,8 +114,7 @@ class MockedGroupComponent:
             group.users |= intent.identities
         # TODO: send message to added user
 
-    @do
-    def perform_group_remove_identities(self, intent):
+    async def perform_group_remove_identities(self, intent):
         try:
             group = self._groups[intent.name]
         except KeyError:

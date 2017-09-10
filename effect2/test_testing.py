@@ -1,8 +1,7 @@
 import attr
-import asyncio
 import pytest
 
-from . import Effect, asyncio_perform, sync_perform, TypeDispatcher, ChainedIntent, do
+from . import Effect, TypeDispatcher
 from .testing import perform_sequence, const, conste, noop, IntentType
 
 
@@ -10,9 +9,9 @@ from .testing import perform_sequence, const, conste, noop, IntentType
 class EDo:
     arg = attr.ib()
 
-@do
-def do_2_things():
-    return [(yield Effect(EDo(0))), (yield Effect(EDo(1)))]
+
+async def do_2_things():
+    return [(await Effect(EDo(0))), (await Effect(EDo(1)))]
 
 
 def test_perform_sequence():

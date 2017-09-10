@@ -1,7 +1,7 @@
 import attr
 import arrow
 from uuid import uuid4
-from effect2 import TypeDispatcher, do, Effect
+from effect2 import TypeDispatcher, Effect
 
 from parsec.core.identity import EIdentityGet, EIdentityUnload
 from parsec.core.backend_user_vlob import EBackendUserVlobRead, EBackendUserVlobUpdate
@@ -113,74 +113,66 @@ class FSComponent:
             raise ManifestError('Identity must be loaded to have a manifest')
         return self._manifest
 
-    @do
-    def _get_block(self, id):
+    async def _get_block(self, id):
         try:
             return self._block_cache[id]
         except KeyError:
-            content = (yield Effect(EBlockRead(id))).content
+            content = (await Effect(EBlockRead(id))).content
             self._block_cache[id] = content
         return content
 
-    @do
-    def _create_block(self, id, content):
+    async def _create_block(self, id, content):
         self._block_cache[id] = content
         intent = EBlockCreate(id, content)
-        yield Effect(ESynchronizerPutJob(intent))
+        await Effect(ESynchronizerPutJob(intent))
 
-    @do
-    def _get_vlob(self, id, trust_seed):
+    async def _get_vlob(self, id, trust_seed):
         try:
             return self._vlob_cache[id]
         except KeyError:
-            vlob = yield Effect(EBackendVlobRead(id, trust_seed))
+            vlob = await Effect(EBackendVlobRead(id, trust_seed))
             self._vlob_cache[id] = vlob
         return vlob
 
-    @do
-    def _create_vlob(self, content):
-        vlob = yield Effect(EBackendVlobCreate(blob=content))
+    async def _create_vlob(self, content):
+        vlob = await Effect(EBackendVlobCreate(blob=content))
         self._block_cache[id] = vlob
         return vlob
 
-    @do
-    def _update_vlob(self, id, trust_seed, version, content):
+    async def _update_vlob(self, id, trust_seed, version, content):
         intent = EBackendVlobUpdate(id, trust_seed, version, content)
-        yield Effect(ESynchronizerPutJob(intent))
+        await Effect(ESynchronizerPutJob(intent))
         self._vlob_cache[id] = VlobAtom(id, version, content)
 
-    @do
-    def perform_init(self, intent):
+    async def perform_init(self, intent):
         if self._manifest:
             raise ManifestError('Manifest already loaded')
-        uservlob = yield Effect(EBackendUserVlobRead())
+        uservlob = await Effect(EBackendUserVlobRead())
         if uservlob.version == 0:
             self._manifest = self._create_new_manifest()
             self._manifest_version = 0
         else:
-            identity = yield Effect(EIdentityGet())
+            identity = await Effect(EIdentityGet())
             self._manifest_version = uservlob.version
             try:
                 self._manifest = ejson_loads(identity.private_key.decrypt(uservlob.blob).decode())
             except Exception as exc:
                 # Avoid being in an inconsistent state
-                yield Effect(EIdentityUnload())
+                await Effect(EIdentityUnload())
                 raise ManifestError('Impossible to load manifest: %s' % exc)
 
-    @do
-    def _commit_manifest(self):
-        identity = yield Effect(EIdentityGet())
+    async def _commit_manifest(self):
+        identity = await Effect(EIdentityGet())
         ciphermanifest = identity.public_key.encrypt(ejson_dumps(self._manifest).encode())
         new_version = self._manifest_version + 1
-        yield Effect(EBackendUserVlobUpdate(new_version, ciphermanifest))
+        await Effect(EBackendUserVlobUpdate(new_version, ciphermanifest))
         self._manifest_version = new_version
 
-    @do
-    def perform_reset(self, intent):
+    async def perform_reset(self, intent):
         self._manifest = None
         self._file_manifest_cache = {}
         self._block_cache = {}
-        yield Effect(ESynchronizerFlush())
+        await Effect(ESynchronizerFlush())
 
     def _create_new_manifest(self):
         now = arrow.get()
@@ -248,9 +240,8 @@ class FSComponent:
                     raise InvalidPath("Path `%s` doesn't exist" % path)
         return cur_dir
 
-    @do
-    def perform_file_create(self, intent):
-        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+    async def perform_file_create(self, intent):
+        await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
         self._check_path(intent.path, should_exists=False)
 
         now = arrow.get()
@@ -262,7 +253,7 @@ class FSComponent:
         }).encode()
         vlob_key = generate_sym_key()
         vlob_content = vlob_key.encrypt(raw_file_manifest)
-        vlob_access = yield self._create_vlob(vlob_content)
+        vlob_access = await self._create_vlob(vlob_content)
         dirpath, name = intent.path.rsplit('/', 1)
         dirobj = self._retrieve_path(dirpath)
         dirobj['children'][name] = {
@@ -272,23 +263,22 @@ class FSComponent:
             'write_trust_seed': vlob_access.write_trust_seed,
             'key': to_jsonb64(vlob_key.key)
         }
-        yield self._commit_manifest()
+        await self._commit_manifest()
 
-    @do
-    def perform_file_write(self, intent):
-        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+    async def perform_file_write(self, intent):
+        await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
         self._check_path(intent.path, should_exists=True, type='file')
 
         # Retrieve file manifest
         fileobj = self._retrieve_file(intent.path)
-        vlob = yield self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
+        vlob = await self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
         vlob_key = load_sym_key(from_jsonb64(fileobj['key']))
         file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
 
         # Retrieve data
         blocks = []
         for block_access in file_manifest['blocks']:
-            cipherblock = yield self._get_block(block_access['id'])
+            cipherblock = await self._get_block(block_access['id'])
             block_key = load_sym_key(from_jsonb64(block_access['key']))
             blocks.append(block_key.decrypt(cipherblock))
         data = b''.join(blocks)
@@ -308,7 +298,7 @@ class FSComponent:
             block_id = uuid4().hex
             block_key = generate_sym_key()
             cipherblock = block_key.encrypt(chunk)
-            yield self._create_block(block_id, cipherblock)
+            await self._create_block(block_id, cipherblock)
             file_manifest['blocks'].append({'id': block_id, 'key': to_jsonb64(block_key.key)})
 
             chunk_offset += chunk_size
@@ -316,26 +306,25 @@ class FSComponent:
 
         # Save file manifest and we're done ;-)
         ciphervlob = vlob_key.encrypt(ejson_dumps(file_manifest).encode())
-        yield self._update_vlob(
+        await self._update_vlob(
             fileobj['id'], fileobj['write_trust_seed'],
             vlob.version + 1, ciphervlob
         )
 
-    @do
-    def perform_file_truncate(self, intent):
-        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+    async def perform_file_truncate(self, intent):
+        await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
         self._check_path(intent.path, should_exists=True, type='file')
 
         # Retrieve file manifest
         fileobj = self._retrieve_file(intent.path)
-        vlob = yield self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
+        vlob = await self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
         vlob_key = load_sym_key(from_jsonb64(fileobj['key']))
         file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
 
         # Retrieve data
         blocks = []
         for block_access in file_manifest['blocks']:
-            cipherblock = yield self._get_block(block_access['id'])
+            cipherblock = await self._get_block(block_access['id'])
             block_key = load_sym_key(from_jsonb64(block_access['key']))
             blocks.append(block_key.decrypt(cipherblock))
         data = b''.join(blocks)
@@ -354,7 +343,7 @@ class FSComponent:
             block_id = uuid4().hex
             block_key = generate_sym_key()
             cipherblock = block_key.encrypt(chunk)
-            yield self._create_block(block_id, cipherblock)
+            await self._create_block(block_id, cipherblock)
             file_manifest['blocks'].append({'id': block_id, 'key': to_jsonb64(block_key.key)})
 
             chunk_offset += chunk_size
@@ -362,26 +351,25 @@ class FSComponent:
 
         # Save file manifest and we're done ;-)
         ciphervlob = vlob_key.encrypt(ejson_dumps(file_manifest).encode())
-        yield self._update_vlob(
+        await self._update_vlob(
             fileobj['id'], fileobj['write_trust_seed'],
             vlob.version + 1, ciphervlob
         )
 
-    @do
-    def perform_file_read(self, intent):
-        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+    async def perform_file_read(self, intent):
+        await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
         self._check_path(intent.path, should_exists=True, type='file')
 
         # Retrieve file manifest
         fileobj = self._retrieve_file(intent.path)
-        vlob = yield self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
+        vlob = await self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
         vlob_key = load_sym_key(from_jsonb64(fileobj['key']))
         file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
 
         # Retrieve data
         blocks = []
         for block_access in file_manifest['blocks']:
-            cipherblock = yield self._get_block(block_access['id'])
+            cipherblock = await self._get_block(block_access['id'])
             block_key = load_sym_key(from_jsonb64(block_access['key']))
             blocks.append(block_key.decrypt(cipherblock))
         data = b''.join(blocks)
@@ -391,16 +379,15 @@ class FSComponent:
         else:
             return data[intent.offset:intent.offset + intent.size]
 
-    @do
-    def perform_stat(self, intent):
-        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+    async def perform_stat(self, intent):
+        await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
         self._check_path(intent.path, should_exists=True)
         obj = self._retrieve_path(intent.path)
         if obj['type'] == 'folder':
             return {'type': obj['type'], 'children': list(sorted(obj['children'].keys()))}
         else:
             # Retrieve file manifest
-            vlob = yield self._get_vlob(obj['id'], obj['read_trust_seed'])
+            vlob = await self._get_vlob(obj['id'], obj['read_trust_seed'])
             vlob_key = load_sym_key(from_jsonb64(obj['key']))
             file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
             return {
@@ -411,20 +398,18 @@ class FSComponent:
                 'version': vlob.version
             }
 
-    @do
-    def perform_folder_create(self, intent):
-        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+    async def perform_folder_create(self, intent):
+        await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
         self._check_path(intent.path, should_exists=False)
         dirpath, name = intent.path.rsplit('/', 1)
         dirobj = self._retrieve_path(dirpath)
         now = arrow.get()
         dirobj['children'][name] = {
             'type': 'folder', 'children': {}, 'stat': {'created': now, 'updated': now}}
-        yield self._commit_manifest()
+        await self._commit_manifest()
 
-    @do
-    def perform_move(self, intent):
-        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+    async def perform_move(self, intent):
+        await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
         self._check_path(intent.src, should_exists=True)
         self._check_path(intent.dst, should_exists=False)
 
@@ -435,16 +420,15 @@ class FSComponent:
         dstobj = self._retrieve_path(dstdirpath)
         dstobj['children'][dstfilename] = srcobj['children'][scrfilename]
         del srcobj['children'][scrfilename]
-        yield self._commit_manifest()
+        await self._commit_manifest()
 
-    @do
-    def perform_delete(self, intent):
-        yield Effect(EIdentityGet())  # Trigger exception if identity is not loaded
+    async def perform_delete(self, intent):
+        await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
         self._check_path(intent.path, should_exists=True)
         dirpath, leafname = intent.path.rsplit('/', 1)
         obj = self._retrieve_path(dirpath)
         del obj['children'][leafname]
-        yield self._commit_manifest()
+        await self._commit_manifest()
 
     def get_dispatcher(self):
         return TypeDispatcher({

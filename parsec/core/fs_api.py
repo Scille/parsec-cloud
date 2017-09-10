@@ -1,5 +1,5 @@
 from marshmallow import fields, validate
-from effect2 import Effect, do
+from effect2 import Effect
 
 from parsec.core.fs import (
     EFSFileCreate, EFSFileRead, EFSFileWrite, EFSFileTruncate, EFSFolderCreate,
@@ -67,116 +67,100 @@ class cmd_MOVE_Schema(UnknownCheckedSchema):
 #     vlob = fields.String(required=True)
 
 
-# @do
-# def api_synchronize(msg):
+# async def api_synchronize(msg):
 #     UnknownCheckedSchema().load(msg)
-#     yield Effect(EFSSynchronize())
+#     await Effect(EFSSynchronize())
 #     return {'status': 'ok'}
 
 
-# @do
-# def api_group_create(msg):
+# async def api_group_create(msg):
 #     msg = cmd_CREATE_GROUP_MANIFEST_Schema().load(msg)
-#     yield Effect(EFSGroupCreate(**msg))
+#     await Effect(EFSGroupCreate(**msg))
 #     return {'status': 'ok'}
 
 
-# @do
-# def api_dustbin_show(msg):
+# async def api_dustbin_show(msg):
 #     msg = cmd_SHOW_dustbin_Schema().load(msg)
-#     dustbin = yield Effect(EFSDustbinShow(**msg))
+#     dustbin = await Effect(EFSDustbinShow(**msg))
 #     return {'status': 'ok', 'dustbin': dustbin}
 
 
-# @do
-# def api_manifest_history(msg):
+# async def api_manifest_history(msg):
 #     msg = cmd_HISTORY_Schema().load(msg)
-#     history = yield Effect(EFSManifestHistory(**msg))
+#     history = await Effect(EFSManifestHistory(**msg))
 #     history['status'] = 'ok'
 #     return history
 
 
-# @do
-# def api_manifest_restore(msg):
+# async def api_manifest_restore(msg):
 #     msg = cmd_RESTORE_MANIFEST_Schema().load(msg)
-#     yield Effect(EFSManifestRestore(**msg))
+#     await Effect(EFSManifestRestore(**msg))
 #     return {'status': 'ok'}
 
 
-@do
-def api_file_create(msg):
+async def api_file_create(msg):
     msg = PathOnlySchema().load(msg)
-    yield Effect(EFSFileCreate(**msg))
+    await Effect(EFSFileCreate(**msg))
     return {'status': 'ok'}
 
 
-@do
-def api_file_read(msg):
+async def api_file_read(msg):
     msg = cmd_FILE_READ_Schema().load(msg)
-    content = yield Effect(EFSFileRead(**msg))
+    content = await Effect(EFSFileRead(**msg))
     return {'status': 'ok', 'content': content}
 
 
-@do
-def api_file_write(msg):
+async def api_file_write(msg):
     msg = cmd_FILE_WRITE_Schema().load(msg)
-    yield Effect(EFSFileWrite(**msg))
+    await Effect(EFSFileWrite(**msg))
     return {'status': 'ok'}
 
 
-@do
-def api_file_truncate(msg):
+async def api_file_truncate(msg):
     msg = cmd_FILE_TRUNCATE_Schema().load(msg)
-    yield Effect(EFSFileTruncate(**msg))
+    await Effect(EFSFileTruncate(**msg))
     return {'status': 'ok'}
 
 
-# @do
-# def api_file_history(msg):
+# async def api_file_history(msg):
 #     msg = cmd_FILE_HISTORY_Schema().load(msg)
-#     history = yield Effect(EFSFileHistory(**msg))
+#     history = await Effect(EFSFileHistory(**msg))
 #     history['status'] = 'ok'
 #     return history
 
 
-# @do
-# def api_file_restore(msg):
+# async def api_file_restore(msg):
 #     msg = cmd_FILE_RESTORE_Schema().load(msg)
-#     yield Effect(EFSFileRestore(**msg))
+#     await Effect(EFSFileRestore(**msg))
 #     return {'status': 'ok'}
 
 
-@do
-def api_folder_create(msg):
+async def api_folder_create(msg):
     msg = PathOnlySchema().load(msg)
-    yield Effect(EFSFolderCreate(**msg))
+    await Effect(EFSFolderCreate(**msg))
     return {'status': 'ok'}
 
 
-@do
-def api_stat(msg):
+async def api_stat(msg):
     msg = PathOnlySchema().load(msg)
-    stat = yield Effect(EFSStat(**msg))
+    stat = await Effect(EFSStat(**msg))
     stat['status'] = 'ok'
     return stat
 
 
-@do
-def api_move(msg):
+async def api_move(msg):
     msg = cmd_MOVE_Schema().load(msg)
-    yield Effect(EFSMove(**msg))
+    await Effect(EFSMove(**msg))
     return {'status': 'ok'}
 
 
-@do
-def api_delete(msg):
+async def api_delete(msg):
     msg = PathOnlySchema().load(msg)
-    yield Effect(EFSDelete(**msg))
+    await Effect(EFSDelete(**msg))
     return {'status': 'ok'}
 
 
-# @do
-# def api_undelete(msg):
+# async def api_undelete(msg):
 #     msg = cmd_UNDELETE_Schema().load(msg)
-#     yield Effect(EFSUndelete(**msg))
+#     await Effect(EFSUndelete(**msg))
 #     return {'status': 'ok'}

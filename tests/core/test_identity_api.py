@@ -36,8 +36,7 @@ def test_api_identity_load_error(bad_params):
 def test_api_identity_unload():
     eff = execute_cmd('identity_unload', {})
     sequence = [
-        (EIdentityUnload(),
-            noop),
+        (EIdentityUnload(), noop),
     ]
     resp = perform_sequence(sequence, eff)
     assert resp == {'status': 'ok'}

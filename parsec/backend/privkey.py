@@ -1,5 +1,5 @@
 import attr
-from effect2 import TypeDispatcher, do
+from effect2 import TypeDispatcher
 
 from parsec.exceptions import PrivKeyHashCollision, PrivKeyNotFound
 
@@ -19,8 +19,7 @@ class EPrivKeyAdd:
 class MockedPrivKeyComponent:
     _keys = attr.ib(default=attr.Factory(dict))
 
-    @do
-    def perform_privkey_add(self, intent):
+    async def perform_privkey_add(self, intent):
         # TODO: should check for authorization token to avoid impersonation
         assert isinstance(intent.cipherkey, (bytes, bytearray))
         if intent.hash in self._keys:
@@ -28,8 +27,7 @@ class MockedPrivKeyComponent:
         else:
             self._keys[intent.hash] = intent.cipherkey
 
-    @do
-    def perform_privkey_get(self, intent):
+    async def perform_privkey_get(self, intent):
         try:
             return self._keys[intent.hash]
         except KeyError:

@@ -1,6 +1,6 @@
 import attr
 import asyncio
-from effect2 import Effect, TypeDispatcher, do, AsyncFunc, asyncio_perform
+from effect2 import Effect, TypeDispatcher, asyncio_perform
 
 from parsec.tools import logger
 
@@ -59,13 +59,11 @@ class SynchronizerComponent:
             logger.debug('Synchronized: %s' % intent.intent)
             self._job_queue.task_done()
 
-    @do
-    def push_to_job_queue(self, intent):
+    async def push_to_job_queue(self, intent):
         self._job_queue.put_nowait(intent)
 
-    @do
-    def perform_flush(self, intent):
-        yield AsyncFunc(self._job_queue.join())
+    async def perform_flush(self, intent):
+        await self._job_queue.join()
 
     def get_dispatcher(self):
         return TypeDispatcher({

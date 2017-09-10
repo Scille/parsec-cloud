@@ -1,5 +1,5 @@
 import attr
-from effect2 import Effect, do
+from effect2 import Effect
 
 from parsec.exceptions import exception_from_status
 from parsec.core.backend import BackendCmd
@@ -36,38 +36,34 @@ class Group:
     users = attr.ib()
 
 
-@do
-def perform_group_create(intent):
+async def perform_group_create(intent):
     msg = {'name': intent.name}
-    ret = yield Effect(BackendCmd('group_create', msg))
+    ret = await Effect(BackendCmd('group_create', msg))
     status = ret['status']
     if status != 'ok':
         raise exception_from_status(status)(ret['label'])
 
 
-@do
-def perform_group_read(intent):
+async def perform_group_read(intent):
     msg = {'name': intent.name}
-    ret = yield Effect(BackendCmd('group_read', msg))
+    ret = await Effect(BackendCmd('group_read', msg))
     status = ret['status']
     if status != 'ok':
         raise exception_from_status(status)(ret['label'])
     return Group(intent.name, ret['admins'], ret['users'])
 
 
-@do
-def perform_group_add_identities(intent):
+async def perform_group_add_identities(intent):
     msg = {'name': intent.name, 'identities': intent.identities, 'admin': intent.admin}
-    ret = yield Effect(BackendCmd('group_add_identities', msg))
+    ret = await Effect(BackendCmd('group_add_identities', msg))
     status = ret['status']
     if status != 'ok':
         raise exception_from_status(status)(ret['label'])
 
 
-@do
-def perform_group_remove_identities(intent):
+async def perform_group_remove_identities(intent):
     msg = {'name': intent.name, 'identities': intent.identities, 'admin': intent.admin}
-    ret = yield Effect(BackendCmd('group_remove_identities', msg))
+    ret = await Effect(BackendCmd('group_remove_identities', msg))
     status = ret['status']
     if status != 'ok':
         raise exception_from_status(status)(ret['label'])
