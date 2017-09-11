@@ -2,7 +2,6 @@ from effect2.testing import noop, perform_sequence
 
 from parsec.base import EEvent
 from parsec.core.identity import IdentityComponent, Identity, EIdentityLoad
-from parsec.core.fs import EFSInit
 
 from tests.test_crypto import ALICE_PRIVATE_RSA
 
@@ -14,7 +13,6 @@ async def test_perform_identity_load():
     eff = component.perform_identity_load(intent)
     ret = perform_sequence([
         (EEvent('identity_loaded', 'Alice'), noop),
-        (EFSInit(), noop),
     ], eff)
     assert isinstance(ret, Identity)
     assert ret == component.identity

@@ -3,6 +3,7 @@ import arrow
 from uuid import uuid4
 from effect2 import TypeDispatcher, Effect
 
+from parsec.base import ERegisterEvent
 from parsec.core.identity import EIdentityGet, EIdentityUnload
 from parsec.core.backend_user_vlob import EBackendUserVlobRead, EBackendUserVlobUpdate
 from parsec.core.backend_vlob import EBackendVlobCreate, EBackendVlobUpdate, EBackendVlobRead, VlobAtom
@@ -143,6 +144,10 @@ class FSComponent:
         intent = EBackendVlobUpdate(id, trust_seed, version, content)
         await Effect(ESynchronizerPutJob(intent))
         self._vlob_cache[id] = VlobAtom(id, version, content)
+
+    async def startup(self, app):
+        await Effect(ERegisterEvent(lambda e, s: EFSInit(), 'identity_loaded', None))
+        await Effect(ERegisterEvent(lambda e, s: EFSReset(), 'identity_unloaded', None))
 
     async def perform_init(self, intent):
         if self._manifest:

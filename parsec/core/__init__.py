@@ -1,5 +1,5 @@
 import attr
-from effect2 import ComposedDispatcher
+from effect2 import ComposedDispatcher, asyncio_perform
 
 from parsec.base import base_dispatcher, EventComponent
 from parsec.core.core_api import register_core_api
@@ -31,12 +31,17 @@ class CoreComponents:
         ])
 
     async def shutdown(self, app):
-        await self.backend.shutdown(app)
-        await self.block.shutdown(app)
-        await self.synchronizer.shutdown(app)
+        async def _shutdown():
+            await self.backend.shutdown(app)
+            await self.block.shutdown(app)
+            await self.synchronizer.shutdown(app)
+        await asyncio_perform(self.get_dispatcher(), _shutdown())
 
     async def startup(self, app):
-        await self.synchronizer.startup(app)
+        async def _startup():
+            await self.synchronizer.startup(app)
+            await self.fs.startup(app)
+        await asyncio_perform(self.get_dispatcher(), _startup())
 
 
 def components_factory(app, backend_host, backend_watchdog=False, cache_size=4000):
