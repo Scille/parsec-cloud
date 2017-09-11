@@ -153,6 +153,9 @@ class BackendComponent:
         self.watchdog = watchdog
         self.connection = None
 
+    async def startup(self, app=None):
+        await Effect(ERegisterEvent(lambda e, s: EBackendReset(), 'identity_unloaded'))
+
     async def shutdown(self, app=None):
         await self.perform_backend_reset()
 

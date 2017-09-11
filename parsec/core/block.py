@@ -2,6 +2,7 @@ import attr
 import aiohttp
 from effect2 import TypeDispatcher, Effect
 
+from parsec.base import ERegisterEvent
 from parsec.core.backend import EBackendBlockStoreGetURL
 from parsec.exceptions import BlockError, BlockNotFound, BlockConnectionError
 
@@ -80,6 +81,9 @@ def block_connection_factory(url):
 class BlockComponent:
     url = attr.ib(default=None)
     connection = attr.ib(default=None)
+
+    async def startup(self, app=None):
+        await Effect(ERegisterEvent(lambda e, s: EBlockReset(), 'identity_unloaded'))
 
     async def shutdown(self, app=None):
         await self.perform_block_reset()

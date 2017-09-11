@@ -41,6 +41,8 @@ class CoreComponents:
         async def _startup():
             await self.synchronizer.startup(app)
             await self.fs.startup(app)
+            await self.block.startup(app)
+            await self.backend.startup(app)
         await asyncio_perform(self.get_dispatcher(), _startup())
 
 

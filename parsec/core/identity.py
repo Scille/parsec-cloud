@@ -62,13 +62,8 @@ class IdentityComponent:
         return self.identity
 
     async def perform_identity_unload(self, intent):
-        from parsec.core.backend import EBackendReset
-        from parsec.core.block import EBlockReset
         if not self.identity:
             raise IdentityNotLoadedError('Identity not loaded')
-        # TODO: make block&backend reset event triggered
-        await Effect(EBlockReset())
-        await Effect(EBackendReset())
         await Effect(EEvent('identity_unloaded', None))
         self.identity = None
 
