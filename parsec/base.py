@@ -28,16 +28,23 @@ class EUnregisterEvent:
 
 @attr.s
 class EventComponent:
-    listeners = attr.ib(default=attr.Factory(lambda: defaultdict(set)))
+    # Use list instead of set to store intent_factories to trigger them in
+    # a determinist order
+    listeners = attr.ib(default=attr.Factory(lambda: defaultdict(list)))
 
     async def perform_trigger_event(self, intent):
         key = (intent.event, intent.sender)
         for intent_factory in self.listeners[key]:
             await Effect(intent_factory(intent.event, intent.sender))
+        # Sender=None means registered for all senders
+        key = (intent.event, None)
+        for intent_factory in self.listeners[key]:
+            await Effect(intent_factory(intent.event, intent.sender))
 
     async def perform_register_event(self, intent):
         key = (intent.event, intent.sender)
-        self.listeners[key].add(intent.intent_factory)
+        if intent.intent_factory not in self.listeners[key]:
+            self.listeners[key].append(intent.intent_factory)
 
     async def perform_unregister_event(self, intent):
         key = (intent.event, intent.sender)
