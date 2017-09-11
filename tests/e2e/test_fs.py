@@ -17,7 +17,7 @@ async def mk_folder(johndoe_client, path='/bar'):
 
 async def test_stat(johndoe_client):
     ret = await johndoe_client.send_cmd('stat', path='/')
-    assert ret == {'children': [], 'status': 'ok', 'type': 'folder'}
+    assert ret == {'children': [], 'status': 'ok', 'type': 'folder', 'mountpoint': ''}
 
 
 @pytest.mark.xfail
@@ -27,7 +27,7 @@ async def test_stat_file(johndoe_client):
     ret = await johndoe_client.send_cmd('stat', path=path)
     assert ret == {
         'status': 'ok',
-        'path': path,
+        'mountpoint': '',
         'type': 'file',
         'version': 1,
         'created': '2017-12-02T12:30:23',
@@ -40,7 +40,7 @@ async def test_create_file(johndoe_client):
     ret = await johndoe_client.send_cmd('file_create', path='/foo.txt')
     assert ret == {'status': 'ok'}
     ret = await johndoe_client.send_cmd('stat', path='/')
-    assert ret == {'children': ['foo.txt'], 'status': 'ok', 'type': 'folder'}
+    assert ret == {'children': ['foo.txt'], 'status': 'ok', 'type': 'folder', 'mountpoint': ''}
 
 
 async def test_create_duplicated_file(johndoe_client):
@@ -106,7 +106,7 @@ async def test_create_dir(johndoe_client):
     ret = await johndoe_client.send_cmd('folder_create', path='/bar')
     assert ret == {'status': 'ok'}
     ret = await johndoe_client.send_cmd('stat', path='/')
-    assert ret == {'children': ['bar'], 'status': 'ok', 'type': 'folder'}
+    assert ret == {'children': ['bar'], 'status': 'ok', 'type': 'folder', 'mountpoint': ''}
 
 
 async def test_create_duplicated_dir(johndoe_client):
@@ -120,7 +120,10 @@ async def test_nested_dir(johndoe_client):
     await mk_folder(johndoe_client, '/bar/sub')
     await mk_file(johndoe_client, '/bar/sub.txt')
     ret = await johndoe_client.send_cmd('stat', path='/bar')
-    assert ret == {'children': ['sub', 'sub.txt'], 'status': 'ok', 'type': 'folder'}
+    assert ret == {'children': ['sub', 'sub.txt'],
+                   'status': 'ok',
+                   'type': 'folder',
+                   'mountpoint': ''}
 
 
 async def test_move_file(johndoe_client):
@@ -129,7 +132,7 @@ async def test_move_file(johndoe_client):
     ret = await johndoe_client.send_cmd('move', src=path, dst=new_path)
     assert ret == {'status': 'ok'}
     ret = await johndoe_client.send_cmd('stat', path='/')
-    assert ret == {'children': ['v2'], 'status': 'ok', 'type': 'folder'}
+    assert ret == {'children': ['v2'], 'status': 'ok', 'type': 'folder', 'mountpoint': ''}
 
 
 @pytest.mark.xfail
@@ -144,7 +147,7 @@ async def test_move_folder(johndoe_client):
     ret = await johndoe_client.send_cmd('move', src=path, dst=new_path)
     assert ret == {'status': 'ok'}
     ret = await johndoe_client.send_cmd('stat', path='/')
-    assert ret == {'children': ['v2'], 'status': 'ok', 'type': 'folder'}
+    assert ret == {'children': ['v2'], 'status': 'ok', 'type': 'folder', 'mountpoint': ''}
 
 
 async def test_delete_file(johndoe_client):
@@ -152,4 +155,4 @@ async def test_delete_file(johndoe_client):
     ret = await johndoe_client.send_cmd('delete', path=path)
     assert ret == {'status': 'ok'}
     ret = await johndoe_client.send_cmd('stat', path='/')
-    assert ret == {'children': [], 'status': 'ok', 'type': 'folder'}
+    assert ret == {'children': [], 'status': 'ok', 'type': 'folder', 'mountpoint': ''}
