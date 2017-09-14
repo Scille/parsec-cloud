@@ -14,36 +14,6 @@ from parsec.tools import ejson_loads, ejson_dumps, to_jsonb64, from_jsonb64
 from parsec.crypto import generate_sym_key, load_sym_key
 
 
-@attr.s(slots=True)
-class Folder:
-    entries = attr.ib(default=set)
-
-
-@attr.s(slots=True)
-class FileManifest:
-    id = attr.ib()
-    key = attr.ib()
-    read_trust_seed = attr.ib()
-    write_trust_seed = attr.ib()
-
-
-@attr.s(slots=True)
-class Manifest(Folder):
-    pass
-
-
-class VlobCache:
-    def get(self, id):
-        pass
-
-    def add(self, id):
-        pass
-
-
-class BlockCache:
-    pass
-
-
 @attr.s
 class EFSInit:
     pass
@@ -195,12 +165,6 @@ class FSComponent:
         }
 
     def _retrieve_file(self, path):
-        fileobj = self._retrieve_path(path)
-        if fileobj['type'] != 'file':
-            raise InvalidPath("Path `%s` is not a file" % path)
-        return fileobj
-
-    def _retrieve_content(self, path):
         fileobj = self._retrieve_path(path)
         if fileobj['type'] != 'file':
             raise InvalidPath("Path `%s` is not a file" % path)
