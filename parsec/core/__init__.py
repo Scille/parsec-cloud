@@ -47,12 +47,10 @@ class CoreComponents:
 
 
 def components_factory(app, backend_host, backend_watchdog=False, cache_size=4000):
-    backend = BackendComponent(backend_host, backend_watchdog)
-    block = BlockComponent()
     core_components = CoreComponents(
         event=EventComponent(),
-        block=block,
-        backend=backend,
+        block=BlockComponent(),
+        backend=BackendComponent(backend_host, backend_watchdog),
         fs=FSComponent(),
         identity=IdentityComponent(),
         synchronizer=SynchronizerComponent()
