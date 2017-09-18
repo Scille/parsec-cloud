@@ -11,22 +11,6 @@ class ESynchronizerPutJob:
 
 
 @attr.s
-class ESynchronizerFileManifestUpdate:
-    file_manifest = attr.ib()
-
-
-@attr.s
-class ESynchronizerBlockCreate:
-    id = attr.ib()
-    content = attr.ib()
-
-
-@attr.s
-class ESynchronizerBlockUpdate:
-    block = attr.ib()
-
-
-@attr.s
 class ESynchronizerFlush:
     pass
 

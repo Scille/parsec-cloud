@@ -115,6 +115,140 @@ class FSComponent:
         await Effect(ESynchronizerPutJob(intent))
         self._vlob_cache[id] = VlobAtom(id, version, content)
 
+    async def _create_file(self):
+        now = arrow.get()
+        raw_file_manifest = ejson_dumps({
+            'created': now,
+            'updated': now,
+            'blocks': [],
+            'size': 0
+        }).encode()
+        vlob_key = generate_sym_key()
+        vlob_content = vlob_key.encrypt(raw_file_manifest)
+        vlob_access = await self._create_vlob(vlob_content)
+        return {
+            'type': 'file',
+            'id': vlob_access.id,
+            'read_trust_seed': vlob_access.read_trust_seed,
+            'write_trust_seed': vlob_access.write_trust_seed,
+            'key': to_jsonb64(vlob_key.key)
+        }
+
+    async def _stat_file(self, fileobj):
+        # Retrieve file manifest
+        vlob = await self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
+        vlob_key = load_sym_key(from_jsonb64(fileobj['key']))
+        file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
+        return {
+            'type': fileobj['type'],
+            'updated': file_manifest['updated'],
+            'created': file_manifest['created'],
+            'size': file_manifest['size'],
+            'version': vlob.version
+        }
+
+    async def _read_file(self, fileobj, offset, size):
+        # Retrieve file manifest
+        vlob = await self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
+        vlob_key = load_sym_key(from_jsonb64(fileobj['key']))
+        file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
+
+        # Retrieve data
+        blocks = []
+        for block_access in file_manifest['blocks']:
+            cipherblock = await self._get_block(block_access['id'])
+            block_key = load_sym_key(from_jsonb64(block_access['key']))
+            blocks.append(block_key.decrypt(cipherblock))
+        data = b''.join(blocks)
+
+        if size is None:
+            return data[offset:]
+        else:
+            return data[offset:offset + size]
+
+    async def _write_file(self, fileobj, offset, content):
+        # Retrieve file manifest
+        vlob = await self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
+        vlob_key = load_sym_key(from_jsonb64(fileobj['key']))
+        file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
+
+        # Retrieve data
+        blocks = []
+        for block_access in file_manifest['blocks']:
+            cipherblock = await self._get_block(block_access['id'])
+            block_key = load_sym_key(from_jsonb64(block_access['key']))
+            blocks.append(block_key.decrypt(cipherblock))
+        data = b''.join(blocks)
+
+        # Modify data
+        data = (data[:offset] + content +
+                data[offset + len(content):])
+        file_manifest['updated'] = arrow.get()
+        file_manifest['size'] = len(data)
+
+        # Reupload data
+        file_manifest['blocks'].clear()
+        chunk_size = 1024 * 1024  # 1mo chunks
+        chunk_offset = 0
+        chunk = data[:chunk_size]
+        while chunk:
+            block_id = uuid4().hex
+            block_key = generate_sym_key()
+            cipherblock = block_key.encrypt(chunk)
+            await self._create_block(block_id, cipherblock)
+            file_manifest['blocks'].append({'id': block_id, 'key': to_jsonb64(block_key.key)})
+
+            chunk_offset += chunk_size
+            chunk = data[chunk_offset: chunk_offset + chunk_size]
+
+        # Save file manifest and we're done ;-)
+        ciphervlob = vlob_key.encrypt(ejson_dumps(file_manifest).encode())
+        await self._update_vlob(
+            fileobj['id'], fileobj['write_trust_seed'],
+            vlob.version + 1, ciphervlob
+        )
+
+    async def _truncate_file(self, fileobj, length):
+        # Retrieve file manifest
+        vlob = await self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
+        vlob_key = load_sym_key(from_jsonb64(fileobj['key']))
+        file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
+
+        # Retrieve data
+        blocks = []
+        for block_access in file_manifest['blocks']:
+            cipherblock = await self._get_block(block_access['id'])
+            block_key = load_sym_key(from_jsonb64(block_access['key']))
+            blocks.append(block_key.decrypt(cipherblock))
+        data = b''.join(blocks)
+
+        # Modify data
+        data = data[:length]
+        file_manifest['updated'] = arrow.get()
+        file_manifest['size'] = len(data)
+
+        # Reupload data
+        file_manifest['blocks'].clear()
+        chunk_size = 4096
+        chunk_offset = 0
+        chunk = data[:chunk_size]
+        while chunk:
+            block_id = uuid4().hex
+            block_key = generate_sym_key()
+            cipherblock = block_key.encrypt(chunk)
+            await self._create_block(block_id, cipherblock)
+            file_manifest['blocks'].append({'id': block_id, 'key': to_jsonb64(block_key.key)})
+
+            chunk_offset += chunk_size
+            chunk = data[chunk_offset: chunk_offset + chunk_size]
+
+        # Save file manifest and we're done ;-)
+        ciphervlob = vlob_key.encrypt(ejson_dumps(file_manifest).encode())
+        await self._update_vlob(
+            fileobj['id'], fileobj['write_trust_seed'],
+            vlob.version + 1, ciphervlob
+        )
+
     async def startup(self, app):
         await Effect(ERegisterEvent(lambda e, s: EFSInit(), 'identity_loaded', None))
         await Effect(ERegisterEvent(lambda e, s: EFSReset(), 'identity_unloaded', None))
@@ -212,141 +346,29 @@ class FSComponent:
     async def perform_file_create(self, intent):
         await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
         self._check_path(intent.path, should_exists=False)
-
-        now = arrow.get()
-        raw_file_manifest = ejson_dumps({
-            'created': now,
-            'updated': now,
-            'blocks': [],
-            'size': 0
-        }).encode()
-        vlob_key = generate_sym_key()
-        vlob_content = vlob_key.encrypt(raw_file_manifest)
-        vlob_access = await self._create_vlob(vlob_content)
         dirpath, name = intent.path.rsplit('/', 1)
         dirobj = self._retrieve_path(dirpath)
-        dirobj['children'][name] = {
-            'type': 'file',
-            'id': vlob_access.id,
-            'read_trust_seed': vlob_access.read_trust_seed,
-            'write_trust_seed': vlob_access.write_trust_seed,
-            'key': to_jsonb64(vlob_key.key)
-        }
-        await self._commit_manifest()
+        fileobj = await self._create_file()
+        dirobj['children'][name] = fileobj
+        # TODO: fill journal
 
     async def perform_file_write(self, intent):
         await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
         self._check_path(intent.path, should_exists=True, type='file')
-
-        # Retrieve file manifest
         fileobj = self._retrieve_file(intent.path)
-        vlob = await self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
-        vlob_key = load_sym_key(from_jsonb64(fileobj['key']))
-        file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
-
-        # Retrieve data
-        blocks = []
-        for block_access in file_manifest['blocks']:
-            cipherblock = await self._get_block(block_access['id'])
-            block_key = load_sym_key(from_jsonb64(block_access['key']))
-            blocks.append(block_key.decrypt(cipherblock))
-        data = b''.join(blocks)
-
-        # Modify data
-        data = (data[:intent.offset] + intent.content +
-                data[intent.offset + len(intent.content):])
-        file_manifest['updated'] = arrow.get()
-        file_manifest['size'] = len(data)
-
-        # Reupload data
-        file_manifest['blocks'].clear()
-        chunk_size = 1024 * 1024  # 1mo chunks
-        chunk_offset = 0
-        chunk = data[:chunk_size]
-        while chunk:
-            block_id = uuid4().hex
-            block_key = generate_sym_key()
-            cipherblock = block_key.encrypt(chunk)
-            await self._create_block(block_id, cipherblock)
-            file_manifest['blocks'].append({'id': block_id, 'key': to_jsonb64(block_key.key)})
-
-            chunk_offset += chunk_size
-            chunk = data[chunk_offset: chunk_offset + chunk_size]
-
-        # Save file manifest and we're done ;-)
-        ciphervlob = vlob_key.encrypt(ejson_dumps(file_manifest).encode())
-        await self._update_vlob(
-            fileobj['id'], fileobj['write_trust_seed'],
-            vlob.version + 1, ciphervlob
-        )
+        await self._write_file(fileobj, intent.offset, intent.content)
 
     async def perform_file_truncate(self, intent):
         await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
         self._check_path(intent.path, should_exists=True, type='file')
-
-        # Retrieve file manifest
         fileobj = self._retrieve_file(intent.path)
-        vlob = await self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
-        vlob_key = load_sym_key(from_jsonb64(fileobj['key']))
-        file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
-
-        # Retrieve data
-        blocks = []
-        for block_access in file_manifest['blocks']:
-            cipherblock = await self._get_block(block_access['id'])
-            block_key = load_sym_key(from_jsonb64(block_access['key']))
-            blocks.append(block_key.decrypt(cipherblock))
-        data = b''.join(blocks)
-
-        # Modify data
-        data = data[:intent.length]
-        file_manifest['updated'] = arrow.get()
-        file_manifest['size'] = len(data)
-
-        # Reupload data
-        file_manifest['blocks'].clear()
-        chunk_size = 4096
-        chunk_offset = 0
-        chunk = data[:chunk_size]
-        while chunk:
-            block_id = uuid4().hex
-            block_key = generate_sym_key()
-            cipherblock = block_key.encrypt(chunk)
-            await self._create_block(block_id, cipherblock)
-            file_manifest['blocks'].append({'id': block_id, 'key': to_jsonb64(block_key.key)})
-
-            chunk_offset += chunk_size
-            chunk = data[chunk_offset: chunk_offset + chunk_size]
-
-        # Save file manifest and we're done ;-)
-        ciphervlob = vlob_key.encrypt(ejson_dumps(file_manifest).encode())
-        await self._update_vlob(
-            fileobj['id'], fileobj['write_trust_seed'],
-            vlob.version + 1, ciphervlob
-        )
+        await self._truncate_file(fileobj, intent.length)
 
     async def perform_file_read(self, intent):
         await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
         self._check_path(intent.path, should_exists=True, type='file')
-
-        # Retrieve file manifest
         fileobj = self._retrieve_file(intent.path)
-        vlob = await self._get_vlob(fileobj['id'], fileobj['read_trust_seed'])
-        vlob_key = load_sym_key(from_jsonb64(fileobj['key']))
-        file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
-
-        # Retrieve data
-        blocks = []
-        for block_access in file_manifest['blocks']:
-            cipherblock = await self._get_block(block_access['id'])
-            block_key = load_sym_key(from_jsonb64(block_access['key']))
-            blocks.append(block_key.decrypt(cipherblock))
-        data = b''.join(blocks)
-
-        if intent.size is None:
-            return data[intent.offset:]
-        else:
-            return data[intent.offset:intent.offset + intent.size]
+        return await self._read_file(fileobj, intent.offset, intent.size)
 
     async def perform_stat(self, intent):
         await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
@@ -355,17 +377,7 @@ class FSComponent:
         if obj['type'] == 'folder':
             return {'type': obj['type'], 'children': list(sorted(obj['children'].keys()))}
         else:
-            # Retrieve file manifest
-            vlob = await self._get_vlob(obj['id'], obj['read_trust_seed'])
-            vlob_key = load_sym_key(from_jsonb64(obj['key']))
-            file_manifest = ejson_loads(vlob_key.decrypt(vlob.blob).decode())
-            return {
-                'type': obj['type'],
-                'updated': file_manifest['updated'],
-                'created': file_manifest['created'],
-                'size': file_manifest['size'],
-                'version': vlob.version
-            }
+            return await self._stat_file(obj)
 
     async def perform_folder_create(self, intent):
         await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
@@ -375,7 +387,7 @@ class FSComponent:
         now = arrow.get()
         dirobj['children'][name] = {
             'type': 'folder', 'children': {}, 'stat': {'created': now, 'updated': now}}
-        await self._commit_manifest()
+        # TODO: fill journal
 
     async def perform_move(self, intent):
         await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
@@ -389,7 +401,7 @@ class FSComponent:
         dstobj = self._retrieve_path(dstdirpath)
         dstobj['children'][dstfilename] = srcobj['children'][scrfilename]
         del srcobj['children'][scrfilename]
-        await self._commit_manifest()
+        # TODO: fill journal
 
     async def perform_delete(self, intent):
         await Effect(EIdentityGet())  # Trigger exception if identity is not loaded
@@ -397,7 +409,7 @@ class FSComponent:
         dirpath, leafname = intent.path.rsplit('/', 1)
         obj = self._retrieve_path(dirpath)
         del obj['children'][leafname]
-        await self._commit_manifest()
+        # TODO: fill journal
 
     def get_dispatcher(self):
         return TypeDispatcher({
