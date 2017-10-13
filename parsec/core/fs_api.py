@@ -2,9 +2,9 @@ from marshmallow import fields, validate
 from effect2 import Effect, do
 
 from parsec.core.fs import (
-    ESynchronize, EGroupCreate, EDustbinShow, EManifestHistory, EManifestRestore, EFileCreate,
-    EFileRead, EFileWrite, EFileTruncate, EFileHistory, EFileRestore, EFolderCreate, EStat, EMove,
-    EDelete, EUndelete
+    ERegisterMountpoint, EUnregisterMountpoint, ESynchronize, EGroupCreate, EDustbinShow,
+    EManifestHistory, EManifestRestore, EFileCreate, EFileRead, EFileWrite, EFileTruncate,
+    EFileHistory, EFileRestore, EFolderCreate, EStat, EMove, EDelete, EUndelete
 )
 from parsec.tools import UnknownCheckedSchema
 
@@ -66,6 +66,20 @@ class cmd_MOVE_Schema(UnknownCheckedSchema):
 
 class cmd_UNDELETE_Schema(UnknownCheckedSchema):
     vlob = fields.String(required=True)
+
+
+@do
+def api_register_mountpoint(msg):
+    msg = PathOnlySchema().load(msg)
+    yield Effect(ERegisterMountpoint(**msg))
+    return {'status': 'ok'}
+
+
+@do
+def api_unregister_mountpoint(msg):
+    msg = PathOnlySchema().load(msg)
+    yield Effect(EUnregisterMountpoint(**msg))
+    return {'status': 'ok'}
 
 
 @do

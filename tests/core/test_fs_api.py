@@ -3,11 +3,31 @@ from effect2.testing import const, noop, perform_sequence
 
 from parsec.core.core_api import execute_cmd
 from parsec.core.fs import (
-    ESynchronize, EGroupCreate, EDustbinShow, EManifestHistory, EManifestRestore,
-    EFileCreate, EFileRead, EFileWrite, EFileTruncate, EFileHistory, EFileRestore, EFolderCreate,
-    EStat, EMove, EDelete, EUndelete
+    ERegisterMountpoint, EUnregisterMountpoint, ESynchronize, EGroupCreate, EDustbinShow,
+    EManifestHistory, EManifestRestore, EFileCreate, EFileRead, EFileWrite, EFileTruncate,
+    EFileHistory, EFileRestore, EFolderCreate, EStat, EMove, EDelete, EUndelete
 )
 from parsec.tools import to_jsonb64
+
+
+def test_api_register_mountpoint():
+    eff = execute_cmd('register_mountpoint', {'path': '/mnt/parsec'})
+    sequence = [
+        (ERegisterMountpoint('/mnt/parsec'),
+            noop),
+    ]
+    resp = perform_sequence(sequence, eff)
+    assert resp == {'status': 'ok'}
+
+
+def test_api_unregister_mountpoint():
+    eff = execute_cmd('unregister_mountpoint', {'path': '/mnt/parsec'})
+    sequence = [
+        (EUnregisterMountpoint('/mnt/parsec'),
+            noop),
+    ]
+    resp = perform_sequence(sequence, eff)
+    assert resp == {'status': 'ok'}
 
 
 def test_api_synchronize():

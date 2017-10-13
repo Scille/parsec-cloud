@@ -261,4 +261,7 @@ def start_fuse(socket_path: str, mountpoint: str, debug: bool=False, nothreads: 
     operations = FuseOperations(socket_path)
     if not debug:
         logger_stream.level = WARNING
+    mountpoint = os.path.join(os.getcwd(), mountpoint)
+    operations.send_cmd(cmd='register_mountpoint', path=mountpoint)
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)
+    operations.send_cmd(cmd='unregister_mountpoint', path=mountpoint)

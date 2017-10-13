@@ -95,6 +95,8 @@ API_CMDS_ROUTER = {
     'identity_unload': identity_api.api_identity_unload,
     'identity_info': identity_api.api_identity_info,
 
+    'register_mountpoint': fs_api.api_register_mountpoint,
+    'unregister_mountpoint': fs_api.api_unregister_mountpoint,
     'synchronize': fs_api.api_synchronize,
     'group_create': fs_api.api_group_create,
     'dustbin_show': fs_api.api_dustbin_show,

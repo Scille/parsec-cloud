@@ -1,4 +1,5 @@
 from copy import deepcopy
+import os
 
 import attr
 from effect2 import TypeDispatcher, do, Effect
@@ -7,6 +8,16 @@ from parsec.core.file import File
 from parsec.core.manifest import UserManifest
 from parsec.core.identity import EIdentityGet
 from parsec.exceptions import FileNotFound, IdentityNotLoadedError, ManifestError, ManifestNotFound
+
+
+@attr.s
+class ERegisterMountpoint:
+    path = attr.ib(default=None)
+
+
+@attr.s
+class EUnregisterMountpoint:
+    path = attr.ib(default=None)
 
 
 @attr.s
@@ -104,6 +115,13 @@ class FSComponent:
 
     def __init__(self):
         self.user_manifest = None
+        self.mountpoint = []
+
+    def perform_register_mountpoint(self, intent):
+        self.mountpoint.append(intent.path)
+
+    def perform_unregister_mountpoint(self, intent):
+        self.mountpoint.remove(intent.path)
 
     @do
     def perform_synchronize(self, intent):
@@ -180,6 +198,9 @@ class FSComponent:
     def perform_stat(self, intent):
         user_manifest = yield self._get_manifest()
         stat = yield user_manifest.stat(intent.path)
+        stat['mountpoint'] = ''
+        if self.mountpoint:
+            stat['mountpoint'] = os.path.join(self.mountpoint[-1], intent.path[1:])
         return stat
 
     @do
@@ -255,6 +276,8 @@ class FSComponent:
 
     def get_dispatcher(self):
         return TypeDispatcher({
+            ERegisterMountpoint: self.perform_register_mountpoint,
+            EUnregisterMountpoint: self.perform_unregister_mountpoint,
             ESynchronize: self.perform_synchronize,
             EGroupCreate: self.perform_group_create,
             EDustbinShow: self.perform_dustbin_show,

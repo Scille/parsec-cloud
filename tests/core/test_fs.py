@@ -6,10 +6,10 @@ from freezegun import freeze_time
 from unittest.mock import Mock
 
 from parsec.core.file import File
-from parsec.core.fs import (FSComponent, ESynchronize, EGroupCreate, EDustbinShow, EManifestHistory,
-                            EManifestRestore, EFileCreate, EFileRead, EFileWrite, EFileTruncate,
-                            EFileHistory, EFileRestore, EFolderCreate, EStat, EMove, EDelete,
-                            EUndelete)
+from parsec.core.fs import (FSComponent, ERegisterMountpoint, EUnregisterMountpoint, ESynchronize,
+                            EGroupCreate, EDustbinShow, EManifestHistory, EManifestRestore,
+                            EFileCreate, EFileRead, EFileWrite, EFileTruncate, EFileHistory,
+                            EFileRestore, EFolderCreate, EStat, EMove, EDelete, EUndelete)
 from parsec.core.identity import EIdentityGet, IdentityComponent, Identity
 from parsec.core.synchronizer import (
     EUserVlobSynchronize, EUserVlobRead, EUserVlobUpdate, EVlobCreate, EVlobList, EVlobRead,
@@ -62,6 +62,23 @@ def file(app, alice_identity, mock_crypto_passthrough):
     ret = perform_sequence(sequence, eff)
     assert ret is None
     File.files = {}
+
+
+def test_perform_register_mountpoint(app):
+    assert len(app.mountpoint) == 0
+    ret = app.perform_register_mountpoint(ERegisterMountpoint('/mnt/parsec'))
+    assert ret is None
+    assert len(app.mountpoint) == 1
+
+
+def test_perform_unregister_mountpoint(app):
+    # Register mountpoint
+    ret = app.perform_register_mountpoint(ERegisterMountpoint('/mnt/parsec'))
+    # Unregister mountpoint
+    assert len(app.mountpoint) == 1
+    ret = app.perform_unregister_mountpoint(EUnregisterMountpoint('/mnt/parsec'))
+    assert ret is None
+    assert len(app.mountpoint) == 0
 
 
 def test_perform_synchronize(app, alice_identity):
@@ -293,7 +310,7 @@ def test_perform_stat(app, alice_identity, file):
         (EIdentityGet(), const(alice_identity))
     ]
     ret = perform_sequence(sequence, eff)
-    assert ret == {'children': [], 'type': 'folder'}
+    assert ret == {'children': [], 'type': 'folder', 'mountpoint': ''}
 
 
 def test_perform_move(app, alice_identity):
