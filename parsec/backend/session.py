@@ -4,7 +4,8 @@ import string
 import json
 from marshmallow import fields
 from effect2 import Effect, TypeDispatcher
-from cryptography.exceptions import InvalidSignature
+from nacl.signing import VerifyKey
+from nacl.exceptions import BadSignatureError
 
 from parsec.backend.pubkey import EPubKeyGet
 from parsec.exceptions import PubKeyNotFound, HandshakeError
@@ -58,11 +59,11 @@ class SessionComponent:
         resp = HandshakeAnswerSchema().load(resp)
         claimed_identity = resp['identity']
         try:
-            pubkey = await Effect(EPubKeyGet(claimed_identity))
-            pubkey.verify(resp['answer'], challenge.encode())
+            rawkey = await Effect(EPubKeyGet(claimed_identity))
+            VerifyKey(rawkey).verify(resp['answer'], challenge.encode())
             await Effect(EHandshakeSend('{"status": "ok", "handshake": "done"}'))
             self.id = claimed_identity
-        except (TypeError, PubKeyNotFound, InvalidSignature):
+        except (TypeError, PubKeyNotFound, BadSignatureError):
             error = HandshakeError('Invalid signature, challenge or identity')
             await Effect(EHandshakeSend(error.to_raw()))
             raise error

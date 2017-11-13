@@ -51,6 +51,7 @@ def mocked_components_factory(block_store):
         event=EventComponent()
     )
 
+
 def postgresql_components_factory(app, store, block_store):
     from parsec.backend import postgresql
     from parsec.backend.block_store import BlockStoreInfoComponent

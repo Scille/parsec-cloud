@@ -7,9 +7,9 @@ import click
 from blinker import signal
 from urllib import parse
 from effect2 import Effect, TypeDispatcher
+from nacl.public import PublicKey
 
 from parsec.base import EEvent
-from parsec.crypto import load_public_key
 from parsec.tools import ejson_dumps, ejson_loads
 from parsec.backend.message import EMessageNew, EMessageGet
 from parsec.backend.vlob import EVlobCreate, EVlobUpdate, EVlobRead, VlobAtom
@@ -366,7 +366,7 @@ class PostgreSQLPubKeyComponent:
                 if ret is None:
                     raise PubKeyNotFound('No public key for identity `%s`' % intent.id)
                 key = bytes(ret[0])
-        return key if intent.raw else load_public_key(key)
+        return key if intent.raw else PublicKey(key)
 
     def get_dispatcher(self):
         return TypeDispatcher({

@@ -3,7 +3,7 @@ from marshmallow import fields
 from effect2 import TypeDispatcher, Effect
 
 from parsec.exceptions import PubKeyError, PubKeyNotFound
-from parsec.crypto import load_public_key
+from nacl.public import PublicKey
 from parsec.tools import UnknownCheckedSchema
 
 
@@ -49,7 +49,7 @@ class MockedPubKeyComponent:
     async def perform_pubkey_get(self, intent):
         try:
             key = self._keys[intent.id]
-            return key if intent.raw else load_public_key(key)
+            return key if intent.raw else PublicKey(key)
         except KeyError:
             raise PubKeyNotFound('No public key for identity `%s`' % intent.id)
 
