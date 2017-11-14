@@ -22,22 +22,12 @@ requirements = [
     'PyNaCl==1.2.0',
     'simplejson==3.10.0',
     # TODO: wait for trio 0.2.0 release...
-    'trio==0.1.0dev'
+    'trio==0.1.0-dev'
 ]
 dependency_links=[
     # need to use --process-dependency-links option for this
-    'git+https://github.com/python-trio/trio.git@389f1e1e01b410756e2833cffb992fd1ff856ae5#egg=trio-0.1.0dev',
+    'git+https://github.com/python-trio/trio.git@389f1e1e01b410756e2833cffb992fd1ff856ae5#egg=trio-0.1.0-dev',
 ]
-
-extra_requirements = {
-    'drive': ["pydrive==1.3.1"],
-    'dropbox': ["dropbox==7.2.1"],
-    'fuse': ['fusepy==2.0.4'],
-    'postgresql': ["psycopg2==2.7.1", "aiopg==0.13.0"],
-    's3': ['boto3==1.4.4', 'botocore==1.5.46'],
-}
-extra_requirements['all'] = sum(extra_requirements.values(), [])
-extra_requirements['oeuf-jambon-fromage'] = extra_requirements['all']
 
 test_requirements = [
     'pytest',
@@ -49,8 +39,18 @@ test_requirements = [
     'Sphinx',
     'flake8',
     'bumpversion',
-    # TODO: put package test requirements here
 ]
+
+extra_requirements = {
+    'drive': ["pydrive==1.3.1"],
+    'dropbox': ["dropbox==7.2.1"],
+    'fuse': ['fusepy==2.0.4'],
+    'postgresql': ["psycopg2==2.7.1", "aiopg==0.13.0"],
+    's3': ['boto3==1.4.4', 'botocore==1.5.46'],
+    'dev': test_requirements
+}
+extra_requirements['all'] = sum(extra_requirements.values(), [])
+extra_requirements['oeuf-jambon-fromage'] = extra_requirements['all']
 
 setup(
     name='parsec-cloud',
