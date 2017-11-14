@@ -25,6 +25,7 @@ requirements = [
     'trio==0.1.0dev'
 ]
 dependency_links=[
+    # need to use --process-dependency-links option for this
     'git+https://github.com/python-trio/trio.git@389f1e1e01b410756e2833cffb992fd1ff856ae5#egg=trio-0.1.0dev',
 ]
 
