@@ -13,7 +13,7 @@ from parsec.utils import CookedSocket, to_jsonb64, from_jsonb64, User
 from parsec.core.local_storage import BaseLocalStorage
 from parsec.backend.app import BackendApp
 
-from tests.populate_local_storage import populate_local_storage_cls
+from tests.populate import populate_local_storage_cls
 
 
 alice = User(
@@ -263,7 +263,7 @@ class ConnectToBackend:
 
 async def _test_backend_factory(config=None):
     config = config or {}
-    config['HOST'] = '127.0.0.1' 
+    config['HOST'] = '127.0.0.1'
     config.setdefault('PORT', _get_unused_port())
     backend = BackendAppTesting(config)
     for userid, user in TEST_USERS.items():

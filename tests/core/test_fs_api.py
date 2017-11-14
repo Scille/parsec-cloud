@@ -27,7 +27,7 @@ async def test_stat_folder(core):
             'status': 'ok',
             'type': 'folder',
             'created': '2017-12-02T12:30:23+00:00',
-            'children': ['modified.txt', 'new.txt', 'up_to_date.txt']
+            'children': ['modified.txt', 'new.txt', 'non_local.txt', 'up_to_date.txt']
         }
     # No sync for a stat
     assert core.mocked_local_storage_cls.return_value.save_dirty_file_manifest.call_count == 0
@@ -122,7 +122,7 @@ async def test_create_folder(core):
             'status': 'ok',
             'type': 'folder',
             'created': '2017-12-02T12:30:23+00:00',
-            'children': ['modified.txt', 'new.txt', 'new_folder', 'up_to_date.txt']
+            'children': ['modified.txt', 'new.txt', 'new_folder', 'non_local.txt', 'up_to_date.txt']
         }
     # Local user manifest should have been flushed another time to local storage
     assert core.mocked_local_storage_cls.return_value.save_local_user_manifest.call_count == 2
@@ -170,7 +170,7 @@ async def test_move_folder(core):
             'status': 'ok',
             'type': 'folder',
             'created': '2017-12-02T12:30:23+00:00',
-            'children': ['modified.txt', 'new.txt', 'up_to_date.txt']
+            'children': ['modified.txt', 'new.txt', 'non_local.txt', 'up_to_date.txt']
         }
         # And old folder nam is no longer available
         await sock.send({'cmd': 'stat', 'path': '/dir'})
@@ -230,7 +230,7 @@ async def test_move_file(core):
             'status': 'ok',
             'type': 'folder',
             'created': '2017-12-02T12:30:23+00:00',
-            'children': ['modified.txt', 'new.txt']
+            'children': ['modified.txt', 'new.txt', 'non_local.txt']
         }
         # Make sure we can no longer stat source name...
         await sock.send({'cmd': 'stat', 'path': '/dir/up_to_date.txt'})
@@ -335,7 +335,7 @@ async def test_delete_file(core):
             'status': 'ok',
             'type': 'folder',
             'created': '2017-12-02T12:30:23+00:00',
-            'children': ['modified.txt', 'new.txt']
+            'children': ['modified.txt', 'new.txt', 'non_local.txt']
         }
         await sock.send({'cmd': 'stat', 'path': '/dir/up_to_date.txt'})
         rep = await sock.recv()
