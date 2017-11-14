@@ -21,7 +21,7 @@ async def test_vlob_create(backend):
 
 @trio_test
 @with_backend(populated_for='alice')
-async def test_vlob_create(backend):
+async def test_vlob_read(backend):
     async with backend.test_connect('alice@test') as sock:
         await sock.send({'cmd': 'vlob_create', 'id': '123', 'blob': to_jsonb64(b'foo')})
         rep = await sock.recv()
