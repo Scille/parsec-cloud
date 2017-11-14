@@ -13,6 +13,7 @@ services:
 install:
 - bash ./.travis/install.sh
 - pip install -U coveralls
+- pip install tox
 before_script:
   - psql -c 'create database parsec_test;' -U postgres
 script:
