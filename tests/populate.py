@@ -321,6 +321,9 @@ def _populate_factory(user):
 async def populate_backend(user, backend):
     data = populate_factory(user)
 
+    # Useful to keep this here to allow tests to retrieve ids
+    backend.test_populate_data = data['backend']
+
     for vlob_id, vlob in data['backend']['vlobs'].items():
         await backend.vlob.create(vlob_id, vlob['rts'], vlob['wts'], vlob['blobs'][0])
         for version, blob in enumerate(vlob['blobs'][1:], 2):

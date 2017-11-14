@@ -1,7 +1,8 @@
 import trio
+from copy import deepcopy
 from nacl.public import PrivateKey
 from nacl.secret import SecretBox
-from copy import deepcopy
+import nacl.utils
 
 from parsec.utils import from_jsonb64, to_jsonb64
 
@@ -28,11 +29,11 @@ class Synchronizer:
     async def _synchronizer_runner(self):
         while True:
             await trio.sleep(WAIT_BEFORE_SYNC)
-            print('START BACKEND SYNCHORNIZATION')
+            print('START BACKEND SYNCHRONIZATION')
             async with trio.open_nursery() as nursery:
                 nursery.start_soon(self._synchronize_user_manifest, nursery)
                 nursery.start_soon(self._synchronize_files, nursery)
-            print('DONE BACKEND SYNCHORNIZATION')
+            print('DONE BACKEND SYNCHRONIZATION')
 
     async def _synchronize_files(self, nursery):
         # Retrieve and upload the dirty blocks

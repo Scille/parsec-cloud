@@ -44,7 +44,10 @@ def almost_wraps(wrapped, to_add=(), to_remove=1):
     # `core` param is an unknown fixture
     args = [*inspect.getargspec(wrapped).args[to_remove:], *to_add]
     signature = eval("""lambda %s: None""" % ', '.join(args))
-    return wraps(signature)
+    signature.__name__ = wrapped.__name__
+    signature.__qualname__ = wrapped.__qualname__
+    wrapper = wraps(signature)
+    return wrapper
 
 
 # `unittest.mock.patch` doesn't work as decorator on async functions
