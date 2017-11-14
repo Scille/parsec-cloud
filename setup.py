@@ -15,20 +15,17 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    "Logbook==1.0.0",
-    "cachetools==2.0.0",
-    "cryptography==1.7.1",
-    "simplejson==3.10.0",
-    "pyaml==16.12.2",
-    "click==6.7",
-    "blinker==1.4",
-    "websockets==3.3",
-    "marshmallow==2.13.5",
-    "gnupg==2.2.0",
-    "python-dateutil==2.6.0",
-    "arrow==0.10.0",
-    "attrs==17.2.0",
-    "aiohttp==2.2.3",
+    'attrs==17.3.0',
+    'click==6.7',
+    'marshmallow==2.14.0',
+    'pendulum==1.3.1',
+    'PyNaCl==1.2.0',
+    'simplejson==3.10.0',
+    # TODO: wait for trio 0.2.0 release...
+    'trio==0.1.0dev'
+]
+dependency_links=[
+    'git+https://github.com/python-trio/trio.git@389f1e1e01b410756e2833cffb992fd1ff856ae5#egg=trio-0.1.0dev',
 ]
 
 extra_requirements = {
@@ -42,6 +39,15 @@ extra_requirements['all'] = sum(extra_requirements.values(), [])
 extra_requirements['oeuf-jambon-fromage'] = extra_requirements['all']
 
 test_requirements = [
+    'pytest',
+    'pytest-xdist',
+    'pytest-cov',
+    'freezegun',
+    'tox',
+    'wheel',
+    'Sphinx',
+    'flake8',
+    'bumpversion',
     # TODO: put package test requirements here
 ]
 
@@ -58,6 +64,7 @@ setup(
     package_dir={'parsec': 'parsec'},
     include_package_data=True,
     install_requires=requirements,
+    dependency_links=dependency_links,
     extras_require=extra_requirements,
     entry_points={
         'console_scripts': [

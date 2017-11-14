@@ -3,14 +3,24 @@ import random
 import string
 from uuid import uuid4
 from marshmallow import fields
-from effect2 import TypeDispatcher, Effect
 
-from parsec.base import EEvent
-from parsec.exceptions import VlobNotFound, TrustSeedError
-from parsec.tools import UnknownCheckedSchema, to_jsonb64
+from parsec.utils import UnknownCheckedSchema, to_jsonb64, ParsecError
 
 
 TRUST_SEED_LENGTH = 12
+
+
+class VlobError(ParsecError):
+    status = 'vlob_error'
+
+
+class VlobNotFound(VlobError):
+    status = 'vlob_not_found'
+
+
+class TrustSeedError(ParsecError):
+    status = 'trust_seed_error'
+
 
 
 def generate_trust_seed():
@@ -26,27 +36,6 @@ class VlobAtom:
     write_trust_seed = attr.ib(default=attr.Factory(generate_trust_seed))
     blob = attr.ib(default=b'')
     version = attr.ib(default=1)
-
-
-@attr.s
-class EVlobCreate:
-    id = attr.ib(default=None)
-    blob = attr.ib(default=b'')
-
-
-@attr.s
-class EVlobRead:
-    id = attr.ib()
-    trust_seed = attr.ib()
-    version = attr.ib(default=None)
-
-
-@attr.s
-class EVlobUpdate:
-    id = attr.ib()
-    version = attr.ib()
-    trust_seed = attr.ib()
-    blob = attr.ib()
 
 
 class cmd_CREATE_Schema(UnknownCheckedSchema):
@@ -67,34 +56,6 @@ class cmd_UPDATE_Schema(UnknownCheckedSchema):
     blob = fields.Base64Bytes(required=True)
 
 
-async def api_vlob_create(msg):
-    msg = cmd_CREATE_Schema().load(msg)
-    atom = await Effect(EVlobCreate(**msg))
-    return {
-        'status': 'ok',
-        'id': atom.id,
-        'read_trust_seed': atom.read_trust_seed,
-        'write_trust_seed': atom.write_trust_seed
-    }
-
-
-async def api_vlob_read(msg):
-    msg = cmd_READ_Schema().load(msg)
-    atom = await Effect(EVlobRead(**msg))
-    return {
-        'status': 'ok',
-        'id': atom.id,
-        'blob': to_jsonb64(atom.blob),
-        'version': atom.version
-    }
-
-
-async def api_vlob_update(msg):
-    msg = cmd_UPDATE_Schema().load(msg)
-    await Effect(EVlobUpdate(**msg))
-    return {'status': 'ok'}
-
-
 class MockedVlob:
     def __init__(self, *args, **kwargs):
         atom = VlobAtom(*args, **kwargs)
@@ -104,29 +65,66 @@ class MockedVlob:
         self.blob_versions = [atom.blob]
 
 
+class BaseVlobComponent:
+
+    async def api_vlob_create(self, client_ctx, msg):
+        msg = cmd_CREATE_Schema().load(msg)
+        atom = await self.create(**msg)
+        return {
+            'status': 'ok',
+            'id': atom.id,
+            'read_trust_seed': atom.read_trust_seed,
+            'write_trust_seed': atom.write_trust_seed
+        }
+
+    async def api_vlob_read(self, client_ctx, msg):
+        msg = cmd_READ_Schema().load(msg)
+        atom = await self.read(**msg)
+        return {
+            'status': 'ok',
+            'id': atom.id,
+            'blob': to_jsonb64(atom.blob),
+            'version': atom.version
+        }
+
+    async def api_vlob_update(self, client_ctx, msg):
+        msg = cmd_UPDATE_Schema().load(msg)
+        await self.update(**msg)
+        return {'status': 'ok'}
+
+    async def create(self, blob, id=None):
+        raise NotImplementedError()
+
+    async def read(self, id, trust_seed, version=None):
+        raise NotImplementedError()
+
+    async def update(self, id, trust_seed, version, blob):
+        raise NotImplementedError()
+
+
 @attr.s
-class MockedVlobComponent:
+class MockedVlobComponent(BaseVlobComponent):
     vlobs = attr.ib(default=attr.Factory(dict))
 
-    async def perform_vlob_create(self, intent):
+    async def create(self, blob, id=None):
         # Generate opaque id if not provided
-        if not intent.id:
-            intent.id = uuid4().hex
-        vlob = MockedVlob(id=intent.id, blob=intent.blob)
+        if not id:
+            id = uuid4().hex
+        vlob = MockedVlob(id=id, blob=blob)
         self.vlobs[vlob.id] = vlob
         return VlobAtom(id=vlob.id,
                         read_trust_seed=vlob.read_trust_seed,
                         write_trust_seed=vlob.write_trust_seed,
                         blob=vlob.blob_versions[0])
 
-    async def perform_vlob_read(self, intent):
+    async def read(self, id, trust_seed, version=None):
         try:
-            vlob = self.vlobs[intent.id]
-            if vlob.read_trust_seed != intent.trust_seed:
+            vlob = self.vlobs[id]
+            if vlob.read_trust_seed != trust_seed:
                 raise TrustSeedError('Invalid read trust seed.')
         except KeyError:
             raise VlobNotFound('Vlob not found.')
-        version = intent.version or len(vlob.blob_versions)
+        version = version or len(vlob.blob_versions)
         try:
             return VlobAtom(id=vlob.id,
                             read_trust_seed=vlob.read_trust_seed,
@@ -136,22 +134,16 @@ class MockedVlobComponent:
         except IndexError:
             raise VlobNotFound('Wrong blob version.')
 
-    async def perform_vlob_update(self, intent):
+    async def update(self, id, trust_seed, version, blob):
         try:
-            vlob = self.vlobs[intent.id]
-            if vlob.write_trust_seed != intent.trust_seed:
+            vlob = self.vlobs[id]
+            if vlob.write_trust_seed != trust_seed:
                 raise TrustSeedError('Invalid write trust seed.')
         except KeyError:
             raise VlobNotFound('Vlob not found.')
-        if intent.version - 1 == len(vlob.blob_versions):
-            vlob.blob_versions.append(intent.blob)
+        if version - 1 == len(vlob.blob_versions):
+            vlob.blob_versions.append(blob)
         else:
             raise VlobNotFound('Wrong blob version.')
-        await Effect(EEvent('vlob_updated', intent.id))
-
-    def get_dispatcher(self):
-        return TypeDispatcher({
-            EVlobCreate: self.perform_vlob_create,
-            EVlobRead: self.perform_vlob_read,
-            EVlobUpdate: self.perform_vlob_update,
-        })
+        # TODO: trigger event
+        # await Effect(EEvent('vlob_updated', id))

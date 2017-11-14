@@ -1,9 +1,19 @@
 import attr
 from marshmallow import fields
-from effect2 import TypeDispatcher, Effect
 
-from parsec.exceptions import GroupAlreadyExist, GroupNotFound
-from parsec.tools import UnknownCheckedSchema
+from parsec.utils import UnknownCheckedSchema, ParsecError
+
+
+class GroupError(ParsecError):
+    status = 'group_error'
+
+
+class GroupAlreadyExist(GroupError):
+    status = 'group_already_exists'
+
+
+class GroupNotFound(GroupError):
+    status = 'group_not_found'
 
 
 @attr.s
@@ -11,30 +21,6 @@ class Group:
     name = attr.ib()
     admins = attr.ib(default=attr.Factory(set), convert=set)
     users = attr.ib(default=attr.Factory(set), convert=set)
-
-
-@attr.s
-class EGroupCreate:
-    name = attr.ib()
-
-
-@attr.s
-class EGroupRead:
-    name = attr.ib()
-
-
-@attr.s
-class EGroupAddIdentities:
-    name = attr.ib()
-    identities = attr.ib()
-    admin = attr.ib()
-
-
-@attr.s
-class EGroupRemoveIdentities:
-    name = attr.ib()
-    identities = attr.ib()
-    admin = attr.ib()
 
 
 class cmd_CREATE_Schema(UnknownCheckedSchema):
@@ -57,78 +43,72 @@ class cmd_REMOVE_IDENTITIES_Schema(UnknownCheckedSchema):
     admin = fields.Boolean(missing=False)
 
 
-async def api_group_create(msg):
-    msg = cmd_CREATE_Schema().load(msg)
-    await Effect(EGroupCreate(**msg))
-    return {'status': 'ok'}
+class BaseGroupComponent:
+
+    async def api_group_create(self, client_ctx, msg):
+        msg = cmd_CREATE_Schema().load(msg)
+        await self.create(**msg)
+        return {'status': 'ok'}
 
 
-async def api_group_read(msg):
-    msg = cmd_READ_Schema().load(msg)
-    group = await Effect(EGroupRead(**msg))
-    return {
-        'status': 'ok',
-        'name': group.name,
-        'admins': list(group.admins),
-        'users': list(group.users)
-    }
+    async def api_group_read(self, client_ctx, msg):
+        msg = cmd_READ_Schema().load(msg)
+        group = await self.read(**msg)
+        return {
+            'status': 'ok',
+            'name': group.name,
+            'admins': list(group.admins),
+            'users': list(group.users)
+        }
 
 
-async def api_group_add_identities(msg):
-    msg = cmd_ADD_IDENTITIES_Schema().load(msg)
-    msg['identities'] = set(msg['identities'])
-    await Effect(EGroupAddIdentities(**msg))
-    return {'status': 'ok'}
+    async def api_group_add_identities(self, client_ctx, msg):
+        msg = cmd_ADD_IDENTITIES_Schema().load(msg)
+        msg['identities'] = set(msg['identities'])
+        await self.add_identities(**msg)
+        return {'status': 'ok'}
 
 
-async def api_group_remove_identities(msg):
-    msg = cmd_REMOVE_IDENTITIES_Schema().load(msg)
-    msg['identities'] = set(msg['identities'])
-    await Effect(EGroupRemoveIdentities(**msg))
-    return {'status': 'ok'}
+    async def api_group_remove_identities(self, client_ctx, msg):
+        msg = cmd_REMOVE_IDENTITIES_Schema().load(msg)
+        msg['identities'] = set(msg['identities'])
+        await self.remove_identities(**msg)
+        return {'status': 'ok'}
 
 
 @attr.s
-class MockedGroupComponent:
+class MockedGroupComponent(BaseGroupComponent):
     _groups = attr.ib(default=attr.Factory(dict))
 
-    async def perform_group_create(self, intent):
-        if intent.name in self._groups:
+    async def perform_group_create(self, name):
+        if name in self._groups:
             raise GroupAlreadyExist('Group already exist.')
-        self._groups[intent.name] = Group(intent.name)
+        self._groups[name] = Group(name)
 
-    async def perform_group_read(self, intent):
+    async def perform_group_read(self, name):
         try:
-            return self._groups[intent.name]
+            return self._groups[name]
         except KeyError:
             raise GroupNotFound('Group not found.')
 
-    async def perform_group_add_identities(self, intent):
+    async def perform_group_add_identities(self, name, identities, admin):
         try:
-            group = self._groups[intent.name]
+            group = self._groups[name]
         except KeyError:
             raise GroupNotFound('Group not found.')
-        if intent.admin:
-            group.admins |= intent.identities
+        if admin:
+            group.admins |= identities
         else:
-            group.users |= intent.identities
+            group.users |= identities
         # TODO: send message to added user
 
-    async def perform_group_remove_identities(self, intent):
+    async def perform_group_remove_identities(self, name, identities, admin):
         try:
-            group = self._groups[intent.name]
+            group = self._groups[name]
         except KeyError:
             raise GroupNotFound('Group not found.')
-        if intent.admin:
-            group.admins -= intent.identities
+        if admin:
+            group.admins -= identities
         else:
-            group.users -= intent.identities
+            group.users -= identities
         # TODO: send message to removed user
-
-    def get_dispatcher(self):
-        return TypeDispatcher({
-            EGroupRead: self.perform_group_read,
-            EGroupCreate: self.perform_group_create,
-            EGroupAddIdentities: self.perform_group_add_identities,
-            EGroupRemoveIdentities: self.perform_group_remove_identities
-        })
