@@ -17,3 +17,15 @@ async def test_vlob_create(backend):
         assert rep['read_trust_seed']
         assert rep['write_trust_seed']
         assert rep['id'] == '123'
+
+
+@trio_test
+@with_backend(populated_for='alice')
+async def test_vlob_create(backend):
+    async with backend.test_connect('alice@test') as sock:
+        await sock.send({'cmd': 'vlob_create', 'id': '123', 'blob': to_jsonb64(b'foo')})
+        rep = await sock.recv()
+        assert rep['status'] == 'ok'
+        assert rep['read_trust_seed']
+        assert rep['write_trust_seed']
+        assert rep['id'] == '123'

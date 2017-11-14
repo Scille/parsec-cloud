@@ -13,6 +13,7 @@ from parsec.backend.vlob import MockedVlobComponent
 from parsec.backend.user_vlob import MockedUserVlobComponent
 from parsec.backend.group import MockedGroupComponent
 from parsec.backend.message import InMemoryMessageComponent
+from parsec.backend.blockstore import MockedBlockStoreComponent
 
 
 class cmd_LOGIN_Schema(BaseCmdSchema):
@@ -39,6 +40,12 @@ class BackendApp:
         self.host = config['HOST']
         self.port = int(config['PORT'])
         self.nursery = None
+        self.blockstore_url = config['BLOCKSTORE_URL']
+        # TODO: validate BLOCKSTORE_URL value
+        if self.blockstore_url == 'backend://':
+            self.blockstore = MockedBlockStoreComponent()
+        else:
+            self.blockstore = None
         self.vlob = MockedVlobComponent()
         self.user_vlob = MockedUserVlobComponent()
         self.pubkey = MockedPubKeyComponent()
@@ -49,7 +56,9 @@ class BackendApp:
             # 'subscribe_event': self.api_subscribe_event,
             # 'unsubscribe_event': self.api_unsubscribe_event,
 
-            # 'blockstore_get_url': self.api_blockstore_get_url,
+            'blockstore_post': self._api_blockstore_post,
+            'blockstore_get': self._api_blockstore_get,
+            'blockstore_get_url': self._api_blockstore_get_url,
 
             'vlob_create': self.vlob.api_vlob_create,
             'vlob_read': self.vlob.api_vlob_read,
@@ -74,6 +83,19 @@ class BackendApp:
     async def _api_ping(self, client_ctx, msg):
         msg = cmd_PING_Schema().load(msg)
         return {'status': 'ok', 'pong': msg['ping']}
+
+    async def _api_blockstore_post(self, client_ctx, msg):
+        if not self.blockstore:
+            return {'status': 'not_available'}
+        return await self.blockstore.api_blockstore_post(client_ctx, msg)
+
+    async def _api_blockstore_get(self, client_ctx, msg):
+        if not self.blockstore:
+            return {'status': 'not_available'}
+        return await self.blockstore.api_blockstore_get(client_ctx, msg)
+
+    async def _api_blockstore_get_url(self, client_ctx, msg):
+        return {'status': 'ok', 'url': self.blockstore_url}
 
     async def _do_handshake(self, sock):
         challenge = nacl.utils.random(self.config.get('HANDSHAKE_CHALLENGE_SIZE', 48))

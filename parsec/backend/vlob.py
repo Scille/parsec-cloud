@@ -69,7 +69,11 @@ class BaseVlobComponent:
 
     async def api_vlob_create(self, client_ctx, msg):
         msg = cmd_CREATE_Schema().load(msg)
-        atom = await self.create(**msg)
+        # Generate opaque id if not provided
+        id = msg.get('id') or uuid4().hex
+        rts = uuid4().hex
+        wts = uuid4().hex
+        atom = await self.create(id, rts, wts, msg['blob'])
         return {
             'status': 'ok',
             'id': atom.id,
@@ -92,7 +96,7 @@ class BaseVlobComponent:
         await self.update(**msg)
         return {'status': 'ok'}
 
-    async def create(self, blob, id=None):
+    async def create(self, id, rts, wts, blob):
         raise NotImplementedError()
 
     async def read(self, id, trust_seed, version=None):
@@ -106,11 +110,8 @@ class BaseVlobComponent:
 class MockedVlobComponent(BaseVlobComponent):
     vlobs = attr.ib(default=attr.Factory(dict))
 
-    async def create(self, blob, id=None):
-        # Generate opaque id if not provided
-        if not id:
-            id = uuid4().hex
-        vlob = MockedVlob(id=id, blob=blob)
+    async def create(self, id, rts, wts, blob):
+        vlob = MockedVlob(id, rts, wts, blob)
         self.vlobs[vlob.id] = vlob
         return VlobAtom(id=vlob.id,
                         read_trust_seed=vlob.read_trust_seed,

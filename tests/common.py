@@ -13,7 +13,7 @@ from parsec.utils import CookedSocket, to_jsonb64, from_jsonb64, User
 from parsec.core.local_storage import BaseLocalStorage
 from parsec.backend.app import BackendApp
 
-from tests.populate import populate_local_storage_cls
+from tests.populate import populate_local_storage_cls, populate_backend
 
 
 alice = User(
@@ -214,9 +214,9 @@ def with_populated_local_storage(user='alice'):
     assert isinstance(user, User)
 
     def decorator(testfunc):
-        # @wraps(testfunc)
+        @wraps(testfunc)
         async def wrapper(core, *args, **kwargs):
-            assert isinstance(core, CoreAppTesting), 'missing `@with_core` parent decorator !'
+            assert isinstance(core, CoreApp), 'missing `@with_core` parent decorator !'
             populate_local_storage_cls(user, core.mocked_local_storage_cls)
             await testfunc(core, *args, **kwargs)
         return wrapper
@@ -264,6 +264,7 @@ class ConnectToBackend:
 async def _test_backend_factory(config=None):
     config = config or {}
     config['HOST'] = '127.0.0.1'
+    config['BLOCKSTORE_URL'] = 'backend://'
     config.setdefault('PORT', _get_unused_port())
     backend = BackendAppTesting(config)
     for userid, user in TEST_USERS.items():
@@ -271,13 +272,14 @@ async def _test_backend_factory(config=None):
     return backend
 
 
-def with_backend(config=None):
+def with_backend(config=None, populated_for=None):
 
     def decorator(testfunc):
         @almost_wraps(testfunc, ['backend_store'])
         async def wrapper(backend_store, *args, **kwargs):
             backend = await _test_backend_factory(config)
-
+            if populated_for:
+                await populate_backend(globals()[populated_for], backend)
             async def run_test_and_cancel_scope(nursery):
                 await testfunc(backend, *args, **kwargs)
                 nursery.cancel_scope.cancel()
