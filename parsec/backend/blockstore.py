@@ -9,20 +9,20 @@ class BlockStoreError(ParsecError):
     status = 'block_store_error'
 
 
-class UnknownBlockError(ParsecError):
-    status = 'unknown_block_error'
+class BlockNotFoundError(ParsecError):
+    status = 'block_not_found'
 
 
 class cmd_GET_Schema(UnknownCheckedSchema):
-    id = fields.String(missing=None, validate=lambda n: 0 < len(n) <= 32)
+    id = fields.String(required=True, validate=lambda n: 0 < len(n) <= 32)
 
 
 class cmd_POST_Schema(UnknownCheckedSchema):
-    block = fields.Base64Bytes(missing=to_jsonb64(b''))
+    block = fields.Base64Bytes(required=True)
 
 
 class BaseBlockStoreComponent:
-    async def api_block_store_get(self, client_ctx, msg):
+    async def api_blockstore_get(self, client_ctx, msg):
         msg = cmd_GET_Schema().load(msg)
         block = await self.get(msg['id'])
         return {
@@ -30,7 +30,7 @@ class BaseBlockStoreComponent:
             'block': to_jsonb64(block)
         }
 
-    async def api_block_store_post(self, client_ctx, msg):
+    async def api_blockstore_post(self, client_ctx, msg):
         msg = cmd_POST_Schema().load(msg)
         id = uuid4().hex
         await self.post(id, msg['block'])
@@ -50,8 +50,8 @@ class MockedBlockStoreComponent(BaseBlockStoreComponent):
     async def get(self, id):
         try:
             return self.blocks[id]
-        except IndexError:
-            raise BlockStoreError('Unknown block id.')
+        except KeyError:
+            raise BlockNotFoundError('Unknown block id.')
 
     async def post(self, id, block):
         if id in self.blocks:

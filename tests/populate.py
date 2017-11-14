@@ -33,7 +33,7 @@ def _populate_factory(user):
             'user_vlobs': {
                 # <userid>: [<bytes>, ...]
             },
-            'blockstore': {
+            'blocks': {
                     # <id>: <bytes>
             }
         },
@@ -64,12 +64,12 @@ def _populate_factory(user):
     up_to_date_txt_block_1_id = '505b0bef5dd44763abc9eac03c765bc3'
     up_to_date_txt_block_1_key = b'\xec\x1d\x84\x80\x05\x18\xb0\x8a\x1d\x81\xe0\xdb\xe5%wx\x9f\x7f\x01\xa6\x8f#>\xc5]\xae|\xfd\x1d\xc22\x05'
     up_to_date_txt_block_1_blob = SecretBox(up_to_date_txt_block_1_key).encrypt(b'Hello from ')
-    data['backend']['blockstore'][up_to_date_txt_block_1_id] = up_to_date_txt_block_1_blob
+    data['backend']['blocks'][up_to_date_txt_block_1_id] = up_to_date_txt_block_1_blob
     data['core']['blocks'][up_to_date_txt_block_1_id] = up_to_date_txt_block_1_blob
     up_to_date_txt_block_2_id = '0187fa3fc8a5480cbb3ef9df5dd2b7e9'
     up_to_date_txt_block_2_key = b'\xae\x85y\xdd:\xae\xa6\xf2\xdf\xce#U\x17\xffa\xde\x19\x1d\xa7\x84[\xb8\x92{$6\xf9\xc4\x8b\xbcT\x14'
     up_to_date_txt_block_2_blob = SecretBox(up_to_date_txt_block_2_key).encrypt(b'up_to_date.txt !')
-    data['backend']['blockstore'][up_to_date_txt_block_2_id] = up_to_date_txt_block_2_blob
+    data['backend']['blocks'][up_to_date_txt_block_2_id] = up_to_date_txt_block_2_blob
     data['core']['blocks'][up_to_date_txt_block_2_id] = up_to_date_txt_block_2_blob
 
     # /dir/up_to_date.txt - File manifest
@@ -103,12 +103,12 @@ def _populate_factory(user):
     non_local_txt_block_1_id = '74ab15c511734fed86163944586e721a'
     non_local_txt_block_1_key = b'\xec\x1d\x84\x80\x05\x18\xb0\x8a\x1d\x81\xe0\xdb\xe5%wx\x9f\x7f\x01\xa6\x8f#>\xc5]\xae|\xfd\x1d\xc22\x05'
     non_local_txt_block_1_blob = SecretBox(non_local_txt_block_1_key).encrypt(b'Hello from ')
-    data['backend']['blockstore'][non_local_txt_block_1_id] = non_local_txt_block_1_blob
+    data['backend']['blocks'][non_local_txt_block_1_id] = non_local_txt_block_1_blob
     data['core']['blocks'][non_local_txt_block_1_id] = non_local_txt_block_1_blob
     non_local_txt_block_2_id = 'bc9d482e76f54b21bf96532272defc43'
     non_local_txt_block_2_key = b'\xae\x85y\xdd:\xae\xa6\xf2\xdf\xce#U\x17\xffa\xde\x19\x1d\xa7\x84[\xb8\x92{$6\xf9\xc4\x8b\xbcT\x14'
     non_local_txt_block_2_blob = SecretBox(non_local_txt_block_2_key).encrypt(b'non_local.txt !')
-    data['backend']['blockstore'][non_local_txt_block_2_id] = non_local_txt_block_2_blob
+    data['backend']['blocks'][non_local_txt_block_2_id] = non_local_txt_block_2_blob
     data['core']['blocks'][non_local_txt_block_2_id] = non_local_txt_block_2_blob
 
     # /dir/non_local.txt - File manifest
@@ -142,7 +142,7 @@ def _populate_factory(user):
     modified_txt_block_1_id = '973a198b344d403888472e17b610a43e'
     modified_txt_block_1_key = b'\xc7|\xd7+\xe5\xfbv\xd2\x8c0\xea\r\xff{;2\x0f\xb8s-H\xfd\xfb\xd4\xa157\x86\xde<3\xaa'
     modified_txt_block_1_blob = SecretBox(modified_txt_block_1_key).encrypt(b'This is version 1.')
-    data['backend']['blockstore'][modified_txt_block_1_id] = modified_txt_block_1_blob
+    data['backend']['blocks'][modified_txt_block_1_id] = modified_txt_block_1_blob
     data['core']['blocks'][modified_txt_block_1_id] = modified_txt_block_1_blob
 
     # /dir/modified.txt - File manifest
@@ -333,7 +333,7 @@ async def populate_backend(user, backend):
         for version, blob in enumerate(blobs, 1):
             await backend.user_vlob.update(user_id, version, blob)
 
-    for block_id, block in data['backend']['blockstore'].items():
+    for block_id, block in data['backend']['blocks'].items():
         await backend.blockstore.post(block_id, block)
 
 
