@@ -115,7 +115,8 @@ class LocalFS:
             'id': file.id,
             'key': to_jsonb64(key)
         }
-        self.local_user_manifest.file_placeholders.append(path)
+        self.local_user_manifest.file_placeholders.add(path)
+        self.local_user_manifest.is_dirty = True
         self._sync_local_user_manifest()
         file.sync()
         return {'status': 'ok'}
@@ -150,6 +151,8 @@ class LocalFS:
             # Data not in local and backend is offline
             abort('unavailable_resource')
         file.write(req['content'], req['offset'])
+        if obj['type'] == 'file':
+            self.local_user_manifest.dirty_files.add(path)
         return {'status': 'ok'}
 
     async def _cmd_FILE_TRUNCATE(self, req):
@@ -166,6 +169,8 @@ class LocalFS:
             # Data not in local and backend is offline
             abort('unavailable_resource')
         file.truncate(req['length'])
+        if obj['type'] == 'file':
+            self.local_user_manifest.dirty_files.add(path)
         return {'status': 'ok'}
 
     async def _cmd_FILE_SYNC(self, req):
@@ -240,6 +245,7 @@ class LocalFS:
         dirobj['children'][name] = {
             'type': 'folder', 'children': {}, 'stat': {'created': now, 'updated': now}}
         self._sync_local_user_manifest()
+        self.local_user_manifest.is_dirty = True
         return {'status': 'ok'}
 
     async def _cmd_MOVE(self, req):
@@ -257,6 +263,7 @@ class LocalFS:
         dstobj = self.local_user_manifest.retrieve_path(dstdirpath)
         dstobj['children'][dstfilename] = srcobj['children'][scrfilename]
         del srcobj['children'][scrfilename]
+        self.local_user_manifest.is_dirty = True
         self._sync_local_user_manifest()
         return {'status': 'ok'}
 
@@ -267,6 +274,7 @@ class LocalFS:
         dirpath, leafname = path.rsplit('/', 1)
         obj = self.local_user_manifest.retrieve_path(dirpath)
         del obj['children'][leafname]
+        self.local_user_manifest.is_dirty = True
         self._sync_local_user_manifest()
         return {'status': 'ok'}
 

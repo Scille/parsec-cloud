@@ -78,7 +78,16 @@ def _populate_factory(user):
     up_to_date_txt_rts = 'c84bf72d941f4a249fe6754033f9214c'
     up_to_date_txt_wts = '03a2902ed1af4e15a60aa4223f8d9453'
     up_to_date_txt_key = b'0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-'
-    up_to_date_txt_fms = {
+    up_to_date_txt_fm_v1 = {
+        'version': 1,
+        'created': '2017-12-02T12:30:30+00:00',
+        'updated': '2017-12-02T12:30:40+00:00',
+        'blocks': [
+            {'id': up_to_date_txt_block_1_id, 'key': to_jsonb64(up_to_date_txt_block_1_key), 'offset': 0, 'size': 11},
+        ],
+        'size': 11
+    }
+    up_to_date_txt_fm_v2 = {
         'version': 2,
         'created': '2017-12-02T12:30:30+00:00',
         'updated': '2017-12-02T12:30:45+00:00',
@@ -88,13 +97,14 @@ def _populate_factory(user):
         ],
         'size': 27
     }
-    up_to_date_txt_fm_blob = SecretBox(up_to_date_txt_key).encrypt(json.dumps(up_to_date_txt_fms).encode())
+    up_to_date_txt_fm_v1_blob = SecretBox(up_to_date_txt_key).encrypt(json.dumps(up_to_date_txt_fm_v1).encode())
+    up_to_date_txt_fm_v2_blob = SecretBox(up_to_date_txt_key).encrypt(json.dumps(up_to_date_txt_fm_v2).encode())
     data['backend']['vlobs'][up_to_date_txt_id] = {
-        'blobs': [up_to_date_txt_fm_blob],
+        'blobs': [up_to_date_txt_fm_v1_blob, up_to_date_txt_fm_v2_blob],
         'rts': up_to_date_txt_rts,
         'wts': up_to_date_txt_wts
     }
-    data['core']['file_manifests'][up_to_date_txt_id] = up_to_date_txt_fm_blob
+    data['core']['file_manifests'][up_to_date_txt_id] = up_to_date_txt_fm_v2_blob
 
     # /dir/up_to_date.txt - No dirty blocks (the file is up to date...)
     # /dir/up_to_date.txt - No dirty file manifest (the file is up to date...)
@@ -117,7 +127,7 @@ def _populate_factory(user):
     non_local_txt_rts = '95f04f9836704a1582309b21923a0ec2'
     non_local_txt_wts = '839069b2089b496cbc1888c43a30edf4'
     non_local_txt_key = b'0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-'
-    non_local_txt_fms = {
+    non_local_txt_fm = {
         'version': 1,
         'created': '2017-12-02T12:38:30+00:00',
         'updated': '2017-12-02T12:38:45+00:00',
@@ -127,7 +137,7 @@ def _populate_factory(user):
         ],
         'size': 27
     }
-    non_local_txt_fm_blob = SecretBox(non_local_txt_key).encrypt(json.dumps(non_local_txt_fms).encode())
+    non_local_txt_fm_blob = SecretBox(non_local_txt_key).encrypt(json.dumps(non_local_txt_fm).encode())
     data['backend']['vlobs'][non_local_txt_id] = {
         'blobs': [non_local_txt_fm_blob],
         'rts': non_local_txt_rts,
@@ -145,6 +155,12 @@ def _populate_factory(user):
     data['backend']['blocks'][modified_txt_block_1_id] = modified_txt_block_1_blob
     data['core']['blocks'][modified_txt_block_1_id] = modified_txt_block_1_blob
 
+    modified_txt_block_2_id = 'cd0396c3c59a453d9fe3253a8c443252'
+    modified_txt_block_2_key = b"\xdaT'jU\x0cra}\x02=\xfe\x05\xdbf\xbf\x86\xa3@F\xc6?\x1d\xadg%\xdb\x146\x91n\xde"
+    modified_txt_block_2_blob = SecretBox(modified_txt_block_2_key).encrypt(b'This is version 2.')
+    data['backend']['blocks'][modified_txt_block_2_id] = modified_txt_block_2_blob
+    data['core']['blocks'][modified_txt_block_2_id] = modified_txt_block_2_blob
+
     # /dir/modified.txt - File manifest
     # This file manifest should be shadowed by the dirty file manifest in the core
 
@@ -152,22 +168,32 @@ def _populate_factory(user):
     modified_txt_rts = 'a8340d5831a44592a7941d7aa1d5c187'
     modified_txt_wts = '68ad5d1c3b9e4192834e888cd773ff18'
     modified_txt_key = b'0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-'
-    modified_txt_fms = {
-        'version': 2,
+    modified_txt_fm_v1 = {
+        'version': 1,
         'created': '2017-12-02T12:50:30+00:00',
-        'updated': '2017-12-02T12:50:45+00:00',
+        'updated': '2017-12-02T12:50:40+00:00',
         'blocks': [
             {'id': modified_txt_block_1_id, 'key': to_jsonb64(modified_txt_block_1_key), 'offset': 0, 'size': 18},
         ],
         'size': 18
     }
-    modified_txt_fm_blob = SecretBox(modified_txt_key).encrypt(json.dumps(modified_txt_fms).encode())
+    modified_txt_fm_v2 = {
+        'version': 2,
+        'created': '2017-12-02T12:50:30+00:00',
+        'updated': '2017-12-02T12:50:45+00:00',
+        'blocks': [
+            {'id': modified_txt_block_2_id, 'key': to_jsonb64(modified_txt_block_2_key), 'offset': 0, 'size': 18},
+        ],
+        'size': 18
+    }
+    modified_txt_fm_v1_blob = SecretBox(modified_txt_key).encrypt(json.dumps(modified_txt_fm_v1).encode())
+    modified_txt_fm_v2_blob = SecretBox(modified_txt_key).encrypt(json.dumps(modified_txt_fm_v2).encode())
     data['backend']['vlobs'][modified_txt_id] = {
-        'blobs': [modified_txt_fm_blob],
+        'blobs': [modified_txt_fm_v1_blob, modified_txt_fm_v2_blob],
         'rts': modified_txt_rts,
         'wts': modified_txt_wts
     }
-    data['core']['file_manifests'][modified_txt_id] = modified_txt_fm_blob
+    data['core']['file_manifests'][modified_txt_id] = modified_txt_fm_v2_blob
 
     # /dir/modified.txt - Dirty blocks
 
@@ -304,7 +330,8 @@ def _populate_factory(user):
     local_user_manifest = {
         'base_version': 3,
         'is_dirty': True,
-        'file_placeholders': [new_txt_placeholder_id],
+        'file_placeholders': ['/dir/new.txt'],
+        'dirty_files': ['/dir/modified.txt'],
         'tree': deepcopy(user_manifest_v3)
     }
     local_user_manifest['tree']['children']['dir']['children']['new.txt'] = {

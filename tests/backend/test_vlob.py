@@ -125,7 +125,7 @@ async def test_read_bad_version(backend):
             'version': len(vblobs) + 1
         })
         rep = await sock.recv()
-        assert rep == {'status': 'vlob_not_found', 'reason': 'Wrong blob version.'}
+        assert rep == {'status': 'vlob_error', 'reason': 'Wrong blob version.'}
 
 
 @trio_test
@@ -212,7 +212,7 @@ async def test_update_bad_version(backend):
             'blob': to_jsonb64(b'Next version.')
         })
         rep = await sock.recv()
-        assert rep == {'status': 'vlob_not_found', 'reason': 'Wrong blob version.'}
+        assert rep == {'status': 'vlob_error', 'reason': 'Wrong blob version.'}
 
 
 @trio_test

@@ -184,6 +184,7 @@ def with_core(config=None, backend_config=None, mocked_get_user=True, mocked_loc
             backend = await _test_backend_factory(backend_config)
             config['BACKEND_ADDR'] = 'tcp://127.0.0.1:%s' % backend.port
             core = await _test_core_factory(config, mocked_get_user)
+            core.test_backend = backend
 
             async def run_test_and_cancel_scope(nursery):
                 if mocked_local_storage:
@@ -219,6 +220,7 @@ def with_populated_local_storage(user='alice'):
         @wraps(testfunc)
         async def wrapper(core, *args, **kwargs):
             assert isinstance(core, CoreApp), 'missing `@with_core` parent decorator !'
+            await populate_backend(user, core.test_backend)
             populate_local_storage_cls(user, core.mocked_local_storage_cls)
             await testfunc(core, *args, **kwargs)
         return wrapper

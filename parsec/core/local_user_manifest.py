@@ -23,6 +23,8 @@ def _create_root_tree():
 def decrypt_and_load_local_user_manifest(privkey, ciphered_data):
     box = Box(privkey, privkey.public_key)
     data = json.loads(box.decrypt(ciphered_data).decode())
+    data['dirty_files'] = set(data['dirty_files'])
+    data['file_placeholders'] = set(data['file_placeholders'])
     return LocalUserManifest(**data)
 
 
@@ -35,7 +37,8 @@ def dump_and_encrypt_local_user_manifest(privkey, local_user_manifest):
 class LocalUserManifest:
     tree = attr.ib(default=attr.Factory(_create_root_tree))
     base_version = attr.ib(default=0)
-    file_placeholders = attr.ib(default=attr.Factory(list))
+    file_placeholders = attr.ib(default=attr.Factory(set))
+    dirty_files = attr.ib(default=attr.Factory(set))
     is_dirty = attr.ib(default=False)
 
     def dump(self):
@@ -43,7 +46,8 @@ class LocalUserManifest:
             'tree': self.tree,
             'base_version': self.base_version,
             'is_dirty': self.is_dirty,
-            'file_placeholders': self.file_placeholders
+            'file_placeholders': list(self.file_placeholders),
+            'dirty_files': list(self.dirty_files)
         }
 
     def check_path(self, path, should_exists=True, type=None):
@@ -72,7 +76,7 @@ class LocalUserManifest:
                 raise InvalidPath("Path `%s` doesn't exist" % path)
 
     def retrieve_path(self, path):
-        # Try to retrieve the 
+        # Try to retrieve the
         if not path:
             return self.tree
         if not path.startswith('/'):

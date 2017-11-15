@@ -133,7 +133,7 @@ class MockedVlobComponent(BaseVlobComponent):
                             blob=vlob.blob_versions[version - 1],
                             version=version)
         except IndexError:
-            raise VlobNotFound('Wrong blob version.')
+            raise VlobError('Wrong blob version.')
 
     async def update(self, id, trust_seed, version, blob):
         try:
@@ -145,6 +145,6 @@ class MockedVlobComponent(BaseVlobComponent):
         if version - 1 == len(vlob.blob_versions):
             vlob.blob_versions.append(blob)
         else:
-            raise VlobNotFound('Wrong blob version.')
+            raise VlobError('Wrong blob version.')
         # TODO: trigger event
         # await Effect(EEvent('vlob_updated', id))

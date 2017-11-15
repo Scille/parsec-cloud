@@ -20,9 +20,6 @@ class FileManager:
         self.local_storage = local_storage
         self._files = {}
 
-    def get_dirty_files(self):
-        return [f for f in self._files if isinstance(f, LocalFile) and f.is_dirty]
-
     async def get_file(self, id, rts, wts, key):
         file = self._files.get(id)
         if not file:
