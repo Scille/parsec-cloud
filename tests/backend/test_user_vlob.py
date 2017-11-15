@@ -29,6 +29,21 @@ async def test_user_vlob_read_bad_version(backend):
         assert rep == {'status': 'user_vlob_error', 'reason': 'Wrong blob version.'}
 
 
+@pytest.mark.parametrize('bad_msg', [
+    {'version': None},
+    {'version': '42x'},
+    {'bad_field': 'foo'}
+])
+@trio_test
+@with_backend()
+async def test_user_vlob_read_bad_msg(backend, bad_msg):
+    async with backend.test_connect('alice@test') as sock:
+        await sock.send({'cmd': 'user_vlob_read', **bad_msg})
+        rep = await sock.recv()
+        # assert rep == {}
+        assert rep['status'] == 'bad_message'
+
+
 @trio_test
 @with_backend(populated_for='alice')
 async def test_user_vlob_update_ok(backend):
@@ -56,4 +71,21 @@ async def test_user_vlob_update_bad_version(backend):
         assert rep == {'status': 'user_vlob_error', 'reason': 'Wrong blob version.'}
 
 
-# TODO: test bad params for user_vlob_update and user_vlob_read
+@pytest.mark.parametrize('bad_msg', [
+    {'version': 42, 'blob': to_jsonb64(b'...'), 'bad_field': 'foo'},
+    {'version': '42x', 'blob': to_jsonb64(b'...')},
+    {'version': None, 'blob': to_jsonb64(b'...')},
+    {'version': 42, 'blob': 42},
+    {'version': 42, 'blob': None},
+    {'version': 42, 'blob': '<not a b64>'},
+    {}
+])
+@trio_test
+@with_backend()
+async def test_user_vlob_update_bad_msg(backend, bad_msg):
+    async with backend.test_connect('alice@test') as sock:
+        await sock.send({'cmd': 'user_vlob_update', **bad_msg})
+        rep = await sock.recv()
+        # Id and trust_seed are invalid anyway, but here we test another layer
+        # so it's not important as long as we get our `bad_message` status
+        assert rep['status'] == 'bad_message'

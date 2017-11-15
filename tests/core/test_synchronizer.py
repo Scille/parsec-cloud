@@ -30,6 +30,7 @@ def with_backend_conn_mocked(testfunc):
 
     return async_patch('parsec.core.local_fs.BackendConnection', BackendConnectionMock)(testfunc)
 
+
 @trio_test
 @with_backend_conn_mocked
 @with_core(with_backend=False)
