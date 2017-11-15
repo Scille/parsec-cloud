@@ -2,6 +2,9 @@ import os
 import pytest
 
 
+pytest_plugins = "pytest_trio.plugin"
+
+
 def pytest_addoption(parser):
     parser.addoption("--no-postgresql", action="store_true",
                      help="Don't run tests making use of PostgreSQL")
