@@ -2,6 +2,7 @@ import trio
 import socket
 import inspect
 import attr
+import contextlib
 from collections import defaultdict
 from unittest.mock import Mock, patch
 from functools import wraps
@@ -61,11 +62,9 @@ def async_patch(*patch_args, **patch_kwargs):
 
 
 def _get_unused_port():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('', 0))
-    port = sock.getsockname()[1]
-    sock.close()
-    return port
+    with contextlib.closing(socket.socket()) as sock:
+        sock.bind(('127.0.0.1', 0))
+        return sock.getsockname()[1]
 
 
 ### CORE helpers ###
