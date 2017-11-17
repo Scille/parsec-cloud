@@ -26,6 +26,26 @@ def _populate_factory(user):
     /dir/non_local.txt <= regular file, only stored in backend
     """
     data = {
+        # Useful for simple introspection of data
+        'clear': {
+            'user_manifests': {
+                # <userid>: [<dict>, ...]
+            },
+            'local_user_manifests': {
+                # <userid>: <dict>
+            },
+            'file_manifests': {
+                # <id>: [<dict>, ...]
+            },
+            'dirty_file_manifests': {
+                # <id>: <dict>
+            },
+            'placeholder_file_manifests': {
+                # <id>: <dict>
+            }
+
+        },
+        # Data stored in the backend
         'backend': {
             'vlobs': {
                 # <id>: {'rts': <str>, 'wts': <str>, 'blobs': [<bytes>, ...]}
@@ -37,6 +57,7 @@ def _populate_factory(user):
                     # <id>: <bytes>
             }
         },
+        # Data stored in the core
         'core': {
             'local_user_manifest': None,  # <bytes>
             'dirty_blocks': {
@@ -79,6 +100,7 @@ def _populate_factory(user):
     up_to_date_txt_wts = '03a2902ed1af4e15a60aa4223f8d9453'
     up_to_date_txt_key = b'0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-'
     up_to_date_txt_fm_v1 = {
+        'format': 1,
         'version': 1,
         'created': '2017-12-02T12:30:30+00:00',
         'updated': '2017-12-02T12:30:40+00:00',
@@ -88,6 +110,7 @@ def _populate_factory(user):
         'size': 11
     }
     up_to_date_txt_fm_v2 = {
+        'format': 1,
         'version': 2,
         'created': '2017-12-02T12:30:30+00:00',
         'updated': '2017-12-02T12:30:45+00:00',
@@ -104,6 +127,7 @@ def _populate_factory(user):
         'rts': up_to_date_txt_rts,
         'wts': up_to_date_txt_wts
     }
+    data['clear']['file_manifests'][up_to_date_txt_id] = [up_to_date_txt_fm_v1, up_to_date_txt_fm_v2]
     data['core']['file_manifests'][up_to_date_txt_id] = up_to_date_txt_fm_v2_blob
 
     # /dir/up_to_date.txt - No dirty blocks (the file is up to date...)
@@ -128,6 +152,7 @@ def _populate_factory(user):
     non_local_txt_wts = '839069b2089b496cbc1888c43a30edf4'
     non_local_txt_key = b'0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-'
     non_local_txt_fm = {
+        'format': 1,
         'version': 1,
         'created': '2017-12-02T12:38:30+00:00',
         'updated': '2017-12-02T12:38:45+00:00',
@@ -143,6 +168,7 @@ def _populate_factory(user):
         'rts': non_local_txt_rts,
         'wts': non_local_txt_wts
     }
+    data['clear']['file_manifests'][up_to_date_txt_id] = [non_local_txt_fm]
 
     # /dir/non_local.txt - No dirty blocks (the file is not in the core)
     # /dir/non_local.txt - No dirty file manifest (the file is not in the core)
@@ -169,6 +195,7 @@ def _populate_factory(user):
     modified_txt_wts = '68ad5d1c3b9e4192834e888cd773ff18'
     modified_txt_key = b'0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-'
     modified_txt_fm_v1 = {
+        'format': 1,
         'version': 1,
         'created': '2017-12-02T12:50:30+00:00',
         'updated': '2017-12-02T12:50:40+00:00',
@@ -178,6 +205,7 @@ def _populate_factory(user):
         'size': 18
     }
     modified_txt_fm_v2 = {
+        'format': 1,
         'version': 2,
         'created': '2017-12-02T12:50:30+00:00',
         'updated': '2017-12-02T12:50:45+00:00',
@@ -193,6 +221,7 @@ def _populate_factory(user):
         'rts': modified_txt_rts,
         'wts': modified_txt_wts
     }
+    data['clear']['file_manifests'][modified_txt_id] = [modified_txt_fm_v1, modified_txt_fm_v2]
     data['core']['file_manifests'][modified_txt_id] = modified_txt_fm_v2_blob
 
     # /dir/modified.txt - Dirty blocks
@@ -205,6 +234,7 @@ def _populate_factory(user):
     # /dir/modified.txt - Dirty file manifest
 
     modified_txt_dirty_fm = {
+        'format': 1,
         'version': 2,
         'created': '2017-12-02T12:50:30+00:00',
         'updated': '2017-12-02T12:51:00+00:00',
@@ -218,6 +248,7 @@ def _populate_factory(user):
     }
     modified_txt_dirty_fm_blob = SecretBox(modified_txt_key).encrypt(json.dumps(modified_txt_dirty_fm).encode())
     data['core']['dirty_file_manifests'][modified_txt_id] = modified_txt_dirty_fm_blob
+    data['clear']['dirty_file_manifests'][modified_txt_id] = modified_txt_dirty_fm
 
     # /dir/new.txt - No blocks (given the file is a placeholder so far)
     # /dir/new.txt - No file manifest (given the file is a placeholder so far)
@@ -239,6 +270,7 @@ def _populate_factory(user):
     new_txt_placeholder_id = '3ca6cb2ba8a9446f8508296b7a8c3ed4'
     new_txt_placeholder_key = b'"\x08"Q\xfbc\xa3 \xf9\xde\xbf\xc3\x07?\x9a\xa6V\xcet\x0c\xa1C\xf2\xa06\xa1\xc9 \xbf\xf6t\xbb'
     new_txt_placeholder_fm = {
+        'format': 1,
         'version': 0,
         'created': '2017-12-02T12:50:30+00:00',
         'updated': '2017-12-02T12:51:00+00:00',
@@ -252,75 +284,89 @@ def _populate_factory(user):
     }
     new_txt_placeholder_fm_blob = SecretBox(new_txt_placeholder_key).encrypt(json.dumps(new_txt_placeholder_fm).encode())
     data['core']['placeholder_file_manifests'][new_txt_placeholder_id] = new_txt_placeholder_fm_blob
+    data['clear']['placeholder_file_manifests'][new_txt_placeholder_id] = new_txt_placeholder_fm
 
     # Now user manifest stored in the backend
     userbox = Box(user.privkey, user.pubkey)
 
     user_manifest_v1 = {
-        'type': 'folder',
-        'created': '2017-12-02T12:30:23+00:00',
-        'children': {}
+        'format': 1,
+        'version': 1,
+        'tree': {
+            'type': 'folder',
+            'created': '2017-12-02T12:30:23+00:00',
+            'children': {}
+        }
     }
     user_manifest_v2 = {
-        'type': 'folder',
-        'created': '2017-12-02T12:30:23+00:00',
-        'children': {
-            'dir': {
-                'type': 'folder',
-                'created': '2017-12-02T12:30:23+00:00',
-                'children': {
-                    'up_to_date.txt': {
-                        'type': 'file',
-                        'id': up_to_date_txt_id,
-                        'read_trust_seed': up_to_date_txt_rts,
-                        'write_trust_seed': up_to_date_txt_wts,
-                        'key': to_jsonb64(up_to_date_txt_key)
+        'format': 1,
+        'version': 2,
+        'tree': {
+            'type': 'folder',
+            'created': '2017-12-02T12:30:23+00:00',
+            'children': {
+                'dir': {
+                    'type': 'folder',
+                    'created': '2017-12-02T12:30:23+00:00',
+                    'children': {
+                        'up_to_date.txt': {
+                            'type': 'file',
+                            'id': up_to_date_txt_id,
+                            'read_trust_seed': up_to_date_txt_rts,
+                            'write_trust_seed': up_to_date_txt_wts,
+                            'key': to_jsonb64(up_to_date_txt_key)
+                        }
                     }
                 }
             }
         }
     }
     user_manifest_v3 = {
-        'type': 'folder',
-        'created': '2017-12-02T12:30:23+00:00',
-        'children': {
-            'empty_dir': {
-                'type': 'folder',
-                'created': '2017-12-02T12:29:03+00:00',
-                'children': {
+        'format': 1,
+        'version': 3,
+        'tree': {
+            'type': 'folder',
+            'created': '2017-12-02T12:30:23+00:00',
+            'children': {
+                'empty_dir': {
+                    'type': 'folder',
+                    'created': '2017-12-02T12:29:03+00:00',
+                    'children': {
+                    },
                 },
-            },
-            'dir': {
-                'type': 'folder',
-                'created': '2017-12-02T12:30:23+00:00',
-                'children': {
+                'dir': {
+                    'type': 'folder',
+                    'created': '2017-12-02T12:30:23+00:00',
+                    'children': {
 
-                    'non_local.txt': {
-                        'type': 'file',
-                        'id': non_local_txt_id,
-                        'read_trust_seed': non_local_txt_rts,
-                        'write_trust_seed': non_local_txt_wts,
-                        'key': to_jsonb64(up_to_date_txt_key)
-                    },
-                    'up_to_date.txt': {
-                        'type': 'file',
-                        'id': up_to_date_txt_id,
-                        'read_trust_seed': up_to_date_txt_rts,
-                        'write_trust_seed': up_to_date_txt_wts,
-                        'key': to_jsonb64(up_to_date_txt_key)
-                    },
-                    'modified.txt': {
-                        'type': 'file',
-                        'id': modified_txt_id,
-                        'read_trust_seed': modified_txt_rts,
-                        'write_trust_seed': modified_txt_wts,
-                        'key': to_jsonb64(modified_txt_key)
+                        'non_local.txt': {
+                            'type': 'file',
+                            'id': non_local_txt_id,
+                            'read_trust_seed': non_local_txt_rts,
+                            'write_trust_seed': non_local_txt_wts,
+                            'key': to_jsonb64(up_to_date_txt_key)
+                        },
+                        'up_to_date.txt': {
+                            'type': 'file',
+                            'id': up_to_date_txt_id,
+                            'read_trust_seed': up_to_date_txt_rts,
+                            'write_trust_seed': up_to_date_txt_wts,
+                            'key': to_jsonb64(up_to_date_txt_key)
+                        },
+                        'modified.txt': {
+                            'type': 'file',
+                            'id': modified_txt_id,
+                            'read_trust_seed': modified_txt_rts,
+                            'write_trust_seed': modified_txt_wts,
+                            'key': to_jsonb64(modified_txt_key)
+                        }
+
                     }
-
                 }
             }
         }
     }
+    data['clear']['user_manifests'][user.id] = [user_manifest_v1, user_manifest_v2, user_manifest_v3]
     user_manifest_v1_blob = userbox.encrypt(json.dumps(user_manifest_v1).encode())
     user_manifest_v2_blob = userbox.encrypt(json.dumps(user_manifest_v2).encode())
     user_manifest_v3_blob = userbox.encrypt(json.dumps(user_manifest_v3).encode())
@@ -328,11 +374,12 @@ def _populate_factory(user):
 
     # Finally, create the local user manifest
     local_user_manifest = {
+        'format': 1,
         'base_version': 3,
         'is_dirty': True,
         'file_placeholders': ['/dir/new.txt'],
         'dirty_files': ['/dir/modified.txt'],
-        'tree': deepcopy(user_manifest_v3)
+        'tree': deepcopy(user_manifest_v3['tree'])
     }
     local_user_manifest['tree']['children']['dir']['children']['new.txt'] = {
         'type': 'placeholder_file',
@@ -341,6 +388,7 @@ def _populate_factory(user):
     }
     local_user_manifest_blob = userbox.encrypt(json.dumps(local_user_manifest).encode())
     data['core']['local_user_manifest'] = local_user_manifest_blob
+    data['clear']['local_user_manifests'][user.id] = local_user_manifest
 
     return data
 

@@ -279,10 +279,12 @@ class PlaceHolderFile(PatchedLocalFileFixture, BaseLocalFile):
     def load(cls, file_manager, id, key, ciphered_data):
         box = SecretBox(key)
         data = json.loads(box.decrypt(ciphered_data).decode())
+        assert data.pop('format') == 1
         return cls(file_manager, id, box, data)
 
     def dump(self):
-        return self.box.encrypt(json.dumps(self.data).encode())
+        data = {**self.data, 'format': 1}
+        return self.box.encrypt(json.dumps(data).encode())
 
     def sync(self):
         if not self._need_sync:

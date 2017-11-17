@@ -25,6 +25,7 @@ def decrypt_and_load_local_user_manifest(privkey, ciphered_data):
     data = json.loads(box.decrypt(ciphered_data).decode())
     data['dirty_files'] = set(data['dirty_files'])
     data['file_placeholders'] = set(data['file_placeholders'])
+    assert data.pop('format') == 1
     return LocalUserManifest(**data)
 
 
@@ -43,6 +44,7 @@ class LocalUserManifest:
 
     def dump(self):
         return {
+            'format': 1,
             'tree': self.tree,
             'base_version': self.base_version,
             'is_dirty': self.is_dirty,
