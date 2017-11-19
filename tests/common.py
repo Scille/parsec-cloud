@@ -12,6 +12,7 @@ from nacl.signing import SigningKey
 from parsec.core.app import CoreApp
 from parsec.utils import CookedSocket, to_jsonb64, from_jsonb64, User
 from parsec.core.local_storage import BaseLocalStorage
+from parsec.core.backend_storage import BaseBackendStorage
 from parsec.backend.app import BackendApp
 
 from tests.populate import populate_local_storage_cls, populate_backend
@@ -100,7 +101,7 @@ class ConnectToCore:
 def mocked_local_storage_cls_factory():
 
     @attr.s
-    class InMemoryStorage:
+    class InMemoryLocalStorage:
         # Can be changed before initialization (that's why we use a factory btw)
         local_manifests = attr.ib(default=attr.Factory(dict))
         local_user_manifest = attr.ib(default=None)
@@ -124,7 +125,7 @@ def mocked_local_storage_cls_factory():
     # in memory during tests
     mls_cls = Mock(spec=BaseLocalStorage)
     # Can be changed before initialization (that's why we use a factory btw)
-    mls_cls.test_storage = InMemoryStorage()
+    mls_cls.test_storage = InMemoryLocalStorage()
     mls_instance = mls_cls.return_value
 
     mls_instance.fetch_user_manifest.side_effect = mls_cls.test_storage.fetch_user_manifest
@@ -134,7 +135,7 @@ def mocked_local_storage_cls_factory():
     return mls_cls
 
 
-async def _test_core_factory(config=None, mocked_get_user=True):
+async def test_core_factory(config=None, mocked_get_user=True):
     config = config or {}
     config['ADDR'] = 'tcp://127.0.0.1:%s' % _get_unused_port()
     core = CoreAppTesting(config)
@@ -157,7 +158,7 @@ def with_core(config=None, backend_config=None, mocked_get_user=True, mocked_loc
         async def wrapper(*args, **kwargs):
             backend = await _test_backend_factory(backend_config)
             config['BACKEND_ADDR'] = 'tcp://127.0.0.1:%s' % backend.port
-            core = await _test_core_factory(config, mocked_get_user)
+            core = await test_core_factory(config, mocked_get_user)
             core.test_backend = backend
 
             async def run_test_and_cancel_scope(nursery):

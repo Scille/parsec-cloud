@@ -14,7 +14,7 @@ class InvalidSignatureError(ParsecError):
     status = 'invalid_signature'
 
 
-def load_local_manifest(raw):
+def load_manifest(raw):
     # TODO catch json decoding error and missing fields
     data = json.loads(raw.decode())
     if data['format'] != 1:
@@ -25,11 +25,17 @@ def load_local_manifest(raw):
         return _load_local_folder_manifest(data)
     elif data['type'] == 'local_user_manifest':
         return _load_local_user_manifest(data)
+    if data['type'] == 'file_manifest':
+        return _load_file_manifest(data)
+    elif data['type'] == 'folder_manifest':
+        return _load_folder_manifest(data)
+    elif data['type'] == 'user_manifest':
+        return _load_user_manifest(data)
     else:
         raise InvalidManifestError()
 
 
-def _load_entry(data):
+def _load_local_entry(data):
     if data['type'] == 'synced_entry':
         return SyncedEntry(
             # TODO: local_id and syncid are pretty misleading...
@@ -53,7 +59,8 @@ def _load_local_user_manifest(data):
         base_version=data['base_version'],
         updated=pendulum.parse(data['updated']),
         created=pendulum.parse(data['created']),
-        children={k: _load_entry(v) for k, v in data['children'].items()}
+        need_sync=data['need_sync'],
+        children={k: _load_local_entry(v) for k, v in data['children'].items()}
     )
 
 
@@ -62,7 +69,8 @@ def _load_local_folder_manifest(data):
         base_version=data['base_version'],
         updated=pendulum.parse(data['updated']),
         created=pendulum.parse(data['created']),
-        children={k: _load_entry(v) for k, v in data['children'].items()}
+        need_sync=data['need_sync'],
+        children={k: _load_local_entry(v) for k, v in data['children'].items()}
     )
 
 
@@ -71,13 +79,51 @@ def _load_local_file_manifest(data):
         base_version=data['base_version'],
         updated=pendulum.parse(data['updated']),
         created=pendulum.parse(data['created']),
+        need_sync=data['need_sync'],
         size=data['size'],
         blocks=data['blocks'],
         dirty_blocks=data['dirty_blocks'],
     )
 
 
-def dump_local_manifest(manifest):
+def _load_entry(data):
+    return SyncedEntry(
+        syncid=data['id'],
+        key=from_jsonb64(data['key']),
+        rts=data['read_trust_seed'],
+        wts=data['write_trust_seed'],
+    )
+
+
+def _load_user_manifest(data):
+    return UserManifest(
+        version=data['version'],
+        updated=pendulum.parse(data['updated']),
+        created=pendulum.parse(data['created']),
+        children={k: _load_entry(v) for k, v in data['children'].items()}
+    )
+
+
+def _load_folder_manifest(data):
+    return FolderManifest(
+        version=data['version'],
+        updated=pendulum.parse(data['updated']),
+        created=pendulum.parse(data['created']),
+        children={k: _load_entry(v) for k, v in data['children'].items()}
+    )
+
+
+def _load_file_manifest(data):
+    return FileManifest(
+        version=data['version'],
+        updated=pendulum.parse(data['updated']),
+        created=pendulum.parse(data['created']),
+        size=data['size'],
+        blocks=data['blocks']
+    )
+
+
+def dump_manifest(manifest):
     return json.dumps(manifest.dumps()).encode()
 
 
@@ -122,6 +168,7 @@ class LocalFolderManifest:
     updated = attr.ib(default=attr.Factory(pendulum.utcnow))
     created = attr.ib(default=attr.Factory(pendulum.utcnow))
     children = attr.ib(default=attr.Factory(dict))
+    need_sync = attr.ib(default=False)
 
     def dumps(self):
         return {
@@ -130,26 +177,16 @@ class LocalFolderManifest:
             'base_version': self.base_version,
             'updated': self.updated.isoformat(),
             'created': self.created.isoformat(),
+            'need_sync': self.need_sync,
             'children': {k: v.dumps() for k, v in self.children.items()}
         }
 
     def to_sync_manifest(self):
-        return {
-            'format': 1,
-            'type': 'folder_manifest',
-            'version': self.base_version + 1,
-            'updated': self.updated.isoformat(),
-            'created': self.created.isoformat(),
-            'children': {k: v.dumps() for k, v in self.children.items()}
-        }
-
-    @classmethod
-    def load_from_sync_manifest(cls, data):
-        return cls(
-            base_version=data['version'],
-            updated=pendulum.parse(data['updated']),
-            created=pendulum.parse(data['created']),
-            children=data['children'],
+        return FolderManifest(
+            version=self.base_version + 1,
+            updated=self.updated,
+            created=self.created,
+            children=self.children
         )
 
 
@@ -161,6 +198,7 @@ class LocalFileManifest:
     size = attr.ib(default=0)
     blocks = attr.ib(default=attr.Factory(list))
     dirty_blocks = attr.ib(default=attr.Factory(list))
+    need_sync = attr.ib(default=False)
 
     def dumps(self):
         return {
@@ -169,10 +207,22 @@ class LocalFileManifest:
             'base_version': self.base_version,
             'updated': self.updated.isoformat(),
             'created': self.created.isoformat(),
+            'need_sync': self.need_sync,
             'size': self.size,
             'blocks': self.blocks,
             'dirty_blocks': self.dirty_blocks,
         }
+
+    def to_sync_manifest(self):
+        if self.dirty_blocks:
+            raise RuntimeError('Cannot convert a file manifest with dirty blocks')
+        return FileManifest(
+            version=self.base_version + 1,
+            updated=self.updated,
+            created=self.created,
+            size=self.size,
+            blocks=self.blocks
+        )
 
 
 @attr.s(slots=True)
@@ -184,8 +234,17 @@ class LocalUserManifest(LocalFolderManifest):
             'base_version': self.base_version,
             'updated': self.updated.isoformat(),
             'created': self.created.isoformat(),
+            'need_sync': self.need_sync,
             'children': {k: v.dumps() for k, v in self.children.items()}
         }
+
+    def to_sync_manifest(self):
+        return UserManifest(
+            version=self.base_version + 1,
+            updated=self.updated,
+            created=self.created,
+            children=self.children
+        )
 
 
 def simple_rename(base, diverged, target, entry_name):
@@ -245,3 +304,130 @@ def merge_folder_manifest(base, diverged, target, on_conflict=simple_rename):
                     resolved.update(on_conflict(base, diverged, target, entry))
 
     return attr.evolve(target, children=resolved)
+
+
+@attr.s(slots=True)
+class FileManifest:
+    version = attr.ib(default=1)
+    updated = attr.ib(default=attr.Factory(pendulum.utcnow))
+    created = attr.ib(default=attr.Factory(pendulum.utcnow))
+    size = attr.ib(default=0)
+    blocks = attr.ib(default=attr.Factory(list))
+
+    def dumps(self):
+        return {
+            'format': 1,
+            'type': 'file_manifest',
+            'version': self.version,
+            'updated': self.updated.isoformat(),
+            'created': self.created.isoformat(),
+            'size': self.size,
+            'blocks': self.blocks,
+        }
+
+
+@attr.s(slots=True)
+class FolderManifest:
+    version = attr.ib(default=1)
+    updated = attr.ib(default=attr.Factory(pendulum.utcnow))
+    created = attr.ib(default=attr.Factory(pendulum.utcnow))
+    children = attr.ib(default=attr.Factory(dict))
+
+    def dumps(self):
+        children = {}
+        for k, v in self.children.items():
+            if isinstance(v, PlaceHolderEntry):
+                raise RuntimeError('Sync manifest cannot contains placeholder entries')
+            children[k] = {
+                'id': v.syncid,
+                'read_trust_seed': v.rts,
+                'write_trust_seed': v.wts,
+                'key': to_jsonb64(v.key)
+            }
+        return {
+            'format': 1,
+            'type': 'folder_manifest',
+            'version': self.version,
+            'updated': self.updated.isoformat(),
+            'created': self.created.isoformat(),
+            'children': children
+        }
+
+
+@attr.s(slots=True)
+class UserManifest(FolderManifest):
+
+    def dumps(self):
+        children = {}
+        for k, v in self.children.items():
+            if isinstance(v, PlaceHolderEntry):
+                raise RuntimeError('Sync manifest cannot contains placeholder entries')
+            children[k] = {
+                'id': v.syncid,
+                'read_trust_seed': v.rts,
+                'write_trust_seed': v.wts,
+                'key': to_jsonb64(v.key)
+            }
+        return {
+            'format': 1,
+            'type': 'user_manifest',
+            'version': self.version,
+            'updated': self.updated.isoformat(),
+            'created': self.created.isoformat(),
+            'children': children
+        }
+
+
+def merge_folder_manifest2(base, diverged, target, on_conflict=simple_rename):
+    # Terminator 2, Back to the future 2... all the best things have a 2 in them !
+    # Except Jurassic park 2 :'-(
+
+    # If entry is in base but not in diverged and target, it is then already
+    # resolved.
+    all_entries = diverged.children.keys() | target.children.keys()
+    resolved = {}
+    for entry in all_entries:
+        base_entry = base.children.get(entry)
+        target_entry = target.children.get(entry)
+        diverged_entry = diverged.children.get(entry)
+        if diverged_entry == target_entry:
+            # No modifications or same modification on both sides, either case
+            # just keep things like this
+            resolved[entry] = target_entry
+        elif target_entry == base_entry:
+            if diverged_entry:
+                # Entry has been modified on diverged side only
+                resolved[entry] = diverged_entry
+        elif diverged_entry == base_entry:
+            # Entry has been modified en target side only
+            if target_entry:
+                resolved[entry] = target_entry
+        else:
+            # Entry modified on both side...
+            if not target_entry:
+                # Entry removed on target side, apply diverged modification
+                # not to loose it (unless it is a remove of course)
+                if diverged_entry:
+                    resolved[entry] = diverged_entry
+            elif not diverged_entry:
+                # Entry removed on diverged side and modified (no remove) on
+                # target side, just apply them
+                resolved[entry] = target_entry
+            else:
+                # Entry modified on both side (no remove), last chance to
+                # resolve this is if the entry is a placeholder that has been
+                # synchronized
+                if target_entry.id == diverged_entry.id:
+                    # Keep the synced entry, forget about the placeholder one
+                    resolved[entry] = target_entry
+                else:
+                    # Conflict !
+                    resolved.update(on_conflict(base, diverged, target, entry))
+
+    return LocalFolderManifest(
+        created=base.created,
+        updated=diverged.updated,
+        base_version=target.version,
+        need_sync=diverged.updated > target.updated,
+        children=resolved
+    )

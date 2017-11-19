@@ -64,7 +64,7 @@ def _populate_factory(user):
         'core': {
             'local_user_manifest': (True, None),  # (<need_sync>, <bytes>)
             'local_manifests': {
-                # <id>: (<need_sync>, <dict>)
+                # <id>: <dict>
             },
             'dirty_blocks': {
                 # <id>: <bytes>
@@ -100,8 +100,8 @@ def _populate_factory(user):
     up_to_date_txt_key = b'0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-'
     up_to_date_txt_fm_v1 = {
         'format': 1,
-        'version': 1,
         'type': 'folder_manifest',
+        'version': 1,
         'created': '2017-12-02T12:30:30+00:00',
         'updated': '2017-12-02T12:30:40+00:00',
         'blocks': [
@@ -111,8 +111,8 @@ def _populate_factory(user):
     }
     up_to_date_txt_fm_v2 = {
         'format': 1,
-        'version': 2,
         'type': 'folder_manifest',
+        'version': 2,
         'created': '2017-12-02T12:30:30+00:00',
         'updated': '2017-12-02T12:30:45+00:00',
         'blocks': [
@@ -136,8 +136,9 @@ def _populate_factory(user):
     up_to_date_txt_local_id = '24c31043d85041ab942d406fc92205d1'
     up_to_date_txt_lfm = {
         'format': 1,
-        'base_version': 2,
         'type': 'local_file_manifest',
+        'base_version': 2,
+        'need_sync': False,
         'created': '2017-12-02T12:30:30+00:00',
         'updated': '2017-12-02T12:30:45+00:00',
         'blocks': [
@@ -172,6 +173,7 @@ def _populate_factory(user):
     non_local_txt_key = b'0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-'
     non_local_txt_fm = {
         'format': 1,
+        'type': 'file_manifest',
         'version': 1,
         'created': '2017-12-02T12:38:30+00:00',
         'updated': '2017-12-02T12:38:45+00:00',
@@ -215,6 +217,7 @@ def _populate_factory(user):
     modified_txt_key = b'0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-'
     modified_txt_fm_v1 = {
         'format': 1,
+        'type': 'file_manifest',
         'version': 1,
         'created': '2017-12-02T12:50:30+00:00',
         'updated': '2017-12-02T12:50:40+00:00',
@@ -225,6 +228,7 @@ def _populate_factory(user):
     }
     modified_txt_fm_v2 = {
         'format': 1,
+        'type': 'file_manifest',
         'version': 2,
         'created': '2017-12-02T12:50:30+00:00',
         'updated': '2017-12-02T12:50:45+00:00',
@@ -255,6 +259,7 @@ def _populate_factory(user):
     modified_txt_lfm = {
         'format': 1,
         'type': 'local_file_manifest',
+        'need_sync': True,
         'base_version': 2,
         'created': '2017-12-02T12:50:30+00:00',
         'updated': '2017-12-02T12:51:00+00:00',
@@ -290,6 +295,7 @@ def _populate_factory(user):
     new_txt_lfm = {
         'format': 1,
         'type': 'local_file_manifest',
+        'need_sync': True,
         'base_version': 0,
         'created': '2017-12-02T12:50:30+00:00',
         'updated': '2017-12-02T12:51:00+00:00',
@@ -315,6 +321,7 @@ def _populate_factory(user):
     dir_key = b"\xb5\xf7'd\x85\x17U\xc4\x9b\x94\xdb\n\x1a\xd2mD\xe18\xff_F\xfc(\r\x8a\xc7\xec7}\xeb\x00\xb1"
     dir_fm_v1 = {
         'format': 1,
+        'type': 'folder_manifest',
         'version': 1,
         'created': '2017-12-01T12:50:30+00:00',
         'updated': '2017-12-01T12:50:30+00:00',
@@ -335,6 +342,7 @@ def _populate_factory(user):
     }
     dir_fm_v2 = {
         'format': 1,
+        'type': 'folder_manifest',
         'version': 2,
         'created': '2017-12-01T12:50:30+00:00',
         'updated': '2017-12-01T12:50:55+00:00',
@@ -374,6 +382,7 @@ def _populate_factory(user):
     dir_lfm = {
         'format': 1,
         'type': 'local_folder_manifest',
+        'need_sync': True,
         'base_version': 1,  # Note the local manifest is out of date !
         'created': '2017-12-01T12:50:30+00:00',
         'updated': '2017-12-02T12:50:56+00:00',
@@ -413,6 +422,7 @@ def _populate_factory(user):
     empty_dir_key = b'\x0e\xdd@\xd3\xb9\x1e\xf5d5Kz\xadib>\xa0yt%\x9aw\xf0/\x99\n\x1b\xde\xeb\x85\x98\xf7^'
     empty_dir_fm_v1 = {
         'format': 1,
+        'type': 'folder_manifest',
         'version': 1,
         'created': '2017-12-01T12:50:30+00:00',
         'updated': '2017-12-01T12:50:30+00:00',
@@ -432,6 +442,7 @@ def _populate_factory(user):
     empty_dir_lfm = {
         'format': 1,
         'type': 'local_folder_manifest',
+        'need_sync': False,
         'base_version': 1,
         'created': '2017-12-01T12:50:30+00:00',
         'updated': '2017-12-01T12:50:30+00:00',
@@ -448,9 +459,9 @@ def _populate_factory(user):
 
     # / - User manifest (storing root folder data)
 
-    user_manifest_id = 'bb645284aded4707a9da094129c437e5'
     user_manifest_v1 = {
         'format': 1,
+        'type': 'user_manifest',
         'version': 1,
         'created': '2017-12-01T12:50:30+00:00',
         'updated': '2017-12-01T12:50:30+00:00',
@@ -500,6 +511,7 @@ def _populate_factory(user):
     local_user_manifest = {
         'format': 1,
         'type': 'local_user_manifest',
+        'need_sync': False,
         'base_version': 3,
         'created': '2017-12-01T12:50:30+00:00',
         'updated': '2017-12-03T12:50:30+00:00',

@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock
 
 from parsec.core.manifest import (
-    LocalFolderManifest, LocalFileManifest, LocalUserManifest, dump_local_manifest, load_local_manifest
+    LocalFolderManifest, LocalFileManifest, LocalUserManifest, dump_manifest, load_manifest
 )
 
 from tests.common import alice
@@ -13,8 +13,8 @@ from tests.common import alice
     LocalFolderManifest,
     LocalUserManifest
 ])
-def test_dump_local_manifest(manifest_cls):
+def test_dump_manifest(manifest_cls):
     manifest = manifest_cls()
-    dumped = dump_local_manifest(manifest)
-    manifest2 = load_local_manifest(dumped)
+    dumped = dump_manifest(manifest)
+    manifest2 = load_manifest(dumped)
     assert manifest == manifest2

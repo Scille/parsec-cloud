@@ -6,7 +6,8 @@ from nacl.exceptions import BadSignatureError, CryptoError
 
 from parsec.core.manifest import (
     PlaceHolderEntry, LocalFileManifest, LocalFolderManifest, LocalUserManifest,
-    load_local_manifest, dump_local_manifest
+    load_manifest, dump_manifest, SyncedEntry, FolderManifest, FileManifest,
+    merge_folder_manifest2
 )
 from parsec.utils import ParsecError
 
@@ -22,7 +23,7 @@ class ManifestsManager:
         self._backend_storage = backend_storage
 
     def _encrypt_manifest(self, entry, manifest):
-        raw = dump_local_manifest(manifest)
+        raw = dump_manifest(manifest)
         box = SecretBox(entry.key)
         # signed = self.user.signkey.sign(raw)
         # return box.encrypt(signed)
@@ -36,10 +37,10 @@ class ManifestsManager:
             # raw = self.user.verifykey.verify(signed)
         except (BadSignatureError, CryptoError, ValueError):
             raise ManifestDecryptionError()
-        return load_local_manifest(raw)
+        return load_manifest(raw)
 
     def _encrypt_user_manifest(self, manifest):
-        raw = dump_local_manifest(manifest)
+        raw = dump_manifest(manifest)
         box = Box(self.user.privkey, self.user.pubkey)
         return box.encrypt(raw)
 
@@ -49,7 +50,7 @@ class ManifestsManager:
             raw = box.decrypt(blob)
         except (BadSignatureError, CryptoError, ValueError):
             raise ManifestDecryptionError()
-        return load_local_manifest(raw)
+        return load_manifest(raw)
 
     def fetch_user_manifest(self):
         blob = self._local_storage.fetch_user_manifest()
@@ -74,30 +75,82 @@ class ManifestsManager:
                 self._local_storage.flush_manifest(entry.id, blob)
         return self._decrypt_manifest(entry, blob)
 
+    async def fetch_manifest_force_version(self, entry, version=None):
+        blob = await self._backend_storage.fetch_manifest(
+            entry.syncid, entry.rts, version=version)
+        return self._decrypt_manifest(entry, blob)
+
+    async def fetch_user_manifest_force_version(self, version=None):
+        blob = await self._backend_storage.fetch_user_manifest(version=version)
+        return self._decrypt_user_manifest(blob)
+
     def flush_manifest(self, entry, manifest):
         blob = self._encrypt_manifest(entry, manifest)
         self._local_storage.flush_manifest(entry.id, blob)
 
     def create_placeholder_file(self):
-        manifest = LocalFileManifest()
+        manifest = LocalFileManifest(need_sync=True)
         entry = PlaceHolderEntry()
         # self._local_storage.flush_manifest(entry.id, manifest)
         return entry, manifest
 
     def create_placeholder_folder(self):
-        manifest = LocalFolderManifest()
+        manifest = LocalFolderManifest(need_sync=True)
         entry = PlaceHolderEntry()
         # self._local_storage.flush_manifest(entry.id, manifest)
         return entry, manifest
 
     async def sync_manifest(self, entry, manifest):
         if isinstance(entry, PlaceHolderEntry):
-            raise RuntimeError('Cannot synchronize placeholder with backend')
+            raise RuntimeError('Cannot synchronize placeholder')
         # Turn the local manifest into a regular synced manifest
-        raw = dump_local_manifest_as_synced_manifest(manifest)
-        box = SecretBox(entry.key)
-        blob = box.encrypt(raw)
-        await self._backend_storage.sync_manifest(entry.synced)
+        sync_manifest = manifest.to_sync_manifest()
+        if hasattr(sync_manifest, 'children'):
+            for childname, childentry in sync_manifest.children.items():
+                if isinstance(childentry, PlaceHolderEntry):
+                    synced_entry = await self._sync_placeholder(childentry)
+                    sync_manifest.children[childname] = synced_entry
+                    # TODO: flush manifest each time a child is synchronized
+                    # to avoid losing this info in case of crash or backend
+                    # disconnection ?
+        blob = self._encrypt_manifest(entry, sync_manifest)
+        await self._backend_storage.sync_manifest(
+            entry.syncid, entry.wts, sync_manifest.version, blob)
+        return sync_manifest
+
+    async def _sync_placeholder(self, entry):
+        assert isinstance(entry, PlaceHolderEntry)
+        # The trick here is to act like the placeholder didn't contain anything
+        # this way the syncronization is fast (no need to sync the blocks or
+        # to go recursive on a folder).
+        manifest = await self.fetch_manifest(entry)
+        if isinstance(manifest, LocalFileManifest):
+            sync_manifest = FileManifest(
+                version=1,
+                updated=manifest.created,
+                created=manifest.created,
+            )
+        else:
+            sync_manifest = FolderManifest(
+                version=1,
+                updated=manifest.created,
+                created=manifest.created,
+            )
+        blob = self._encrypt_manifest(entry, sync_manifest)
+        syncid, rts, wts = await self._backend_storage.sync_new_manifest(blob)
+        return SyncedEntry(entry.id, syncid, entry.key, rts, wts)
 
     async def sync_user_manifest(self, manifest):
-        pass
+        # Turn the local manifest into a regular synced manifest
+        sync_manifest = manifest.to_sync_manifest()
+        if hasattr(sync_manifest, 'children'):
+            for childname, childentry in sync_manifest.children.items():
+                if isinstance(childentry, PlaceHolderEntry):
+                    synced_entry = await self._sync_placeholder(childentry)
+                    sync_manifest.children[childname] = synced_entry
+                    # TODO: flush manifest each time a child is synchronized
+                    # to avoid losing this info in case of crash or backend
+                    # disconnection ?
+        blob = self._encrypt_user_manifest(sync_manifest)
+        await self._backend_storage.sync_user_manifest(sync_manifest.version, blob)
+        return sync_manifest

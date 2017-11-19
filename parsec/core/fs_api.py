@@ -179,8 +179,15 @@ class FSApi:
         obj.flush()
         return {'status': 'ok'}
 
-    async def _cmd_SYNCHRONISE(self, req):
+    async def _cmd_SYNCHRONIZE(self, req):
         req = PathOnlySchema().load(req)
         obj = await self.fs.fetch_path(req['path'])
-        await obj.sync()
+        to_sync = [obj]
+        curr_path = req['path']
+        while to_sync[-1].is_placeholder:
+            curr_path, _ = curr_path.rsplit('/', 1)
+            to_sync.append(await self.fs.fetch_path(curr_path))
+        for obj in reversed(to_sync):
+            # Note we must explicitly sync children even if parent are sync !
+            await obj.sync()
         return {'status': 'ok'}

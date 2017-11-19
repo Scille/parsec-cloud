@@ -5,7 +5,7 @@ from parsec.core.manifest import *
 from parsec.core.manifests_manager import ManifestsManager
 from parsec.core.local_storage import LocalStorage
 from parsec.core.backend_connection import BackendConnection
-from parsec.core.backend_storage import BackendStorage
+from parsec.core.backend_storage import BackendStorage, BackendConcurrencyError
 from parsec.core.synchronizer import Synchronizer
 from parsec.utils import ParsecError
 
@@ -88,11 +88,34 @@ class BaseFS:
     async def sync(self, elem):
         if not elem.need_sync:
             return
-        if elem._entry:
-            await self._manifests_manager.sync_manifest(elem._entry, elem._manifest)
-        else:
-            await self._manifests_manager.sync_user_manifest(elem._manifest)
-        elem.synced.set()
+        while True:
+            try:
+                if elem._entry:
+                    # TODO: not really nice to fetch the base manifest this way...
+                    base_manifest = await self._manifests_manager.fetch_manifest_force_version(
+                        elem._entry, version=elem.base_version)
+                    synced_manifest = await self._manifests_manager.sync_manifest(elem._entry, elem._manifest)
+                else:
+                    # TODO: not really nice to fetch the base manifest this way...
+                    base_manifest = await self._manifests_manager.fetch_user_manifest_force_version(
+                        version=elem.base_version)
+                    synced_manifest = await self._manifests_manager.sync_user_manifest(elem._manifest)
+                # Given the synchronizing process is asynchronous, it is possible
+                # the manifest has been modified in the meantime, so we must merged
+                # the syncronized manifest.
+                elem._manifest = merge_folder_manifest2(base_manifest, elem._manifest, synced_manifest)
+            except BackendConcurrencyError:
+                # Our manifest is outdated, we must fetch the last up to date
+                # manifest and merge it with our current one before retrying the
+                # synchronization
+                if elem._entry:
+                    target_manifest = await self._manifests_manager.fetch_manifest_force_version(
+                        elem._entry)
+                else:
+                    target_manifest = await self._manifests_manager.fetch_user_manifest_force_version()
+                elem._manifest = merge_folder_manifest2(base_manifest, elem._manifest, target_manifest)
+            else:
+                break
 
     def flush(self, elem):
         if not elem.need_flush:
@@ -134,7 +157,6 @@ class BaseFile:
     _manifest = attr.ib()
     _need_flush = attr.ib()
     path = attr.ib(default='.')
-    synced = attr.ib(default=attr.Factory(trio.Event), init=False)
 
     def __eq__(self, other):
         if isinstance(other, BaseFile):
@@ -147,13 +169,11 @@ class BaseFile:
 
     @property
     def need_sync(self):
-        return not self.synced.is_set()
+        return self._manifest.need_sync
 
     def _modified(self):
         self._need_flush = True
-        # TODO
-        # self._manifest.need_sync = True
-        self.synced.clear()
+        self._manifest.need_sync = True
 
     @property
     def is_placeholder(self):
@@ -210,7 +230,6 @@ class BaseFolder:
     _manifest = attr.ib()
     _need_flush = attr.ib()
     path = attr.ib(default='./')
-    synced = attr.ib(default=attr.Factory(trio.Event), init=False)
 
     def __eq__(self, other):
         if isinstance(other, BaseFolder):
@@ -246,7 +265,7 @@ class BaseFolder:
 
     @property
     def need_sync(self):
-        return not self.synced.is_set()
+        return self._manifest.need_sync
 
     @property
     def need_flush(self):
@@ -254,9 +273,7 @@ class BaseFolder:
 
     def _modified(self):
         self._need_flush = True
-        # TODO
-        # self._manifest.need_sync = True
-        self.synced.clear()
+        self._manifest.need_sync = True
 
     @property
     def is_placeholder(self):
@@ -318,4 +335,7 @@ class BaseFolder:
         self._fs.flush(self)
 
     async def sync(self):
+        if self.is_placeholder:
+            raise RuntimeError('Cannot sync a placeholder')
         await self._fs.sync(self)
+        self.flush()

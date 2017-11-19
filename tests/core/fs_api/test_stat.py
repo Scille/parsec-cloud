@@ -22,7 +22,7 @@ async def test_stat_folder(core):
             'updated': '2017-12-03T12:50:30+00:00',
             'is_placeholder': False,
             'need_flush': False,
-            'need_sync': True,
+            'need_sync': False,
             'children': ['dir', 'empty_dir']
         }
         # Test nested folder as well
@@ -65,7 +65,7 @@ async def test_stat_file(core):
             'updated': '2017-12-02T12:30:45+00:00',
             'is_placeholder': False,
             'need_flush': False,
-            'need_sync': True,
+            'need_sync': False,
             'size': 27
         }
         # Blocks + dirty blocks

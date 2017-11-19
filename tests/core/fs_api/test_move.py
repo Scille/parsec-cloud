@@ -143,7 +143,7 @@ async def test_move_file(core):
             'updated': '2017-12-02T12:30:45+00:00',
             'is_placeholder': False,
             'need_flush': False,
-            'need_sync': True,
+            'need_sync': False,
             'size': 27,
         }
 
