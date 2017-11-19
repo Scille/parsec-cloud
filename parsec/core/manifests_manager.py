@@ -1,0 +1,91 @@
+import attr
+from nacl.public import Box
+from nacl.secret import SecretBox
+from nacl.signing import SigningKey
+from nacl.exceptions import BadSignatureError, CryptoError
+
+from parsec.core.manifest import (
+    PlaceHolderEntry, LocalFileManifest, LocalFolderManifest, LocalUserManifest,
+    load_local_manifest, dump_local_manifest
+)
+from parsec.utils import ParsecError
+
+
+class ManifestDecryptionError(ParsecError):
+    status = 'invalid_signature'
+
+
+class ManifestsManager:
+    def __init__(self, user, local_storage, backend_storage):
+        self.user = user
+        self._local_storage = local_storage
+        self._backend_storage = backend_storage
+
+    def _encrypt_manifest(self, entry, manifest):
+        raw = dump_local_manifest(manifest)
+        box = SecretBox(entry.key)
+        # signed = self.user.signkey.sign(raw)
+        # return box.encrypt(signed)
+        return box.encrypt(raw)
+
+    def _decrypt_manifest(self, entry, blob):
+        box = SecretBox(entry.key)
+        try:
+            raw = box.decrypt(blob)
+            # signed = box.decrypt(blob)
+            # raw = self.user.verifykey.verify(signed)
+        except (BadSignatureError, CryptoError, ValueError):
+            raise ManifestDecryptionError()
+        return load_local_manifest(raw)
+
+    def _encrypt_user_manifest(self, manifest):
+        raw = dump_local_manifest(manifest)
+        box = Box(self.user.privkey, self.user.pubkey)
+        return box.encrypt(raw)
+
+    def _decrypt_user_manifest(self, blob):
+        box = Box(self.user.privkey, self.user.pubkey)
+        try:
+            raw = box.decrypt(blob)
+        except (BadSignatureError, CryptoError, ValueError):
+            raise ManifestDecryptionError()
+        return load_local_manifest(raw)
+
+    def fetch_user_manifest(self):
+        blob = self._local_storage.fetch_user_manifest()
+        if not blob:
+            # If the user manifest is not available locally, we don't
+            # want to wait for the backend to respond. So we provide
+            # version 0 of the manifest (i.e. a fresh new instance of it)
+            # that will be merged later with the real one by the synchronizer.
+            return LocalUserManifest()
+        else:
+            return self._decrypt_user_manifest(blob)
+
+    def flush_user_manifest(self, manifest):
+        blob = self._encrypt_user_manifest(manifest)
+        self._local_storage.flush_user_manifest(blob)
+
+    async def fetch_manifest(self, entry):
+        blob = self._local_storage.fetch_manifest(entry.id)
+        if not blob and not isinstance(entry, PlaceHolderEntry):
+            blob = await self._backend_storage.fetch_manifest(entry.syncid, entry.rts)
+            if blob:
+                self._local_storage.flush_manifest(entry.id, blob)
+        return self._decrypt_manifest(entry, blob)
+
+    def flush_manifest(self, entry, manifest):
+        blob = self._encrypt_manifest(entry, manifest)
+        self._local_storage.flush_manifest(entry.id, blob)
+
+    def create_placeholder_file(self):
+        manifest = LocalFileManifest()
+        entry = PlaceHolderEntry()
+        # self._local_storage.flush_manifest(entry.id, manifest)
+        return entry, manifest
+
+    def create_placeholder_folder(self):
+        manifest = LocalFolderManifest()
+        entry = PlaceHolderEntry()
+        # self._local_storage.flush_manifest(entry.id, manifest)
+        return entry, manifest

@@ -177,6 +177,7 @@ async def test_file_write_and_truncate():
     assert out == b'12345'
 
 
+@pytest.mark.xfail
 @trio_test
 async def test_file_read_with_blocks():
     phf, _ = _local_file_factory(with_blocks=True)
@@ -184,6 +185,7 @@ async def test_file_read_with_blocks():
     assert out == b'abcdefghijABCDEFGHIJ'
 
 
+@pytest.mark.xfail
 @trio_test
 async def test_file_write_with_blocks():
     phf, _ = _local_file_factory(with_blocks=True)
@@ -194,6 +196,7 @@ async def test_file_write_with_blocks():
     assert out == b'1bcdefghij2BCDEFGHIJ3'
 
 
+@pytest.mark.xfail
 @trio_test
 async def test_file_truncate_with_blocks():
     phf, _ = _local_file_factory(with_blocks=True)

@@ -98,6 +98,9 @@ class LocalFS:
     async def teardown(self):
         await self.backend_conn.teardown()
 
+    async def retrieve_path(self, path):
+        dirobj = self.local_user_manifest.retrieve_path(dirpath)
+
     def _sync_local_user_manifest(self):
         ciphered = dump_and_encrypt_local_user_manifest(
             self.user.privkey, self.local_user_manifest)

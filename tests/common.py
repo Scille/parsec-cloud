@@ -102,42 +102,23 @@ def mocked_local_storage_cls_factory():
     @attr.s
     class InMemoryStorage:
         # Can be changed before initialization (that's why we use a factory btw)
-        blocks = attr.ib(default=attr.Factory(dict))
-        dirty_blocks = attr.ib(default=attr.Factory(dict))
-        dirty_file_manifests = attr.ib(default=attr.Factory(dict))
-        placeholder_file_manifests = attr.ib(default=attr.Factory(dict))
-        file_manifests = attr.ib(default=attr.Factory(dict))
+        local_manifests = attr.ib(default=attr.Factory(dict))
         local_user_manifest = attr.ib(default=None)
 
-        def get_block(self, id):
-            return self.blocks.get(id)
+        def __init__(self, user):
+            self.user = user
 
-        def get_file_manifest(self, id):
-            return self.file_manifests.get(id)
-
-        def get_local_user_manifest(self):
+        def fetch_user_manifest(self):
             return self.local_user_manifest
 
-        def save_local_user_manifest(self, data):
-            self.local_user_manifest = data
+        def flush_user_manifest(self, blob):
+            self.local_user_manifest = blob
 
-        def get_dirty_block(self, id):
-            return self.dirty_blocks.get(id)
+        def fetch_manifest(self, id):
+            return self.local_manifests.get(id)
 
-        def save_dirty_block(self, id, data):
-            self.dirty_blocks[id] = data
-
-        def get_dirty_file_manifest(self, id):
-            return self.dirty_file_manifests.get(id)
-
-        def save_dirty_file_manifest(self, id, data):
-            self.dirty_file_manifests[id] = data
-
-        def get_placeholder_file_manifest(self, id):
-            return self.placeholder_file_manifests.get(id)
-
-        def save_placeholder_file_manifest(self, id, data):
-            self.placeholder_file_manifests[id] = data
+        def flush_manifest(self, id, blob):
+            self.local_manifests[id] = blob
 
     # LocalStorage should store on disk, but faster and easier to do that
     # in memory during tests
@@ -146,17 +127,10 @@ def mocked_local_storage_cls_factory():
     mls_cls.test_storage = InMemoryStorage()
     mls_instance = mls_cls.return_value
 
-    mls_instance.get_block.side_effect = mls_cls.test_storage.get_block
-    mls_instance.get_file_manifest.side_effect = mls_cls.test_storage.get_file_manifest
-    mls_instance.get_local_user_manifest.side_effect = mls_cls.test_storage.get_local_user_manifest
-    mls_instance.save_local_user_manifest.side_effect = mls_cls.test_storage.save_local_user_manifest
-    mls_instance.get_dirty_block.side_effect = mls_cls.test_storage.get_dirty_block
-    mls_instance.save_dirty_block.side_effect = mls_cls.test_storage.save_dirty_block
-    mls_instance.get_dirty_file_manifest.side_effect = mls_cls.test_storage.get_dirty_file_manifest
-    mls_instance.save_dirty_file_manifest.side_effect = mls_cls.test_storage.save_dirty_file_manifest
-    mls_instance.get_placeholder_file_manifest.side_effect = mls_cls.test_storage.get_placeholder_file_manifest
-    mls_instance.save_placeholder_file_manifest.side_effect = mls_cls.test_storage.save_placeholder_file_manifest
-
+    mls_instance.fetch_user_manifest.side_effect = mls_cls.test_storage.fetch_user_manifest
+    mls_instance.flush_user_manifest.side_effect = mls_cls.test_storage.flush_user_manifest
+    mls_instance.fetch_manifest.side_effect = mls_cls.test_storage.fetch_manifest
+    mls_instance.flush_manifest.side_effect = mls_cls.test_storage.flush_manifest
     return mls_cls
 
 
@@ -190,7 +164,7 @@ def with_core(config=None, backend_config=None, mocked_get_user=True, mocked_loc
                 if mocked_local_storage:
                     mocked_local_storage_cls = mocked_local_storage_cls_factory()
                     core.mocked_local_storage_cls = mocked_local_storage_cls
-                    with patch('parsec.core.local_fs.LocalStorage', mocked_local_storage_cls):
+                    with patch('parsec.core.fs.LocalStorage', mocked_local_storage_cls):
                         await testfunc(core, *args, **kwargs)
                 else:
                     await testfunc(core, *args, **kwargs)

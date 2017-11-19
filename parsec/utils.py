@@ -5,10 +5,16 @@ from functools import partial
 from marshmallow import Schema, fields, validates_schema, ValidationError
 from pendulum import Pendulum
 from nacl.public import PrivateKey
+from nacl.secret import SecretBox
 from nacl.signing import SigningKey
+import nacl.utils
 
 
 BUFFSIZE = 4049
+
+
+def generate_sym_key():
+    return nacl.utils.random(SecretBox.KEY_SIZE)
 
 
 @attr.s

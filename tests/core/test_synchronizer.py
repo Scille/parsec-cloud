@@ -31,6 +31,7 @@ def with_backend_conn_mocked(testfunc):
     return async_patch('parsec.core.local_fs.BackendConnection', BackendConnectionMock)(testfunc)
 
 
+@pytest.mark.xfail
 @trio_test
 @with_backend_conn_mocked
 @with_core(with_backend=False)
@@ -52,6 +53,7 @@ async def test_sync_files(core, backend_conn_cls_mock):
     # TODO: this test is really really raw...
 
 
+@pytest.mark.xfail
 @trio_test
 @with_backend_conn_mocked
 @with_core(with_backend=False)
