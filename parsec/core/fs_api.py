@@ -180,6 +180,7 @@ class FSApi:
         return {'status': 'ok'}
 
     async def _cmd_SYNCHRONISE(self, req):
-        BaseCmdSchema().load(req)
-        # TODO: sync file and user manifest if placeholder file
-        return {'status': 'not_implemented'}
+        req = PathOnlySchema().load(req)
+        obj = await self.fs.fetch_path(req['path'])
+        await obj.sync()
+        return {'status': 'ok'}

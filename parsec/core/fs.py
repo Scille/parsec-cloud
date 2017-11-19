@@ -18,6 +18,7 @@ class BaseFS:
 
     def __init__(self, user, manifests_manager, synchronizer):
         self.user = user
+        self._objs = {}
         self._manifests_manager = manifests_manager
         self._synchronizer = synchronizer
         self._file_cls = self._file_cls_factory()
@@ -55,29 +56,26 @@ class BaseFS:
         return Folder
 
     async def fetch_entry(self, entry, path='.'):
-        manifest = await self._manifests_manager.fetch_manifest(entry)
-        if isinstance(manifest, LocalFolderManifest):
-            return self._folder_cls(entry, manifest, path=path, need_flush=False)
-        else:
-            return self._file_cls(entry, manifest, path=path, need_flush=False)
+        obj = self._objs.get(entry.id)
+        if not obj:
+            manifest = await self._manifests_manager.fetch_manifest(entry)
+            if isinstance(manifest, LocalFolderManifest):
+                obj = self._folder_cls(entry, manifest, path=path, need_flush=False)
+            else:
+                obj = self._file_cls(entry, manifest, path=path, need_flush=False)
+            self._objs[entry.id] = obj
+        return obj
 
     async def fetch_path(self, path):
         if not path.startswith('/'):
             raise FSInvalidPath('Path must be absolute')
         hops = [n for n in path.split('/') if n]
-        if not hops:
-            return self._root_folder
-        manifest = self._manifest
+        obj = self._root_folder
         for hop in hops:
-            try:
-                entry = manifest.children[hop]
-            except KeyError:
+            if not isinstance(obj, BaseFolder):
                 raise FSInvalidPath("Path `%s` doesn't exists" % path)
-            manifest = await self._manifests_manager.fetch_manifest(entry)
-        if isinstance(manifest, LocalFolderManifest):
-            return self._folder_cls(entry, manifest, path=path, need_flush=False)
-        else:
-            return self._file_cls(entry, manifest, path=path, need_flush=False)
+            obj = await obj.fetch_child(hop)
+        return obj
 
     def create_folder(self):
         entry, manifest = self._manifests_manager.create_placeholder_folder()
@@ -194,13 +192,16 @@ class BaseFile:
     # TODO: implement file read/write etc.
 
     async def read(self, length, offset=0):
-        raise NotImplementedError()
+        # TODO: really implement this !
+        return b'teube'
 
     def write(self, content, offset=0):
-        raise NotImplementedError()
+        self._modified()
+        # TODO: really implement this !
 
     def truncate(self, length):
-        raise NotImplementedError()
+        self._modified()
+        # TODO: really implement this !
 
 
 @attr.s(slots=True)
@@ -275,7 +276,7 @@ class BaseFolder:
             entry = self._manifest.children[name]
         except KeyError:
             raise FSInvalidPath("Path `%s` doesn't exists" % self._build_path(name))
-        return await self._fs.fetch_entry(entry, path=self.path)
+        return await self._fs.fetch_entry(entry, path=self._build_path(name))
 
     def delete_child(self, name):
         try:

@@ -89,3 +89,15 @@ class ManifestsManager:
         entry = PlaceHolderEntry()
         # self._local_storage.flush_manifest(entry.id, manifest)
         return entry, manifest
+
+    async def sync_manifest(self, entry, manifest):
+        if isinstance(entry, PlaceHolderEntry):
+            raise RuntimeError('Cannot synchronize placeholder with backend')
+        # Turn the local manifest into a regular synced manifest
+        raw = dump_local_manifest_as_synced_manifest(manifest)
+        box = SecretBox(entry.key)
+        blob = box.encrypt(raw)
+        await self._backend_storage.sync_manifest(entry.synced)
+
+    async def sync_user_manifest(self, manifest):
+        pass

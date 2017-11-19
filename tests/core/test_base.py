@@ -115,7 +115,8 @@ async def test_need_login_cmds(core):
                 'file_create',
                 'file_read',
                 'file_write',
-                'file_sync',
+                'synchronize',
+                'flush',
                 'stat',
                 'folder_create',
                 'move',
@@ -125,3 +126,12 @@ async def test_need_login_cmds(core):
             await sock.send({'cmd': cmd})
             rep = await sock.recv()
             assert rep == {'status': 'login_required'}
+
+
+@trio_test
+@with_core()
+async def test_bad_cmd(core):
+    async with core.test_connect() as sock:
+        await sock.send({'cmd': 'dummy'})
+        rep = await sock.recv()
+        assert rep == {'status': 'unknown_command'}

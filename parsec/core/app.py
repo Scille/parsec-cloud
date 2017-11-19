@@ -48,11 +48,15 @@ class CoreApp:
                     print('CLIENT DISCONNECTED')
                     return
                 print('REQ %s' % req)
-                cmd_func = getattr(self, '_cmd_%s' % req['cmd'].upper())
                 try:
-                    rep = await cmd_func(req)
-                except ParsecError as err:
-                    rep = err.to_dict()
+                    cmd_func = getattr(self, '_cmd_%s' % req['cmd'].upper())
+                except AttributeError:
+                    rep = {'status': 'unknown_command'}
+                else:
+                    try:
+                        rep = await cmd_func(req)
+                    except ParsecError as err:
+                        rep = err.to_dict()
                 print('REP %s' % rep)
                 await sock.send(rep)
 
@@ -134,10 +138,15 @@ class CoreApp:
             return {'status': 'login_required'}
         return await self.fs.api._cmd_FILE_WRITE(req)
 
-    async def _cmd_FILE_SYNC(self, req):
+    async def _cmd_FLUSH(self, req):
         if not self.auth_user:
             return {'status': 'login_required'}
-        return await self.fs.api._cmd_FILE_SYNC(req)
+        return await self.fs.api._cmd_FLUSH(req)
+
+    async def _cmd_SYNCHRONIZE(self, req):
+        if not self.auth_user:
+            return {'status': 'login_required'}
+        return await self.fs.api._cmd_SYNCHRONIZE(req)
 
     async def _cmd_STAT(self, req):
         if not self.auth_user:

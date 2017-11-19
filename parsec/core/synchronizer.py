@@ -19,13 +19,13 @@ class Synchronizer:
 
     async def init(self, nursery):
         self.nursery = nursery
-        # nursery.start_soon(self._synchronizer_runner)
+        nursery.start_soon(self._synchronizer_task)
         # Determine who needs to be synchronized
 
     async def teardown(self):
         pass
 
-    async def _synchronizer_runner(self):
+    async def _synchronizer_task(self):
         while True:
             await trio.sleep(WAIT_BEFORE_SYNC)
             print('START BACKEND SYNCHRONIZATION')
