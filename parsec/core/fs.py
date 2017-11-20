@@ -1,5 +1,7 @@
 import trio
 import attr
+from nacl.secret import SecretBox
+import nacl.utils
 
 from parsec.core.manifest import *
 from parsec.core.manifests_manager import ManifestsManager
@@ -7,7 +9,7 @@ from parsec.core.local_storage import LocalStorage
 from parsec.core.backend_connection import BackendConnection
 from parsec.core.backend_storage import BackendStorage, BackendConcurrencyError
 from parsec.core.synchronizer import Synchronizer
-from parsec.core.file_manager import *
+from parsec.core.file_manager import _merge_patches, Patch
 from parsec.utils import ParsecError
 
 
@@ -89,6 +91,28 @@ class BaseFS:
     async def sync(self, elem):
         if not elem.need_sync:
             return
+        if isinstance(elem, BaseFile):
+            await self._sync_file(elem)
+        else:
+            await self._sync_folder(elem)
+
+    async def _sync_file(self, elem):
+        while True:
+            try:
+                synced_manifest = await self._manifests_manager.sync_manifest(elem._entry, elem._manifest)
+                elem._manifest.base_version = synced_manifest.version
+                elem._manifest.need_sync = False
+            except BackendConcurrencyError:
+                # Our manifest is outdated, this means somebody has modified
+                # this file in our back... We have no choice but to save our
+                # current version under another name
+                # TODO: we don't have reference on the parent folder here...
+                raise
+            else:
+                break
+            elem.flush()
+
+    async def _sync_folder(self, elem):
         while True:
             try:
                 if elem._entry:
@@ -158,7 +182,18 @@ class BaseFile:
     _entry = attr.ib()
     _manifest = attr.ib()
     _need_flush = attr.ib()
+    _patches = attr.ib(init=False)
+    _need_patches_merge = attr.ib(False, init=False)
     path = attr.ib(default='.')
+
+    @_patches.default
+    def _load_patches(self):
+        patches = []
+        for db in self._manifest.dirty_blocks:
+            key = from_jsonb64(db['key'])
+            patches.append(Patch.build_from_dirty_block(
+                self._fs.local_storage, db['id'], db['offset'], db['size'], key))
+        return patches
 
     def __eq__(self, other):
         if isinstance(other, BaseFile):
@@ -206,24 +241,119 @@ class BaseFile:
         return self._manifest.base_version
 
     def flush(self):
+        # Flush the dirty blocks first, then the manifest
+        # Now is time to clean the patches
+        if self._need_patches_merge:
+            self._patches = _merge_patches(self._patches)
+        dirty_blocks = self._manifest.dirty_blocks = []
+        for p in self._patches:
+            if not p.dirty_block_id:
+                p.save_as_dirty_block()
+            dirty_blocks.append({
+                'id': p.dirty_block_id,
+                'key': to_jsonb64(p.dirty_block_key),
+                'offset': p.offset,
+                'size': p.size
+            })
         self._fs.flush(self)
 
-    async def sync(self):
-        await self._fs.sync(self)
+    async def read(self, size=None, offset=0):
+        size = size if (size is not None and 0 < size < self.size) else self.size
+        if self._need_patches_merge:
+            self._patches = _merge_patches(self._patches)
 
-    # TODO: implement file read/write etc.
+        async def _read_buffers_from_blocks(offset, size):
+            buffers = []
+            end = offset + size
+            curr_pos = offset
+            for block in self._manifest.blocks:
+                block_size = block['size']
+                block_offset = block['offset']
+                block_end = block_offset + block_size
+                # Blocks should be contiguous, so no holes in our read is possible
+                # TODO: detect bad contiguous blocks and raise error ?
+                if block_end <= curr_pos:
+                    continue
+                elif block_offset >= end:
+                    break
+                else:
+                    # TODO: have a hot cache in RAM with unciphered data ?
+                    ciphered = self._fs.local_storage.fetch_block(block['id'])
+                    if not ciphered:
+                        # TODO: fetch block on backend
+                        raise NotImplementedError()
+                    key = from_jsonb64(block['key'])
+                    block_data = SecretBox(key).decrypt(ciphered)
+                    buffer = block_data[curr_pos - block_offset:end - block_offset]
+                    buffers.append(buffer)
+                    curr_pos += len(buffer)
+            assert curr_pos == end
+            return buffers
 
-    async def read(self, length, offset=0):
-        # TODO: really implement this !
-        return b'teube'
+        buffers = []
+        curr_pos = offset
+        end = offset + size
+        # Remember patches are ordered once merged
+        for p in self._patches:
+            if p.end <= curr_pos:
+                continue
+            elif p.offset >= end:
+                # We're done here
+                break
+            else:
+                if p.offset > curr_pos:
+                    missing_size = p.offset - curr_pos
+                    buffers += await _read_buffers_from_blocks(curr_pos, missing_size)
+                    curr_pos += missing_size
+                buffer = p.get_buffer()[curr_pos - p.offset:end - p.offset]
+                buffers.append(buffer)
+                curr_pos += len(buffer)
+                if curr_pos == end:
+                    break
+        if curr_pos < end:
+            buffers += await _read_buffers_from_blocks(curr_pos, end - curr_pos)
 
-    def write(self, content, offset=0):
+        return b''.join(buffers)
+
+    def write(self, buffer, offset=0):
+        self._need_patches_merge = True
+        self._patches.append(Patch(self._fs.local_storage, offset, len(buffer), buffer=buffer))
+        if offset + len(buffer) > self.size:
+            self._manifest.size = offset + len(buffer)
         self._modified()
-        # TODO: really implement this !
 
     def truncate(self, length):
+        self._need_patches_merge = True
+        if self.size < length:
+            return
+        self._manifest.size = length
         self._modified()
-        # TODO: really implement this !
+
+    async def sync(self):
+        if not self.need_sync:
+            return
+        self.flush()
+        # TODO: instead of nicely creating new blocks, we replace everything
+        # by a single big block...
+        full_buffer = await self.read()
+        block_key = nacl.utils.random(SecretBox.KEY_SIZE)
+        box = SecretBox(block_key)
+        full_ciphered = box.encrypt(full_buffer)
+        block_id = await self._fs.backend_storage.sync_new_block(full_ciphered)
+        self._manifest.dirty_blocks = []
+        self._manifest.blocks = [
+            {
+                'id': block_id,
+                'key': to_jsonb64(block_key),
+                'offset': 0,
+                'size': len(full_buffer)
+            }
+        ]
+        # Now synchronize the manifest
+        await self._fs.sync(self)
+        # Force flush
+        self._need_flush = True
+        self.flush()
 
 
 @attr.s(slots=True)

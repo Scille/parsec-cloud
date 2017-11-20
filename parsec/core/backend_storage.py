@@ -68,6 +68,26 @@ class BaseBackendStorage:
             raise BackendConcurrencyError()
         return rep['id'], rep['read_trust_seed'], rep['write_trust_seed']
 
+    async def sync_new_block(self, block):
+        rep = await self.backend_conn.send({
+            'cmd': 'blockstore_post',
+            'block': to_jsonb64(block)
+        })
+        if rep['status'] != 'ok':
+            # TODO: handle other errors like wrong trust seed
+            raise BackendConcurrencyError()
+        return rep['id']
+
+    async def fetch_block(self, id):
+        rep = await self.backend_conn.send({
+            'cmd': 'blockstore_get',
+            'id': id
+        })
+        if rep['status'] != 'ok':
+            # TODO: handle other errors like wrong trust seed
+            raise BackendConcurrencyError()
+        return from_jsonb64(rep['block'])
+
 
 class BackendStorage(BaseBackendStorage):
     pass

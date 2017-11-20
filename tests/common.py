@@ -105,6 +105,8 @@ def mocked_local_storage_cls_factory():
         # Can be changed before initialization (that's why we use a factory btw)
         local_manifests = attr.ib(default=attr.Factory(dict))
         local_user_manifest = attr.ib(default=None)
+        blocks = attr.ib(default=attr.Factory(dict))
+        dirty_blocks = attr.ib(default=attr.Factory(dict))
 
         def __init__(self, user):
             self.user = user
@@ -125,6 +127,18 @@ def mocked_local_storage_cls_factory():
             self.local_manifests[new_id] = self.local_manifests[id]
             del self.local_manifests[id]
 
+        def fetch_block(self, id):
+            return self.blocks.get(id)
+
+        def flush_block(self, id, blob):
+            self.blocks[id] = blob
+
+        def fetch_dirty_block(self, id):
+            return self.dirty_blocks.get(id)
+
+        def flush_dirty_block(self, id, blob):
+            self.blocks[id] = blob
+
     # LocalStorage should store on disk, but faster and easier to do that
     # in memory during tests
     mls_cls = Mock(spec=BaseLocalStorage)
@@ -137,6 +151,10 @@ def mocked_local_storage_cls_factory():
     mls_instance.fetch_manifest.side_effect = mls_cls.test_storage.fetch_manifest
     mls_instance.flush_manifest.side_effect = mls_cls.test_storage.flush_manifest
     mls_instance.move_manifest.side_effect = mls_cls.test_storage.move_manifest
+    mls_instance.fetch_block.side_effect = mls_cls.test_storage.fetch_block
+    mls_instance.flush_block.side_effect = mls_cls.test_storage.flush_block
+    mls_instance.fetch_dirty_block.side_effect = mls_cls.test_storage.fetch_dirty_block
+    mls_instance.flush_dirty_block.side_effect = mls_cls.test_storage.flush_dirty_block
     return mls_cls
 
 
