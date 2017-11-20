@@ -7,7 +7,7 @@ from nacl.exceptions import BadSignatureError, CryptoError
 from parsec.core.manifest import (
     PlaceHolderEntry, LocalFileManifest, LocalFolderManifest, LocalUserManifest,
     load_manifest, dump_manifest, SyncedEntry, FolderManifest, FileManifest,
-    merge_folder_manifest2
+    merge_folder_manifest2, NewlySyncedEntry
 )
 from parsec.utils import ParsecError
 
@@ -70,14 +70,15 @@ class ManifestsManager:
     async def fetch_manifest(self, entry):
         blob = self._local_storage.fetch_manifest(entry.id)
         if not blob and not isinstance(entry, PlaceHolderEntry):
-            blob = await self._backend_storage.fetch_manifest(entry.syncid, entry.rts)
+            blob = await self._backend_storage.fetch_manifest(entry.id, entry.rts)
             if blob:
                 self._local_storage.flush_manifest(entry.id, blob)
         return self._decrypt_manifest(entry, blob)
 
     async def fetch_manifest_force_version(self, entry, version=None):
+        assert not isinstance(entry, PlaceHolderEntry)
         blob = await self._backend_storage.fetch_manifest(
-            entry.syncid, entry.rts, version=version)
+            entry.id, entry.rts, version=version)
         return self._decrypt_manifest(entry, blob)
 
     async def fetch_user_manifest_force_version(self, version=None):
@@ -91,13 +92,11 @@ class ManifestsManager:
     def create_placeholder_file(self):
         manifest = LocalFileManifest(need_sync=True)
         entry = PlaceHolderEntry()
-        # self._local_storage.flush_manifest(entry.id, manifest)
         return entry, manifest
 
     def create_placeholder_folder(self):
         manifest = LocalFolderManifest(need_sync=True)
         entry = PlaceHolderEntry()
-        # self._local_storage.flush_manifest(entry.id, manifest)
         return entry, manifest
 
     async def sync_manifest(self, entry, manifest):
@@ -115,7 +114,7 @@ class ManifestsManager:
                     # disconnection ?
         blob = self._encrypt_manifest(entry, sync_manifest)
         await self._backend_storage.sync_manifest(
-            entry.syncid, entry.wts, sync_manifest.version, blob)
+            entry.id, entry.wts, sync_manifest.version, blob)
         return sync_manifest
 
     async def _sync_placeholder(self, entry):
@@ -138,7 +137,9 @@ class ManifestsManager:
             )
         blob = self._encrypt_manifest(entry, sync_manifest)
         syncid, rts, wts = await self._backend_storage.sync_new_manifest(blob)
-        return SyncedEntry(entry.id, syncid, entry.key, rts, wts)
+        new_entry = NewlySyncedEntry(syncid, entry.key, rts, wts, placeholder_id=entry.id)
+        self._local_storage.move_manifest(entry.id, new_entry.id)
+        return new_entry
 
     async def sync_user_manifest(self, manifest):
         # Turn the local manifest into a regular synced manifest

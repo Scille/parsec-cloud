@@ -8,10 +8,13 @@ class BaseLocalStorage:
     def flush_user_manifest(self, blob):
         raise NotImplementedError()
 
-    def fetch_manifest(self, entry):
+    def fetch_manifest(self, id):
         raise NotImplementedError()
 
-    def flush_manifest(self, entry, blob):
+    def flush_manifest(self, id, blob):
+        raise NotImplementedError()
+
+    def move_manifest(self, id, new_id):
         raise NotImplementedError()
 
 

@@ -81,7 +81,6 @@ async def test_sync_placeholder_file(core):
     # TODO: test cascade sync ?
 
 
-@pytest.mark.xfail
 @trio_test
 @with_core()
 @with_populated_local_storage('alice')
@@ -106,10 +105,11 @@ async def test_sync_folder(core):
         assert rep['need_sync']
         assert not rep['is_placeholder']
 
-    # # Before synchronizing the folder, all it children placeholder should have
-    # # been synchronized (here we only have `new.txt`)
-    # assert core.mocked_local_storage_cls.return_value.flush_user_manifest.call_count == 0
-    # assert core.mocked_local_storage_cls.return_value.flush_manifest.call_count == 2
+    # Before synchronizing the folder, all it children placeholder should have
+    # been synchronized (here we only have `new.txt`)
+    assert core.mocked_local_storage_cls.return_value.flush_user_manifest.call_count == 0
+    assert core.mocked_local_storage_cls.return_value.flush_manifest.call_count == 1
+    assert core.mocked_local_storage_cls.return_value.move_manifest.call_count == 1
 
     # Test of truth: drop all data in the local storage and check if
     # synchronized data are still available
@@ -140,5 +140,14 @@ async def test_sync_folder(core):
 
         await sock.send({'cmd': 'stat', 'path': '/dir/new.txt'})
         rep = await sock.recv()
-        # TODO
-        assert rep == {}
+        assert rep == {
+            'status': 'ok',
+            'type': 'file',
+            'base_version': 0,
+            'created': '2017-12-02T12:50:30+00:00',
+            'updated': '2017-12-02T12:51:00+00:00',
+            'is_placeholder': False,
+            'need_flush': False,
+            'need_sync': True,
+            'size': 24,
+        }

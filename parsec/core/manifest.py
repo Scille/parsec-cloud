@@ -38,16 +38,14 @@ def load_manifest(raw):
 def _load_local_entry(data):
     if data['type'] == 'synced_entry':
         return SyncedEntry(
-            # TODO: local_id and syncid are pretty misleading...
-            id=data['local_id'],
-            syncid=data['id'],
+            id=data['id'],
             key=from_jsonb64(data['key']),
             rts=data['read_trust_seed'],
             wts=data['write_trust_seed'],
         )
     elif data['type'] == 'placeholder_entry':
         return PlaceHolderEntry(
-            id=data['local_id'],
+            id=data['id'],
             key=from_jsonb64(data['key']),
         )
     else:
@@ -88,7 +86,7 @@ def _load_local_file_manifest(data):
 
 def _load_entry(data):
     return SyncedEntry(
-        syncid=data['id'],
+        id=data['id'],
         key=from_jsonb64(data['key']),
         rts=data['read_trust_seed'],
         wts=data['write_trust_seed'],
@@ -129,13 +127,11 @@ def dump_manifest(manifest):
 
 @attr.s(slots=True)
 class BaseEntry:
-    # Local id, not to be mistaken with the syncid
     id = attr.ib(default=attr.Factory(lambda: uuid4().hex))
 
 
 @attr.s(slots=True)
 class SyncedEntry(BaseEntry):
-    syncid = attr.ib(default=None)
     key = attr.ib(default=None)
     rts = attr.ib(default=None)
     wts = attr.ib(default=None)
@@ -143,12 +139,16 @@ class SyncedEntry(BaseEntry):
     def dumps(self):
         return {
             'type': 'synced_entry',
-            'local_id': self.id,
-            'id': self.syncid,
+            'id': self.id,
             'read_trust_seed': self.rts,
             'write_trust_seed': self.wts,
             'key': to_jsonb64(self.key)
         }
+
+
+@attr.s(slots=True)
+class NewlySyncedEntry(SyncedEntry):
+    placeholder_id = attr.ib(default=None)
 
 
 @attr.s(slots=True)
@@ -158,9 +158,10 @@ class PlaceHolderEntry(BaseEntry):
     def dumps(self):
         return {
             'type': 'placeholder_entry',
-            'local_id': self.id,
+            'id': self.id,
             'key': to_jsonb64(self.key)
         }
+
 
 @attr.s(slots=True)
 class LocalFolderManifest:
@@ -339,7 +340,7 @@ class FolderManifest:
             if isinstance(v, PlaceHolderEntry):
                 raise RuntimeError('Sync manifest cannot contains placeholder entries')
             children[k] = {
-                'id': v.syncid,
+                'id': v.id,
                 'read_trust_seed': v.rts,
                 'write_trust_seed': v.wts,
                 'key': to_jsonb64(v.key)
@@ -363,7 +364,7 @@ class UserManifest(FolderManifest):
             if isinstance(v, PlaceHolderEntry):
                 raise RuntimeError('Sync manifest cannot contains placeholder entries')
             children[k] = {
-                'id': v.syncid,
+                'id': v.id,
                 'read_trust_seed': v.rts,
                 'write_trust_seed': v.wts,
                 'key': to_jsonb64(v.key)

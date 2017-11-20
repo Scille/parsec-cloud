@@ -7,6 +7,7 @@ from parsec.core.local_storage import LocalStorage
 from parsec.core.backend_connection import BackendConnection
 from parsec.core.backend_storage import BackendStorage, BackendConcurrencyError
 from parsec.core.synchronizer import Synchronizer
+from parsec.core.file_manager import *
 from parsec.utils import ParsecError
 
 
@@ -116,6 +117,7 @@ class BaseFS:
                 elem._manifest = merge_folder_manifest2(base_manifest, elem._manifest, target_manifest)
             else:
                 break
+            elem.flush()
 
     def flush(self, elem):
         if not elem.need_flush:
@@ -338,4 +340,6 @@ class BaseFolder:
         if self.is_placeholder:
             raise RuntimeError('Cannot sync a placeholder')
         await self._fs.sync(self)
+        # Force flush
+        self._need_flush = True
         self.flush()

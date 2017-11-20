@@ -13,7 +13,7 @@ from tests.common import alice
 
 class MockedSyncedEntry(SyncedEntry):
     def __init__(self, id):
-        super().__init__(id, '<%s-syncid>' % id, b'<key>', '<rts>', '<wts>')
+        super().__init__(id, b'<key>', '<rts>', '<wts>')
 
 
 class MockedPlaceHolderEntry(PlaceHolderEntry):

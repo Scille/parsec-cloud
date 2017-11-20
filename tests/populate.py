@@ -133,7 +133,6 @@ def _populate_factory(user):
     # /dir/up_to_date.txt - No dirty blocks (the file is up to date...)
 
     # /dir/up_to_date.txt - Local file manifest
-    up_to_date_txt_local_id = '24c31043d85041ab942d406fc92205d1'
     up_to_date_txt_lfm = {
         'format': 1,
         'type': 'local_file_manifest',
@@ -150,8 +149,8 @@ def _populate_factory(user):
         'size': 27
     }
     up_to_date_txt_lfm_blob = SecretBox(up_to_date_txt_key).encrypt(json.dumps(up_to_date_txt_lfm).encode())
-    data['core']['local_manifests'][up_to_date_txt_local_id] = up_to_date_txt_lfm_blob
-    data['clear']['local_file_manifests'][up_to_date_txt_local_id] = up_to_date_txt_lfm
+    data['core']['local_manifests'][up_to_date_txt_id] = up_to_date_txt_lfm_blob
+    data['clear']['local_file_manifests'][up_to_date_txt_id] = up_to_date_txt_lfm
 
     # /dir/non_local.txt - Blocks
     non_local_txt_block_1_id = '74ab15c511734fed86163944586e721a'
@@ -255,7 +254,6 @@ def _populate_factory(user):
     data['core']['dirty_blocks'][modified_txt_dirty_block_1_id] = modified_txt_dirty_block_1_blob
 
     # /dir/modified.txt - Local file manifest
-    modified_txt_local_id = '5068371a529e48918d9c2260c4f11006'
     modified_txt_lfm = {
         'format': 1,
         'type': 'local_file_manifest',
@@ -272,8 +270,8 @@ def _populate_factory(user):
         'size': 19
     }
     modified_txt_lfm_blob = SecretBox(modified_txt_key).encrypt(json.dumps(modified_txt_lfm).encode())
-    data['core']['local_manifests'][modified_txt_local_id] = modified_txt_lfm_blob
-    data['clear']['local_file_manifests'][modified_txt_local_id] = modified_txt_lfm
+    data['core']['local_manifests'][modified_txt_id] = modified_txt_lfm_blob
+    data['clear']['local_file_manifests'][modified_txt_id] = modified_txt_lfm
 
     # /dir/new.txt - No blocks (given the file is a placeholder so far)
     # /dir/new.txt - No file manifest (given the file is a placeholder so far)
@@ -290,7 +288,7 @@ def _populate_factory(user):
     data['core']['dirty_blocks'][new_txt_dirty_block_2_id] = new_txt_dirty_block_2_blob
 
     # /dir/new.txt - Local file manifest
-    new_txt_local_id = '3ca6cb2ba8a9446f8508296b7a8c3ed4'
+    new_txt_placeholder_id = '3ca6cb2ba8a9446f8508296b7a8c3ed4'
     new_txt_key = b'"\x08"Q\xfbc\xa3 \xf9\xde\xbf\xc3\x07?\x9a\xa6V\xcet\x0c\xa1C\xf2\xa06\xa1\xc9 \xbf\xf6t\xbb'
     new_txt_lfm = {
         'format': 1,
@@ -308,8 +306,8 @@ def _populate_factory(user):
         'size': 24
     }
     new_txt_lfm_blob = SecretBox(new_txt_key).encrypt(json.dumps(new_txt_lfm).encode())
-    data['core']['local_manifests'][new_txt_local_id] = new_txt_lfm_blob
-    data['clear']['local_file_manifests'][new_txt_local_id] = new_txt_lfm
+    data['core']['local_manifests'][new_txt_placeholder_id] = new_txt_lfm_blob
+    data['clear']['local_file_manifests'][new_txt_placeholder_id] = new_txt_lfm
 
     ### Folder manifests ###
 
@@ -378,7 +376,6 @@ def _populate_factory(user):
 
     # /dir/ - Local folder manifest
 
-    dir_local_id = '763b8630ff9d4c73a5f67b41ce8664b4'
     dir_lfm = {
         'format': 1,
         'type': 'local_folder_manifest',
@@ -389,7 +386,6 @@ def _populate_factory(user):
         'children': {
             'up_to_date.txt': {
                 'type': 'synced_entry',
-                'local_id': up_to_date_txt_local_id,
                 'id': up_to_date_txt_id,
                 'read_trust_seed': up_to_date_txt_rts,
                 'write_trust_seed': up_to_date_txt_wts,
@@ -397,7 +393,6 @@ def _populate_factory(user):
             },
             'modified.txt': {
                 'type': 'synced_entry',
-                'local_id': modified_txt_local_id,
                 'id': modified_txt_id,
                 'read_trust_seed': modified_txt_rts,
                 'write_trust_seed': modified_txt_wts,
@@ -405,14 +400,14 @@ def _populate_factory(user):
             },
             'new.txt': {
                 'type': 'placeholder_entry',
-                'local_id': new_txt_local_id,
+                'id': new_txt_placeholder_id,
                 'key': to_jsonb64(new_txt_key)
             }
         }
     }
     dir_lfm_blob = SecretBox(dir_key).encrypt(json.dumps(dir_lfm).encode())
-    data['core']['local_manifests'][dir_local_id] = dir_lfm_blob
-    data['clear']['local_folder_manifests'][dir_local_id] = dir_lfm
+    data['core']['local_manifests'][dir_id] = dir_lfm_blob
+    data['clear']['local_folder_manifests'][dir_id] = dir_lfm
 
     # /empty_dir/ - Folder manifest
 
@@ -438,7 +433,6 @@ def _populate_factory(user):
     data['clear']['folder_manifests'][empty_dir_id] = [empty_dir_fm_v1]
 
     # /empty_dir/ - Local folder manifest
-    empty_dir_local_id = '74e09fc111ec4916802290cdd91dd03b'
     empty_dir_lfm = {
         'format': 1,
         'type': 'local_folder_manifest',
@@ -450,8 +444,8 @@ def _populate_factory(user):
         }
     }
     empty_dir_lfm_blob = SecretBox(empty_dir_key).encrypt(json.dumps(empty_dir_lfm).encode())
-    data['core']['local_manifests'][empty_dir_local_id] = empty_dir_lfm_blob
-    data['clear']['local_folder_manifests'][empty_dir_local_id] = empty_dir_lfm
+    data['core']['local_manifests'][empty_dir_id] = empty_dir_lfm_blob
+    data['clear']['local_folder_manifests'][empty_dir_id] = empty_dir_lfm
 
     # Carry on ! Almost there !
 
@@ -518,7 +512,6 @@ def _populate_factory(user):
         'children': {
             'empty_dir': {
                 'type': 'synced_entry',
-                'local_id': empty_dir_local_id,
                 'id': empty_dir_id,
                 'read_trust_seed': empty_dir_rts,
                 'write_trust_seed': empty_dir_wts,
@@ -526,7 +519,6 @@ def _populate_factory(user):
             },
             'dir': {
                 'type': 'synced_entry',
-                'local_id': dir_local_id,
                 'id': dir_id,
                 'read_trust_seed': dir_rts,
                 'write_trust_seed': dir_wts,

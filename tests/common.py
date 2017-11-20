@@ -121,6 +121,10 @@ def mocked_local_storage_cls_factory():
         def flush_manifest(self, id, blob):
             self.local_manifests[id] = blob
 
+        def move_manifest(self, id, new_id):
+            self.local_manifests[new_id] = self.local_manifests[id]
+            del self.local_manifests[id]
+
     # LocalStorage should store on disk, but faster and easier to do that
     # in memory during tests
     mls_cls = Mock(spec=BaseLocalStorage)
@@ -132,6 +136,7 @@ def mocked_local_storage_cls_factory():
     mls_instance.flush_user_manifest.side_effect = mls_cls.test_storage.flush_user_manifest
     mls_instance.fetch_manifest.side_effect = mls_cls.test_storage.fetch_manifest
     mls_instance.flush_manifest.side_effect = mls_cls.test_storage.flush_manifest
+    mls_instance.move_manifest.side_effect = mls_cls.test_storage.move_manifest
     return mls_cls
 
 
