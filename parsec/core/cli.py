@@ -59,9 +59,9 @@ def core_cmd(**kwargs):
 
 def _core(socket, backend_host, backend_watchdog, debug, i_am_john):
     # TODO: so far LocalStorage is not implemented, so use the testing mock...
-    from . import local_fs
+    from . import fs
     from tests.common import mocked_local_storage_cls_factory
-    local_fs.LocalStorage = mocked_local_storage_cls_factory()
+    fs.LocalStorage = mocked_local_storage_cls_factory()
     config = {
         **CONFIG,
         'DEBUG': debug,
