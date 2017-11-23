@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "1e8e09ec3c59f7f05b5441638a8236e715eac81b2d73affff1521659d9ec0371"
+            "sha256": "1cb70967252a69a92538ac234a3a472de3761eede3345ef956d265d50f7417b1"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -84,9 +84,16 @@
             ],
             "version": "==2.14.0"
         },
+        "marshmallow-oneofschema": {
+            "hashes": [
+                "sha256:a8b7db820304bd8d9d954f5fe6522bfa89c003dac12fa0e76edddc244901f2f8",
+                "sha256:5b645dcb582657362362c6ad9fce5afa5ac31837cac2fe63b8eabf47995dd944"
+            ],
+            "version": "==1.0.5"
+        },
         "parsec-cloud": {
             "editable": true,
-            "git": "git@github.com:Scille/parsec-cloud.git@536643a74751039eea45e5c4302056485cb8ae91"
+            "git": "git@github.com:Scille/parsec-cloud.git@ff14090acfe43354265080ec6a3a1eff17180dfa"
         },
         "pendulum": {
             "hashes": [
@@ -364,10 +371,10 @@
         },
         "py": {
             "hashes": [
-                "sha256:2ccb79b01769d99115aa600d7eed99f524bf752bba8f041dc1c184853514655a",
-                "sha256:0f2d585d22050e90c7d293b6451c83db097df77871974d90efd5a30dc12fcde3"
+                "sha256:8cca5c229d225f8c1e3085be4fcf306090b00850fefad892f9d96c7b6e2f310f",
+                "sha256:ca18943e28235417756316bfada6cd96b23ce60dd532642690dcfdaba988a76d"
             ],
-            "version": "==1.4.34"
+            "version": "==1.5.2"
         },
         "pycodestyle": {
             "hashes": [
@@ -392,10 +399,10 @@
         },
         "pytest": {
             "hashes": [
-                "sha256:81a25f36a97da3313e1125fce9e7bbbba565bc7fec3c5beb14c262ddab238ac1",
-                "sha256:27fa6617efc2869d3e969a3e75ec060375bfb28831ade8b5cdd68da3a741dc3c"
+                "sha256:241d7e7798d79192a123ceaf64c602b4d233eacf6d6e42ae27caa97f498b7dc6",
+                "sha256:6d5bd4f7113b444c55a3bbb5c738a3dd80d43563d063fc42dcb0aaefbdd78b81"
             ],
-            "version": "==3.2.3"
+            "version": "==3.2.5"
         },
         "pytest-cov": {
             "hashes": [

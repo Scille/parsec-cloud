@@ -18,13 +18,14 @@ requirements = [
     'attrs==17.3.0',
     'click==6.7',
     'marshmallow==2.14.0',
+    'marshmallow-oneofschema==1.0.5',
     'pendulum==1.3.1',
     'PyNaCl==1.2.0',
     'simplejson==3.10.0',
     # TODO: wait for trio 0.2.0 release...
     'trio==0.1.0-dev'
 ]
-dependency_links=[
+dependency_links = [
     # need to use --process-dependency-links option for this
     'git+https://github.com/python-trio/trio.git@389f1e1e01b410756e2833cffb992fd1ff856ae5#egg=trio-0.1.0-dev',
 ]
