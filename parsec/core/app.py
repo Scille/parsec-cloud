@@ -1,10 +1,12 @@
-import attr
 import trio
 from marshmallow import fields
-from nacl.public import PrivateKey
 from urllib.parse import urlparse
 
-from parsec.core.fs import FS
+from parsec.core.fs import fs_factory
+from parsec.core.fs_api import FSApi
+from parsec.core.manifests_manager import ManifestsManager
+from parsec.core.blocks_manager import BlocksManager
+from parsec.core.backend_connection import BackendConnection
 from parsec.utils import CookedSocket, BaseCmdSchema, ParsecError, User
 
 
@@ -33,6 +35,7 @@ class CoreApp:
         self.auth_user = None
         self.auth_privkey = None
         self.fs = None
+        self.backend_connection = None
 
     def _get_user(self, userid, password):
         return None
@@ -83,11 +86,26 @@ class CoreApp:
 
     async def login(self, user):
         self.auth_user = user
-        self.fs = FS(self.auth_user, self.backend_addr)
-        await self.fs.init(self.nursery)
+        self.backend_connection = BackendConnection(
+            user, self.config['BACKEND_ADDR'])
+        await self.backend_connection.init(self.nursery)
+        self.fs = await fs_factory(user, self.config, self.backend_connection)
+        # local_storage = LocalStorage()
+        # backend_storage = BackendStorage()
+        # manifests_manager = ManifestsManager(self.auth_user, local_storage, backend_storage)
+        # blocks_manager = BlocksManager(self.auth_user, local_storage, backend_storage)
+        # # await manifests_manager.init()
+        # # await blocks_manager.init()
+        # self.fs = FS(manifests_manager, blocks_manager)
+        await self.fs.init()
+        self.fs.api = FSApi(self.fs)
 
     async def logout(self):
         await self.fs.teardown()
+        await self.backend_connection.teardown()
+        self.backend_connection = None
+        # await self.fs.manifests_manager.teardown()
+        # await self.fs.blocks_manager.teardown()
         self.fs = None
         self.auth_user = None
 

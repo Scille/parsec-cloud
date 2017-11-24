@@ -284,7 +284,7 @@ def _populate_factory(user):
 
     new_txt_dirty_block_2_id = '4c5b4338a47c462098d6c98856f5bf56'
     new_txt_dirty_block_2_key = b'\xcb\x1c\xe4\x80\x8d\xca\rl?z\xa4\x82J7\xc5\xd5\xed5^\xb6\x05\x8cR;A\xbd\xb1 \xbd\xc2?\xe9'
-    new_txt_dirty_block_2_blob = SecretBox(new_txt_dirty_block_2_key).encrypt(b'the new file."')
+    new_txt_dirty_block_2_blob = SecretBox(new_txt_dirty_block_2_key).encrypt(b'the new file.')
     data['core']['dirty_blocks'][new_txt_dirty_block_2_id] = new_txt_dirty_block_2_blob
 
     # /dir/new.txt - Local file manifest
@@ -326,14 +326,14 @@ def _populate_factory(user):
         'children': {
             'up_to_date.txt': {
                 'id': up_to_date_txt_id,
-                'read_trust_seed': up_to_date_txt_rts,
-                'write_trust_seed': up_to_date_txt_wts,
+                'rts': up_to_date_txt_rts,
+                'wts': up_to_date_txt_wts,
                 'key': to_jsonb64(up_to_date_txt_key)
             },
             'modified.txt': {
                 'id': modified_txt_id,
-                'read_trust_seed': modified_txt_rts,
-                'write_trust_seed': modified_txt_wts,
+                'rts': modified_txt_rts,
+                'wts': modified_txt_wts,
                 'key': to_jsonb64(modified_txt_key)
             }
         }
@@ -347,20 +347,20 @@ def _populate_factory(user):
         'children': {
             'up_to_date.txt': {
                 'id': up_to_date_txt_id,
-                'read_trust_seed': up_to_date_txt_rts,
-                'write_trust_seed': up_to_date_txt_wts,
+                'rts': up_to_date_txt_rts,
+                'wts': up_to_date_txt_wts,
                 'key': to_jsonb64(up_to_date_txt_key)
             },
             'modified.txt': {
                 'id': modified_txt_id,
-                'read_trust_seed': modified_txt_rts,
-                'write_trust_seed': modified_txt_wts,
+                'rts': modified_txt_rts,
+                'wts': modified_txt_wts,
                 'key': to_jsonb64(modified_txt_key)
             },
             'non_local.txt': {
                 'id': non_local_txt_id,
-                'read_trust_seed': non_local_txt_rts,
-                'write_trust_seed': non_local_txt_wts,
+                'rts': non_local_txt_rts,
+                'wts': non_local_txt_wts,
                 'key': to_jsonb64(non_local_txt_key)
             }
         }
@@ -385,21 +385,21 @@ def _populate_factory(user):
         'updated': '2017-12-02T12:50:56+00:00',
         'children': {
             'up_to_date.txt': {
-                'type': 'synced_entry',
+                'type': 'vlob',
                 'id': up_to_date_txt_id,
-                'read_trust_seed': up_to_date_txt_rts,
-                'write_trust_seed': up_to_date_txt_wts,
+                'rts': up_to_date_txt_rts,
+                'wts': up_to_date_txt_wts,
                 'key': to_jsonb64(up_to_date_txt_key)
             },
             'modified.txt': {
-                'type': 'synced_entry',
+                'type': 'vlob',
                 'id': modified_txt_id,
-                'read_trust_seed': modified_txt_rts,
-                'write_trust_seed': modified_txt_wts,
+                'rts': modified_txt_rts,
+                'wts': modified_txt_wts,
                 'key': to_jsonb64(modified_txt_key)
             },
             'new.txt': {
-                'type': 'placeholder_entry',
+                'type': 'placeholder',
                 'id': new_txt_placeholder_id,
                 'key': to_jsonb64(new_txt_key)
             }
@@ -469,8 +469,8 @@ def _populate_factory(user):
         'children': {
             'empty_dir': {
                 'id': empty_dir_id,
-                'read_trust_seed': empty_dir_rts,
-                'write_trust_seed': empty_dir_wts,
+                'rts': empty_dir_rts,
+                'wts': empty_dir_wts,
                 'key': to_jsonb64(empty_dir_key)
             }
         }
@@ -482,14 +482,14 @@ def _populate_factory(user):
         'children': {
             'empty_dir': {
                 'id': empty_dir_id,
-                'read_trust_seed': empty_dir_rts,
-                'write_trust_seed': empty_dir_wts,
+                'rts': empty_dir_rts,
+                'wts': empty_dir_wts,
                 'key': to_jsonb64(empty_dir_key)
             },
             'dir': {
                 'id': dir_id,
-                'read_trust_seed': dir_rts,
-                'write_trust_seed': dir_wts,
+                'rts': dir_rts,
+                'wts': dir_wts,
                 'key': to_jsonb64(dir_key)
             }
         }
@@ -511,17 +511,17 @@ def _populate_factory(user):
         'updated': '2017-12-03T12:50:30+00:00',
         'children': {
             'empty_dir': {
-                'type': 'synced_entry',
+                'type': 'vlob',
                 'id': empty_dir_id,
-                'read_trust_seed': empty_dir_rts,
-                'write_trust_seed': empty_dir_wts,
+                'rts': empty_dir_rts,
+                'wts': empty_dir_wts,
                 'key': to_jsonb64(empty_dir_key)
             },
             'dir': {
-                'type': 'synced_entry',
+                'type': 'vlob',
                 'id': dir_id,
-                'read_trust_seed': dir_rts,
-                'write_trust_seed': dir_wts,
+                'rts': dir_rts,
+                'wts': dir_wts,
                 'key': to_jsonb64(dir_key)
             }
         }

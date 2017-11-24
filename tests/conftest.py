@@ -1,6 +1,7 @@
 import os
 import pytest
 
+from tests.common import TEST_USERS
 
 pytest_plugins = "pytest_trio.plugin"
 
@@ -26,3 +27,18 @@ def backend_store(request):
         return postgresql_url()
     else:
         return 'mocked://'
+
+
+@pytest.fixture(scope='session')
+def alice():
+    return TEST_USERS['alice@test']
+
+
+@pytest.fixture(scope='session')
+def bob():
+    return TEST_USERS['bob@test']
+
+
+@pytest.fixture(scope='session')
+def mallory():
+    return TEST_USERS['mallory@test']

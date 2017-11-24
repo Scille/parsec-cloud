@@ -1,6 +1,6 @@
 from marshmallow import fields, validate
 
-from parsec.core.fs import BaseFolder, BaseFile
+from parsec.core.fs import BaseFolderEntry, BaseFileEntry
 from parsec.utils import BaseCmdSchema, to_jsonb64
 
 
@@ -71,17 +71,17 @@ class FSApi:
         req = PathOnlySchema().load(req)
         dirpath, filename = req['path'].rsplit('/', 1)
         parent = await self.fs.fetch_path(dirpath or '/')
-        if not isinstance(parent, BaseFolder):
+        if not isinstance(parent, BaseFolderEntry):
             return {'status': 'invalid_path', 'reason': 'Path `%s` is not a directory' % parent.path}
-        new_file = parent.create_file(filename)
-        new_file.flush()
-        parent.flush()
+        new_file = await parent.create_file(filename)
+        await new_file.flush()
+        await parent.flush()
         return {'status': 'ok'}
 
     async def _cmd_FILE_READ(self, req):
         req = cmd_FILE_READ_Schema().load(req)
         file = await self.fs.fetch_path(req['path'])
-        if not isinstance(file, BaseFile):
+        if not isinstance(file, BaseFileEntry):
             return {'status': 'invalid_path', 'reason': 'Path `%s` is not a file' % file.path}
         content = await file.read(req['size'], req['offset'])
         return {'status': 'ok', 'content': to_jsonb64(content)}
@@ -89,23 +89,23 @@ class FSApi:
     async def _cmd_FILE_WRITE(self, req):
         req = cmd_FILE_WRITE_Schema().load(req)
         file = await self.fs.fetch_path(req['path'])
-        if not isinstance(file, BaseFile):
+        if not isinstance(file, BaseFileEntry):
             return {'status': 'invalid_path', 'reason': 'Path `%s` is not a file' % file.path}
-        file.write(req['content'], req['offset'])
+        await file.write(req['content'], req['offset'])
         return {'status': 'ok'}
 
     async def _cmd_FILE_TRUNCATE(self, req):
         req = cmd_FILE_TRUNCATE_Schema().load(req)
         file = await self.fs.fetch_path(req['path'])
-        if not isinstance(file, BaseFile):
+        if not isinstance(file, BaseFileEntry):
             return {'status': 'invalid_path', 'reason': 'Path `%s` is not a file' % file.path}
-        file.truncate(req['length'])
+        await file.truncate(req['length'])
         return {'status': 'ok'}
 
     async def _cmd_STAT(self, req):
         req = PathOnlySchema().load(req)
         obj = await self.fs.fetch_path(req['path'])
-        if isinstance(obj, BaseFolder):
+        if isinstance(obj, BaseFolderEntry):
             return {
                 'status': 'ok',
                 'type': 'folder',
@@ -134,49 +134,56 @@ class FSApi:
         req = PathOnlySchema().load(req)
         dirpath, name = req['path'].rsplit('/', 1)
         parent = await self.fs.fetch_path(dirpath or '/')
-        if not isinstance(parent, BaseFolder):
+        if not isinstance(parent, BaseFolderEntry):
             return {'status': 'invalid_path', 'reason': 'Path `%s` is not a directory' % parent.path}
-        child = parent.create_folder(name)
-        child.flush()
-        parent.flush()
+        child = await parent.create_folder(name)
+        await child.flush()
+        await parent.flush()
         return {'status': 'ok'}
 
     async def _cmd_MOVE(self, req):
         req = cmd_MOVE_Schema().load(req)
+        if req['src'] == '/':
+            return {'status': 'invalid_path', 'reason': "Cannot move `/` root folder"}
+        if req['dst'] == '/':
+            return {'status': 'invalid_path', 'reason': "Path `/` already exists"}
         srcdirpath, srcfilename = req['src'].rsplit('/', 1)
         dstdirpath, dstfilename = req['dst'].rsplit('/', 1)
 
         srcparent = await self.fs.fetch_path(srcdirpath or '/')
         dstparent = await self.fs.fetch_path(dstdirpath or '/')
 
-        if not isinstance(srcparent, BaseFolder):
+        if not isinstance(srcparent, BaseFolderEntry):
             return {'status': 'invalid_path', 'reason': 'Path `%s` is not a directory' % srcparent.path}
-        if not isinstance(dstparent, BaseFolder):
+        if not isinstance(dstparent, BaseFolderEntry):
             return {'status': 'invalid_path', 'reason': 'Path `%s` is not a directory' % dstparent.path}
 
-        obj = await srcparent.fetch_child(srcfilename)
-        dstparent.insert_child(dstfilename, obj)
-        srcparent.delete_child(srcfilename)
+        if srcfilename not in srcparent:
+            return {'status': 'invalid_path', 'reason': "Path `%s` doesn't exists" % req['src']}
+        if dstfilename in dstparent:
+            return {'status': 'invalid_path', 'reason': "Path `%s` already exists" % req['dst']}
+        obj = await srcparent.delete_child(srcfilename)
+        await dstparent.insert_child(dstfilename, obj)
 
-        dstparent.flush()
+        await dstparent.flush()
         if srcparent != dstparent:
-            srcparent.flush()
+            await srcparent.flush()
         return {'status': 'ok'}
 
     async def _cmd_DELETE(self, req):
         req = PathOnlySchema().load(req)
         dirpath, name = req['path'].rsplit('/', 1)
         parent = await self.fs.fetch_path(dirpath or '/')
-        if not isinstance(parent, BaseFolder):
+        if not isinstance(parent, BaseFolderEntry):
             return {'status': 'invalid_path', 'reason': 'Path `%s` is not a directory' % parent.path}
-        parent.delete_child(name)
-        parent.flush()
+        await parent.delete_child(name)
+        await parent.flush()
         return {'status': 'ok'}
 
     async def _cmd_FLUSH(self, req):
         req = PathOnlySchema().load(req)
         obj = await self.fs.fetch_path(req['path'])
-        obj.flush()
+        await obj.flush()
         return {'status': 'ok'}
 
     async def _cmd_SYNCHRONIZE(self, req):

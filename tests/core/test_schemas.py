@@ -271,8 +271,8 @@ class TestUserManifestSchema:
 
 
 class TestTypedAccessSchema:
-    ORIGINAL_SYNCED = {
-        'type': 'synced',
+    ORIGINAL_VLOB = {
+        'type': 'vlob',
         'id': '4f55b4d5b08544e2a784daf73754c7e2',
         'rts': 'd6b769de2102482498b174245757fa5a',
         'wts': '02841ba1970044d8aed93784b956bc8f',
@@ -297,10 +297,10 @@ class TestTypedAccessSchema:
         assert dumped == self.ORIGINAL_PLACEHOLDER
 
     def test_load_synced(self):
-        loaded, errors = TypedAccessSchema().load(self.ORIGINAL_SYNCED)
+        loaded, errors = TypedAccessSchema().load(self.ORIGINAL_VLOB)
         assert not errors
         assert loaded == {
-            'type': 'synced',
+            'type': 'vlob',
             'id': '4f55b4d5b08544e2a784daf73754c7e2',
             'rts': 'd6b769de2102482498b174245757fa5a',
             'wts': '02841ba1970044d8aed93784b956bc8f',
@@ -308,7 +308,7 @@ class TestTypedAccessSchema:
         }
         dumped, errors = TypedAccessSchema().dump(loaded)
         assert not errors
-        assert dumped == self.ORIGINAL_SYNCED
+        assert dumped == self.ORIGINAL_VLOB
 
     @pytest.mark.parametrize('bad_patch', [
         {'unkown': 'field'},
@@ -320,7 +320,7 @@ class TestTypedAccessSchema:
         {'id': REMOVE_FIELD}, {'id': None},
         {'key': REMOVE_FIELD}, {'key': None},
         {'type': 'dummy'},
-        {'type': 'synced'},
+        {'type': 'vlob'},
     ])
     def test_bad_load_placeholder(self, bad_patch):
         bad_data = {
@@ -347,7 +347,7 @@ class TestTypedAccessSchema:
     ])
     def test_bad_load_synced(self, bad_patch):
         bad_data = {
-            **self.ORIGINAL_SYNCED,
+            **self.ORIGINAL_VLOB,
             **bad_patch
         }
         bad_data = {k: v for k, v in bad_data.items() if v is not REMOVE_FIELD}
@@ -360,6 +360,7 @@ class TestLocalFileManifestSchema:
         'format': 1,
         'type': 'local_file_manifest',
         'base_version': 0,
+        'need_sync': True,
         'created': '2017-01-01T00:00:00+00:00',
         'updated': '2017-12-31T23:59:59+00:00',
         'size': 800,
@@ -400,6 +401,7 @@ class TestLocalFileManifestSchema:
             'format': 1,
             'type': 'local_file_manifest',
             'base_version': 0,
+            'need_sync': True,
             'created': datetime(2017, 1, 1),
             'updated': datetime(2017, 12, 31, 23, 59, 59),
             'size': 800,
@@ -447,6 +449,7 @@ class TestLocalFileManifestSchema:
         {'size': REMOVE_FIELD}, {'size': None},
         {'blocks': REMOVE_FIELD}, {'blocks': None},
         {'dirty_blocks': REMOVE_FIELD}, {'dirty_blocks': None},
+        {'need_sync': REMOVE_FIELD}, {'need_sync': None},
 
         {'type': 'local_dummy'},
         {'base_version': -1},
@@ -469,11 +472,12 @@ class TestLocalFolderManifestSchema:
         'format': 1,
         'type': 'local_folder_manifest',
         'base_version': 0,
+        'need_sync': True,
         'created': '2017-01-01T00:00:00+00:00',
         'updated': '2017-12-31T23:59:59+00:00',
         'children': {
             'foo': {
-                'type': 'synced',
+                'type': 'vlob',
                 'id': '8aadbc777ece4a4fb5fa0564ecfbb54f',
                 'rts': '9809c436b3af4fba9dd6955ad03e0310',
                 'wts': '004714d9997147efa52a696127694fdc',
@@ -494,11 +498,12 @@ class TestLocalFolderManifestSchema:
             'format': 1,
             'type': 'local_folder_manifest',
             'base_version': 0,
+            'need_sync': True,
             'created': datetime(2017, 1, 1),
             'updated': datetime(2017, 12, 31, 23, 59, 59),
             'children': {
                 'foo': {
-                    'type': 'synced',
+                    'type': 'vlob',
                     'id': '8aadbc777ece4a4fb5fa0564ecfbb54f',
                     'rts': '9809c436b3af4fba9dd6955ad03e0310',
                     'wts': '004714d9997147efa52a696127694fdc',
@@ -523,6 +528,7 @@ class TestLocalFolderManifestSchema:
         {'created': REMOVE_FIELD}, {'created': None},
         {'updated': REMOVE_FIELD}, {'updated': None},
         {'children': REMOVE_FIELD}, {'children': None},
+        {'need_sync': REMOVE_FIELD}, {'need_sync': None},
 
         {'type': 'dummy'},
         {'base_version': -1},

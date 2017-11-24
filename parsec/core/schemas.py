@@ -51,20 +51,22 @@ class UserManifestSchema(FolderManifestSchema):
 ### Local data  ###
 
 
-class TypedSyncedAccessSchema(SyncedAccessSchema):
-    type = fields.Constant('synced')
+class TypedVlobAccessSchema(SyncedAccessSchema):
+    type = fields.CheckedConstant('vlob')
 
 
 class TypedPlaceHolderAccessSchema(UnknownCheckedSchema):
-    type = fields.Constant('placeholder')
+    type = fields.CheckedConstant('placeholder')
     id = fields.String(required=True, validate=validate.Length(min=1, max=32))
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
 
 
 class TypedAccessSchema(OneOfSchema):
+    type_field = 'type'
+    type_field_remove = False
     type_schemas = {
         'placeholder': TypedPlaceHolderAccessSchema,
-        'synced': TypedSyncedAccessSchema
+        'vlob': TypedVlobAccessSchema
     }
 
     def get_obj_type(self, obj):
@@ -75,6 +77,7 @@ class LocalFileManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant('local_file_manifest', required=True)
     base_version = fields.Integer(required=True, validate=validate.Range(min=0))
+    need_sync = fields.Boolean(required=True)
     created = fields.DateTime(required=True)
     updated = fields.DateTime(required=True)
     size = fields.Integer(required=True, validate=validate.Range(min=0))
@@ -86,6 +89,7 @@ class LocalFolderManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant('local_folder_manifest', required=True)
     base_version = fields.Integer(required=True, validate=validate.Range(min=0))
+    need_sync = fields.Boolean(required=True)
     created = fields.DateTime(required=True)
     updated = fields.DateTime(required=True)
     children = fields.Map(
@@ -97,3 +101,19 @@ class LocalFolderManifestSchema(UnknownCheckedSchema):
 
 class LocalUserManifestSchema(LocalFolderManifestSchema):
     type = fields.CheckedConstant('local_user_manifest', required=True)
+
+
+class TypedManifestSchema(OneOfSchema):
+    type_field = 'type'
+    type_field_remove = False
+    type_schemas = {
+        'local_user_manifest': LocalUserManifestSchema,
+        'local_folder_manifest': LocalFolderManifestSchema,
+        'local_file_manifest': LocalFileManifestSchema,
+        'user_manifest': UserManifestSchema,
+        'folder_manifest': FolderManifestSchema,
+        'file_manifest': FileManifestSchema,
+    }
+
+    def get_obj_type(self, obj):
+        return obj['type']

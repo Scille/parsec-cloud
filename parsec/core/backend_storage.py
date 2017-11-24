@@ -1,6 +1,10 @@
 from parsec.utils import from_jsonb64, to_jsonb64
 
 
+class BackendError(Exception):
+    pass
+
+
 class BackendConcurrencyError(Exception):
     status = 'concurrency_error'
 

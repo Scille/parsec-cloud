@@ -26,6 +26,7 @@ class BackendConnection:
         self.socket = None
         self.req_queue = trio.Queue(1)
         self.rep_queue = trio.Queue(1)
+        self._nursery = None
 
     async def block_get(self, id):
         # Only support block service embedded in backend so far
@@ -47,11 +48,14 @@ class BackendConnection:
         return rep
 
     async def init(self, nursery):
-        self.nursery = nursery
-        nursery.start_soon(self._backend_connection)
+        nursery.start_soon(self.start)
+
+    async def start(self):
+        async with trio.open_nursery() as self._nursery:
+            self._nursery.start_soon(self._backend_connection)
 
     async def teardown(self):
-        pass
+        self._nursery.cancel_scope.cancel()
 
     async def ping(self):
         await self.send({'cmd': 'ping', 'ping': ''})
@@ -88,8 +92,10 @@ class BackendConnection:
         with rawsock:
             while True:
                 req = await self.req_queue.get()
+                print('=======>', req)
                 await sock.send(req)
                 rep = await sock.recv()
+                print('<=======', rep)
                 await self.rep_queue.put(rep)
             # TODO: handle disconnection
             # req = await self.req_queue.get()
