@@ -19,19 +19,19 @@ def generate_sym_key():
 
 @attr.s
 class CookedSocket:
-    rawsocket = attr.ib()
+    sockstream = attr.ib()
 
     async def send(self, msg):
-        await self.rawsocket.sendall(json.dumps(msg).encode() + b'\n')
+        await self.sockstream.send_all(json.dumps(msg).encode() + b'\n')
 
     async def recv(self):
         raw = b''
         # TODO: handle message longer than BUFFSIZE...
-        raw = await self.rawsocket.recv(BUFFSIZE)
+        raw = await self.sockstream.receive_some(BUFFSIZE)
         if not raw:
             return None
         while raw[-1] != ord(b'\n'):
-            raw += self.rawsocket.recv(BUFFSIZE)
+            raw += self.sockstream.receive_some(BUFFSIZE)
         return json.loads(raw[:-1].decode())
 
 

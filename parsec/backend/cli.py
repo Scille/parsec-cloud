@@ -5,7 +5,10 @@ from .app import BackendApp
 
 
 JOHN_DOE_IDENTITY = 'johndoe@test'
-JOHN_DOE_PUBLIC_KEY = b'1\xbc29\xc9\xce"\xf1\xcex\xea"\x83k\x1d\xede\x81\xbfRc\rG\xde&\x82\xbc\x80rc\xaa\xe4'
+JOHN_DOE_PUBLIC_KEY = (b'1\xbc29\xc9\xce"\xf1\xcex\xea"\x83k\x1d\xede'
+                       b'\x81\xbfRc\rG\xde&\x82\xbc\x80rc\xaa\xe4')
+JOHN_DOE_VERIFY_KEY = (b'\xd5\xef\x8f\xbdPJ\xea\x9c<]qy\x06!M\xad5'
+                       b'\x99m\xa0}EDqN\x06\x06c\x9e:\xe6\x80')
 DEFAULT_CORE_UNIX_SOCKET = 'tcp://127.0.0.1:6776'
 
 
@@ -57,6 +60,7 @@ def backend_cmd(**kwargs):
 def _backend(host, port, pubkeys, store, block_store, debug):
     config = {
         # **CONFIG,
+        'BLOCKSTORE_URL': block_store,
         'DEBUG': debug,
         'PORT': port,
         'HOST': host,
@@ -64,13 +68,9 @@ def _backend(host, port, pubkeys, store, block_store, debug):
     backend = BackendApp(config)
 
     async def _run_and_register_johndoe():
-        async def _register_on_ready():
-            await backend.server_ready.wait()
-            await backend.pubkey.add(JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY)
-
-        async with trio.open_nursery() as nursery:
-            nursery.start_soon(backend.run)
-            nursery.start_soon(_register_on_ready)
+        await backend.init()
+        await backend.pubkey.add(JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY, JOHN_DOE_VERIFY_KEY)
+        await trio.serve_tcp(backend.handle_client, port)
 
     print('Starting Parsec Backend on %s:%s' % (host, port))
     try:

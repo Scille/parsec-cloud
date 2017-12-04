@@ -37,7 +37,6 @@ class BackendApp:
 
     def __init__(self, config):
         self.config = config
-        self.server_ready = trio.Event()
         self.host = config['HOST']
         self.port = int(config['PORT'])
         self.nursery = None
@@ -81,6 +80,9 @@ class BackendApp:
             'ping': self._api_ping
         }
 
+    async def init(self):
+        pass
+
     async def _api_ping(self, client_ctx, msg):
         msg = cmd_PING_Schema().load(msg)
         return {'status': 'ok', 'pong': msg['ping']}
@@ -118,41 +120,26 @@ class BackendApp:
         await sock.send(result_req)
         return context
 
-    async def _serve_client(self, client_sock):
-        # TODO: handle client not closing there part of the socket...
-        with client_sock:
-            sock = CookedSocket(client_sock)
-            print('START HANDSHAKE')
-            client_ctx = await self._do_handshake(sock)
-            if not client_ctx:
-                # Invalid handshake
-                print('BAD HANDSHAKE')
-                return
-            print('HANDSHAKE DONE, CLIENT IS `%s`' % client_ctx.id)
-            while True:
-                req = await sock.recv()
-                if not req:  # Client disconnected
-                    print('CLIENT DISCONNECTED')
-                    break
-                print('REQ %s' % req)
-                # TODO: handle bad msg
-                cmd_func = self.cmds[req.pop('cmd')]
-                try:
-                    rep = await cmd_func(client_ctx, req)
-                except ParsecError as err:
-                    rep = err.to_dict()
-                print('REP %s' % rep)
-                await sock.send(rep)
-
-    async def _wait_clients(self, nursery):
-        with trio.socket.socket() as listen_sock:
-            listen_sock.bind((self.host, self.port))
-            listen_sock.listen()
-            self.server_ready.set()
-            while True:
-                server_sock, _ = await listen_sock.accept()
-                nursery.start_soon(self._serve_client, server_sock)
-
-    async def run(self):
-        async with trio.open_nursery() as self.nursery:
-            self.nursery.start_soon(self._wait_clients, self.nursery)
+    async def handle_client(self, sockstream):
+        sock = CookedSocket(sockstream)
+        print('START HANDSHAKE')
+        client_ctx = await self._do_handshake(sock)
+        if not client_ctx:
+            # Invalid handshake
+            print('BAD HANDSHAKE')
+            return
+        print('HANDSHAKE DONE, CLIENT IS `%s`' % client_ctx.id)
+        while True:
+            req = await sock.recv()
+            if not req:  # Client disconnected
+                print('CLIENT DISCONNECTED')
+                break
+            print('REQ %s' % req)
+            # TODO: handle bad msg
+            cmd_func = self.cmds[req.pop('cmd')]
+            try:
+                rep = await cmd_func(client_ctx, req)
+            except ParsecError as err:
+                rep = err.to_dict()
+            print('REP %s' % rep)
+            await sock.send(rep)

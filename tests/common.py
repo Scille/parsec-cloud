@@ -1,4 +1,5 @@
 import trio
+from trio.testing import open_stream_to_socket_listener
 import socket
 import inspect
 import attr
@@ -238,25 +239,25 @@ class ConnectToBackend:
     def __init__(self, backend, auth_as):
         self.backend = backend
         self.auth_as = auth_as
+        self.sock = None
 
     async def __aenter__(self):
-        self.sock = trio.socket.socket()
-        await self.sock.connect((self.backend.host, self.backend.port))
-        cookedsock = CookedSocket(self.sock)
+        sockstream = await open_stream_to_socket_listener(self.backend.listeners[0])
+        self.sock = CookedSocket(sockstream)
         if self.auth_as:
             assert self.auth_as in TEST_USERS
             user = TEST_USERS[self.auth_as]
             # Handshake
             ch = ClientHandshake(user)
-            challenge_req = await cookedsock.recv()
+            challenge_req = await self.sock.recv()
             answer_req = ch.process_challenge_req(challenge_req)
-            await cookedsock.send(answer_req)
-            result_req = await cookedsock.recv()
+            await self.sock.send(answer_req)
+            result_req = await self.sock.recv()
             ch.process_result_req(result_req)
-        return cookedsock
+        return self.sock
 
     async def __aexit__(self, exc_type, exc, tb):
-        self.sock.close()
+        await self.sock.sockstream.aclose()
 
 
 async def _test_backend_factory(config=None):
@@ -283,10 +284,7 @@ def with_backend(config=None, populated_for=None):
                 nursery.cancel_scope.cancel()
 
             async with trio.open_nursery() as nursery:
-                nursery.start_soon(backend.run)
-                with trio.move_on_after(1) as cancel_scope:
-                    await backend.server_ready.wait()
-                assert not cancel_scope.cancelled_caught, 'Backend starting timeout...'
+                backend.listeners = await nursery.start(trio.serve_tcp, backend.handle_client, 0)
                 nursery.start_soon(run_test_and_cancel_scope, nursery)
         return wrapper
     return decorator
