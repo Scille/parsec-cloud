@@ -5,11 +5,6 @@ from nacl.secret import SecretBox
 from nacl.signing import SigningKey
 from nacl.exceptions import BadSignatureError, CryptoError
 
-from parsec.core.manifest import (
-    PlaceHolderEntry, LocalFileManifest, LocalFolderManifest, LocalUserManifest,
-    load_manifest, dump_manifest, SyncedEntry, FolderManifest, FileManifest,
-    merge_folder_manifest2, NewlySyncedEntry
-)
 from parsec.core.schemas import TypedManifestSchema
 from parsec.utils import ParsecError
 
