@@ -116,3 +116,18 @@ def test_build_bad_identity_result_req(alice):
         'handshake': 'result',
         'result': 'bad_identity',
     }
+
+
+def test_build_bad_identity_result_req(alice):
+    sh = ServerHandshake()
+    sh.build_challenge_req()
+    sh.process_answer_req({
+        'handshake': 'answer',
+        'identity': alice.id,
+        'answer': to_jsonb64(alice.signkey.sign(sh.challenge + b'-dummy'))
+    })
+    req = sh.build_bad_format_result_req()
+    assert req == {
+        'handshake': 'result',
+        'result': 'bad_format',
+    }

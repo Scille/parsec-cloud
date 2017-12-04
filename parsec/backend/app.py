@@ -8,6 +8,7 @@ from nacl.exceptions import BadSignatureError
 from urllib.parse import urlparse
 
 from parsec.utils import CookedSocket, BaseCmdSchema, ParsecError, to_jsonb64, from_jsonb64
+from parsec.handshake import HandshakeFormatError, ServerHandshake
 from parsec.backend.pubkey import MockedPubKeyComponent
 from parsec.backend.vlob import MockedVlobComponent
 from parsec.backend.user_vlob import MockedUserVlobComponent
@@ -98,24 +99,24 @@ class BackendApp:
         return {'status': 'ok', 'url': self.blockstore_url}
 
     async def _do_handshake(self, sock):
-        challenge = nacl.utils.random(self.config.get('HANDSHAKE_CHALLENGE_SIZE', 48))
-        hds1 = {'handshake': 'challenge', 'challenge': to_jsonb64(challenge)}
-        await sock.send(hds1)
-        hds2 = await sock.recv()
-        # TODO: check response validity...
-        claimed_identity = hds2['identity']
-        rawkeys = await self.pubkey.get(claimed_identity)
-        if not rawkeys:
-            await sock.send({'status': 'bad_identity'})
-            return
+        context = None
         try:
-            returned_challenge = VerifyKey(rawkeys[1]).verify(from_jsonb64(hds2['answer']))
-            if returned_challenge != challenge:
-                raise BadSignatureError()
-            await sock.send({"status": "ok", "handshake": "done"})
-            return ClientContext(claimed_identity, *rawkeys)
-        except BadSignatureError:
-            await sock.send({'status': 'bad_identity'})
+            hs = ServerHandshake(self.config.get('HANDSHAKE_CHALLENGE_SIZE', 48))
+            challenge_req = hs.build_challenge_req()
+            await sock.send(challenge_req)
+
+            answer_req = await sock.recv()
+            hs.process_answer_req(answer_req)
+            rawkeys = await self.pubkey.get(hs.identity)
+            if not rawkeys:
+                result_req = hs.build_bad_identity_result_req()
+            else:
+                result_req = hs.build_result_req(VerifyKey(rawkeys[1]))
+                context = ClientContext(hs.identity, *rawkeys)
+        except HandshakeFormatError:
+            result_req = hs.build_bad_format_result_req()
+        await sock.send(result_req)
+        return context
 
     async def _serve_client(self, client_sock):
         # TODO: handle client not closing there part of the socket...

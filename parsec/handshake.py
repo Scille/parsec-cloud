@@ -64,6 +64,15 @@ class ServerHandshake:
 
         self.state = 'answer'
 
+    def build_bad_format_result_req(self):
+        assert self.state == 'answer'
+        self.state = 'result'
+        data, _ = HandshakeResultSchema().dump({
+            'handshake': 'result',
+            'result': 'bad_format',
+        })
+        return data
+
     def build_bad_identity_result_req(self):
         assert self.state == 'answer'
         self.state = 'result'

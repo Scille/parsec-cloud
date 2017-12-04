@@ -9,6 +9,7 @@ from functools import wraps
 from nacl.public import PrivateKey
 from nacl.signing import SigningKey
 
+from parsec.handshake import ClientHandshake
 from parsec.core.app import CoreApp
 from parsec.utils import CookedSocket, to_jsonb64, from_jsonb64, User
 from parsec.core.local_storage import BaseLocalStorage
@@ -246,17 +247,12 @@ class ConnectToBackend:
             assert self.auth_as in TEST_USERS
             user = TEST_USERS[self.auth_as]
             # Handshake
-            hds1 = await cookedsock.recv()
-            assert hds1['handshake'] == 'challenge', hds1
-            answer = user.signkey.sign(from_jsonb64(hds1['challenge']))
-            hds2 = {
-                'handshake': 'answer',
-                'identity': self.auth_as,
-                'answer': to_jsonb64(answer)
-            }
-            await cookedsock.send(hds2)
-            hds3 = await cookedsock.recv()
-            assert hds3 == {'status': 'ok', 'handshake': 'done'}, hds3
+            ch = ClientHandshake(user)
+            challenge_req = await cookedsock.recv()
+            answer_req = ch.process_challenge_req(challenge_req)
+            await cookedsock.send(answer_req)
+            result_req = await cookedsock.recv()
+            ch.process_result_req(result_req)
         return cookedsock
 
     async def __aexit__(self, exc_type, exc, tb):
