@@ -70,12 +70,37 @@ def _get_unused_port():
         return sock.getsockname()[1]
 
 
+class QuitTestDueToBrokenStream(Exception):
+    pass
+
+
+class QuitTestOnBrokenStreamCookedSocket(CookedSocket):
+    """
+    When a server crashes during test, it is possible the client coroutine
+    receives a `trio.BrokenStreamError` exception. Hence we end up with two
+    exceptions: the server crash (i.e. the original exception we are interested
+    into) and the client not receiving an answer.
+    """
+
+    async def send(self, msg):
+        try:
+            return await super().send(msg)
+        except trio.BrokenStreamError as exc:
+            raise QuitTestDueToBrokenStream() from exc
+
+    async def recv(self):
+        try:
+            return await super().recv()
+        except trio.BrokenStreamError as exc:
+            raise QuitTestDueToBrokenStream() from exc
+
+
 ### CORE helpers ###
 
 
 class CoreAppTesting(CoreApp):
-    def test_connect(self, auth_as=None):
-        return ConnectToCore(self, auth_as)
+    def test_connect(self, auth_as=None, quit_test_on_broken_stream=True):
+        return ConnectToCore(self, auth_as, quit_test_on_broken_stream)
 
     @property
     def port(self):
@@ -83,9 +108,10 @@ class CoreAppTesting(CoreApp):
 
 
 class ConnectToCore:
-    def __init__(self, core, auth_as):
+    def __init__(self, core, auth_as, quit_test_on_broken_stream):
         self.core = core
         self.auth_as = auth_as
+        self.quit_test_on_broken_stream = quit_test_on_broken_stream
 
     async def __aenter__(self):
         if self.auth_as and (not self.core.auth_user or self.core.auth_user.id != self.auth_as):
@@ -95,7 +121,10 @@ class ConnectToCore:
                 await self.core.logout()
             await self.core.login(user)
         sockstream = await open_stream_to_socket_listener(self.core.listeners[0])
-        self.sock = CookedSocket(sockstream)
+        if self.quit_test_on_broken_stream:
+            self.sock = QuitTestOnBrokenStreamCookedSocket(sockstream)
+        else:
+            self.sock = CookedSocket(sockstream)
         return self.sock
 
     async def __aexit__(self, exc_type, exc, tb):
@@ -190,13 +219,16 @@ def with_core(config=None, backend_config=None, mocked_get_user=True, mocked_loc
             core.test_backend = backend
 
             async def run_test_and_cancel_scope(nursery):
-                if mocked_local_storage:
-                    mocked_local_storage_cls = mocked_local_storage_cls_factory()
-                    core.mocked_local_storage_cls = mocked_local_storage_cls
-                    with patch('parsec.core.fs.LocalStorage', mocked_local_storage_cls):
+                try:
+                    if mocked_local_storage:
+                        mocked_local_storage_cls = mocked_local_storage_cls_factory()
+                        core.mocked_local_storage_cls = mocked_local_storage_cls
+                        with patch('parsec.core.fs.LocalStorage', mocked_local_storage_cls):
+                            await testfunc(core, *args, **kwargs)
+                    else:
                         await testfunc(core, *args, **kwargs)
-                else:
-                    await testfunc(core, *args, **kwargs)
+                except QuitTestDueToBrokenStream:
+                    pass
                 nursery.cancel_scope.cancel()
 
             async with trio.open_nursery() as nursery:
@@ -231,8 +263,8 @@ def with_populated_local_storage(user='alice'):
 
 
 class BackendAppTesting(BackendApp):
-    def test_connect(self, auth_as=None):
-        return ConnectToBackend(self, auth_as)
+    def test_connect(self, auth_as=None, quit_test_on_broken_stream=True):
+        return ConnectToBackend(self, auth_as, quit_test_on_broken_stream)
 
     @property
     def port(self):
@@ -240,14 +272,18 @@ class BackendAppTesting(BackendApp):
 
 
 class ConnectToBackend:
-    def __init__(self, backend, auth_as):
+    def __init__(self, backend, auth_as, quit_test_on_broken_stream):
         self.backend = backend
         self.auth_as = auth_as
         self.sock = None
+        self.quit_test_on_broken_stream = quit_test_on_broken_stream
 
     async def __aenter__(self):
         sockstream = await open_stream_to_socket_listener(self.backend.listeners[0])
-        self.sock = CookedSocket(sockstream)
+        if self.quit_test_on_broken_stream:
+            self.sock = QuitTestOnBrokenStreamCookedSocket(sockstream)
+        else:
+            self.sock = CookedSocket(sockstream)
         if self.auth_as:
             assert self.auth_as in TEST_USERS
             user = TEST_USERS[self.auth_as]
@@ -282,7 +318,10 @@ def with_backend(config=None, populated_for=None):
             if populated_for:
                 await populate_backend(globals()[populated_for], backend)
             async def run_test_and_cancel_scope(nursery):
-                await testfunc(backend, *args, **kwargs)
+                try:
+                    await testfunc(backend, *args, **kwargs)
+                except QuitTestDueToBrokenStream:
+                    pass
                 nursery.cancel_scope.cancel()
 
             async with trio.open_nursery() as nursery:
