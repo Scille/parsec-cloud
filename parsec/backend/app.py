@@ -7,7 +7,8 @@ from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 from urllib.parse import urlparse
 
-from parsec.utils import CookedSocket, BaseCmdSchema, ParsecError, to_jsonb64, from_jsonb64
+from parsec.utils import (CookedSocket, BaseCmdSchema,
+                          ParsecError, to_jsonb64, from_jsonb64)
 from parsec.handshake import HandshakeFormatError, ServerHandshake
 from parsec.backend.pubkey import MockedPubKeyComponent
 from parsec.backend.vlob import MockedVlobComponent
@@ -37,8 +38,6 @@ class BackendApp:
 
     def __init__(self, config):
         self.config = config
-        self.host = config['HOST']
-        self.port = int(config['PORT'])
         self.nursery = None
         self.blockstore_url = config['BLOCKSTORE_URL']
         # TODO: validate BLOCKSTORE_URL value
@@ -122,24 +121,27 @@ class BackendApp:
 
     async def handle_client(self, sockstream):
         sock = CookedSocket(sockstream)
-        print('START HANDSHAKE')
-        client_ctx = await self._do_handshake(sock)
-        if not client_ctx:
-            # Invalid handshake
-            print('BAD HANDSHAKE')
-            return
-        print('HANDSHAKE DONE, CLIENT IS `%s`' % client_ctx.id)
-        while True:
-            req = await sock.recv()
-            if not req:  # Client disconnected
-                print('CLIENT DISCONNECTED')
-                break
-            print('REQ %s' % req)
-            # TODO: handle bad msg
-            cmd_func = self.cmds[req.pop('cmd')]
-            try:
-                rep = await cmd_func(client_ctx, req)
-            except ParsecError as err:
-                rep = err.to_dict()
-            print('REP %s' % rep)
-            await sock.send(rep)
+        try:
+            print('START HANDSHAKE')
+            client_ctx = await self._do_handshake(sock)
+            if not client_ctx:
+                # Invalid handshake
+                print('BAD HANDSHAKE')
+                return
+            print('HANDSHAKE DONE, CLIENT IS `%s`' % client_ctx.id)
+            while True:
+                req = await sock.recv()
+                if not req:  # Client disconnected
+                    print('CLIENT DISCONNECTED')
+                    break
+                print('REQ %s' % req)
+                # TODO: handle bad msg
+                cmd_func = self.cmds[req.pop('cmd')]
+                try:
+                    rep = await cmd_func(client_ctx, req)
+                except ParsecError as err:
+                    rep = err.to_dict()
+                print('REP %s' % rep)
+                await sock.send(rep)
+        except trio.BrokenStreamError:
+            pass

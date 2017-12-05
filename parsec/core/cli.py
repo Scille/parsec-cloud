@@ -1,6 +1,8 @@
 import trio
 import click
+from urllib.parse import urlparse
 
+from parsec.utils import User
 from .app import CoreApp
 from .config import CONFIG
 
@@ -8,8 +10,8 @@ from .config import CONFIG
 JOHN_DOE_IDENTITY = 'johndoe@test'
 JOHN_DOE_PRIVATE_KEY = (b']x\xd3\xa9$S\xa92\x9ex\x91\xa7\xee\x04SY\xbe\xe6'
                         b'\x03\xf0\x1d\xe2\xcc7\x8a\xd7L\x137\x9e\xa7\xc6')
-JOHN_DOE_SIGN_KEY = (b'w\xac\xd8\xb4\x88B:i\xd6G\xb9\xd6\xc5\x0f\xf6\x99'
-                     b'\xccH\xfa\xaeY\x00:\xdeP\x84\t@\xfe\xf8\x8a\xa5')
+JOHN_DOE_SIGNING_KEY = (b'w\xac\xd8\xb4\x88B:i\xd6G\xb9\xd6\xc5\x0f\xf6\x99'
+                        b'\xccH\xfa\xaeY\x00:\xdeP\x84\t@\xfe\xf8\x8a\xa5')
 DEFAULT_CORE_UNIX_SOCKET = 'tcp://127.0.0.1:6776'
 
 
@@ -65,37 +67,44 @@ def _core(socket, backend_host, backend_watchdog, debug, i_am_john):
     from . import fs
     from tests.common import mocked_local_storage_cls_factory
     fs.LocalStorage = mocked_local_storage_cls_factory()
+
     config = {
         **CONFIG,
         'DEBUG': debug,
         'BACKEND_ADDR': backend_host,
         'BACKEND_WATCHDOG': backend_watchdog,
-        'ADDR': socket
     }
     core = CoreApp(config)
 
-    async def _run_and_login(identity, rawkey):
-        async def _login_on_ready():
-            await core.server_ready.wait()
-            await core.login(identity, rawkey)
-            print('Logged as %s' % identity)
-
+    async def _login_and_run(user=None):
         async with trio.open_nursery() as nursery:
-            nursery.start_soon(core.run)
-            nursery.start_soon(_login_on_ready)
+            await core.init(nursery)
+
+            if user:
+                await core.login(user)
+                print('Logged as %s' % user.id)
+
+            if socket.startswith('unix://'):
+                await trio.serve_unix(core.handle_client, socket[len('unix://'):])
+            elif socket.startswith('tcp://'):
+                parsed = urlparse(socket)
+                await trio.serve_tcp(core.handle_client, parsed.port, host=parsed.hostname)
+            else:
+                raise SystemExit('Error: Invalid --socket value `%s`' % socket)
 
     print('Starting Parsec Core on %s (with backend on %s)' %
-        (config['ADDR'], config['BACKEND_ADDR']))
+        (socket, config['BACKEND_ADDR']))
     try:
         if i_am_john:
             # TODO: well well well...
-            from tests.common import User
-            from tests.populate_local_storage import populate_local_storage_cls
-            from nacl.public import PrivateKey
-            populate_local_storage_cls(User(JOHN_DOE_IDENTITY, PrivateKey(JOHN_DOE_PRIVATE_KEY)), local_fs.LocalStorage)
-
-            trio.run(_run_and_login, JOHN_DOE_IDENTITY, JOHN_DOE_PRIVATE_KEY)
+            from tests.populate import populate_local_storage_cls
+            user = User(JOHN_DOE_IDENTITY, JOHN_DOE_PRIVATE_KEY, JOHN_DOE_SIGNING_KEY)
+            populate_local_storage_cls(
+                user,
+                fs.LocalStorage,
+            )
+            trio.run(_login_and_run, user)
         else:
-            trio.run(core.run)
+            trio.run(_login_and_run)
     except KeyboardInterrupt:
         print('bye ;-)')

@@ -82,7 +82,8 @@ class FS:
             self.root = self._load_entry(access, '', None, user_manifest)
 
     async def teardown(self):
-        await self.manifests_manager.backend_storage.backend_connection.teardown()
+        # TODO: too deeeeeeeep
+        await self.manifests_manager._backend_storage.backend_conn.teardown()
 
     async def fetch_path(self, path):
         if not path.startswith('/'):

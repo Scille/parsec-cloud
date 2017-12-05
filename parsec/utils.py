@@ -1,6 +1,7 @@
 import attr
 import base64
 import json
+import trio
 from functools import partial
 from marshmallow import Schema, fields, validates_schema, ValidationError
 from pendulum import Pendulum
@@ -21,15 +22,22 @@ def generate_sym_key():
 class CookedSocket:
     sockstream = attr.ib()
 
+    async def aclose(self):
+        await self.sockstream.aclose()
+
     async def send(self, msg):
+        print('[%s]==>%s' % (self.sockstream, msg))
         await self.sockstream.send_all(json.dumps(msg).encode() + b'\n')
 
     async def recv(self):
         raw = b''
         # TODO: handle message longer than BUFFSIZE...
         raw = await self.sockstream.receive_some(BUFFSIZE)
+        print('[%s]<==%s' % (self.sockstream, raw))
         if not raw:
-            return None
+            # Empty body should normally never occurs, though it is sent
+            # when peer closes connection
+            raise trio.BrokenStreamError('Peer has closed connection')
         while raw[-1] != ord(b'\n'):
             raw += self.sockstream.receive_some(BUFFSIZE)
         return json.loads(raw[:-1].decode())

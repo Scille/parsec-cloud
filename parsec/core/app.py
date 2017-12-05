@@ -19,18 +19,8 @@ class CoreApp:
 
     def __init__(self, config):
         self.config = config
-        self.server_ready = trio.Event()
         self.backend_addr = config['BACKEND_ADDR']
-        addr = self.config['ADDR']
-        if addr.startswith('unix://'):
-            self.socket_type = trio.socket.AF_UNIX
-            self.socket_bind_opts = addr[len('unix://'):]
-        elif addr.startswith('tcp://'):
-            self.socket_type = trio.socket.AF_INET
-            parsed = urlparse(addr)
-            self.socket_bind_opts = (parsed.hostname, parsed.port)
-        else:
-            raise RuntimeError('Invalid ADDR value `%s`' % addr)
+
         self.nursery = None
         self.auth_user = None
         self.auth_privkey = None
@@ -40,49 +30,28 @@ class CoreApp:
     def _get_user(self, userid, password):
         return None
 
-    async def _serve_client(self, client_sock):
-        # TODO: handle client not closing there part of the socket...
-        print('server sock', client_sock)
-        with client_sock:
-            sock = CookedSocket(client_sock)
-            while True:
-                req = await sock.recv()
-                if not req:  # Client disconnected
-                    print('CLIENT DISCONNECTED')
-                    return
-                print('REQ %s' % req)
-                try:
-                    cmd_func = getattr(self, '_cmd_%s' % req['cmd'].upper())
-                except AttributeError:
-                    rep = {'status': 'unknown_command'}
-                else:
-                    try:
-                        rep = await cmd_func(req)
-                    except ParsecError as err:
-                        rep = err.to_dict()
-                print('REP %s' % rep)
-                await sock.send(rep)
+    async def init(self, nursery):
+        self.nursery = nursery
 
-    async def _wait_clients(self, nursery):
-        with trio.socket.socket(self.socket_type) as listen_sock:
-            listen_sock.bind(self.socket_bind_opts)
-            listen_sock.listen()
-            self.server_ready.set()
-            while True:
-                server_sock, _ = await listen_sock.accept()
-                nursery.start_soon(self._serve_client, server_sock)
-
-    async def run(self):
-        try:
-            async with trio.open_nursery() as self.nursery:
-                self.nursery.start_soon(self._wait_clients, self.nursery)
-        finally:
-            if self.socket_type == trio.socket.AF_UNIX:
+    async def handle_client(self, sockstream):
+        sock = CookedSocket(sockstream)
+        while True:
+            req = await sock.recv()
+            if not req:  # Client disconnected
+                print('CLIENT DISCONNECTED')
+                return
+            print('REQ %s' % req)
+            try:
+                cmd_func = getattr(self, '_cmd_%s' % req['cmd'].upper())
+            except AttributeError:
+                rep = {'status': 'unknown_command'}
+            else:
                 try:
-                    import os
-                    os.remove(self.socket_bind_opts)
-                except FileNotFoundError:
-                    pass
+                    rep = await cmd_func(req)
+                except ParsecError as err:
+                    rep = err.to_dict()
+            print('REP %s' % rep)
+            await sock.send(rep)
 
     async def login(self, user):
         self.auth_user = user

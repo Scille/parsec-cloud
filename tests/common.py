@@ -77,6 +77,10 @@ class CoreAppTesting(CoreApp):
     def test_connect(self, auth_as=None):
         return ConnectToCore(self, auth_as)
 
+    @property
+    def port(self):
+        return self.listeners[0].socket.getsockname()[1]
+
 
 class ConnectToCore:
     def __init__(self, core, auth_as):
@@ -84,20 +88,18 @@ class ConnectToCore:
         self.auth_as = auth_as
 
     async def __aenter__(self):
-        self.sock = trio.socket.socket()
         if self.auth_as and (not self.core.auth_user or self.core.auth_user.id != self.auth_as):
             assert self.auth_as in TEST_USERS
             user = TEST_USERS[self.auth_as]
             if self.core.auth_user:
                 await self.core.logout()
             await self.core.login(user)
-        await self.sock.connect(self.core.socket_bind_opts)
-        print('client sock', self.sock)
-        cookedsock = CookedSocket(self.sock)
-        return cookedsock
+        sockstream = await open_stream_to_socket_listener(self.core.listeners[0])
+        self.sock = CookedSocket(sockstream)
+        return self.sock
 
     async def __aexit__(self, exc_type, exc, tb):
-        self.sock.close()
+        await self.sock.aclose()
 
 
 def mocked_local_storage_cls_factory():
@@ -182,7 +184,8 @@ def with_core(config=None, backend_config=None, mocked_get_user=True, mocked_loc
         @almost_wraps(testfunc)
         async def wrapper(*args, **kwargs):
             backend = await _test_backend_factory(backend_config)
-            config['BACKEND_ADDR'] = 'tcp://127.0.0.1:%s' % backend.port
+            backend_port = _get_unused_port()
+            config['BACKEND_ADDR'] = 'tcp://127.0.0.1:%s' % backend_port
             core = await test_core_factory(config, mocked_get_user)
             core.test_backend = backend
 
@@ -198,14 +201,11 @@ def with_core(config=None, backend_config=None, mocked_get_user=True, mocked_loc
 
             async with trio.open_nursery() as nursery:
                 if with_backend:
-                    nursery.start_soon(backend.run)
-                    with trio.move_on_after(1) as cancel_scope:
-                        await backend.server_ready.wait()
-                    assert not cancel_scope.cancelled_caught, 'Backend starting timeout...'
-                nursery.start_soon(core.run)
-                with trio.move_on_after(1) as cancel_scope:
-                    await core.server_ready.wait()
-                assert not cancel_scope.cancelled_caught, 'Core starting timeout...'
+                    backend.listeners = await nursery.start(
+                        trio.serve_tcp, backend.handle_client, backend_port)
+                await core.init(nursery)
+                core.listeners = await nursery.start(
+                    trio.serve_tcp, core.handle_client, 0)
                 nursery.start_soon(run_test_and_cancel_scope, nursery)
         return wrapper
     return decorator
@@ -234,6 +234,10 @@ class BackendAppTesting(BackendApp):
     def test_connect(self, auth_as=None):
         return ConnectToBackend(self, auth_as)
 
+    @property
+    def port(self):
+        return self.listeners[0].socket.getsockname()[1]
+
 
 class ConnectToBackend:
     def __init__(self, backend, auth_as):
@@ -257,14 +261,12 @@ class ConnectToBackend:
         return self.sock
 
     async def __aexit__(self, exc_type, exc, tb):
-        await self.sock.sockstream.aclose()
+        await self.sock.aclose()
 
 
 async def _test_backend_factory(config=None):
     config = config or {}
-    config['HOST'] = '127.0.0.1'
     config['BLOCKSTORE_URL'] = 'backend://'
-    config.setdefault('PORT', _get_unused_port())
     backend = BackendAppTesting(config)
     for userid, user in TEST_USERS.items():
         await backend.pubkey.add(userid, user.pubkey.encode(), user.verifykey.encode())
