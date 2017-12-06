@@ -144,4 +144,5 @@ class BackendApp:
                 print('REP %s' % rep)
                 await sock.send(rep)
         except trio.BrokenStreamError:
+            # Client has closed connection
             pass

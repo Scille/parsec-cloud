@@ -34,24 +34,28 @@ class CoreApp:
         self.nursery = nursery
 
     async def handle_client(self, sockstream):
-        sock = CookedSocket(sockstream)
-        while True:
-            req = await sock.recv()
-            if not req:  # Client disconnected
-                print('CLIENT DISCONNECTED')
-                return
-            print('REQ %s' % req)
-            try:
-                cmd_func = getattr(self, '_cmd_%s' % req['cmd'].upper())
-            except AttributeError:
-                rep = {'status': 'unknown_command'}
-            else:
+        try:
+            sock = CookedSocket(sockstream)
+            while True:
+                req = await sock.recv()
+                if not req:  # Client disconnected
+                    print('CLIENT DISCONNECTED')
+                    return
+                print('REQ %s' % req)
                 try:
-                    rep = await cmd_func(req)
-                except ParsecError as err:
-                    rep = err.to_dict()
-            print('REP %s' % rep)
-            await sock.send(rep)
+                    cmd_func = getattr(self, '_cmd_%s' % req['cmd'].upper())
+                except AttributeError:
+                    rep = {'status': 'unknown_command'}
+                else:
+                    try:
+                        rep = await cmd_func(req)
+                    except ParsecError as err:
+                        rep = err.to_dict()
+                print('REP %s' % rep)
+                await sock.send(rep)
+        except trio.BrokenStreamError:
+            # Client has closed connection
+            pass
 
     async def login(self, user):
         self.auth_user = user

@@ -60,7 +60,8 @@ class BackendConnection:
             pass
 
     async def teardown(self):
-        await self._sock.aclose()
+        if self._sock:
+            await self._sock.aclose()
 
     async def ping(self):
         await self.send({'cmd': 'ping', 'ping': ''})
