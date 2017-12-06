@@ -4,11 +4,9 @@ import socket
 import inspect
 import attr
 import contextlib
-from collections import defaultdict
 from unittest.mock import Mock, patch
 from functools import wraps
-from nacl.public import PrivateKey
-from nacl.signing import SigningKey
+from inspect import iscoroutinefunction
 
 from parsec.handshake import ClientHandshake
 from parsec.core.app import CoreApp
@@ -18,6 +16,28 @@ from parsec.core.backend_storage import BaseBackendStorage
 from parsec.backend.app import BackendApp
 
 from tests.populate import populate_local_storage_cls, populate_backend
+
+
+class AsyncMock(Mock):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        spec = kwargs.get('spec')
+        if spec:
+            for field in dir(spec):
+                if iscoroutinefunction(getattr(spec, field)):
+                    getattr(self, field).is_async = True
+
+    async def __async_call(self, *args, **kwargs):
+        return super().__call__(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        if getattr(self, 'is_async', False) is True:
+            if iscoroutinefunction(self.side_effect):
+                return self.side_effect(*args, **kwargs)
+            else:
+                return self.__async_call(*args, **kwargs)
+        else:
+            return super().__call__(*args, **kwargs)
 
 
 alice = User(
@@ -269,6 +289,10 @@ class BackendAppTesting(BackendApp):
     @property
     def port(self):
         return self.listeners[0].socket.getsockname()[1]
+
+    @property
+    def addr(self):
+        return 'tcp://127.0.0.1:%s' % self.port
 
 
 class ConnectToBackend:

@@ -2,6 +2,8 @@ import os
 import pytest
 
 from tests.common import TEST_USERS
+from tests.populate import populate_factory
+
 
 pytest_plugins = "pytest_trio.plugin"
 
@@ -42,3 +44,18 @@ def bob():
 @pytest.fixture(scope='session')
 def mallory():
     return TEST_USERS['mallory@test']
+
+
+@pytest.fixture
+def alice_data(alice):
+    return populate_factory(alice)
+
+
+@pytest.fixture
+def bob_data(bob):
+    return populate_factory(bob)
+
+
+@pytest.fixture
+def mallory_data(mallory):
+    return populate_factory(mallory)

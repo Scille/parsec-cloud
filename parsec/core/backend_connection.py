@@ -33,6 +33,8 @@ class BackendConnection:
         ch.process_result_req(result_req)
 
     async def _naive_send(self, req):
+        if not self._sock:
+            raise BackendNotAvailable()
         await self._sock.send(req)
         return await self._sock.recv()
 
@@ -42,9 +44,9 @@ class BackendConnection:
             try:
                 return await self._naive_send(req)
             except (trio.BrokenStreamError, trio.ClosedStreamError):
-                # If it failed, reopen the socket and retry the request
-                await self._init_connection()
                 try:
+                    # If it failed, reopen the socket and retry the request
+                    await self._init_connection()
                     return await self._naive_send(req)
                 except (OSError, trio.BrokenStreamError) as e:
                     # Failed again, it seems we are offline
