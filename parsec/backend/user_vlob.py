@@ -52,7 +52,7 @@ class BaseUserVlobComponent:
 class MockedUserVlobComponent(BaseUserVlobComponent):
     vlobs = attr.ib(default=attr.Factory(lambda: defaultdict(list)))
 
-    async def read(self, id, version):
+    async def read(self, id, version=None):
         vlobs = self.vlobs[id]
         if version == 0 or (version is None and not vlobs):
             return UserVlobAtom(id=id)

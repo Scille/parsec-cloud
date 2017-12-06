@@ -22,6 +22,18 @@ async def test_user_vlob_read_ok(backend):
 
 @trio_test
 @with_backend(populated_for='alice')
+async def test_user_vlob_read_last_version(backend):
+    async with backend.test_connect('alice@test') as sock:
+        await sock.send({'cmd': 'user_vlob_read'})
+        rep = await sock.recv()
+        assert rep == {
+            'status': 'ok',
+            'blob': to_jsonb64(backend.test_populate_data['user_vlobs']['alice@test'][-1]),
+            'version': 3
+        }
+
+@trio_test
+@with_backend(populated_for='alice')
 async def test_user_vlob_read_bad_version(backend):
     async with backend.test_connect('alice@test') as sock:
         await sock.send({'cmd': 'user_vlob_read', 'version': 42})
