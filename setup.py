@@ -30,7 +30,6 @@ dependency_links = [
 
 test_requirements = [
     'pytest',
-    'pytest-xdist',
     'pytest-cov',
     'pytest-trio',
     'freezegun',
