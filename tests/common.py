@@ -10,9 +10,8 @@ from inspect import iscoroutinefunction
 
 from parsec.handshake import ClientHandshake
 from parsec.core.app import CoreApp
-from parsec.utils import CookedSocket, to_jsonb64, from_jsonb64, User
+from parsec.utils import CookedSocket, User
 from parsec.core.local_storage import BaseLocalStorage
-from parsec.core.backend_storage import BaseBackendStorage
 from parsec.backend.app import BackendApp
 
 from tests.populate import populate_local_storage_cls, populate_backend
