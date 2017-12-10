@@ -13,7 +13,7 @@ class BackendAccessError(BackendError):
     pass
 
 
-class BaseBackendStorage:
+class BackendStorage:
 
     def __init__(self, backend_connection):
         self.backend_conn = backend_connection
@@ -98,7 +98,3 @@ class BaseBackendStorage:
         else:
             raise BackendAccessError(
                 'Error %s: %s' % (rep['status'], rep['reason']))
-
-
-class BackendStorage(BaseBackendStorage):
-    pass

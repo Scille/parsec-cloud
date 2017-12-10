@@ -150,46 +150,47 @@ class ConnectToCore:
         await self.sock.aclose()
 
 
+@attr.s
+class InMemoryLocalStorage:
+    # Can be changed before initialization (that's why we use a factory btw)
+    local_manifests = attr.ib(default=attr.Factory(dict))
+    local_user_manifest = attr.ib(default=None)
+    blocks = attr.ib(default=attr.Factory(dict))
+    dirty_blocks = attr.ib(default=attr.Factory(dict))
+
+    def __init__(self, user):
+        self.user = user
+
+    def fetch_user_manifest(self):
+        return self.local_user_manifest
+
+    def flush_user_manifest(self, blob):
+        self.local_user_manifest = blob
+
+    def fetch_manifest(self, id):
+        return self.local_manifests.get(id)
+
+    def flush_manifest(self, id, blob):
+        self.local_manifests[id] = blob
+
+    def move_manifest(self, id, new_id):
+        self.local_manifests[new_id] = self.local_manifests[id]
+        del self.local_manifests[id]
+
+    def fetch_block(self, id):
+        return self.blocks.get(id)
+
+    def flush_block(self, id, blob):
+        self.blocks[id] = blob
+
+    def fetch_dirty_block(self, id):
+        return self.dirty_blocks.get(id)
+
+    def flush_dirty_block(self, id, blob):
+        self.blocks[id] = blob
+
+
 def mocked_local_storage_cls_factory():
-
-    @attr.s
-    class InMemoryLocalStorage:
-        # Can be changed before initialization (that's why we use a factory btw)
-        local_manifests = attr.ib(default=attr.Factory(dict))
-        local_user_manifest = attr.ib(default=None)
-        blocks = attr.ib(default=attr.Factory(dict))
-        dirty_blocks = attr.ib(default=attr.Factory(dict))
-
-        def __init__(self, user):
-            self.user = user
-
-        def fetch_user_manifest(self):
-            return self.local_user_manifest
-
-        def flush_user_manifest(self, blob):
-            self.local_user_manifest = blob
-
-        def fetch_manifest(self, id):
-            return self.local_manifests.get(id)
-
-        def flush_manifest(self, id, blob):
-            self.local_manifests[id] = blob
-
-        def move_manifest(self, id, new_id):
-            self.local_manifests[new_id] = self.local_manifests[id]
-            del self.local_manifests[id]
-
-        def fetch_block(self, id):
-            return self.blocks.get(id)
-
-        def flush_block(self, id, blob):
-            self.blocks[id] = blob
-
-        def fetch_dirty_block(self, id):
-            return self.dirty_blocks.get(id)
-
-        def flush_dirty_block(self, id, blob):
-            self.blocks[id] = blob
 
     # LocalStorage should store on disk, but faster and easier to do that
     # in memory during tests
