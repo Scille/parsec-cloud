@@ -64,10 +64,13 @@ class cmd_UNDELETE_Schema(BaseCmdSchema):
 
 
 class FSApi:
-    def __init__(self, fs):
+    def __init__(self, fs=None):
         self.fs = fs
 
-    async def _cmd_FILE_CREATE(self, req):
+    async def file_create(self, req):
+        if not self.fs:
+            return {'status': 'login_required'}
+
         req = PathOnlySchema().load(req)
         dirpath, filename = req['path'].rsplit('/', 1)
         parent = await self.fs.fetch_path(dirpath or '/')
@@ -78,7 +81,10 @@ class FSApi:
         await parent.flush()
         return {'status': 'ok'}
 
-    async def _cmd_FILE_READ(self, req):
+    async def file_read(self, req):
+        if not self.fs:
+            return {'status': 'login_required'}
+
         req = cmd_FILE_READ_Schema().load(req)
         file = await self.fs.fetch_path(req['path'])
         if not isinstance(file, BaseFileEntry):
@@ -86,7 +92,10 @@ class FSApi:
         content = await file.read(req['size'], req['offset'])
         return {'status': 'ok', 'content': to_jsonb64(content)}
 
-    async def _cmd_FILE_WRITE(self, req):
+    async def file_write(self, req):
+        if not self.fs:
+            return {'status': 'login_required'}
+
         req = cmd_FILE_WRITE_Schema().load(req)
         file = await self.fs.fetch_path(req['path'])
         if not isinstance(file, BaseFileEntry):
@@ -94,7 +103,10 @@ class FSApi:
         await file.write(req['content'], req['offset'])
         return {'status': 'ok'}
 
-    async def _cmd_FILE_TRUNCATE(self, req):
+    async def file_truncate(self, req):
+        if not self.fs:
+            return {'status': 'login_required'}
+
         req = cmd_FILE_TRUNCATE_Schema().load(req)
         file = await self.fs.fetch_path(req['path'])
         if not isinstance(file, BaseFileEntry):
@@ -102,7 +114,10 @@ class FSApi:
         await file.truncate(req['length'])
         return {'status': 'ok'}
 
-    async def _cmd_STAT(self, req):
+    async def stat(self, req):
+        if not self.fs:
+            return {'status': 'login_required'}
+
         req = PathOnlySchema().load(req)
         obj = await self.fs.fetch_path(req['path'])
         if isinstance(obj, BaseFolderEntry):
@@ -130,7 +145,10 @@ class FSApi:
                 'size': obj.size
             }
 
-    async def _cmd_FOLDER_CREATE(self, req):
+    async def folder_create(self, req):
+        if not self.fs:
+            return {'status': 'login_required'}
+
         req = PathOnlySchema().load(req)
         dirpath, name = req['path'].rsplit('/', 1)
         parent = await self.fs.fetch_path(dirpath or '/')
@@ -141,7 +159,10 @@ class FSApi:
         await parent.flush()
         return {'status': 'ok'}
 
-    async def _cmd_MOVE(self, req):
+    async def move(self, req):
+        if not self.fs:
+            return {'status': 'login_required'}
+
         req = cmd_MOVE_Schema().load(req)
         if req['src'] == '/':
             return {'status': 'invalid_path', 'reason': "Cannot move `/` root folder"}
@@ -154,9 +175,15 @@ class FSApi:
         dstparent = await self.fs.fetch_path(dstdirpath or '/')
 
         if not isinstance(srcparent, BaseFolderEntry):
-            return {'status': 'invalid_path', 'reason': 'Path `%s` is not a directory' % srcparent.path}
+            return {
+                'status': 'invalid_path',
+                'reason': 'Path `%s` is not a directory' % srcparent.path
+            }
         if not isinstance(dstparent, BaseFolderEntry):
-            return {'status': 'invalid_path', 'reason': 'Path `%s` is not a directory' % dstparent.path}
+            return {
+                'status': 'invalid_path',
+                'reason': 'Path `%s` is not a directory' % dstparent.path
+            }
 
         if srcfilename not in srcparent:
             return {'status': 'invalid_path', 'reason': "Path `%s` doesn't exists" % req['src']}
@@ -170,7 +197,10 @@ class FSApi:
             await srcparent.flush()
         return {'status': 'ok'}
 
-    async def _cmd_DELETE(self, req):
+    async def delete(self, req):
+        if not self.fs:
+            return {'status': 'login_required'}
+
         req = PathOnlySchema().load(req)
         dirpath, name = req['path'].rsplit('/', 1)
         parent = await self.fs.fetch_path(dirpath or '/')
@@ -180,13 +210,19 @@ class FSApi:
         await parent.flush()
         return {'status': 'ok'}
 
-    async def _cmd_FLUSH(self, req):
+    async def flush(self, req):
+        if not self.fs:
+            return {'status': 'login_required'}
+
         req = PathOnlySchema().load(req)
         obj = await self.fs.fetch_path(req['path'])
         await obj.flush()
         return {'status': 'ok'}
 
-    async def _cmd_SYNCHRONIZE(self, req):
+    async def synchronize(self, req):
+        if not self.fs:
+            return {'status': 'login_required'}
+
         req = PathOnlySchema().load(req)
         obj = await self.fs.fetch_path(req['path'])
         to_sync = [obj]

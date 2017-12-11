@@ -27,6 +27,28 @@ class CoreApp:
         self.fs = None
         self.backend_connection = None
 
+        self._fs_api = FSApi()
+
+        self.cmds = {
+            'register': self._api_register,
+            'identity_login': self._api_identity_login,
+            'identity_logout': self._api_identity_logout,
+            'identity_info': self._api_identity_info,
+            'get_available_logins': self._api_get_available_logins,
+            'get_core_state': self._api_get_core_state,
+
+            'file_create': self._fs_api.file_create,
+            'file_read': self._fs_api.file_read,
+            'file_write': self._fs_api.file_write,
+            'flush': self._fs_api.flush,
+            'synchronize': self._fs_api.synchronize,
+            'stat': self._fs_api.stat,
+            'folder_create': self._fs_api.folder_create,
+            'move': self._fs_api.move,
+            'delete': self._fs_api.delete,
+            'file_truncate': self._fs_api.file_truncate,
+        }
+
     def _get_user(self, userid, password):
         return None
 
@@ -43,8 +65,8 @@ class CoreApp:
                     return
                 print('REQ %s' % req)
                 try:
-                    cmd_func = getattr(self, '_cmd_%s' % req['cmd'].upper())
-                except AttributeError:
+                    cmd_func = self.cmds[req['cmd']]
+                except KeyError:
                     rep = {'status': 'unknown_command'}
                 else:
                     try:
@@ -71,7 +93,7 @@ class CoreApp:
         # # await blocks_manager.init()
         # self.fs = FS(manifests_manager, blocks_manager)
         await self.fs.init()
-        self.fs.api = FSApi(self.fs)
+        self._fs_api.fs = self.fs
 
     async def logout(self):
         await self.fs.teardown()
@@ -79,13 +101,14 @@ class CoreApp:
         self.backend_connection = None
         # await self.fs.manifests_manager.teardown()
         # await self.fs.blocks_manager.teardown()
-        self.fs = None
         self.auth_user = None
+        self.fs = None
+        self._fs_api.fs = None
 
-    async def _cmd_REGISTER(self, req):
+    async def _api_register(self, req):
         return {'status': 'not_implemented'}
 
-    async def _cmd_IDENTITY_LOGIN(self, req):
+    async def _api_identity_login(self, req):
         if self.auth_user:
             return {'status': 'already_logged'}
         msg = cmd_LOGIN_Schema().load(req)
@@ -95,71 +118,21 @@ class CoreApp:
         await self.login(User(msg['id'], *rawkeys))
         return {'status': 'ok'}
 
-    async def _cmd_IDENTITY_LOGOUT(self, req):
+    async def _api_identity_logout(self, req):
         if not self.auth_user:
             return {'status': 'login_required'}
         await self.logout()
         return {'status': 'ok'}
 
-    async def _cmd_IDENTITY_INFO(self, req):
+    async def _api_identity_info(self, req):
         return {
             'status': 'ok',
             'loaded': bool(self.auth_user),
             'id': self.auth_user.id if self.auth_user else None
         }
 
-    async def _cmd_GET_AVAILABLE_LOGINS(self, req):
+    async def _api_get_available_logins(self, req):
         pass
 
-    async def _cmd_GET_CORE_STATE(self, req):
+    async def _api_get_core_state(self, req):
         return {'status': 'ok'}
-
-    async def _cmd_FILE_CREATE(self, req):
-        if not self.auth_user:
-            return {'status': 'login_required'}
-        return await self.fs.api._cmd_FILE_CREATE(req)
-
-    async def _cmd_FILE_READ(self, req):
-        if not self.auth_user:
-            return {'status': 'login_required'}
-        return await self.fs.api._cmd_FILE_READ(req)
-
-    async def _cmd_FILE_WRITE(self, req):
-        if not self.auth_user:
-            return {'status': 'login_required'}
-        return await self.fs.api._cmd_FILE_WRITE(req)
-
-    async def _cmd_FLUSH(self, req):
-        if not self.auth_user:
-            return {'status': 'login_required'}
-        return await self.fs.api._cmd_FLUSH(req)
-
-    async def _cmd_SYNCHRONIZE(self, req):
-        if not self.auth_user:
-            return {'status': 'login_required'}
-        return await self.fs.api._cmd_SYNCHRONIZE(req)
-
-    async def _cmd_STAT(self, req):
-        if not self.auth_user:
-            return {'status': 'login_required'}
-        return await self.fs.api._cmd_STAT(req)
-
-    async def _cmd_FOLDER_CREATE(self, req):
-        if not self.auth_user:
-            return {'status': 'login_required'}
-        return await self.fs.api._cmd_FOLDER_CREATE(req)
-
-    async def _cmd_MOVE(self, req):
-        if not self.auth_user:
-            return {'status': 'login_required'}
-        return await self.fs.api._cmd_MOVE(req)
-
-    async def _cmd_DELETE(self, req):
-        if not self.auth_user:
-            return {'status': 'login_required'}
-        return await self.fs.api._cmd_DELETE(req)
-
-    async def _cmd_FILE_TRUNCATE(self, req):
-        if not self.auth_user:
-            return {'status': 'login_required'}
-        return await self.fs.api._cmd_FILE_TRUNCATE(req)
