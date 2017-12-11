@@ -193,11 +193,9 @@ async def test_lookup_in_backend_storage(fs, mocked_manifests_manager):
     assert not entry.need_flush
 
 
-# TODO: seems to fail from time to time...
-@pytest.mark.xfail
 @pytest.mark.trio
-async def test_concurrent_lookup(fs, mocked_manifests_manager):
-    populated_fs(fs)
+async def test_concurrent_lookup(populated_fs, mocked_manifests_manager):
+    fs = populated_fs
     fs.manifests_manager.fetch_from_local.return_value = None
     fs.manifests_manager.fetch_from_backend.return_value = {
         'format': 1,

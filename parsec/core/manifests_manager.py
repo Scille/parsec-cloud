@@ -2,40 +2,10 @@ import attr
 import json
 from nacl.public import Box
 from nacl.secret import SecretBox
-from nacl.signing import SigningKey
 from nacl.exceptions import BadSignatureError, CryptoError
 
 from parsec.core.schemas import TypedManifestSchema
 from parsec.utils import ParsecError
-
-
-class BaseManifestsManager:
-    async def fetch_user_manifest_from_backend(self, privkey):
-        raise NotImplementedError()
-
-    async def fetch_user_manifest_from_local(self, privkey):
-        raise NotImplementedError()
-
-    async def flush_user_manifest_on_local(self, manifest):
-        raise NotImplementedError()
-
-    async def sync_user_manifest_with_backend(self, manifest):
-        raise NotImplementedError()
-
-    async def fetch_from_local(self, id, key):
-        raise NotImplementedError()
-
-    async def fetch_from_backend(self, id, rts, key, version=None):
-        raise NotImplementedError()
-
-    async def flush_on_local(self, id, key, manifest):
-        raise NotImplementedError()
-
-    async def sync_new_entry_with_backend(self, key, manifest):
-        raise NotImplementedError()
-
-    async def sync_with_backend(self, id, wts, key, manifest):
-        raise NotImplementedError()
 
 
 class ManifestDecryptionError(ParsecError):

@@ -20,6 +20,7 @@ class BaseAccess:
 
 @attr.s(slots=True, frozen=True)
 class BaseUserVlobAccess(BaseAccess):
+    # TODO: remove privkey (only manifests_manager deals with it)
     privkey = attr.ib()
 
     async def fetch(self):
@@ -27,6 +28,7 @@ class BaseUserVlobAccess(BaseAccess):
             self.privkey)
 
     def dump(self, with_type=True):
+        # TODO: shouldn't be called, so raise exception here
         dumped = {
             'privkey': self.privkey,
         }

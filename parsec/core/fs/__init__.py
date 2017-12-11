@@ -74,6 +74,11 @@ class FS:
 
     async def init(self):
         access = self._user_vlob_access_cls(None)  # TODO...
+        # Note we don't try to get the user manifest from the backend here
+        # The reason is we already know version 0 of the manifest (i.e. empty
+        # user manifest), so we fallback to it if there is nothing better in
+        # the local storage. This way init can be done no matter if the
+        # backend is not available.
         user_manifest = await self.manifests_manager.fetch_user_manifest_from_local()
         if not user_manifest:
             self.root = self._root_entry_cls(

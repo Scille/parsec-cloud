@@ -89,11 +89,14 @@ class BaseNotLoadedEntry(BaseEntry):
         if self._loaded:
             return self._loaded
         async with self.acquire_write():
+            # Make sure this entry hasn't been loaded while we were waiting
+            if self._loaded:
+                return self._loaded
             manifest = await self._access.fetch()
             if manifest:
                 # The idea here is to create a new entry object that will replace the
                 # current one and represent the fact it is now loaded in memory.
-                # Hence we must share _access and _rwlock between the two.
+                # Hence we must share `_access` and `_rwlock` between the two.
                 self._loaded = self._fs._load_entry(self._access, self.name, self.parent, manifest)
                 self._loaded._rwlock = self._rwlock
                 return self._loaded
