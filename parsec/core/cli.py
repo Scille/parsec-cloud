@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 
 from parsec.utils import User
 from .app import CoreApp
-from .config import CONFIG
+from .config import Config
 
 
 JOHN_DOE_IDENTITY = 'johndoe@test'
@@ -47,7 +47,7 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option('--socket', '-s', default=DEFAULT_CORE_UNIX_SOCKET,
               help='Path to the UNIX socket exposing the core API (default: %s).' %
               DEFAULT_CORE_UNIX_SOCKET)
-@click.option('--backend-host', '-H', default='tcp://127.0.0.1:6777')
+@click.option('--backend-addr', '-A', default='tcp://127.0.0.1:6777')
 @click.option('--backend-watchdog', '-W', type=click.INT, default=None)
 @click.option('--debug', '-d', is_flag=True)
 @click.option('--pdb', is_flag=True)
@@ -62,18 +62,18 @@ def core_cmd(**kwargs):
         return _core(**kwargs)
 
 
-def _core(socket, backend_host, backend_watchdog, debug, i_am_john):
+def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
     # TODO: so far LocalStorage is not implemented, so use the testing mock...
     from . import fs
     from tests.common import mocked_local_storage_cls_factory
     fs.LocalStorage = mocked_local_storage_cls_factory()
 
-    config = {
-        **CONFIG,
-        'DEBUG': debug,
-        'BACKEND_ADDR': backend_host,
-        'BACKEND_WATCHDOG': backend_watchdog,
-    }
+    config = Config(
+        debug=debug,
+        addr=socket,
+        backend_addr=backend_addr,
+        backend_watchdog=backend_watchdog
+    )
     core = CoreApp(config)
 
     async def _login_and_run(user=None):
@@ -93,7 +93,7 @@ def _core(socket, backend_host, backend_watchdog, debug, i_am_john):
                 raise SystemExit('Error: Invalid --socket value `%s`' % socket)
 
     print('Starting Parsec Core on %s (with backend on %s)' %
-        (socket, config['BACKEND_ADDR']))
+        (socket, config.backend_addr))
     try:
         if i_am_john:
             # TODO: well well well...

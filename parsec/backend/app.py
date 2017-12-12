@@ -39,7 +39,7 @@ class BackendApp:
     def __init__(self, config):
         self.config = config
         self.nursery = None
-        self.blockstore_url = config['BLOCKSTORE_URL']
+        self.blockstore_url = config.blockstore_url
         # TODO: validate BLOCKSTORE_URL value
         if self.blockstore_url == 'backend://':
             self.blockstore = MockedBlockStoreComponent()
@@ -102,7 +102,7 @@ class BackendApp:
     async def _do_handshake(self, sock):
         context = None
         try:
-            hs = ServerHandshake(self.config.get('HANDSHAKE_CHALLENGE_SIZE', 48))
+            hs = ServerHandshake(self.config.handshake_challenge_size)
             challenge_req = hs.build_challenge_req()
             await sock.send(challenge_req)
 

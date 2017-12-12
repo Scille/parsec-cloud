@@ -22,7 +22,8 @@ requirements = [
     'pendulum==1.3.1',
     'PyNaCl==1.2.0',
     'simplejson==3.10.0',
-    'trio==0.2.0'
+    'trio==0.2.0',
+    'python-decouple==3.1'
 ]
 dependency_links = [
     # need to use --process-dependency-links option for this

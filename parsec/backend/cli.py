@@ -2,6 +2,7 @@ import trio
 import click
 
 from .app import BackendApp
+from .config import Config
 
 
 JOHN_DOE_IDENTITY = 'johndoe@test'
@@ -58,13 +59,12 @@ def backend_cmd(**kwargs):
 
 
 def _backend(host, port, pubkeys, store, block_store, debug):
-    config = {
-        # **CONFIG,
-        'BLOCKSTORE_URL': block_store,
-        'DEBUG': debug,
-        'PORT': port,
-        'HOST': host,
-    }
+    config = Config(
+        debug=debug,
+        blockstore_url=block_store,
+        host=host,
+        port=port
+    )
     backend = BackendApp(config)
 
     async def _run_and_register_johndoe():

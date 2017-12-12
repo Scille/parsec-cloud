@@ -15,7 +15,7 @@ marshmallow = "==2.14.0"
 click = "==6.7"
 attrs = "==17.3.0"
 marshmallow-oneofschema = "*"
-
+python-decouple = "==3.1"
 
 [dev-packages]
 

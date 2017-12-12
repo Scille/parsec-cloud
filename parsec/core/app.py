@@ -19,7 +19,7 @@ class CoreApp:
 
     def __init__(self, config):
         self.config = config
-        self.backend_addr = config['BACKEND_ADDR']
+        self.backend_addr = config.backend_addr
 
         self.nursery = None
         self.auth_user = None
@@ -82,7 +82,8 @@ class CoreApp:
     async def login(self, user):
         self.auth_user = user
         self.backend_connection = BackendConnection(
-            user, self.config['BACKEND_ADDR'])
+            user, self.backend_addr
+        )
         await self.backend_connection.init(self.nursery)
         self.fs = await fs_factory(user, self.config, self.backend_connection)
         # local_storage = LocalStorage()

@@ -8,10 +8,14 @@ from unittest.mock import Mock, patch
 from functools import wraps
 from inspect import iscoroutinefunction
 
-from parsec.handshake import ClientHandshake
-from parsec.core.app import CoreApp
-from parsec.utils import CookedSocket, User
 from parsec.core.local_storage import BaseLocalStorage
+from parsec.core.config import Config as CoreConfig
+from parsec.core.app import CoreApp
+
+from parsec.handshake import ClientHandshake
+from parsec.utils import CookedSocket, User
+
+from parsec.backend.config import Config as BackendConfig
 from parsec.backend.app import BackendApp
 
 from tests.populate import populate_local_storage_cls, populate_backend
@@ -211,8 +215,13 @@ def mocked_local_storage_cls_factory():
 
 
 async def test_core_factory(config=None, mocked_get_user=True):
-    config = config or {}
-    config['ADDR'] = 'tcp://127.0.0.1:%s' % _get_unused_port()
+    config_kw = {}
+    if config is not None:
+        config_kw = attr.asdict(config)
+
+    config_kw['addr'] = 'tcp://127.0.0.1:%s' % _get_unused_port()
+
+    config = CoreConfig(**config_kw)
     core = CoreAppTesting(config)
 
     def _get_user(id, password):
@@ -226,14 +235,19 @@ async def test_core_factory(config=None, mocked_get_user=True):
 
 
 def with_core(config=None, backend_config=None, mocked_get_user=True, mocked_local_storage=True, with_backend=True):
-    config = config or {}
+    config_kw = {}
+
+    if config is not None:
+        config _kw = CoreConfig()
 
     def decorator(testfunc):
         @almost_wraps(testfunc)
         async def wrapper(*args, **kwargs):
             backend = await _test_backend_factory(backend_config)
             backend_port = _get_unused_port()
-            config['BACKEND_ADDR'] = 'tcp://127.0.0.1:%s' % backend_port
+
+            config_kw['backend_addr'] = 'tcp://127.0.0.1:%s' % backend_port
+            config = CoreConfig(**config_kw)
             core = await test_core_factory(config, mocked_get_user)
             core.test_backend = backend
 
@@ -324,8 +338,13 @@ class ConnectToBackend:
 
 
 async def _test_backend_factory(config=None):
-    config = config or {}
-    config['BLOCKSTORE_URL'] = 'backend://'
+    config_kw = {}
+
+    if config is not None:
+        config_kw = attr.asdict(config)
+
+    config_kw['blockstore_url'] = 'backend://'
+    config = Config(**config_kw)
     backend = BackendAppTesting(config)
     for userid, user in TEST_USERS.items():
         await backend.pubkey.add(userid, user.pubkey.encode(), user.verifykey.encode())
