@@ -48,8 +48,8 @@ class ManifestsManager:
             raise ManifestDecryptionError()
         return json.loads(raw.decode())
 
-    async def fetch_user_manifest_from_backend(self):
-        blob = await self._backend_storage.fetch_user_manifest()
+    async def fetch_user_manifest_from_backend(self, version=None):
+        blob = await self._backend_storage.fetch_user_manifest(version=version)
         if blob:
             decrypted = self._decrypt_user_manifest(blob)
             data, _ = TypedManifestSchema(strict=True).load(decrypted)

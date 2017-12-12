@@ -2,18 +2,7 @@ import attr
 from marshmallow import fields
 
 from parsec.utils import UnknownCheckedSchema, ParsecError
-
-
-class GroupError(ParsecError):
-    status = 'group_error'
-
-
-class GroupAlreadyExist(GroupError):
-    status = 'group_already_exists'
-
-
-class GroupNotFound(GroupError):
-    status = 'group_not_found'
+from parsec.exceptions import GroupAlreadyExist, GroupNotFound
 
 
 @attr.s
@@ -82,20 +71,20 @@ class MockedGroupComponent(BaseGroupComponent):
 
     async def perform_group_create(self, name):
         if name in self._groups:
-            raise GroupAlreadyExist('Group already exist.')
+            raise GroupAlreadyExist()
         self._groups[name] = Group(name)
 
     async def perform_group_read(self, name):
         try:
             return self._groups[name]
         except KeyError:
-            raise GroupNotFound('Group not found.')
+            raise GroupNotFound()
 
     async def perform_group_add_identities(self, name, identities, admin):
         try:
             group = self._groups[name]
         except KeyError:
-            raise GroupNotFound('Group not found.')
+            raise GroupNotFound()
         if admin:
             group.admins |= identities
         else:
@@ -106,7 +95,7 @@ class MockedGroupComponent(BaseGroupComponent):
         try:
             group = self._groups[name]
         except KeyError:
-            raise GroupNotFound('Group not found.')
+            raise GroupNotFound()
         if admin:
             group.admins -= identities
         else:

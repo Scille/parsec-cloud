@@ -5,22 +5,13 @@ from uuid import uuid4
 from marshmallow import fields
 
 from parsec.utils import UnknownCheckedSchema, to_jsonb64, ParsecError
-
+from parsec.backend.exceptions import (
+    VersionError,
+    VlobNotFound,
+    TrustSeedError
+)
 
 TRUST_SEED_LENGTH = 12
-
-
-class VlobError(ParsecError):
-    status = 'vlob_error'
-
-
-class VlobNotFound(VlobError):
-    status = 'vlob_not_found'
-
-
-class TrustSeedError(ParsecError):
-    status = 'trust_seed_error'
-
 
 
 def generate_trust_seed():
@@ -122,9 +113,9 @@ class MockedVlobComponent(BaseVlobComponent):
         try:
             vlob = self.vlobs[id]
             if vlob.read_trust_seed != trust_seed:
-                raise TrustSeedError('Invalid read trust seed.')
+                raise TrustSeedError()
         except KeyError:
-            raise VlobNotFound('Vlob not found.')
+            raise VlobNotFound()
         version = version or len(vlob.blob_versions)
         try:
             return VlobAtom(id=vlob.id,
@@ -133,7 +124,7 @@ class MockedVlobComponent(BaseVlobComponent):
                             blob=vlob.blob_versions[version - 1],
                             version=version)
         except IndexError:
-            raise VlobError('Wrong blob version.')
+            raise VersionError()
 
     async def update(self, id, trust_seed, version, blob):
         try:
@@ -141,10 +132,10 @@ class MockedVlobComponent(BaseVlobComponent):
             if vlob.write_trust_seed != trust_seed:
                 raise TrustSeedError('Invalid write trust seed.')
         except KeyError:
-            raise VlobNotFound('Vlob not found.')
+            raise VlobNotFound()
         if version - 1 == len(vlob.blob_versions):
             vlob.blob_versions.append(blob)
         else:
-            raise VlobError('Wrong blob version.')
+            raise VersionError()
         # TODO: trigger event
         # await Effect(EEvent('vlob_updated', id))

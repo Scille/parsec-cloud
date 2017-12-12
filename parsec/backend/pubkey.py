@@ -5,14 +5,7 @@ from nacl.public import PublicKey
 from nacl.signing import VerifyKey
 
 from parsec.utils import UnknownCheckedSchema, ParsecError, to_jsonb64
-
-
-class PubKeyError(ParsecError):
-    status = 'pubkey_error'
-
-
-class PubKeyNotFound(PubKeyError):
-    status = 'pubkey_not_found'
+from parsec.exceptions import PubKeyNotFound
 
 
 class cmd_PUBKEY_GET_Schema(UnknownCheckedSchema):
@@ -53,7 +46,9 @@ class MockedPubKeyComponent(BasePubKeyComponent):
         assert isinstance(pubkey, (bytes, bytearray))
         assert isinstance(verifykey, (bytes, bytearray))
         if id in self._keys:
-            raise PubKeyError('Identity `%s` already has a public key' % id)
+            raise PubKeyAlreadyExists(
+                'Identity `%s` already has a public key' % id
+            )
         else:
             self._keys[id] = (pubkey, verifykey)
 

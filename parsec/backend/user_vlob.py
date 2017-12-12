@@ -3,10 +3,7 @@ from collections import defaultdict
 from marshmallow import fields
 
 from parsec.utils import UnknownCheckedSchema, to_jsonb64, ParsecError
-
-
-class UserVlobError(ParsecError):
-    status = 'user_vlob_error'
+from parsec.exceptions import VersionError
 
 
 @attr.s
@@ -62,12 +59,12 @@ class MockedUserVlobComponent(BaseUserVlobComponent):
             else:
                 return vlobs[version - 1]
         except IndexError:
-            raise UserVlobError('Wrong blob version.')
+            raise VersionError()
 
     async def update(self, id, version, blob):
         vlobs = self.vlobs[id]
         if len(vlobs) != version - 1:
-            raise UserVlobError('Wrong blob version.')
+            raise VersionError()
         vlobs.append(UserVlobAtom(id=id, version=version, blob=blob))
         # TODO: trigger event
         # await Effect(EEvent('user_vlob_updated', id))

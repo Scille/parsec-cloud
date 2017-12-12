@@ -289,7 +289,20 @@ class BaseRootEntry(BaseFolderEntry):
             manifest['children'][name] = entry._access.dump(with_type=False)
 
         # Upload the file manifest as new vlob version
-        await self._fs.manifests_manager.sync_user_manifest_with_backend(manifest)
+        while True:
+            try:
+                await self._fs.manifests_manager.sync_user_manifest_with_backend(manifest)
+                break
+
+            except BackendConcurrencyError:
+                base = await self._fs.manifests_manager.fetch_user_manifest_from_backend(
+                    version=manifest['version'] - 1
+                )
+                # Fetch last version from the backend and merge with it
+                # before retrying the synchronization
+                target = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
+                # 3-ways merge between base, modified and target versions
+                manifest = merge_folder_manifest(base, manifest, target)
         # TODO: If conflict, do a 3-ways merge between base, modified and target versions ?
         async with self.acquire_write():
             # Else update base_version
