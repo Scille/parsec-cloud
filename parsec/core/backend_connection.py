@@ -50,7 +50,7 @@ class BackendConnection:
                     return await self._naive_send(req)
                 except (OSError, trio.BrokenStreamError) as e:
                     # Failed again, it seems we are offline
-                    raise BackendNotAvailable(str(e))
+                    raise BackendNotAvailable() from e
 
     async def init(self, nursery):
         # Try to open connection with the backend to save time for first

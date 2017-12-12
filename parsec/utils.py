@@ -117,12 +117,13 @@ def ejson_loads(raw):
 
 class ParsecError(Exception):
     status = 'error'
+    reason = 'reason'
 
     def __init__(self, reason=None, **kwargs):
-        if reason:
-            self.kwargs = {**kwargs, 'reason': reason}
-        else:
-            self.kwargs = kwargs
+        if reason is None:
+            reason = self.__class__.reason
+
+        self.kwargs = {**kwargs, 'reason': reason}
 
     def to_dict(self):
         return {'status': self.status, **self.kwargs}

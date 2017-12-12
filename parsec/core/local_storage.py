@@ -17,6 +17,18 @@ class BaseLocalStorage:
     def move_manifest(self, id, new_id):
         raise NotImplementedError()
 
+    def fetch_block(self, id):
+        raise NotImplementedError()
+
+    def flush_block(self, id, blob):
+        raise NotImplementedError()
+
+    def fetch_dirty_block(self, id):
+        raise NotImplementedError()
+
+    def flush_dirty_block(self, id, blob):
+        raise NotImplementedError()
+
 
 # TODO...
 class LocalStorage(BaseLocalStorage):

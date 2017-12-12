@@ -174,8 +174,7 @@ class InMemoryLocalStorage:
         self.local_manifests[id] = blob
 
     def move_manifest(self, id, new_id):
-        self.local_manifests[new_id] = self.local_manifests[id]
-        del self.local_manifests[id]
+        self.local_manifests[new_id] = self.local_manifests.pop(id)
 
     def fetch_block(self, id):
         return self.blocks.get(id)
