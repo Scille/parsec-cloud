@@ -25,7 +25,7 @@ class BackendConnection:
             await self._sock.aclose()
         sockstream = await trio.open_tcp_stream(self.addr.hostname, self.addr.port)
         self._sock = CookedSocket(sockstream)
-        ch = ClientHandshake(self.user)
+        ch = ClientHandshake(self.user.id, self.user.signkey)
         challenge_req = await self._sock.recv()
         answer_req = ch.process_challenge_req(challenge_req)
         await self._sock.send(answer_req)

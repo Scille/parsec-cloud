@@ -7,6 +7,7 @@ import contextlib
 from unittest.mock import Mock, patch
 from functools import wraps
 from inspect import iscoroutinefunction
+from nacl.signing import SigningKey
 
 from parsec.handshake import ClientHandshake
 from parsec.core.app import CoreApp
@@ -39,6 +40,10 @@ class AsyncMock(Mock):
             return super().__call__(*args, **kwargs)
 
 
+ANONYMOUS_SIGNING_KEY = SigningKey(b"t\xd9\xa58J\xbc}\xdfO\x00\x8cL=\x11\xb1\xa8\xeb9"
+                         b"\xda\x9cE\xc4'<\x0b\x19`\xa7O\x9e\xfb\x1c")
+
+
 alice = User(
     'alice@test',
     b'\xceZ\x9f\xe4\x9a\x19w\xbc\x12\xc8\x98\xd1CB\x02vS\xa4\xfe\xc8\xc5\xa6\xcd\x87\x90\xd7\xabJ\x1f$\x87\xc4',
@@ -56,6 +61,7 @@ mallory = User(
     b'sD\xae\x91^\xae\xcc\xe7.\x89\xc8\x91\x9f\xa0t>B\x93\x07\xe7\xb5\xb0\x81\xb1\x07\xf0\xe5\x9b\x91\xd0`:',
     b'\xcd \x7f\xf5\x91\x17=\xda\x856Sz\xe0\xf9\xc6\x82!O7g9\x01`s\xdd\xeeoj\xcb\xe7\x0e\xc5'
 )
+
 
 TEST_USERS = {user.id: user for user in (alice, bob, mallory)}
 
@@ -309,15 +315,19 @@ class ConnectToBackend:
         else:
             self.sock = CookedSocket(sockstream)
         if self.auth_as:
-            assert self.auth_as in TEST_USERS
-            user = TEST_USERS[self.auth_as]
             # Handshake
-            ch = ClientHandshake(user)
+            if self.auth_as == 'anonymous':
+                ch = ClientHandshake('anonymous', ANONYMOUS_SIGNING_KEY)
+            else:
+                assert self.auth_as in TEST_USERS
+                user = TEST_USERS[self.auth_as]
+                ch = ClientHandshake(user.id, user.signkey)
             challenge_req = await self.sock.recv()
             answer_req = ch.process_challenge_req(challenge_req)
             await self.sock.send(answer_req)
             result_req = await self.sock.recv()
             ch.process_result_req(result_req)
+
         return self.sock
 
     async def __aexit__(self, exc_type, exc, tb):
@@ -327,9 +337,16 @@ class ConnectToBackend:
 async def _test_backend_factory(config=None):
     config = config or {}
     config['BLOCKSTORE_URL'] = 'backend://'
+    config['ANONYMOUS_VERIFY_KEY'] = ANONYMOUS_SIGNING_KEY.verify_key.encode()
     backend = BackendAppTesting(config)
-    for userid, user in TEST_USERS.items():
-        await backend.pubkey.add(userid, user.pubkey.encode(), user.verifykey.encode())
+    for fullid, user in TEST_USERS.items():
+        userid, deviceid = fullid.split('@')
+        await backend.user.create(
+            author='<pytest>',
+            id=userid,
+            broadcast_key=user.pubkey.encode(),
+            devices=[(deviceid, user.verifykey.encode())]
+        )
     return backend
 
 

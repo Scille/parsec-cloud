@@ -102,16 +102,17 @@ class ServerHandshake:
 
 @attr.s
 class ClientHandshake:
-    user = attr.ib()
+    user_id = attr.ib()
+    user_signkey = attr.ib()
 
     def process_challenge_req(self, req):
         data, errors = HandshakeChallengeSchema().load(req)
         if errors:
             raise HandshakeFormatError('Invalid `challenge` request %s: %s' % (req, errors))
-        answer = self.user.signkey.sign(data['challenge'])
+        answer = self.user_signkey.sign(data['challenge'])
         rep, _ = HandshakeAnswerSchema().dump({
             'handshake': 'answer',
-            'identity': self.user.id,
+            'identity': self.user_id,
             'answer': answer
         })
         return rep

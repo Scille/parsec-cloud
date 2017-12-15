@@ -2,7 +2,7 @@ import attr
 import trio
 from marshmallow import fields
 import nacl.utils
-from nacl.public import PrivateKey
+from nacl.public import PublicKey
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 from urllib.parse import urlparse
@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from parsec.utils import (CookedSocket, BaseCmdSchema,
                           ParsecError, to_jsonb64, from_jsonb64)
 from parsec.handshake import HandshakeFormatError, ServerHandshake
+from parsec.backend.user import MockedUserComponent, UserNotFound
 from parsec.backend.pubkey import MockedPubKeyComponent
 from parsec.backend.vlob import MockedVlobComponent
 from parsec.backend.user_vlob import MockedUserVlobComponent
@@ -28,10 +29,25 @@ class cmd_PING_Schema(BaseCmdSchema):
 
 
 @attr.s
+class AnonymousClientContext:
+    id = 'anonymous'
+    anonymous = True
+
+
+@attr.s
 class ClientContext:
+    anonymous = False
     id = attr.ib()
-    pubkey = attr.ib()
-    signkey = attr.ib()
+    broadcast_key = attr.ib()
+    verify_key = attr.ib()
+
+    @property
+    def user_id(self):
+        return self.id.split('@')[0]
+
+    @property
+    def device_id(self):
+        return self.id.split('@')[1]
 
 
 class BackendApp:
@@ -39,21 +55,31 @@ class BackendApp:
     def __init__(self, config):
         self.config = config
         self.nursery = None
+        self.anonymous_verifykey = VerifyKey(config['ANONYMOUS_VERIFY_KEY'])
         self.blockstore_url = config['BLOCKSTORE_URL']
         # TODO: validate BLOCKSTORE_URL value
         if self.blockstore_url == 'backend://':
             self.blockstore = MockedBlockStoreComponent()
         else:
             self.blockstore = None
+        self.user = MockedUserComponent()
         self.vlob = MockedVlobComponent()
         self.user_vlob = MockedUserVlobComponent()
         self.pubkey = MockedPubKeyComponent()
         self.message = InMemoryMessageComponent()
         self.group = MockedGroupComponent()
 
+        self.anonymous_cmds = {
+            'user_claim': self.user.api_user_claim,
+            'ping': self._api_ping
+        }
+
         self.cmds = {
             # 'subscribe_event': self.api_subscribe_event,
             # 'unsubscribe_event': self.api_unsubscribe_event,
+
+            'user_get': self.user.api_user_get,
+            'user_create': self.user.api_user_create,
 
             'blockstore_post': self._api_blockstore_post,
             'blockstore_get': self._api_blockstore_get,
@@ -105,15 +131,28 @@ class BackendApp:
             hs = ServerHandshake(self.config.get('HANDSHAKE_CHALLENGE_SIZE', 48))
             challenge_req = hs.build_challenge_req()
             await sock.send(challenge_req)
-
             answer_req = await sock.recv()
+
             hs.process_answer_req(answer_req)
-            rawkeys = await self.pubkey.get(hs.identity)
-            if not rawkeys:
-                result_req = hs.build_bad_identity_result_req()
+            if hs.identity == 'anonymous':
+                context = AnonymousClientContext()
+                result_req = hs.build_result_req(self.anonymous_verifykey)
             else:
-                result_req = hs.build_result_req(VerifyKey(rawkeys[1]))
-                context = ClientContext(hs.identity, *rawkeys)
+                try:
+                    userid, deviceid = hs.identity.split('@')
+                except ValueError:
+                    raise HandshakeFormatError()
+                try:
+                    user = await self.user.get(userid)
+                    device = user['devices'][deviceid]
+                except (UserNotFound, KeyError):
+                    result_req = hs.build_bad_identity_result_req()
+                else:
+                    broadcast_key = PublicKey(user['broadcast_key'])
+                    verify_key = VerifyKey(device['verify_key'])
+                    context = ClientContext(hs.identity, broadcast_key, verify_key)
+                    result_req = hs.build_result_req(verify_key)
+
         except HandshakeFormatError:
             result_req = hs.build_bad_format_result_req()
         await sock.send(result_req)
@@ -136,11 +175,19 @@ class BackendApp:
                     break
                 print('REQ %s' % req)
                 # TODO: handle bad msg
-                cmd_func = self.cmds[req.pop('cmd')]
                 try:
-                    rep = await cmd_func(client_ctx, req)
-                except ParsecError as err:
-                    rep = err.to_dict()
+                    cmd = req.pop('cmd', '<missing>')
+                    if client_ctx.anonymous:
+                        cmd_func = self.anonymous_cmds[cmd]
+                    else:
+                        cmd_func = self.cmds[cmd]
+                except KeyError:
+                    rep = {'status': 'bad_cmd', 'reason': 'Unknown command `%s`' % cmd}
+                else:
+                    try:
+                        rep = await cmd_func(client_ctx, req)
+                    except ParsecError as err:
+                        rep = err.to_dict()
                 print('REP %s' % rep)
                 await sock.send(rep)
         except trio.BrokenStreamError:

@@ -1,5 +1,7 @@
 import os
 import pytest
+import socket
+import contextlib
 
 from tests.common import TEST_USERS
 from tests.populate import populate_factory
@@ -56,3 +58,11 @@ def bob_data(bob):
 @pytest.fixture
 def mallory_data(mallory):
     return populate_factory(mallory)
+
+
+@pytest.fixture
+def unused_tcp_port():
+    """Find an unused localhost TCP port from 1024-65535 and return it."""
+    with contextlib.closing(socket.socket()) as sock:
+        sock.bind(('127.0.0.1', 0))
+        return sock.getsockname()[1]

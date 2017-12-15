@@ -10,7 +10,7 @@ from parsec.handshake import (
 def test_good_handshake(alice):
     sh = ServerHandshake()
 
-    ch = ClientHandshake(alice)
+    ch = ClientHandshake(alice.id, alice.signkey)
     assert sh.state == 'stalled'
 
     challenge_req = sh.build_challenge_req()
@@ -36,7 +36,7 @@ def test_good_handshake(alice):
     {'handshake': 'challenge', 'challenge': 42},
 ])
 def test_process_challenge_req_bad_format(alice, req):
-    ch = ClientHandshake(alice)
+    ch = ClientHandshake(alice.id, alice.signkey)
     with pytest.raises(HandshakeFormatError):
         ch.process_challenge_req(req)
 
@@ -49,13 +49,13 @@ def test_process_challenge_req_bad_format(alice, req):
     {'handshake': 'result', 'result': 'error'},
 ])
 def test_process_result_req_bad_format(alice, req):
-    ch = ClientHandshake(alice)
+    ch = ClientHandshake(alice.id, alice.signkey)
     with pytest.raises(HandshakeFormatError):
         ch.process_result_req(req)
 
 
 def test_process_result_req_bad_identity(alice):
-    ch = ClientHandshake(alice)
+    ch = ClientHandshake(alice.id, alice.signkey)
     with pytest.raises(HandshakeBadIdentity):
         ch.process_result_req({
             'handshake': 'result',

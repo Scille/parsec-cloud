@@ -69,7 +69,9 @@ def _backend(host, port, pubkeys, store, block_store, debug):
 
     async def _run_and_register_johndoe():
         await backend.init()
-        await backend.pubkey.add(JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY, JOHN_DOE_VERIFY_KEY)
+        await backend.user.create(JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY, devices={
+            'main': JOHN_DOE_VERIFY_KEY
+        })
         await trio.serve_tcp(backend.handle_client, port)
 
     print('Starting Parsec Backend on %s:%s' % (host, port))
