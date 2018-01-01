@@ -229,6 +229,8 @@ class FSApi:
         curr_path = req['path']
         while to_sync[-1].is_placeholder:
             curr_path, _ = curr_path.rsplit('/', 1)
+            if not curr_path:
+                curr_path = '/'
             to_sync.append(await self.fs.fetch_path(curr_path))
         for obj in reversed(to_sync):
             # Note we must explicitly sync children even if parent are sync !
