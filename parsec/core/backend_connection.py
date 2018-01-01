@@ -24,13 +24,19 @@ class BackendConnection:
         if self._sock:
             await self._sock.aclose()
         sockstream = await trio.open_tcp_stream(self.addr.hostname, self.addr.port)
-        self._sock = CookedSocket(sockstream)
-        ch = ClientHandshake(self.user.id, self.user.signkey)
-        challenge_req = await self._sock.recv()
-        answer_req = ch.process_challenge_req(challenge_req)
-        await self._sock.send(answer_req)
-        result_req = await self._sock.recv()
-        ch.process_result_req(result_req)
+        try:
+            sock = CookedSocket(sockstream)
+            ch = ClientHandshake(self.user.id, self.user.signkey)
+            challenge_req = await sock.recv()
+            answer_req = ch.process_challenge_req(challenge_req)
+            await sock.send(answer_req)
+            result_req = await sock.recv()
+            ch.process_result_req(result_req)
+        except Exception as exc:
+            await sockstream.aclose()
+            raise exc
+
+        self._sock = sock
 
     async def _naive_send(self, req):
         if not self._sock:

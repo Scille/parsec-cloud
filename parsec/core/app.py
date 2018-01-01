@@ -6,7 +6,7 @@ from parsec.core.fs import fs_factory
 from parsec.core.fs_api import FSApi
 from parsec.core.manifests_manager import ManifestsManager
 from parsec.core.blocks_manager import BlocksManager
-from parsec.core.backend_connection import BackendConnection
+from parsec.core.backend_connection import BackendConnection, BackendNotAvailable
 from parsec.utils import CookedSocket, BaseCmdSchema, ParsecError, User
 
 
@@ -81,8 +81,7 @@ class CoreApp:
 
     async def login(self, user):
         self.auth_user = user
-        self.backend_connection = BackendConnection(
-            user, self.config['BACKEND_ADDR'])
+        self.backend_connection = BackendConnection(user, self.config['BACKEND_ADDR'])
         await self.backend_connection.init(self.nursery)
         self.fs = await fs_factory(user, self.config, self.backend_connection)
         # local_storage = LocalStorage()
@@ -135,4 +134,12 @@ class CoreApp:
         pass
 
     async def _api_get_core_state(self, req):
-        return {'status': 'ok'}
+        status = {'status': 'ok', 'login': None, 'backend_online': False}
+        if self.auth_user:
+            status['login'] = self.auth_user.id
+            try:
+                await self.backend_connection.ping()
+                status['backend_online'] = True
+            except BackendNotAvailable:
+                status['backend_online'] = False
+        return status
