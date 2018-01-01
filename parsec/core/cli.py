@@ -1,3 +1,4 @@
+from os.path import expandvars
 import trio
 import click
 from urllib.parse import urlparse
@@ -73,6 +74,7 @@ def _core(socket, backend_host, backend_watchdog, debug, i_am_john):
         'DEBUG': debug,
         'BACKEND_ADDR': backend_host,
         'BACKEND_WATCHDOG': backend_watchdog,
+        'BASE_SETTINGS_PATH': expandvars('$HOME/.config/parsec')
     }
     core = CoreApp(config)
 

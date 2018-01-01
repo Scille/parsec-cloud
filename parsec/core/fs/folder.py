@@ -1,10 +1,8 @@
 import attr
-import json
 import pendulum
 
-from parsec.rwlock import RWLock
-from parsec.core.fs.base import BaseEntry, FSLoadError, BaseNotLoadedEntry, FSInvalidPath, FSError
-from parsec.core.fs.merge_folder import merge_folder_manifest, merge_children
+from parsec.core.fs.base import BaseEntry, FSInvalidPath, FSError
+from parsec.core.fs.merge_folder import merge_folder_manifest
 from parsec.core.backend_storage import BackendConcurrencyError
 
 

@@ -1,4 +1,6 @@
 import os
+from tempfile import mkdtemp
+from shutil import rmtree
 import pytest
 import socket
 import contextlib
@@ -132,8 +134,10 @@ async def alice_backend_sock(backend, alice):
 
 @pytest.fixture
 async def core(backend_addr, default_users, config={}):
+    base_settings_path = mkdtemp()
     config = {
         'BACKEND_ADDR': backend_addr,
+        'BASE_SETTINGS_PATH': base_settings_path,
         **config
     }
     core = CoreApp(config)
@@ -148,7 +152,9 @@ async def core(backend_addr, default_users, config={}):
 
         core._get_user = _get_user
 
-    return core
+    yield core
+
+    rmtree(base_settings_path)
 
 
 @pytest.fixture
