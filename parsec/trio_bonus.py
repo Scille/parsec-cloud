@@ -15,7 +15,7 @@ async def serve_unix(
     mode=0o666,
     backlog=None,
     handler_nursery=None,
-    task_status=trio.STATUS_IGNORED
+    task_status=trio.TASK_STATUS_IGNORED
 ):
     listeners = await open_unix_listeners(path, mode=mode, backlog=backlog)
     await trio.serve_listeners(
