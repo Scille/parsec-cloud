@@ -2,9 +2,17 @@ import os
 import pytest
 import socket
 import contextlib
+from unittest.mock import patch
 
-from tests.common import TEST_USERS
+from parsec.backend.app import BackendApp
+from parsec.core.app import CoreApp
+
+from tests.common import (
+    ANONYMOUS_SIGNING_KEY, TEST_USERS, connect_backend, connect_core, run_app)
 from tests.populate import populate_factory
+from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
+
+
 
 
 def pytest_addoption(parser):
@@ -66,3 +74,85 @@ def unused_tcp_port():
     with contextlib.closing(socket.socket()) as sock:
         sock.bind(('127.0.0.1', 0))
         return sock.getsockname()[1]
+
+
+@pytest.fixture
+def default_users(alice, bob):
+    return (alice, bob)
+
+
+@pytest.fixture
+async def backend(default_users, config={}):
+    config = {
+        'BLOCKSTORE_URL': 'backend://',
+        'ANONYMOUS_VERIFY_KEY': ANONYMOUS_SIGNING_KEY.verify_key.encode(),
+        **config
+    }
+    backend = BackendApp(config)
+    for user in default_users:
+        userid, deviceid = user.id.split('@')
+        await backend.user.create(
+            author='<backend-fixture>',
+            id=userid,
+            broadcast_key=user.pubkey.encode(),
+            devices=[(deviceid, user.verifykey.encode())]
+        )
+    return backend
+
+
+@pytest.fixture
+async def backend_addr():
+    return 'tcp://<placeholder>:9999'
+
+
+@pytest.fixture
+async def tcp_stream_spy():
+    open_tcp_stream_mock_wrapper = OpenTCPStreamMockWrapper()
+    with patch('trio.open_tcp_stream', new=open_tcp_stream_mock_wrapper):
+        yield open_tcp_stream_mock_wrapper
+
+
+@pytest.fixture
+async def running_backend(tcp_stream_spy, backend, backend_addr):
+    async with run_app(backend) as backend_connection_factory:
+
+        async def _open_tcp_stream(*args):
+            return await backend_connection_factory()
+
+        tcp_stream_spy.install_hook(backend_addr, _open_tcp_stream)
+        yield (backend, backend_addr, backend_connection_factory)
+        tcp_stream_spy.install_hook(backend_addr, None)
+
+
+@pytest.fixture
+async def alice_backend_sock(backend, alice):
+    async with connect_backend(backend, auth_as=alice.id) as sock:
+        yield sock
+
+
+@pytest.fixture
+async def core(backend_addr, default_users, config={}):
+    config = {
+        'BACKEND_ADDR': backend_addr,
+        **config
+    }
+    core = CoreApp(config)
+
+    if default_users:
+        core.mocked_users_list = list(default_users)
+
+        def _get_user(id, password):
+            for user in core.mocked_users_list:
+                if user.id == id:
+                    return user.privkey.encode(), user.signkey.encode()
+
+        core._get_user = _get_user
+
+    return core
+
+
+@pytest.fixture
+async def alice_core_sock(core, alice):
+    await core.login(alice)
+    async with connect_core(core) as sock:
+        yield sock

@@ -1,4 +1,5 @@
 import trio
+from trio._util import acontextmanager
 from trio.testing import open_stream_to_socket_listener
 import socket
 import inspect
@@ -9,9 +10,9 @@ from functools import wraps
 from inspect import iscoroutinefunction
 from nacl.signing import SigningKey
 
+from parsec.utils import CookedSocket, User
 from parsec.handshake import ClientHandshake
 from parsec.core.app import CoreApp
-from parsec.utils import CookedSocket, User
 from parsec.core.local_storage import BaseLocalStorage
 from parsec.backend.app import BackendApp
 
@@ -370,3 +371,52 @@ def with_backend(config=None, populated_for=None):
                 nursery.start_soon(run_test_and_cancel_scope, nursery)
         return wrapper
     return decorator
+
+
+@acontextmanager
+async def run_app(app):
+    async with trio.open_nursery() as nursery:
+
+        async def connection_factory():
+            right, left = trio.testing.memory_stream_pair()
+            nursery.start_soon(app.handle_client, left)
+            return right
+
+        yield connection_factory
+        nursery.cancel_scope.cancel()
+
+
+@acontextmanager
+async def connect_backend(backend, auth_as=None):
+    async with run_app(backend) as connection_factory:
+        sockstream = await connection_factory()
+        sock = QuitTestOnBrokenStreamCookedSocket(sockstream)
+        if auth_as:
+            # Handshake
+            if auth_as == 'anonymous':
+                ch = ClientHandshake('anonymous', ANONYMOUS_SIGNING_KEY)
+            else:
+                assert auth_as in TEST_USERS
+                user = TEST_USERS[auth_as]
+                ch = ClientHandshake(user.id, user.signkey)
+            challenge_req = await sock.recv()
+            answer_req = ch.process_challenge_req(challenge_req)
+            await sock.send(answer_req)
+            result_req = await sock.recv()
+            ch.process_result_req(result_req)
+        try:
+            yield sock
+        except QuitTestDueToBrokenStream:
+            # Exception should be raised from the handle_client coroutine in nursery
+            pass
+
+
+@acontextmanager
+async def connect_core(core):
+    async with run_app(core) as connection_factory:
+        sockstream = await connection_factory()
+        sock = QuitTestOnBrokenStreamCookedSocket(sockstream)
+        try:
+            yield sock
+        except QuitTestDueToBrokenStream:
+            pass
