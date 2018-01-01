@@ -55,7 +55,6 @@ class BackendApp:
     def __init__(self, config):
         self.config = config
         self.nursery = None
-        self.anonymous_verifykey = VerifyKey(config['ANONYMOUS_VERIFY_KEY'])
         self.blockstore_url = config['BLOCKSTORE_URL']
         # TODO: validate BLOCKSTORE_URL value
         if self.blockstore_url == 'backend://':
@@ -136,7 +135,7 @@ class BackendApp:
             hs.process_answer_req(answer_req)
             if hs.identity == 'anonymous':
                 context = AnonymousClientContext()
-                result_req = hs.build_result_req(self.anonymous_verifykey)
+                result_req = hs.build_result_req()
             else:
                 try:
                     userid, deviceid = hs.identity.split('@')

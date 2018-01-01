@@ -10,7 +10,7 @@ from parsec.backend.app import BackendApp
 from parsec.core.app import CoreApp
 
 from tests.common import (
-    ANONYMOUS_SIGNING_KEY, TEST_USERS, connect_backend, connect_core, run_app)
+    TEST_USERS, connect_backend, connect_core, run_app)
 from tests.populate import populate_factory
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 
@@ -87,7 +87,6 @@ def default_users(alice, bob):
 async def backend(default_users, config={}):
     config = {
         'BLOCKSTORE_URL': 'backend://',
-        'ANONYMOUS_VERIFY_KEY': ANONYMOUS_SIGNING_KEY.verify_key.encode(),
         **config
     }
     backend = BackendApp(config)

@@ -8,10 +8,9 @@ import contextlib
 from unittest.mock import Mock, patch
 from functools import wraps
 from inspect import iscoroutinefunction
-from nacl.signing import SigningKey
 
 from parsec.utils import CookedSocket, User
-from parsec.handshake import ClientHandshake
+from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 from parsec.core.app import CoreApp
 from parsec.core.local_storage import BaseLocalStorage
 from parsec.backend.app import BackendApp
@@ -39,10 +38,6 @@ class AsyncMock(Mock):
                 return self.__async_call(*args, **kwargs)
         else:
             return super().__call__(*args, **kwargs)
-
-
-ANONYMOUS_SIGNING_KEY = SigningKey(b"t\xd9\xa58J\xbc}\xdfO\x00\x8cL=\x11\xb1\xa8\xeb9"
-                         b"\xda\x9cE\xc4'<\x0b\x19`\xa7O\x9e\xfb\x1c")
 
 
 alice = User(
@@ -318,7 +313,7 @@ class ConnectToBackend:
         if self.auth_as:
             # Handshake
             if self.auth_as == 'anonymous':
-                ch = ClientHandshake('anonymous', ANONYMOUS_SIGNING_KEY)
+                ch = AnonymousClientHandshake()
             else:
                 assert self.auth_as in TEST_USERS
                 user = TEST_USERS[self.auth_as]
@@ -338,7 +333,6 @@ class ConnectToBackend:
 async def _test_backend_factory(config=None):
     config = config or {}
     config['BLOCKSTORE_URL'] = 'backend://'
-    config['ANONYMOUS_VERIFY_KEY'] = ANONYMOUS_SIGNING_KEY.verify_key.encode()
     backend = BackendAppTesting(config)
     for fullid, user in TEST_USERS.items():
         userid, deviceid = fullid.split('@')
@@ -394,7 +388,7 @@ async def connect_backend(backend, auth_as=None):
         if auth_as:
             # Handshake
             if auth_as == 'anonymous':
-                ch = ClientHandshake('anonymous', ANONYMOUS_SIGNING_KEY)
+                ch = AnonymousClientHandshake()
             else:
                 assert auth_as in TEST_USERS
                 user = TEST_USERS[auth_as]
