@@ -16,6 +16,7 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'attrs==17.3.0',
+    'blinker==1.4.0',
     'click==6.7',
     'marshmallow==2.14.0',
     'marshmallow-oneofschema==1.0.5',

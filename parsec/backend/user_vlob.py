@@ -27,6 +27,10 @@ class cmd_UPDATE_Schema(UnknownCheckedSchema):
 
 
 class BaseUserVlobComponent:
+
+    def __init__(self, signal_ns):
+        self._signal_user_vlob_updated = signal_ns.signal('user_vlob_updated')
+
     async def api_user_vlob_read(self, client_ctx, msg):
         msg = cmd_READ_Schema().load(msg)
         atom = await self.read(client_ctx.id, **msg)
@@ -48,9 +52,10 @@ class BaseUserVlobComponent:
         raise NotImplementedError()
 
 
-@attr.s
 class MockedUserVlobComponent(BaseUserVlobComponent):
-    vlobs = attr.ib(default=attr.Factory(lambda: defaultdict(list)))
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.vlobs = defaultdict(list)
 
     async def read(self, id, version=None):
         vlobs = self.vlobs[id]
@@ -69,5 +74,4 @@ class MockedUserVlobComponent(BaseUserVlobComponent):
         if len(vlobs) != version - 1:
             raise UserVlobError('Wrong blob version.')
         vlobs.append(UserVlobAtom(id=id, version=version, blob=blob))
-        # TODO: trigger event
-        # await Effect(EEvent('user_vlob_updated', id))
+        self._signal_user_vlob_updated.send(id)

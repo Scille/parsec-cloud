@@ -67,6 +67,9 @@ class MockedVlob:
 
 class BaseVlobComponent:
 
+    def __init__(self, signal_ns):
+        self._signal_vlob_updated = signal_ns.signal('vlob_updated')
+
     async def api_vlob_create(self, client_ctx, msg):
         msg = cmd_CREATE_Schema().load(msg)
         # Generate opaque id if not provided
@@ -106,9 +109,10 @@ class BaseVlobComponent:
         raise NotImplementedError()
 
 
-@attr.s
 class MockedVlobComponent(BaseVlobComponent):
-    vlobs = attr.ib(default=attr.Factory(dict))
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.vlobs = {}
 
     async def create(self, id, rts, wts, blob):
         vlob = MockedVlob(id, rts, wts, blob)
@@ -146,5 +150,4 @@ class MockedVlobComponent(BaseVlobComponent):
             vlob.blob_versions.append(blob)
         else:
             raise VlobError('Wrong blob version.')
-        # TODO: trigger event
-        # await Effect(EEvent('vlob_updated', id))
+        self._signal_vlob_updated.send(id)

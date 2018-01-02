@@ -27,17 +27,16 @@ class UserIDSchema(UnknownCheckedSchema):
     id = fields.String(required=True)
 
 
-# TODO: currently it's hard to test created_on date, so it has been disable...
 class DeviceSchema(UnknownCheckedSchema):
-    # created_on = fields.DateTime(required=True)
-    # revocated_on = fields.DateTime()
+    created_on = fields.DateTime(required=True)
+    revocated_on = fields.DateTime()
     verify_key = fields.Base64Bytes(required=True)
 
 
 class UserSchema(UnknownCheckedSchema):
     id = fields.String(required=True)
-    # created_on = fields.DateTime()
-    # created_by = fields.String()
+    created_on = fields.DateTime()
+    created_by = fields.String()
     broadcast_key = fields.Base64Bytes()
     devices = fields.Map(
         fields.String(),
@@ -58,6 +57,9 @@ def _generate_invitation_token():
 
 
 class BaseUserComponent:
+
+    def __init__(self, signal_ns):
+        self._signal_user_claimed = signal_ns.signal('user_claimed')
 
     async def api_user_get(self, client_ctx, msg):
         msg = UserIDSchema().load(msg)
@@ -106,19 +108,20 @@ class BaseUserComponent:
         raise NotImplementedError()
 
 
-@attr.s
 class MockedUserComponent(BaseUserComponent):
-    _users = attr.ib(default=attr.Factory(dict))
-    _invitations = attr.ib(default=attr.Factory(dict))
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._users = {}
+        self._invitations = {}
 
     async def claim_invitation(self, id, token, broadcast_key, device_name, device_verify_key):
         assert isinstance(broadcast_key, (bytes, bytearray))
         assert isinstance(device_verify_key, (bytes, bytearray))
 
         invitation = self._invitations.get(id)
+        if not invitation:
+            raise UserClaimError('No invitation for user `%s`' % id)
         try:
-            if not invitation:
-                raise UserClaimError('No invitation for user `%s`' % id)
             if id in self._users:
                 raise UserClaimError('User `%s` has already been registered' % id)
             now = pendulum.utcnow()

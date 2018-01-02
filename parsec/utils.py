@@ -138,6 +138,14 @@ def abort(status='bad_message', **kwargs):
 class User:
     id = attr.ib()
 
+    @property
+    def user_id(self):
+        return self.id.split('@')[0]
+
+    @property
+    def device_id(self):
+        return self.id.split('@')[1]
+
     def __init__(self, id, privkey, signkey):
         self.id = id
         self.privkey = PrivateKey(privkey)

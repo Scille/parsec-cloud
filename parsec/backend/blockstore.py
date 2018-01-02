@@ -22,6 +22,10 @@ class cmd_POST_Schema(UnknownCheckedSchema):
 
 
 class BaseBlockStoreComponent:
+
+    def __init__(self, signal_ns):
+        pass
+
     async def api_blockstore_get(self, client_ctx, msg):
         msg = cmd_GET_Schema().load(msg)
         block = await self.get(msg['id'])
@@ -43,9 +47,10 @@ class BaseBlockStoreComponent:
         raise NotImplementedError()
 
 
-@attr.s
 class MockedBlockStoreComponent(BaseBlockStoreComponent):
-    blocks = attr.ib(default=attr.Factory(dict))
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.blocks = {}
 
     async def get(self, id):
         try:

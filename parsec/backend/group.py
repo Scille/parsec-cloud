@@ -45,6 +45,9 @@ class cmd_REMOVE_IDENTITIES_Schema(UnknownCheckedSchema):
 
 class BaseGroupComponent:
 
+    def __init__(self, signal_ns):
+        pass
+
     async def api_group_create(self, client_ctx, msg):
         msg = cmd_CREATE_Schema().load(msg)
         await self.create(**msg)
@@ -76,9 +79,10 @@ class BaseGroupComponent:
         return {'status': 'ok'}
 
 
-@attr.s
 class MockedGroupComponent(BaseGroupComponent):
-    _groups = attr.ib(default=attr.Factory(dict))
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._groups = {}
 
     async def perform_group_create(self, name):
         if name in self._groups:
