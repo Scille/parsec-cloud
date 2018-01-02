@@ -59,7 +59,7 @@ class ServerHandshake:
         data, errors = HandshakeAnswerSchema().load(req)
         if errors:
             raise HandshakeFormatError('Invalid `answer` request %s: %s' % (req, errors))
-        self.answer = data['answer']
+        self.answer = data['answer'] or b''
         self.identity = data['identity']
 
         self.state = 'answer'
