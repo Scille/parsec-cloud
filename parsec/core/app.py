@@ -1,18 +1,30 @@
 import trio
 from marshmallow import fields
 from urllib.parse import urlparse
+import nacl.utils
+import nacl.signing
 
 from parsec.core.fs import fs_factory
 from parsec.core.fs_api import FSApi
 from parsec.core.manifests_manager import ManifestsManager
 from parsec.core.blocks_manager import BlocksManager
-from parsec.core.backend_connection import BackendConnection, BackendNotAvailable
-from parsec.utils import CookedSocket, BaseCmdSchema, ParsecError, User
+from parsec.core.backend_connection import (
+    BackendConnection, BackendNotAvailable, backend_send_anonymous_cmd)
+from parsec.utils import CookedSocket, BaseCmdSchema, ParsecError, User, to_jsonb64
 
 
 class cmd_LOGIN_Schema(BaseCmdSchema):
     id = fields.String(required=True)
     password = fields.String(missing=None)
+
+
+class cmd_USER_INVITE_Schema(BaseCmdSchema):
+    id = fields.String(required=True)
+
+
+class cmd_USER_CLAIM_Schema(BaseCmdSchema):
+    id = fields.String(required=True)
+    token = fields.String(required=True)
 
 
 class CoreApp:
@@ -30,7 +42,9 @@ class CoreApp:
         self._fs_api = FSApi()
 
         self.cmds = {
-            'register': self._api_register,
+            'user_invite': self._api_user_invite,
+            'user_claim': self._api_user_claim,
+            'register_device': self._api_register_device,
             'identity_login': self._api_identity_login,
             'identity_logout': self._api_identity_logout,
             'identity_info': self._api_identity_info,
@@ -104,7 +118,40 @@ class CoreApp:
         self.fs = None
         self._fs_api.fs = None
 
-    async def _api_register(self, req):
+    async def _api_user_invite(self, req):
+        if not self.auth_user:
+            return {'status': 'login_required'}
+        msg = cmd_USER_INVITE_Schema().load(req)
+        try:
+            rep = await self.backend_connection.send({'cmd': 'user_create', 'id': msg['id']})
+        except BackendNotAvailable:
+            return {'status': 'backend_not_availabled'}
+        return rep
+
+    async def _api_user_claim(self, req):
+        if self.auth_user:
+            return {'status': 'already_logged'}
+        msg = cmd_USER_CLAIM_Schema().load(req)
+        broadcast_key = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
+        device_verify_key = nacl.signing.SigningKey.generate().encode()
+        user_id, device_id = msg['id'].split('@')
+        try:
+            rep = await backend_send_anonymous_cmd(self.backend_addr, {
+                'cmd': 'user_claim',
+                'id': user_id,
+                'device_name': device_id,
+                'token': msg['token'],
+                'broadcast_key': to_jsonb64(broadcast_key),
+                'device_name': device_id,
+                'device_verify_key': to_jsonb64(device_verify_key),
+            })
+        except BackendNotAvailable:
+            return {'status': 'backend_not_availabled'}
+        return rep
+
+    async def _api_register_device(self, req):
+        if not self.auth_user:
+            return {'status': 'login_required'}
         return {'status': 'not_implemented'}
 
     async def _api_identity_login(self, req):

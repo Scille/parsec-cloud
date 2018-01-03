@@ -390,8 +390,11 @@ async def connect_backend(backend, auth_as=None):
             if auth_as == 'anonymous':
                 ch = AnonymousClientHandshake()
             else:
-                assert auth_as in TEST_USERS
-                user = TEST_USERS[auth_as]
+                if isinstance(auth_as, str):
+                    assert auth_as in TEST_USERS
+                    user = TEST_USERS[auth_as]
+                else:
+                    user = auth_as
                 ch = ClientHandshake(user.id, user.signkey)
             challenge_req = await sock.recv()
             answer_req = ch.process_challenge_req(challenge_req)

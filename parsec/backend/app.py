@@ -88,6 +88,7 @@ class BackendApp:
 
             'user_get': self.user.api_user_get,
             'user_create': self.user.api_user_create,
+            'user_claim': self.user.api_user_claim,
 
             'blockstore_post': self._api_blockstore_post,
             'blockstore_get': self._api_blockstore_get,

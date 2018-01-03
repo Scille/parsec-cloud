@@ -4,6 +4,7 @@ from shutil import rmtree
 import pytest
 import socket
 import contextlib
+from freezegun import freeze_time
 from unittest.mock import patch
 
 from parsec.backend.app import BackendApp
@@ -90,20 +91,21 @@ async def backend(default_users, config={}):
         **config
     }
     backend = BackendApp(config)
-    for user in default_users:
-        userid, deviceid = user.id.split('@')
-        await backend.user.create(
-            author='<backend-fixture>',
-            id=userid,
-            broadcast_key=user.pubkey.encode(),
-            devices=[(deviceid, user.verifykey.encode())]
-        )
+    with freeze_time('2000-01-01'):
+        for user in default_users:
+            userid, deviceid = user.id.split('@')
+            await backend.user.create(
+                author='<backend-fixture>',
+                id=userid,
+                broadcast_key=user.pubkey.encode(),
+                devices=[(deviceid, user.verifykey.encode())]
+            )
     return backend
 
 
 @pytest.fixture
-async def backend_addr():
-    return 'tcp://<placeholder>:9999'
+async def backend_addr(tcp_stream_spy):
+    return 'tcp://placeholder.com:9999'
 
 
 @pytest.fixture

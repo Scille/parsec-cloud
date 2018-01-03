@@ -23,12 +23,10 @@ class OpenTCPStreamMockWrapper:
     async def __call__(self, host, port, **kwargs):
         addr = 'tcp://%s:%s' % (host, port)
         hook = self._hooks.get(addr)
-        if hook:
-            if addr in self._offlines:
-                raise ConnectionRefusedError('[Errno 111] Connection refused')
+        if hook and addr not in self._offlines:
             sock = await hook(host, port, **kwargs)
         else:
-            sock = self._original_open_tcp_stream(host, port, **kwargs)
+            raise ConnectionRefusedError('[Errno 111] Connection refused')
         self.socks[addr].append(sock)
         return sock
 

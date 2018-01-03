@@ -2,7 +2,7 @@ import trio
 from urllib.parse import urlparse
 
 from parsec.utils import CookedSocket
-from parsec.handshake import ClientHandshake
+from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 
 
 class BackendError(Exception):
@@ -15,7 +15,8 @@ class BackendNotAvailable(BackendError):
 
 class BackendConnection:
     def __init__(self, user, addr):
-        self.user = user
+        self.handshake_id = user.id
+        self.handshake_signkey = user.signkey
         self.addr = urlparse(addr)
         self._lock = trio.Lock()
         self._sock = None
@@ -26,7 +27,10 @@ class BackendConnection:
         sockstream = await trio.open_tcp_stream(self.addr.hostname, self.addr.port)
         try:
             sock = CookedSocket(sockstream)
-            ch = ClientHandshake(self.user.id, self.user.signkey)
+            if self.handshake_id == 'anonymous':
+                ch = AnonymousClientHandshake()
+            else:
+                ch = ClientHandshake(self.handshake_id, self.handshake_signkey)
             challenge_req = await sock.recv()
             answer_req = ch.process_challenge_req(challenge_req)
             await sock.send(answer_req)
@@ -49,7 +53,7 @@ class BackendConnection:
             # Try to use the already connected socket
             try:
                 return await self._naive_send(req)
-            except (trio.BrokenStreamError, trio.ClosedStreamError):
+            except (BackendNotAvailable, trio.BrokenStreamError, trio.ClosedStreamError):
                 try:
                     # If it failed, reopen the socket and retry the request
                     await self._init_connection()
@@ -73,3 +77,20 @@ class BackendConnection:
 
     async def ping(self):
         await self.send({'cmd': 'ping', 'ping': ''})
+
+
+class AnonymousBackendConnection(BackendConnection):
+    def __init__(self, addr):
+        self.handshake_id = 'anonymous'
+        self.handshake_signkey = None
+        self.addr = urlparse(addr)
+        self._lock = trio.Lock()
+        self._sock = None
+
+
+async def backend_send_anonymous_cmd(addr, cmd):
+    conn = AnonymousBackendConnection(addr)
+    try:
+        return await conn.send(cmd)
+    finally:
+        await conn.teardown()

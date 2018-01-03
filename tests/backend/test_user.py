@@ -1,34 +1,31 @@
 import pytest
 from unittest.mock import patch
-from trio.testing import open_stream_to_socket_listener
 from freezegun import freeze_time
-from nacl.signing import SigningKey
-from nacl.public import PrivateKey
 
-from parsec.utils import to_jsonb64, CookedSocket
-from parsec.handshake import ClientHandshake
+from parsec.utils import to_jsonb64
 
-from tests.common import with_backend
+from tests.common import connect_backend
 
 
 @pytest.mark.trio
-@with_backend()
-async def test_user_get_ok(backend):
-    async with backend.test_connect('alice@test') as sock:
+async def test_user_get_ok(backend, alice, bob):
+    async with connect_backend(backend, auth_as=alice) as sock:
         with freeze_time('2017-07-07'):
             await sock.send({
                 'cmd': 'user_get',
-                'id': 'bob'
+                'id': 'bob',
             })
             rep = await sock.recv()
     assert rep == {
         'status': 'ok',
         'id': 'bob',
         'broadcast_key': 'PJyDuQC6ZXlhLqnwP9cwLZE9ye18fydKmzAgT/dvS04=\n',
+        'created_by': '<backend-fixture>',
+        'created_on': '2000-01-01T00:00:00+00:00',
         'devices': {
             'test': {
-                # 'created_on': '2017-07-07T00:00:00+00:00',
-                # 'revocated_on': None,
+                'created_on': '2000-01-01T00:00:00+00:00',
+                'revocated_on': None,
                 'verify_key': 'p9KzHZjz4qjlFSTvMNNMU4QVD5CfdWEJ/Yprw/G9Xl4=\n',
             }
         }
@@ -42,18 +39,16 @@ async def test_user_get_ok(backend):
     {}
 ])
 @pytest.mark.trio
-@with_backend()
-async def test_user_get_bad_msg(backend, bad_msg):
-    async with backend.test_connect('alice@test') as sock:
+async def test_user_get_bad_msg(backend, alice, bad_msg):
+    async with connect_backend(backend, auth_as=alice) as sock:
         await sock.send({'cmd': 'user_get', **bad_msg})
         rep = await sock.recv()
         assert rep['status'] == 'bad_message'
 
 
 @pytest.mark.trio
-@with_backend()
-async def test_pubkey_get_not_found(backend):
-    async with backend.test_connect('alice@test') as sock:
+async def test_pubkey_get_not_found(backend, alice):
+    async with connect_backend(backend, auth_as=alice) as sock:
         await sock.send({'cmd': 'user_get', 'id': 'dummy'})
         rep = await sock.recv()
         assert rep == {
@@ -63,22 +58,11 @@ async def test_pubkey_get_not_found(backend):
 
 
 @pytest.mark.trio
-@with_backend()
-async def test_user_create_and_claim(backend):
-    john_device_sign_key = SigningKey(
-        b'\x07\xb5WHe\xf0\xefW\x00&]db6bA\xcf6\x1f\xca'
-        b'\xa7\xeb\xf7\x954\x01\x05T\x8f,\xdc^'
-    )
-    john_broadcast_key = PrivateKey(
-        b"\x9cuK\\\xc8\xe3\xbfDE\xd7+E\x9f\xbb&\x8d"
-        b"'\xe4\xda\xedx_\xb2\xcc^\xed\x00d\x9faPd"
-    )
-    token = '<token>'
-    async with backend.test_connect('alice@test') as sock:
-        with freeze_time('2017-07-07T01:00:00'), \
-                patch('parsec.backend.user._generate_invitation_token') \
+async def test_user_create_token(backend, alice):
+    async with connect_backend(backend, auth_as=alice) as sock:
+        with patch('parsec.backend.user._generate_invitation_token') \
                 as mock_generate_invitation_token:
-            mock_generate_invitation_token.return_value = token
+            mock_generate_invitation_token.return_value = '<token>'
             await sock.send({
                 'cmd': 'user_create',
                 'id': 'john'
@@ -87,37 +71,82 @@ async def test_user_create_and_claim(backend):
     assert rep == {
         'status': 'ok',
         'id': 'john',
-        'token': token,
+        'token': '<token>',
     }
 
-    # Now claim the newly created user
-    async with backend.test_connect('anonymous') as sock:
-        with freeze_time('2017-07-07T01:59:00'):
+
+@pytest.mark.trio
+async def test_user_claim_unknown_token(backend, mallory):
+    async with connect_backend(backend, auth_as='anonymous') as sock:
+        await sock.send({
+            'cmd': 'user_claim',
+            'id': mallory.user_id,
+            'token': '<token>',
+            'broadcast_key': to_jsonb64(mallory.pubkey.encode()),
+            'device_name': mallory.device_id,
+            'device_verify_key': to_jsonb64(mallory.verifykey.encode()),
+        })
+        rep = await sock.recv()
+    assert rep == {
+        'status': 'claim_error',
+        'reason': 'No invitation for user `mallory`',
+    }
+
+
+@pytest.fixture
+async def token(backend, alice, mallory):
+    token = '1234567890'
+    with freeze_time('2017-07-07T00:00:00'):
+        await backend.user.create_invitation(alice.id, mallory.user_id, token)
+    return token
+
+
+@pytest.mark.trio
+async def test_user_claim_too_old_token(backend, token, mallory):
+    async with connect_backend(backend, auth_as='anonymous') as sock:
+        with freeze_time('2017-07-07T01:01:00'):
             await sock.send({
                 'cmd': 'user_claim',
-                'id': 'john',
+                'id': mallory.user_id,
                 'token': token,
-                'broadcast_key': to_jsonb64(john_broadcast_key.public_key.encode()),
-                'device_name': 'phone',
-                'device_verify_key': to_jsonb64(john_device_sign_key.verify_key.encode()),
+                'broadcast_key': to_jsonb64(mallory.pubkey.encode()),
+                'device_name': mallory.device_id,
+                'device_verify_key': to_jsonb64(mallory.verifykey.encode()),
+            })
+            rep = await sock.recv()
+    assert rep == {'status': 'claim_error', 'reason': 'Claim code is too old'}
+
+
+@pytest.mark.trio
+async def test_user_claim_token(backend, token, mallory):
+    async with connect_backend(backend, auth_as='anonymous') as sock:
+        with freeze_time('2017-07-07T00:59:00'):
+            await sock.send({
+                'cmd': 'user_claim',
+                'id': mallory.user_id,
+                'token': token,
+                'broadcast_key': to_jsonb64(mallory.pubkey.encode()),
+                'device_name': mallory.device_id,
+                'device_verify_key': to_jsonb64(mallory.verifykey.encode()),
             })
             rep = await sock.recv()
     assert rep == {'status': 'ok'}
 
     # Finally make sure this user is accepted by the backend
-    sockstream = await open_stream_to_socket_listener(backend.listeners[0])
-    sock = CookedSocket(sockstream)
-
-    ch = ClientHandshake('john@phone', john_device_sign_key)
-    challenge_req = await sock.recv()
-    answer_req = ch.process_challenge_req(challenge_req)
-    await sock.send(answer_req)
-    result_req = await sock.recv()
-    ch.process_result_req(result_req)
-
-    await sock.send({'cmd': 'ping', 'ping': 'foo'})
-    rep = await sock.recv()
-    assert rep == {'status': 'ok', 'pong': 'foo'}
-
-
-# TODO: test out of date claim code
+    async with connect_backend(backend, auth_as=mallory) as sock:
+        await sock.send({'cmd': 'user_get', 'id': 'mallory'})
+        rep = await sock.recv()
+    assert rep == {
+        'status': 'ok',
+        'id': 'mallory',
+        'created_by': 'alice@test',
+        'created_on': '2017-07-07T00:59:00+00:00',
+        'broadcast_key': 'KDXG2SYSdeTl+EBvZwPpsOfRkhEVVimOwH9hB459QWg=\n',
+        'devices': {
+            'test': {
+                'created_on': '2017-07-07T00:59:00+00:00',
+                'revocated_on': None,
+                'verify_key': 'YH9SOadvA66vf4GZn7wCbKVQ5RsiSkxW2deBeFVuzco=\n'
+            },
+        },
+    }
