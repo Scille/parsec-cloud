@@ -6,9 +6,9 @@ class VersionError(ParsecError):
     reason = 'Wrong blob version.'
 
 
-class VlobNotFound(VlobError):
-    status = 'vlob_not_found'
-    reason = 'Vlob not found.'
+class NotFoundError(ParsecError):
+    status = 'not_found_error'
+    reason = 'Element not found.'
 
 
 class TrustSeedError(ParsecError):
@@ -16,28 +16,6 @@ class TrustSeedError(ParsecError):
     reason = 'Invalid read trust seed.'
 
 
-class BlockAlreadyExistsError(ParsecError):
-    status = 'block_already_exist'
-
-
-class BlockNotFoundError(ParsecError):
-    status = 'block_not_found'
-    reason = 'Unknown block id.'
-
-
-class GroupAlreadyExist(ParsecError):
-    status = 'group_already_exists'
-    reason = 'Group already exist.'
-
-
-class GroupNotFound(ParsecError):
-    status = 'group_not_found'
-    reason = 'Group not found.'
-
-
-class PubKeyAlreadyExists(ParsecError):
-    status = 'pubkey_already_exists'
-
-
-class PubKeyNotFound(ParsecError):
-    status = 'pubkey_not_found'
+class AlreadyExistsError(ParsecError):
+    status = 'already_exists_error'
+    reason = 'Element already exists.'

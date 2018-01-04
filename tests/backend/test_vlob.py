@@ -74,7 +74,7 @@ async def test_vlob_read_not_found(backend):
     async with backend.test_connect('alice@test') as sock:
         await sock.send({'cmd': 'vlob_read', 'id': '1234', 'trust_seed': 'TS4242'})
         rep = await sock.recv()
-        assert rep == {'status': 'vlob_not_found', 'reason': 'Vlob not found.'}
+        assert rep == {'status': 'not_found_error', 'reason': 'Vlob not found.'}
 
 
 @trio_test
@@ -125,7 +125,7 @@ async def test_read_bad_version(backend):
             'version': len(vblobs) + 1
         })
         rep = await sock.recv()
-        assert rep == {'status': 'vlob_error', 'reason': 'Wrong blob version.'}
+        assert rep == {'status': 'version_error', 'reason': 'Wrong blob version.'}
 
 
 @trio_test
@@ -158,7 +158,7 @@ async def test_vlob_update_not_found(backend):
             'blob': blob
         })
         rep = await sock.recv()
-        assert rep == {'status': 'vlob_not_found', 'reason': 'Vlob not found.'}
+        assert rep == {'status': 'not_found_error', 'reason': 'Vlob not found.'}
 
 
 @pytest.mark.parametrize('bad_msg', [
@@ -212,7 +212,7 @@ async def test_update_bad_version(backend):
             'blob': to_jsonb64(b'Next version.')
         })
         rep = await sock.recv()
-        assert rep == {'status': 'vlob_error', 'reason': 'Wrong blob version.'}
+        assert rep == {'status': 'version_error', 'reason': 'Wrong blob version.'}
 
 
 @trio_test

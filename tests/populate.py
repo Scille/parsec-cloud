@@ -560,3 +560,13 @@ def populate_local_storage_cls(user, mocked_local_storage_cls):
     store.blocks = data['core']['blocks']
     store.local_user_manifest = data['core']['local_user_manifest']
     store.local_manifests = data['core']['local_manifests']
+
+
+def populate_core(core, user):
+    data = populate_factory(user)
+    store = core.fs.manifests_manager._local_storage
+
+    store.dirty_blocks = data['core']['dirty_blocks']
+    store.blocks = data['core']['blocks']
+    store.local_user_manifest = data['core']['local_user_manifest']
+    store.local_manifests = data['core']['local_manifests']

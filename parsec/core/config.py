@@ -1,5 +1,6 @@
-from decouple import config
 import attr
+from decouple import config
+from os.path import expandvars
 
 
 def _cast_int(v):
@@ -37,4 +38,7 @@ class Config:
     )
     local_storage_dir = attr.ib(
         default=config('PARSEC_LOCAL_STORAGE_DIR', default='')
+    )
+    base_settings_path = attr.ib(
+        default=config('BASE_SETTINGS_PATH', default=expandvars('$HOME/.config/parsec'))
     )

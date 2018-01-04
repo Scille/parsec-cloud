@@ -1,10 +1,10 @@
+import pytest
 import trio
-from trio.testing import trio_test
 
 from parsec.rwlock import RWLock
 
 
-@trio_test
+@pytest.mark.trio
 async def test_parallel_reads():
     lock = RWLock()
     events = []
@@ -21,7 +21,7 @@ async def test_parallel_reads():
     assert events == ['read-start'] * 10 + ['read-end'] * 10
 
 
-@trio_test
+@pytest.mark.trio
 async def test_simple_concurrent_writes():
     lock = RWLock()
     events = []
@@ -38,7 +38,7 @@ async def test_simple_concurrent_writes():
     assert events == ['write-start', 'write-end'] * 10
 
 
-@trio_test
+@pytest.mark.trio
 async def test_parallel_writes():
     lock = RWLock()
     events = []
@@ -65,7 +65,7 @@ async def test_parallel_writes():
     assert lookup == events
 
 
-@trio_test
+@pytest.mark.trio
 async def test_exception_handling():
     lock = RWLock()
     events = []

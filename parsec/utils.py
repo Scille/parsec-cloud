@@ -117,13 +117,12 @@ def ejson_loads(raw):
 
 class ParsecError(Exception):
     status = 'error'
-    reason = 'reason'
 
     def __init__(self, reason=None, **kwargs):
-        if reason is None:
-            reason = self.__class__.reason
-
-        self.kwargs = {**kwargs, 'reason': reason}
+        if reason:
+            self.kwargs = {**kwargs, 'reason': reason}
+        else:
+            self.kwargs = kwargs
 
     def to_dict(self):
         return {'status': self.status, **self.kwargs}
@@ -138,6 +137,14 @@ def abort(status='bad_message', **kwargs):
 @attr.s(init=False)
 class User:
     id = attr.ib()
+
+    @property
+    def user_id(self):
+        return self.id.split('@')[0]
+
+    @property
+    def device_id(self):
+        return self.id.split('@')[1]
 
     def __init__(self, id, privkey, signkey):
         self.id = id

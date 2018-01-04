@@ -1,4 +1,5 @@
 import trio
+from trio._util import acontextmanager
 from trio.testing import open_stream_to_socket_listener
 import socket
 import inspect
@@ -12,7 +13,7 @@ from parsec.core.local_storage import BaseLocalStorage
 from parsec.core.config import Config as CoreConfig
 from parsec.core.app import CoreApp
 
-from parsec.handshake import ClientHandshake
+from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 from parsec.utils import CookedSocket, User
 
 from parsec.backend.config import Config as BackendConfig
@@ -60,6 +61,7 @@ mallory = User(
     b'sD\xae\x91^\xae\xcc\xe7.\x89\xc8\x91\x9f\xa0t>B\x93\x07\xe7\xb5\xb0\x81\xb1\x07\xf0\xe5\x9b\x91\xd0`:',
     b'\xcd \x7f\xf5\x91\x17=\xda\x856Sz\xe0\xf9\xc6\x82!O7g9\x01`s\xdd\xeeoj\xcb\xe7\x0e\xc5'
 )
+
 
 TEST_USERS = {user.id: user for user in (alice, bob, mallory)}
 
@@ -238,7 +240,7 @@ def with_core(config=None, backend_config=None, mocked_get_user=True, mocked_loc
     config_kw = {}
 
     if config is not None:
-        config _kw = CoreConfig()
+        config_kw = CoreConfig()
 
     def decorator(testfunc):
         @almost_wraps(testfunc)
@@ -322,15 +324,19 @@ class ConnectToBackend:
         else:
             self.sock = CookedSocket(sockstream)
         if self.auth_as:
-            assert self.auth_as in TEST_USERS
-            user = TEST_USERS[self.auth_as]
             # Handshake
-            ch = ClientHandshake(user)
+            if self.auth_as == 'anonymous':
+                ch = AnonymousClientHandshake()
+            else:
+                assert self.auth_as in TEST_USERS
+                user = TEST_USERS[self.auth_as]
+                ch = ClientHandshake(user.id, user.signkey)
             challenge_req = await self.sock.recv()
             answer_req = ch.process_challenge_req(challenge_req)
             await self.sock.send(answer_req)
             result_req = await self.sock.recv()
             ch.process_result_req(result_req)
+
         return self.sock
 
     async def __aexit__(self, exc_type, exc, tb):
@@ -344,10 +350,16 @@ async def _test_backend_factory(config=None):
         config_kw = attr.asdict(config)
 
     config_kw['blockstore_url'] = 'backend://'
-    config = Config(**config_kw)
+    config = BackendConfig(**config_kw)
     backend = BackendAppTesting(config)
-    for userid, user in TEST_USERS.items():
-        await backend.pubkey.add(userid, user.pubkey.encode(), user.verifykey.encode())
+    for fullid, user in TEST_USERS.items():
+        userid, deviceid = fullid.split('@')
+        await backend.user.create(
+            author='<pytest>',
+            id=userid,
+            broadcast_key=user.pubkey.encode(),
+            devices=[(deviceid, user.verifykey.encode())]
+        )
     return backend
 
 
@@ -371,3 +383,55 @@ def with_backend(config=None, populated_for=None):
                 nursery.start_soon(run_test_and_cancel_scope, nursery)
         return wrapper
     return decorator
+
+
+@acontextmanager
+async def run_app(app):
+    async with trio.open_nursery() as nursery:
+
+        async def connection_factory():
+            right, left = trio.testing.memory_stream_pair()
+            nursery.start_soon(app.handle_client, left)
+            return right
+
+        yield connection_factory
+        nursery.cancel_scope.cancel()
+
+
+@acontextmanager
+async def connect_backend(backend, auth_as=None):
+    async with run_app(backend) as connection_factory:
+        sockstream = await connection_factory()
+        sock = QuitTestOnBrokenStreamCookedSocket(sockstream)
+        if auth_as:
+            # Handshake
+            if auth_as == 'anonymous':
+                ch = AnonymousClientHandshake()
+            else:
+                if isinstance(auth_as, str):
+                    assert auth_as in TEST_USERS
+                    user = TEST_USERS[auth_as]
+                else:
+                    user = auth_as
+                ch = ClientHandshake(user.id, user.signkey)
+            challenge_req = await sock.recv()
+            answer_req = ch.process_challenge_req(challenge_req)
+            await sock.send(answer_req)
+            result_req = await sock.recv()
+            ch.process_result_req(result_req)
+        try:
+            yield sock
+        except QuitTestDueToBrokenStream:
+            # Exception should be raised from the handle_client coroutine in nursery
+            pass
+
+
+@acontextmanager
+async def connect_core(core):
+    async with run_app(core) as connection_factory:
+        sockstream = await connection_factory()
+        sock = QuitTestOnBrokenStreamCookedSocket(sockstream)
+        try:
+            yield sock
+        except QuitTestDueToBrokenStream:
+            pass

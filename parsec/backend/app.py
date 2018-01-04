@@ -1,16 +1,13 @@
 import attr
 import trio
-from marshmallow import fields
-import nacl.utils
-from nacl.public import PrivateKey
+import blinker
+from marshmallow import fields, validate
+from nacl.public import PublicKey
 from nacl.signing import VerifyKey
-from nacl.exceptions import BadSignatureError
-from urllib.parse import urlparse
 
-from parsec.utils import (CookedSocket, BaseCmdSchema,
-                          ParsecError, to_jsonb64, from_jsonb64)
+from parsec.utils import CookedSocket, BaseCmdSchema, ParsecError
 from parsec.handshake import HandshakeFormatError, ServerHandshake
-from parsec.backend.pubkey import MockedPubKeyComponent
+from parsec.backend.user import MockedUserComponent, UserNotFound
 from parsec.backend.vlob import MockedVlobComponent
 from parsec.backend.user_vlob import MockedUserVlobComponent
 from parsec.backend.group import MockedGroupComponent
@@ -27,33 +24,69 @@ class cmd_PING_Schema(BaseCmdSchema):
     ping = fields.String(required=True)
 
 
+class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
+    event = fields.String(required=True, validate=validate.OneOf([
+        'vlob_updated', 'user_vlob_updated', 'message_arrived', 'ping',
+    ]))
+    subject = fields.String(missing=None)
+
+
+@attr.s
+class AnonymousClientContext:
+    id = 'anonymous'
+    anonymous = True
+
+
 @attr.s
 class ClientContext:
+    anonymous = False
     id = attr.ib()
-    pubkey = attr.ib()
-    signkey = attr.ib()
+    broadcast_key = attr.ib()
+    verify_key = attr.ib()
+    subscribed_events = attr.ib(default=attr.Factory(dict), init=False)
+    events = attr.ib(default=attr.Factory(lambda: trio.Queue(100)), init=False)
+
+    @property
+    def user_id(self):
+        return self.id.split('@')[0]
+
+    @property
+    def device_id(self):
+        return self.id.split('@')[1]
 
 
 class BackendApp:
 
     def __init__(self, config):
+        self.signal_ns = blinker.Namespace()
         self.config = config
         self.nursery = None
         self.blockstore_url = config.blockstore_url
         # TODO: validate BLOCKSTORE_URL value
         if self.blockstore_url == 'backend://':
-            self.blockstore = MockedBlockStoreComponent()
+            self.blockstore = MockedBlockStoreComponent(self.signal_ns)
         else:
             self.blockstore = None
-        self.vlob = MockedVlobComponent()
-        self.user_vlob = MockedUserVlobComponent()
-        self.pubkey = MockedPubKeyComponent()
-        self.message = InMemoryMessageComponent()
-        self.group = MockedGroupComponent()
+        self.user = MockedUserComponent(self.signal_ns)
+        self.vlob = MockedVlobComponent(self.signal_ns)
+        self.user_vlob = MockedUserVlobComponent(self.signal_ns)
+        self.message = InMemoryMessageComponent(self.signal_ns)
+        self.group = MockedGroupComponent(self.signal_ns)
+
+        self.anonymous_cmds = {
+            'user_claim': self.user.api_user_claim,
+            'ping': self._api_ping
+        }
 
         self.cmds = {
-            # 'subscribe_event': self.api_subscribe_event,
-            # 'unsubscribe_event': self.api_unsubscribe_event,
+            'event_subscribe': self._api_event_subscribe,
+            'event_unsubscribe': self._api_event_unsubscribe,
+            'event_listen': self._api_event_listen,
+            'event_list_subscribed': self._api_event_list_subscribed,
+
+            'user_get': self.user.api_user_get,
+            'user_create': self.user.api_user_create,
+            'user_claim': self.user.api_user_claim,
 
             'blockstore_post': self._api_blockstore_post,
             'blockstore_get': self._api_blockstore_get,
@@ -74,8 +107,6 @@ class BackendApp:
             'message_get': self.message.api_message_get,
             'message_new': self.message.api_message_new,
 
-            'pubkey_get': self.pubkey.api_pubkey_get,
-
             'ping': self._api_ping
         }
 
@@ -84,6 +115,7 @@ class BackendApp:
 
     async def _api_ping(self, client_ctx, msg):
         msg = cmd_PING_Schema().load(msg)
+        self.signal_ns.signal('ping').send(msg['ping'])
         return {'status': 'ok', 'pong': msg['ping']}
 
     async def _api_blockstore_post(self, client_ctx, msg):
@@ -99,21 +131,80 @@ class BackendApp:
     async def _api_blockstore_get_url(self, client_ctx, msg):
         return {'status': 'ok', 'url': self.blockstore_url}
 
+    async def _api_event_subscribe(self, client_ctx, msg):
+        msg = cmd_EVENT_SUBSCRIBE_Schema().load(msg)
+        event = msg['event']
+        subject = msg['subject']
+
+        if (event in ('user_vlob_updated', 'message_arrived') and
+                subject not in (None, client_ctx.user_id)):
+            return {
+                'status': 'private_event',
+                'reason': 'This type of event is private.'
+            }
+
+        def _handle_event(sender):
+            try:
+                client_ctx.events.put_nowait((event, subject))
+            except trio.WouldBlock:
+                print('WARNING: event queue is full for %s' % client_ctx.id)
+
+        client_ctx.subscribed_events[event, subject] = _handle_event
+        self.signal_ns.signal(event).connect(
+            _handle_event, sender=subject, weak=True)
+        return {'status': 'ok'}
+
+    async def _api_event_unsubscribe(self, client_ctx, msg):
+        msg = cmd_EVENT_SUBSCRIBE_Schema().load(msg)
+        try:
+            del client_ctx.subscribed_events[msg['event'], msg['subject']]
+        except KeyError:
+            return {
+                'status': 'not_subscribed',
+                'reason': 'Not subscribed to this event/subject couple'
+            }
+        return {'status': 'ok'}
+
+    async def _api_event_listen(self, client_ctx, msg):
+        BaseCmdSchema().load(msg)  # empty msg expected
+        event, subject = await client_ctx.events.get()
+        return {'status': 'ok', 'event': event, 'subject': subject}
+
+    async def _api_event_list_subscribed(self, client_ctx, msg):
+        BaseCmdSchema().load(msg)  # empty msg expected
+        return {
+            'status': 'ok',
+            'subscribed': list(client_ctx.subscribed_events.keys())
+        }
+
     async def _do_handshake(self, sock):
         context = None
         try:
             hs = ServerHandshake(self.config.handshake_challenge_size)
             challenge_req = hs.build_challenge_req()
             await sock.send(challenge_req)
-
             answer_req = await sock.recv()
+
             hs.process_answer_req(answer_req)
-            rawkeys = await self.pubkey.get(hs.identity)
-            if not rawkeys:
-                result_req = hs.build_bad_identity_result_req()
+            if hs.identity == 'anonymous':
+                context = AnonymousClientContext()
+                result_req = hs.build_result_req()
             else:
-                result_req = hs.build_result_req(VerifyKey(rawkeys[1]))
-                context = ClientContext(hs.identity, *rawkeys)
+                try:
+                    userid, deviceid = hs.identity.split('@')
+                except ValueError:
+                    raise HandshakeFormatError()
+                try:
+                    user = await self.user.get(userid)
+                    device = user['devices'][deviceid]
+                except (UserNotFound, KeyError):
+                    result_req = hs.build_bad_identity_result_req()
+                else:
+                    broadcast_key = PublicKey(user['broadcast_key'])
+                    verify_key = VerifyKey(device['verify_key'])
+                    context = ClientContext(hs.identity, broadcast_key, verify_key)
+                    result_req = hs.build_result_req(verify_key)
+
         except HandshakeFormatError:
             result_req = hs.build_bad_format_result_req()
         await sock.send(result_req)
@@ -136,11 +227,19 @@ class BackendApp:
                     break
                 print('REQ %s' % req)
                 # TODO: handle bad msg
-                cmd_func = self.cmds[req.pop('cmd')]
                 try:
-                    rep = await cmd_func(client_ctx, req)
-                except ParsecError as err:
-                    rep = err.to_dict()
+                    cmd = req.pop('cmd', '<missing>')
+                    if client_ctx.anonymous:
+                        cmd_func = self.anonymous_cmds[cmd]
+                    else:
+                        cmd_func = self.cmds[cmd]
+                except KeyError:
+                    rep = {'status': 'bad_cmd', 'reason': 'Unknown command `%s`' % cmd}
+                else:
+                    try:
+                        rep = await cmd_func(client_ctx, req)
+                    except ParsecError as err:
+                        rep = err.to_dict()
                 print('REP %s' % rep)
                 await sock.send(rep)
         except trio.BrokenStreamError:

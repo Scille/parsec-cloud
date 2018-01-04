@@ -4,10 +4,10 @@ import string
 from uuid import uuid4
 from marshmallow import fields
 
-from parsec.utils import UnknownCheckedSchema, to_jsonb64, ParsecError
+from parsec.utils import UnknownCheckedSchema, to_jsonb64
 from parsec.backend.exceptions import (
     VersionError,
-    VlobNotFound,
+    NotFoundError,
     TrustSeedError
 )
 
@@ -58,6 +58,9 @@ class MockedVlob:
 
 class BaseVlobComponent:
 
+    def __init__(self, signal_ns):
+        self._signal_vlob_updated = signal_ns.signal('vlob_updated')
+
     async def api_vlob_create(self, client_ctx, msg):
         msg = cmd_CREATE_Schema().load(msg)
         # Generate opaque id if not provided
@@ -97,9 +100,10 @@ class BaseVlobComponent:
         raise NotImplementedError()
 
 
-@attr.s
 class MockedVlobComponent(BaseVlobComponent):
-    vlobs = attr.ib(default=attr.Factory(dict))
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.vlobs = {}
 
     async def create(self, id, rts, wts, blob):
         vlob = MockedVlob(id, rts, wts, blob)
@@ -115,7 +119,7 @@ class MockedVlobComponent(BaseVlobComponent):
             if vlob.read_trust_seed != trust_seed:
                 raise TrustSeedError()
         except KeyError:
-            raise VlobNotFound()
+            raise NotFoundError('Vlob not found.')
         version = version or len(vlob.blob_versions)
         try:
             return VlobAtom(id=vlob.id,
@@ -124,7 +128,7 @@ class MockedVlobComponent(BaseVlobComponent):
                             blob=vlob.blob_versions[version - 1],
                             version=version)
         except IndexError:
-            raise VersionError()
+            raise VersionError('Wrong blob version.')
 
     async def update(self, id, trust_seed, version, blob):
         try:
@@ -132,10 +136,9 @@ class MockedVlobComponent(BaseVlobComponent):
             if vlob.write_trust_seed != trust_seed:
                 raise TrustSeedError('Invalid write trust seed.')
         except KeyError:
-            raise VlobNotFound()
+            raise NotFoundError('Vlob not found.')
         if version - 1 == len(vlob.blob_versions):
             vlob.blob_versions.append(blob)
         else:
-            raise VersionError()
-        # TODO: trigger event
-        # await Effect(EEvent('vlob_updated', id))
+            raise VersionError('Wrong blob version.')
+        self._signal_vlob_updated.send(id)

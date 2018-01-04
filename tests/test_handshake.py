@@ -10,7 +10,7 @@ from parsec.handshake import (
 def test_good_handshake(alice):
     sh = ServerHandshake()
 
-    ch = ClientHandshake(alice)
+    ch = ClientHandshake(alice.id, alice.signkey)
     assert sh.state == 'stalled'
 
     challenge_req = sh.build_challenge_req()
@@ -36,7 +36,7 @@ def test_good_handshake(alice):
     {'handshake': 'challenge', 'challenge': 42},
 ])
 def test_process_challenge_req_bad_format(alice, req):
-    ch = ClientHandshake(alice)
+    ch = ClientHandshake(alice.id, alice.signkey)
     with pytest.raises(HandshakeFormatError):
         ch.process_challenge_req(req)
 
@@ -49,13 +49,13 @@ def test_process_challenge_req_bad_format(alice, req):
     {'handshake': 'result', 'result': 'error'},
 ])
 def test_process_result_req_bad_format(alice, req):
-    ch = ClientHandshake(alice)
+    ch = ClientHandshake(alice.id, alice.signkey)
     with pytest.raises(HandshakeFormatError):
         ch.process_result_req(req)
 
 
 def test_process_result_req_bad_identity(alice):
-    ch = ClientHandshake(alice)
+    ch = ClientHandshake(alice.id, alice.signkey)
     with pytest.raises(HandshakeBadIdentity):
         ch.process_result_req({
             'handshake': 'result',
@@ -68,7 +68,6 @@ def test_process_result_req_bad_identity(alice):
     {'handshake': 'foo', 'identity': 'alice@test', 'answer': b'1234567890'},
     {'handshake': 'answer', 'identity': 'alice@test', 'answer': b'1234567890', 'foo': 'bar'},
     {'handshake': 'answer', 'identity': 'alice@test', 'answer': 42},
-    {'handshake': 'answer', 'identity': 'alice@test', 'answer': None},
     {'handshake': 'answer', 'answer': b'1234567890'},
     {'handshake': 'answer', 'identity': 'alice@test'},
 ])
@@ -89,6 +88,18 @@ def test_build_result_req_bad_key(alice, bob):
     })
     with pytest.raises(HandshakeFormatError):
         sh.build_result_req(bob.verifykey)
+
+
+def test_build_result_req_answer_is_none(alice):
+    sh = ServerHandshake()
+    sh.build_challenge_req()
+    sh.process_answer_req({
+        'handshake': 'answer',
+        'identity': alice.id,
+        'answer': None
+    })
+    with pytest.raises(HandshakeFormatError):
+        sh.build_result_req(alice.verifykey)
 
 
 def test_build_result_req_bad_challenge(alice):
@@ -118,7 +129,7 @@ def test_build_bad_identity_result_req(alice):
     }
 
 
-def test_build_bad_identity_result_req(alice):
+def test_build_bad_format_result_req(alice):
     sh = ServerHandshake()
     sh.build_challenge_req()
     sh.process_answer_req({

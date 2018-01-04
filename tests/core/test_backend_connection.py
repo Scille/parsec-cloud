@@ -1,97 +1,82 @@
 import pytest
 import trio
-from unittest.mock import patch
-
-from tests.common import with_backend
+from trio._util import acontextmanager
 
 from parsec.core.backend_connection import BackendConnection, BackendNotAvailable
 
+from tests.open_tcp_stream_mock_wrapper import offline
 
-async def _testbed(addr, user, tester):
-    conn = BackendConnection(user, addr)
 
+@acontextmanager
+async def open_backend_connection(user, backend_addr):
+    conn = BackendConnection(user, backend_addr)
     async with trio.open_nursery() as nursery:
-        nursery.start_soon(tester, nursery, conn)
-
-
-@pytest.mark.trio
-@with_backend()
-async def test_base(backend, alice):
-    async def tester(nursery, conn):
         await conn.init(nursery)
-        rep = await conn.send({'cmd': 'ping', 'ping': 'hello'})
-        assert rep == {'status': 'ok', 'pong': 'hello'}
+        yield conn
         await conn.teardown()
 
-    await _testbed(backend.addr, alice, tester)
+
+@pytest.mark.trio
+async def test_base(running_backend, backend_addr, alice):
+    async with open_backend_connection(alice, backend_addr) as conn:
+        rep = await conn.send({'cmd': 'ping', 'ping': 'hello'})
+        assert rep == {'status': 'ok', 'pong': 'hello'}
 
 
 @pytest.mark.trio
-@with_backend()
-async def test_concurrency_sends(backend, alice):
-    done_queue = trio.Queue(10)
-
-    async def tester(nursery, conn):
-        await conn.init(nursery)
-        for x in range(5):
-            nursery.start_soon(sender, conn, str(x))
-        done = 0
-        while True:
-            await done_queue.get()
-            done += 1
-            if done == 5:
-                await conn.teardown()
-                break
+async def test_concurrency_sends(running_backend, backend_addr, alice):
+    count = 0
 
     async def sender(conn, x):
+        nonlocal count
         rep = await conn.send({'cmd': 'ping', 'ping': x})
         assert rep == {'status': 'ok', 'pong': x}
-        await done_queue.put(rep)
+        count += 1
 
-    await _testbed(backend.addr, alice, tester)
+    async with open_backend_connection(alice, backend_addr) as conn:
+        async with trio.open_nursery() as nursery:
+            for x in range(5):
+                nursery.start_soon(sender, conn, str(x))
+
+    assert count == 5
 
 
 @pytest.mark.trio
 async def test_backend_offline(unused_tcp_port, alice):
     addr = 'tcp://127.0.0.1:%s' % unused_tcp_port
 
-    async def tester(nursery, conn):
+    conn = BackendConnection(alice, addr)
+    async with trio.open_nursery() as nursery:
         await conn.init(nursery)
-        with pytest.raises(BackendNotAvailable):
-            await conn.send({'cmd': 'ping', 'ping': 'hello'})
-        with pytest.raises(BackendNotAvailable):
-            await conn.send({'cmd': 'ping', 'ping': 'hello'})
-        await conn.teardown()
 
-    await _testbed(addr, alice, tester)
+        with pytest.raises(BackendNotAvailable):
+            await conn.send({'cmd': 'ping', 'ping': 'hello'})
+        with pytest.raises(BackendNotAvailable):
+            await conn.send({'cmd': 'ping', 'ping': 'hello'})
+
+        await conn.teardown()
 
 
 @pytest.mark.trio
-@with_backend()
-async def test_backend_switch_offline(backend, alice):
-    async def tester(nursery, conn):
-        await conn.init(nursery)
+async def test_backend_switch_offline(running_backend, backend_addr, alice, tcp_stream_spy):
+    async with open_backend_connection(alice, backend_addr) as conn:
+
         # Connection ok
+
         rep = await conn.send({'cmd': 'ping', 'ping': 'hello'})
         assert rep == {'status': 'ok', 'pong': 'hello'}
 
         # Current socket is down, but opening another socket
         # should solve the trouble
 
-        def _broken_stream(*args, **kwargs):
-            raise trio.BrokenStreamError()
-
-        conn._sock.send = _broken_stream
+        tcp_stream_spy.socks[backend_addr][-1].send_stream.close()
 
         rep = await conn.send({'cmd': 'ping', 'ping': 'hello'})
         assert rep == {'status': 'ok', 'pong': 'hello'}
 
         # Now sockets will never be able to reach the backend no matter what
 
-        with patch('parsec.utils.CookedSocket.send') as mock_send, \
-             patch('parsec.utils.CookedSocket.recv') as mock_recv:
-            mock_send.side_effect = _broken_stream
-            mock_recv.side_effect = _broken_stream
+        with offline(backend_addr):
             with pytest.raises(BackendNotAvailable):
                 await conn.send({'cmd': 'ping', 'ping': 'hello'})
 
@@ -99,7 +84,3 @@ async def test_backend_switch_offline(backend, alice):
 
         rep = await conn.send({'cmd': 'ping', 'ping': 'hello'})
         assert rep == {'status': 'ok', 'pong': 'hello'}
-
-        await conn.teardown()
-
-    await _testbed(backend.addr, alice, tester)

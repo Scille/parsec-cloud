@@ -1,6 +1,6 @@
 import pytest
 
-from parsec.core.fs import *
+from parsec.core.fs import FS
 from parsec.core.manifests_manager import ManifestsManager
 from parsec.core.blocks_manager import BlocksManager
 

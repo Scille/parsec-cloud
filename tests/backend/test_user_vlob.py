@@ -38,7 +38,7 @@ async def test_user_vlob_read_bad_version(backend):
     async with backend.test_connect('alice@test') as sock:
         await sock.send({'cmd': 'user_vlob_read', 'version': 42})
         rep = await sock.recv()
-        assert rep == {'status': 'user_vlob_error', 'reason': 'Wrong blob version.'}
+        assert rep == {'status': 'version_error', 'reason': 'Wrong blob version.'}
 
 
 @pytest.mark.parametrize('bad_msg', [
@@ -80,7 +80,7 @@ async def test_user_vlob_update_bad_version(backend):
             'blob': to_jsonb64(b'fooo')
         })
         rep = await sock.recv()
-        assert rep == {'status': 'user_vlob_error', 'reason': 'Wrong blob version.'}
+        assert rep == {'status': 'version_error', 'reason': 'Wrong blob version.'}
 
 
 @pytest.mark.parametrize('bad_msg', [

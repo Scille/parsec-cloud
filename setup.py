@@ -16,14 +16,15 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'attrs==17.3.0',
+    'blinker==1.4.0',
     'click==6.7',
     'marshmallow==2.14.0',
     'marshmallow-oneofschema==1.0.5',
     'pendulum==1.3.1',
     'PyNaCl==1.2.0',
     'simplejson==3.10.0',
-    'trio==0.2.0',
-    'python-decouple==3.1'
+    'python-decouple==3.1',
+    'trio==0.3.0',
 ]
 dependency_links = [
     # need to use --process-dependency-links option for this

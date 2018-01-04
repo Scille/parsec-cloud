@@ -1,3 +1,5 @@
+import os
+
 from parsec.core.fs.access import *
 from parsec.core.fs.base import *
 from parsec.core.fs.block import *
@@ -10,7 +12,8 @@ from parsec.core.backend_storage import BackendStorage
 
 
 async def fs_factory(user, config, backend_conn):
-    local_storage = LocalStorage(user, config)
+    local_storage = LocalStorage(os.path.join(config.base_settings_path, user.id))
+    local_storage.init()  # TODO: don't forget teardown !
     backend_storage = BackendStorage(backend_conn)
     manifests_manager = ManifestsManager(user, local_storage, backend_storage)
     blocks_manager = BlocksManager(local_storage, backend_storage)

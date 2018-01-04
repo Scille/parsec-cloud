@@ -2,8 +2,8 @@ import attr
 from marshmallow import fields
 from uuid import uuid4
 
-from parsec.utils import UnknownCheckedSchema, to_jsonb64, ParsecError
-from parsec.exceptions import BlockAlreadyExistError, BlockNotFoundError
+from parsec.utils import UnknownCheckedSchema, to_jsonb64
+from parsec.backend.exceptions import AlreadyExistsError, NotFoundError
 
 
 class cmd_GET_Schema(UnknownCheckedSchema):
@@ -15,6 +15,10 @@ class cmd_POST_Schema(UnknownCheckedSchema):
 
 
 class BaseBlockStoreComponent:
+
+    def __init__(self, signal_ns):
+        pass
+
     async def api_blockstore_get(self, client_ctx, msg):
         msg = cmd_GET_Schema().load(msg)
         block = await self.get(msg['id'])
@@ -36,20 +40,21 @@ class BaseBlockStoreComponent:
         raise NotImplementedError()
 
 
-@attr.s
 class MockedBlockStoreComponent(BaseBlockStoreComponent):
-    blocks = attr.ib(default=attr.Factory(dict))
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.blocks = {}
 
     async def get(self, id):
         try:
             return self.blocks[id]
         except KeyError:
-            raise BlockNotFoundError()
+            raise NotFoundError('Unknown block id.')
 
     async def post(self, id, block):
         if id in self.blocks:
             # Should never happen
-            raise BlockAlreadyExistError(
+            raise AlreadyExistsError(
                 'A block already exists with id `%s`.' % id
             )
         self.blocks[id] = block

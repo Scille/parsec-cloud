@@ -1,5 +1,5 @@
-from decouple import config
 import attr
+from decouple import config
 
 
 @attr.s(slots=True, frozen=True)
@@ -8,13 +8,13 @@ class Config:
         default=config('DEBUG', cast=bool, default=False)
     )
     blockstore_url = attr.ib(
-        default=config('PARSEC_BLOCKSTORE_URL', default=None)
+        default=config('BLOCKSTORE_URL', default=None)
     )
     host = attr.ib(
-        default=config('PARSEC_BACKEND_HOST', default=None)
+        default=config('BACKEND_HOST', default=None)
     )
     port = attr.ib(
-        default=config('PARSEC_BACKEND_PORT', cast=int, default=6777)
+        default=config('BACKEND_PORT', cast=int, default=6777)
     )
     handshake_challenge_size = attr.ib(
         default=config('CONFIG_HANDSHAKE_CHALLENGE_SIZE', cast=int, default=48)

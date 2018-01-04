@@ -5,7 +5,7 @@ from nacl.public import PublicKey
 from nacl.signing import VerifyKey
 
 from parsec.utils import UnknownCheckedSchema, ParsecError, to_jsonb64
-from parsec.exceptions import PubKeyNotFound
+from parsec.backend.exceptions import PubKeyNotFound
 
 
 class cmd_PUBKEY_GET_Schema(UnknownCheckedSchema):

@@ -2,8 +2,8 @@ import attr
 from collections import defaultdict
 from marshmallow import fields
 
-from parsec.utils import UnknownCheckedSchema, to_jsonb64, ParsecError
-from parsec.exceptions import VersionError
+from parsec.utils import UnknownCheckedSchema, to_jsonb64
+from parsec.backend.exceptions import VersionError
 
 
 @attr.s
@@ -24,6 +24,10 @@ class cmd_UPDATE_Schema(UnknownCheckedSchema):
 
 
 class BaseUserVlobComponent:
+
+    def __init__(self, signal_ns):
+        self._signal_user_vlob_updated = signal_ns.signal('user_vlob_updated')
+
     async def api_user_vlob_read(self, client_ctx, msg):
         msg = cmd_READ_Schema().load(msg)
         atom = await self.read(client_ctx.id, **msg)
@@ -45,9 +49,10 @@ class BaseUserVlobComponent:
         raise NotImplementedError()
 
 
-@attr.s
 class MockedUserVlobComponent(BaseUserVlobComponent):
-    vlobs = attr.ib(default=attr.Factory(lambda: defaultdict(list)))
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.vlobs = defaultdict(list)
 
     async def read(self, id, version=None):
         vlobs = self.vlobs[id]
@@ -59,12 +64,11 @@ class MockedUserVlobComponent(BaseUserVlobComponent):
             else:
                 return vlobs[version - 1]
         except IndexError:
-            raise VersionError()
+            raise VersionError('Wrong blob version.')
 
     async def update(self, id, version, blob):
         vlobs = self.vlobs[id]
         if len(vlobs) != version - 1:
-            raise VersionError()
+            raise VersionError('Wrong blob version.')
         vlobs.append(UserVlobAtom(id=id, version=version, blob=blob))
-        # TODO: trigger event
-        # await Effect(EEvent('user_vlob_updated', id))
+        self._signal_user_vlob_updated.send(id)
