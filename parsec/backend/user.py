@@ -5,7 +5,7 @@ from parsec import schema_fields as fields
 from parsec.utils import UnknownCheckedSchema
 from parsec.backend.exceptions import (
     NotFoundError,
-    AlreadyExistError,
+    AlreadyExistsError,
     UserClaimError
 )
 
