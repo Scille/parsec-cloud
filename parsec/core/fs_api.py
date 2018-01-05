@@ -1,7 +1,6 @@
-from marshmallow import fields, validate
-
 from parsec.core.fs import BaseFolderEntry, BaseFileEntry
-from parsec.utils import BaseCmdSchema, to_jsonb64
+from parsec.utils import to_jsonb64
+from parsec.schema import BaseCmdSchema, fields, validate
 
 
 class PathOnlySchema(BaseCmdSchema):
@@ -71,7 +70,7 @@ class FSApi:
         if not self.fs:
             return {'status': 'login_required'}
 
-        req = PathOnlySchema().load(req)
+        req = PathOnlySchema().load_or_abort(req)
         dirpath, filename = req['path'].rsplit('/', 1)
         parent = await self.fs.fetch_path(dirpath or '/')
         if not isinstance(parent, BaseFolderEntry):
@@ -85,7 +84,7 @@ class FSApi:
         if not self.fs:
             return {'status': 'login_required'}
 
-        req = cmd_FILE_READ_Schema().load(req)
+        req = cmd_FILE_READ_Schema().load_or_abort(req)
         file = await self.fs.fetch_path(req['path'])
         if not isinstance(file, BaseFileEntry):
             return {'status': 'invalid_path', 'reason': 'Path `%s` is not a file' % file.path}
@@ -96,7 +95,7 @@ class FSApi:
         if not self.fs:
             return {'status': 'login_required'}
 
-        req = cmd_FILE_WRITE_Schema().load(req)
+        req = cmd_FILE_WRITE_Schema().load_or_abort(req)
         file = await self.fs.fetch_path(req['path'])
         if not isinstance(file, BaseFileEntry):
             return {'status': 'invalid_path', 'reason': 'Path `%s` is not a file' % file.path}
@@ -107,7 +106,7 @@ class FSApi:
         if not self.fs:
             return {'status': 'login_required'}
 
-        req = cmd_FILE_TRUNCATE_Schema().load(req)
+        req = cmd_FILE_TRUNCATE_Schema().load_or_abort(req)
         file = await self.fs.fetch_path(req['path'])
         if not isinstance(file, BaseFileEntry):
             return {'status': 'invalid_path', 'reason': 'Path `%s` is not a file' % file.path}
@@ -118,7 +117,7 @@ class FSApi:
         if not self.fs:
             return {'status': 'login_required'}
 
-        req = PathOnlySchema().load(req)
+        req = PathOnlySchema().load_or_abort(req)
         obj = await self.fs.fetch_path(req['path'])
         if isinstance(obj, BaseFolderEntry):
             return {
@@ -149,7 +148,7 @@ class FSApi:
         if not self.fs:
             return {'status': 'login_required'}
 
-        req = PathOnlySchema().load(req)
+        req = PathOnlySchema().load_or_abort(req)
         dirpath, name = req['path'].rsplit('/', 1)
         parent = await self.fs.fetch_path(dirpath or '/')
         if not isinstance(parent, BaseFolderEntry):
@@ -163,7 +162,7 @@ class FSApi:
         if not self.fs:
             return {'status': 'login_required'}
 
-        req = cmd_MOVE_Schema().load(req)
+        req = cmd_MOVE_Schema().load_or_abort(req)
         if req['src'] == '/':
             return {'status': 'invalid_path', 'reason': "Cannot move `/` root folder"}
         if req['dst'] == '/':
@@ -201,7 +200,7 @@ class FSApi:
         if not self.fs:
             return {'status': 'login_required'}
 
-        req = PathOnlySchema().load(req)
+        req = PathOnlySchema().load_or_abort(req)
         dirpath, name = req['path'].rsplit('/', 1)
         parent = await self.fs.fetch_path(dirpath or '/')
         if not isinstance(parent, BaseFolderEntry):
@@ -214,7 +213,7 @@ class FSApi:
         if not self.fs:
             return {'status': 'login_required'}
 
-        req = PathOnlySchema().load(req)
+        req = PathOnlySchema().load_or_abort(req)
         obj = await self.fs.fetch_path(req['path'])
         await obj.flush()
         return {'status': 'ok'}
@@ -223,7 +222,7 @@ class FSApi:
         if not self.fs:
             return {'status': 'login_required'}
 
-        req = PathOnlySchema().load(req)
+        req = PathOnlySchema().load_or_abort(req)
         obj = await self.fs.fetch_path(req['path'])
         to_sync = [obj]
         curr_path = req['path']

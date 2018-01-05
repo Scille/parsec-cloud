@@ -1,8 +1,7 @@
 import random
 import string
 
-from parsec import schema_fields as fields
-from parsec.utils import UnknownCheckedSchema
+from parsec.schema import BaseCmdSchema, fields
 from parsec.backend.exceptions import (
     NotFoundError,
     AlreadyExistsError,
@@ -10,17 +9,17 @@ from parsec.backend.exceptions import (
 )
 
 
-class UserIDSchema(UnknownCheckedSchema):
+class UserIDSchema(BaseCmdSchema):
     id = fields.String(required=True)
 
 
-class DeviceSchema(UnknownCheckedSchema):
+class DeviceSchema(BaseCmdSchema):
     created_on = fields.DateTime(required=True)
     revocated_on = fields.DateTime()
     verify_key = fields.Base64Bytes(required=True)
 
 
-class UserSchema(UnknownCheckedSchema):
+class UserSchema(BaseCmdSchema):
     id = fields.String(required=True)
     created_on = fields.DateTime()
     created_by = fields.String()
@@ -31,7 +30,7 @@ class UserSchema(UnknownCheckedSchema):
     )
 
 
-class UserClaimSchema(UnknownCheckedSchema):
+class UserClaimSchema(BaseCmdSchema):
     id = fields.String(required=True)
     token = fields.String(required=True)
     broadcast_key = fields.Base64Bytes(required=True)
@@ -49,7 +48,7 @@ class BaseUserComponent:
         self._signal_user_claimed = signal_ns.signal('user_claimed')
 
     async def api_user_get(self, client_ctx, msg):
-        msg = UserIDSchema().load(msg)
+        msg = UserIDSchema().load_or_abort(msg)
         try:
             user = await self.get(msg['id'])
         except NotFoundError:
@@ -63,7 +62,7 @@ class BaseUserComponent:
         return {'status': 'ok', **data}
 
     async def api_user_create(self, client_ctx, msg):
-        msg = UserIDSchema().load(msg)
+        msg = UserIDSchema().load_or_abort(msg)
         token = _generate_invitation_token()
         try:
             await self.create_invitation(client_ctx.id, msg['id'], token)
@@ -75,7 +74,7 @@ class BaseUserComponent:
         return {'status': 'ok', 'id': msg['id'], 'token': token}
 
     async def api_user_claim(self, client_ctx, msg):
-        msg = UserClaimSchema().load(msg)
+        msg = UserClaimSchema().load_or_abort(msg)
         try:
             await self.claim_invitation(**msg)
         except UserClaimError as exc:

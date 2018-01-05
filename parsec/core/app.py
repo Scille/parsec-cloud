@@ -1,6 +1,4 @@
 import trio
-from marshmallow import fields
-from urllib.parse import urlparse
 import nacl.utils
 import nacl.signing
 
@@ -10,7 +8,8 @@ from parsec.core.manifests_manager import ManifestsManager
 from parsec.core.blocks_manager import BlocksManager
 from parsec.core.backend_connection import (
     BackendConnection, BackendNotAvailable, backend_send_anonymous_cmd)
-from parsec.utils import CookedSocket, BaseCmdSchema, ParsecError, User, to_jsonb64
+from parsec.utils import CookedSocket, ParsecError, User, to_jsonb64
+from parsec.schema import BaseCmdSchema, fields
 
 
 class cmd_LOGIN_Schema(BaseCmdSchema):
@@ -123,7 +122,7 @@ class CoreApp:
     async def _api_user_invite(self, req):
         if not self.auth_user:
             return {'status': 'login_required'}
-        msg = cmd_USER_INVITE_Schema().load(req)
+        msg = cmd_USER_INVITE_Schema().load_or_abort(req)
         try:
             rep = await self.backend_connection.send({'cmd': 'user_create', 'id': msg['id']})
         except BackendNotAvailable:
@@ -133,7 +132,7 @@ class CoreApp:
     async def _api_user_claim(self, req):
         if self.auth_user:
             return {'status': 'already_logged'}
-        msg = cmd_USER_CLAIM_Schema().load(req)
+        msg = cmd_USER_CLAIM_Schema().load_or_abort(req)
         broadcast_key = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
         device_verify_key = nacl.signing.SigningKey.generate().encode()
         user_id, device_id = msg['id'].split('@')
@@ -159,7 +158,7 @@ class CoreApp:
     async def _api_identity_login(self, req):
         if self.auth_user:
             return {'status': 'already_logged'}
-        msg = cmd_LOGIN_Schema().load(req)
+        msg = cmd_LOGIN_Schema().load_or_abort(req)
         rawkeys = self._get_user(msg['id'], msg['password'])
         if not rawkeys:
             return {'status': 'unknown_user'}

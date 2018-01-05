@@ -2,14 +2,10 @@ import attr
 import random
 import string
 from uuid import uuid4
-from marshmallow import fields
 
-from parsec.utils import UnknownCheckedSchema, to_jsonb64
-from parsec.backend.exceptions import (
-    VersionError,
-    NotFoundError,
-    TrustSeedError
-)
+from parsec.utils import to_jsonb64
+from parsec.schema import BaseCmdSchema, fields
+
 
 TRUST_SEED_LENGTH = 12
 
@@ -29,18 +25,18 @@ class VlobAtom:
     version = attr.ib(default=1)
 
 
-class cmd_CREATE_Schema(UnknownCheckedSchema):
+class cmd_CREATE_Schema(BaseCmdSchema):
     id = fields.String(missing=None, validate=lambda n: 0 < len(n) <= 32)
     blob = fields.Base64Bytes(missing=to_jsonb64(b''))
 
 
-class cmd_READ_Schema(UnknownCheckedSchema):
+class cmd_READ_Schema(BaseCmdSchema):
     id = fields.String(required=True)
     version = fields.Int(validate=lambda n: n >= 1)
     trust_seed = fields.String(required=True)
 
 
-class cmd_UPDATE_Schema(UnknownCheckedSchema):
+class cmd_UPDATE_Schema(BaseCmdSchema):
     id = fields.String(required=True)
     version = fields.Int(validate=lambda n: n > 1)
     trust_seed = fields.String(required=True)
@@ -53,7 +49,7 @@ class BaseVlobComponent:
         self._signal_vlob_updated = signal_ns.signal('vlob_updated')
 
     async def api_vlob_create(self, client_ctx, msg):
-        msg = cmd_CREATE_Schema().load(msg)
+        msg = cmd_CREATE_Schema().load_or_abort(msg)
         # Generate opaque id if not provided
         id = msg.get('id') or uuid4().hex
         rts = uuid4().hex
@@ -67,7 +63,7 @@ class BaseVlobComponent:
         }
 
     async def api_vlob_read(self, client_ctx, msg):
-        msg = cmd_READ_Schema().load(msg)
+        msg = cmd_READ_Schema().load_or_abort(msg)
         atom = await self.read(**msg)
         return {
             'status': 'ok',
@@ -77,7 +73,7 @@ class BaseVlobComponent:
         }
 
     async def api_vlob_update(self, client_ctx, msg):
-        msg = cmd_UPDATE_Schema().load(msg)
+        msg = cmd_UPDATE_Schema().load_or_abort(msg)
         await self.update(**msg)
         return {'status': 'ok'}
 

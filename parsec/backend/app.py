@@ -1,12 +1,12 @@
 import attr
 import trio
 import blinker
-from marshmallow import fields, validate
 from nacl.public import PublicKey
 from nacl.signing import VerifyKey
 
-from parsec.utils import CookedSocket, BaseCmdSchema, ParsecError
+from parsec.utils import CookedSocket, ParsecError
 from parsec.handshake import HandshakeFormatError, ServerHandshake
+from parsec.schema import BaseCmdSchema, fields, validate
 
 from parsec.backend.drivers.memory import (
     MemoryUserComponent,
@@ -154,7 +154,7 @@ class BackendApp:
             await self.dbh.stop()
 
     async def _api_ping(self, client_ctx, msg):
-        msg = cmd_PING_Schema().load(msg)
+        msg = cmd_PING_Schema().load_or_abort(msg)
         self.signal_ns.signal('ping').send(msg['ping'])
         return {'status': 'ok', 'pong': msg['ping']}
 
@@ -172,7 +172,7 @@ class BackendApp:
         return {'status': 'ok', 'url': self.blockstore_url}
 
     async def _api_event_subscribe(self, client_ctx, msg):
-        msg = cmd_EVENT_SUBSCRIBE_Schema().load(msg)
+        msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(msg)
         event = msg['event']
         subject = msg['subject']
 
@@ -195,7 +195,7 @@ class BackendApp:
         return {'status': 'ok'}
 
     async def _api_event_unsubscribe(self, client_ctx, msg):
-        msg = cmd_EVENT_SUBSCRIBE_Schema().load(msg)
+        msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(msg)
         try:
             del client_ctx.subscribed_events[msg['event'], msg['subject']]
         except KeyError:
@@ -206,12 +206,12 @@ class BackendApp:
         return {'status': 'ok'}
 
     async def _api_event_listen(self, client_ctx, msg):
-        BaseCmdSchema().load(msg)  # empty msg expected
+        BaseCmdSchema().load_or_abort(msg)  # empty msg expected
         event, subject = await client_ctx.events.get()
         return {'status': 'ok', 'event': event, 'subject': subject}
 
     async def _api_event_list_subscribed(self, client_ctx, msg):
-        BaseCmdSchema().load(msg)  # empty msg expected
+        BaseCmdSchema().load_or_abort(msg)  # empty msg expected
         return {
             'status': 'ok',
             'subscribed': list(client_ctx.subscribed_events.keys())
@@ -268,7 +268,7 @@ class BackendApp:
                 print('REQ %s' % req)
                 # TODO: handle bad msg
                 try:
-                    cmd = req.pop('cmd', '<missing>')
+                    cmd = req.get('cmd', '<missing>')
                     if client_ctx.anonymous:
                         cmd_func = self.anonymous_cmds[cmd]
                     else:

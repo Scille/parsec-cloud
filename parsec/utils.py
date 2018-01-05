@@ -2,8 +2,6 @@ import attr
 import base64
 import json
 import trio
-from functools import partial
-from marshmallow import Schema, fields, validates_schema, ValidationError
 from pendulum import Pendulum
 from nacl.public import PrivateKey
 from nacl.secret import SecretBox
@@ -49,52 +47,6 @@ def to_jsonb64(raw: bytes):
 
 def from_jsonb64(msg: str):
     return base64.decodebytes(msg.encode())
-
-
-# TODO: monkeypatch is ugly but I'm in a hurry...
-def _jsonb64_serialize(obj):
-    try:
-        return to_jsonb64(obj)
-    except:
-        raise ValidationError('Invalid bytes')
-
-
-def _jsonb64_deserialize(value):
-    try:
-        return from_jsonb64(value)
-    except:
-        raise ValidationError('Invalid base64 encoded data')
-
-
-fields.Base64Bytes = partial(fields.Function,
-                             serialize=_jsonb64_serialize,
-                             deserialize=_jsonb64_deserialize)
-
-
-class UnknownCheckedSchema(Schema):
-
-    """
-    ModelSchema with check for unknown field
-    """
-
-    @validates_schema(pass_original=True)
-    def check_unknown_fields(self, data, original_data):
-        for key in original_data:
-            if key not in self.fields or self.fields[key].dump_only:
-                raise ValidationError('Unknown field name {}'.format(key))
-
-    def load(self, msg, abort_on_error=True):
-        parsed_msg, errors = super().load(msg)
-        if not abort_on_error:
-            return parsed_msg, errors
-        if errors:
-            raise abort(errors=errors)
-        else:
-            return parsed_msg
-
-
-class BaseCmdSchema(UnknownCheckedSchema):
-    cmd = fields.String()
 
 
 def _json_serial(obj):
