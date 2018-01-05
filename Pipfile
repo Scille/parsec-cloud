@@ -16,6 +16,7 @@ click = "==6.7"
 attrs = "==17.3.0"
 marshmallow-oneofschema = "*"
 python-decouple = "==3.1"
+psycopg2 = "==2.7.1"
 
 [dev-packages]
 
