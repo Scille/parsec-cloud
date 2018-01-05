@@ -1,11 +1,6 @@
-import attr
 from marshmallow import fields
 
-from nacl.public import PublicKey
-from nacl.signing import VerifyKey
-
-from parsec.utils import UnknownCheckedSchema, ParsecError, to_jsonb64
-from parsec.backend.exceptions import PubKeyNotFound
+from parsec.utils import UnknownCheckedSchema, to_jsonb64
 
 
 class cmd_PUBKEY_GET_Schema(UnknownCheckedSchema):
@@ -36,25 +31,3 @@ class BasePubKeyComponent:
 
     async def get(self, intent):
         raise NotImplementedError()
-
-
-@attr.s
-class MockedPubKeyComponent(BasePubKeyComponent):
-    _keys = attr.ib(default=attr.Factory(dict))
-
-    async def add(self, id, pubkey, verifykey):
-        assert isinstance(pubkey, (bytes, bytearray))
-        assert isinstance(verifykey, (bytes, bytearray))
-        if id in self._keys:
-            raise PubKeyAlreadyExists(
-                'Identity `%s` already has a public key' % id
-            )
-        else:
-            self._keys[id] = (pubkey, verifykey)
-
-    async def get(self, id, cooked=False):
-        try:
-            keys = self._keys[id]
-            return (PublicKey(keys[0]), VerifyKey(keys[1])) if cooked else keys
-        except KeyError:
-            raise PubKeyNotFound('No public key for identity `%s`' % id)

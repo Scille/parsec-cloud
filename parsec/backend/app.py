@@ -7,12 +7,26 @@ from nacl.signing import VerifyKey
 
 from parsec.utils import CookedSocket, BaseCmdSchema, ParsecError
 from parsec.handshake import HandshakeFormatError, ServerHandshake
-from parsec.backend.user import MockedUserComponent, UserNotFound
-from parsec.backend.vlob import MockedVlobComponent
-from parsec.backend.user_vlob import MockedUserVlobComponent
-from parsec.backend.group import MockedGroupComponent
-from parsec.backend.message import InMemoryMessageComponent
-from parsec.backend.blockstore import MockedBlockStoreComponent
+
+from parsec.backend.drivers.memory import (
+    MemoryUserComponent,
+    MemoryVlobComponent,
+    MemoryUserVlobComponent,
+    MemoryGroupComponent,
+    MemoryMessageComponent,
+    MemoryBlockStoreComponent
+)
+from parsec.backend.drivers.postgresql import (
+    PGHandler,
+    PGUserComponent,
+    PGVlobComponent,
+    PGUserVlobComponent,
+    PGGroupComponent,
+    PGMessageComponent,
+    PGBlockStoreComponent
+)
+
+from parsec.backend.exceptions import NotFoundError
 
 
 class cmd_LOGIN_Schema(BaseCmdSchema):
@@ -62,16 +76,37 @@ class BackendApp:
         self.config = config
         self.nursery = None
         self.blockstore_url = config.blockstore_url
-        # TODO: validate BLOCKSTORE_URL value
-        if self.blockstore_url == 'backend://':
-            self.blockstore = MockedBlockStoreComponent(self.signal_ns)
+
+        if self.config.dburl is None:
+            # TODO: validate BLOCKSTORE_URL value
+            if self.blockstore_url == 'backend://':
+                self.blockstore = MemoryBlockStoreComponent(self.signal_ns)
+            else:
+                self.blockstore = None
+
+            self.user = MemoryUserComponent(self.signal_ns)
+            self.vlob = MemoryVlobComponent(self.signal_ns)
+            self.user_vlob = MemoryUserVlobComponent(self.signal_ns)
+            self.message = MemoryMessageComponent(self.signal_ns)
+            self.group = MemoryGroupComponent(self.signal_ns)
+
         else:
-            self.blockstore = None
-        self.user = MockedUserComponent(self.signal_ns)
-        self.vlob = MockedVlobComponent(self.signal_ns)
-        self.user_vlob = MockedUserVlobComponent(self.signal_ns)
-        self.message = InMemoryMessageComponent(self.signal_ns)
-        self.group = MockedGroupComponent(self.signal_ns)
+            self.dbh = PGHandler(self.config.dburl)
+
+            if self.blockstore_url == 'backend://':
+                self.blockstore = PGBlockStoreComponent(
+                    self.dbh,
+                    self.signal_ns
+                )
+
+            else:
+                self.blockstore = None
+
+            self.user = PGUserComponent(self.dbh, self.signal_ns)
+            self.vlob = PGVlobComponent(self.dbh, self.signal_ns)
+            self.user_vlob = PGUserVlobComponent(self.dbh, self.signal_ns)
+            self.message = PGMessageComponent(self.dbh, self.signal_ns)
+            self.group = PGGroupComponent(self.dbh, self.signal_ns)
 
         self.anonymous_cmds = {
             'user_claim': self.user.api_user_claim,
@@ -111,7 +146,12 @@ class BackendApp:
         }
 
     async def init(self):
-        pass
+        if self.config.dburl is not None:
+            await self.dbh.start()
+
+    async def shutdown(self):
+        if self.config.dburl is not None:
+            await self.dbh.stop()
 
     async def _api_ping(self, client_ctx, msg):
         msg = cmd_PING_Schema().load(msg)
@@ -197,7 +237,7 @@ class BackendApp:
                 try:
                     user = await self.user.get(userid)
                     device = user['devices'][deviceid]
-                except (UserNotFound, KeyError):
+                except (NotFoundError, KeyError):
                     result_req = hs.build_bad_identity_result_req()
                 else:
                     broadcast_key = PublicKey(user['broadcast_key'])

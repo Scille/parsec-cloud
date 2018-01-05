@@ -1,4 +1,3 @@
-from collections import defaultdict
 from marshmallow import fields
 
 from parsec.utils import UnknownCheckedSchema, to_jsonb64
@@ -34,16 +33,3 @@ class BaseMessageComponent:
             'messages': [{'count': i, 'body': to_jsonb64(msg)}
                          for i, msg in enumerate(messages, offset + 1)]
         }
-
-
-class InMemoryMessageComponent(BaseMessageComponent):
-    def __init__(self, *args):
-        super().__init__(*args)
-        self._messages = defaultdict(list)
-
-    async def perform_message_new(self, recipient, body):
-        self._messages[recipient].append(body)
-        self._signal_message_arrived.send(recipient)
-
-    async def perform_message_get(self, id, offset):
-        return self._messages[id][offset:]

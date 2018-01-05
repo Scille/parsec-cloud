@@ -1,0 +1,139 @@
+from parsec.backend.user import BaseUserComponent
+import pendulum
+
+from parsec.backend.exceptions import (
+    AlreadyExistsError,
+    NotFoundError,
+    UserClaimError
+)
+
+
+class PGUserComponent(BaseUserComponent):
+    def __init__(self, dbh, *args):
+        super().__init__(*args)
+        self.dbh = dbh
+
+    async def claim_invitation(self, id, token, broadcast_key, device_name, device_verify_key):
+        assert isinstance(broadcast_key, (bytes, bytearray))
+        assert isinstance(device_verify_key, (bytes, bytearray))
+
+        invitation = await self.dbh.fetch_one(
+            'SELECT id, ts, author, token, claim_tries FROM invitations WHERE id = %s',
+            (id,)
+        )
+
+        if invitation is None:
+            raise UserClaimError('No invitation for user `%s`' % id)
+
+        invitation['date'] = pendulum.from_timestamp(invitation['ts'])
+        user = await self.dbh.fetch_one(
+            'SELECT 1 FROM users WHERE id = %s',
+            (id,)
+        )
+
+        try:
+            if user is not None:
+                raise UserClaimError('User `%s` has already been registered' % id)
+
+            now = pendulum.utcnow()
+
+            if (now - invitation['date']) > pendulum.interval(hours=1):
+                raise UserClaimError('Claim code is too old')
+
+            if invitation['token'] != token:
+                raise UserClaimError('Invalid token')
+
+        except UserClaimError:
+            claim_tries = invitation['claim_tries'] + 1
+
+            if claim_tries > 3:
+                await self.dbh.delete_one(
+                    'DELETE FROM invitations WHERE id = %s',
+                    (id,)
+                )
+
+            else:
+                await self.dbh.update_one(
+                    'UPDATE invitations SET claim_tries = %s WHERE id = %s',
+                    (claim_tries, id)
+                )
+
+            raise
+
+        await self.create(
+            invitation['author'],
+            id,
+            broadcast_key,
+            devices=[(device_name, device_verify_key)]
+        )
+
+    async def create_invitation(self, author, id, token):
+        user = await self.dbh.fetch_one(
+            'SELECT 1 FROM users WHERE id = %s',
+            (id,)
+        )
+
+        if user is not None:
+            raise AlreadyExistsError('User `%s` already exists' % id)
+
+        # Overwrite previous invitation if any
+        await self.dbh.insert_one(
+            'INSERT INTO invitations (id, ts, author, token, claim_tries) VALUES (%s, %s, %s, %s, 0) ON CONFLICT DO UPDATE',
+            (id, pendulum.utcnow().int_timestamp, author, token)
+        )
+
+    async def create(self, author, id, broadcast_key, devices):
+        assert isinstance(broadcast_key, (bytes, bytearray))
+
+        if isinstance(devices, dict):
+            devices = list(devices.items())
+
+        for _, key in devices:
+            assert isinstance(key, (bytes, bytearray))
+
+        user = await self.dbh.fetch_one(
+            'SELECT 1 FROM users WHERE id = %s',
+            (id,)
+        )
+
+        if user is not None:
+            raise AlreadyExistsError('User `%s` already exists' % id)
+
+        now = pendulum.utcnow().int_timestamp
+
+        await self.dbh.insert_one(
+            'INSERT INTO users (id, created_on, created_by, broadcast_key) VALUES (%s, %s, %s, %s)',
+            (id, now, author, broadcast_key)
+        )
+
+        await self.dbh.insert_many(
+            'INSERT INTO user_devices (user_id, name, created_on, verify_key, revocated_on) VALUES (%s, %s, %s, %s, NULL)',
+            [
+                (id, name, now, key)
+                for name, key in devices
+            ]
+        )
+
+    async def get(self, id):
+        user = await self.dbh.fetch_one(
+            'SELECT id, created_on, created_by, broadcast_key FROM users WHERE id = %s',
+            (id,)
+        )
+
+        if user is None:
+            raise NotFoundError(id)
+
+        user['created_on'] = pendulum.from_timestamp(user['created_on'])
+        user['devices'] = {
+            device['name']: {
+                'created_on': pendulum.from_timestamp(device['created_on']),
+                'verify_key': device['verify_key'],
+                'revocated_on': pendulum.from_timestamp(device['revocated_on'])
+            }
+            for device in await self.dbh.fetch_many(
+                'SELECT name, created_on, verify_key, revocated_on FROM user_devices WHERE user_id = %s',
+                (id,)
+            )
+        }
+
+        return user

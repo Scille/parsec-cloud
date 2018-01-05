@@ -19,3 +19,8 @@ class TrustSeedError(ParsecError):
 class AlreadyExistsError(ParsecError):
     status = 'already_exists_error'
     reason = 'Element already exists.'
+
+
+class UserClaimError(ParsecError):
+    status = 'user_claim_error'
+    reason = 'User related error'

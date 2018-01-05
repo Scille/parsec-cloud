@@ -3,7 +3,6 @@ from marshmallow import fields
 from uuid import uuid4
 
 from parsec.utils import UnknownCheckedSchema, to_jsonb64
-from parsec.backend.exceptions import AlreadyExistsError, NotFoundError
 
 
 class cmd_GET_Schema(UnknownCheckedSchema):
@@ -38,23 +37,3 @@ class BaseBlockStoreComponent:
 
     async def post(self, id, block):
         raise NotImplementedError()
-
-
-class MockedBlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.blocks = {}
-
-    async def get(self, id):
-        try:
-            return self.blocks[id]
-        except KeyError:
-            raise NotFoundError('Unknown block id.')
-
-    async def post(self, id, block):
-        if id in self.blocks:
-            # Should never happen
-            raise AlreadyExistsError(
-                'A block already exists with id `%s`.' % id
-            )
-        self.blocks[id] = block

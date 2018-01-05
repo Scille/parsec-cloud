@@ -73,6 +73,7 @@ def _backend(host, port, pubkeys, store, block_store, debug):
             'main': JOHN_DOE_VERIFY_KEY
         })
         await trio.serve_tcp(backend.handle_client, port)
+        await backend.shutdown()
 
     print('Starting Parsec Backend on %s:%s' % (host, port))
     try:

@@ -19,3 +19,6 @@ class Config:
     handshake_challenge_size = attr.ib(
         default=config('CONFIG_HANDSHAKE_CHALLENGE_SIZE', cast=int, default=48)
     )
+    dburl = attr.ib(
+        default=config('PARSEC_DB_URL', default=None)
+    )
