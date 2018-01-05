@@ -24,18 +24,6 @@ class Config:
     backend_watchdog = attr.ib(
         default=config('PARSEC_BACKEND_WATCHDOG', cast=_cast_int, default=None)
     )
-    anonymous_pubkey = attr.ib(
-        default=config(
-            'PARSEC_ANONYMOUS_PUBKEY',
-            default='y4scJ4mV09t5FJXtjwTctrpFg+xctuCyh+e4EoyuDFA='
-        )
-    )
-    anonymous_privkey = attr.ib(
-        default=config(
-            'PARSEC_ANONYMOUS_PRIVKEY',
-            default='ua1CbOtQ0dUrWG0+Satf2SeFpQsyYugJTcEB4DNIu/c='
-        )
-    )
     local_storage_dir = attr.ib(
         default=config('PARSEC_LOCAL_STORAGE_DIR', default='')
     )
