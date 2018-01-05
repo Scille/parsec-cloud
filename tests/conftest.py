@@ -37,7 +37,7 @@ def backend_store(request):
     if request.param == 'postgresql':
         if pytest.config.getoption('--no-postgresql'):
             pytest.skip('`--no-postgresql` option provided')
-        pytest.importorskip('parsec.backend.postgresql')
+        pytest.importorskip('parsec.backend.drivers.postgresql')
         return postgresql_url()
     else:
         return 'mocked://'
