@@ -66,7 +66,7 @@ def test_list_devices(tmpdir, alice_cleartext_device, bob_cleartext_device):
     devices = dm.list_available_devices()
     assert set(devices) == {
         alice_cleartext_device,
-        bob_cleartext_device    
+        bob_cleartext_device
     }
 
 
