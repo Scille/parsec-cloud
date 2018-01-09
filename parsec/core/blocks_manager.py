@@ -44,7 +44,7 @@ class BlocksManager:
             return self._decrypt_block(key, crypted)
 
     async def fetch_from_backend(self, id, key):
-        crypted = self.backend_storage.fetch_block(id)
+        crypted = await self.backend_storage.fetch_block(id)
         if crypted:
             return self._decrypt_block(key, crypted)
 
@@ -54,4 +54,4 @@ class BlocksManager:
 
     async def sync_new_block_with_backend(self, key, block):
         crypted = self._encrypt_block(key, block)
-        return self.backend_storage.sync_new_block(crypted)
+        return await self.backend_storage.sync_new_block(crypted)
