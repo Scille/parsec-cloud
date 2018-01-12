@@ -6,7 +6,7 @@ services:
   - postgresql
 install:
 - pip install -U coveralls
-- pip install .[dev]
+- pip install .[postgresql,dev]
 before_script:
   - psql -c 'create database parsec_test;' -U postgres
 script:

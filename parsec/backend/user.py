@@ -3,7 +3,11 @@ import string
 
 from parsec import schema_fields as fields
 from parsec.utils import UnknownCheckedSchema
-from parsec.backend.exceptions import NotFoundError
+from parsec.backend.exceptions import (
+    NotFoundError,
+    AlreadyExistsError,
+    UserClaimError
+)
 
 
 class UserIDSchema(UnknownCheckedSchema):
@@ -63,7 +67,7 @@ class BaseUserComponent:
         token = _generate_invitation_token()
         try:
             await self.create_invitation(client_ctx.id, msg['id'], token)
-        except UserAlreadyExists:
+        except AlreadyExistsError:
             return {
                 'status': 'already_exists',
                 'reason': 'User `%s` already exists' % msg['id'],
