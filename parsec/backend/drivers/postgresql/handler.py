@@ -7,10 +7,23 @@ import trio
 
 
 class PGHandler(Thread):
-    def __init__(self, url, *args, **kwargs):
+    def __init__(self, url, signal_ns, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.url = url
+
+        self.signal_ns = signal_ns
+        self.signals = [
+            'message_arrived',
+            'user_claimed',
+            'user_vlob_updated',
+            'vlob_updated'
+        ]
+
+        for signal in self.signals:
+            sighandler = self.signal_ns.signal('message_arrived')
+            sighandler.connect(self.get_signal_handler(signal))
+
         self.reqqueue = Queue()
         self.respqueue = Queue()
 
@@ -93,23 +106,41 @@ class PGHandler(Thread):
         )
         conn.commit()
 
+        for signal in self.signals:
+            cursor.execute('LISTEN {0}'.format(signal))
+
         self.respqueue.put({'status': 'ok'})
 
-        while True:
-            req = self.reqqueue.get()
+        running = True
 
-            if req['type'] == 'stop':
-                break
-
-            else:
+        while running:
+            while True:
                 try:
-                    reqmethod = getattr(self, 'cmd_{0}'.format(req['type']))
-                    resp = reqmethod(cursor, **req)
+                    req = self.reqqueue.get(block=False)
 
-                except Exception as err:
-                    resp = {'status': 'ko', 'error': err}
+                except Empty:
+                    break
 
-                self.respqueue.put(resp)
+                if req['type'] == 'stop':
+                    running = False
+                    break
+
+                else:
+                    try:
+                        reqtype = req.pop('type')
+                        reqmethod = getattr(self, 'cmd_{0}'.format(reqtype))
+                        resp = reqmethod(cursor, **req)
+
+                    except Exception as err:
+                        resp = {'status': 'ko', 'error': err}
+
+                    self.respqueue.put(resp)
+
+            conn.poll()
+            while conn.notifies:
+                notify = conn.notifies.pop(0)
+                signal = self.signal_ns.signal(notify.channel)
+                signal.send(notify.payload, propagate=False)
 
         cursor.close()
         conn.close()
@@ -151,6 +182,9 @@ class PGHandler(Thread):
         cursor.connection.commit()
 
         return {'status': 'ok'}
+
+    def cmd_notify(self, cursor, signal=None, sender=None):
+        cursor.execute('NOTIFY {0}, %s'.format(signal), (sender,))
 
     async def get_response(self):
         while True:
@@ -224,3 +258,14 @@ class PGHandler(Thread):
 
         if resp['status'] != 'ok':
             raise resp.get('error', RuntimeError('Unknown error'))
+
+    def get_signal_handler(self, signal):
+        def signal_handler(sender, propagate=True):
+            if propagate:
+                self.reqqueue.put({
+                    'type': 'notify',
+                    'signal': signal
+                    'sender': sender
+                })
+
+        return signal_handler
