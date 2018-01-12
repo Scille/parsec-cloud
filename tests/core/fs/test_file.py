@@ -1,8 +1,8 @@
 import trio
 import pytest
-from libfaketime import fake_time
 from pendulum import datetime
 
+from tests.common import freeze_time
 from parsec.core.fs import *
 
 

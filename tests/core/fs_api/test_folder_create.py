@@ -1,10 +1,9 @@
 import pytest
 from trio.testing import trio_test
-from libfaketime import fake_time
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
-from tests.common import with_core, with_populated_local_storage
+from tests.common import freeze_time, with_core, with_populated_local_storage
 
 
 @pytest.mark.skip(reason='regression...')
@@ -13,7 +12,7 @@ from tests.common import with_core, with_populated_local_storage
 @with_populated_local_storage('alice')
 async def test_create_folder(core):
     async with core.test_connect('alice@test') as sock:
-        with fake_time('2017-12-10T12:00:00'):
+        with freeze_time('2017-12-10T12:00:00'):
             await sock.send({'cmd': 'folder_create', 'path': '/new_folder'})
             rep = await sock.recv()
         assert rep == {'status': 'ok'}
@@ -43,7 +42,7 @@ async def test_create_folder(core):
 @with_populated_local_storage('alice')
 async def test_nested_create_folder(core):
     async with core.test_connect('alice@test') as sock:
-        with fake_time('2017-12-10T12:00:00'):
+        with freeze_time('2017-12-10T12:00:00'):
             await sock.send({'cmd': 'folder_create', 'path': '/dir/new_folder'})
             rep = await sock.recv()
         assert rep == {'status': 'ok'}

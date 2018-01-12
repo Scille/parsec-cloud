@@ -9,6 +9,11 @@ from unittest.mock import Mock, patch
 from functools import wraps
 from inspect import iscoroutinefunction
 
+try:
+    from libfaketime import freeze_time
+except ImportError:
+    from freezegun import freeze_time
+
 from parsec.core.local_storage import BaseLocalStorage
 from parsec.core.config import Config as CoreConfig
 from parsec.core.app import CoreApp

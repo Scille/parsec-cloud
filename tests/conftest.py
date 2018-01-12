@@ -4,7 +4,6 @@ from shutil import rmtree
 import pytest
 import socket
 import contextlib
-from libfaketime import fake_time
 from unittest.mock import patch
 
 from parsec.backend.app import BackendApp
@@ -13,7 +12,7 @@ from parsec.core.app import CoreApp
 from parsec.core.config import Config as CoreConfig
 
 from tests.common import (
-    TEST_USERS, connect_backend, connect_core, run_app)
+    freeze_time, TEST_USERS, connect_backend, connect_core, run_app)
 from tests.populate import populate_factory
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 
@@ -93,7 +92,7 @@ async def backend(default_users, config={}):
         **config
     })
     backend = BackendApp(config)
-    with fake_time('2000-01-01'):
+    with freeze_time('2000-01-01'):
         for user in default_users:
             userid, deviceid = user.id.split('@')
             await backend.user.create(

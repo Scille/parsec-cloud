@@ -2,11 +2,10 @@ import pytest
 import trio
 from unittest.mock import Mock
 from trio.testing import trio_test
-from libfaketime import fake_time
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
-from tests.common import with_core, with_populated_local_storage, async_patch
+from tests.common import freeze_time, with_core, with_populated_local_storage, async_patch
 
 
 def with_backend_conn_mocked(testfunc):

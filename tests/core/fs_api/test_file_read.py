@@ -1,10 +1,9 @@
 import pytest
 from trio.testing import trio_test
-from libfaketime import fake_time
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
-from tests.common import with_core, with_populated_local_storage
+from tests.common import freeze_time, with_core, with_populated_local_storage
 
 
 @pytest.mark.skip(reason='regression...')
