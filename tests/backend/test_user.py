@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch
-from freezegun import freeze_time
+from libfaketime import fake_time
 
 from parsec.utils import to_jsonb64
 
@@ -10,7 +10,7 @@ from tests.common import connect_backend
 @pytest.mark.trio
 async def test_user_get_ok(backend, alice, bob):
     async with connect_backend(backend, auth_as=alice) as sock:
-        with freeze_time('2017-07-07'):
+        with fake_time('2017-07-07'):
             await sock.send({
                 'cmd': 'user_get',
                 'id': 'bob',
@@ -96,7 +96,7 @@ async def test_user_claim_unknown_token(backend, mallory):
 @pytest.fixture
 async def token(backend, alice, mallory):
     token = '1234567890'
-    with freeze_time('2017-07-07T00:00:00'):
+    with fake_time('2017-07-07T00:00:00'):
         await backend.user.create_invitation(alice.id, mallory.user_id, token)
     return token
 
@@ -104,7 +104,7 @@ async def token(backend, alice, mallory):
 @pytest.mark.trio
 async def test_user_claim_too_old_token(backend, token, mallory):
     async with connect_backend(backend, auth_as='anonymous') as sock:
-        with freeze_time('2017-07-07T01:01:00'):
+        with fake_time('2017-07-07T01:01:00'):
             await sock.send({
                 'cmd': 'user_claim',
                 'id': mallory.user_id,
@@ -120,7 +120,7 @@ async def test_user_claim_too_old_token(backend, token, mallory):
 @pytest.mark.trio
 async def test_user_claim_token(backend, token, mallory):
     async with connect_backend(backend, auth_as='anonymous') as sock:
-        with freeze_time('2017-07-07T00:59:00'):
+        with fake_time('2017-07-07T00:59:00'):
             await sock.send({
                 'cmd': 'user_claim',
                 'id': mallory.user_id,

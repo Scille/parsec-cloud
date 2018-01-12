@@ -4,7 +4,7 @@ from shutil import rmtree
 import pytest
 import socket
 import contextlib
-from freezegun import freeze_time
+from libfaketime import fake_time
 from unittest.mock import patch
 
 from parsec.backend.app import BackendApp
@@ -93,7 +93,7 @@ async def backend(default_users, config={}):
         **config
     })
     backend = BackendApp(config)
-    with freeze_time('2000-01-01'):
+    with fake_time('2000-01-01'):
         for user in default_users:
             userid, deviceid = user.id.split('@')
             await backend.user.create(

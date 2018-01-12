@@ -2,7 +2,7 @@ import pytest
 import trio
 from unittest.mock import Mock
 from trio.testing import trio_test
-from freezegun import freeze_time
+from libfaketime import fake_time
 
 from parsec.utils import to_jsonb64, from_jsonb64
 

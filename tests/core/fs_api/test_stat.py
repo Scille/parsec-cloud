@@ -1,6 +1,6 @@
 import pytest
 from trio.testing import trio_test
-from freezegun import freeze_time
+from libfaketime import fake_time
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
@@ -11,7 +11,7 @@ from tests.populate import populate_core
 @pytest.mark.skip(reason='regression...')
 @pytest.mark.trio
 async def test_stat_folder(core, alice):
-    with freeze_time('2017-12-01T12:50:30'):
+    with fake_time('2017-12-01T12:50:30'):
         await core.login(alice)
         populate_core(core, alice)
 

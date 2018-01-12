@@ -1,6 +1,6 @@
 import trio
 import pytest
-from freezegun import freeze_time
+from libfaketime import fake_time
 from pendulum import datetime
 
 from parsec.core.fs import *
@@ -194,7 +194,7 @@ async def test_fetch_unknown_child(foo):
 
 @pytest.mark.trio
 async def test_delete_child(foo, bar_txt):
-    with freeze_time('2017-07-07'):
+    with fake_time('2017-07-07'):
         ret = await foo.delete_child('bar.txt')
     assert foo.updated == datetime(2017, 7, 7)
     assert foo.need_flush
@@ -206,7 +206,7 @@ async def test_delete_child(foo, bar_txt):
 
 @pytest.mark.trio
 async def test_delete_not_loaded_child(fs, foo, bar_txt):
-    with freeze_time('2017-07-07'):
+    with fake_time('2017-07-07'):
         ret = await foo.delete_child('child')
     assert foo.updated == datetime(2017, 7, 7)
     assert foo.need_flush
@@ -223,7 +223,7 @@ async def test_delete_unknown_child(foo):
 
 @pytest.mark.trio
 async def test_insert_child(foo, new_txt):
-    with freeze_time('2017-07-07'):
+    with fake_time('2017-07-07'):
         await foo.insert_child('new', new_txt)
     assert foo.updated == datetime(2017, 7, 7)
     assert foo.need_flush
@@ -247,7 +247,7 @@ async def test_insert_entry_with_parent(foo, bar_txt):
 
 @pytest.mark.trio
 async def test_create_folder(fs, foo):
-    with freeze_time('2017-07-07'):
+    with fake_time('2017-07-07'):
         new = await foo.create_folder('new')
     assert isinstance(new, fs._folder_entry_cls)
 
@@ -272,7 +272,7 @@ async def test_create_folder_existing_child(foo):
 
 @pytest.mark.trio
 async def test_create_file(fs, foo):
-    with freeze_time('2017-07-07'):
+    with fake_time('2017-07-07'):
         new = await foo.create_file('new')
     assert isinstance(new, fs._file_entry_cls)
 
@@ -303,7 +303,7 @@ async def test_flush_not_needed(foo, mocked_manifests_manager):
 
 @pytest.mark.trio
 async def test_flush(foo, bar_txt, mocked_manifests_manager):
-    with freeze_time('2017-07-07'):
+    with fake_time('2017-07-07'):
         child = await foo.delete_child('child')
         await foo.insert_child('renamed', child)
     assert foo.need_flush
@@ -340,7 +340,7 @@ async def test_flush(foo, bar_txt, mocked_manifests_manager):
 @pytest.mark.trio
 async def test_simple_sync(fs, mocked_manifests_manager):
     foo = create_entry(fs, 'foo', need_sync=True)
-    with freeze_time('2017-07-07'):
+    with fake_time('2017-07-07'):
         await foo.sync()
     assert not foo.need_sync
     assert foo.base_version == 2
@@ -365,7 +365,7 @@ async def test_sync_with_children(fs, mocked_manifests_manager):
     create_entry(fs, 'spam.txt', is_file=True, parent=foo)
     # Note we don't need to load entry to sync the parent
     create_entry(fs, 'baz', is_not_loaded=True, parent=foo)
-    with freeze_time('2017-07-07'):
+    with fake_time('2017-07-07'):
         await foo.sync()
     assert not foo.need_sync
     assert foo.base_version == 2
@@ -454,7 +454,7 @@ async def test_sync_with_placeholder_children(fs, mocked_manifests_manager):
         ('<id 3>', '<rts 3>', '<wts 3>'),
     ]
 
-    with freeze_time('2017-07-07'):
+    with fake_time('2017-07-07'):
         await foo.sync()
     assert not foo.need_sync
     assert foo.base_version == 2
@@ -556,7 +556,7 @@ async def test_sync_with_concurrent_updates(fs, mocked_manifests_manager):
 
     mocked_manifests_manager.sync_with_backend.side_effect = _sync_with_backend
 
-    with freeze_time('2017-07-07'):
+    with fake_time('2017-07-07'):
         await foo.sync()
     # In the end, folder should have kept it changes
     assert set(foo.keys()) == {'c'}

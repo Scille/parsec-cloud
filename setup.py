@@ -34,7 +34,7 @@ test_requirements = [
     'pytest',
     'pytest-cov',
     'pytest-trio',
-    'freezegun',
+    'pytest-libfaketime',
     'tox',
     'wheel',
     'Sphinx',

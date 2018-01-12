@@ -1,6 +1,6 @@
 import pytest
 from trio.testing import trio_test
-from freezegun import freeze_time
+from libfaketime import fake_time
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
@@ -13,7 +13,7 @@ from tests.common import with_core, with_populated_local_storage
 @with_populated_local_storage('alice')
 async def test_move_folder(core):
     async with core.test_connect('alice@test') as sock:
-        with freeze_time('2017-12-10T12:00:00'):
+        with fake_time('2017-12-10T12:00:00'):
             await sock.send({'cmd': 'move', 'src': '/dir', 'dst': '/renamed_dir'})
             rep = await sock.recv()
         assert rep == {'status': 'ok'}
@@ -92,7 +92,7 @@ async def test_move_folder_bad_dst(core):
 @with_populated_local_storage('alice')
 async def test_move_file(core):
     async with core.test_connect('alice@test') as sock:
-        with freeze_time('2017-12-10T12:00:00'):
+        with fake_time('2017-12-10T12:00:00'):
             await sock.send({'cmd': 'move', 'src': '/dir/up_to_date.txt', 'dst': '/renamed.txt'})
             rep = await sock.recv()
         assert rep == {'status': 'ok'}

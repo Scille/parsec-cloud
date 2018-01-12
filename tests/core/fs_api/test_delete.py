@@ -1,17 +1,17 @@
 import pytest
-from freezegun import freeze_time
+from libfaketime import fake_time
 
 from tests.common import connect_core
 
 
 @pytest.mark.trio
 async def test_delete_folder(core, alice):
-    with freeze_time('2017-12-10T12:00:00'):
+    with fake_time('2017-12-10T12:00:00'):
         await core.login(alice)
         await core.fs.root.create_folder('empty_dir')
 
     async with connect_core(core) as sock:
-        with freeze_time('2017-12-10T12:50:30'):
+        with fake_time('2017-12-10T12:50:30'):
             await sock.send({'cmd': 'delete', 'path': '/empty_dir'})
             rep = await sock.recv()
         assert rep == {'status': 'ok'}
@@ -36,13 +36,13 @@ async def test_delete_folder(core, alice):
 
 @pytest.mark.trio
 async def test_delete_non_empty_folder(core, alice):
-    with freeze_time('2017-12-10T12:00:00'):
+    with fake_time('2017-12-10T12:00:00'):
         await core.login(alice)
         dir_entry = await core.fs.root.create_folder('dir')
         await dir_entry.create_file('foo.txt')
 
     async with connect_core(core) as sock:
-        with freeze_time('2017-12-10T12:50:30'):
+        with fake_time('2017-12-10T12:50:30'):
             await sock.send({'cmd': 'delete', 'path': '/dir'})
             rep = await sock.recv()
         assert rep == {'status': 'ok'}
@@ -71,13 +71,13 @@ async def test_delete_non_empty_folder(core, alice):
 
 @pytest.mark.trio
 async def test_delete_file(core, alice):
-    with freeze_time('2017-12-10T12:00:00'):
+    with fake_time('2017-12-10T12:00:00'):
         await core.login(alice)
         dir_entry = await core.fs.root.create_folder('dir')
         await dir_entry.create_file('foo.txt')
 
     async with connect_core(core) as sock:
-        with freeze_time('2017-12-10T12:50:30'):
+        with fake_time('2017-12-10T12:50:30'):
             await sock.send({'cmd': 'delete', 'path': '/dir/foo.txt'})
             rep = await sock.recv()
         assert rep == {'status': 'ok'}
@@ -105,7 +105,7 @@ async def test_delete_file(core, alice):
 
 @pytest.mark.trio
 async def test_delete_unknow_file(core, alice):
-    with freeze_time('2017-12-10T12:00:00'):
+    with fake_time('2017-12-10T12:00:00'):
         await core.login(alice)
         dir_entry = await core.fs.root.create_folder('dir')
         await dir_entry.create_file('foo.txt')
