@@ -41,6 +41,7 @@ class cmd_PING_Schema(BaseCmdSchema):
 class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
     event = fields.String(required=True, validate=validate.OneOf([
         'vlob_updated', 'user_vlob_updated', 'message_arrived', 'ping',
+        'device_try_claim_submitted'
     ]))
     subject = fields.String(missing=None)
 
@@ -110,7 +111,9 @@ class BackendApp:
 
         self.anonymous_cmds = {
             'user_claim': self.user.api_user_claim,
-            'ping': self._api_ping
+            'ping': self._api_ping,
+
+            'device_configure': self.user.api_device_configure,
         }
 
         self.cmds = {
@@ -120,8 +123,13 @@ class BackendApp:
             'event_list_subscribed': self._api_event_list_subscribed,
 
             'user_get': self.user.api_user_get,
-            'user_create': self.user.api_user_create,
+            'user_invite': self.user.api_user_invite,
             'user_claim': self.user.api_user_claim,
+
+            'device_declare': self.user.api_device_declare,
+            'device_get_configuration_try': self.user.api_device_get_configuration_try,
+            'device_accept_configuration_try': self.user.api_device_accept_configuration_try,
+            'device_refuse_configuration_try': self.user.api_device_refuse_configuration_try,
 
             'blockstore_post': self._api_blockstore_post,
             'blockstore_get': self._api_blockstore_get,
@@ -176,7 +184,7 @@ class BackendApp:
         event = msg['event']
         subject = msg['subject']
 
-        if (event in ('user_vlob_updated', 'message_arrived') and
+        if (event in ('user_vlob_updated', 'message_arrived', 'device_try_claim') and
                 subject not in (None, client_ctx.user_id)):
             return {
                 'status': 'private_event',
@@ -185,13 +193,16 @@ class BackendApp:
 
         def _handle_event(sender):
             try:
-                client_ctx.events.put_nowait((event, subject))
+                client_ctx.events.put_nowait((event, sender))
             except trio.WouldBlock:
                 print('WARNING: event queue is full for %s' % client_ctx.id)
 
         client_ctx.subscribed_events[event, subject] = _handle_event
-        self.signal_ns.signal(event).connect(
-            _handle_event, sender=subject, weak=True)
+        if subject:
+            self.signal_ns.signal(event).connect(
+                _handle_event, sender=subject, weak=True)
+        else:
+            self.signal_ns.signal(event).connect(_handle_event, weak=True)
         return {'status': 'ok'}
 
     async def _api_event_unsubscribe(self, client_ctx, msg):

@@ -97,7 +97,7 @@ async def backend(default_users, config={}):
             userid, deviceid = user.id.split('@')
             await backend.user.create(
                 author='<backend-fixture>',
-                id=userid,
+                user_id=userid,
                 broadcast_key=user.pubkey.encode(),
                 devices=[(deviceid, user.verifykey.encode())]
             )

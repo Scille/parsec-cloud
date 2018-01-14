@@ -18,9 +18,10 @@ class cmd_LOGIN_Schema(BaseCmdSchema):
 
 
 class cmd_USER_INVITE_Schema(BaseCmdSchema):
-    id = fields.String(required=True)
+    user_id = fields.String(required=True)
 
 
+# TODO: change id to user_id/device_name
 class cmd_USER_CLAIM_Schema(BaseCmdSchema):
     id = fields.String(required=True)
     token = fields.String(required=True)
@@ -124,7 +125,7 @@ class CoreApp:
             return {'status': 'login_required'}
         msg = cmd_USER_INVITE_Schema().load_or_abort(req)
         try:
-            rep = await self.backend_connection.send({'cmd': 'user_create', 'id': msg['id']})
+            rep = await self.backend_connection.send({'cmd': 'user_invite', 'user_id': msg['user_id']})
         except BackendNotAvailable:
             return {'status': 'backend_not_availabled'}
         return rep
@@ -139,7 +140,7 @@ class CoreApp:
         try:
             rep = await backend_send_anonymous_cmd(self.backend_addr, {
                 'cmd': 'user_claim',
-                'id': user_id,
+                'user_id': user_id,
                 'device_name': device_id,
                 'token': msg['token'],
                 'broadcast_key': to_jsonb64(broadcast_key),

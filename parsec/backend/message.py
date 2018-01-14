@@ -22,7 +22,6 @@ class BaseMessageComponent:
         await self.new(**msg)
         return {'status': 'ok'}
 
-
     async def api_message_get(self, client_ctx, msg):
         msg = cmd_GET_Schema().load_or_abort(msg)
         messages = await self.get(client_ctx.id, **msg)

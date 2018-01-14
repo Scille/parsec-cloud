@@ -361,7 +361,7 @@ async def _test_backend_factory(config=None):
         userid, deviceid = fullid.split('@')
         await backend.user.create(
             author='<pytest>',
-            id=userid,
+            user_id=userid,
             broadcast_key=user.pubkey.encode(),
             devices=[(deviceid, user.verifykey.encode())]
         )
