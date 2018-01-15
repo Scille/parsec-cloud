@@ -34,7 +34,7 @@ class DeviceRefuseConfigurationTrySchema(BaseCmdSchema):
 
 
 class DeviceConfigureSchema(BaseCmdSchema):
-    token = fields.String(required=True)
+    configure_device_token = fields.String(required=True)
     user_id = fields.String(required=True)
     device_name = fields.String(required=True)
     device_verify_key = fields.Base64Bytes(required=True)
@@ -123,7 +123,7 @@ class BaseUserComponent:
                 'status': 'already_exists',
                 'reason': 'Device `%s` already exists.' % msg['device_name'],
             }
-        return {'status': 'ok', 'token': configure_device_token}
+        return {'status': 'ok', 'configure_device_token': configure_device_token}
 
     async def api_device_configure(self, client_ctx, msg):
         msg = DeviceConfigureSchema().load_or_abort(msg)
@@ -141,7 +141,7 @@ class BaseUserComponent:
                 'status': 'not_found',
                 'reason': "Device `%s` doesn't exists." % msg['device_name'],
             }
-        if device['configure_token'] != msg['token']:
+        if device['configure_token'] != msg['configure_device_token']:
             return {
                 'status': 'invalid_token',
                 'reason': 'Wrong device configuration token.'
@@ -218,7 +218,7 @@ class BaseUserComponent:
         return {'status': 'ok'}
 
     async def api_device_refuse_configuration_try(self, client_ctx, msg):
-        msg = DeviceAcceptConfigurationTrySchema().load_or_abort(msg)
+        msg = DeviceRefuseConfigurationTrySchema().load_or_abort(msg)
         try:
             await self.refuse_device_configuration_try(
                 msg['configuration_try_id'], client_ctx.user_id, msg['reason'])
