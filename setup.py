@@ -36,7 +36,7 @@ test_requirements = [
     'pytest-trio',
     # Libfaketime is much faster than Freezegun but UNIX only
     'pytest-libfaketime;platform_system!="Windows"',
-    'freezgun;platform_system=="Windows"',
+    'freezegun;platform_system=="Windows"',
     'tox',
     'wheel',
     'Sphinx',
