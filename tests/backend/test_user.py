@@ -86,7 +86,7 @@ async def test_user_claim_unknown_token(backend, mallory):
             'user_id': mallory.user_id,
             'token': '<token>',
             'broadcast_key': to_jsonb64(mallory.pubkey.encode()),
-            'device_name': mallory.device_id,
+            'device_name': mallory.device_name,
             'device_verify_key': to_jsonb64(mallory.verifykey.encode()),
         })
         rep = await sock.recv()
@@ -113,7 +113,7 @@ async def test_user_claim_too_old_token(backend, token, mallory):
                 'user_id': mallory.user_id,
                 'token': token,
                 'broadcast_key': to_jsonb64(mallory.pubkey.encode()),
-                'device_name': mallory.device_id,
+                'device_name': mallory.device_name,
                 'device_verify_key': to_jsonb64(mallory.verifykey.encode()),
             })
             rep = await sock.recv()
@@ -129,7 +129,7 @@ async def test_user_claim_token(backend, token, mallory):
                 'user_id': mallory.user_id,
                 'token': token,
                 'broadcast_key': to_jsonb64(mallory.pubkey.encode()),
-                'device_name': mallory.device_id,
+                'device_name': mallory.device_name,
                 'device_verify_key': to_jsonb64(mallory.verifykey.encode()),
             })
             rep = await sock.recv()

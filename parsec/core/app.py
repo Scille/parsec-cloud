@@ -136,15 +136,14 @@ class CoreApp:
         msg = cmd_USER_CLAIM_Schema().load_or_abort(req)
         broadcast_key = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
         device_verify_key = nacl.signing.SigningKey.generate().encode()
-        user_id, device_id = msg['id'].split('@')
+        user_id, device_name = msg['id'].split('@')
         try:
             rep = await backend_send_anonymous_cmd(self.backend_addr, {
                 'cmd': 'user_claim',
                 'user_id': user_id,
-                'device_name': device_id,
+                'device_name': device_name,
                 'token': msg['token'],
                 'broadcast_key': to_jsonb64(broadcast_key),
-                'device_name': device_id,
                 'device_verify_key': to_jsonb64(device_verify_key),
             })
         except BackendNotAvailable:

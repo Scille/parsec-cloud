@@ -95,7 +95,7 @@ class User:
         return self.id.split('@')[0]
 
     @property
-    def device_id(self):
+    def device_name(self):
         return self.id.split('@')[1]
 
     def __init__(self, id, privkey, signkey):

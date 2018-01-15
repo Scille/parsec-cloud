@@ -7,8 +7,8 @@ from parsec.core.devices_manager import (
 from parsec.utils import to_jsonb64
 
 
-def cleartext_device(tmpdir, device_id, user_privkey, device_signkey):
-    conf_path = tmpdir.mkdir(device_id)
+def cleartext_device(basedir, device_id, user_privkey, device_signkey):
+    conf_path = basedir.mkdir(device_id)
     conf = {
         'device_id': device_id,
         'encryption': 'quedalle',
