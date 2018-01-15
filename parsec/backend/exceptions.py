@@ -23,4 +23,9 @@ class AlreadyExistsError(ParsecError):
 
 class UserClaimError(ParsecError):
     status = 'user_claim_error'
-    reason = 'User related error'
+    reason = 'User related error.'
+
+
+class OutOfDateError(ParsecError):
+    status = 'out_of_date_error'
+    reason = 'Out of date error.'

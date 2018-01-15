@@ -64,7 +64,7 @@ async def test_user_get_not_found(backend, alice):
 
 @pytest.mark.trio
 async def test_user_invite(backend, alice, mock_generate_token):
-    mock_generate_token.return_value = '<token>'
+    mock_generate_token.side_effect = ['<token>']
     async with connect_backend(backend, auth_as=alice) as sock:
         await sock.send({
             'cmd': 'user_invite',
@@ -74,7 +74,7 @@ async def test_user_invite(backend, alice, mock_generate_token):
     assert rep == {
         'status': 'ok',
         'user_id': 'john',
-        'token': '<token>',
+        'invitation_token': '<token>',
     }
 
 
@@ -84,20 +84,20 @@ async def test_user_claim_unknown_token(backend, mallory):
         await sock.send({
             'cmd': 'user_claim',
             'user_id': mallory.user_id,
-            'token': '<token>',
+            'invitation_token': '<token>',
             'broadcast_key': to_jsonb64(mallory.pubkey.encode()),
             'device_name': mallory.device_name,
             'device_verify_key': to_jsonb64(mallory.verifykey.encode()),
         })
         rep = await sock.recv()
     assert rep == {
-        'status': 'claim_error',
+        'status': 'not_found_error',
         'reason': 'No invitation for user `mallory`',
     }
 
 
 @pytest.fixture
-async def token(backend, alice, mallory):
+async def invitation_token(backend, alice, mallory):
     token = '1234567890'
     with freeze_time('2017-07-07T00:00:00'):
         await backend.user.create_invitation(token, alice.id, mallory.user_id)
@@ -105,29 +105,29 @@ async def token(backend, alice, mallory):
 
 
 @pytest.mark.trio
-async def test_user_claim_too_old_token(backend, token, mallory):
+async def test_user_claim_too_old_token(backend, invitation_token, mallory):
     async with connect_backend(backend, auth_as='anonymous') as sock:
         with freeze_time('2017-07-07T01:01:00'):
             await sock.send({
                 'cmd': 'user_claim',
                 'user_id': mallory.user_id,
-                'token': token,
+                'invitation_token': invitation_token,
                 'broadcast_key': to_jsonb64(mallory.pubkey.encode()),
                 'device_name': mallory.device_name,
                 'device_verify_key': to_jsonb64(mallory.verifykey.encode()),
             })
             rep = await sock.recv()
-    assert rep == {'status': 'claim_error', 'reason': 'Claim code is too old'}
+    assert rep == {'status': 'out_of_date_error', 'reason': 'Claim code is too old.'}
 
 
 @pytest.mark.trio
-async def test_user_claim_token(backend, token, mallory):
+async def test_user_claim_token(backend, invitation_token, mallory):
     async with connect_backend(backend, auth_as='anonymous') as sock:
         with freeze_time('2017-07-07T00:59:00'):
             await sock.send({
                 'cmd': 'user_claim',
                 'user_id': mallory.user_id,
-                'token': token,
+                'invitation_token': invitation_token,
                 'broadcast_key': to_jsonb64(mallory.pubkey.encode()),
                 'device_name': mallory.device_name,
                 'device_verify_key': to_jsonb64(mallory.verifykey.encode()),

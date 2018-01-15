@@ -59,7 +59,7 @@ class UserSchema(BaseCmdSchema):
 
 
 class UserClaimSchema(BaseCmdSchema):
-    token = fields.String(required=True)
+    invitation_token = fields.String(required=True)
     user_id = fields.String(required=True)
     broadcast_key = fields.Base64Bytes(required=True)
     device_name = fields.String(required=True)
@@ -101,7 +101,7 @@ class BaseUserComponent:
                 'status': 'already_exists',
                 'reason': 'User `%s` already exists.' % msg['user_id'],
             }
-        return {'status': 'ok', 'user_id': msg['user_id'], 'token': token}
+        return {'status': 'ok', 'user_id': msg['user_id'], 'invitation_token': token}
 
     async def api_user_claim(self, client_ctx, msg):
         msg = UserClaimSchema().load_or_abort(msg)
@@ -229,10 +229,10 @@ class BaseUserComponent:
         self._signal_device_try_claim_answered.send(msg['configuration_try_id'])
         return {'status': 'ok'}
 
-    async def claim_invitation(self, token, user_id, broadcast_key, device_name, device_verify_key):
+    async def claim_invitation(self, invitation_token, user_id, broadcast_key, device_name, device_verify_key):
         raise NotImplementedError()
 
-    async def create_invitation(self, token, author, user_id):
+    async def create_invitation(self, invitation_token, author, user_id):
         raise NotImplementedError()
 
     async def declare_unconfigured_device(self, token, user_id, device_name):

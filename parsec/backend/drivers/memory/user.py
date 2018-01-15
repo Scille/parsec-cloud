@@ -5,6 +5,7 @@ import pendulum
 from parsec.backend.exceptions import (
     AlreadyExistsError,
     NotFoundError,
+    OutOfDateError,
     UserClaimError
 )
 
@@ -16,21 +17,21 @@ class MemoryUserComponent(BaseUserComponent):
         self._invitations = {}
         self._device_configuration_tries = {}
 
-    async def claim_invitation(self, token, user_id, broadcast_key, device_name, device_verify_key):
+    async def claim_invitation(self, invitation_token, user_id, broadcast_key, device_name, device_verify_key):
         assert isinstance(broadcast_key, (bytes, bytearray))
         assert isinstance(device_verify_key, (bytes, bytearray))
 
         invitation = self._invitations.get(user_id)
         if not invitation:
-            raise UserClaimError('No invitation for user `%s`' % user_id)
+            raise NotFoundError('No invitation for user `%s`' % user_id)
         try:
             if user_id in self._users:
-                raise UserClaimError('User `%s` has already been registered' % user_id)
+                raise AlreadyExistsError('User `%s` has already been registered' % user_id)
             now = pendulum.utcnow()
             if (now - invitation['date']) > pendulum.interval(hours=1):
-                raise UserClaimError('Claim code is too old')
-            if invitation['token'] != token:
-                raise UserClaimError('Invalid token')
+                raise OutOfDateError('Claim code is too old.')
+            if invitation['invitation_token'] != invitation_token:
+                raise UserClaimError('Invalid invitation token')
         except UserClaimError:
             invitation['claim_tries'] += 1
             if invitation['claim_tries'] > 3:
@@ -44,14 +45,14 @@ class MemoryUserComponent(BaseUserComponent):
             devices=[(device_name, device_verify_key)]
         )
 
-    async def create_invitation(self, token, author, user_id):
+    async def create_invitation(self, invitation_token, author, user_id):
         if user_id in self._users:
             raise AlreadyExistsError('User `%s` already exists' % user_id)
         # Overwrite previous invitation if any
         self._invitations[user_id] = {
             'date': pendulum.utcnow(),
             'author': author,
-            'token': token,
+            'invitation_token': invitation_token,
             'claim_tries': 0,
         }
 

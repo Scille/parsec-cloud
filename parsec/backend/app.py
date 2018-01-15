@@ -111,9 +111,10 @@ class BackendApp:
 
         self.anonymous_cmds = {
             'user_claim': self.user.api_user_claim,
-            'ping': self._api_ping,
 
             'device_configure': self.user.api_device_configure,
+
+            'ping': self._api_ping,
         }
 
         self.cmds = {
@@ -124,7 +125,6 @@ class BackendApp:
 
             'user_get': self.user.api_user_get,
             'user_invite': self.user.api_user_invite,
-            'user_claim': self.user.api_user_claim,
 
             'device_declare': self.user.api_device_declare,
             'device_get_configuration_try': self.user.api_device_get_configuration_try,

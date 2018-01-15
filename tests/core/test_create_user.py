@@ -25,8 +25,8 @@ async def test_user_create_ok(backend_addr, running_backend, alice_core_sock, co
     rep = await alice_core_sock.recv()
     assert rep['status'] == 'ok'
     assert rep['user_id'] == 'mallory'
-    assert rep['token']
-    token = rep['token']
+    assert rep['invitation_token']
+    invitation_token = rep['invitation_token']
 
     # Create a brand new core and try to use the token to register
     core_gen = core_factory(backend_addr, ())
@@ -36,7 +36,7 @@ async def test_user_create_ok(backend_addr, running_backend, alice_core_sock, co
             await mallory_core_sock.send({
                 'cmd': 'user_claim',
                 'id': 'mallory@device1',
-                'token': token
+                'invitation_token': invitation_token
             })
             rep = await mallory_core_sock.recv()
             assert rep == {

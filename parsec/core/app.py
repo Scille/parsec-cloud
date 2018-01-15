@@ -24,7 +24,7 @@ class cmd_USER_INVITE_Schema(BaseCmdSchema):
 # TODO: change id to user_id/device_name
 class cmd_USER_CLAIM_Schema(BaseCmdSchema):
     id = fields.String(required=True)
-    token = fields.String(required=True)
+    invitation_token = fields.String(required=True)
 
 
 class CoreApp:
@@ -142,7 +142,7 @@ class CoreApp:
                 'cmd': 'user_claim',
                 'user_id': user_id,
                 'device_name': device_name,
-                'token': msg['token'],
+                'invitation_token': msg['invitation_token'],
                 'broadcast_key': to_jsonb64(broadcast_key),
                 'device_verify_key': to_jsonb64(device_verify_key),
             })
