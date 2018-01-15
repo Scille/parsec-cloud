@@ -85,9 +85,9 @@ async def test_user_claim_unknown_token(backend, mallory):
             'cmd': 'user_claim',
             'user_id': mallory.user_id,
             'invitation_token': '<token>',
-            'broadcast_key': to_jsonb64(mallory.pubkey.encode()),
+            'broadcast_key': to_jsonb64(mallory.user_pubkey.encode()),
             'device_name': mallory.device_name,
-            'device_verify_key': to_jsonb64(mallory.verifykey.encode()),
+            'device_verify_key': to_jsonb64(mallory.device_verifykey.encode()),
         })
         rep = await sock.recv()
     assert rep == {
@@ -112,9 +112,9 @@ async def test_user_claim_too_old_token(backend, invitation_token, mallory):
                 'cmd': 'user_claim',
                 'user_id': mallory.user_id,
                 'invitation_token': invitation_token,
-                'broadcast_key': to_jsonb64(mallory.pubkey.encode()),
+                'broadcast_key': to_jsonb64(mallory.user_pubkey.encode()),
                 'device_name': mallory.device_name,
-                'device_verify_key': to_jsonb64(mallory.verifykey.encode()),
+                'device_verify_key': to_jsonb64(mallory.device_verifykey.encode()),
             })
             rep = await sock.recv()
     assert rep == {'status': 'out_of_date_error', 'reason': 'Claim code is too old.'}
@@ -128,9 +128,9 @@ async def test_user_claim_token(backend, invitation_token, mallory):
                 'cmd': 'user_claim',
                 'user_id': mallory.user_id,
                 'invitation_token': invitation_token,
-                'broadcast_key': to_jsonb64(mallory.pubkey.encode()),
+                'broadcast_key': to_jsonb64(mallory.user_pubkey.encode()),
                 'device_name': mallory.device_name,
-                'device_verify_key': to_jsonb64(mallory.verifykey.encode()),
+                'device_verify_key': to_jsonb64(mallory.device_verifykey.encode()),
             })
             rep = await sock.recv()
     assert rep == {'status': 'ok'}

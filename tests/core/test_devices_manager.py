@@ -34,8 +34,8 @@ def alice_cleartext_device(tmpdir, alice):
     return cleartext_device(
         tmpdir,
         alice.id,
-        alice.privkey.encode(),
-        alice.signkey.encode()
+        alice.user_privkey.encode(),
+        alice.device_signkey.encode()
     )
 
 
@@ -44,8 +44,8 @@ def bob_cleartext_device(tmpdir, bob):
     return cleartext_device(
         tmpdir,
         bob.id,
-        bob.privkey.encode(),
-        bob.signkey.encode()
+        bob.user_privkey.encode(),
+        bob.device_signkey.encode()
     )
 
 
@@ -74,15 +74,15 @@ def test_load_cleartext_device(tmpdir, alice_cleartext_device, alice):
     dm = DevicesManager(str(tmpdir))
     device = dm.load_device(alice_cleartext_device)
     assert device.id == alice_cleartext_device
-    assert alice.privkey == device.user_privkey
-    assert alice.signkey == device.device_signkey
+    assert alice.user_privkey == device.user_privkey
+    assert alice.device_signkey == device.device_signkey
     assert device.local_storage_db_path == tmpdir.join('alice@test', 'local_storage.sqlite')
 
 
 def test_register_new_cleartext_device(tmpdir, alice):
     device_id = alice.id
-    device_signkey = alice.signkey
-    user_privkey = alice.privkey
+    device_signkey = alice.device_signkey
+    user_privkey = alice.user_privkey
 
     dm1 = DevicesManager(str(tmpdir))
     dm1.register_new_device(
@@ -101,8 +101,8 @@ def test_register_new_cleartext_device(tmpdir, alice):
 
 
 def test_register_already_exists_device(tmpdir, alice_cleartext_device, alice):
-    device_signkey = alice.signkey
-    user_privkey = alice.privkey
+    device_signkey = alice.device_signkey
+    user_privkey = alice.user_privkey
 
     dm = DevicesManager(str(tmpdir))
     with pytest.raises(DeviceSavingError):
@@ -114,11 +114,11 @@ def test_register_already_exists_device(tmpdir, alice_cleartext_device, alice):
 
 
 def test_register_new_encrypted_device(tmpdir, fast_crypto, alice):
-    password = b'S3Cr37'
+    password = 'S3Cr37'
 
     device_id = alice.id
-    device_signkey = alice.signkey
-    user_privkey = alice.privkey
+    device_signkey = alice.device_signkey
+    user_privkey = alice.user_privkey
 
     dm1 = DevicesManager(str(tmpdir))
     dm1.register_new_device(
@@ -138,4 +138,4 @@ def test_register_new_encrypted_device(tmpdir, fast_crypto, alice):
 
     dm2 = DevicesManager(str(tmpdir))
     with pytest.raises(DeviceLoadingError):
-        dm2.load_device(device_id, password=b'bad pwd')
+        dm2.load_device(device_id, password='bad pwd')

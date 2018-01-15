@@ -11,11 +11,11 @@ from parsec.core.local_storage import LocalStorage
 from parsec.core.backend_storage import BackendStorage
 
 
-async def fs_factory(user, config, backend_conn):
-    local_storage = LocalStorage(os.path.join(config.base_settings_path, user.id))
+async def fs_factory(device, config, backend_conn):
+    local_storage = LocalStorage(device.local_storage_db_path)
     local_storage.init()  # TODO: don't forget teardown !
     backend_storage = BackendStorage(backend_conn)
-    manifests_manager = ManifestsManager(user, local_storage, backend_storage)
+    manifests_manager = ManifestsManager(device, local_storage, backend_storage)
     blocks_manager = BlocksManager(local_storage, backend_storage)
     # await manifests_manager.init()
     # await blocks_manager.init()

@@ -119,7 +119,7 @@ async def test_device_configure(backend, alice, configure_device_token, mock_gen
         # 5) Existing device accept configuration
 
         box = SealedBox(user_privkey_cypherkey)
-        cyphered_user_privkey = box.encrypt(alice.privkey.encode())
+        cyphered_user_privkey = box.encrypt(alice.user_privkey.encode())
         await alice_sock.send({
             'cmd': 'device_accept_configuration_try',
             'configuration_try_id': '<config_try_id>',
@@ -141,8 +141,6 @@ async def test_device_configure(backend, alice, configure_device_token, mock_gen
 @pytest.mark.trio
 async def test_device_configure_und_get_refused(backend, alice, configure_device_token, mock_generate_token):
     mock_generate_token.side_effect = ['<config_try_id>']
-    verifykey = b'0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-'
-    cypherkey = b"\x8b\xfc\xc1\x88\xb7\xd7\x16t\xce<\x7f\xd2j_fTI\x14r':\rF!\xff~\xa8\r\x912\xe3N"
 
     async with connect_backend(backend, auth_as='anonymous') as anonymous_sock, \
             connect_backend(backend, auth_as=alice) as alice_sock:
@@ -162,8 +160,8 @@ async def test_device_configure_und_get_refused(backend, alice, configure_device
             'user_id': 'alice',
             'device_name': 'phone2',
             'configure_device_token': configure_device_token,
-            'device_verify_key': to_jsonb64(verifykey),
-            'user_privkey_cypherkey': to_jsonb64(cypherkey),
+            'device_verify_key': to_jsonb64(b'<verifykey>'),
+            'user_privkey_cypherkey': to_jsonb64(b'<cypherkey>'),
         })
 
         # 3) Existing device receive configuration event
@@ -200,9 +198,7 @@ async def test_device_configure_und_get_refused(backend, alice, configure_device
 
 
 @pytest.mark.trio
-async def test_device_configure(autojump_clock, backend, alice, configure_device_token):
-    verifykey = b'0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-'
-    cypherkey = b"\x8b\xfc\xc1\x88\xb7\xd7\x16t\xce<\x7f\xd2j_fTI\x14r':\rF!\xff~\xa8\r\x912\xe3N"
+async def test_device_configure_timeout(autojump_clock, backend, alice, configure_device_token):
 
     async with connect_backend(backend, auth_as='anonymous') as anonymous_sock:
 
@@ -213,8 +209,8 @@ async def test_device_configure(autojump_clock, backend, alice, configure_device
             'user_id': 'alice',
             'device_name': 'phone2',
             'configure_device_token': configure_device_token,
-            'device_verify_key': to_jsonb64(verifykey),
-            'user_privkey_cypherkey': to_jsonb64(cypherkey),
+            'device_verify_key': to_jsonb64(b'<verifykey>'),
+            'user_privkey_cypherkey': to_jsonb64(b'<cypherkey>'),
         })
 
         # Configuration should timeout after 5mn without answer (autojump_clock

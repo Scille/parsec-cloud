@@ -5,6 +5,8 @@ import socket
 import inspect
 import attr
 import contextlib
+from shutil import rmtree
+from tempfile import mkdtemp
 from unittest.mock import Mock, patch
 from functools import wraps
 from inspect import iscoroutinefunction
@@ -413,12 +415,7 @@ async def connect_backend(backend, auth_as=None):
             if auth_as == 'anonymous':
                 ch = AnonymousClientHandshake()
             else:
-                if isinstance(auth_as, str):
-                    assert auth_as in TEST_USERS
-                    user = TEST_USERS[auth_as]
-                else:
-                    user = auth_as
-                ch = ClientHandshake(user.id, user.signkey)
+                ch = ClientHandshake(auth_as.id, auth_as.device_signkey)
             challenge_req = await sock.recv()
             answer_req = ch.process_challenge_req(challenge_req)
             await sock.send(answer_req)
@@ -440,3 +437,17 @@ async def connect_core(core):
             yield sock
         except QuitTestDueToBrokenStream:
             pass
+
+
+@contextlib.contextmanager
+def core_factory(**config):
+    base_settings_path = mkdtemp()
+    config = CoreConfig(**{
+        'base_settings_path': base_settings_path,
+        **config
+    })
+    core = CoreApp(config)
+
+    yield core
+
+    rmtree(base_settings_path)

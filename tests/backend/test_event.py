@@ -4,16 +4,16 @@ from tests.common import connect_backend
 
 
 @pytest.mark.trio
-async def test_event_subscribe(backend):
-    async with connect_backend(backend, auth_as='alice@test') as sock:
+async def test_event_subscribe(backend, alice):
+    async with connect_backend(backend, auth_as=alice) as sock:
         await sock.send({'cmd': 'event_subscribe', 'event': 'ping', 'subject': 'foo'})
         rep = await sock.recv()
         assert rep == {'status': 'ok'}
 
 
 @pytest.mark.trio
-async def test_event_subscribe_unkown_event(backend):
-    async with connect_backend(backend, auth_as='alice@test') as sock:
+async def test_event_subscribe_unkown_event(backend, alice):
+    async with connect_backend(backend, auth_as=alice) as sock:
         await sock.send({'cmd': 'event_subscribe', 'event': 'foo', 'subject': 'foo'})
         rep = await sock.recv()
         assert rep == {

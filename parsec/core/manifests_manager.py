@@ -13,15 +13,15 @@ class ManifestDecryptionError(ParsecError):
 
 
 class ManifestsManager:
-    def __init__(self, user, local_storage, backend_storage):
-        self.user = user
+    def __init__(self, device, local_storage, backend_storage):
+        self.device = device
         self._local_storage = local_storage
         self._backend_storage = backend_storage
 
     def _encrypt_manifest(self, key, manifest):
         raw = json.dumps(manifest).encode()
         box = SecretBox(key)
-        # signed = self.user.signkey.sign(raw)
+        # signed = self.device.user_signkey.sign(raw)
         # return box.encrypt(signed)
         return box.encrypt(raw)
 
@@ -30,18 +30,19 @@ class ManifestsManager:
         try:
             raw = box.decrypt(blob)
             # signed = box.decrypt(blob)
-            # raw = self.user.verifykey.verify(signed)
+            # raw = self.device.device_verifykey.verify(signed)
         except (BadSignatureError, CryptoError, ValueError):
             raise ManifestDecryptionError()
         return json.loads(raw.decode())
 
     def _encrypt_user_manifest(self, manifest):
         raw = json.dumps(manifest).encode()
-        box = Box(self.user.privkey, self.user.pubkey)
+        # TODO: replace this by a SealedBox
+        box = Box(self.device.user_privkey, self.device.user_pubkey)
         return box.encrypt(raw)
 
     def _decrypt_user_manifest(self, blob):
-        box = Box(self.user.privkey, self.user.pubkey)
+        box = Box(self.device.user_privkey, self.device.user_pubkey)
         try:
             raw = box.decrypt(blob)
         except (BadSignatureError, CryptoError, ValueError):

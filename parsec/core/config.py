@@ -3,6 +3,9 @@ from decouple import config
 from os.path import expandvars
 
 
+# TODO: add required=True option
+
+
 def _cast_int(v):
     return int(v) if v is not None else None
 
@@ -30,3 +33,7 @@ class Config:
     base_settings_path = attr.ib(
         default=config('BASE_SETTINGS_PATH', default=expandvars('$HOME/.config/parsec'))
     )
+
+
+# TODO: rename Config -> CoreConfig
+CoreConfig = Config

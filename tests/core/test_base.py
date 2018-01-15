@@ -40,38 +40,43 @@ async def test_multi_connections(core):
 @pytest.mark.trio
 async def test_offline_login_and_logout(backend, core, mallory):
     # Backend is not available, hence we can use a user not registered in it
-    core.mocked_users_list.append(mallory)
+    core.devices_manager.register_new_device(
+        mallory.id,
+        mallory.user_privkey.encode(),
+        mallory.device_signkey.encode(),
+        '<secret>'
+    )
 
     async with connect_core(core) as sock:
-        await sock.send({'cmd': 'identity_info'})
+        await sock.send({'cmd': 'info'})
         rep = await sock.recv()
         assert rep == {'status': 'ok', 'loaded': False, 'id': None}
         # Do the login
-        await sock.send({'cmd': 'identity_login', 'id': mallory.id, 'password': '<secret>'})
+        await sock.send({'cmd': 'login', 'id': mallory.id, 'password': '<secret>'})
         rep = await sock.recv()
         assert rep == {'status': 'ok'}
 
-        await sock.send({'cmd': 'identity_info'})
+        await sock.send({'cmd': 'info'})
         rep = await sock.recv()
         assert rep == {'status': 'ok', 'loaded': True, 'id': mallory.id}
 
     # Changing socket should not trigger logout
     async with connect_core(core) as sock:
-        await sock.send({'cmd': 'identity_info'})
+        await sock.send({'cmd': 'info'})
         rep = await sock.recv()
         assert rep == {'status': 'ok', 'loaded': True, 'id': mallory.id}
         # Actual logout
-        await sock.send({'cmd': 'identity_logout'})
+        await sock.send({'cmd': 'logout'})
         rep = await sock.recv()
         assert rep == {'status': 'ok'}
-        await sock.send({'cmd': 'identity_info'})
+        await sock.send({'cmd': 'info'})
         rep = await sock.recv()
         assert rep == {'status': 'ok', 'loaded': False, 'id': None}
 
     # Startup backend and check exception is triggered given logged user is unknown
     async with run_app(backend):
         async with connect_core(core) as sock:
-            await sock.send({'cmd': 'identity_login', 'id': mallory.id, 'password': '<secret>'})
+            await sock.send({'cmd': 'login', 'id': mallory.id, 'password': '<secret>'})
             rep = await sock.recv()
             assert rep == {'status': 'ok'}
             await sock.send({'cmd': 'get_core_state'})
@@ -82,28 +87,28 @@ async def test_offline_login_and_logout(backend, core, mallory):
 @pytest.mark.trio
 async def test_login_and_logout(core):
     async with connect_core(core) as sock:
-        await sock.send({'cmd': 'identity_info'})
+        await sock.send({'cmd': 'info'})
         rep = await sock.recv()
         assert rep == {'status': 'ok', 'loaded': False, 'id': None}
         # Do the login
-        await sock.send({'cmd': 'identity_login', 'id': alice.id, 'password': '<secret>'})
+        await sock.send({'cmd': 'login', 'id': alice.id, 'password': '<secret>'})
         rep = await sock.recv()
         assert rep == {'status': 'ok'}
 
-        await sock.send({'cmd': 'identity_info'})
+        await sock.send({'cmd': 'info'})
         rep = await sock.recv()
         assert rep == {'status': 'ok', 'loaded': True, 'id': alice.id}
 
     # Changing socket should not trigger logout
     async with connect_core(core) as sock:
-        await sock.send({'cmd': 'identity_info'})
+        await sock.send({'cmd': 'info'})
         rep = await sock.recv()
         assert rep == {'status': 'ok', 'loaded': True, 'id': alice.id}
         # Actual logout
-        await sock.send({'cmd': 'identity_logout'})
+        await sock.send({'cmd': 'logout'})
         rep = await sock.recv()
         assert rep == {'status': 'ok'}
-        await sock.send({'cmd': 'identity_info'})
+        await sock.send({'cmd': 'info'})
         rep = await sock.recv()
         assert rep == {'status': 'ok', 'loaded': False, 'id': None}
 
@@ -112,7 +117,7 @@ async def test_login_and_logout(core):
 async def test_need_login_cmds(core):
     async with connect_core(core) as sock:
         for cmd in [
-                'identity_logout',
+                'logout',
                 'file_create',
                 'file_read',
                 'file_write',

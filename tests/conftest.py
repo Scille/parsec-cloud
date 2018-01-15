@@ -1,6 +1,4 @@
 import os
-from tempfile import mkdtemp
-from shutil import rmtree
 import pytest
 import socket
 import contextlib
@@ -8,15 +6,13 @@ from unittest.mock import patch
 
 from parsec.backend.app import BackendApp
 from parsec.backend.config import Config as BackendConfig
-from parsec.core.app import CoreApp
+from parsec.core.devices_manager import Device
 from parsec.core.config import Config as CoreConfig
+from parsec.core.app import CoreApp
 
-from tests.common import (
-    freeze_time, TEST_USERS, connect_backend, connect_core, run_app)
+from tests.common import freeze_time, connect_backend, connect_core, run_app
 from tests.populate import populate_factory
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
-
-
 
 
 def pytest_addoption(parser):
@@ -42,19 +38,40 @@ def backend_store(request):
         return 'mocked://'
 
 
-@pytest.fixture(scope='session')
-def alice():
-    return TEST_USERS['alice@test']
+@pytest.fixture
+def alice(tmpdir):
+    return Device(
+        'alice@test',
+        (b'\xceZ\x9f\xe4\x9a\x19w\xbc\x12\xc8\x98\xd1CB\x02vS\xa4\xfe\xc8\xc5'
+         b'\xa6\xcd\x87\x90\xd7\xabJ\x1f$\x87\xc4'),
+        (b'\xa7\n\xb2\x94\xbb\xe6\x03\xd3\xd0\xd3\xce\x95\xe6\x8b\xfe5`('
+         b'\x15\xc0UL\xe9\x1dTf^ m\xb7\xbc\\'),
+        tmpdir.join('alice@test.sqlite').strpath,
+    )
 
 
-@pytest.fixture(scope='session')
-def bob():
-    return TEST_USERS['bob@test']
+@pytest.fixture
+def bob(tmpdir):
+    return Device(
+        'bob@test',
+        (b'\xc3\xc9(\xf7\\\xd2\xb4[\x85\xe5\xfa\xd3\xad\xbc9\xc6Y\xa3%G{\x08ks'
+         b'\xc5\xff\xb3\x97\xf6\xdf\x8b\x0f'),
+        (b'!\x94\x93\xda\x0cC\xc6\xeb\x80\xbc$\x8f\xaf\xeb\x83\xcb`T\xcf'
+         b'\x96R\x97{\xd5Nx\x0c\x04\xe96a\xb0'),
+        tmpdir.join('bob@test.sqlite').strpath,
+    )
 
 
-@pytest.fixture(scope='session')
-def mallory():
-    return TEST_USERS['mallory@test']
+@pytest.fixture
+def mallory(tmpdir):
+    return Device(
+        'mallory@test',
+        (b'sD\xae\x91^\xae\xcc\xe7.\x89\xc8\x91\x9f\xa0t>B\x93\x07\xe7\xb5'
+         b'\xb0\x81\xb1\x07\xf0\xe5\x9b\x91\xd0`:'),
+        (b'\xcd \x7f\xf5\x91\x17=\xda\x856Sz\xe0\xf9\xc6\x82!O7g9\x01`s\xdd'
+         b'\xeeoj\xcb\xe7\x0e\xc5'),
+        tmpdir.join('mallory@test.sqlite').strpath,
+    )
 
 
 @pytest.fixture
@@ -81,25 +98,24 @@ def unused_tcp_port():
 
 
 @pytest.fixture
-def default_users(alice, bob):
+def default_devices(alice, bob):
     return (alice, bob)
 
 
 @pytest.fixture
-async def backend(default_users, config={}):
+async def backend(default_devices, config={}):
     config = BackendConfig(**{
         'blockstore_url': 'backend://',
         **config
     })
     backend = BackendApp(config)
     with freeze_time('2000-01-01'):
-        for user in default_users:
-            userid, deviceid = user.id.split('@')
+        for device in default_devices:
             await backend.user.create(
                 author='<backend-fixture>',
-                user_id=userid,
-                broadcast_key=user.pubkey.encode(),
-                devices=[(deviceid, user.verifykey.encode())]
+                user_id=device.user_id,
+                broadcast_key=device.user_pubkey.encode(),
+                devices=[(device.device_name, device.device_verifykey.encode())]
             )
     return backend
 
@@ -130,33 +146,28 @@ async def running_backend(tcp_stream_spy, backend, backend_addr):
 
 @pytest.fixture
 async def alice_backend_sock(backend, alice):
-    async with connect_backend(backend, auth_as=alice.id) as sock:
+    async with connect_backend(backend, auth_as=alice) as sock:
         yield sock
 
 
 @pytest.fixture
-async def core(backend_addr, default_users, config={}):
-    base_settings_path = mkdtemp()
+async def core(backend_addr, tmpdir, default_devices, config={}):
     config = CoreConfig(**{
+        'base_settings_path': tmpdir.mkdir('core_fixture').strpath,
         'backend_addr': backend_addr,
-        'base_settings_path': base_settings_path,
         **config
     })
     core = CoreApp(config)
 
-    if default_users:
-        core.mocked_users_list = list(default_users)
+    for device in default_devices:
+        core.devices_manager.register_new_device(
+            device.id,
+            device.user_privkey.encode(),
+            device.device_signkey.encode(),
+            '<secret>'
+        )
 
-        def _get_user(id, password):
-            for user in core.mocked_users_list:
-                if user.id == id:
-                    return user.privkey.encode(), user.signkey.encode()
-
-        core._get_user = _get_user
-
-    yield core
-
-    rmtree(base_settings_path)
+    return core
 
 
 @pytest.fixture

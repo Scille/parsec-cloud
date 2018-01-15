@@ -14,8 +14,11 @@ from parsec.schema import UnknownCheckedSchema, fields, validate
 logger = logging.getLogger('parsec')
 
 
-CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_SENSITIVE
-CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_SENSITIVE
+# TODO: SENSITIVE is really slow which is not good for unittests...
+# CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_SENSITIVE
+# CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_SENSITIVE
+CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_INTERACTIVE
+CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
 
 
 class DeviceLoadingError(Exception):
@@ -67,16 +70,12 @@ def _generate_salt():
     return nacl.utils.random(argon2i.SALTBYTES)
 
 
-def _generate_nonce():
-    return nacl.utils.random(SecretBox.NONCE_SIZE)
-
-
 @attr.s(init=False, slots=True)
 class Device:
     id = attr.ib()
-    local_storage_db_path = attr.ib()
     user_privkey = attr.ib()
     device_signkey = attr.ib()
+    local_storage_db_path = attr.ib()
 
     def __init__(self, id, user_privkey, device_signkey, local_storage_db_path):
         assert is_valid_device_id(id)
@@ -161,11 +160,11 @@ class DevicesManager:
         }
         if password:
             salt = _generate_salt()
-            box = _secret_box_factory(password, salt)
+            box = _secret_box_factory(password.encode('utf-8'), salt)
             device_conf['salt'] = salt
             device_conf['encryption'] = 'password'
-            device_conf['device_signkey'] = box.encrypt(device_signkey, _generate_nonce())
-            device_conf['user_privkey'] = box.encrypt(user_privkey, _generate_nonce())
+            device_conf['device_signkey'] = box.encrypt(device_signkey)
+            device_conf['user_privkey'] = box.encrypt(user_privkey)
         else:
             device_conf['encryption'] = 'quedalle'
             # Feel dirty just writting this...
@@ -200,7 +199,7 @@ class DevicesManager:
                     (device_conf_path, device_conf['encryption'])
                 )
 
-            box = _secret_box_factory(password, device_conf['salt'])
+            box = _secret_box_factory(password.encode('utf-8'), device_conf['salt'])
             try:
                 user_privkey = box.decrypt(device_conf['user_privkey'])
                 device_signkey = box.decrypt(device_conf['device_signkey'])

@@ -14,9 +14,9 @@ class BackendNotAvailable(BackendError):
 
 
 class BackendConnection:
-    def __init__(self, user, addr):
-        self.handshake_id = user.id
-        self.handshake_signkey = user.signkey
+    def __init__(self, device, addr):
+        self.handshake_id = device.id
+        self.handshake_signkey = device.device_signkey
         self.addr = urlparse(addr)
         self._lock = trio.Lock()
         self._sock = None

@@ -18,15 +18,15 @@ async def test_blockstore_get_url(alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_blockstore_post_and_get(backend):
-    async with connect_backend(backend, auth_as='alice@test') as sock:
+async def test_blockstore_post_and_get(backend, alice, bob):
+    async with connect_backend(backend, auth_as=alice) as sock:
         block = to_jsonb64(b'Hodi ho !')
         await sock.send({'cmd': 'blockstore_post', 'block': block})
         rep = await sock.recv()
     assert rep['status'] == 'ok'
     assert rep['id']
 
-    async with connect_backend(backend, auth_as='bob@test') as sock:
+    async with connect_backend(backend, auth_as=bob) as sock:
         await sock.send({'cmd': 'blockstore_get', 'id': rep['id']})
         rep = await sock.recv()
     assert rep == {'status': 'ok', 'block': block}
