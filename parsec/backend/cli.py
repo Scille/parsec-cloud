@@ -5,11 +5,12 @@ from .app import BackendApp
 from .config import Config
 
 
-JOHN_DOE_IDENTITY = 'johndoe@test'
+JOHN_DOE_IDENTITY = 'johndoe'
 JOHN_DOE_PUBLIC_KEY = (b'1\xbc29\xc9\xce"\xf1\xcex\xea"\x83k\x1d\xede'
                        b'\x81\xbfRc\rG\xde&\x82\xbc\x80rc\xaa\xe4')
-JOHN_DOE_VERIFY_KEY = (b'\xd5\xef\x8f\xbdPJ\xea\x9c<]qy\x06!M\xad5'
-                       b'\x99m\xa0}EDqN\x06\x06c\x9e:\xe6\x80')
+JOHN_DOE_DEVICE_NAME = 'test'
+JOHN_DOE_DEVICE_VERIFY_KEY = (b'\xd5\xef\x8f\xbdPJ\xea\x9c<]qy\x06!M\xad5'
+                              b'\x99m\xa0}EDqN\x06\x06c\x9e:\xe6\x80')
 DEFAULT_CORE_UNIX_SOCKET = 'tcp://127.0.0.1:6776'
 
 
@@ -70,7 +71,7 @@ def _backend(host, port, pubkeys, store, block_store, debug):
     async def _run_and_register_johndoe():
         await backend.init()
         await backend.user.create('<backend-mock>', JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY, devices={
-            'main': JOHN_DOE_VERIFY_KEY
+            JOHN_DOE_DEVICE_NAME: JOHN_DOE_DEVICE_VERIFY_KEY
         })
         await trio.serve_tcp(backend.handle_client, port)
         await backend.shutdown()
