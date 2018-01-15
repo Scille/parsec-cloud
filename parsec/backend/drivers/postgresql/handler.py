@@ -264,7 +264,7 @@ class PGHandler(Thread):
             if propagate:
                 self.reqqueue.put({
                     'type': 'notify',
-                    'signal': signal
+                    'signal': signal,
                     'sender': sender
                 })
 
