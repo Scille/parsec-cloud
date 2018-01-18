@@ -92,7 +92,7 @@ class BackendApp:
             self.group = MemoryGroupComponent(self.signal_ns)
 
         else:
-            self.dbh = PGHandler(self.config.dburl)
+            self.dbh = PGHandler(self.config.dburl, self.signal_ns)
 
             if self.blockstore_url == 'backend://':
                 self.blockstore = PGBlockStoreComponent(
@@ -191,7 +191,7 @@ class BackendApp:
                 'reason': 'This type of event is private.'
             }
 
-        def _handle_event(sender):
+        def _handle_event(sender, propagate=True):
             try:
                 client_ctx.events.put_nowait((event, sender))
             except trio.WouldBlock:
