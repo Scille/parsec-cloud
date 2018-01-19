@@ -439,15 +439,6 @@ async def connect_core(core):
             pass
 
 
-@contextlib.contextmanager
 def core_factory(**config):
-    base_settings_path = mkdtemp()
-    config = CoreConfig(**{
-        'base_settings_path': base_settings_path,
-        **config
-    })
-    core = CoreApp(config)
-
-    yield core
-
-    rmtree(base_settings_path)
+    config = CoreConfig(**config)
+    return CoreApp(config)

@@ -7,10 +7,8 @@ from unittest.mock import patch
 from parsec.backend.app import BackendApp
 from parsec.backend.config import Config as BackendConfig
 from parsec.core.devices_manager import Device
-from parsec.core.config import Config as CoreConfig
-from parsec.core.app import CoreApp
 
-from tests.common import freeze_time, connect_backend, connect_core, run_app
+from tests.common import freeze_time, core_factory, connect_backend, connect_core, run_app
 from tests.populate import populate_factory
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 
@@ -152,12 +150,11 @@ async def alice_backend_sock(backend, alice):
 
 @pytest.fixture
 async def core(backend_addr, tmpdir, default_devices, config={}):
-    config = CoreConfig(**{
+    core = core_factory(**{
         'base_settings_path': tmpdir.mkdir('core_fixture').strpath,
         'backend_addr': backend_addr,
         **config
     })
-    core = CoreApp(config)
 
     for device in default_devices:
         core.devices_manager.register_new_device(
