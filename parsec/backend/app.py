@@ -191,7 +191,7 @@ class BackendApp:
                 'reason': 'This type of event is private.'
             }
 
-        def _handle_event(sender, propagate=True):
+        def _handle_event(sender):
             try:
                 client_ctx.events.put_nowait((event, sender))
             except trio.WouldBlock:
