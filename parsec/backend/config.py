@@ -22,3 +22,7 @@ class Config:
     dburl = attr.ib(
         default=config('PARSEC_DB_URL', default=None)
     )
+
+
+# TODO: rename Config -> BackendConfig
+BackendConfig = Config
