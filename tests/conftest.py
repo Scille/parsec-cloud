@@ -119,12 +119,12 @@ async def backend(default_devices, config={}):
 
 
 @pytest.fixture
-async def backend_addr(tcp_stream_spy):
+def backend_addr(tcp_stream_spy):
     return 'tcp://placeholder.com:9999'
 
 
 @pytest.fixture
-async def tcp_stream_spy():
+def tcp_stream_spy():
     open_tcp_stream_mock_wrapper = OpenTCPStreamMockWrapper()
     with patch('trio.open_tcp_stream', new=open_tcp_stream_mock_wrapper):
         yield open_tcp_stream_mock_wrapper
@@ -149,7 +149,7 @@ async def alice_backend_sock(backend, alice):
 
 
 @pytest.fixture
-async def core(backend_addr, tmpdir, default_devices, config={}):
+def core(backend_addr, tmpdir, default_devices, config={}):
     core = core_factory(**{
         'base_settings_path': tmpdir.mkdir('core_fixture').strpath,
         'backend_addr': backend_addr,
