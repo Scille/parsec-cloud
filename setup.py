@@ -3,10 +3,12 @@
 
 
 try:
-    from setuptools import setup, find_packages
+    from setuptools import find_packages
 except ImportError:
-    from distutils.core import setup, find_packages
+    from distutils.core import find_packages
+from cx_Freeze import setup, Executable
 
+build_exe_options = {"packages": ["idna"]}
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -23,6 +25,7 @@ requirements = [
     'pendulum==1.3.1',
     'PyNaCl==1.2.0',
     'simplejson==3.10.0',
+    'pyreadline==2.1',
     'python-decouple==3.1',
     'trio==0.3.0',
 ]
@@ -75,6 +78,8 @@ setup(
             'parsec = parsec.cli:cli',
         ],
     },
+    options = {"build_exe": build_exe_options},
+    executables = [Executable('parsec/cli.py')],
     license="GPLv3",
     zip_safe=False,
     keywords='parsec',

@@ -1,3 +1,4 @@
+import logging
 import os
 import stat
 import sys
@@ -7,14 +8,20 @@ import threading
 from dateutil.parser import parse as dateparse
 from itertools import count
 from logbook import WARNING
-from errno import ENOENT, EBADFD
+from errno import ENOENT
+try:
+	from errno import EBADFD
+except ImportError:
+	from errno import EBADF as EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
-from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
+from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_get_context
 
-from parsec.tools import logger, logger_stream, from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
+from parsec.utils import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 
+logger = logging.getLogger('parsec')
+logger_stream = logging.StreamHandler(sys.stdout)
 
-DEFAULT_CORE_UNIX_SOCKET = '/tmp/parsec'
+DEFAULT_CORE_UNIX_SOCKET = 'tcp://127.0.0.1:6776'
 
 
 class ContentBuilder:
@@ -59,7 +66,7 @@ class ContentBuilder:
 
 
 @click.command()
-@click.argument('mountpoint', type=click.Path(exists=True, file_okay=False))
+@click.argument('mountpoint', type=click.Path(**{'exists': True, 'file_okay': False} if os.name == 'posix' else {'exists': False}))
 @click.option('--debug', '-d', is_flag=True, default=False)
 @click.option('--nothreads', is_flag=True, default=False)
 @click.option('--socket', '-s', default=DEFAULT_CORE_UNIX_SOCKET,
@@ -135,10 +142,10 @@ class File:
 
 class FuseOperations(LoggingMixIn, Operations):
 
-    def __init__(self, socket_path):
+    def __init__(self, socket_address):
         self.fds = {}
         self._fs_id_generator = count(1)
-        self._socket_path = socket_path
+        self._socket_address = socket_address
         self._socket_lock = threading.Lock()
         self._socket = None
 
@@ -152,13 +159,10 @@ class FuseOperations(LoggingMixIn, Operations):
         return self._socket
 
     def _init_socket(self):
-        sock = socket.socket(socket.AF_UNIX, type=socket.SOCK_STREAM)
-        if (not os.path.exists(self._socket_path) or
-                not stat.S_ISSOCK(os.stat(self._socket_path).st_mode)):
-            logger.error("File %s doesn't exist or isn't a socket. Is Parsec Core running?" %
-                         self._socket_path)
-            sys.exit(1)
-        sock.connect(self._socket_path)
+        sock = socket.socket(socket.AF_INET, type=socket.SOCK_STREAM)
+        ip = self._socket_address.split(':')[1][2:]
+        port = int(self._socket_address.split(':')[2])
+        sock.connect((ip, port))
         logger.debug('Init socket')
         self._socket = sock
 
@@ -194,16 +198,18 @@ class FuseOperations(LoggingMixIn, Operations):
         fuse_stat['st_mode'] = 0
         if stat['type'] == 'folder':
             fuse_stat['st_mode'] |= S_IFDIR
+            fuse_stat['st_nlink'] = 2
         else:
             fuse_stat['st_mode'] |= S_IFREG
             fuse_stat['st_size'] = stat.get('size', 0)
             fuse_stat['st_ctime'] = dateparse(stat['created']).timestamp()  # TODO change to local timezone
             fuse_stat['st_mtime'] = dateparse(stat['updated']).timestamp()
             fuse_stat['st_atime'] = dateparse(stat['updated']).timestamp()  # TODO not supported ?
+            fuse_stat['st_nlink'] = 1
         fuse_stat['st_mode'] |= S_IRWXU | S_IRWXG | S_IRWXO
-        fuse_stat['st_nlink'] = 1
-        fuse_stat['st_uid'] = os.getuid()
-        fuse_stat['st_gid'] = os.getgid()
+        uid, gid, _ = fuse_get_context()
+        fuse_stat['st_uid'] = uid
+        fuse_stat['st_gid'] = gid
         return fuse_stat
 
     def readdir(self, path, fh):
@@ -297,8 +303,8 @@ class FuseOperations(LoggingMixIn, Operations):
         return 0  # TODO
 
 
-def start_fuse(socket_path: str, mountpoint: str, debug: bool=False, nothreads: bool=False):
-    operations = FuseOperations(socket_path)
+def start_fuse(socket_address: str, mountpoint: str, debug: bool=False, nothreads: bool=False):
+    operations = FuseOperations(socket_address)
     if not debug:
         logger_stream.level = WARNING
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)
