@@ -46,6 +46,10 @@ class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
     subject = fields.String(missing=None)
 
 
+class cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
+    wait = fields.Boolean(missing=True)
+
+
 @attr.s
 class AnonymousClientContext:
     id = 'anonymous'
@@ -217,8 +221,14 @@ class BackendApp:
         return {'status': 'ok'}
 
     async def _api_event_listen(self, client_ctx, msg):
-        BaseCmdSchema().load_or_abort(msg)  # empty msg expected
-        event, subject = await client_ctx.events.get()
+        msg = cmd_EVENT_LISTEN_Schema().load_or_abort(msg)
+        if msg['wait']:
+            event, subject = await client_ctx.events.get()
+        else:
+            try:
+                event, subject = client_ctx.events.get_nowait()
+            except trio.WouldBlock:
+                return {'status': 'ok'}
         return {'status': 'ok', 'event': event, 'subject': subject}
 
     async def _api_event_list_subscribed(self, client_ctx, msg):

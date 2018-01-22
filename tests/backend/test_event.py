@@ -75,6 +75,11 @@ async def test_event_unsubscribe_unknown_event(backend, alice):
 async def test_event_listen(backend, alice, bob):
     async with connect_backend(backend, auth_as=alice) as alice_sock, \
             connect_backend(backend, auth_as=bob) as bob_sock:
+
+        await alice_sock.send({'cmd': 'event_listen', 'wait': False})
+        rep = await alice_sock.recv()
+        assert rep == {'status': 'ok'}
+
         await subscribe(alice_sock, 'ping', 'foo')
 
         await alice_sock.send({'cmd': 'event_listen'})
@@ -84,6 +89,16 @@ async def test_event_listen(backend, alice, bob):
         await bob_sock.send({'cmd': 'ping', 'ping': 'foo'})
         await bob_sock.recv()
 
+        rep = await alice_sock.recv()
+        assert rep == {
+            'status': 'ok',
+            'event': 'ping',
+            'subject': 'foo',
+        }
+
+        await bob_sock.send({'cmd': 'ping', 'ping': 'foo'})
+        await bob_sock.recv()
+        await alice_sock.send({'cmd': 'event_listen', 'wait': False})
         rep = await alice_sock.recv()
         assert rep == {
             'status': 'ok',
