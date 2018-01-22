@@ -4,11 +4,10 @@ import socket
 import contextlib
 from unittest.mock import patch
 
-from parsec.backend.app import BackendApp
-from parsec.backend.config import Config as BackendConfig
 from parsec.core.devices_manager import Device
 
-from tests.common import freeze_time, core_factory, connect_backend, connect_core, run_app
+from tests.common import (
+    freeze_time, run_app, backend_factory, core_factory, connect_backend, connect_core)
 from tests.populate import populate_factory
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 
@@ -101,21 +100,22 @@ def default_devices(alice, bob):
 
 
 @pytest.fixture
-async def backend(default_devices, config={}):
-    config = BackendConfig(**{
+async def backend(nursery, default_devices, config={}):
+    async with backend_factory(**{
         'blockstore_url': 'backend://',
         **config
-    })
-    backend = BackendApp(config)
-    with freeze_time('2000-01-01'):
-        for device in default_devices:
-            await backend.user.create(
-                author='<backend-fixture>',
-                user_id=device.user_id,
-                broadcast_key=device.user_pubkey.encode(),
-                devices=[(device.device_name, device.device_verifykey.encode())]
-            )
-    return backend
+    }) as backend:
+
+        with freeze_time('2000-01-01'):
+            for device in default_devices:
+                await backend.user.create(
+                    author='<backend-fixture>',
+                    user_id=device.user_id,
+                    broadcast_key=device.user_pubkey.encode(),
+                    devices=[(device.device_name, device.device_verifykey.encode())]
+                )
+
+        yield backend
 
 
 @pytest.fixture
@@ -149,26 +149,26 @@ async def alice_backend_sock(backend, alice):
 
 
 @pytest.fixture
-def core(backend_addr, tmpdir, default_devices, config={}):
-    core = core_factory(**{
+async def core(nursery, backend_addr, tmpdir, default_devices, config={}):
+    async with core_factory(**{
         'base_settings_path': tmpdir.mkdir('core_fixture').strpath,
         'backend_addr': backend_addr,
         **config
-    })
+    }) as core:
 
-    for device in default_devices:
-        core.devices_manager.register_new_device(
-            device.id,
-            device.user_privkey.encode(),
-            device.device_signkey.encode(),
-            '<secret>'
-        )
+        for device in default_devices:
+            core.devices_manager.register_new_device(
+                device.id,
+                device.user_privkey.encode(),
+                device.device_signkey.encode(),
+                '<secret>'
+            )
 
-    return core
+        yield core
 
 
 @pytest.fixture
 async def alice_core_sock(core, alice):
-    await core.login(alice)
     async with connect_core(core) as sock:
+        await core.login(alice)
         yield sock

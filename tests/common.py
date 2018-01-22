@@ -402,7 +402,20 @@ async def run_app(app):
             return right
 
         yield connection_factory
+
         nursery.cancel_scope.cancel()
+
+
+@acontextmanager
+async def backend_factory(**config):
+    config = BackendConfig(**config)
+    backend = BackendApp(config)
+    async with trio.open_nursery() as nursery:
+        await backend.init(nursery)
+
+        yield backend
+
+        await backend.shutdown()
 
 
 @acontextmanager
@@ -439,6 +452,13 @@ async def connect_core(core):
             pass
 
 
-def core_factory(**config):
+@acontextmanager
+async def core_factory(**config):
     config = CoreConfig(**config)
-    return CoreApp(config)
+    core = CoreApp(config)
+    async with trio.open_nursery() as nursery:
+        await core.init(nursery)
+
+        yield core
+
+        await core.shutdown()

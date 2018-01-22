@@ -157,7 +157,7 @@ class BackendApp:
             'ping': self._api_ping
         }
 
-    async def init(self):
+    async def init(self, nursery):
         if self.config.dburl is not None:
             await self.dbh.start()
 

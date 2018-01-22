@@ -1,4 +1,5 @@
 import trio
+import blinker
 from nacl.public import PrivateKey
 from nacl.signing import SigningKey
 
@@ -10,7 +11,7 @@ from parsec.core.blocks_manager import BlocksManager
 from parsec.core.backend_connection import (
     BackendConnection, BackendNotAvailable, backend_send_anonymous_cmd)
 from parsec.utils import CookedSocket, ParsecError, to_jsonb64
-from parsec.schema import BaseCmdSchema, fields
+from parsec.schema import BaseCmdSchema, fields, validate
 
 
 class cmd_LOGIN_Schema(BaseCmdSchema):
@@ -29,15 +30,28 @@ class cmd_USER_CLAIM_Schema(BaseCmdSchema):
     password = fields.String(required=True)
 
 
+class cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
+    wait = fields.Boolean(missing=True)
+
+
+class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
+    event = fields.String(required=True)
+    subject = fields.String(missing=None)
+
+
 class CoreApp:
 
     def __init__(self, config):
+        self.signal_ns = blinker.Namespace()
         self.config = config
         self.backend_addr = config.backend_addr
 
         self.nursery = None
+        # TODO: create a context object to store/manipulate auth_* data
         self.auth_device = None
         self.auth_privkey = None
+        self.auth_subscribed_events = None
+        self.auth_events = None
         self.fs = None
         self.backend_connection = None
         self.devices_manager = DevicesManager(config.base_settings_path)
@@ -45,15 +59,20 @@ class CoreApp:
         self._fs_api = FSApi()
 
         self.cmds = {
+            'event_subscribe': self._api_event_subscribe,
+            'event_unsubscribe': self._api_event_unsubscribe,
+            'event_listen': self._api_event_listen,
+            'event_list_subscribed': self._api_event_list_subscribed,
+
             'user_invite': self._api_user_invite,
             'user_claim': self._api_user_claim,
 
-            # 'device_declare': self._api_device_declare,
-            # 'device_get_configuration_try': self._api_device_get_configuration_try,
-            # 'device_accept_configuration_try': self._api_device_accept_configuration_try,
-            # 'device_refuse_configuration_try': self._api_device_refuse_configuration_try,
+            'device_declare': self._api_device_declare,
+            'device_configure': self._api_device_configure,
+            'device_get_configuration_try': self._api_device_get_configuration_try,
+            'device_accept_configuration_try': self._api_device_accept_configuration_try,
+            'device_refuse_configuration_try': self._api_device_refuse_configuration_try,
 
-            'register_device': self._api_register_device,
             'login': self._api_login,
             'logout': self._api_logout,
             'info': self._api_info,
@@ -74,6 +93,10 @@ class CoreApp:
 
     async def init(self, nursery):
         self.nursery = nursery
+
+    async def shutdown(self):
+        if self.auth_device:
+            await self.logout()
 
     async def handle_client(self, sockstream):
         try:
@@ -101,8 +124,10 @@ class CoreApp:
 
     async def login(self, device):
         self.auth_device = device
+        self.auth_subscribed_events = {}
+        self.auth_events = trio.Queue(100)
         self.backend_connection = BackendConnection(
-            device, self.config.backend_addr
+            device, self.config.backend_addr, self.signal_ns
         )
         await self.backend_connection.init(self.nursery)
         self.fs = await fs_factory(device, self.config, self.backend_connection)
@@ -123,6 +148,8 @@ class CoreApp:
         # await self.fs.manifests_manager.teardown()
         # await self.fs.blocks_manager.teardown()
         self.auth_device = None
+        self.auth_subscribed_events = None
+        self.auth_events = None
         self.fs = None
         self._fs_api.fs = None
 
@@ -159,10 +186,39 @@ class CoreApp:
             msg['id'], user_privkey.encode(), device_signkey.encode(), msg['password'])
         return rep
 
-    async def _api_register_device(self, req):
+    async def _backend_passthrough(self, req):
+        try:
+            rep = await self.backend_connection.send(req)
+        except BackendNotAvailable:
+            return {'status': 'backend_not_availabled'}
+        return rep
+
+    async def _api_device_declare(self, req):
         if not self.auth_device:
             return {'status': 'login_required'}
-        return {'status': 'not_implemented'}
+        return await self._backend_passthrough(req)
+
+    async def _api_device_configure(self, req):
+        try:
+            return await backend_send_anonymous_cmd(self.backend_addr, req)
+        except BackendNotAvailable:
+            return {'status': 'backend_not_availabled'}
+        # TODO: should save the data...
+
+    async def _api_device_get_configuration_try(self, req):
+        if not self.auth_device:
+            return {'status': 'login_required'}
+        return await self._backend_passthrough(req)
+
+    async def _api_device_accept_configuration_try(self, req):
+        if not self.auth_device:
+            return {'status': 'login_required'}
+        return await self._backend_passthrough(req)
+
+    async def _api_device_refuse_configuration_try(self, req):
+        if not self.auth_device:
+            return {'status': 'login_required'}
+        return await self._backend_passthrough(req)
 
     async def _api_login(self, req):
         if self.auth_device:
@@ -207,3 +263,65 @@ class CoreApp:
             except BackendNotAvailable:
                 status['backend_online'] = False
         return status
+
+    async def _api_event_subscribe(self, req):
+        if not self.auth_device:
+            return {'status': 'login_required'}
+
+        msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(req)
+        event = msg['event']
+        subject = msg['subject']
+
+        def _handle_event(sender):
+            try:
+                self.auth_events.put_nowait((event, sender))
+            except trio.WouldBlock:
+                print('WARNING: event queue is full')
+
+        self.auth_subscribed_events[event, subject] = _handle_event
+        if event == 'device_try_claim_submitted':
+            await self.backend_connection.subscribe_event(event, subject)
+        if subject:
+            self.signal_ns.signal(event).connect(
+                _handle_event, sender=subject, weak=True)
+        else:
+            self.signal_ns.signal(event).connect(_handle_event, weak=True)
+        return {'status': 'ok'}
+
+    async def _api_event_unsubscribe(self, req):
+        if not self.auth_device:
+            return {'status': 'login_required'}
+
+        msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(req)
+        try:
+            del self.auth_subscribed_events[msg['event'], msg['subject']]
+        except KeyError:
+            return {
+                'status': 'not_subscribed',
+                'reason': 'Not subscribed to this event/subject couple'
+            }
+        return {'status': 'ok'}
+
+    async def _api_event_listen(self, req):
+        if not self.auth_device:
+            return {'status': 'login_required'}
+
+        msg = cmd_EVENT_LISTEN_Schema().load_or_abort(req)
+        if msg['wait']:
+            event, subject = await self.auth_events.get()
+        else:
+            try:
+                event, subject = await self.auth_events.get_nowait()
+            except trio.WouldBlock:
+                return {'status': 'ok'}
+        return {'status': 'ok', 'event': event, 'subject': subject}
+
+    async def _api_event_list_subscribed(self, req):
+        if not self.auth_device:
+            return {'status': 'login_required'}
+
+        BaseCmdSchema().load_or_abort(req)  # empty msg expected
+        return {
+            'status': 'ok',
+            'subscribed': list(self.auth_subscribed_events.keys())
+        }

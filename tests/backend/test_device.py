@@ -109,7 +109,7 @@ async def test_device_configure(backend, alice, configure_device_token, mock_gen
         rep = await alice_sock.recv()
         assert rep == {
             'status': 'ok',
-            'status': 'waiting_answer',
+            'configuration_status': 'waiting_answer',
             'device_name': 'phone2',
             'device_verify_key': 'MLqfWdG0RJMN9qdb6Kr57mG4AZjBfmltfUP63lzmoS0=\n',
             'user_privkey_cypherkey': 'i/zBiLfXFnTOPH/Sal9mVEkUcic6DUYh/36oDZEy404=\n',

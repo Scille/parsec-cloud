@@ -198,11 +198,12 @@ class BaseUserComponent:
                 msg['configuration_try_id'], client_ctx.user_id)
         except NotFoundError:
             return {'status': 'not_found', 'reason': 'Unknown device configuration try.'}
-        config_try['device_verify_key'] = to_jsonb64(config_try['device_verify_key'])
-        config_try['user_privkey_cypherkey'] = to_jsonb64(config_try['user_privkey_cypherkey'])
         return {
             'status': 'ok',
-            **config_try
+            'device_name': config_try['device_name'],
+            'configuration_status': config_try['status'],
+            'device_verify_key': to_jsonb64(config_try['device_verify_key']),
+            'user_privkey_cypherkey': to_jsonb64(config_try['user_privkey_cypherkey']),
         }
 
     async def api_device_accept_configuration_try(self, client_ctx, msg):

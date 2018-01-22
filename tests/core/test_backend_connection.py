@@ -1,6 +1,7 @@
 import pytest
 import trio
 from trio._util import acontextmanager
+import blinker
 
 from parsec.core.backend_connection import BackendConnection, BackendNotAvailable
 
@@ -9,7 +10,8 @@ from tests.open_tcp_stream_mock_wrapper import offline
 
 @acontextmanager
 async def open_backend_connection(user, backend_addr):
-    conn = BackendConnection(user, backend_addr)
+    signal_ns = blinker.Namespace()
+    conn = BackendConnection(user, backend_addr, signal_ns)
     async with trio.open_nursery() as nursery:
         await conn.init(nursery)
         yield conn
@@ -45,7 +47,8 @@ async def test_concurrency_sends(running_backend, backend_addr, alice):
 async def test_backend_offline(unused_tcp_port, alice):
     addr = 'tcp://127.0.0.1:%s' % unused_tcp_port
 
-    conn = BackendConnection(alice, addr)
+    signal_ns = blinker.Namespace()
+    conn = BackendConnection(alice, addr, signal_ns)
     async with trio.open_nursery() as nursery:
         await conn.init(nursery)
 
@@ -84,3 +87,95 @@ async def test_backend_switch_offline(running_backend, backend_addr, alice, tcp_
 
         rep = await conn.send({'cmd': 'ping', 'ping': 'hello'})
         assert rep == {'status': 'ok', 'pong': 'hello'}
+
+
+# @pytest.mark.trio
+# async def test_backend_event_passthrough(running_backend, backend_addr, alice, alice_backend_sock):
+#     backend, _, _ = running_backend
+
+#     async with open_backend_connection(alice, backend_addr) as conn:
+#         # Dummy event (not provided by backend)
+#         await conn.subscribe_event('ping')
+#         await conn.send({'cmd': 'event_subscribe', 'event': 'foo'})
+#         rep = await conn.recv()
+#         assert rep == {'status': 'ok'}
+#         # Event passed by backend
+#         await conn.send({'cmd': 'event_subscribe', 'event': 'ping', 'subject': 'back'})
+#         rep = await conn.recv()
+#         assert rep == {'status': 'ok'}
+
+#         backend.signal_ns.send('foo', 'bar')
+#         backend.signal_ns.send('foo', 'bar')
+#         await conn.send({'cmd': 'event_listen', 'wait': False})
+#         rep = await conn.recv()
+#         rep == {'status': 'ok'}
+
+#         backend.signal_ns.send('ping', 'bar')
+#         await conn.send({'cmd': 'event_listen', 'wait': False})
+#         rep = await conn.recv()
+#         rep == {'status': 'ok', 'event': 'ping', 'subject': 'bar'}
+
+
+@pytest.mark.trio
+async def test_backend_event_passthrough_not_configured(running_backend, backend_addr, alice):
+    backend, _, _ = running_backend
+
+    async with open_backend_connection(alice, backend_addr) as conn:
+        # Make sure connection with backend is up and running
+        await conn.send({'cmd': 'ping'})
+
+        received_by_core_events = []
+        conn.signal_ns.signal('ping').connect(lambda *args: received_by_core_events.append(args))
+
+        # Trigger events inside the backend, core should not be notified of them
+        backend.signal_ns.signal('ping').send()
+        backend.signal_ns.signal('ping').send('bar')
+
+        # Don't like to do that, but given we test that nothing happened...
+        await trio.sleep(0.01)
+
+        assert not received_by_core_events
+
+
+@pytest.mark.trio
+async def test_backend_event_passthrough_subscribing(running_backend, backend_addr, alice):
+    backend, _, _ = running_backend
+
+    async with open_backend_connection(alice, backend_addr) as conn:
+        # Make sure connection with backend is up and running
+        await conn.send({'cmd': 'ping', 'ping': 'too early'})
+
+        core_ping_events = []
+
+        def collect_core_ping_events(sender):
+            core_ping_events.append(sender)
+
+        conn.signal_ns.signal('ping').connect(collect_core_ping_events)
+
+        await conn.subscribe_event('ping')
+        # TODO: backend_connection event pump is really ugly so far,
+        # need to improve code to avoid this sleep
+        await trio.sleep(0.01)
+
+        backend.signal_ns.signal('dummy').send()
+        backend.signal_ns.signal('ping').send()
+        backend.signal_ns.signal('ping').send('bar')
+
+        # Don't like to do that, but needed to have events dispatched
+        await trio.sleep(0.01)
+
+        assert core_ping_events == [None, 'bar']
+
+        # Now forget about the event
+
+        await conn.unsubscribe_event('ping')
+        core_ping_events.clear()
+
+        backend.signal_ns.signal('dummy').send()
+        backend.signal_ns.signal('ping').send()
+        backend.signal_ns.signal('ping').send('too late')
+
+        # Don't like to do that, but given we test that nothing happened...
+        await trio.sleep(0.01)
+
+        assert not core_ping_events
