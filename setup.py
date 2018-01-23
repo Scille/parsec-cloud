@@ -1,11 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 try:
     from setuptools import setup, find_packages
 except ImportError:
     from distutils.core import setup, find_packages
+
+try:
+    from cx_Freeze import setup, Executable
+except ImportError:
+    Executable = lambda x: x
+
+
+def _extract_libs_cffi_backend():
+    import nacl
+    import pathlib
+
+    cffi_backend_dir = pathlib.Path(nacl.__file__).parent / '../.libs_cffi_backend'
+    return [(lib.as_posix(), lib.name) for lib in cffi_backend_dir.glob('*')]
+
+ 
+build_exe_options = {
+    "packages": ["idna", "trio._core", "nacl._sodium"],
+    # nacl store it cffi shared lib in a very strange place...
+    'include_files': _extract_libs_cffi_backend(),
+}
+
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -75,6 +95,8 @@ setup(
             'parsec = parsec.cli:cli',
         ],
     },
+    options={"build_exe": build_exe_options},
+    executables=[Executable('parsec/cli.py', targetName='parsec')],
     license="GPLv3",
     zip_safe=False,
     keywords='parsec',
