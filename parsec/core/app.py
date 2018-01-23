@@ -123,7 +123,6 @@ class CoreApp:
             pass
 
     async def login(self, device):
-        self.auth_device = device
         self.auth_subscribed_events = {}
         self.auth_events = trio.Queue(100)
         self.backend_connection = BackendConnection(
@@ -140,6 +139,8 @@ class CoreApp:
         # self.fs = FS(manifests_manager, blocks_manager)
         await self.fs.init()
         self._fs_api.fs = self.fs
+        # Keep this last to guarantee login was ok if it is set
+        self.auth_device = device
 
     async def logout(self):
         await self.fs.teardown()

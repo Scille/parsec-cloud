@@ -69,12 +69,17 @@ def _backend(host, port, pubkeys, store, block_store, debug):
     backend = BackendApp(config)
 
     async def _run_and_register_johndoe():
-        await backend.init()
-        await backend.user.create('<backend-mock>', JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY, devices={
-            JOHN_DOE_DEVICE_NAME: JOHN_DOE_DEVICE_VERIFY_KEY
-        })
-        await trio.serve_tcp(backend.handle_client, port)
-        await backend.shutdown()
+        async with trio.open_nursery() as nursery:
+            await backend.init(nursery)
+            try:
+                await backend.user.create(
+                    '<backend-mock>', JOHN_DOE_IDENTITY, JOHN_DOE_PUBLIC_KEY, devices={
+                        JOHN_DOE_DEVICE_NAME: JOHN_DOE_DEVICE_VERIFY_KEY
+                    }
+                )
+                await trio.serve_tcp(backend.handle_client, port)
+            finally:
+                await backend.shutdown()
 
     print('Starting Parsec Backend on %s:%s' % (host, port))
     try:
