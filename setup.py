@@ -45,6 +45,7 @@ test_requirements = [
     'Sphinx',
     'flake8',
     'bumpversion',
+    'cx-Freeze',
 ]
 
 extra_requirements = {
