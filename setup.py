@@ -3,12 +3,9 @@
 
 
 try:
-    from setuptools import find_packages
+    from setuptools import setup, find_packages
 except ImportError:
-    from distutils.core import find_packages
-from cx_Freeze import setup, Executable
-
-build_exe_options = {"packages": ["idna"]}
+    from distutils.core import setup, find_packages
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -45,7 +42,6 @@ test_requirements = [
     'Sphinx',
     'flake8',
     'bumpversion',
-    'cx-Freeze',
 ]
 
 extra_requirements = {
@@ -79,8 +75,6 @@ setup(
             'parsec = parsec.cli:cli',
         ],
     },
-    options = {"build_exe": build_exe_options},
-    executables = [Executable('parsec/cli.py')],
     license="GPLv3",
     zip_safe=False,
     keywords='parsec',
