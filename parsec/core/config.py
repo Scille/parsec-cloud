@@ -11,7 +11,7 @@ def _cast_int(v):
 
 
 @attr.s(slots=True, frozen=True)
-class Config:
+class CoreConfig:
     debug = attr.ib(
         default=config('DEBUG', cast=bool, default=False)
     )
@@ -33,7 +33,3 @@ class Config:
     base_settings_path = attr.ib(
         default=config('BASE_SETTINGS_PATH', default=expandvars('$HOME/.config/parsec'))
     )
-
-
-# TODO: rename Config -> CoreConfig
-CoreConfig = Config

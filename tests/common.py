@@ -17,14 +17,12 @@ except ImportError:
     from freezegun import freeze_time
 
 from parsec.core.local_storage import BaseLocalStorage
-from parsec.core.config import Config as CoreConfig
-from parsec.core.app import CoreApp
+from parsec.core import CoreApp, CoreConfig
 
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 from parsec.utils import CookedSocket, User
 
-from parsec.backend.config import Config as BackendConfig
-from parsec.backend.app import BackendApp
+from parsec.backend import BackendApp, BackendConfig
 
 from tests.populate import populate_local_storage_cls, populate_backend
 

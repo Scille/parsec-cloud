@@ -107,7 +107,6 @@ def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
                 print('Hello Mr. Doe, your conf dir is `%s`' % john_conf_dir)
                 trio.run(_login_and_run, user)
             finally:
-                # pass
                 shutil.rmtree(john_conf_dir)
         else:
             trio.run(_login_and_run)

@@ -3,7 +3,7 @@ from decouple import config
 
 
 @attr.s(slots=True, frozen=True)
-class Config:
+class BackendConfig:
     debug = attr.ib(
         default=config('DEBUG', cast=bool, default=False)
     )
@@ -22,7 +22,3 @@ class Config:
     dburl = attr.ib(
         default=config('PARSEC_DB_URL', default=None)
     )
-
-
-# TODO: rename Config -> BackendConfig
-BackendConfig = Config
