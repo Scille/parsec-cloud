@@ -1,8 +1,11 @@
 import asyncio
 from functools import partial
-import readline  # noqa: side effect powaaa !
+try:
+  import readline
+except ImportError:
+  import pyreadline as readline
 
-from parsec.tools import ejson_loads
+from parsec.utils import ejson_loads
 
 
 async def repl(socket_path):
