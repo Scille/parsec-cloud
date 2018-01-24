@@ -9,7 +9,7 @@ except ImportError:
 try:
     from cx_Freeze import setup, Executable
 except ImportError:
-    Executable = lambda x: x
+    Executable = lambda x, **kw: x
 
 
 def _extract_libs_cffi_backend():
