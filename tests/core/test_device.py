@@ -1,8 +1,4 @@
 import pytest
-from nacl.signing import SigningKey
-from nacl.public import PrivateKey, SealedBox
-
-from parsec.utils import to_jsonb64, from_jsonb64
 
 from tests.common import connect_core, core_factory
 
@@ -12,15 +8,12 @@ from tests.common import connect_core, core_factory
     {'cmd': 'device_declare', 'device_name': 'device2'},
     {
         'cmd': 'device_configure',
+        'device_id': 'alice@device2',
+        'password': 'S3cr37',
         'configure_device_token': '123456',
-        'user_id': 'alice',
-        'device_name': 'device2',
-        'device_verify_key': '123',
-        'user_privkey_cypherkey': 'ABC',
     },
-    {'cmd': 'device_get_configuration_try', 'configuration_try_id': '123456'},
-    {'cmd': 'device_accept_configuration_try', 'configuration_try_id': '123456', 'cyphered_user_privkey': '123'},
-    {'cmd': 'device_refuse_configuration_try', 'configuration_try_id': '123456', 'reason': 'Whatever'},
+    # TODO: mocking configuraton_try_id is a PITA right now...
+    # {'cmd': 'device_accept_configuration_try', 'configuration_try_id': '123456'},
 ])
 async def test_device_cmd_backend_offline(core, alice_core_sock, cmd):
     await alice_core_sock.send(cmd)
@@ -51,16 +44,12 @@ async def test_device_declare_then_accepted(tmpdir, running_backend, backend_add
         backend_addr=backend_addr
     ) as new_device_core:
 
-        device_signkey = SigningKey.generate()
-        user_privkey_cypherkey_privkey = PrivateKey.generate()
         async with connect_core(new_device_core) as new_device_core_sock:
             await new_device_core_sock.send({
                 'cmd': 'device_configure',
+                'device_id': 'alice@device2',
+                'password': 'S3cr37',
                 'configure_device_token': configure_device_token,
-                'user_id': 'alice',
-                'device_name': 'device2',
-                'device_verify_key': to_jsonb64(device_signkey.verify_key.encode()),
-                'user_privkey_cypherkey': to_jsonb64(user_privkey_cypherkey_privkey.public_key.encode()),
             })
 
             # Here new_device_core should be on hold, waiting for existing device to
@@ -72,39 +61,57 @@ async def test_device_declare_then_accepted(tmpdir, running_backend, backend_add
             rep = await alice_core_sock.recv()
             assert rep['status'] == 'ok'
             assert rep['event'] == 'device_try_claim_submitted'
-            assert rep['subject']
-
-            config_try_id = rep['subject']
-
-            # 4) Existing device retreive configuration try informations
-
-            await alice_core_sock.send({
-                'cmd': 'device_get_configuration_try',
-                'configuration_try_id': config_try_id,
-            })
-            rep = await alice_core_sock.recv()
-            assert rep['status'] == 'ok'
-            assert rep['configuration_status'] == 'waiting_answer'
             assert rep['device_name'] == 'device2'
-            assert rep['device_verify_key']
-            assert rep['user_privkey_cypherkey']
-            user_privkey_cypherkey = PrivateKey(from_jsonb64(rep['user_privkey_cypherkey']))
+            assert rep['configuration_try_id']
 
-            # 5) Existing device accept configuration
+            config_try_id = rep['configuration_try_id']
 
-            box = SealedBox(user_privkey_cypherkey)
-            cyphered_user_privkey = box.encrypt(alice.user_privkey.encode())
+            # 4) Existing device accept configuration
 
             await alice_core_sock.send({
                 'cmd': 'device_accept_configuration_try',
                 'configuration_try_id': config_try_id,
-                'cyphered_user_privkey': to_jsonb64(cyphered_user_privkey)
             })
             rep = await alice_core_sock.recv()
             assert rep == {'status': 'ok'}
 
-            # 6) Wannabe device get it answer: device has been accepted !
+            # 5) Wannabe device get it answer: device has been accepted !
 
             rep = await new_device_core_sock.recv()
             assert rep['status'] == 'ok'
-            assert rep['cyphered_user_privkey']
+
+    # Device config should have been stored on local storage so restarting
+    # core is not a trouble
+
+    async with core_factory(
+        base_settings_path=new_device_core_conf_dir,
+        backend_addr=backend_addr
+    ) as restarted_new_device_core:
+        async with connect_core(restarted_new_device_core) as new_device_core_sock:
+
+            # 6) Now wannabe device can login as alice
+
+            rep = await new_device_core_sock.send({'cmd': 'list_available_logins'})
+            rep = await new_device_core_sock.recv()
+            assert rep == {
+                'status': 'ok',
+                'devices': ['alice@device2'],
+            }
+
+            rep = await new_device_core_sock.send({
+                'cmd': 'login',
+                'id': 'alice@device2',
+                'password': 'S3cr37'
+            })
+            rep = await new_device_core_sock.recv()
+            assert rep == {'status': 'ok'}
+
+            rep = await new_device_core_sock.send({
+                'cmd': 'info',
+            })
+            rep = await new_device_core_sock.recv()
+            assert rep == {
+                'status': 'ok',
+                'loaded': True,
+                'id': 'alice@device2',
+            }

@@ -38,6 +38,8 @@ class DeviceConfigureSchema(BaseCmdSchema):
     user_id = fields.String(required=True)
     device_name = fields.String(required=True)
     device_verify_key = fields.Base64Bytes(required=True)
+    # TODO: should be itself cyphered with a password-derived key
+    # to mitigate man-in-the-middle attack
     user_privkey_cypherkey = fields.Base64Bytes(required=True)
 
 

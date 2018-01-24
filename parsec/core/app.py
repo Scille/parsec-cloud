@@ -1,6 +1,6 @@
 import trio
 import blinker
-from nacl.public import PrivateKey
+from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 
 from parsec.core.fs import fs_factory
@@ -10,7 +10,7 @@ from parsec.core.manifests_manager import ManifestsManager
 from parsec.core.blocks_manager import BlocksManager
 from parsec.core.backend_connection import (
     BackendConnection, BackendNotAvailable, backend_send_anonymous_cmd)
-from parsec.utils import CookedSocket, ParsecError, to_jsonb64
+from parsec.utils import CookedSocket, ParsecError, to_jsonb64, from_jsonb64
 from parsec.schema import BaseCmdSchema, fields, validate
 
 
@@ -39,12 +39,25 @@ class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
     subject = fields.String(missing=None)
 
 
+class cmd_DEVICE_CONFIGURE_Schema(BaseCmdSchema):
+    # TODO: add regex validation
+    device_id = fields.String(required=True)
+    password = fields.String(required=True)
+    configure_device_token = fields.String(required=True)
+
+
+class cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema(BaseCmdSchema):
+    configuration_try_id = fields.String(required=True)
+
+
 class CoreApp:
 
     def __init__(self, config):
         self.signal_ns = blinker.Namespace()
         self.config = config
         self.backend_addr = config.backend_addr
+
+        self._config_try_pendings = {}
 
         self.nursery = None
         # TODO: create a context object to store/manipulate auth_* data
@@ -71,7 +84,6 @@ class CoreApp:
             'device_configure': self._api_device_configure,
             'device_get_configuration_try': self._api_device_get_configuration_try,
             'device_accept_configuration_try': self._api_device_accept_configuration_try,
-            'device_refuse_configuration_try': self._api_device_refuse_configuration_try,
 
             'login': self._api_login,
             'logout': self._api_logout,
@@ -200,11 +212,35 @@ class CoreApp:
         return await self._backend_passthrough(req)
 
     async def _api_device_configure(self, req):
+        msg = cmd_DEVICE_CONFIGURE_Schema().load_or_abort(req)
+
+        user_id, device_name = msg['device_id'].split('@')
+        user_privkey_cypherkey_privkey = PrivateKey.generate()
+        device_signkey = SigningKey.generate()
+
         try:
-            return await backend_send_anonymous_cmd(self.backend_addr, req)
+            rep = await backend_send_anonymous_cmd(self.backend_addr, {
+                'cmd': 'device_configure',
+                'user_id': user_id,
+                'device_name': device_name,
+                'configure_device_token': msg['configure_device_token'],
+                'device_verify_key': to_jsonb64(device_signkey.verify_key.encode()),
+                'user_privkey_cypherkey': to_jsonb64(user_privkey_cypherkey_privkey.public_key.encode()),
+            })
         except BackendNotAvailable:
             return {'status': 'backend_not_availabled'}
-        # TODO: should save the data...
+        if rep['status'] != 'ok':
+            return rep
+
+        cyphered = from_jsonb64(rep['cyphered_user_privkey'])
+        box = SealedBox(user_privkey_cypherkey_privkey)
+        user_privkey_raw = box.decrypt(cyphered)
+        user_privkey = PrivateKey(user_privkey_raw)
+
+        self.devices_manager.register_new_device(
+            msg['device_id'], user_privkey.encode(), device_signkey.encode(), msg['password'])
+
+        return {'status': 'ok'}
 
     async def _api_device_get_configuration_try(self, req):
         if not self.auth_device:
@@ -214,12 +250,28 @@ class CoreApp:
     async def _api_device_accept_configuration_try(self, req):
         if not self.auth_device:
             return {'status': 'login_required'}
-        return await self._backend_passthrough(req)
 
-    async def _api_device_refuse_configuration_try(self, req):
-        if not self.auth_device:
-            return {'status': 'login_required'}
-        return await self._backend_passthrough(req)
+        msg = cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema().load_or_abort(req)
+
+        conf_try = self._config_try_pendings.get(msg['configuration_try_id'])
+        if not conf_try:
+            return {'status': 'unknown_configuration_try_id'}
+
+        user_privkey_cypherkey_raw = from_jsonb64(conf_try['user_privkey_cypherkey'])
+        box = SealedBox(PublicKey(user_privkey_cypherkey_raw))
+        cyphered_user_privkey = box.encrypt(self.auth_device.user_privkey.encode())
+
+        try:
+            rep = await self.backend_connection.send({
+                'cmd': 'device_accept_configuration_try',
+                'configuration_try_id': msg['configuration_try_id'],
+                'cyphered_user_privkey': to_jsonb64(cyphered_user_privkey),
+            })
+        except BackendNotAvailable:
+            return {'status': 'backend_not_availabled'}
+        if rep != 'ok':
+            return rep
+        return {'status': 'ok'}
 
     async def _api_login(self, req):
         if self.auth_device:
@@ -315,7 +367,23 @@ class CoreApp:
                 event, subject = await self.auth_events.get_nowait()
             except trio.WouldBlock:
                 return {'status': 'ok'}
-        return {'status': 'ok', 'event': event, 'subject': subject}
+
+        # TODO: make more generic
+        if event == 'device_try_claim_submitted':
+            rep = await self.backend_connection.send({
+                'cmd': 'device_get_configuration_try',
+                'configuration_try_id': subject
+            })
+            assert rep['status'] == 'ok'
+            self._config_try_pendings[subject] = rep
+            return {
+                'status': 'ok',
+                'event': event,
+                'device_name': rep['device_name'],
+                'configuration_try_id': subject,
+            }
+        else:
+            return {'status': 'ok', 'event': event, 'subject': subject}
 
     async def _api_event_list_subscribed(self, req):
         if not self.auth_device:
