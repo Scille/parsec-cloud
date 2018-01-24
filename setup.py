@@ -13,7 +13,10 @@ except ImportError:
 
 
 def _extract_libs_cffi_backend():
-    import nacl
+    try:
+        import nacl
+    except ImportError:
+        return []
     import pathlib
 
     cffi_backend_dir = pathlib.Path(nacl.__file__).parent / '../.libs_cffi_backend'
