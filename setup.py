@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+import sys
+
 try:
     from setuptools import setup, find_packages
 except ImportError:
@@ -22,11 +25,12 @@ def _extract_libs_cffi_backend():
     cffi_backend_dir = pathlib.Path(nacl.__file__).parent / '../.libs_cffi_backend'
     return [(lib.as_posix(), lib.name) for lib in cffi_backend_dir.glob('*')]
 
- 
+
 build_exe_options = {
     "packages": ["idna", "trio._core", "nacl._sodium"],
     # nacl store it cffi shared lib in a very strange place...
-    'include_files': _extract_libs_cffi_backend(),
+    'include_files': _extract_libs_cffi_backend() + [(os.path.dirname(sys.executable) +
+                                                     '\DLLs\sqlite3.dll', 'sqlite3.dll')],
 }
 
 
@@ -40,6 +44,7 @@ requirements = [
     'attrs==17.3.0',
     'blinker==1.4.0',
     'click==6.7',
+    'Logbook==1.1.0',
     'marshmallow==2.14.0',
     'marshmallow-oneofschema==1.0.5',
     'pendulum==1.3.1',
