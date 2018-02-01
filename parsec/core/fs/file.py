@@ -266,12 +266,15 @@ class BaseFileEntry(BaseEntry):
                 block_start_data = start_offset[index] - block.offset
                 block_end_data = offset - block.offset
                 if block_start_data != block_end_data:
-                    data = await block.fetch_data()
-                    buffer = data[block_start_data:block_end_data]
-                    access = self._fs._dirty_block_access_cls(offset=start_offset[index],
-                                                              size=len(buffer))
-                    new_block = self._fs._block_cls(access, data=buffer)
-                    blocks.append(new_block)
+                    if block.offset == block_start_data and block.end == block_end_data:
+                        blocks.append(block)
+                    else:
+                        data = await block.fetch_data()
+                        buffer = data[block_start_data:block_end_data]
+                        access = self._fs._dirty_block_access_cls(offset=start_offset[index],
+                                                                  size=len(buffer))
+                        new_block = self._fs._block_cls(access, data=buffer)
+                        blocks.append(new_block)
                 del start_offset[index]
                 block_stack.pop()
                 if block_stack:
