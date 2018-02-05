@@ -27,7 +27,9 @@ build_exe_options = {
     "packages": ["idna", "trio._core", "nacl._sodium"],
     # nacl store it cffi shared lib in a very strange place...
     'include_files': _extract_libs_cffi_backend() + [(os.path.dirname(sys.executable) +
-                                                     '\DLLs\sqlite3.dll', 'sqlite3.dll')],
+                                                     '\DLLs\sqlite3.dll', 'sqlite3.dll'),
+                                                     (os.path.dirname(sys.executable) +
+                                                     '\DLLs\_sqlite3.pyd', '_sqlite3.pyd')],
 }
 
 
