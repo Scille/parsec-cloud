@@ -1,10 +1,6 @@
 import trio
 import click
 from urllib.parse import urlparse
-try:
-    import readline
-except ImportError:
-    import pyreadline as readline
 
 from parsec.core.cli import DEFAULT_CORE_SOCKET
 from parsec.utils import CookedSocket
@@ -55,6 +51,10 @@ async def repl(socket_path):
               help='Core socket to connect to (default: %s).' %
               DEFAULT_CORE_SOCKET)
 def cli(socket):
+    try:
+        import readline  # For Linux
+    except ModuleNotFoundError:
+        pass
     from parsec import __version__
 
     print('Parsec shell version: %s' % __version__)

@@ -26,10 +26,7 @@ def _extract_libs_cffi_backend():
 build_exe_options = {
     "packages": ["idna", "trio._core", "nacl._sodium"],
     # nacl store it cffi shared lib in a very strange place...
-    'include_files': _extract_libs_cffi_backend() + [
-        (os.path.join(os.path.dirname(sys.executable), 'DLLs', 'sqlite3.dll'), 'sqlite3.dll'),
-        (os.path.join(os.path.dirname(sys.executable), 'DLLs', '_sqlite3.pyd'), '_sqlite3.pyd'),
-    ],
+    'include_files': _extract_libs_cffi_backend(),
 }
 
 
@@ -49,7 +46,6 @@ requirements = [
     'pendulum==1.3.1',
     'PyNaCl==1.2.0',
     'simplejson==3.10.0',
-    'pyreadline==2.1',
     'python-decouple==3.1',
     'trio==0.3.0',
 ]
