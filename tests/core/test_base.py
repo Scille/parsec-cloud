@@ -139,3 +139,10 @@ async def test_bad_cmd(alice_core_sock):
     await alice_core_sock.send({'cmd': 'dummy'})
     rep = await alice_core_sock.recv()
     assert rep == {'status': 'unknown_command'}
+
+
+@pytest.mark.trio
+async def test_bad_msg_format(alice_core_sock):
+    await alice_core_sock.sockstream.send_all(b'fooo\n')
+    rep = await alice_core_sock.recv()
+    assert rep == {'status': 'invalid_msg_format'}

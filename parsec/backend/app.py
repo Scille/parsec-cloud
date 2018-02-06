@@ -3,6 +3,7 @@ import trio
 import blinker
 from nacl.public import PublicKey
 from nacl.signing import VerifyKey
+from json import JSONDecodeError
 
 from parsec.utils import CookedSocket, ParsecError
 from parsec.handshake import HandshakeFormatError, ServerHandshake
@@ -282,7 +283,12 @@ class BackendApp:
                 return
             print('HANDSHAKE DONE, CLIENT IS `%s`' % client_ctx.id)
             while True:
-                req = await sock.recv()
+                try:
+                    req = await sock.recv()
+                except JSONDecodeError:
+                    rep = {'status': 'invalid_msg_format'}
+                    await sock.send(rep)
+                    continue
                 if not req:  # Client disconnected
                     print('CLIENT DISCONNECTED')
                     break
@@ -295,7 +301,7 @@ class BackendApp:
                     else:
                         cmd_func = self.cmds[cmd]
                 except KeyError:
-                    rep = {'status': 'bad_cmd', 'reason': 'Unknown command `%s`' % cmd}
+                    rep = {'status': 'unknown_command'}
                 else:
                     try:
                         rep = await cmd_func(client_ctx, req)

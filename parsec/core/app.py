@@ -2,6 +2,7 @@ import trio
 import blinker
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
+from json import JSONDecodeError
 
 from parsec.core.fs import fs_factory
 from parsec.core.fs_api import FSApi
@@ -114,7 +115,12 @@ class CoreApp:
         try:
             sock = CookedSocket(sockstream)
             while True:
-                req = await sock.recv()
+                try:
+                    req = await sock.recv()
+                except JSONDecodeError:
+                    rep = {'status': 'invalid_msg_format'}
+                    await sock.send(rep)
+                    continue
                 if not req:  # Client disconnected
                     print('CLIENT DISCONNECTED')
                     return
