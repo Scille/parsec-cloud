@@ -15,6 +15,13 @@ from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 def pytest_addoption(parser):
     parser.addoption("--no-postgresql", action="store_true",
                      help="Don't run tests making use of PostgreSQL")
+    parser.addoption("--runslow", action="store_true",
+                     help="Don't skip slow tests")
+
+
+def pytest_runtest_setup(item):
+    if 'slow' in item.keywords and not item.config.getoption('--runslow'):
+        pytest.skip('need --runslow option to run')
 
 
 DEFAULT_POSTGRESQL_TEST_URL = '/parsec_test'

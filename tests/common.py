@@ -421,18 +421,20 @@ async def connect_backend(backend, auth_as=None):
     async with run_app(backend) as connection_factory:
         sockstream = await connection_factory()
         sock = QuitTestOnBrokenStreamCookedSocket(sockstream)
-        if auth_as:
-            # Handshake
-            if auth_as == 'anonymous':
-                ch = AnonymousClientHandshake()
-            else:
-                ch = ClientHandshake(auth_as.id, auth_as.device_signkey)
-            challenge_req = await sock.recv()
-            answer_req = ch.process_challenge_req(challenge_req)
-            await sock.send(answer_req)
-            result_req = await sock.recv()
-            ch.process_result_req(result_req)
         try:
+
+            if auth_as:
+                # Handshake
+                if auth_as == 'anonymous':
+                    ch = AnonymousClientHandshake()
+                else:
+                    ch = ClientHandshake(auth_as.id, auth_as.device_signkey)
+                challenge_req = await sock.recv()
+                answer_req = ch.process_challenge_req(challenge_req)
+                await sock.send(answer_req)
+                result_req = await sock.recv()
+                ch.process_result_req(result_req)
+
             yield sock
         except QuitTestDueToBrokenStream:
             # Exception should be raised from the handle_client coroutine in nursery
