@@ -2,9 +2,7 @@ import os
 import attr
 import pytest
 from hypothesis import strategies as st, note
-from hypothesis.stateful import Bundle, rule, invariant
-
-from parsec.utils import to_jsonb64, from_jsonb64
+from hypothesis.stateful import Bundle, rule
 
 from tests.common import connect_core, core_factory
 
@@ -14,26 +12,50 @@ class OracleFS:
     root = attr.ib(default=attr.Factory(dict))
 
     def create_file(self, parent_path, name):
-        import pdb; pdb.set_trace()
         parent_folder = self.get_folder(parent_path)
         if parent_folder is None or name in parent_folder:
-            return None
+            return False
         parent_folder[name] = '<file>'
-        return 
+        return True
 
     def create_folder(self, parent_path, name):
         parent_folder = self.get_folder(parent_path)
         if parent_folder is None or name in parent_folder:
-            return None
+            return False
         parent_folder[name] = {}
+        return True
+
+    def delete(self, path):
+        parent_path, name = path.rsplit('/', 1)
+        parent_dir = self.get_path(parent_path)
+        if isinstance(parent_dir, dict) and name in parent_dir:
+            del parent_dir[name]
+            return True
+        else:
+            return False
+
+    def move(self, src, dst):
+        parent_src, name_src = src.rsplit('/', 1)
+        parent_dst, name_dst = dst.rsplit('/', 1)
+
+        parent_dir_src = self.get_folder(parent_src)
+        parent_dir_dst = self.get_folder(parent_dst)
+
+        if parent_dir_src is None or name_src not in parent_dir_src:
+            return False
+        if parent_dir_dst is None or name_dst in parent_dir_dst:
+            return False
+
+        parent_dir_dst[name_dst] = parent_dir_src.pop(name_src)
+        return True
 
     def get_folder(self, path):
         elem = self.get_path(path)
-        return elem if elem is not '<file>' else None
+        return elem if elem != '<file>' else None
         
     def get_file(self, path):
         elem = self.get_path(path)
-        return elem if elem is '<file>' else None
+        return elem if elem == '<file>' else None
         
     def get_path(self, path):
         current_folder = self.root
@@ -46,25 +68,11 @@ class OracleFS:
         return current_folder
 
 
-@attr.s
-class File:
-    path = attr.ib()
-
-
-@attr.s
-class Folder:
-    path = attr.ib()
-
-    def file_child(self, name):
-        return File(os.path.join(self.path, name))
-
-    def folder_child(self, name):
-        return Folder(os.path.join(self.path, name))
-
-
 @pytest.mark.slow
 @pytest.mark.trio
 async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, tmpdir, alice, monitor):
+
+    st_entry_name = st.text(min_size=1).filter(lambda x: '/' not in x)
 
     class CoreOfflineRWFile(TrioDriverRuleBasedStateMachine):
         Files = Bundle('file')
@@ -100,35 +108,72 @@ async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, 
         def init_root(self):
             return '/'
 
-        @rule(target=Files, parent=Folders, name=st.text(min_size=1))
+        @rule(target=Files, parent=Folders, name=st_entry_name)
         def create_file(self, parent, name):
+            print('create_file', parent, name)
             path = os.path.join(parent, name)
             rep = self.core_cmd({'cmd': 'file_create', 'path': path})
             note(rep)
-            if self.oracle_fs.create_file(parent, name) is None:
-                assert rep['status'] != 'ok'
-            else:
+            if self.oracle_fs.create_file(parent, name):
                 assert rep == {'status': 'ok'}
+            else:
+                assert rep['status'] != 'ok'
             return path
 
-        @rule(target=Folders, parent=Folders, name=st.text(min_size=1))
+        @rule(target=Folders, parent=Folders, name=st_entry_name)
         def create_folder(self, parent, name):
+            print('create_folder', parent, name)
             path = os.path.join(parent, name)
-            rep = self.core_cmd({'cmd': 'file_folder', 'path': path})
+            rep = self.core_cmd({'cmd': 'folder_create', 'path': path})
             note(rep)
-            if self.oracle_fs.create_file(parent, name) is None:
-                assert rep['status'] != 'ok'
-            else:
+            if self.oracle_fs.create_folder(parent, name):
                 assert rep == {'status': 'ok'}
+            else:
+                assert rep['status'] != 'ok'
             return path
 
-        def delete_entry():
-            pass
+        @rule(path=Files)
+        def delete_file(self, path):
+            print('delete_file', path)
+            rep = self.core_cmd({'cmd': 'delete', 'path': path})
+            note(rep)
+            if self.oracle_fs.delete(path):
+                assert rep == {'status': 'ok'}
+            else:
+                assert rep['status'] != 'ok'
 
-        def move_entry():
-            pass
+        @rule(path=Folders)
+        def delete_folder(self, path):
+            print('delete_folder', path)
+            rep = self.core_cmd({'cmd': 'delete', 'path': path})
+            note(rep)
+            if self.oracle_fs.delete(path):
+                assert rep == {'status': 'ok'}
+            else:
+                assert rep['status'] != 'ok'
 
-        def copy_entry():
-            pass
+        @rule(target=Files, src=Files, dst_parent=Folders, dst_name=st_entry_name)
+        def move_file(self, src, dst_parent, dst_name):
+            print('move_file', src, dst_parent, dst_name)
+            dst = os.path.join(dst_parent, dst_name)
+            rep = self.core_cmd({'cmd': 'move', 'src': src, 'dst': dst})
+            note(rep)
+            if self.oracle_fs.move(src, dst):
+                assert rep == {'status': 'ok'}
+            else:
+                assert rep['status'] != 'ok'
+            return dst
+
+        @rule(target=Folders, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
+        def move_folder(self, src, dst_parent, dst_name):
+            print('move_folder', src, dst_parent, dst_name)
+            dst = os.path.join(dst_parent, dst_name)
+            rep = self.core_cmd({'cmd': 'move', 'src': src, 'dst': dst})
+            note(rep)
+            if self.oracle_fs.move(src, dst):
+                assert rep == {'status': 'ok'}
+            else:
+                assert rep['status'] != 'ok'
+            return dst
 
     await CoreOfflineRWFile.run_test()
