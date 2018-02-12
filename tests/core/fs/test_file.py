@@ -203,6 +203,14 @@ async def test_write(fs):
 
 
 @pytest.mark.trio
+async def test_write_empty(fs):
+    file = create_file(fs, 'foo')
+    await file.write(b'')
+    out = await file.read()
+    assert out == b''
+
+
+@pytest.mark.trio
 async def test_write_overwrite(fs):
     file = create_file(fs, 'foo')
     await file.write(b'123')

@@ -72,8 +72,7 @@ async def test_offline_core_rwfile(TrioDriverRuleBasedStateMachine, backend_addr
             note(rep)
             assert rep['status'] == 'ok'
 
-        @rule(offset=st.integers(min_value=0), content=st.binary(min_size=1))
-        # @rule(offset=st.integers(min_value=0), content=st.binary())
+        @rule(offset=st.integers(min_value=0), content=st.binary())
         def write(self, offset, content):
             b64content = to_jsonb64(content)
             rep = self.core_cmd({

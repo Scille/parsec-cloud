@@ -140,6 +140,8 @@ class BaseFileEntry(BaseEntry):
         return out
 
     async def read(self, size=None, offset=0):
+        if size == 0:
+            return b''
         async with self.acquire_read():
             return await self.read_no_lock(size, offset)
 
@@ -153,6 +155,8 @@ class BaseFileEntry(BaseEntry):
         self._modified()
 
     async def write(self, buffer, offset=0):
+        if not buffer:
+            return
         async with self.acquire_write():
             await self.write_no_lock(buffer, offset)
 
