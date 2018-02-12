@@ -40,7 +40,7 @@ requirements = [
     'attrs==17.3.0',
     'blinker==1.4.0',
     'click==6.7',
-    'Logbook==1.1.0',
+    'Logbook==1.2.1',
     'marshmallow==2.14.0',
     'marshmallow-oneofschema==1.0.5',
     'pendulum==1.3.1',
