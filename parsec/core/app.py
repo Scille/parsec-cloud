@@ -1,6 +1,7 @@
 import trio
 import blinker
 import logbook
+import traceback
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 from json import JSONDecodeError
@@ -143,6 +144,11 @@ class CoreApp:
         except trio.BrokenStreamError:
             # Client has closed connection
             pass
+        except Exception:
+            # If we are here, something unexpected happened...
+            logger.error(traceback.format_exc())
+            await sock.aclose()
+            raise
 
     async def login(self, device):
         self.auth_subscribed_events = {}
