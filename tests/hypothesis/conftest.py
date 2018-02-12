@@ -1,8 +1,23 @@
 import pytest
 import trio
 import queue
+from functools import wraps
 from contextlib import contextmanager
-from hypothesis.stateful import RuleBasedStateMachine, run_state_machine_as_test
+from hypothesis.stateful import RuleBasedStateMachine, run_state_machine_as_test, invariant
+
+from tests.common import QuitTestDueToBrokenStream
+
+
+def skip_on_broken_stream(fn):
+
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except QuitTestDueToBrokenStream:
+            pass
+
+    return wrapper
 
 
 class ThreadToTrioCommunicator:
@@ -13,7 +28,10 @@ class ThreadToTrioCommunicator:
 
     def send(self, msg):
         self.portal.run(self.trio_queue.put, msg)
-        return self.queue.get()
+        ret = self.queue.get()
+        if isinstance(ret, Exception):
+            raise ret
+        return ret
 
     async def trio_recv(self):
         return await self.trio_queue.get()
@@ -22,7 +40,7 @@ class ThreadToTrioCommunicator:
         self.queue.put(msg)
 
     def close(self):
-        self.queue.put(None)
+        self.queue.put(QuitTestDueToBrokenStream())
 
 
 @pytest.fixture
@@ -51,11 +69,18 @@ async def TrioDriverRuleBasedStateMachine(nursery, portal):
             raise NotImplementedError()
 
         async def _trio_runner(self, *, task_status=trio.TASK_STATUS_IGNORED):
-            with trio.open_cancel_scope() as self._trio_runner_cancel_scope:
-                await self.trio_runner(task_status)
+            try:
+                with trio.open_cancel_scope() as self._trio_runner_cancel_scope:
+                    await self.trio_runner(task_status)
+            except Exception as exc:
+                # The trick here is to avoid raising the exception here given
+                # otherwise hypothesis will consider the crash comes from the
+                # previously executed rule.
+                self.trio_runner_crash = exc
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
+            self.trio_runner_crash = None
             self._portal.run(self._nursery.start, self._trio_runner)
 
         def teardown(self):
@@ -68,5 +93,12 @@ async def TrioDriverRuleBasedStateMachine(nursery, portal):
                 yield communicator
             finally:
                 communicator.close()
+
+        @invariant()
+        def check_trio_runner_crash(self):
+            # After each rule we make sure the trio runner hasn't crashed,
+            # so we can be sure which rule caused it.
+            if self.trio_runner_crash:
+                raise self.trio_runner_crash
 
     return TrioDriverRuleBasedStateMachine
