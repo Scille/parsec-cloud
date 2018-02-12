@@ -146,6 +146,8 @@ class BaseFileEntry(BaseEntry):
             return await self.read_no_lock(size, offset)
 
     async def write_no_lock(self, buffer, offset=0):
+        if offset > self.size:
+            offset = self.size
         # Create a new dirty block
         access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer))
         block = self._fs._block_cls(access, data=buffer)
