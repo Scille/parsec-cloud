@@ -100,7 +100,9 @@ class BaseFileEntry(BaseEntry):
         # Fetch the blocks
         # Fetch the dirty blocks
         # Combine everything together
-        size = size if (size is not None and 0 < size < self.size) else self.size
+        size = size if (size is not None and 0 <= size + offset < self.size) else self.size - offset
+        if size < 0:
+            size = 0
         end = offset + size
 
         # Get all buffer
