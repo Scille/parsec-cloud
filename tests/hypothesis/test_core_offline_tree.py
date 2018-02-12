@@ -14,25 +14,25 @@ class OracleFS:
     def create_file(self, parent_path, name):
         parent_folder = self.get_folder(parent_path)
         if parent_folder is None or name in parent_folder:
-            return False
+            return 'invalid_path'
         parent_folder[name] = '<file>'
-        return True
+        return 'ok'
 
     def create_folder(self, parent_path, name):
         parent_folder = self.get_folder(parent_path)
         if parent_folder is None or name in parent_folder:
-            return False
+            return 'invalid_path'
         parent_folder[name] = {}
-        return True
+        return 'ok'
 
     def delete(self, path):
         parent_path, name = path.rsplit('/', 1)
         parent_dir = self.get_path(parent_path)
         if isinstance(parent_dir, dict) and name in parent_dir:
             del parent_dir[name]
-            return True
+            return 'ok'
         else:
-            return False
+            return 'invalid_path'
 
     def move(self, src, dst):
         parent_src, name_src = src.rsplit('/', 1)
@@ -42,12 +42,12 @@ class OracleFS:
         parent_dir_dst = self.get_folder(parent_dst)
 
         if parent_dir_src is None or name_src not in parent_dir_src:
-            return False
+            return 'invalid_path'
         if parent_dir_dst is None or name_dst in parent_dir_dst:
-            return False
+            return 'invalid_path'
 
         parent_dir_dst[name_dst] = parent_dir_src.pop(name_src)
-        return True
+        return 'ok'
 
     def get_folder(self, path):
         elem = self.get_path(path)
@@ -113,10 +113,8 @@ async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, 
             path = os.path.join(parent, name)
             rep = self.core_cmd({'cmd': 'file_create', 'path': path})
             note(rep)
-            if self.oracle_fs.create_file(parent, name):
-                assert rep == {'status': 'ok'}
-            else:
-                assert rep['status'] != 'ok'
+            expected_status = self.oracle_fs.create_file(parent, name)
+            assert rep['status'] == expected_status
             return path
 
         @rule(target=Folders, parent=Folders, name=st_entry_name)
@@ -124,39 +122,31 @@ async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, 
             path = os.path.join(parent, name)
             rep = self.core_cmd({'cmd': 'folder_create', 'path': path})
             note(rep)
-            if self.oracle_fs.create_folder(parent, name):
-                assert rep == {'status': 'ok'}
-            else:
-                assert rep['status'] != 'ok'
+            expected_status = self.oracle_fs.create_folder(parent, name)
+            assert rep['status'] == expected_status
             return path
 
         @rule(path=Files)
         def delete_file(self, path):
             rep = self.core_cmd({'cmd': 'delete', 'path': path})
             note(rep)
-            if self.oracle_fs.delete(path):
-                assert rep == {'status': 'ok'}
-            else:
-                assert rep['status'] != 'ok'
+            expected_status = self.oracle_fs.delete(path)
+            assert rep['status'] == expected_status
 
         @rule(path=Folders)
         def delete_folder(self, path):
             rep = self.core_cmd({'cmd': 'delete', 'path': path})
             note(rep)
-            if self.oracle_fs.delete(path):
-                assert rep == {'status': 'ok'}
-            else:
-                assert rep['status'] != 'ok'
+            expected_status = self.oracle_fs.delete(path)
+            assert rep['status'] == expected_status
 
         @rule(target=Files, src=Files, dst_parent=Folders, dst_name=st_entry_name)
         def move_file(self, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd({'cmd': 'move', 'src': src, 'dst': dst})
             note(rep)
-            if self.oracle_fs.move(src, dst):
-                assert rep == {'status': 'ok'}
-            else:
-                assert rep['status'] != 'ok'
+            expected_status = self.oracle_fs.move(src, dst)
+            assert rep['status'] == expected_status
             return dst
 
         @rule(target=Folders, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
@@ -164,10 +154,8 @@ async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, 
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd({'cmd': 'move', 'src': src, 'dst': dst})
             note(rep)
-            if self.oracle_fs.move(src, dst):
-                assert rep == {'status': 'ok'}
-            else:
-                assert rep['status'] != 'ok'
+            expected_status = self.oracle_fs.move(src, dst)
+            assert rep['status'] == expected_status
             return dst
 
     await CoreOfflineRWFile.run_test()
