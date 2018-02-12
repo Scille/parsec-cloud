@@ -1,5 +1,6 @@
 import trio
 import blinker
+import logbook
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 from json import JSONDecodeError
@@ -13,6 +14,9 @@ from parsec.core.backend_connection import (
     BackendConnection, BackendNotAvailable, backend_send_anonymous_cmd)
 from parsec.utils import CookedSocket, ParsecError, to_jsonb64, from_jsonb64
 from parsec.schema import BaseCmdSchema, fields, validate
+
+
+logger = logbook.Logger("parsec.core.app")
 
 
 class cmd_LOGIN_Schema(BaseCmdSchema):
@@ -122,9 +126,9 @@ class CoreApp:
                     await sock.send(rep)
                     continue
                 if not req:  # Client disconnected
-                    print('CLIENT DISCONNECTED')
+                    logger.debug('CLIENT DISCONNECTED')
                     return
-                print('REQ %s' % req)
+                logger.debug('REQ %s' % req)
                 try:
                     cmd_func = self.cmds[req['cmd']]
                 except KeyError:
@@ -134,7 +138,7 @@ class CoreApp:
                         rep = await cmd_func(req)
                     except ParsecError as err:
                         rep = err.to_dict()
-                print('REP %s' % rep)
+                logger.debug('REP %s' % rep)
                 await sock.send(rep)
         except trio.BrokenStreamError:
             # Client has closed connection
@@ -335,7 +339,7 @@ class CoreApp:
             try:
                 self.auth_events.put_nowait((event, sender))
             except trio.WouldBlock:
-                print('WARNING: event queue is full')
+                logger.warning('event queue is full')
 
         self.auth_subscribed_events[event, subject] = _handle_event
         if event == 'device_try_claim_submitted':

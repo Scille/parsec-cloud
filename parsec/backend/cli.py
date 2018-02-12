@@ -1,5 +1,6 @@
 import trio
 import click
+import logbook
 
 from parsec.backend import BackendApp, BackendConfig
 
@@ -49,6 +50,8 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option('--block-store', '-b', default=None,
     help="URL of the block store the clients should write into (default: "
     "backend creates it own in-memory block store).")
+@click.option('--log-level', '-l', default='WARNING',
+              type=click.Choice(('DEBUG', 'INFO', 'WARNING', 'ERROR')))
 @click.option('--debug', '-d', is_flag=True)
 @click.option('--pdb', is_flag=True)
 def backend_cmd(**kwargs):
@@ -58,7 +61,10 @@ def backend_cmd(**kwargs):
         return _backend(**kwargs)
 
 
-def _backend(host, port, pubkeys, store, block_store, debug):
+def _backend(host, port, pubkeys, store, block_store, debug, log_level):
+    log_handler = logbook.StderrHandler(level=log_level.upper())
+    # Push globally the log handler make it work across threads
+    log_handler.push_application()
     config = BackendConfig(
         debug=debug,
         blockstore_url=block_store,

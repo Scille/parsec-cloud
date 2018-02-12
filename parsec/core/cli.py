@@ -3,6 +3,7 @@ import os.path
 import click
 import shutil
 import tempfile
+import logbook
 from urllib.parse import urlparse
 
 from parsec.core import CoreApp, CoreConfig, Device
@@ -51,6 +52,8 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option('--backend-addr', '-A', default='tcp://127.0.0.1:6777')
 @click.option('--backend-watchdog', '-W', type=click.INT, default=None)
 @click.option('--debug', '-d', is_flag=True)
+@click.option('--log-level', '-l', default='WARNING',
+              type=click.Choice(('DEBUG', 'INFO', 'WARNING', 'ERROR')))
 @click.option('--pdb', is_flag=True)
 # @click.option('--identity', '-i', default=None)
 # @click.option('--identity-key', '-I', type=click.File('rb'), default=None)
@@ -63,7 +66,10 @@ def core_cmd(**kwargs):
         return _core(**kwargs)
 
 
-def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
+def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
+    log_handler = logbook.StderrHandler(level=log_level.upper())
+    # Push globally the log handler make it work across threads
+    log_handler.push_application()
     config = CoreConfig(
         debug=debug,
         addr=socket,

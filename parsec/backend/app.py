@@ -1,6 +1,7 @@
 import attr
 import trio
 import blinker
+import logbook
 from nacl.public import PublicKey
 from nacl.signing import VerifyKey
 from json import JSONDecodeError
@@ -28,6 +29,9 @@ from parsec.backend.drivers.postgresql import (
 )
 
 from parsec.backend.exceptions import NotFoundError
+
+
+logger = logbook.Logger("parsec.backend.app")
 
 
 class cmd_LOGIN_Schema(BaseCmdSchema):
@@ -200,7 +204,7 @@ class BackendApp:
             try:
                 client_ctx.events.put_nowait((event, sender))
             except trio.WouldBlock:
-                print('WARNING: event queue is full for %s' % client_ctx.id)
+                logger.warning('event queue is full for %s' % client_ctx.id)
 
         client_ctx.subscribed_events[event, subject] = _handle_event
         if subject:
@@ -275,13 +279,13 @@ class BackendApp:
     async def handle_client(self, sockstream):
         sock = CookedSocket(sockstream)
         try:
-            print('START HANDSHAKE')
+            logger.debug('START HANDSHAKE')
             client_ctx = await self._do_handshake(sock)
             if not client_ctx:
                 # Invalid handshake
-                print('BAD HANDSHAKE')
+                logger.debug('BAD HANDSHAKE')
                 return
-            print('HANDSHAKE DONE, CLIENT IS `%s`' % client_ctx.id)
+            logger.debug('HANDSHAKE DONE, CLIENT IS `%s`' % client_ctx.id)
             while True:
                 try:
                     req = await sock.recv()
@@ -290,9 +294,9 @@ class BackendApp:
                     await sock.send(rep)
                     continue
                 if not req:  # Client disconnected
-                    print('CLIENT DISCONNECTED')
+                    logger.debug('CLIENT DISCONNECTED')
                     break
-                print('REQ %s' % req)
+                logger.debug('REQ %s' % req)
                 # TODO: handle bad msg
                 try:
                     cmd = req.get('cmd', '<missing>')
@@ -307,7 +311,7 @@ class BackendApp:
                         rep = await cmd_func(client_ctx, req)
                     except ParsecError as err:
                         rep = err.to_dict()
-                print('REP %s' % rep)
+                logger.debug('REP %s' % rep)
                 await sock.send(rep)
         except trio.BrokenStreamError:
             # Client has closed connection

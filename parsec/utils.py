@@ -24,14 +24,12 @@ class CookedSocket:
         await self.sockstream.aclose()
 
     async def send(self, msg):
-        # print('[%s]==>%s' % (self.sockstream, msg))
         await self.sockstream.send_all(json.dumps(msg).encode() + b'\n')
 
     async def recv(self):
         raw = b''
         # TODO: handle message longer than BUFFSIZE...
         raw = await self.sockstream.receive_some(BUFFSIZE)
-        # print('[%s]<==%s' % (self.sockstream, raw))
         if not raw:
             # Empty body should normally never occurs, though it is sent
             # when peer closes connection
