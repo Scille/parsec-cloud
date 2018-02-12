@@ -65,6 +65,7 @@ test_requirements = [
     'wheel',
     'Sphinx',
     'flake8',
+    'hypothesis',
     'bumpversion',
 ]
 
