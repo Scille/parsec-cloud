@@ -70,7 +70,14 @@ class OracleFS:
 
 @pytest.mark.slow
 @pytest.mark.trio
-async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, tmpdir, alice, monitor):
+async def test_offline_core_tree(
+    TrioDriverRuleBasedStateMachine,
+    mocked_local_storage_connection,
+    backend_addr,
+    tmpdir,
+    alice,
+    monitor
+):
 
     st_entry_name = st.text(min_size=1).filter(lambda x: '/' not in x)
 
@@ -80,6 +87,7 @@ async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, 
         count = 0
 
         async def trio_runner(self, task_status):
+            mocked_local_storage_connection.reset()
             self.oracle_fs = OracleFS()
 
             type(self).count += 1
@@ -87,8 +95,6 @@ async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, 
                 'base_settings_path': tmpdir.mkdir('try-%s' % self.count).strpath,
                 'backend_addr': backend_addr,
             }
-            # Hack...
-            alice.local_storage_db_path = ':memory:'
 
             async with core_factory(**config) as core:
                 await core.login(alice)

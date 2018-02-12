@@ -4,6 +4,7 @@ import socket
 import contextlib
 from unittest.mock import patch
 
+from parsec.core.local_storage import LocalStorage
 from parsec.core.devices_manager import Device
 
 from tests.common import (
@@ -179,3 +180,45 @@ async def alice_core_sock(core, alice):
     async with connect_core(core) as sock:
         await core.login(alice)
         yield sock
+
+
+@pytest.fixture
+def mocked_local_storage_connection():
+    # Persistent local storage is achieve by using sqlite storing in FS.
+    # However it is a lot faster to store in memory and just pass around the
+    # sqlite connection object.
+    # Given each core should have it own device, no inter-core concurrency
+    # should occurs.
+
+    class MockedLocalStorageConnection:
+        _conn = None
+
+        def reset(self):
+            ls = LocalStorage(':memory:')
+            vanilla_init(ls)
+            self._conn = ls.conn
+
+        @property
+        def conn(self):
+            if not self._conn:
+                self.reset()
+            return self._conn
+
+    mock = MockedLocalStorageConnection()
+
+    def mock_init(self):
+        self.conn = mock.conn
+
+    def mock_teardown(self):
+        self.conn = None
+
+    vanilla_init = LocalStorage.init
+    vanilla_teardown = LocalStorage.teardown
+    LocalStorage.init = mock_init
+    LocalStorage.teardown = mock_teardown
+
+    try:
+        yield mock
+    finally:
+        LocalStorage.init = vanilla_init
+        LocalStorage.teardown = vanilla_teardown

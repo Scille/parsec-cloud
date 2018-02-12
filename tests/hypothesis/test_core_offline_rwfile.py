@@ -1,6 +1,6 @@
 import pytest
 from hypothesis import strategies as st, note
-from hypothesis.stateful import Bundle, rule, invariant
+from hypothesis.stateful import rule
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
@@ -20,19 +20,25 @@ class FileOracle:
 
 @pytest.mark.slow
 @pytest.mark.trio
-async def test_offline_core_rwfile(TrioDriverRuleBasedStateMachine, backend_addr, tmpdir, alice, monitor):
+async def test_offline_core_rwfile(
+    TrioDriverRuleBasedStateMachine,
+    mocked_local_storage_connection,
+    backend_addr,
+    tmpdir,
+    alice,
+    monitor
+):
 
     class CoreOfflineRWFile(TrioDriverRuleBasedStateMachine):
         count = 0
 
         async def trio_runner(self, task_status):
+            mocked_local_storage_connection.reset()
             type(self).count += 1
             config = {
                 'base_settings_path': tmpdir.mkdir('try-%s' % self.count).strpath,
                 'backend_addr': backend_addr,
             }
-            # Hack...
-            alice.local_storage_db_path = ':memory:'
 
             async with core_factory(**config) as core:
                 await core.login(alice)
