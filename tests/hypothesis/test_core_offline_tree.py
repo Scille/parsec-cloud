@@ -110,7 +110,6 @@ async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, 
 
         @rule(target=Files, parent=Folders, name=st_entry_name)
         def create_file(self, parent, name):
-            print('create_file', parent, name)
             path = os.path.join(parent, name)
             rep = self.core_cmd({'cmd': 'file_create', 'path': path})
             note(rep)
@@ -122,7 +121,6 @@ async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, 
 
         @rule(target=Folders, parent=Folders, name=st_entry_name)
         def create_folder(self, parent, name):
-            print('create_folder', parent, name)
             path = os.path.join(parent, name)
             rep = self.core_cmd({'cmd': 'folder_create', 'path': path})
             note(rep)
@@ -134,7 +132,6 @@ async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, 
 
         @rule(path=Files)
         def delete_file(self, path):
-            print('delete_file', path)
             rep = self.core_cmd({'cmd': 'delete', 'path': path})
             note(rep)
             if self.oracle_fs.delete(path):
@@ -144,7 +141,6 @@ async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, 
 
         @rule(path=Folders)
         def delete_folder(self, path):
-            print('delete_folder', path)
             rep = self.core_cmd({'cmd': 'delete', 'path': path})
             note(rep)
             if self.oracle_fs.delete(path):
@@ -154,7 +150,6 @@ async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, 
 
         @rule(target=Files, src=Files, dst_parent=Folders, dst_name=st_entry_name)
         def move_file(self, src, dst_parent, dst_name):
-            print('move_file', src, dst_parent, dst_name)
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd({'cmd': 'move', 'src': src, 'dst': dst})
             note(rep)
@@ -166,7 +161,6 @@ async def test_offline_core_tree(TrioDriverRuleBasedStateMachine, backend_addr, 
 
         @rule(target=Folders, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
         def move_folder(self, src, dst_parent, dst_name):
-            print('move_folder', src, dst_parent, dst_name)
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd({'cmd': 'move', 'src': src, 'dst': dst})
             note(rep)
