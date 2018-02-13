@@ -81,6 +81,7 @@ class BaseFileEntry(BaseEntry):
             'base_version': self._base_version,
             'created': self._created,
             'updated': self._updated,
+            'size': self._size,
             'blocks': [v._access.dump() for v in self._blocks],
             'dirty_blocks': [v._access.dump() for v in self._dirty_blocks],
         }
