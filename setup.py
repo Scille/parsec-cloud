@@ -58,6 +58,7 @@ test_requirements = [
     'pytest',
     'pytest-cov',
     'pytest-trio',
+    'pytest-logbook',
     # Libfaketime is much faster than Freezegun but UNIX only
     'pytest-libfaketime;platform_system!="Windows"',
     'freezegun;platform_system=="Windows"',
