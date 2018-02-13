@@ -54,7 +54,7 @@ async def test_offline_core_rwfile(
                         task_status.started()
 
                         while True:
-                            msg = await core_communicator.trio_recv()
+                            msg, = await core_communicator.trio_recv()
                             await sock.send(msg)
                             rep = await sock.recv()
                             await core_communicator.trio_respond(rep)
