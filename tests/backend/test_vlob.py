@@ -1,10 +1,14 @@
 import pytest
-from trio.testing import trio_test
-from nacl.public import PrivateKey
 
 from parsec.utils import to_jsonb64
 
-from tests.common import with_backend, async_patch
+from tests.common import connect_backend
+
+
+async def populate_backend_vlob(backend):
+    await backend.vlob.create('1', '<1 rts>', '<1 wts>', b'1 blob v1')
+    await backend.vlob.update('1', '<1 wts>', 2, b'1 blob v2')
+    await backend.vlob.create('2', '<2 rts>', '<2 wts>', b'2 blob v1')
 
 
 def _get_existing_vlob(backend):
@@ -19,10 +23,9 @@ def _get_existing_vlob(backend):
     ('foo', None),
     ('bar', b'Initial commit.')
 ], ids=lambda x: 'id=%s, blob=%s' % x)
-@trio_test
-@with_backend()
-async def test_vlob_create_and_read(backend, id, blob):
-    async with backend.test_connect('alice@test') as sock:
+@pytest.mark.trio
+async def test_vlob_create_and_read(backend, alice, id, blob):
+    async with connect_backend(backend, auth_as=alice) as sock:
         payload = {}
         if id:
             payload['id'] = id
@@ -39,7 +42,7 @@ async def test_vlob_create_and_read(backend, id, blob):
             assert rep['id']
             id = rep['id']
 
-    async with backend.test_connect('alice@test') as sock:
+    async with connect_backend(backend, auth_as=alice) as sock:
         await sock.send({'cmd': 'vlob_read', 'id': rep['id'], 'trust_seed': rep['read_trust_seed']})
         rep = await sock.recv()
         expected_content = to_jsonb64(b'' if not blob else blob)
@@ -59,36 +62,32 @@ async def test_vlob_create_and_read(backend, id, blob):
     {'id': '', 'blob': to_jsonb64(b'...')},  # Id is 1 long min
     {'id': 'X' * 33, 'blob': to_jsonb64(b'...')},  # Id is 32 long max
 ])
-@trio_test
-@with_backend()
-async def test_vlob_create_bad_msg(backend, bad_msg):
-    async with backend.test_connect('alice@test') as sock:
-        await sock.send({'cmd': 'vlob_create', **bad_msg})
-        rep = await sock.recv()
-        assert rep['status'] == 'bad_message'
+@pytest.mark.trio
+async def test_vlob_create_bad_msg(alice_backend_sock, bad_msg):
+    await alice_backend_sock.send({'cmd': 'vlob_create', **bad_msg})
+    rep = await alice_backend_sock.recv()
+    assert rep['status'] == 'bad_message'
 
 
-@trio_test
-@with_backend()
-async def test_vlob_read_not_found(backend):
-    async with backend.test_connect('alice@test') as sock:
-        await sock.send({'cmd': 'vlob_read', 'id': '1234', 'trust_seed': 'TS4242'})
-        rep = await sock.recv()
-        assert rep == {'status': 'not_found_error', 'reason': 'Vlob not found.'}
+@pytest.mark.trio
+async def test_vlob_read_not_found(alice_backend_sock):
+    await alice_backend_sock.send({'cmd': 'vlob_read', 'id': '1234', 'trust_seed': 'TS4242'})
+    rep = await alice_backend_sock.recv()
+    assert rep == {'status': 'not_found_error', 'reason': 'Vlob not found.'}
 
 
-@trio_test
-@with_backend(populated_for='alice')
-async def test_vlob_read_ok(backend):
-    vid, vrts, vwts, vblobs = _get_existing_vlob(backend)
-    async with backend.test_connect('alice@test') as sock:
-        await sock.send({'cmd': 'vlob_read', 'id': vid, 'trust_seed': vrts})
-        rep = await sock.recv()
-        assert rep == {
-            'status': 'ok',
-            'id': vid,
-            'blob': to_jsonb64(vblobs[-1]),
-            'version': len(vblobs)
+@pytest.mark.trio
+async def test_vlob_read_ok(backend, alice_backend_sock):
+    await populate_backend_vlob(backend)
+
+    await alice_backend_sock.send({'cmd': 'vlob_read', 'id': '1', 'trust_seed': '<1 rts>'})
+    rep = await alice_backend_sock.recv()
+
+    assert rep == {
+        'status': 'ok',
+        'id': '1',
+        'blob': to_jsonb64(b'1 blob v2'),
+        'version': 2
     }
 
 
@@ -102,63 +101,56 @@ async def test_vlob_read_ok(backend):
     # {'id': '1234567890', 'trust_seed': 'TS4242'},  # TODO bad?
     {}
 ])
-@trio_test
-@with_backend()
-async def test_vlob_read_bad_msg(backend, bad_msg):
-    async with backend.test_connect('alice@test') as sock:
-        await sock.send({'cmd': 'vlob_read', **bad_msg})
-        rep = await sock.recv()
-        # Id and trust_seed are invalid anyway, but here we test another layer
-        # so it's not important as long as we get our `bad_message` status
-        assert rep['status'] == 'bad_message'
+@pytest.mark.trio
+async def test_vlob_read_bad_msg(alice_backend_sock, bad_msg):
+    await alice_backend_sock.send({'cmd': 'vlob_read', **bad_msg})
+    rep = await alice_backend_sock.recv()
+    # Id and trust_seed are invalid anyway, but here we test another layer
+    # so it's not important as long as we get our `bad_message` status
+    assert rep['status'] == 'bad_message'
 
 
-@trio_test
-@with_backend(populated_for='alice')
-async def test_read_bad_version(backend):
-    vid, vrts, vwts, vblobs = _get_existing_vlob(backend)
-    async with backend.test_connect('alice@test') as sock:
-        await sock.send({
-            'cmd': 'vlob_read',
-            'id': vid,
-            'trust_seed': vrts,
-            'version': len(vblobs) + 1
-        })
-        rep = await sock.recv()
-        assert rep == {'status': 'version_error', 'reason': 'Wrong blob version.'}
+@pytest.mark.trio
+async def test_read_bad_version(backend, alice_backend_sock):
+    await populate_backend_vlob(backend)
+
+    await alice_backend_sock.send({
+        'cmd': 'vlob_read',
+        'id': '1',
+        'trust_seed': '<1 rts>',
+        'version': 3
+    })
+    rep = await alice_backend_sock.recv()
+
+    assert rep == {'status': 'version_error', 'reason': 'Wrong blob version.'}
 
 
-@trio_test
-@with_backend(populated_for='alice')
-async def test_vlob_update_ok(backend):
-    vid, vrts, vwts, vblobs = _get_existing_vlob(backend)
-    blob = to_jsonb64(b'Next version.')
-    async with backend.test_connect('alice@test') as sock:
-        await sock.send({
-            'cmd': 'vlob_update',
-            'id': vid,
-            'trust_seed': vwts,
-            'version': len(vblobs) + 1,
-            'blob': blob
-        })
-        rep = await sock.recv()
-        assert rep == {'status': 'ok'}
+@pytest.mark.trio
+async def test_vlob_update_ok(backend, alice_backend_sock):
+    await populate_backend_vlob(backend)
+
+    await alice_backend_sock.send({
+        'cmd': 'vlob_update',
+        'id': '1',
+        'trust_seed': '<1 wts>',
+        'version': 3,
+        'blob': to_jsonb64(b'Next version.')
+    })
+    rep = await alice_backend_sock.recv()
+    assert rep == {'status': 'ok'}
 
 
-@trio_test
-@with_backend()
-async def test_vlob_update_not_found(backend):
-    blob = to_jsonb64(b'Next version.')
-    async with backend.test_connect('alice@test') as sock:
-        await sock.send({
-            'cmd': 'vlob_update',
-            'id': '123',
-            'trust_seed': 'WTS42',
-            'version': 2,
-            'blob': blob
-        })
-        rep = await sock.recv()
-        assert rep == {'status': 'not_found_error', 'reason': 'Vlob not found.'}
+@pytest.mark.trio
+async def test_vlob_update_not_found(alice_backend_sock):
+    await alice_backend_sock.send({
+        'cmd': 'vlob_update',
+        'id': '123',
+        'trust_seed': 'WTS42',
+        'version': 2,
+        'blob': to_jsonb64(b'Next version.')
+    })
+    rep = await alice_backend_sock.recv()
+    assert rep == {'status': 'not_found_error', 'reason': 'Vlob not found.'}
 
 
 @pytest.mark.parametrize('bad_msg', [
@@ -188,44 +180,42 @@ async def test_vlob_update_not_found(backend):
      'version': '42', 'blob': to_jsonb64(b'...')},
     {}
 ])
-@trio_test
-@with_backend()
-async def test_vlob_update_bad_msg(backend, bad_msg):
-    async with backend.test_connect('alice@test') as sock:
-        await sock.send({'cmd': 'vlob_update', **bad_msg})
-        rep = await sock.recv()
-        # Id and trust_seed are invalid anyway, but here we test another layer
-        # so it's not important as long as we get our `bad_message` status
-        assert rep['status'] == 'bad_message'
+@pytest.mark.trio
+async def test_vlob_update_bad_msg(alice_backend_sock, bad_msg):
+    await alice_backend_sock.send({'cmd': 'vlob_update', **bad_msg})
+    rep = await alice_backend_sock.recv()
+    # Id and trust_seed are invalid anyway, but here we test another layer
+    # so it's not important as long as we get our `bad_message` status
+    assert rep['status'] == 'bad_message'
 
 
-@trio_test
-@with_backend(populated_for='alice')
-async def test_update_bad_version(backend):
-    vid, vrts, vwts, vblobs = _get_existing_vlob(backend)
-    async with backend.test_connect('alice@test') as sock:
-        await sock.send({
-            'cmd': 'vlob_update',
-            'id': vid,
-            'trust_seed': vwts,
-            'version': len(vblobs) + 2,
-            'blob': to_jsonb64(b'Next version.')
-        })
-        rep = await sock.recv()
-        assert rep == {'status': 'version_error', 'reason': 'Wrong blob version.'}
+@pytest.mark.trio
+async def test_update_bad_version(backend, alice_backend_sock):
+    await populate_backend_vlob(backend)
+
+    await alice_backend_sock.send({
+        'cmd': 'vlob_update',
+        'id': '1',
+        'trust_seed': '<1 wts>',
+        'version': 4,
+        'blob': to_jsonb64(b'Next version.')
+    })
+    rep = await alice_backend_sock.recv()
+
+    assert rep == {'status': 'version_error', 'reason': 'Wrong blob version.'}
 
 
-@trio_test
-@with_backend(populated_for='alice')
-async def test_update_bad_seed(backend):
-    vid, vrts, vwts, vblobs = _get_existing_vlob(backend)
-    async with backend.test_connect('alice@test') as sock:
-        await sock.send({
-            'cmd': 'vlob_update',
-            'id': vid,
-            'trust_seed': 'dummy_seed',
-            'version': len(vblobs) + 1,
-            'blob': to_jsonb64(b'Next version.')
-        })
-        rep = await sock.recv()
-        assert rep == {'status': 'trust_seed_error', 'reason': 'Invalid write trust seed.'}
+@pytest.mark.trio
+async def test_update_bad_seed(backend, alice_backend_sock):
+    await populate_backend_vlob(backend)
+
+    await alice_backend_sock.send({
+        'cmd': 'vlob_update',
+        'id': '1',
+        'trust_seed': 'dummy_seed',
+        'version': 3,
+        'blob': to_jsonb64(b'Next version.')
+    })
+    rep = await alice_backend_sock.recv()
+
+    assert rep == {'status': 'trust_seed_error', 'reason': 'Invalid write trust seed.'}

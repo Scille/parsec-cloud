@@ -26,6 +26,8 @@ class VlobAtom:
 
 
 class cmd_CREATE_Schema(BaseCmdSchema):
+    # TODO: don't allow providing id during creation
+    # TODO: blob must be present
     id = fields.String(missing=None, validate=lambda n: 0 < len(n) <= 32)
     blob = fields.Base64Bytes(missing=to_jsonb64(b''))
 
