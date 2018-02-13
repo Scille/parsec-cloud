@@ -82,29 +82,3 @@ def abort(status='bad_message', **kwargs):
     error = ParsecError(**kwargs)
     error.status = status
     raise error
-
-
-@attr.s(init=False)
-class User:
-    id = attr.ib()
-
-    @property
-    def user_id(self):
-        return self.id.split('@')[0]
-
-    @property
-    def device_name(self):
-        return self.id.split('@')[1]
-
-    def __init__(self, id, privkey, signkey):
-        self.id = id
-        self.privkey = PrivateKey(privkey)
-        self.signkey = SigningKey(signkey)
-
-    @property
-    def pubkey(self):
-        return self.privkey.public_key
-
-    @property
-    def verifykey(self):
-        return self.signkey.verify_key
