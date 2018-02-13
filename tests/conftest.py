@@ -9,7 +9,6 @@ from parsec.core.devices_manager import Device
 
 from tests.common import (
     freeze_time, run_app, backend_factory, core_factory, connect_backend, connect_core)
-from tests.populate import populate_factory
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 
 
@@ -77,21 +76,6 @@ def mallory(tmpdir):
          b'\xeeoj\xcb\xe7\x0e\xc5'),
         tmpdir.join('mallory@test.sqlite').strpath,
     )
-
-
-@pytest.fixture
-def alice_data(alice):
-    return populate_factory(alice)
-
-
-@pytest.fixture
-def bob_data(bob):
-    return populate_factory(bob)
-
-
-@pytest.fixture
-def mallory_data(mallory):
-    return populate_factory(mallory)
 
 
 @pytest.fixture
