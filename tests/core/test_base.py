@@ -1,7 +1,6 @@
 import pytest
-from trio.testing import trio_test
 
-from tests.common import with_core, async_patch, alice, connect_core, run_app
+from tests.common import connect_core, run_app
 
 
 @pytest.mark.trio
@@ -85,7 +84,7 @@ async def test_offline_login_and_logout(backend, core, mallory):
 
 
 @pytest.mark.trio
-async def test_login_and_logout(core):
+async def test_login_and_logout(core, alice):
     async with connect_core(core) as sock:
         await sock.send({'cmd': 'info'})
         rep = await sock.recv()
