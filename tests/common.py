@@ -110,20 +110,22 @@ async def connect_backend(backend, auth_as=None):
 
             yield sock
         except QuitTestDueToBrokenStream:
-            # Exception should be raised from the handle_client coroutine in nursery
-            pass
+            # Wait for the coroutine handling the other side of the closed
+            # stream to propagate it exception.
+            await trio.sleep_forever()
 
 
 @acontextmanager
-async def connect_core(core, swallow_broken_stream=True):
+async def connect_core(core):
     async with run_app(core) as connection_factory:
         sockstream = await connection_factory()
         sock = QuitTestOnBrokenStreamCookedSocket(sockstream)
         try:
             yield sock
         except QuitTestDueToBrokenStream:
-            if not swallow_broken_stream:
-                raise
+            # Wait for the coroutine handling the other side of the closed
+            # stream to propagate it exception.
+            await trio.sleep_forever()
 
 
 @acontextmanager
