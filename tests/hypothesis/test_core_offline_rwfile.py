@@ -49,15 +49,14 @@ async def test_offline_core_rwfile(
                     assert rep == {'status': 'ok'}
                     self.file_oracle = FileOracle()
 
-                    with self.open_communicator() as core_communicator:
-                        self.core_cmd = core_communicator.send
-                        task_status.started()
+                    self.core_cmd = self.communicator.send
+                    task_status.started()
 
-                        while True:
-                            msg, = await core_communicator.trio_recv()
-                            await sock.send(msg)
-                            rep = await sock.recv()
-                            await core_communicator.trio_respond(rep)
+                    while True:
+                        msg = await self.communicator.trio_recv()
+                        await sock.send(msg)
+                        rep = await sock.recv()
+                        await self.communicator.trio_respond(rep)
 
         @rule(size=st.integers(min_value=0), offset=st.integers(min_value=0))
         @skip_on_broken_stream

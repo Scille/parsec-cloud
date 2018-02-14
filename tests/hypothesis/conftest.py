@@ -26,27 +26,31 @@ class ThreadToTrioCommunicator:
         self.queue = queue.Queue()
         self.trio_queue = trio.Queue(1)
 
-    def send(self, *msgs):
-        print('========>', msgs)
-        self.portal.run(self.trio_queue.put, msgs)
+    def send(self, msg):
+        self.portal.run(self.trio_queue.put, msg)
         ret = self.queue.get()
-        print('<========', ret)
         if isinstance(ret, Exception):
             raise ret
         return ret
 
     async def trio_recv(self):
         ret = await self.trio_queue.get()
-        print('<--------', ret)
         return ret
 
     async def trio_respond(self, msg):
         self.queue.put(msg)
-        print('-------->', self.queue.queue)
 
     def close(self):
         self.queue.put(QuitTestDueToBrokenStream())
-        print('-------->BROKENSTREAM', self.queue.queue)
+
+
+@contextmanager
+def open_communicator(portal):
+    communicator = ThreadToTrioCommunicator(portal)
+    try:
+        yield communicator
+    finally:
+        communicator.close()
 
 
 @pytest.fixture
@@ -84,7 +88,8 @@ async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler):
             loghandler.records.clear()
             try:
                 with trio.open_cancel_scope() as self._trio_runner_cancel_scope:
-                    await self.trio_runner(task_status)
+                    with open_communicator(self._portal) as self._communicator:
+                        await self.trio_runner(task_status)
             except Exception as exc:
                 # The trick is to avoid raising the exception here given
                 # otherwise hypothesis will consider the crash comes from the
@@ -98,14 +103,6 @@ async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler):
 
         def teardown(self):
             self._trio_runner_cancel_scope.cancel()
-
-        @contextmanager
-        def open_communicator(self):
-            communicator = ThreadToTrioCommunicator(portal)
-            try:
-                yield communicator
-            finally:
-                communicator.close()
 
         @invariant()
         def check_trio_runner_crash(self):

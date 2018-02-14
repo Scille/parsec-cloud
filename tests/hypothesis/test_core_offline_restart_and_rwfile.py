@@ -1,11 +1,10 @@
 import pytest
 from hypothesis import strategies as st, note
 from hypothesis.stateful import rule
-from functools import partial
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
-from tests.common import connect_core, core_factory, QuitTestDueToBrokenStream
+from tests.common import connect_core, core_factory
 from tests.hypothesis.conftest import skip_on_broken_stream
 
 
@@ -41,7 +40,6 @@ async def test_offline_core_rwfile(
         count = 0
 
         async def trio_runner(self, task_status):
-            print('+++++++ INIT ++++++++++')
             mocked_local_storage_connection.reset()
             type(self).count += 1
             config = {
@@ -49,59 +47,51 @@ async def test_offline_core_rwfile(
                 'backend_addr': backend_addr,
             }
 
-            with self.open_communicator() as communicator:
-                self.sys_cmd = partial(communicator.send, 'sys')
-                self.file_oracle = FileOracle()
+            self.sys_cmd = lambda x: self.communicator.send(('sys', x))
+            self.file_oracle = FileOracle()
 
-                async def run_core(on_ready):
-                    async with core_factory(**config) as core:
-                        await core.login(alice)
-                        async with connect_core(core) as sock:
+            async def run_core(on_ready):
+                async with core_factory(**config) as core:
+                    await core.login(alice)
+                    async with connect_core(core) as sock:
 
-                            await on_ready(sock)
-                            self.core_cmd = partial(communicator.send, 'core')
+                        await on_ready(sock)
+                        self.core_cmd = lambda x: self.communicator.send(('core', x))
 
-                            while True:
-                                print('WAITING, queue:', communicator.queue.queue)
-                                target, msg = await communicator.trio_recv()
-                                print('PROCESSING, queue:', communicator.queue.queue)
-                                if target == 'core':
-                                    await sock.send(msg)
-                                    rep = await sock.recv()
-                                    await communicator.trio_respond(rep)
-                                elif msg == 'restart!':
-                                    raise RestartCore()
+                        while True:
+                            target, msg = await self.communicator.trio_recv()
+                            if target == 'core':
+                                await sock.send(msg)
+                                rep = await sock.recv()
+                                await self.communicator.trio_respond(rep)
+                            elif msg == 'restart!':
+                                raise RestartCore()
 
-                async def bootstrap_core(sock):
-                    await sock.send({'cmd': 'file_create', 'path': '/foo.txt'})
-                    rep = await sock.recv()
-                    assert rep == {'status': 'ok'}
-                    task_status.started()
+            async def bootstrap_core(sock):
+                await sock.send({'cmd': 'file_create', 'path': '/foo.txt'})
+                rep = await sock.recv()
+                assert rep == {'status': 'ok'}
+                task_status.started()
 
-                async def restart_core_done(sock):
-                    await communicator.trio_respond(42)
+            async def restart_core_done(sock):
+                await self.communicator.trio_respond(42)
 
-                on_ready = bootstrap_core
-                while True:
-                    try:
-                        await run_core(on_ready)
-                    except RestartCore:
-                        print('restarting...')
-                        on_ready = restart_core_done
+            on_ready = bootstrap_core
+            while True:
+                try:
+                    await run_core(on_ready)
+                except RestartCore:
+                    on_ready = restart_core_done
 
         @rule()
         @skip_on_broken_stream
         def restart(self):
-            print('//// RESTART')
-            print('before restart')
             self.sys_cmd('restart!')
             self.file_oracle.restart()
-            print('after restart')
 
         @rule(size=st.integers(min_value=0), offset=st.integers(min_value=0))
         @skip_on_broken_stream
         def read(self, size, offset):
-            print('//// READ')
             rep = self.core_cmd({
                 'cmd': 'file_read',
                 'path': '/foo.txt',
@@ -116,7 +106,6 @@ async def test_offline_core_rwfile(
         @rule()
         @skip_on_broken_stream
         def flush(self):
-            print('//// FLUSH')
             rep = self.core_cmd({'cmd': 'flush', 'path': '/foo.txt'})
             note(rep)
             assert rep['status'] == 'ok'
@@ -124,7 +113,6 @@ async def test_offline_core_rwfile(
         @rule(offset=st.integers(min_value=0), content=st.binary())
         @skip_on_broken_stream
         def write(self, offset, content):
-            print('//// WRITE')
             b64content = to_jsonb64(content)
             rep = self.core_cmd({
                 'cmd': 'file_write',
