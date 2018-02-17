@@ -79,6 +79,19 @@ def mallory(tmpdir):
 
 
 @pytest.fixture
+def always_logs():
+    """
+    By default, pytest-logbook only print last test's logs in case of error.
+    With this fixture all logs are outputed as soon as they are created.
+    """
+    from logbook import StreamHandler
+    import sys
+    sh = StreamHandler(sys.stdout)
+    with sh.applicationbound():
+        yield
+
+
+@pytest.fixture
 def unused_tcp_port():
     """Find an unused localhost TCP port from 1024-65535 and return it."""
     with contextlib.closing(socket.socket()) as sock:
@@ -125,11 +138,7 @@ def tcp_stream_spy():
 @pytest.fixture
 async def running_backend(tcp_stream_spy, backend, backend_addr):
     async with run_app(backend) as backend_connection_factory:
-
-        async def _open_tcp_stream(*args):
-            return await backend_connection_factory()
-
-        tcp_stream_spy.install_hook(backend_addr, _open_tcp_stream)
+        tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
         yield (backend, backend_addr, backend_connection_factory)
         tcp_stream_spy.install_hook(backend_addr, None)
 
