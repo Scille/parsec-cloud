@@ -70,6 +70,7 @@ async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler):
     class TrioDriverRuleBasedStateMachine(RuleBasedStateMachine):
         _portal = portal
         _nursery = nursery
+        _running = trio.Lock()
 
         @classmethod
         async def run_test(cls):
@@ -84,13 +85,34 @@ async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler):
             return self._communicator
 
         async def _trio_runner(self, *, task_status=trio.TASK_STATUS_IGNORED):
+            # We need to hijack `task_status.started` callback because error
+            # handling of trio_runner coroutine depends of it (see below).
+            task_started = False
+            vanilla_task_status_started = task_status.started
+
+            def task_status_started_hook(ret=None):
+                nonlocal task_started
+                task_started = True
+                vanilla_task_status_started(ret)
+
+            task_status.started = task_status_started_hook
+
             # Drop previous run logs, preventing flooding stdout
             loghandler.records.clear()
             try:
-                with trio.open_cancel_scope() as self._trio_runner_cancel_scope:
-                    with open_communicator(self._portal) as self._communicator:
-                        await self.trio_runner(task_status)
+                # This lock is to make sure the hypothesis thread doesn't start
+                # another `_trio_runner` coroutine while this one hasn't done
+                # it teardown yet.
+                async with self._running:
+                    with trio.open_cancel_scope() as self._trio_runner_cancel_scope:
+                        with open_communicator(self._portal) as self._communicator:
+                            await self.trio_runner(task_status)
             except Exception as exc:
+                if not task_started:
+                    # If the crash occurs during the init phase, hypothesis
+                    # thread is synchrone with this coroutine so raising the
+                    # exception here will have the expected effect.
+                    raise
                 # The trick is to avoid raising the exception here given
                 # otherwise hypothesis will consider the crash comes from the
                 # previously executed rule.
