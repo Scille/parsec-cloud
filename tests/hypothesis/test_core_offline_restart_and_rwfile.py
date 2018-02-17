@@ -25,7 +25,7 @@ class FileOracle:
 
 @pytest.mark.slow
 @pytest.mark.trio
-async def test_offline_core_rwfile(
+async def test_core_offline_restart_and_rwfile(
     TrioDriverRuleBasedStateMachine,
     mocked_local_storage_connection,
     backend_addr,
@@ -36,7 +36,7 @@ async def test_offline_core_rwfile(
     class RestartCore(Exception):
         pass
 
-    class CoreOfflineRWFile(TrioDriverRuleBasedStateMachine):
+    class CoreOfflineRestartAndRWFile(TrioDriverRuleBasedStateMachine):
         count = 0
 
         async def trio_runner(self, task_status):
@@ -124,4 +124,4 @@ async def test_offline_core_rwfile(
             assert rep['status'] == 'ok'
             self.file_oracle.write(offset, content)
 
-    await CoreOfflineRWFile.run_test()
+    await CoreOfflineRestartAndRWFile.run_test()
