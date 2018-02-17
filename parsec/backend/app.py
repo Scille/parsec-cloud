@@ -287,33 +287,9 @@ class BackendApp:
                 logger.debug('BAD HANDSHAKE')
                 return
             logger.debug('HANDSHAKE DONE, CLIENT IS `%s`' % client_ctx.id)
-            while True:
-                try:
-                    req = await sock.recv()
-                except JSONDecodeError:
-                    rep = {'status': 'invalid_msg_format'}
-                    await sock.send(rep)
-                    continue
-                if not req:  # Client disconnected
-                    logger.debug('CLIENT DISCONNECTED')
-                    break
-                logger.debug('REQ %s' % req)
-                # TODO: handle bad msg
-                try:
-                    cmd = req.get('cmd', '<missing>')
-                    if client_ctx.anonymous:
-                        cmd_func = self.anonymous_cmds[cmd]
-                    else:
-                        cmd_func = self.cmds[cmd]
-                except KeyError:
-                    rep = {'status': 'unknown_command'}
-                else:
-                    try:
-                        rep = await cmd_func(client_ctx, req)
-                    except ParsecError as err:
-                        rep = err.to_dict()
-                logger.debug('REP %s' % rep)
-                await sock.send(rep)
+
+            await self._handle_client_loop(sock, client_ctx)
+
         except trio.BrokenStreamError:
             # Client has closed connection
             pass
@@ -322,3 +298,32 @@ class BackendApp:
             logger.error(traceback.format_exc())
             await sock.aclose()
             raise
+
+    async def _handle_client_loop(self, sock, client_ctx):
+        while True:
+            try:
+                req = await sock.recv()
+            except JSONDecodeError:
+                rep = {'status': 'invalid_msg_format'}
+                await sock.send(rep)
+                continue
+            if not req:  # Client disconnected
+                logger.debug('CLIENT DISCONNECTED')
+                break
+            logger.debug('REQ %s' % req)
+            # TODO: handle bad msg
+            try:
+                cmd = req.get('cmd', '<missing>')
+                if client_ctx.anonymous:
+                    cmd_func = self.anonymous_cmds[cmd]
+                else:
+                    cmd_func = self.cmds[cmd]
+            except KeyError:
+                rep = {'status': 'unknown_command'}
+            else:
+                try:
+                    rep = await cmd_func(client_ctx, req)
+                except ParsecError as err:
+                    rep = err.to_dict()
+            logger.debug('REP %s' % rep)
+            await sock.send(rep)

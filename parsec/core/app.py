@@ -129,7 +129,7 @@ class CoreApp:
                 if not req:  # Client disconnected
                     logger.debug('CLIENT DISCONNECTED')
                     return
-                logger.debug('REQ %s' % req)
+                logger.debug('REQ {}', req)
                 try:
                     cmd_func = self.cmds[req['cmd']]
                 except KeyError:
@@ -139,7 +139,7 @@ class CoreApp:
                         rep = await cmd_func(req)
                     except ParsecError as err:
                         rep = err.to_dict()
-                logger.debug('REP %s' % rep)
+                logger.debug('REP {}', rep)
                 await sock.send(rep)
         except trio.BrokenStreamError:
             # Client has closed connection
