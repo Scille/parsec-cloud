@@ -83,10 +83,10 @@ async def backend_factory(**config):
     backend = BackendApp(config)
     async with trio.open_nursery() as nursery:
         await backend.init(nursery)
-
-        yield backend
-
-        await backend.shutdown()
+        try:
+            yield backend
+        finally:
+            await backend.shutdown()
 
 
 @acontextmanager
@@ -134,7 +134,7 @@ async def core_factory(**config):
     core = CoreApp(config)
     async with trio.open_nursery() as nursery:
         await core.init(nursery)
-
-        yield core
-
-        await core.shutdown()
+        try:
+            yield core
+        finally:
+            await core.shutdown()
