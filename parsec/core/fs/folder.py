@@ -2,7 +2,7 @@ import attr
 import pendulum
 
 from parsec.core.fs.base import BaseEntry, FSInvalidPath, FSError
-from parsec.core.fs.merge_folder import merge_folder_manifest
+from parsec.core.fs.merge_folder import merge_folder_manifest, merge_children
 from parsec.core.backend_storage import BackendConcurrencyError
 
 
@@ -148,16 +148,21 @@ class BaseFolderEntry(BaseEntry):
                 target = await self._fs.manifests_manager.fetch_from_backend(
                     access.id, access.rts, access.key)
                 # 3-ways merge between base, modified and target versions
-                manifest = merge_folder_manifest(base, manifest, target)
+                manifest, _ = merge_folder_manifest(base, manifest, target)
 
         async with self.acquire_write():
             # Else update base_version
             self._base_version = manifest['version']
             self.flush_no_lock()
-            # self._children = merge_children(base, self._children, )
-            # TODO: what if the folder is modified during the sync ?
-            # it is now marked as need_sync=False but needs synchro !
-            self._need_sync = False
+
+            base = await self._fs.manifests_manager.fetch_from_backend(
+                access.id, access.rts, access.key, self._base_version)
+            target = await self._fs.manifests_manager.fetch_from_backend(
+                access.id, access.rts, access.key)
+
+            diverged = self
+            _, modified = merge_children(base, diverged, target, inplace=diverged)
+            self._need_sync = modified
 
     def _get_child(self, name):
         try:

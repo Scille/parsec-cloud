@@ -27,6 +27,10 @@ class BaseEntry:
         self._rwlock = RWLock()
 
     @property
+    def id(self):
+        return self._access.id
+
+    @property
     def is_loaded(self):
         return True
 

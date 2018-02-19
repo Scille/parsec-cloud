@@ -119,7 +119,7 @@ def create_entry(fs, name, parent=None, is_file=False, is_placeholder=False,
             updated=datetime(2017, 12, 31, 23, 59, 59),
             base_version=base_version,
             name=name,
-            parent=root,
+            parent=root(fs),
             children_accesses={},
         )
     if parent:
@@ -339,6 +339,20 @@ async def test_flush(foo, bar_txt, mocked_manifests_manager):
 
 @pytest.mark.trio
 async def test_simple_sync(fs, mocked_manifests_manager):
+    def fetch_effect(id, rts, key, version=None):
+        if version is None:
+            return {
+                'format': 1,
+                'type': 'folder_manifest',
+                'version': 2,
+                'created': datetime(2017, 1, 1),
+                'updated': datetime(2017, 12, 31, 23, 59, 59),
+                'children': {}
+            }
+
+        return {}
+
+    mocked_manifests_manager.fetch_from_backend.side_effect = fetch_effect
     foo = create_entry(fs, 'foo', need_sync=True)
     with freeze_time('2017-07-07'):
         await foo.sync()
@@ -360,6 +374,37 @@ async def test_simple_sync(fs, mocked_manifests_manager):
 
 @pytest.mark.trio
 async def test_sync_with_children(fs, mocked_manifests_manager):
+    def fetch_effect(id, rts, key, version=None):
+        return {
+            'format': 1,
+            'type': 'folder_manifest',
+            'version': 2,
+            'created': datetime(2017, 1, 1),
+            'updated': datetime(2017, 12, 31, 23, 59, 59),
+            'children': {
+                'bar': {
+                    'id': '<bar id>',
+                    'rts': '<bar rts>',
+                    'wts': '<bar wts>',
+                    'key': b'<bar key>',
+                },
+                'baz': {
+                    'id': '<baz id>',
+                    'rts': '<baz rts>',
+                    'wts': '<baz wts>',
+                    'key': b'<baz key>',
+                },
+                'spam.txt': {
+                    'id': '<spam.txt id>',
+                    'rts': '<spam.txt rts>',
+                    'wts': '<spam.txt wts>',
+                    'key': b'<spam.txt key>',
+                }
+            }
+        }
+
+    mocked_manifests_manager.fetch_from_backend.side_effect = fetch_effect
+
     foo = create_entry(fs, 'foo', need_sync=True)
     create_entry(fs, 'bar', parent=foo)
     create_entry(fs, 'spam.txt', is_file=True, parent=foo)
