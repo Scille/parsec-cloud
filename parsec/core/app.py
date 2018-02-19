@@ -380,7 +380,7 @@ class CoreApp:
             event, subject = await self.auth_events.get()
         else:
             try:
-                event, subject = await self.auth_events.get_nowait()
+                event, subject = self.auth_events.get_nowait()
             except trio.WouldBlock:
                 return {'status': 'ok'}
 
