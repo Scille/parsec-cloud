@@ -88,13 +88,13 @@ class BaseBlock:
         return isinstance(self._access, BaseDirtyBlockAccess)
 
     async def flush_data(self):
-        if not self._data:
+        if self._data is None:
             return
         await self._fs.blocks_manager.flush_on_local(
             self._access.id, self._access.key, self._data)
         self._data = None
 
     async def fetch_data(self):
-        if self._data:
+        if self._data is not None:
             return self._data
         return await self._access.fetch()

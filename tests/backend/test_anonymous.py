@@ -35,4 +35,4 @@ async def test_anonymous_has_limited_access(backend, cmd):
     async with connect_backend(backend, auth_as='anonymous') as sock:
         await sock.send({'cmd': cmd})
         rep = await sock.recv()
-        assert rep == {'status': 'bad_cmd', 'reason': 'Unknown command `%s`' % cmd}
+        assert rep == {'status': 'unknown_command'}

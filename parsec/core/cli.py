@@ -3,6 +3,7 @@ import os.path
 import click
 import shutil
 import tempfile
+import logbook
 from urllib.parse import urlparse
 
 from parsec.core import CoreApp, CoreConfig, Device
@@ -13,7 +14,7 @@ JOHN_DOE_PRIVATE_KEY = (b']x\xd3\xa9$S\xa92\x9ex\x91\xa7\xee\x04SY\xbe\xe6'
                         b'\x03\xf0\x1d\xe2\xcc7\x8a\xd7L\x137\x9e\xa7\xc6')
 JOHN_DOE_DEVICE_SIGNING_KEY = (b'w\xac\xd8\xb4\x88B:i\xd6G\xb9\xd6\xc5\x0f\xf6\x99'
                                b'\xccH\xfa\xaeY\x00:\xdeP\x84\t@\xfe\xf8\x8a\xa5')
-DEFAULT_CORE_UNIX_SOCKET = 'tcp://127.0.0.1:6776'
+DEFAULT_CORE_SOCKET = 'tcp://127.0.0.1:6776'
 
 
 def run_with_pdb(cmd, *args, **kwargs):
@@ -45,12 +46,14 @@ def run_with_pdb(cmd, *args, **kwargs):
 
 
 @click.command()
-@click.option('--socket', '-s', default=DEFAULT_CORE_UNIX_SOCKET,
-              help='Path to the UNIX socket exposing the core API (default: %s).' %
-              DEFAULT_CORE_UNIX_SOCKET)
+@click.option('--socket', '-s', default=DEFAULT_CORE_SOCKET,
+              help=('Socket path (`tcp://<domain:port>` or `unix://<path>`) '
+                    'exposing the core API (default: %s).' % DEFAULT_CORE_SOCKET))
 @click.option('--backend-addr', '-A', default='tcp://127.0.0.1:6777')
 @click.option('--backend-watchdog', '-W', type=click.INT, default=None)
 @click.option('--debug', '-d', is_flag=True)
+@click.option('--log-level', '-l', default='WARNING',
+              type=click.Choice(('DEBUG', 'INFO', 'WARNING', 'ERROR')))
 @click.option('--pdb', is_flag=True)
 # @click.option('--identity', '-i', default=None)
 # @click.option('--identity-key', '-I', type=click.File('rb'), default=None)
@@ -63,7 +66,10 @@ def core_cmd(**kwargs):
         return _core(**kwargs)
 
 
-def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
+def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
+    log_handler = logbook.StderrHandler(level=log_level.upper())
+    # Push globally the log handler make it work across threads
+    log_handler.push_application()
     config = CoreConfig(
         debug=debug,
         addr=socket,

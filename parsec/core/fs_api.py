@@ -34,7 +34,7 @@ class cmd_FILE_READ_Schema(BaseCmdSchema):
 class cmd_FILE_WRITE_Schema(BaseCmdSchema):
     path = fields.String(required=True)
     offset = fields.Int(missing=0, validate=validate.Range(min=0))
-    content = fields.Base64Bytes(required=True)
+    content = fields.Base64Bytes(required=True, validate=validate.Length(min=0))
 
 
 class cmd_FILE_TRUNCATE_Schema(BaseCmdSchema):

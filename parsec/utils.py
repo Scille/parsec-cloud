@@ -24,20 +24,18 @@ class CookedSocket:
         await self.sockstream.aclose()
 
     async def send(self, msg):
-        print('[%s]==>%s' % (self.sockstream, msg))
         await self.sockstream.send_all(json.dumps(msg).encode() + b'\n')
 
     async def recv(self):
         raw = b''
         # TODO: handle message longer than BUFFSIZE...
         raw = await self.sockstream.receive_some(BUFFSIZE)
-        print('[%s]<==%s' % (self.sockstream, raw))
         if not raw:
             # Empty body should normally never occurs, though it is sent
             # when peer closes connection
             raise trio.BrokenStreamError('Peer has closed connection')
         while raw[-1] != ord(b'\n'):
-            raw += self.sockstream.receive_some(BUFFSIZE)
+            raw += await self.sockstream.receive_some(BUFFSIZE)
         return json.loads(raw[:-1].decode())
 
 
@@ -84,29 +82,3 @@ def abort(status='bad_message', **kwargs):
     error = ParsecError(**kwargs)
     error.status = status
     raise error
-
-
-@attr.s(init=False)
-class User:
-    id = attr.ib()
-
-    @property
-    def user_id(self):
-        return self.id.split('@')[0]
-
-    @property
-    def device_name(self):
-        return self.id.split('@')[1]
-
-    def __init__(self, id, privkey, signkey):
-        self.id = id
-        self.privkey = PrivateKey(privkey)
-        self.signkey = SigningKey(signkey)
-
-    @property
-    def pubkey(self):
-        return self.privkey.public_key
-
-    @property
-    def verifykey(self):
-        return self.signkey.verify_key

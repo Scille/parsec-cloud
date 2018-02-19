@@ -81,6 +81,7 @@ class BaseFileEntry(BaseEntry):
             'base_version': self._base_version,
             'created': self._created,
             'updated': self._updated,
+            'size': self._size,
             'blocks': [v._access.dump() for v in self._blocks],
             'dirty_blocks': [v._access.dump() for v in self._dirty_blocks],
         }
@@ -100,7 +101,9 @@ class BaseFileEntry(BaseEntry):
         # Fetch the blocks
         # Fetch the dirty blocks
         # Combine everything together
-        size = size if (size is not None and 0 < size < self.size) else self.size
+        size = size if (size is not None and 0 <= size + offset < self.size) else self.size - offset
+        if size < 0:
+            size = 0
         end = offset + size
 
         # Get all buffer
@@ -138,10 +141,14 @@ class BaseFileEntry(BaseEntry):
         return out
 
     async def read(self, size=None, offset=0):
+        if size == 0:
+            return b''
         async with self.acquire_read():
             return await self.read_no_lock(size, offset)
 
     async def write_no_lock(self, buffer, offset=0):
+        if offset > self.size:
+            offset = self.size
         # Create a new dirty block
         access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer))
         block = self._fs._block_cls(access, data=buffer)
@@ -151,6 +158,8 @@ class BaseFileEntry(BaseEntry):
         self._modified()
 
     async def write(self, buffer, offset=0):
+        if not buffer:
+            return
         async with self.acquire_write():
             await self.write_no_lock(buffer, offset)
 
@@ -202,8 +211,22 @@ class BaseFileEntry(BaseEntry):
                 'created': self._created,
                 'updated': self._updated,
             }
-            merged_blocks = await self.get_merged_blocks()
-            normalized_blocks = await self.get_normalized_blocks(merged_blocks, 4096)
+            merged_blocks = []
+            for block, offset, end in get_merged_blocks():
+                if offset and end:
+                    buffer = await block.fetch_data()
+                    buffer = buffer[offset:end]
+                    access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer))
+                    block = self._fs._block_cls(access, data=buffer)
+                merged_blocks.append(block)
+            normalized_blocks = []
+            for block, offset, end in get_normalized_blocks(merged_blocks, 4096):
+                if offset and end:
+                    buffer = await block.fetch_data()
+                    buffer = buffer[offset:end]
+                    access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer))
+                    block = self._fs._block_cls(access, data=buffer)
+                normalized_blocks.append(block)
             dirty_blocks_count = len(self._dirty_blocks)
 
         # Flush data here given we don't want to lose the upload blocks
@@ -224,83 +247,82 @@ class BaseFileEntry(BaseEntry):
             self.flush_no_lock()
             self._need_sync = bool(self._dirty_blocks)
 
-    async def get_merged_blocks(self):
-        events = []
-        for index, block in enumerate(self._blocks):
-            bisect.insort(events, (block.offset, index, 'start', block))
-            bisect.insort(events, (block.end, index, 'end', block))
-        delta = len(self._blocks)
-        for index, block in enumerate(self._dirty_blocks):
-            bisect.insort(events, (block.offset, index + delta, 'start', block))
-            bisect.insort(events, (block.end, index + delta, 'end', block))
-        blocks = []
-        block_stack = []
-        start_offset = {}
-        for event in events:
-            offset, index, action, block = event
-            if offset > self._size:
-                if action == 'end' and index in start_offset:
-                    offset = self._size
-                else:
-                    continue
-            top_index = -1
-            if block_stack:
-                top_index = block_stack[-1][0]
-            if action == 'start' and index > top_index:
-                if len(block_stack) > 0:
-                    index_ended, block_ended = block_stack[-1]
-                    block_ended_start_data = start_offset[index_ended] - block_ended.offset
-                    block_ended_end_data = offset - block_ended.offset
-                    if block_ended_start_data != block_ended_end_data:
-                        data = await block_ended.fetch_data()
-                        buffer = data[block_ended_start_data:block_ended_end_data]
-                        access = self._fs._dirty_block_access_cls(offset=start_offset[index_ended],
-                                                                  size=len(buffer))
-                        new_block = self._fs._block_cls(access, data=buffer)
-                        blocks.append(new_block)
-                bisect.insort(block_stack, (index, block))
-                start_offset[index] = offset
-            elif action == 'start' and index < top_index:
-                bisect.insort(block_stack, (index, block))
-            elif action == 'end' and index == top_index:
-                block_start_data = start_offset[index] - block.offset
-                block_end_data = offset - block.offset
-                if block_start_data != block_end_data:
-                    data = await block.fetch_data()
-                    buffer = data[block_start_data:block_end_data]
-                    access = self._fs._dirty_block_access_cls(offset=start_offset[index],
-                                                              size=len(buffer))
-                    new_block = self._fs._block_cls(access, data=buffer)
-                    blocks.append(new_block)
-                del start_offset[index]
-                block_stack.pop()
-                if block_stack:
-                    restart_index, _ = block_stack[-1]
-                    start_offset[restart_index] = offset
-            elif action == 'end' and index < top_index:
-                block_stack.remove((index, block))
-        return blocks
 
-    async def get_normalized_blocks(self, blocks, block_size=4096):
-        final_blocks = []
-        buffer = b''
-        last_offset = 0
-        for block in blocks:
-            while len(buffer) >= block_size:
-                current_buffer = buffer[:block_size]
-                access = self._fs._dirty_block_access_cls(offset=last_offset, size=block_size)
-                new_block = self._fs._block_cls(access, data=current_buffer)
-                final_blocks.append(new_block)
-                buffer = buffer[block_size:]
-                last_offset = last_offset + block_size
-            if not buffer and block.size == block_size:
-                final_blocks.append(block)
-                last_offset = block.end
+def get_merged_blocks(file_blocks, file_dirty_blocks, file_size):
+    events = []
+    for index, block in enumerate(file_blocks):
+        bisect.insort(events, (block.offset, index, 'start', block))
+        bisect.insort(events, (block.end, index, 'end', block))
+    delta = len(file_blocks)
+    for index, block in enumerate(file_dirty_blocks):
+        bisect.insort(events, (block.offset, index + delta, 'start', block))
+        bisect.insort(events, (block.end, index + delta, 'end', block))
+    blocks = []
+    block_stack = []
+    start_offset = {}
+    for event in events:
+        offset, index, action, block = event
+        if offset > file_size:
+            if action == 'end' and index in start_offset:
+                offset = file_size
             else:
-                data = await block.fetch_data()
-                buffer += data
-        if buffer:
-            access = self._fs._dirty_block_access_cls(offset=last_offset, size=len(buffer))
-            new_block = self._fs._block_cls(access, data=buffer)
-            final_blocks.append(new_block)
-        return final_blocks
+                continue
+        top_index = -1
+        if block_stack:
+            top_index = block_stack[-1][0]
+        if action == 'start' and index > top_index:
+            if len(block_stack) > 0:
+                index_ended, block_ended = block_stack[-1]
+                block_ended_start_data = start_offset[index_ended] - block_ended.offset
+                block_ended_end_data = offset - block_ended.offset
+                if block_ended_start_data != block_ended_end_data:
+                    blocks.append((block_ended, block_ended_start_data, block_ended_end_data))
+            bisect.insort(block_stack, (index, block))
+            start_offset[index] = offset
+        elif action == 'start' and index < top_index:
+            bisect.insort(block_stack, (index, block))
+        elif action == 'end' and index == top_index:
+            block_start_data = start_offset[index] - block.offset
+            block_end_data = offset - block.offset
+            if block_start_data != block_end_data:
+                if block.offset == block_start_data and block.end == block_end_data:
+                    blocks.append((block, None, None))
+                else:
+                    blocks.append((block, block_start_data, block_end_data))
+            del start_offset[index]
+            block_stack.pop()
+            if block_stack:
+                restart_index, _ = block_stack[-1]
+                start_offset[restart_index] = offset
+        elif action == 'end' and index < top_index:
+            block_stack.remove((index, block))
+    return blocks
+
+
+def get_normalized_blocks(blocks, block_size=4096):
+    size = sum([block.size for block in blocks])
+    offset_splits = [i for i in range(block_size, size, block_size)]
+    offset_splits.append(offset_splits[-1] + block_size)
+    final_blocks = []
+    block_group = []
+    blocks = [(block, block.offset, block.end) for block in blocks]
+    while blocks:
+        block, offset, end = blocks.pop(0)
+        if offset < offset_splits[0] and end > offset_splits[0]:
+            block_group.append((block, offset - block.offset, offset_splits[0] - block.offset))
+            final_blocks.append(block_group)
+            block_group = []
+            blocks.insert(0, (block, offset_splits[0], block.end))
+            offset_splits.pop(0)
+        else:
+            if offset == block.offset and end == block.end:
+                block_group.append((block, None, None))
+            else:
+                block_group.append((block, offset - block.offset, end - block.offset))
+            if end == offset_splits[0]:
+                final_blocks.append(block_group)
+                block_group = []
+                offset_splits.pop(0)
+    if block_group:
+        final_blocks.append(block_group)
+    return final_blocks

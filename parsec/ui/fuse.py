@@ -1,13 +1,12 @@
-import logging
 import os
 import stat
 import sys
 import socket
 import click
+import logbook
 import threading
 from dateutil.parser import parse as dateparse
 from itertools import count
-from logbook import WARNING
 from errno import ENOENT
 try:
 	from errno import EBADFD
@@ -18,8 +17,8 @@ from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_get_context
 
 from parsec.utils import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 
-logger = logging.getLogger('parsec')
-logger_stream = logging.StreamHandler(sys.stdout)
+
+logger = logbook.Logger("parsec.fuse")
 
 DEFAULT_CORE_UNIX_SOCKET = 'tcp://127.0.0.1:6776'
 
@@ -68,11 +67,15 @@ class ContentBuilder:
 @click.command()
 @click.argument('mountpoint', type=click.Path(**{'exists': True, 'file_okay': False} if os.name == 'posix' else {'exists': False}))
 @click.option('--debug', '-d', is_flag=True, default=False)
+@click.option('--log-level', '-l', default='WARNING',
+              type=click.Choice(('DEBUG', 'INFO', 'WARNING', 'ERROR')))
 @click.option('--nothreads', is_flag=True, default=False)
 @click.option('--socket', '-s', default=DEFAULT_CORE_UNIX_SOCKET,
               help='Path to the UNIX socket (default: %s).' % DEFAULT_CORE_UNIX_SOCKET)
-def cli(mountpoint, debug, nothreads, socket):
-    # Do the import here in case fuse is not an available dependency
+def cli(mountpoint, debug, log_level, nothreads, socket):
+    log_handler = logbook.StderrHandler(level=log_level.upper())
+    # Push globally the log handler make it work across threads
+    log_handler.push_application()
     start_fuse(socket, mountpoint, debug=debug, nothreads=nothreads)
 
 
@@ -305,6 +308,4 @@ class FuseOperations(LoggingMixIn, Operations):
 
 def start_fuse(socket_address: str, mountpoint: str, debug: bool=False, nothreads: bool=False):
     operations = FuseOperations(socket_address)
-    if not debug:
-        logger_stream.level = WARNING
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)

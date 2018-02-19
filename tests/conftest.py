@@ -4,17 +4,24 @@ import socket
 import contextlib
 from unittest.mock import patch
 
+from parsec.core.local_storage import LocalStorage
 from parsec.core.devices_manager import Device
 
 from tests.common import (
     freeze_time, run_app, backend_factory, core_factory, connect_backend, connect_core)
-from tests.populate import populate_factory
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 
 
 def pytest_addoption(parser):
     parser.addoption("--no-postgresql", action="store_true",
                      help="Don't run tests making use of PostgreSQL")
+    parser.addoption("--runslow", action="store_true",
+                     help="Don't skip slow tests")
+
+
+def pytest_runtest_setup(item):
+    if 'slow' in item.keywords and not item.config.getoption('--runslow'):
+        pytest.skip('need --runslow option to run')
 
 
 DEFAULT_POSTGRESQL_TEST_URL = '/parsec_test'
@@ -72,18 +79,16 @@ def mallory(tmpdir):
 
 
 @pytest.fixture
-def alice_data(alice):
-    return populate_factory(alice)
-
-
-@pytest.fixture
-def bob_data(bob):
-    return populate_factory(bob)
-
-
-@pytest.fixture
-def mallory_data(mallory):
-    return populate_factory(mallory)
+def always_logs():
+    """
+    By default, pytest-logbook only print last test's logs in case of error.
+    With this fixture all logs are outputed as soon as they are created.
+    """
+    from logbook import StreamHandler
+    import sys
+    sh = StreamHandler(sys.stdout)
+    with sh.applicationbound():
+        yield
 
 
 @pytest.fixture
@@ -133,11 +138,7 @@ def tcp_stream_spy():
 @pytest.fixture
 async def running_backend(tcp_stream_spy, backend, backend_addr):
     async with run_app(backend) as backend_connection_factory:
-
-        async def _open_tcp_stream(*args):
-            return await backend_connection_factory()
-
-        tcp_stream_spy.install_hook(backend_addr, _open_tcp_stream)
+        tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
         yield (backend, backend_addr, backend_connection_factory)
         tcp_stream_spy.install_hook(backend_addr, None)
 
@@ -172,3 +173,45 @@ async def alice_core_sock(core, alice):
     async with connect_core(core) as sock:
         await core.login(alice)
         yield sock
+
+
+@pytest.fixture
+def mocked_local_storage_connection():
+    # Persistent local storage is achieve by using sqlite storing in FS.
+    # However it is a lot faster to store in memory and just pass around the
+    # sqlite connection object.
+    # Given each core should have it own device, no inter-core concurrency
+    # should occurs.
+
+    class MockedLocalStorageConnection:
+        _conn = None
+
+        def reset(self):
+            ls = LocalStorage(':memory:')
+            vanilla_init(ls)
+            self._conn = ls.conn
+
+        @property
+        def conn(self):
+            if not self._conn:
+                self.reset()
+            return self._conn
+
+    mock = MockedLocalStorageConnection()
+
+    def mock_init(self):
+        self.conn = mock.conn
+
+    def mock_teardown(self):
+        self.conn = None
+
+    vanilla_init = LocalStorage.init
+    vanilla_teardown = LocalStorage.teardown
+    LocalStorage.init = mock_init
+    LocalStorage.teardown = mock_teardown
+
+    try:
+        yield mock
+    finally:
+        LocalStorage.init = vanilla_init
+        LocalStorage.teardown = vanilla_teardown

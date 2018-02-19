@@ -1,7 +1,10 @@
 import trio
 import blinker
+import logbook
+import traceback
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
+from json import JSONDecodeError
 
 from parsec.core.fs import fs_factory
 from parsec.core.fs_api import FSApi
@@ -12,6 +15,9 @@ from parsec.core.backend_connection import (
     BackendConnection, BackendNotAvailable, backend_send_anonymous_cmd)
 from parsec.utils import CookedSocket, ParsecError, to_jsonb64, from_jsonb64
 from parsec.schema import BaseCmdSchema, fields, validate
+
+
+logger = logbook.Logger("parsec.core.app")
 
 
 class cmd_LOGIN_Schema(BaseCmdSchema):
@@ -114,11 +120,16 @@ class CoreApp:
         try:
             sock = CookedSocket(sockstream)
             while True:
-                req = await sock.recv()
+                try:
+                    req = await sock.recv()
+                except JSONDecodeError:
+                    rep = {'status': 'invalid_msg_format'}
+                    await sock.send(rep)
+                    continue
                 if not req:  # Client disconnected
-                    print('CLIENT DISCONNECTED')
+                    logger.debug('CLIENT DISCONNECTED')
                     return
-                print('REQ %s' % req)
+                logger.debug('REQ {}', req)
                 try:
                     cmd_func = self.cmds[req['cmd']]
                 except KeyError:
@@ -128,11 +139,16 @@ class CoreApp:
                         rep = await cmd_func(req)
                     except ParsecError as err:
                         rep = err.to_dict()
-                print('REP %s' % rep)
+                logger.debug('REP {}', rep)
                 await sock.send(rep)
         except trio.BrokenStreamError:
             # Client has closed connection
             pass
+        except Exception:
+            # If we are here, something unexpected happened...
+            logger.error(traceback.format_exc())
+            await sock.aclose()
+            raise
 
     async def login(self, device):
         self.auth_subscribed_events = {}
@@ -329,7 +345,7 @@ class CoreApp:
             try:
                 self.auth_events.put_nowait((event, sender))
             except trio.WouldBlock:
-                print('WARNING: event queue is full')
+                logger.warning('event queue is full')
 
         self.auth_subscribed_events[event, subject] = _handle_event
         if event == 'device_try_claim_submitted':

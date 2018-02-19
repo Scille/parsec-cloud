@@ -203,6 +203,14 @@ async def test_write(fs):
 
 
 @pytest.mark.trio
+async def test_write_empty(fs):
+    file = create_file(fs, 'foo')
+    await file.write(b'')
+    out = await file.read()
+    assert out == b''
+
+
+@pytest.mark.trio
 async def test_write_overwrite(fs):
     file = create_file(fs, 'foo')
     await file.write(b'123')
@@ -302,71 +310,110 @@ async def test_simple_sync(fs, mocked_manifests_manager):
     await file.sync()
 
 
-@pytest.mark.trio
-async def test_get_merged_blocks(fs):
-    file = create_file(fs, 'foo')
-    add_block(file, b'1' * 100, offset=0, name='1', in_local=True)
-    add_block(file, b'2' * 100, offset=100, name='2', in_local=False)
-    add_block(file, b'3' * 100, offset=200, name='3', in_local=True)
-    add_block(file, b'4' * 100, offset=300, name='4', in_local=False)
-    add_block(file, b'5' * 100, offset=400, name='5', in_local=True)
-    add_dirty_block(file, b'A' * 140, offset=340, name='A', not_flushed=True)
-    add_dirty_block(file, b'B' * 50, offset=250, name='B', not_flushed=True)
-    add_dirty_block(file, b'C' * 40, offset=30, name='C', not_flushed=False)
-    add_dirty_block(file, b'D' * 20, offset=60, name='D', not_flushed=True)
-    add_dirty_block(file, b'E' * 120, offset=350, name='E', not_flushed=False)
-    add_dirty_block(file, b'F' * 60, offset=330, name='F', not_flushed=True)
-    add_dirty_block(file, b'G' * 100, offset=500, name='G', not_flushed=False)
-    add_dirty_block(file, b'H' * 1, offset=0, name='H', not_flushed=True)
-    await file.truncate(475)
+class MockBlock:
 
-    blocks = await file.get_merged_blocks()
-    assert len(blocks) == 12
+    def __init__(self, data, offset):
+        self.data = data
+        self.offset = offset
+        self.end = offset + len(data)
+        self.size = len(data)
+
+
+def test_get_merged_blocks():
+    blocks = []
+    blocks.append(MockBlock(b'1' * 100, 0))
+    blocks.append(MockBlock(b'2' * 100, 100))
+    blocks.append(MockBlock(b'3' * 100, 200))
+    blocks.append(MockBlock(b'4' * 100, 300))
+    blocks.append(MockBlock(b'5' * 100, 400))
+
+    dirty_blocks = []
+    dirty_blocks.append(MockBlock(b'A' * 140, 340))
+    dirty_blocks.append(MockBlock(b'B' * 50, 250))
+    dirty_blocks.append(MockBlock(b'C' * 40, 30))
+    dirty_blocks.append(MockBlock(b'D' * 20, 60))
+    dirty_blocks.append(MockBlock(b'E' * 120, 350))
+    dirty_blocks.append(MockBlock(b'F' * 60, 330))
+    dirty_blocks.append(MockBlock(b'G' * 100, 500))
+    dirty_blocks.append(MockBlock(b'H' * 1, 0))
+
     results = [
-        (0, 1, b'H'),
-        (1, 30, b'1'),
-        (30, 60, b'C'),
-        (60, 80, b'D'),
-        (80, 100, b'1'),
-        (100, 200, b'2'),
-        (200, 250, b'3'),
-        (250, 300, b'B'),
-        (300, 330, b'4'),
-        (330, 390, b'F'),
-        (390, 470, b'E'),
-        (470, 475, b'A'),
+        (dirty_blocks[7], 0, 1, b'H'),
+        (blocks[0], 1, 30, b'1'),
+        (dirty_blocks[2], 30, 60, b'C'),
+        (dirty_blocks[3], 60, 80, b'D'),
+        (blocks[0], 80, 100, b'1'),
+        (blocks[1], 100, 200, b'2'),
+        (blocks[2], 200, 250, b'3'),
+        (dirty_blocks[1], 250, 300, b'B'),
+        (blocks[3], 300, 330, b'4'),
+        (dirty_blocks[5], 330, 390, b'F'),
+        (dirty_blocks[4], 390, 470, b'E'),
+        (dirty_blocks[0], 470, 475, b'A'),
     ]
-    for index, (offset, end, data) in enumerate(results):
-        assert blocks[index].offset == offset
-        assert blocks[index].end == end
-        assert await blocks[index].fetch_data() == data * (end - offset)
+
+    merged_blocks = file.get_merged_blocks(blocks, dirty_blocks, 475)
+
+    assert len(merged_blocks) == 12
+
+    for index, (base_block, offset, end, data) in enumerate(results):
+        block, block_offset, block_end = merged_blocks[index]
+        if not block_offset and not block_end:
+            block_offset = 0
+            block_end = block.end - block.offset
+        block_data = merged_blocks[index][0].data
+        block_data = block_data[block_offset:block_end]
+        assert block_data == data * (end - offset)
+        block_offset += merged_blocks[index][0].offset
+        block_end += merged_blocks[index][0].offset
+        assert block == base_block
+        assert block == merged_blocks[index][0]
+        assert block_offset == offset
+        assert block_end == end
 
 
-@pytest.mark.trio
-async def test_get_normalized_blocks(fs):
-    file = create_file(fs, 'foo')
-    add_block(file, b'1' * 90, offset=0, name='1', in_local=True)
-    add_block(file, b'2' * 100, offset=90, name='2', in_local=False)
-    add_block(file, b'3' * 200, offset=190, name='3', in_local=True)
-    add_block(file, b'4' * 100, offset=490, name='4', in_local=False)
-    add_block(file, b'5' * 110, offset=600, name='5', in_local=True)
-    add_block(file, b'6' * 100, offset=600, name='6', in_local=False)
-    add_block(file, b'7' * 10, offset=700, name='7', in_local=True)
+def test_get_normalized_blocks():
+    blocks = []
+    blocks.append(MockBlock(b'1' * 90, 0))
+    blocks.append(MockBlock(b'2' * 100, 90))
+    blocks.append(MockBlock(b'3' * 200, 190))
+    blocks.append(MockBlock(b'4' * 100, 390))
+    blocks.append(MockBlock(b'5' * 110, 490))
+    blocks.append(MockBlock(b'6' * 100, 600))
+    blocks.append(MockBlock(b'7' * 10, 700))
+
+    results = [
+        [(blocks[0], 0, 90, b'1' * 90),
+         (blocks[1], 90, 100, b'2' * 10)],
+        [(blocks[1], 100, 190, b'2' * 90),
+         (blocks[2], 190, 200, b'3' * 10)],
+        [(blocks[2], 200, 300, b'3' * 100)],
+        [(blocks[2], 300, 390, b'3' * 90),
+         (blocks[3], 390, 400, b'4' * 10)],
+        [(blocks[3], 400, 490, b'4' * 90),
+         (blocks[4], 490, 500, b'5' * 10)],
+        [(blocks[4], 500, 600, b'5' * 100)],
+        [(blocks[5], 600, 700, b'6' * 100)],
+        [(blocks[6], 700, 710, b'7' * 10)],
+    ]
 
     block_size = 100
-    blocks = await file.get_normalized_blocks(file._blocks, block_size)
-    assert len(blocks) == 8
-    results = [
-        (0, 100, b'1' * 90 + b'2' * 10),
-        (100, 200, b'2' * 90 + b'3' * 10),
-        (200, 300, b'3' * 100),
-        (300, 400, b'3' * 90 + b'4' * 10),
-        (400, 500, b'4' * 90 + b'5' * 10),
-        (500, 600, b'5' * 100),
-        (600, 700, b'6' * 100),
-        (700, 710, b'7' * 10),
-    ]
-    for index, (offset, end, data) in enumerate(results):
-        assert blocks[index].offset == offset
-        assert blocks[index].end == end
-        assert await blocks[index].fetch_data() == data
+    normalized_blocks = file.get_normalized_blocks(blocks, block_size)
+
+    assert len(normalized_blocks) == 8
+
+    for group_index, group in enumerate(results):
+        for index, (base_block, offset, end, data) in enumerate(group):
+            block, block_offset, block_end = normalized_blocks[group_index][index]
+            if not block_offset and not block_end:
+                block_offset = 0
+                block_end = block.end - block.offset
+            block_data = normalized_blocks[group_index][index][0].data
+            block_data = block_data[block_offset:block_end]
+            assert block_data == data
+            block_offset += normalized_blocks[group_index][index][0].offset
+            block_end += normalized_blocks[group_index][index][0].offset
+            assert block == base_block
+            assert block == normalized_blocks[group_index][index][0]
+            assert block_offset == offset
+            assert block_end == end

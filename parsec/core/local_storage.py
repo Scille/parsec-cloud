@@ -42,6 +42,7 @@ class LocalStorage(BaseLocalStorage):
         self.conn = sqlite3.connect(self.path)
         cur = self.conn.cursor()
         cur.execute("CREATE TABLE IF NOT EXISTS manifests (id TEXT, blob BLOB)")
+        cur.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT, blob BLOB)")
         self.conn.commit()
 
     def teardown(self):
@@ -55,7 +56,7 @@ class LocalStorage(BaseLocalStorage):
         try:
             return cur.fetchone()[0]
         except TypeError:
-            return b''
+            return None
 
     def flush_user_manifest(self, blob):
         cur = self.conn.cursor()
@@ -65,7 +66,10 @@ class LocalStorage(BaseLocalStorage):
     def fetch_manifest(self, id):
         cur = self.conn.cursor()
         cur.execute('SELECT blob FROM manifests WHERE id=?', (id,))
-        return cur.fetchone()[0]
+        try:
+            return cur.fetchone()[0]
+        except TypeError:
+            return None
 
     def flush_manifest(self, id, blob):
         cur = self.conn.cursor()
@@ -74,5 +78,29 @@ class LocalStorage(BaseLocalStorage):
 
     def move_manifest(self, id, new_id):
         cur = self.conn.cursor()
-        cur.execute('UPDATE blob SET (id=?) WHERE (id=?)', (new_id, id))
+        cur.execute('UPDATE manifests SET id=? WHERE id=?', (new_id, id))
+        self.conn.commit()
+
+    def fetch_block(self, id):
+        cur = self.conn.cursor()
+        cur.execute('SELECT blob FROM blocks WHERE id=?', (id,))
+        res = cur.fetchone()
+        if res is not None:
+            return res[0]
+
+    def flush_block(self, id, blob):
+        cur = self.conn.cursor()
+        cur.execute('INSERT OR REPLACE INTO blocks (id, blob) VALUES (?, ?)', (id, blob))
+        self.conn.commit()
+
+    def fetch_dirty_block(self, id):
+        cur = self.conn.cursor()
+        cur.execute('SELECT blob FROM blocks WHERE id=?', (id,))
+        res = cur.fetchone()
+        if res is not None:
+            return res[0]
+
+    def flush_dirty_block(self, id, blob):
+        cur = self.conn.cursor()
+        cur.execute('INSERT OR REPLACE INTO blocks (id, blob) VALUES (?, ?)', (id, blob))
         self.conn.commit()

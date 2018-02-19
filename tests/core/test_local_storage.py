@@ -2,14 +2,12 @@ import pytest
 
 from parsec.core.local_storage import LocalStorage
 
-from tests.common import InMemoryLocalStorage
 
-
-@pytest.fixture(params=[InMemoryLocalStorage, LocalStorage])
-def local_storage(request):
-    if request.param is LocalStorage:
-        pytest.skip('`LocalStorage` not implemented yet !')
-    return request.param()
+@pytest.fixture
+def local_storage():
+    ls = LocalStorage(':memory:')
+    ls.init()
+    return ls
 
 
 def test_fetch_user_manifest_not_available(local_storage):

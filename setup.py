@@ -4,10 +4,7 @@
 import os
 import sys
 
-try:
-    from setuptools import setup, find_packages
-except ImportError:
-    from distutils.core import setup, find_packages
+from setuptools import setup, find_packages
 
 try:
     from cx_Freeze import setup, Executable
@@ -29,8 +26,7 @@ def _extract_libs_cffi_backend():
 build_exe_options = {
     "packages": ["idna", "trio._core", "nacl._sodium"],
     # nacl store it cffi shared lib in a very strange place...
-    'include_files': _extract_libs_cffi_backend() + [(os.path.dirname(sys.executable) +
-                                                     '\DLLs\sqlite3.dll', 'sqlite3.dll')],
+    'include_files': _extract_libs_cffi_backend(),
 }
 
 
@@ -44,24 +40,25 @@ requirements = [
     'attrs==17.3.0',
     'blinker==1.4.0',
     'click==6.7',
-    'Logbook==1.1.0',
+    'Logbook==1.2.1',
     'marshmallow==2.14.0',
     'marshmallow-oneofschema==1.0.5',
     'pendulum==1.3.1',
     'PyNaCl==1.2.0',
     'simplejson==3.10.0',
-    'pyreadline==2.1',
     'python-decouple==3.1',
     'trio==0.3.0',
 ]
 dependency_links = [
     # need to use --process-dependency-links option for this
+    'git+https://github.com/Scille/fusepy.git@3b4aeb91566f902eaccb3278467612f0dc13caa0#egg=fusepy-2.0.4-win',
 ]
 
 test_requirements = [
     'pytest',
     'pytest-cov',
     'pytest-trio',
+    'pytest-logbook',
     # Libfaketime is much faster than Freezegun but UNIX only
     'pytest-libfaketime;platform_system!="Windows"',
     'freezegun;platform_system=="Windows"',
@@ -69,13 +66,17 @@ test_requirements = [
     'wheel',
     'Sphinx',
     'flake8',
+    'hypothesis',
     'bumpversion',
 ]
 
 extra_requirements = {
     'drive': ["pydrive==1.3.1"],
     'dropbox': ["dropbox==7.2.1"],
-    'fuse': ['fusepy==2.0.4'],
+    'fuse': [
+        'fusepy==2.0.4;platform_system!="Windows"',
+        'fusepy==2.0.4-win;platform_system=="Windows"'
+    ],
     'postgresql': ["psycopg2==2.7.1", "aiopg==0.13.0"],
     's3': ['boto3==1.4.4', 'botocore==1.5.46'],
     'dev': test_requirements

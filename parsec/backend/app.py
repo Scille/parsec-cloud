@@ -1,8 +1,11 @@
 import attr
 import trio
 import blinker
+import logbook
+import traceback
 from nacl.public import PublicKey
 from nacl.signing import VerifyKey
+from json import JSONDecodeError
 
 from parsec.utils import CookedSocket, ParsecError
 from parsec.handshake import HandshakeFormatError, ServerHandshake
@@ -27,6 +30,9 @@ from parsec.backend.drivers.postgresql import (
 )
 
 from parsec.backend.exceptions import NotFoundError
+
+
+logger = logbook.Logger("parsec.backend.app")
 
 
 class cmd_LOGIN_Schema(BaseCmdSchema):
@@ -199,7 +205,7 @@ class BackendApp:
             try:
                 client_ctx.events.put_nowait((event, sender))
             except trio.WouldBlock:
-                print('WARNING: event queue is full for %s' % client_ctx.id)
+                logger.warning('event queue is full for %s' % client_ctx.id)
 
         client_ctx.subscribed_events[event, subject] = _handle_event
         if subject:
@@ -274,35 +280,50 @@ class BackendApp:
     async def handle_client(self, sockstream):
         sock = CookedSocket(sockstream)
         try:
-            print('START HANDSHAKE')
+            logger.debug('START HANDSHAKE')
             client_ctx = await self._do_handshake(sock)
             if not client_ctx:
                 # Invalid handshake
-                print('BAD HANDSHAKE')
+                logger.debug('BAD HANDSHAKE')
                 return
-            print('HANDSHAKE DONE, CLIENT IS `%s`' % client_ctx.id)
-            while True:
-                req = await sock.recv()
-                if not req:  # Client disconnected
-                    print('CLIENT DISCONNECTED')
-                    break
-                print('REQ %s' % req)
-                # TODO: handle bad msg
-                try:
-                    cmd = req.get('cmd', '<missing>')
-                    if client_ctx.anonymous:
-                        cmd_func = self.anonymous_cmds[cmd]
-                    else:
-                        cmd_func = self.cmds[cmd]
-                except KeyError:
-                    rep = {'status': 'bad_cmd', 'reason': 'Unknown command `%s`' % cmd}
-                else:
-                    try:
-                        rep = await cmd_func(client_ctx, req)
-                    except ParsecError as err:
-                        rep = err.to_dict()
-                print('REP %s' % rep)
-                await sock.send(rep)
+            logger.debug('HANDSHAKE DONE, CLIENT IS `%s`' % client_ctx.id)
+
+            await self._handle_client_loop(sock, client_ctx)
+
         except trio.BrokenStreamError:
             # Client has closed connection
             pass
+        except Exception:
+            # If we are here, something unexpected happened...
+            logger.error(traceback.format_exc())
+            await sock.aclose()
+            raise
+
+    async def _handle_client_loop(self, sock, client_ctx):
+        while True:
+            try:
+                req = await sock.recv()
+            except JSONDecodeError:
+                rep = {'status': 'invalid_msg_format'}
+                await sock.send(rep)
+                continue
+            if not req:  # Client disconnected
+                logger.debug('CLIENT DISCONNECTED')
+                break
+            logger.debug('REQ %s' % req)
+            # TODO: handle bad msg
+            try:
+                cmd = req.get('cmd', '<missing>')
+                if client_ctx.anonymous:
+                    cmd_func = self.anonymous_cmds[cmd]
+                else:
+                    cmd_func = self.cmds[cmd]
+            except KeyError:
+                rep = {'status': 'unknown_command'}
+            else:
+                try:
+                    rep = await cmd_func(client_ctx, req)
+                except ParsecError as err:
+                    rep = err.to_dict()
+            logger.debug('REP %s' % rep)
+            await sock.send(rep)
