@@ -135,7 +135,7 @@ class BaseUserComponent:
         except NotFoundError:
             return {
                 'status': 'not_found',
-                'reason': 'No user with id `%s`.' % msg['id'],
+                'reason': 'No user with id `%s`.' % msg['user_id'],
             }
         device = user['devices'].get(msg['device_name'])
         if not device:
