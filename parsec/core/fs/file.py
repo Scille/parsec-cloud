@@ -212,7 +212,8 @@ class BaseFileEntry(BaseEntry):
                 'updated': self._updated,
             }
             merged_blocks = []
-            for block, offset, end in get_merged_blocks():
+            for block, offset, end in get_merged_blocks(
+                    self._blocks, self._dirty_blocks, self._size):
                 if offset and end:
                     buffer = await block.fetch_data()
                     buffer = buffer[offset:end]
