@@ -436,7 +436,9 @@ def test_get_merged_blocks(random, dirty_blocks_count, synced_file_size, synced_
 )
 def test_get_normalized_blocks(random, normalized_block_size, size, slices):
     blocks = _generate_contiguous_blocks(random, slices, size)
+    note('Blocks: %s' % blocks)
     normalized_blocks = file.get_normalized_blocks(blocks, normalized_block_size)
+    note('Normalized blocks: %s' % normalized_blocks)
 
     original_data = b''.join([x.data for x in blocks])
 
