@@ -2,7 +2,7 @@ import trio
 import pytest
 import attr
 from pendulum import datetime
-from hypothesis import given, strategies as st, note
+from hypothesis import given, strategies as st, note, assume
 
 from tests.common import freeze_time
 from parsec.core.fs import *
@@ -435,6 +435,7 @@ def test_get_merged_blocks(random, dirty_blocks_count, synced_file_size, synced_
     slices=st.integers(min_value=0, max_value=25)
 )
 def test_get_normalized_blocks(random, normalized_block_size, size, slices):
+    assume(size / normalized_block_size < 1000)
     blocks = _generate_contiguous_blocks(random, slices, size)
     note('Blocks: %s' % blocks)
     normalized_blocks = file.get_normalized_blocks(blocks, normalized_block_size)
