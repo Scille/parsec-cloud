@@ -60,7 +60,7 @@ def merge_children(base, diverged, target, on_conflict=simple_rename, inplace=No
     # If entry is in base but not in diverged and target, it is then already
     # resolved.
     all_entries = diverged['children'].keys() | target['children'].keys()
-    resolved = inplace['children']
+    resolved = inplace['children'].copy()
     modified = False
 
     for entry in all_entries:

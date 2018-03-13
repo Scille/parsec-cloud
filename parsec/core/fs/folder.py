@@ -178,7 +178,7 @@ class BaseFolderEntry(BaseEntry):
         if not entry.is_loaded:
             not_loaded_entry = entry
             entry = await not_loaded_entry.load()
-            # Finally, update the parent to take into account this entry 
+            # Finally, update the parent to take into account this entry
             async with self.acquire_write():
                 # As usual we must make sure the entry hasn't been tempered
                 # in the meantime (e.g. entry deleted or moved)
