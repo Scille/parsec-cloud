@@ -221,13 +221,14 @@ class BaseFileEntry(BaseEntry):
                     block = self._fs._block_cls(access, data=buffer)
                 merged_blocks.append(block)
             normalized_blocks = []
-            for block, offset, end in get_normalized_blocks(merged_blocks, 4096):
-                if offset and end:
-                    buffer = await block.fetch_data()
-                    buffer = buffer[offset:end]
-                    access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer))
-                    block = self._fs._block_cls(access, data=buffer)
-                normalized_blocks.append(block)
+            for block_group in get_normalized_blocks(merged_blocks, 4096):
+                for block, offset, end in block_group:
+                    if offset and end:
+                        buffer = await block.fetch_data()
+                        buffer = buffer[offset:end]
+                        access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer))
+                        block = self._fs._block_cls(access, data=buffer)
+                    normalized_blocks.append(block)
             dirty_blocks_count = len(self._dirty_blocks)
 
         # Flush data here given we don't want to lose the upload blocks
@@ -308,7 +309,8 @@ def get_merged_blocks(file_blocks, file_dirty_blocks, file_size):
 def get_normalized_blocks(blocks, block_size=4096):
     size = sum([block.size for block in blocks])
     if size <= block_size:
-        return [[(block, 0, block.size) for block in blocks if block.size]]
+        block_list = [(block, 0, block.size) for block in blocks if block.size]
+        return [block_list] if block_list else []
     offset_splits = list(range(block_size, size, block_size))
     offset_splits.append(offset_splits[-1] + block_size)
     final_blocks = []
