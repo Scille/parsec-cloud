@@ -236,7 +236,6 @@ class BaseFileEntry(BaseEntry):
         # Upload the file manifest as new vlob version
         await self._fs.manifests_manager.sync_with_backend(
             self._access.id, self._access.wts, self._access.key, manifest)
-        print('------------------------------------')
         # If conflict, raise exception and let parent folder copy ourself somewhere else
         async with self.acquire_write():
             # Merge our synced data with up-to-date dirty_blocks and patches
@@ -250,14 +249,19 @@ class BaseFileEntry(BaseEntry):
 
 
 def get_merged_blocks(file_blocks, file_dirty_blocks, file_size):
+    # TODO: add docstring
+    # TODO: file_size currently used to handle truncate, remove it ?
     events = []
+    # file_size = 0
     for index, block in enumerate(file_blocks):
         bisect.insort(events, (block.offset, index, 'start', block))
         bisect.insort(events, (block.end, index, 'end', block))
+        # file_size = block.end if block.end > file_size else file_size
     delta = len(file_blocks)
     for index, block in enumerate(file_dirty_blocks):
         bisect.insort(events, (block.offset, index + delta, 'start', block))
         bisect.insort(events, (block.end, index + delta, 'end', block))
+        # file_size = block.end if block.end > file_size else file_size
     blocks = []
     block_stack = []
     start_offset = {}
@@ -302,7 +306,9 @@ def get_merged_blocks(file_blocks, file_dirty_blocks, file_size):
 
 def get_normalized_blocks(blocks, block_size=4096):
     size = sum([block.size for block in blocks])
-    offset_splits = [i for i in range(block_size, size, block_size)]
+    if not size:
+        return []
+    offset_splits = list(range(block_size, size, block_size))
     offset_splits.append(offset_splits[-1] + block_size)
     final_blocks = []
     block_group = []

@@ -1,6 +1,8 @@
 import trio
 import pytest
+import attr
 from pendulum import datetime
+from hypothesis import given, strategies as st, note
 
 from tests.common import freeze_time
 from parsec.core.fs import *
@@ -310,7 +312,12 @@ async def test_simple_sync(fs, mocked_manifests_manager):
     await file.sync()
 
 
+@attr.s(init=False)
 class MockBlock:
+    data = attr.ib()
+    offset = attr.ib()
+    end = attr.ib()
+    size = attr.ib()
 
     def __init__(self, data, offset):
         self.data = data
@@ -319,7 +326,7 @@ class MockBlock:
         self.size = len(data)
 
 
-def test_get_merged_blocks():
+def test_get_merged_blocks_like_middleage():
     blocks = []
     blocks.append(MockBlock(b'1' * 100, 0))
     blocks.append(MockBlock(b'2' * 100, 100))
@@ -372,7 +379,77 @@ def test_get_merged_blocks():
         assert block_end == end
 
 
-def test_get_normalized_blocks():
+def _generate_contiguous_blocks(random, slices, size):
+    blocks = []
+    curr_offset = 0
+    for i in range(slices):
+        curr_block_size = random.randint(0, size - curr_offset)
+        # Keep payload different for each block
+        curr_block_payload = chr(ord('a') + i).encode() * curr_block_size
+        blocks.append(MockBlock(curr_block_payload, curr_offset))
+        curr_offset += curr_block_size
+    blocks.append(MockBlock(b'@' * (size - curr_offset), curr_offset))
+    return blocks
+
+
+@given(
+    random=st.randoms(),
+    dirty_blocks_count=st.integers(min_value=0, max_value=25),
+    synced_blocks_slices=st.integers(min_value=0, max_value=25),
+    synced_file_size=st.integers(min_value=0),
+)
+def test_get_merged_blocks(random, dirty_blocks_count, synced_file_size, synced_blocks_slices):
+    synced_blocks = _generate_contiguous_blocks(random, synced_blocks_slices, synced_file_size)
+    synced_data = b''.join([x.data for x in synced_blocks])
+    note('Synced blocks: %s' % synced_blocks)
+
+    expected_data = synced_data
+    dirty_blocks = []
+    for i in range(dirty_blocks_count):
+        dirty_block_size = random.randint(0, synced_file_size)
+        dirty_block_offset = random.randint(0, synced_file_size)
+        # Keep payload different for each block
+        dirty_block_payload = chr(ord('a') + i).encode() * dirty_block_size
+        dirty_blocks.append(MockBlock(dirty_block_payload, dirty_block_offset))
+        expected_data = (
+            expected_data[:dirty_block_offset] +
+            dirty_block_payload +
+            expected_data[dirty_block_offset + dirty_block_size:]
+        )
+    note('Dirty blocks: %s' % dirty_blocks)
+    # Simulate truncate
+    final_size = random.randint(0, len(expected_data))
+    note('Truncate to: %s, expect: %r' % (final_size, expected_data))
+    expected_data = expected_data[:final_size]
+
+    merged_blocks = get_merged_blocks(synced_blocks, dirty_blocks, final_size)
+    merged_data = b''.join([block.data[start:end] for block, start, end in merged_blocks])
+
+    assert merged_data == expected_data
+
+
+@given(
+    random=st.randoms(),
+    normalized_block_size=st.integers(min_value=1, max_value=10000),
+    size=st.integers(min_value=0),
+    slices=st.integers(min_value=0, max_value=25)
+)
+def test_get_normalized_blocks(random, normalized_block_size, size, slices):
+    blocks = _generate_contiguous_blocks(random, slices, size)
+    normalized_blocks = file.get_normalized_blocks(blocks, normalized_block_size)
+
+    original_data = b''.join([x.data for x in blocks])
+
+    normalized_data = []
+    for normalized_block in normalized_blocks:
+        for block, offset, end in normalized_block:
+            normalized_data.append(block.data[offset:end])
+    normalized_data = b''.join(normalized_data)
+
+    assert original_data == normalized_data
+
+
+def test_get_normalized_blocks_like_middleage():
     blocks = []
     blocks.append(MockBlock(b'1' * 90, 0))
     blocks.append(MockBlock(b'2' * 100, 90))
