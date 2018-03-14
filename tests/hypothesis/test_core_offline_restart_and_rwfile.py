@@ -11,6 +11,7 @@ from tests.hypothesis.conftest import skip_on_broken_stream
 class FileOracle:
     def __init__(self):
         self._buffer = bytearray()
+        self._flushed_buffer = bytearray()
 
     def read(self, size, offset):
         return self._buffer[offset:size + offset]
@@ -18,9 +19,11 @@ class FileOracle:
     def write(self, offset, content):
         self._buffer[offset:len(content) + offset] = content
 
+    def flush(self):
+        self._flushed_buffer = self._buffer.copy()
+
     def restart(self):
-        # TODO: comment me and look where it crash...
-        self._buffer = bytearray()
+        self._buffer = self._flushed_buffer.copy()
 
 
 @pytest.mark.slow
@@ -48,15 +51,16 @@ async def test_core_offline_restart_and_rwfile(
             }
 
             self.sys_cmd = lambda x: self.communicator.send(('sys', x))
+            self.core_cmd = lambda x: self.communicator.send(('core', x))
             self.file_oracle = FileOracle()
 
             async def run_core(on_ready):
                 async with core_factory(**config) as core:
+
                     await core.login(alice)
                     async with connect_core(core) as sock:
 
                         await on_ready(sock)
-                        self.core_cmd = lambda x: self.communicator.send(('core', x))
 
                         while True:
                             target, msg = await self.communicator.trio_recv()
@@ -74,7 +78,7 @@ async def test_core_offline_restart_and_rwfile(
                 task_status.started()
 
             async def restart_core_done(sock):
-                await self.communicator.trio_respond(42)
+                await self.communicator.trio_respond(True)
 
             on_ready = bootstrap_core
             while True:
@@ -86,10 +90,12 @@ async def test_core_offline_restart_and_rwfile(
         @rule()
         @skip_on_broken_stream
         def restart(self):
-            self.sys_cmd('restart!')
+            rep = self.sys_cmd('restart!')
+            assert rep is True
             self.file_oracle.restart()
 
-        @rule(size=st.integers(min_value=0), offset=st.integers(min_value=0))
+        @rule(size=st.integers(min_value=0, max_value=100),
+              offset=st.integers(min_value=0, max_value=100))
         @skip_on_broken_stream
         def read(self, size, offset):
             rep = self.core_cmd({
@@ -109,8 +115,9 @@ async def test_core_offline_restart_and_rwfile(
             rep = self.core_cmd({'cmd': 'flush', 'path': '/foo.txt'})
             note(rep)
             assert rep['status'] == 'ok'
+            self.file_oracle.flush()
 
-        @rule(offset=st.integers(min_value=0), content=st.binary())
+        @rule(offset=st.integers(min_value=0, max_value=100), content=st.binary())
         @skip_on_broken_stream
         def write(self, offset, content):
             b64content = to_jsonb64(content)
