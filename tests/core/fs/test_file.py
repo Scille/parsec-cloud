@@ -300,9 +300,8 @@ async def test_flush(fs, mocked_manifests_manager, mocked_blocks_manager):
     assert file.need_sync
 
 
-@pytest.mark.xfail
 @pytest.mark.trio
-async def test_simple_sync(fs, mocked_manifests_manager):
+async def test_simple_sync(fs, mocked_manifests_manager, mocked_blocks_manager):
     file = create_file(fs, 'foo')
     add_block(file, b'1' * 10, offset=0, name='1', in_local=True)
     add_block(file, b'2' * 10, offset=10, name='2', in_local=False)
@@ -310,6 +309,17 @@ async def test_simple_sync(fs, mocked_manifests_manager):
     add_dirty_block(file, b'B' * 5, offset=7, name='B', not_flushed=True)
 
     await file.sync()
+
+    mocked_manifests_manager.sync_with_backend.assert_called_with(
+        '<foo id>', '<foo wts>', b'<foo key>', {
+            'format': 1,
+            'type': 'file_manifest',
+            'version': 2,
+            'created': datetime(2017, 1, 1),
+            'updated': datetime(2017, 12, 31, 23, 59, 59)
+        }
+    )
+    # TODO: use assert_called_with on mocked_blocks_manager
 
 
 @attr.s(init=False)
