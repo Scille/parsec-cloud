@@ -79,7 +79,7 @@ class OracleFS:
 
 @pytest.mark.slow
 @pytest.mark.trio
-async def test_offline_core_tree_and_sync(
+async def test_online_core_tree_and_sync(
     TrioDriverRuleBasedStateMachine,
     mocked_local_storage_connection,
     tcp_stream_spy,
@@ -90,7 +90,7 @@ async def test_offline_core_tree_and_sync(
 
     st_entry_name = st.text(min_size=1).filter(lambda x: '/' not in x)
 
-    class CoreOfflineRWFile(TrioDriverRuleBasedStateMachine):
+    class CoreOnlineRWFile(TrioDriverRuleBasedStateMachine):
         Files = Bundle('file')
         Folders = Bundle('folder')
         count = 0
@@ -216,4 +216,4 @@ async def test_offline_core_tree_and_sync(
                 expected_status = self.oracle_fs.sync(*path.rsplit('/', 1))
             assert rep['status'] == expected_status
 
-    await CoreOfflineRWFile.run_test()
+    await CoreOnlineRWFile.run_test()
