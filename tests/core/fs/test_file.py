@@ -262,7 +262,6 @@ async def test_flush_not_needed(bar_txt, mocked_manifests_manager):
     mocked_manifests_manager.flush_on_local.assert_not_called()
 
 
-@pytest.mark.xfail
 @pytest.mark.trio
 async def test_flush(fs, mocked_manifests_manager, mocked_blocks_manager):
     file = create_file(fs, 'foo')
@@ -282,19 +281,20 @@ async def test_flush(fs, mocked_manifests_manager, mocked_blocks_manager):
             'base_version': 1,
             'created': datetime(2017, 1, 1),
             'updated': datetime(2017, 12, 31, 23, 59, 59),
+            'size': 20,
             'blocks': [
-                {'id': '<1 id>', 'key': 'PDEga2V5Pg==\n', 'offset': 0, 'size': 10},
-                {'id': '<2 id>', 'key': 'PDIga2V5Pg==\n', 'offset': 10, 'size': 10},
+                {'id': '<1 id>', 'key': b'<1 key>', 'offset': 0, 'size': 10},
+                {'id': '<2 id>', 'key': b'<2 key>', 'offset': 10, 'size': 10},
             ],
             'dirty_blocks': [
-                {'id': '<A id>', 'key': 'PEEga2V5Pg==\n', 'offset': 5, 'size': 5},
-                {'id': '<B id>', 'key': 'PEIga2V5Pg==\n', 'offset': 7, 'size': 5}
+                {'id': '<A id>', 'key': b'<A key>', 'offset': 5, 'size': 5},
+                {'id': '<B id>', 'key': b'<B key>', 'offset': 7, 'size': 5}
             ]
         }
     )
 
     assert mocked_blocks_manager.flush_on_local.call_count == 1
-    mocked_blocks_manager.flush_on_local.assert_called_with(b'BBBBB')
+    mocked_blocks_manager.flush_on_local.assert_called_with('<B id>', b'<B key>', b'BBBBB')
 
     assert not file.need_flush
     assert file.need_sync
