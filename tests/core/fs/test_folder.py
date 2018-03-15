@@ -372,46 +372,52 @@ async def test_simple_sync(fs, mocked_manifests_manager):
     )
 
 
+@pytest.mark.xfail(reason='sync api works recursively now')
 @pytest.mark.trio
 async def test_sync_with_children(fs, mocked_manifests_manager):
-    def fetch_effect(id, rts, key, version=None):
-        return {
-            'format': 1,
-            'type': 'folder_manifest',
-            'version': 2,
-            'created': datetime(2017, 1, 1),
-            'updated': datetime(2017, 12, 31, 23, 59, 59),
-            'children': {
-                'bar': {
-                    'id': '<bar id>',
-                    'rts': '<bar rts>',
-                    'wts': '<bar wts>',
-                    'key': b'<bar key>',
-                },
-                'baz': {
-                    'id': '<baz id>',
-                    'rts': '<baz rts>',
-                    'wts': '<baz wts>',
-                    'key': b'<baz key>',
-                },
-                'spam.txt': {
-                    'id': '<spam.txt id>',
-                    'rts': '<spam.txt rts>',
-                    'wts': '<spam.txt wts>',
-                    'key': b'<spam.txt key>',
-                }
+    folder_manifest = {
+        'format': 1,
+        'type': 'folder_manifest',
+        'version': 2,
+        'created': datetime(2017, 1, 1),
+        'updated': datetime(2017, 12, 31, 23, 59, 59),
+        'children': {
+            'bar': {
+                'id': '<bar id>',
+                'rts': '<bar rts>',
+                'wts': '<bar wts>',
+                'key': b'<bar key>',
+            },
+            'baz': {
+                'id': '<baz id>',
+                'rts': '<baz rts>',
+                'wts': '<baz wts>',
+                'key': b'<baz key>',
+            },
+            'spam.txt': {
+                'id': '<spam.txt id>',
+                'rts': '<spam.txt rts>',
+                'wts': '<spam.txt wts>',
+                'key': b'<spam.txt key>',
             }
         }
+    }
 
-    mocked_manifests_manager.fetch_from_backend.side_effect = fetch_effect
+    # Folder.sync will fetch folder manifest base and current versions
+    mocked_manifests_manager.fetch_from_backend.side_effect = lambda *args: folder_manifest
+    mocked_manifests_manager.fetch_from_local.side_effect = [
+        folder_manifest
+    ]
 
     foo = create_entry(fs, 'foo', need_sync=True)
     create_entry(fs, 'bar', parent=foo)
     create_entry(fs, 'spam.txt', is_file=True, parent=foo)
     # Note we don't need to load entry to sync the parent
     create_entry(fs, 'baz', is_not_loaded=True, parent=foo)
+
     with freeze_time('2017-07-07'):
         await foo.sync()
+
     assert not foo.need_sync
     assert foo.base_version == 2
     mocked_manifests_manager.flush_on_local.assert_not_called()

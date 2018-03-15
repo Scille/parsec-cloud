@@ -53,11 +53,11 @@ class OracleFS:
     def get_folder(self, path):
         elem = self.get_path(path)
         return elem if elem != '<file>' else None
-        
+
     def get_file(self, path):
         elem = self.get_path(path)
         return elem if elem == '<file>' else None
-        
+
     def get_path(self, path):
         current_folder = self.root
         try:
@@ -116,7 +116,6 @@ async def test_core_offline_restart_and_rwfile(
 
                         while True:
                             target, msg = await self.communicator.trio_recv()
-                            print(target, msg)
                             if target == 'core':
                                 await sock.send(msg)
                                 rep = await sock.recv()
@@ -125,9 +124,6 @@ async def test_core_offline_restart_and_rwfile(
                                 raise RestartCore()
 
             async def bootstrap_core(sock):
-                await sock.send({'cmd': 'file_create', 'path': '/foo.txt'})
-                rep = await sock.recv()
-                assert rep == {'status': 'ok'}
                 task_status.started()
 
             async def restart_core_done(sock):

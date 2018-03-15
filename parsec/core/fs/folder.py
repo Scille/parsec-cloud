@@ -66,9 +66,17 @@ class BaseFolderEntry(BaseEntry):
         self._need_sync = True
         self._updated = pendulum.utcnow()
 
-    async def flush_no_lock(self):
+    async def flush_no_lock(self, recursive=False):
+        if recursive:
+            # TODO: recursive lock maybe too violent here (e.g.
+            # `flush('/', recursive=True)` means we cannot modify / when
+            # recursively flush children, which maybe numerous...)
+            for child in self._children.values():
+                await child.flush(recursive=True)
+
         if not self._need_flush:
             return
+
         # Serialize as local folder manifest
         manifest = {
             'format': 1,
@@ -85,11 +93,11 @@ class BaseFolderEntry(BaseEntry):
         await self._fs.manifests_manager.flush_on_local(access.id, access.key, manifest)
         self._need_flush = False
 
-    async def flush(self):
-        if not self._need_flush:
+    async def flush(self, recursive=False):
+        if not self._need_flush and not recursive:
             return
         async with self.acquire_write():
-            await self.flush_no_lock()
+            await self.flush_no_lock(recursive)
 
     async def minimal_sync_if_placeholder(self):
         if not self.is_placeholder:
@@ -111,7 +119,10 @@ class BaseFolderEntry(BaseEntry):
             self._base_version = 1
             self._access = self._fs._vlob_access_cls(id, rts, wts, key)
 
-    async def sync(self):
+    async def sync(self, recursive=False):
+        # TODO: if file is a placeholder but contains data we sync it two
+        # times...
+        await self.minimal_sync_if_placeholder()
         async with self.acquire_write():
             await self.flush_no_lock()
             # Make a snapshot of ourself to avoid concurrency
@@ -129,7 +140,10 @@ class BaseFolderEntry(BaseEntry):
 
         # Convert placeholder children into proper synchronized children
         for name, entry in children.items():
-            await entry.minimal_sync_if_placeholder()
+            if recursive:
+                await entry.minimal_sync_if_placeholder()
+            else:
+                await entry.sync(recursive=True)
             # TODO: Synchronize with up-to-date data and flush to avoid
             # having to re-synchronize placeholders
             manifest['children'][name] = entry._access.dump(with_type=False)
@@ -250,9 +264,17 @@ class BaseFolderEntry(BaseEntry):
 
 
 class BaseRootEntry(BaseFolderEntry):
-    async def flush_no_lock(self):
+    async def flush_no_lock(self, recursive=False):
+        if recursive:
+            # TODO: recursive lock maybe too violent here (e.g.
+            # `flush('/', recursive=True)` means we cannot modify / when
+            # recursively flush children, which maybe numerous...)
+            for child in self._children.values():
+                await child.flush(recursive=True)
+
         if not self._need_flush:
             return
+
         # Serialize as local folder manifest
         manifest = {
             'format': 1,
@@ -268,7 +290,7 @@ class BaseRootEntry(BaseFolderEntry):
         await self._fs.manifests_manager.flush_user_manifest_on_local(manifest)
         self._need_flush = False
 
-    async def sync(self):
+    async def sync(self, recursive=False):
         async with self.acquire_write():
             await self.flush_no_lock()
             # Make a snapshot of ourself to avoid concurrency
@@ -286,7 +308,10 @@ class BaseRootEntry(BaseFolderEntry):
 
         # Convert placeholder children into proper synchronized children
         for name, entry in children.items():
-            await entry.minimal_sync_if_placeholder()
+            if recursive:
+                await entry.minimal_sync_if_placeholder()
+            else:
+                await entry.sync(recursive=True)
             # TODO: Synchronize with up-to-date data and flush to avoid
             # having to re-synchronize placeholders
             manifest['children'][name] = entry._access.dump(with_type=False)

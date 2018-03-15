@@ -1,5 +1,3 @@
-import os
-
 from parsec.core.fs.access import *
 from parsec.core.fs.base import *
 from parsec.core.fs.block import *
@@ -91,6 +89,8 @@ class FS:
 
     async def teardown(self):
         # TODO: too deeeeeeeep
+        # Flush what needs to be before leaving to avoid data loss
+        await self.root.flush(recursive=True)
         await self.manifests_manager._backend_storage.backend_conn.teardown()
 
     async def fetch_path(self, path):

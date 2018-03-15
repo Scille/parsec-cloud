@@ -223,15 +223,21 @@ class FSApi:
             return {'status': 'login_required'}
 
         req = PathOnlySchema().load_or_abort(req)
-        obj = await self.fs.fetch_path(req['path'])
-        to_sync = [obj]
+        to_sync_target = await self.fs.fetch_path(req['path'])
+        # If the path to the target contains placeholders, we must synchronize
+        # them here
+        to_sync = [to_sync_target]
         curr_path = req['path']
         while to_sync[-1].is_placeholder:
             curr_path, _ = curr_path.rsplit('/', 1)
             if not curr_path:
                 curr_path = '/'
             to_sync.append(await self.fs.fetch_path(curr_path))
-        for obj in reversed(to_sync):
-            # Note we must explicitly sync children even if parent are sync !
-            await obj.sync()
+        await to_sync_target.sync(recursive=True)
+        to_sync_parents = reversed(to_sync[1:])
+        # TODO: If parent contains placeholders than what compose the path to
+        # the target, there will be synchronized as empty files/folders.
+        # It would be better (and faster) to skip them entirely.
+        for to_sync_parent in to_sync_parents:
+            await to_sync_parent.sync(recursive=False)
         return {'status': 'ok'}

@@ -20,12 +20,14 @@ class ManifestsManager:
 
     def _encrypt_manifest(self, key, manifest):
         raw = json.dumps(manifest).encode()
+        return raw
         box = SecretBox(key)
         # signed = self.device.user_signkey.sign(raw)
         # return box.encrypt(signed)
         return box.encrypt(raw)
 
     def _decrypt_manifest(self, key, blob):
+        return json.loads(blob.decode())
         box = SecretBox(key)
         try:
             raw = box.decrypt(blob)
@@ -37,11 +39,13 @@ class ManifestsManager:
 
     def _encrypt_user_manifest(self, manifest):
         raw = json.dumps(manifest).encode()
+        return raw
         # TODO: replace this by a SealedBox
         box = Box(self.device.user_privkey, self.device.user_pubkey)
         return box.encrypt(raw)
 
     def _decrypt_user_manifest(self, blob):
+        return json.loads(blob.decode())
         box = Box(self.device.user_privkey, self.device.user_pubkey)
         try:
             raw = box.decrypt(blob)

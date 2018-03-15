@@ -75,6 +75,12 @@ class BaseEntry:
     def _fs(self):
         raise NotImplementedError()
 
+    async def flush(self, recursive=False):
+        raise NotImplementedError()
+
+    async def sync(self, recursive=False):
+        raise NotImplementedError()
+
     async def minimal_sync_if_placeholder(self):
         raise NotImplementedError()
 
@@ -106,6 +112,16 @@ class BaseNotLoadedEntry(BaseEntry):
                 return self._loaded
             else:
                 raise FSLoadError('%s: cannot fetch access %r' % (self.path, self._access))
+
+    async def flush(self, recursive=False):
+        # If the entry is not loaded, then there is nothing to be flushed
+        pass
+
+    async def sync(self, recursive=False):
+        if self.is_placeholder:
+            raise RuntimeError('TODO: should update access here...')
+        loaded_entry = await self.load()
+        await loaded_entry.sync(recursive=recursive)
 
     async def minimal_sync_if_placeholder(self):
         if not self.is_placeholder:

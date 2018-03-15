@@ -90,7 +90,8 @@ class BaseFileEntry(BaseEntry):
         await self._fs.manifests_manager.flush_on_local(access.id, access.key, manifest)
         self._need_flush = False
 
-    async def flush(self):
+    async def flush(self, recursive=False):
+        # Note recursive argument is not needed here
         if not self._need_flush:
             return
         async with self.acquire_write():
@@ -194,7 +195,9 @@ class BaseFileEntry(BaseEntry):
             self._base_version = 1
             self._access = self._fs._vlob_access_cls(id, rts, wts, key)
 
-    async def sync(self):
+    async def sync(self, recursive=False):
+        await self.minimal_sync_if_placeholder()
+        # Note recursive argument is not needed here
         if not self._need_sync:
             return
         # Make sure we are not a placeholder

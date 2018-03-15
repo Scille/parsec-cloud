@@ -11,19 +11,12 @@ from tests.hypothesis.conftest import skip_on_broken_stream
 class FileOracle:
     def __init__(self):
         self._buffer = bytearray()
-        self._flushed_buffer = bytearray()
 
     def read(self, size, offset):
         return self._buffer[offset:size + offset]
 
     def write(self, offset, content):
         self._buffer[offset:len(content) + offset] = content
-
-    def flush(self):
-        self._flushed_buffer = self._buffer.copy()
-
-    def restart(self):
-        self._buffer = self._flushed_buffer.copy()
 
 
 @pytest.mark.slow
@@ -92,7 +85,6 @@ async def test_core_offline_restart_and_rwfile(
         def restart(self):
             rep = self.sys_cmd('restart!')
             assert rep is True
-            self.file_oracle.restart()
 
         @rule(size=st.integers(min_value=0, max_value=100),
               offset=st.integers(min_value=0, max_value=100))
@@ -115,7 +107,6 @@ async def test_core_offline_restart_and_rwfile(
             rep = self.core_cmd({'cmd': 'flush', 'path': '/foo.txt'})
             note(rep)
             assert rep['status'] == 'ok'
-            self.file_oracle.flush()
 
         @rule(offset=st.integers(min_value=0, max_value=100), content=st.binary())
         @skip_on_broken_stream
