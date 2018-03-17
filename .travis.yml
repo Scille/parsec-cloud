@@ -4,13 +4,15 @@ python:
 #- '3.7-dev'
 services:
   - postgresql
+env:
+  - PARSEC_POSTGRESQL_TEST_URL='postgresql://postgres:@localhost/parsec_test'
 install:
 - pip install -U coveralls
 - pip install .[postgresql,dev]
 before_script:
   - psql -c 'create database parsec_test;' -U postgres
 script:
-- py.test tests --runslow
+- py.test tests --runslow -v -s
 after_success:
 - coveralls
 deploy:
