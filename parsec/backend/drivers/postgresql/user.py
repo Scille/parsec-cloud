@@ -1,6 +1,7 @@
-from parsec.backend.user import BaseUserComponent
+import itertools
 import pendulum
 
+from parsec.backend.user import BaseUserComponent
 from parsec.backend.exceptions import (
     AlreadyExistsError,
     NotFoundError,
@@ -140,15 +141,113 @@ class PGUserComponent(BaseUserComponent):
             'devices': {
                 d_name: {
                     'created_on': pendulum.from_timestamp(d_created_on),
-                    'verify_key': d_verify_key.tobytes(),
+                    'configure_token': d_configure_token,
+                    'verify_key': d_verify_key.tobytes() if d_verify_key else None,
                     'revocated_on': (pendulum.from_timestamp(d_revocated_on)
-                                     if d_revocated_on else None)
+                                     if d_revocated_on else None),
                 }
-                for d_name, d_created_on, d_verify_key, d_revocated_on in await self.dbh.fetch_many(
-                    'SELECT device_name, created_on, verify_key, revocated_on FROM user_devices WHERE user_id = %s',
+                for d_name, d_created_on, d_configure_token, d_verify_key, d_revocated_on in await self.dbh.fetch_many(
+                    'SELECT device_name, created_on, configure_token, verify_key, revocated_on FROM user_devices WHERE user_id = %s',
                     (user_id,)
                 )
             }
         }
 
         return user
+
+    async def declare_device(self, user_id, device_name):
+        devices = await self.dbh.fetch_many(
+            'SELECT device_name FROM user_devices WHERE user_id = %s',
+            (user_id, )
+        )
+        if not devices:
+            raise NotFoundError("User `%s` doesn't exists" % user_id)
+
+        if device_name in itertools.chain(*devices):
+            raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
+
+        await self.dbh.insert_one(
+            'INSERT INTO user_devices (user_id, device_name, created_on) VALUES (%s, %s, %s)',
+            (user_id, device_name, pendulum.utcnow().int_timestamp)
+        )
+
+    async def configure_device(self, user_id, device_name, device_verify_key):
+        updated = await self.dbh.update_one(
+            'UPDATE user_devices SET verify_key = %s WHERE user_id=%s AND device_name=%s',
+            # 'SELECT device_name FROM user_devices WHERE user_id=%s AND device_name=%s',
+            (device_verify_key, user_id, device_name)
+        )
+        if not updated:
+            raise NotFoundError("User `%s` doesn't exists" % user_id)
+            # TODO
+            # raise NotFoundError("Device `%s@%s` doesn't exists" % (user_id, device_name))
+
+    async def declare_unconfigured_device(self, token, user_id, device_name):
+        devices = await self.dbh.fetch_many(
+            'SELECT device_name FROM user_devices WHERE user_id = %s',
+            (user_id, )
+        )
+        if not devices:
+            raise NotFoundError("User `%s` doesn't exists" % user_id)
+
+        if device_name in itertools.chain(*devices):
+            raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
+
+        await self.dbh.insert_one("""
+            INSERT INTO user_devices (
+                user_id, device_name, created_on, configure_token
+            ) VALUES (%s, %s, %s, %s)""",
+            (user_id, device_name, pendulum.utcnow().int_timestamp, token)
+        )
+
+    async def register_device_configuration_try(
+            self, config_try_id, user_id, device_name, device_verify_key, user_privkey_cypherkey):
+        # TODO: handle multiple configuration tries on a given device
+        await self.dbh.insert_one("""
+            INSERT INTO device_configure_tries (
+                user_id, config_try_id, status, device_name, device_verify_key, user_privkey_cypherkey
+            ) VALUES (%s, %s, %s, %s, %s, %s)""",
+            (user_id, config_try_id, 'waiting_answer', device_name, device_verify_key, user_privkey_cypherkey)
+        )
+        return config_try_id
+
+    async def retrieve_device_configuration_try(self, config_try_id, user_id):
+        config_try = await self.dbh.fetch_one("""
+            SELECT status, device_name, device_verify_key, user_privkey_cypherkey, cyphered_user_privkey, refused_reason
+            FROM device_configure_tries WHERE user_id = %s AND config_try_id = %s
+            """,
+            (user_id, config_try_id)
+        )
+        if not config_try:
+            raise NotFoundError()
+        return {
+            'status': config_try[0],
+            'device_name': config_try[1],
+            'device_verify_key': config_try[2],
+            'user_privkey_cypherkey': config_try[3],
+            'cyphered_user_privkey': config_try[4],
+            'refused_reason': config_try[5]
+        }
+        return config_try
+
+    async def accept_device_configuration_try(self, config_try_id, user_id, cyphered_user_privkey):
+        updated = await self.dbh.update_one(
+            'UPDATE device_configure_tries SET status = %s, cyphered_user_privkey = %s WHERE user_id=%s AND config_try_id=%s and status=%s',
+            ('accepted', cyphered_user_privkey, user_id, config_try_id, 'waiting_answer')
+        )
+        if not updated:
+            raise NotFoundError()
+        # TODO: handle this error
+        # if config_try['status'] != 'waiting_answer':
+        #     raise AlreadyExistsError('Device configuration try already done.')
+
+    async def refuse_device_configuration_try(self, config_try_id, user_id, reason):
+        updated = await self.dbh.update_one(
+            'UPDATE device_configure_tries SET status = %s, refused_reason = %s WHERE user_id=%s AND config_try_id=%s and status=%s',
+            ('refused', reason, user_id, config_try_id, 'waiting_answer')
+        )
+        if not updated:
+            raise NotFoundError()
+        # TODO: handle this error
+        # if config_try['status'] != 'waiting_answer':
+        #     raise AlreadyExistsError('Device configuration try already done.')

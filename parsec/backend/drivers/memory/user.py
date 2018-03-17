@@ -104,6 +104,7 @@ class MemoryUserComponent(BaseUserComponent):
         device = user['devices'].get(device_name)
         if not device:
             raise NotFoundError("Device `%s@%s` doesn't exists" % (user_id, device_name))
+        # TODO: configured useful ?
         device.update({
             'configured': True,
             'verify_key': device_verify_key,

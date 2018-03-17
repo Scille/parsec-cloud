@@ -13,7 +13,7 @@ def init_db(url, force=False):
     if force:
         for table in ('blockstore', 'groups', 'group_identities', 'messages',
                       'pubkeys', 'users', 'user_devices', 'invitations',
-                      'vlobs', 'user_vlobs'):
+                      'vlobs', 'user_vlobs', 'device_configure_tries'):
             cursor.execute('DROP TABLE IF EXISTS %s' % table)
 
     cursor.execute(
@@ -68,6 +68,7 @@ def init_db(url, force=False):
             'user_id VARCHAR(32), '
             'device_name TEXT, '
             'created_on INTEGER, '
+            'configure_token TEXT, '
             'verify_key BYTEA, '
             'revocated_on INTEGER'
         ')'
@@ -80,6 +81,19 @@ def init_db(url, force=False):
             'author VARCHAR(32), '
             'invitation_token TEXT, '
             'claim_tries INTEGER'
+        ')'
+    )
+    cursor.execute(
+        'CREATE TABLE IF NOT EXISTS device_configure_tries ('
+            '_id SERIAL PRIMARY KEY, '
+            'user_id VARCHAR(32), '
+            'config_try_id TEXT, '
+            'status TEXT, '
+            'device_name TEXT, '
+            'device_verify_key BYTEA, '
+            'user_privkey_cypherkey BYTEA, '
+            'cyphered_user_privkey BYTEA, '
+            'refused_reason TEXT'
         ')'
     )
     cursor.execute(
@@ -198,7 +212,7 @@ class PGHandler(Thread):
         cursor.execute(sql, params)
         cursor.connection.commit()
 
-        return {'status': 'ok'}
+        return {'status': 'ok', 'rowcount': cursor.rowcount}
 
     def cmd_write_many(self, cursor, sql=None, paramslist=None):
         assert sql is not None
@@ -209,7 +223,7 @@ class PGHandler(Thread):
 
         cursor.connection.commit()
 
-        return {'status': 'ok'}
+        return {'status': 'ok', 'rowcount': cursor.rowcount}
 
     def cmd_notify(self, cursor, signal=None, sender=None):
         cursor.execute('NOTIFY {0}, %s'.format(signal), (sender,))
@@ -220,7 +234,7 @@ class PGHandler(Thread):
                 return self.respqueue.get(block=False)
 
             except Empty:
-                await trio.sleep(0.1)
+                await trio.sleep(0.01)
 
     async def start(self):
         super().start()
@@ -269,6 +283,7 @@ class PGHandler(Thread):
 
         if resp['status'] != 'ok':
             raise resp.get('error', RuntimeError('Unknown error'))
+        return resp['rowcount']
 
     async def update_many(self, sql, paramslist):
         self.update_one(sql, paramslist)
@@ -279,6 +294,7 @@ class PGHandler(Thread):
 
         if resp['status'] != 'ok':
             raise resp.get('error', RuntimeError('Unknown error'))
+        return resp['rowcount']
 
     async def delete_many(self, sql, paramslist):
         self.reqqueue.put({'type': 'write_many', 'sql': sql, 'paramslist': paramslist})
