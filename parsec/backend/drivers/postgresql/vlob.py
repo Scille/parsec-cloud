@@ -22,7 +22,7 @@ class PGVlobComponent(BaseVlobComponent):
 
     async def create(self, id, rts, wts, blob):
         await self.dbh.insert_one(
-            'INSERT INTO vlobs (id, rts, wts, blob) VALUES (%s, %s, %s, %s)',
+            'INSERT INTO vlobs (id, rts, wts, version, blob) VALUES (%s, %s, %s, 0, %s)',
             (id, rts, wts, blob)
         )
 
@@ -34,8 +34,9 @@ class PGVlobComponent(BaseVlobComponent):
         )
 
     async def read(self, id, trust_seed, version=None):
+        # TODO: use version in query to avoid retreiving all data each time
         vlobs = await self.dbh.fetch_many(
-            'SELECT id, rts, wts, blob FROM vlobs WHERE id = %s',
+            'SELECT id, rts, wts, blob FROM vlobs WHERE id = %s ORDER BY version ASC',
             (id,)
         )
         vlobcount = len(vlobs)
@@ -44,22 +45,25 @@ class PGVlobComponent(BaseVlobComponent):
             raise NotFoundError('Vlob not found.')
 
         version = version or vlobcount
-        vlob = vlobs[version - 1]
+        try:
+            id, rts, wts, blob = vlobs[version - 1]
+        except IndexError:
+            raise VersionError('Wrong blob version.')
 
-        if vlob['rts'] != trust_seed:
+        if rts != trust_seed:
             raise TrustSeedError()
 
         return VlobAtom(
-            id=vlob['id'],
-            read_trust_seed=vlob['rts'],
-            write_trust_seed=vlob['wts'],
-            blob=vlob['blob'],
+            id=id,
+            read_trust_seed=rts,
+            write_trust_seed=wts,
+            blob=blob,
             version=version
         )
 
     async def update(self, id, trust_seed, version, blob):
         vlobs = await self.dbh.fetch_many(
-            'SELECT id, rts, wts, blob FROM vlobs WHERE id = %s',
+            'SELECT id, rts, wts FROM vlobs WHERE id = %s',
             (id,)
         )
         vlobcount = len(vlobs)
@@ -67,15 +71,17 @@ class PGVlobComponent(BaseVlobComponent):
         if vlobcount == 0:
             raise NotFoundError('Vlob not found.')
 
-        vlob = vlobs[0]
+        id, rts, wts = vlobs[0]
 
-        if vlob['wts'] != trust_seed:
+        if wts != trust_seed:
             raise TrustSeedError('Invalid write trust seed.')
 
-        if version - 1 == vlobcount:
-            await self.create(vlob['id'], vlob['rts'], vlob['wts'], blob)
-
-        else:
+        if version - 1 != vlobcount:
             raise VersionError('Wrong blob version.')
+
+        await self.dbh.insert_one(
+            'INSERT INTO vlobs (id, rts, wts, version, blob) VALUES (%s, %s, %s, %s, %s)',
+            (id, rts, wts, version, blob)
+        )
 
         self._signal_vlob_updated.send(id)

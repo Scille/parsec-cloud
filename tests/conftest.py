@@ -24,7 +24,7 @@ def pytest_runtest_setup(item):
         pytest.skip('need --runslow option to run')
 
 
-DEFAULT_POSTGRESQL_TEST_URL = '/parsec_test'
+DEFAULT_POSTGRESQL_TEST_URL = 'postgresql://postgres:postgres@localhost/parsec_test'
 
 
 def postgresql_url():
@@ -36,8 +36,11 @@ def backend_store(request):
     if request.param == 'postgresql':
         if pytest.config.getoption('--no-postgresql'):
             pytest.skip('`--no-postgresql` option provided')
-        pytest.importorskip('parsec.backend.drivers.postgresql')
-        return postgresql_url()
+        pg_driver = pytest.importorskip('parsec.backend.drivers.postgresql')
+        url = postgresql_url()
+        conn = pg_driver.handler.init_db(url, force=True)
+        conn.close()
+        return url
     else:
         return 'mocked://'
 
@@ -105,9 +108,10 @@ def default_devices(alice, bob):
 
 
 @pytest.fixture
-async def backend(nursery, default_devices, config={}):
+async def backend(nursery, default_devices, backend_store, config={}):
     async with backend_factory(**{
         'blockstore_url': 'backend://',
+        'dburl': backend_store,
         **config
     }) as backend:
 

@@ -8,22 +8,24 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
         self.dbh = dbh
 
     async def get(self, id):
-        block = await self.dbh.fetch_one(
-            'SELECT * FROM blockstore WHERE id = %s',
+        try:
+            block, = await self.dbh.fetch_one(
+                'SELECT block FROM blockstore WHERE id = %s',
+                (id,)
+            )
+        except (TypeError, ValueError):
+            raise NotFoundError('Unknown block id.')
+
+        return block.tobytes()
+
+    async def post(self, id, block):
+        # TODO: non atomic operation !
+        exists = await self.dbh.fetch_one(
+            'SELECT 1 FROM blockstore WHERE id = %s',
             (id,)
         )
 
-        if block is None:
-            raise NotFoundError('Unknown block id.')
-
-        return block
-
-    async def post(self, id, block):
-        block = await self.dbh.fetch_one(
-            'SELECT 1 FROM blockstore WHERE id = %s'
-        )
-
-        if block is not None:
+        if exists is not None:
             # Should never happen
             raise AlreadyExistsError(
                 'A block already exists with id `%s`.' % id

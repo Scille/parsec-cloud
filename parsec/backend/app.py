@@ -87,8 +87,9 @@ class BackendApp:
         self.config = config
         self.nursery = None
         self.blockstore_url = config.blockstore_url
+        self.dbh = None
 
-        if self.config.dburl is None:
+        if self.config.dburl in [None, 'mocked://']:
             # TODO: validate BLOCKSTORE_URL value
             if self.blockstore_url == 'backend://':
                 self.blockstore = MemoryBlockStoreComponent(self.signal_ns)
@@ -164,11 +165,11 @@ class BackendApp:
         }
 
     async def init(self, nursery):
-        if self.config.dburl is not None:
+        if self.dbh:
             await self.dbh.start()
 
     async def shutdown(self):
-        if self.config.dburl is not None:
+        if self.dbh:
             await self.dbh.stop()
 
     async def _api_ping(self, client_ctx, msg):

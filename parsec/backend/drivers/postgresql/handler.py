@@ -1,9 +1,109 @@
+import trio
+from threading import Thread
+from queue import Queue, Empty
+from urllib.parse import urlparse
 from psycopg2.extensions import parse_dsn
 from psycopg2 import connect as pgconnect, Error as PGError
 
-from threading import Thread
-from queue import Queue, Empty
-import trio
+
+def init_db(url, force=False):
+    conn = pgconnect(**parse_dsn(url))
+    cursor = conn.cursor()
+
+    if force:
+        for table in ('blockstore', 'groups', 'group_identities', 'messages',
+                      'pubkeys', 'users', 'user_devices', 'invitations',
+                      'vlobs', 'user_vlobs'):
+            cursor.execute('DROP TABLE IF EXISTS %s' % table)
+
+    cursor.execute(
+        'CREATE TABLE IF NOT EXISTS blockstore ('
+            '_id SERIAL PRIMARY KEY, '
+            'id VARCHAR(32), '
+            'block BYTEA'
+        ')'
+    )
+    cursor.execute(
+        'CREATE TABLE IF NOT EXISTS groups ('
+            'id SERIAL PRIMARY KEY, '
+            'name TEXT UNIQUE'
+        ')'
+    )
+    cursor.execute(
+        'CREATE TABLE IF NOT EXISTS group_identities ('
+            'id SERIAL PRIMARY KEY, '
+            'group_id INTEGER, '
+            'name TEXT, '
+            'admin BOOLEAN, '
+            'UNIQUE (group_id, name)'
+        ')'
+    )
+    cursor.execute(
+        'CREATE TABLE IF NOT EXISTS messages ('
+            'id SERIAL PRIMARY KEY, '
+            'recipient TEXT, '
+            'body BYTEA'
+        ')'
+    )
+    cursor.execute(
+        'CREATE TABLE IF NOT EXISTS pubkeys ('
+            '_id SERIAL PRIMARY KEY, '
+            'id VARCHAR(32) UNIQUE, '
+            'pubkey BYTEA, '
+            'verifykey BYTEA'
+        ')'
+    )
+    cursor.execute(
+        'CREATE TABLE IF NOT EXISTS users ('
+            '_id SERIAL PRIMARY KEY, '
+            'user_id VARCHAR(32) UNIQUE, '
+            'created_on INTEGER, '
+            'created_by VARCHAR(32), '
+            'broadcast_key BYTEA'
+        ')'
+    )
+    cursor.execute(
+        'CREATE TABLE IF NOT EXISTS user_devices ('
+            '_id SERIAL PRIMARY KEY, '
+            'user_id VARCHAR(32), '
+            'device_name TEXT, '
+            'created_on INTEGER, '
+            'verify_key BYTEA, '
+            'revocated_on INTEGER'
+        ')'
+    )
+    cursor.execute(
+        'CREATE TABLE IF NOT EXISTS invitations ('
+            '_id SERIAL PRIMARY KEY, '
+            'user_id VARCHAR(32) UNIQUE, '
+            'ts INTEGER, '
+            'author VARCHAR(32), '
+            'invitation_token TEXT, '
+            'claim_tries INTEGER'
+        ')'
+    )
+    cursor.execute(
+        'CREATE TABLE IF NOT EXISTS vlobs ('
+            '_id SERIAL PRIMARY KEY, '
+            'id VARCHAR(32), '
+            'version INTEGER, '
+            'rts TEXT, '
+            'wts TEXT, '
+            'blob BYTEA '
+        ')'
+    )
+    cursor.execute(
+        'CREATE TABLE IF NOT EXISTS user_vlobs ('
+            '_id SERIAL PRIMARY KEY, '
+            'id VARCHAR(32), '
+            'version INTEGER, '
+            'blob BYTEA '
+        ')'
+    )
+    conn.commit()
+    cursor.close()
+    return conn
+
 
 
 class PGHandler(Thread):
@@ -28,83 +128,8 @@ class PGHandler(Thread):
         self.respqueue = Queue()
 
     def run(self):
-        conn = pgconnect(**parse_dsn(self.url))
+        conn = init_db(self.url)
         cursor = conn.cursor()
-
-        cursor.execute(
-            'CREATE TABLE IF NOT EXIST blockstore ('
-                '_id INTEGER PRIMARY KEY, '
-                'id VARCHAR(32), block TEXT UNIQUE'
-            ')'
-        )
-        cursor.execute(
-            'CREATE TABLE IF NOT EXIST groups ('
-                'id INTEGER PRIMARY KEY, '
-                'name TEXT UNIQUE'
-            ')'
-        )
-        cursor.execute(
-            'CREATE TABLE IF NOT EXIST group_identities ('
-                'id INTEGER PRIMARY KEY, '
-                'group_id INTEGER, '
-                'name TEXT, '
-                'admin BOOLEAN, '
-                'UNIQUE (group_id, name)'
-            ')'
-        )
-        cursor.execute(
-            'CREATE TABLE IF NOT EXIST messages ('
-                'id INTEGER PRIMARY KEY, '
-                'recipient TEXT, '
-                'body TEXT'
-            ')'
-        )
-        cursor.execute(
-            'CREATE TABLE IF NOT EXIST pubkeys ('
-                '_id INTEGER PRIMARY KEY, '
-                'id VARCHAR(32) UNIQUE, '
-                'pubkey BYTEA, '
-                'verifykey BYTEA'
-            ')'
-        )
-        cursor.execute(
-            'CREATE TABLE IF NOT EXIST users ('
-                '_id INTEGER PRIMARY KEY, '
-                'id VARCHAR(32) UNIQUE, '
-                'created_on INTEGER, '
-                'created_by VARCHAR(32), '
-                'broadcast_key BYTEA'
-            ')'
-        )
-        cursor.execute(
-            'CREATE TABLE IF NOT EXIST user_devices ('
-                'id INTEGER PRIMARY KEY, '
-                'name TEXT, '
-                'created_on INTEGER, '
-                'verify_key BYTEA, '
-                'revocated_on INTEGER'
-            ')'
-        )
-        cursor.execute(
-            'CREATE TABLE IF NOT EXIST invitations ('
-                '_id INTEGER PRIMARY KEY, '
-                'id VARCHAR(32) UNIQUE, '
-                'ts INTEGER, '
-                'author VARCHAR(32), '
-                'token TEXT, '
-                'claim_tries INTEGER'
-            ')'
-        )
-        cursor.execute(
-            'CREATE TABLE IF NOT EXIST vlobs ('
-                '_id INTEGER PRIMARY KEY, '
-                'id VARCHAR(32), '
-                'rts TEXT, '
-                'wts TEXT, '
-                'blob BYTEA '
-            ')'
-        )
-        conn.commit()
 
         for signal in self.signals:
             cursor.execute('LISTEN {0}'.format(signal))
@@ -116,7 +141,10 @@ class PGHandler(Thread):
         while running:
             while True:
                 try:
-                    req = self.reqqueue.get(block=False)
+                    # TODO: timeout avoid this threads to eat all the CPU,
+                    # but it would be better to have a dedicated thread
+                    # for events listening
+                    req = self.reqqueue.get(timeout=0.1)
 
                 except Empty:
                     break
@@ -228,8 +256,8 @@ class PGHandler(Thread):
         if resp['status'] != 'ok':
             raise resp.get('error', RuntimeError('Unknown error'))
 
-    async def insert_many(self, sql, params):
-        self.reqqueue.put({'type': 'write_many', 'sql': sql, 'params': params})
+    async def insert_many(self, sql, paramslist):
+        self.reqqueue.put({'type': 'write_many', 'sql': sql, 'paramslist': paramslist})
         resp = await self.get_response()
 
         if resp['status'] != 'ok':
@@ -242,8 +270,8 @@ class PGHandler(Thread):
         if resp['status'] != 'ok':
             raise resp.get('error', RuntimeError('Unknown error'))
 
-    async def update_many(self, sql, params):
-        self.update_one(sql, params)
+    async def update_many(self, sql, paramslist):
+        self.update_one(sql, paramslist)
 
     async def delete_one(self, sql, params):
         self.reqqueue.put({'type': 'write_one', 'sql': sql, 'params': params})
@@ -252,8 +280,8 @@ class PGHandler(Thread):
         if resp['status'] != 'ok':
             raise resp.get('error', RuntimeError('Unknown error'))
 
-    async def delete_many(self, sql, params):
-        self.reqqueue.put({'type': 'write_many', 'sql': sql, 'params': params})
+    async def delete_many(self, sql, paramslist):
+        self.reqqueue.put({'type': 'write_many', 'sql': sql, 'paramslist': paramslist})
         resp = await self.get_response()
 
         if resp['status'] != 'ok':

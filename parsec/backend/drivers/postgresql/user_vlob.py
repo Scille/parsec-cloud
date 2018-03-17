@@ -18,22 +18,19 @@ class PGUserVlobComponent(BaseUserVlobComponent):
 
         try:
             if version is None:
-                vlob = vlobs[-1]
+                id, version, blob = vlobs[-1]
             else:
-                vlob = vlobs[version - 1]
+                id, version, blob = vlobs[version - 1]
 
         except IndexError:
             raise VersionError('Wrong blob version.')
 
-        return UserVlobAtom(
-            id=vlob['id'],
-            version=vlob['version'],
-            blob=vlob['blob']
-        )
+        return UserVlobAtom(id=id, version=version, blob=blob)
 
     async def update(self, id, version, blob):
-        vlobcount = await self.dbh.fetch_one(
-            'SELECT COUNT(id) AS len FROM user_vlobs WHERE id=%s',
+        # TODO: atomic operations
+        vlobcount, = await self.dbh.fetch_one(
+            'SELECT COUNT(id) FROM user_vlobs WHERE id=%s',
             (id,)
         )
 

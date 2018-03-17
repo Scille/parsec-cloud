@@ -17,15 +17,21 @@ class BaseMessageComponent:
     def __init__(self, signal_ns):
         self._signal_message_arrived = signal_ns.signal('message_arrived')
 
+    async def perform_message_new(self, recipient, body):
+        raise NotImplementedError()
+
+    async def perform_message_get(self, id, offset):
+        raise NotImplementedError()
+
     async def api_message_new(self, client_ctx, msg):
         msg = cmd_NEW_Schema().load_or_abort(msg)
-        await self.new(**msg)
+        await self.perform_message_new(**msg)
         return {'status': 'ok'}
 
     async def api_message_get(self, client_ctx, msg):
         msg = cmd_GET_Schema().load_or_abort(msg)
-        messages = await self.get(client_ctx.id, **msg)
         offset = msg['offset']
+        messages = await self.perform_message_get(client_ctx.user_id, offset)
         return {
             'status': 'ok',
             'messages': [{'count': i, 'body': to_jsonb64(msg)}

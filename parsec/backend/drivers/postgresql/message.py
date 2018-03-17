@@ -15,8 +15,8 @@ class PGMessageComponent(BaseMessageComponent):
 
     async def perform_message_get(self, id, offset):
         return [
-            message['body']
-            for message in await self.dbh.fetch_many(
+            msg_body.tobytes()
+            for msg_body, in await self.dbh.fetch_many(
                 'SELECT body FROM messages WHERE recipient = %s OFFSET %s',
                 (id, offset)
             )
