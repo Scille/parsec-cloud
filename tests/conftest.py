@@ -24,7 +24,9 @@ def pytest_runtest_setup(item):
         pytest.skip('need --runslow option to run')
 
 
-DEFAULT_POSTGRESQL_TEST_URL = 'postgresql://postgres:postgres@localhost/parsec_test'
+# Use current unix user's credential, don't forget to do
+# `psql -c 'CREATE DATABASE parsec_test;'` prior to run tests
+DEFAULT_POSTGRESQL_TEST_URL = 'postgresql:///parsec_test'
 
 
 def postgresql_url():
