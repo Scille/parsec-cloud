@@ -67,14 +67,12 @@ class LocalStorage(BaseLocalStorage):
         cur.execute('SELECT blob FROM manifests WHERE id="0"')
         try:
             data = cur.fetchone()[0]
-            print('fetch_user_manifest', data)
             return data
             return cur.fetchone()[0]
         except TypeError:
             return None
 
     def flush_user_manifest(self, blob):
-        print('flush_user_manifest', blob)
         cur = self.conn.cursor()
         cur.execute('INSERT OR REPLACE INTO manifests (id, blob) VALUES ("0", ?)', (blob,))
         self.conn.commit()
@@ -84,14 +82,12 @@ class LocalStorage(BaseLocalStorage):
         cur.execute('SELECT blob FROM manifests WHERE id=?', (id,))
         try:
             data = cur.fetchone()[0]
-            print('fetch_manifest', id, data)
             return data
             return cur.fetchone()[0]
         except TypeError:
             return None
 
     def flush_manifest(self, id, blob):
-        print('flush_manifest', id, blob)
         cur = self.conn.cursor()
         cur.execute('INSERT OR REPLACE INTO manifests (id, blob) VALUES (?, ?)', (id, blob))
         self.conn.commit()
