@@ -166,11 +166,11 @@ class BackendApp:
 
     async def init(self, nursery):
         if self.dbh:
-            await self.dbh.start()
+            await self.dbh.init(nursery)
 
     async def shutdown(self):
         if self.dbh:
-            await self.dbh.stop()
+            await self.dbh.teardown()
 
     async def _api_ping(self, client_ctx, msg):
         msg = cmd_PING_Schema().load_or_abort(msg)

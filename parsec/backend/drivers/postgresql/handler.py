@@ -1,5 +1,5 @@
 import trio
-from threading import Thread
+from threading import Thread, Event
 from queue import Queue, Empty
 from urllib.parse import urlparse
 from psycopg2.extensions import parse_dsn
@@ -120,11 +120,12 @@ def init_db(url, force=False):
 
 
 
-class PGHandler(Thread):
+class PGHandler:
     def __init__(self, url, signal_ns, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.url = url
+        self._driver_thread_cancel_scope = None
 
         self.signal_ns = signal_ns
         self.signals = [
@@ -141,16 +142,34 @@ class PGHandler(Thread):
         self.reqqueue = Queue()
         self.respqueue = Queue()
 
-    def run(self):
+    async def init(self, nursery):
+        self._driver_thread_cancel_scope = await nursery.start(self._bootstrap_driver_thread)
+
+    async def teardown(self):
+        self._driver_thread_cancel_scope.cancel()
+
+    async def _bootstrap_driver_thread(self, *, task_status=trio.TASK_STATUS_IGNORED):
+        portal = trio.BlockingTrioPortal()
+
+        with trio.open_cancel_scope() as cancel:
+            def trigger_started_from_thread():
+                portal.run_sync(lambda: task_status.started(cancel))
+
+            try:
+                await trio.run_sync_in_worker_thread(
+                    self._driver_thread_run, trigger_started_from_thread, cancellable=True)
+            finally:
+                self.reqqueue.put({'type': 'stop'})
+
+    def _driver_thread_run(self, started):
         conn = init_db(self.url)
         cursor = conn.cursor()
 
         for signal in self.signals:
             cursor.execute('LISTEN {0}'.format(signal))
 
-        self.respqueue.put({'status': 'ok'})
-
         running = True
+        started()
 
         while running:
             while True:
