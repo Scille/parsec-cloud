@@ -335,7 +335,7 @@ class BaseRootEntry(BaseFolderEntry):
         async with self.acquire_write():
             # Else update base_version
             self._base_version = manifest['version']
-            self.flush_no_lock()
+            await self.flush_no_lock()
             # TODO: what if the folder is modified during the sync ?
             # it is now marked as need_sync=False but needs synchro !
             self._need_sync = False
