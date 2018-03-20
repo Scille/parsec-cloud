@@ -33,7 +33,7 @@ class BackendConnection:
         logger.debug('connecting to backend {}:{}', self.addr.hostname, self.addr.port)
         sockstream = await trio.open_tcp_stream(self.addr.hostname, self.addr.port)
         try:
-            logger.debug('handshake has {}', self.handshake_id)
+            logger.debug('handshake as {}', self.handshake_id)
             sock = CookedSocket(sockstream)
             if self.handshake_id == 'anonymous':
                 ch = AnonymousClientHandshake()
