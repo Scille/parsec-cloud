@@ -8,6 +8,7 @@ from json import JSONDecodeError
 
 from parsec.core.fs import fs_factory
 from parsec.core.fs_api import FSApi
+from parsec.core.synchronizer import Synchronizer
 from parsec.core.devices_manager import DevicesManager, DeviceLoadingError
 from parsec.core.manifests_manager import ManifestsManager
 from parsec.core.blocks_manager import BlocksManager
@@ -72,6 +73,7 @@ class CoreApp:
         self.auth_subscribed_events = None
         self.auth_events = None
         self.fs = None
+        self.synchronizer = None
         self.backend_connection = None
         self.devices_manager = DevicesManager(config.base_settings_path)
 
@@ -158,6 +160,8 @@ class CoreApp:
         )
         await self.backend_connection.init(self.nursery)
         self.fs = await fs_factory(device, self.config, self.backend_connection)
+        self.synchronizer = Synchronizer()
+        await self.synchronizer.init(self.nursery, self.fs)
         # local_storage = LocalStorage()
         # backend_storage = BackendStorage()
         # manifests_manager = ManifestsManager(self.auth_device, local_storage, backend_storage)
@@ -172,6 +176,7 @@ class CoreApp:
 
     async def logout(self):
         await self.fs.teardown()
+        await self.synchronizer.teardown()
         await self.backend_connection.teardown()
         self.backend_connection = None
         # await self.fs.manifests_manager.teardown()
@@ -179,6 +184,7 @@ class CoreApp:
         self.auth_device = None
         self.auth_subscribed_events = None
         self.auth_events = None
+        self.synchronizer = None
         self.fs = None
         self._fs_api.fs = None
 

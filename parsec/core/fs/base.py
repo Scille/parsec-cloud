@@ -72,6 +72,14 @@ class BaseEntry:
         return isinstance(self._access, BasePlaceHolderAccess)
 
     @property
+    def need_sync(self):
+        raise NotImplementedError()
+
+    @property
+    def need_flush(self):
+        raise NotImplementedError()
+
+    @property
     def _fs(self):
         raise NotImplementedError()
 
@@ -93,6 +101,14 @@ class BaseNotLoadedEntry(BaseEntry):
 
     @property
     def is_loaded(self):
+        return False
+
+    @property
+    def need_sync(self):
+        return False
+
+    @property
+    def need_flush(self):
         return False
 
     async def load(self):

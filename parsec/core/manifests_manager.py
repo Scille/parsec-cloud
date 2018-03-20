@@ -75,7 +75,7 @@ class ManifestsManager:
     async def sync_user_manifest_with_backend(self, manifest):
         data, _ = TypedManifestSchema(strict=True).dump(manifest)
         blob = self._encrypt_user_manifest(data)
-        self._backend_storage.sync_user_manifest(manifest['version'], blob)
+        await self._backend_storage.sync_user_manifest(manifest['version'], blob)
 
     async def fetch_from_local(self, id, key):
         blob = self._local_storage.fetch_manifest(id)
