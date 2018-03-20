@@ -1,6 +1,6 @@
 import attr
 from decouple import config
-from os.path import expandvars
+import os
 
 
 # TODO: add required=True option
@@ -8,6 +8,10 @@ from os.path import expandvars
 
 def _cast_int(v):
     return int(v) if v is not None else None
+
+
+def get_settings_path():
+    return os.path.expandvars('%APPDATA%\parsec' if os.name == 'nt' else '$HOME/.config/parsec')
 
 
 @attr.s(slots=True, frozen=True)
@@ -31,5 +35,5 @@ class CoreConfig:
         default=config('PARSEC_LOCAL_STORAGE_DIR', default='')
     )
     base_settings_path = attr.ib(
-        default=config('BASE_SETTINGS_PATH', default=expandvars('$HOME/.config/parsec'))
+        default=config('BASE_SETTINGS_PATH', default=get_settings_path())
     )
