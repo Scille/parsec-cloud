@@ -37,3 +37,4 @@ class CoreConfig:
     base_settings_path = attr.ib(
         default=config('BASE_SETTINGS_PATH', default=get_settings_path())
     )
+    auto_sync = attr.ib(default=False)

@@ -160,7 +160,8 @@ class CoreApp:
         )
         await self.backend_connection.init(self.nursery)
         self.fs = await fs_factory(device, self.config, self.backend_connection)
-        self.synchronizer = Synchronizer()
+        if self.config.auto_sync:
+            self.synchronizer = Synchronizer()
         await self.synchronizer.init(self.nursery, self.fs)
         # local_storage = LocalStorage()
         # backend_storage = BackendStorage()
@@ -176,7 +177,8 @@ class CoreApp:
 
     async def logout(self):
         await self.fs.teardown()
-        await self.synchronizer.teardown()
+        if self.synchronizer:
+            await self.synchronizer.teardown()
         await self.backend_connection.teardown()
         self.backend_connection = None
         # await self.fs.manifests_manager.teardown()

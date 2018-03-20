@@ -74,7 +74,8 @@ def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
         debug=debug,
         addr=socket,
         backend_addr=backend_addr,
-        backend_watchdog=backend_watchdog
+        backend_watchdog=backend_watchdog,
+        auto_sync=True
     )
     core = CoreApp(config)
 
