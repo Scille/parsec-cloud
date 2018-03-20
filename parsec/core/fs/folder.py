@@ -330,7 +330,7 @@ class BaseRootEntry(BaseFolderEntry):
                 # before retrying the synchronization
                 target = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
                 # 3-ways merge between base, modified and target versions
-                manifest = merge_folder_manifest(base, manifest, target)
+                manifest, _ = merge_folder_manifest(base, manifest, target)
         # TODO: If conflict, do a 3-ways merge between base, modified and target versions ?
         async with self.acquire_write():
             # Else update base_version

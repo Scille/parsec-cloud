@@ -127,7 +127,7 @@ def merge_children(base, diverged, target, on_conflict=simple_rename, inplace=No
 def merge_folder_manifest(base, diverged, target, on_conflict=simple_rename, inplace=None):
     resolved, modified = merge_children(
         base, diverged, target,
-        on_confilct=on_conflict,
+        on_conflict=on_conflict,
         inplace=inplace
     )
 
