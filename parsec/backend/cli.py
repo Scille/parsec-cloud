@@ -3,6 +3,7 @@ import click
 import logbook
 
 from parsec.backend import BackendApp, BackendConfig
+from parsec.backend.user import NotFoundError
 
 
 JOHN_DOE_USER_ID = 'johndoe'
@@ -68,6 +69,7 @@ def _backend(host, port, pubkeys, store, block_store, debug, log_level):
     config = BackendConfig(
         debug=debug,
         blockstore_url=block_store,
+        dburl=store,
         host=host,
         port=port
     )
@@ -76,12 +78,17 @@ def _backend(host, port, pubkeys, store, block_store, debug, log_level):
     async def _run_and_register_johndoe():
         async with trio.open_nursery() as nursery:
             await backend.init(nursery)
+
             try:
+                await backend.user.get(JOHN_DOE_USER_ID)
+            except NotFoundError:
                 await backend.user.create(
                     '<backend-mock>', JOHN_DOE_USER_ID, JOHN_DOE_PUBLIC_KEY, devices={
                         JOHN_DOE_DEVICE_NAME: JOHN_DOE_DEVICE_VERIFY_KEY
                     }
                 )
+
+            try:
                 await trio.serve_tcp(backend.handle_client, port)
             finally:
                 await backend.shutdown()
