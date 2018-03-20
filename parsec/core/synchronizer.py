@@ -10,6 +10,11 @@ logger = logbook.Logger("parsec.core.synchronizer")
 
 
 class Synchronizer:
+    def __init__(self):
+        self.fs = None
+        self.nursery = None
+        self._synchronizer_task_cancel_scope = None
+
     async def init(self, nursery, fs):
         self.fs = fs
         self.nursery = nursery
@@ -17,18 +22,17 @@ class Synchronizer:
 
     async def teardown(self):
         self._synchronizer_task_cancel_scope.cancel()
-        if self._sock:
-            await self._sock.aclose()
 
     async def _synchronizer_task(self, *, task_status=trio.TASK_STATUS_IGNORED):
-        task_status.started()
-        while True:
-            await trio.sleep(1)
-            trigger_time = pendulum.now() + pendulum.interval(seconds=1)
-            try:
-                await self._scan_and_sync_fs(self.fs.root, trigger_time)
-            except BackendNotAvailable:
-                pass
+        with trio.open_cancel_scope() as cancel_scope:
+            task_status.started(cancel_scope)
+            while True:
+                await trio.sleep(1)
+                trigger_time = pendulum.now() + pendulum.interval(seconds=1)
+                try:
+                    await self._scan_and_sync_fs(self.fs.root, trigger_time)
+                except BackendNotAvailable:
+                    pass
 
     async def _scan_and_sync_fs(self, entry, trigger_time):
         if entry.need_sync and entry.updated < trigger_time:
