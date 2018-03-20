@@ -1,5 +1,6 @@
 import trio
 import click
+import json
 from urllib.parse import urlparse
 
 from parsec.core.cli import DEFAULT_CORE_SOCKET
@@ -36,7 +37,12 @@ async def repl(socket_path):
                 raise ReloadShell()
                 continue
             try:
-                await sock.sockstream.send_all(data.encode() + b'\n')
+                cooked_data = json.loads(data)
+            except json.decoder.JSONDecodeError as exc:
+                print('Invalid json: %s', exc)
+                continue
+            try:
+                await sock.send(cooked_data)
                 rep = await sock.recv()
             except trio.BrokenStreamError as exc:
                 raise SystemExit(exc)
