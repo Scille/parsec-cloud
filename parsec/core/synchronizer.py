@@ -42,4 +42,4 @@ class Synchronizer:
             # TODO: not really elegant to access _children like this.
             # However we don't want to skip the not loadded entries...
             for children_entry in entry._children.values():
-                self._scan_and_sync_fs(children_entry)
+                await self._scan_and_sync_fs(children_entry, trigger_time)

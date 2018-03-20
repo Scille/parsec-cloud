@@ -326,6 +326,9 @@ class BaseRootEntry(BaseFolderEntry):
                 base = await self._fs.manifests_manager.fetch_user_manifest_from_backend(
                     version=manifest['version'] - 1
                 )
+                if not base:
+                    # base is version 0, which is never stored
+                    base = {'children': {}}
                 # Fetch last version from the backend and merge with it
                 # before retrying the synchronization
                 target = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
