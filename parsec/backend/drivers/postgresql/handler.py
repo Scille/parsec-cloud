@@ -126,6 +126,7 @@ class PGHandler:
 
         self.url = url
         self._driver_thread_cancel_scope = None
+        self._lock = trio.Lock()
 
         self.signal_ns = signal_ns
         self.signals = [
@@ -256,71 +257,81 @@ class PGHandler:
                 await trio.sleep(0.01)
 
     async def start(self):
-        super().start()
-        await self.get_response()
+        async with self._lock:
+            super().start()
+            await self.get_response()
 
     async def stop(self):
-        self.reqqueue.put({'type': 'stop'})
-        await self.get_response()
-        self.join()
+        async with self._lock:
+            self.reqqueue.put({'type': 'stop'})
+            await self.get_response()
+            self.join()
 
     async def fetch_one(self, sql, params):
-        self.reqqueue.put({'type': 'read_one', 'sql': sql, 'params': params})
-        resp = await self.get_response()
+        async with self._lock:
+            self.reqqueue.put({'type': 'read_one', 'sql': sql, 'params': params})
+            resp = await self.get_response()
 
-        if resp['status'] != 'ok':
-            raise resp.get('error', RuntimeError('Unknown error'))
+            if resp['status'] != 'ok':
+                raise resp.get('error', RuntimeError('Unknown error'))
 
-        return resp['data']
+            return resp['data']
 
     async def fetch_many(self, sql, params):
-        self.reqqueue.put({'type': 'read_many', 'sql': sql, 'params': params})
-        resp = await self.get_response()
+        async with self._lock:
+            self.reqqueue.put({'type': 'read_many', 'sql': sql, 'params': params})
+            resp = await self.get_response()
 
-        if resp['status'] != 'ok':
-            raise resp.get('error', RuntimeError('Unknown error'))
+            if resp['status'] != 'ok':
+                raise resp.get('error', RuntimeError('Unknown error'))
 
-        return resp['data']
+            return resp['data']
 
     async def insert_one(self, sql, params):
-        self.reqqueue.put({'type': 'write_one', 'sql': sql, 'params': params})
-        resp = await self.get_response()
+        async with self._lock:
+            self.reqqueue.put({'type': 'write_one', 'sql': sql, 'params': params})
+            resp = await self.get_response()
 
-        if resp['status'] != 'ok':
-            raise resp.get('error', RuntimeError('Unknown error'))
+            if resp['status'] != 'ok':
+                raise resp.get('error', RuntimeError('Unknown error'))
 
     async def insert_many(self, sql, paramslist):
-        self.reqqueue.put({'type': 'write_many', 'sql': sql, 'paramslist': paramslist})
-        resp = await self.get_response()
+        async with self._lock:
+            self.reqqueue.put({'type': 'write_many', 'sql': sql, 'paramslist': paramslist})
+            resp = await self.get_response()
 
-        if resp['status'] != 'ok':
-            raise resp.get('error', RuntimeError('Unknown error'))
+            if resp['status'] != 'ok':
+                raise resp.get('error', RuntimeError('Unknown error'))
 
     async def update_one(self, sql, params):
-        self.reqqueue.put({'type': 'write_one', 'sql': sql, 'params': params})
-        resp = await self.get_response()
+        async with self._lock:
+            self.reqqueue.put({'type': 'write_one', 'sql': sql, 'params': params})
+            resp = await self.get_response()
 
-        if resp['status'] != 'ok':
-            raise resp.get('error', RuntimeError('Unknown error'))
-        return resp['rowcount']
+            if resp['status'] != 'ok':
+                raise resp.get('error', RuntimeError('Unknown error'))
+            return resp['rowcount']
 
     async def update_many(self, sql, paramslist):
-        self.update_one(sql, paramslist)
+        async with self._lock:
+            self.update_one(sql, paramslist)
 
     async def delete_one(self, sql, params):
-        self.reqqueue.put({'type': 'write_one', 'sql': sql, 'params': params})
-        resp = await self.get_response()
+        async with self._lock:
+            self.reqqueue.put({'type': 'write_one', 'sql': sql, 'params': params})
+            resp = await self.get_response()
 
-        if resp['status'] != 'ok':
-            raise resp.get('error', RuntimeError('Unknown error'))
-        return resp['rowcount']
+            if resp['status'] != 'ok':
+                raise resp.get('error', RuntimeError('Unknown error'))
+            return resp['rowcount']
 
     async def delete_many(self, sql, paramslist):
-        self.reqqueue.put({'type': 'write_many', 'sql': sql, 'paramslist': paramslist})
-        resp = await self.get_response()
+        async with self._lock:
+            self.reqqueue.put({'type': 'write_many', 'sql': sql, 'paramslist': paramslist})
+            resp = await self.get_response()
 
-        if resp['status'] != 'ok':
-            raise resp.get('error', RuntimeError('Unknown error'))
+            if resp['status'] != 'ok':
+                raise resp.get('error', RuntimeError('Unknown error'))
 
     def get_signal_handler(self, signal):
         def signal_handler(sender, propagate=True):
