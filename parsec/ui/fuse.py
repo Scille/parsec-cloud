@@ -1,6 +1,4 @@
 import os
-import stat
-import sys
 import socket
 import click
 import logbook
@@ -9,9 +7,9 @@ from dateutil.parser import parse as dateparse
 from itertools import count
 from errno import ENOENT
 try:
-	from errno import EBADFD
+    from errno import EBADFD
 except ImportError:
-	from errno import EBADF as EBADFD
+    from errno import EBADF as EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_get_context
 

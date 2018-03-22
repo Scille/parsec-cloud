@@ -1,21 +1,23 @@
+import os
+import signal
 import trio
 import blinker
 import logbook
 import traceback
+import webbrowser
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 from json import JSONDecodeError
 
 from parsec.core.fs import fs_factory
-from parsec.core.fs_api import FSApi
+from parsec.core.fs_api import FSApi, PathOnlySchema
 from parsec.core.synchronizer import Synchronizer
 from parsec.core.devices_manager import DevicesManager, DeviceLoadingError
-from parsec.core.manifests_manager import ManifestsManager
-from parsec.core.blocks_manager import BlocksManager
 from parsec.core.backend_connection import (
     BackendConnection, BackendNotAvailable, backend_send_anonymous_cmd)
+from parsec.ui import fuse
 from parsec.utils import CookedSocket, ParsecError, to_jsonb64, from_jsonb64
-from parsec.schema import BaseCmdSchema, fields, validate
+from parsec.schema import BaseCmdSchema, fields
 
 
 logger = logbook.Logger("parsec.core.app")
@@ -57,6 +59,10 @@ class cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema(BaseCmdSchema):
     configuration_try_id = fields.String(required=True)
 
 
+class cmd_FUSE_START_Schema(BaseCmdSchema):
+    mountpoint = fields.String(required=True)
+
+
 class CoreApp:
 
     def __init__(self, config):
@@ -76,6 +82,7 @@ class CoreApp:
         self.synchronizer = None
         self.backend_connection = None
         self.devices_manager = DevicesManager(config.base_settings_path)
+        self.fuse_pid = None
 
         self._fs_api = FSApi()
 
@@ -98,6 +105,10 @@ class CoreApp:
             'info': self._api_info,
             'list_available_logins': self._api_list_available_logins,
             'get_core_state': self._api_get_core_state,
+
+            'fuse_start': self._api_fuse_start,
+            'fuse_stop': self._api_fuse_stop,
+            'fuse_open': self._api_fuse_open,
 
             'file_create': self._fs_api.file_create,
             'file_read': self._fs_api.file_read,
@@ -427,3 +438,32 @@ class CoreApp:
             'status': 'ok',
             'subscribed': list(self.auth_subscribed_events.keys())
         }
+
+    async def _api_fuse_start(self, req):
+        msg = cmd_FUSE_START_Schema().load_or_abort(req)
+        if self.fuse_pid:
+            return {'status': 'fuse_already_started'}
+        if os.name == 'posix':
+            try:
+                os.makedirs(msg['mountpoint'])
+            except FileExistsError:
+                pass
+        self.fuse_pid = os.fork()
+        if self.fuse_pid == 0:
+            fuse.start_fuse(self.config.addr, msg['mountpoint'])
+        else:
+            return {'status': 'ok'}
+
+    async def _api_fuse_stop(self, req):
+        BaseCmdSchema().load_or_abort(req)  # empty msg expected
+        if not self.fuse_pid:
+            return {'status': 'fuse_not_started'}
+        os.kill(self.fuse_pid, signal.SIGTERM)
+        os.waitpid(self.fuse_pid, 0)
+        self.fuse_pid = None
+        return {'status': 'ok'}
+
+    async def _api_fuse_open(self, req):
+        msg = PathOnlySchema().load_or_abort(req)
+        webbrowser.open(msg['path'])
+        return {'status': 'ok'}
