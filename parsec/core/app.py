@@ -180,7 +180,7 @@ class CoreApp:
             await self.backend_connection.teardown()
             raise
 
-       self._fs_api.fs = self.fs
+        self._fs_api.fs = self.fs
         # Keep this last to guarantee login was ok if it is set
         self.auth_device = device
 
