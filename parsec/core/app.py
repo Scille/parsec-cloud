@@ -159,19 +159,28 @@ class CoreApp:
             device, self.config.backend_addr, self.signal_ns
         )
         await self.backend_connection.init(self.nursery)
-        self.fs = await fs_factory(device, self.config, self.backend_connection)
-        if self.config.auto_sync:
-            self.synchronizer = Synchronizer()
-        await self.synchronizer.init(self.nursery, self.fs)
-        # local_storage = LocalStorage()
-        # backend_storage = BackendStorage()
-        # manifests_manager = ManifestsManager(self.auth_device, local_storage, backend_storage)
-        # blocks_manager = BlocksManager(self.auth_device, local_storage, backend_storage)
-        # # await manifests_manager.init()
-        # # await blocks_manager.init()
-        # self.fs = FS(manifests_manager, blocks_manager)
-        await self.fs.init()
-        self._fs_api.fs = self.fs
+        try:
+            self.fs = await fs_factory(device, self.config, self.backend_connection)
+            if self.config.auto_sync:
+                self.synchronizer = Synchronizer()
+                await self.synchronizer.init(self.nursery, self.fs)
+            try:
+                # local_storage = LocalStorage()
+                # backend_storage = BackendStorage()
+                # manifests_manager = ManifestsManager(self.auth_device, local_storage, backend_storage)
+                # blocks_manager = BlocksManager(self.auth_device, local_storage, backend_storage)
+                # # await manifests_manager.init()
+                # # await blocks_manager.init()
+                # self.fs = FS(manifests_manager, blocks_manager)
+                await self.fs.init()
+            except BaseException:
+                await self.synchronizer.teardown()
+                raise
+        except BaseException:
+            await self.backend_connection.teardown()
+            raise
+
+       self._fs_api.fs = self.fs
         # Keep this last to guarantee login was ok if it is set
         self.auth_device = device
 
