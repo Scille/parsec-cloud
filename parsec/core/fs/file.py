@@ -248,7 +248,7 @@ class BaseFileEntry(BaseEntry):
             self._dirty_blocks = self._dirty_blocks[dirty_blocks_count:]
             # TODO: notify blocks_managers the dirty blocks are no longer useful ?
             self._base_version = manifest['version']
-            self.flush_no_lock()
+            await self.flush_no_lock()
             self._need_sync = bool(self._dirty_blocks)
 
 

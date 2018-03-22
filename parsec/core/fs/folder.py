@@ -167,7 +167,7 @@ class BaseFolderEntry(BaseEntry):
         async with self.acquire_write():
             # Else update base_version
             self._base_version = manifest['version']
-            self.flush_no_lock()
+            await self.flush_no_lock()
 
             base = await self._fs.manifests_manager.fetch_from_backend(
                 access.id, access.rts, access.key, self._base_version)
