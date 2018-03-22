@@ -8,7 +8,7 @@ env:
   - PARSEC_POSTGRESQL_TEST_URL='postgresql://postgres@localhost/parsec_test'
 install:
 - pip install -U coveralls
-- pip install .[postgresql,dev]
+- pip install .[postgresql,dev,fuse]
 before_script:
   - psql -c 'create database parsec_test;' -U postgres
 script:
