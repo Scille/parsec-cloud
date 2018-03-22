@@ -1,5 +1,5 @@
 import os
-import signal
+from multiprocessing import Process
 import trio
 import blinker
 import logbook
@@ -82,7 +82,7 @@ class CoreApp:
         self.synchronizer = None
         self.backend_connection = None
         self.devices_manager = DevicesManager(config.base_settings_path)
-        self.fuse_pid = None
+        self.fuse_process = None
 
         self._fs_api = FSApi()
 
@@ -441,26 +441,25 @@ class CoreApp:
 
     async def _api_fuse_start(self, req):
         msg = cmd_FUSE_START_Schema().load_or_abort(req)
-        if self.fuse_pid:
+        if self.fuse_process:
             return {'status': 'fuse_already_started'}
         if os.name == 'posix':
             try:
                 os.makedirs(msg['mountpoint'])
             except FileExistsError:
                 pass
-        self.fuse_pid = os.fork()
-        if self.fuse_pid == 0:
-            fuse.start_fuse(self.config.addr, msg['mountpoint'])
-        else:
-            return {'status': 'ok'}
+        self.fuse_process = Process(target=fuse.start_fuse,
+                                    args=(self.config.addr, msg['mountpoint']))
+        self.fuse_process.start()
+        return {'status': 'ok'}
 
     async def _api_fuse_stop(self, req):
         BaseCmdSchema().load_or_abort(req)  # empty msg expected
-        if not self.fuse_pid:
+        if not self.fuse_process:
             return {'status': 'fuse_not_started'}
-        os.kill(self.fuse_pid, signal.SIGTERM)
-        os.waitpid(self.fuse_pid, 0)
-        self.fuse_pid = None
+        self.fuse_process.terminate()
+        self.fuse_process.join()
+        self.fuse_process = None
         return {'status': 'ok'}
 
     async def _api_fuse_open(self, req):
