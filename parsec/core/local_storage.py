@@ -66,8 +66,6 @@ class LocalStorage(BaseLocalStorage):
         cur = self.conn.cursor()
         cur.execute('SELECT blob FROM manifests WHERE id="0"')
         try:
-            data = cur.fetchone()[0]
-            return data
             return cur.fetchone()[0]
         except TypeError:
             return None
@@ -81,8 +79,6 @@ class LocalStorage(BaseLocalStorage):
         cur = self.conn.cursor()
         cur.execute('SELECT blob FROM manifests WHERE id=?', (id,))
         try:
-            data = cur.fetchone()[0]
-            return data
             return cur.fetchone()[0]
         except TypeError:
             return None
