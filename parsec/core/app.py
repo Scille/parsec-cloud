@@ -1,5 +1,6 @@
 import os
 from multiprocessing import Process
+import subprocess
 import trio
 import blinker
 import logbook
@@ -443,14 +444,22 @@ class CoreApp:
         msg = cmd_FUSE_START_Schema().load_or_abort(req)
         if self.fuse_process:
             return {'status': 'fuse_already_started'}
+        mountpoint = msg['mountpoint']
         if os.name == 'posix':
             try:
-                os.makedirs(msg['mountpoint'])
+                os.makedirs(mountpoint)
             except FileExistsError:
                 pass
-        self.fuse_process = Process(target=fuse.start_fuse,
-                                    args=(self.config.addr, msg['mountpoint']))
+        self.fuse_process = Process(target=fuse.start_fuse, args=(self.config.addr, mountpoint))
         self.fuse_process.start()
+        if os.name == 'nt':
+            if not os.path.isabs(mountpoint):
+                mountpoint = os.path.join(os.getcwd(), mountpoint)
+            await trio.sleep(1)
+            subprocess.Popen(
+                'net use p: \\\\localhost\\' + mountpoint[0] + '$' + mountpoint[2:],
+                shell=True
+            )
         return {'status': 'ok'}
 
     async def _api_fuse_stop(self, req):
@@ -460,6 +469,7 @@ class CoreApp:
         self.fuse_process.terminate()
         self.fuse_process.join()
         self.fuse_process = None
+        subprocess.call('net use p: /delete /y', shell=True)
         return {'status': 'ok'}
 
     async def _api_fuse_open(self, req):
