@@ -14,7 +14,7 @@ from parsec.core.manifests_manager import ManifestsManager
 from parsec.core.blocks_manager import BlocksManager
 from parsec.core.backend_connection import (
     BackendConnection, BackendNotAvailable, backend_send_anonymous_cmd)
-from parsec.utils import CookedSocket, ParsecError, to_jsonb64, from_jsonb64
+from parsec.utils import CookedSocket, ParsecError, to_jsonb64, from_jsonb64, ejson_dumps
 from parsec.schema import BaseCmdSchema, fields, validate
 
 
@@ -55,6 +55,11 @@ class cmd_DEVICE_CONFIGURE_Schema(BaseCmdSchema):
 
 class cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema(BaseCmdSchema):
     configuration_try_id = fields.String(required=True)
+
+
+class cmd_SHARE_Schema(BaseCmdSchema):
+    path = fields.String(required=True)
+    recipient = fields.String(required=True)
 
 
 class CoreApp:
@@ -109,6 +114,8 @@ class CoreApp:
             'move': self._fs_api.move,
             'delete': self._fs_api.delete,
             'file_truncate': self._fs_api.file_truncate,
+
+            'share': self._api_share,
         }
 
     async def init(self, nursery):
@@ -427,3 +434,48 @@ class CoreApp:
             'status': 'ok',
             'subscribed': list(self.auth_subscribed_events.keys())
         }
+
+    async def _api_share(self, req):
+        # TODO: super rough stuff...
+        if not self.auth_device:
+            return {'status': 'login_required'}
+
+        try:
+            cmd_SHARE_Schema().load_or_abort(req)
+            entry = await self.fs.fetch_path(req['path'])
+            # Cannot share a placeholder !
+            if entry.is_placeholder:
+                # TODO: use minimal_sync_if_placeholder ?
+                await entry.sync()
+            share_msg = {
+                'type': 'share',
+                'content': entry._access.dump()
+            }
+
+            recipient = req['recipient']
+            rep = await self.backend_connection.send({
+                'cmd': 'user_get',
+                'user_id': recipient,
+            })
+            if rep['status'] != 'ok':
+                # TODO: better cooking of the answer
+                return rep
+
+            from nacl.public import Box
+            from nacl.public import PublicKey
+
+            broadcast_key = PublicKey(from_jsonb64(rep['broadcast_key']))
+            box = Box(self.auth_device.user_privkey, broadcast_key)
+            share_msg_encrypted = box.encrypt(ejson_dumps(share_msg).encode('utf8'))
+
+            rep = await self.backend_connection.send({
+                'cmd': 'message_new',
+                'recipient': recipient,
+                'body': to_jsonb64(share_msg_encrypted)
+            })
+            if rep['status'] != 'ok':
+                # TODO: better cooking of the answer
+                return rep
+        except BackendNotAvailable:
+            return {'status': 'backend_not_availabled'}
+        return {'status': 'ok'}

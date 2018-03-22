@@ -175,9 +175,46 @@ async def core(nursery, backend_addr, tmpdir, default_devices, config={}):
 
 
 @pytest.fixture
+async def core2(nursery, backend_addr, tmpdir, default_devices, config={}):
+    # TODO: refacto with core fixture
+    async with core_factory(**{
+        'base_settings_path': tmpdir.mkdir('core2_fixture').strpath,
+        'backend_addr': backend_addr,
+        **config
+    }) as core:
+
+        for device in default_devices:
+            core.devices_manager.register_new_device(
+                device.id,
+                device.user_privkey.encode(),
+                device.device_signkey.encode(),
+                '<secret>'
+            )
+
+        yield core
+
+
+@pytest.fixture
 async def alice_core_sock(core, alice):
+    assert not core.auth_device, 'Core already logged'
     async with connect_core(core) as sock:
         await core.login(alice)
+        yield sock
+
+
+@pytest.fixture
+async def alice_core2_sock(core2, alice):
+    assert not core2.auth_device, 'Core already logged'
+    async with connect_core(core2) as sock:
+        await core2.login(alice)
+        yield sock
+
+
+@pytest.fixture
+async def bob_core2_sock(core2, bob):
+    assert not core2.auth_device, 'Core already logged'
+    async with connect_core(core2) as sock:
+        await core2.login(bob)
         yield sock
 
 
