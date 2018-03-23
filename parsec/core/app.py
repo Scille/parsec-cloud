@@ -84,6 +84,7 @@ class CoreApp:
         self.backend_connection = None
         self.devices_manager = DevicesManager(config.base_settings_path)
         self.fuse_process = None
+        self.mountpoint = None
 
         self._fs_api = FSApi()
 
@@ -441,38 +442,54 @@ class CoreApp:
         }
 
     async def _api_fuse_start(self, req):
+        if not self.auth_device:
+            return {'status': 'login_required'}
+
         msg = cmd_FUSE_START_Schema().load_or_abort(req)
         if self.fuse_process:
             return {'status': 'fuse_already_started'}
-        mountpoint = msg['mountpoint']
+        self.mountpoint = msg['mountpoint']
         if os.name == 'posix':
             try:
-                os.makedirs(mountpoint)
+                os.makedirs(self.mountpoint)
             except FileExistsError:
                 pass
-        self.fuse_process = Process(target=fuse.start_fuse, args=(self.config.addr, mountpoint))
+        self.fuse_process = Process(
+            target=fuse.start_fuse,
+            args=(self.config.addr, self.mountpoint)
+        )
         self.fuse_process.start()
         if os.name == 'nt':
-            if not os.path.isabs(mountpoint):
-                mountpoint = os.path.join(os.getcwd(), mountpoint)
+            if not os.path.isabs(self.mountpoint):
+                self.mountpoint = os.path.join(os.getcwd(), self.mountpoint)
             await trio.sleep(1)
             subprocess.Popen(
-                'net use p: \\\\localhost\\' + mountpoint[0] + '$' + mountpoint[2:],
+                'net use p: \\\\localhost\\' + self.mountpoint[0] + '$' + self.mountpoint[2:],
                 shell=True
             )
         return {'status': 'ok'}
 
     async def _api_fuse_stop(self, req):
+        if not self.auth_device:
+            return {'status': 'login_required'}
+
         BaseCmdSchema().load_or_abort(req)  # empty msg expected
         if not self.fuse_process:
             return {'status': 'fuse_not_started'}
         self.fuse_process.terminate()
         self.fuse_process.join()
         self.fuse_process = None
-        subprocess.call('net use p: /delete /y', shell=True)
+        self.mountpoint = None
+        if os.name == 'nt':
+            subprocess.call('net use p: /delete /y', shell=True)
         return {'status': 'ok'}
 
     async def _api_fuse_open(self, req):
+        if not self.auth_device:
+            return {'status': 'login_required'}
+
         msg = PathOnlySchema().load_or_abort(req)
-        webbrowser.open(msg['path'])
+        if not self.fuse_process:
+            return {'status': 'fuse_not_started'}
+        webbrowser.open(os.path.join(self.mountpoint, msg['path'][1:]))
         return {'status': 'ok'}
