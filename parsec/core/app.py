@@ -159,6 +159,11 @@ class CoreApp:
             await sock.aclose()
             raise
 
+    def _handle_message_arrived_factory(self):
+        def _handle_message_arrived(sender):
+            self.signal_ns.signal('new_sharing').send()
+        return _handle_message_arrived
+
     async def login(self, device):
         self.auth_subscribed_events = {}
         self.auth_events = trio.Queue(100)
@@ -166,6 +171,9 @@ class CoreApp:
             device, self.config.backend_addr, self.signal_ns
         )
         await self.backend_connection.init(self.nursery)
+        self._handle_message_arrived = self._handle_message_arrived_factory()
+        self.signal_ns.signal('message_arrived').connect(
+            self._handle_message_arrived, weak=True)
         try:
             self.fs = await fs_factory(device, self.config, self.backend_connection)
             if self.config.auto_sync:
@@ -192,6 +200,7 @@ class CoreApp:
         self.auth_device = device
 
     async def logout(self):
+        self._handle_new_message = None
         await self.fs.teardown()
         if self.synchronizer:
             await self.synchronizer.teardown()

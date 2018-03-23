@@ -197,6 +197,7 @@ class BackendApp:
 
         if (event in ('user_vlob_updated', 'message_arrived', 'device_try_claim') and
                 subject not in (None, client_ctx.user_id)):
+            # TODO: is the `subject == None` valid here ?
             return {
                 'status': 'private_event',
                 'reason': 'This type of event is private.'
