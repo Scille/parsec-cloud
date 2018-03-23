@@ -24,7 +24,11 @@ async def test_share_file(running_backend, core, core2, alice_core_sock, bob_cor
     with trio.move_on_after(seconds=1) as cancel_scope:
         rep = await bob_core2_sock.recv()
     assert not cancel_scope.cancelled_caught
-    assert rep == {'status': 'ok', 'event': 'new_sharing', 'subject': '/shared-with-Alice/foo.txt'}
+    assert rep == {
+        'status': 'ok',
+        'event': 'new_sharing',
+        'subject': '/shared-with-Alice/foo.txt'
+    }
 
     # Now Bob can access the file just like Alice would do
     bob_file = await core2.fs.fetch_path('/shared-with-Alice/foo.txt')
@@ -105,3 +109,5 @@ async def test_share_bad_recipient(core, alice_core_sock, running_backend):
 #     # Bob is connected on multiple cores, which will fight to update the
 #     # main manifest.
 #     pass
+
+# TODO: test sharing name already taken

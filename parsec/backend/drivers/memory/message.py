@@ -7,8 +7,8 @@ class MemoryMessageComponent(BaseMessageComponent):
         super().__init__(*args)
         self._messages = defaultdict(list)
 
-    async def perform_message_new(self, recipient, body):
-        self._messages[recipient].append(body)
+    async def perform_message_new(self, device_id, recipient, body):
+        self._messages[recipient].append((device_id, body))
         self._signal_message_arrived.send(recipient)
 
     async def perform_message_get(self, id, offset):

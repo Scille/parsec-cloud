@@ -6,6 +6,7 @@ from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 from json import JSONDecodeError
 
+from parsec.core.sharing import Sharing
 from parsec.core.fs import fs_factory
 from parsec.core.fs_api import FSApi
 from parsec.core.synchronizer import Synchronizer
@@ -79,6 +80,7 @@ class CoreApp:
         self.auth_events = None
         self.fs = None
         self.synchronizer = None
+        self.sharing = None
         self.backend_connection = None
         self.devices_manager = DevicesManager(config.base_settings_path)
 
@@ -188,6 +190,11 @@ class CoreApp:
                 # # await blocks_manager.init()
                 # self.fs = FS(manifests_manager, blocks_manager)
                 await self.fs.init()
+                try:
+                    self.sharing = Sharing(device, self.signal_fs, self.backend_connection, self.fs)
+                    await self.sharing.init(self.nursery)
+                except BaseException:
+                    await self.fs.teardown()
             except BaseException:
                 await self.synchronizer.teardown()
                 raise
@@ -201,6 +208,7 @@ class CoreApp:
 
     async def logout(self):
         self._handle_new_message = None
+        await self.sharing.teardown()
         await self.fs.teardown()
         if self.synchronizer:
             await self.synchronizer.teardown()
@@ -458,7 +466,8 @@ class CoreApp:
                 await entry.sync()
             share_msg = {
                 'type': 'share',
-                'content': entry._access.dump()
+                'content': entry._access.dump(),
+                'name': entry.name
             }
 
             recipient = req['recipient']

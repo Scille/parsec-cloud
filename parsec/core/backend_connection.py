@@ -27,8 +27,7 @@ class BackendConnection:
         self._lock = trio.Lock()
         self._sock = None
         self._event_listener_task_cancel_scope = None
-        # TODO: not very elegant to add by default this event here...
-        self._subscribed_events = [('message_arrived', device.user_id)]
+        self._subscribed_events = []
 
     async def _socket_connection_factory(self):
         logger.debug('connecting to backend {}:{}', self.addr.hostname, self.addr.port)

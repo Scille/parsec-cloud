@@ -25,7 +25,7 @@ class BaseMessageComponent:
 
     async def api_message_new(self, client_ctx, msg):
         msg = cmd_NEW_Schema().load_or_abort(msg)
-        await self.perform_message_new(**msg)
+        await self.perform_message_new(client_ctx.user_id, client_ctx.device_name, **msg)
         return {'status': 'ok'}
 
     async def api_message_get(self, client_ctx, msg):
@@ -34,6 +34,6 @@ class BaseMessageComponent:
         messages = await self.perform_message_get(client_ctx.user_id, offset)
         return {
             'status': 'ok',
-            'messages': [{'count': i, 'body': to_jsonb64(msg)}
-                         for i, msg in enumerate(messages, offset + 1)]
+            'messages': [{'count': i, 'body': to_jsonb64(data[1]), 'sender_id': data[0]}
+                         for i, data in enumerate(messages, offset + 1)]
         }
