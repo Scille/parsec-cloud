@@ -3,7 +3,7 @@ import trio
 
 
 @pytest.mark.trio
-async def test_share_file(running_backend, core, core2, alice_core_sock, bob_core2_sock):
+async def test_share_file(core, core2, alice_core_sock, bob_core2_sock, running_backend):
     # Bob stays idle waiting for a sharing from alice
     await bob_core2_sock.send({'cmd': 'event_subscribe', 'event': 'new_sharing'})
     rep = await bob_core2_sock.recv()
@@ -27,11 +27,11 @@ async def test_share_file(running_backend, core, core2, alice_core_sock, bob_cor
     assert rep == {
         'status': 'ok',
         'event': 'new_sharing',
-        'subject': '/shared-with-Alice/foo.txt'
+        'subject': '/shared-with-alice/foo.txt'
     }
 
     # Now Bob can access the file just like Alice would do
-    bob_file = await core2.fs.fetch_path('/shared-with-Alice/foo.txt')
+    bob_file = await core2.fs.fetch_path('/shared-with-alice/foo.txt')
     assert bob_file.created == alice_file.created
     assert bob_file.updated == alice_file.updated
     assert bob_file.version == alice_file.version
@@ -49,7 +49,6 @@ async def test_share_file(running_backend, core, core2, alice_core_sock, bob_cor
 # async def test_share_not_yet_synced_file(alice_core_sock, bob_core2_sock, backend):
 #     file = await core.fs.root.create_file('foo.txt')
 #     await file.write('Hello from Alice !')
-
 #     # TODO
 #     pass
 
@@ -57,7 +56,6 @@ async def test_share_file(running_backend, core, core2, alice_core_sock, bob_cor
 # @pytest.mark.trio
 # async def test_share_not_yet_synced_folder(alice_core_sock, bob_core2_sock, backend):
 #     await core.fs.root.create_folder('foo')
-
 #     # TODO
 #     pass
 
@@ -108,6 +106,11 @@ async def test_share_bad_recipient(core, alice_core_sock, running_backend):
 # async def test_share_with_receiver_concurrency(alice_core_sock, running_backend):
 #     # Bob is connected on multiple cores, which will fight to update the
 #     # main manifest.
+#     # TODO
 #     pass
 
-# TODO: test sharing name already taken
+
+# @pytest.mark.trio
+# async def test_share_with_sharing_name_already_taken(alice_core_sock, running_backend):
+#     # TODO
+#     pass

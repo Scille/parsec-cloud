@@ -161,21 +161,15 @@ class CoreApp:
             await sock.aclose()
             raise
 
-    def _handle_message_arrived_factory(self):
-        def _handle_message_arrived(sender):
-            self.signal_ns.signal('new_sharing').send()
-        return _handle_message_arrived
-
     async def login(self, device):
+        # TODO: create a login/logout lock to avoid concurrency crash
+        # during logout
         self.auth_subscribed_events = {}
         self.auth_events = trio.Queue(100)
         self.backend_connection = BackendConnection(
             device, self.config.backend_addr, self.signal_ns
         )
         await self.backend_connection.init(self.nursery)
-        self._handle_message_arrived = self._handle_message_arrived_factory()
-        self.signal_ns.signal('message_arrived').connect(
-            self._handle_message_arrived, weak=True)
         try:
             self.fs = await fs_factory(device, self.config, self.backend_connection)
             if self.config.auto_sync:
@@ -191,12 +185,14 @@ class CoreApp:
                 # self.fs = FS(manifests_manager, blocks_manager)
                 await self.fs.init()
                 try:
-                    self.sharing = Sharing(device, self.signal_fs, self.backend_connection, self.fs)
+                    self.sharing = Sharing(device, self.signal_ns, self.fs, self.backend_connection)
                     await self.sharing.init(self.nursery)
                 except BaseException:
                     await self.fs.teardown()
+                    raise
             except BaseException:
-                await self.synchronizer.teardown()
+                if self.synchronizer:
+                    await self.synchronizer.teardown()
                 raise
         except BaseException:
             await self.backend_connection.teardown()
@@ -464,9 +460,9 @@ class CoreApp:
             if entry.is_placeholder:
                 # TODO: use minimal_sync_if_placeholder ?
                 await entry.sync()
-            share_msg = {
+            sharing_msg = {
                 'type': 'share',
-                'content': entry._access.dump(),
+                'content': entry._access.dump(with_type=False),
                 'name': entry.name
             }
 
@@ -479,17 +475,18 @@ class CoreApp:
                 # TODO: better cooking of the answer
                 return rep
 
-            from nacl.public import Box
-            from nacl.public import PublicKey
+            from nacl.public import SealedBox, PublicKey
 
             broadcast_key = PublicKey(from_jsonb64(rep['broadcast_key']))
-            box = Box(self.auth_device.user_privkey, broadcast_key)
-            share_msg_encrypted = box.encrypt(ejson_dumps(share_msg).encode('utf8'))
+            box = SealedBox(broadcast_key)
+            sharing_msg_clear = ejson_dumps(sharing_msg).encode('utf8')
+            sharing_msg_signed = self.auth_device.device_signkey.sign(sharing_msg_clear)
+            sharing_msg_encrypted = box.encrypt(sharing_msg_signed)
 
             rep = await self.backend_connection.send({
                 'cmd': 'message_new',
                 'recipient': recipient,
-                'body': to_jsonb64(share_msg_encrypted)
+                'body': to_jsonb64(sharing_msg_encrypted)
             })
             if rep['status'] != 'ok':
                 # TODO: better cooking of the answer
