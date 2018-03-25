@@ -3,7 +3,8 @@ import trio
 
 
 @pytest.mark.trio
-async def test_share_file(core, core2, alice_core_sock, bob_core2_sock, running_backend):
+@pytest.mark.parametrize('already_synced', [True, False])
+async def test_share_file(already_synced, core, core2, alice_core_sock, bob_core2_sock, running_backend):
     # Bob stays idle waiting for a sharing from alice
     await bob_core2_sock.send({'cmd': 'event_subscribe', 'event': 'new_sharing'})
     rep = await bob_core2_sock.recv()
@@ -13,7 +14,8 @@ async def test_share_file(core, core2, alice_core_sock, bob_core2_sock, running_
     # First, create a file and sync it on backend
     alice_file = await core.fs.root.create_file('foo.txt')
     await alice_file.write(b'Hello from Alice !')
-    await alice_file.sync()
+    if already_synced:
+        await alice_file.sync()
 
     # Now we can share this file with Bob
     await alice_core_sock.send({'cmd': 'share', 'path': '/foo.txt', 'recipient': 'bob'})
@@ -40,22 +42,8 @@ async def test_share_file(core, core2, alice_core_sock, bob_core2_sock, running_
 
 
 # @pytest.mark.trio
-# async def test_share_folder(alice_core_sock, bob_core2_sock, backend):
-#     # TODO
-#     pass
-
-
-# @pytest.mark.trio
-# async def test_share_not_yet_synced_file(alice_core_sock, bob_core2_sock, backend):
-#     file = await core.fs.root.create_file('foo.txt')
-#     await file.write('Hello from Alice !')
-#     # TODO
-#     pass
-
-
-# @pytest.mark.trio
-# async def test_share_not_yet_synced_folder(alice_core_sock, bob_core2_sock, backend):
-#     await core.fs.root.create_folder('foo')
+# @pytest.mark.parametrize('already_synced', [True, False])
+# async def test_share_folder(already_synced, alice_core_sock, bob_core2_sock, backend):
 #     # TODO
 #     pass
 

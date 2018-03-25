@@ -196,11 +196,11 @@ class BaseFileEntry(BaseEntry):
             self._access = self._fs._vlob_access_cls(id, rts, wts, key)
 
     async def sync(self, recursive=False):
-        await self.minimal_sync_if_placeholder()
         # Note recursive argument is not needed here
+        # Make sure we are not a placeholder
+        await self.minimal_sync_if_placeholder()
         if not self._need_sync:
             return
-        # Make sure we are not a placeholder
         async with self.acquire_write():
             if not self._need_sync:
                 return
@@ -214,16 +214,16 @@ class BaseFileEntry(BaseEntry):
                 'created': self._created,
                 'updated': self._updated,
                 'size': self._size,
-                'blocks': [v._access.dump() for v in self._blocks],
+                'blocks': None,  # Will be computed later
             }
             merged_blocks = []
             for block, offset, end in get_merged_blocks(
                     self._blocks, self._dirty_blocks, self._size):
-                if offset and end:
-                    buffer = await block.fetch_data()
-                    buffer = buffer[offset:end]
-                    access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer))
-                    block = self._fs._block_cls(access, data=buffer)
+                # TODO: block taken verbatim are rewritten
+                buffer = await block.fetch_data()
+                buffer = buffer[offset:end]
+                access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer))
+                block = self._fs._block_cls(access, data=buffer)
                 merged_blocks.append(block)
             normalized_blocks = []
             for block_group in get_normalized_blocks(merged_blocks, 4096):
@@ -235,10 +235,12 @@ class BaseFileEntry(BaseEntry):
                         block = self._fs._block_cls(access, data=buffer)
                     normalized_blocks.append(block)
             dirty_blocks_count = len(self._dirty_blocks)
-        # TODO: sync data here
 
-        # Flush data here given we don't want to lose the upload blocks
-        # TODO...
+        # TODO: Flush manifest here given we don't want to lose the upload blocks
+        # TODO: block upload in parallel ?
+        for normalized_block in normalized_blocks:
+            await normalized_block.sync()
+        manifest['blocks'] = [v._access.dump() for v in normalized_blocks]
 
         # Upload the file manifest as new vlob version
         await self._fs.manifests_manager.sync_with_backend(
@@ -252,7 +254,7 @@ class BaseFileEntry(BaseEntry):
             # TODO: notify blocks_managers the dirty blocks are no longer useful ?
             self._base_version = manifest['version']
             await self.flush_no_lock()
-            self._need_sync = bool(self._dirty_blocks)
+            self._need_sync = self._updated != manifest['updated']
 
 
 def get_merged_blocks(file_blocks, file_dirty_blocks, file_size):

@@ -84,6 +84,19 @@ class BaseBlock:
     def _fs(self):
         raise NotImplementedError()
 
+    async def sync(self):
+        if not self.is_dirty:
+            return
+        if not self._data:
+            raise RuntimeError('Nothing to sync')
+        dirty_access = self._access
+        # TODO: add a lock ? should be more secure, but on the other hand
+        # a block is sync only once, really close to where is has been created.
+        id = await self._fs.blocks_manager.sync_new_block_with_backend(
+            dirty_access.key, self._data)
+        self._access = self._fs._block_access_cls(
+            id, dirty_access.key, dirty_access.offset, dirty_access.size)
+
     def is_dirty(self):
         return isinstance(self._access, BaseDirtyBlockAccess)
 
