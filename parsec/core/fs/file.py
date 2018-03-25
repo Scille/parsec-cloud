@@ -299,7 +299,7 @@ def get_merged_blocks(file_blocks, file_dirty_blocks, file_size):
             block_end_data = offset - block.offset
             if block_start_data != block_end_data:
                 if block.offset == block_start_data and block.end == block_end_data:
-                    blocks.append((block, None, None))
+                    blocks.append((block, 0, block.size))
                 else:
                     blocks.append((block, block_start_data, block_end_data))
             del start_offset[index]
@@ -332,7 +332,7 @@ def get_normalized_blocks(blocks, block_size=4096):
             offset_splits.pop(0)
         else:
             if offset == block.offset and end == block.end:
-                block_group.append((block, None, None))
+                block_group.append((block, 0, block.size))
             else:
                 block_group.append((block, offset - block.offset, end - block.offset))
             if end == offset_splits[0]:

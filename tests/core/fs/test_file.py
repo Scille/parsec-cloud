@@ -454,9 +454,15 @@ def test_get_normalized_blocks(random, normalized_block_size, size, slices):
     original_data = b''.join([x.data for x in blocks])
 
     normalized_data = []
-    for normalized_block in normalized_blocks:
+    for i, normalized_block in enumerate(normalized_blocks):
+        block_size = 0
         for block, offset, end in normalized_block:
+            block_size += end - offset
             normalized_data.append(block.data[offset:end])
+        if i < len(normalized_blocks) - 1:
+            assert block_size == normalized_block_size
+        else:
+            assert block_size <= normalized_block_size
     normalized_data = b''.join(normalized_data)
 
     assert original_data == normalized_data
