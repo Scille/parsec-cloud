@@ -213,6 +213,22 @@ class BaseFolderEntry(BaseEntry):
         entry._parent = None
         return entry
 
+    async def insert_child_from_access(self, name, access):
+        async with self.acquire_write():
+            return await self.insert_child_from_access_no_lock(name, access)
+
+    async def insert_child_from_access_no_lock(self, name, access):
+        if name in self._children:
+            raise FSInvalidPath("Path `%s/%s` already exists" % (self.path, name))
+        child = self._fs._not_loaded_entry_cls(
+            access=access,
+            name=name,
+            parent=self
+        )
+        self._children[name] = child
+        self._modified()
+        return child
+
     async def insert_child(self, name, child):
         async with self.acquire_write():
             await self.insert_child_no_lock(name, child)

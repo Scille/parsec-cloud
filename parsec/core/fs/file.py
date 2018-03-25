@@ -196,11 +196,11 @@ class BaseFileEntry(BaseEntry):
             self._access = self._fs._vlob_access_cls(id, rts, wts, key)
 
     async def sync(self, recursive=False):
-        await self.minimal_sync_if_placeholder()
         # Note recursive argument is not needed here
+        # Make sure we are not a placeholder
+        await self.minimal_sync_if_placeholder()
         if not self._need_sync:
             return
-        # Make sure we are not a placeholder
         async with self.acquire_write():
             if not self._need_sync:
                 return
@@ -213,15 +213,17 @@ class BaseFileEntry(BaseEntry):
                 'version': self._base_version + 1,
                 'created': self._created,
                 'updated': self._updated,
+                'size': self._size,
+                'blocks': None,  # Will be computed later
             }
             merged_blocks = []
             for block, offset, end in get_merged_blocks(
                     self._blocks, self._dirty_blocks, self._size):
-                if offset and end:
-                    buffer = await block.fetch_data()
-                    buffer = buffer[offset:end]
-                    access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer))
-                    block = self._fs._block_cls(access, data=buffer)
+                # TODO: block taken verbatim are rewritten
+                buffer = await block.fetch_data()
+                buffer = buffer[offset:end]
+                access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer))
+                block = self._fs._block_cls(access, data=buffer)
                 merged_blocks.append(block)
             normalized_blocks = []
             for block_group in get_normalized_blocks(merged_blocks, 4096):
@@ -234,8 +236,11 @@ class BaseFileEntry(BaseEntry):
                     normalized_blocks.append(block)
             dirty_blocks_count = len(self._dirty_blocks)
 
-        # Flush data here given we don't want to lose the upload blocks
-        # TODO...
+        # TODO: Flush manifest here given we don't want to lose the upload blocks
+        # TODO: block upload in parallel ?
+        for normalized_block in normalized_blocks:
+            await normalized_block.sync()
+        manifest['blocks'] = [v._access.dump() for v in normalized_blocks]
 
         # Upload the file manifest as new vlob version
         await self._fs.manifests_manager.sync_with_backend(
@@ -249,7 +254,7 @@ class BaseFileEntry(BaseEntry):
             # TODO: notify blocks_managers the dirty blocks are no longer useful ?
             self._base_version = manifest['version']
             await self.flush_no_lock()
-            self._need_sync = bool(self._dirty_blocks)
+            self._need_sync = self._updated != manifest['updated']
 
 
 def get_merged_blocks(file_blocks, file_dirty_blocks, file_size):
@@ -296,7 +301,7 @@ def get_merged_blocks(file_blocks, file_dirty_blocks, file_size):
             block_end_data = offset - block.offset
             if block_start_data != block_end_data:
                 if block.offset == block_start_data and block.end == block_end_data:
-                    blocks.append((block, None, None))
+                    blocks.append((block, 0, block.size))
                 else:
                     blocks.append((block, block_start_data, block_end_data))
             del start_offset[index]
@@ -329,7 +334,7 @@ def get_normalized_blocks(blocks, block_size=4096):
             offset_splits.pop(0)
         else:
             if offset == block.offset and end == block.end:
-                block_group.append((block, None, None))
+                block_group.append((block, 0, block.size))
             else:
                 block_group.append((block, offset - block.offset, end - block.offset))
             if end == offset_splits[0]:

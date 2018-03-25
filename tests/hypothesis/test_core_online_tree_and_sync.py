@@ -7,7 +7,6 @@ from hypothesis.stateful import Bundle, rule
 from tests.common import (
     connect_core, core_factory, backend_factory, run_app
 )
-from tests.hypothesis.conftest import skip_on_broken_stream
 
 
 @attr.s
@@ -142,7 +141,6 @@ async def test_online_core_tree_and_sync(
             return '/'
 
         @rule(target=Files, parent=Folders, name=st_entry_name)
-        @skip_on_broken_stream
         def create_file(self, parent, name):
             path = os.path.join(parent, name)
             rep = self.core_cmd({'cmd': 'file_create', 'path': path})
@@ -152,7 +150,6 @@ async def test_online_core_tree_and_sync(
             return path
 
         @rule(target=Folders, parent=Folders, name=st_entry_name)
-        @skip_on_broken_stream
         def create_folder(self, parent, name):
             path = os.path.join(parent, name)
             rep = self.core_cmd({'cmd': 'folder_create', 'path': path})
@@ -162,7 +159,6 @@ async def test_online_core_tree_and_sync(
             return path
 
         @rule(path=Files)
-        @skip_on_broken_stream
         def delete_file(self, path):
             rep = self.core_cmd({'cmd': 'delete', 'path': path})
             note(rep)
@@ -170,7 +166,6 @@ async def test_online_core_tree_and_sync(
             assert rep['status'] == expected_status
 
         @rule(path=Folders)
-        @skip_on_broken_stream
         def delete_folder(self, path):
             rep = self.core_cmd({'cmd': 'delete', 'path': path})
             note(rep)
@@ -178,7 +173,6 @@ async def test_online_core_tree_and_sync(
             assert rep['status'] == expected_status
 
         @rule(target=Files, src=Files, dst_parent=Folders, dst_name=st_entry_name)
-        @skip_on_broken_stream
         def move_file(self, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd({'cmd': 'move', 'src': src, 'dst': dst})
@@ -188,7 +182,6 @@ async def test_online_core_tree_and_sync(
             return dst
 
         @rule(target=Folders, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
-        @skip_on_broken_stream
         def move_folder(self, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd({'cmd': 'move', 'src': src, 'dst': dst})
@@ -198,7 +191,6 @@ async def test_online_core_tree_and_sync(
             return dst
 
         @rule(path=Files)
-        @skip_on_broken_stream
         def sync_file(self, path):
             rep = self.core_cmd({'cmd': 'synchronize', 'path': path})
             note(rep)
@@ -206,7 +198,6 @@ async def test_online_core_tree_and_sync(
             assert rep['status'] == expected_status
 
         @rule(path=Folders)
-        @skip_on_broken_stream
         def sync_folder(self, path):
             rep = self.core_cmd({'cmd': 'synchronize', 'path': path})
             note(rep)

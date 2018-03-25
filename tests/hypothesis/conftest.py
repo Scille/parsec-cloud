@@ -5,20 +5,6 @@ from functools import wraps
 from contextlib import contextmanager
 from hypothesis.stateful import RuleBasedStateMachine, run_state_machine_as_test, invariant
 
-from tests.common import QuitTestDueToBrokenStream
-
-
-def skip_on_broken_stream(fn):
-
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        try:
-            return fn(*args, **kwargs)
-        except QuitTestDueToBrokenStream:
-            pass
-
-    return wrapper
-
 
 class ThreadToTrioCommunicator:
     def __init__(self, portal):
@@ -41,7 +27,9 @@ class ThreadToTrioCommunicator:
         self.queue.put(msg)
 
     def close(self):
-        self.queue.put(QuitTestDueToBrokenStream())
+        # Avoid deadlock if somebody is waiting on the other end
+        self.queue.put(RuntimeError(
+            'Communicator has closed while something was still listening'))
 
 
 @contextmanager
@@ -49,6 +37,11 @@ def open_communicator(portal):
     communicator = ThreadToTrioCommunicator(portal)
     try:
         yield communicator
+    except Exception as exc:
+        # Pass the exception to the listening part, to have the current
+        # hypothesis rule crash correctly
+        communicator.queue.put(exc)
+        raise
     finally:
         communicator.close()
 
@@ -113,10 +106,6 @@ async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler):
                     # thread is synchrone with this coroutine so raising the
                     # exception here will have the expected effect.
                     raise
-                # The trick is to avoid raising the exception here given
-                # otherwise hypothesis will consider the crash comes from the
-                # previously executed rule.
-                self._trio_runner_crash = exc
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -125,12 +114,5 @@ async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler):
 
         def teardown(self):
             self._trio_runner_cancel_scope.cancel()
-
-        @invariant()
-        def check_trio_runner_crash(self):
-            # After each rule we make sure the trio runner hasn't crashed,
-            # so we can be sure which rule caused it.
-            if self._trio_runner_crash:
-                raise self._trio_runner_crash
 
     return TrioDriverRuleBasedStateMachine

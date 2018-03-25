@@ -76,6 +76,7 @@ async def test_device_configure(backend, alice, configure_device_token, mock_gen
             'event': 'device_try_claim_submitted',
         })
         rep = await alice_sock.recv()
+        assert rep == {'status': 'ok'}
 
         # 2) Wannabe device start configuration
 
@@ -126,9 +127,7 @@ async def test_device_configure(backend, alice, configure_device_token, mock_gen
             'cyphered_user_privkey': to_jsonb64(cyphered_user_privkey),
         })
         rep = await alice_sock.recv()
-        assert rep == {
-            'status': 'ok',
-        }
+        assert rep == {'status': 'ok'}
 
         # 6) Wannabe device get it answer: device has been accepted !
 
@@ -152,6 +151,7 @@ async def test_device_configure_und_get_refused(backend, alice, configure_device
             'event': 'device_try_claim_submitted',
         })
         rep = await alice_sock.recv()
+        assert rep == {'status': 'ok'}
 
         # 2) Wannabe device start configuration
 
@@ -184,9 +184,7 @@ async def test_device_configure_und_get_refused(backend, alice, configure_device
             'reason': 'Not in the mood.',
         })
         rep = await alice_sock.recv()
-        assert rep == {
-            'status': 'ok',
-        }
+        assert rep == {'status': 'ok'}
 
         # 6) Wannabe device get it answer: device is not accepted :'-(
 

@@ -38,29 +38,29 @@ class AsyncMock(Mock):
             return super().__call__(*args, **kwargs)
 
 
-class QuitTestDueToBrokenStream(Exception):
-    pass
-
-
-class QuitTestOnBrokenStreamCookedSocket(CookedSocket):
+class FreezeTestOnBrokenStreamCookedSocket(CookedSocket):
     """
     When a server crashes during test, it is possible the client coroutine
     receives a `trio.BrokenStreamError` exception. Hence we end up with two
     exceptions: the server crash (i.e. the original exception we are interested
     into) and the client not receiving an answer.
+    The solution is simply to freeze the coroutine receiving the broken stream
+    error until it will be cancelled by the original exception bubbling up.
     """
 
     async def send(self, msg):
         try:
             return await super().send(msg)
         except trio.BrokenStreamError as exc:
-            raise QuitTestDueToBrokenStream() from exc
+            # Wait here until this coroutine is cancelled
+            await trio.sleep_forever()
 
     async def recv(self):
         try:
             return await super().recv()
         except trio.BrokenStreamError as exc:
-            raise QuitTestDueToBrokenStream() from exc
+            # Wait here until this coroutine is cancelled
+            await trio.sleep_forever()
 
 
 @acontextmanager
@@ -93,39 +93,29 @@ async def backend_factory(**config):
 async def connect_backend(backend, auth_as=None):
     async with run_app(backend) as connection_factory:
         sockstream = await connection_factory()
-        sock = QuitTestOnBrokenStreamCookedSocket(sockstream)
-        try:
+        sock = FreezeTestOnBrokenStreamCookedSocket(sockstream)
+        if auth_as:
+            # Handshake
+            if auth_as == 'anonymous':
+                ch = AnonymousClientHandshake()
+            else:
+                ch = ClientHandshake(auth_as.id, auth_as.device_signkey)
+            challenge_req = await sock.recv()
+            answer_req = ch.process_challenge_req(challenge_req)
+            await sock.send(answer_req)
+            result_req = await sock.recv()
+            ch.process_result_req(result_req)
 
-            if auth_as:
-                # Handshake
-                if auth_as == 'anonymous':
-                    ch = AnonymousClientHandshake()
-                else:
-                    ch = ClientHandshake(auth_as.id, auth_as.device_signkey)
-                challenge_req = await sock.recv()
-                answer_req = ch.process_challenge_req(challenge_req)
-                await sock.send(answer_req)
-                result_req = await sock.recv()
-                ch.process_result_req(result_req)
-
-            yield sock
-        except QuitTestDueToBrokenStream:
-            # Wait for the coroutine handling the other side of the closed
-            # stream to propagate it exception.
-            await trio.sleep_forever()
+        yield sock
 
 
 @acontextmanager
 async def connect_core(core):
     async with run_app(core) as connection_factory:
         sockstream = await connection_factory()
-        sock = QuitTestOnBrokenStreamCookedSocket(sockstream)
-        try:
-            yield sock
-        except QuitTestDueToBrokenStream:
-            # Wait for the coroutine handling the other side of the closed
-            # stream to propagate it exception.
-            await trio.sleep_forever()
+        sock = FreezeTestOnBrokenStreamCookedSocket(sockstream)
+
+        yield sock
 
 
 @acontextmanager

@@ -5,7 +5,6 @@ from hypothesis.stateful import rule
 from parsec.utils import to_jsonb64, from_jsonb64
 
 from tests.common import connect_core, core_factory
-from tests.hypothesis.conftest import skip_on_broken_stream
 
 
 class FileOracle:
@@ -81,14 +80,12 @@ async def test_core_offline_restart_and_rwfile(
                     on_ready = restart_core_done
 
         @rule()
-        @skip_on_broken_stream
         def restart(self):
             rep = self.sys_cmd('restart!')
             assert rep is True
 
         @rule(size=st.integers(min_value=0, max_value=100),
               offset=st.integers(min_value=0, max_value=100))
-        @skip_on_broken_stream
         def read(self, size, offset):
             rep = self.core_cmd({
                 'cmd': 'file_read',
@@ -102,14 +99,12 @@ async def test_core_offline_restart_and_rwfile(
             assert from_jsonb64(rep['content']) == expected_content
 
         @rule()
-        @skip_on_broken_stream
         def flush(self):
             rep = self.core_cmd({'cmd': 'flush', 'path': '/foo.txt'})
             note(rep)
             assert rep['status'] == 'ok'
 
         @rule(offset=st.integers(min_value=0, max_value=100), content=st.binary())
-        @skip_on_broken_stream
         def write(self, offset, content):
             b64content = to_jsonb64(content)
             rep = self.core_cmd({

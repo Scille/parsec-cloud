@@ -10,6 +10,7 @@ from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 from json import JSONDecodeError
 
+from parsec.core.sharing import Sharing
 from parsec.core.fs import fs_factory
 from parsec.core.fs_api import FSApi, PathOnlySchema
 from parsec.core.synchronizer import Synchronizer
@@ -17,8 +18,9 @@ from parsec.core.devices_manager import DevicesManager, DeviceLoadingError
 from parsec.core.backend_connection import (
     BackendConnection, BackendNotAvailable, backend_send_anonymous_cmd)
 from parsec.ui import fuse
-from parsec.utils import CookedSocket, ParsecError, to_jsonb64, from_jsonb64
-from parsec.schema import BaseCmdSchema, fields
+from parsec.utils import (
+    CookedSocket, ParsecError, to_jsonb64, from_jsonb64, ejson_dumps)
+from parsec.schema import BaseCmdSchema, fields, validate
 
 
 logger = logbook.Logger("parsec.core.app")
@@ -64,6 +66,11 @@ class cmd_FUSE_START_Schema(BaseCmdSchema):
     mountpoint = fields.String(required=True)
 
 
+class cmd_SHARE_Schema(BaseCmdSchema):
+    path = fields.String(required=True)
+    recipient = fields.String(required=True)
+
+
 class CoreApp:
 
     def __init__(self, config):
@@ -81,6 +88,7 @@ class CoreApp:
         self.auth_events = None
         self.fs = None
         self.synchronizer = None
+        self.sharing = None
         self.backend_connection = None
         self.devices_manager = DevicesManager(config.base_settings_path)
         self.fuse_process = None
@@ -122,6 +130,8 @@ class CoreApp:
             'move': self._fs_api.move,
             'delete': self._fs_api.delete,
             'file_truncate': self._fs_api.file_truncate,
+
+            'share': self._api_share,
         }
 
     async def init(self, nursery):
@@ -166,6 +176,8 @@ class CoreApp:
             raise
 
     async def login(self, device):
+        # TODO: create a login/logout lock to avoid concurrency crash
+        # during logout
         self.auth_subscribed_events = {}
         self.auth_events = trio.Queue(100)
         self.backend_connection = BackendConnection(
@@ -186,8 +198,15 @@ class CoreApp:
                 # # await blocks_manager.init()
                 # self.fs = FS(manifests_manager, blocks_manager)
                 await self.fs.init()
+                try:
+                    self.sharing = Sharing(device, self.signal_ns, self.fs, self.backend_connection)
+                    await self.sharing.init(self.nursery)
+                except BaseException:
+                    await self.fs.teardown()
+                    raise
             except BaseException:
-                await self.synchronizer.teardown()
+                if self.synchronizer:
+                    await self.synchronizer.teardown()
                 raise
         except BaseException:
             await self.backend_connection.teardown()
@@ -198,6 +217,8 @@ class CoreApp:
         self.auth_device = device
 
     async def logout(self):
+        self._handle_new_message = None
+        await self.sharing.teardown()
         await self.fs.teardown()
         if self.synchronizer:
             await self.synchronizer.teardown()
@@ -492,4 +513,51 @@ class CoreApp:
         if not self.fuse_process:
             return {'status': 'fuse_not_started'}
         webbrowser.open(os.path.join(self.mountpoint, msg['path'][1:]))
+        return {'status': 'ok'}
+
+    async def _api_share(self, req):
+        # TODO: super rough stuff...
+        if not self.auth_device:
+            return {'status': 'login_required'}
+
+        try:
+            cmd_SHARE_Schema().load_or_abort(req)
+            entry = await self.fs.fetch_path(req['path'])
+            # Cannot share a placeholder !
+            if entry.is_placeholder:
+                # TODO: use minimal_sync_if_placeholder ?
+                await entry.sync()
+            sharing_msg = {
+                'type': 'share',
+                'content': entry._access.dump(with_type=False),
+                'name': entry.name
+            }
+
+            recipient = req['recipient']
+            rep = await self.backend_connection.send({
+                'cmd': 'user_get',
+                'user_id': recipient,
+            })
+            if rep['status'] != 'ok':
+                # TODO: better cooking of the answer
+                return rep
+
+            from nacl.public import SealedBox, PublicKey
+
+            broadcast_key = PublicKey(from_jsonb64(rep['broadcast_key']))
+            box = SealedBox(broadcast_key)
+            sharing_msg_clear = ejson_dumps(sharing_msg).encode('utf8')
+            sharing_msg_signed = self.auth_device.device_signkey.sign(sharing_msg_clear)
+            sharing_msg_encrypted = box.encrypt(sharing_msg_signed)
+
+            rep = await self.backend_connection.send({
+                'cmd': 'message_new',
+                'recipient': recipient,
+                'body': to_jsonb64(sharing_msg_encrypted)
+            })
+            if rep['status'] != 'ok':
+                # TODO: better cooking of the answer
+                return rep
+        except BackendNotAvailable:
+            return {'status': 'backend_not_availabled'}
         return {'status': 'ok'}

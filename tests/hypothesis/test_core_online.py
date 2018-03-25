@@ -5,7 +5,6 @@ from hypothesis.stateful import rule
 from tests.common import (
     connect_core, core_factory, backend_factory, run_app
 )
-from tests.hypothesis.conftest import skip_on_broken_stream
 
 
 @pytest.mark.slow
@@ -63,7 +62,6 @@ async def test_online(
                         tcp_stream_spy.install_hook(backend_addr, None)
 
         @rule()
-        @skip_on_broken_stream
         def get_core_state(self):
             rep = self.core_cmd({'cmd': 'get_core_state'})
             note(rep)

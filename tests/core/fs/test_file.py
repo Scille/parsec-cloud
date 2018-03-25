@@ -301,6 +301,7 @@ async def test_flush(fs, mocked_manifests_manager, mocked_blocks_manager):
 
 
 @pytest.mark.trio
+@pytest.mark.xfail
 async def test_simple_sync(fs, mocked_manifests_manager, mocked_blocks_manager):
     file = create_file(fs, 'foo')
     add_block(file, b'1' * 10, offset=0, name='1', in_local=True)
@@ -316,7 +317,12 @@ async def test_simple_sync(fs, mocked_manifests_manager, mocked_blocks_manager):
             'type': 'file_manifest',
             'version': 2,
             'created': datetime(2017, 1, 1),
-            'updated': datetime(2017, 12, 31, 23, 59, 59)
+            'updated': datetime(2017, 12, 31, 23, 59, 59),
+            'size': 20,
+            'blocks': [
+                {'id': '<1 id>', 'key': b'<1 key>', 'offset': 0, 'size': 10},
+                {'id': '<2 id>', 'key': b'<2 key>', 'offset': 10, 'size': 10}
+            ]
         }
     )
     # TODO: use assert_called_with on mocked_blocks_manager
@@ -454,9 +460,15 @@ def test_get_normalized_blocks(random, normalized_block_size, size, slices):
     original_data = b''.join([x.data for x in blocks])
 
     normalized_data = []
-    for normalized_block in normalized_blocks:
+    for i, normalized_block in enumerate(normalized_blocks):
+        block_size = 0
         for block, offset, end in normalized_block:
+            block_size += end - offset
             normalized_data.append(block.data[offset:end])
+        if i < len(normalized_blocks) - 1:
+            assert block_size == normalized_block_size
+        else:
+            assert block_size <= normalized_block_size
     normalized_data = b''.join(normalized_data)
 
     assert original_data == normalized_data
