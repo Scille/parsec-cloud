@@ -213,6 +213,8 @@ class BaseFileEntry(BaseEntry):
                 'version': self._base_version + 1,
                 'created': self._created,
                 'updated': self._updated,
+                'size': self._size,
+                'blocks': [v._access.dump() for v in self._blocks],
             }
             merged_blocks = []
             for block, offset, end in get_merged_blocks(
@@ -233,6 +235,7 @@ class BaseFileEntry(BaseEntry):
                         block = self._fs._block_cls(access, data=buffer)
                     normalized_blocks.append(block)
             dirty_blocks_count = len(self._dirty_blocks)
+        # TODO: sync data here
 
         # Flush data here given we don't want to lose the upload blocks
         # TODO...

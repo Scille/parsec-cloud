@@ -34,7 +34,7 @@ async def test_share_file(core, core2, alice_core_sock, bob_core2_sock, running_
     bob_file = await core2.fs.fetch_path('/shared-with-alice/foo.txt')
     assert bob_file.created == alice_file.created
     assert bob_file.updated == alice_file.updated
-    assert bob_file.version == alice_file.version
+    assert bob_file.base_version == alice_file.base_version
     bob_file_data = await bob_file.read()
     assert bob_file_data == b'Hello from Alice !'
 
