@@ -148,7 +148,7 @@ class CoreApp:
                 try:
                     req = await sock.recv()
                 except JSONDecodeError:
-                    rep = {'status': 'invalid_msg_format'}
+                    rep = {'status': 'invalid_msg_format', 'reason': 'Invalid message format'}
                     await sock.send(rep)
                     continue
                 if not req:  # Client disconnected
@@ -158,7 +158,7 @@ class CoreApp:
                 try:
                     cmd_func = self.cmds[req['cmd']]
                 except KeyError:
-                    rep = {'status': 'unknown_command'}
+                    rep = {'status': 'unknown_command', 'reason': 'Unknown command'}
                 else:
                     try:
                         rep = await cmd_func(req)
@@ -235,18 +235,18 @@ class CoreApp:
 
     async def _api_user_invite(self, req):
         if not self.auth_device:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
         msg = cmd_USER_INVITE_Schema().load_or_abort(req)
         try:
             rep = await self.backend_connection.send(
                 {'cmd': 'user_invite', 'user_id': msg['user_id']})
         except BackendNotAvailable:
-            return {'status': 'backend_not_availabled'}
+            return {'status': 'backend_not_availabled', 'reason': 'Backend not available'}
         return rep
 
     async def _api_user_claim(self, req):
         if self.auth_device:
-            return {'status': 'already_logged'}
+            return {'status': 'already_logged', 'reason': 'Already logged'}
         msg = cmd_USER_CLAIM_Schema().load_or_abort(req)
         user_privkey = PrivateKey.generate()
         device_signkey = SigningKey.generate()
@@ -261,7 +261,7 @@ class CoreApp:
                 'device_verify_key': to_jsonb64(device_signkey.verify_key.encode()),
             })
         except BackendNotAvailable:
-            return {'status': 'backend_not_availabled'}
+            return {'status': 'backend_not_availabled', 'reason': 'Backend not available'}
         self.devices_manager.register_new_device(
             msg['id'], user_privkey.encode(), device_signkey.encode(), msg['password'])
         return rep
@@ -270,12 +270,12 @@ class CoreApp:
         try:
             rep = await self.backend_connection.send(req)
         except BackendNotAvailable:
-            return {'status': 'backend_not_availabled'}
+            return {'status': 'backend_not_availabled', 'reason': 'Backend not available'}
         return rep
 
     async def _api_device_declare(self, req):
         if not self.auth_device:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
         return await self._backend_passthrough(req)
 
     async def _api_device_configure(self, req):
@@ -295,7 +295,7 @@ class CoreApp:
                 'user_privkey_cypherkey': to_jsonb64(user_privkey_cypherkey_privkey.public_key.encode()),
             })
         except BackendNotAvailable:
-            return {'status': 'backend_not_availabled'}
+            return {'status': 'backend_not_availabled', 'reason': 'Backend not available'}
         if rep['status'] != 'ok':
             return rep
 
@@ -311,18 +311,19 @@ class CoreApp:
 
     async def _api_device_get_configuration_try(self, req):
         if not self.auth_device:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
         return await self._backend_passthrough(req)
 
     async def _api_device_accept_configuration_try(self, req):
         if not self.auth_device:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         msg = cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema().load_or_abort(req)
 
         conf_try = self._config_try_pendings.get(msg['configuration_try_id'])
         if not conf_try:
-            return {'status': 'unknown_configuration_try_id'}
+            return {'status': 'unknown_configuration_try_id',
+                    'reason': 'Unknown configuration try id'}
 
         user_privkey_cypherkey_raw = from_jsonb64(conf_try['user_privkey_cypherkey'])
         box = SealedBox(PublicKey(user_privkey_cypherkey_raw))
@@ -335,25 +336,25 @@ class CoreApp:
                 'cyphered_user_privkey': to_jsonb64(cyphered_user_privkey),
             })
         except BackendNotAvailable:
-            return {'status': 'backend_not_availabled'}
+            return {'status': 'backend_not_availabled', 'reason': 'Backend not available'}
         if rep != 'ok':
             return rep
         return {'status': 'ok'}
 
     async def _api_login(self, req):
         if self.auth_device:
-            return {'status': 'already_logged'}
+            return {'status': 'already_logged', 'reason': 'Already logged'}
         msg = cmd_LOGIN_Schema().load_or_abort(req)
         try:
             device = self.devices_manager.load_device(msg['id'], msg['password'])
         except DeviceLoadingError:
-            return {'status': 'unknown_user'}
+            return {'status': 'unknown_user', 'reason': 'Unknown user'}
         await self.login(device)
         return {'status': 'ok'}
 
     async def _api_logout(self, req):
         if not self.auth_device:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
         await self.logout()
         return {'status': 'ok'}
 
@@ -386,7 +387,7 @@ class CoreApp:
 
     async def _api_event_subscribe(self, req):
         if not self.auth_device:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(req)
         event = msg['event']
@@ -410,7 +411,7 @@ class CoreApp:
 
     async def _api_event_unsubscribe(self, req):
         if not self.auth_device:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(req)
         try:
@@ -424,7 +425,7 @@ class CoreApp:
 
     async def _api_event_listen(self, req):
         if not self.auth_device:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         msg = cmd_EVENT_LISTEN_Schema().load_or_abort(req)
         if msg['wait']:
@@ -454,7 +455,7 @@ class CoreApp:
 
     async def _api_event_list_subscribed(self, req):
         if not self.auth_device:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         BaseCmdSchema().load_or_abort(req)  # empty msg expected
         return {
@@ -464,11 +465,11 @@ class CoreApp:
 
     async def _api_fuse_start(self, req):
         if not self.auth_device:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         msg = cmd_FUSE_START_Schema().load_or_abort(req)
         if self.fuse_process:
-            return {'status': 'fuse_already_started'}
+            return {'status': 'fuse_already_started', 'reason': 'Fuse already started'}
         self.mountpoint = msg['mountpoint']
         if os.name == 'posix':
             try:
@@ -492,7 +493,7 @@ class CoreApp:
 
     async def _api_fuse_stop(self, req):
         if not self.auth_device:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         BaseCmdSchema().load_or_abort(req)  # empty msg expected
         if not self.fuse_process:
@@ -507,18 +508,18 @@ class CoreApp:
 
     async def _api_fuse_open(self, req):
         if not self.auth_device:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         msg = PathOnlySchema().load_or_abort(req)
         if not self.fuse_process:
-            return {'status': 'fuse_not_started'}
+            return {'status': 'fuse_not_started', 'reason': 'Fuse not started'}
         webbrowser.open(os.path.join(self.mountpoint, msg['path'][1:]))
         return {'status': 'ok'}
 
     async def _api_share(self, req):
         # TODO: super rough stuff...
         if not self.auth_device:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         try:
             cmd_SHARE_Schema().load_or_abort(req)
@@ -559,5 +560,5 @@ class CoreApp:
                 # TODO: better cooking of the answer
                 return rep
         except BackendNotAvailable:
-            return {'status': 'backend_not_availabled'}
+            return {'status': 'backend_not_availabled', 'reason': 'Backend not available'}
         return {'status': 'ok'}

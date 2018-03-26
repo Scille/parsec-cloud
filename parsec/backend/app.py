@@ -179,12 +179,12 @@ class BackendApp:
 
     async def _api_blockstore_post(self, client_ctx, msg):
         if not self.blockstore:
-            return {'status': 'not_available'}
+            return {'status': 'not_available', 'reason': 'Blockstore not available'}
         return await self.blockstore.api_blockstore_post(client_ctx, msg)
 
     async def _api_blockstore_get(self, client_ctx, msg):
         if not self.blockstore:
-            return {'status': 'not_available'}
+            return {'status': 'not_available', 'reason': 'Blockstore not available'}
         return await self.blockstore.api_blockstore_get(client_ctx, msg)
 
     async def _api_blockstore_get_url(self, client_ctx, msg):
@@ -306,7 +306,7 @@ class BackendApp:
             try:
                 req = await sock.recv()
             except JSONDecodeError:
-                rep = {'status': 'invalid_msg_format'}
+                rep = {'status': 'invalid_msg_format', 'reason': 'Invalid message format'}
                 await sock.send(rep)
                 continue
             if not req:  # Client disconnected
@@ -321,7 +321,7 @@ class BackendApp:
                 else:
                     cmd_func = self.cmds[cmd]
             except KeyError:
-                rep = {'status': 'unknown_command'}
+                rep = {'status': 'unknown_command', 'reason': 'Unknown command'}
             else:
                 try:
                     rep = await cmd_func(client_ctx, req)
