@@ -1,9 +1,10 @@
 import trio
 import logbook
 import pendulum
+import traceback
 
 from parsec.core.fs.folder import BaseFolderEntry
-from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.backend_connection import BackendNotAvailable, BackendError
 
 
 logger = logbook.Logger("parsec.core.synchronizer")
@@ -33,6 +34,8 @@ class Synchronizer:
                     await self._scan_and_sync_fs(self.fs.root, trigger_time)
                 except BackendNotAvailable:
                     pass
+                except BackendError:
+                    logger.warning('Error with backend: ' % traceback.format_exc())
 
     async def _scan_and_sync_fs(self, entry, trigger_time):
         if entry.need_sync and entry.updated < trigger_time:
