@@ -40,7 +40,7 @@ class Synchronizer:
     async def _scan_and_sync_fs(self, entry, trigger_time):
         if entry.need_sync and entry.updated < trigger_time:
             logger.debug('sync {}', entry.path)
-            await entry.sync()
+            await entry.sync(recursive=True)
         elif isinstance(entry, BaseFolderEntry):
             # TODO: not really elegant to access _children like this.
             # However we don't want to skip the not loadded entries...

@@ -3,7 +3,7 @@ import bisect
 import pendulum
 
 from parsec.core.fs.base import BaseEntry
-from parsec.utils import generate_sym_key
+from parsec.core.backend_connection import BackendConcurrencyError
 
 
 @attr.s(slots=True, init=False)
@@ -62,6 +62,7 @@ class BaseFileEntry(BaseEntry):
 
     def _modified(self):
         self._need_flush = True
+        self._need_sync = True
         self._updated = pendulum.utcnow()
 
     async def flush_no_lock(self):
@@ -199,11 +200,20 @@ class BaseFileEntry(BaseEntry):
         # Note recursive argument is not needed here
         # Make sure we are not a placeholder
         await self.minimal_sync_if_placeholder()
-        if not self._need_sync:
-            return
+
         async with self.acquire_write():
             if not self._need_sync:
-                return
+                manifest = await self._fs.manifests_manager.fetch_from_backend(
+                    self._access.id, self._access.rts, self._access.key)
+                if manifest['version'] != self.base_version:
+                    self._created = manifest['created']
+                    self._updated = manifest['updated']
+                    self._base_version = manifest['version']
+                    self._size = manifest['size']
+                    self._blocks = [self._fs._block_cls(self._block_access_cls(**v))
+                                    for v in manifest['blocks']]
+                    return
+
             # Make sure data are flushed on disk
             await self.flush_no_lock()
             # TODO: Protect the dirty blocks from beeing deleted
@@ -256,9 +266,34 @@ class BaseFileEntry(BaseEntry):
         manifest['blocks'] = [v._access.dump() for v in normalized_blocks]
 
         # Upload the file manifest as new vlob version
-        await self._fs.manifests_manager.sync_with_backend(
-            self._access.id, self._access.wts, self._access.key, manifest)
-        # If conflict, raise exception and let parent folder copy ourself somewhere else
+        try:
+            await self._fs.manifests_manager.sync_with_backend(
+                self._access.id, self._access.wts, self._access.key, manifest)
+        except BackendConcurrencyError:
+            # File already modified, must rename ourself in the parent directory
+            # to avoid losing data !
+            original_access = self._access
+            original_name = self._name
+
+            async with self.acquire_write(), \
+                    self.parent.acquire_write():
+
+                self._access = self._fs._placeholder_access_cls()
+                entry = self._parent._children.pop(self._name)
+                while True:
+                    self._name += '.conflict'
+                    if self._name not in self._parent._children:
+                        self._parent._children[self._name] = entry
+                        break
+
+                self._parent._children[original_name] = self._not_loaded_entry_cls(original_access)
+                # Merge&flush
+                self._blocks = normalized_blocks
+                self._dirty_blocks = self._dirty_blocks[dirty_blocks_count:]
+                self._base_version = manifest['version']
+                await self.flush_no_lock()
+                return
+
         async with self.acquire_write():
             # Merge our synced data with up-to-date dirty_blocks and patches
             self._blocks = normalized_blocks
