@@ -497,7 +497,7 @@ class CoreApp:
 
         BaseCmdSchema().load_or_abort(req)  # empty msg expected
         if not self.fuse_process:
-            return {'status': 'fuse_not_started'}
+            return {'status': 'fuse_not_started', 'reason': 'Fuse not started'}
         self.fuse_process.terminate()
         self.fuse_process.join()
         self.fuse_process = None
