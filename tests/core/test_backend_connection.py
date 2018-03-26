@@ -155,14 +155,14 @@ async def test_backend_event_passthrough_subscribing(running_backend, backend_ad
         await conn.subscribe_event('ping')
         # TODO: backend_connection event pump is really ugly so far,
         # need to improve code to avoid this sleep
-        await trio.sleep(0.01)
+        await trio.sleep(0.1)
 
         backend.signal_ns.signal('dummy').send()
         backend.signal_ns.signal('ping').send()
         backend.signal_ns.signal('ping').send('bar')
 
         # Don't like to do that, but needed to have events dispatched
-        await trio.sleep(0.01)
+        await trio.sleep(0.1)
 
         assert core_ping_events == [None, 'bar']
 
