@@ -18,7 +18,7 @@ from tests.common import connect_core, core_factory
 async def test_device_cmd_backend_offline(core, alice_core_sock, cmd):
     await alice_core_sock.send(cmd)
     rep = await alice_core_sock.recv()
-    assert rep == {'status': 'backend_not_availabled'}
+    assert rep == {'status': 'backend_not_availabled', 'reason': 'Backend not available'}
 
 
 @pytest.mark.trio

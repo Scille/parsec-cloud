@@ -68,7 +68,7 @@ class FSApi:
 
     async def file_create(self, req):
         if not self.fs:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         req = PathOnlySchema().load_or_abort(req)
         dirpath, filename = req['path'].rsplit('/', 1)
@@ -82,7 +82,7 @@ class FSApi:
 
     async def file_read(self, req):
         if not self.fs:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         req = cmd_FILE_READ_Schema().load_or_abort(req)
         file = await self.fs.fetch_path(req['path'])
@@ -93,7 +93,7 @@ class FSApi:
 
     async def file_write(self, req):
         if not self.fs:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         req = cmd_FILE_WRITE_Schema().load_or_abort(req)
         file = await self.fs.fetch_path(req['path'])
@@ -104,7 +104,7 @@ class FSApi:
 
     async def file_truncate(self, req):
         if not self.fs:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         req = cmd_FILE_TRUNCATE_Schema().load_or_abort(req)
         file = await self.fs.fetch_path(req['path'])
@@ -115,7 +115,7 @@ class FSApi:
 
     async def stat(self, req):
         if not self.fs:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         req = PathOnlySchema().load_or_abort(req)
         obj = await self.fs.fetch_path(req['path'])
@@ -146,7 +146,7 @@ class FSApi:
 
     async def folder_create(self, req):
         if not self.fs:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         req = PathOnlySchema().load_or_abort(req)
         dirpath, name = req['path'].rsplit('/', 1)
@@ -160,7 +160,7 @@ class FSApi:
 
     async def move(self, req):
         if not self.fs:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         req = cmd_MOVE_Schema().load_or_abort(req)
         if req['src'] == '/':
@@ -198,7 +198,7 @@ class FSApi:
 
     async def delete(self, req):
         if not self.fs:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         req = PathOnlySchema().load_or_abort(req)
         dirpath, name = req['path'].rsplit('/', 1)
@@ -211,7 +211,7 @@ class FSApi:
 
     async def flush(self, req):
         if not self.fs:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         req = PathOnlySchema().load_or_abort(req)
         obj = await self.fs.fetch_path(req['path'])
@@ -220,7 +220,7 @@ class FSApi:
 
     async def synchronize(self, req):
         if not self.fs:
-            return {'status': 'login_required'}
+            return {'status': 'login_required', 'reason': 'Login required'}
 
         req = PathOnlySchema().load_or_abort(req)
         to_sync_target = await self.fs.fetch_path(req['path'])

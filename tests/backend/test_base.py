@@ -16,7 +16,7 @@ async def test_bad_cmd(backend, alice):
     async with connect_backend(backend, auth_as=alice) as sock:
         await sock.send({'cmd': 'dummy'})
         rep = await sock.recv()
-        assert rep == {'status': 'unknown_command'}
+        assert rep == {'status': 'unknown_command', 'reason': 'Unknown command'}
 
 
 @pytest.mark.trio
@@ -24,4 +24,4 @@ async def test_bad_msg_format(backend, alice):
     async with connect_backend(backend, auth_as=alice) as sock:
         await sock.sockstream.send_all(b'fooo\n')
         rep = await sock.recv()
-        assert rep == {'status': 'invalid_msg_format'}
+        assert rep == {'status': 'invalid_msg_format', 'reason': 'Invalid message format'}

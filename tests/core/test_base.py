@@ -130,18 +130,18 @@ async def test_need_login_cmds(core):
             ]:
             await sock.send({'cmd': cmd})
             rep = await sock.recv()
-            assert rep == {'status': 'login_required'}
+            assert rep == {'status': 'login_required', 'reason': 'Login required'}
 
 
 @pytest.mark.trio
 async def test_bad_cmd(alice_core_sock):
     await alice_core_sock.send({'cmd': 'dummy'})
     rep = await alice_core_sock.recv()
-    assert rep == {'status': 'unknown_command'}
+    assert rep == {'status': 'unknown_command', 'reason': 'Unknown command'}
 
 
 @pytest.mark.trio
 async def test_bad_msg_format(alice_core_sock):
     await alice_core_sock.sockstream.send_all(b'fooo\n')
     rep = await alice_core_sock.recv()
-    assert rep == {'status': 'invalid_msg_format'}
+    assert rep == {'status': 'invalid_msg_format', 'reason': 'Invalid message format'}

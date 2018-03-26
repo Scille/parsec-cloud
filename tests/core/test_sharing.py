@@ -58,7 +58,7 @@ async def test_share_backend_offline(core, alice_core_sock, bob):
         'recipient': bob.user_id
     })
     rep = await alice_core_sock.recv()
-    assert rep == {'status': 'backend_not_availabled'}
+    assert rep == {'status': 'backend_not_availabled', 'reason': 'Backend not available'}
 
 
 @pytest.mark.trio

@@ -10,14 +10,14 @@ async def test_user_invite_not_logged(core):
     async with connect_core(core) as sock:
         await sock.send({'cmd': 'user_invite', 'user_id': 'John'})
         rep = await sock.recv()
-    assert rep == {'status': 'login_required'}
+    assert rep == {'status': 'login_required', 'reason': 'Login required'}
 
 
 @pytest.mark.trio
 async def test_user_invite_backend_offline(core, alice_core_sock):
     await alice_core_sock.send({'cmd': 'user_invite', 'user_id': 'John'})
     rep = await alice_core_sock.recv()
-    assert rep == {'status': 'backend_not_availabled'}
+    assert rep == {'status': 'backend_not_availabled', 'reason': 'Backend not available'}
 
 
 @pytest.mark.trio
