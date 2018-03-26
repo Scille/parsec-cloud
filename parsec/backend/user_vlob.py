@@ -6,8 +6,7 @@ from parsec.schema import BaseCmdSchema, fields
 
 @attr.s
 class UserVlobAtom:
-    # Generate opaque id if not provided
-    id = attr.ib()
+    user_id = attr.ib()
     version = attr.ib(default=0)
     blob = attr.ib(default=b'')
 
@@ -28,7 +27,7 @@ class BaseUserVlobComponent:
 
     async def api_user_vlob_read(self, client_ctx, msg):
         msg = cmd_READ_Schema().load_or_abort(msg)
-        atom = await self.read(client_ctx.id, **msg)
+        atom = await self.read(client_ctx.user_id, **msg)
         return {
             'status': 'ok',
             'blob': to_jsonb64(atom.blob),
@@ -37,7 +36,7 @@ class BaseUserVlobComponent:
 
     async def api_user_vlob_update(self, client_ctx, msg):
         msg = cmd_UPDATE_Schema().load_or_abort(msg)
-        await self.update(client_ctx.id, **msg)
+        await self.update(client_ctx.user_id, **msg)
         return {'status': 'ok'}
 
     async def read(self, id, version):

@@ -109,7 +109,7 @@ def init_db(url, force=False):
     cursor.execute(
         'CREATE TABLE IF NOT EXISTS user_vlobs ('
             '_id SERIAL PRIMARY KEY, '
-            'id VARCHAR(32), '
+            'user_id VARCHAR(32), '
             'version INTEGER, '
             'blob BYTEA '
         ')'
