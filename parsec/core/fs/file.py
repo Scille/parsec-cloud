@@ -226,14 +226,27 @@ class BaseFileEntry(BaseEntry):
                 block = self._fs._block_cls(access, data=buffer)
                 merged_blocks.append(block)
             normalized_blocks = []
+            curr_file_offset = 0
             for block_group in get_normalized_blocks(merged_blocks, 4096):
+                if len(block_group) == 1:
+                    block, offset, end = block_group[0]
+                    if offset == 0 and end == block.size:
+                        # Current block hasn't been changed
+                        curr_file_offset += block.size
+                        normalized_blocks.append(block)
+                        continue
+
                 for block, offset, end in block_group:
-                    if offset and end:
-                        buffer = await block.fetch_data()
-                        buffer = buffer[offset:end]
-                        access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer))
-                        block = self._fs._block_cls(access, data=buffer)
-                    normalized_blocks.append(block)
+                    buffer = await block.fetch_data()
+                    buffer = buffer[offset:end]
+
+                access = self._fs._dirty_block_access_cls(
+                    offset=curr_file_offset, size=len(buffer))
+                block = self._fs._block_cls(access, data=buffer)
+
+                curr_file_offset += len(buffer)
+                normalized_blocks.append(block)
+
             dirty_blocks_count = len(self._dirty_blocks)
 
         # TODO: Flush manifest here given we don't want to lose the upload blocks
