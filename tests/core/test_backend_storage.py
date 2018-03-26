@@ -2,9 +2,8 @@ import pytest
 
 from parsec.utils import to_jsonb64
 from parsec.core.backend_storage import (
-    BackendStorage, BackendAccessError, BackendConcurrencyError)
-from parsec.core.backend_connection import (
-    BackendConnection, BackendNotAvailable)
+    BackendStorage, BackendError, BackendConcurrencyError)
+from parsec.core.backend_connection import BackendConnection, BackendNotAvailable
 
 from tests.common import AsyncMock
 
@@ -69,7 +68,7 @@ async def test_fetch_user_manifest_bad_version():
         'reason': 'Wrong blob version.',
     }
 
-    with pytest.raises(BackendAccessError):
+    with pytest.raises(BackendError):
         await storage.fetch_user_manifest(version=42)
 
 

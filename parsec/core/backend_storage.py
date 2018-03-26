@@ -1,17 +1,5 @@
 from parsec.utils import from_jsonb64, to_jsonb64, ParsecError
-from parsec.core.backend_connection import BackendError
-
-
-class BackendStorageError(BackendError):
-    pass
-
-
-class BackendStorageConcurrencyError(BackendError):
-    pass
-
-
-class BackendStorageAccessError(BackendError):
-    pass
+from parsec.core.backend_connection import BackendError, BackendConcurrencyError
 
 
 class BackendStorage:
@@ -29,7 +17,7 @@ class BackendStorage:
         if rep['status'] == 'ok':
             return from_jsonb64(rep['blob'])
         else:
-            raise BackendStorageAccessError(
+            raise BackendError(
                 'Error %s: %s' % (rep.pop('status'), rep))
 
     async def sync_user_manifest(self, version, blob):
@@ -39,7 +27,7 @@ class BackendStorage:
             'blob': to_jsonb64(blob)
         })
         if rep['status'] != 'ok':
-            raise BackendStorageConcurrencyError(
+            raise BackendConcurrencyError(
                 'Error %s: %s' % (rep.pop('status'), rep))
 
     async def fetch_manifest(self, id, rts, version=None):
@@ -54,7 +42,7 @@ class BackendStorage:
         if rep['status'] == 'ok':
             return from_jsonb64(rep['blob'])
         else:
-            raise BackendStorageAccessError(
+            raise BackendError(
                 'Error %s: %s' % (rep.pop('status'), rep))
 
     async def sync_manifest(self, id, wts, version, blob):
@@ -66,7 +54,7 @@ class BackendStorage:
             'blob': to_jsonb64(blob)
         })
         if rep['status'] != 'ok':
-            raise BackendStorageConcurrencyError(
+            raise BackendConcurrencyError(
                 'Error %s: %s' % (rep.pop('status'), rep))
 
     async def sync_new_manifest(self, blob):
@@ -75,7 +63,7 @@ class BackendStorage:
             'blob': to_jsonb64(blob)
         })
         if rep['status'] != 'ok':
-            raise BackendStorageAccessError(
+            raise BackendError(
                 'Error %s: %s' % (rep.pop('status'), rep))
         return rep['id'], rep['read_trust_seed'], rep['write_trust_seed']
 
@@ -85,7 +73,7 @@ class BackendStorage:
             'block': to_jsonb64(block)
         })
         if rep['status'] != 'ok':
-            raise BackendStorageAccessError(
+            raise BackendError(
                 'Error %s: %s' % (rep.pop('status'), rep))
         return rep['id']
 
@@ -97,5 +85,5 @@ class BackendStorage:
         if rep['status'] == 'ok':
             return from_jsonb64(rep['block'])
         else:
-            raise BackendStorageAccessError(
+            raise BackendError(
                 'Error %s: %s' % (rep.pop('status'), rep))

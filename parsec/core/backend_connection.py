@@ -17,6 +17,10 @@ class BackendNotAvailable(BackendError):
     pass
 
 
+class BackendConcurrencyError(BackendError):
+    pass
+
+
 class BackendConnection:
     def __init__(self, device, addr, signal_ns):
         self.handshake_id = device.id
@@ -91,13 +95,12 @@ class BackendConnection:
                 rep = await sock.recv()
                 if rep['status'] != 'ok':
                     # TODO: better exception
-                    raise BackendNotAvailable(rep)
+                    raise BackendError(rep)
             while True:
                 await sock.send({'cmd': 'event_listen'})
                 rep = await sock.recv()
                 if rep['status'] != 'ok':
-                    # TODO: better exception
-                    raise BackendNotAvailable(rep)
+                    raise BackendError(rep)
                 if rep.get('subject') is None:
                     signal_ns.signal(rep['event']).send()
                 else:

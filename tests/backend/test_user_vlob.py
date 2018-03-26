@@ -4,9 +4,9 @@ from parsec.utils import to_jsonb64
 
 
 async def populate_backend_user_vlob(backend, user):
-    await backend.user_vlob.update(user.id, 1, b'blob v1')
-    await backend.user_vlob.update(user.id, 2, b'blob v2')
-    await backend.user_vlob.update(user.id, 3, b'blob v3')
+    await backend.user_vlob.update(user.user_id, 1, b'blob v1')
+    await backend.user_vlob.update(user.user_id, 2, b'blob v2')
+    await backend.user_vlob.update(user.user_id, 3, b'blob v3')
 
 
 @pytest.mark.trio
