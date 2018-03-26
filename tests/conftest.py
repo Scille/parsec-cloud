@@ -15,6 +15,8 @@ from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 def pytest_addoption(parser):
     parser.addoption("--no-postgresql", action="store_true",
                      help="Don't run tests making use of PostgreSQL")
+    parser.addoption("--only-postgresql", action="store_true",
+                     help="Only run tests making use of PostgreSQL")
     parser.addoption("--runslow", action="store_true",
                      help="Don't skip slow tests")
 
@@ -44,6 +46,8 @@ def backend_store(request):
         conn.close()
         return url
     else:
+        if pytest.config.getoption('--only-postgresql'):
+            pytest.skip('`--only-postgresql` option provided')
         return 'mocked://'
 
 
