@@ -35,7 +35,7 @@ class Synchronizer:
                 except BackendNotAvailable:
                     pass
                 except BackendError:
-                    logger.warning('Error with backend: ' % traceback.format_exc())
+                    logger.warning('Error with backend: %s' % traceback.format_exc())
 
     async def _scan_and_sync_fs(self, entry, trigger_time):
         if entry.need_sync and entry.updated < trigger_time:
