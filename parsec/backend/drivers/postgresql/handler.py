@@ -41,7 +41,8 @@ def init_db(url, force=False):
     cursor.execute(
         'CREATE TABLE IF NOT EXISTS messages ('
             'id SERIAL PRIMARY KEY, '
-            'recipient TEXT, '
+            'recipient_user_id TEXT, '
+            'sender_device_id TEXT, '
             'body BYTEA'
         ')'
     )

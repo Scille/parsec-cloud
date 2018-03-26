@@ -11,5 +11,5 @@ class MemoryMessageComponent(BaseMessageComponent):
         self._messages[recipient_user_id].append((sender_device_id, body))
         self._signal_message_arrived.send(recipient_user_id)
 
-    async def perform_message_get(self, id, offset):
-        return self._messages[id][offset:]
+    async def perform_message_get(self, recipient_user_id, offset):
+        return self._messages[recipient_user_id][offset:]

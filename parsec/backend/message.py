@@ -20,7 +20,7 @@ class BaseMessageComponent:
     async def perform_message_new(self, sender_device_id, recipient_user_id, body):
         raise NotImplementedError()
 
-    async def perform_message_get(self, id, offset):
+    async def perform_message_get(self, recipient_user_id, offset):
         raise NotImplementedError()
 
     async def api_message_new(self, client_ctx, msg):
