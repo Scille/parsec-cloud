@@ -1,4 +1,5 @@
 import pytest
+from copy import deepcopy
 from hypothesis import strategies as st, note
 from hypothesis.stateful import rule
 
@@ -51,6 +52,7 @@ async def test_online(
             self.sys_cmd = lambda x: self.communicator.send(('sys', x))
             self.core_cmd = lambda x: self.communicator.send(('core', x))
             self.file_oracle = FileOracle()
+            self.file_oracle_synced = FileOracle()
 
             async def run_core(on_ready):
                 async with core_factory(**core_config) as core:
@@ -131,6 +133,7 @@ async def test_online(
             rep = self.core_cmd({'cmd': 'synchronize', 'path': '/foo.txt'})
             note(rep)
             assert rep['status'] == 'ok'
+            self.file_oracle_synced = deepcopy(self.file_oracle)
 
         @rule(offset=st.integers(min_value=0, max_value=100), content=st.binary())
         def write(self, offset, content):
@@ -154,5 +157,6 @@ async def test_online(
         def reset_core(self):
             rep = self.sys_cmd('reset_core!')
             assert rep is True
+            self.file_oracle = deepcopy(self.file_oracle_synced)
 
     await CoreOnline.run_test()
