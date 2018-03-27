@@ -7,14 +7,15 @@ from hypothesis.stateful import RuleBasedStateMachine, run_state_machine_as_test
 
 
 class ThreadToTrioCommunicator:
-    def __init__(self, portal):
+    def __init__(self, portal, timeout=1):
+        self.timeout = timeout
         self.portal = portal
         self.queue = queue.Queue()
         self.trio_queue = trio.Queue(1)
 
     def send(self, msg):
         self.portal.run(self.trio_queue.put, msg)
-        ret = self.queue.get()
+        ret = self.queue.get(timeout=self.timeout)
         if isinstance(ret, Exception):
             raise ret
         return ret
