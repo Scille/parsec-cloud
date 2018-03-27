@@ -239,5 +239,5 @@ class FSApi:
         # the target, there will be synchronized as empty files/folders.
         # It would be better (and faster) to skip them entirely.
         for to_sync_parent in to_sync_parents:
-            await to_sync_parent.sync(recursive=False)
+            await to_sync_parent.sync()
         return {'status': 'ok'}

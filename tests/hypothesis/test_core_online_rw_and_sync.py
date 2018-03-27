@@ -80,6 +80,13 @@ async def test_online(
                 task_status.started()
 
             async def restart_core_done(core):
+                # Core won't try to fetch the user manifest from backend when
+                # starting (given a modified version can be present on disk,
+                # or we could be offline).
+                # If we reset local storage however, we want to force the core
+                # to load the data from the backend.
+                if core.fs.root.base_version == 0:
+                    await core.fs.root.sync()
                 await self.communicator.trio_respond(True)
 
             async with backend_factory(**backend_config) as backend:

@@ -1,9 +1,23 @@
 import attr
 import pendulum
 
-from parsec.core.fs.base import BaseEntry, FSInvalidPath, FSError
+from parsec.core.fs.base import BaseEntry, BaseNotLoadedEntry, FSInvalidPath, FSError
 from parsec.core.fs.merge_folder import merge_folder_manifest, merge_children
 from parsec.core.backend_storage import BackendConcurrencyError
+
+
+def _recursive_need_sync(entry):
+    if isinstance(entry, BaseNotLoadedEntry):
+        raise NotImplementedError()
+    elif isinstance(entry, BaseFolderEntry):
+        if entry.need_sync:
+            return True
+        for child_entry in entry._children.values():
+            if _recursive_need_sync(entry):
+                return True
+    elif entry.need_sync:
+        return True
+    return False
 
 
 class BaseFolderEntry(BaseEntry):
@@ -123,7 +137,25 @@ class BaseFolderEntry(BaseEntry):
         # TODO: if file is a placeholder but contains data we sync it two
         # times...
         await self.minimal_sync_if_placeholder()
+
         async with self.acquire_write():
+
+            if not _recursive_need_sync(self):
+                # This folder (and it children) hasn't been modified locally,
+                # just download last version from the backend if any.
+                manifest = await self._fs.manifests_manager.fetch_from_backend(
+                    self._access.id, self._access.rts, self._access.key)
+                if manifest['version'] != self.base_version:
+                    self._created = manifest['created']
+                    self._updated = manifest['updated']
+                    self._base_version = manifest['version']
+                    self._children = {
+                        k: self._fs._not_loaded_entry_cls(
+                            name=k, parent=self, access=self._fs._vlob_access_cls(**v))
+                        for k, v in manifest['children'].items()
+                    }
+                    return
+
             await self.flush_no_lock()
             # Make a snapshot of ourself to avoid concurrency
             # Serialize as local folder manifest
@@ -308,19 +340,34 @@ class BaseRootEntry(BaseFolderEntry):
 
     async def sync(self, recursive=False):
         async with self.acquire_write():
+
+            if not _recursive_need_sync(self):
+                # This folder (and it children) hasn't been modified locally,
+                # just download last version from the backend if any.
+                manifest = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
+                if manifest['version'] != self.base_version:
+                    self._created = manifest['created']
+                    self._updated = manifest['updated']
+                    self._base_version = manifest['version']
+                    self._children = {
+                        k: self._fs._not_loaded_entry_cls(
+                            name=k, parent=self, access=self._fs._vlob_access_cls(**v))
+                        for k, v in manifest['children'].items()
+                    }
+                return
+
             await self.flush_no_lock()
             # Make a snapshot of ourself to avoid concurrency
             # Serialize as local folder manifest
             manifest = {
                 'format': 1,
-                'type': 'folder_manifest',
+                'type': 'user_manifest',
                 'version': self._base_version + 1,
                 'created': self._created,
                 'updated': self._updated,
                 'children': {}
             }
             children = self._children.copy()
-            access = self._access
 
         # Convert placeholder children into proper synchronized children
         for name, entry in children.items():
@@ -354,6 +401,7 @@ class BaseRootEntry(BaseFolderEntry):
         async with self.acquire_write():
             # Else update base_version
             self._base_version = manifest['version']
+            self._need_flush = True
             await self.flush_no_lock()
             # TODO: what if the folder is modified during the sync ?
             # it is now marked as need_sync=False but needs synchro !

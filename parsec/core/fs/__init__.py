@@ -83,9 +83,10 @@ class FS:
         user_manifest = await self.manifests_manager.fetch_user_manifest_from_local()
         if not user_manifest:
             self.root = self._root_entry_cls(
-                access, name='', need_flush=True, need_sync=True)
+                access, name='', need_flush=False, need_sync=False)
         else:
-            self.root = self._load_entry(access, '', None, user_manifest)
+            self.root = self._load_entry(
+                access, name='', parent=None, manifest=user_manifest)
 
     async def teardown(self):
         # TODO: too deeeeeeeep

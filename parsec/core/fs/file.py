@@ -187,7 +187,7 @@ class BaseFileEntry(BaseEntry):
                 'version': 1,
                 'created': self._created,
                 'updated': self._created,
-                'blocks': {},
+                'blocks': [],
                 'size': 0,
             }
             key = self._access.key
@@ -227,13 +227,18 @@ class BaseFileEntry(BaseEntry):
                 'blocks': None,  # Will be computed later
             }
             merged_blocks = []
+            curr_file_offset = 0
             for block, offset, end in get_merged_blocks(
                     self._blocks, self._dirty_blocks, self._size):
                 # TODO: block taken verbatim are rewritten
                 buffer = await block.fetch_data()
                 buffer = buffer[offset:end]
-                access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer))
+                access = self._fs._dirty_block_access_cls(
+                    offset=curr_file_offset,
+                    size=len(buffer)
+                )
                 block = self._fs._block_cls(access, data=buffer)
+                curr_file_offset += access.size
                 merged_blocks.append(block)
             normalized_blocks = []
             curr_file_offset = 0
@@ -246,9 +251,9 @@ class BaseFileEntry(BaseEntry):
                         normalized_blocks.append(block)
                         continue
 
+                buffer = bytearray()
                 for block, offset, end in block_group:
-                    buffer = await block.fetch_data()
-                    buffer = buffer[offset:end]
+                    buffer += (await block.fetch_data())[offset:end]
 
                 access = self._fs._dirty_block_access_cls(
                     offset=curr_file_offset, size=len(buffer))
@@ -258,7 +263,6 @@ class BaseFileEntry(BaseEntry):
                 normalized_blocks.append(block)
 
             dirty_blocks_count = len(self._dirty_blocks)
-
         # TODO: Flush manifest here given we don't want to lose the upload blocks
         # TODO: block upload in parallel ?
         for normalized_block in normalized_blocks:
@@ -286,7 +290,7 @@ class BaseFileEntry(BaseEntry):
                         self._parent._children[self._name] = entry
                         break
 
-                self._parent._children[original_name] = self._not_loaded_entry_cls(original_access)
+                self._parent._children[original_name] = self._fs._not_loaded_entry_cls(original_access)
                 # Merge&flush
                 self._blocks = normalized_blocks
                 self._dirty_blocks = self._dirty_blocks[dirty_blocks_count:]
@@ -301,6 +305,7 @@ class BaseFileEntry(BaseEntry):
             self._dirty_blocks = self._dirty_blocks[dirty_blocks_count:]
             # TODO: notify blocks_managers the dirty blocks are no longer useful ?
             self._base_version = manifest['version']
+            self._need_flush = True
             await self.flush_no_lock()
             self._need_sync = self._updated != manifest['updated']
 
