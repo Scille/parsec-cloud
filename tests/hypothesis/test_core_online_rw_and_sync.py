@@ -31,6 +31,10 @@ async def test_online(
     alice
 ):
 
+    class RestartCore(Exception):
+        def __init__(self, reset_local_storage):
+            self.reset_local_storage = reset_local_storage
+
     class CoreOnline(TrioDriverRuleBasedStateMachine):
         count = 0
 
@@ -44,7 +48,37 @@ async def test_online(
                 'base_settings_path': tmpdir.mkdir('try-%s' % self.count).strpath,
                 'backend_addr': backend_addr,
             }
-            self.core_cmd = self.communicator.send
+            self.sys_cmd = lambda x: self.communicator.send(('sys', x))
+            self.core_cmd = lambda x: self.communicator.send(('core', x))
+            self.file_oracle = FileOracle()
+
+            async def run_core(on_ready):
+                async with core_factory(**core_config) as core:
+
+                    await core.login(alice)
+                    async with connect_core(core) as sock:
+
+                        await on_ready(sock)
+
+                        while True:
+                            target, msg = await self.communicator.trio_recv()
+                            if target == 'core':
+                                await sock.send(msg)
+                                rep = await sock.recv()
+                                await self.communicator.trio_respond(rep)
+                            elif msg == 'restart_core!':
+                                raise RestartCore()
+                            elif msg == 'reset_core!':
+                                raise RestartCore(reset_local_storage=True)
+
+            async def bootstrap_core(sock):
+                await sock.send({'cmd': 'file_create', 'path': '/foo.txt'})
+                rep = await sock.recv()
+                assert rep == {'status': 'ok'}
+                task_status.started()
+
+            async def restart_core_done(sock):
+                await self.communicator.trio_respond(True)
 
             async with backend_factory(**backend_config) as backend:
 
@@ -59,27 +93,21 @@ async def test_online(
 
                     tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
                     try:
-                        async with core_factory(**core_config) as core:
-                            await core.login(alice)
-                            async with connect_core(core) as sock:
 
-                                await sock.send({'cmd': 'file_create', 'path': '/foo.txt'})
-                                rep = await sock.recv()
-                                assert rep == {'status': 'ok'}
-                                self.file_oracle = FileOracle()
-
-                                task_status.started()
-
-                                while True:
-                                    msg = await self.communicator.trio_recv()
-                                    await sock.send(msg)
-                                    rep = await sock.recv()
-                                    await self.communicator.trio_respond(rep)
+                        on_ready = bootstrap_core
+                        while True:
+                            try:
+                                await run_core(on_ready)
+                            except RestartCore as exc:
+                                on_ready = restart_core_done
+                                if exc.reset_local_storage:
+                                    mocked_local_storage_connection.reset()
 
                     finally:
                         tcp_stream_spy.install_hook(backend_addr, None)
 
-        @rule(size=st.integers(min_value=0), offset=st.integers(min_value=0))
+        @rule(size=st.integers(min_value=0, max_value=100),
+              offset=st.integers(min_value=0, max_value=100))
         def read(self, size, offset):
             rep = self.core_cmd({
                 'cmd': 'file_read',
@@ -104,7 +132,7 @@ async def test_online(
             note(rep)
             assert rep['status'] == 'ok'
 
-        @rule(offset=st.integers(min_value=0), content=st.binary())
+        @rule(offset=st.integers(min_value=0, max_value=100), content=st.binary())
         def write(self, offset, content):
             b64content = to_jsonb64(content)
             rep = self.core_cmd({
@@ -116,5 +144,13 @@ async def test_online(
             note(rep)
             assert rep['status'] == 'ok'
             self.file_oracle.write(offset, content)
+
+        def restart_core(self):
+            rep = self.sys_cmd('restart_core!')
+            assert rep is True
+
+        def reset_core(self):
+            rep = self.sys_cmd('reset_core!')
+            assert rep is True
 
     await CoreOnline.run_test()
