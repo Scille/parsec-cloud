@@ -32,7 +32,7 @@ async def test_online(
 ):
 
     class RestartCore(Exception):
-        def __init__(self, reset_local_storage):
+        def __init__(self, reset_local_storage=False):
             self.reset_local_storage = reset_local_storage
 
     class CoreOnline(TrioDriverRuleBasedStateMachine):
@@ -58,7 +58,7 @@ async def test_online(
                     await core.login(alice)
                     async with connect_core(core) as sock:
 
-                        await on_ready(sock)
+                        await on_ready(core)
 
                         while True:
                             target, msg = await self.communicator.trio_recv()
@@ -71,13 +71,13 @@ async def test_online(
                             elif msg == 'reset_core!':
                                 raise RestartCore(reset_local_storage=True)
 
-            async def bootstrap_core(sock):
-                await sock.send({'cmd': 'file_create', 'path': '/foo.txt'})
-                rep = await sock.recv()
-                assert rep == {'status': 'ok'}
+            async def bootstrap_core(core):
+                await core.fs.root.create_file('foo.txt')
+                await core.fs.root.sync(recursive=True)
+
                 task_status.started()
 
-            async def restart_core_done(sock):
+            async def restart_core_done(core):
                 await self.communicator.trio_respond(True)
 
             async with backend_factory(**backend_config) as backend:
@@ -145,10 +145,12 @@ async def test_online(
             assert rep['status'] == 'ok'
             self.file_oracle.write(offset, content)
 
+        @rule()
         def restart_core(self):
             rep = self.sys_cmd('restart_core!')
             assert rep is True
 
+        @rule()
         def reset_core(self):
             rep = self.sys_cmd('reset_core!')
             assert rep is True
