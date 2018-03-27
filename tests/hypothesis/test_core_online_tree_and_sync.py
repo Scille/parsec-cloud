@@ -2,6 +2,7 @@ import os
 import pytest
 from hypothesis import strategies as st, note
 from hypothesis.stateful import Bundle, rule
+from copy import deepcopy
 
 from tests.common import (
     connect_core, core_factory, backend_factory, run_app
@@ -19,6 +20,10 @@ async def test_online_core_tree_and_sync(
     tmpdir,
     alice
 ):
+
+    class RestartCore(Exception):
+        def __init__(self, reset_local_storage=False):
+            self.reset_local_storage = reset_local_storage
 
     st_entry_name = st.text(min_size=1).filter(lambda x: '/' not in x)
 
@@ -39,7 +44,37 @@ async def test_online_core_tree_and_sync(
                 'base_settings_path': tmpdir.mkdir('try-%s' % self.count).strpath,
                 'backend_addr': backend_addr,
             }
-            self.core_cmd = self.communicator.send
+
+            self.sys_cmd = lambda x: self.communicator.send(('sys', x))
+            self.core_cmd = lambda x: self.communicator.send(('core', x))
+            self.oracle_fs = OracleFS()
+            self.oracle_synced_fs = OracleFS()
+
+            async def run_core(on_ready):
+                async with core_factory(**core_config) as core:
+                    self.core = core
+
+                    await core.login(alice)
+                    async with connect_core(core) as sock:
+
+                        await on_ready(sock)
+
+                        while True:
+                            target, msg = await self.communicator.trio_recv()
+                            if target == 'core':
+                                await sock.send(msg)
+                                rep = await sock.recv()
+                                await self.communicator.trio_respond(rep)
+                            elif msg == 'restart_core!':
+                                raise RestartCore()
+                            elif msg == 'reset_core!':
+                                raise RestartCore(reset_local_storage=True)
+
+            async def bootstrap_core(sock):
+                task_status.started()
+
+            async def restart_core_done(sock):
+                await self.communicator.trio_respond(True)
 
             async with backend_factory(**backend_config) as backend:
 
@@ -54,23 +89,21 @@ async def test_online_core_tree_and_sync(
 
                     tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
                     try:
-                        async with core_factory(**core_config) as core:
-                            await core.login(alice)
-                            async with connect_core(core) as sock:
 
-                                task_status.started()
-
-                                while True:
-                                    msg = await self.communicator.trio_recv()
-                                    await sock.send(msg)
-                                    rep = await sock.recv()
-                                    await self.communicator.trio_respond(rep)
+                        on_ready = bootstrap_core
+                        while True:
+                            try:
+                                await run_core(on_ready)
+                            except RestartCore as exc:
+                                on_ready = restart_core_done
+                                if exc.reset_local_storage:
+                                    mocked_local_storage_connection.reset()
 
                     finally:
                         tcp_stream_spy.install_hook(backend_addr, None)
 
         @rule(target=Folders)
-        def init_root(self):
+        def get_root(self):
             return '/'
 
         @rule(target=Files, parent=Folders, name=st_entry_name)
@@ -139,5 +172,16 @@ async def test_online_core_tree_and_sync(
             else:
                 expected_status = self.oracle_fs.sync(*path.rsplit('/', 1))
             assert rep['status'] == expected_status
+
+        @rule()
+        def restart_core(self):
+            rep = self.sys_cmd('restart_core!')
+            assert rep is True
+
+        @rule()
+        def reset_core(self):
+            rep = self.sys_cmd('reset_core!')
+            assert rep is True
+            self.oracle_fs = deepcopy(self.oracle_synced_fs)
 
     await CoreOnlineRWFile.run_test()

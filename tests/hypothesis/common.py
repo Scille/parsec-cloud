@@ -1,28 +1,36 @@
 import attr
 
 
+class File:
+    pass
+
+
+class Folder(dict):
+    pass
+
+
 @attr.s
 class OracleFS:
-    root = attr.ib(default=attr.Factory(dict))
+    root = attr.ib(default=attr.Factory(Folder))
 
     def create_file(self, parent_path, name):
         parent_folder = self.get_folder(parent_path)
         if parent_folder is None or name in parent_folder:
             return 'invalid_path'
-        parent_folder[name] = '<file>'
+        parent_folder[name] = File()
         return 'ok'
 
     def create_folder(self, parent_path, name):
         parent_folder = self.get_folder(parent_path)
         if parent_folder is None or name in parent_folder:
             return 'invalid_path'
-        parent_folder[name] = {}
+        parent_folder[name] = Folder()
         return 'ok'
 
     def delete(self, path):
         parent_path, name = path.rsplit('/', 1)
         parent_dir = self.get_path(parent_path)
-        if isinstance(parent_dir, dict) and name in parent_dir:
+        if isinstance(parent_dir, Folder) and name in parent_dir:
             del parent_dir[name]
             return 'ok'
         else:
@@ -45,22 +53,22 @@ class OracleFS:
 
     def get_folder(self, path):
         elem = self.get_path(path)
-        return elem if elem != '<file>' else None
+        return elem if isinstance(elem, Folder) else None
 
     def get_file(self, path):
         elem = self.get_path(path)
-        return elem if elem == '<file>' else None
+        return elem if isinstance(elem, File) else None
 
     def get_path(self, path):
-        current_folder = self.root
+        current_entry = self.root
         try:
             for item in path.split('/'):
                 if item:
-                    current_folder = current_folder[item]
+                    current_entry = current_entry[item]
         except (KeyError, TypeError):
-            # Item not in folder or we reached a file instead of a folder
+            # Next entry is not in folder or we reached a file instead of a folder
             return None
-        return current_folder
+        return current_entry
 
     def flush(self, path):
         return 'ok' if self.get_path(path) is not None else 'invalid_path'
