@@ -1,4 +1,17 @@
 import attr
+from functools import wraps
+from hypothesis.stateful import rule as vanilla_rule
+
+
+def rule(**config):
+    def dec(fn):
+        @vanilla_rule(**config)
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            print(fn.__name__)
+            return fn(*args, **kwargs)
+        return wrapper
+    return dec
 
 
 class File:
@@ -28,8 +41,10 @@ class OracleFS:
         return 'ok'
 
     def delete(self, path):
+        if path == '/':
+            return 'invalid_path'
         parent_path, name = path.rsplit('/', 1)
-        parent_dir = self.get_path(parent_path)
+        parent_dir = self.get_path(parent_path or '/')
         if isinstance(parent_dir, Folder) and name in parent_dir:
             del parent_dir[name]
             return 'ok'
@@ -37,6 +52,9 @@ class OracleFS:
             return 'invalid_path'
 
     def move(self, src, dst):
+        if src == '/' or dst == '/':
+            return 'invalid_path'
+
         parent_src, name_src = src.rsplit('/', 1)
         parent_dst, name_dst = dst.rsplit('/', 1)
 

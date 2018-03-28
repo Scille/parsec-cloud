@@ -200,6 +200,9 @@ class FSApi:
         if not self.fs:
             return {'status': 'login_required', 'reason': 'Login required'}
 
+        if req['path'] == '/':
+            return {'status': 'invalid_path', 'reason': "Cannot remove `/` root folder"}
+
         req = PathOnlySchema().load_or_abort(req)
         dirpath, name = req['path'].rsplit('/', 1)
         parent = await self.fs.fetch_path(dirpath or '/')

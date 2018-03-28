@@ -1,13 +1,29 @@
 import os
 import pytest
 from hypothesis import strategies as st, note
-from hypothesis.stateful import Bundle, rule
+# from hypothesis.stateful import Bundle, rule
+from hypothesis.stateful import Bundle
 from copy import deepcopy
 
 from tests.common import (
     connect_core, core_factory, backend_factory, run_app
 )
-from tests.hypothesis.common import OracleFS
+from tests.hypothesis.common import OracleFS, rule
+
+
+def _sync_oracles(oracle_fs, oracle_synced_fs, path):
+    if path == '/':
+        oracle_synced_fs.root = deepcopy(oracle_fs.root)
+    else:
+        entry = oracle_fs.get_path(path)
+        *parents, entry_name = path.split('/')
+        # Make sure folder path exists in sync
+        folder_path = '/'
+        for parent in parents:
+            oracle_synced_fs.create_folder(folder_path, parent)
+            folder_path += '%s/' % parent
+        sync_parent_entry = oracle_synced_fs.get_path(folder_path)
+        sync_parent_entry[entry_name] = deepcopy(entry)
 
 
 @pytest.mark.slow
@@ -34,7 +50,6 @@ async def test_online_core_tree_and_sync(
 
         async def trio_runner(self, task_status):
             mocked_local_storage_connection.reset()
-            self.oracle_fs = OracleFS()
 
             type(self).count += 1
             backend_config = {
@@ -57,7 +72,7 @@ async def test_online_core_tree_and_sync(
                     await core.login(alice)
                     async with connect_core(core) as sock:
 
-                        await on_ready(sock)
+                        await on_ready(core)
 
                         while True:
                             target, msg = await self.communicator.trio_recv()
@@ -70,10 +85,18 @@ async def test_online_core_tree_and_sync(
                             elif msg == 'reset_core!':
                                 raise RestartCore(reset_local_storage=True)
 
-            async def bootstrap_core(sock):
+            async def bootstrap_core(core):
                 task_status.started()
 
-            async def restart_core_done(sock):
+            async def restart_core_done(core):
+                # Core won't try to fetch the user manifest from backend when
+                # starting (given a modified version can be present on disk,
+                # or we could be offline).
+                # If we reset local storage however, we want to force the core
+                # to load the data from the backend.
+                if core.fs.root.base_version == 0 and not core.fs.root.need_sync:
+                    await core.fs.root.sync()
+                    print('==>', core.fs.root, core.fs.root._children)
                 await self.communicator.trio_respond(True)
 
             async with backend_factory(**backend_config) as backend:
@@ -162,6 +185,8 @@ async def test_online_core_tree_and_sync(
             note(rep)
             expected_status = self.oracle_fs.sync(*path.rsplit('/', 1))
             assert rep['status'] == expected_status
+            if expected_status == 'ok':
+                _sync_oracles(self.oracle_fs, self.oracle_synced_fs, path)
 
         @rule(path=Folders)
         def sync_folder(self, path):
@@ -172,6 +197,8 @@ async def test_online_core_tree_and_sync(
             else:
                 expected_status = self.oracle_fs.sync(*path.rsplit('/', 1))
             assert rep['status'] == expected_status
+            if expected_status == 'ok':
+                _sync_oracles(self.oracle_fs, self.oracle_synced_fs, path)
 
         @rule()
         def restart_core(self):

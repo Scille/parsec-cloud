@@ -134,8 +134,6 @@ class BaseNotLoadedEntry(BaseEntry):
         pass
 
     async def sync(self, recursive=False):
-        if self.is_placeholder:
-            raise RuntimeError('TODO: should update access here...')
         loaded_entry = await self.load()
         await loaded_entry.sync(recursive=recursive)
 

@@ -6,14 +6,16 @@ from parsec.core.fs.merge_folder import merge_folder_manifest, merge_children
 from parsec.core.backend_storage import BackendConcurrencyError
 
 
-def _recursive_need_sync(entry):
+async def _recursive_need_sync(entry):
     if isinstance(entry, BaseNotLoadedEntry):
-        raise NotImplementedError()
-    elif isinstance(entry, BaseFolderEntry):
+        # TODO: Do we really need to reload the entire fs tree to retrieve
+        # what need to be sync ? couldn't we just interrogate local_storage ?
+        entry = await entry.load()
+    if isinstance(entry, BaseFolderEntry):
         if entry.need_sync:
             return True
         for child_entry in entry._children.values():
-            if _recursive_need_sync(entry):
+            if _recursive_need_sync(child_entry):
                 return True
     elif entry.need_sync:
         return True
@@ -140,7 +142,7 @@ class BaseFolderEntry(BaseEntry):
 
         async with self.acquire_write():
 
-            if not _recursive_need_sync(self):
+            if not await _recursive_need_sync(self):
                 # This folder (and it children) hasn't been modified locally,
                 # just download last version from the backend if any.
                 manifest = await self._fs.manifests_manager.fetch_from_backend(
@@ -173,9 +175,9 @@ class BaseFolderEntry(BaseEntry):
         # Convert placeholder children into proper synchronized children
         for name, entry in children.items():
             if recursive:
-                await entry.minimal_sync_if_placeholder()
-            else:
                 await entry.sync(recursive=True)
+            else:
+                await entry.minimal_sync_if_placeholder()
             # TODO: Synchronize with up-to-date data and flush to avoid
             # having to re-synchronize placeholders
             manifest['children'][name] = entry._access.dump(with_type=False)
@@ -341,11 +343,11 @@ class BaseRootEntry(BaseFolderEntry):
     async def sync(self, recursive=False):
         async with self.acquire_write():
 
-            if not _recursive_need_sync(self):
+            if not await _recursive_need_sync(self):
                 # This folder (and it children) hasn't been modified locally,
                 # just download last version from the backend if any.
                 manifest = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
-                if manifest['version'] != self.base_version:
+                if manifest and manifest['version'] != self.base_version:
                     self._created = manifest['created']
                     self._updated = manifest['updated']
                     self._base_version = manifest['version']
@@ -372,9 +374,9 @@ class BaseRootEntry(BaseFolderEntry):
         # Convert placeholder children into proper synchronized children
         for name, entry in children.items():
             if recursive:
-                await entry.minimal_sync_if_placeholder()
-            else:
                 await entry.sync(recursive=True)
+            else:
+                await entry.minimal_sync_if_placeholder()
             # TODO: Synchronize with up-to-date data and flush to avoid
             # having to re-synchronize placeholders
             manifest['children'][name] = entry._access.dump(with_type=False)

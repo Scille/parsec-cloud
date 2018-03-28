@@ -7,7 +7,7 @@ from hypothesis.stateful import RuleBasedStateMachine, run_state_machine_as_test
 
 
 class ThreadToTrioCommunicator:
-    def __init__(self, portal, timeout=1):
+    def __init__(self, portal, timeout=None):
         self.timeout = timeout
         self.portal = portal
         self.queue = queue.Queue()
@@ -79,6 +79,7 @@ async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler):
             return self._communicator
 
         async def _trio_runner(self, *, task_status=trio.TASK_STATUS_IGNORED):
+            print('=====================================================')
             # We need to hijack `task_status.started` callback because error
             # handling of trio_runner coroutine depends of it (see below).
             task_started = False

@@ -85,7 +85,7 @@ async def test_online(
                 # or we could be offline).
                 # If we reset local storage however, we want to force the core
                 # to load the data from the backend.
-                if core.fs.root.base_version == 0:
+                if core.fs.root.base_version == 0 and not core.fs.root.need_sync:
                     await core.fs.root.sync()
                 await self.communicator.trio_respond(True)
 
