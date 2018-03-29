@@ -166,7 +166,8 @@ async def test_online_core_tree_and_sync_multicore(
         def sync_all_the_files(self):
             rep1 = self.core_cmd('core_1', {'cmd': 'synchronize', 'path': '/'})
             rep2 = self.core_cmd('core_2', {'cmd': 'synchronize', 'path': '/'})
-            note((rep1, rep2))
+            rep3 = self.core_cmd('core_1', {'cmd': 'synchronize', 'path': '/'})
+            note((rep1, rep2, rep3))
 
             note('core_1 fs %r' % self.core_1.fs.root._children)
             note('core_2 fs %r' % self.core_2.fs.root._children)
