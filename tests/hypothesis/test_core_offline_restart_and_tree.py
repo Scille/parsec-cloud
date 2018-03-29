@@ -80,7 +80,7 @@ async def test_core_offline_restart_and_tree(
             path = os.path.join(parent, name)
             rep = self.core_cmd({'cmd': 'file_create', 'path': path})
             note(rep)
-            expected_status = self.oracle_fs.create_file(parent, name)
+            expected_status = self.oracle_fs.create_file(path)
             assert rep['status'] == expected_status
             return path
 
@@ -89,7 +89,7 @@ async def test_core_offline_restart_and_tree(
             path = os.path.join(parent, name)
             rep = self.core_cmd({'cmd': 'folder_create', 'path': path})
             note(rep)
-            expected_status = self.oracle_fs.create_folder(parent, name)
+            expected_status = self.oracle_fs.create_folder(path)
             assert rep['status'] == expected_status
             return path
 

@@ -28,18 +28,28 @@ class Folder(dict):
     pass
 
 
+def normalize_path(path):
+    return '/' + '/'.join([x for x in path.split('/') if x])
+
+
 @attr.s
 class OracleFS:
     root = attr.ib(default=attr.Factory(Folder))
 
-    def create_file(self, parent_path, name):
+    def create_file(self, path):
+        path = normalize_path(path)
+        parent_path, name = path.rsplit('/', 1)
+
         parent_folder = self.get_folder(parent_path)
         if parent_folder is None or name in parent_folder:
             return 'invalid_path'
         parent_folder[name] = File()
         return 'ok'
 
-    def create_folder(self, parent_path, name):
+    def create_folder(self, path):
+        path = normalize_path(path)
+        parent_path, name = path.rsplit('/', 1)
+
         parent_folder = self.get_folder(parent_path)
         if parent_folder is None or name in parent_folder:
             return 'invalid_path'
@@ -47,6 +57,7 @@ class OracleFS:
         return 'ok'
 
     def delete(self, path):
+        path = normalize_path(path)
         if path == '/':
             return 'invalid_path'
         parent_path, name = path.rsplit('/', 1)
@@ -58,14 +69,12 @@ class OracleFS:
             return 'invalid_path'
 
     def move(self, src, dst):
+        src = normalize_path(src)
+        dst = normalize_path(dst)
+
         if src == '/' or dst == '/':
             return 'invalid_path'
 
-        def _normalize_path(path):
-            return '/' + '/'.join([x for x in path.split('/') if x])
-
-        src = _normalize_path(src)
-        dst = _normalize_path(dst)
         if src == dst or dst.startswith(src):
             return 'invalid_path'
 
@@ -84,14 +93,20 @@ class OracleFS:
         return 'ok'
 
     def get_folder(self, path):
+        path = normalize_path(path)
+
         elem = self.get_path(path)
         return elem if isinstance(elem, Folder) else None
 
     def get_file(self, path):
+        path = normalize_path(path)
+
         elem = self.get_path(path)
         return elem if isinstance(elem, File) else None
 
     def get_path(self, path):
+        path = normalize_path(path)
+
         current_entry = self.root
         try:
             for item in path.split('/'):
@@ -105,8 +120,5 @@ class OracleFS:
     def flush(self, path):
         return 'ok' if self.get_path(path) is not None else 'invalid_path'
 
-    def sync(self, parent_path, name):
-        parent_folder = self.get_folder(parent_path)
-        if parent_folder is None or name not in parent_folder:
-            return 'invalid_path'
-        return 'ok'
+    def sync(self, path):
+        return 'ok' if self.get_path(path) is not None else 'invalid_path'

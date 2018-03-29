@@ -8,24 +8,64 @@ from copy import deepcopy
 from tests.common import (
     connect_core, core_factory, backend_factory, run_app
 )
-from tests.hypothesis.common import OracleFS, rule
+from tests.hypothesis.common import OracleFS, rule, normalize_path
 
 
-def _sync_oracles(oracle_fs, oracle_synced_fs, path):
-    if path == '/':
-        oracle_synced_fs.root = deepcopy(oracle_fs.root)
-    else:
-        entry = oracle_fs.get_path(path)
-        *parents, entry_name = path.split('/')
-        # Make sure folder path exists in sync
-        folder_path = '/'
-        for parent in parents:
-            oracle_synced_fs.create_folder(folder_path, parent)
-            folder_path += '%s/' % parent
-        sync_parent_entry = oracle_synced_fs.get_path(folder_path)
-        sync_parent_entry[entry_name] = deepcopy(entry)
+class OracleFSWithSync:
+    def __init__(self):
+        self.core_fs = OracleFS()
+        self.synced_fs = OracleFS()
 
-k = None
+    def create_file(self, path):
+        res = self.core_fs.create_file(path)
+        return res
+
+    def create_folder(self, path):
+        res = self.core_fs.create_folder(path)
+        return res
+
+    def delete(self, path):
+        res = self.core_fs.delete(path)
+        return res
+
+    def move(self, src, dst):
+        res = self.core_fs.move(src, dst)
+        return res
+
+    def flush(self, path):
+        return self.core_fs.flush(path)
+
+    def sync(self, path):
+        res = self.core_fs.sync(path)
+        if res == 'ok':
+            self._sync_oracles(path)
+        return res
+
+    def reset_core(self):
+        self.core_fs = deepcopy(self.synced_fs)
+
+    def _sync_oracles(self, path):
+        path = normalize_path(path)
+        if path != '/':
+            raise NotImplementedError("Oracle can only sync root yet :'(")
+        self.synced_fs = deepcopy(self.core_fs)
+        # TODO: allow arbitrary path sync
+        # if path == '/':
+        #     self.synced_fs = deepcopy(self.core_fs)
+        # else:
+        #     entry = self.core_fs.get_path(path)
+        #     *parents, entry_name = path.strip('/').split('/')
+        #     # Make sure folder path exists in sync
+        #     folder_path = '/'
+        #     for parent in parents:
+        #         cur_path = _normalize_path('%s/%s' % (folder_path, parent))
+        #         if cur_path in self._just_deleted:
+        #             self.synced_fs.delete(cur_path)
+        #         self.synced_fs.create_folder(folder_path, parent)
+        #         folder_path += '%s/' % parent
+        #     sync_parent_entry = self.synced_fs.get_path(folder_path)
+        #     sync_parent_entry[entry_name] = deepcopy(entry)
+
 
 @pytest.mark.slow
 @pytest.mark.trio
@@ -64,14 +104,11 @@ async def test_online_core_tree_and_sync(
 
             self.sys_cmd = lambda x: self.communicator.send(('sys', x))
             self.core_cmd = lambda x: self.communicator.send(('core', x))
-            self.oracle_fs = OracleFS()
-            self.oracle_synced_fs = OracleFS()
+            self.oracle_fs = OracleFSWithSync()
 
             async def run_core(on_ready):
                 async with core_factory(**core_config) as core:
                     self.core = core
-                    global k
-                    k = core
 
                     await core.login(alice)
                     async with connect_core(core) as sock:
@@ -100,7 +137,6 @@ async def test_online_core_tree_and_sync(
                 # to load the data from the backend.
                 if core.fs.root.base_version == 0 and not core.fs.root.need_sync:
                     await core.fs.root.sync()
-                    print('==>', core.fs.root, core.fs.root._children)
                 await self.communicator.trio_respond(True)
 
             async with backend_factory(**backend_config) as backend:
@@ -138,7 +174,7 @@ async def test_online_core_tree_and_sync(
             path = os.path.join(parent, name)
             rep = self.core_cmd({'cmd': 'file_create', 'path': path})
             note(rep)
-            expected_status = self.oracle_fs.create_file(parent, name)
+            expected_status = self.oracle_fs.create_file(path)
             assert rep['status'] == expected_status
             return path
 
@@ -147,7 +183,7 @@ async def test_online_core_tree_and_sync(
             path = os.path.join(parent, name)
             rep = self.core_cmd({'cmd': 'folder_create', 'path': path})
             note(rep)
-            expected_status = self.oracle_fs.create_folder(parent, name)
+            expected_status = self.oracle_fs.create_folder(path)
             assert rep['status'] == expected_status
             return path
 
@@ -183,26 +219,29 @@ async def test_online_core_tree_and_sync(
             assert rep['status'] == expected_status
             return dst
 
-        @rule(path=Files)
-        def sync_file(self, path):
-            rep = self.core_cmd({'cmd': 'synchronize', 'path': path})
+        @rule()
+        def sync_root(self):
+            rep = self.core_cmd({'cmd': 'synchronize', 'path': '/'})
             note(rep)
-            expected_status = self.oracle_fs.sync(*path.rsplit('/', 1))
+            expected_status = self.oracle_fs.sync('/')
             assert rep['status'] == expected_status
-            if expected_status == 'ok':
-                _sync_oracles(self.oracle_fs, self.oracle_synced_fs, path)
 
-        @rule(path=Folders)
-        def sync_folder(self, path):
-            rep = self.core_cmd({'cmd': 'synchronize', 'path': path})
-            note(rep)
-            if path == '/':
-                expected_status = 'ok'
-            else:
-                expected_status = self.oracle_fs.sync(*path.rsplit('/', 1))
-            assert rep['status'] == expected_status
-            if expected_status == 'ok':
-                _sync_oracles(self.oracle_fs, self.oracle_synced_fs, path)
+        # @rule(path=Files)
+        # def sync_file(self, path):
+        #     rep = self.core_cmd({'cmd': 'synchronize', 'path': path})
+        #     note(rep)
+        #     expected_status = self.oracle_fs.sync(*path.rsplit('/', 1))
+        #     assert rep['status'] == expected_status
+
+        # @rule(path=Folders)
+        # def sync_folder(self, path):
+        #     rep = self.core_cmd({'cmd': 'synchronize', 'path': path})
+        #     note(rep)
+        #     if path == '/':
+        #         expected_status = 'ok'
+        #     else:
+        #         expected_status = self.oracle_fs.sync(*path.rsplit('/', 1))
+        #     assert rep['status'] == expected_status
 
         @rule()
         def restart_core(self):
@@ -213,6 +252,6 @@ async def test_online_core_tree_and_sync(
         def reset_core(self):
             rep = self.sys_cmd('reset_core!')
             assert rep is True
-            self.oracle_fs = deepcopy(self.oracle_synced_fs)
+            self.oracle_fs.reset_core()
 
     await CoreOnlineRWFile.run_test()
