@@ -4,6 +4,7 @@ import pendulum
 from parsec.core.fs.base import BaseEntry, BaseNotLoadedEntry, FSInvalidPath, FSError
 from parsec.core.fs.merge_folder import merge_folder_manifest, merge_children
 from parsec.core.backend_storage import BackendConcurrencyError
+from huepy import *
 
 
 async def _recursive_need_sync(entry):
@@ -15,10 +16,22 @@ async def _recursive_need_sync(entry):
         if entry.need_sync:
             return True
         for child_entry in entry._children.values():
-            if _recursive_need_sync(child_entry):
+            if await _recursive_need_sync(child_entry):
                 return True
     elif entry.need_sync:
         return True
+    return False
+
+
+def _recursive_need_flush(entry):
+    if isinstance(entry, BaseNotLoadedEntry):
+        return
+    if entry.need_flush:
+        return True
+    if isinstance(entry, BaseFolderEntry):
+        for child_entry in entry._children.values():
+            if _recursive_need_flush(child_entry):
+                return True
     return False
 
 
@@ -90,7 +103,7 @@ class BaseFolderEntry(BaseEntry):
             for child in self._children.values():
                 await child.flush(recursive=True)
 
-        if not self._need_flush:
+        if not _recursive_need_flush(self):
             return
 
         # Serialize as local folder manifest
@@ -106,6 +119,7 @@ class BaseFolderEntry(BaseEntry):
         }
         # Save the local folder manifest
         access = self._access
+        print(good(f'flush {self.path} {manifest}'))
         await self._fs.manifests_manager.flush_on_local(access.id, access.key, manifest)
         self._need_flush = False
 
@@ -135,7 +149,7 @@ class BaseFolderEntry(BaseEntry):
             self._base_version = 1
             self._access = self._fs._vlob_access_cls(id, rts, wts, key)
 
-    async def sync(self, recursive=False):
+    async def sync(self, recursive=False, ignore_placeholders=False):
         # TODO: if file is a placeholder but contains data we sync it two
         # times...
         await self.minimal_sync_if_placeholder()
@@ -158,7 +172,8 @@ class BaseFolderEntry(BaseEntry):
                     }
                     return
 
-            await self.flush_no_lock()
+            # TODO: useful ?
+            # await self.flush_no_lock()
             # Make a snapshot of ourself to avoid concurrency
             # Serialize as local folder manifest
             manifest = {
@@ -174,10 +189,13 @@ class BaseFolderEntry(BaseEntry):
 
         # Convert placeholder children into proper synchronized children
         for name, entry in children.items():
-            if recursive:
-                await entry.sync(recursive=True)
+            if ignore_placeholders and entry.is_placeholder:
+                continue
             else:
-                await entry.minimal_sync_if_placeholder()
+                if recursive:
+                    await entry.sync(recursive=True)
+                else:
+                    await entry.minimal_sync_if_placeholder()
             # TODO: Synchronize with up-to-date data and flush to avoid
             # having to re-synchronize placeholders
             manifest['children'][name] = entry._access.dump(with_type=False)
@@ -187,21 +205,25 @@ class BaseFolderEntry(BaseEntry):
             try:
                 await self._fs.manifests_manager.sync_with_backend(
                     access.id, access.wts, access.key, manifest)
+                print(que(f'sync {self.path} {manifest}'))
                 break
             except BackendConcurrencyError:
+                print(bad('concurrency error sync'))
                 base = await self._fs.manifests_manager.fetch_from_backend(
                     access.id, access.rts, access.key, version=manifest['version'] - 1)
+                print(info('base %s' % base))
                 # Fetch last version from the backend and merge with it
                 # before retrying the synchronization
                 target = await self._fs.manifests_manager.fetch_from_backend(
                     access.id, access.rts, access.key)
+                print(info('target %s' % target))
                 # 3-ways merge between base, modified and target versions
                 manifest, _ = merge_folder_manifest(base, manifest, target)
+                print(info('merged %s' % manifest))
 
         async with self.acquire_write():
             # Else update base_version
             self._base_version = manifest['version']
-            await self.flush_no_lock()
 
             base = await self._fs.manifests_manager.fetch_from_backend(
                 access.id, access.rts, access.key, self._base_version)
@@ -211,6 +233,8 @@ class BaseFolderEntry(BaseEntry):
             diverged = self
             _, modified = merge_children(base, diverged, target, inplace=diverged)
             self._need_sync = modified
+            self._need_flush = True
+            await self.flush_no_lock()
 
     def _get_child(self, name):
         try:
@@ -322,7 +346,7 @@ class BaseRootEntry(BaseFolderEntry):
             for child in self._children.values():
                 await child.flush(recursive=True)
 
-        if not self._need_flush:
+        if not _recursive_need_flush(self):
             return
 
         # Serialize as local folder manifest
@@ -337,10 +361,11 @@ class BaseRootEntry(BaseFolderEntry):
                          for k, v in self._children.items()}
         }
         # Save the local folder manifest
+        print(good(f'flush {self.path} {manifest}'))
         await self._fs.manifests_manager.flush_user_manifest_on_local(manifest)
         self._need_flush = False
 
-    async def sync(self, recursive=False):
+    async def sync(self, recursive=False, ignore_placeholders=False):
         async with self.acquire_write():
 
             if not await _recursive_need_sync(self):
@@ -358,7 +383,8 @@ class BaseRootEntry(BaseFolderEntry):
                     }
                 return
 
-            await self.flush_no_lock()
+            # TODO: seems not useful...
+            # await self.flush_no_lock()
             # Make a snapshot of ourself to avoid concurrency
             # Serialize as local folder manifest
             manifest = {
@@ -373,10 +399,13 @@ class BaseRootEntry(BaseFolderEntry):
 
         # Convert placeholder children into proper synchronized children
         for name, entry in children.items():
-            if recursive:
-                await entry.sync(recursive=True)
+            if ignore_placeholders and entry.is_placeholder:
+                continue
             else:
-                await entry.minimal_sync_if_placeholder()
+                if recursive:
+                    await entry.sync(recursive=True)
+                else:
+                    await entry.minimal_sync_if_placeholder()
             # TODO: Synchronize with up-to-date data and flush to avoid
             # having to re-synchronize placeholders
             manifest['children'][name] = entry._access.dump(with_type=False)
@@ -385,29 +414,34 @@ class BaseRootEntry(BaseFolderEntry):
         while True:
             try:
                 await self._fs.manifests_manager.sync_user_manifest_with_backend(manifest)
+                print(que(f'sync {self.path} {manifest}'))
                 break
 
             except BackendConcurrencyError:
+                print(bad('concurrency error sync'))
                 base = await self._fs.manifests_manager.fetch_user_manifest_from_backend(
                     version=manifest['version'] - 1
                 )
                 if not base:
                     # base is version 0, which is never stored
                     base = {'children': {}}
+                print(info('base %s' % base))
                 # Fetch last version from the backend and merge with it
                 # before retrying the synchronization
                 target = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
+                print(info('target %s' % target))
                 # 3-ways merge between base, modified and target versions
                 manifest, _ = merge_folder_manifest(base, manifest, target)
+                print(info('merged %s' % manifest))
         # TODO: If conflict, do a 3-ways merge between base, modified and target versions ?
         async with self.acquire_write():
             # Else update base_version
             self._base_version = manifest['version']
             self._need_flush = True
-            await self.flush_no_lock()
             # TODO: what if the folder is modified during the sync ?
             # it is now marked as need_sync=False but needs synchro !
             self._need_sync = False
+            await self.flush_no_lock()
 
     async def minimal_sync_if_placeholder(self):
         raise RuntimeError("Don't do that on root !")

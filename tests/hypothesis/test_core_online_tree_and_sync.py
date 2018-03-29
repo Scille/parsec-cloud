@@ -25,6 +25,7 @@ def _sync_oracles(oracle_fs, oracle_synced_fs, path):
         sync_parent_entry = oracle_synced_fs.get_path(folder_path)
         sync_parent_entry[entry_name] = deepcopy(entry)
 
+k = None
 
 @pytest.mark.slow
 @pytest.mark.trio
@@ -33,6 +34,7 @@ async def test_online_core_tree_and_sync(
     mocked_local_storage_connection,
     tcp_stream_spy,
     backend_addr,
+    monitor,
     tmpdir,
     alice
 ):
@@ -68,6 +70,8 @@ async def test_online_core_tree_and_sync(
             async def run_core(on_ready):
                 async with core_factory(**core_config) as core:
                     self.core = core
+                    global k
+                    k = core
 
                     await core.login(alice)
                     async with connect_core(core) as sock:

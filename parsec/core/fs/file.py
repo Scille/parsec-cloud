@@ -4,7 +4,7 @@ import pendulum
 
 from parsec.core.fs.base import BaseEntry
 from parsec.core.backend_connection import BackendConcurrencyError
-
+from huepy import *
 
 @attr.s(slots=True, init=False)
 class BaseFileEntry(BaseEntry):
@@ -88,6 +88,7 @@ class BaseFileEntry(BaseEntry):
         }
         # Save the local folder manifest
         access = self._access
+        print(good(f'flush {self.path} {manifest}'))
         await self._fs.manifests_manager.flush_on_local(access.id, access.key, manifest)
         self._need_flush = False
 
@@ -273,9 +274,11 @@ class BaseFileEntry(BaseEntry):
         try:
             await self._fs.manifests_manager.sync_with_backend(
                 self._access.id, self._access.wts, self._access.key, manifest)
+            print(que(f'sync {self.path} {manifest}'))
         except BackendConcurrencyError:
             # File already modified, must rename ourself in the parent directory
             # to avoid losing data !
+            print(bad('concurrency error sync'))
             original_access = self._access
             original_name = self._name
 
@@ -306,8 +309,8 @@ class BaseFileEntry(BaseEntry):
             # TODO: notify blocks_managers the dirty blocks are no longer useful ?
             self._base_version = manifest['version']
             self._need_flush = True
-            await self.flush_no_lock()
             self._need_sync = self._updated != manifest['updated']
+            await self.flush_no_lock()
 
 
 def get_merged_blocks(file_blocks, file_dirty_blocks, file_size):

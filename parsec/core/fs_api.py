@@ -237,10 +237,10 @@ class FSApi:
                 curr_path = '/'
             to_sync.append(await self.fs.fetch_path(curr_path))
         await to_sync_target.sync(recursive=True)
-        to_sync_parents = reversed(to_sync[1:])
+        to_sync_parents = to_sync[1:]
         # TODO: If parent contains placeholders than what compose the path to
         # the target, there will be synchronized as empty files/folders.
         # It would be better (and faster) to skip them entirely.
         for to_sync_parent in to_sync_parents:
-            await to_sync_parent.sync()
+            await to_sync_parent.sync(ignore_placeholders=True)
         return {'status': 'ok'}

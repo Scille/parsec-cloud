@@ -6,7 +6,7 @@ class MergeProtocol:
         self.entry = entry
 
     def __eq__(self, other):
-        return self['id'] == other['id']
+        return self['id'] == other['id'] if isinstance(other, MergeProtocol) else False
 
     def __getitem__(self, attr):
         if attr == 'children':
