@@ -7,8 +7,8 @@ from parsec.backend.user import NotFoundError
 
 
 JOHN_DOE_USER_ID = 'johndoe'
-JOHN_DOE_PUBLIC_KEY = (b'1\xbc29\xc9\xce"\xf1\xcex\xea"\x83k\x1d\xede'
-                       b'\x81\xbfRc\rG\xde&\x82\xbc\x80rc\xaa\xe4')
+JOHN_DOE_PUBLIC_KEY = (b'zv\xf8\xa4\xf3n\x0b\xfe\xb8o9\xbe\xd8\xe705Y'
+                       b'\x0f<\x81\xf6\xf0o\xc0\xa5\x80 \xed\xe7\x80\x86\x0c')
 JOHN_DOE_DEVICE_NAME = 'test'
 JOHN_DOE_DEVICE_VERIFY_KEY = (b'\xd5\xef\x8f\xbdPJ\xea\x9c<]qy\x06!M\xad5'
                               b'\x99m\xa0}EDqN\x06\x06c\x9e:\xe6\x80')
