@@ -222,6 +222,7 @@ class BaseFolderEntry(BaseEntry):
                     # before retrying the synchronization
                     target = await self._fs.manifests_manager.fetch_from_backend(
                         access.id, access.rts, access.key)
+                    manifest['version'] = target['version'] + 1
                     print(info('target %s' % target))
                     # 3-ways merge between base, modified and target versions
                     manifest, _ = merge_folder_manifest(base, manifest, target)
@@ -452,6 +453,7 @@ class BaseRootEntry(BaseFolderEntry):
                     # before retrying the synchronization
                     target = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
                     print(info('target %s' % target))
+                    manifest['version'] = target['version'] + 1
                     # 3-ways merge between base, modified and target versions
                     manifest, _ = merge_folder_manifest(base, manifest, target)
                     print(info('merged %s' % manifest))
