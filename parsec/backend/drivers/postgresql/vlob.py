@@ -22,7 +22,7 @@ class PGVlobComponent(BaseVlobComponent):
 
     async def create(self, id, rts, wts, blob):
         await self.dbh.insert_one(
-            'INSERT INTO vlobs (id, rts, wts, version, blob) VALUES (%s, %s, %s, 0, %s)',
+            'INSERT INTO vlobs (id, rts, wts, version, blob) VALUES (%s, %s, %s, 1, %s)',
             (id, rts, wts, blob)
         )
 
@@ -34,21 +34,32 @@ class PGVlobComponent(BaseVlobComponent):
         )
 
     async def read(self, id, trust_seed, version=None):
-        # TODO: use version in query to avoid retreiving all data each time
-        vlobs = await self.dbh.fetch_many(
-            'SELECT id, rts, wts, blob FROM vlobs WHERE id = %s ORDER BY version ASC',
-            (id,)
-        )
-        vlobcount = len(vlobs)
-
-        if vlobcount == 0:
-            raise NotFoundError('Vlob not found.')
-
-        version = version or vlobcount
-        try:
-            id, rts, wts, blob = vlobs[version - 1]
-        except IndexError:
-            raise VersionError('Wrong blob version.')
+        if version is None:
+            data = await self.dbh.fetch_one(
+                'SELECT rts, wts, version, blob FROM vlobs WHERE id=%s ORDER BY version DESC limit 1',
+                (id,)
+            )
+            if not data:
+                raise NotFoundError('Vlob not found.')
+            else:
+                rts, wts, version, blob = data
+        else:
+            data = await self.dbh.fetch_one(
+                'SELECT rts, wts, blob FROM vlobs WHERE id=%s AND version=%s',
+                (id, version)
+            )
+            if not data:
+                # TODO: not cool to need 2nd request to know the error...
+                exists = await self.dbh.fetch_one(
+                    'SELECT true FROM vlobs WHERE id=%s',
+                    (id, )
+                )
+                if exists:
+                    raise VersionError('Wrong blob version.')
+                else:
+                    raise NotFoundError('Vlob not found.')
+            else:
+                rts, wts, blob = data
 
         if rts != trust_seed:
             raise TrustSeedError()

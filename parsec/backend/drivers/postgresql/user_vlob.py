@@ -8,22 +8,27 @@ class PGUserVlobComponent(BaseUserVlobComponent):
         self.dbh = dbh
 
     async def read(self, user_id, version=None):
-        vlobs = await self.dbh.fetch_many(
-            'SELECT user_id, version, blob FROM user_vlobs WHERE user_id=%s',
-            (user_id,)
-        )
-
-        if version == 0 or (version is None and not vlobs):
+        if version == 0:
             return UserVlobAtom(user_id=user_id)
 
-        try:
-            if version is None:
-                user_id, version, blob = vlobs[-1]
+        if version is None:
+            data = await self.dbh.fetch_one(
+                'SELECT version, blob FROM user_vlobs WHERE user_id=%s ORDER BY version DESC limit 1',
+                (user_id,)
+            )
+            if not data:
+                return UserVlobAtom(user_id=user_id)
             else:
-                user_id, version, blob = vlobs[version - 1]
-
-        except IndexError:
-            raise VersionError('Wrong blob version.')
+                version, blob = data
+        else:
+            data = await self.dbh.fetch_one(
+                'SELECT blob FROM user_vlobs WHERE user_id=%s AND version=%s',
+                (user_id, version)
+            )
+            if not data:
+                raise VersionError('Wrong blob version.')
+            else:
+                blob = data[0]
 
         return UserVlobAtom(user_id=user_id, version=version, blob=blob)
 
