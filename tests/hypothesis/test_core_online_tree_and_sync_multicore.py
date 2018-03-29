@@ -6,7 +6,6 @@ from hypothesis.stateful import Bundle, rule
 from tests.common import (
     connect_core, core_factory, backend_factory, run_app
 )
-from tests.hypothesis.common import OracleFS
 
 
 async def get_tree_from_core(core):
@@ -56,8 +55,6 @@ async def test_online_core_tree_and_sync_multicore(
 
             self.sys_cmd = lambda x, y: self.communicator.send(('sys', x, y))
             self.core_cmd = lambda x, y: self.communicator.send(('core', x, y))
-            self.oracle_1 = OracleFS()
-            self.oracle_2 = OracleFS()
 
             async with backend_factory(**backend_config) as backend:
                 await backend.user.create(
@@ -101,13 +98,6 @@ async def test_online_core_tree_and_sync_multicore(
                     finally:
                         tcp_stream_spy.install_hook(backend_addr, None)
 
-        def get_oracle(self, core):
-            oracles = {
-                'core_1': self.oracle_1,
-                'core_2': self.oracle_2
-            }
-            return oracles[core]
-
         @rule(target=Folders)
         def get_root(self):
             return '/'
@@ -117,8 +107,6 @@ async def test_online_core_tree_and_sync_multicore(
             path = os.path.join(parent, name)
             rep = self.core_cmd(core, {'cmd': 'file_create', 'path': path})
             note(rep)
-            expected_status = self.get_oracle(core).create_file(path)
-            assert rep['status'] == expected_status
             return path
 
         @rule(target=Folders, core=st_core, parent=Folders, name=st_entry_name)
@@ -126,31 +114,23 @@ async def test_online_core_tree_and_sync_multicore(
             path = os.path.join(parent, name)
             rep = self.core_cmd(core, {'cmd': 'folder_create', 'path': path})
             note(rep)
-            expected_status = self.get_oracle(core).create_folder(path)
-            assert rep['status'] == expected_status
             return path
 
         @rule(path=Files, core=st_core)
         def delete_file(self, core, path):
             rep = self.core_cmd(core, {'cmd': 'delete', 'path': path})
             note(rep)
-            expected_status = self.get_oracle(core).delete(path)
-            assert rep['status'] == expected_status
 
         @rule(path=Folders, core=st_core)
         def delete_folder(self, core, path):
             rep = self.core_cmd(core, {'cmd': 'delete', 'path': path})
             note(rep)
-            expected_status = self.get_oracle(core).delete(path)
-            assert rep['status'] == expected_status
 
         @rule(target=Files, core=st_core, src=Files, dst_parent=Folders, dst_name=st_entry_name)
         def move_file(self, core, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd(core, {'cmd': 'move', 'src': src, 'dst': dst})
             note(rep)
-            expected_status = self.get_oracle(core).move(src, dst)
-            assert rep['status'] == expected_status
             return dst
 
         @rule(target=Folders, core=st_core, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
@@ -158,8 +138,6 @@ async def test_online_core_tree_and_sync_multicore(
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd(core, {'cmd': 'move', 'src': src, 'dst': dst})
             note(rep)
-            expected_status = self.get_oracle(core).move(src, dst)
-            assert rep['status'] == expected_status
             return dst
 
         @rule()
