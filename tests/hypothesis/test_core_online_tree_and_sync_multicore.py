@@ -117,7 +117,7 @@ async def test_online_core_tree_and_sync_multicore(
             path = os.path.join(parent, name)
             rep = self.core_cmd(core, {'cmd': 'file_create', 'path': path})
             note(rep)
-            expected_status = self.get_oracle(core).create_file(parent, name)
+            expected_status = self.get_oracle(core).create_file(path)
             assert rep['status'] == expected_status
             return path
 
@@ -126,7 +126,7 @@ async def test_online_core_tree_and_sync_multicore(
             path = os.path.join(parent, name)
             rep = self.core_cmd(core, {'cmd': 'folder_create', 'path': path})
             note(rep)
-            expected_status = self.get_oracle(core).create_folder(parent, name)
+            expected_status = self.get_oracle(core).create_folder(path)
             assert rep['status'] == expected_status
             return path
 
