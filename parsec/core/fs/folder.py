@@ -119,7 +119,7 @@ class BaseFolderEntry(BaseEntry):
         }
         # Save the local folder manifest
         access = self._access
-        print(good(f'flush {self.path} {manifest}'))
+        print(good('flush %s %s' % (self.path, manifest)))
         await self._fs.manifests_manager.flush_on_local(access.id, access.key, manifest)
         self._need_flush = False
 
@@ -144,7 +144,7 @@ class BaseFolderEntry(BaseEntry):
                 'children': {}
             }
             key = self._access.key
-            print(run(f'min sync {self.path} {manifest}'))
+            print(run('min sync %s %s' % (self.path, manifest)))
             id, rts, wts = await self._fs.manifests_manager.sync_new_entry_with_backend(
                 key, manifest)
             self._base_version = 1
@@ -210,10 +210,10 @@ class BaseFolderEntry(BaseEntry):
                 try:
                     await self._fs.manifests_manager.sync_with_backend(
                         access.id, access.wts, access.key, manifest)
-                    print(que(f'sync {self.path} {manifest}'))
+                    print(que('sync %s %s' % (self.path, manifest)))
                     break
                 except BackendConcurrencyError:
-                    print(bad(f'concurrency error sync {self.path}'))
+                    print(bad('concurrency error sync %s' % self.path))
                     print(info('manifest %s' % manifest))
                     base = await self._fs.manifests_manager.fetch_from_backend(
                         access.id, access.rts, access.key, version=manifest['version'] - 1)
@@ -381,7 +381,7 @@ class BaseRootEntry(BaseFolderEntry):
                          for k, v in self._children.items()}
         }
         # Save the local folder manifest
-        print(good(f'flush {self.path} {manifest}'))
+        print(good('flush %s %s' % (self.path, manifest)))
         await self._fs.manifests_manager.flush_user_manifest_on_local(manifest)
         self._need_flush = False
 
@@ -436,7 +436,7 @@ class BaseRootEntry(BaseFolderEntry):
             while True:
                 try:
                     await self._fs.manifests_manager.sync_user_manifest_with_backend(manifest)
-                    print(que(f'sync {self.path} {manifest}'))
+                    print(que('sync %s %s' % (self.path, manifest)))
                     break
 
                 except BackendConcurrencyError:

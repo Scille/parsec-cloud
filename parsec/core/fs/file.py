@@ -88,7 +88,7 @@ class BaseFileEntry(BaseEntry):
         }
         # Save the local folder manifest
         access = self._access
-        print(good(f'flush {self.path} {manifest}'))
+        print(good('flush %s %s' % (self.path, manifest)))
         await self._fs.manifests_manager.flush_on_local(access.id, access.key, manifest)
         self._need_flush = False
 
@@ -192,7 +192,7 @@ class BaseFileEntry(BaseEntry):
                 'size': 0,
             }
             key = self._access.key
-            print(run(f'min sync {self.path} {manifest}'))
+            print(run('min sync %s %s' % (self.path, manifest)))
             id, rts, wts = await self._fs.manifests_manager.sync_new_entry_with_backend(
                 key, manifest)
             self._base_version = 1
@@ -277,11 +277,11 @@ class BaseFileEntry(BaseEntry):
         try:
             await self._fs.manifests_manager.sync_with_backend(
                 self._access.id, self._access.wts, self._access.key, manifest)
-            print(que(f'sync {self.path} {manifest}'))
+            print(que('sync %s %s' % (self.path, manifest)))
         except BackendConcurrencyError:
             # File already modified, must rename ourself in the parent directory
             # to avoid losing data !
-            print(bad(f'concurrency error sync {self.path}'))
+            print(bad('concurrency error sync %s' % self.path))
             original_access = self._access
             original_name = self._name
 
