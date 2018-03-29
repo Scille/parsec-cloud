@@ -190,60 +190,68 @@ class BaseFolderEntry(BaseEntry):
             children = self._children.copy()
             access = self._access
 
-        # Convert placeholder children into proper synchronized children
-        for name, entry in children.items():
-            if ignore_placeholders and entry.is_placeholder:
-                continue
-            else:
-                if recursive:
-                    await entry.sync(recursive=True)
+            # TODO: should release the lock here
+
+            # Convert placeholder children into proper synchronized children
+            for name, entry in children.items():
+                if ignore_placeholders and entry.is_placeholder:
+                    continue
                 else:
-                    await entry.minimal_sync_if_placeholder()
-            # TODO: Synchronize with up-to-date data and flush to avoid
-            # having to re-synchronize placeholders
-            manifest['children'][name] = entry._access.dump(with_type=False)
+                    if recursive:
+                        await entry.sync(recursive=True)
+                    else:
+                        await entry.minimal_sync_if_placeholder()
+                # TODO: Synchronize with up-to-date data and flush to avoid
+                # having to re-synchronize placeholders
+                manifest['children'][name] = entry._access.dump(with_type=False)
 
-        # Upload the file manifest as new vlob version
-        while True:
-            try:
-                await self._fs.manifests_manager.sync_with_backend(
-                    access.id, access.wts, access.key, manifest)
-                print(que(f'sync {self.path} {manifest}'))
-                break
-            except BackendConcurrencyError:
-                print(bad(f'concurrency error sync {self.path}'))
-                print(info('manifest %s' % manifest))
-                base = await self._fs.manifests_manager.fetch_from_backend(
-                    access.id, access.rts, access.key, version=manifest['version'] - 1)
-                print(info('base %s' % base))
-                # Fetch last version from the backend and merge with it
-                # before retrying the synchronization
-                target = await self._fs.manifests_manager.fetch_from_backend(
-                    access.id, access.rts, access.key)
-                print(info('target %s' % target))
-                # 3-ways merge between base, modified and target versions
-                manifest, _ = merge_folder_manifest(base, manifest, target)
-                print(info('merged %s' % manifest))
+            # Upload the file manifest as new vlob version
+            while True:
+                try:
+                    await self._fs.manifests_manager.sync_with_backend(
+                        access.id, access.wts, access.key, manifest)
+                    print(que(f'sync {self.path} {manifest}'))
+                    break
+                except BackendConcurrencyError:
+                    print(bad(f'concurrency error sync {self.path}'))
+                    print(info('manifest %s' % manifest))
+                    base = await self._fs.manifests_manager.fetch_from_backend(
+                        access.id, access.rts, access.key, version=manifest['version'] - 1)
+                    print(info('base %s' % base))
+                    # Fetch last version from the backend and merge with it
+                    # before retrying the synchronization
+                    target = await self._fs.manifests_manager.fetch_from_backend(
+                        access.id, access.rts, access.key)
+                    print(info('target %s' % target))
+                    # 3-ways merge between base, modified and target versions
+                    manifest, _ = merge_folder_manifest(base, manifest, target)
+                    print(info('merged %s' % manifest))
 
-        async with self.acquire_write():
+            # TODO: should re-acquire the lock here and fix the following
             # Else update base_version
             self._base_version = manifest['version']
 
-            base = await self._fs.manifests_manager.fetch_from_backend(
-                access.id, access.rts, access.key, self._base_version-1)
-            target = manifest
-            # target = await self._fs.manifests_manager.fetch_from_backend(
-            #     access.id, access.rts, access.key)
-            diverged = self
+            # base = await self._fs.manifests_manager.fetch_from_backend(
+            #     access.id, access.rts, access.key, self._base_version-1)
+            # target = manifest
+            # # target = await self._fs.manifests_manager.fetch_from_backend(
+            # #     access.id, access.rts, access.key)
+            # diverged = self
 
-            _, modified = merge_children(base, diverged, target, inplace=self)
-            for k, v in self._children.items():
-                # TODO: merge_children should take care of this !
-                if isinstance(v, dict):
-                    self._children[k] = self._fs._not_loaded_entry_cls(
-                        self._vlob_access_cls(**v)
-                    )
-            self._need_sync = modified
+            # _, modified = merge_children(base, diverged, target, inplace=self)
+            # for k, v in self._children.items():
+            #     # TODO: merge_children should take care of this !
+            #     if isinstance(v, dict):
+            #         self._children[k] = self._fs._not_loaded_entry_cls(
+            #             self._vlob_access_cls(**v)
+            #         )
+            # self._need_sync = modified
+
+            self._children = {
+                k: self._fs._not_loaded_entry_cls(self._fs._vlob_access_cls(**v))
+                for k, v in manifest['children'].items()
+            }
+            self._need_sync = False
             self._need_flush = True
             await self.flush_no_lock()
 
@@ -408,71 +416,80 @@ class BaseRootEntry(BaseFolderEntry):
             }
             children = self._children.copy()
 
-        # Convert placeholder children into proper synchronized children
-        for name, entry in children.items():
-            if ignore_placeholders and entry.is_placeholder:
-                continue
-            else:
-                if recursive:
-                    await entry.sync(recursive=True)
+            # TODO: should release the lock here
+
+            # Convert placeholder children into proper synchronized children
+            for name, entry in children.items():
+                if ignore_placeholders and entry.is_placeholder:
+                    continue
                 else:
-                    await entry.minimal_sync_if_placeholder()
-            # TODO: Synchronize with up-to-date data and flush to avoid
-            # having to re-synchronize placeholders
-            manifest['children'][name] = entry._access.dump(with_type=False)
+                    if recursive:
+                        await entry.sync(recursive=True)
+                    else:
+                        await entry.minimal_sync_if_placeholder()
+                # TODO: Synchronize with up-to-date data and flush to avoid
+                # having to re-synchronize placeholders
+                manifest['children'][name] = entry._access.dump(with_type=False)
 
-        # Upload the file manifest as new vlob version
-        while True:
-            try:
-                await self._fs.manifests_manager.sync_user_manifest_with_backend(manifest)
-                print(que(f'sync {self.path} {manifest}'))
-                break
+            # Upload the file manifest as new vlob version
+            while True:
+                try:
+                    await self._fs.manifests_manager.sync_user_manifest_with_backend(manifest)
+                    print(que(f'sync {self.path} {manifest}'))
+                    break
 
-            except BackendConcurrencyError:
-                print(bad('concurrency error sync in root'))
-                print(info('manifest %s' % manifest))
-                base = await self._fs.manifests_manager.fetch_user_manifest_from_backend(
-                    version=manifest['version'] - 1
-                )
-                if not base:
-                    # base is version 0, which is never stored
-                    base = {'children': {}}
-                print(info('base %s' % base))
-                # Fetch last version from the backend and merge with it
-                # before retrying the synchronization
-                target = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
-                print(info('target %s' % target))
-                # 3-ways merge between base, modified and target versions
-                manifest, _ = merge_folder_manifest(base, manifest, target)
-                print(info('merged %s' % manifest))
-        # TODO: If conflict, do a 3-ways merge between base, modified and target versions ?
-        async with self.acquire_write():
+                except BackendConcurrencyError:
+                    print(bad('concurrency error sync in root'))
+                    print(info('manifest %s' % manifest))
+                    base = await self._fs.manifests_manager.fetch_user_manifest_from_backend(
+                        version=manifest['version'] - 1
+                    )
+                    if not base:
+                        # base is version 0, which is never stored
+                        base = {'children': {}}
+                    print(info('base %s' % base))
+                    # Fetch last version from the backend and merge with it
+                    # before retrying the synchronization
+                    target = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
+                    print(info('target %s' % target))
+                    # 3-ways merge between base, modified and target versions
+                    manifest, _ = merge_folder_manifest(base, manifest, target)
+                    print(info('merged %s' % manifest))
+
+            # TODO: should re-acquire the lock here and fix the following
+            # TODO: If conflict, do a 3-ways merge between base, modified and target versions ?
             # Else update base_version
             self._base_version = manifest['version']
 
-            target = manifest
-            base = await self._fs.manifests_manager.fetch_user_manifest_from_backend(self._base_version-1)
-            if not base:
-                # Fake v0 version
-                base = {
-                'format': 1,
-                'type': 'user_manifest',
-                'version': 0,
-                'created': target['created'],
-                'updated': target['updated'],
-                'children': {}
-            }
-            # target = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
-            diverged = self
+            # target = manifest
+            # base = await self._fs.manifests_manager.fetch_user_manifest_from_backend(self._base_version-1)
+            # if not base:
+            #     # Fake v0 version
+            #     base = {
+            #     'format': 1,
+            #     'type': 'user_manifest',
+            #     'version': 0,
+            #     'created': target['created'],
+            #     'updated': target['updated'],
+            #     'children': {}
+            # }
+            # # target = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
+            # diverged = self
 
-            _, modified = merge_children(base, diverged, target, inplace=self)
-            for k, v in self._children.items():
-                # TODO: merge_children should take care of this !
-                if isinstance(v, dict):
-                    self._children[k] = self._fs._not_loaded_entry_cls(
-                        self._fs._vlob_access_cls(**v)
-                    )
-            self._need_sync = modified
+            # _, modified = merge_children(base, diverged, target, inplace=self)
+            # for k, v in self._children.items():
+            #     # TODO: merge_children should take care of this !
+            #     if isinstance(v, dict):
+            #         self._children[k] = self._fs._not_loaded_entry_cls(
+            #             self._fs._vlob_access_cls(**v)
+            #         )
+            # self._need_sync = modified
+
+            self._children = {
+                k: self._fs._not_loaded_entry_cls(self._fs._vlob_access_cls(**v))
+                for k, v in manifest['children'].items()
+            }
+            self._need_sync = False
             self._need_flush = True
             await self.flush_no_lock()
 
