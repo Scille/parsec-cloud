@@ -1,9 +1,15 @@
 import pytest
 import trio
 import queue
-from functools import wraps
+from functools import wraps, partial
 from contextlib import contextmanager
+import hypothesis
 from hypothesis.stateful import RuleBasedStateMachine, run_state_machine_as_test, invariant
+
+
+def pytest_addoption(parser):
+    parser.addoption("--hypothesis-max-examples", default=100, type=int)
+    parser.addoption("--hypothesis-derandomize", action='store_true')
 
 
 class ThreadToTrioCommunicator:
@@ -59,7 +65,15 @@ def monitor():
 
 
 @pytest.fixture
-async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler):
+def hypothesis_settings(request):
+    return hypothesis.settings(
+        max_examples=pytest.config.getoption("--hypothesis-max-examples"),
+        derandomize=pytest.config.getoption("--hypothesis-derandomize")
+    )
+
+
+@pytest.fixture
+async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler, hypothesis_settings):
 
     class TrioDriverRuleBasedStateMachine(RuleBasedStateMachine):
         _portal = portal
@@ -68,7 +82,8 @@ async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler):
 
         @classmethod
         async def run_test(cls):
-            await trio.run_sync_in_worker_thread(run_state_machine_as_test, cls)
+            await trio.run_sync_in_worker_thread(
+                partial(run_state_machine_as_test, cls, settings=hypothesis_settings))
 
         async def trio_runner(self, task_status):
             raise NotImplementedError()
