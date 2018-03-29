@@ -249,7 +249,8 @@ class BaseFolderEntry(BaseEntry):
             # self._need_sync = modified
 
             self._children = {
-                k: self._fs._not_loaded_entry_cls(self._fs._vlob_access_cls(**v))
+                k: self._fs._not_loaded_entry_cls(
+                    name=k, parent=self, access=self._fs._vlob_access_cls(**v))
                 for k, v in manifest['children'].items()
             }
             self._need_sync = False
@@ -488,7 +489,8 @@ class BaseRootEntry(BaseFolderEntry):
             # self._need_sync = modified
 
             self._children = {
-                k: self._fs._not_loaded_entry_cls(self._fs._vlob_access_cls(**v))
+                k: self._fs._not_loaded_entry_cls(
+                    name=k, parent=self, access=self._fs._vlob_access_cls(**v))
                 for k, v in manifest['children'].items()
             }
             self._need_sync = False
