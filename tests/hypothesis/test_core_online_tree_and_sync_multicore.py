@@ -9,20 +9,18 @@ from tests.common import (
 from tests.hypothesis.common import OracleFS
 
 
-def get_tree_from_core(core):
-    def get_tree_from_folder_entry(entry):
+async def get_tree_from_core(core):
+    async def get_tree_from_folder_entry(entry):
         tree = {}
-
         for k, v in entry._children.items():
+            if not v.is_loaded:
+                v = await v.load()
             if isinstance(v, core.fs._file_entry_cls):
                 tree[k] = v._access.dump()
-
             else:
-                tree[k] = get_tree_from_folder_entry(v)
-
+                tree[k] = await get_tree_from_folder_entry(v)
         return tree
-
-    return get_tree_from_folder_entry(core.fs.root)
+    return await get_tree_from_folder_entry(core.fs.root)
 
 
 @pytest.mark.slow
@@ -37,7 +35,7 @@ async def test_online_core_tree_and_sync_multicore(
 ):
 
     st_entry_name = st.text(min_size=1).filter(lambda x: '/' not in x)
-    st_core = st.sampled_from(['core1', 'core2'])
+    st_core = st.sampled_from(['core_1', 'core_2'])
 
     class MultiCoreTreeAndSync(TrioDriverRuleBasedStateMachine):
         Files = Bundle('file')
@@ -46,8 +44,6 @@ async def test_online_core_tree_and_sync_multicore(
 
         async def trio_runner(self, task_status):
             mocked_local_storage_connection.reset()
-            self.oracle1 = OracleFS()
-            self.oracle2 = OracleFS()
 
             type(self).count += 1
             backend_config = {
@@ -57,6 +53,11 @@ async def test_online_core_tree_and_sync_multicore(
                 'base_settings_path': tmpdir.mkdir('try-%s' % self.count).strpath,
                 'backend_addr': backend_addr,
             }
+
+            self.sys_cmd = lambda x, y: self.communicator.send(('sys', x, y))
+            self.core_cmd = lambda x, y: self.communicator.send(('core', x, y))
+            self.oracle_1 = OracleFS()
+            self.oracle_2 = OracleFS()
 
             async with backend_factory(**backend_config) as backend:
                 await backend.user.create(
@@ -70,47 +71,48 @@ async def test_online_core_tree_and_sync_multicore(
                     tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
 
                     try:
-                        async with core_factory(**core_config) as self.core1, \
-                                   core_factory(**core_config) as self.core2:
+                        async with core_factory(**core_config) as self.core_1, \
+                                   core_factory(**core_config) as self.core_2:
 
-                            await self.core1.login(alice)
-                            await self.core2.login(alice)
+                            await self.core_1.login(alice)
+                            await self.core_2.login(alice)
 
-                            async with connect_core(self.core1) as sock1, \
-                                       connect_core(self.core2) as sock2:
+                            async with connect_core(self.core_1) as sock_1, \
+                                       connect_core(self.core_2) as sock_2:
                                 task_status.started()
 
-                                targets = {
-                                    'core1': sock1,
-                                    'core2': sock2
+                                sockets = {
+                                    'core_1': sock_1,
+                                    'core_2': sock_2
                                 }
 
                                 while True:
-                                    target, msg = await self.communicator.trio_recv()
-                                    sock = targets[target]
-                                    await sock.send(msg)
-                                    rep = await sock.recv()
-                                    await self.communicator.trio_respond(rep)
+                                    target, core, msg = await self.communicator.trio_recv()
+                                    if target == 'core':
+                                        await sockets[core].send(msg)
+                                        rep = await sockets[core].recv()
+                                        await self.communicator.trio_respond(rep)
+                                    elif msg == 'get_tree_from_core':
+                                        core = self.core_1 if core == 'core_1' else self.core_2
+                                        await self.communicator.trio_respond(
+                                            await get_tree_from_core(core)
+                                        )
 
                     finally:
                         tcp_stream_spy.install_hook(backend_addr, None)
 
-        def core_cmd(self, core, msg):
-            return self.communicator.send((core, msg))
-
         def get_oracle(self, core):
             oracles = {
-                'core1': self.oracle1,
-                'core2': self.oracle2
+                'core_1': self.oracle_1,
+                'core_2': self.oracle_2
             }
-
             return oracles[core]
 
         @rule(target=Folders)
-        def init_root(self):
+        def get_root(self):
             return '/'
 
-        @rule(core=st_core, target=Files, parent=Folders, name=st_entry_name)
+        @rule(target=Files, core=st_core, parent=Folders, name=st_entry_name)
         def create_file(self, core, parent, name):
             path = os.path.join(parent, name)
             rep = self.core_cmd(core, {'cmd': 'file_create', 'path': path})
@@ -119,7 +121,7 @@ async def test_online_core_tree_and_sync_multicore(
             assert rep['status'] == expected_status
             return path
 
-        @rule(core=st_core, target=Folders, parent=Folders, name=st_entry_name)
+        @rule(target=Folders, core=st_core, parent=Folders, name=st_entry_name)
         def create_folder(self, core, parent, name):
             path = os.path.join(parent, name)
             rep = self.core_cmd(core, {'cmd': 'folder_create', 'path': path})
@@ -128,21 +130,21 @@ async def test_online_core_tree_and_sync_multicore(
             assert rep['status'] == expected_status
             return path
 
-        @rule(core=st_core, path=Files)
+        @rule(path=Files, core=st_core)
         def delete_file(self, core, path):
             rep = self.core_cmd(core, {'cmd': 'delete', 'path': path})
             note(rep)
             expected_status = self.get_oracle(core).delete(path)
             assert rep['status'] == expected_status
 
-        @rule(core=st_core, path=Folders)
+        @rule(path=Folders, core=st_core)
         def delete_folder(self, core, path):
             rep = self.core_cmd(core, {'cmd': 'delete', 'path': path})
             note(rep)
             expected_status = self.get_oracle(core).delete(path)
             assert rep['status'] == expected_status
 
-        @rule(core=st_core, target=Files, src=Files, dst_parent=Folders, dst_name=st_entry_name)
+        @rule(target=Files, core=st_core, src=Files, dst_parent=Folders, dst_name=st_entry_name)
         def move_file(self, core, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd(core, {'cmd': 'move', 'src': src, 'dst': dst})
@@ -151,7 +153,7 @@ async def test_online_core_tree_and_sync_multicore(
             assert rep['status'] == expected_status
             return dst
 
-        @rule(core=st_core, target=Folders, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
+        @rule(target=Folders, core=st_core, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
         def move_folder(self, core, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd(core, {'cmd': 'move', 'src': src, 'dst': dst})
@@ -162,21 +164,21 @@ async def test_online_core_tree_and_sync_multicore(
 
         @rule()
         def sync_all_the_files(self):
-            rep1 = self.core_cmd('core1', {'cmd': 'synchronize', 'path': '/'})
-            rep2 = self.core_cmd('core2', {'cmd': 'synchronize', 'path': '/'})
+            rep1 = self.core_cmd('core_1', {'cmd': 'synchronize', 'path': '/'})
+            rep2 = self.core_cmd('core_2', {'cmd': 'synchronize', 'path': '/'})
             note((rep1, rep2))
 
-            note('core1 fs %r' % self.core1.fs.root._children)
-            note('core2 fs %r' % self.core2.fs.root._children)
-            synced_tree1 = get_tree_from_core(self.core1)
-            synced_tree2 = get_tree_from_core(self.core2)
-            note((synced_tree1, synced_tree2))
+            note('core_1 fs %r' % self.core_1.fs.root._children)
+            note('core_2 fs %r' % self.core_2.fs.root._children)
+            synced_tree_1 = self.sys_cmd('core_1', 'get_tree_from_core')
+            synced_tree_2 = self.sys_cmd('core_2', 'get_tree_from_core')
+            note((synced_tree_1, synced_tree_2))
 
             assert rep1['status'] == 'ok'
             assert rep2['status'] == 'ok'
-            assert not self.core1.fs.root.need_sync
-            assert not self.core2.fs.root.need_sync
-            assert self.core1.fs.root.base_version == self.core2.fs.root.base_version
-            assert synced_tree1 == synced_tree2
+            assert not self.core_1.fs.root.need_sync
+            assert not self.core_2.fs.root.need_sync
+            assert self.core_1.fs.root.base_version == self.core_2.fs.root.base_version
+            assert synced_tree_1 == synced_tree_2
 
     await MultiCoreTreeAndSync.run_test()
