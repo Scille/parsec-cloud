@@ -31,7 +31,9 @@ class Synchronizer:
                 await trio.sleep(1)
                 trigger_time = pendulum.now() + pendulum.interval(seconds=1)
                 try:
-                    await self._scan_and_sync_fs(self.fs.root, trigger_time)
+                    # TODO: quick'n dirty fix...
+                    await self.fs.root.sync(recursive=True)
+                    # await self._scan_and_sync_fs(self.fs.root, trigger_time)
                 except BackendNotAvailable:
                     pass
                 except BackendError:
