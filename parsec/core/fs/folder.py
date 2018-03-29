@@ -144,10 +144,13 @@ class BaseFolderEntry(BaseEntry):
                 'children': {}
             }
             key = self._access.key
+            print(run(f'min sync {self.path} {manifest}'))
             id, rts, wts = await self._fs.manifests_manager.sync_new_entry_with_backend(
                 key, manifest)
             self._base_version = 1
             self._access = self._fs._vlob_access_cls(id, rts, wts, key)
+            self._need_flush = True
+            await self.flush_no_lock()
 
     async def sync(self, recursive=False, ignore_placeholders=False):
         # TODO: if file is a placeholder but contains data we sync it two
@@ -198,6 +201,8 @@ class BaseFolderEntry(BaseEntry):
                     await entry.minimal_sync_if_placeholder()
             # TODO: Synchronize with up-to-date data and flush to avoid
             # having to re-synchronize placeholders
+            if entry.is_placeholder:
+                import pdb; pdb.set_trace()
             manifest['children'][name] = entry._access.dump(with_type=False)
 
         # Upload the file manifest as new vlob version

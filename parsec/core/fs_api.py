@@ -62,6 +62,10 @@ class cmd_UNDELETE_Schema(BaseCmdSchema):
     vlob = fields.String(required=True)
 
 
+def _normalize_path(path):
+    return '/' + '/'.join([x for x in path.split('/') if x])
+
+
 class FSApi:
     def __init__(self, fs=None):
         self.fs = fs
@@ -170,6 +174,19 @@ class FSApi:
         srcdirpath, srcfilename = req['src'].rsplit('/', 1)
         dstdirpath, dstfilename = req['dst'].rsplit('/', 1)
 
+        src = _normalize_path(req['src'])
+        dst = _normalize_path(req['dst'])
+        if src == dst:
+            return {
+                'status': 'invalid_path',
+                'reason': 'Cannot move `%s` to itself' % src
+            }
+        if dst.startswith(src):
+            return {
+                'status': 'invalid_path',
+                'reason': 'Cannot move `%s` to a subdirectory of itself' % src
+            }
+
         srcparent = await self.fs.fetch_path(srcdirpath or '/')
         dstparent = await self.fs.fetch_path(dstdirpath or '/')
 
@@ -188,6 +205,7 @@ class FSApi:
             return {'status': 'invalid_path', 'reason': "Path `%s` doesn't exists" % req['src']}
         if dstfilename in dstparent:
             return {'status': 'invalid_path', 'reason': "Path `%s` already exists" % req['dst']}
+
         obj = await srcparent.delete_child(srcfilename)
         await dstparent.insert_child(dstfilename, obj)
 

@@ -136,6 +136,9 @@ class BaseNotLoadedEntry(BaseEntry):
     async def sync(self, recursive=False):
         loaded_entry = await self.load()
         await loaded_entry.sync(recursive=recursive)
+        # TODO: should be modified while lock is held
+        # in case access was a placeholder
+        self._access = loaded_entry._access
 
     async def minimal_sync_if_placeholder(self):
         if not self.is_placeholder:

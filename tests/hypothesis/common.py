@@ -61,6 +61,14 @@ class OracleFS:
         if src == '/' or dst == '/':
             return 'invalid_path'
 
+        def _normalize_path(path):
+            return '/' + '/'.join([x for x in path.split('/') if x])
+
+        src = _normalize_path(src)
+        dst = _normalize_path(dst)
+        if src == dst or dst.startswith(src):
+            return 'invalid_path'
+
         parent_src, name_src = src.rsplit('/', 1)
         parent_dst, name_dst = dst.rsplit('/', 1)
 

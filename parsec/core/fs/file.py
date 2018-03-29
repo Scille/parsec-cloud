@@ -192,10 +192,13 @@ class BaseFileEntry(BaseEntry):
                 'size': 0,
             }
             key = self._access.key
+            print(run(f'min sync {self.path} {manifest}'))
             id, rts, wts = await self._fs.manifests_manager.sync_new_entry_with_backend(
                 key, manifest)
             self._base_version = 1
             self._access = self._fs._vlob_access_cls(id, rts, wts, key)
+            self._need_flush = True
+            await self.flush_no_lock()
 
     async def sync(self, recursive=False):
         # Note recursive argument is not needed here
@@ -298,6 +301,7 @@ class BaseFileEntry(BaseEntry):
                 self._blocks = normalized_blocks
                 self._dirty_blocks = self._dirty_blocks[dirty_blocks_count:]
                 self._base_version = manifest['version']
+                self._need_flush = True
                 await self.flush_no_lock()
                 return
 
