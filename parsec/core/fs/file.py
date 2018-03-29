@@ -214,7 +214,7 @@ class BaseFileEntry(BaseEntry):
                     self._updated = manifest['updated']
                     self._base_version = manifest['version']
                     self._size = manifest['size']
-                    self._blocks = [self._fs._block_cls(self._block_access_cls(**v))
+                    self._blocks = [self._fs._block_cls(self._fs._block_access_cls(**v))
                                     for v in manifest['blocks']]
                     return
 
