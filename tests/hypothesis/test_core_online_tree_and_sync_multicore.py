@@ -1,11 +1,13 @@
 import os
 import pytest
 from hypothesis import strategies as st, note
-from hypothesis.stateful import Bundle, rule
+# from hypothesis.stateful import Bundle, rule
+from hypothesis.stateful import Bundle
 
 from tests.common import (
     connect_core, core_factory, backend_factory, run_app
 )
+from tests.hypothesis.common import rule
 
 
 async def get_tree_from_core(core):

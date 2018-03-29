@@ -281,7 +281,7 @@ class BaseFileEntry(BaseEntry):
         except BackendConcurrencyError:
             # File already modified, must rename ourself in the parent directory
             # to avoid losing data !
-            print(bad('concurrency error sync'))
+            print(bad(f'concurrency error sync {self.path}'))
             original_access = self._access
             original_name = self._name
 

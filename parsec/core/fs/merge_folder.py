@@ -6,7 +6,7 @@ class MergeProtocol:
         self.entry = entry
 
     def __eq__(self, other):
-        return self['id'] == other['id'] if isinstance(other, MergeProtocol) else False
+        return self['id'] == other['id'] if isinstance(other, (MergeProtocol, dict)) else False
 
     def __getitem__(self, attr):
         if attr == 'children':
@@ -60,7 +60,7 @@ def merge_children(base, diverged, target, on_conflict=simple_rename, inplace=No
     # If entry is in base but not in diverged and target, it is then already
     # resolved.
     all_entries = diverged['children'].keys() | target['children'].keys()
-    resolved = inplace['children'].copy()
+    resolved = inplace['children']
     modified = False
 
     for entry in all_entries:

@@ -201,8 +201,6 @@ class BaseFolderEntry(BaseEntry):
                     await entry.minimal_sync_if_placeholder()
             # TODO: Synchronize with up-to-date data and flush to avoid
             # having to re-synchronize placeholders
-            if entry.is_placeholder:
-                import pdb; pdb.set_trace()
             manifest['children'][name] = entry._access.dump(with_type=False)
 
         # Upload the file manifest as new vlob version
@@ -213,7 +211,8 @@ class BaseFolderEntry(BaseEntry):
                 print(que(f'sync {self.path} {manifest}'))
                 break
             except BackendConcurrencyError:
-                print(bad('concurrency error sync'))
+                print(bad(f'concurrency error sync {self.path}'))
+                print(info('manifest %s' % manifest))
                 base = await self._fs.manifests_manager.fetch_from_backend(
                     access.id, access.rts, access.key, version=manifest['version'] - 1)
                 print(info('base %s' % base))
@@ -231,12 +230,19 @@ class BaseFolderEntry(BaseEntry):
             self._base_version = manifest['version']
 
             base = await self._fs.manifests_manager.fetch_from_backend(
-                access.id, access.rts, access.key, self._base_version)
-            target = await self._fs.manifests_manager.fetch_from_backend(
-                access.id, access.rts, access.key)
-
+                access.id, access.rts, access.key, self._base_version-1)
+            target = manifest
+            # target = await self._fs.manifests_manager.fetch_from_backend(
+            #     access.id, access.rts, access.key)
             diverged = self
-            _, modified = merge_children(base, diverged, target, inplace=diverged)
+
+            _, modified = merge_children(base, diverged, target, inplace=self)
+            for k, v in self._children.items():
+                # TODO: merge_children should take care of this !
+                if isinstance(v, dict):
+                    self._children[k] = self._fs._not_loaded_entry_cls(
+                        self._vlob_access_cls(**v)
+                    )
             self._need_sync = modified
             self._need_flush = True
             await self.flush_no_lock()
@@ -423,7 +429,8 @@ class BaseRootEntry(BaseFolderEntry):
                 break
 
             except BackendConcurrencyError:
-                print(bad('concurrency error sync'))
+                print(bad('concurrency error sync in root'))
+                print(info('manifest %s' % manifest))
                 base = await self._fs.manifests_manager.fetch_user_manifest_from_backend(
                     version=manifest['version'] - 1
                 )
@@ -442,10 +449,31 @@ class BaseRootEntry(BaseFolderEntry):
         async with self.acquire_write():
             # Else update base_version
             self._base_version = manifest['version']
+
+            target = manifest
+            base = await self._fs.manifests_manager.fetch_user_manifest_from_backend(self._base_version-1)
+            if not base:
+                # Fake v0 version
+                base = {
+                'format': 1,
+                'type': 'user_manifest',
+                'version': 0,
+                'created': target['created'],
+                'updated': target['updated'],
+                'children': {}
+            }
+            # target = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
+            diverged = self
+
+            _, modified = merge_children(base, diverged, target, inplace=self)
+            for k, v in self._children.items():
+                # TODO: merge_children should take care of this !
+                if isinstance(v, dict):
+                    self._children[k] = self._fs._not_loaded_entry_cls(
+                        self._fs._vlob_access_cls(**v)
+                    )
+            self._need_sync = modified
             self._need_flush = True
-            # TODO: what if the folder is modified during the sync ?
-            # it is now marked as need_sync=False but needs synchro !
-            self._need_sync = False
             await self.flush_no_lock()
 
     async def minimal_sync_if_placeholder(self):
