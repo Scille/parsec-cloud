@@ -106,10 +106,10 @@ def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
             john_conf_dir = tempfile.mkdtemp(prefix='parsec-jdoe-conf-')
             try:
                 user = Device(
-                    JOHN_DOE_DEVICE_ID,
-                    JOHN_DOE_DEVICE_SIGNING_KEY,
-                    JOHN_DOE_DEVICE_SIGNING_KEY,
-                    os.path.join(john_conf_dir, 'db.sqlite')
+                    id=JOHN_DOE_DEVICE_ID,
+                    user_privkey=JOHN_DOE_PRIVATE_KEY,
+                    device_signkey=JOHN_DOE_DEVICE_SIGNING_KEY,
+                    local_storage_db_path=os.path.join(john_conf_dir, 'db.sqlite')
                 )
                 print('Hello Mr. Doe, your conf dir is `%s`' % john_conf_dir)
                 trio.run(_login_and_run, user)
