@@ -77,13 +77,13 @@ async def test_online_core_tree_and_sync_multicore(
                             await self.core_1.login(alice)
                             await self.core_2.login(alice)
 
-                            async with connect_core(self.core_1) as sock1, \
-                                       connect_core(self.core_2) as sock2:
+                            async with connect_core(self.core_1) as sock_1, \
+                                       connect_core(self.core_2) as sock_2:
                                 task_status.started()
 
                                 sockets = {
-                                    'core_1': sock1,
-                                    'core_2': sock2
+                                    'core_1': sock_1,
+                                    'core_2': sock_2
                                 }
 
                                 while True:
@@ -106,7 +106,6 @@ async def test_online_core_tree_and_sync_multicore(
                 'core_1': self.oracle_1,
                 'core_2': self.oracle_2
             }
-
             return oracles[core]
 
         @rule(target=Folders)
