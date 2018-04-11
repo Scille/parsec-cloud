@@ -6,6 +6,7 @@ import threading
 from dateutil.parser import parse as dateparse
 from itertools import count
 from errno import ENOENT
+
 try:
     from errno import EBADFD
 except ImportError:
@@ -18,7 +19,7 @@ from parsec.utils import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 
 logger = logbook.Logger("parsec.fuse")
 
-DEFAULT_CORE_UNIX_SOCKET = 'tcp://127.0.0.1:6776'
+DEFAULT_CORE_UNIX_SOCKET = "tcp://127.0.0.1:6776"
 
 
 class ContentBuilder:
@@ -33,7 +34,9 @@ class ContentBuilder:
         for current_offset in self.contents:
             current_content = self.contents[current_offset]
             # Insert inside
-            if offset >= current_offset and end_offset <= current_offset + len(current_content):
+            if offset >= current_offset and end_offset <= current_offset + len(
+                current_content
+            ):
                 new_data = current_content[:offset - current_offset]
                 new_data += data
                 new_data += current_content[offset - current_offset + len(data):]
@@ -63,13 +66,29 @@ class ContentBuilder:
 
 
 @click.command()
-@click.argument('mountpoint', type=click.Path(**{'exists': True, 'file_okay': False} if os.name == 'posix' else {'exists': False}))
-@click.option('--debug', '-d', is_flag=True, default=False)
-@click.option('--log-level', '-l', default='WARNING',
-              type=click.Choice(('DEBUG', 'INFO', 'WARNING', 'ERROR')))
-@click.option('--nothreads', is_flag=True, default=False)
-@click.option('--socket', '-s', default=DEFAULT_CORE_UNIX_SOCKET,
-              help='Path to the UNIX socket (default: %s).' % DEFAULT_CORE_UNIX_SOCKET)
+@click.argument(
+    "mountpoint",
+    type=click.Path(
+        **(
+            {"exists": True, "file_okay": False} if os.name
+            == "posix" else {"exists": False}
+        )
+    )
+)
+@click.option("--debug", "-d", is_flag=True, default=False)
+@click.option(
+    "--log-level",
+    "-l",
+    default="WARNING",
+    type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR")),
+)
+@click.option("--nothreads", is_flag=True, default=False)
+@click.option(
+    "--socket",
+    "-s",
+    default=DEFAULT_CORE_UNIX_SOCKET,
+    help="Path to the UNIX socket (default: %s)." % DEFAULT_CORE_UNIX_SOCKET,
+)
 def cli(mountpoint, debug, log_level, nothreads, socket):
     log_handler = logbook.StderrHandler(level=log_level.upper())
     # Push globally the log handler make it work across threads
@@ -92,10 +111,12 @@ class File:
         self.flush()
         # TODO use flags
         response = self._operations.send_cmd(
-            cmd='file_read', path=self.path, size=size, offset=offset)
-        if response['status'] != 'ok':
+            cmd="file_read", path=self.path, size=size, offset=offset
+        )
+        if response["status"] != "ok":
             raise FuseOSError(ENOENT)
-        return from_jsonb64(response['content'])
+
+        return from_jsonb64(response["content"])
 
     def write(self, data, offset=0):
         self.modifications.append((self.write, data, offset))
@@ -110,6 +131,7 @@ class File:
     def flush(self):
         if not self.modifications:
             return
+
         # Merge all modifications to build final content
         builder = ContentBuilder()
         shortest_truncate = None
@@ -122,22 +144,26 @@ class File:
                     shortest_truncate = modification[1]
             else:
                 raise NotImplementedError()
+
         self.modifications = []
         # Truncate file
         if shortest_truncate is not None:
             response = self._operations.send_cmd(
-                cmd='file_truncate', path=self.path, length=shortest_truncate)
-            if response['status'] != 'ok':
+                cmd="file_truncate", path=self.path, length=shortest_truncate
+            )
+            if response["status"] != "ok":
                 raise FuseOSError(ENOENT)
+
         # Write new contents
         for offset, content in builder.contents.items():
             # TODO use flags
             response = self._operations.send_cmd(
-                cmd='file_write',
+                cmd="file_write",
                 path=self.path,
                 content=to_jsonb64(content),
-                offset=offset)
-            if response['status'] != 'ok':
+                offset=offset,
+            )
+            if response["status"] != "ok":
                 raise FuseOSError(ENOENT)
 
 
@@ -161,76 +187,86 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def _init_socket(self):
         sock = socket.socket(socket.AF_INET, type=socket.SOCK_STREAM)
-        ip = self._socket_address.split(':')[1][2:]
-        port = int(self._socket_address.split(':')[2])
+        ip = self._socket_address.split(":")[1][2:]
+        port = int(self._socket_address.split(":")[2])
         sock.connect((ip, port))
-        logger.debug('Init socket')
+        logger.debug("Init socket")
         self._socket = sock
 
     def send_cmd(self, **msg):
         with self._socket_lock:
-            req = ejson_dumps(msg).encode() + b'\n'
-            logger.debug('Send: %r' % req)
+            req = ejson_dumps(msg).encode() + b"\n"
+            logger.debug("Send: %r" % req)
             self.sock.send(req)
             raw_reps = self.sock.recv(4096)
-            while raw_reps[-1] != ord(b'\n'):
+            while raw_reps[-1] != ord(b"\n"):
                 raw_reps += self.sock.recv(4096)
-            logger.debug('Received: %r' % raw_reps)
+            logger.debug("Received: %r" % raw_reps)
             return ejson_loads(raw_reps[:-1].decode())
 
     def _get_fd(self, fh):
         try:
             return self.fds[fh]
+
         except KeyError:
             raise FuseOSError(EBADFD)
 
     def _get_file_id(self, path):
-        response = self.send_cmd(cmd='list_dir', path=path)
-        if response['status'] != 'ok':
+        response = self.send_cmd(cmd="list_dir", path=path)
+        if response["status"] != "ok":
             raise FuseOSError(ENOENT)
-        return response['current']['id']
+
+        return response["current"]["id"]
 
     def getattr(self, path, fh=None):
-        stat = self.send_cmd(cmd='stat', path=path)
-        if stat['status'] != 'ok':
+        stat = self.send_cmd(cmd="stat", path=path)
+        if stat["status"] != "ok":
             raise FuseOSError(ENOENT)
+
         fuse_stat = {}
         # Set it to 777 access
-        fuse_stat['st_mode'] = 0
-        if stat['type'] == 'folder':
-            fuse_stat['st_mode'] |= S_IFDIR
-            fuse_stat['st_nlink'] = 2
+        fuse_stat["st_mode"] = 0
+        if stat["type"] == "folder":
+            fuse_stat["st_mode"] |= S_IFDIR
+            fuse_stat["st_nlink"] = 2
         else:
-            fuse_stat['st_mode'] |= S_IFREG
-            fuse_stat['st_size'] = stat.get('size', 0)
-            fuse_stat['st_ctime'] = dateparse(stat['created']).timestamp()  # TODO change to local timezone
-            fuse_stat['st_mtime'] = dateparse(stat['updated']).timestamp()
-            fuse_stat['st_atime'] = dateparse(stat['updated']).timestamp()  # TODO not supported ?
-            fuse_stat['st_nlink'] = 1
-        fuse_stat['st_mode'] |= S_IRWXU | S_IRWXG | S_IRWXO
+            fuse_stat["st_mode"] |= S_IFREG
+            fuse_stat["st_size"] = stat.get("size", 0)
+            fuse_stat["st_ctime"] = dateparse(
+                stat["created"]
+            ).timestamp()  # TODO change to local timezone
+            fuse_stat["st_mtime"] = dateparse(stat["updated"]).timestamp()
+            fuse_stat["st_atime"] = dateparse(
+                stat["updated"]
+            ).timestamp()  # TODO not supported ?
+            fuse_stat["st_nlink"] = 1
+        fuse_stat["st_mode"] |= S_IRWXU | S_IRWXG | S_IRWXO
         uid, gid, _ = fuse_get_context()
-        fuse_stat['st_uid'] = uid
-        fuse_stat['st_gid'] = gid
+        fuse_stat["st_uid"] = uid
+        fuse_stat["st_gid"] = gid
         return fuse_stat
 
     def readdir(self, path, fh):
-        resp = self.send_cmd(cmd='stat', path=path)
+        resp = self.send_cmd(cmd="stat", path=path)
         # TODO: make sure error code for path is not a folder is ENOENT
-        if resp['status'] != 'ok' or resp['type'] != 'folder':
+        if resp["status"] != "ok" or resp["type"] != "folder":
             raise FuseOSError(ENOENT)
-        return ['.', '..'] + list(resp['children'])
+
+        return [".", ".."] + list(resp["children"])
 
     def create(self, path, mode):
-        response = self.send_cmd(cmd='file_create', path=path)
-        if response['status'] != 'ok':
+        response = self.send_cmd(cmd="file_create", path=path)
+        if response["status"] != "ok":
             raise FuseOSError(ENOENT)
+
         return self.open(path)
 
     def open(self, path, flags=0):
         fd_id = self.get_fd_id()
-        resp = self.send_cmd(cmd='stat', path=path)
-        if resp['status'] != 'ok' or resp['type'] != 'file':
+        resp = self.send_cmd(cmd="stat", path=path)
+        if resp["status"] != "ok" or resp["type"] != "file":
             raise FuseOSError(ENOENT)
+
         file = File(self, path, fd_id, flags)
         self.fds[fd_id] = file
         return fd_id
@@ -265,31 +301,34 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def unlink(self, path):
         # TODO: check path is a file
-        response = self.send_cmd(cmd='delete', path=path)
-        if response['status'] != 'ok':
+        response = self.send_cmd(cmd="delete", path=path)
+        if response["status"] != "ok":
             raise FuseOSError(ENOENT)
 
     def mkdir(self, path, mode):
-        response = self.send_cmd(cmd='folder_create', path=path)
-        if response['status'] != 'ok':
+        response = self.send_cmd(cmd="folder_create", path=path)
+        if response["status"] != "ok":
             raise FuseOSError(ENOENT)
+
         return 0
 
     def rmdir(self, path):
         # TODO: check directory is empty
         # TODO: check path is a directory
-        response = self.send_cmd(cmd='delete', path=path)
-        if response['status'] != 'ok':
+        response = self.send_cmd(cmd="delete", path=path)
+        if response["status"] != "ok":
             raise FuseOSError(ENOENT)
+
         return 0
 
     def rename(self, src, dst):
         # Unix allows to overwrite the destination, so make sure to have
         # space before calling the move
-        self.send_cmd(cmd='delete', path=dst)
-        response = self.send_cmd(cmd='move', src=src, dst=dst)
-        if response['status'] != 'ok':
+        self.send_cmd(cmd="delete", path=dst)
+        response = self.send_cmd(cmd="move", src=src, dst=dst)
+        if response["status"] != "ok":
             raise FuseOSError(ENOENT)
+
         return 0
 
     def flush(self, path, fh):
@@ -304,6 +343,8 @@ class FuseOperations(LoggingMixIn, Operations):
         return 0  # TODO
 
 
-def start_fuse(socket_address: str, mountpoint: str, debug: bool=False, nothreads: bool=False):
+def start_fuse(
+    socket_address: str, mountpoint: str, debug: bool = False, nothreads: bool = False
+):
     operations = FuseOperations(socket_address)
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)

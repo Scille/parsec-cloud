@@ -8,6 +8,6 @@ echo 'pre-push: checking style...'
 2>&1 1>/dev/null $BASEDIR/autoformat.sh --check | grep 'reformatted'
 if ( [ $? -eq 0 ] )
 then
-    echo "Run ${YELLOW}./misc/autoformat.sh${NC} to fix this"
+    echo "Run ${YELLOW}./misc/autoformat.sh && git commit -a --amend ${NC} to fix this"
     exit 1
 fi
