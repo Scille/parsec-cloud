@@ -28,9 +28,7 @@ class VlobAtom:
 
 
 class cmd_CREATE_Schema(BaseCmdSchema):
-    # TODO: don't allow providing id during creation
     # TODO: blob must be present
-    id = fields.String(missing=None, validate=lambda n: 0 < len(n) <= 32)
     blob = fields.Base64Bytes(missing=to_jsonb64(b""))
 
 
@@ -54,8 +52,7 @@ class BaseVlobComponent:
 
     async def api_vlob_create(self, client_ctx, msg):
         msg = cmd_CREATE_Schema().load_or_abort(msg)
-        # Generate opaque id if not provided
-        id = msg.get("id") or uuid4().hex
+        id = uuid4().hex
         rts = uuid4().hex
         wts = uuid4().hex
         atom = await self.create(id, rts, wts, msg["blob"])
@@ -81,7 +78,7 @@ class BaseVlobComponent:
         await self.update(**msg)
         return {"status": "ok"}
 
-    async def create(self, id, rts, wts, blob):
+    async def create(self, rts, wts, blob):
         raise NotImplementedError()
 
     async def read(self, id, trust_seed, version=None):
