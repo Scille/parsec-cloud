@@ -526,52 +526,55 @@ async def test_sync_with_placeholder_children(fs, mocked_manifests_manager):
     mocked_manifests_manager.fetch_from_local.assert_called_with(
         "<mysterious id>", b"<mysterious key>"
     )
-    assert mocked_manifests_manager.sync_new_entry_with_backend.call_args_list == [
-        [
-            (
-                b"<bar key>",
-                {
-                    "format": 1,
-                    "type": "folder_manifest",
-                    "version": 1,
-                    "created": datetime(2017, 1, 1),
-                    "updated": datetime(2017, 1, 1),
-                    "children": {},
-                },
-            ),
-            {},
-        ],
-        [
-            (
-                b"<spam.txt key>",
-                {
-                    "format": 1,
-                    "type": "file_manifest",
-                    "version": 1,
-                    "created": datetime(2017, 1, 1),
-                    "updated": datetime(2017, 1, 1),
-                    "blocks": {},
-                    "size": 0,
-                },
-            ),
-            {},
-        ],
-        [
-            (
-                b"<mysterious key>",
-                {
-                    "format": 1,
-                    "type": "file_manifest",
-                    "version": 1,
-                    "created": datetime(2017, 1, 1),
-                    "updated": datetime(2017, 1, 1),
-                    "blocks": {},
-                    "size": 0,
-                },
-            ),
-            {},
-        ],
-    ]
+    assert (
+        mocked_manifests_manager.sync_new_entry_with_backend.call_args_list
+        == [
+            [
+                (
+                    b"<bar key>",
+                    {
+                        "format": 1,
+                        "type": "folder_manifest",
+                        "version": 1,
+                        "created": datetime(2017, 1, 1),
+                        "updated": datetime(2017, 1, 1),
+                        "children": {},
+                    },
+                ),
+                {},
+            ],
+            [
+                (
+                    b"<spam.txt key>",
+                    {
+                        "format": 1,
+                        "type": "file_manifest",
+                        "version": 1,
+                        "created": datetime(2017, 1, 1),
+                        "updated": datetime(2017, 1, 1),
+                        "blocks": {},
+                        "size": 0,
+                    },
+                ),
+                {},
+            ],
+            [
+                (
+                    b"<mysterious key>",
+                    {
+                        "format": 1,
+                        "type": "file_manifest",
+                        "version": 1,
+                        "created": datetime(2017, 1, 1),
+                        "updated": datetime(2017, 1, 1),
+                        "blocks": {},
+                        "size": 0,
+                    },
+                ),
+                {},
+            ],
+        ]
+    )
 
     # TODO: also check local storage flushes
 

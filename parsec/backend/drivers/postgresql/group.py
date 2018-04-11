@@ -47,7 +47,9 @@ class PGGroupComponent(BaseGroupComponent):
             raise NotFoundError("Group not found.")
 
         await self.dbh.insert_many(
-            "INSERT INTO group_identities (group_id, name, admin) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
+            """INSERT INTO group_identities (group_id, name, admin) VALUES (%s, %s, %s)
+            ON CONFLICT DO NOTHING
+            """,
             [(group["id"], identity, admin) for identity in identities],
         )
 

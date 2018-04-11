@@ -1,4 +1,3 @@
-import attr
 from uuid import uuid4
 
 from parsec.utils import to_jsonb64

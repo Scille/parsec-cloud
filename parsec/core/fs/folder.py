@@ -2,9 +2,9 @@ import attr
 import pendulum
 
 from parsec.core.fs.base import BaseEntry, BaseNotLoadedEntry, FSInvalidPath, FSError
-from parsec.core.fs.merge_folder import merge_folder_manifest, merge_children
+from parsec.core.fs.merge_folder import merge_folder_manifest
 from parsec.core.backend_storage import BackendConcurrencyError
-from huepy import *
+from huepy import good, bad, run, info, que
 
 
 async def _recursive_need_sync(entry):

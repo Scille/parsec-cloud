@@ -28,9 +28,14 @@ async def test_share_file(
     with trio.move_on_after(seconds=1) as cancel_scope:
         rep = await bob_core2_sock.recv()
     assert not cancel_scope.cancelled_caught
-    assert rep == {
-        "status": "ok", "event": "new_sharing", "subject": "/shared-with-alice/foo.txt"
-    }
+    assert (
+        rep
+        == {
+            "status": "ok",
+            "event": "new_sharing",
+            "subject": "/shared-with-alice/foo.txt",
+        }
+    )
 
     # Now Bob can access the file just like Alice would do
     bob_file = await core2.fs.fetch_path("/shared-with-alice/foo.txt")
@@ -56,9 +61,9 @@ async def test_share_backend_offline(core, alice_core_sock, bob):
         {"cmd": "share", "path": "/foo.txt", "recipient": bob.user_id}
     )
     rep = await alice_core_sock.recv()
-    assert rep == {
-        "status": "backend_not_availabled", "reason": "Backend not available"
-    }
+    assert (
+        rep == {"status": "backend_not_availabled", "reason": "Backend not available"}
+    )
 
 
 @pytest.mark.trio
@@ -67,9 +72,9 @@ async def test_share_bad_entry(alice_core_sock, running_backend, bob):
         {"cmd": "share", "path": "/dummy.txt", "recipient": bob.user_id}
     )
     rep = await alice_core_sock.recv()
-    assert rep == {
-        "status": "invalid_path", "reason": "Path `/dummy.txt` doesn't exists"
-    }
+    assert (
+        rep == {"status": "invalid_path", "reason": "Path `/dummy.txt` doesn't exists"}
+    )
 
 
 @pytest.mark.trio

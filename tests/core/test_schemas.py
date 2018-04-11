@@ -18,12 +18,15 @@ class TestBlockAccessSchema:
     def test_load_and_dump(self):
         loaded, errors = BlockAccessSchema().load(self.ORIGINAL)
         assert not errors
-        assert loaded == {
-            "id": "4f55b4d5b08544e2a784daf73754c7e2",
-            "key": b"<my key>",
-            "offset": 0,
-            "size": 4096,
-        }
+        assert (
+            loaded
+            == {
+                "id": "4f55b4d5b08544e2a784daf73754c7e2",
+                "key": b"<my key>",
+                "offset": 0,
+                "size": 4096,
+            }
+        )
         dumped, errors = BlockAccessSchema().dump(loaded)
         assert not errors
         assert dumped == self.ORIGINAL
@@ -71,12 +74,15 @@ class TestSyncedAccessSchema:
     def test_load_and_dump(self):
         loaded, errors = SyncedAccessSchema().load(self.ORIGINAL)
         assert not errors
-        assert loaded == {
-            "id": "4f55b4d5b08544e2a784daf73754c7e2",
-            "rts": "d6b769de2102482498b174245757fa5a",
-            "wts": "02841ba1970044d8aed93784b956bc8f",
-            "key": b"<my key>",
-        }
+        assert (
+            loaded
+            == {
+                "id": "4f55b4d5b08544e2a784daf73754c7e2",
+                "rts": "d6b769de2102482498b174245757fa5a",
+                "wts": "02841ba1970044d8aed93784b956bc8f",
+                "key": b"<my key>",
+            }
+        )
         dumped, errors = SyncedAccessSchema().dump(loaded)
         assert not errors
         assert dumped == self.ORIGINAL
@@ -140,28 +146,31 @@ class TestFileManifestSchema:
     def test_load_and_dump(self):
         loaded, errors = FileManifestSchema().load(self.ORIGINAL)
         assert not errors
-        assert loaded == {
-            "format": 1,
-            "type": "file_manifest",
-            "version": 2,
-            "created": datetime(2017, 1, 1),
-            "updated": datetime(2017, 12, 31, 23, 59, 59),
-            "size": 800,
-            "blocks": [
-                {
-                    "id": "27537f7cedba434ea3bf7848ba17a2eb",
-                    "key": b"<block 1 key>",
-                    "offset": 0,
-                    "size": 4096,
-                },
-                {
-                    "id": "b64041c3e3d649fc931ca54564701d38",
-                    "key": b"<block 2 key>",
-                    "offset": 4096,
-                    "size": 3904,
-                },
-            ],
-        }
+        assert (
+            loaded
+            == {
+                "format": 1,
+                "type": "file_manifest",
+                "version": 2,
+                "created": datetime(2017, 1, 1),
+                "updated": datetime(2017, 12, 31, 23, 59, 59),
+                "size": 800,
+                "blocks": [
+                    {
+                        "id": "27537f7cedba434ea3bf7848ba17a2eb",
+                        "key": b"<block 1 key>",
+                        "offset": 0,
+                        "size": 4096,
+                    },
+                    {
+                        "id": "b64041c3e3d649fc931ca54564701d38",
+                        "key": b"<block 2 key>",
+                        "offset": 4096,
+                        "size": 3904,
+                    },
+                ],
+            }
+        )
         dumped, errors = FileManifestSchema().dump(loaded)
         assert not errors
         assert dumped == self.ORIGINAL
@@ -224,27 +233,30 @@ class TestFolderManifestSchema:
     def test_load_and_dump(self):
         loaded, errors = FolderManifestSchema().load(self.ORIGINAL)
         assert not errors
-        assert loaded == {
-            "format": 1,
-            "type": "folder_manifest",
-            "version": 2,
-            "created": datetime(2017, 1, 1),
-            "updated": datetime(2017, 12, 31, 23, 59, 59),
-            "children": {
-                "foo": {
-                    "id": "8aadbc777ece4a4fb5fa0564ecfbb54f",
-                    "rts": "9809c436b3af4fba9dd6955ad03e0310",
-                    "wts": "004714d9997147efa52a696127694fdc",
-                    "key": b"<foo key>",
+        assert (
+            loaded
+            == {
+                "format": 1,
+                "type": "folder_manifest",
+                "version": 2,
+                "created": datetime(2017, 1, 1),
+                "updated": datetime(2017, 12, 31, 23, 59, 59),
+                "children": {
+                    "foo": {
+                        "id": "8aadbc777ece4a4fb5fa0564ecfbb54f",
+                        "rts": "9809c436b3af4fba9dd6955ad03e0310",
+                        "wts": "004714d9997147efa52a696127694fdc",
+                        "key": b"<foo key>",
+                    },
+                    "bar.txt": {
+                        "id": "51c865a60b194d9bb087df000056c299",
+                        "rts": "5a48035bdd7c4082b1101b28b6656d0c",
+                        "wts": "9b2ab384ed6b426daa1214f49587458a",
+                        "key": b"<bar.txt key>",
+                    },
                 },
-                "bar.txt": {
-                    "id": "51c865a60b194d9bb087df000056c299",
-                    "rts": "5a48035bdd7c4082b1101b28b6656d0c",
-                    "wts": "9b2ab384ed6b426daa1214f49587458a",
-                    "key": b"<bar.txt key>",
-                },
-            },
-        }
+            }
+        )
         dumped, errors = FolderManifestSchema().dump(loaded)
         assert not errors
         assert dumped == self.ORIGINAL
@@ -300,11 +312,14 @@ class TestTypedAccessSchema:
     def test_load_placeholder(self):
         loaded, errors = TypedAccessSchema().load(self.ORIGINAL_PLACEHOLDER)
         assert not errors
-        assert loaded == {
-            "type": "placeholder",
-            "id": "4f55b4d5b08544e2a784daf73754c7e2",
-            "key": b"<my key>",
-        }
+        assert (
+            loaded
+            == {
+                "type": "placeholder",
+                "id": "4f55b4d5b08544e2a784daf73754c7e2",
+                "key": b"<my key>",
+            }
+        )
         dumped, errors = TypedAccessSchema().dump(loaded)
         assert not errors
         assert dumped == self.ORIGINAL_PLACEHOLDER
@@ -312,13 +327,16 @@ class TestTypedAccessSchema:
     def test_load_synced(self):
         loaded, errors = TypedAccessSchema().load(self.ORIGINAL_VLOB)
         assert not errors
-        assert loaded == {
-            "type": "vlob",
-            "id": "4f55b4d5b08544e2a784daf73754c7e2",
-            "rts": "d6b769de2102482498b174245757fa5a",
-            "wts": "02841ba1970044d8aed93784b956bc8f",
-            "key": b"<my key>",
-        }
+        assert (
+            loaded
+            == {
+                "type": "vlob",
+                "id": "4f55b4d5b08544e2a784daf73754c7e2",
+                "rts": "d6b769de2102482498b174245757fa5a",
+                "wts": "02841ba1970044d8aed93784b956bc8f",
+                "key": b"<my key>",
+            }
+        )
         dumped, errors = TypedAccessSchema().dump(loaded)
         assert not errors
         assert dumped == self.ORIGINAL_VLOB
@@ -418,43 +436,46 @@ class TestLocalFileManifestSchema:
     def test_load_and_dump(self):
         loaded, errors = LocalFileManifestSchema().load(self.ORIGINAL)
         assert not errors
-        assert loaded == {
-            "format": 1,
-            "type": "local_file_manifest",
-            "base_version": 0,
-            "need_sync": True,
-            "created": datetime(2017, 1, 1),
-            "updated": datetime(2017, 12, 31, 23, 59, 59),
-            "size": 800,
-            "blocks": [
-                {
-                    "id": "27537f7cedba434ea3bf7848ba17a2eb",
-                    "key": b"<block 1 key>",
-                    "offset": 0,
-                    "size": 4096,
-                },
-                {
-                    "id": "b64041c3e3d649fc931ca54564701d38",
-                    "key": b"<block 2 key>",
-                    "offset": 5096,
-                    "size": 2904,
-                },
-            ],
-            "dirty_blocks": [
-                {
-                    "id": "22cd9a5503ef49919f29f1452a9a628c",
-                    "key": b"<dirty block 1 key>",
-                    "offset": 4096,
-                    "size": 1000,
-                },
-                {
-                    "id": "03ef5b652762404bb1d2a55474cbc95f",
-                    "key": b"<dirty block 2 key>",
-                    "offset": 8000,
-                    "size": 100,
-                },
-            ],
-        }
+        assert (
+            loaded
+            == {
+                "format": 1,
+                "type": "local_file_manifest",
+                "base_version": 0,
+                "need_sync": True,
+                "created": datetime(2017, 1, 1),
+                "updated": datetime(2017, 12, 31, 23, 59, 59),
+                "size": 800,
+                "blocks": [
+                    {
+                        "id": "27537f7cedba434ea3bf7848ba17a2eb",
+                        "key": b"<block 1 key>",
+                        "offset": 0,
+                        "size": 4096,
+                    },
+                    {
+                        "id": "b64041c3e3d649fc931ca54564701d38",
+                        "key": b"<block 2 key>",
+                        "offset": 5096,
+                        "size": 2904,
+                    },
+                ],
+                "dirty_blocks": [
+                    {
+                        "id": "22cd9a5503ef49919f29f1452a9a628c",
+                        "key": b"<dirty block 1 key>",
+                        "offset": 4096,
+                        "size": 1000,
+                    },
+                    {
+                        "id": "03ef5b652762404bb1d2a55474cbc95f",
+                        "key": b"<dirty block 2 key>",
+                        "offset": 8000,
+                        "size": 100,
+                    },
+                ],
+            }
+        )
         dumped, errors = LocalFileManifestSchema().dump(loaded)
         assert not errors
         assert dumped == self.ORIGINAL
@@ -522,28 +543,31 @@ class TestLocalFolderManifestSchema:
     def test_load_and_dump(self):
         loaded, errors = LocalFolderManifestSchema().load(self.ORIGINAL)
         assert not errors
-        assert loaded == {
-            "format": 1,
-            "type": "local_folder_manifest",
-            "base_version": 0,
-            "need_sync": True,
-            "created": datetime(2017, 1, 1),
-            "updated": datetime(2017, 12, 31, 23, 59, 59),
-            "children": {
-                "foo": {
-                    "type": "vlob",
-                    "id": "8aadbc777ece4a4fb5fa0564ecfbb54f",
-                    "rts": "9809c436b3af4fba9dd6955ad03e0310",
-                    "wts": "004714d9997147efa52a696127694fdc",
-                    "key": b"<foo key>",
+        assert (
+            loaded
+            == {
+                "format": 1,
+                "type": "local_folder_manifest",
+                "base_version": 0,
+                "need_sync": True,
+                "created": datetime(2017, 1, 1),
+                "updated": datetime(2017, 12, 31, 23, 59, 59),
+                "children": {
+                    "foo": {
+                        "type": "vlob",
+                        "id": "8aadbc777ece4a4fb5fa0564ecfbb54f",
+                        "rts": "9809c436b3af4fba9dd6955ad03e0310",
+                        "wts": "004714d9997147efa52a696127694fdc",
+                        "key": b"<foo key>",
+                    },
+                    "bar.txt": {
+                        "type": "placeholder",
+                        "id": "51c865a60b194d9bb087df000056c299",
+                        "key": b"<bar.txt key>",
+                    },
                 },
-                "bar.txt": {
-                    "type": "placeholder",
-                    "id": "51c865a60b194d9bb087df000056c299",
-                    "key": b"<bar.txt key>",
-                },
-            },
-        }
+            }
+        )
         dumped, errors = LocalFolderManifestSchema().dump(loaded)
         assert not errors
         assert dumped == self.ORIGINAL

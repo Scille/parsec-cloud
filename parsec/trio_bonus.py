@@ -35,7 +35,7 @@ async def open_unix_listeners(path, *, mode=0o666, backlog=None):
         sock.bind(path)
         os.chmod(path, mode)
         sock.listen(backlog)
-    except:
+    except Exception:
         sock.close()
         raise
 
@@ -47,7 +47,7 @@ async def open_unix_stream(path):
     sock = tsocket.socket(trio.socket.AF_UNIX, tsocket.SOCK_STREAM, 0)
     try:
         sock.connect(path)
-    except:
+    except Exception:
         sock.close()
         raise
 

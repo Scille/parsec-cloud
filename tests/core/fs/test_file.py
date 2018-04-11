@@ -199,10 +199,13 @@ async def test_read_blocks(fs, mocked_blocks_manager):
     mocked_blocks_manager.fetch_from_local.side_effect = [b"Hello... ", b"world !"]
     content = await foo.read()
     assert content == b"Hello... world !"
-    assert mocked_blocks_manager.fetch_from_local.call_args_list == [
-        [("<block 1 id>", b"<block 1 key>"), {}],
-        [("<block 2 id>", b"<block 2 key>"), {}],
-    ]
+    assert (
+        mocked_blocks_manager.fetch_from_local.call_args_list
+        == [
+            [("<block 1 id>", b"<block 1 key>"), {}],
+            [("<block 2 id>", b"<block 2 key>"), {}],
+        ]
+    )
 
 
 @pytest.mark.trio

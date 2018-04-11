@@ -1,10 +1,10 @@
-from marshmallow import Schema, ValidationError, validate
+from marshmallow import validate
 
 from parsec import schema_fields as fields
 from parsec.schema import UnknownCheckedSchema, OneOfSchema
 
 
-### Synchronized with backend data ###
+# Synchronized with backend data
 
 
 class BlockAccessSchema(UnknownCheckedSchema):
@@ -48,7 +48,7 @@ class UserManifestSchema(FolderManifestSchema):
     type = fields.CheckedConstant("user_manifest", required=True)
 
 
-### Local data  ###
+# Local data
 
 
 class TypedVlobAccessSchema(SyncedAccessSchema):

@@ -1,5 +1,5 @@
 from parsec.backend.vlob import VlobAtom, BaseVlobComponent
-from parsec.backend.exceptions import (TrustSeedError, VersionError, NotFoundError)
+from parsec.backend.exceptions import TrustSeedError, VersionError, NotFoundError
 
 
 class MemoryVlob:

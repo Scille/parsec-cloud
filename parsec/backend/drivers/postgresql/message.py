@@ -18,7 +18,9 @@ class PGMessageComponent(BaseMessageComponent):
         return [
             (sender_device_id, body.tobytes())
             for sender_device_id, body in await self.dbh.fetch_many(
-                "SELECT sender_device_id, body FROM messages WHERE recipient_user_id = %s OFFSET %s",
+                """
+                SELECT sender_device_id, body FROM messages WHERE recipient_user_id = %s OFFSET %s
+                """,
                 (recipient_user_id, offset),
             )
         ]

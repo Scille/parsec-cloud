@@ -71,7 +71,7 @@ async def repl(socket_path):
 )
 def cli(socket):
     try:
-        import readline  # For Linux
+        import readline  # noqa: for Linux
     except ModuleNotFoundError:
         pass
     from parsec import __version__

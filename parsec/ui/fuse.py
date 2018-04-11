@@ -12,6 +12,7 @@ try:
 except ImportError:
     from errno import EBADF as EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
+
 try:
     from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_get_context
 except ImportError:
@@ -37,8 +38,9 @@ class ContentBuilder:
         for current_offset in self.contents:
             current_content = self.contents[current_offset]
             # Insert inside
-            if offset >= current_offset and end_offset <= current_offset + len(
-                current_content
+            if (
+                offset >= current_offset
+                and end_offset <= current_offset + len(current_content)
             ):
                 new_data = current_content[:offset - current_offset]
                 new_data += data

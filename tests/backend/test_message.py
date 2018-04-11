@@ -28,19 +28,23 @@ async def test_message_from_bob_to_alice(backend, alice, bob):
         assert rep == {"status": "ok"}
 
         rep = await alice_sock.recv()
-        assert rep == {
-            "status": "ok", "event": "message_arrived", "subject": alice.user_id
-        }
+        assert (
+            rep
+            == {"status": "ok", "event": "message_arrived", "subject": alice.user_id}
+        )
 
         await alice_sock.send({"cmd": "message_get"})
         rep = await alice_sock.recv()
-        assert rep == {
-            "status": "ok",
-            "messages": [
-                {
-                    "body": to_jsonb64(b"Hello from Bob !"),
-                    "sender_id": "bob@test",
-                    "count": 1,
-                }
-            ],
-        }
+        assert (
+            rep
+            == {
+                "status": "ok",
+                "messages": [
+                    {
+                        "body": to_jsonb64(b"Hello from Bob !"),
+                        "sender_id": "bob@test",
+                        "count": 1,
+                    }
+                ],
+            }
+        )

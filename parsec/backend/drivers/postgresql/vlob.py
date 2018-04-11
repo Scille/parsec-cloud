@@ -1,5 +1,5 @@
 from parsec.backend.vlob import VlobAtom, BaseVlobComponent
-from parsec.backend.exceptions import (TrustSeedError, VersionError, NotFoundError)
+from parsec.backend.exceptions import TrustSeedError, VersionError, NotFoundError
 
 
 class PGVlob:
@@ -29,7 +29,9 @@ class PGVlobComponent(BaseVlobComponent):
     async def read(self, id, trust_seed, version=None):
         if version is None:
             data = await self.dbh.fetch_one(
-                "SELECT rts, wts, version, blob FROM vlobs WHERE id=%s ORDER BY version DESC limit 1",
+                """
+                SELECT rts, wts, version, blob FROM vlobs WHERE id=%s ORDER BY version DESC limit 1
+                """,
                 (id,),
             )
             if not data:

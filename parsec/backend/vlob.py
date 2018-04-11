@@ -34,13 +34,13 @@ class cmd_CREATE_Schema(BaseCmdSchema):
 
 class cmd_READ_Schema(BaseCmdSchema):
     id = fields.String(required=True)
-    version = fields.Int(validate=lambda n: n >= 1)
+    version = fields.Integer(validate=lambda n: n >= 1)
     trust_seed = fields.String(required=True)
 
 
 class cmd_UPDATE_Schema(BaseCmdSchema):
     id = fields.String(required=True)
-    version = fields.Int(validate=lambda n: n > 1)
+    version = fields.Integer(validate=lambda n: n > 1)
     trust_seed = fields.String(required=True)
     blob = fields.Base64Bytes(required=True)
 

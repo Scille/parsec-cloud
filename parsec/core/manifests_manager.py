@@ -1,4 +1,3 @@
-import attr
 import json
 from nacl.public import Box
 from nacl.secret import SecretBox

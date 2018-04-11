@@ -91,9 +91,10 @@ async def test_vlob_read_ok(backend, alice_backend_sock):
     )
     rep = await alice_backend_sock.recv()
 
-    assert rep == {
-        "status": "ok", "id": "1", "blob": to_jsonb64(b"1 blob v2"), "version": 2
-    }
+    assert (
+        rep
+        == {"status": "ok", "id": "1", "blob": to_jsonb64(b"1 blob v2"), "version": 2}
+    )
 
 
 @pytest.mark.parametrize(

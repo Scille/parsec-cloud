@@ -5,7 +5,7 @@ from hypothesis.stateful import rule
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
-from tests.common import (connect_core, core_factory, backend_factory, run_app)
+from tests.common import connect_core, core_factory, backend_factory, run_app
 
 
 class FileOracle:

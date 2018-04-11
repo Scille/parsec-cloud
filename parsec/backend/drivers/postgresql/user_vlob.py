@@ -14,7 +14,9 @@ class PGUserVlobComponent(BaseUserVlobComponent):
 
         if version is None:
             data = await self.dbh.fetch_one(
-                "SELECT version, blob FROM user_vlobs WHERE user_id=%s ORDER BY version DESC limit 1",
+                """
+                SELECT version, blob FROM user_vlobs WHERE user_id=%s ORDER BY version DESC limit 1
+                """,
                 (user_id,),
             )
             if not data:

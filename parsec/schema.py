@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields as ma_fields, ValidationError, validates_schema, post_load
+from marshmallow import Schema, ValidationError, validates_schema, post_load
 from marshmallow import validate  # noqa: republishing
 from marshmallow_oneofschema import OneOfSchema  # noqa: republishing
 

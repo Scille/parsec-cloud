@@ -27,30 +27,30 @@ class cmd_RESTORE_MANIFEST_Schema(BaseCmdSchema):
 
 class cmd_FILE_READ_Schema(BaseCmdSchema):
     path = fields.String(required=True)
-    offset = fields.Int(missing=0, validate=validate.Range(min=0))
-    size = fields.Int(missing=None, validate=validate.Range(min=0))
+    offset = fields.Integer(missing=0, validate=validate.Range(min=0))
+    size = fields.Integer(missing=None, validate=validate.Range(min=0))
 
 
 class cmd_FILE_WRITE_Schema(BaseCmdSchema):
     path = fields.String(required=True)
-    offset = fields.Int(missing=0, validate=validate.Range(min=0))
+    offset = fields.Integer(missing=0, validate=validate.Range(min=0))
     content = fields.Base64Bytes(required=True, validate=validate.Length(min=0))
 
 
 class cmd_FILE_TRUNCATE_Schema(BaseCmdSchema):
     path = fields.String(required=True)
-    length = fields.Int(required=True, validate=validate.Range(min=0))
+    length = fields.Integer(required=True, validate=validate.Range(min=0))
 
 
 class cmd_FILE_HISTORY_Schema(BaseCmdSchema):
     path = fields.String(required=True)
-    first_version = fields.Int(missing=1, validate=validate.Range(min=1))
-    last_version = fields.Int(missing=None, validate=validate.Range(min=1))
+    first_version = fields.Integer(missing=1, validate=validate.Range(min=1))
+    last_version = fields.Integer(missing=None, validate=validate.Range(min=1))
 
 
 class cmd_FILE_RESTORE_Schema(BaseCmdSchema):
     path = fields.String(required=True)
-    version = fields.Int(required=True, validate=validate.Range(min=1))
+    version = fields.Integer(required=True, validate=validate.Range(min=1))
 
 
 class cmd_MOVE_Schema(BaseCmdSchema):

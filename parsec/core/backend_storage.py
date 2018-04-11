@@ -1,4 +1,4 @@
-from parsec.utils import from_jsonb64, to_jsonb64, ParsecError
+from parsec.utils import from_jsonb64, to_jsonb64
 from parsec.core.backend_connection import BackendError, BackendConcurrencyError
 
 

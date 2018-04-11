@@ -21,7 +21,9 @@ class PGUserComponent(BaseUserComponent):
 
         try:
             ts, author, invitation_token, claim_tries = await self.dbh.fetch_one(
-                "SELECT ts, author, invitation_token, claim_tries FROM invitations WHERE user_id = %s",
+                """SELECT ts, author, invitation_token, claim_tries
+                FROM invitations WHERE user_id = %s
+                """,
                 (user_id,),
             )
         except (TypeError, ValueError):
@@ -106,12 +108,16 @@ class PGUserComponent(BaseUserComponent):
         now = pendulum.utcnow().int_timestamp
 
         await self.dbh.insert_one(
-            "INSERT INTO users (user_id, created_on, created_by, broadcast_key) VALUES (%s, %s, %s, %s)",
+            """INSERT INTO users (user_id, created_on, created_by, broadcast_key)
+            VALUES (%s, %s, %s, %s)
+            """,
             (user_id, now, author, broadcast_key),
         )
 
         await self.dbh.insert_many(
-            "INSERT INTO user_devices (user_id, device_name, created_on, verify_key, revocated_on) VALUES (%s, %s, %s, %s, NULL)",
+            """INSERT INTO user_devices (user_id, device_name, created_on, verify_key, revocated_on)
+            VALUES (%s, %s, %s, %s, NULL)
+            """,
             [(user_id, name, now, key) for name, key in devices],
         )
 
@@ -141,7 +147,10 @@ class PGUserComponent(BaseUserComponent):
                     ),
                 }
                 for d_name, d_created_on, d_configure_token, d_verify_key, d_revocated_on in await self.dbh.fetch_many(
-                    "SELECT device_name, created_on, configure_token, verify_key, revocated_on FROM user_devices WHERE user_id = %s",
+                    """
+                    SELECT device_name, created_on, configure_token, verify_key, revocated_on
+                    FROM user_devices WHERE user_id = %s
+                    """,
                     (user_id,),
                 )
             },
@@ -210,8 +219,10 @@ class PGUserComponent(BaseUserComponent):
         await self.dbh.insert_one(
             """
             INSERT INTO device_configure_tries (
-                user_id, config_try_id, status, device_name, device_verify_key, user_privkey_cypherkey
-            ) VALUES (%s, %s, %s, %s, %s, %s)""",
+                user_id, config_try_id, status, device_name, device_verify_key,
+                user_privkey_cypherkey
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+            """,
             (
                 user_id,
                 config_try_id,
@@ -226,7 +237,8 @@ class PGUserComponent(BaseUserComponent):
     async def retrieve_device_configuration_try(self, config_try_id, user_id):
         config_try = await self.dbh.fetch_one(
             """
-            SELECT status, device_name, device_verify_key, user_privkey_cypherkey, cyphered_user_privkey, refused_reason
+            SELECT status, device_name, device_verify_key, user_privkey_cypherkey,
+                cyphered_user_privkey, refused_reason
             FROM device_configure_tries WHERE user_id = %s AND config_try_id = %s
             """,
             (user_id, config_try_id),
@@ -249,7 +261,10 @@ class PGUserComponent(BaseUserComponent):
         self, config_try_id, user_id, cyphered_user_privkey
     ):
         updated = await self.dbh.update_one(
-            "UPDATE device_configure_tries SET status = %s, cyphered_user_privkey = %s WHERE user_id=%s AND config_try_id=%s and status=%s",
+            """
+            UPDATE device_configure_tries SET status = %s, cyphered_user_privkey = %s
+            WHERE user_id=%s AND config_try_id=%s and status=%s
+            """,
             (
                 "accepted",
                 cyphered_user_privkey,
@@ -267,7 +282,10 @@ class PGUserComponent(BaseUserComponent):
 
     async def refuse_device_configuration_try(self, config_try_id, user_id, reason):
         updated = await self.dbh.update_one(
-            "UPDATE device_configure_tries SET status = %s, refused_reason = %s WHERE user_id=%s AND config_try_id=%s and status=%s",
+            """
+            UPDATE device_configure_tries SET status = %s, refused_reason = %s
+            WHERE user_id=%s AND config_try_id=%s and status=%s,
+            """,
             ("refused", reason, user_id, config_try_id, "waiting_answer"),
         )
         if not updated:

@@ -4,9 +4,7 @@ import string
 
 from parsec.schema import BaseCmdSchema, fields
 from parsec.utils import to_jsonb64
-from parsec.backend.exceptions import (
-    NotFoundError, AlreadyExistsError, UserClaimError
-)
+from parsec.backend.exceptions import NotFoundError, AlreadyExistsError, UserClaimError
 
 
 class UserIDSchema(BaseCmdSchema):

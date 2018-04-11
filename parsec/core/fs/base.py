@@ -1,8 +1,5 @@
-import attr
-from uuid import uuid4
-
 from parsec.rwlock import RWLock
-from parsec.utils import ParsecError, generate_sym_key, to_jsonb64
+from parsec.utils import ParsecError
 from parsec.core.fs.access import BasePlaceHolderAccess
 
 

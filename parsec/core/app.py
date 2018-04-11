@@ -18,6 +18,7 @@ from parsec.core.devices_manager import DevicesManager, DeviceLoadingError
 from parsec.core.backend_connection import (
     BackendConnection, BackendNotAvailable, backend_send_anonymous_cmd
 )
+
 try:
     from parsec.ui import fuse
 except NameError:
@@ -198,7 +199,9 @@ class CoreApp:
             try:
                 # local_storage = LocalStorage()
                 # backend_storage = BackendStorage()
-                # manifests_manager = ManifestsManager(self.auth_device, local_storage, backend_storage)
+                # manifests_manager = ManifestsManager(self.auth_device,
+                #                                      local_storage,
+                #                                      backend_storage)
                 # blocks_manager = BlocksManager(self.auth_device, local_storage, backend_storage)
                 # # await manifests_manager.init()
                 # # await blocks_manager.init()

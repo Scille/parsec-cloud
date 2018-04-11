@@ -1,7 +1,7 @@
 import attr
 from uuid import uuid4
 
-from parsec.utils import generate_sym_key, to_jsonb64
+from parsec.utils import generate_sym_key
 from parsec.core.fs.access import BaseAccess
 
 

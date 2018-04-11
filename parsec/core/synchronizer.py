@@ -1,6 +1,7 @@
 import trio
 import logbook
-import pendulum
+
+# import pendulum
 import traceback
 
 from parsec.core.fs.folder import BaseFolderEntry
@@ -32,7 +33,7 @@ class Synchronizer:
             task_status.started(cancel_scope)
             while True:
                 await trio.sleep(1)
-                trigger_time = pendulum.now() + pendulum.interval(seconds=1)
+                # trigger_time = pendulum.now() + pendulum.interval(seconds=1)
                 try:
                     # TODO: quick'n dirty fix...
                     await self.fs.root.sync(recursive=True)

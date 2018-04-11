@@ -1,9 +1,7 @@
 import trio
-from threading import Thread, Event
 from queue import Queue, Empty
-from urllib.parse import urlparse
 from psycopg2.extensions import parse_dsn
-from psycopg2 import connect as pgconnect, Error as PGError
+from psycopg2 import connect as pgconnect
 
 
 def init_db(url, force=False):
@@ -27,103 +25,114 @@ def init_db(url, force=False):
             cursor.execute("DROP TABLE IF EXISTS %s" % table)
 
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS blockstore ("
-        "_id SERIAL PRIMARY KEY, "
-        "id VARCHAR(32), "
-        "block BYTEA"
-        ")"
+        """
+        CREATE TABLE IF NOT EXISTS blockstore (
+            _id SERIAL PRIMARY KEY,
+            id VARCHAR(32),
+            block BYTEA
+        )"""
     )
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS groups ("
-        "id SERIAL PRIMARY KEY, "
-        "name TEXT UNIQUE"
-        ")"
+        """
+        CREATE TABLE IF NOT EXISTS groups (
+            id SERIAL PRIMARY KEY,
+            name TEXT UNIQUE
+        )"""
     )
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS group_identities ("
-        "id SERIAL PRIMARY KEY, "
-        "group_id INTEGER, "
-        "name TEXT, "
-        "admin BOOLEAN, "
-        "UNIQUE (group_id, name)"
-        ")"
+        """
+        CREATE TABLE IF NOT EXISTS group_identities (
+            id SERIAL PRIMARY KEY,
+            group_id INTEGER,
+            name TEXT,
+            admin BOOLEAN,
+            UNIQUE (group_id, name)
+        )"""
     )
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS messages ("
-        "id SERIAL PRIMARY KEY, "
-        "recipient_user_id TEXT, "
-        "sender_device_id TEXT, "
-        "body BYTEA"
-        ")"
+        """
+        CREATE TABLE IF NOT EXISTS messages (
+            id SERIAL PRIMARY KEY,
+            recipient_user_id TEXT,
+            sender_device_id TEXT,
+            body BYTEA
+        )"""
     )
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS pubkeys ("
-        "_id SERIAL PRIMARY KEY, "
-        "id VARCHAR(32) UNIQUE, "
-        "pubkey BYTEA, "
-        "verifykey BYTEA"
-        ")"
+        """
+        CREATE TABLE IF NOT EXISTS pubkeys (
+            _id SERIAL PRIMARY KEY,
+            id VARCHAR(32) UNIQUE,
+            pubkey BYTEA,
+            verifykey BYTEA
+        )"""
     )
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS users ("
-        "_id SERIAL PRIMARY KEY, "
-        "user_id VARCHAR(32) UNIQUE, "
-        "created_on INTEGER, "
-        "created_by VARCHAR(32), "
-        "broadcast_key BYTEA"
-        ")"
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            _id SERIAL PRIMARY KEY,
+            user_id VARCHAR(32) UNIQUE,
+            created_on INTEGER,
+            created_by VARCHAR(32),
+            broadcast_key BYTEA
+        )"""
     )
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS user_devices ("
-        "_id SERIAL PRIMARY KEY, "
-        "user_id VARCHAR(32), "
-        "device_name TEXT, "
-        "created_on INTEGER, "
-        "configure_token TEXT, "
-        "verify_key BYTEA, "
-        "revocated_on INTEGER"
-        ")"
+        """
+        CREATE TABLE IF NOT EXISTS user_devices (
+            _id SERIAL PRIMARY KEY,
+            user_id VARCHAR(32),
+            device_name TEXT,
+            created_on INTEGER,
+            configure_token TEXT,
+            verify_key BYTEA,
+            revocated_on INTEGER
+        )"""
     )
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS invitations ("
-        "_id SERIAL PRIMARY KEY, "
-        "user_id VARCHAR(32) UNIQUE, "
-        "ts INTEGER, "
-        "author VARCHAR(32), "
-        "invitation_token TEXT, "
-        "claim_tries INTEGER"
-        ")"
+        """
+        CREATE TABLE IF NOT EXISTS invitations (
+            _id SERIAL PRIMARY KEY,
+            user_id VARCHAR(32) UNIQUE,
+            ts INTEGER,
+            author VARCHAR(32),
+            invitation_token TEXT,
+            claim_tries INTEGER
+        )"""
     )
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS device_configure_tries ("
-        "_id SERIAL PRIMARY KEY, "
-        "user_id VARCHAR(32), "
-        "config_try_id TEXT, "
-        "status TEXT, "
-        "device_name TEXT, "
-        "device_verify_key BYTEA, "
-        "user_privkey_cypherkey BYTEA, "
-        "cyphered_user_privkey BYTEA, "
-        "refused_reason TEXT"
-        ")"
+        """
+        CREATE TABLE IF NOT EXISTS device_configure_tries (
+            _id SERIAL PRIMARY KEY,
+            user_id VARCHAR(32),
+            config_try_id TEXT,
+            status TEXT,
+            device_name TEXT,
+            device_verify_key BYTEA,
+            user_privkey_cypherkey BYTEA,
+            cyphered_user_privkey BYTEA,
+            refused_reason TEXT
+        )"""
     )
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS vlobs ("
-        "_id SERIAL PRIMARY KEY, "
-        "id VARCHAR(32), "
-        "version INTEGER, "
-        "rts TEXT, "
-        "wts TEXT, "
-        "blob BYTEA "
-        ")"
+        """
+        CREATE TABLE IF NOT EXISTS vlobs (
+            _id SERIAL PRIMARY KEY,
+            id VARCHAR(32),
+            version INTEGER,
+            rts TEXT,
+            wts TEXT,
+            blob BYTEA
+        )"""
     )
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS user_vlobs ("
-        "_id SERIAL PRIMARY KEY, "
-        "user_id VARCHAR(32), "
-        "version INTEGER, "
-        "blob BYTEA "
-        ")"
+        """
+        CREATE TABLE IF NOT EXISTS user_vlobs (
+            _id SERIAL PRIMARY KEY,
+            user_id VARCHAR(32),
+            version INTEGER,
+            blob BYTEA
+        )"""
     )
     conn.commit()
     cursor.close()

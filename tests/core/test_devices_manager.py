@@ -72,8 +72,9 @@ def test_load_cleartext_device(tmpdir, alice_cleartext_device, alice):
     assert device.id == alice_cleartext_device
     assert alice.user_privkey == device.user_privkey
     assert alice.device_signkey == device.device_signkey
-    assert device.local_storage_db_path == tmpdir.join(
-        "alice@test", "local_storage.sqlite"
+    assert (
+        device.local_storage_db_path
+        == tmpdir.join("alice@test", "local_storage.sqlite")
     )
 
 
@@ -91,8 +92,9 @@ def test_register_new_cleartext_device(tmpdir, alice):
     assert device.id == device_id
     assert device.user_privkey == user_privkey
     assert device.device_signkey == device_signkey
-    assert device.local_storage_db_path == tmpdir.join(
-        "alice@test", "local_storage.sqlite"
+    assert (
+        device.local_storage_db_path
+        == tmpdir.join("alice@test", "local_storage.sqlite")
     )
 
 
@@ -125,8 +127,9 @@ def test_register_new_encrypted_device(tmpdir, fast_crypto, alice):
     assert device.id == device_id
     assert device.user_privkey == user_privkey
     assert device.device_signkey == device_signkey
-    assert device.local_storage_db_path == tmpdir.join(
-        "alice@test", "local_storage.sqlite"
+    assert (
+        device.local_storage_db_path
+        == tmpdir.join("alice@test", "local_storage.sqlite")
     )
 
     dm2 = DevicesManager(str(tmpdir))

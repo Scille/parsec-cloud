@@ -4,9 +4,7 @@ import json
 import trio
 from collections import deque
 from pendulum import Pendulum
-from nacl.public import PrivateKey
 from nacl.secret import SecretBox
-from nacl.signing import SigningKey
 import nacl.utils
 
 

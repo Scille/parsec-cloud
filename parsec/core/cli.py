@@ -22,7 +22,9 @@ DEFAULT_CORE_SOCKET = "tcp://127.0.0.1:6776"
 
 
 def run_with_pdb(cmd, *args, **kwargs):
-    import pdb, traceback, sys
+    import pdb
+    import traceback
+    import sys
 
     # Stolen from pdb.main
     pdb_context = pdb.Pdb()
@@ -43,7 +45,7 @@ def run_with_pdb(cmd, *args, **kwargs):
     except SyntaxError:
         traceback.print_exc()
         sys.exit(1)
-    except:
+    except Exception:
         traceback.print_exc()
         print("Uncaught exception. Entering post mortem debugging")
         print("Running 'cont' or 'step' will restart the program")

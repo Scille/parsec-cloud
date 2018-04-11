@@ -1,8 +1,4 @@
-from uuid import uuid4
-from nacl.public import Box
 from nacl.secret import SecretBox
-from nacl.signing import SigningKey
-from nacl.exceptions import BadSignatureError, CryptoError
 
 
 class BaseBlocksManager:

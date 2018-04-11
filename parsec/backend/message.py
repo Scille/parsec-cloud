@@ -8,7 +8,7 @@ class cmd_NEW_Schema(BaseCmdSchema):
 
 
 class cmd_GET_Schema(BaseCmdSchema):
-    offset = fields.Int(missing=0)
+    offset = fields.Integer(missing=0)
 
 
 class BaseMessageComponent:

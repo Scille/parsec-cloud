@@ -12,11 +12,11 @@ class UserVlobAtom:
 
 
 class cmd_READ_Schema(BaseCmdSchema):
-    version = fields.Int(validate=lambda n: n >= 0)
+    version = fields.Integer(validate=lambda n: n >= 0)
 
 
 class cmd_UPDATE_Schema(BaseCmdSchema):
-    version = fields.Int(validate=lambda n: n > 0)
+    version = fields.Integer(validate=lambda n: n > 0)
     blob = fields.Base64Bytes(required=True)
 
 

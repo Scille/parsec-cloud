@@ -4,7 +4,7 @@ import pendulum
 
 from parsec.core.fs.base import BaseEntry
 from parsec.core.backend_connection import BackendConcurrencyError
-from huepy import *
+from huepy import good, bad, run, que
 
 
 @attr.s(slots=True, init=False)

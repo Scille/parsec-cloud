@@ -1,5 +1,4 @@
 from parsec.backend.user import BaseUserComponent
-from uuid import uuid4
 import pendulum
 
 from parsec.backend.exceptions import (

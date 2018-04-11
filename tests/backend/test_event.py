@@ -16,9 +16,10 @@ async def test_event_subscribe_unkown_event(backend, alice):
     async with connect_backend(backend, auth_as=alice) as sock:
         await sock.send({"cmd": "event_subscribe", "event": "foo", "subject": "foo"})
         rep = await sock.recv()
-        assert rep == {
-            "status": "bad_message", "errors": {"event": ["Not a valid choice."]}
-        }
+        assert (
+            rep
+            == {"status": "bad_message", "errors": {"event": ["Not a valid choice."]}}
+        )
 
 
 async def subscribe(sock, event, subject):
@@ -42,10 +43,13 @@ async def test_event_unsubscribe_bad_subject(backend, alice):
         await subscribe(sock, "ping", "foo")
         await sock.send({"cmd": "event_unsubscribe", "event": "ping", "subject": "bar"})
         rep = await sock.recv()
-        assert rep == {
-            "status": "not_subscribed",
-            "reason": "Not subscribed to this event/subject couple",
-        }
+        assert (
+            rep
+            == {
+                "status": "not_subscribed",
+                "reason": "Not subscribed to this event/subject couple",
+            }
+        )
 
 
 @pytest.mark.trio
@@ -53,10 +57,13 @@ async def test_event_unsubscribe_bad_event(backend, alice):
     async with connect_backend(backend, auth_as=alice) as sock:
         await sock.send({"cmd": "event_unsubscribe", "event": "ping", "subject": "bar"})
         rep = await sock.recv()
-        assert rep == {
-            "status": "not_subscribed",
-            "reason": "Not subscribed to this event/subject couple",
-        }
+        assert (
+            rep
+            == {
+                "status": "not_subscribed",
+                "reason": "Not subscribed to this event/subject couple",
+            }
+        )
 
 
 @pytest.mark.trio
@@ -66,9 +73,10 @@ async def test_event_unsubscribe_unknown_event(backend, alice):
             {"cmd": "event_unsubscribe", "event": "unknown", "subject": "bar"}
         )
         rep = await sock.recv()
-        assert rep == {
-            "status": "bad_message", "errors": {"event": ["Not a valid choice."]}
-        }
+        assert (
+            rep
+            == {"status": "bad_message", "errors": {"event": ["Not a valid choice."]}}
+        )
 
 
 @pytest.mark.trio

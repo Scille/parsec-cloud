@@ -11,6 +11,8 @@ except ImportError:
     @click.command()
     def fuse_cli():
         raise RuntimeError("No available, is fusepy installed ?")
+
+
 except NameError:
     pass
 

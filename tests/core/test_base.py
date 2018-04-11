@@ -80,9 +80,10 @@ async def test_offline_login_and_logout(backend, core, mallory):
             assert rep == {"status": "ok"}
             await sock.send({"cmd": "get_core_state"})
             rep = await sock.recv()
-            assert rep == {
-                "status": "ok", "login": "mallory@test", "backend_online": False
-            }
+            assert (
+                rep
+                == {"status": "ok", "login": "mallory@test", "backend_online": False}
+            )
 
 
 @pytest.mark.trio
