@@ -18,11 +18,14 @@ from parsec.core.devices_manager import DevicesManager, DeviceLoadingError
 from parsec.core.backend_connection import (
     BackendConnection, BackendNotAvailable, backend_send_anonymous_cmd
 )
-from parsec.ui import fuse
+try:
+    from parsec.ui import fuse
+except NameError:
+    pass
 from parsec.utils import (
     CookedSocket, ParsecError, to_jsonb64, from_jsonb64, ejson_dumps
 )
-from parsec.schema import BaseCmdSchema, fields, validate
+from parsec.schema import BaseCmdSchema, fields
 
 
 logger = logbook.Logger("parsec.core.app")

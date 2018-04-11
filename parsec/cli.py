@@ -11,6 +11,8 @@ except ImportError:
     @click.command()
     def fuse_cli():
         raise RuntimeError("No available, is fusepy installed ?")
+except NameError:
+    pass
 
 
 @click.group()
@@ -20,7 +22,10 @@ def cli():
 
 cli.add_command(core_cmd, "core")
 cli.add_command(backend_cmd, "backend")
-cli.add_command(fuse_cli, "fuse")
+try:
+    cli.add_command(fuse_cli, "fuse")
+except NameError:
+    pass
 cli.add_command(shell.cli, "shell")
 
 
