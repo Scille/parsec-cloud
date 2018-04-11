@@ -69,6 +69,7 @@ test_requirements = [
     'flake8',
     'hypothesis',
     'bumpversion',
+    'black',
 ]
 
 extra_requirements = {
