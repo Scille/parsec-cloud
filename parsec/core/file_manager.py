@@ -15,14 +15,19 @@ def _generate_sym_key():
 
 
 def _try_merge_two_patches(p1, p2):
-    if ((p1.offset < p2.offset and p1.offset + p1.size < p2.offset) or
-            (p2.offset < p1.offset and p2.offset + p2.size < p1.offset)):
+    if (
+        (p1.offset < p2.offset and p1.offset + p1.size < p2.offset)
+        or (p2.offset < p1.offset and p2.offset + p2.size < p1.offset)
+    ):
         return None
+
     p1buffer = p1.get_buffer()
     p2buffer = p2.get_buffer()
     # Remember p2 has priority over p1
     if p1.offset < p2.offset:
-        newbuffer = p1buffer[:p2.offset - p1.offset] + p2buffer + p1buffer[p2.offset + p2.size - p1.offset:]
+        newbuffer = p1buffer[:p2.offset - p1.offset] + p2buffer + p1buffer[
+            p2.offset + p2.size - p1.offset:
+        ]
         newsize = len(newbuffer)
         newoffset = p1.offset
     else:
@@ -63,14 +68,18 @@ class Patch:
     def get_buffer(self):
         if self._buffer is None:
             if not self.dirty_block_id:
-                raise RuntimeError('This patch has no buffer...')
+                raise RuntimeError("This patch has no buffer...")
+
             ciphered = self.local_storage.fetch_dirty_block(self.dirty_block_id)
             self._buffer = SecretBox(self.dirty_block_key).decrypt(ciphered)
         return self._buffer
 
     def save_as_dirty_block(self):
         if self.dirty_block_id:
-            raise RuntimeError('Cannot modify already existing `%s` dirty block' % self.dirty_block_id)
+            raise RuntimeError(
+                "Cannot modify already existing `%s` dirty block" % self.dirty_block_id
+            )
+
         self.dirty_block_id = uuid4().hex
         self.dirty_block_key = _generate_sym_key()
         ciphered = SecretBox(self.dirty_block_key).encrypt(self._buffer)

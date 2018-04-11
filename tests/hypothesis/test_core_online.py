@@ -2,9 +2,7 @@ import pytest
 from hypothesis import strategies as st, note
 from hypothesis.stateful import rule
 
-from tests.common import (
-    connect_core, core_factory, backend_factory, run_app
-)
+from tests.common import (connect_core, core_factory, backend_factory, run_app)
 
 
 @pytest.mark.slow
@@ -15,7 +13,7 @@ async def test_online(
     tcp_stream_spy,
     backend_addr,
     tmpdir,
-    alice
+    alice,
 ):
 
     class CoreOnline(TrioDriverRuleBasedStateMachine):
@@ -24,27 +22,27 @@ async def test_online(
         async def trio_runner(self, task_status):
             mocked_local_storage_connection.reset()
             type(self).count += 1
-            backend_config = {
-                'blockstore_url': 'backend://',
-            }
+            backend_config = {"blockstore_url": "backend://"}
             core_config = {
-                'base_settings_path': tmpdir.mkdir('try-%s' % self.count).strpath,
-                'backend_addr': backend_addr,
+                "base_settings_path": tmpdir.mkdir("try-%s" % self.count).strpath,
+                "backend_addr": backend_addr,
             }
             self.core_cmd = self.communicator.send
 
             async with backend_factory(**backend_config) as backend:
 
                 await backend.user.create(
-                    author='<backend-fixture>',
+                    author="<backend-fixture>",
                     user_id=alice.user_id,
                     broadcast_key=alice.user_pubkey.encode(),
-                    devices=[(alice.device_name, alice.device_verifykey.encode())]
+                    devices=[(alice.device_name, alice.device_verifykey.encode())],
                 )
 
                 async with run_app(backend) as backend_connection_factory:
 
-                    tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
+                    tcp_stream_spy.install_hook(
+                        backend_addr, backend_connection_factory
+                    )
                     try:
                         async with core_factory(**core_config) as core:
                             await core.login(alice)
@@ -63,8 +61,10 @@ async def test_online(
 
         @rule()
         def get_core_state(self):
-            rep = self.core_cmd({'cmd': 'get_core_state'})
+            rep = self.core_cmd({"cmd": "get_core_state"})
             note(rep)
-            assert rep == {'status': 'ok', 'login': 'alice@test', 'backend_online': True}
+            assert rep == {
+                "status": "ok", "login": "alice@test", "backend_online": True
+            }
 
     await CoreOnline.run_test()

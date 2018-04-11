@@ -16,7 +16,7 @@ class UnknownCheckedSchema(Schema):
     def check_unknown_fields(self, data, original_data):
         for key in original_data:
             if key not in self.fields or self.fields[key].dump_only:
-                raise ValidationError('Unknown field name {}'.format(key))
+                raise ValidationError("Unknown field name {}".format(key))
 
 
 class BaseCmdSchema(UnknownCheckedSchema):
@@ -25,7 +25,7 @@ class BaseCmdSchema(UnknownCheckedSchema):
     @post_load
     def _drop_cmd_field(self, item):
         if self.drop_cmd_field:
-            item.pop('cmd')
+            item.pop("cmd")
         return item
 
     def __init__(self, drop_cmd_field=True, **kwargs):
@@ -36,5 +36,6 @@ class BaseCmdSchema(UnknownCheckedSchema):
         parsed_msg, errors = super().load(msg)
         if errors:
             raise abort(errors=errors)
+
         else:
             return parsed_msg

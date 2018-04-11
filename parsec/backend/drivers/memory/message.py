@@ -3,6 +3,7 @@ from collections import defaultdict
 
 
 class MemoryMessageComponent(BaseMessageComponent):
+
     def __init__(self, *args):
         super().__init__(*args)
         self._messages = defaultdict(list)

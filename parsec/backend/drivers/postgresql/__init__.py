@@ -9,12 +9,12 @@ from .handler import PGHandler
 
 
 __all__ = [
-    'PGBlockStoreComponent',
-    'PGUserVlobComponent',
-    'PGMessageComponent',
-    'PGPubKeyComponent',
-    'PGGroupComponent',
-    'PGUserComponent',
-    'PGVlobComponent',
-    'PGHandler'
+    "PGBlockStoreComponent",
+    "PGUserVlobComponent",
+    "PGMessageComponent",
+    "PGPubKeyComponent",
+    "PGGroupComponent",
+    "PGUserComponent",
+    "PGVlobComponent",
+    "PGHandler",
 ]

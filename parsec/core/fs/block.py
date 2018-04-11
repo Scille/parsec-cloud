@@ -14,24 +14,20 @@ class BaseBlockAccess(BaseAccess):
 
     async def fetch(self):
         # First look into local storage
-        block = await self._fs.blocks_manager.fetch_from_local(
-            self.id, self.key)
+        block = await self._fs.blocks_manager.fetch_from_local(self.id, self.key)
         if not block:
             # Go the much slower way of asking backend
             # Note this can raise a `BackendOfflineError` exception
-            block = await self._fs.blocks_manager.fetch_from_backend(
-                self.id, self.key)
+            block = await self._fs.blocks_manager.fetch_from_backend(self.id, self.key)
             # TODO: save block as cache local storage ?
             if not block:
-                raise RuntimeError('No block with access %s' % self)
+                raise RuntimeError("No block with access %s" % self)
+
         return block
 
     def dump(self):
         return {
-            'id': self.id,
-            'key': self.key,
-            'offset': self.offset,
-            'size': self.size,
+            "id": self.id, "key": self.key, "offset": self.offset, "size": self.size
         }
 
 
@@ -44,18 +40,15 @@ class BaseDirtyBlockAccess(BaseAccess):
 
     async def fetch(self):
         # Dirty blocks are only stored into the local storage
-        block = await self._fs.blocks_manager.fetch_from_local(
-            self.id, self.key)
+        block = await self._fs.blocks_manager.fetch_from_local(self.id, self.key)
         if not block:
-            raise RuntimeError('No block with access %s' % self)
+            raise RuntimeError("No block with access %s" % self)
+
         return block
 
     def dump(self):
         return {
-            'id': self.id,
-            'key': self.key,
-            'offset': self.offset,
-            'size': self.size,
+            "id": self.id, "key": self.key, "offset": self.offset, "size": self.size
         }
 
 
@@ -87,15 +80,19 @@ class BaseBlock:
     async def sync(self):
         if not self.is_dirty:
             return
+
         if not self._data:
-            raise RuntimeError('Nothing to sync')
+            raise RuntimeError("Nothing to sync")
+
         dirty_access = self._access
         # TODO: add a lock ? should be more secure, but on the other hand
         # a block is sync only once, really close to where is has been created.
         id = await self._fs.blocks_manager.sync_new_block_with_backend(
-            dirty_access.key, self._data)
+            dirty_access.key, self._data
+        )
         self._access = self._fs._block_access_cls(
-            id, dirty_access.key, dirty_access.offset, dirty_access.size)
+            id, dirty_access.key, dirty_access.offset, dirty_access.size
+        )
 
     def is_dirty(self):
         return isinstance(self._access, BaseDirtyBlockAccess)
@@ -103,11 +100,14 @@ class BaseBlock:
     async def flush_data(self):
         if self._data is None:
             return
+
         await self._fs.blocks_manager.flush_on_local(
-            self._access.id, self._access.key, self._data)
+            self._access.id, self._access.key, self._data
+        )
         self._data = None
 
     async def fetch_data(self):
         if self._data is not None:
             return self._data
+
         return await self._access.fetch()

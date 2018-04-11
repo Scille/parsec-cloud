@@ -10,14 +10,15 @@ class BasePubKeyComponent:
 
     async def api_pubkey_get(self, client_ctx, msg):
         msg = cmd_PUBKEY_GET_Schema().load_or_abort(msg)
-        keys = await self.get(msg['id'])
+        keys = await self.get(msg["id"])
         if not keys:
-            return {'pubkey_not_found', 'No public key for identity `%s`' % msg['id']}
+            return {"pubkey_not_found", "No public key for identity `%s`" % msg["id"]}
+
         return {
-            'status': 'ok',
-            'id': msg['id'],
-            'public': to_jsonb64(keys[0]),
-            'verify': to_jsonb64(keys[1])
+            "status": "ok",
+            "id": msg["id"],
+            "public": to_jsonb64(keys[0]),
+            "verify": to_jsonb64(keys[1]),
         }
 
     # async def api_pubkey_add(self, msg):

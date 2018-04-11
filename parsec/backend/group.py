@@ -38,29 +38,26 @@ class BaseGroupComponent:
     async def api_group_create(self, client_ctx, msg):
         msg = cmd_CREATE_Schema().load_or_abort(msg)
         await self.create(**msg)
-        return {'status': 'ok'}
-
+        return {"status": "ok"}
 
     async def api_group_read(self, client_ctx, msg):
         msg = cmd_READ_Schema().load_or_abort(msg)
         group = await self.read(**msg)
         return {
-            'status': 'ok',
-            'name': group.name,
-            'admins': list(group.admins),
-            'users': list(group.users)
+            "status": "ok",
+            "name": group.name,
+            "admins": list(group.admins),
+            "users": list(group.users),
         }
-
 
     async def api_group_add_identities(self, client_ctx, msg):
         msg = cmd_ADD_IDENTITIES_Schema().load_or_abort(msg)
-        msg['identities'] = set(msg['identities'])
+        msg["identities"] = set(msg["identities"])
         await self.add_identities(**msg)
-        return {'status': 'ok'}
-
+        return {"status": "ok"}
 
     async def api_group_remove_identities(self, client_ctx, msg):
         msg = cmd_REMOVE_IDENTITIES_Schema().load_or_abort(msg)
-        msg['identities'] = set(msg['identities'])
+        msg["identities"] = set(msg["identities"])
         await self.remove_identities(**msg)
-        return {'status': 'ok'}
+        return {"status": "ok"}

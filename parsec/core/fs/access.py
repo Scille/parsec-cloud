@@ -25,15 +25,14 @@ class BaseUserVlobAccess(BaseAccess):
 
     async def fetch(self):
         return await self._fs.manifests_manager.fetch_user_manifest_from_backend(
-            self.privkey)
+            self.privkey
+        )
 
     def dump(self, with_type=True):
         # TODO: shouldn't be called, so raise exception here
-        dumped = {
-            'privkey': self.privkey,
-        }
+        dumped = {"privkey": self.privkey}
         if with_type:
-            dumped['type'] = 'user_vlob'
+            dumped["type"] = "user_vlob"
         return dumped
 
 
@@ -46,26 +45,22 @@ class BaseVlobAccess(BaseAccess):
 
     async def fetch(self):
         # First look into local storage
-        manifest = await self._fs.manifests_manager.fetch_from_local(
-            self.id, self.key)
+        manifest = await self._fs.manifests_manager.fetch_from_local(self.id, self.key)
         if not manifest:
             # Go the much slower way of asking backend
             # Note this can raise a `BackendOfflineError` exception
             manifest = await self._fs.manifests_manager.fetch_from_backend(
-                self.id, self.rts, self.key)
+                self.id, self.rts, self.key
+            )
             if not manifest:
-                raise RuntimeError('No manifest with access %s' % self)
+                raise RuntimeError("No manifest with access %s" % self)
+
         return manifest
 
     def dump(self, with_type=True):
-        dumped = {
-            'id': self.id,
-            'rts': self.rts,
-            'wts': self.wts,
-            'key': self.key,
-        }
+        dumped = {"id": self.id, "rts": self.rts, "wts": self.wts, "key": self.key}
         if with_type:
-            dumped['type'] = 'vlob'
+            dumped["type"] = "vlob"
         return dumped
 
 
@@ -78,10 +73,7 @@ class BasePlaceHolderAccess(BaseAccess):
         return await self._fs.manifests_manager.fetch_from_local(self.id, self.key)
 
     def dump(self, with_type=True):
-        dumped = {
-            'id': self.id,
-            'key': self.key,
-        }
+        dumped = {"id": self.id, "key": self.key}
         if with_type:
-            dumped['type'] = 'placeholder'
+            dumped["type"] = "placeholder"
         return dumped

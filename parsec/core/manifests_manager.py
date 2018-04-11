@@ -9,10 +9,11 @@ from parsec.utils import ParsecError
 
 
 class ManifestDecryptionError(ParsecError):
-    status = 'invalid_signature'
+    status = "invalid_signature"
 
 
 class ManifestsManager:
+
     def __init__(self, device, local_storage, backend_storage):
         self.device = device
         self._local_storage = local_storage
@@ -21,6 +22,7 @@ class ManifestsManager:
     def _encrypt_manifest(self, key, manifest):
         raw = json.dumps(manifest).encode()
         return raw
+
         box = SecretBox(key)
         # signed = self.device.user_signkey.sign(raw)
         # return box.encrypt(signed)
@@ -28,29 +30,34 @@ class ManifestsManager:
 
     def _decrypt_manifest(self, key, blob):
         return json.loads(blob.decode())
+
         box = SecretBox(key)
         try:
             raw = box.decrypt(blob)
-            # signed = box.decrypt(blob)
-            # raw = self.device.device_verifykey.verify(signed)
+        # signed = box.decrypt(blob)
+        # raw = self.device.device_verifykey.verify(signed)
         except (BadSignatureError, CryptoError, ValueError):
             raise ManifestDecryptionError()
+
         return json.loads(raw.decode())
 
     def _encrypt_user_manifest(self, manifest):
         raw = json.dumps(manifest).encode()
         return raw
+
         # TODO: replace this by a SealedBox
         box = Box(self.device.user_privkey, self.device.user_pubkey)
         return box.encrypt(raw)
 
     def _decrypt_user_manifest(self, blob):
         return json.loads(blob.decode())
+
         box = Box(self.device.user_privkey, self.device.user_pubkey)
         try:
             raw = box.decrypt(blob)
         except (BadSignatureError, CryptoError, ValueError):
             raise ManifestDecryptionError()
+
         return json.loads(raw.decode())
 
     async def fetch_user_manifest_from_backend(self, version=None):
@@ -77,7 +84,7 @@ class ManifestsManager:
         blob = self._encrypt_user_manifest(data)
         # if b'"children": {"0"' in blob:
         #     import pdb; pdb.set_trace()
-        await self._backend_storage.sync_user_manifest(manifest['version'], blob)
+        await self._backend_storage.sync_user_manifest(manifest["version"], blob)
 
     async def fetch_from_local(self, id, key):
         blob = self._local_storage.fetch_manifest(id)
@@ -105,7 +112,7 @@ class ManifestsManager:
         return await self._backend_storage.sync_new_manifest(blob)
 
     async def sync_with_backend(self, id, wts, key, manifest):
-        version = manifest['version']
+        version = manifest["version"]
         data, _ = TypedManifestSchema(strict=True).dump(manifest)
         blob = self._encrypt_manifest(key, data)
         await self._backend_storage.sync_manifest(id, wts, version, blob)

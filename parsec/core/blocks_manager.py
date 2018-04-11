@@ -6,6 +6,7 @@ from nacl.exceptions import BadSignatureError, CryptoError
 
 
 class BaseBlocksManager:
+
     async def fetch_from_local(self, id, key):
         raise NotImplementedError()
 
@@ -20,6 +21,7 @@ class BaseBlocksManager:
 
 
 class BlocksManager:
+
     def __init__(self, local_storage, backend_storage):
         self.local_storage = local_storage
         self.backend_storage = backend_storage
@@ -33,8 +35,9 @@ class BlocksManager:
     def _decrypt_block(self, key, blob):
         box = SecretBox(key)
         return box.decrypt(blob)
-        # signed = box.decrypt(blob)
-        # raw = self.user.verifykey.verify(signed)
+
+    # signed = box.decrypt(blob)
+    # raw = self.user.verifykey.verify(signed)
 
     async def fetch_from_local(self, id, key):
         crypted = self.local_storage.fetch_dirty_block(id)

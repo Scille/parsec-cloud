@@ -12,15 +12,18 @@ class Base64Bytes(Field):
     def _serialize(self, value, attr, obj):
         if value is None:
             return None
+
         return to_jsonb64(value)
 
     def _deserialize(self, value, attr, data):
         if value is None:
             return None
+
         try:
             return from_jsonb64(value)
+
         except Exception:
-            raise ValidationError('Invalid base64-encoded bytes')
+            raise ValidationError("Invalid base64-encoded bytes")
 
 
 class DateTime(Field):
@@ -29,15 +32,18 @@ class DateTime(Field):
     def _serialize(self, value, attr, obj):
         if value is None:
             return None
+
         return value.isoformat()
 
     def _deserialize(self, value, attr, data):
         if value is None:
             return None
+
         try:
             return pendulum.parse(value)
+
         except Exception:
-            raise ValidationError('Invalid datetime')
+            raise ValidationError("Invalid datetime")
 
 
 class CheckedConstant(Field):
@@ -50,15 +56,15 @@ class CheckedConstant(Field):
     def _deserialize(self, value, attr, data):
         if value is None:
             return None
+
         if value != self.constant:
-            raise ValidationError('Invalid value')
+            raise ValidationError("Invalid value")
+
         return value
 
 
 class Map(Field):
-    default_error_messages = {
-        'invalid': 'Not a valid mapping type.'
-    }
+    default_error_messages = {"invalid": "Not a valid mapping type."}
 
     def __init__(self, key_field, nested_field, **kwargs):
         super().__init__(**kwargs)
@@ -68,7 +74,7 @@ class Map(Field):
     def _deserialize(self, value, attr, obj):
 
         if not isinstance(value, Mapping):
-            self.fail('invalid')
+            self.fail("invalid")
 
         ret = {}
         for key, val in value.items():

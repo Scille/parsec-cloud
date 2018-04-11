@@ -83,10 +83,12 @@ class FS:
         user_manifest = await self.manifests_manager.fetch_user_manifest_from_local()
         if not user_manifest:
             self.root = self._root_entry_cls(
-                access, name='', need_flush=False, need_sync=False)
+                access, name="", need_flush=False, need_sync=False
+            )
         else:
             self.root = self._load_entry(
-                access, name='', parent=None, manifest=user_manifest)
+                access, name="", parent=None, manifest=user_manifest
+            )
 
     async def teardown(self):
         # TODO: too deeeeeeeep
@@ -95,52 +97,58 @@ class FS:
         await self.manifests_manager._backend_storage.backend_conn.teardown()
 
     async def fetch_path(self, path):
-        if not path.startswith('/'):
-            raise FSInvalidPath('Path must be absolute')
-        hops = [n for n in path.split('/') if n]
+        if not path.startswith("/"):
+            raise FSInvalidPath("Path must be absolute")
+
+        hops = [n for n in path.split("/") if n]
         entry = self.root
         for hop in hops:
             if not isinstance(entry, BaseFolderEntry):
                 raise FSInvalidPath("Path `%s` doesn't exists" % path)
+
             entry = await entry.fetch_child(hop)
         return entry
 
     def _load_entry(self, access, name, parent, manifest):
-        if manifest['type'] == 'file_manifest':
-            blocks_accesses = [self._block_access_cls(**v) for v in manifest['blocks']]
+        if manifest["type"] == "file_manifest":
+            blocks_accesses = [self._block_access_cls(**v) for v in manifest["blocks"]]
             return self._file_entry_cls(
                 access=access,
                 need_flush=False,
                 need_sync=False,
                 name=name,
                 parent=parent,
-                created=manifest['created'],
-                updated=manifest['updated'],
-                base_version=manifest['version'],
-                size=manifest['size'],
+                created=manifest["created"],
+                updated=manifest["updated"],
+                base_version=manifest["version"],
+                size=manifest["size"],
                 blocks_accesses=blocks_accesses,
             )
-        elif manifest['type'] == 'local_file_manifest':
-            blocks_accesses = [self._block_access_cls(**v) for v in manifest['blocks']]
-            dirty_blocks_accesses = [self._dirty_block_access_cls(**v)
-                            for v in manifest['dirty_blocks']]
+
+        elif manifest["type"] == "local_file_manifest":
+            blocks_accesses = [self._block_access_cls(**v) for v in manifest["blocks"]]
+            dirty_blocks_accesses = [
+                self._dirty_block_access_cls(**v) for v in manifest["dirty_blocks"]
+            ]
             return self._file_entry_cls(
                 access=access,
                 need_flush=False,
-                need_sync=manifest['need_sync'],
+                need_sync=manifest["need_sync"],
                 name=name,
                 parent=parent,
-                created=manifest['created'],
-                updated=manifest['updated'],
-                base_version=manifest['base_version'],
-                size=manifest['size'],
+                created=manifest["created"],
+                updated=manifest["updated"],
+                base_version=manifest["base_version"],
+                size=manifest["size"],
                 blocks_accesses=blocks_accesses,
                 dirty_blocks_accesses=dirty_blocks_accesses,
             )
-        elif manifest['type'] in ('folder_manifest', 'user_manifest'):
-            children_accesses = {k: self._vlob_access_cls(**v)
-                                for k, v in manifest['children'].items()}
-            if manifest['type'] == 'folder_manifest':
+
+        elif manifest["type"] in ("folder_manifest", "user_manifest"):
+            children_accesses = {
+                k: self._vlob_access_cls(**v) for k, v in manifest["children"].items()
+            }
+            if manifest["type"] == "folder_manifest":
                 entry_cls = self._folder_entry_cls
             else:
                 entry_cls = self._root_entry_cls
@@ -150,35 +158,38 @@ class FS:
                 need_sync=False,
                 name=name,
                 parent=parent,
-                created=manifest['created'],
-                updated=manifest['updated'],
-                base_version=manifest['version'],
+                created=manifest["created"],
+                updated=manifest["updated"],
+                base_version=manifest["version"],
                 children_accesses=children_accesses,
             )
-        elif manifest['type'] in ('local_folder_manifest', 'local_user_manifest'):
+
+        elif manifest["type"] in ("local_folder_manifest", "local_user_manifest"):
             children_accesses = {}
-            for k, v in manifest['children'].items():
-                vtype = v.pop('type')
-                if vtype == 'vlob':
+            for k, v in manifest["children"].items():
+                vtype = v.pop("type")
+                if vtype == "vlob":
                     children_accesses[k] = self._vlob_access_cls(**v)
-                elif vtype == 'placeholder':
+                elif vtype == "placeholder":
                     children_accesses[k] = self._placeholder_access_cls(**v)
                 else:
-                    raise RuntimeError('Unknown entry type `%s`' % vtype)
-            if manifest['type'] == 'local_folder_manifest':
+                    raise RuntimeError("Unknown entry type `%s`" % vtype)
+
+            if manifest["type"] == "local_folder_manifest":
                 entry_cls = self._folder_entry_cls
             else:
                 entry_cls = self._root_entry_cls
             return entry_cls(
                 access=access,
                 need_flush=False,
-                need_sync=manifest['need_sync'],
+                need_sync=manifest["need_sync"],
                 name=name,
                 parent=parent,
-                created=manifest['created'],
-                updated=manifest['updated'],
-                base_version=manifest['base_version'],
+                created=manifest["created"],
+                updated=manifest["updated"],
+                base_version=manifest["base_version"],
                 children_accesses=children_accesses,
             )
+
         else:
-            raise RuntimeError('Invalid manifest type `%s`', manifest['type'])
+            raise RuntimeError("Invalid manifest type `%s`", manifest["type"])

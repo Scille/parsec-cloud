@@ -17,9 +17,10 @@ from parsec.backend import BackendApp, BackendConfig
 
 
 class AsyncMock(Mock):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        spec = kwargs.get('spec')
+        spec = kwargs.get("spec")
         if spec:
             for field in dir(spec):
                 if iscoroutinefunction(getattr(spec, field)):
@@ -29,11 +30,13 @@ class AsyncMock(Mock):
         return super().__call__(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        if getattr(self, 'is_async', False) is True:
+        if getattr(self, "is_async", False) is True:
             if iscoroutinefunction(self.side_effect):
                 return self.side_effect(*args, **kwargs)
+
             else:
                 return self.__async_call(*args, **kwargs)
+
         else:
             return super().__call__(*args, **kwargs)
 
@@ -51,6 +54,7 @@ class FreezeTestOnBrokenStreamCookedSocket(CookedSocket):
     async def send(self, msg):
         try:
             return await super().send(msg)
+
         except trio.BrokenStreamError as exc:
             # Wait here until this coroutine is cancelled
             await trio.sleep_forever()
@@ -58,6 +62,7 @@ class FreezeTestOnBrokenStreamCookedSocket(CookedSocket):
     async def recv(self):
         try:
             return await super().recv()
+
         except trio.BrokenStreamError as exc:
             # Wait here until this coroutine is cancelled
             await trio.sleep_forever()
@@ -85,6 +90,7 @@ async def backend_factory(**config):
         await backend.init(nursery)
         try:
             yield backend
+
         finally:
             await backend.shutdown()
 
@@ -96,7 +102,7 @@ async def connect_backend(backend, auth_as=None):
         sock = FreezeTestOnBrokenStreamCookedSocket(sockstream)
         if auth_as:
             # Handshake
-            if auth_as == 'anonymous':
+            if auth_as == "anonymous":
                 ch = AnonymousClientHandshake()
             else:
                 ch = ClientHandshake(auth_as.id, auth_as.device_signkey)
@@ -126,5 +132,6 @@ async def core_factory(**config):
         await core.init(nursery)
         try:
             yield core
+
         finally:
             await core.shutdown()

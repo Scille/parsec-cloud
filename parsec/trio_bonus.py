@@ -19,10 +19,7 @@ async def serve_unix(
 ):
     listeners = await open_unix_listeners(path, mode=mode, backlog=backlog)
     await trio.serve_listeners(
-        handler,
-        listeners,
-        handler_nursery=handler_nursery,
-        task_status=task_status
+        handler, listeners, handler_nursery=handler_nursery, task_status=task_status
     )
 
 
@@ -41,6 +38,7 @@ async def open_unix_listeners(path, *, mode=0o666, backlog=None):
     except:
         sock.close()
         raise
+
     listeners.append(trio.SocketListener(sock))
     return listeners
 
@@ -52,6 +50,7 @@ async def open_unix_stream(path):
     except:
         sock.close()
         raise
+
     return trio.SocketStream(sock)
 
 
@@ -60,4 +59,4 @@ def monkey_patch():
     trio.serve_unix = serve_unix
     trio.open_unix_listeners = open_unix_listeners
     trio.open_unix_stream = open_unix_stream
-    trio.__all__ += ['serve_unix', 'open_unix_listeners', 'open_unix_stream']
+    trio.__all__ += ["serve_unix", "open_unix_listeners", "open_unix_stream"]

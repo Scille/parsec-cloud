@@ -6,6 +6,7 @@ from parsec.core.fs.base import BaseEntry
 from parsec.core.backend_connection import BackendConcurrencyError
 from huepy import *
 
+
 @attr.s(slots=True, init=False)
 class BaseFileEntry(BaseEntry):
     _need_flush = attr.ib()
@@ -17,9 +18,20 @@ class BaseFileEntry(BaseEntry):
     _dirty_blocks = attr.ib()
     _rwlock = attr.ib()
 
-    def __init__(self, access, need_flush=True, need_sync=True, created=None, updated=None,
-                 name='', parent=None, base_version=0, size=0, blocks_accesses=None,
-                 dirty_blocks_accesses=None):
+    def __init__(
+        self,
+        access,
+        need_flush=True,
+        need_sync=True,
+        created=None,
+        updated=None,
+        name="",
+        parent=None,
+        base_version=0,
+        size=0,
+        blocks_accesses=None,
+        dirty_blocks_accesses=None,
+    ):
         super().__init__(access, name, parent)
         self._created = created or pendulum.utcnow()
         self._updated = updated or self.created
@@ -72,23 +84,24 @@ class BaseFileEntry(BaseEntry):
         # Save the local file manifest
         if not self._need_flush:
             return
+
         for dirty_block in self._dirty_blocks:
             await dirty_block.flush_data()
         # Serialize as local folder manifest
         manifest = {
-            'format': 1,
-            'type': 'local_file_manifest',
-            'need_sync': self._need_sync,
-            'base_version': self._base_version,
-            'created': self._created,
-            'updated': self._updated,
-            'size': self._size,
-            'blocks': [v._access.dump() for v in self._blocks],
-            'dirty_blocks': [v._access.dump() for v in self._dirty_blocks],
+            "format": 1,
+            "type": "local_file_manifest",
+            "need_sync": self._need_sync,
+            "base_version": self._base_version,
+            "created": self._created,
+            "updated": self._updated,
+            "size": self._size,
+            "blocks": [v._access.dump() for v in self._blocks],
+            "dirty_blocks": [v._access.dump() for v in self._dirty_blocks],
         }
         # Save the local folder manifest
         access = self._access
-        print(good('flush %s %s' % (self.path, manifest)))
+        print(good("flush %s %s" % (self.path, manifest)))
         await self._fs.manifests_manager.flush_on_local(access.id, access.key, manifest)
         self._need_flush = False
 
@@ -96,6 +109,7 @@ class BaseFileEntry(BaseEntry):
         # Note recursive argument is not needed here
         if not self._need_flush:
             return
+
         async with self.acquire_write():
             await self.flush_no_lock()
 
@@ -104,7 +118,9 @@ class BaseFileEntry(BaseEntry):
         # Fetch the blocks
         # Fetch the dirty blocks
         # Combine everything together
-        size = size if (size is not None and 0 <= size + offset < self.size) else self.size - offset
+        size = size if (
+            size is not None and 0 <= size + offset < self.size
+        ) else self.size - offset
         if size < 0:
             size = 0
         end = offset + size
@@ -115,6 +131,7 @@ class BaseFileEntry(BaseEntry):
         for block in self._blocks:
             if block.end <= offset or block.offset >= end:
                 continue
+
             else:
                 data = await block.fetch_data()
                 if block.offset <= offset and block.end < end:
@@ -130,6 +147,7 @@ class BaseFileEntry(BaseEntry):
         for block in self._dirty_blocks:
             if block.end <= offset or block.offset >= end:
                 continue
+
             else:
                 data = await block.fetch_data()
                 if block.offset <= offset and block.end < end:
@@ -145,7 +163,8 @@ class BaseFileEntry(BaseEntry):
 
     async def read(self, size=None, offset=0):
         if size == 0:
-            return b''
+            return b""
+
         async with self.acquire_read():
             return await self.read_no_lock(size, offset)
 
@@ -163,12 +182,14 @@ class BaseFileEntry(BaseEntry):
     async def write(self, buffer, offset=0):
         if not buffer:
             return
+
         async with self.acquire_write():
             await self.write_no_lock(buffer, offset)
 
     async def truncate_no_lock(self, length):
         if self._size < length:
             return
+
         self._size = length
         self._modified()
 
@@ -179,22 +200,24 @@ class BaseFileEntry(BaseEntry):
     async def minimal_sync_if_placeholder(self):
         if not self.is_placeholder:
             return
+
         # Don't actually synchronize the data to save to, otherwise
         # consider version 1 is the newly created pristine object
         async with self.acquire_write():
             manifest = {
-                'format': 1,
-                'type': 'file_manifest',
-                'version': 1,
-                'created': self._created,
-                'updated': self._created,
-                'blocks': [],
-                'size': 0,
+                "format": 1,
+                "type": "file_manifest",
+                "version": 1,
+                "created": self._created,
+                "updated": self._created,
+                "blocks": [],
+                "size": 0,
             }
             key = self._access.key
-            print(run('min sync %s %s' % (self.path, manifest)))
+            print(run("min sync %s %s" % (self.path, manifest)))
             id, rts, wts = await self._fs.manifests_manager.sync_new_entry_with_backend(
-                key, manifest)
+                key, manifest
+            )
             self._base_version = 1
             self._access = self._fs._vlob_access_cls(id, rts, wts, key)
             self._need_flush = True
@@ -208,38 +231,41 @@ class BaseFileEntry(BaseEntry):
         async with self.acquire_write():
             if not self._need_sync:
                 manifest = await self._fs.manifests_manager.fetch_from_backend(
-                    self._access.id, self._access.rts, self._access.key)
-                if manifest['version'] != self.base_version:
-                    self._created = manifest['created']
-                    self._updated = manifest['updated']
-                    self._base_version = manifest['version']
-                    self._size = manifest['size']
-                    self._blocks = [self._fs._block_cls(self._fs._block_access_cls(**v))
-                                    for v in manifest['blocks']]
+                    self._access.id, self._access.rts, self._access.key
+                )
+                if manifest["version"] != self.base_version:
+                    self._created = manifest["created"]
+                    self._updated = manifest["updated"]
+                    self._base_version = manifest["version"]
+                    self._size = manifest["size"]
+                    self._blocks = [
+                        self._fs._block_cls(self._fs._block_access_cls(**v))
+                        for v in manifest["blocks"]
+                    ]
                     return
 
             # Make sure data are flushed on disk
             await self.flush_no_lock()
             # TODO: Protect the dirty blocks from beeing deleted
             manifest = {
-                'format': 1,
-                'type': 'file_manifest',
-                'version': self._base_version + 1,
-                'created': self._created,
-                'updated': self._updated,
-                'size': self._size,
-                'blocks': None,  # Will be computed later
+                "format": 1,
+                "type": "file_manifest",
+                "version": self._base_version + 1,
+                "created": self._created,
+                "updated": self._updated,
+                "size": self._size,
+                "blocks": None,  # Will be computed later
             }
             merged_blocks = []
             curr_file_offset = 0
             for block, offset, end in get_merged_blocks(
-                    self._blocks, self._dirty_blocks, self._size):
+                self._blocks, self._dirty_blocks, self._size
+            ):
                 # TODO: block taken verbatim are rewritten
                 buffer = await block.fetch_data()
                 buffer = buffer[offset:end]
                 access = self._fs._dirty_block_access_cls(
-                    offset=curr_file_offset,
-                    size=len(buffer)
+                    offset=curr_file_offset, size=len(buffer)
                 )
                 block = self._fs._block_cls(access, data=buffer)
                 curr_file_offset += access.size
@@ -260,7 +286,8 @@ class BaseFileEntry(BaseEntry):
                     buffer += (await block.fetch_data())[offset:end]
 
                 access = self._fs._dirty_block_access_cls(
-                    offset=curr_file_offset, size=len(buffer))
+                    offset=curr_file_offset, size=len(buffer)
+                )
                 block = self._fs._block_cls(access, data=buffer)
 
                 curr_file_offset += len(buffer)
@@ -271,36 +298,38 @@ class BaseFileEntry(BaseEntry):
         # TODO: block upload in parallel ?
         for normalized_block in normalized_blocks:
             await normalized_block.sync()
-        manifest['blocks'] = [v._access.dump() for v in normalized_blocks]
+        manifest["blocks"] = [v._access.dump() for v in normalized_blocks]
 
         # Upload the file manifest as new vlob version
         try:
             await self._fs.manifests_manager.sync_with_backend(
-                self._access.id, self._access.wts, self._access.key, manifest)
-            print(que('sync %s %s' % (self.path, manifest)))
+                self._access.id, self._access.wts, self._access.key, manifest
+            )
+            print(que("sync %s %s" % (self.path, manifest)))
         except BackendConcurrencyError:
             # File already modified, must rename ourself in the parent directory
             # to avoid losing data !
-            print(bad('concurrency error sync %s' % self.path))
+            print(bad("concurrency error sync %s" % self.path))
             original_access = self._access
             original_name = self._name
 
-            async with self.acquire_write(), \
-                    self.parent.acquire_write():
+            async with self.acquire_write(), self.parent.acquire_write():
 
                 self._access = self._fs._placeholder_access_cls()
                 entry = self._parent._children.pop(self._name)
                 while True:
-                    self._name += '.conflict'
+                    self._name += ".conflict"
                     if self._name not in self._parent._children:
                         self._parent._children[self._name] = entry
                         break
 
-                self._parent._children[original_name] = self._fs._not_loaded_entry_cls(original_access)
+                self._parent._children[original_name] = self._fs._not_loaded_entry_cls(
+                    original_access
+                )
                 # Merge&flush
                 self._blocks = normalized_blocks
                 self._dirty_blocks = self._dirty_blocks[dirty_blocks_count:]
-                self._base_version = manifest['version']
+                self._base_version = manifest["version"]
                 self._need_flush = True
                 await self.flush_no_lock()
                 return
@@ -311,9 +340,9 @@ class BaseFileEntry(BaseEntry):
             # Forget about all the blocks that was part of our synchronization
             self._dirty_blocks = self._dirty_blocks[dirty_blocks_count:]
             # TODO: notify blocks_managers the dirty blocks are no longer useful ?
-            self._base_version = manifest['version']
+            self._base_version = manifest["version"]
             self._need_flush = True
-            self._need_sync = self._updated != manifest['updated']
+            self._need_sync = self._updated != manifest["updated"]
             await self.flush_no_lock()
 
 
@@ -324,39 +353,44 @@ def get_merged_blocks(file_blocks, file_dirty_blocks, file_size):
     for index, block in enumerate(file_blocks):
         if not block.size:
             continue
-        bisect.insort(events, (block.offset, index, 'start', block))
-        bisect.insort(events, (block.end, index, 'end', block))
+
+        bisect.insort(events, (block.offset, index, "start", block))
+        bisect.insort(events, (block.end, index, "end", block))
     delta = len(file_blocks)
     for index, block in enumerate(file_dirty_blocks):
         if not block.size:
             continue
-        bisect.insort(events, (block.offset, index + delta, 'start', block))
-        bisect.insort(events, (block.end, index + delta, 'end', block))
+
+        bisect.insort(events, (block.offset, index + delta, "start", block))
+        bisect.insort(events, (block.end, index + delta, "end", block))
     blocks = []
     block_stack = []
     start_offset = {}
     for event in events:
         offset, index, action, block = event
         if offset > file_size:
-            if action == 'end' and index in start_offset:
+            if action == "end" and index in start_offset:
                 offset = file_size
             else:
                 continue
+
         top_index = -1
         if block_stack:
             top_index = block_stack[-1][0]
-        if action == 'start' and index > top_index:
+        if action == "start" and index > top_index:
             if len(block_stack) > 0:
                 index_ended, block_ended = block_stack[-1]
                 block_ended_start_data = start_offset[index_ended] - block_ended.offset
                 block_ended_end_data = offset - block_ended.offset
                 if block_ended_start_data != block_ended_end_data:
-                    blocks.append((block_ended, block_ended_start_data, block_ended_end_data))
+                    blocks.append(
+                        (block_ended, block_ended_start_data, block_ended_end_data)
+                    )
             bisect.insort(block_stack, (index, block))
             start_offset[index] = offset
-        elif action == 'start' and index < top_index:
+        elif action == "start" and index < top_index:
             bisect.insort(block_stack, (index, block))
-        elif action == 'end' and index == top_index:
+        elif action == "end" and index == top_index:
             block_start_data = start_offset[index] - block.offset
             block_end_data = offset - block.offset
             if block_start_data != block_end_data:
@@ -369,7 +403,7 @@ def get_merged_blocks(file_blocks, file_dirty_blocks, file_size):
             if block_stack:
                 restart_index, _ = block_stack[-1]
                 start_offset[restart_index] = offset
-        elif action == 'end' and index < top_index:
+        elif action == "end" and index < top_index:
             block_stack.remove((index, block))
     return blocks
 
@@ -379,6 +413,7 @@ def get_normalized_blocks(blocks, block_size=4096):
     if size <= block_size:
         block_list = [(block, 0, block.size) for block in blocks if block.size]
         return [block_list] if block_list else []
+
     offset_splits = list(range(block_size, size, block_size))
     offset_splits.append(offset_splits[-1] + block_size)
     final_blocks = []
@@ -387,7 +422,9 @@ def get_normalized_blocks(blocks, block_size=4096):
     while blocks:
         block, offset, end = blocks.pop(0)
         if offset < offset_splits[0] and end > offset_splits[0]:
-            block_group.append((block, offset - block.offset, offset_splits[0] - block.offset))
+            block_group.append(
+                (block, offset - block.offset, offset_splits[0] - block.offset)
+            )
             final_blocks.append(block_group)
             block_group = []
             blocks.insert(0, (block, offset_splits[0], block.end))

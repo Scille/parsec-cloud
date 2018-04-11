@@ -3,4 +3,4 @@ from parsec.core.config import CoreConfig
 from parsec.core.devices_manager import Device
 
 
-__all__ = ('CoreApp', 'CoreConfig', 'Device')
+__all__ = ("CoreApp", "CoreConfig", "Device")

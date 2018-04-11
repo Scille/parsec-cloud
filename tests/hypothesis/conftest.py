@@ -9,10 +9,11 @@ from hypothesis.stateful import RuleBasedStateMachine, run_state_machine_as_test
 
 def pytest_addoption(parser):
     parser.addoption("--hypothesis-max-examples", default=100, type=int)
-    parser.addoption("--hypothesis-derandomize", action='store_true')
+    parser.addoption("--hypothesis-derandomize", action="store_true")
 
 
 class ThreadToTrioCommunicator:
+
     def __init__(self, portal, timeout=None):
         self.timeout = timeout
         self.portal = portal
@@ -24,6 +25,7 @@ class ThreadToTrioCommunicator:
         ret = self.queue.get(timeout=self.timeout)
         if isinstance(ret, Exception):
             raise ret
+
         return ret
 
     async def trio_recv(self):
@@ -35,8 +37,9 @@ class ThreadToTrioCommunicator:
 
     def close(self):
         # Avoid deadlock if somebody is waiting on the other end
-        self.queue.put(RuntimeError(
-            'Communicator has closed while something was still listening'))
+        self.queue.put(
+            RuntimeError("Communicator has closed while something was still listening")
+        )
 
 
 @contextmanager
@@ -44,11 +47,13 @@ def open_communicator(portal):
     communicator = ThreadToTrioCommunicator(portal)
     try:
         yield communicator
+
     except Exception as exc:
         # Pass the exception to the listening part, to have the current
         # hypothesis rule crash correctly
         communicator.queue.put(exc)
         raise
+
     finally:
         communicator.close()
 
@@ -68,12 +73,14 @@ def monitor():
 def hypothesis_settings(request):
     return hypothesis.settings(
         max_examples=pytest.config.getoption("--hypothesis-max-examples"),
-        derandomize=pytest.config.getoption("--hypothesis-derandomize")
+        derandomize=pytest.config.getoption("--hypothesis-derandomize"),
     )
 
 
 @pytest.fixture
-async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler, hypothesis_settings):
+async def TrioDriverRuleBasedStateMachine(
+    nursery, portal, loghandler, hypothesis_settings
+):
 
     class TrioDriverRuleBasedStateMachine(RuleBasedStateMachine):
         _portal = portal
@@ -83,7 +90,8 @@ async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler, hypothesi
         @classmethod
         async def run_test(cls):
             await trio.run_sync_in_worker_thread(
-                partial(run_state_machine_as_test, cls, settings=hypothesis_settings))
+                partial(run_state_machine_as_test, cls, settings=hypothesis_settings)
+            )
 
         async def trio_runner(self, task_status):
             raise NotImplementedError()
@@ -94,7 +102,7 @@ async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler, hypothesi
             return self._communicator
 
         async def _trio_runner(self, *, task_status=trio.TASK_STATUS_IGNORED):
-            print('=====================================================')
+            print("=====================================================")
             # We need to hijack `task_status.started` callback because error
             # handling of trio_runner coroutine depends of it (see below).
             task_started = False

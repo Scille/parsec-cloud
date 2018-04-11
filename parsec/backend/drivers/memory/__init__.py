@@ -8,11 +8,11 @@ from .vlob import MemoryVlobComponent
 
 
 __all__ = [
-    'MemoryBlockStoreComponent',
-    'MemoryUserVlobComponent',
-    'MemoryMessageComponent',
-    'MemoryPubKeyComponent',
-    'MemoryGroupComponent',
-    'MemoryUserComponent',
-    'MemoryVlobComponent'
+    "MemoryBlockStoreComponent",
+    "MemoryUserVlobComponent",
+    "MemoryMessageComponent",
+    "MemoryPubKeyComponent",
+    "MemoryGroupComponent",
+    "MemoryUserComponent",
+    "MemoryVlobComponent",
 ]
