@@ -482,5 +482,4 @@ class ParsecSFTPServer(SFTPServer):
 
     def exit(self):
         """Shut down this SFTP server"""
-
         pass

@@ -18,9 +18,7 @@ def _get_existing_vlob(backend):
 
 
 @pytest.mark.parametrize(
-    "blob",
-    [None, b"Initial commit."],
-    ids=lambda x: "id=%s, blob=%s" % x,
+    "blob", [None, b"Initial commit."], ids=lambda x: "id=%s, blob=%s" % x
 )
 @pytest.mark.trio
 async def test_vlob_create_and_read(backend, alice, blob):

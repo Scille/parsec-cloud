@@ -1,6 +1,5 @@
 import pytest
 
-from parsec.core import CoreApp, CoreConfig
 
 from tests.common import connect_core, core_factory, freeze_time
 

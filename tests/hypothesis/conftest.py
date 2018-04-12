@@ -1,7 +1,7 @@
 import pytest
 import trio
 import queue
-from functools import wraps, partial
+from functools import partial
 from contextlib import contextmanager
 import hypothesis
 from hypothesis.stateful import (

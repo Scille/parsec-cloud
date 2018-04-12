@@ -1,5 +1,5 @@
 import pytest
-from hypothesis import strategies as st, note
+from hypothesis import note
 from hypothesis.stateful import rule
 
 from tests.common import connect_core, core_factory, backend_factory, run_app

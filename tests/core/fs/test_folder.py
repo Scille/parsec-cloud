@@ -1,4 +1,3 @@
-import trio
 import pytest
 from pendulum import datetime
 

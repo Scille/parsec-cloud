@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import patch
 from nacl.public import PrivateKey, SealedBox
 
 from parsec.utils import to_jsonb64, from_jsonb64
