@@ -18,21 +18,14 @@ def _get_existing_vlob(backend):
 
 
 @pytest.mark.parametrize(
-    "id,blob",
-    [
-        (None, None),
-        (None, b"Initial commit."),
-        ("foo", None),
-        ("bar", b"Initial commit."),
-    ],
+    "blob",
+    [None, b"Initial commit."],
     ids=lambda x: "id=%s, blob=%s" % x,
 )
 @pytest.mark.trio
-async def test_vlob_create_and_read(backend, alice, id, blob):
+async def test_vlob_create_and_read(backend, alice, blob):
     async with connect_backend(backend, auth_as=alice) as sock:
         payload = {}
-        if id:
-            payload["id"] = id
         if blob:
             payload["blob"] = to_jsonb64(blob)
         await sock.send({"cmd": "vlob_create", **payload})
@@ -40,11 +33,8 @@ async def test_vlob_create_and_read(backend, alice, id, blob):
         assert rep["status"] == "ok"
         assert rep["read_trust_seed"]
         assert rep["write_trust_seed"]
-        if id:
-            assert rep["id"] == id
-        else:
-            assert rep["id"]
-            id = rep["id"]
+        assert rep["id"]
+        id = rep["id"]
 
     async with connect_backend(backend, auth_as=alice) as sock:
         await sock.send(

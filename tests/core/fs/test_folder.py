@@ -4,6 +4,7 @@ from pendulum import datetime
 
 from tests.common import freeze_time
 from parsec.core.fs import *
+from parsec.core.fs.base import FSError
 
 
 @pytest.fixture

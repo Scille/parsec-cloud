@@ -474,7 +474,7 @@ def test_get_merged_blocks(
     note("Truncate to: %s, expect: %r" % (final_size, expected_data))
     expected_data = expected_data[:final_size]
 
-    merged_blocks = get_merged_blocks(synced_blocks, dirty_blocks, final_size)
+    merged_blocks = file.get_merged_blocks(synced_blocks, dirty_blocks, final_size)
     merged_data = b"".join(
         [block.data[start:end] for block, start, end in merged_blocks]
     )
