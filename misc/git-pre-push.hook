@@ -5,7 +5,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo 'pre-push: checking style...'
-2>&1 1>/dev/null $BASEDIR/autoformat.sh --check | grep 'reformatted'
+2>/dev/null misc/autoformat.sh --check | grep 'reformatted' > /dev/null
 if ( [ $? -eq 0 ] )
 then
     echo "Run ${YELLOW}./misc/autoformat.sh && git commit -a --amend ${NC} to fix this"
