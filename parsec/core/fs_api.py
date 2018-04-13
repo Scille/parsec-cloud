@@ -1,197 +1,300 @@
-from marshmallow import fields, validate
-from effect2 import Effect, do
-
-from parsec.core.fs import (
-    ERegisterMountpoint, EUnregisterMountpoint, ESynchronize, EGroupCreate, EDustbinShow,
-    EManifestHistory, EManifestRestore, EFileCreate, EFileRead, EFileWrite, EFileTruncate,
-    EFileHistory, EFileRestore, EFolderCreate, EStat, EMove, EDelete, EUndelete
-)
-from parsec.tools import UnknownCheckedSchema
+from parsec.core.fs import BaseFolderEntry, BaseFileEntry
+from parsec.utils import to_jsonb64
+from parsec.schema import BaseCmdSchema, fields, validate
 
 
-class PathOnlySchema(UnknownCheckedSchema):
+class PathOnlySchema(BaseCmdSchema):
     path = fields.String(required=True)
 
 
-class cmd_CREATE_GROUP_MANIFEST_Schema(UnknownCheckedSchema):
+class cmd_CREATE_GROUP_MANIFEST_Schema(BaseCmdSchema):
     group = fields.String()
 
 
-class cmd_SHOW_dustbin_Schema(UnknownCheckedSchema):
+class cmd_SHOW_dustbin_Schema(BaseCmdSchema):
     path = fields.String(missing=None)
 
 
-class cmd_HISTORY_Schema(UnknownCheckedSchema):
+class cmd_HISTORY_Schema(BaseCmdSchema):
     first_version = fields.Integer(missing=1, validate=lambda n: n >= 1)
     last_version = fields.Integer(missing=None, validate=lambda n: n >= 1)
     summary = fields.Boolean(missing=False)
 
 
-class cmd_RESTORE_MANIFEST_Schema(UnknownCheckedSchema):
+class cmd_RESTORE_MANIFEST_Schema(BaseCmdSchema):
     version = fields.Integer(missing=None, validate=lambda n: n >= 1)
 
 
-class cmd_FILE_READ_Schema(UnknownCheckedSchema):
+class cmd_FILE_READ_Schema(BaseCmdSchema):
     path = fields.String(required=True)
-    offset = fields.Int(missing=0, validate=validate.Range(min=0))
-    size = fields.Int(missing=None, validate=validate.Range(min=0))
+    offset = fields.Integer(missing=0, validate=validate.Range(min=0))
+    size = fields.Integer(missing=None, validate=validate.Range(min=0))
 
 
-class cmd_FILE_WRITE_Schema(UnknownCheckedSchema):
+class cmd_FILE_WRITE_Schema(BaseCmdSchema):
     path = fields.String(required=True)
-    offset = fields.Int(missing=0, validate=validate.Range(min=0))
-    content = fields.Base64Bytes(required=True)
+    offset = fields.Integer(missing=0, validate=validate.Range(min=0))
+    content = fields.Base64Bytes(required=True, validate=validate.Length(min=0))
 
 
-class cmd_FILE_TRUNCATE_Schema(UnknownCheckedSchema):
+class cmd_FILE_TRUNCATE_Schema(BaseCmdSchema):
     path = fields.String(required=True)
-    length = fields.Int(required=True, validate=validate.Range(min=0))
+    length = fields.Integer(required=True, validate=validate.Range(min=0))
 
 
-class cmd_FILE_HISTORY_Schema(UnknownCheckedSchema):
+class cmd_FILE_HISTORY_Schema(BaseCmdSchema):
     path = fields.String(required=True)
-    first_version = fields.Int(missing=1, validate=validate.Range(min=1))
-    last_version = fields.Int(missing=None, validate=validate.Range(min=1))
+    first_version = fields.Integer(missing=1, validate=validate.Range(min=1))
+    last_version = fields.Integer(missing=None, validate=validate.Range(min=1))
 
 
-class cmd_FILE_RESTORE_Schema(UnknownCheckedSchema):
+class cmd_FILE_RESTORE_Schema(BaseCmdSchema):
     path = fields.String(required=True)
-    version = fields.Int(required=True, validate=validate.Range(min=1))
+    version = fields.Integer(required=True, validate=validate.Range(min=1))
 
 
-class cmd_MOVE_Schema(UnknownCheckedSchema):
+class cmd_MOVE_Schema(BaseCmdSchema):
     src = fields.String(required=True)
     dst = fields.String(required=True)
 
 
-class cmd_UNDELETE_Schema(UnknownCheckedSchema):
+class cmd_UNDELETE_Schema(BaseCmdSchema):
     vlob = fields.String(required=True)
 
 
-@do
-def api_register_mountpoint(msg):
-    msg = PathOnlySchema().load(msg)
-    yield Effect(ERegisterMountpoint(**msg))
-    return {'status': 'ok'}
+def _normalize_path(path):
+    return "/" + "/".join([x for x in path.split("/") if x])
 
 
-@do
-def api_unregister_mountpoint(msg):
-    msg = PathOnlySchema().load(msg)
-    yield Effect(EUnregisterMountpoint(**msg))
-    return {'status': 'ok'}
+class FSApi:
 
+    def __init__(self, fs=None):
+        self.fs = fs
 
-@do
-def api_synchronize(msg):
-    UnknownCheckedSchema().load(msg)
-    yield Effect(ESynchronize())
-    return {'status': 'ok'}
+    async def file_create(self, req):
+        if not self.fs:
+            return {"status": "login_required", "reason": "Login required"}
 
+        req = PathOnlySchema().load_or_abort(req)
+        dirpath, filename = req["path"].rsplit("/", 1)
+        parent = await self.fs.fetch_path(dirpath or "/")
+        if not isinstance(parent, BaseFolderEntry):
+            return {
+                "status": "invalid_path",
+                "reason": "Path `%s` is not a directory" % parent.path,
+            }
 
-@do
-def api_group_create(msg):
-    msg = cmd_CREATE_GROUP_MANIFEST_Schema().load(msg)
-    yield Effect(EGroupCreate(**msg))
-    return {'status': 'ok'}
+        new_file = await parent.create_file(filename)
+        await new_file.flush()
+        await parent.flush()
+        return {"status": "ok"}
 
+    async def file_read(self, req):
+        if not self.fs:
+            return {"status": "login_required", "reason": "Login required"}
 
-@do
-def api_dustbin_show(msg):
-    msg = cmd_SHOW_dustbin_Schema().load(msg)
-    dustbin = yield Effect(EDustbinShow(**msg))
-    return {'status': 'ok', 'dustbin': dustbin}
+        req = cmd_FILE_READ_Schema().load_or_abort(req)
+        file = await self.fs.fetch_path(req["path"])
+        if not isinstance(file, BaseFileEntry):
+            return {
+                "status": "invalid_path",
+                "reason": "Path `%s` is not a file" % file.path,
+            }
 
+        content = await file.read(req["size"], req["offset"])
+        return {"status": "ok", "content": to_jsonb64(content)}
 
-@do
-def api_manifest_history(msg):
-    msg = cmd_HISTORY_Schema().load(msg)
-    history = yield Effect(EManifestHistory(**msg))
-    history['status'] = 'ok'
-    return history
+    async def file_write(self, req):
+        if not self.fs:
+            return {"status": "login_required", "reason": "Login required"}
 
+        req = cmd_FILE_WRITE_Schema().load_or_abort(req)
+        file = await self.fs.fetch_path(req["path"])
+        if not isinstance(file, BaseFileEntry):
+            return {
+                "status": "invalid_path",
+                "reason": "Path `%s` is not a file" % file.path,
+            }
 
-@do
-def api_manifest_restore(msg):
-    msg = cmd_RESTORE_MANIFEST_Schema().load(msg)
-    yield Effect(EManifestRestore(**msg))
-    return {'status': 'ok'}
+        await file.write(req["content"], req["offset"])
+        return {"status": "ok"}
 
+    async def file_truncate(self, req):
+        if not self.fs:
+            return {"status": "login_required", "reason": "Login required"}
 
-@do
-def api_file_create(msg):
-    msg = PathOnlySchema().load(msg)
-    yield Effect(EFileCreate(**msg))
-    return {'status': 'ok'}
+        req = cmd_FILE_TRUNCATE_Schema().load_or_abort(req)
+        file = await self.fs.fetch_path(req["path"])
+        if not isinstance(file, BaseFileEntry):
+            return {
+                "status": "invalid_path",
+                "reason": "Path `%s` is not a file" % file.path,
+            }
 
+        await file.truncate(req["length"])
+        return {"status": "ok"}
 
-@do
-def api_file_read(msg):
-    msg = cmd_FILE_READ_Schema().load(msg)
-    content = yield Effect(EFileRead(**msg))
-    return {'status': 'ok', 'content': content}
+    async def stat(self, req):
+        if not self.fs:
+            return {"status": "login_required", "reason": "Login required"}
 
+        req = PathOnlySchema().load_or_abort(req)
+        obj = await self.fs.fetch_path(req["path"])
+        if isinstance(obj, BaseFolderEntry):
+            return {
+                "status": "ok",
+                "type": "folder",
+                "created": obj.created.isoformat(),
+                "updated": obj.updated.isoformat(),
+                "base_version": obj.base_version,
+                "is_placeholder": obj.is_placeholder,
+                "need_sync": obj.need_sync,
+                "need_flush": obj.need_flush,
+                "children": list(sorted(obj.keys())),
+            }
 
-@do
-def api_file_write(msg):
-    msg = cmd_FILE_WRITE_Schema().load(msg)
-    yield Effect(EFileWrite(**msg))
-    return {'status': 'ok'}
+        else:
+            return {
+                "status": "ok",
+                "type": "file",
+                "created": obj.created.isoformat(),
+                "updated": obj.updated.isoformat(),
+                "base_version": obj.base_version,
+                "is_placeholder": obj.is_placeholder,
+                "need_sync": obj.need_sync,
+                "need_flush": obj.need_flush,
+                "size": obj.size,
+            }
 
+    async def folder_create(self, req):
+        if not self.fs:
+            return {"status": "login_required", "reason": "Login required"}
 
-@do
-def api_file_truncate(msg):
-    msg = cmd_FILE_TRUNCATE_Schema().load(msg)
-    yield Effect(EFileTruncate(**msg))
-    return {'status': 'ok'}
+        req = PathOnlySchema().load_or_abort(req)
+        dirpath, name = req["path"].rsplit("/", 1)
+        parent = await self.fs.fetch_path(dirpath or "/")
+        if not isinstance(parent, BaseFolderEntry):
+            return {
+                "status": "invalid_path",
+                "reason": "Path `%s` is not a directory" % parent.path,
+            }
 
+        child = await parent.create_folder(name)
+        await child.flush()
+        await parent.flush()
+        return {"status": "ok"}
 
-@do
-def api_file_history(msg):
-    msg = cmd_FILE_HISTORY_Schema().load(msg)
-    history = yield Effect(EFileHistory(**msg))
-    history['status'] = 'ok'
-    return history
+    async def move(self, req):
+        if not self.fs:
+            return {"status": "login_required", "reason": "Login required"}
 
+        req = cmd_MOVE_Schema().load_or_abort(req)
+        if req["src"] == "/":
+            return {"status": "invalid_path", "reason": "Cannot move `/` root folder"}
 
-@do
-def api_file_restore(msg):
-    msg = cmd_FILE_RESTORE_Schema().load(msg)
-    yield Effect(EFileRestore(**msg))
-    return {'status': 'ok'}
+        if req["dst"] == "/":
+            return {"status": "invalid_path", "reason": "Path `/` already exists"}
 
+        srcdirpath, srcfilename = req["src"].rsplit("/", 1)
+        dstdirpath, dstfilename = req["dst"].rsplit("/", 1)
 
-@do
-def api_folder_create(msg):
-    msg = PathOnlySchema().load(msg)
-    yield Effect(EFolderCreate(**msg))
-    return {'status': 'ok'}
+        src = _normalize_path(req["src"])
+        dst = _normalize_path(req["dst"])
+        if src == dst:
+            return {
+                "status": "invalid_path", "reason": "Cannot move `%s` to itself" % src
+            }
 
+        if dst.startswith(src):
+            return {
+                "status": "invalid_path",
+                "reason": "Cannot move `%s` to a subdirectory of itself" % src,
+            }
 
-@do
-def api_stat(msg):
-    msg = PathOnlySchema().load(msg)
-    stat = yield Effect(EStat(**msg))
-    stat['status'] = 'ok'
-    return stat
+        srcparent = await self.fs.fetch_path(srcdirpath or "/")
+        dstparent = await self.fs.fetch_path(dstdirpath or "/")
 
+        if not isinstance(srcparent, BaseFolderEntry):
+            return {
+                "status": "invalid_path",
+                "reason": "Path `%s` is not a directory" % srcparent.path,
+            }
 
-@do
-def api_move(msg):
-    msg = cmd_MOVE_Schema().load(msg)
-    yield Effect(EMove(**msg))
-    return {'status': 'ok'}
+        if not isinstance(dstparent, BaseFolderEntry):
+            return {
+                "status": "invalid_path",
+                "reason": "Path `%s` is not a directory" % dstparent.path,
+            }
 
+        if srcfilename not in srcparent:
+            return {
+                "status": "invalid_path",
+                "reason": "Path `%s` doesn't exists" % req["src"],
+            }
 
-@do
-def api_delete(msg):
-    msg = PathOnlySchema().load(msg)
-    yield Effect(EDelete(**msg))
-    return {'status': 'ok'}
+        if dstfilename in dstparent:
+            return {
+                "status": "invalid_path",
+                "reason": "Path `%s` already exists" % req["dst"],
+            }
 
+        obj = await srcparent.delete_child(srcfilename)
+        await dstparent.insert_child(dstfilename, obj)
 
-@do
-def api_undelete(msg):
-    msg = cmd_UNDELETE_Schema().load(msg)
-    yield Effect(EUndelete(**msg))
-    return {'status': 'ok'}
+        await dstparent.flush()
+        if srcparent != dstparent:
+            await srcparent.flush()
+        return {"status": "ok"}
+
+    async def delete(self, req):
+        if not self.fs:
+            return {"status": "login_required", "reason": "Login required"}
+
+        if req["path"] == "/":
+            return {"status": "invalid_path", "reason": "Cannot remove `/` root folder"}
+
+        req = PathOnlySchema().load_or_abort(req)
+        dirpath, name = req["path"].rsplit("/", 1)
+        parent = await self.fs.fetch_path(dirpath or "/")
+        if not isinstance(parent, BaseFolderEntry):
+            return {
+                "status": "invalid_path",
+                "reason": "Path `%s` is not a directory" % parent.path,
+            }
+
+        await parent.delete_child(name)
+        await parent.flush()
+        return {"status": "ok"}
+
+    async def flush(self, req):
+        if not self.fs:
+            return {"status": "login_required", "reason": "Login required"}
+
+        req = PathOnlySchema().load_or_abort(req)
+        obj = await self.fs.fetch_path(req["path"])
+        await obj.flush()
+        return {"status": "ok"}
+
+    async def synchronize(self, req):
+        if not self.fs:
+            return {"status": "login_required", "reason": "Login required"}
+
+        req = PathOnlySchema().load_or_abort(req)
+        to_sync_target = await self.fs.fetch_path(req["path"])
+        # If the path to the target contains placeholders, we must synchronize
+        # them here
+        to_sync = [to_sync_target]
+        curr_path = req["path"]
+        while to_sync[-1].is_placeholder:
+            curr_path, _ = curr_path.rsplit("/", 1)
+            if not curr_path:
+                curr_path = "/"
+            to_sync.append(await self.fs.fetch_path(curr_path))
+        await to_sync_target.sync(recursive=True)
+        to_sync_parents = to_sync[1:]
+        # TODO: If parent contains placeholders than what compose the path to
+        # the target, there will be synchronized as empty files/folders.
+        # It would be better (and faster) to skip them entirely.
+        for to_sync_parent in to_sync_parents:
+            await to_sync_parent.sync(ignore_placeholders=True)
+        return {"status": "ok"}

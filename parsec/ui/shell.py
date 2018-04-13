@@ -1,40 +1,87 @@
-import asyncio
-from functools import partial
-import readline  # noqa: side effect powaaa !
+import trio
+import click
+import json
+from urllib.parse import urlparse
 
-from parsec.tools import ejson_loads
+from parsec.core.cli import DEFAULT_CORE_SOCKET
+from parsec.utils import CookedSocket
+
+
+class ReloadShell(Exception):
+    pass
 
 
 async def repl(socket_path):
+    try:
+        if socket_path.startswith("unix://"):
+            sockstream = await trio.open_unix_stream(socket_path[len("unix://"):])
+        elif socket_path.startswith("tcp://"):
+            parsed = urlparse(socket_path)
+            sockstream = await trio.open_tcp_stream(
+                port=parsed.port, host=parsed.hostname
+            )
+    except OSError as exc:
+        raise SystemExit(exc)
+
+    sock = CookedSocket(sockstream)
+    try:
+
+        quit = False
+        while not quit:
+            data = input(">>> ")
+            if not data:
+                continue
+
+            elif data in ("quit", "q"):
+                return
+
+            elif data in ("help", "h"):
+                print("No help for the braves !")
+                continue
+
+            elif data in ("reload", "r"):
+                raise ReloadShell()
+
+                continue
+
+            try:
+                cooked_data = json.loads(data)
+            except json.decoder.JSONDecodeError as exc:
+                print("Invalid json: %s", exc)
+                continue
+
+            try:
+                await sock.send(cooked_data)
+                rep = await sock.recv()
+            except trio.BrokenStreamError as exc:
+                raise SystemExit(exc)
+
+            print("Received: %r" % rep)
+
+    finally:
+        await sock.aclose()
+
+
+@click.command()
+@click.option(
+    "--socket",
+    "-s",
+    default=DEFAULT_CORE_SOCKET,
+    help="Core socket to connect to (default: %s)." % DEFAULT_CORE_SOCKET,
+)
+def cli(socket):
+    try:
+        import readline  # noqa: for Linux
+    except ModuleNotFoundError:
+        pass
     from parsec import __version__
-    print('Parsec shell version: %s' % __version__)
-    print('Connecting to: %s' % socket_path)
-    open_conn = partial(asyncio.open_unix_connection, path=socket_path)
-    reader, writer = await open_conn()
-    quit = False
-    while not quit:
-        data = input('>>> ')
-        if data in ('quit', 'q'):
-            writer.close()
-            return
-        elif data in ('help', 'h'):
-            print('No help for the braves !')
-            continue
-        elif data in ('reload', 'r'):
-            writer.close()
-            reader, writer = await open_conn()
-            continue
-        writer.write(data.encode())
-        writer.write(b'\n')
-        raw_resp = await reader.readline()
-        resp = ejson_loads(raw_resp.decode())
-        print('Received: %r' % resp)
 
-
-def start_shell(socket_path):
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(repl(socket_path))
-
-
-if __name__ == '__main__':
-    start_shell()
+    print("Parsec shell version: %s" % __version__)
+    print("Connecting to: %s" % socket)
+    while True:
+        try:
+            trio.run(repl, socket)
+        except ReloadShell:
+            pass
+        else:
+            break

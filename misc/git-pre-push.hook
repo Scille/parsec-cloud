@@ -1,0 +1,13 @@
+#! /bin/sh
+
+BASEDIR=$( dirname `readlink -f $0` )
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo 'pre-push: checking style...'
+2>/dev/null $BASEDIR/autoformat.sh --check | grep 'reformatted' > /dev/null
+if ( [ $? -eq 0 ] )
+then
+    echo "Run ${YELLOW}./misc/autoformat.sh && git commit -a --amend ${NC}to fix this"
+    exit 1
+fi

@@ -1,23 +1,19 @@
 language: python
-cache:
-  directories:
-  - $HOME/ossl-1/
-matrix:
-    include:
-        - python: 3.5
-          env: OPENSSL=1.1.0c
-        - python: 3.6
-          env: OPENSSL=1.1.0c
+python:
+- '3.6'
+#- '3.7-dev'
 services:
   - postgresql
+env:
+  - PARSEC_POSTGRESQL_TEST_URL='postgresql://postgres@localhost/parsec_test'
 install:
-- bash ./.travis/install.sh
 - pip install -U coveralls
-- pip install -Ur requirements_dev.txt
+- pip install .[postgresql,dev,fuse]
 before_script:
   - psql -c 'create database parsec_test;' -U postgres
 script:
-- bash ./.travis/run.sh
+- ./misc/autoformat.sh --check
+- py.test tests --runslow -v -s --no-postgresql
 after_success:
 - coveralls
 deploy:
@@ -29,4 +25,4 @@ deploy:
   on:
     tags: true
     repo: Scille/parsec-cloud
-    condition: $TRAVIS_PYTHON_VERSION == 3.5
+    python: 3.6

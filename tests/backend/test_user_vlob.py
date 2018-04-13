@@ -1,175 +1,93 @@
 import pytest
-import asyncio
-from effect2.testing import const, conste, noop, perform_sequence, asyncio_perform_sequence
 
-from parsec.base import EEvent
-from parsec.backend.session import EGetAuthenticatedUser
-from parsec.backend.backend_api import execute_cmd
-from parsec.backend.user_vlob import (
-    EUserVlobRead, EUserVlobUpdate, UserVlobAtom, MockedUserVlobComponent)
-from parsec.exceptions import UserVlobError
-from parsec.tools import to_jsonb64
-
-from tests.common import can_side_effect_or_skip
-from tests.backend.common import init_or_skiptest_parsec_postgresql
+from parsec.utils import to_jsonb64
 
 
-async def bootstrap_PostgreSQLUserVlobComponent(request, loop):
-    can_side_effect_or_skip()
-    module, url = await init_or_skiptest_parsec_postgresql()
-
-    conn = module.PostgreSQLConnection(url)
-    await conn.open_connection()
-
-    def finalize():
-        loop.run_until_complete(conn.close_connection())
-
-    request.addfinalizer(finalize)
-    return module.PostgreSQLUserVlobComponent(conn)
+async def populate_backend_user_vlob(backend, user):
+    await backend.user_vlob.update(user.user_id, 1, b"blob v1")
+    await backend.user_vlob.update(user.user_id, 2, b"blob v2")
+    await backend.user_vlob.update(user.user_id, 3, b"blob v3")
 
 
-@pytest.fixture(params=[MockedUserVlobComponent, bootstrap_PostgreSQLUserVlobComponent],
-                ids=['mocked', 'postgresql'])
-def component(request, loop):
-    if asyncio.iscoroutinefunction(request.param):
-        return loop.run_until_complete(request.param(request, loop))
-    else:
-        return request.param()
+@pytest.mark.trio
+async def test_user_vlob_read_ok(backend, alice, alice_backend_sock):
+    await populate_backend_user_vlob(backend, alice)
+
+    await alice_backend_sock.send({"cmd": "user_vlob_read", "version": 2})
+    rep = await alice_backend_sock.recv()
+
+    assert rep == {"status": "ok", "blob": to_jsonb64(b"blob v2"), "version": 2}
 
 
-class TestUserVlobComponent:
+@pytest.mark.trio
+async def test_user_vlob_read_last_version(backend, alice, alice_backend_sock):
+    await populate_backend_user_vlob(backend, alice)
 
-    async def test_user_vlob_read_ok(self, component):
-        intent = EUserVlobRead()
-        eff = component.perform_user_vlob_read(intent)
-        sequence = [
-            (EGetAuthenticatedUser(), const('alice@test.com'))
-        ]
-        ret = await asyncio_perform_sequence(sequence, eff)
-        assert ret == UserVlobAtom('alice@test.com', 0, b'')
+    await alice_backend_sock.send({"cmd": "user_vlob_read"})
+    rep = await alice_backend_sock.recv()
 
-    async def test_user_vlob_read_previous_version(self, component):
-        # Update user vlob
-        intent = EUserVlobUpdate(1, b'Next version.')
-        eff = component.perform_user_vlob_update(intent)
-        sequence = [
-            (EGetAuthenticatedUser(), const('alice@test.com')),
-            (EEvent('user_vlob_updated', 'alice@test.com'), noop)
-        ]
-        await asyncio_perform_sequence(sequence, eff)
-        # Read previous version
-        intent = EUserVlobRead(version=0)
-        eff = component.perform_user_vlob_read(intent)
-        sequence = [
-            (EGetAuthenticatedUser(), const('alice@test.com')),
-        ]
-        ret = await asyncio_perform_sequence(sequence, eff)
-        assert ret == UserVlobAtom('alice@test.com', 0, b'')
-
-    async def test_user_vlob_read_wrong_version(self, component):
-        intent = EUserVlobRead(version=42)
-        with pytest.raises(UserVlobError):
-            eff = component.perform_user_vlob_read(intent)
-            sequence = [
-                (EGetAuthenticatedUser(), const('alice@test.com'))
-            ]
-            await asyncio_perform_sequence(sequence, eff)
-
-    async def test_user_vlob_update_ok(self, component):
-        intent = EUserVlobUpdate(1, b'Next version.')
-        eff = component.perform_user_vlob_update(intent)
-        sequence = [
-            (EGetAuthenticatedUser(), const('alice@test.com')),
-            (EEvent('user_vlob_updated', 'alice@test.com'), noop)
-        ]
-        await asyncio_perform_sequence(sequence, eff)
-        # Check back the value
-        intent = EUserVlobRead(version=1)
-        eff = component.perform_user_vlob_read(intent)
-        sequence = [
-            (EGetAuthenticatedUser(), const('alice@test.com'))
-        ]
-        ret = await asyncio_perform_sequence(sequence, eff)
-        assert ret == UserVlobAtom('alice@test.com', 1, b'Next version.')
-
-    async def test_user_vlob_update_wrong_version(self, component):
-        intent = EUserVlobUpdate(42, b'Next version.')
-        with pytest.raises(UserVlobError):
-            eff = component.perform_user_vlob_update(intent)
-            sequence = [
-                (EGetAuthenticatedUser(), const('alice@test.com')),
-            ]
-            await asyncio_perform_sequence(sequence, eff)
-
-    async def test_multiple_users(self, component):
-        async def _update(user):
-                intent = EUserVlobUpdate(1, b'Next version for %s.' % user.encode())
-                eff = component.perform_user_vlob_update(intent)
-                sequence = [
-                    (EGetAuthenticatedUser(), const(user)),
-                    (EEvent('user_vlob_updated', user), noop)
-                ]
-                await asyncio_perform_sequence(sequence, eff)
-
-        await _update('alice@test.com')
-        await _update('bob@test.com')
-
-        async def _read(user):
-            intent = EUserVlobRead()
-            eff = component.perform_user_vlob_read(intent)
-            sequence = [
-                (EGetAuthenticatedUser(), const(user))
-            ]
-            return await asyncio_perform_sequence(sequence, eff)
-
-        alice_usa = await _read('alice@test.com')
-        assert alice_usa == UserVlobAtom('alice@test.com', 1, b'Next version for alice@test.com.')
-
-        bob_usa = await _read('bob@test.com')
-        assert bob_usa == UserVlobAtom('bob@test.com', 1, b'Next version for bob@test.com.')
+    assert rep == {"status": "ok", "blob": to_jsonb64(b"blob v3"), "version": 3}
 
 
-class TestUserVlobServiceAPI:
+@pytest.mark.trio
+async def test_user_vlob_read_bad_version(backend, alice, alice_backend_sock):
+    await populate_backend_user_vlob(backend, alice)
 
-    def test_user_vlob_read_ok(self):
-        eff = execute_cmd('user_vlob_read', {})
-        sequence = [
-            (EUserVlobRead(),
-                const(UserVlobAtom('alice@test.com', 42, b'content v42')))
-        ]
-        ret = perform_sequence(sequence, eff)
-        assert ret == {
-            'status': 'ok',
-            'blob': to_jsonb64(b'content v42'),
-            'version': 42
-        }
+    await alice_backend_sock.send({"cmd": "user_vlob_read", "version": 42})
+    rep = await alice_backend_sock.recv()
 
-    def test_user_vlob_read_bad_version(self):
-        eff = execute_cmd('user_vlob_read', {'version': 42})
-        sequence = [
-            (EUserVlobRead(version=42), conste(UserVlobError('Wrong blob version.')))
-        ]
-        ret = perform_sequence(sequence, eff)
-        assert ret['status'] == 'user_vlob_error'
+    assert rep == {"status": "version_error", "reason": "Wrong blob version."}
 
-    def test_user_vlob_update_ok(self):
-        eff = execute_cmd('user_vlob_update', {'version': 42, 'blob': to_jsonb64(b'Next version.')})
-        sequence = [
-            (EUserVlobUpdate(version=42, blob=b'Next version.'), noop)
-        ]
-        ret = perform_sequence(sequence, eff)
-        assert ret == {
-            'status': 'ok',
-        }
 
-    def test_user_vlob_update_bad_version(self):
-        eff = execute_cmd('user_vlob_update', {'version': 42, 'blob': to_jsonb64(b'Next version.')})
-        sequence = [
-            (EUserVlobUpdate(version=42, blob=b'Next version.'),
-                conste(UserVlobError('Wrong blob version.')))
-        ]
-        ret = perform_sequence(sequence, eff)
-        assert ret['status'] == 'user_vlob_error'
+@pytest.mark.parametrize(
+    "bad_msg", [{"version": None}, {"version": "42x"}, {"bad_field": "foo"}]
+)
+@pytest.mark.trio
+async def test_user_vlob_read_bad_msg(backend, alice, alice_backend_sock, bad_msg):
+    await alice_backend_sock.send({"cmd": "user_vlob_read", **bad_msg})
+    rep = await alice_backend_sock.recv()
+    assert rep["status"] == "bad_message"
 
-# TODO: test event
-# TODO: test can't listen other user's events
+
+@pytest.mark.trio
+async def test_user_vlob_update_ok(backend, alice, alice_backend_sock):
+    await populate_backend_user_vlob(backend, alice)
+
+    await alice_backend_sock.send(
+        {"cmd": "user_vlob_update", "version": 4, "blob": to_jsonb64(b"fooo")}
+    )
+    rep = await alice_backend_sock.recv()
+
+    assert rep == {"status": "ok"}
+
+
+@pytest.mark.trio
+async def test_user_vlob_update_bad_version(backend, alice, alice_backend_sock):
+    await populate_backend_user_vlob(backend, alice)
+
+    await alice_backend_sock.send(
+        {"cmd": "user_vlob_update", "version": 42, "blob": to_jsonb64(b"fooo")}
+    )
+    rep = await alice_backend_sock.recv()
+    assert rep == {"status": "version_error", "reason": "Wrong blob version."}
+
+
+@pytest.mark.parametrize(
+    "bad_msg",
+    [
+        {"version": 42, "blob": to_jsonb64(b"..."), "bad_field": "foo"},
+        {"version": "42x", "blob": to_jsonb64(b"...")},
+        {"version": None, "blob": to_jsonb64(b"...")},
+        {"version": 42, "blob": 42},
+        {"version": 42, "blob": None},
+        {"version": 42, "blob": "<not a b64>"},
+        {},
+    ],
+)
+@pytest.mark.trio
+async def test_user_vlob_update_bad_msg(backend, bad_msg, alice, alice_backend_sock):
+    await alice_backend_sock.send({"cmd": "user_vlob_update", **bad_msg})
+    rep = await alice_backend_sock.recv()
+    # Id and trust_seed are invalid anyway, but here we test another layer
+    # so it's not important as long as we get our `bad_message` status
+    assert rep["status"] == "bad_message"
