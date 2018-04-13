@@ -77,7 +77,6 @@ async def test_online_core_tree_and_sync(
     mocked_local_storage_connection,
     tcp_stream_spy,
     backend_addr,
-    monitor,
     tmpdir,
     alice,
 ):
