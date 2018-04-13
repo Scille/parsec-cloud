@@ -9,11 +9,6 @@ from hypothesis.stateful import (
 )
 
 
-def pytest_addoption(parser):
-    parser.addoption("--hypothesis-max-examples", default=100, type=int)
-    parser.addoption("--hypothesis-derandomize", action="store_true")
-
-
 class ThreadToTrioCommunicator:
 
     def __init__(self, portal, timeout=None):

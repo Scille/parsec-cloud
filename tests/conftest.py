@@ -14,6 +14,8 @@ from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 
 
 def pytest_addoption(parser):
+    parser.addoption("--hypothesis-max-examples", default=100, type=int)
+    parser.addoption("--hypothesis-derandomize", action="store_true")
     parser.addoption(
         "--no-postgresql",
         action="store_true",
