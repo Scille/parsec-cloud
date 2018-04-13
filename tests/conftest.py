@@ -185,7 +185,8 @@ async def core(nursery, backend_addr, tmpdir, default_devices, config={}):
     async with core_factory(
         **{
             "base_settings_path": tmpdir.mkdir("core_fixture").strpath,
-            "backend_addr": backend_addr, **config
+            "backend_addr": backend_addr,
+            **config
         }
     ) as core:
 
@@ -206,7 +207,8 @@ async def core2(nursery, backend_addr, tmpdir, default_devices, config={}):
     async with core_factory(
         **{
             "base_settings_path": tmpdir.mkdir("core2_fixture").strpath,
-            "backend_addr": backend_addr, **config
+            "backend_addr": backend_addr,
+            **config
         }
     ) as core:
 
