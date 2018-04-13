@@ -1,5 +1,7 @@
 import pytest
 import attr
+import nacl.encoding
+import nacl.hash
 from pendulum import datetime
 from hypothesis import given, strategies as st, note, assume
 
@@ -88,10 +90,11 @@ def add_block(
     name = name or "block-%s" % count
     id = "<%s id>" % name
     key = ("<%s key>" % name).encode()
+    digest = nacl.hash.sha256(data, encoder=nacl.encoding.Base64Encoder)
     if dirty:
-        access = file._fs._dirty_block_access_cls(id, key, offset, len(data))
+        access = file._fs._dirty_block_access_cls(id, key, offset, len(data), digest)
     else:
-        access = file._fs._block_access_cls(id, key, offset, len(data))
+        access = file._fs._block_access_cls(id, key, offset, len(data), digest)
     block = file._fs._block_cls(access)
 
     if not dirty:
@@ -189,12 +192,14 @@ async def test_read_empty(fs):
 
 @pytest.mark.trio
 async def test_read_blocks(fs, mocked_blocks_manager):
+    blocks_data = [b"Hello... ", b"world !"]
+    digests = [nacl.hash.sha256(data, encoder=nacl.encoding.Base64Encoder) for data in blocks_data]
     blocks_accesses = [
-        fs._block_access_cls("<block 1 id>", b"<block 1 key>", 0, 9),
-        fs._block_access_cls("<block 2 id>", b"<block 2 key>", 9, 7),
+        fs._block_access_cls("<block 1 id>", b"<block 1 key>", 0, 9, digests[0]),
+        fs._block_access_cls("<block 2 id>", b"<block 2 key>", 9, 7, digests[1]),
     ]
     foo = create_file(fs, "foo", blocks_accesses=blocks_accesses, size=16)
-    mocked_blocks_manager.fetch_from_local.side_effect = [b"Hello... ", b"world !"]
+    mocked_blocks_manager.fetch_from_local.side_effect = blocks_data
     content = await foo.read()
     assert content == b"Hello... world !"
     assert (
@@ -293,6 +298,11 @@ async def test_flush(fs, mocked_manifests_manager, mocked_blocks_manager):
 
     await file.flush()
 
+    digests = [
+        nacl.hash.sha256(data, encoder=nacl.encoding.Base64Encoder)
+        for data in [b"1" * 10, b"2" * 10, b"A" * 5, b"B" * 5]
+    ]
+
     assert mocked_manifests_manager.flush_on_local.call_count
     mocked_manifests_manager.flush_on_local.assert_called_with(
         "<foo id>",
@@ -306,12 +316,12 @@ async def test_flush(fs, mocked_manifests_manager, mocked_blocks_manager):
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "size": 20,
             "blocks": [
-                {"id": "<1 id>", "key": b"<1 key>", "offset": 0, "size": 10},
-                {"id": "<2 id>", "key": b"<2 key>", "offset": 10, "size": 10},
+                {"id": "<1 id>", "key": b"<1 key>", "offset": 0, "size": 10, "digest": digests[0]},
+                {"id": "<2 id>", "key": b"<2 key>", "offset": 10, "size": 10, "digest": digests[1]},
             ],
             "dirty_blocks": [
-                {"id": "<A id>", "key": b"<A key>", "offset": 5, "size": 5},
-                {"id": "<B id>", "key": b"<B key>", "offset": 7, "size": 5},
+                {"id": "<A id>", "key": b"<A key>", "offset": 5, "size": 5, "digest": digests[2]},
+                {"id": "<B id>", "key": b"<B key>", "offset": 7, "size": 5, "digest": digests[3]},
             ],
         },
     )
@@ -336,6 +346,11 @@ async def test_simple_sync(fs, mocked_manifests_manager, mocked_blocks_manager):
 
     await file.sync()
 
+    digests = [
+        nacl.hash.sha256(data, encoder=nacl.encoding.Base64Encoder)
+        for data in [b"1" * 10, b"2" * 10]
+    ]
+
     mocked_manifests_manager.sync_with_backend.assert_called_with(
         "<foo id>",
         "<foo wts>",
@@ -348,8 +363,8 @@ async def test_simple_sync(fs, mocked_manifests_manager, mocked_blocks_manager):
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "size": 20,
             "blocks": [
-                {"id": "<1 id>", "key": b"<1 key>", "offset": 0, "size": 10},
-                {"id": "<2 id>", "key": b"<2 key>", "offset": 10, "size": 10},
+                {"id": "<1 id>", "key": b"<1 key>", "offset": 0, "size": 10, "digest": digests[0]},
+                {"id": "<2 id>", "key": b"<2 key>", "offset": 10, "size": 10, "digest": digests[1]},
             ],
         },
     )

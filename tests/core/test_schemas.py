@@ -13,6 +13,7 @@ class TestBlockAccessSchema:
         "key": "PG15IGtleT4=\n",
         "offset": 0,
         "size": 4096,
+        "digest": "NHlUNUUwV0tPeXkweHFUNmVTdVlkUGdTNkpzYUduOGNUdWlEd0IzZ1Jscz0=\n",
     }
 
     def test_load_and_dump(self):
@@ -25,6 +26,7 @@ class TestBlockAccessSchema:
                 "key": b"<my key>",
                 "offset": 0,
                 "size": 4096,
+                "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
             }
         )
         dumped, errors = BlockAccessSchema().dump(loaded)
@@ -54,6 +56,7 @@ class TestBlockAccessSchema:
                 "id": "x"
                 * 1000
             },
+            {"digest": None},
         ],
     )
     def test_bad_load(self, bad_patch):
@@ -133,12 +136,14 @@ class TestFileManifestSchema:
                 "key": "PGJsb2NrIDEga2V5Pg==\n",
                 "offset": 0,
                 "size": 4096,
+                "digest": "NHlUNUUwV0tPeXkweHFUNmVTdVlkUGdTNkpzYUduOGNUdWlEd0IzZ1Jscz0=\n",
             },
             {
                 "id": "b64041c3e3d649fc931ca54564701d38",
                 "key": "PGJsb2NrIDIga2V5Pg==\n",
                 "offset": 4096,
                 "size": 3904,
+                "digest": "NHlUNUUwV0tPeXkweHFUNmVTdVlkUGdTNkpzYUduOGNUdWlEd0IzZ1Jscz0=\n",
             },
         ],
     }
@@ -161,12 +166,14 @@ class TestFileManifestSchema:
                         "key": b"<block 1 key>",
                         "offset": 0,
                         "size": 4096,
+                        "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
                     },
                     {
                         "id": "b64041c3e3d649fc931ca54564701d38",
                         "key": b"<block 2 key>",
                         "offset": 4096,
                         "size": 3904,
+                        "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
                     },
                 ],
             }
@@ -409,12 +416,14 @@ class TestLocalFileManifestSchema:
                 "key": "PGJsb2NrIDEga2V5Pg==\n",
                 "offset": 0,
                 "size": 4096,
+                "digest": "NHlUNUUwV0tPeXkweHFUNmVTdVlkUGdTNkpzYUduOGNUdWlEd0IzZ1Jscz0=\n",
             },
             {
                 "id": "b64041c3e3d649fc931ca54564701d38",
                 "key": "PGJsb2NrIDIga2V5Pg==\n",
                 "offset": 5096,
                 "size": 2904,
+                "digest": "NHlUNUUwV0tPeXkweHFUNmVTdVlkUGdTNkpzYUduOGNUdWlEd0IzZ1Jscz0=\n",
             },
         ],
         "dirty_blocks": [
@@ -423,12 +432,14 @@ class TestLocalFileManifestSchema:
                 "key": "PGRpcnR5IGJsb2NrIDEga2V5Pg==\n",
                 "offset": 4096,
                 "size": 1000,
+                "digest": "NHlUNUUwV0tPeXkweHFUNmVTdVlkUGdTNkpzYUduOGNUdWlEd0IzZ1Jscz0=\n",
             },
             {
                 "id": "03ef5b652762404bb1d2a55474cbc95f",
                 "key": "PGRpcnR5IGJsb2NrIDIga2V5Pg==\n",
                 "offset": 8000,
                 "size": 100,
+                "digest": "NHlUNUUwV0tPeXkweHFUNmVTdVlkUGdTNkpzYUduOGNUdWlEd0IzZ1Jscz0=\n",
             },
         ],
     }
@@ -452,12 +463,14 @@ class TestLocalFileManifestSchema:
                         "key": b"<block 1 key>",
                         "offset": 0,
                         "size": 4096,
+                        "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
                     },
                     {
                         "id": "b64041c3e3d649fc931ca54564701d38",
                         "key": b"<block 2 key>",
                         "offset": 5096,
                         "size": 2904,
+                        "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
                     },
                 ],
                 "dirty_blocks": [
@@ -466,12 +479,14 @@ class TestLocalFileManifestSchema:
                         "key": b"<dirty block 1 key>",
                         "offset": 4096,
                         "size": 1000,
+                        "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
                     },
                     {
                         "id": "03ef5b652762404bb1d2a55474cbc95f",
                         "key": b"<dirty block 2 key>",
                         "offset": 8000,
                         "size": 100,
+                        "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
                     },
                 ],
             }

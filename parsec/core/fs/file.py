@@ -1,5 +1,7 @@
 import attr
 import bisect
+import nacl.encoding
+import nacl.hash
 import pendulum
 
 from parsec.core.fs.base import BaseEntry
@@ -172,7 +174,12 @@ class BaseFileEntry(BaseEntry):
         if offset > self.size:
             offset = self.size
         # Create a new dirty block
-        access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer))
+        digest = nacl.hash.sha256(bytes(buffer), encoder=nacl.encoding.Base64Encoder)
+        access = self._fs._dirty_block_access_cls(
+            offset=offset,
+            size=len(buffer),
+            digest=digest
+        )
         block = self._fs._block_cls(access, data=buffer)
         self._dirty_blocks.append(block)
         if offset + len(buffer) > self._size:
@@ -265,7 +272,7 @@ class BaseFileEntry(BaseEntry):
                 buffer = await block.fetch_data()
                 buffer = buffer[offset:end]
                 access = self._fs._dirty_block_access_cls(
-                    offset=curr_file_offset, size=len(buffer)
+                    offset=curr_file_offset, size=len(buffer), digest=block._access.digest
                 )
                 block = self._fs._block_cls(access, data=buffer)
                 curr_file_offset += access.size
@@ -285,8 +292,9 @@ class BaseFileEntry(BaseEntry):
                 for block, offset, end in block_group:
                     buffer += (await block.fetch_data())[offset:end]
 
+                digest = nacl.hash.sha256(bytes(buffer), encoder=nacl.encoding.Base64Encoder)
                 access = self._fs._dirty_block_access_cls(
-                    offset=curr_file_offset, size=len(buffer)
+                    offset=curr_file_offset, size=len(buffer), digest=digest
                 )
                 block = self._fs._block_cls(access, data=buffer)
 

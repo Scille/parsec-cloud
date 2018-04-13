@@ -90,12 +90,19 @@ async def test_load_folder(manifest, fs, access):
             "created": datetime(2017, 1, 1),
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "blocks": [
-                {"id": "<block 1 id>", "key": b"<block 1 key", "offset": 0, "size": 11},
+                {
+                    "id": "<block 1 id>",
+                    "key": b"<block 1 key",
+                    "offset": 0,
+                    "size": 11,
+                    "digest": b"<block 1 digest>"
+                },
                 {
                     "id": "<block 2 id>",
                     "key": b"<block 2 key",
                     "offset": 11,
                     "size": 16,
+                    "digest": b"<block 2 digest>",
                 },
             ],
             "size": 27,
@@ -117,21 +124,35 @@ async def test_load_folder(manifest, fs, access):
             "created": datetime(2017, 1, 1),
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "blocks": [
-                {"id": "<block 1 id>", "key": b"<block 1 key", "offset": 0, "size": 11},
+                {
+                    "id": "<block 1 id>",
+                    "key": b"<block 1 key",
+                    "offset": 0,
+                    "size": 11,
+                    "digest": b"<block 1 digest>"
+                },
                 {
                     "id": "<block 2 id>",
                     "key": b"<block 2 key",
                     "offset": 11,
                     "size": 16,
+                    "digest": b"<block 2 digest>",
                 },
             ],
             "dirty_blocks": [
-                {"id": "<block 3 id>", "key": b"<block 3 key", "offset": 0, "size": 11},
+                {
+                    "id": "<block 3 id>",
+                    "key": b"<block 3 key",
+                    "offset": 0,
+                    "size": 11,
+                    "digest": b"<block 3 digest>"
+                },
                 {
                     "id": "<block 4 id>",
                     "key": b"<block 4 key",
                     "offset": 11,
                     "size": 16,
+                    "digest": b"<block 4 digest>",
                 },
             ],
             "size": 27,

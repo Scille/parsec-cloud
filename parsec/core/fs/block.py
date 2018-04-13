@@ -1,4 +1,7 @@
 import attr
+import nacl.encoding
+import nacl.hash
+from nacl.bindings.utils import sodium_memcmp
 from uuid import uuid4
 
 from parsec.utils import generate_sym_key
@@ -11,6 +14,7 @@ class BaseBlockAccess(BaseAccess):
     key = attr.ib()
     offset = attr.ib()
     size = attr.ib()
+    digest = attr.ib()
 
     async def fetch(self):
         # First look into local storage
@@ -22,12 +26,18 @@ class BaseBlockAccess(BaseAccess):
             # TODO: save block as cache local storage ?
             if not block:
                 raise RuntimeError("No block with access %s" % self)
-
+            digest = nacl.hash.sha256(block, encoder=nacl.encoding.Base64Encoder)
+            if not sodium_memcmp(digest, self.digest):
+                raise RuntimeError("Digest error for block with access %s" % self)
         return block
 
     def dump(self):
         return {
-            "id": self.id, "key": self.key, "offset": self.offset, "size": self.size
+            "id": self.id,
+            "key": self.key,
+            "offset": self.offset,
+            "size": self.size,
+            "digest": self.digest
         }
 
 
@@ -37,18 +47,25 @@ class BaseDirtyBlockAccess(BaseAccess):
     key = attr.ib(default=attr.Factory(generate_sym_key))
     offset = attr.ib(default=0)
     size = attr.ib(default=0)
+    digest = attr.ib(default=None)
 
     async def fetch(self):
         # Dirty blocks are only stored into the local storage
         block = await self._fs.blocks_manager.fetch_from_local(self.id, self.key)
         if not block:
             raise RuntimeError("No block with access %s" % self)
-
+            digest = nacl.hash.sha256(block, encoder=nacl.encoding.Base64Encoder)
+            if not sodium_memcmp(digest, self.digest):
+                raise RuntimeError("Digest check failed for block with access %s" % self)
         return block
 
     def dump(self):
         return {
-            "id": self.id, "key": self.key, "offset": self.offset, "size": self.size
+            "id": self.id,
+            "key": self.key,
+            "offset": self.offset,
+            "size": self.size,
+            "digest": self.digest
         }
 
 
@@ -91,7 +108,7 @@ class BaseBlock:
             dirty_access.key, self._data
         )
         self._access = self._fs._block_access_cls(
-            id, dirty_access.key, dirty_access.offset, dirty_access.size
+            id, dirty_access.key, dirty_access.offset, dirty_access.size, dirty_access.digest
         )
 
     def is_dirty(self):
