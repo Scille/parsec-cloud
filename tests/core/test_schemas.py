@@ -26,7 +26,7 @@ class TestBlockAccessSchema:
                 "key": b"<my key>",
                 "offset": 0,
                 "size": 4096,
-                "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
+                "digest": b"4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=",
             }
         )
         dumped, errors = BlockAccessSchema().dump(loaded)
@@ -166,14 +166,14 @@ class TestFileManifestSchema:
                         "key": b"<block 1 key>",
                         "offset": 0,
                         "size": 4096,
-                        "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
+                        "digest": b"4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=",
                     },
                     {
                         "id": "b64041c3e3d649fc931ca54564701d38",
                         "key": b"<block 2 key>",
                         "offset": 4096,
                         "size": 3904,
-                        "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
+                        "digest": b"4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=",
                     },
                 ],
             }
@@ -463,14 +463,14 @@ class TestLocalFileManifestSchema:
                         "key": b"<block 1 key>",
                         "offset": 0,
                         "size": 4096,
-                        "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
+                        "digest": b"4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=",
                     },
                     {
                         "id": "b64041c3e3d649fc931ca54564701d38",
                         "key": b"<block 2 key>",
                         "offset": 5096,
                         "size": 2904,
-                        "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
+                        "digest": b"4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=",
                     },
                 ],
                 "dirty_blocks": [
@@ -479,14 +479,14 @@ class TestLocalFileManifestSchema:
                         "key": b"<dirty block 1 key>",
                         "offset": 4096,
                         "size": 1000,
-                        "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
+                        "digest": b"4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=",
                     },
                     {
                         "id": "03ef5b652762404bb1d2a55474cbc95f",
                         "key": b"<dirty block 2 key>",
                         "offset": 8000,
                         "size": 100,
-                        "digest": b'4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=',
+                        "digest": b"4yT5E0WKOyy0xqT6eSuYdPgS6JsaGn8cTuiDwB3gRls=",
                     },
                 ],
             }

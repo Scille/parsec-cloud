@@ -193,7 +193,10 @@ async def test_read_empty(fs):
 @pytest.mark.trio
 async def test_read_blocks(fs, mocked_blocks_manager):
     blocks_data = [b"Hello... ", b"world !"]
-    digests = [nacl.hash.sha256(data, encoder=nacl.encoding.Base64Encoder) for data in blocks_data]
+    digests = [
+        nacl.hash.sha256(data, encoder=nacl.encoding.Base64Encoder)
+        for data in blocks_data
+    ]
     blocks_accesses = [
         fs._block_access_cls("<block 1 id>", b"<block 1 key>", 0, 9, digests[0]),
         fs._block_access_cls("<block 2 id>", b"<block 2 key>", 9, 7, digests[1]),
@@ -316,12 +319,36 @@ async def test_flush(fs, mocked_manifests_manager, mocked_blocks_manager):
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "size": 20,
             "blocks": [
-                {"id": "<1 id>", "key": b"<1 key>", "offset": 0, "size": 10, "digest": digests[0]},
-                {"id": "<2 id>", "key": b"<2 key>", "offset": 10, "size": 10, "digest": digests[1]},
+                {
+                    "id": "<1 id>",
+                    "key": b"<1 key>",
+                    "offset": 0,
+                    "size": 10,
+                    "digest": digests[0],
+                },
+                {
+                    "id": "<2 id>",
+                    "key": b"<2 key>",
+                    "offset": 10,
+                    "size": 10,
+                    "digest": digests[1],
+                },
             ],
             "dirty_blocks": [
-                {"id": "<A id>", "key": b"<A key>", "offset": 5, "size": 5, "digest": digests[2]},
-                {"id": "<B id>", "key": b"<B key>", "offset": 7, "size": 5, "digest": digests[3]},
+                {
+                    "id": "<A id>",
+                    "key": b"<A key>",
+                    "offset": 5,
+                    "size": 5,
+                    "digest": digests[2],
+                },
+                {
+                    "id": "<B id>",
+                    "key": b"<B key>",
+                    "offset": 7,
+                    "size": 5,
+                    "digest": digests[3],
+                },
             ],
         },
     )
@@ -363,8 +390,20 @@ async def test_simple_sync(fs, mocked_manifests_manager, mocked_blocks_manager):
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "size": 20,
             "blocks": [
-                {"id": "<1 id>", "key": b"<1 key>", "offset": 0, "size": 10, "digest": digests[0]},
-                {"id": "<2 id>", "key": b"<2 key>", "offset": 10, "size": 10, "digest": digests[1]},
+                {
+                    "id": "<1 id>",
+                    "key": b"<1 key>",
+                    "offset": 0,
+                    "size": 10,
+                    "digest": digests[0],
+                },
+                {
+                    "id": "<2 id>",
+                    "key": b"<2 key>",
+                    "offset": 10,
+                    "size": 10,
+                    "digest": digests[1],
+                },
             ],
         },
     )

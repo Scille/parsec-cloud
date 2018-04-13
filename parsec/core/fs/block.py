@@ -26,9 +26,11 @@ class BaseBlockAccess(BaseAccess):
             # TODO: save block as cache local storage ?
             if not block:
                 raise RuntimeError("No block with access %s" % self)
+
             digest = nacl.hash.sha256(block, encoder=nacl.encoding.Base64Encoder)
             if not sodium_memcmp(digest, self.digest):
                 raise RuntimeError("Digest error for block with access %s" % self)
+
         return block
 
     def dump(self):
@@ -37,7 +39,7 @@ class BaseBlockAccess(BaseAccess):
             "key": self.key,
             "offset": self.offset,
             "size": self.size,
-            "digest": self.digest
+            "digest": self.digest,
         }
 
 
@@ -54,9 +56,13 @@ class BaseDirtyBlockAccess(BaseAccess):
         block = await self._fs.blocks_manager.fetch_from_local(self.id, self.key)
         if not block:
             raise RuntimeError("No block with access %s" % self)
+
             digest = nacl.hash.sha256(block, encoder=nacl.encoding.Base64Encoder)
             if not sodium_memcmp(digest, self.digest):
-                raise RuntimeError("Digest check failed for block with access %s" % self)
+                raise RuntimeError(
+                    "Digest check failed for block with access %s" % self
+                )
+
         return block
 
     def dump(self):
@@ -65,7 +71,7 @@ class BaseDirtyBlockAccess(BaseAccess):
             "key": self.key,
             "offset": self.offset,
             "size": self.size,
-            "digest": self.digest
+            "digest": self.digest,
         }
 
 
@@ -108,7 +114,11 @@ class BaseBlock:
             dirty_access.key, self._data
         )
         self._access = self._fs._block_access_cls(
-            id, dirty_access.key, dirty_access.offset, dirty_access.size, dirty_access.digest
+            id,
+            dirty_access.key,
+            dirty_access.offset,
+            dirty_access.size,
+            dirty_access.digest,
         )
 
     def is_dirty(self):

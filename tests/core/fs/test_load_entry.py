@@ -95,7 +95,7 @@ async def test_load_folder(manifest, fs, access):
                     "key": b"<block 1 key",
                     "offset": 0,
                     "size": 11,
-                    "digest": b"<block 1 digest>"
+                    "digest": b"<block 1 digest>",
                 },
                 {
                     "id": "<block 2 id>",
@@ -129,7 +129,7 @@ async def test_load_folder(manifest, fs, access):
                     "key": b"<block 1 key",
                     "offset": 0,
                     "size": 11,
-                    "digest": b"<block 1 digest>"
+                    "digest": b"<block 1 digest>",
                 },
                 {
                     "id": "<block 2 id>",
@@ -145,7 +145,7 @@ async def test_load_folder(manifest, fs, access):
                     "key": b"<block 3 key",
                     "offset": 0,
                     "size": 11,
-                    "digest": b"<block 3 digest>"
+                    "digest": b"<block 3 digest>",
                 },
                 {
                     "id": "<block 4 id>",
