@@ -1,6 +1,6 @@
 import pytest
 import trio
-from trio._util import acontextmanager
+from async_generator import asynccontextmanager
 import blinker
 
 from parsec.core.backend_connection import BackendConnection, BackendNotAvailable
@@ -8,7 +8,7 @@ from parsec.core.backend_connection import BackendConnection, BackendNotAvailabl
 from tests.open_tcp_stream_mock_wrapper import offline
 
 
-@acontextmanager
+@asynccontextmanager
 async def open_backend_connection(user, backend_addr):
     signal_ns = blinker.Namespace()
     conn = BackendConnection(user, backend_addr, signal_ns)

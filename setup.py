@@ -36,7 +36,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "attrs==17.3.0",
+    "attrs==17.4.0",
     "blinker==1.4.0",
     "click==6.7",
     "huepy==0.9.6",
@@ -47,7 +47,7 @@ requirements = [
     "PyNaCl==1.2.0",
     "simplejson==3.10.0",
     "python-decouple==3.1",
-    "trio==0.3.0",
+    "trio==0.4.0",
 ]
 dependency_links = [
     # need to use --process-dependency-links option for this
@@ -62,6 +62,7 @@ test_requirements = [
     # Libfaketime is much faster than Freezegun but UNIX only
     'pytest-libfaketime;platform_system!="Windows"',
     'freezegun;platform_system=="Windows"',
+    "async_generator >= 1.9",
     "tox",
     "wheel",
     "Sphinx",

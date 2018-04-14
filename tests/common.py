@@ -1,7 +1,7 @@
 import trio
-from trio._util import acontextmanager
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
+from async_generator import asynccontextmanager
 
 try:
     from libfaketime import freeze_time
@@ -68,7 +68,7 @@ class FreezeTestOnBrokenStreamCookedSocket(CookedSocket):
             await trio.sleep_forever()
 
 
-@acontextmanager
+@asynccontextmanager
 async def run_app(app):
     async with trio.open_nursery() as nursery:
 
@@ -82,7 +82,7 @@ async def run_app(app):
         nursery.cancel_scope.cancel()
 
 
-@acontextmanager
+@asynccontextmanager
 async def backend_factory(**config):
     config = BackendConfig(**config)
     backend = BackendApp(config)
@@ -95,7 +95,7 @@ async def backend_factory(**config):
             await backend.shutdown()
 
 
-@acontextmanager
+@asynccontextmanager
 async def connect_backend(backend, auth_as=None):
     async with run_app(backend) as connection_factory:
         sockstream = await connection_factory()
@@ -115,7 +115,7 @@ async def connect_backend(backend, auth_as=None):
         yield sock
 
 
-@acontextmanager
+@asynccontextmanager
 async def connect_core(core):
     async with run_app(core) as connection_factory:
         sockstream = await connection_factory()
@@ -124,7 +124,7 @@ async def connect_core(core):
         yield sock
 
 
-@acontextmanager
+@asynccontextmanager
 async def core_factory(**config):
     config = CoreConfig(**config)
     core = CoreApp(config)
