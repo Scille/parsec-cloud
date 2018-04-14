@@ -10,6 +10,10 @@ ParSec
         :target: https://travis-ci.org/Scille/parsec-cloud
         :alt: CI Status
 
+.. image:: https://pyup.io/repos/github/Scille/parsec-cloud/shield.svg
+     :target: https://pyup.io/repos/github/Scille/parsec-cloud/
+     :alt: Updates
+
 .. image:: https://readthedocs.org/projects/parsec-cloud/badge/?version=latest
         :target: http://parsec-cloud.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status

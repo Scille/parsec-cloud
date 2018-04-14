@@ -4,12 +4,13 @@ from urllib.parse import urlparse
 
 from parsec.utils import CookedSocket
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake
+from parsec.utils import ParsecError
 
 
 logger = logbook.Logger("parsec.core.backend_connection")
 
 
-class BackendError(Exception):
+class BackendError(ParsecError):
     pass
 
 
@@ -140,11 +141,11 @@ class BackendConnection:
         )
         # Try to open connection with the backend to save time for first
         # request
-        try:
-            async with self._lock:
-                await self._init_send_connection()
-        except (OSError, trio.BrokenStreamError):
-            pass
+        # try:
+        #     async with self._lock:
+        #         await self._init_send_connection()
+        # except (OSError, trio.BrokenStreamError):
+        #     pass
 
     async def teardown(self):
         self._event_listener_task_cancel_scope.cancel()
