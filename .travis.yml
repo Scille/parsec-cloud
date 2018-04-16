@@ -13,7 +13,7 @@ before_script:
   - psql -c 'create database parsec_test;' -U postgres
 script:
 - ./misc/autoformat.sh --check
-- py.test tests --runslow -v -s --no-postgresql
+- py.test tests --runslow -v --no-postgresql
 after_success:
 - coveralls
 deploy:
