@@ -4,6 +4,10 @@ BASEDIR=$( dirname `readlink -f $0` )
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+echo 'pre-push: checking black version...'
+# Black is fairly new, so the we stay bleeding edge
+pip install -U black | grep -v up-to-date
+
 echo 'pre-push: checking style...'
 2>&1 1>/dev/null $BASEDIR/autoformat.sh --check | grep 'reformat'
 if ( [ $? -eq 0 ] )
