@@ -4,11 +4,16 @@ from nacl.secret import SecretBox
 from nacl.exceptions import BadSignatureError, CryptoError
 
 from parsec.core.schemas import TypedManifestSchema
+from parsec.core.fs.base import SecurityError
 from parsec.utils import ParsecError
 
 
-class ManifestDecryptionError(ParsecError):
+class ManifestSignatureError(SecurityError):
     status = "invalid_signature"
+
+
+class ManifestDecryptionError(ParsecError):
+    status = "decryption_error"
 
 
 class ManifestsManager:
@@ -35,8 +40,11 @@ class ManifestsManager:
             raw = box.decrypt(blob)
         # signed = box.decrypt(blob)
         # raw = self.device.device_verifykey.verify(signed)
-        except (BadSignatureError, CryptoError, ValueError):
+        except (CryptoError, ValueError):
             raise ManifestDecryptionError()
+
+        except BadSignatureError:
+            raise ManifestSignatureError()
 
         return json.loads(raw.decode())
 
@@ -54,8 +62,11 @@ class ManifestsManager:
         box = Box(self.device.user_privkey, self.device.user_pubkey)
         try:
             raw = box.decrypt(blob)
-        except (BadSignatureError, CryptoError, ValueError):
+        except (CryptoError, ValueError):
             raise ManifestDecryptionError()
+
+        except BadSignatureError:
+            raise ManifestSignatureError()
 
         return json.loads(raw.decode())
 

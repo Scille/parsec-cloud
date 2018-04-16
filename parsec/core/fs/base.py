@@ -3,6 +3,10 @@ from parsec.utils import ParsecError
 from parsec.core.fs.access import BasePlaceHolderAccess
 
 
+class SecurityError(ParsecError):
+    pass
+
+
 class FSInvalidPath(ParsecError):
     status = "invalid_path"
 
