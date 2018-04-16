@@ -77,9 +77,11 @@ async def run_app(app):
             nursery.start_soon(app.handle_client, left)
             return right
 
-        yield connection_factory
+        try:
+            yield connection_factory
 
-        nursery.cancel_scope.cancel()
+        finally:
+            nursery.cancel_scope.cancel()
 
 
 @asynccontextmanager
@@ -93,6 +95,7 @@ async def backend_factory(**config):
 
         finally:
             await backend.shutdown()
+            nursery.cancel_scope.cancel()
 
 
 @asynccontextmanager
@@ -135,3 +138,4 @@ async def core_factory(**config):
 
         finally:
             await core.shutdown()
+            nursery.cancel_scope.cancel()

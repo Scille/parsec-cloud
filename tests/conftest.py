@@ -288,3 +288,9 @@ def mocked_local_storage_connection():
     finally:
         LocalStorage.init = vanilla_init
         LocalStorage.teardown = vanilla_teardown
+
+
+@pytest.fixture
+def monitor():
+    from tests.monitor import Monitor
+    return Monitor()
