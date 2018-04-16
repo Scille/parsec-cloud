@@ -61,12 +61,6 @@ async def portal():
 
 
 @pytest.fixture
-def monitor():
-    from trio.monitor import Monitor
-    return Monitor()
-
-
-@pytest.fixture
 def hypothesis_settings(request):
     return hypothesis.settings(
         max_examples=pytest.config.getoption("--hypothesis-max-examples"),
