@@ -5,6 +5,7 @@ import nacl.hash
 from pendulum import datetime
 from hypothesis import given, strategies as st, note, assume
 
+from parsec.core.fs.block import BlockHashError
 from parsec.core.fs import *
 
 
@@ -211,6 +212,24 @@ async def test_read_blocks(fs, mocked_blocks_manager):
             [("<block 1 id>", b"<block 1 key>"), {}],
             [("<block 2 id>", b"<block 2 key>"), {}],
         ]
+    )
+
+
+@pytest.mark.trio
+async def test_read_corrupted_blocks(fs, mocked_blocks_manager):
+    blocks_data = [b"Hello... ", b"world !"]
+    blocks_accesses = [
+        fs._block_access_cls("<block 1 id>", b"<block 1 key>", 0, 9, b"wrong_digest"),
+        fs._block_access_cls("<block 2 id>", b"<block 2 key>", 9, 7, b"wrong_digest"),
+    ]
+    foo = create_file(fs, "foo", blocks_accesses=blocks_accesses, size=16)
+    mocked_blocks_manager.fetch_from_local.side_effect = [None, None]
+    mocked_blocks_manager.fetch_from_backend.side_effect = blocks_data
+    with pytest.raises(BlockHashError):
+        await foo.read()
+    assert (
+        mocked_blocks_manager.fetch_from_backend.call_args_list
+        == [[("<block 1 id>", b"<block 1 key>"), {}]]
     )
 
 
