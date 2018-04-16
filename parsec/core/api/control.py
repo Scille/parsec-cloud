@@ -1,16 +1,12 @@
-from multiprocessing import Process
-
 from parsec.networking import ClientContext
 from parsec.schema import BaseCmdSchema, fields
 from parsec.core.app import Core
+from parsec.core.fuse_manager import (
+    FuseNotAvailable, FuseAlreadyStarted, FuseNotStarted
+)
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.devices_manager import DeviceLoadingError
 from parsec.utils import ParsecError, to_jsonb64, from_jsonb64, ejson_dumps
-
-try:
-    from parsec.ui import fuse
-except NameError:
-    fuse = None
 
 
 class PathOnlySchema(BaseCmdSchema):
@@ -81,70 +77,51 @@ async def get_core_state(req: dict, client_ctx: ClientContext, core: Core) -> di
 
 
 async def fuse_start(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    raise NotImplementedError()
+    if not core.auth_device:
+        return {"status": "login_required", "reason": "Login required"}
 
+    msg = cmd_FUSE_START_Schema().load_or_abort(req)
 
-#     if not core.auth_device:
-#         return {"status": "login_required", "reason": "Login required"}
+    try:
+        await core.fuse_manager.start_mountpoint(msg["mountpoint"])
+    except FuseNotAvailable as exc:
+        return {"status": "fuse_not_available", "reason": str(exc)}
 
-#     msg = cmd_FUSE_START_Schema().load_or_abort(req)
-#     if core.fuse_process:
-#         return {"status": "fuse_already_started", "reason": "Fuse already started"}
+    except FuseAlreadyStarted as exc:
+        return {"status": "fuse_already_started", "reason": str(exc)}
 
-#     core.mountpoint = msg["mountpoint"]
-#     if os.name == "posix":
-#         try:
-#             os.makedirs(core.mountpoint)
-#         except FileExistsError:
-#             pass
-#     core.fuse_process = Process(
-#         target=fuse.start_fuse, args=(core.config.addr, core.mountpoint)
-#     )
-#     core.fuse_process.start()
-#     if os.name == "nt":
-#         if not os.path.isabs(core.mountpoint):
-#             core.mountpoint = os.path.join(os.getcwd(), core.mountpoint)
-#         await trio.sleep(1)
-#         subprocess.Popen(
-#             "net use p: \\\\localhost\\"
-#             + core.mountpoint[0]
-#             + "$"
-#             + core.mountpoint[2:],
-#             shell=True,
-#         )
-#     return {"status": "ok"}
+    return {"status": "ok"}
 
 
 async def fuse_stop(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    raise NotImplementedError()
+    if not core.auth_device:
+        return {"status": "login_required", "reason": "Login required"}
 
+    BaseCmdSchema().load_or_abort(req)  # empty msg expected
 
-#     if not core.auth_device:
-#         return {"status": "login_required", "reason": "Login required"}
+    try:
+        await core.fuse_manager.stop_mountpoint()
+    except FuseNotAvailable as exc:
+        return {"status": "fuse_not_available", "reason": str(exc)}
 
-#     BaseCmdSchema().load_or_abort(req)  # empty msg expected
-#     if not core.fuse_process:
-#         return {"status": "fuse_not_started", "reason": "Fuse not started"}
+    except FuseNotStarted as exc:
+        return {"status": "fuse_not_started", "reason": str(exc)}
 
-#     core.fuse_process.terminate()
-#     core.fuse_process.join()
-#     core.fuse_process = None
-#     core.mountpoint = None
-#     if os.name == "nt":
-#         subprocess.call("net use p: /delete /y", shell=True)
-#     return {"status": "ok"}
+    return {"status": "ok"}
 
 
 async def fuse_open(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    raise NotImplementedError()
+    if not core.auth_device:
+        return {"status": "login_required", "reason": "Login required"}
 
+    msg = PathOnlySchema().load_or_abort(req)
 
-#     if not core.auth_device:
-#         return {"status": "login_required", "reason": "Login required"}
+    try:
+        core.fuse_manager.open_file(msg["path"])
+    except FuseNotAvailable as exc:
+        return {"status": "fuse_not_available", "reason": str(exc)}
 
-#     msg = PathOnlySchema().load_or_abort(req)
-#     if not core.fuse_process:
-#         return {"status": "fuse_not_started", "reason": "Fuse not started"}
+    except FuseNotStarted as exc:
+        return {"status": "fuse_not_started", "reason": str(exc)}
 
-#     webbrowser.open(os.path.join(core.mountpoint, msg["path"][1:]))
-#     return {"status": "ok"}
+    return {"status": "ok"}
