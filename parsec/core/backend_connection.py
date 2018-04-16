@@ -139,13 +139,14 @@ class BackendConnection:
         self._event_listener_task_cancel_scope = await nursery.start(
             self._event_listener_task
         )
-        # Try to open connection with the backend to save time for first
-        # request
-        # try:
-        #     async with self._lock:
-        #         await self._init_send_connection()
-        # except (OSError, trio.BrokenStreamError):
-        #     pass
+
+    # Try to open connection with the backend to save time for first
+    # request
+    # try:
+    #     async with self._lock:
+    #         await self._init_send_connection()
+    # except (OSError, trio.BrokenStreamError):
+    #     pass
 
     async def teardown(self):
         self._event_listener_task_cancel_scope.cancel()

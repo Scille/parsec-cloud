@@ -1,3 +1,5 @@
+import time
+import traceback
 import trio
 import os.path
 import click
@@ -94,14 +96,11 @@ def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
     log_handler = logbook.StderrHandler(level=log_level.upper())
     # Push globally the log handler make it work across threads
     log_handler.push_application()
-    config = CoreConfig(
-        debug=debug,
-        addr=socket,
-        backend_addr=backend_addr,
-        backend_watchdog=backend_watchdog,
-        auto_sync=True,
-    )
-    core = CoreApp(config)
+
+    def handle_crashing(exception):
+        traceback.print_exc()
+        print("Core crashed... Restarting!")
+        time.sleep(1)
 
     async def _login_and_run(user=None):
         async with trio.open_nursery() as nursery:
@@ -125,25 +124,44 @@ def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
             finally:
                 await core.shutdown()
 
-    print(
-        "Starting Parsec Core on %s (with backend on %s)"
-        % (socket, config.backend_addr)
+    config = CoreConfig(
+        debug=debug,
+        addr=socket,
+        backend_addr=backend_addr,
+        backend_watchdog=backend_watchdog,
+        auto_sync=True,
     )
-    try:
-        if i_am_john:
-            john_conf_dir = tempfile.mkdtemp(prefix="parsec-jdoe-conf-")
-            try:
-                user = Device(
-                    id=JOHN_DOE_DEVICE_ID,
-                    user_privkey=JOHN_DOE_PRIVATE_KEY,
-                    device_signkey=JOHN_DOE_DEVICE_SIGNING_KEY,
-                    local_storage_db_path=os.path.join(john_conf_dir, "db.sqlite"),
-                )
-                print("Hello Mr. Doe, your conf dir is `%s`" % john_conf_dir)
-                trio.run(_login_and_run, user)
-            finally:
-                shutil.rmtree(john_conf_dir)
-        else:
-            trio.run(_login_and_run)
-    except KeyboardInterrupt:
-        print("bye ;-)")
+
+    while True:
+        core = CoreApp(config)
+
+        print(
+            "Starting Parsec Core on %s (with backend on %s)"
+            % (socket, config.backend_addr)
+        )
+
+        try:
+            if i_am_john:
+                john_conf_dir = tempfile.mkdtemp(prefix="parsec-jdoe-conf-")
+                try:
+                    user = Device(
+                        id=JOHN_DOE_DEVICE_ID,
+                        user_privkey=JOHN_DOE_PRIVATE_KEY,
+                        device_signkey=JOHN_DOE_DEVICE_SIGNING_KEY,
+                        local_storage_db_path=os.path.join(john_conf_dir, "db.sqlite"),
+                    )
+                    print("Hello Mr. Doe, your conf dir is `%s`" % john_conf_dir)
+                    try:
+                        trio.run(_login_and_run, user)
+                    except Exception as exc:
+                        handle_crashing(exc)
+                finally:
+                    shutil.rmtree(john_conf_dir)
+            else:
+                try:
+                    trio.run(_login_and_run)
+                except Exception:
+                    handle_crashing()
+        except KeyboardInterrupt:
+            print("bye ;-)")
+            break
