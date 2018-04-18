@@ -10,6 +10,8 @@ from parsec.core.fs.base import FSError
 def root(fs):
     return fs._folder_entry_cls(
         access=fs._user_vlob_access_cls(b"<foo key>"),
+        user_id="alice",
+        device_name="test",
         need_flush=False,
         need_sync=False,
         created=datetime(2017, 1, 1),
@@ -25,6 +27,8 @@ def root(fs):
 def foo(fs, root):
     foo = fs._folder_entry_cls(
         access=fs._vlob_access_cls("<foo id>", "<foo rts>", "<foo wts>", b"<foo key>"),
+        user_id="alice",
+        device_name="test",
         need_flush=False,
         need_sync=True,
         created=datetime(2017, 1, 1),
@@ -44,6 +48,8 @@ def foo(fs, root):
 def bar_txt(fs, foo):
     bar = fs._file_entry_cls(
         access=fs._vlob_access_cls("<bar id>", "<bar rts>", "<bar wts>", b"<bar key>"),
+        user_id="alice",
+        device_name="test",
         need_flush=False,
         need_sync=True,
         created=datetime(2017, 1, 1),
@@ -60,6 +66,8 @@ def bar_txt(fs, foo):
 def new_txt(fs):
     return fs._file_entry_cls(
         access=fs._placeholder_access_cls("<new id>", b"<new key>"),
+        user_id="alice",
+        device_name="test",
         need_flush=True,
         need_sync=True,
         created=datetime(2017, 1, 1),
@@ -76,6 +84,8 @@ def spam_txt(fs, root):
         access=fs._vlob_access_cls(
             "<spam id>", "<spam rts>", "<spam wts>", b"<spam key>"
         ),
+        user_id="alice",
+        device_name="test",
         need_flush=False,
         created=datetime(2017, 1, 1),
         updated=datetime(2017, 12, 31, 23, 59, 59),
@@ -115,6 +125,8 @@ def create_entry(
     elif is_file:
         entry = fs._file_entry_cls(
             access=access,
+            user_id="alice",
+            device_name="test",
             need_flush=need_flush,
             need_sync=need_sync,
             created=datetime(2017, 1, 1),
@@ -126,6 +138,8 @@ def create_entry(
     else:
         entry = fs._folder_entry_cls(
             access=access,
+            user_id="alice",
+            device_name="test",
             need_flush=need_flush,
             need_sync=need_sync,
             created=datetime(2017, 1, 1),
@@ -184,6 +198,8 @@ async def test_attributes(foo, root):
 async def test_fetch_child(fs, mocked_manifests_manager, foo):
     mocked_manifests_manager.fetch_from_local.return_value = {
         "format": 1,
+        "user_id": "alice",
+        "device_name": "test",
         "type": "local_file_manifest",
         "base_version": 0,
         "need_sync": True,
@@ -330,6 +346,8 @@ async def test_flush(foo, bar_txt, mocked_manifests_manager):
         {
             "format": 1,
             "type": "local_folder_manifest",
+            "user_id": "alice",
+            "device_name": "test",
             "base_version": 0,
             "need_sync": True,
             "created": datetime(2017, 1, 1),
@@ -358,6 +376,8 @@ async def test_simple_sync(fs, mocked_manifests_manager):
             return {
                 "format": 1,
                 "type": "folder_manifest",
+                "user_id": "alice",
+                "device_name": "test",
                 "version": 2,
                 "created": datetime(2017, 1, 1),
                 "updated": datetime(2017, 12, 31, 23, 59, 59),
@@ -381,6 +401,8 @@ async def test_simple_sync(fs, mocked_manifests_manager):
         {
             "format": 1,
             "type": "folder_manifest",
+            "user_id": "alice",
+            "device_name": "test",
             "version": 2,
             "created": datetime(2017, 1, 1),
             "updated": datetime(2017, 12, 31, 23, 59, 59),
@@ -395,6 +417,8 @@ async def test_sync_with_children(fs, mocked_manifests_manager):
     folder_manifest = {
         "format": 1,
         "type": "folder_manifest",
+        "user_id": "alice",
+        "device_name": "test",
         "version": 2,
         "created": datetime(2017, 1, 1),
         "updated": datetime(2017, 12, 31, 23, 59, 59),
@@ -445,6 +469,8 @@ async def test_sync_with_children(fs, mocked_manifests_manager):
         {
             "format": 1,
             "type": "folder_manifest",
+            "user_id": "alice",
+            "device_name": "test",
             "version": 2,
             "created": datetime(2017, 1, 1),
             "updated": datetime(2017, 12, 31, 23, 59, 59),
@@ -494,6 +520,8 @@ async def test_sync_with_placeholder_children(fs, mocked_manifests_manager):
         {  # Dirty file, again we shouldn't sync the new blocks
             "format": 1,
             "type": "local_file_manifest",
+            "user_id": "alice",
+            "device_name": "test",
             "base_version": 0,
             "need_sync": True,
             "created": datetime(2017, 1, 1),
@@ -536,6 +564,8 @@ async def test_sync_with_placeholder_children(fs, mocked_manifests_manager):
                     {
                         "format": 1,
                         "type": "folder_manifest",
+                        "user_id": "alice",
+                        "device_name": "test",
                         "version": 1,
                         "created": datetime(2017, 1, 1),
                         "updated": datetime(2017, 1, 1),
@@ -550,6 +580,8 @@ async def test_sync_with_placeholder_children(fs, mocked_manifests_manager):
                     {
                         "format": 1,
                         "type": "file_manifest",
+                        "user_id": "alice",
+                        "device_name": "test",
                         "version": 1,
                         "created": datetime(2017, 1, 1),
                         "updated": datetime(2017, 1, 1),
@@ -565,6 +597,8 @@ async def test_sync_with_placeholder_children(fs, mocked_manifests_manager):
                     {
                         "format": 1,
                         "type": "file_manifest",
+                        "user_id": "alice",
+                        "device_name": "test",
                         "version": 1,
                         "created": datetime(2017, 1, 1),
                         "updated": datetime(2017, 1, 1),
@@ -587,6 +621,8 @@ async def test_sync_with_placeholder_children(fs, mocked_manifests_manager):
         {
             "format": 1,
             "type": "folder_manifest",
+            "user_id": "alice",
+            "device_name": "test",
             "version": 2,
             "created": datetime(2017, 1, 1),
             "updated": datetime(2017, 12, 31, 23, 59, 59),

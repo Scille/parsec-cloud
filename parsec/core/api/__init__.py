@@ -1,5 +1,6 @@
 from parsec.networking import ClientContext
 from parsec.core.fs import FSInvalidPath
+from parsec.core.fs.base import SecurityError
 from parsec.core.app import Core
 from parsec.core.api.event import (
     event_subscribe, event_unsubscribe, event_listen, event_list_subscribed
@@ -88,6 +89,9 @@ async def dispatch_request(req: dict, client_ctx: ClientContext, core: Core) -> 
     # Protect againsts generic exceptions
     except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
+
+    except SecurityError as exc:
+        return {"status": "security_error", "reason": str(exc)}
 
 
 __all__ = ("dispatch_request",)

@@ -5,7 +5,12 @@ from nacl.bindings.utils import sodium_memcmp
 from uuid import uuid4
 
 from parsec.utils import generate_sym_key
+from parsec.core.fs.base import SecurityError
 from parsec.core.fs.access import BaseAccess
+
+
+class BlockHashError(SecurityError):
+    status = "invalid_hash"
 
 
 @attr.s(slots=True, frozen=True)
@@ -29,7 +34,7 @@ class BaseBlockAccess(BaseAccess):
 
             digest = nacl.hash.sha256(block, encoder=nacl.encoding.Base64Encoder)
             if not sodium_memcmp(digest, self.digest):
-                raise RuntimeError("Digest error for block with access %s" % self)
+                raise BlockHashError("Digest error for block with access %s" % self)
 
         return block
 
@@ -59,9 +64,7 @@ class BaseDirtyBlockAccess(BaseAccess):
 
             digest = nacl.hash.sha256(block, encoder=nacl.encoding.Base64Encoder)
             if not sodium_memcmp(digest, self.digest):
-                raise RuntimeError(
-                    "Digest check failed for block with access %s" % self
-                )
+                raise BlockHashError("Digest error for block with access %s" % self)
 
         return block
 

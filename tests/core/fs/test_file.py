@@ -5,6 +5,7 @@ import nacl.hash
 from pendulum import datetime
 from hypothesis import given, strategies as st, note, assume
 
+from parsec.core.fs.block import BlockHashError
 from parsec.core.fs import *
 
 
@@ -38,6 +39,8 @@ def create_file(
     else:
         entry = fs._file_entry_cls(
             access=access,
+            user_id="alice",
+            device_name="test",
             need_flush=need_flush,
             need_sync=need_sync,
             created=datetime(2017, 1, 1),
@@ -124,6 +127,8 @@ def add_dirty_block(*args, not_flushed=False, **kwargs):
 def root(fs):
     return fs._folder_entry_cls(
         access=fs._user_vlob_access_cls(b"<foo key>"),
+        user_id="alice",
+        device_name="test",
         need_flush=False,
         need_sync=False,
         created=datetime(2017, 1, 1),
@@ -139,6 +144,8 @@ def root(fs):
 def bar_txt(fs, root):
     bar = fs._file_entry_cls(
         access=fs._vlob_access_cls("<bar id>", "<bar rts>", "<bar wts>", b"<bar key>"),
+        user_id="alice",
+        device_name="test",
         need_flush=False,
         need_sync=True,
         created=datetime(2017, 1, 1),
@@ -211,6 +218,24 @@ async def test_read_blocks(fs, mocked_blocks_manager):
             [("<block 1 id>", b"<block 1 key>"), {}],
             [("<block 2 id>", b"<block 2 key>"), {}],
         ]
+    )
+
+
+@pytest.mark.trio
+async def test_read_corrupted_blocks(fs, mocked_blocks_manager):
+    blocks_data = [b"Hello... ", b"world !"]
+    blocks_accesses = [
+        fs._block_access_cls("<block 1 id>", b"<block 1 key>", 0, 9, b"wrong_digest"),
+        fs._block_access_cls("<block 2 id>", b"<block 2 key>", 9, 7, b"wrong_digest"),
+    ]
+    foo = create_file(fs, "foo", blocks_accesses=blocks_accesses, size=16)
+    mocked_blocks_manager.fetch_from_local.side_effect = [None, None]
+    mocked_blocks_manager.fetch_from_backend.side_effect = blocks_data
+    with pytest.raises(BlockHashError):
+        await foo.read()
+    assert (
+        mocked_blocks_manager.fetch_from_backend.call_args_list
+        == [[("<block 1 id>", b"<block 1 key>"), {}]]
     )
 
 
@@ -313,6 +338,8 @@ async def test_flush(fs, mocked_manifests_manager, mocked_blocks_manager):
         {
             "format": 1,
             "type": "local_file_manifest",
+            "user_id": "alice",
+            "device_name": "test",
             "need_sync": True,
             "base_version": 1,
             "created": datetime(2017, 1, 1),
