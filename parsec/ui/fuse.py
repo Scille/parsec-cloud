@@ -3,7 +3,6 @@ import socket
 import click
 import logbook
 import threading
-import warnings
 from dateutil.parser import parse as dateparse
 from itertools import count
 from errno import ENOENT
@@ -14,30 +13,6 @@ except ImportError:
     from errno import EBADF as EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_get_context
-
-# TODO: remove this once fusepy 2.0.5 is released
-try:
-    from fuse import fuse_exit
-
-    warnings.warn("fuse_exit is now available in fusepy, workaround should be removed")
-except ImportError:
-    from fuse import _libfuse
-    import ctypes
-
-    # Stolen from master branch
-    # TODO: it seems currently using this function cause segfault (
-    # which is a way to exit... but not a really clean one !)
-
-    def fuse_exit():
-        """
-        This will shutdown the FUSE mount and cause the call to FUSE(...) to
-        return, similar to sending SIGINT to the process.
-        Flags the native FUSE session as terminated and will cause any running FUSE
-        event loops to exit on the next opportunity. (see fuse.c::fuse_exit)
-        """
-        fuse_ptr = ctypes.c_void_p(_libfuse.fuse_get_context().contents.fuse)
-        _libfuse.fuse_exit(fuse_ptr)
-
 
 from parsec.utils import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 

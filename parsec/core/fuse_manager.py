@@ -1,4 +1,6 @@
 import os
+import subprocess
+import tempfile
 import trio
 import blinker
 from multiprocessing import Process
@@ -54,6 +56,7 @@ class FuseManager:
             "socket_address": core_addr, "debug": debug, "nothreads": nothreads
         }
         self.mountpoint = None
+        self.drive_letter = None
         self.fuse_process = None
 
     async def teardown(self):
@@ -73,6 +76,11 @@ class FuseManager:
                     "Fuse already started on mountpoint `%s`" % self.mountpoint
                 )
 
+            if os.name == "nt":
+                self.drive_letter = mountpoint
+                mountpoint = tempfile.mkdtemp(prefix="parsec-mountpoint-")
+                mountpoint = os.path.join(mountpoint, "Parsec")
+
             if os.name == "posix":
                 try:
                     os.makedirs(mountpoint)
@@ -83,17 +91,17 @@ class FuseManager:
             )
             fuse_process.start()
             if os.name == "nt":
-                if not os.path.isabs(mountpoint):
-                    mountpoint = os.path.join(os.getcwd(), mountpoint)
-            # TODO: ask Frossigneux...
-            # await trio.sleep(1)
-            # subprocess.Popen(
-            #     "net use p: \\\\localhost\\"
-            #     + mountpoint[0]
-            #     + "$"
-            #     + mountpoint[2:],
-            #     shell=True,
-            # )
+                await trio.sleep(1)
+                subprocess.Popen(
+                    "net use "
+                    + self.drive_letter
+                    + ": \\\\localhost\\"
+                    + mountpoint[0]
+                    + "$"
+                    + mountpoint[2:]
+                    + " /persistent:no",
+                    shell=True,
+                )
 
             self.mountpoint = mountpoint
             self.fuse_process = fuse_process
@@ -124,9 +132,10 @@ class FuseManager:
             old_mountpoint = self.mountpoint
             self.mountpoint = self.fuse_process = None
 
-        # TODO: ask Frossigneux...
-        # if name == "nt":
-        #     subprocess.call("net use p: /delete /y", shell=True)
+        # TODO: remove mountpoint dir
+
+        if os.name == "nt":
+            subprocess.call("net use " + self.drive_letter + ": /delete /y", shell=True)
         self._fuse_mountpoint_stopped.send(old_mountpoint)
 
     def open_file(self, path: str):

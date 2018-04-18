@@ -1,3 +1,6 @@
+from marshmallow import validate
+import os
+
 from parsec.networking import ClientContext
 from parsec.schema import BaseCmdSchema, fields
 from parsec.core.app import Core
@@ -17,7 +20,10 @@ class cmd_LOGIN_Schema(BaseCmdSchema):
 
 
 class cmd_FUSE_START_Schema(BaseCmdSchema):
-    mountpoint = fields.String(required=True)
+    if os.name == "nt":
+        mountpoint = fields.String(required=True, validate=validate.Length(min=1, max=1))
+    else:
+        mountpoint = fields.String(required=True)
 
 
 async def login(req: dict, client_ctx: ClientContext, core: Core) -> dict:
