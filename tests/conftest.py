@@ -11,6 +11,7 @@ from tests.common import (
     freeze_time, run_app, backend_factory, core_factory, connect_backend, connect_core
 )
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
+from tests.core.test_devices_manager import alice_cleartext_device, bob_cleartext_device
 
 
 def pytest_addoption(parser):

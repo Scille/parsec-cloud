@@ -25,60 +25,52 @@ class ManifestsManager:
 
     def _encrypt_manifest(self, key, manifest):
         raw = json.dumps(manifest).encode()
-        return raw
-
         box = SecretBox(key)
-        # signed = self.device.user_signkey.sign(raw)
-        # return box.encrypt(signed)
-        return box.encrypt(raw)
+        signed = self.device.device_signkey.sign(raw)
+        return box.encrypt(signed)
 
     def _decrypt_manifest(self, key, blob):
-        return json.loads(blob.decode())
-
         box = SecretBox(key)
         try:
-            raw = box.decrypt(blob)
-        # signed = box.decrypt(blob)
-        # raw = self.device.device_verifykey.verify(signed)
-        except (CryptoError, ValueError):
-            raise ManifestDecryptionError()
-
+            signed = box.decrypt(blob)
+            raw = self.device.device_verifykey.verify(signed)
         except BadSignatureError:
             raise ManifestSignatureError()
+
+        except (CryptoError, ValueError):
+            raise ManifestDecryptionError()
 
         return json.loads(raw.decode())
 
     def _encrypt_user_manifest(self, manifest):
         raw = json.dumps(manifest).encode()
-        return raw
-
         # TODO: replace this by a SealedBox
         box = Box(self.device.user_privkey, self.device.user_pubkey)
-        return box.encrypt(raw)
+        signed = self.device.device_signkey.sign(raw)
+        return box.encrypt(signed)
 
     def _decrypt_user_manifest(self, blob):
-        return json.loads(blob.decode())
-
         box = Box(self.device.user_privkey, self.device.user_pubkey)
         try:
-            raw = box.decrypt(blob)
-        except (CryptoError, ValueError):
-            raise ManifestDecryptionError()
-
+            signed = box.decrypt(blob)
+            raw = self.device.device_verifykey.verify(signed)
         except BadSignatureError:
             raise ManifestSignatureError()
 
+        except (CryptoError, ValueError):
+            raise ManifestDecryptionError()
+
         return json.loads(raw.decode())
 
-    async def fetch_user_manifest_from_backend(self, version=None):
-        blob = await self._backend_storage.fetch_user_manifest(version=version)
+    async def fetch_user_manifest_from_local(self):
+        blob = self._local_storage.fetch_user_manifest()
         if blob:
             decrypted = self._decrypt_user_manifest(blob)
             data, _ = TypedManifestSchema(strict=True).load(decrypted)
             return data
 
-    async def fetch_user_manifest_from_local(self):
-        blob = self._local_storage.fetch_user_manifest()
+    async def fetch_user_manifest_from_backend(self, version=None):
+        blob = await self._backend_storage.fetch_user_manifest(version=version)
         if blob:
             decrypted = self._decrypt_user_manifest(blob)
             data, _ = TypedManifestSchema(strict=True).load(decrypted)
