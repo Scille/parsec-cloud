@@ -14,7 +14,8 @@ before_script:
   - sudo modprobe fuse
   - psql -c 'create database parsec_test;' -U postgres
 script:
-- ./misc/autoformat.sh --check
+# Only print output if check failed
+- OUT=$(2>&1 ./misc/autoformat.sh --check) || (echo $OUT; $(exit 1))
 - py.test tests --runslow -v --no-postgresql
 after_success:
 - coveralls
