@@ -1,3 +1,4 @@
+sudo: required
 language: python
 python:
 - '3.6'
@@ -10,6 +11,7 @@ install:
 - pip install -U coveralls
 - pip install .[postgresql,dev,fuse]
 before_script:
+  - sudo modprobe fuse
   - psql -c 'create database parsec_test;' -U postgres
 script:
 - ./misc/autoformat.sh --check
