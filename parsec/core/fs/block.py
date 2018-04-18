@@ -113,15 +113,9 @@ class BaseBlock:
         dirty_access = self._access
         # TODO: add a lock ? should be more secure, but on the other hand
         # a block is sync only once, really close to where is has been created.
-        id = await self._fs.blocks_manager.sync_new_block_with_backend(
-            dirty_access.key, self._data
-        )
+        id = await self._fs.blocks_manager.sync_new_block_with_backend(dirty_access.key, self._data)
         self._access = self._fs._block_access_cls(
-            id,
-            dirty_access.key,
-            dirty_access.offset,
-            dirty_access.size,
-            dirty_access.digest,
+            id, dirty_access.key, dirty_access.offset, dirty_access.size, dirty_access.digest
         )
 
     def is_dirty(self):
@@ -131,9 +125,7 @@ class BaseBlock:
         if self._data is None:
             return
 
-        await self._fs.blocks_manager.flush_on_local(
-            self._access.id, self._access.key, self._data
-        )
+        await self._fs.blocks_manager.flush_on_local(self._access.id, self._access.key, self._data)
         self._data = None
 
     async def fetch_data(self):

@@ -39,9 +39,7 @@ async def test_user_vlob_read_bad_version(backend, alice, alice_backend_sock):
     assert rep == {"status": "version_error", "reason": "Wrong blob version."}
 
 
-@pytest.mark.parametrize(
-    "bad_msg", [{"version": None}, {"version": "42x"}, {"bad_field": "foo"}]
-)
+@pytest.mark.parametrize("bad_msg", [{"version": None}, {"version": "42x"}, {"bad_field": "foo"}])
 @pytest.mark.trio
 async def test_user_vlob_read_bad_msg(backend, alice, alice_backend_sock, bad_msg):
     await alice_backend_sock.send({"cmd": "user_vlob_read", **bad_msg})

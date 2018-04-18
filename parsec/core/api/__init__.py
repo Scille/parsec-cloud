@@ -14,14 +14,7 @@ from parsec.core.api.management import (
     device_accept_configuration_try,
 )
 from parsec.core.api.control import (
-    login,
-    logout,
-    info,
-    list_available_logins,
-    get_core_state,
-    fuse_start,
-    fuse_stop,
-    fuse_open,
+    login, logout, info, list_available_logins, get_core_state, fuse_start, fuse_stop, fuse_open
 )
 from parsec.core.api.fs import (
     file_create,

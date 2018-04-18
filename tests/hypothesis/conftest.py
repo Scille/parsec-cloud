@@ -4,9 +4,7 @@ import queue
 from functools import partial
 from contextlib import contextmanager
 import hypothesis
-from hypothesis.stateful import (
-    RuleBasedStateMachine, run_state_machine_as_test, invariant
-)
+from hypothesis.stateful import RuleBasedStateMachine, run_state_machine_as_test, invariant
 
 
 class ThreadToTrioCommunicator:
@@ -34,9 +32,7 @@ class ThreadToTrioCommunicator:
 
     def close(self):
         # Avoid deadlock if somebody is waiting on the other end
-        self.queue.put(
-            RuntimeError("Communicator has closed while something was still listening")
-        )
+        self.queue.put(RuntimeError("Communicator has closed while something was still listening"))
 
 
 @contextmanager
@@ -69,9 +65,7 @@ def hypothesis_settings(request):
 
 
 @pytest.fixture
-async def TrioDriverRuleBasedStateMachine(
-    nursery, portal, loghandler, hypothesis_settings
-):
+async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler, hypothesis_settings):
 
     class TrioDriverRuleBasedStateMachine(RuleBasedStateMachine):
         _portal = portal

@@ -22,16 +22,11 @@ def create_file(
     dirty_blocks_accesses=None,
 ):
     if is_placeholder:
-        access = fs._placeholder_access_cls(
-            "<%s id>" % name, b"<%s key>" % name.encode()
-        )
+        access = fs._placeholder_access_cls("<%s id>" % name, b"<%s key>" % name.encode())
         base_version = 0
     else:
         access = fs._vlob_access_cls(
-            "<%s id>" % name,
-            "<%s rts>" % name,
-            "<%s wts>" % name,
-            b"<%s key>" % name.encode(),
+            "<%s id>" % name, "<%s rts>" % name, "<%s wts>" % name, b"<%s key>" % name.encode()
         )
         base_version = 1
     if is_not_loaded:
@@ -67,13 +62,7 @@ def _mocked_lookup_in_data(mock):
 
 
 def add_block(
-    file,
-    data,
-    offset=0,
-    in_local=False,
-    name=None,
-    dirty=False,
-    dirty_not_flushed=False,
+    file, data, offset=0, in_local=False, name=None, dirty=False, dirty_not_flushed=False
 ):
     if file._fs.blocks_manager.fetch_from_backend.side_effect is None:
         file._fs.blocks_manager.fetch_from_backend.side_effect = _mocked_lookup_in_data(
@@ -200,10 +189,7 @@ async def test_read_empty(fs):
 @pytest.mark.trio
 async def test_read_blocks(fs, mocked_blocks_manager):
     blocks_data = [b"Hello... ", b"world !"]
-    digests = [
-        nacl.hash.sha256(data, encoder=nacl.encoding.Base64Encoder)
-        for data in blocks_data
-    ]
+    digests = [nacl.hash.sha256(data, encoder=nacl.encoding.Base64Encoder) for data in blocks_data]
     blocks_accesses = [
         fs._block_access_cls("<block 1 id>", b"<block 1 key>", 0, 9, digests[0]),
         fs._block_access_cls("<block 2 id>", b"<block 2 key>", 9, 7, digests[1]),
@@ -214,10 +200,7 @@ async def test_read_blocks(fs, mocked_blocks_manager):
     assert content == b"Hello... world !"
     assert (
         mocked_blocks_manager.fetch_from_local.call_args_list
-        == [
-            [("<block 1 id>", b"<block 1 key>"), {}],
-            [("<block 2 id>", b"<block 2 key>"), {}],
-        ]
+        == [[("<block 1 id>", b"<block 1 key>"), {}], [("<block 2 id>", b"<block 2 key>"), {}]]
     )
 
 
@@ -346,44 +329,18 @@ async def test_flush(fs, mocked_manifests_manager, mocked_blocks_manager):
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "size": 20,
             "blocks": [
-                {
-                    "id": "<1 id>",
-                    "key": b"<1 key>",
-                    "offset": 0,
-                    "size": 10,
-                    "digest": digests[0],
-                },
-                {
-                    "id": "<2 id>",
-                    "key": b"<2 key>",
-                    "offset": 10,
-                    "size": 10,
-                    "digest": digests[1],
-                },
+                {"id": "<1 id>", "key": b"<1 key>", "offset": 0, "size": 10, "digest": digests[0]},
+                {"id": "<2 id>", "key": b"<2 key>", "offset": 10, "size": 10, "digest": digests[1]},
             ],
             "dirty_blocks": [
-                {
-                    "id": "<A id>",
-                    "key": b"<A key>",
-                    "offset": 5,
-                    "size": 5,
-                    "digest": digests[2],
-                },
-                {
-                    "id": "<B id>",
-                    "key": b"<B key>",
-                    "offset": 7,
-                    "size": 5,
-                    "digest": digests[3],
-                },
+                {"id": "<A id>", "key": b"<A key>", "offset": 5, "size": 5, "digest": digests[2]},
+                {"id": "<B id>", "key": b"<B key>", "offset": 7, "size": 5, "digest": digests[3]},
             ],
         },
     )
 
     assert mocked_blocks_manager.flush_on_local.call_count == 1
-    mocked_blocks_manager.flush_on_local.assert_called_with(
-        "<B id>", b"<B key>", b"BBBBB"
-    )
+    mocked_blocks_manager.flush_on_local.assert_called_with("<B id>", b"<B key>", b"BBBBB")
 
     assert not file.need_flush
     assert file.need_sync
@@ -417,20 +374,8 @@ async def test_simple_sync(fs, mocked_manifests_manager, mocked_blocks_manager):
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "size": 20,
             "blocks": [
-                {
-                    "id": "<1 id>",
-                    "key": b"<1 key>",
-                    "offset": 0,
-                    "size": 10,
-                    "digest": digests[0],
-                },
-                {
-                    "id": "<2 id>",
-                    "key": b"<2 key>",
-                    "offset": 10,
-                    "size": 10,
-                    "digest": digests[1],
-                },
+                {"id": "<1 id>", "key": b"<1 key>", "offset": 0, "size": 10, "digest": digests[0]},
+                {"id": "<2 id>", "key": b"<2 key>", "offset": 10, "size": 10, "digest": digests[1]},
             ],
         },
     )
@@ -525,12 +470,8 @@ def _generate_contiguous_blocks(random, slices, size):
     synced_blocks_slices=st.integers(min_value=0, max_value=25),
     synced_file_size=st.integers(min_value=0),
 )
-def test_get_merged_blocks(
-    random, dirty_blocks_count, synced_file_size, synced_blocks_slices
-):
-    synced_blocks = _generate_contiguous_blocks(
-        random, synced_blocks_slices, synced_file_size
-    )
+def test_get_merged_blocks(random, dirty_blocks_count, synced_file_size, synced_blocks_slices):
+    synced_blocks = _generate_contiguous_blocks(random, synced_blocks_slices, synced_file_size)
     synced_data = b"".join([x.data for x in synced_blocks])
     note("Synced blocks: %s" % synced_blocks)
 
@@ -554,9 +495,7 @@ def test_get_merged_blocks(
     expected_data = expected_data[:final_size]
 
     merged_blocks = file.get_merged_blocks(synced_blocks, dirty_blocks, final_size)
-    merged_data = b"".join(
-        [block.data[start:end] for block, start, end in merged_blocks]
-    )
+    merged_data = b"".join([block.data[start:end] for block, start, end in merged_blocks])
 
     assert merged_data == expected_data
 

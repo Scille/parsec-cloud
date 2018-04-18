@@ -17,9 +17,7 @@ def _get_existing_vlob(backend):
     return id, block["rts"], block["wts"], block["blobs"]
 
 
-@pytest.mark.parametrize(
-    "blob", [None, b"Initial commit."], ids=lambda x: "id=%s, blob=%s" % x
-)
+@pytest.mark.parametrize("blob", [None, b"Initial commit."], ids=lambda x: "id=%s, blob=%s" % x)
 @pytest.mark.trio
 async def test_vlob_create_and_read(backend, alice, blob):
     async with connect_backend(backend, auth_as=alice) as sock:
@@ -35,9 +33,7 @@ async def test_vlob_create_and_read(backend, alice, blob):
         id = rep["id"]
 
     async with connect_backend(backend, auth_as=alice) as sock:
-        await sock.send(
-            {"cmd": "vlob_read", "id": rep["id"], "trust_seed": rep["read_trust_seed"]}
-        )
+        await sock.send({"cmd": "vlob_read", "id": rep["id"], "trust_seed": rep["read_trust_seed"]})
         rep = await sock.recv()
         expected_content = to_jsonb64(b"" if not blob else blob)
         assert rep == {"status": "ok", "id": id, "version": 1, "blob": expected_content}
@@ -63,9 +59,7 @@ async def test_vlob_create_bad_msg(alice_backend_sock, bad_msg):
 
 @pytest.mark.trio
 async def test_vlob_read_not_found(alice_backend_sock):
-    await alice_backend_sock.send(
-        {"cmd": "vlob_read", "id": "1234", "trust_seed": "TS4242"}
-    )
+    await alice_backend_sock.send({"cmd": "vlob_read", "id": "1234", "trust_seed": "TS4242"})
     rep = await alice_backend_sock.recv()
     assert rep == {"status": "not_found_error", "reason": "Vlob not found."}
 
@@ -74,15 +68,10 @@ async def test_vlob_read_not_found(alice_backend_sock):
 async def test_vlob_read_ok(backend, alice_backend_sock):
     await populate_backend_vlob(backend)
 
-    await alice_backend_sock.send(
-        {"cmd": "vlob_read", "id": "1", "trust_seed": "<1 rts>"}
-    )
+    await alice_backend_sock.send({"cmd": "vlob_read", "id": "1", "trust_seed": "<1 rts>"})
     rep = await alice_backend_sock.recv()
 
-    assert (
-        rep
-        == {"status": "ok", "id": "1", "blob": to_jsonb64(b"1 blob v2"), "version": 2}
-    )
+    assert rep == {"status": "ok", "id": "1", "blob": to_jsonb64(b"1 blob v2"), "version": 2}
 
 
 @pytest.mark.parametrize(
@@ -164,28 +153,13 @@ async def test_vlob_update_not_found(alice_backend_sock):
         {"id": "1234", "trust_seed": "WTS42", "version": "42", "blob": None},
         {"id": "1234", "trust_seed": "WTS42", "version": "42", "blob": 42},
         {"id": "1234", "trust_seed": "WTS42", "version": "42"},
-        {
-            "id": "1234",
-            "trust_seed": "WTS42",
-            "version": None,
-            "blob": to_jsonb64(b"..."),
-        },
-        {
-            "id": "1234",
-            "trust_seed": "WTS42",
-            "version": -1,
-            "blob": to_jsonb64(b"..."),
-        },
+        {"id": "1234", "trust_seed": "WTS42", "version": None, "blob": to_jsonb64(b"...")},
+        {"id": "1234", "trust_seed": "WTS42", "version": -1, "blob": to_jsonb64(b"...")},
         {"id": "1234", "trust_seed": None, "version": "42", "blob": to_jsonb64(b"...")},
         {"id": "1234", "trust_seed": 42, "version": "42", "blob": to_jsonb64(b"...")},
         {"id": "1234", "version": "42", "blob": to_jsonb64(b"...")},
         {"id": 42, "trust_seed": "WTS42", "version": "42", "blob": to_jsonb64(b"...")},
-        {
-            "id": None,
-            "trust_seed": "WTS42",
-            "version": "42",
-            "blob": to_jsonb64(b"..."),
-        },
+        {"id": None, "trust_seed": "WTS42", "version": "42", "blob": to_jsonb64(b"...")},
         {"trust_seed": "WTS42", "version": "42", "blob": to_jsonb64(b"...")},
         {},
     ],

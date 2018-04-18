@@ -24,9 +24,7 @@ class BaseUserVlobAccess(BaseAccess):
     privkey = attr.ib()
 
     async def fetch(self):
-        return await self._fs.manifests_manager.fetch_user_manifest_from_backend(
-            self.privkey
-        )
+        return await self._fs.manifests_manager.fetch_user_manifest_from_backend(self.privkey)
 
     def dump(self, with_type=True):
         # TODO: shouldn't be called, so raise exception here

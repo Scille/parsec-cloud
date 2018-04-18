@@ -172,9 +172,7 @@ class ParsecSFTPServer(SFTPServer):
                 return FileObj(self._vfs, write=True, path=path, append=append)
 
             else:
-                raise FileNotFoundError(
-                    "[Errno 2] No such file or directory: '%s'" % path
-                )
+                raise FileNotFoundError("[Errno 2] No such file or directory: '%s'" % path)
 
         seek = 0 if pflags & FXF_TRUNC else response.stat.size
 
@@ -282,9 +280,7 @@ class ParsecSFTPServer(SFTPServer):
 
         """
         try:
-            return [b".", b".."] + [
-                d.encode() for d in self._vfs.list_dir(path).list_dir
-            ]
+            return [b".", b".."] + [d.encode() for d in self._vfs.list_dir(path).list_dir]
 
         except VFSFileNotFoundError:
             raise SFTPError(FX_NO_SUCH_FILE, "No such directory")

@@ -32,9 +32,7 @@ async def share(req: dict, client_ctx: ClientContext, core: Core) -> dict:
         }
 
         recipient = req["recipient"]
-        rep = await core.backend_connection.send(
-            {"cmd": "user_get", "user_id": recipient}
-        )
+        rep = await core.backend_connection.send({"cmd": "user_get", "user_id": recipient})
         if rep["status"] != "ok":
             # TODO: better cooking of the answer
             return rep

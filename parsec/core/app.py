@@ -71,9 +71,7 @@ class CoreApp:
                 # self.fs = FS(manifests_manager, blocks_manager)
                 await self.fs.init()
                 try:
-                    self.sharing = Sharing(
-                        device, self.signal_ns, self.fs, self.backend_connection
-                    )
+                    self.sharing = Sharing(device, self.signal_ns, self.fs, self.backend_connection)
                     await self.sharing.init(self.nursery)
                 except BaseException:
                     await self.fs.teardown()
@@ -113,9 +111,7 @@ class CoreApp:
     async def handle_client(self, sockstream):
         from parsec.core.api import dispatch_request
 
-        await serve_client(
-            lambda req, ctx: dispatch_request(req, ctx, self), sockstream
-        )
+        await serve_client(lambda req, ctx: dispatch_request(req, ctx, self), sockstream)
 
 
 Core = CoreApp

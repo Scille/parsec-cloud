@@ -32,9 +32,7 @@ async def serve_client(dispatch_request, sockstream) -> None:
             try:
                 req = await sock.recv()
             except json.JSONDecodeError:
-                rep = {
-                    "status": "invalid_msg_format", "reason": "Invalid message format"
-                }
+                rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
                 await sock.send(rep)
                 continue
 

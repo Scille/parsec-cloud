@@ -1,9 +1,7 @@
 import pytest
 
 from parsec.utils import to_jsonb64
-from parsec.core.backend_storage import (
-    BackendStorage, BackendError, BackendConcurrencyError
-)
+from parsec.core.backend_storage import BackendStorage, BackendError, BackendConcurrencyError
 from parsec.core.backend_connection import BackendConnection, BackendNotAvailable
 
 from tests.common import AsyncMock

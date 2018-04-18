@@ -2,9 +2,7 @@ import pytest
 from unittest.mock import patch
 import json
 
-from parsec.core.devices_manager import (
-    DevicesManager, DeviceSavingError, DeviceLoadingError
-)
+from parsec.core.devices_manager import DevicesManager, DeviceSavingError, DeviceLoadingError
 from parsec.utils import to_jsonb64
 
 
@@ -26,9 +24,7 @@ def fast_crypto():
     # Default crypto is really slow, so hack it just enough to give it a boost
     from nacl.pwhash import argon2i
 
-    with patch(
-        "parsec.core.devices_manager.CRYPTO_OPSLIMIT", argon2i.OPSLIMIT_INTERACTIVE
-    ), patch(
+    with patch("parsec.core.devices_manager.CRYPTO_OPSLIMIT", argon2i.OPSLIMIT_INTERACTIVE), patch(
         "parsec.core.devices_manager.CRYPTO_MEMLIMIT", argon2i.MEMLIMIT_INTERACTIVE
     ):
         yield
@@ -43,9 +39,7 @@ def alice_cleartext_device(tmpdir, alice):
 
 @pytest.fixture
 def bob_cleartext_device(tmpdir, bob):
-    return cleartext_device(
-        tmpdir, bob.id, bob.user_privkey.encode(), bob.device_signkey.encode()
-    )
+    return cleartext_device(tmpdir, bob.id, bob.user_privkey.encode(), bob.device_signkey.encode())
 
 
 def test_non_existant_base_path_list_devices(tmpdir):
@@ -72,10 +66,7 @@ def test_load_cleartext_device(tmpdir, alice_cleartext_device, alice):
     assert device.id == alice_cleartext_device
     assert alice.user_privkey == device.user_privkey
     assert alice.device_signkey == device.device_signkey
-    assert (
-        device.local_storage_db_path
-        == tmpdir.join("alice@test", "local_storage.sqlite")
-    )
+    assert device.local_storage_db_path == tmpdir.join("alice@test", "local_storage.sqlite")
 
 
 def test_register_new_cleartext_device(tmpdir, alice):
@@ -92,10 +83,7 @@ def test_register_new_cleartext_device(tmpdir, alice):
     assert device.id == device_id
     assert device.user_privkey == user_privkey
     assert device.device_signkey == device_signkey
-    assert (
-        device.local_storage_db_path
-        == tmpdir.join("alice@test", "local_storage.sqlite")
-    )
+    assert device.local_storage_db_path == tmpdir.join("alice@test", "local_storage.sqlite")
 
 
 def test_register_already_exists_device(tmpdir, alice_cleartext_device, alice):
@@ -127,10 +115,7 @@ def test_register_new_encrypted_device(tmpdir, fast_crypto, alice):
     assert device.id == device_id
     assert device.user_privkey == user_privkey
     assert device.device_signkey == device_signkey
-    assert (
-        device.local_storage_db_path
-        == tmpdir.join("alice@test", "local_storage.sqlite")
-    )
+    assert device.local_storage_db_path == tmpdir.join("alice@test", "local_storage.sqlite")
 
     dm2 = DevicesManager(str(tmpdir))
     with pytest.raises(DeviceLoadingError):

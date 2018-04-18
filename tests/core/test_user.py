@@ -16,9 +16,7 @@ async def test_user_invite_not_logged(core):
 async def test_user_invite_backend_offline(core, alice_core_sock):
     await alice_core_sock.send({"cmd": "user_invite", "user_id": "John"})
     rep = await alice_core_sock.recv()
-    assert (
-        rep == {"status": "backend_not_availabled", "reason": "Backend not available"}
-    )
+    assert rep == {"status": "backend_not_availabled", "reason": "Backend not available"}
 
 
 @pytest.mark.trio
@@ -96,7 +94,4 @@ async def test_user_invite_then_claim_timeout(
                     }
                 )
                 rep = await mallory_core_sock.recv()
-            assert (
-                rep
-                == {"status": "out_of_date_error", "reason": "Claim code is too old."}
-            )
+            assert rep == {"status": "out_of_date_error", "reason": "Claim code is too old."}

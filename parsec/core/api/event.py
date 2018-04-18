@@ -53,10 +53,7 @@ async def event_unsubscribe(req: dict, client_ctx: ClientContext, core: Core) ->
     try:
         del core.auth_subscribed_events[msg["event"], msg["subject"]]
     except KeyError:
-        return {
-            "status": "not_subscribed",
-            "reason": "Not subscribed to this event/subject couple",
-        }
+        return {"status": "not_subscribed", "reason": "Not subscribed to this event/subject couple"}
 
     return {"status": "ok"}
 
@@ -92,9 +89,7 @@ async def event_listen(req: dict, client_ctx: ClientContext, core: Core) -> dict
         return {"status": "ok", "event": event, "subject": subject}
 
 
-async def event_list_subscribed(
-    req: dict, client_ctx: ClientContext, core: Core
-) -> dict:
+async def event_list_subscribed(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 

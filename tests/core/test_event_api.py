@@ -4,9 +4,7 @@ import pytest
 @pytest.mark.trio
 async def test_event_api_subscribe_and_receive(core, alice_core_sock):
     # TODO: should fail once event name filter is implemented
-    await alice_core_sock.send(
-        {"cmd": "event_subscribe", "event": "foo", "subject": "bar"}
-    )
+    await alice_core_sock.send({"cmd": "event_subscribe", "event": "foo", "subject": "bar"})
     rep = await alice_core_sock.recv()
     assert rep == {"status": "ok"}
 
@@ -22,9 +20,7 @@ async def test_event_api_subscribe_and_receive(core, alice_core_sock):
     assert rep == {"status": "ok"}
 
     # Unsubscribe event
-    await alice_core_sock.send(
-        {"cmd": "event_unsubscribe", "event": "foo", "subject": "bar"}
-    )
+    await alice_core_sock.send({"cmd": "event_unsubscribe", "event": "foo", "subject": "bar"})
     rep = await alice_core_sock.recv()
     assert rep == {"status": "ok"}
 

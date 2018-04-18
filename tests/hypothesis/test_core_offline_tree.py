@@ -10,11 +10,7 @@ from tests.hypothesis.common import OracleFS
 @pytest.mark.slow
 @pytest.mark.trio
 async def test_offline_core_tree(
-    TrioDriverRuleBasedStateMachine,
-    mocked_local_storage_connection,
-    backend_addr,
-    tmpdir,
-    alice,
+    TrioDriverRuleBasedStateMachine, mocked_local_storage_connection, backend_addr, tmpdir, alice
 ):
 
     st_entry_name = st.text(min_size=1).filter(lambda x: "/" not in x)

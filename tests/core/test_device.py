@@ -21,9 +21,7 @@ from tests.common import connect_core, core_factory
 async def test_device_cmd_backend_offline(core, alice_core_sock, cmd):
     await alice_core_sock.send(cmd)
     rep = await alice_core_sock.recv()
-    assert (
-        rep == {"status": "backend_not_availabled", "reason": "Backend not available"}
-    )
+    assert rep == {"status": "backend_not_availabled", "reason": "Backend not available"}
 
 
 @pytest.mark.trio
@@ -39,9 +37,7 @@ async def test_device_declare_then_accepted(
 
     # 1) Existing device start listening for device configuration
 
-    await alice_core_sock.send(
-        {"cmd": "event_subscribe", "event": "device_try_claim_submitted"}
-    )
+    await alice_core_sock.send({"cmd": "event_subscribe", "event": "device_try_claim_submitted"})
     rep = await alice_core_sock.recv()
     assert rep == {"status": "ok"}
 
@@ -79,10 +75,7 @@ async def test_device_declare_then_accepted(
             # 4) Existing device accept configuration
 
             await alice_core_sock.send(
-                {
-                    "cmd": "device_accept_configuration_try",
-                    "configuration_try_id": config_try_id,
-                }
+                {"cmd": "device_accept_configuration_try", "configuration_try_id": config_try_id}
             )
             rep = await alice_core_sock.recv()
             assert rep == {"status": "ok"}

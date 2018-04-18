@@ -149,9 +149,7 @@ class PGHandler:
         self._lock = trio.Lock()
 
         self.signal_ns = signal_ns
-        self.signals = [
-            "message_arrived", "user_claimed", "user_vlob_updated", "vlob_updated"
-        ]
+        self.signals = ["message_arrived", "user_claimed", "user_vlob_updated", "vlob_updated"]
 
         for signal in self.signals:
             sighandler = self.signal_ns.signal("message_arrived")
@@ -161,9 +159,7 @@ class PGHandler:
         self.respqueue = Queue()
 
     async def init(self, nursery):
-        self._driver_thread_cancel_scope = await nursery.start(
-            self._bootstrap_driver_thread
-        )
+        self._driver_thread_cancel_scope = await nursery.start(self._bootstrap_driver_thread)
 
     async def teardown(self):
         self._driver_thread_cancel_scope.cancel()
@@ -178,9 +174,7 @@ class PGHandler:
 
             try:
                 await trio.run_sync_in_worker_thread(
-                    self._driver_thread_run,
-                    trigger_started_from_thread,
-                    cancellable=True,
+                    self._driver_thread_run, trigger_started_from_thread, cancellable=True
                 )
             finally:
                 self.reqqueue.put({"type": "stop"})
@@ -320,9 +314,7 @@ class PGHandler:
 
     async def insert_many(self, sql, paramslist):
         async with self._lock:
-            self.reqqueue.put(
-                {"type": "write_many", "sql": sql, "paramslist": paramslist}
-            )
+            self.reqqueue.put({"type": "write_many", "sql": sql, "paramslist": paramslist})
             resp = await self.get_response()
 
             if resp["status"] != "ok":
@@ -354,9 +346,7 @@ class PGHandler:
 
     async def delete_many(self, sql, paramslist):
         async with self._lock:
-            self.reqqueue.put(
-                {"type": "write_many", "sql": sql, "paramslist": paramslist}
-            )
+            self.reqqueue.put({"type": "write_many", "sql": sql, "paramslist": paramslist})
             resp = await self.get_response()
 
             if resp["status"] != "ok":
@@ -366,8 +356,6 @@ class PGHandler:
 
         def signal_handler(sender, propagate=True):
             if propagate:
-                self.reqqueue.put(
-                    {"type": "notify", "signal": signal, "sender": sender}
-                )
+                self.reqqueue.put({"type": "notify", "signal": signal, "sender": sender})
 
         return signal_handler

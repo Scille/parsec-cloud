@@ -47,14 +47,10 @@ def is_valid_device_id(tocheck):
 
 
 class DeviceConfSchema(UnknownCheckedSchema):
-    device_id = fields.String(
-        validate=validate.Regexp(DEVICE_ID_PATTERN), required=True
-    )
+    device_id = fields.String(validate=validate.Regexp(DEVICE_ID_PATTERN), required=True)
     user_privkey = fields.Base64Bytes(required=True)
     device_signkey = fields.Base64Bytes(required=True)
-    encryption = fields.String(
-        validate=validate.OneOf({"quedalle", "password"}), required=True
-    )
+    encryption = fields.String(validate=validate.OneOf({"quedalle", "password"}), required=True)
     salt = fields.Base64Bytes()
 
 
@@ -63,11 +59,7 @@ device_conf_schema = DeviceConfSchema()
 
 def _secret_box_factory(password, salt):
     key = argon2i.kdf(
-        SecretBox.KEY_SIZE,
-        password,
-        salt,
-        opslimit=CRYPTO_OPSLIMIT,
-        memlimit=CRYPTO_MEMLIMIT,
+        SecretBox.KEY_SIZE, password, salt, opslimit=CRYPTO_OPSLIMIT, memlimit=CRYPTO_MEMLIMIT
     )
     return SecretBox(key)
 
@@ -125,10 +117,7 @@ class DevicesManager:
                 device_conf_path = os.path.join(self.devices_conf_path, device_id)
                 logger.warning(
                     "Invalid %s device config:\n%s"
-                    % (
-                        device_conf_path,
-                        "\n".join(["- %s: %s" % kv for kv in errors.items()]),
-                    )
+                    % (device_conf_path, "\n".join(["- %s: %s" % kv for kv in errors.items()]))
                 )
             else:
                 devices.append(device_id)
@@ -159,15 +148,11 @@ class DevicesManager:
         except FileExistsError:
             pass
 
-    def register_new_device(
-        self, device_id, user_privkey, device_signkey, password=None
-    ):
+    def register_new_device(self, device_id, user_privkey, device_signkey, password=None):
         self._ensure_devices_conf_path_exists()
         device_conf_path = os.path.join(self.devices_conf_path, device_id)
         if os.path.exists(device_conf_path):
-            raise DeviceSavingError(
-                "Device config %s already exists" % device_conf_path
-            )
+            raise DeviceSavingError("Device config %s already exists" % device_conf_path)
 
         os.mkdir(device_conf_path)
 
@@ -203,10 +188,7 @@ class DevicesManager:
         if errors:
             raise DeviceLoadingError(
                 "Invalid %s device config:\n%s"
-                % (
-                    device_conf_path,
-                    "\n".join(["- %s: %s" % kv for kv in errors.items()]),
-                )
+                % (device_conf_path, "\n".join(["- %s: %s" % kv for kv in errors.items()]))
             )
 
         if password:
@@ -222,8 +204,7 @@ class DevicesManager:
                 device_signkey = box.decrypt(device_conf["device_signkey"])
             except nacl.exceptions.CryptoError as exc:
                 raise DeviceLoadingError(
-                    "Invalid %s device config: decryption key failure"
-                    % device_conf_path
+                    "Invalid %s device config: decryption key failure" % device_conf_path
                 ) from exc
 
         else:

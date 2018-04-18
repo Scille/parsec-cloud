@@ -152,9 +152,7 @@ async def test_online_core_tree_and_sync(
 
                 async with run_app(backend) as backend_connection_factory:
 
-                    tcp_stream_spy.install_hook(
-                        backend_addr, backend_connection_factory
-                    )
+                    tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
                     try:
 
                         on_ready = bootstrap_core

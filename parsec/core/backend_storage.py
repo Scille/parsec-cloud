@@ -50,18 +50,14 @@ class BackendStorage:
             raise BackendConcurrencyError("Error %s: %s" % (rep.pop("status"), rep))
 
     async def sync_new_manifest(self, blob):
-        rep = await self.backend_conn.send(
-            {"cmd": "vlob_create", "blob": to_jsonb64(blob)}
-        )
+        rep = await self.backend_conn.send({"cmd": "vlob_create", "blob": to_jsonb64(blob)})
         if rep["status"] != "ok":
             raise BackendError("Error %s: %s" % (rep.pop("status"), rep))
 
         return rep["id"], rep["read_trust_seed"], rep["write_trust_seed"]
 
     async def sync_new_block(self, block):
-        rep = await self.backend_conn.send(
-            {"cmd": "blockstore_post", "block": to_jsonb64(block)}
-        )
+        rep = await self.backend_conn.send({"cmd": "blockstore_post", "block": to_jsonb64(block)})
         if rep["status"] != "ok":
             raise BackendError("Error %s: %s" % (rep.pop("status"), rep))
 

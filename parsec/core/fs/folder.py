@@ -143,9 +143,7 @@ class BaseFolderEntry(BaseEntry):
             "base_version": self._base_version,
             "created": self._created,
             "updated": self._updated,
-            "children": {
-                k: v._access.dump(with_type=True) for k, v in self._children.items()
-            },
+            "children": {k: v._access.dump(with_type=True) for k, v in self._children.items()},
         }
         # Save the local folder manifest
         access = self._access
@@ -260,10 +258,7 @@ class BaseFolderEntry(BaseEntry):
                     print(bad("concurrency error sync %s" % self.path))
                     print(info("manifest %s" % manifest))
                     base = await self._fs.manifests_manager.fetch_from_backend(
-                        access.id,
-                        access.rts,
-                        access.key,
-                        version=manifest["version"] - 1,
+                        access.id, access.rts, access.key, version=manifest["version"] - 1
                     )
                     print(info("base %s" % base))
                     # Fetch last version from the backend and merge with it
@@ -363,9 +358,7 @@ class BaseFolderEntry(BaseEntry):
 
     async def insert_child_no_lock(self, name, child):
         if child._parent:
-            raise FSError(
-                "Cannot insert %r in %r given it already has a parent" % (child, self)
-            )
+            raise FSError("Cannot insert %r in %r given it already has a parent" % (child, self))
 
         if name in self._children:
             raise FSInvalidPath("Path `%s/%s` already exists" % (self.path, name))
@@ -440,9 +433,7 @@ class BaseRootEntry(BaseFolderEntry):
             "base_version": self._base_version,
             "created": self._created,
             "updated": self._updated,
-            "children": {
-                k: v._access.dump(with_type=True) for k, v in self._children.items()
-            },
+            "children": {k: v._access.dump(with_type=True) for k, v in self._children.items()},
         }
         # Save the local folder manifest
         print(good("flush %s %s" % (self.path, manifest)))
@@ -505,9 +496,7 @@ class BaseRootEntry(BaseFolderEntry):
             # Upload the file manifest as new vlob version
             while True:
                 try:
-                    await self._fs.manifests_manager.sync_user_manifest_with_backend(
-                        manifest
-                    )
+                    await self._fs.manifests_manager.sync_user_manifest_with_backend(manifest)
                     print(que("sync %s %s" % (self.path, manifest)))
                     break
 

@@ -18,14 +18,10 @@ def pytest_addoption(parser):
     parser.addoption("--hypothesis-max-examples", default=100, type=int)
     parser.addoption("--hypothesis-derandomize", action="store_true")
     parser.addoption(
-        "--no-postgresql",
-        action="store_true",
-        help="Don't run tests making use of PostgreSQL",
+        "--no-postgresql", action="store_true", help="Don't run tests making use of PostgreSQL"
     )
     parser.addoption(
-        "--only-postgresql",
-        action="store_true",
-        help="Only run tests making use of PostgreSQL",
+        "--only-postgresql", action="store_true", help="Only run tests making use of PostgreSQL"
     )
     parser.addoption("--runslow", action="store_true", help="Don't skip slow tests")
 
@@ -193,10 +189,7 @@ async def core(nursery, backend_addr, tmpdir, default_devices, config={}):
 
         for device in default_devices:
             core.devices_manager.register_new_device(
-                device.id,
-                device.user_privkey.encode(),
-                device.device_signkey.encode(),
-                "<secret>",
+                device.id, device.user_privkey.encode(), device.device_signkey.encode(), "<secret>"
             )
 
         yield core
@@ -215,10 +208,7 @@ async def core2(nursery, backend_addr, tmpdir, default_devices, config={}):
 
         for device in default_devices:
             core.devices_manager.register_new_device(
-                device.id,
-                device.user_privkey.encode(),
-                device.device_signkey.encode(),
-                "<secret>",
+                device.id, device.user_privkey.encode(), device.device_signkey.encode(), "<secret>"
             )
 
         yield core

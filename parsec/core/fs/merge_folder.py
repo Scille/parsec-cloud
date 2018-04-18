@@ -7,9 +7,7 @@ class MergeProtocol:
         self.entry = entry
 
     def __eq__(self, other):
-        return self["id"] == other["id"] if isinstance(
-            other, (MergeProtocol, dict)
-        ) else False
+        return self["id"] == other["id"] if isinstance(other, (MergeProtocol, dict)) else False
 
     def __getitem__(self, attr):
         if attr == "children":
@@ -126,9 +124,7 @@ def merge_children(base, diverged, target, on_conflict=simple_rename, inplace=No
     return resolved, modified
 
 
-def merge_folder_manifest(
-    base, diverged, target, on_conflict=simple_rename, inplace=None
-):
+def merge_folder_manifest(base, diverged, target, on_conflict=simple_rename, inplace=None):
     resolved, modified = merge_children(
         base, diverged, target, on_conflict=on_conflict, inplace=inplace
     )
@@ -139,8 +135,5 @@ def merge_folder_manifest(
         updated = diverged["updated"]
 
     return {
-        **target,
-        "version": target["version"] + 1,
-        "updated": updated,
-        "children": resolved
+        **target, "version": target["version"] + 1, "updated": updated, "children": resolved
     }, modified

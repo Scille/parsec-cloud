@@ -22,11 +22,7 @@ class FileOracle:
 @pytest.mark.slow
 @pytest.mark.trio
 async def test_core_offline_rwfile(
-    TrioDriverRuleBasedStateMachine,
-    mocked_local_storage_connection,
-    backend_addr,
-    tmpdir,
-    alice,
+    TrioDriverRuleBasedStateMachine, mocked_local_storage_connection, backend_addr, tmpdir, alice
 ):
 
     class CoreOfflineRWFile(TrioDriverRuleBasedStateMachine):
@@ -78,12 +74,7 @@ async def test_core_offline_rwfile(
         def write(self, offset, content):
             b64content = to_jsonb64(content)
             rep = self.core_cmd(
-                {
-                    "cmd": "file_write",
-                    "path": "/foo.txt",
-                    "offset": offset,
-                    "content": b64content,
-                }
+                {"cmd": "file_write", "path": "/foo.txt", "offset": offset, "content": b64content}
             )
             note(rep)
             assert rep["status"] == "ok"

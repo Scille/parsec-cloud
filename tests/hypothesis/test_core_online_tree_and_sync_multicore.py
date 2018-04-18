@@ -66,23 +66,17 @@ async def test_online_core_tree_and_sync_multicore(
                 )
 
                 async with run_app(backend) as backend_connection_factory:
-                    tcp_stream_spy.install_hook(
-                        backend_addr, backend_connection_factory
-                    )
+                    tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
 
                     try:
-                        async with core_factory(
-                            **core_config
-                        ) as self.core_1, core_factory(
+                        async with core_factory(**core_config) as self.core_1, core_factory(
                             **core_config
                         ) as self.core_2:
 
                             await self.core_1.login(alice)
                             await self.core_2.login(alice)
 
-                            async with connect_core(
-                                self.core_1
-                            ) as sock_1, connect_core(
+                            async with connect_core(self.core_1) as sock_1, connect_core(
                                 self.core_2
                             ) as sock_2:
                                 task_status.started()
@@ -132,26 +126,14 @@ async def test_online_core_tree_and_sync_multicore(
             rep = self.core_cmd(core, {"cmd": "delete", "path": path})
             note(rep)
 
-        @rule(
-            target=Files,
-            core=st_core,
-            src=Files,
-            dst_parent=Folders,
-            dst_name=st_entry_name,
-        )
+        @rule(target=Files, core=st_core, src=Files, dst_parent=Folders, dst_name=st_entry_name)
         def move_file(self, core, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd(core, {"cmd": "move", "src": src, "dst": dst})
             note(rep)
             return dst
 
-        @rule(
-            target=Folders,
-            core=st_core,
-            src=Folders,
-            dst_parent=Folders,
-            dst_name=st_entry_name,
-        )
+        @rule(target=Folders, core=st_core, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
         def move_folder(self, core, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd(core, {"cmd": "move", "src": src, "dst": dst})

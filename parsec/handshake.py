@@ -57,9 +57,7 @@ class ServerHandshake:
 
         data, errors = HandshakeAnswerSchema().load(req)
         if errors:
-            raise HandshakeFormatError(
-                "Invalid `answer` request %s: %s" % (req, errors)
-            )
+            raise HandshakeFormatError("Invalid `answer` request %s: %s" % (req, errors))
 
         self.answer = data["answer"] or b""
         self.identity = data["identity"]
@@ -69,17 +67,13 @@ class ServerHandshake:
     def build_bad_format_result_req(self):
         assert self.state in ("answer", "challenge")
         self.state = "result"
-        data, _ = HandshakeResultSchema().dump(
-            {"handshake": "result", "result": "bad_format"}
-        )
+        data, _ = HandshakeResultSchema().dump({"handshake": "result", "result": "bad_format"})
         return data
 
     def build_bad_identity_result_req(self):
         assert self.state == "answer"
         self.state = "result"
-        data, _ = HandshakeResultSchema().dump(
-            {"handshake": "result", "result": "bad_identity"}
-        )
+        data, _ = HandshakeResultSchema().dump({"handshake": "result", "result": "bad_identity"})
         return data
 
     def build_result_req(self, verify_key=None):
@@ -107,9 +101,7 @@ class ClientHandshake:
     def process_challenge_req(self, req):
         data, errors = HandshakeChallengeSchema().load(req)
         if errors:
-            raise HandshakeFormatError(
-                "Invalid `challenge` request %s: %s" % (req, errors)
-            )
+            raise HandshakeFormatError("Invalid `challenge` request %s: %s" % (req, errors))
 
         answer = self.user_signkey.sign(data["challenge"])
         rep, _ = HandshakeAnswerSchema().dump(
@@ -120,18 +112,14 @@ class ClientHandshake:
     def process_result_req(self, req):
         data, errors = HandshakeResultSchema().load(req)
         if errors:
-            raise HandshakeFormatError(
-                "Invalid `result` request %s: %s" % (req, errors)
-            )
+            raise HandshakeFormatError("Invalid `result` request %s: %s" % (req, errors))
 
         if data["result"] != "ok":
             if data["result"] == "bad_identity":
                 raise HandshakeBadIdentity("Backend didn't recognized our identity")
 
             else:
-                raise HandshakeFormatError(
-                    "Bad result for result handshake: %s" % data["result"]
-                )
+                raise HandshakeFormatError("Bad result for result handshake: %s" % data["result"])
 
 
 @attr.s
@@ -140,9 +128,7 @@ class AnonymousClientHandshake:
     def process_challenge_req(self, req):
         data, errors = HandshakeChallengeSchema().load(req)
         if errors:
-            raise HandshakeFormatError(
-                "Invalid `challenge` request %s: %s" % (req, errors)
-            )
+            raise HandshakeFormatError("Invalid `challenge` request %s: %s" % (req, errors))
 
         rep, _ = HandshakeAnswerSchema().dump(
             {"handshake": "answer", "identity": "anonymous", "answer": None}
@@ -152,15 +138,11 @@ class AnonymousClientHandshake:
     def process_result_req(self, req):
         data, errors = HandshakeResultSchema().load(req)
         if errors:
-            raise HandshakeFormatError(
-                "Invalid `result` request %s: %s" % (req, errors)
-            )
+            raise HandshakeFormatError("Invalid `result` request %s: %s" % (req, errors))
 
         if data["result"] != "ok":
             if data["result"] == "bad_identity":
                 raise HandshakeBadIdentity("Backend didn't recognized our identity")
 
             else:
-                raise HandshakeFormatError(
-                    "Bad result for result handshake: %s" % data["result"]
-                )
+                raise HandshakeFormatError("Bad result for result handshake: %s" % data["result"])

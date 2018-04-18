@@ -197,9 +197,7 @@ class BackendApp:
             and subject not in (None, client_ctx.user_id)
         ):
             # TODO: is the `subject == None` valid here ?
-            return {
-                "status": "private_event", "reason": "This type of event is private."
-            }
+            return {"status": "private_event", "reason": "This type of event is private."}
 
         def _handle_event(sender):
             try:
@@ -209,9 +207,7 @@ class BackendApp:
 
         client_ctx.subscribed_events[event, subject] = _handle_event
         if subject:
-            self.signal_ns.signal(event).connect(
-                _handle_event, sender=subject, weak=True
-            )
+            self.signal_ns.signal(event).connect(_handle_event, sender=subject, weak=True)
         else:
             self.signal_ns.signal(event).connect(_handle_event, weak=True)
         return {"status": "ok"}
@@ -222,8 +218,7 @@ class BackendApp:
             del client_ctx.subscribed_events[msg["event"], msg["subject"]]
         except KeyError:
             return {
-                "status": "not_subscribed",
-                "reason": "Not subscribed to this event/subject couple",
+                "status": "not_subscribed", "reason": "Not subscribed to this event/subject couple"
             }
 
         return {"status": "ok"}
@@ -306,9 +301,7 @@ class BackendApp:
             try:
                 req = await sock.recv()
             except JSONDecodeError:
-                rep = {
-                    "status": "invalid_msg_format", "reason": "Invalid message format"
-                }
+                rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
                 await sock.send(rep)
                 continue
 

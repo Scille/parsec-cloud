@@ -47,9 +47,7 @@ class ManifestsManager:
                 assert rep["status"] == "ok"
                 # TODO: handle crash, handle key validity expiration
                 verify_key = VerifyKey(
-                    from_jsonb64(
-                        rep["devices"][unsigned_message["device_name"]]["verify_key"]
-                    )
+                    from_jsonb64(rep["devices"][unsigned_message["device_name"]]["verify_key"])
                 )
             raw = verify_key.verify(signed)
         except json.decoder.JSONDecodeError as exc:

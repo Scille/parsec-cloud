@@ -21,9 +21,7 @@ class Synchronizer:
     async def init(self, nursery, fs):
         self.fs = fs
         self.nursery = nursery
-        self._synchronizer_task_cancel_scope = await nursery.start(
-            self._synchronizer_task
-        )
+        self._synchronizer_task_cancel_scope = await nursery.start(self._synchronizer_task)
 
     async def teardown(self):
         self._synchronizer_task_cancel_scope.cancel()

@@ -79,8 +79,7 @@ class FuseManager:
                 except FileExistsError:
                     pass
             fuse_process = Process(
-                target=start_fuse,
-                kwargs={**self._start_fuse_config, "mountpoint": mountpoint}
+                target=start_fuse, kwargs={**self._start_fuse_config, "mountpoint": mountpoint}
             )
             fuse_process.start()
             if os.name == "nt":

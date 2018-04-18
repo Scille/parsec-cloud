@@ -79,10 +79,7 @@ async def file_create(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     dirpath, filename = req["path"].rsplit("/", 1)
     parent = await core.fs.fetch_path(dirpath or "/")
     if not isinstance(parent, BaseFolderEntry):
-        return {
-            "status": "invalid_path",
-            "reason": "Path `%s` is not a directory" % parent.path,
-        }
+        return {"status": "invalid_path", "reason": "Path `%s` is not a directory" % parent.path}
 
     new_file = await parent.create_file(filename)
     await new_file.flush()
@@ -97,9 +94,7 @@ async def file_read(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     req = cmd_FILE_READ_Schema().load_or_abort(req)
     file = await core.fs.fetch_path(req["path"])
     if not isinstance(file, BaseFileEntry):
-        return {
-            "status": "invalid_path", "reason": "Path `%s` is not a file" % file.path
-        }
+        return {"status": "invalid_path", "reason": "Path `%s` is not a file" % file.path}
 
     content = await file.read(req["size"], req["offset"])
     return {"status": "ok", "content": to_jsonb64(content)}
@@ -112,9 +107,7 @@ async def file_write(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     req = cmd_FILE_WRITE_Schema().load_or_abort(req)
     file = await core.fs.fetch_path(req["path"])
     if not isinstance(file, BaseFileEntry):
-        return {
-            "status": "invalid_path", "reason": "Path `%s` is not a file" % file.path
-        }
+        return {"status": "invalid_path", "reason": "Path `%s` is not a file" % file.path}
 
     await file.write(req["content"], req["offset"])
     return {"status": "ok"}
@@ -127,9 +120,7 @@ async def file_truncate(req: dict, client_ctx: ClientContext, core: Core) -> dic
     req = cmd_FILE_TRUNCATE_Schema().load_or_abort(req)
     file = await core.fs.fetch_path(req["path"])
     if not isinstance(file, BaseFileEntry):
-        return {
-            "status": "invalid_path", "reason": "Path `%s` is not a file" % file.path
-        }
+        return {"status": "invalid_path", "reason": "Path `%s` is not a file" % file.path}
 
     await file.truncate(req["length"])
     return {"status": "ok"}
@@ -176,10 +167,7 @@ async def folder_create(req: dict, client_ctx: ClientContext, core: Core) -> dic
     dirpath, name = req["path"].rsplit("/", 1)
     parent = await core.fs.fetch_path(dirpath or "/")
     if not isinstance(parent, BaseFolderEntry):
-        return {
-            "status": "invalid_path",
-            "reason": "Path `%s` is not a directory" % parent.path,
-        }
+        return {"status": "invalid_path", "reason": "Path `%s` is not a directory" % parent.path}
 
     child = await parent.create_folder(name)
     await child.flush()
@@ -208,34 +196,23 @@ async def move(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
     if dst.startswith(src):
         return {
-            "status": "invalid_path",
-            "reason": "Cannot move `%s` to a subdirectory of itself" % src,
+            "status": "invalid_path", "reason": "Cannot move `%s` to a subdirectory of itself" % src
         }
 
     srcparent = await core.fs.fetch_path(srcdirpath or "/")
     dstparent = await core.fs.fetch_path(dstdirpath or "/")
 
     if not isinstance(srcparent, BaseFolderEntry):
-        return {
-            "status": "invalid_path",
-            "reason": "Path `%s` is not a directory" % srcparent.path,
-        }
+        return {"status": "invalid_path", "reason": "Path `%s` is not a directory" % srcparent.path}
 
     if not isinstance(dstparent, BaseFolderEntry):
-        return {
-            "status": "invalid_path",
-            "reason": "Path `%s` is not a directory" % dstparent.path,
-        }
+        return {"status": "invalid_path", "reason": "Path `%s` is not a directory" % dstparent.path}
 
     if srcfilename not in srcparent:
-        return {
-            "status": "invalid_path", "reason": "Path `%s` doesn't exists" % req["src"]
-        }
+        return {"status": "invalid_path", "reason": "Path `%s` doesn't exists" % req["src"]}
 
     if dstfilename in dstparent:
-        return {
-            "status": "invalid_path", "reason": "Path `%s` already exists" % req["dst"]
-        }
+        return {"status": "invalid_path", "reason": "Path `%s` already exists" % req["dst"]}
 
     obj = await srcparent.delete_child(srcfilename)
     await dstparent.insert_child(dstfilename, obj)
@@ -257,10 +234,7 @@ async def delete(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     dirpath, name = req["path"].rsplit("/", 1)
     parent = await core.fs.fetch_path(dirpath or "/")
     if not isinstance(parent, BaseFolderEntry):
-        return {
-            "status": "invalid_path",
-            "reason": "Path `%s` is not a directory" % parent.path,
-        }
+        return {"status": "invalid_path", "reason": "Path `%s` is not a directory" % parent.path}
 
     await parent.delete_child(name)
     await parent.flush()

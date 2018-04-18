@@ -1,9 +1,7 @@
 from parsec.networking import ClientContext
 from parsec.schema import BaseCmdSchema, fields
 from parsec.core.app import Core
-from parsec.core.fuse_manager import (
-    FuseNotAvailable, FuseAlreadyStarted, FuseNotStarted
-)
+from parsec.core.fuse_manager import FuseNotAvailable, FuseAlreadyStarted, FuseNotStarted
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.devices_manager import DeviceLoadingError
 from parsec.utils import ParsecError, to_jsonb64, from_jsonb64, ejson_dumps
@@ -54,9 +52,7 @@ async def info(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     }
 
 
-async def list_available_logins(
-    req: dict, client_ctx: ClientContext, core: Core
-) -> dict:
+async def list_available_logins(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     devices = core.devices_manager.list_available_devices()
     return {"status": "ok", "devices": devices}
 

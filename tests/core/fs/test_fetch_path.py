@@ -39,10 +39,7 @@ def populated_fs(fs):
             name="synced",
             parent=in_memory,
             access=fs._vlob_access_cls(
-                id="<synced id>",
-                rts="<synced rts>",
-                wts="<synced wts>",
-                key=b"<synced key>",
+                id="<synced id>", rts="<synced rts>", wts="<synced wts>", key=b"<synced key>"
             ),
             user_id="alice",
             device_name="test",
@@ -50,9 +47,7 @@ def populated_fs(fs):
         "placeholder": fs._file_entry_cls(
             name="placeholder",
             parent=in_memory,
-            access=fs._placeholder_access_cls(
-                id="<placeholder id>", key=b"<placeholder key>"
-            ),
+            access=fs._placeholder_access_cls(id="<placeholder id>", key=b"<placeholder key>"),
             user_id="alice",
             device_name="test",
         ),
@@ -112,11 +107,7 @@ async def test_get_path(file_cls, folder_cls):
             device_name="test",
             name="spam",
             parent=folder_cls(
-                access=None,
-                user_id="alice",
-                device_name="test",
-                name="root",
-                parent=None,
+                access=None, user_id="alice", device_name="test", name="root", parent=None
             ),
         ),
         user_id="alice",

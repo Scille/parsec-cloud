@@ -36,9 +36,7 @@ def foo(fs, root):
         base_version=0,
         name="foo",
         parent=root,
-        children_accesses={
-            "child": fs._placeholder_access_cls("<child id>", b"<child key>")
-        },
+        children_accesses={"child": fs._placeholder_access_cls("<child id>", b"<child key>")},
     )
     root._children["foo"] = foo
     return foo
@@ -81,9 +79,7 @@ def new_txt(fs):
 @pytest.fixture
 def spam_txt(fs, root):
     spam = fs._file_entry_cls(
-        access=fs._vlob_access_cls(
-            "<spam id>", "<spam rts>", "<spam wts>", b"<spam key>"
-        ),
+        access=fs._vlob_access_cls("<spam id>", "<spam rts>", "<spam wts>", b"<spam key>"),
         user_id="alice",
         device_name="test",
         need_flush=False,
@@ -108,16 +104,11 @@ def create_entry(
     need_flush=False,
 ):
     if is_placeholder:
-        access = fs._placeholder_access_cls(
-            "<%s id>" % name, b"<%s key>" % name.encode()
-        )
+        access = fs._placeholder_access_cls("<%s id>" % name, b"<%s key>" % name.encode())
         base_version = 0
     else:
         access = fs._vlob_access_cls(
-            "<%s id>" % name,
-            "<%s rts>" % name,
-            "<%s wts>" % name,
-            b"<%s key>" % name.encode(),
+            "<%s id>" % name, "<%s rts>" % name, "<%s wts>" % name, b"<%s key>" % name.encode()
         )
         base_version = 1
     if is_not_loaded:
@@ -353,9 +344,7 @@ async def test_flush(foo, bar_txt, mocked_manifests_manager):
             "created": datetime(2017, 1, 1),
             "updated": datetime(2017, 7, 7),
             "children": {
-                "renamed": {
-                    "type": "placeholder", "id": "<child id>", "key": b"<child key>"
-                },
+                "renamed": {"type": "placeholder", "id": "<child id>", "key": b"<child key>"},
                 "bar.txt": {
                     "type": "vlob",
                     "id": "<bar id>",
@@ -423,18 +412,8 @@ async def test_sync_with_children(fs, mocked_manifests_manager):
         "created": datetime(2017, 1, 1),
         "updated": datetime(2017, 12, 31, 23, 59, 59),
         "children": {
-            "bar": {
-                "id": "<bar id>",
-                "rts": "<bar rts>",
-                "wts": "<bar wts>",
-                "key": b"<bar key>",
-            },
-            "baz": {
-                "id": "<baz id>",
-                "rts": "<baz rts>",
-                "wts": "<baz wts>",
-                "key": b"<baz key>",
-            },
+            "bar": {"id": "<bar id>", "rts": "<bar rts>", "wts": "<bar wts>", "key": b"<bar key>"},
+            "baz": {"id": "<baz id>", "rts": "<baz rts>", "wts": "<baz wts>", "key": b"<baz key>"},
             "spam.txt": {
                 "id": "<spam.txt id>",
                 "rts": "<spam.txt rts>",
@@ -476,16 +455,10 @@ async def test_sync_with_children(fs, mocked_manifests_manager):
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "children": {
                 "bar": {
-                    "id": "<bar id>",
-                    "rts": "<bar rts>",
-                    "wts": "<bar wts>",
-                    "key": b"<bar key>",
+                    "id": "<bar id>", "rts": "<bar rts>", "wts": "<bar wts>", "key": b"<bar key>"
                 },
                 "baz": {
-                    "id": "<baz id>",
-                    "rts": "<baz rts>",
-                    "wts": "<baz wts>",
-                    "key": b"<baz key>",
+                    "id": "<baz id>", "rts": "<baz rts>", "wts": "<baz wts>", "key": b"<baz key>"
                 },
                 "spam.txt": {
                     "id": "<spam.txt id>",
@@ -498,9 +471,7 @@ async def test_sync_with_children(fs, mocked_manifests_manager):
     )
 
 
-@pytest.mark.xfail(
-    reason="sync_new_entry_with_backend is called in a non-deterministic order..."
-)
+@pytest.mark.xfail(reason="sync_new_entry_with_backend is called in a non-deterministic order...")
 @pytest.mark.trio
 async def test_sync_with_placeholder_children(fs, mocked_manifests_manager):
     foo = create_entry(fs, "foo", need_sync=True)
@@ -527,16 +498,9 @@ async def test_sync_with_placeholder_children(fs, mocked_manifests_manager):
             "created": datetime(2017, 1, 1),
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "size": 42,
-            "blocks": [
-                {"id": "<block id>", "key": "<block key>", "offset": 0, "size": 20}
-            ],
+            "blocks": [{"id": "<block id>", "key": "<block key>", "offset": 0, "size": 20}],
             "dirty_blocks": [
-                {
-                    "id": "<dirty block id>",
-                    "key": "<dirty block key>",
-                    "offset": 20,
-                    "size": 22,
-                }
+                {"id": "<dirty block id>", "key": "<dirty block key>", "offset": 20, "size": 22}
             ],
         }
     ]
@@ -627,32 +591,19 @@ async def test_sync_with_placeholder_children(fs, mocked_manifests_manager):
             "created": datetime(2017, 1, 1),
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "children": {
-                "bar": {
-                    "id": "<id 1>",
-                    "rts": "<rts 1>",
-                    "wts": "<wts 1>",
-                    "key": b"<bar key>",
-                },
+                "bar": {"id": "<id 1>", "rts": "<rts 1>", "wts": "<wts 1>", "key": b"<bar key>"},
                 "spam.txt": {
-                    "id": "<id 2>",
-                    "rts": "<rts 2>",
-                    "wts": "<wts 2>",
-                    "key": b"<spam.txt key>",
+                    "id": "<id 2>", "rts": "<rts 2>", "wts": "<wts 2>", "key": b"<spam.txt key>"
                 },
                 "mysterious": {
-                    "id": "<id 3>",
-                    "rts": "<rts 3>",
-                    "wts": "<wts 3>",
-                    "key": b"<mysterious key>",
+                    "id": "<id 3>", "rts": "<rts 3>", "wts": "<wts 3>", "key": b"<mysterious key>"
                 },
             },
         },
     )
 
 
-@pytest.mark.xfail(
-    reason="sync_new_entry_with_backend is called in a non-deterministic order..."
-)
+@pytest.mark.xfail(reason="sync_new_entry_with_backend is called in a non-deterministic order...")
 @pytest.mark.trio
 async def test_sync_with_concurrent_updates(fs, mocked_manifests_manager):
     foo = create_entry(fs, "foo", need_sync=True)

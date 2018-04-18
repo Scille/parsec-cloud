@@ -9,9 +9,7 @@ class PGGroupComponent(BaseGroupComponent):
         self.dbh = dbh
 
     async def perform_group_create(self, name):
-        group = await self.dbh.fetch_one(
-            "SELECT 1 FROM groups WHERE name = %s", (name,)
-        )
+        group = await self.dbh.fetch_one("SELECT 1 FROM groups WHERE name = %s", (name,))
 
         if group is not None:
             raise AlreadyExistsError("Group Already exists.")
@@ -25,8 +23,7 @@ class PGGroupComponent(BaseGroupComponent):
             raise NotFoundError("Group not found.")
 
         identities = await self.dbh.fetch_many(
-            "SELECT name, admin FROM group_identities WHERE group_id = %s",
-            (group["id"],),
+            "SELECT name, admin FROM group_identities WHERE group_id = %s", (group["id"],)
         )
 
         group = Group(group["name"])

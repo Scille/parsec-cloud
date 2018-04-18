@@ -62,9 +62,7 @@ async def test_backend_offline(unused_tcp_port, alice):
 
 
 @pytest.mark.trio
-async def test_backend_switch_offline(
-    running_backend, backend_addr, alice, tcp_stream_spy
-):
+async def test_backend_switch_offline(running_backend, backend_addr, alice, tcp_stream_spy):
     async with open_backend_connection(alice, backend_addr) as conn:
 
         # Connection ok
@@ -120,9 +118,7 @@ async def test_backend_switch_offline(
 
 
 @pytest.mark.trio
-async def test_backend_event_passthrough_not_configured(
-    running_backend, backend_addr, alice
-):
+async def test_backend_event_passthrough_not_configured(running_backend, backend_addr, alice):
     backend, _, _ = running_backend
 
     async with open_backend_connection(alice, backend_addr) as conn:
@@ -130,9 +126,7 @@ async def test_backend_event_passthrough_not_configured(
         await conn.send({"cmd": "ping"})
 
         received_by_core_events = []
-        conn.signal_ns.signal("ping").connect(
-            lambda *args: received_by_core_events.append(args)
-        )
+        conn.signal_ns.signal("ping").connect(lambda *args: received_by_core_events.append(args))
 
         # Trigger events inside the backend, core should not be notified of them
         backend.signal_ns.signal("ping").send()
@@ -145,9 +139,7 @@ async def test_backend_event_passthrough_not_configured(
 
 
 @pytest.mark.trio
-async def test_backend_event_passthrough_subscribing(
-    running_backend, backend_addr, alice
-):
+async def test_backend_event_passthrough_subscribing(running_backend, backend_addr, alice):
     backend, _, _ = running_backend
 
     async with open_backend_connection(alice, backend_addr) as conn:

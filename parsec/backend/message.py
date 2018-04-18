@@ -25,9 +25,7 @@ class BaseMessageComponent:
     async def api_message_new(self, client_ctx, msg):
         msg = cmd_NEW_Schema().load_or_abort(msg)
         await self.perform_message_new(
-            sender_device_id=client_ctx.id,
-            recipient_user_id=msg["recipient"],
-            body=msg["body"],
+            sender_device_id=client_ctx.id, recipient_user_id=msg["recipient"], body=msg["body"]
         )
         return {"status": "ok"}
 

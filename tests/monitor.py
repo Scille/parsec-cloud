@@ -259,14 +259,7 @@ io_statistics:
             task = self._tasks[taskid]
             sout.write(
                 "%-*d %-*s %-*s\n"
-                % (
-                    widths[0],
-                    taskid,
-                    widths[1],
-                    task._monitor_state,
-                    widths[2],
-                    task.name,
-                )
+                % (widths[0], taskid, widths[1], task._monitor_state, widths[2], task.name)
             )
 
     def command_task_tree(self, sout):
@@ -352,12 +345,7 @@ def monitor_client(host, port):
 def main():
     parser = argparse.ArgumentParser("usage: python -m trio.monitor [options]")
     parser.add_argument(
-        "-H",
-        "--host",
-        dest="monitor_host",
-        default=MONITOR_HOST,
-        type=str,
-        help="monitor host ip",
+        "-H", "--host", dest="monitor_host", default=MONITOR_HOST, type=str, help="monitor host ip"
     )
 
     parser.add_argument(

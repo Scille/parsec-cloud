@@ -30,24 +30,9 @@ def access(fs):
             "created": datetime(2017, 1, 1),
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "children": {
-                "e1": {
-                    "id": "<e1 id>",
-                    "rts": "<e1 rts>",
-                    "wts": "<e1 wts>",
-                    "key": b"<e1 key>",
-                },
-                "e2": {
-                    "id": "<e2 id>",
-                    "rts": "<e2 rts>",
-                    "wts": "<e2 wts>",
-                    "key": b"<e2 key>",
-                },
-                "e3": {
-                    "id": "<e3 id>",
-                    "rts": "<e3 rts>",
-                    "wts": "<e3 wts>",
-                    "key": b"<e3 key>",
-                },
+                "e1": {"id": "<e1 id>", "rts": "<e1 rts>", "wts": "<e1 wts>", "key": b"<e1 key>"},
+                "e2": {"id": "<e2 id>", "rts": "<e2 rts>", "wts": "<e2 wts>", "key": b"<e2 key>"},
+                "e3": {"id": "<e3 id>", "rts": "<e3 rts>", "wts": "<e3 wts>", "key": b"<e3 key>"},
             },
         },
         {

@@ -67,10 +67,7 @@ class BaseVlobComponent:
         msg = cmd_READ_Schema().load_or_abort(msg)
         atom = await self.read(**msg)
         return {
-            "status": "ok",
-            "id": atom.id,
-            "blob": to_jsonb64(atom.blob),
-            "version": atom.version,
+            "status": "ok", "id": atom.id, "blob": to_jsonb64(atom.blob), "version": atom.version
         }
 
     async def api_vlob_update(self, client_ctx, msg):

@@ -78,9 +78,7 @@ class BackendConnection:
                 logger.debug("recv {}", rep)
                 return rep
 
-            except (
-                BackendNotAvailable, trio.BrokenStreamError, trio.ClosedStreamError
-            ) as exc:
+            except (BackendNotAvailable, trio.BrokenStreamError, trio.ClosedStreamError) as exc:
                 logger.debug("retrying, cannot reach backend: {!r}", exc)
                 try:
                     # If it failed, reopen the socket and retry the request
@@ -99,9 +97,7 @@ class BackendConnection:
 
         async def _event_pump(sock, signal_ns, subscribed_event):
             for event, subject in subscribed_event:
-                await sock.send(
-                    {"cmd": "event_subscribe", "event": event, "subject": subject}
-                )
+                await sock.send({"cmd": "event_subscribe", "event": event, "subject": subject})
                 rep = await sock.recv()
                 if rep["status"] != "ok":
                     # TODO: better exception
@@ -126,19 +122,14 @@ class BackendConnection:
                     sock = await self._socket_connection_factory()
                     await _event_pump(sock, self.signal_ns, self._subscribed_events)
                 except (
-                    OSError,
-                    BackendNotAvailable,
-                    trio.BrokenStreamError,
-                    trio.ClosedStreamError,
+                    OSError, BackendNotAvailable, trio.BrokenStreamError, trio.ClosedStreamError
                 ):
                     # In case of connection failure, wait a bit and restart
                     await trio.sleep(1)
 
     async def init(self, nursery):
         self.nursery = nursery
-        self._event_listener_task_cancel_scope = await nursery.start(
-            self._event_listener_task
-        )
+        self._event_listener_task_cancel_scope = await nursery.start(self._event_listener_task)
 
     # Try to open connection with the backend to save time for first
     # request
@@ -159,16 +150,12 @@ class BackendConnection:
     async def subscribe_event(self, event, subject=None):
         self._subscribed_events.append((event, subject))
         self._event_listener_task_cancel_scope.cancel()
-        self._event_listener_task_cancel_scope = await self.nursery.start(
-            self._event_listener_task
-        )
+        self._event_listener_task_cancel_scope = await self.nursery.start(self._event_listener_task)
 
     async def unsubscribe_event(self, event, subject=None):
         self._subscribed_events.remove((event, subject))
         self._event_listener_task_cancel_scope.cancel()
-        self._event_listener_task_cancel_scope = await self.nursery.start(
-            self._event_listener_task
-        )
+        self._event_listener_task_cancel_scope = await self.nursery.start(self._event_listener_task)
 
 
 class AnonymousBackendConnection(BackendConnection):

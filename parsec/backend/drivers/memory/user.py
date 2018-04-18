@@ -26,9 +26,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         try:
             if user_id in self._users:
-                raise AlreadyExistsError(
-                    "User `%s` has already been registered" % user_id
-                )
+                raise AlreadyExistsError("User `%s` has already been registered" % user_id)
 
             now = pendulum.utcnow()
             if (now - invitation["date"]) > pendulum.interval(hours=1):
@@ -44,10 +42,7 @@ class MemoryUserComponent(BaseUserComponent):
             raise
 
         await self.create(
-            invitation["author"],
-            user_id,
-            broadcast_key,
-            devices=[(device_name, device_verify_key)],
+            invitation["author"], user_id, broadcast_key, devices=[(device_name, device_verify_key)]
         )
 
     async def create_invitation(self, invitation_token, author, user_id):
@@ -99,9 +94,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         user = self._users[user_id]
         if device_name in user["devices"]:
-            raise AlreadyExistsError(
-                "Device `%s@%s` already exists" % (user_id, device_name)
-            )
+            raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
 
         user["devices"][device_name] = {
             "created_on": pendulum.utcnow(),
@@ -114,9 +107,7 @@ class MemoryUserComponent(BaseUserComponent):
         user = self._users.get(user_id, {})
         device = user["devices"].get(device_name)
         if not device:
-            raise NotFoundError(
-                "Device `%s@%s` doesn't exists" % (user_id, device_name)
-            )
+            raise NotFoundError("Device `%s@%s` doesn't exists" % (user_id, device_name))
 
         # TODO: configured useful ?
         device.update({"configured": True, "verify_key": device_verify_key})
@@ -127,9 +118,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         user = self._users[user_id]
         if device_name in user["devices"]:
-            raise AlreadyExistsError(
-                "Device `%s@%s` already exists" % (user_id, device_name)
-            )
+            raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
 
         user["devices"][device_name] = {
             "created_on": pendulum.utcnow(),
@@ -139,12 +128,7 @@ class MemoryUserComponent(BaseUserComponent):
         }
 
     async def register_device_configuration_try(
-        self,
-        config_try_id,
-        user_id,
-        device_name,
-        device_verify_key,
-        user_privkey_cypherkey,
+        self, config_try_id, user_id, device_name, device_verify_key, user_privkey_cypherkey
     ):
         self._device_configuration_tries[(user_id, config_try_id)] = {
             "status": "waiting_answer",
@@ -161,9 +145,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         return config_try
 
-    async def accept_device_configuration_try(
-        self, config_try_id, user_id, cyphered_user_privkey
-    ):
+    async def accept_device_configuration_try(self, config_try_id, user_id, cyphered_user_privkey):
         config_try = self._device_configuration_tries.get((user_id, config_try_id))
         if not config_try:
             raise NotFoundError()

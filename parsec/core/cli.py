@@ -70,10 +70,7 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option("--backend-watchdog", "-W", type=click.INT, default=None)
 @click.option("--debug", "-d", is_flag=True)
 @click.option(
-    "--log-level",
-    "-l",
-    default="WARNING",
-    type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR")),
+    "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
 )
 @click.option("--pdb", is_flag=True)
 # @click.option('--identity', '-i', default=None)
@@ -115,9 +112,7 @@ def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
                     await trio.serve_unix(core.handle_client, socket[len("unix://"):])
                 elif socket.startswith("tcp://"):
                     parsed = urlparse(socket)
-                    await trio.serve_tcp(
-                        core.handle_client, parsed.port, host=parsed.hostname
-                    )
+                    await trio.serve_tcp(core.handle_client, parsed.port, host=parsed.hostname)
                 else:
                     raise SystemExit("Error: Invalid --socket value `%s`" % socket)
 
@@ -135,10 +130,7 @@ def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
     while True:
         core = CoreApp(config)
 
-        print(
-            "Starting Parsec Core on %s (with backend on %s)"
-            % (socket, config.backend_addr)
-        )
+        print("Starting Parsec Core on %s (with backend on %s)" % (socket, config.backend_addr))
 
         try:
             if i_am_john:

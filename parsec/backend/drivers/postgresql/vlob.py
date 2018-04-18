@@ -41,14 +41,11 @@ class PGVlobComponent(BaseVlobComponent):
                 rts, wts, version, blob = data
         else:
             data = await self.dbh.fetch_one(
-                "SELECT rts, wts, blob FROM vlobs WHERE id=%s AND version=%s",
-                (id, version),
+                "SELECT rts, wts, blob FROM vlobs WHERE id=%s AND version=%s", (id, version)
             )
             if not data:
                 # TODO: not cool to need 2nd request to know the error...
-                exists = await self.dbh.fetch_one(
-                    "SELECT true FROM vlobs WHERE id=%s", (id,)
-                )
+                exists = await self.dbh.fetch_one("SELECT true FROM vlobs WHERE id=%s", (id,))
                 if exists:
                     raise VersionError("Wrong blob version.")
 
@@ -66,9 +63,7 @@ class PGVlobComponent(BaseVlobComponent):
         )
 
     async def update(self, id, trust_seed, version, blob):
-        vlobs = await self.dbh.fetch_many(
-            "SELECT id, rts, wts FROM vlobs WHERE id = %s", (id,)
-        )
+        vlobs = await self.dbh.fetch_many("SELECT id, rts, wts FROM vlobs WHERE id = %s", (id,))
         vlobcount = len(vlobs)
 
         if vlobcount == 0:

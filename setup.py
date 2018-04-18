@@ -76,8 +76,7 @@ extra_requirements = {
     "drive": ["pydrive==1.3.1"],
     "dropbox": ["dropbox==7.2.1"],
     "fuse": [
-        'fusepy==2.0.4;platform_system!="Windows"',
-        'fusepy==2.0.4-win;platform_system=="Windows"',
+        'fusepy==2.0.4;platform_system!="Windows"', 'fusepy==2.0.4-win;platform_system=="Windows"'
     ],
     "postgresql": ["psycopg2==2.7.1", "aiopg==0.13.0"],
     "s3": ["boto3==1.4.4", "botocore==1.5.46"],

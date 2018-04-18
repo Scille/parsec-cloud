@@ -30,9 +30,7 @@ class PGUserComponent(BaseUserComponent):
             raise NotFoundError("No invitation for user `%s`" % user_id)
 
         ts = pendulum.from_timestamp(ts)
-        user = await self.dbh.fetch_one(
-            "SELECT 1 FROM users WHERE user_id = %s", (user_id,)
-        )
+        user = await self.dbh.fetch_one("SELECT 1 FROM users WHERE user_id = %s", (user_id,))
 
         try:
             if user is not None:
@@ -50,9 +48,7 @@ class PGUserComponent(BaseUserComponent):
             claim_tries = claim_tries + 1
 
             if claim_tries > 3:
-                await self.dbh.delete_one(
-                    "DELETE FROM invitations WHERE user_id = %s", (user_id,)
-                )
+                await self.dbh.delete_one("DELETE FROM invitations WHERE user_id = %s", (user_id,))
 
             else:
                 await self.dbh.update_one(
@@ -67,9 +63,7 @@ class PGUserComponent(BaseUserComponent):
         )
 
     async def create_invitation(self, invitation_token, author, user_id):
-        user = await self.dbh.fetch_one(
-            "SELECT 1 FROM users WHERE user_id = %s", (user_id,)
-        )
+        user = await self.dbh.fetch_one("SELECT 1 FROM users WHERE user_id = %s", (user_id,))
 
         if user is not None:
             raise AlreadyExistsError("User `%s` already exists" % user_id)
@@ -98,9 +92,7 @@ class PGUserComponent(BaseUserComponent):
         for _, key in devices:
             assert isinstance(key, (bytes, bytearray))
 
-        user = await self.dbh.fetch_one(
-            "SELECT 1 FROM users WHERE user_id = %s", (user_id,)
-        )
+        user = await self.dbh.fetch_one("SELECT 1 FROM users WHERE user_id = %s", (user_id,))
 
         if user is not None:
             raise AlreadyExistsError("User `%s` already exists" % user_id)
@@ -141,9 +133,7 @@ class PGUserComponent(BaseUserComponent):
                     "configure_token": d_configure_token,
                     "verify_key": d_verify_key.tobytes() if d_verify_key else None,
                     "revocated_on": (
-                        pendulum.from_timestamp(
-                            d_revocated_on
-                        ) if d_revocated_on else None
+                        pendulum.from_timestamp(d_revocated_on) if d_revocated_on else None
                     ),
                 }
                 for d_name, d_created_on, d_configure_token, d_verify_key, d_revocated_on in await self.dbh.fetch_many(
@@ -166,9 +156,7 @@ class PGUserComponent(BaseUserComponent):
             raise NotFoundError("User `%s` doesn't exists" % user_id)
 
         if device_name in itertools.chain(*devices):
-            raise AlreadyExistsError(
-                "Device `%s@%s` already exists" % (user_id, device_name)
-            )
+            raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
 
         await self.dbh.insert_one(
             "INSERT INTO user_devices (user_id, device_name, created_on) VALUES (%s, %s, %s)",
@@ -195,9 +183,7 @@ class PGUserComponent(BaseUserComponent):
             raise NotFoundError("User `%s` doesn't exists" % user_id)
 
         if device_name in itertools.chain(*devices):
-            raise AlreadyExistsError(
-                "Device `%s@%s` already exists" % (user_id, device_name)
-            )
+            raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
 
         await self.dbh.insert_one(
             """
@@ -208,12 +194,7 @@ class PGUserComponent(BaseUserComponent):
         )
 
     async def register_device_configuration_try(
-        self,
-        config_try_id,
-        user_id,
-        device_name,
-        device_verify_key,
-        user_privkey_cypherkey,
+        self, config_try_id, user_id, device_name, device_verify_key, user_privkey_cypherkey
     ):
         # TODO: handle multiple configuration tries on a given device
         await self.dbh.insert_one(
@@ -257,21 +238,13 @@ class PGUserComponent(BaseUserComponent):
 
         return config_try
 
-    async def accept_device_configuration_try(
-        self, config_try_id, user_id, cyphered_user_privkey
-    ):
+    async def accept_device_configuration_try(self, config_try_id, user_id, cyphered_user_privkey):
         updated = await self.dbh.update_one(
             """
             UPDATE device_configure_tries SET status = %s, cyphered_user_privkey = %s
             WHERE user_id=%s AND config_try_id=%s and status=%s
             """,
-            (
-                "accepted",
-                cyphered_user_privkey,
-                user_id,
-                config_try_id,
-                "waiting_answer",
-            ),
+            ("accepted", cyphered_user_privkey, user_id, config_try_id, "waiting_answer"),
         )
         if not updated:
             raise NotFoundError()

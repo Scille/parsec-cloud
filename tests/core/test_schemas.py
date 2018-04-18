@@ -319,9 +319,7 @@ class TestTypedAccessSchema:
         "key": "PG15IGtleT4=\n",
     }
     ORIGINAL_PLACEHOLDER = {
-        "type": "placeholder",
-        "id": "4f55b4d5b08544e2a784daf73754c7e2",
-        "key": "PG15IGtleT4=\n",
+        "type": "placeholder", "id": "4f55b4d5b08544e2a784daf73754c7e2", "key": "PG15IGtleT4=\n"
     }
 
     def test_load_placeholder(self):
@@ -329,11 +327,7 @@ class TestTypedAccessSchema:
         assert not errors
         assert (
             loaded
-            == {
-                "type": "placeholder",
-                "id": "4f55b4d5b08544e2a784daf73754c7e2",
-                "key": b"<my key>",
-            }
+            == {"type": "placeholder", "id": "4f55b4d5b08544e2a784daf73754c7e2", "key": b"<my key>"}
         )
         dumped, errors = TypedAccessSchema().dump(loaded)
         assert not errors

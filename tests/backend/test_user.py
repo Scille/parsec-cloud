@@ -37,8 +37,7 @@ async def test_user_get_ok(backend, alice, bob):
 
 
 @pytest.mark.parametrize(
-    "bad_msg",
-    [{"user_id": 42}, {"user_id": None}, {"user_id": "alice", "unknown": "field"}, {}],
+    "bad_msg", [{"user_id": 42}, {"user_id": None}, {"user_id": "alice", "unknown": "field"}, {}]
 )
 @pytest.mark.trio
 async def test_user_get_bad_msg(backend, alice, bad_msg):
@@ -79,10 +78,7 @@ async def test_user_claim_unknown_token(backend, mallory):
             }
         )
         rep = await sock.recv()
-    assert (
-        rep
-        == {"status": "not_found_error", "reason": "No invitation for user `mallory`"}
-    )
+    assert rep == {"status": "not_found_error", "reason": "No invitation for user `mallory`"}
 
 
 @pytest.fixture

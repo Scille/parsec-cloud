@@ -4,9 +4,7 @@ from nacl.signing import SigningKey
 from parsec.networking import ClientContext
 from parsec.schema import BaseCmdSchema, fields
 from parsec.core.app import Core
-from parsec.core.backend_connection import (
-    BackendNotAvailable, backend_send_anonymous_cmd
-)
+from parsec.core.backend_connection import BackendNotAvailable, backend_send_anonymous_cmd
 from parsec.utils import to_jsonb64, from_jsonb64, ejson_dumps
 
 
@@ -38,9 +36,7 @@ async def user_invite(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
     msg = cmd_USER_INVITE_Schema().load_or_abort(req)
     try:
-        rep = await core.backend_connection.send(
-            {"cmd": "user_invite", "user_id": msg["user_id"]}
-        )
+        rep = await core.backend_connection.send({"cmd": "user_invite", "user_id": msg["user_id"]})
     except BackendNotAvailable:
         return {"status": "backend_not_availabled", "reason": "Backend not available"}
 
@@ -125,27 +121,20 @@ async def device_configure(req: dict, client_ctx: ClientContext, core: Core) -> 
     user_privkey = PrivateKey(user_privkey_raw)
 
     core.devices_manager.register_new_device(
-        msg["device_id"],
-        user_privkey.encode(),
-        device_signkey.encode(),
-        msg["password"],
+        msg["device_id"], user_privkey.encode(), device_signkey.encode(), msg["password"]
     )
 
     return {"status": "ok"}
 
 
-async def device_get_configuration_try(
-    req: dict, client_ctx: ClientContext, core: Core
-) -> dict:
+async def device_get_configuration_try(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
     return await _backend_passthrough(core, req)
 
 
-async def device_accept_configuration_try(
-    req: dict, client_ctx: ClientContext, core: Core
-) -> dict:
+async def device_accept_configuration_try(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
@@ -153,10 +142,7 @@ async def device_accept_configuration_try(
 
     conf_try = core._config_try_pendings.get(msg["configuration_try_id"])
     if not conf_try:
-        return {
-            "status": "unknown_configuration_try_id",
-            "reason": "Unknown configuration try id",
-        }
+        return {"status": "unknown_configuration_try_id", "reason": "Unknown configuration try id"}
 
     user_privkey_cypherkey_raw = from_jsonb64(conf_try["user_privkey_cypherkey"])
     box = SealedBox(PublicKey(user_privkey_cypherkey_raw))

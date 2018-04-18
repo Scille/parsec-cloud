@@ -139,9 +139,7 @@ class BaseNotLoadedEntry(BaseEntry):
                 return self._loaded
 
             else:
-                raise FSLoadError(
-                    "%s: cannot fetch access %r" % (self.path, self._access)
-                )
+                raise FSLoadError("%s: cannot fetch access %r" % (self.path, self._access))
 
     async def flush(self, recursive=False):
         # If the entry is not loaded, then there is nothing to be flushed

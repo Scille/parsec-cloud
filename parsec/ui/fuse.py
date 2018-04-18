@@ -85,21 +85,14 @@ def start_shutdown_watcher(socket_address, mountpoint):
         sock = _socket_init(socket_address)
         _socket_send_cmd(
             sock,
-            {
-                "cmd": "event_subscribe",
-                "event": "fuse_mountpoint_need_stop",
-                "subject": mountpoint,
-            },
+            {"cmd": "event_subscribe", "event": "fuse_mountpoint_need_stop", "subject": mountpoint},
         )
         logger.debug("Shutdown watcher Started")
         while True:
             try:
                 rep = _socket_send_cmd(sock, {"cmd": "event_listen"})
                 assert rep["status"] == "ok"
-                if (
-                    rep["event"] == "fuse_mountpoint_need_stop"
-                    and rep["subject"] == mountpoint
-                ):
+                if rep["event"] == "fuse_mountpoint_need_stop" and rep["subject"] == mountpoint:
                     logger.warning("Received need stop event, exiting...")
                     break
 
@@ -124,10 +117,7 @@ class ContentBuilder:
         for current_offset in self.contents:
             current_content = self.contents[current_offset]
             # Insert inside
-            if (
-                offset >= current_offset
-                and end_offset <= current_offset + len(current_content)
-            ):
+            if offset >= current_offset and end_offset <= current_offset + len(current_content):
                 new_data = current_content[:offset - current_offset]
                 new_data += data
                 new_data += current_content[offset - current_offset + len(data):]
@@ -160,18 +150,12 @@ class ContentBuilder:
 @click.argument(
     "mountpoint",
     type=click.Path(
-        **(
-            {"exists": True, "file_okay": False} if os.name
-            == "posix" else {"exists": False}
-        )
+        **({"exists": True, "file_okay": False} if os.name == "posix" else {"exists": False})
     )
 )
 @click.option("--debug", "-d", is_flag=True, default=False)
 @click.option(
-    "--log-level",
-    "-l",
-    default="WARNING",
-    type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR")),
+    "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
 )
 @click.option("--nothreads", is_flag=True, default=False)
 @click.option(
@@ -249,10 +233,7 @@ class File:
         for offset, content in builder.contents.items():
             # TODO use flags
             response = self._operations.send_cmd(
-                cmd="file_write",
-                path=self.path,
-                content=to_jsonb64(content),
-                offset=offset,
+                cmd="file_write", path=self.path, content=to_jsonb64(content), offset=offset
             )
             if response["status"] != "ok":
                 raise FuseOSError(ENOENT)
@@ -313,9 +294,7 @@ class FuseOperations(LoggingMixIn, Operations):
                 stat["created"]
             ).timestamp()  # TODO change to local timezone
             fuse_stat["st_mtime"] = dateparse(stat["updated"]).timestamp()
-            fuse_stat["st_atime"] = dateparse(
-                stat["updated"]
-            ).timestamp()  # TODO not supported ?
+            fuse_stat["st_atime"] = dateparse(stat["updated"]).timestamp()  # TODO not supported ?
             fuse_stat["st_nlink"] = 1
         fuse_stat["st_mode"] |= S_IRWXU | S_IRWXG | S_IRWXO
         uid, gid, _ = fuse_get_context()
@@ -420,9 +399,7 @@ class FuseOperations(LoggingMixIn, Operations):
         return 0  # TODO
 
 
-def start_fuse(
-    socket_address: str, mountpoint: str, debug: bool = False, nothreads: bool = False
-):
+def start_fuse(socket_address: str, mountpoint: str, debug: bool = False, nothreads: bool = False):
     operations = FuseOperations(socket_address)
     start_shutdown_watcher(socket_address, mountpoint)
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)

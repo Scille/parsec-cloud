@@ -99,9 +99,7 @@ async def test_online(
 
                 async with run_app(backend) as backend_connection_factory:
 
-                    tcp_stream_spy.install_hook(
-                        backend_addr, backend_connection_factory
-                    )
+                    tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
                     try:
 
                         on_ready = bootstrap_core
@@ -146,12 +144,7 @@ async def test_online(
         def write(self, offset, content):
             b64content = to_jsonb64(content)
             rep = self.core_cmd(
-                {
-                    "cmd": "file_write",
-                    "path": "/foo.txt",
-                    "offset": offset,
-                    "content": b64content,
-                }
+                {"cmd": "file_write", "path": "/foo.txt", "offset": offset, "content": b64content}
             )
             note(rep)
             assert rep["status"] == "ok"

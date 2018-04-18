@@ -67,9 +67,7 @@ class Sharing:
                             shared_with_folder_name
                         )
                     else:
-                        shared_with_folder = await self.fs.root.fetch_child(
-                            shared_with_folder_name
-                        )
+                        shared_with_folder = await self.fs.root.fetch_child(shared_with_folder_name)
                     sharing_name = sharing_msg["name"]
                     while True:
                         try:
@@ -91,15 +89,9 @@ class Sharing:
         self.msg_arrived.set()
 
     async def init(self, nursery):
-        self._message_listener_task_cancel_scope = await nursery.start(
-            self._message_listener_task
-        )
-        await self.backend_connection.subscribe_event(
-            "message_arrived", self.device.user_id
-        )
-        self.signal_ns.signal("message_arrived").connect(
-            self._msg_arrived_cb, weak=True
-        )
+        self._message_listener_task_cancel_scope = await nursery.start(self._message_listener_task)
+        await self.backend_connection.subscribe_event("message_arrived", self.device.user_id)
+        self.signal_ns.signal("message_arrived").connect(self._msg_arrived_cb, weak=True)
 
     async def teardown(self):
         self._message_listener_task_cancel_scope.cancel()

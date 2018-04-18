@@ -77,9 +77,7 @@ class LocalStorage(BaseLocalStorage):
 
     def flush_user_manifest(self, blob):
         cur = self.conn.cursor()
-        cur.execute(
-            'INSERT OR REPLACE INTO manifests (id, blob) VALUES ("0", ?)', (blob,)
-        )
+        cur.execute('INSERT OR REPLACE INTO manifests (id, blob) VALUES ("0", ?)', (blob,))
         self.conn.commit()
 
     def fetch_manifest(self, id):
@@ -93,9 +91,7 @@ class LocalStorage(BaseLocalStorage):
 
     def flush_manifest(self, id, blob):
         cur = self.conn.cursor()
-        cur.execute(
-            "INSERT OR REPLACE INTO manifests (id, blob) VALUES (?, ?)", (id, blob)
-        )
+        cur.execute("INSERT OR REPLACE INTO manifests (id, blob) VALUES (?, ?)", (id, blob))
         self.conn.commit()
 
     def move_manifest(self, id, new_id):
@@ -112,9 +108,7 @@ class LocalStorage(BaseLocalStorage):
 
     def flush_block(self, id, blob):
         cur = self.conn.cursor()
-        cur.execute(
-            "INSERT OR REPLACE INTO blocks (id, blob) VALUES (?, ?)", (id, blob)
-        )
+        cur.execute("INSERT OR REPLACE INTO blocks (id, blob) VALUES (?, ?)", (id, blob))
         self.conn.commit()
 
     def fetch_dirty_block(self, id):
@@ -126,7 +120,5 @@ class LocalStorage(BaseLocalStorage):
 
     def flush_dirty_block(self, id, blob):
         cur = self.conn.cursor()
-        cur.execute(
-            "INSERT OR REPLACE INTO blocks (id, blob) VALUES (?, ?)", (id, blob)
-        )
+        cur.execute("INSERT OR REPLACE INTO blocks (id, blob) VALUES (?, ?)", (id, blob))
         self.conn.commit()

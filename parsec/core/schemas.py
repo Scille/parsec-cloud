@@ -12,9 +12,7 @@ class BlockAccessSchema(UnknownCheckedSchema):
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
     size = fields.Integer(required=True, validate=validate.Range(min=0))
-    digest = fields.Base64Bytes(
-        required=True, validate=validate.Length(min=1, max=4096)
-    )
+    digest = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
 
 
 class SyncedAccessSchema(UnknownCheckedSchema):
@@ -71,9 +69,7 @@ class TypedPlaceHolderAccessSchema(UnknownCheckedSchema):
 class TypedAccessSchema(OneOfSchema):
     type_field = "type"
     type_field_remove = False
-    type_schemas = {
-        "placeholder": TypedPlaceHolderAccessSchema, "vlob": TypedVlobAccessSchema
-    }
+    type_schemas = {"placeholder": TypedPlaceHolderAccessSchema, "vlob": TypedVlobAccessSchema}
 
     def get_obj_type(self, obj):
         return obj["type"]

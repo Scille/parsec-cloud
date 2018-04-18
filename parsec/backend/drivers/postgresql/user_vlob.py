@@ -26,8 +26,7 @@ class PGUserVlobComponent(BaseUserVlobComponent):
                 version, blob = data
         else:
             data = await self.dbh.fetch_one(
-                "SELECT blob FROM user_vlobs WHERE user_id=%s AND version=%s",
-                (user_id, version),
+                "SELECT blob FROM user_vlobs WHERE user_id=%s AND version=%s", (user_id, version)
             )
             if not data:
                 raise VersionError("Wrong blob version.")

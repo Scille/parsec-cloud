@@ -53,15 +53,9 @@ def run_with_pdb(cmd, *args, **kwargs):
 
 @click.command()
 @click.option("--pubkeys", default=None)
-@click.option(
-    "--host", "-H", default="127.0.0.1", help="Host to listen on (default: 127.0.0.1)"
-)
-@click.option(
-    "--port", "-P", default=6777, type=int, help=("Port to listen on (default: 6777)")
-)
-@click.option(
-    "--store", "-s", default=None, help="Store configuration (default: in memory)"
-)
+@click.option("--host", "-H", default="127.0.0.1", help="Host to listen on (default: 127.0.0.1)")
+@click.option("--port", "-P", default=6777, type=int, help=("Port to listen on (default: 6777)"))
+@click.option("--store", "-s", default=None, help="Store configuration (default: in memory)")
 @click.option(
     "--block-store",
     "-b",
@@ -70,10 +64,7 @@ def run_with_pdb(cmd, *args, **kwargs):
     "backend creates it own in-memory block store).",
 )
 @click.option(
-    "--log-level",
-    "-l",
-    default="WARNING",
-    type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR")),
+    "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
 )
 @click.option("--debug", "-d", is_flag=True)
 @click.option("--pdb", is_flag=True)

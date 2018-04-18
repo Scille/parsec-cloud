@@ -69,22 +69,15 @@ class BaseUserComponent:
 
     def __init__(self, signal_ns):
         self._signal_user_claimed = signal_ns.signal("user_claimed")
-        self._signal_device_try_claim_submitted = signal_ns.signal(
-            "device_try_claim_submitted"
-        )
-        self._signal_device_try_claim_answered = signal_ns.signal(
-            "device_try_claim_answered"
-        )
+        self._signal_device_try_claim_submitted = signal_ns.signal("device_try_claim_submitted")
+        self._signal_device_try_claim_answered = signal_ns.signal("device_try_claim_answered")
 
     async def api_user_get(self, client_ctx, msg):
         msg = UserIDSchema().load_or_abort(msg)
         try:
             user = await self.get(msg["user_id"])
         except NotFoundError:
-            return {
-                "status": "not_found",
-                "reason": "No user with id `%s`." % msg["user_id"],
-            }
+            return {"status": "not_found", "reason": "No user with id `%s`." % msg["user_id"]}
 
         data, errors = UserSchema().dump(user)
         if errors:
@@ -99,8 +92,7 @@ class BaseUserComponent:
             await self.create_invitation(token, client_ctx.id, msg["user_id"])
         except AlreadyExistsError:
             return {
-                "status": "already_exists",
-                "reason": "User `%s` already exists." % msg["user_id"],
+                "status": "already_exists", "reason": "User `%s` already exists." % msg["user_id"]
             }
 
         return {"status": "ok", "user_id": msg["user_id"], "invitation_token": token}
@@ -135,22 +127,16 @@ class BaseUserComponent:
         try:
             user = await self.get(user_id)
         except NotFoundError:
-            return {
-                "status": "not_found",
-                "reason": "No user with id `%s`." % msg["user_id"],
-            }
+            return {"status": "not_found", "reason": "No user with id `%s`." % msg["user_id"]}
 
         device = user["devices"].get(msg["device_name"])
         if not device:
             return {
-                "status": "not_found",
-                "reason": "Device `%s` doesn't exists." % msg["device_name"],
+                "status": "not_found", "reason": "Device `%s` doesn't exists." % msg["device_name"]
             }
 
         if device["configure_token"] != msg["configure_device_token"]:
-            return {
-                "status": "invalid_token", "reason": "Wrong device configuration token."
-            }
+            return {"status": "invalid_token", "reason": "Wrong device configuration token."}
 
         config_try_id = _generate_token()
         await self.register_device_configuration_try(
@@ -182,23 +168,15 @@ class BaseUserComponent:
                 }
 
         # Should not raise NotFoundError given we created this just above
-        config_try = await self.retrieve_device_configuration_try(
-            config_try_id, user_id
-        )
+        config_try = await self.retrieve_device_configuration_try(config_try_id, user_id)
 
         if config_try["status"] != "accepted":
-            return {
-                "status": "configuration_refused",
-                "reason": config_try["refused_reason"],
-            }
+            return {"status": "configuration_refused", "reason": config_try["refused_reason"]}
 
-        await self.configure_device(
-            user_id, msg["device_name"], msg["device_verify_key"]
-        )
+        await self.configure_device(user_id, msg["device_name"], msg["device_verify_key"])
 
         return {
-            "status": "ok",
-            "cyphered_user_privkey": to_jsonb64(config_try["cyphered_user_privkey"]),
+            "status": "ok", "cyphered_user_privkey": to_jsonb64(config_try["cyphered_user_privkey"])
         }
 
     async def api_device_get_configuration_try(self, client_ctx, msg):
@@ -208,9 +186,7 @@ class BaseUserComponent:
                 msg["configuration_try_id"], client_ctx.user_id
             )
         except NotFoundError:
-            return {
-                "status": "not_found", "reason": "Unknown device configuration try."
-            }
+            return {"status": "not_found", "reason": "Unknown device configuration try."}
 
         return {
             "status": "ok",
@@ -224,20 +200,13 @@ class BaseUserComponent:
         msg = DeviceAcceptConfigurationTrySchema().load_or_abort(msg)
         try:
             await self.accept_device_configuration_try(
-                msg["configuration_try_id"],
-                client_ctx.user_id,
-                msg["cyphered_user_privkey"],
+                msg["configuration_try_id"], client_ctx.user_id, msg["cyphered_user_privkey"]
             )
         except NotFoundError:
-            return {
-                "status": "not_found", "reason": "Unknown device configuration try."
-            }
+            return {"status": "not_found", "reason": "Unknown device configuration try."}
 
         except AlreadyExistsError:
-            return {
-                "status": "already_done",
-                "reason": "Device configuration try already done.",
-            }
+            return {"status": "already_done", "reason": "Device configuration try already done."}
 
         self._signal_device_try_claim_answered.send(msg["configuration_try_id"])
         return {"status": "ok"}
@@ -249,15 +218,10 @@ class BaseUserComponent:
                 msg["configuration_try_id"], client_ctx.user_id, msg["reason"]
             )
         except NotFoundError:
-            return {
-                "status": "not_found", "reason": "Unknown device configuration try."
-            }
+            return {"status": "not_found", "reason": "Unknown device configuration try."}
 
         except AlreadyExistsError:
-            return {
-                "status": "already_done",
-                "reason": "Device configuration try already done.",
-            }
+            return {"status": "already_done", "reason": "Device configuration try already done."}
 
         self._signal_device_try_claim_answered.send(msg["configuration_try_id"])
         return {"status": "ok"}
@@ -281,9 +245,7 @@ class BaseUserComponent:
     async def retrieve_device_configuration_try(self, config_try_id, user_id):
         raise NotImplementedError()
 
-    async def accept_device_configuration_try(
-        self, config_try_id, user_id, cyphered_user_privkey
-    ):
+    async def accept_device_configuration_try(self, config_try_id, user_id, cyphered_user_privkey):
         raise NotImplementedError()
 
     async def refuse_device_configuration_try(self, config_try_id, user_id, reason):

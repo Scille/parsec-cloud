@@ -70,12 +70,7 @@ def test_process_result_req_bad_identity(alice):
     [
         {},
         {"handshake": "foo", "identity": "alice@test", "answer": b"1234567890"},
-        {
-            "handshake": "answer",
-            "identity": "alice@test",
-            "answer": b"1234567890",
-            "foo": "bar",
-        },
+        {"handshake": "answer", "identity": "alice@test", "answer": b"1234567890", "foo": "bar"},
         {"handshake": "answer", "identity": "alice@test", "answer": 42},
         {"handshake": "answer", "answer": b"1234567890"},
         {"handshake": "answer", "identity": "alice@test"},

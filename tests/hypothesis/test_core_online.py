@@ -40,9 +40,7 @@ async def test_online(
 
                 async with run_app(backend) as backend_connection_factory:
 
-                    tcp_stream_spy.install_hook(
-                        backend_addr, backend_connection_factory
-                    )
+                    tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
                     try:
                         async with core_factory(**core_config) as core:
                             await core.login(alice)
@@ -63,8 +61,6 @@ async def test_online(
         def get_core_state(self):
             rep = self.core_cmd({"cmd": "get_core_state"})
             note(rep)
-            assert (
-                rep == {"status": "ok", "login": "alice@test", "backend_online": True}
-            )
+            assert rep == {"status": "ok", "login": "alice@test", "backend_online": True}
 
     await CoreOnline.run_test()

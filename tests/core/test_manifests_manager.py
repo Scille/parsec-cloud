@@ -65,11 +65,7 @@ def original_manifest():
 @pytest.mark.usefixtures("bob_cleartext_device")
 @pytest.fixture
 def user_manifests_samples(
-    manifests_manager,
-    original_manifest,
-    alice_cleartext_device,
-    bob_cleartext_device,
-    tmpdir,
+    manifests_manager, original_manifest, alice_cleartext_device, bob_cleartext_device, tmpdir
 ):
     manifest_raw = json.dumps(original_manifest).encode()
     # Decryption error
@@ -79,15 +75,11 @@ def user_manifests_samples(
     signed = bob_device.device_signkey.sign(manifest_raw)
     decryption_error_manifest = bob_box.encrypt(signed)
     # Signature error
-    alice_box = Box(
-        manifests_manager.device.user_privkey, manifests_manager.device.user_pubkey
-    )
+    alice_box = Box(manifests_manager.device.user_privkey, manifests_manager.device.user_pubkey)
     signed = bob_device.device_signkey.sign(manifest_raw)
     signature_error_manifest = alice_box.encrypt(signed)
     # Json decode error
-    alice_box = Box(
-        manifests_manager.device.user_privkey, manifests_manager.device.user_pubkey
-    )
+    alice_box = Box(manifests_manager.device.user_privkey, manifests_manager.device.user_pubkey)
     signed = manifests_manager.device.device_signkey.sign(b"foo")
     json_error_manifest = alice_box.encrypt(signed)
     # Ok
@@ -103,9 +95,7 @@ def user_manifests_samples(
 
 @pytest.mark.usefixtures("bob_cleartext_device")
 @pytest.fixture
-def manifests_samples(
-    manifests_manager, original_manifest, bob_cleartext_device, tmpdir
-):
+def manifests_samples(manifests_manager, original_manifest, bob_cleartext_device, tmpdir):
     manifest_raw = json.dumps(original_manifest).encode()
     # Decryption error
     devices_manager = DevicesManager(str(tmpdir))
@@ -133,9 +123,7 @@ def manifests_samples(
 
 
 @pytest.mark.trio
-async def test_manifests_manager_fetch_user_manifest_from_backend_empty(
-    manifests_manager
-):
+async def test_manifests_manager_fetch_user_manifest_from_backend_empty(manifests_manager):
     manifests_manager._backend_storage.fetch_user_manifest.return_value = None
     user_manifest = await manifests_manager.fetch_user_manifest_from_backend(3)
     manifests_manager._backend_storage.fetch_user_manifest.assert_called_with(version=3)
@@ -146,16 +134,12 @@ async def test_manifests_manager_fetch_user_manifest_from_backend_empty(
 async def test_manifests_manager_fetch_manifest_from_backend_empty(manifests_manager):
     manifests_manager._backend_storage.fetch_manifest.return_value = None
     manifest = await manifests_manager.fetch_from_backend("id", "rts", "key", 3)
-    manifests_manager._backend_storage.fetch_manifest.assert_called_with(
-        "id", "rts", version=3
-    )
+    manifests_manager._backend_storage.fetch_manifest.assert_called_with("id", "rts", version=3)
     assert manifest is None
 
 
 @pytest.mark.trio
-async def test_manifests_manager_fetch_user_manifest_from_local_empty(
-    manifests_manager
-):
+async def test_manifests_manager_fetch_user_manifest_from_local_empty(manifests_manager):
     manifests_manager._local_storage.fetch_user_manifest.return_value = None
     user_manifest = await manifests_manager.fetch_user_manifest_from_local()
     manifests_manager._local_storage.fetch_user_manifest.assert_called_with()
@@ -205,10 +189,7 @@ async def test_manifests_manager_fetch_user_manifest(
         fetch_method = manifests_manager.fetch_user_manifest_from_backend
     storage.fetch_user_manifest.return_value = user_manifests_samples["valid"]
     retrieved_manifest = await fetch_method()
-    assert (
-        TypedManifestSchema(strict=False).dump(retrieved_manifest).data
-        == original_manifest
-    )
+    assert TypedManifestSchema(strict=False).dump(retrieved_manifest).data == original_manifest
 
 
 @pytest.mark.usefixtures("bob_cleartext_device")
@@ -240,12 +221,7 @@ async def test_manifests_manager_fetch_manifest_invalid(
 @pytest.mark.trio
 @pytest.mark.parametrize("location", ["local", "backend"])
 async def test_manifests_manager_fetch_manifest_belonging_to_other_user(
-    manifests_manager,
-    location,
-    original_manifest,
-    manifests_samples,
-    bob_cleartext_device,
-    tmpdir,
+    manifests_manager, location, original_manifest, manifests_samples, bob_cleartext_device, tmpdir
 ):
     devices_manager = DevicesManager(str(tmpdir))
     bob_device = devices_manager.load_device(bob_cleartext_device)
@@ -261,10 +237,7 @@ async def test_manifests_manager_fetch_manifest_belonging_to_other_user(
         retrieved_manifest = await fetch_method("id", b"a" * 32)
     else:
         retrieved_manifest = await fetch_method("id", "rts", b"a" * 32)
-    assert (
-        TypedManifestSchema(strict=False).dump(retrieved_manifest).data
-        == original_manifest
-    )
+    assert TypedManifestSchema(strict=False).dump(retrieved_manifest).data == original_manifest
 
 
 @pytest.mark.trio
@@ -283,10 +256,7 @@ async def test_manifests_manager_fetch_manifest_belonging_to_logged_user(
         retrieved_manifest = await fetch_method("id", b"a" * 32)
     else:
         retrieved_manifest = await fetch_method("id", "rts", b"a" * 32)
-    assert (
-        TypedManifestSchema(strict=False).dump(retrieved_manifest).data
-        == original_manifest
-    )
+    assert TypedManifestSchema(strict=False).dump(retrieved_manifest).data == original_manifest
 
 
 @pytest.mark.usefixtures("alice_cleartext_device")
@@ -297,9 +267,7 @@ async def test_manifests_manager_flush_user_manifest_on_local(
     manifest, _ = TypedManifestSchema(strict=True).load(original_manifest)
     await manifests_manager.flush_user_manifest_on_local(manifest)
     assert len(manifests_manager._local_storage.flush_user_manifest.call_args_list) == 1
-    dumped = manifests_manager._local_storage.flush_user_manifest.call_args_list[0][0][
-        0
-    ]
+    dumped = manifests_manager._local_storage.flush_user_manifest.call_args_list[0][0][0]
     assert isinstance(dumped, bytes)
     # Reload the manifest
     local_storage = Mock()
@@ -340,17 +308,9 @@ async def test_manifests_manager_sync_user_manifest_with_backend(
 ):
     manifest, _ = TypedManifestSchema(strict=True).load(original_manifest)
     await manifests_manager.sync_user_manifest_with_backend(manifest)
-    assert (
-        len(manifests_manager._backend_storage.sync_user_manifest.call_args_list) == 1
-    )
-    version = manifests_manager._backend_storage.sync_user_manifest.call_args_list[0][
-        0
-    ][
-        0
-    ]
-    dumped = manifests_manager._backend_storage.sync_user_manifest.call_args_list[0][0][
-        1
-    ]
+    assert len(manifests_manager._backend_storage.sync_user_manifest.call_args_list) == 1
+    version = manifests_manager._backend_storage.sync_user_manifest.call_args_list[0][0][0]
+    dumped = manifests_manager._backend_storage.sync_user_manifest.call_args_list[0][0][1]
     assert version == manifest["version"]
     assert isinstance(dumped, bytes)
     # Reload the manifest
@@ -372,9 +332,7 @@ async def test_manifests_manager_sync_new_entry_with_backend(
     manifest, _ = TypedManifestSchema(strict=True).load(original_manifest)
     await manifests_manager.sync_new_entry_with_backend(b"a" * 32, manifest)
     assert len(manifests_manager._backend_storage.sync_new_manifest.call_args_list) == 1
-    dumped = manifests_manager._backend_storage.sync_new_manifest.call_args_list[0][0][
-        0
-    ]
+    dumped = manifests_manager._backend_storage.sync_new_manifest.call_args_list[0][0][0]
     assert isinstance(dumped, bytes)
     # Reload the manifest
     local_storage = Mock()

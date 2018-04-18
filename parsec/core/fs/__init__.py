@@ -1,6 +1,4 @@
-from parsec.core.fs.access import (
-    BasePlaceHolderAccess, BaseVlobAccess, BaseUserVlobAccess
-)
+from parsec.core.fs.access import BasePlaceHolderAccess, BaseVlobAccess, BaseUserVlobAccess
 from parsec.core.fs.base import BaseNotLoadedEntry, FSInvalidPath
 from parsec.core.fs.block import BaseBlock, BaseBlockAccess, BaseDirtyBlockAccess
 from parsec.core.fs.file import BaseFileEntry
@@ -91,12 +89,7 @@ class FS:
             )
         else:
             self.root = self._load_entry(
-                access,
-                user_id,
-                device_name,
-                name="",
-                parent=None,
-                manifest=user_manifest,
+                access, user_id, device_name, name="", parent=None, manifest=user_manifest
             )
 
     async def teardown(self):

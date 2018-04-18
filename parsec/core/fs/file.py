@@ -136,9 +136,7 @@ class BaseFileEntry(BaseEntry):
         # Fetch the blocks
         # Fetch the dirty blocks
         # Combine everything together
-        size = size if (
-            size is not None and 0 <= size + offset < self.size
-        ) else self.size - offset
+        size = size if (size is not None and 0 <= size + offset < self.size) else self.size - offset
         if size < 0:
             size = 0
         end = offset + size
@@ -191,9 +189,7 @@ class BaseFileEntry(BaseEntry):
             offset = self.size
         # Create a new dirty block
         digest = nacl.hash.sha256(bytes(buffer), encoder=nacl.encoding.Base64Encoder)
-        access = self._fs._dirty_block_access_cls(
-            offset=offset, size=len(buffer), digest=digest
-        )
+        access = self._fs._dirty_block_access_cls(offset=offset, size=len(buffer), digest=digest)
         block = self._fs._block_cls(access, data=buffer)
         self._dirty_blocks.append(block)
         if offset + len(buffer) > self._size:
@@ -292,9 +288,7 @@ class BaseFileEntry(BaseEntry):
                 buffer = await block.fetch_data()
                 buffer = buffer[offset:end]
                 access = self._fs._dirty_block_access_cls(
-                    offset=curr_file_offset,
-                    size=len(buffer),
-                    digest=block._access.digest,
+                    offset=curr_file_offset, size=len(buffer), digest=block._access.digest
                 )
                 block = self._fs._block_cls(access, data=buffer)
                 curr_file_offset += access.size
@@ -314,9 +308,7 @@ class BaseFileEntry(BaseEntry):
                 for block, offset, end in block_group:
                     buffer += (await block.fetch_data())[offset:end]
 
-                digest = nacl.hash.sha256(
-                    bytes(buffer), encoder=nacl.encoding.Base64Encoder
-                )
+                digest = nacl.hash.sha256(bytes(buffer), encoder=nacl.encoding.Base64Encoder)
                 access = self._fs._dirty_block_access_cls(
                     offset=curr_file_offset, size=len(buffer), digest=digest
                 )
@@ -415,9 +407,7 @@ def get_merged_blocks(file_blocks, file_dirty_blocks, file_size):
                 block_ended_start_data = start_offset[index_ended] - block_ended.offset
                 block_ended_end_data = offset - block_ended.offset
                 if block_ended_start_data != block_ended_end_data:
-                    blocks.append(
-                        (block_ended, block_ended_start_data, block_ended_end_data)
-                    )
+                    blocks.append((block_ended, block_ended_start_data, block_ended_end_data))
             bisect.insort(block_stack, (index, block))
             start_offset[index] = offset
         elif action == "start" and index < top_index:
@@ -454,9 +444,7 @@ def get_normalized_blocks(blocks, block_size=4096):
     while blocks:
         block, offset, end = blocks.pop(0)
         if offset < offset_splits[0] and end > offset_splits[0]:
-            block_group.append(
-                (block, offset - block.offset, offset_splits[0] - block.offset)
-            )
+            block_group.append((block, offset - block.offset, offset_splits[0] - block.offset))
             final_blocks.append(block_group)
             block_group = []
             blocks.insert(0, (block, offset_splits[0], block.end))

@@ -41,8 +41,7 @@ async def test_mount_fuse(core, alice, tmpdir, fuse_stop_mode):
     async with trio.open_nursery() as nursery:
         listeners = await nursery.start(trio.serve_tcp, core.handle_client, 0)
         core.config = attr.evolve(
-            core.config,
-            addr="tcp://localhost:%s" % listeners[0].socket.getsockname()[1],
+            core.config, addr="tcp://localhost:%s" % listeners[0].socket.getsockname()[1]
         )
 
         # Login into the core and populate it a bit
