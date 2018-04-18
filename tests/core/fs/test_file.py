@@ -39,6 +39,8 @@ def create_file(
     else:
         entry = fs._file_entry_cls(
             access=access,
+            user_id="alice",
+            device_name="test",
             need_flush=need_flush,
             need_sync=need_sync,
             created=datetime(2017, 1, 1),
@@ -125,6 +127,8 @@ def add_dirty_block(*args, not_flushed=False, **kwargs):
 def root(fs):
     return fs._folder_entry_cls(
         access=fs._user_vlob_access_cls(b"<foo key>"),
+        user_id="alice",
+        device_name="test",
         need_flush=False,
         need_sync=False,
         created=datetime(2017, 1, 1),
@@ -140,6 +144,8 @@ def root(fs):
 def bar_txt(fs, root):
     bar = fs._file_entry_cls(
         access=fs._vlob_access_cls("<bar id>", "<bar rts>", "<bar wts>", b"<bar key>"),
+        user_id="alice",
+        device_name="test",
         need_flush=False,
         need_sync=True,
         created=datetime(2017, 1, 1),
@@ -332,6 +338,8 @@ async def test_flush(fs, mocked_manifests_manager, mocked_blocks_manager):
         {
             "format": 1,
             "type": "local_file_manifest",
+            "user_id": "alice",
+            "device_name": "test",
             "need_sync": True,
             "base_version": 1,
             "created": datetime(2017, 1, 1),

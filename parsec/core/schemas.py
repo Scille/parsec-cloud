@@ -27,6 +27,8 @@ class SyncedAccessSchema(UnknownCheckedSchema):
 class FileManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("file_manifest", required=True)
+    user_id = fields.String(required=True)
+    device_name = fields.String(required=True)
     version = fields.Integer(required=True, validate=validate.Range(min=1))
     created = fields.DateTime(required=True)
     updated = fields.DateTime(required=True)
@@ -37,6 +39,8 @@ class FileManifestSchema(UnknownCheckedSchema):
 class FolderManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("folder_manifest", required=True)
+    user_id = fields.String(required=True)
+    device_name = fields.String(required=True)
     version = fields.Integer(required=True, validate=validate.Range(min=1))
     created = fields.DateTime(required=True)
     updated = fields.DateTime(required=True)
@@ -78,6 +82,8 @@ class TypedAccessSchema(OneOfSchema):
 class LocalFileManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_file_manifest", required=True)
+    user_id = fields.String(required=True)
+    device_name = fields.String(required=True)
     base_version = fields.Integer(required=True, validate=validate.Range(min=0))
     need_sync = fields.Boolean(required=True)
     created = fields.DateTime(required=True)
@@ -90,6 +96,8 @@ class LocalFileManifestSchema(UnknownCheckedSchema):
 class LocalFolderManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_folder_manifest", required=True)
+    user_id = fields.String(required=True)
+    device_name = fields.String(required=True)
     base_version = fields.Integer(required=True, validate=validate.Range(min=0))
     need_sync = fields.Boolean(required=True)
     created = fields.DateTime(required=True)

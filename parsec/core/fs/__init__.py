@@ -83,13 +83,20 @@ class FS:
         # the local storage. This way init can be done no matter if the
         # backend is not available.
         user_manifest = await self.manifests_manager.fetch_user_manifest_from_local()
+        user_id = self.manifests_manager.device.user_id
+        device_name = self.manifests_manager.device.device_name
         if not user_manifest:
             self.root = self._root_entry_cls(
-                access, name="", need_flush=False, need_sync=False
+                access, user_id, device_name, name="", need_flush=False, need_sync=False
             )
         else:
             self.root = self._load_entry(
-                access, name="", parent=None, manifest=user_manifest
+                access,
+                user_id,
+                device_name,
+                name="",
+                parent=None,
+                manifest=user_manifest,
             )
 
     async def teardown(self):
@@ -111,11 +118,13 @@ class FS:
             entry = await entry.fetch_child(hop)
         return entry
 
-    def _load_entry(self, access, name, parent, manifest):
+    def _load_entry(self, access, user_id, device_name, name, parent, manifest):
         if manifest["type"] == "file_manifest":
             blocks_accesses = [self._block_access_cls(**v) for v in manifest["blocks"]]
             return self._file_entry_cls(
                 access=access,
+                user_id=user_id,
+                device_name=device_name,
                 need_flush=False,
                 need_sync=False,
                 name=name,
@@ -134,6 +143,8 @@ class FS:
             ]
             return self._file_entry_cls(
                 access=access,
+                user_id=user_id,
+                device_name=device_name,
                 need_flush=False,
                 need_sync=manifest["need_sync"],
                 name=name,
@@ -156,6 +167,8 @@ class FS:
                 entry_cls = self._root_entry_cls
             return entry_cls(
                 access=access,
+                user_id=user_id,
+                device_name=device_name,
                 need_flush=False,
                 need_sync=False,
                 name=name,
@@ -183,6 +196,8 @@ class FS:
                 entry_cls = self._root_entry_cls
             return entry_cls(
                 access=access,
+                user_id=user_id,
+                device_name=device_name,
                 need_flush=False,
                 need_sync=manifest["need_sync"],
                 name=name,

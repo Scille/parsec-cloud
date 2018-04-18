@@ -11,6 +11,8 @@ from huepy import good, bad, run, que
 
 @attr.s(slots=True, init=False)
 class BaseFileEntry(BaseEntry):
+    _user_id = attr.ib()
+    _device_name = attr.ib()
     _need_flush = attr.ib()
     _need_sync = attr.ib()
     _created = attr.ib()
@@ -23,6 +25,8 @@ class BaseFileEntry(BaseEntry):
     def __init__(
         self,
         access,
+        user_id,
+        device_name,
         need_flush=True,
         need_sync=True,
         created=None,
@@ -35,6 +39,8 @@ class BaseFileEntry(BaseEntry):
         dirty_blocks_accesses=None,
     ):
         super().__init__(access, name, parent)
+        self._user_id = user_id
+        self._device_name = device_name
         self._created = created or pendulum.utcnow()
         self._updated = updated or self.created
         self._need_flush = need_flush
@@ -49,6 +55,14 @@ class BaseFileEntry(BaseEntry):
         if dirty_blocks_accesses:
             for access in dirty_blocks_accesses:
                 self._dirty_blocks.append(self._fs._block_cls(access))
+
+    @property
+    def user_id(self):
+        return self._user_id
+
+    @property
+    def device_name(self):
+        return self._device_name
 
     @property
     def created(self):
@@ -93,6 +107,8 @@ class BaseFileEntry(BaseEntry):
         manifest = {
             "format": 1,
             "type": "local_file_manifest",
+            "user_id": self._user_id,
+            "device_name": self._device_name,
             "need_sync": self._need_sync,
             "base_version": self._base_version,
             "created": self._created,
@@ -212,6 +228,8 @@ class BaseFileEntry(BaseEntry):
             manifest = {
                 "format": 1,
                 "type": "file_manifest",
+                "user_id": self._user_id,
+                "device_name": self._device_name,
                 "version": 1,
                 "created": self._created,
                 "updated": self._created,
@@ -239,6 +257,8 @@ class BaseFileEntry(BaseEntry):
                     self._access.id, self._access.rts, self._access.key
                 )
                 if manifest["version"] != self.base_version:
+                    self._user_id = manifest["user_id"]
+                    self._device_name = manifest["device_name"]
                     self._created = manifest["created"]
                     self._updated = manifest["updated"]
                     self._base_version = manifest["version"]
@@ -255,6 +275,8 @@ class BaseFileEntry(BaseEntry):
             manifest = {
                 "format": 1,
                 "type": "file_manifest",
+                "user_id": self._user_id,
+                "device_name": self._device_name,
                 "version": self._base_version + 1,
                 "created": self._created,
                 "updated": self._updated,

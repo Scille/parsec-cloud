@@ -26,6 +26,7 @@ async def share(req: dict, client_ctx: ClientContext, core: Core) -> dict:
             await entry.sync()
         sharing_msg = {
             "type": "share",
+            "author": core.auth_device.id,
             "content": entry._access.dump(with_type=False),
             "name": entry.name,
         }

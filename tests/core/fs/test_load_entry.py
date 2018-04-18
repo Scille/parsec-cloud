@@ -14,6 +14,8 @@ def access(fs):
         {
             "format": 1,
             "type": "folder_manifest",
+            "user_id": "alice",
+            "device_name": "test",
             "version": 1,
             "created": datetime(2017, 1, 1),
             "updated": datetime(2017, 12, 31, 23, 59, 59),
@@ -22,6 +24,8 @@ def access(fs):
         {
             "format": 1,
             "type": "folder_manifest",
+            "user_id": "alice",
+            "device_name": "test",
             "version": 2,
             "created": datetime(2017, 1, 1),
             "updated": datetime(2017, 12, 31, 23, 59, 59),
@@ -49,6 +53,8 @@ def access(fs):
         {
             "format": 1,
             "type": "local_folder_manifest",
+            "user_id": "alice",
+            "device_name": "test",
             "base_version": 0,
             "need_sync": True,
             "created": datetime(2017, 1, 1),
@@ -74,7 +80,14 @@ def access(fs):
     ],
 )
 async def test_load_folder(manifest, fs, access):
-    entry = fs._load_entry(access=access, name="foo", parent=None, manifest=manifest)
+    entry = fs._load_entry(
+        access=access,
+        user_id="alice",
+        device_name="test",
+        name="foo",
+        parent=None,
+        manifest=manifest,
+    )
     assert isinstance(entry, fs._folder_entry_cls)
     assert not entry._need_flush
 
@@ -86,6 +99,8 @@ async def test_load_folder(manifest, fs, access):
         {
             "format": 1,
             "type": "file_manifest",
+            "user_id": "alice",
+            "device_name": "test",
             "version": 2,
             "created": datetime(2017, 1, 1),
             "updated": datetime(2017, 12, 31, 23, 59, 59),
@@ -110,6 +125,8 @@ async def test_load_folder(manifest, fs, access):
         {
             "format": 1,
             "type": "file_manifest",
+            "user_id": "alice",
+            "device_name": "test",
             "version": 1,
             "created": datetime(2017, 1, 1),
             "updated": datetime(2017, 12, 31, 23, 59, 59),
@@ -119,6 +136,8 @@ async def test_load_folder(manifest, fs, access):
         {
             "format": 1,
             "type": "local_file_manifest",
+            "user_id": "alice",
+            "device_name": "test",
             "need_sync": True,
             "base_version": 0,
             "created": datetime(2017, 1, 1),
@@ -160,6 +179,13 @@ async def test_load_folder(manifest, fs, access):
     ],
 )
 async def test_load_file(manifest, fs, access):
-    entry = fs._load_entry(access=access, name="foo", parent=None, manifest=manifest)
+    entry = fs._load_entry(
+        access=access,
+        user_id="alice",
+        device_name="test",
+        name="foo",
+        parent=None,
+        manifest=manifest,
+    )
     assert isinstance(entry, fs._file_entry_cls)
     assert not entry._need_flush

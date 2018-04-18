@@ -16,7 +16,9 @@ def populated_fs(fs):
     # /in_backend
 
     fs.root = fs._folder_entry_cls(
-        access=fs._user_vlob_access_cls(privkey=b"<user vlob key>")
+        access=fs._user_vlob_access_cls(privkey=b"<user vlob key>"),
+        user_id="alice",
+        device_name="test",
     )
 
     in_memory = fs._folder_entry_cls(
@@ -28,6 +30,8 @@ def populated_fs(fs):
             wts="<in_memory wts>",
             key=b"<in_memory key>",
         ),
+        user_id="alice",
+        device_name="test",
     )
 
     in_memory._children = {
@@ -40,6 +44,8 @@ def populated_fs(fs):
                 wts="<synced wts>",
                 key=b"<synced key>",
             ),
+            user_id="alice",
+            device_name="test",
         ),
         "placeholder": fs._file_entry_cls(
             name="placeholder",
@@ -47,6 +53,8 @@ def populated_fs(fs):
             access=fs._placeholder_access_cls(
                 id="<placeholder id>", key=b"<placeholder key>"
             ),
+            user_id="alice",
+            device_name="test",
         ),
     }
 
@@ -100,9 +108,19 @@ async def test_get_path(file_cls, folder_cls):
         name="bar.txt",
         parent=folder_cls(
             access=None,
+            user_id="alice",
+            device_name="test",
             name="spam",
-            parent=folder_cls(access=None, name="root", parent=None),
+            parent=folder_cls(
+                access=None,
+                user_id="alice",
+                device_name="test",
+                name="root",
+                parent=None,
+            ),
         ),
+        user_id="alice",
+        device_name="test",
     )
     assert leaf.path == "/root/spam/bar.txt"
     leaf._parent._parent = None
@@ -139,6 +157,8 @@ async def test_lookup_in_local_storage(fs, mocked_manifests_manager):
     fs.manifests_manager.fetch_from_local.return_value = {
         "format": 1,
         "type": "local_file_manifest",
+        "user_id": "alice",
+        "device_name": "test",
         "base_version": 2,
         "need_sync": True,
         "created": datetime(2017, 1, 1),
@@ -168,6 +188,8 @@ async def test_lookup_in_backend_storage(fs, mocked_manifests_manager):
     fs.manifests_manager.fetch_from_backend.return_value = {
         "format": 1,
         "type": "file_manifest",
+        "user_id": "alice",
+        "device_name": "test",
         "version": 2,
         "created": datetime(2017, 1, 1),
         "updated": datetime(2017, 12, 31, 23, 59, 59),
@@ -197,6 +219,8 @@ async def test_concurrent_lookup(populated_fs, mocked_manifests_manager):
     fs.manifests_manager.fetch_from_backend.return_value = {
         "format": 1,
         "type": "file_manifest",
+        "user_id": "alice",
+        "device_name": "test",
         "version": 2,
         "created": datetime(2017, 1, 1),
         "updated": datetime(2017, 12, 31, 23, 59, 59),

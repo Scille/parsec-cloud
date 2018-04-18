@@ -126,6 +126,8 @@ class TestFileManifestSchema:
     ORIGINAL = {
         "format": 1,
         "type": "file_manifest",
+        "user_id": "alice",
+        "device_name": "test",
         "version": 2,
         "created": "2017-01-01T00:00:00+00:00",
         "updated": "2017-12-31T23:59:59+00:00",
@@ -156,6 +158,8 @@ class TestFileManifestSchema:
             == {
                 "format": 1,
                 "type": "file_manifest",
+                "user_id": "alice",
+                "device_name": "test",
                 "version": 2,
                 "created": datetime(2017, 1, 1),
                 "updated": datetime(2017, 12, 31, 23, 59, 59),
@@ -218,6 +222,8 @@ class TestFolderManifestSchema:
     ORIGINAL = {
         "format": 1,
         "type": "folder_manifest",
+        "user_id": "alice",
+        "device_name": "test",
         "version": 2,
         "created": "2017-01-01T00:00:00+00:00",
         "updated": "2017-12-31T23:59:59+00:00",
@@ -245,6 +251,8 @@ class TestFolderManifestSchema:
             == {
                 "format": 1,
                 "type": "folder_manifest",
+                "user_id": "alice",
+                "device_name": "test",
                 "version": 2,
                 "created": datetime(2017, 1, 1),
                 "updated": datetime(2017, 12, 31, 23, 59, 59),
@@ -405,6 +413,8 @@ class TestLocalFileManifestSchema:
     ORIGINAL = {
         "format": 1,
         "type": "local_file_manifest",
+        "user_id": "alice",
+        "device_name": "test",
         "base_version": 0,
         "need_sync": True,
         "created": "2017-01-01T00:00:00+00:00",
@@ -452,6 +462,8 @@ class TestLocalFileManifestSchema:
             == {
                 "format": 1,
                 "type": "local_file_manifest",
+                "user_id": "alice",
+                "device_name": "test",
                 "base_version": 0,
                 "need_sync": True,
                 "created": datetime(2017, 1, 1),
@@ -535,6 +547,8 @@ class TestLocalFolderManifestSchema:
     ORIGINAL = {
         "format": 1,
         "type": "local_folder_manifest",
+        "user_id": "alice",
+        "device_name": "test",
         "base_version": 0,
         "need_sync": True,
         "created": "2017-01-01T00:00:00+00:00",
@@ -563,6 +577,8 @@ class TestLocalFolderManifestSchema:
             == {
                 "format": 1,
                 "type": "local_folder_manifest",
+                "user_id": "alice",
+                "device_name": "test",
                 "base_version": 0,
                 "need_sync": True,
                 "created": datetime(2017, 1, 1),

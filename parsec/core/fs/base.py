@@ -128,7 +128,12 @@ class BaseNotLoadedEntry(BaseEntry):
                 # current one and represent the fact it is now loaded in memory.
                 # Hence we must share `_access` and `_rwlock` between the two.
                 self._loaded = self._fs._load_entry(
-                    self._access, self.name, self.parent, manifest
+                    self._access,
+                    manifest["user_id"],
+                    manifest["device_name"],
+                    self.name,
+                    self.parent,
+                    manifest,
                 )
                 self._loaded._rwlock = self._rwlock
                 return self._loaded
