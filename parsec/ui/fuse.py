@@ -3,6 +3,7 @@ import socket
 import click
 import logbook
 import threading
+import warnings
 from dateutil.parser import parse as dateparse
 from itertools import count
 from errno import ENOENT
@@ -14,12 +15,101 @@ except ImportError:
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_get_context
 
+# TODO: remove this once fusepy 2.0.5 is released
+try:
+    from fuse import fuse_exit
+
+    warnings.warn("fuse_exit is now available in fusepy, workaround should be removed")
+except ImportError:
+    from fuse import _libfuse
+    import ctypes
+
+    # Stolen from master branch
+    # TODO: it seems currently using this function cause segfault (
+    # which is a way to exit... but not a really clean one !)
+
+    def fuse_exit():
+        """
+        This will shutdown the FUSE mount and cause the call to FUSE(...) to
+        return, similar to sending SIGINT to the process.
+        Flags the native FUSE session as terminated and will cause any running FUSE
+        event loops to exit on the next opportunity. (see fuse.c::fuse_exit)
+        """
+        fuse_ptr = ctypes.c_void_p(_libfuse.fuse_get_context().contents.fuse)
+        _libfuse.fuse_exit(fuse_ptr)
+
+
 from parsec.utils import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 
 
 logger = logbook.Logger("parsec.fuse")
 
 DEFAULT_CORE_UNIX_SOCKET = "tcp://127.0.0.1:6776"
+
+
+class CoreConectionLostError(Exception):
+    pass
+
+
+def _socket_init(socket_address):
+    logger.debug("Init socket on %s" % socket_address)
+    sock = socket.socket(socket.AF_INET, type=socket.SOCK_STREAM)
+    ip = socket_address.split(":")[1][2:]
+    port = int(socket_address.split(":")[2])
+    sock.connect((ip, port))
+    return sock
+
+
+def _socket_send_cmd(sock, msg):
+    req = ejson_dumps(msg).encode() + b"\n"
+    logger.debug("Send: %r" % req)
+    sock.send(req)
+    raw_reps = sock.recv(4096)
+    if not raw_reps:
+        raise CoreConectionLostError()
+
+    while raw_reps[-1] != ord(b"\n"):
+        buff = sock.recv(4096)
+        if not buff:
+            raise CoreConectionLostError()
+
+        raw_reps += buff
+    logger.debug("Received: %r" % raw_reps)
+    return ejson_loads(raw_reps[:-1].decode())
+
+
+def start_shutdown_watcher(socket_address, mountpoint):
+
+    def _shutdown_watcher():
+        logger.debug("Starting shutdown watcher")
+        sock = _socket_init(socket_address)
+        _socket_send_cmd(
+            sock,
+            {
+                "cmd": "event_subscribe",
+                "event": "fuse_mountpoint_need_stop",
+                "subject": mountpoint,
+            },
+        )
+        logger.debug("Shutdown watcher Started")
+        while True:
+            try:
+                rep = _socket_send_cmd(sock, {"cmd": "event_listen"})
+                assert rep["status"] == "ok"
+                if (
+                    rep["event"] == "fuse_mountpoint_need_stop"
+                    and rep["subject"] == mountpoint
+                ):
+                    logger.warning("Received need stop event, exiting...")
+                    break
+
+            except CoreConectionLostError as exc:
+                logger.warning("Connection with core has been lost, exiting...")
+                break
+
+        fuse_exit()
+
+    threading.Thread(target=_shutdown_watcher).start()
 
 
 class ContentBuilder:
@@ -174,6 +264,7 @@ class FuseOperations(LoggingMixIn, Operations):
         self.fds = {}
         self._fs_id_generator = count(1)
         self._socket_address = socket_address
+        # TODO: create a per-thread socket instead of using a lock
         self._socket_lock = threading.Lock()
         self._socket = None
 
@@ -183,27 +274,12 @@ class FuseOperations(LoggingMixIn, Operations):
     @property
     def sock(self):
         if not self._socket:
-            self._init_socket()
+            self._socket = _socket_init(self._socket_address)
         return self._socket
-
-    def _init_socket(self):
-        sock = socket.socket(socket.AF_INET, type=socket.SOCK_STREAM)
-        ip = self._socket_address.split(":")[1][2:]
-        port = int(self._socket_address.split(":")[2])
-        sock.connect((ip, port))
-        logger.debug("Init socket")
-        self._socket = sock
 
     def send_cmd(self, **msg):
         with self._socket_lock:
-            req = ejson_dumps(msg).encode() + b"\n"
-            logger.debug("Send: %r" % req)
-            self.sock.send(req)
-            raw_reps = self.sock.recv(4096)
-            while raw_reps[-1] != ord(b"\n"):
-                raw_reps += self.sock.recv(4096)
-            logger.debug("Received: %r" % raw_reps)
-            return ejson_loads(raw_reps[:-1].decode())
+            return _socket_send_cmd(self.sock, msg)
 
     def _get_fd(self, fh):
         try:
@@ -348,5 +424,9 @@ def start_fuse(
     socket_address: str, mountpoint: str, debug: bool = False, nothreads: bool = False
 ):
     operations = FuseOperations(socket_address)
+    start_shutdown_watcher(socket_address, mountpoint)
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)
-    operations.send_cmd(cmd="unregister_mountpoint", path=mountpoint)
+
+
+# TODO: shutdown watcher should be able to send here a command to the
+# core to signify it has been successfully closed

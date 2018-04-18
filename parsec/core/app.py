@@ -8,6 +8,7 @@ from parsec.core.fs import fs_factory
 from parsec.core.synchronizer import Synchronizer
 from parsec.core.devices_manager import DevicesManager
 from parsec.core.backend_connection import BackendConnection
+from parsec.core.fuse_manager import FuseManager
 
 
 logger = logbook.Logger("parsec.core.app")
@@ -33,7 +34,7 @@ class CoreApp:
         self.sharing = None
         self.backend_connection = None
         self.devices_manager = DevicesManager(config.base_settings_path)
-        self.fuse_process = None
+        self.fuse_manager = None
         self.mountpoint = None
 
     async def init(self, nursery):
@@ -48,6 +49,7 @@ class CoreApp:
         # during logout
         self.auth_subscribed_events = {}
         self.auth_events = trio.Queue(100)
+        self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
         self.backend_connection = BackendConnection(
             device, self.config.backend_addr, self.signal_ns
         )
@@ -91,6 +93,7 @@ class CoreApp:
 
     async def logout(self):
         self._handle_new_message = None
+        await self.fuse_manager.teardown()
         await self.sharing.teardown()
         await self.fs.teardown()
         if self.synchronizer:
@@ -104,6 +107,8 @@ class CoreApp:
         self.auth_events = None
         self.synchronizer = None
         self.fs = None
+        self.sharing = None
+        self.fuse_manager = None
 
     async def handle_client(self, sockstream):
         from parsec.core.api import dispatch_request

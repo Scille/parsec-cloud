@@ -1,5 +1,6 @@
 import os
 import trio
+import blinker
 from multiprocessing import Process
 import webbrowser
 
@@ -32,15 +33,34 @@ class FuseNotAvailable(FuseManagerError):
     pass
 
 
+class FuseStoppingError(FuseManagerError):
+    pass
+
+
 class FuseManager:
 
-    def __init__(self, core_addr: str, debug: bool = False, nothreads: bool = False):
+    def __init__(
+        self,
+        core_addr: str,
+        signal_ns: blinker.Namespace,
+        debug: bool = False,
+        nothreads: bool = False,
+    ):
+        self._fuse_mountpoint_started = signal_ns.signal("fuse_mountpoint_started")
+        self._fuse_mountpoint_need_stop = signal_ns.signal("fuse_mountpoint_need_stop")
+        self._fuse_mountpoint_stopped = signal_ns.signal("fuse_mountpoint_stopped")
         self._lock = trio.Lock()
         self._start_fuse_config = {
             "socket_address": core_addr, "debug": debug, "nothreads": nothreads
         }
         self.mountpoint = None
         self.fuse_process = None
+
+    async def teardown(self):
+        try:
+            await self.stop_mountpoint()
+        except FuseNotStarted:
+            pass
 
     def is_started(self):
         return self.fuse_process is not None
@@ -78,6 +98,7 @@ class FuseManager:
 
             self.mountpoint = mountpoint
             self.fuse_process = fuse_process
+            self._fuse_mountpoint_started.send(mountpoint)
 
     async def stop_mountpoint(self):
         _die_if_fuse_not_available()
@@ -85,15 +106,29 @@ class FuseManager:
             if not self.is_started():
                 raise FuseNotStarted("Fuse is not started")
 
+            # Fuse process should be listening to this event
+            self._fuse_mountpoint_need_stop.send(self.mountpoint)
+
+            def close_fuse_process():
+                # Once the need stop event received, fuse should close itself,
+                # so we just have to wait for this...
+                self.fuse_process.join(1)
+                if self.fuse_process.exitcode is None:
+                    raise FuseStoppingError(
+                        "Fuse process (pid: %s) refuse to stop" % self.fuse_process.pid
+                    )
+
+            await trio.run_sync_in_worker_thread(close_fuse_process)
+
             # TODO: multiprocess start/stop can make async loop unresponsive,
             # we should use a thread executor do to this
-            self.fuse_process.terminate()
-            self.fuse_process.join()
+            old_mountpoint = self.mountpoint
             self.mountpoint = self.fuse_process = None
 
-    # TODO: ask Frossigneux...
-    # if name == "nt":
-    #     subprocess.call("net use p: /delete /y", shell=True)
+        # TODO: ask Frossigneux...
+        # if name == "nt":
+        #     subprocess.call("net use p: /delete /y", shell=True)
+        self._fuse_mountpoint_stopped.send(old_mountpoint)
 
     def open_file(self, path: str):
         _die_if_fuse_not_available()
