@@ -2,6 +2,7 @@ import trio
 import logbook
 from urllib.parse import urlparse
 
+from parsec.core.base import IAsyncComponent, implements
 from parsec.utils import CookedSocket
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 from parsec.utils import ParsecError
@@ -22,7 +23,7 @@ class BackendConcurrencyError(BackendError):
     pass
 
 
-class BackendConnection:
+class BackendConnection(implements(IAsyncComponent)):
 
     def __init__(self, device, addr, signal_ns):
         self.handshake_id = device.id

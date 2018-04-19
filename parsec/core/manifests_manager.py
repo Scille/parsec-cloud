@@ -4,6 +4,7 @@ from nacl.secret import SecretBox
 from nacl.signing import SignedMessage, VerifyKey
 from nacl.exceptions import BadSignatureError, CryptoError
 
+from parsec.core.base import IAsyncComponent, implements
 from parsec.core.schemas import TypedManifestSchema
 from parsec.core.fs.base import SecurityError
 from parsec.utils import ParsecError, from_jsonb64
@@ -17,12 +18,18 @@ class ManifestDecryptionError(ParsecError):
     status = "decryption_error"
 
 
-class ManifestsManager:
+class ManifestsManager(implements(IAsyncComponent)):
 
     def __init__(self, device, local_storage, backend_storage):
         self.device = device
         self._local_storage = local_storage
         self._backend_storage = backend_storage
+
+    async def init(self, nursery):
+        pass
+
+    async def teardown(self):
+        pass
 
     def _encrypt_manifest(self, key, manifest):
         raw = json.dumps(manifest).encode()

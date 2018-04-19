@@ -137,5 +137,5 @@ async def core_factory(**config):
             yield core
 
         finally:
-            await core.shutdown()
+            await core.teardown()
             nursery.cancel_scope.cancel()

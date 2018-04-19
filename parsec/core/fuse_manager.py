@@ -4,6 +4,7 @@ import blinker
 from multiprocessing import Process
 import webbrowser
 
+from parsec.core.base import IAsyncComponent, implements
 try:
     from parsec.ui.fuse import start_fuse
 
@@ -37,7 +38,7 @@ class FuseStoppingError(FuseManagerError):
     pass
 
 
-class FuseManager:
+class FuseManager(implements(IAsyncComponent)):
 
     def __init__(
         self,
@@ -56,6 +57,9 @@ class FuseManager:
         self.mountpoint = None
         self.drive_letter = None
         self.fuse_process = None
+
+    async def init(self, nursery):
+        pass
 
     async def teardown(self):
         try:

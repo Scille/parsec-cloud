@@ -114,7 +114,7 @@ def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
                     raise SystemExit("Error: Invalid --socket value `%s`" % socket)
 
             finally:
-                await core.shutdown()
+                await core.teardown()
 
     config = CoreConfig(
         debug=debug,

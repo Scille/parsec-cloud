@@ -1,8 +1,10 @@
 import trio
 import blinker
 import logbook
+from interface import implements
 
 from parsec.networking import serve_client
+from parsec.core.base import IAsyncComponent
 from parsec.core.sharing import Sharing
 from parsec.core.fs import fs_factory
 from parsec.core.synchronizer import Synchronizer
@@ -14,7 +16,7 @@ from parsec.core.fuse_manager import FuseManager
 logger = logbook.Logger("parsec.core.app")
 
 
-class CoreApp:
+class CoreApp(implements(IAsyncComponent)):
 
     def __init__(self, config):
         self.signal_ns = blinker.Namespace()
@@ -40,7 +42,7 @@ class CoreApp:
     async def init(self, nursery):
         self.nursery = nursery
 
-    async def shutdown(self):
+    async def teardown(self):
         if self.auth_device:
             await self.logout()
 
@@ -57,8 +59,8 @@ class CoreApp:
         try:
             self.fs = await fs_factory(device, self.config, self.backend_connection)
             if self.config.auto_sync:
-                self.synchronizer = Synchronizer()
-                await self.synchronizer.init(self.nursery, self.fs)
+                self.synchronizer = Synchronizer(self.fs)
+                await self.synchronizer.init(self.nursery)
             try:
                 # local_storage = LocalStorage()
                 # backend_storage = BackendStorage()

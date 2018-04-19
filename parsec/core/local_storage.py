@@ -1,40 +1,39 @@
 import sqlite3
 
+from parsec.core.base import Interface, implements
 
-class BaseLocalStorage:
 
-    def __init__(self, user):
-        self.user = user
+class ILocalStorage(Interface):
 
     def fetch_user_manifest(self):
-        raise NotImplementedError()
+        pass
 
     def flush_user_manifest(self, blob):
-        raise NotImplementedError()
+        pass
 
     def fetch_manifest(self, id):
-        raise NotImplementedError()
+        pass
 
     def flush_manifest(self, id, blob):
-        raise NotImplementedError()
+        pass
 
     def move_manifest(self, id, new_id):
-        raise NotImplementedError()
+        pass
 
     def fetch_block(self, id):
-        raise NotImplementedError()
+        pass
 
     def flush_block(self, id, blob):
-        raise NotImplementedError()
+        pass
 
     def fetch_dirty_block(self, id):
-        raise NotImplementedError()
+        pass
 
     def flush_dirty_block(self, id, blob):
-        raise NotImplementedError()
+        pass
 
 
-class LocalStorage(BaseLocalStorage):
+class LocalStorage(implements(ILocalStorage)):
 
     def __init__(self, path):
         self.path = path
