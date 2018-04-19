@@ -94,7 +94,7 @@ async def backend_factory(**config):
             yield backend
 
         finally:
-            await backend.shutdown()
+            await backend.teardown()
             nursery.cancel_scope.cancel()
 
 
