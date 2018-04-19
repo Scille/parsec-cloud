@@ -4,6 +4,7 @@ import traceback
 from nacl.public import SealedBox
 from nacl.signing import VerifyKey
 
+from parsec.core.base import IAsyncComponent, implements
 from parsec.utils import from_jsonb64, ejson_loads
 from parsec.core.fs import FSInvalidPath
 from parsec.core.backend_connection import BackendNotAvailable, BackendError
@@ -12,7 +13,7 @@ from parsec.core.backend_connection import BackendNotAvailable, BackendError
 logger = logbook.Logger("parsec.core.sharing")
 
 
-class Sharing:
+class Sharing(implements(IAsyncComponent)):
 
     def __init__(self, device, signal_ns, fs, backend_connection):
         self.signal_ns = signal_ns
@@ -20,6 +21,14 @@ class Sharing:
         self.backend_connection = backend_connection
         self.device = device
         self.msg_arrived = trio.Event()
+
+    async def init(self, nursery):
+        self._message_listener_task_cancel_scope = await nursery.start(self._message_listener_task)
+        await self.backend_connection.subscribe_event("message_arrived", self.device.user_id)
+        self.signal_ns.signal("message_arrived").connect(self._msg_arrived_cb, weak=True)
+
+    async def teardown(self):
+        self._message_listener_task_cancel_scope.cancel()
 
     async def _message_listener_task(self, *, task_status=trio.TASK_STATUS_IGNORED):
         with trio.open_cancel_scope() as cancel_scope:
@@ -87,11 +96,3 @@ class Sharing:
 
     def _msg_arrived_cb(self, sender):
         self.msg_arrived.set()
-
-    async def init(self, nursery):
-        self._message_listener_task_cancel_scope = await nursery.start(self._message_listener_task)
-        await self.backend_connection.subscribe_event("message_arrived", self.device.user_id)
-        self.signal_ns.signal("message_arrived").connect(self._msg_arrived_cb, weak=True)
-
-    async def teardown(self):
-        self._message_listener_task_cancel_scope.cancel()
