@@ -13,5 +13,24 @@ echo 'pre-push: checking style...'
 if ( [ $? -eq 0 ] )
 then
     echo "Run ${YELLOW}./misc/autoformat.sh && git commit -a --amend --no-edit ${NC}to fix this"
-    exit 1
+    # Make shell interactive before asking user's answer
+    exec < /dev/tty
+    read -p "Would you like to do this now ? (Y/n)" yn
+    exec <&-
+    if [ "$yn" = "" ]; then
+    yn='Y'
+    fi
+    case $yn in
+      [Yy])
+        $BASEDIR/autoformat.sh && git commit -a --amend --no-edit
+        exit $?
+        ;;
+      [Nn])
+        exit 1
+        ;;
+      * )
+        echo "Please answer y or n for yes or no."
+        exit 1
+        ;;
+    esac
 fi
