@@ -53,11 +53,11 @@ class ManifestsManager:
         except json.decoder.JSONDecodeError as exc:
             raise exc
 
-        except BadSignatureError:
-            raise ManifestSignatureError()
+        except BadSignatureError as exc:
+            raise ManifestSignatureError() from exc
 
-        except (CryptoError, ValueError):
-            raise ManifestDecryptionError()
+        except (CryptoError, ValueError) as exc:
+            raise ManifestDecryptionError() from exc
 
         return json.loads(raw.decode())
 
