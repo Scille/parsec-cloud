@@ -7,7 +7,6 @@ from parsec.core.app import Core
 from parsec.core.fuse_manager import FuseNotAvailable, FuseAlreadyStarted, FuseNotStarted
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.devices_manager import DeviceLoadingError
-from parsec.utils import ParsecError, to_jsonb64, from_jsonb64, ejson_dumps
 
 
 class PathOnlySchema(BaseCmdSchema):
@@ -21,7 +20,7 @@ class cmd_LOGIN_Schema(BaseCmdSchema):
 
 class cmd_FUSE_START_Schema(BaseCmdSchema):
     if os.name == "nt":
-        mountpoint = fields.String(required=True, validate=validate.Length(min=1, max=1))
+        mountpoint = fields.String(required=True, validate=validate.Regexp(r"^[A-Z]:$"))
     else:
         mountpoint = fields.String(required=True)
 

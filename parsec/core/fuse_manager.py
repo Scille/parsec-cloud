@@ -1,6 +1,4 @@
 import os
-import subprocess
-import tempfile
 import trio
 import blinker
 from multiprocessing import Process
@@ -76,11 +74,6 @@ class FuseManager:
                     "Fuse already started on mountpoint `%s`" % self.mountpoint
                 )
 
-            if os.name == "nt":
-                self.drive_letter = mountpoint
-                mountpoint = tempfile.mkdtemp(prefix="parsec-mountpoint-")
-                mountpoint = os.path.join(mountpoint, "Parsec")
-
             if os.name == "posix":
                 try:
                     os.makedirs(mountpoint)
@@ -90,18 +83,9 @@ class FuseManager:
                 target=start_fuse, kwargs={**self._start_fuse_config, "mountpoint": mountpoint}
             )
             fuse_process.start()
-            if os.name == "nt":
-                await trio.sleep(1)
-                subprocess.Popen(
-                    "net use "
-                    + self.drive_letter
-                    + ": \\\\localhost\\"
-                    + mountpoint[0]
-                    + "$"
-                    + mountpoint[2:]
-                    + " /persistent:no",
-                    shell=True,
-                )
+
+            # TODO: waiting event fuse_started
+            await trio.sleep(1)
 
             self.mountpoint = mountpoint
             self.fuse_process = fuse_process
@@ -132,10 +116,6 @@ class FuseManager:
             old_mountpoint = self.mountpoint
             self.mountpoint = self.fuse_process = None
 
-        # TODO: remove mountpoint dir
-
-        if os.name == "nt":
-            subprocess.call("net use " + self.drive_letter + ": /delete /y", shell=True)
         self._fuse_mountpoint_stopped.send(old_mountpoint)
 
     def open_file(self, path: str):
