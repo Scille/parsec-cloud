@@ -3,7 +3,6 @@ import socket
 import click
 import logbook
 import threading
-import warnings
 from dateutil.parser import parse as dateparse
 from itertools import count
 from errno import ENOENT
@@ -13,31 +12,7 @@ try:
 except ImportError:
     from errno import EBADF as EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
-from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_get_context
-
-# TODO: remove this once fusepy 2.0.5 is released
-try:
-    from fuse import fuse_exit
-
-    warnings.warn("fuse_exit is now available in fusepy, workaround should be removed")
-except ImportError:
-    from fuse import _libfuse
-    import ctypes
-
-    # Stolen from master branch
-    # TODO: it seems currently using this function cause segfault (
-    # which is a way to exit... but not a really clean one !)
-
-    def fuse_exit():
-        """
-        This will shutdown the FUSE mount and cause the call to FUSE(...) to
-        return, similar to sending SIGINT to the process.
-        Flags the native FUSE session as terminated and will cause any running FUSE
-        event loops to exit on the next opportunity. (see fuse.c::fuse_exit)
-        """
-        fuse_ptr = ctypes.c_void_p(_libfuse.fuse_get_context().contents.fuse)
-        _libfuse.fuse_exit(fuse_ptr)
-
+from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
 from parsec.utils import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 
@@ -45,6 +20,28 @@ from parsec.utils import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 logger = logbook.Logger("parsec.fuse")
 
 DEFAULT_CORE_UNIX_SOCKET = "tcp://127.0.0.1:6776"
+
+# TODO: Currently call fuse_exit from a non fuse thread is not possible
+# (see https://github.com/fusepy/fusepy/issues/116).
+
+_need_closing = False
+
+
+def shutdown_fuse_if_needed():
+    if _need_closing:
+        fuse_exit()
+        raise FuseOSError(ENOENT)
+
+
+def shutdown_fuse(mountpoint):
+    global _need_closing
+    _need_closing = True
+    # Ask for dummy file just to force a fuse operation that will
+    # call the `fuse_exit` from a valid context
+    try:
+        os.path.exists("%s/__shutdown_fuse__" % mountpoint)
+    except OSError:
+        pass
 
 
 class CoreConectionLostError(Exception):
@@ -100,9 +97,11 @@ def start_shutdown_watcher(socket_address, mountpoint):
                 logger.warning("Connection with core has been lost, exiting...")
                 break
 
-        fuse_exit()
+        shutdown_fuse(mountpoint)
 
-    threading.Thread(target=_shutdown_watcher).start()
+    # fuse_exit()
+
+    threading.Thread(target=_shutdown_watcher, daemon=True).start()
 
 
 class ContentBuilder:
@@ -254,6 +253,7 @@ class FuseOperations(LoggingMixIn, Operations):
 
     @property
     def sock(self):
+        shutdown_fuse_if_needed()
         if not self._socket:
             self._socket = _socket_init(self._socket_address)
         return self._socket

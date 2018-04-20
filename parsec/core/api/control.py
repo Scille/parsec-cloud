@@ -1,10 +1,12 @@
+from marshmallow import validate
+import os
+
 from parsec.networking import ClientContext
 from parsec.schema import BaseCmdSchema, fields
 from parsec.core.app import Core
 from parsec.core.fuse_manager import FuseNotAvailable, FuseAlreadyStarted, FuseNotStarted
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.devices_manager import DeviceLoadingError
-from parsec.utils import ParsecError, to_jsonb64, from_jsonb64, ejson_dumps
 
 
 class PathOnlySchema(BaseCmdSchema):
@@ -17,7 +19,10 @@ class cmd_LOGIN_Schema(BaseCmdSchema):
 
 
 class cmd_FUSE_START_Schema(BaseCmdSchema):
-    mountpoint = fields.String(required=True)
+    if os.name == "nt":
+        mountpoint = fields.String(required=True, validate=validate.Regexp(r"^[A-Z]:$"))
+    else:
+        mountpoint = fields.String(required=True)
 
 
 async def login(req: dict, client_ctx: ClientContext, core: Core) -> dict:
