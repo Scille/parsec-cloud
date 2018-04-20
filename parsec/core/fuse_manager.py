@@ -5,6 +5,7 @@ from multiprocessing import Process
 import webbrowser
 
 from parsec.core.base import IAsyncComponent, implements
+
 try:
     from parsec.ui.fuse import start_fuse
 
