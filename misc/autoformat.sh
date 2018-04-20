@@ -1,9 +1,11 @@
 #! /bin/sh
 
-BASEDIR=$( dirname `readlink -f $0` )/..
+BASEDIR=$( dirname `readlink -f $0` )
+cd $BASEDIR/..
+
 black --line-length=100 \
-  $BASEDIR/parsec \
-  $BASEDIR/tests \
-  $BASEDIR/setup.py \
-  $BASEDIR/examples \
+  parsec \
+  tests \
+  setup.py \
+  examples \
   $@
