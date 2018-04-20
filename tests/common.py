@@ -11,7 +11,7 @@ except ImportError:
 from parsec.core import CoreApp, CoreConfig
 
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake
-from parsec.utils import CookedSocket
+from parsec.networking import CookedSocket
 
 from parsec.backend import BackendApp, BackendConfig
 

@@ -7,7 +7,8 @@ from nacl.public import PublicKey
 from nacl.signing import VerifyKey
 from json import JSONDecodeError
 
-from parsec.utils import CookedSocket, ParsecError
+from parsec.utils import ParsecError
+from parsec.networking import CookedSocket
 from parsec.handshake import HandshakeFormatError, ServerHandshake
 from parsec.schema import BaseCmdSchema, fields, validate
 

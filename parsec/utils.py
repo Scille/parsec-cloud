@@ -1,49 +1,13 @@
-import attr
 import base64
 import json
-import trio
 from collections import deque
 from pendulum import Pendulum
 from nacl.secret import SecretBox
 import nacl.utils
 
 
-BUFFSIZE = 4049
-
-
 def generate_sym_key():
     return nacl.utils.random(SecretBox.KEY_SIZE)
-
-
-@attr.s
-class CookedSocket:
-    sockstream = attr.ib()
-    _recv_buff = attr.ib(default=attr.Factory(bytearray))
-    _msgs_ready = attr.ib(default=attr.Factory(deque))
-
-    async def aclose(self):
-        await self.sockstream.aclose()
-
-    async def send(self, msg):
-        await self.sockstream.send_all(json.dumps(msg).encode() + b"\n")
-
-    async def recv(self):
-        self._recv_buff += await self.sockstream.receive_some(BUFFSIZE)
-        if not self._recv_buff:
-            # Empty body should normally never occurs, though it is sent
-            # when peer closes connection
-            raise trio.BrokenStreamError("Peer has closed connection")
-
-        *msgs, unfinished_msg = self._recv_buff.split(b"\n")
-        self._msgs_ready += msgs
-        self._recv_buff = unfinished_msg
-        if not self._msgs_ready:
-            # Recursive call to do a new BUFFSIZE read on the socket
-            return await self.recv()
-
-        else:
-            next_msg = self._msgs_ready.popleft()
-            return json.loads(next_msg.decode())
 
 
 def to_jsonb64(raw: bytes):

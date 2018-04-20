@@ -71,20 +71,20 @@ class CookedSocket:
         await self.sockstream.send_all(json.dumps(msg).encode() + b"\n")
 
     async def recv(self):
-        self._recv_buff += await self.sockstream.receive_some(self.BUFFSIZE)
-        if not self._recv_buff:
-            # Empty body should normally never occurs, though it is sent
-            # when peer closes connection
-            raise trio.BrokenStreamError("Peer has closed connection")
+        while True:
+            self._recv_buff += await self.sockstream.receive_some(self.BUFFSIZE)
+            if not self._recv_buff:
+                # Empty body should normally never occurs, though it is sent
+                # when peer closes connection
+                raise trio.BrokenStreamError("Peer has closed connection")
 
-        *msgs, unfinished_msg = self._recv_buff.split(b"\n")
-        self._msgs_ready += msgs
-        self._recv_buff = unfinished_msg
-        if not self._msgs_ready:
-            # TODO: avoid recursive call
-            # Recursive call to do a new BUFFSIZE read on the socket
-            return await self.recv()
+            *msgs, unfinished_msg = self._recv_buff.split(b"\n")
+            self._msgs_ready += msgs
+            self._recv_buff = unfinished_msg
+            if not self._msgs_ready:
+                # Return in the loop to do a new BUFFSIZE read on the socket
+                continue
 
-        else:
-            next_msg = self._msgs_ready.popleft()
-            return json.loads(next_msg.decode())
+            else:
+                next_msg = self._msgs_ready.popleft()
+                return json.loads(next_msg.decode())

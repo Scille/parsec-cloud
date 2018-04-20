@@ -2,7 +2,7 @@ import trio
 import logbook
 from urllib.parse import urlparse
 
-from parsec.utils import CookedSocket
+from parsec.networking import CookedSocket
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 from parsec.utils import ParsecError
 
