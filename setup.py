@@ -51,7 +51,7 @@ requirements = [
 ]
 dependency_links = [
     # need to use --process-dependency-links option for this
-    "git+https://github.com/Scille/fusepy.git@3b4aeb91566f902eaccb3278467612f0dc13caa0#egg=fusepy-2.0.4-win"
+    "git+https://github.com/fusepy/fusepy.git#egg=fusepy-3.0.0"
 ]
 
 test_requirements = [
@@ -75,9 +75,7 @@ test_requirements = [
 extra_requirements = {
     "drive": ["pydrive==1.3.1"],
     "dropbox": ["dropbox==7.2.1"],
-    "fuse": [
-        'fusepy==2.0.4;platform_system!="Windows"', 'fusepy==2.0.4-win;platform_system=="Windows"'
-    ],
+    "fuse": ["fusepy==3.0.0"],
     "postgresql": ["psycopg2==2.7.1", "aiopg==0.13.0"],
     "s3": ["boto3==1.4.4", "botocore==1.5.46"],
     "dev": test_requirements,
