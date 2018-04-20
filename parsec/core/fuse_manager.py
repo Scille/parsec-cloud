@@ -60,7 +60,7 @@ class FuseManager:
     async def teardown(self):
         try:
             await self.stop_mountpoint()
-        except FuseNotStarted:
+        except (FuseNotStarted, FuseNotAvailable):
             pass
 
     def is_started(self):
