@@ -11,6 +11,8 @@ from urllib.parse import urlparse
 from parsec.core import CoreApp, CoreConfig, Device
 
 
+logger = logbook.Logger("parsec.core.app")
+
 JOHN_DOE_DEVICE_ID = "johndoe@test"
 JOHN_DOE_PRIVATE_KEY = (
     b"]x\xd3\xa9$S\xa92\x9ex\x91\xa7\xee\x04SY\xbe\xe6"
@@ -94,11 +96,6 @@ def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
     # Push globally the log handler make it work across threads
     log_handler.push_application()
 
-    def handle_crashing(exception):
-        traceback.print_exc()
-        print("Core crashed... Restarting!")
-        time.sleep(1)
-
     async def _login_and_run(user=None):
         async with trio.open_nursery() as nursery:
             await core.init(nursery)
@@ -143,17 +140,17 @@ def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
                         local_storage_db_path=os.path.join(john_conf_dir, "db.sqlite"),
                     )
                     print("Hello Mr. Doe, your conf dir is `%s`" % john_conf_dir)
-                    try:
-                        trio.run(_login_and_run, user)
-                    except Exception as exc:
-                        handle_crashing(exc)
+                    trio.run(_login_and_run, user)
                 finally:
                     shutil.rmtree(john_conf_dir)
             else:
-                try:
-                    trio.run(_login_and_run)
-                except Exception:
-                    handle_crashing()
+                trio.run(_login_and_run)
+
         except KeyboardInterrupt:
             print("bye ;-)")
             break
+
+        except Exception:
+            logger.error(traceback.format_exc())
+            logger.error("Core crashed... Restarting!")
+            time.sleep(1)
