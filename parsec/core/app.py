@@ -27,7 +27,7 @@ class NotLoggedError(Exception):
     pass
 
 
-class CoreApp(BaseAsyncComponent):
+class Core(BaseAsyncComponent):
 
     def __init__(self, config):
         super().__init__()
@@ -130,7 +130,7 @@ class CoreApp(BaseAsyncComponent):
     async def logout(self):
         async with self.auth_lock:
             if not self.auth_device:
-                raise NotLoggedError('No user logged')
+                raise NotLoggedError("No user logged")
 
             # Teardown in init reverse order
             for cname in reversed(self.components_dep_order):
@@ -147,6 +147,3 @@ class CoreApp(BaseAsyncComponent):
         from parsec.core.api import dispatch_request
 
         await serve_client(lambda req, ctx: dispatch_request(req, ctx, self), sockstream)
-
-
-Core = CoreApp

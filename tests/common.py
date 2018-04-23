@@ -8,7 +8,7 @@ try:
 except ImportError:
     from freezegun import freeze_time
 
-from parsec.core import CoreApp, CoreConfig
+from parsec.core import Core, CoreConfig
 
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 from parsec.utils import CookedSocket
@@ -130,7 +130,7 @@ async def connect_core(core):
 @asynccontextmanager
 async def core_factory(**config):
     config = CoreConfig(**config)
-    core = CoreApp(config)
+    core = Core(config)
     async with trio.open_nursery() as nursery:
         await core.init(nursery)
         try:

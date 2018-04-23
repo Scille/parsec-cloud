@@ -10,6 +10,7 @@ class AlreadyInitializedError(Exception):
 
 
 class BaseAsyncComponent:
+
     def __init__(self):
         self._lock = trio.Lock()
         self.is_initialized = False
@@ -18,6 +19,7 @@ class BaseAsyncComponent:
         async with self._lock:
             if self.is_initialized:
                 raise AlreadyInitializedError()
+
             await self._init(nursery)
             self.is_initialized = True
 
@@ -25,6 +27,7 @@ class BaseAsyncComponent:
         async with self._lock:
             if not self.is_initialized:
                 raise NotInitializedError()
+
             await self._teardown()
 
     async def _init(self, nursery):
