@@ -1,6 +1,5 @@
 import base64
 import json
-from collections import deque
 from pendulum import Pendulum
 from nacl.secret import SecretBox
 import nacl.utils

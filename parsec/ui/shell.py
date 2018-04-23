@@ -4,7 +4,7 @@ import json
 from urllib.parse import urlparse
 
 from parsec.core.cli import DEFAULT_CORE_SOCKET
-from parsec.utils import CookedSocket
+from parsec.networking import CookedSocket
 
 
 class ReloadShell(Exception):

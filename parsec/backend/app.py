@@ -31,6 +31,7 @@ from parsec.backend.drivers.postgresql import (
 )
 
 from parsec.backend.exceptions import NotFoundError
+from parsec.backend.s3_blockstore import S3BlockStoreComponent
 
 
 logger = logbook.Logger("parsec.backend.app")
@@ -102,6 +103,10 @@ class BackendApp:
             # TODO: validate BLOCKSTORE_URL value
             if self.blockstore_url == "backend://":
                 self.blockstore = MemoryBlockStoreComponent(self.signal_ns)
+            elif self.blockstore_url.startswith("s3"):
+                self.blockstore = S3BlockStoreComponent(
+                    self.signal_ns, *self.blockstore_url.split(":")[1:]
+                )
             else:
                 self.blockstore = None
 
@@ -116,7 +121,10 @@ class BackendApp:
 
             if self.blockstore_url == "backend://":
                 self.blockstore = PGBlockStoreComponent(self.dbh, self.signal_ns)
-
+            elif self.blockstore_url.startswith("s3"):
+                self.blockstore = S3BlockStoreComponent(
+                    self.signal_ns, *self.blockstore_url.split(":")[1:]
+                )
             else:
                 self.blockstore = None
 
