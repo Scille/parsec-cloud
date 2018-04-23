@@ -272,15 +272,15 @@ def mocked_local_storage_connection():
 
     vanilla_init = LocalStorage.init
     vanilla_teardown = LocalStorage.teardown
-    LocalStorage.init = mock_init
-    LocalStorage.teardown = mock_teardown
+    LocalStorage._init = mock_init
+    LocalStorage._teardown = mock_teardown
 
     try:
         yield mock
 
     finally:
-        LocalStorage.init = vanilla_init
-        LocalStorage.teardown = vanilla_teardown
+        LocalStorage._init = vanilla_init
+        LocalStorage._teardown = vanilla_teardown
 
 
 @pytest.fixture

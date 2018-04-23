@@ -2,7 +2,7 @@ import trio
 import logbook
 import traceback
 
-from parsec.core.base import IAsyncComponent, implements
+from parsec.core.base import BaseAsyncComponent
 from parsec.core.fs.folder import BaseFolderEntry
 from parsec.core.backend_connection import BackendNotAvailable, BackendError
 
@@ -10,20 +10,19 @@ from parsec.core.backend_connection import BackendNotAvailable, BackendError
 logger = logbook.Logger("parsec.core.synchronizer")
 
 
-class Synchronizer(implements(IAsyncComponent)):
+class Synchronizer(BaseAsyncComponent):
 
     def __init__(self, auto_sync, fs):
+        super().__init__()
         self.auto_sync = auto_sync
         self.fs = fs
-        self.nursery = None
         self._synchronizer_task_cancel_scope = None
 
-    async def init(self, nursery):
-        self.nursery = nursery
+    async def _init(self, nursery):
         if self.auto_sync:
             self._synchronizer_task_cancel_scope = await nursery.start(self._synchronizer_task)
 
-    async def teardown(self):
+    async def _teardown(self):
         if self._synchronizer_task_cancel_scope:
             self._synchronizer_task_cancel_scope.cancel()
 

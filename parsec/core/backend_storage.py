@@ -1,18 +1,19 @@
 from parsec.utils import from_jsonb64, to_jsonb64
 from parsec.core.backend_connection import BackendError, BackendConcurrencyError
 
-from parsec.core.base import IAsyncComponent, implements
+from parsec.core.base import BaseAsyncComponent
 
 
-class BackendStorage(implements(IAsyncComponent)):
+class BackendStorage(BaseAsyncComponent):
 
     def __init__(self, backend_connection):
+        super().__init__()
         self.backend_conn = backend_connection
 
-    async def init(self, nursery):
+    async def _init(self, nursery):
         pass
 
-    async def teardown(self):
+    async def _teardown(self):
         pass
 
     async def fetch_user_manifest(self, version=None):

@@ -1,10 +1,9 @@
 import trio
 import blinker
 import logbook
-from interface import implements
 
 from parsec.networking import serve_client
-from parsec.core.base import IAsyncComponent
+from parsec.core.base import BaseAsyncComponent
 from parsec.core.sharing import Sharing
 from parsec.core.fs import FS
 from parsec.core.synchronizer import Synchronizer
@@ -28,9 +27,10 @@ class NotLoggedError(Exception):
     pass
 
 
-class CoreApp(implements(IAsyncComponent)):
+class CoreApp(BaseAsyncComponent):
 
     def __init__(self, config):
+        super().__init__()
         self.nursery = None
         self.signal_ns = blinker.Namespace()
         self.devices_manager = DevicesManager(config.base_settings_path)
@@ -77,10 +77,10 @@ class CoreApp(implements(IAsyncComponent)):
         # TODO: replace this by signal passing
         self._config_try_pendings = {}
 
-    async def init(self, nursery):
+    async def _init(self, nursery):
         self.nursery = nursery
 
-    async def teardown(self):
+    async def _teardown(self):
         try:
             await self.logout()
         except NotLoggedError:

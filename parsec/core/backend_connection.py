@@ -2,7 +2,7 @@ import trio
 import logbook
 from urllib.parse import urlparse
 
-from parsec.core.base import IAsyncComponent, implements
+from parsec.core.base import BaseAsyncComponent
 from parsec.utils import CookedSocket
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 from parsec.utils import ParsecError
@@ -23,18 +23,36 @@ class BackendConcurrencyError(BackendError):
     pass
 
 
-class BackendConnection(implements(IAsyncComponent)):
+class BackendConnection(BaseAsyncComponent):
 
     def __init__(self, device, addr, signal_ns):
+        super().__init__()
         self.handshake_id = device.id
         self.handshake_signkey = device.device_signkey
         self.addr = urlparse(addr)
         self.signal_ns = signal_ns
         self.nursery = None
-        self._lock = trio.Lock()
         self._sock = None
         self._event_listener_task_cancel_scope = None
         self._subscribed_events = []
+
+    async def _init(self, nursery):
+        # TODO: avoid having to keep nursery object
+        self.nursery = nursery
+        self._event_listener_task_cancel_scope = await nursery.start(self._event_listener_task)
+
+        # Try to open connection with the backend to save time for first
+        # request
+        # try:
+        #     async with self._lock:
+        #         await self._init_send_connection()
+        # except (OSError, trio.BrokenStreamError):
+        #     pass
+
+    async def _teardown(self):
+        self._event_listener_task_cancel_scope.cancel()
+        if self._sock:
+            await self._sock.aclose()
 
     async def _socket_connection_factory(self):
         logger.debug("connecting to backend {}:{}", self.addr.hostname, self.addr.port)
@@ -128,23 +146,6 @@ class BackendConnection(implements(IAsyncComponent)):
                     # In case of connection failure, wait a bit and restart
                     await trio.sleep(1)
 
-    async def init(self, nursery):
-        self.nursery = nursery
-        self._event_listener_task_cancel_scope = await nursery.start(self._event_listener_task)
-
-    # Try to open connection with the backend to save time for first
-    # request
-    # try:
-    #     async with self._lock:
-    #         await self._init_send_connection()
-    # except (OSError, trio.BrokenStreamError):
-    #     pass
-
-    async def teardown(self):
-        self._event_listener_task_cancel_scope.cancel()
-        if self._sock:
-            await self._sock.aclose()
-
     async def ping(self):
         await self.send({"cmd": "ping", "ping": ""})
 
@@ -159,35 +160,35 @@ class BackendConnection(implements(IAsyncComponent)):
         self._event_listener_task_cancel_scope = await self.nursery.start(self._event_listener_task)
 
 
-class AnonymousBackendConnection(BackendConnection):
+class AnonymousBackendConnection(BaseAsyncComponent):
 
     def __init__(self, addr):
+        super().__init__()
         self.handshake_id = "anonymous"
         self.handshake_signkey = None
         self.addr = urlparse(addr)
-        self._lock = trio.Lock()
         self._sock = None
 
-    async def init(self, nursery):
-        # TODO: Avoid this ugly code copy/paste
-        self.nursery = nursery
-        # Try to open connection with the backend to save time for first
-        # request
-        try:
-            async with self._lock:
-                await self._init_send_connection()
-        except (OSError, trio.BrokenStreamError):
-            pass
+    # TODO: Avoid this ugly code copy/paste
 
-    async def teardown(self):
+    _socket_connection_factory = BackendConnection._socket_connection_factory
+    _init_send_connection = BackendConnection._init_send_connection
+    _naive_send = BackendConnection._naive_send
+    send = BackendConnection.send
+
+    async def _init(self, nursery):
+        pass
+
+    async def _teardown(self):
         if self._sock:
             await self._sock.aclose()
 
 
 async def backend_send_anonymous_cmd(addr, cmd):
     conn = AnonymousBackendConnection(addr)
+    # TODO: avoid this hack by splitting BackendConnection functions
     try:
         return await conn.send(cmd)
 
     finally:
-        await conn.teardown()
+        await conn._teardown()

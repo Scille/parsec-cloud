@@ -1,45 +1,16 @@
 import sqlite3
 
-from parsec.core.base import Interface, implements
+from parsec.core.base import BaseAsyncComponent
 
 
-class ILocalStorage(Interface):
-
-    def fetch_user_manifest(self):
-        pass
-
-    def flush_user_manifest(self, blob):
-        pass
-
-    def fetch_manifest(self, id):
-        pass
-
-    def flush_manifest(self, id, blob):
-        pass
-
-    def move_manifest(self, id, new_id):
-        pass
-
-    def fetch_block(self, id):
-        pass
-
-    def flush_block(self, id, blob):
-        pass
-
-    def fetch_dirty_block(self, id):
-        pass
-
-    def flush_dirty_block(self, id, blob):
-        pass
-
-
-class LocalStorage(implements(ILocalStorage)):
+class LocalStorage(BaseAsyncComponent):
 
     def __init__(self, path):
+        super().__init__()
         self.path = path
         self.conn = None
 
-    async def init(self, nursery):
+    async def _init(self, nursery):
         self._init_conn()
 
     def _init_conn(self):
@@ -63,7 +34,7 @@ class LocalStorage(implements(ILocalStorage)):
         )
         self.conn.commit()
 
-    async def teardown(self):
+    async def _teardown(self):
         if self.conn:
             self.conn.close()
             self.conn = None

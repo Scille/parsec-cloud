@@ -4,7 +4,7 @@ import blinker
 from multiprocessing import Process
 import webbrowser
 
-from parsec.core.base import IAsyncComponent, implements
+from parsec.core.base import BaseAsyncComponent
 
 try:
     from parsec.ui.fuse import start_fuse
@@ -39,7 +39,7 @@ class FuseStoppingError(FuseManagerError):
     pass
 
 
-class FuseManager(implements(IAsyncComponent)):
+class FuseManager(BaseAsyncComponent):
 
     def __init__(
         self,
@@ -48,10 +48,10 @@ class FuseManager(implements(IAsyncComponent)):
         debug: bool = False,
         nothreads: bool = False,
     ):
+        super().__init__()
         self._fuse_mountpoint_started = signal_ns.signal("fuse_mountpoint_started")
         self._fuse_mountpoint_need_stop = signal_ns.signal("fuse_mountpoint_need_stop")
         self._fuse_mountpoint_stopped = signal_ns.signal("fuse_mountpoint_stopped")
-        self._lock = trio.Lock()
         self._start_fuse_config = {
             "socket_address": core_addr, "debug": debug, "nothreads": nothreads
         }
@@ -59,10 +59,10 @@ class FuseManager(implements(IAsyncComponent)):
         self.drive_letter = None
         self.fuse_process = None
 
-    async def init(self, nursery):
+    async def _init(self, nursery):
         pass
 
-    async def teardown(self):
+    async def _teardown(self):
         try:
             await self.stop_mountpoint()
         except (FuseNotStarted, FuseNotAvailable):
