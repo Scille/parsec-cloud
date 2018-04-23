@@ -250,8 +250,10 @@ def mocked_local_storage_connection():
         _conn = None
 
         def reset(self):
+            if self._conn:
+                self._conn.close()
             ls = LocalStorage(":memory:")
-            vanilla_init(ls)
+            ls._init_conn()
             self._conn = ls.conn
 
         @property
@@ -262,10 +264,10 @@ def mocked_local_storage_connection():
 
     mock = MockedLocalStorageConnection()
 
-    def mock_init(self):
+    async def mock_init(self, nursery):
         self.conn = mock.conn
 
-    def mock_teardown(self):
+    async def mock_teardown(self):
         self.conn = None
 
     vanilla_init = LocalStorage.init

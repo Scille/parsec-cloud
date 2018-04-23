@@ -73,7 +73,7 @@ class FS:
         self._block_access_cls = BlockAccess
         self._dirty_block_access_cls = DirtyBlockAccess
 
-    async def init(self):
+    async def init(self, nursery):
         access = self._user_vlob_access_cls(None)  # TODO...
         # Note we don't try to get the user manifest from the backend here
         # The reason is we already know version 0 of the manifest (i.e. empty
@@ -93,10 +93,10 @@ class FS:
             )
 
     async def teardown(self):
-        # TODO: too deeeeeeeep
+        # TODO: if should be handled by parent
         # Flush what needs to be before leaving to avoid data loss
-        await self.root.flush(recursive=True)
-        await self.manifests_manager._backend_storage.backend_conn.teardown()
+        if self.root:
+            await self.root.flush(recursive=True)
 
     async def fetch_path(self, path):
         if not path.startswith("/"):

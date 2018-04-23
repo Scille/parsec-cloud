@@ -21,6 +21,7 @@ class Sharing(implements(IAsyncComponent)):
         self.backend_connection = backend_connection
         self.device = device
         self.msg_arrived = trio.Event()
+        self._message_listener_task_cancel_scope = None
 
     async def init(self, nursery):
         self._message_listener_task_cancel_scope = await nursery.start(self._message_listener_task)
@@ -28,7 +29,8 @@ class Sharing(implements(IAsyncComponent)):
         self.signal_ns.signal("message_arrived").connect(self._msg_arrived_cb, weak=True)
 
     async def teardown(self):
-        self._message_listener_task_cancel_scope.cancel()
+        if self._message_listener_task_cancel_scope:
+            self._message_listener_task_cancel_scope.cancel()
 
     async def _message_listener_task(self, *, task_status=trio.TASK_STATUS_IGNORED):
         with trio.open_cancel_scope() as cancel_scope:

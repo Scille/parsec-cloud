@@ -39,7 +39,10 @@ class LocalStorage(implements(ILocalStorage)):
         self.path = path
         self.conn = None
 
-    def init(self):
+    async def init(self, nursery):
+        self._init_conn()
+
+    def _init_conn(self):
         self.conn = sqlite3.connect(self.path)
         cur = self.conn.cursor()
         cur.execute(
@@ -60,7 +63,7 @@ class LocalStorage(implements(ILocalStorage)):
         )
         self.conn.commit()
 
-    def teardown(self):
+    async def teardown(self):
         if self.conn:
             self.conn.close()
             self.conn = None
