@@ -24,6 +24,24 @@ class ManifestsManager:
         self._local_storage = local_storage
         self._backend_storage = backend_storage
 
+    async def _verify(self, signed):
+        unsigned_message = json.loads(signed[64:].decode())
+        if (
+            unsigned_message["user_id"] == self.device.user_id
+            and unsigned_message["device_name"] == self.device.device_name
+        ):
+            verify_key = self.device.device_verifykey
+        else:
+            rep = await self._backend_storage.backend_conn.send(
+                {"cmd": "user_get", "user_id": unsigned_message["user_id"]}
+            )
+            assert rep["status"] == "ok"
+            # TODO: handle crash, handle key validity expiration
+            verify_key = VerifyKey(
+                from_jsonb64(rep["devices"][unsigned_message["device_name"]]["verify_key"])
+            )
+        return verify_key.verify(signed)
+
     def _encrypt_manifest(self, key, manifest):
         raw = json.dumps(manifest).encode()
         box = SecretBox(key)
@@ -34,22 +52,7 @@ class ManifestsManager:
         box = SecretBox(key)
         try:
             signed = box.decrypt(blob)
-            unsigned_message = json.loads(signed[64:].decode())
-            if (
-                unsigned_message["user_id"] == self.device.user_id
-                and unsigned_message["device_name"] == self.device.device_name
-            ):
-                verify_key = self.device.device_verifykey
-            else:
-                rep = await self._backend_storage.backend_conn.send(
-                    {"cmd": "user_get", "user_id": unsigned_message["user_id"]}
-                )
-                assert rep["status"] == "ok"
-                # TODO: handle crash, handle key validity expiration
-                verify_key = VerifyKey(
-                    from_jsonb64(rep["devices"][unsigned_message["device_name"]]["verify_key"])
-                )
-            raw = verify_key.verify(signed)
+            raw = await self._verify(signed)
         except json.decoder.JSONDecodeError as exc:
             raise exc
 
@@ -67,30 +70,33 @@ class ManifestsManager:
         signed = self.device.device_signkey.sign(raw)
         return box.encrypt(signed)
 
-    def _decrypt_user_manifest(self, blob):
+    async def _decrypt_user_manifest(self, blob):
         box = Box(self.device.user_privkey, self.device.user_pubkey)
         try:
             signed = box.decrypt(blob)
-            raw = self.device.device_verifykey.verify(signed)
-        except BadSignatureError:
-            raise ManifestSignatureError()
+            raw = await self._verify(signed)
+        except json.decoder.JSONDecodeError as exc:
+            raise exc
 
-        except (CryptoError, ValueError):
-            raise ManifestDecryptionError()
+        except BadSignatureError as exc:
+            raise ManifestSignatureError() from exc
+
+        except (CryptoError, ValueError) as exc:
+            raise ManifestDecryptionError() from exc
 
         return json.loads(raw.decode())
 
     async def fetch_user_manifest_from_local(self):
         blob = self._local_storage.fetch_user_manifest()
         if blob:
-            decrypted = self._decrypt_user_manifest(blob)
+            decrypted = await self._decrypt_user_manifest(blob)
             data, _ = TypedManifestSchema(strict=True).load(decrypted)
             return data
 
     async def fetch_user_manifest_from_backend(self, version=None):
         blob = await self._backend_storage.fetch_user_manifest(version=version)
         if blob:
-            decrypted = self._decrypt_user_manifest(blob)
+            decrypted = await self._decrypt_user_manifest(blob)
             data, _ = TypedManifestSchema(strict=True).load(decrypted)
             return data
 
