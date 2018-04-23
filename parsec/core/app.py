@@ -3,12 +3,13 @@ import blinker
 import logbook
 
 from parsec.networking import serve_client
-from parsec.core.base import BaseAsyncComponent
+from parsec.core.base import BaseAsyncComponent, NotInitializedError
 from parsec.core.sharing import Sharing
 from parsec.core.fs import FS
 from parsec.core.synchronizer import Synchronizer
 from parsec.core.devices_manager import DevicesManager
 from parsec.core.backend_connection import BackendConnection
+from parsec.core.events_manager import EventsManager
 from parsec.core.fuse_manager import FuseManager
 from parsec.core.local_storage import LocalStorage
 from parsec.core.backend_storage import BackendStorage
@@ -40,6 +41,7 @@ class Core(BaseAsyncComponent):
 
         # Components dependencies tree:
         # app
+        # ├─ events_manager
         # ├─ fs
         # │  ├─ manifests_manager
         # │  │  ├─ local_storage
@@ -49,11 +51,14 @@ class Core(BaseAsyncComponent):
         # │     ├─ local_storage
         # │     └─ backend_storage
         # ├─ fuse_manager
+        # │  └─ events_manager
         # ├─ synchronizer
         # │  └─ fs
         # └─ sharing
+        #    └─ events_manager
 
         self.components_dep_order = (
+            "events_manager",
             "backend_connection",
             "backend_storage",
             "local_storage",
@@ -92,6 +97,7 @@ class Core(BaseAsyncComponent):
                 raise AlreadyLoggedError("Already logged as `%s`" % self.auth_device)
 
             # First create components
+            self.events_manager = EventsManager(device, self.config.backend_addr)
             self.backend_connection = BackendConnection(
                 device, self.config.backend_addr, self.signal_ns
             )
@@ -122,7 +128,10 @@ class Core(BaseAsyncComponent):
                 # if something goes wrong
                 for cname_ in reversed(self.components_dep_order):
                     component_ = getattr(self, cname_)
-                    await component_.teardown()
+                    try:
+                        await component_.teardown()
+                    except NotInitializedError:
+                        pass
                 # Don't unset components and auth_* stuff after teardown to
                 # easier post-mortem debugging
                 raise

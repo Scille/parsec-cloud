@@ -49,6 +49,7 @@ class FuseManager(BaseAsyncComponent):
         nothreads: bool = False,
     ):
         super().__init__()
+        # TODO: make fuse process send events to synchronise with the manager
         self._fuse_mountpoint_started = signal_ns.signal("fuse_mountpoint_started")
         self._fuse_mountpoint_need_stop = signal_ns.signal("fuse_mountpoint_need_stop")
         self._fuse_mountpoint_stopped = signal_ns.signal("fuse_mountpoint_stopped")

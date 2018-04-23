@@ -23,6 +23,35 @@ class BackendConcurrencyError(BackendError):
     pass
 
 
+async def backend_connection_factory(addr, handshake_id="anonymous", handshake_signkey=None):
+    parsed_addr = urlparse(addr)
+    logger.debug("connecting to backend {}:{}", parsed_addr.hostname, parsed_addr.port)
+    sockstream = await trio.open_tcp_stream(parsed_addr.hostname, parsed_addr.port)
+    try:
+        sock = CookedSocket(sockstream)
+        if handshake_id == "anonymous":
+            ch = AnonymousClientHandshake()
+        else:
+            assert handshake_id
+            assert handshake_signkey
+            ch = ClientHandshake(handshake_id, handshake_signkey)
+        logger.debug("handshake as {}", handshake_id)
+        challenge_req = await sock.recv()
+        answer_req = ch.process_challenge_req(challenge_req)
+        await sock.send(answer_req)
+        result_req = await sock.recv()
+        ch.process_result_req(result_req)
+    except Exception as exc:
+        logger.debug("handshake failed {!r}", exc)
+        await sockstream.aclose()
+        raise exc
+
+    return sock
+
+
+# TODO: rename in `BackendConnectionMultiplexer` ?
+
+
 class BackendConnection(BaseAsyncComponent):
 
     def __init__(self, device, addr, signal_ns):
