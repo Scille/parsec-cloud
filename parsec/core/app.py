@@ -9,7 +9,7 @@ from parsec.core.fs import FS
 from parsec.core.synchronizer import Synchronizer
 from parsec.core.devices_manager import DevicesManager
 from parsec.core.backend_connection import BackendConnection
-from parsec.core.events_manager import EventsManager
+from parsec.core.backend_events_manager import BackendEventsManager
 from parsec.core.fuse_manager import FuseManager
 from parsec.core.local_storage import LocalStorage
 from parsec.core.backend_storage import BackendStorage
@@ -41,7 +41,7 @@ class Core(BaseAsyncComponent):
 
         # Components dependencies tree:
         # app
-        # ├─ events_manager
+        # ├─ backend_events_manager
         # ├─ fs
         # │  ├─ manifests_manager
         # │  │  ├─ local_storage
@@ -51,14 +51,12 @@ class Core(BaseAsyncComponent):
         # │     ├─ local_storage
         # │     └─ backend_storage
         # ├─ fuse_manager
-        # │  └─ events_manager
         # ├─ synchronizer
         # │  └─ fs
         # └─ sharing
-        #    └─ events_manager
 
         self.components_dep_order = (
-            "events_manager",
+            "backend_events_manager",
             "backend_connection",
             "backend_storage",
             "local_storage",
@@ -97,7 +95,9 @@ class Core(BaseAsyncComponent):
                 raise AlreadyLoggedError("Already logged as `%s`" % self.auth_device)
 
             # First create components
-            self.events_manager = EventsManager(device, self.config.backend_addr)
+            self.backend_events_manager = BackendEventsManager(
+                device, self.config.backend_addr, self.signal_ns
+            )
             self.backend_connection = BackendConnection(
                 device, self.config.backend_addr, self.signal_ns
             )

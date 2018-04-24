@@ -1,5 +1,4 @@
 import trio
-import blinker
 import logbook
 import json
 
@@ -9,16 +8,16 @@ from parsec.core.devices_manager import Device
 from parsec.core import backend_connection as bc
 
 
-logger = logbook.Logger("parsec.core.events_manager")
+logger = logbook.Logger("parsec.core.backend_events_manager")
 
 
-class EventListenRepSchema(UnknownCheckedSchema):
+class BackendEventListenRepSchema(UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
     event = fields.String(required=True)
     subject = fields.String(missing=None)
 
 
-event_listen_rep_schema = EventListenRepSchema()
+backend_event_listen_rep_schema = BackendEventListenRepSchema()
 
 
 class SubscribeBackendEventError(Exception):
@@ -29,20 +28,20 @@ class ListenBackendEventError(Exception):
     pass
 
 
-class EventsManager(BaseAsyncComponent):
+class BackendEventsManager(BaseAsyncComponent):
     """
     Difference between signal and event:
     - signals are in-process notifications
     - events are message sent downstream from the backend to the client core
     """
 
-    def __init__(self, device: Device, backend_addr: str):
+    def __init__(self, device: Device, backend_addr: str, signal_ns):
         super().__init__()
         self.device = device
         self.backend_addr = backend_addr
-        self._ns = blinker.Namespace()
+        self._signal_ns = signal_ns
         self._nursery = None
-        self._subscribed_events = []
+        self._subscribed_events = set()
 
     async def _init(self, nursery):
         self._nursery = nursery
@@ -51,17 +50,26 @@ class EventsManager(BaseAsyncComponent):
     async def _teardown(self):
         self._event_listener_task_cancel_scope.cancel()
 
-    def signal(self, name: str) -> blinker.NamedSignal:
-        return self._ns.signal(name)
-
     async def subscribe_backend_event(self, event, subject=None):
+        """
+        Raises:
+            KeyError: if event/subject couple has already been previously subscribed
+        """
         async with self._lock:
-            self._subscribed_events.append((event, subject))
+            key = (event, subject)
+            if key in self._subscribed_events:
+                raise KeyError("%s@%s already subscribed" % key)
+
+            self._subscribed_events.add(key)
             logger.debug("Subscribe %s@%s, restarting event listener" % (event, subject))
             await self._teardown()
             await self._init(self._nursery)
 
     async def unsubscribe_backend_event(self, event, subject=None):
+        """
+        Raises:
+            KeyError: if event/subject couple has not been previously subscribed
+        """
         async with self._lock:
             self._subscribed_events.remove((event, subject))
             logger.debug("Unsubscribe %s@%s, restarting event listener" % (event, subject))
@@ -85,7 +93,7 @@ class EventsManager(BaseAsyncComponent):
             while True:
                 await sock.send({"cmd": "event_listen"})
                 rep = await sock.recv()
-                _, errors = event_listen_rep_schema.load(rep)
+                _, errors = backend_event_listen_rep_schema.load(rep)
                 if errors:
                     raise ListenBackendEventError(
                         "Bad reponse %r while listening for event: %r" % (rep, errors)
@@ -94,9 +102,9 @@ class EventsManager(BaseAsyncComponent):
                 subject = rep.get("subject")
                 event = rep.get("event")
                 if subject is None:
-                    self._ns.signal(event).send()
+                    self._signal_ns.signal(event).send()
                 else:
-                    self._ns.signal(event).send(subject)
+                    self._signal_ns.signal(event).send(subject)
 
         with trio.open_cancel_scope() as cancel:
             task_status.started(cancel)
@@ -117,4 +125,4 @@ class EventsManager(BaseAsyncComponent):
                     # Only thing we can do is sending a signal to notify the
                     # trouble...
                     # TODO: think about this kind of signal format
-                    self._ns.signal("panic").send(exc)
+                    self._signal_ns.signal("panic").send(exc)

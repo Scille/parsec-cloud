@@ -1,6 +1,7 @@
 import os
 import pytest
 import socket
+import blinker
 import contextlib
 from unittest.mock import patch
 
@@ -125,6 +126,11 @@ def unused_tcp_port():
     with contextlib.closing(socket.socket()) as sock:
         sock.bind(("127.0.0.1", 0))
         return sock.getsockname()[1]
+
+
+@pytest.fixture
+def signal_ns():
+    return blinker.Namespace()
 
 
 @pytest.fixture
