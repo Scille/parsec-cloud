@@ -64,13 +64,41 @@ class CookedSocket:
     _recv_buff = attr.ib(default=attr.Factory(bytearray))
     _msgs_ready = attr.ib(default=attr.Factory(deque))
 
-    async def aclose(self):
+    async def aclose(self) -> None:
+        """
+        Close the underlying sockstream.
+        """
         await self.sockstream.aclose()
 
-    async def send(self, msg):
-        await self.sockstream.send_all(json.dumps(msg).encode() + b"\n")
+    async def send(self, msg: dict) -> None:
+        """
+        Args:
+            msg: Dictionary data that will be serialized and sent.
 
-    async def recv(self):
+        Raises:
+            TypeError: if provided msg is not a valid JSON serializable object.
+            trio.ResourceBusyError: if another task is already executing a send_all(),
+                wait_send_all_might_not_block(), or HalfCloseableStream.send_eof() on this stream.
+            trio.BrokenStreamError: if something has gone wrong, and the stream is broken.
+            trio.ClosedStreamError: if you already closed this stream object.
+        """
+        if not isinstance(msg, dict):
+            raise TypeError('msg must be a dict')
+        payload = json.dumps(msg).encode() + b"\n"
+        await self.sockstream.send_all(payload)
+
+    async def recv(self) -> dict:
+        """
+        Returns:
+            Receveid data deserialized as a dictionary.
+
+        Raises:
+            json.JSONDecodeError: if returned message is not valid JSON data.
+            trio.ResourceBusyError: if two tasks attempt to call receive_some()
+                on the same stream at the same time.
+            trio.BrokenStreamError: if something has gone wrong, and the stream is broken.
+            trio.ClosedStreamError: if you already closed this stream object.
+        """
         self._recv_buff += await self.sockstream.receive_some(self.BUFFSIZE)
         if not self._recv_buff:
             # Empty body should normally never occurs, though it is sent
