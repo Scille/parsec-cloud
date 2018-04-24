@@ -65,7 +65,7 @@ class FuseManager(BaseAsyncComponent):
 
     async def _teardown(self):
         try:
-            await self.stop_mountpoint()
+            await self._stop_mountpoint_no_lock()
         except (FuseNotStarted, FuseNotAvailable):
             pass
 
@@ -100,27 +100,30 @@ class FuseManager(BaseAsyncComponent):
     async def stop_mountpoint(self):
         _die_if_fuse_not_available()
         async with self._lock:
-            if not self.is_started():
-                raise FuseNotStarted("Fuse is not started")
+            await self._stop_mountpoint_no_lock()
 
-            # Fuse process should be listening to this event
-            self._fuse_mountpoint_need_stop.send(self.mountpoint)
+    async def _stop_mountpoint_no_lock(self):
+        if not self.is_started():
+            raise FuseNotStarted("Fuse is not started")
 
-            def close_fuse_process():
-                # Once the need stop event received, fuse should close itself,
-                # so we just have to wait for this...
-                self.fuse_process.join(1)
-                if self.fuse_process.exitcode is None:
-                    raise FuseStoppingError(
-                        "Fuse process (pid: %s) refuse to stop" % self.fuse_process.pid
-                    )
+        # Fuse process should be listening to this event
+        self._fuse_mountpoint_need_stop.send(self.mountpoint)
 
-            await trio.run_sync_in_worker_thread(close_fuse_process)
+        def close_fuse_process():
+            # Once the need stop event received, fuse should close itself,
+            # so we just have to wait for this...
+            self.fuse_process.join(1)
+            if self.fuse_process.exitcode is None:
+                raise FuseStoppingError(
+                    "Fuse process (pid: %s) refuse to stop" % self.fuse_process.pid
+                )
 
-            # TODO: multiprocess start/stop can make async loop unresponsive,
-            # we should use a thread executor do to this
-            old_mountpoint = self.mountpoint
-            self.mountpoint = self.fuse_process = None
+        await trio.run_sync_in_worker_thread(close_fuse_process)
+
+        # TODO: multiprocess start/stop can make async loop unresponsive,
+        # we should use a thread executor do to this
+        old_mountpoint = self.mountpoint
+        self.mountpoint = self.fuse_process = None
 
         self._fuse_mountpoint_stopped.send(old_mountpoint)
 

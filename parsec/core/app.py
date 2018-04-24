@@ -146,19 +146,22 @@ class Core(BaseAsyncComponent):
 
     async def logout(self):
         async with self.auth_lock:
-            if not self.auth_device:
-                raise NotLoggedError("No user logged")
+            await self._logout_no_lock()
 
-            # Teardown in init reverse order
-            for cname in reversed(self.components_dep_order):
-                component = getattr(self, cname)
-                await component.teardown()
-                setattr(self, cname, None)
+    async def _logout_no_lock(self):
+        if not self.auth_device:
+            raise NotLoggedError("No user logged")
 
-            # Keep this last to guarantee logout was ok if it is unset
-            self.auth_subscribed_events = None
-            self.auth_events = None
-            self.auth_device = None
+        # Teardown in init reverse order
+        for cname in reversed(self.components_dep_order):
+            component = getattr(self, cname)
+            await component.teardown()
+            setattr(self, cname, None)
+
+        # Keep this last to guarantee logout was ok if it is unset
+        self.auth_subscribed_events = None
+        self.auth_events = None
+        self.auth_device = None
 
     async def handle_client(self, sockstream):
         from parsec.core.api import dispatch_request
