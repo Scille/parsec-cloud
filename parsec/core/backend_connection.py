@@ -3,9 +3,10 @@ import logbook
 from urllib.parse import urlparse
 
 from parsec.core.base import BaseAsyncComponent
-from parsec.utils import CookedSocket
-from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 from parsec.utils import ParsecError
+from parsec.networking import CookedSocket
+from parsec.handshake import ClientHandshake, AnonymousClientHandshake, HandshakeError
+from parsec.core.devices_manager import Device
 
 
 logger = logbook.Logger("parsec.core.backend_connection")
@@ -23,28 +24,57 @@ class BackendConcurrencyError(BackendError):
     pass
 
 
-async def backend_connection_factory(addr, handshake_id="anonymous", handshake_signkey=None):
+async def backend_connection_factory(addr: str, device: Device = None) -> CookedSocket:
+    """
+    Connect and authenticate to the given backend.
+
+    Args:
+        addr: Address of the backend.
+        device: Device to authenticate as.
+
+    Raises:
+        BackendNotAvailable: if connection with backend failed
+        HandshakeError: if handshake failed
+
+    Returns:
+        A cooked socket ready to communicate with the backend.
+    """
     parsed_addr = urlparse(addr)
-    logger.debug("connecting to backend {}:{}", parsed_addr.hostname, parsed_addr.port)
-    sockstream = await trio.open_tcp_stream(parsed_addr.hostname, parsed_addr.port)
+    logger.debug(
+        "Connecting to backend {}:{} as {}",
+        parsed_addr.hostname,
+        parsed_addr.port,
+        device or "<anonymous>",
+    )
+
+    try:
+        sockstream = await trio.open_tcp_stream(parsed_addr.hostname, parsed_addr.port)
+
+    except OSError as exc:
+        logger.debug("Impossible to connect to backend: {!r}", exc)
+        raise BackendNotAvailable() from exc
+
     try:
         sock = CookedSocket(sockstream)
-        if handshake_id == "anonymous":
+        if not device:
             ch = AnonymousClientHandshake()
         else:
-            assert handshake_id
-            assert handshake_signkey
-            ch = ClientHandshake(handshake_id, handshake_signkey)
-        logger.debug("handshake as {}", handshake_id)
+            ch = ClientHandshake(device.id, device.device_signkey)
         challenge_req = await sock.recv()
         answer_req = ch.process_challenge_req(challenge_req)
         await sock.send(answer_req)
         result_req = await sock.recv()
         ch.process_result_req(result_req)
-    except Exception as exc:
-        logger.debug("handshake failed {!r}", exc)
+
+    except trio.BrokenStreamError as exc:
+        logger.debug("Connection with backend lost during handshake: {!r}", exc)
         await sockstream.aclose()
-        raise exc
+        raise BackendNotAvailable() from exc
+
+    except HandshakeError as exc:
+        logger.warning("Handshake failed: {!r}", exc)
+        await sockstream.aclose()
+        raise
 
     return sock
 

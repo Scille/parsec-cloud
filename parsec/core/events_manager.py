@@ -1,11 +1,12 @@
-import os
 import trio
 import blinker
 import logbook
+import json
 
 from parsec.schema import UnknownCheckedSchema, fields
 from parsec.core.base import BaseAsyncComponent
-from parsec.core.backend_connection import backend_connection_factory, BackendNotAvailable
+from parsec.core.devices_manager import Device
+from parsec.core import backend_connection as bc
 
 
 logger = logbook.Logger("parsec.core.events_manager")
@@ -30,11 +31,12 @@ class ListenBackendEventError(Exception):
 
 class EventsManager(BaseAsyncComponent):
     """
-    signals are in-process notifications
-    events are backend transmitted
+    Difference between signal and event:
+    - signals are in-process notifications
+    - events are message sent downstream from the backend to the client core
     """
 
-    def __init__(self, device, backend_addr):
+    def __init__(self, device: Device, backend_addr: str):
         super().__init__()
         self.device = device
         self.backend_addr = backend_addr
@@ -49,7 +51,7 @@ class EventsManager(BaseAsyncComponent):
     async def _teardown(self):
         self._event_listener_task_cancel_scope.cancel()
 
-    def signal(self, name):
+    def signal(self, name: str) -> blinker.NamedSignal:
         return self._ns.signal(name)
 
     async def subscribe_backend_event(self, event, subject=None):
@@ -67,6 +69,7 @@ class EventsManager(BaseAsyncComponent):
             await self._init(self._nursery)
 
     async def _event_listener_task(self, *, task_status=trio.TASK_STATUS_IGNORED):
+        # Copy `self._subscribed_event` to avoid concurrent modifications
         subscribed_events = self._subscribed_events.copy()
 
         async def _event_pump(sock):
@@ -100,18 +103,18 @@ class EventsManager(BaseAsyncComponent):
 
             while True:
                 try:
-                    sock = await backend_connection_factory(
-                        self.backend_addr, self.device.id, self.device.device_signkey
-                    )
+                    sock = await bc.backend_connection_factory(self.backend_addr, self.device)
                     await _event_pump(sock)
-                except (
-                    OSError, BackendNotAvailable, trio.BrokenStreamError, trio.ClosedStreamError
-                ) as exc:
+                except (bc.BackendNotAvailable, trio.BrokenStreamError) as exc:
                     # In case of connection failure, wait a bit and restart
-                    logger.debug(
-                        "Connection lost with backend (%r), restarting connection..." % exc
-                    )
+                    logger.debug("Connection lost with backend ({}), restarting connection...", exc)
                     await trio.sleep(1)
-                except (SubscribeBackendEventError, ListenBackendEventError) as exc:
+                except (SubscribeBackendEventError, ListenBackendEventError, json.JSONDecodeError):
                     logger.exception("Invalid response sent by backend, restarting connection...")
                     await trio.sleep(1)
+                except bc.HandshakeError as exc:
+                    # Handshake error means there is no need retrying the connection
+                    # Only thing we can do is sending a signal to notify the
+                    # trouble...
+                    # TODO: think about this kind of signal format
+                    self._ns.signal("panic").send(exc)

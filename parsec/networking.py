@@ -83,7 +83,8 @@ class CookedSocket:
             trio.ClosedStreamError: if you already closed this stream object.
         """
         if not isinstance(msg, dict):
-            raise TypeError('msg must be a dict')
+            raise TypeError("msg must be a dict")
+
         payload = json.dumps(msg).encode() + b"\n"
         await self.sockstream.send_all(payload)
 

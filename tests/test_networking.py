@@ -2,6 +2,7 @@ import pytest
 import trio
 import trio.testing
 import json
+
 # from hypothesis import given, strategies as st
 # from string import printable; from pprint import pprint
 
@@ -24,11 +25,10 @@ class TestCookedSocket:
         self.cserver = CookedSocket(self.rserver)
 
     @pytest.mark.trio
-    @pytest.mark.parametrize('payload', [
-        {},
-        {'foo': 42, 'spam': None},
-        {'foo': 'bar', 'spam': [1, 'two', {'three': True}]},
-    ])
+    @pytest.mark.parametrize(
+        "payload",
+        [{}, {"foo": 42, "spam": None}, {"foo": "bar", "spam": [1, "two", {"three": True}]}],
+    )
     async def test_base(self, payload):
         await self.cclient.send(payload)
         server_payload = await self.cserver.recv()
@@ -43,7 +43,7 @@ class TestCookedSocket:
         await self.rserver.aclose()
         with pytest.raises(trio.BrokenStreamError):
             with trio.move_on_after(1):
-                await self.cclient.send({'foo': 'bar'})
+                await self.cclient.send({"foo": "bar"})
 
     @pytest.mark.trio
     async def test_peer_diconnected_during_recv(self):
@@ -53,12 +53,9 @@ class TestCookedSocket:
                 await self.cclient.recv()
 
     @pytest.mark.trio
-    @pytest.mark.parametrize('payload', [
-        None,
-        object(),
-        [],
-        {'foo': 42, 'bar': {'spam': object()}},
-    ])
+    @pytest.mark.parametrize(
+        "payload", [None, object(), [], {"foo": 42, "bar": {"spam": object()}}]
+    )
     async def test_send_invalid_message(self, payload):
         with pytest.raises(TypeError):
             with trio.move_on_after(1):
@@ -66,7 +63,7 @@ class TestCookedSocket:
 
     @pytest.mark.trio
     async def test_receive_invalid_message(self):
-        await self.rserver.send_all(b'dummy\n')
+        await self.rserver.send_all(b"dummy\n")
         with pytest.raises(json.JSONDecodeError):
             with trio.move_on_after(1):
                 await self.cclient.recv()
