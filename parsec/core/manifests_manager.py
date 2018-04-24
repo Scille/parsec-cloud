@@ -20,9 +20,10 @@ class ManifestDecryptionError(ParsecError):
 
 class ManifestsManager(BaseAsyncComponent):
 
-    def __init__(self, device, local_storage, backend_storage):
+    def __init__(self, device, local_storage, backend_storage, backend_connection):
         super().__init__()
         self.device = device
+        self._backend_connection = backend_connection
         self._local_storage = local_storage
         self._backend_storage = backend_storage
 
@@ -49,7 +50,9 @@ class ManifestsManager(BaseAsyncComponent):
             ):
                 verify_key = self.device.device_verifykey
             else:
-                rep = await self._backend_storage.backend_conn.send(
+                # TODO: create a component (or methods in backend_storage ?)
+                # dedicated to retrieve user infos
+                rep = await self._backend_connection.send(
                     {"cmd": "user_get", "user_id": unsigned_message["user_id"]}
                 )
                 assert rep["status"] == "ok"

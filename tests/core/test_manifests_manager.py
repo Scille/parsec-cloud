@@ -25,10 +25,9 @@ def manifests_manager(alice_cleartext_device, tmpdir):
 
     devices_manager = DevicesManager(str(tmpdir))
     alice_device = devices_manager.load_device(alice_cleartext_device)
-    backend_storage.backend_conn = AsyncMock()
-    backend_storage.backend_conn.send = AsyncMock()
-    backend_storage.backend_conn.send.is_async = True
-    backend_storage.backend_conn.send.side_effect = [
+    backend_connection = AsyncMock()
+    backend_connection.send.is_async = True
+    backend_connection.send.side_effect = [
         {
             "status": "ok",
             "devices": {
@@ -42,7 +41,7 @@ def manifests_manager(alice_cleartext_device, tmpdir):
     ]
 
     device = devices_manager.load_device(alice_cleartext_device)
-    return ManifestsManager(device, local_storage, backend_storage)
+    return ManifestsManager(device, local_storage, backend_storage, backend_connection)
 
 
 @pytest.fixture
@@ -275,7 +274,10 @@ async def test_manifests_manager_flush_user_manifest_on_local(
     backend_storage = Mock()
     devices_manager = DevicesManager(str(tmpdir))
     device = devices_manager.load_device(alice_cleartext_device)
-    manifests_manager2 = ManifestsManager(device, local_storage, backend_storage)
+    backend_connection = Mock()
+    manifests_manager2 = ManifestsManager(
+        device, local_storage, backend_storage, backend_connection
+    )
     manifest2 = await manifests_manager2.fetch_user_manifest_from_local()
     assert manifest == manifest2
 
@@ -296,7 +298,10 @@ async def test_manifests_manager_flush_on_local(
     backend_storage = Mock()
     devices_manager = DevicesManager(str(tmpdir))
     device = devices_manager.load_device(alice_cleartext_device)
-    manifests_manager2 = ManifestsManager(device, local_storage, backend_storage)
+    backend_connection = Mock()
+    manifests_manager2 = ManifestsManager(
+        device, local_storage, backend_storage, backend_connection
+    )
     manifest2 = await manifests_manager2.fetch_from_local("id", b"a" * 32)
     assert manifest == manifest2
 
@@ -319,7 +324,10 @@ async def test_manifests_manager_sync_user_manifest_with_backend(
     backend_storage = Mock()
     devices_manager = DevicesManager(str(tmpdir))
     device = devices_manager.load_device(alice_cleartext_device)
-    manifests_manager2 = ManifestsManager(device, local_storage, backend_storage)
+    backend_connection = Mock()
+    manifests_manager2 = ManifestsManager(
+        device, local_storage, backend_storage, backend_connection
+    )
     manifest2 = await manifests_manager2.fetch_user_manifest_from_local()
     assert manifest == manifest2
 
@@ -340,7 +348,10 @@ async def test_manifests_manager_sync_new_entry_with_backend(
     backend_storage = Mock()
     devices_manager = DevicesManager(str(tmpdir))
     device = devices_manager.load_device(alice_cleartext_device)
-    manifests_manager2 = ManifestsManager(device, local_storage, backend_storage)
+    backend_connection = Mock()
+    manifests_manager2 = ManifestsManager(
+        device, local_storage, backend_storage, backend_connection
+    )
     manifest2 = await manifests_manager2.fetch_from_local("id", b"a" * 32)
     assert manifest == manifest2
 
@@ -367,6 +378,9 @@ async def test_manifests_manager_sync_with_backend(
     backend_storage = Mock()
     devices_manager = DevicesManager(str(tmpdir))
     device = devices_manager.load_device(alice_cleartext_device)
-    manifests_manager2 = ManifestsManager(device, local_storage, backend_storage)
+    backend_connection = Mock()
+    manifests_manager2 = ManifestsManager(
+        device, local_storage, backend_storage, backend_connection
+    )
     manifest2 = await manifests_manager2.fetch_from_local("id", b"a" * 32)
     assert manifest == manifest2

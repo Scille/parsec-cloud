@@ -62,7 +62,7 @@ class CookedSocket:
 
     sockstream = attr.ib()
     _recv_buff = attr.ib(default=attr.Factory(bytearray))
-    _msgs_ready = attr.ib(default=attr.Factory(deque))
+    _reps_ready = attr.ib(default=attr.Factory(deque))
 
     async def aclose(self) -> None:
         """
@@ -70,28 +70,28 @@ class CookedSocket:
         """
         await self.sockstream.aclose()
 
-    async def send(self, msg: dict) -> None:
+    async def send(self, req: dict) -> None:
         """
         Args:
-            msg: Dictionary data that will be serialized and sent.
+            req: Dictionary data that will be serialized and sent.
 
         Raises:
-            TypeError: if provided msg is not a valid JSON serializable object.
+            TypeError: if provided req is not a valid JSON serializable object.
             trio.ResourceBusyError: if another task is already executing a send_all(),
                 wait_send_all_might_not_block(), or HalfCloseableStream.send_eof() on this stream.
             trio.BrokenStreamError: if something has gone wrong, and the stream is broken.
             trio.ClosedStreamError: if you already closed this stream object.
         """
-        if not isinstance(msg, dict):
-            raise TypeError("msg must be a dict")
+        if not isinstance(req, dict):
+            raise TypeError("req must be a dict")
 
-        payload = json.dumps(msg).encode() + b"\n"
+        payload = json.dumps(req).encode() + b"\n"
         await self.sockstream.send_all(payload)
 
     async def recv(self) -> dict:
         """
         Returns:
-            Receveid data deserialized as a dictionary.
+            Received data deserialized as a dictionary.
 
         Raises:
             json.JSONDecodeError: if returned message is not valid JSON data.
@@ -106,14 +106,14 @@ class CookedSocket:
             # when peer closes connection
             raise trio.BrokenStreamError("Peer has closed connection")
 
-        *msgs, unfinished_msg = self._recv_buff.split(b"\n")
-        self._msgs_ready += msgs
+        *reps, unfinished_msg = self._recv_buff.split(b"\n")
+        self._reps_ready += reps
         self._recv_buff = unfinished_msg
-        if not self._msgs_ready:
+        if not self._reps_ready:
             # TODO: avoid recursive call
             # Recursive call to do a new BUFFSIZE read on the socket
             return await self.recv()
 
         else:
-            next_msg = self._msgs_ready.popleft()
-            return json.loads(next_msg.decode())
+            next_rep = self._reps_ready.popleft()
+            return json.loads(next_rep.decode())

@@ -53,7 +53,7 @@ class BackendEventsManager(BaseAsyncComponent):
     async def subscribe_backend_event(self, event, subject=None):
         """
         Raises:
-            KeyError: if event/subject couple has already been previously subscribed
+            KeyError: if event/subject couple has already been previously subscribed.
         """
         async with self._lock:
             key = (event, subject)
@@ -68,7 +68,7 @@ class BackendEventsManager(BaseAsyncComponent):
     async def unsubscribe_backend_event(self, event, subject=None):
         """
         Raises:
-            KeyError: if event/subject couple has not been previously subscribed
+            KeyError: if event/subject couple has not been previously subscribed.
         """
         async with self._lock:
             self._subscribed_events.remove((event, subject))
@@ -113,7 +113,9 @@ class BackendEventsManager(BaseAsyncComponent):
                 try:
                     sock = await bc.backend_connection_factory(self.backend_addr, self.device)
                     await _event_pump(sock)
-                except (bc.BackendNotAvailable, trio.BrokenStreamError) as exc:
+                except (
+                    bc.BackendNotAvailable, trio.BrokenStreamError, trio.ClosedStreamError
+                ) as exc:
                     # In case of connection failure, wait a bit and restart
                     logger.debug("Connection lost with backend ({}), restarting connection...", exc)
                     await trio.sleep(1)

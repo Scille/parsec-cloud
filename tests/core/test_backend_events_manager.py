@@ -5,8 +5,8 @@ from parsec.core.backend_events_manager import BackendEventsManager
 
 
 @pytest.fixture
-async def backend_event_manager(nursery, running_backend, signal_ns, backend_addr, alice):
-    em = BackendEventsManager(alice, backend_addr, signal_ns)
+async def backend_event_manager(nursery, running_backend, signal_ns, alice):
+    em = BackendEventsManager(alice, running_backend.addr, signal_ns)
     await em.init(nursery)
     try:
         yield em
@@ -17,8 +17,6 @@ async def backend_event_manager(nursery, running_backend, signal_ns, backend_add
 
 @pytest.mark.trio
 async def test_subscribe_backend_event(running_backend, signal_ns, backend_event_manager):
-    backend, _, _ = running_backend
-
     # Dummy event (not provided by backend)
     await backend_event_manager.subscribe_backend_event("ping")
 
@@ -33,12 +31,12 @@ async def test_subscribe_backend_event(running_backend, signal_ns, backend_event
     # has been setup, in such case we wait a bit an retry.
     for tries in range(1, 4):
         with trio.move_on_after(0.01):
-            backend.signal_ns.signal("ping").send()
+            running_backend.backend.signal_ns.signal("ping").send()
             await ping_received.wait()
             break
 
     else:
-        assert False, "Not signal received after %s tentatives" % tries
+        raise RuntimeError("Not signal received after %s tentatives" % tries)
 
 
 @pytest.mark.trio
@@ -49,8 +47,6 @@ async def test_unsubscribe_unknown_backend_event(running_backend, backend_event_
 
 @pytest.mark.trio
 async def test_subscribe_already_subscribed_backend_event(running_backend, backend_event_manager):
-    backend, _, _ = running_backend
-
     await backend_event_manager.subscribe_backend_event("ping")
     with pytest.raises(KeyError):
         await backend_event_manager.subscribe_backend_event("ping")
@@ -58,8 +54,6 @@ async def test_subscribe_already_subscribed_backend_event(running_backend, backe
 
 @pytest.mark.trio
 async def test_unsbuscribe_backend_event(running_backend, signal_ns, backend_event_manager):
-    backend, _, _ = running_backend
-
     await backend_event_manager.subscribe_backend_event("ping")
     await trio.sleep(0.01)
     await backend_event_manager.unsubscribe_backend_event("ping")
@@ -70,6 +64,6 @@ async def test_unsbuscribe_backend_event(running_backend, signal_ns, backend_eve
 
     signal_ns.signal("ping").connect(on_ping)
 
-    backend.signal_ns.signal("ping").send()
+    running_backend.backend.signal_ns.signal("ping").send()
     # Nothing occured ? Then we're good !
     await trio.sleep(0.01)

@@ -1,5 +1,6 @@
 import os
 import pytest
+import attr
 import socket
 import blinker
 import contextlib
@@ -129,6 +130,11 @@ def unused_tcp_port():
 
 
 @pytest.fixture
+def unused_tcp_addr(unused_tcp_port):
+    return "tcp://127.0.0.1:%s" % unused_tcp_port
+
+
+@pytest.fixture
 def signal_ns():
     return blinker.Namespace()
 
@@ -168,11 +174,19 @@ def tcp_stream_spy():
         yield open_tcp_stream_mock_wrapper
 
 
+@attr.s(frozen=True)
+class RunningBackendInfo:
+    backend = attr.ib()
+    addr = attr.ib()
+    connection_factory = attr.ib()
+
+
 @pytest.fixture
 async def running_backend(tcp_stream_spy, backend, backend_addr):
     async with run_app(backend) as backend_connection_factory:
         tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
-        yield (backend, backend_addr, backend_connection_factory)
+
+        yield RunningBackendInfo(backend, backend_addr, backend_connection_factory)
 
         tcp_stream_spy.install_hook(backend_addr, None)
 

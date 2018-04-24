@@ -37,7 +37,7 @@ async def event_subscribe(req: dict, client_ctx: ClientContext, core: Core) -> d
 
     core.auth_subscribed_events[event, subject] = _handle_event
     if event == "device_try_claim_submitted":
-        await core.backend_connection.subscribe_event(event, subject)
+        await core.backend_events_manager.subscribe_backend_event(event, subject)
     if subject:
         core.signal_ns.signal(event).connect(_handle_event, sender=subject, weak=True)
     else:

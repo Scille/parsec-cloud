@@ -2,7 +2,6 @@ import trio
 import logbook
 from urllib.parse import urlparse
 
-from parsec.core.base import BaseAsyncComponent
 from parsec.utils import ParsecError
 from parsec.networking import CookedSocket
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake, HandshakeError
@@ -12,15 +11,14 @@ from parsec.core.devices_manager import Device
 logger = logbook.Logger("parsec.core.backend_connection")
 
 
+# TODO: remove this exception
+
+
 class BackendError(ParsecError):
     pass
 
 
 class BackendNotAvailable(BackendError):
-    pass
-
-
-class BackendConcurrencyError(BackendError):
     pass
 
 
@@ -33,8 +31,8 @@ async def backend_connection_factory(addr: str, device: Device = None) -> Cooked
         device: Device to authenticate as.
 
     Raises:
-        BackendNotAvailable: if connection with backend failed
-        HandshakeError: if handshake failed
+        BackendNotAvailable: if connection with backend failed.
+        HandshakeError: if handshake failed.
 
     Returns:
         A cooked socket ready to communicate with the backend.
@@ -79,175 +77,31 @@ async def backend_connection_factory(addr: str, device: Device = None) -> Cooked
     return sock
 
 
-# TODO: rename in `BackendConnectionMultiplexer` ?
+async def backend_send_anonymous_cmd(addr: str, req: dict) -> dict:
+    """
+    Send a single request to the backend as anonymous user.
 
+    Args:
+        addr: Address of the backend.
+        req: Request data to send.
 
-class BackendConnection(BaseAsyncComponent):
+    Raises:
+        BackendNotAvailable: if connection with backend failed.
+        HandshakeError: if handshake failed.
+        TypeError: if provided msg is not a valid JSON serializable object.
+        json.JSONDecodeError: if the backend answer is not a valid json.
 
-    def __init__(self, device, addr, signal_ns):
-        super().__init__()
-        self.handshake_id = device.id
-        self.handshake_signkey = device.device_signkey
-        self.addr = urlparse(addr)
-        self.signal_ns = signal_ns
-        self.nursery = None
-        self._sock = None
-        self._event_listener_task_cancel_scope = None
-        self._subscribed_events = []
-
-    async def _init(self, nursery):
-        # TODO: avoid having to keep nursery object
-        self.nursery = nursery
-        self._event_listener_task_cancel_scope = await nursery.start(self._event_listener_task)
-
-    # Try to open connection with the backend to save time for first
-    # request
-    # try:
-    #     async with self._lock:
-    #         await self._init_send_connection()
-    # except (OSError, trio.BrokenStreamError):
-    #     pass
-
-    async def _teardown(self):
-        self._event_listener_task_cancel_scope.cancel()
-        if self._sock:
-            await self._sock.aclose()
-
-    async def _socket_connection_factory(self):
-        logger.debug("connecting to backend {}:{}", self.addr.hostname, self.addr.port)
-        sockstream = await trio.open_tcp_stream(self.addr.hostname, self.addr.port)
-        try:
-            logger.debug("handshake as {}", self.handshake_id)
-            sock = CookedSocket(sockstream)
-            if self.handshake_id == "anonymous":
-                ch = AnonymousClientHandshake()
-            else:
-                ch = ClientHandshake(self.handshake_id, self.handshake_signkey)
-            challenge_req = await sock.recv()
-            answer_req = ch.process_challenge_req(challenge_req)
-            await sock.send(answer_req)
-            result_req = await sock.recv()
-            ch.process_result_req(result_req)
-        except Exception as exc:
-            logger.debug("handshake failed {!r}", exc)
-            await sockstream.aclose()
-            raise exc
-
-        return sock
-
-    async def _init_send_connection(self):
-        if self._sock:
-            await self._sock.aclose()
-        self._sock = await self._socket_connection_factory()
-
-    async def _naive_send(self, req):
-        if not self._sock:
-            raise BackendNotAvailable()
-
-        await self._sock.send(req)
-        return await self._sock.recv()
-
-    async def send(self, req):
-        async with self._lock:
-            # Try to use the already connected socket
-            try:
-                logger.debug("send {}", req)
-                rep = await self._naive_send(req)
-                logger.debug("recv {}", rep)
-                return rep
-
-            except (BackendNotAvailable, trio.BrokenStreamError, trio.ClosedStreamError) as exc:
-                logger.debug("retrying, cannot reach backend: {!r}", exc)
-                try:
-                    # If it failed, reopen the socket and retry the request
-                    await self._init_send_connection()
-                    logger.debug("send {}", req)
-                    rep = await self._naive_send(req)
-                    logger.debug("recv {}", rep)
-                    return rep
-
-                except (OSError, trio.BrokenStreamError) as e:
-                    logger.debug("aborting, cannot reach backend: {!r}", e)
-                    # Failed again, it seems we are offline
-                    raise BackendNotAvailable() from e
-
-    async def _event_listener_task(self, *, task_status=trio.TASK_STATUS_IGNORED):
-
-        async def _event_pump(sock, signal_ns, subscribed_event):
-            for event, subject in subscribed_event:
-                await sock.send({"cmd": "event_subscribe", "event": event, "subject": subject})
-                rep = await sock.recv()
-                if rep["status"] != "ok":
-                    # TODO: better exception
-                    raise BackendError(rep)
-
-            while True:
-                await sock.send({"cmd": "event_listen"})
-                rep = await sock.recv()
-                if rep["status"] != "ok":
-                    raise BackendError(rep)
-
-                if rep.get("subject") is None:
-                    signal_ns.signal(rep["event"]).send()
-                else:
-                    signal_ns.signal(rep["event"]).send(rep["subject"])
-
-        with trio.open_cancel_scope() as cancel:
-            task_status.started(cancel)
-
-            while True:
-                try:
-                    sock = await self._socket_connection_factory()
-                    await _event_pump(sock, self.signal_ns, self._subscribed_events)
-                except (
-                    OSError, BackendNotAvailable, trio.BrokenStreamError, trio.ClosedStreamError
-                ):
-                    # In case of connection failure, wait a bit and restart
-                    await trio.sleep(1)
-
-    async def ping(self):
-        await self.send({"cmd": "ping", "ping": ""})
-
-    async def subscribe_event(self, event, subject=None):
-        self._subscribed_events.append((event, subject))
-        self._event_listener_task_cancel_scope.cancel()
-        self._event_listener_task_cancel_scope = await self.nursery.start(self._event_listener_task)
-
-    async def unsubscribe_event(self, event, subject=None):
-        self._subscribed_events.remove((event, subject))
-        self._event_listener_task_cancel_scope.cancel()
-        self._event_listener_task_cancel_scope = await self.nursery.start(self._event_listener_task)
-
-
-class AnonymousBackendConnection(BaseAsyncComponent):
-
-    def __init__(self, addr):
-        super().__init__()
-        self.handshake_id = "anonymous"
-        self.handshake_signkey = None
-        self.addr = urlparse(addr)
-        self._sock = None
-
-    # TODO: Avoid this ugly code copy/paste
-
-    _socket_connection_factory = BackendConnection._socket_connection_factory
-    _init_send_connection = BackendConnection._init_send_connection
-    _naive_send = BackendConnection._naive_send
-    send = BackendConnection.send
-
-    async def _init(self, nursery):
-        pass
-
-    async def _teardown(self):
-        if self._sock:
-            await self._sock.aclose()
-
-
-async def backend_send_anonymous_cmd(addr, cmd):
-    conn = AnonymousBackendConnection(addr)
+    Returns:
+        The backend reponse deserialized as a dict.
+    """
+    sock = await backend_connection_factory(addr)
     # TODO: avoid this hack by splitting BackendConnection functions
     try:
-        return await conn.send(cmd)
+        await sock.send(req)
+        return await sock.recv()
+
+    except trio.BrokenStreamError as exc:
+        raise BackendNotAvailable() from exc
 
     finally:
-        await conn._teardown()
+        await sock.aclose()

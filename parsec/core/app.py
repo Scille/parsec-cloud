@@ -8,7 +8,7 @@ from parsec.core.sharing import Sharing
 from parsec.core.fs import FS
 from parsec.core.synchronizer import Synchronizer
 from parsec.core.devices_manager import DevicesManager
-from parsec.core.backend_connection import BackendConnection
+from parsec.core.backend_connections_multiplexer import BackendConnectionsMultiplexer
 from parsec.core.backend_events_manager import BackendEventsManager
 from parsec.core.fuse_manager import FuseManager
 from parsec.core.local_storage import LocalStorage
@@ -44,6 +44,7 @@ class Core(BaseAsyncComponent):
         # ├─ backend_events_manager
         # ├─ fs
         # │  ├─ manifests_manager
+        # │  │  ├─ backend_connection
         # │  │  ├─ local_storage
         # │  │  └─ backend_storage
         # │  │     └─ backend_connection
@@ -54,6 +55,7 @@ class Core(BaseAsyncComponent):
         # ├─ synchronizer
         # │  └─ fs
         # └─ sharing
+        #    └─ backend_connection
 
         self.components_dep_order = (
             "backend_events_manager",
@@ -98,19 +100,25 @@ class Core(BaseAsyncComponent):
             self.backend_events_manager = BackendEventsManager(
                 device, self.config.backend_addr, self.signal_ns
             )
-            self.backend_connection = BackendConnection(
-                device, self.config.backend_addr, self.signal_ns
+            self.backend_connection = BackendConnectionsMultiplexer(
+                device, self.config.backend_addr
             )
             self.local_storage = LocalStorage(device.local_storage_db_path)
             self.backend_storage = BackendStorage(self.backend_connection)
             self.manifests_manager = ManifestsManager(
-                device, self.local_storage, self.backend_storage
+                device, self.local_storage, self.backend_storage, self.backend_connection
             )
             self.blocks_manager = BlocksManager(self.local_storage, self.backend_storage)
             self.fs = FS(self.manifests_manager, self.blocks_manager)
             self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
             self.synchronizer = Synchronizer(self.config.auto_sync, self.fs)
-            self.sharing = Sharing(device, self.signal_ns, self.fs, self.backend_connection)
+            self.sharing = Sharing(
+                device,
+                self.fs,
+                self.backend_connection,
+                self.backend_events_manager,
+                self.signal_ns,
+            )
 
             # Then initialize them, order must respect dependencies here !
             try:
