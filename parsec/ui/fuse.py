@@ -150,7 +150,7 @@ class ContentBuilder:
     "mountpoint",
     type=click.Path(
         **({"exists": True, "file_okay": False} if os.name == "posix" else {"exists": False})
-    )
+    ),
 )
 @click.option("--debug", "-d", is_flag=True, default=False)
 @click.option(

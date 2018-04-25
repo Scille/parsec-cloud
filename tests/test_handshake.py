@@ -2,7 +2,10 @@ import pytest
 
 from parsec.utils import to_jsonb64
 from parsec.handshake import (
-    HandshakeFormatError, HandshakeBadIdentity, ServerHandshake, ClientHandshake
+    HandshakeFormatError,
+    HandshakeBadIdentity,
+    ServerHandshake,
+    ClientHandshake,
 )
 
 

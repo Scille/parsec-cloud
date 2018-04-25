@@ -8,7 +8,12 @@ from parsec.core.local_storage import LocalStorage
 from parsec.core.devices_manager import Device
 
 from tests.common import (
-    freeze_time, run_app, backend_factory, core_factory, connect_backend, connect_core
+    freeze_time,
+    run_app,
+    backend_factory,
+    core_factory,
+    connect_backend,
+    connect_core,
 )
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 from tests.core.test_devices_manager import alice_cleartext_device, bob_cleartext_device
@@ -183,7 +188,7 @@ async def core(nursery, backend_addr, tmpdir, default_devices, config={}):
         **{
             "base_settings_path": tmpdir.mkdir("core_fixture").strpath,
             "backend_addr": backend_addr,
-            **config
+            **config,
         }
     ) as core:
 
@@ -202,7 +207,7 @@ async def core2(nursery, backend_addr, tmpdir, default_devices, config={}):
         **{
             "base_settings_path": tmpdir.mkdir("core2_fixture").strpath,
             "backend_addr": backend_addr,
-            **config
+            **config,
         }
     ) as core:
 
@@ -284,4 +289,5 @@ def mocked_local_storage_connection():
 @pytest.fixture
 def monitor():
     from tests.monitor import Monitor
+
     return Monitor()

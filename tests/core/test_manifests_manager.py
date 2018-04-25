@@ -10,7 +10,9 @@ from unittest.mock import Mock
 from parsec.core.backend_storage import BackendStorage
 from parsec.core.local_storage import LocalStorage
 from parsec.core.manifests_manager import (
-    ManifestsManager, ManifestDecryptionError, ManifestSignatureError
+    ManifestsManager,
+    ManifestDecryptionError,
+    ManifestSignatureError,
 )
 from parsec.core.devices_manager import DevicesManager
 from parsec.core.schemas import TypedManifestSchema

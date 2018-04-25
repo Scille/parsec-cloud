@@ -3,7 +3,10 @@ import pendulum
 
 from parsec.backend.user import BaseUserComponent
 from parsec.backend.exceptions import (
-    AlreadyExistsError, NotFoundError, UserClaimError, OutOfDateError
+    AlreadyExistsError,
+    NotFoundError,
+    UserClaimError,
+    OutOfDateError,
 )
 
 

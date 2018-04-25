@@ -6,7 +6,11 @@ import trio
 import blinker
 
 from parsec.core.fuse_manager import (
-    FuseManager, FuseNotAvailable, FuseAlreadyStarted, FuseNotStarted, FUSE_AVAILABLE
+    FuseManager,
+    FuseNotAvailable,
+    FuseAlreadyStarted,
+    FuseNotStarted,
+    FUSE_AVAILABLE,
 )
 
 

@@ -1,10 +1,8 @@
 import boto3
 from botocore.exceptions import (
-    ClientError as S3ClientError, EndpointConnectionError as S3EndpointConnectionError
+    ClientError as S3ClientError,
+    EndpointConnectionError as S3EndpointConnectionError,
 )
-from functools import partial
-from datetime import datetime
-import trio
 
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.exceptions import AlreadyExistsError, NotFoundError
