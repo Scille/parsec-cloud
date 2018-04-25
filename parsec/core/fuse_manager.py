@@ -1,8 +1,8 @@
 import os
+import click
 import trio
 import blinker
 from multiprocessing import Process
-import webbrowser
 
 try:
     from parsec.ui.fuse import start_fuse
@@ -123,5 +123,4 @@ class FuseManager:
         if not self.is_started():
             raise FuseNotStarted("Fuse is not started")
 
-        # TODO: find a better way to open file with system's default application
-        webbrowser.open(os.path.join(self.mountpoint, path))
+        click.launch(os.path.join(self.mountpoint, path))
