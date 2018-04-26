@@ -9,7 +9,7 @@ env:
   - PARSEC_POSTGRESQL_TEST_URL='postgresql://postgres@localhost/parsec_test'
 install:
 - pip install -U coveralls
-- pip install .[postgresql,dev,fuse,s3] --process-dependency-links
+- pip install .[postgresql,dev,fuse,s3,openstack] --process-dependency-links
 before_script:
   - sudo modprobe fuse
   - psql -c 'create database parsec_test;' -U postgres
