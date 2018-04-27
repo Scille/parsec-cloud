@@ -2,7 +2,8 @@ import os
 import click
 import trio
 import blinker
-from multiprocessing import Process
+import multiprocessing
+import sys
 
 try:
     from parsec.ui.fuse import start_fuse
@@ -79,7 +80,9 @@ class FuseManager:
                     os.makedirs(mountpoint)
                 except FileExistsError:
                     pass
-            fuse_process = Process(
+            elif os.name == "nt":
+                multiprocessing.set_executable(os.path.join(sys.exec_prefix, "pythonw.exe"))
+            fuse_process = multiprocessing.Process(
                 target=start_fuse, kwargs={**self._start_fuse_config, "mountpoint": mountpoint}
             )
             fuse_process.start()
