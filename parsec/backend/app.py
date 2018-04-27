@@ -104,11 +104,11 @@ class BackendApp:
             # TODO: validate BLOCKSTORE_URL value
             if self.blockstore_url == "backend://":
                 self.blockstore = MemoryBlockStoreComponent(self.signal_ns)
-            elif self.blockstore_url.startswith("s3"):
+            elif self.blockstore_url and self.blockstore_url.startswith("s3"):
                 self.blockstore = S3BlockStoreComponent(
                     self.signal_ns, *self.blockstore_url.split(":")[1:]
                 )
-            elif self.blockstore_url.startswith("openstack"):
+            elif self.blockstore_url and self.blockstore_url.startswith("openstack"):
                 self.blockstore = OpenStackBlockStoreComponent(
                     self.signal_ns, *self.blockstore_url.split(":")[1:]
                 )
