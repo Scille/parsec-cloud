@@ -6,6 +6,7 @@ import traceback
 from nacl.public import PublicKey
 from nacl.signing import VerifyKey
 from json import JSONDecodeError
+import re
 
 from parsec.utils import ParsecError
 from parsec.networking import CookedSocket
@@ -31,6 +32,7 @@ from parsec.backend.drivers.postgresql import (
 )
 
 from parsec.backend.exceptions import NotFoundError
+
 try:
     from parsec.backend.s3_blockstore import S3BlockStoreComponent
 
@@ -118,10 +120,12 @@ class BackendApp:
                 self.blockstore = S3BlockStoreComponent(
                     self.signal_ns, *self.blockstore_url.split(":")[1:]
                 )
-            elif OPENSTACK_AVAILABLE and self.blockstore_url and self.blockstore_url.startswith("openstack"):
-                self.blockstore = OpenStackBlockStoreComponent(
-                    self.signal_ns, *self.blockstore_url.split(":")[1:]
-                )
+            elif OPENSTACK_AVAILABLE and self.blockstore_url and self.blockstore_url.startswith(
+                "openstack"
+            ):
+                arguments = re.split(r"(?<!\\):", self.blockstore_url)[1:]
+                arguments = [arg.replace("\\", "") for arg in arguments]
+                self.blockstore = OpenStackBlockStoreComponent(self.signal_ns, *arguments)
             else:
                 self.blockstore = None
 
