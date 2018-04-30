@@ -8,6 +8,7 @@ class cmd_NEW_Schema(BaseCmdSchema):
 
 
 class cmd_GET_Schema(BaseCmdSchema):
+    # TODO: accept negative offset to fetch only last message ?
     offset = fields.Integer(missing=0)
 
 

@@ -1,9 +1,8 @@
 import trio
 import logbook
-
-# import pendulum
 import traceback
 
+from parsec.core.base import BaseAsyncComponent
 from parsec.core.fs.folder import BaseFolderEntry
 from parsec.core.backend_connection import BackendNotAvailable, BackendError
 
@@ -11,20 +10,21 @@ from parsec.core.backend_connection import BackendNotAvailable, BackendError
 logger = logbook.Logger("parsec.core.synchronizer")
 
 
-class Synchronizer:
+class Synchronizer(BaseAsyncComponent):
 
-    def __init__(self):
-        self.fs = None
-        self.nursery = None
+    def __init__(self, auto_sync, fs):
+        super().__init__()
+        self.auto_sync = auto_sync
+        self.fs = fs
         self._synchronizer_task_cancel_scope = None
 
-    async def init(self, nursery, fs):
-        self.fs = fs
-        self.nursery = nursery
-        self._synchronizer_task_cancel_scope = await nursery.start(self._synchronizer_task)
+    async def _init(self, nursery):
+        if self.auto_sync:
+            self._synchronizer_task_cancel_scope = await nursery.start(self._synchronizer_task)
 
-    async def teardown(self):
-        self._synchronizer_task_cancel_scope.cancel()
+    async def _teardown(self):
+        if self._synchronizer_task_cancel_scope:
+            self._synchronizer_task_cancel_scope.cancel()
 
     async def _synchronizer_task(self, *, task_status=trio.TASK_STATUS_IGNORED):
         with trio.open_cancel_scope() as cancel_scope:

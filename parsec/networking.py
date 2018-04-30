@@ -62,15 +62,44 @@ class CookedSocket:
 
     sockstream = attr.ib()
     _recv_buff = attr.ib(default=attr.Factory(bytearray))
-    _msgs_ready = attr.ib(default=attr.Factory(deque))
+    _reps_ready = attr.ib(default=attr.Factory(deque))
 
-    async def aclose(self):
+    async def aclose(self) -> None:
+        """
+        Close the underlying sockstream.
+        """
         await self.sockstream.aclose()
 
-    async def send(self, msg):
-        await self.sockstream.send_all(json.dumps(msg).encode() + b"\n")
+    async def send(self, req: dict) -> None:
+        """
+        Args:
+            req: Dictionary data that will be serialized and sent.
 
-    async def recv(self):
+        Raises:
+            TypeError: if provided req is not a valid JSON serializable object.
+            trio.ResourceBusyError: if another task is already executing a send_all(),
+                wait_send_all_might_not_block(), or HalfCloseableStream.send_eof() on this stream.
+            trio.BrokenStreamError: if something has gone wrong, and the stream is broken.
+            trio.ClosedStreamError: if you already closed this stream object.
+        """
+        if not isinstance(req, dict):
+            raise TypeError("req must be a dict")
+
+        payload = json.dumps(req).encode() + b"\n"
+        await self.sockstream.send_all(payload)
+
+    async def recv(self) -> dict:
+        """
+        Returns:
+            Received data deserialized as a dictionary.
+
+        Raises:
+            json.JSONDecodeError: if returned message is not valid JSON data.
+            trio.ResourceBusyError: if two tasks attempt to call receive_some()
+                on the same stream at the same time.
+            trio.BrokenStreamError: if something has gone wrong, and the stream is broken.
+            trio.ClosedStreamError: if you already closed this stream object.
+        """
         while True:
             self._recv_buff += await self.sockstream.receive_some(self.BUFFSIZE)
             if not self._recv_buff:
@@ -78,13 +107,13 @@ class CookedSocket:
                 # when peer closes connection
                 raise trio.BrokenStreamError("Peer has closed connection")
 
-            *msgs, unfinished_msg = self._recv_buff.split(b"\n")
-            self._msgs_ready += msgs
+            *reps, unfinished_msg = self._recv_buff.split(b"\n")
+            self._reps_ready += reps
             self._recv_buff = unfinished_msg
-            if not self._msgs_ready:
+            if not self._reps_ready:
                 # Return in the loop to do a new BUFFSIZE read on the socket
                 continue
 
             else:
-                next_msg = self._msgs_ready.popleft()
-                return json.loads(next_msg.decode())
+                next_rep = self._reps_ready.popleft()
+                return json.loads(next_rep.decode())

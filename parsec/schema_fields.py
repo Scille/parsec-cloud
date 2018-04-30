@@ -58,7 +58,7 @@ class CheckedConstant(Field):
             return None
 
         if value != self.constant:
-            raise ValidationError("Invalid value")
+            raise ValidationError("Invalid value, should be `%s`" % self.constant)
 
         return value
 

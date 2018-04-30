@@ -4,6 +4,7 @@ from nacl.secret import SecretBox
 from nacl.signing import SignedMessage, VerifyKey
 from nacl.exceptions import BadSignatureError, CryptoError
 
+from parsec.core.base import BaseAsyncComponent
 from parsec.core.schemas import TypedManifestSchema
 from parsec.core.fs.base import SecurityError
 from parsec.utils import ParsecError, from_jsonb64
@@ -17,12 +18,20 @@ class ManifestDecryptionError(ParsecError):
     status = "decryption_error"
 
 
-class ManifestsManager:
+class ManifestsManager(BaseAsyncComponent):
 
-    def __init__(self, device, local_storage, backend_storage):
+    def __init__(self, device, local_storage, backend_storage, backend_connection):
+        super().__init__()
         self.device = device
+        self._backend_connection = backend_connection
         self._local_storage = local_storage
         self._backend_storage = backend_storage
+
+    async def _init(self, nursery):
+        pass
+
+    async def _teardown(self):
+        pass
 
     async def _verify(self, signed):
         unsigned_message = json.loads(signed[64:].decode())
@@ -32,7 +41,9 @@ class ManifestsManager:
         ):
             verify_key = self.device.device_verifykey
         else:
-            rep = await self._backend_storage.backend_conn.send(
+            # TODO: create a component (or methods in backend_storage ?)
+            # dedicated to retrieve user infos
+            rep = await self._backend_connection.send(
                 {"cmd": "user_get", "user_id": unsigned_message["user_id"]}
             )
             assert rep["status"] == "ok"
@@ -53,6 +64,7 @@ class ManifestsManager:
         try:
             signed = box.decrypt(blob)
             raw = await self._verify(signed)
+
         except json.decoder.JSONDecodeError as exc:
             raise exc
 

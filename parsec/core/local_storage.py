@@ -1,46 +1,19 @@
 import sqlite3
 
-
-class BaseLocalStorage:
-
-    def __init__(self, user):
-        self.user = user
-
-    def fetch_user_manifest(self):
-        raise NotImplementedError()
-
-    def flush_user_manifest(self, blob):
-        raise NotImplementedError()
-
-    def fetch_manifest(self, id):
-        raise NotImplementedError()
-
-    def flush_manifest(self, id, blob):
-        raise NotImplementedError()
-
-    def move_manifest(self, id, new_id):
-        raise NotImplementedError()
-
-    def fetch_block(self, id):
-        raise NotImplementedError()
-
-    def flush_block(self, id, blob):
-        raise NotImplementedError()
-
-    def fetch_dirty_block(self, id):
-        raise NotImplementedError()
-
-    def flush_dirty_block(self, id, blob):
-        raise NotImplementedError()
+from parsec.core.base import BaseAsyncComponent
 
 
-class LocalStorage(BaseLocalStorage):
+class LocalStorage(BaseAsyncComponent):
 
     def __init__(self, path):
+        super().__init__()
         self.path = path
         self.conn = None
 
-    def init(self):
+    async def _init(self, nursery):
+        self._init_conn()
+
+    def _init_conn(self):
         self.conn = sqlite3.connect(self.path)
         cur = self.conn.cursor()
         cur.execute(
@@ -61,7 +34,7 @@ class LocalStorage(BaseLocalStorage):
         )
         self.conn.commit()
 
-    def teardown(self):
+    async def _teardown(self):
         if self.conn:
             self.conn.close()
             self.conn = None

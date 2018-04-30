@@ -1,26 +1,20 @@
 from nacl.secret import SecretBox
 
-
-class BaseBlocksManager:
-
-    async def fetch_from_local(self, id, key):
-        raise NotImplementedError()
-
-    async def fetch_from_backend(self, id, key):
-        raise NotImplementedError()
-
-    async def flush_on_local(self, id, key, block):
-        raise NotImplementedError()
-
-    async def sync_new_block_with_backend(self, key, block):
-        raise NotImplementedError()
+from parsec.core.base import BaseAsyncComponent
 
 
-class BlocksManager:
+class BlocksManager(BaseAsyncComponent):
 
     def __init__(self, local_storage, backend_storage):
+        super().__init__()
         self.local_storage = local_storage
         self.backend_storage = backend_storage
+
+    async def _init(self, nursery):
+        pass
+
+    async def _teardown(self):
+        pass
 
     def _encrypt_block(self, key, block):
         box = SecretBox(key)

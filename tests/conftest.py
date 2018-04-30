@@ -1,6 +1,8 @@
 import os
 import pytest
+import attr
 import socket
+import blinker
 import contextlib
 from unittest.mock import patch
 
@@ -133,6 +135,16 @@ def unused_tcp_port():
 
 
 @pytest.fixture
+def unused_tcp_addr(unused_tcp_port):
+    return "tcp://127.0.0.1:%s" % unused_tcp_port
+
+
+@pytest.fixture
+def signal_ns():
+    return blinker.Namespace()
+
+
+@pytest.fixture
 def default_devices(alice, bob):
     return (alice, bob)
 
@@ -167,11 +179,19 @@ def tcp_stream_spy():
         yield open_tcp_stream_mock_wrapper
 
 
+@attr.s(frozen=True)
+class RunningBackendInfo:
+    backend = attr.ib()
+    addr = attr.ib()
+    connection_factory = attr.ib()
+
+
 @pytest.fixture
 async def running_backend(tcp_stream_spy, backend, backend_addr):
     async with run_app(backend) as backend_connection_factory:
         tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
-        yield (backend, backend_addr, backend_connection_factory)
+
+        yield RunningBackendInfo(backend, backend_addr, backend_connection_factory)
 
         tcp_stream_spy.install_hook(backend_addr, None)
 
@@ -255,8 +275,10 @@ def mocked_local_storage_connection():
         _conn = None
 
         def reset(self):
+            if self._conn:
+                self._conn.close()
             ls = LocalStorage(":memory:")
-            vanilla_init(ls)
+            ls._init_conn()
             self._conn = ls.conn
 
         @property
@@ -267,23 +289,23 @@ def mocked_local_storage_connection():
 
     mock = MockedLocalStorageConnection()
 
-    def mock_init(self):
+    async def mock_init(self, nursery):
         self.conn = mock.conn
 
-    def mock_teardown(self):
+    async def mock_teardown(self):
         self.conn = None
 
     vanilla_init = LocalStorage.init
     vanilla_teardown = LocalStorage.teardown
-    LocalStorage.init = mock_init
-    LocalStorage.teardown = mock_teardown
+    LocalStorage._init = mock_init
+    LocalStorage._teardown = mock_teardown
 
     try:
         yield mock
 
     finally:
-        LocalStorage.init = vanilla_init
-        LocalStorage.teardown = vanilla_teardown
+        LocalStorage._init = vanilla_init
+        LocalStorage._teardown = vanilla_teardown
 
 
 @pytest.fixture

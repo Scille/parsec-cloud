@@ -5,7 +5,10 @@ from parsec.networking import ClientContext
 from parsec.schema import BaseCmdSchema, fields
 from parsec.core.app import Core
 from parsec.core.backend_connection import BackendNotAvailable, backend_send_anonymous_cmd
-from parsec.utils import to_jsonb64, from_jsonb64, ejson_dumps
+from parsec.utils import to_jsonb64, from_jsonb64
+
+
+# TODO: move complex stuff out of the api
 
 
 class cmd_USER_INVITE_Schema(BaseCmdSchema):

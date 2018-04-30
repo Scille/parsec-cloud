@@ -177,7 +177,7 @@ class BackendApp:
         if self.dbh:
             await self.dbh.init(nursery)
 
-    async def shutdown(self):
+    async def teardown(self):
         if self.dbh:
             await self.dbh.teardown()
 

@@ -8,7 +8,7 @@ import tempfile
 import logbook
 from urllib.parse import urlparse
 
-from parsec.core import CoreApp, CoreConfig, Device
+from parsec.core import Core, CoreConfig, Device
 
 
 logger = logbook.Logger("parsec.core.app")
@@ -114,7 +114,7 @@ def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
                     raise SystemExit("Error: Invalid --socket value `%s`" % socket)
 
             finally:
-                await core.shutdown()
+                await core.teardown()
 
     config = CoreConfig(
         debug=debug,
@@ -125,7 +125,7 @@ def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
     )
 
     while True:
-        core = CoreApp(config)
+        core = Core(config)
 
         print("Starting Parsec Core on %s (with backend on %s)" % (socket, config.backend_addr))
 

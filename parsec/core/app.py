@@ -3,115 +3,167 @@ import blinker
 import logbook
 
 from parsec.networking import serve_client
+from parsec.core.base import BaseAsyncComponent, NotInitializedError
 from parsec.core.sharing import Sharing
-from parsec.core.fs import fs_factory
+from parsec.core.fs import FS
 from parsec.core.synchronizer import Synchronizer
 from parsec.core.devices_manager import DevicesManager
-from parsec.core.backend_connection import BackendConnection
+from parsec.core.backend_connections_multiplexer import BackendConnectionsMultiplexer
+from parsec.core.backend_events_manager import BackendEventsManager
 from parsec.core.fuse_manager import FuseManager
+from parsec.core.local_storage import LocalStorage
+from parsec.core.backend_storage import BackendStorage
+from parsec.core.manifests_manager import ManifestsManager
+from parsec.core.blocks_manager import BlocksManager
 
 
 logger = logbook.Logger("parsec.core.app")
 
 
-class CoreApp:
+class AlreadyLoggedError(Exception):
+    pass
+
+
+class NotLoggedError(Exception):
+    pass
+
+
+class Core(BaseAsyncComponent):
 
     def __init__(self, config):
+        super().__init__()
+        self.nursery = None
         self.signal_ns = blinker.Namespace()
+        self.devices_manager = DevicesManager(config.base_settings_path)
+
         self.config = config
         self.backend_addr = config.backend_addr
 
-        self._config_try_pendings = {}
+        # Components dependencies tree:
+        # app
+        # ├─ backend_events_manager
+        # ├─ fs
+        # │  ├─ manifests_manager
+        # │  │  ├─ backend_connection
+        # │  │  ├─ local_storage
+        # │  │  └─ backend_storage
+        # │  │     └─ backend_connection
+        # │  └─ blocks_manager
+        # │     ├─ local_storage
+        # │     └─ backend_storage
+        # ├─ fuse_manager
+        # ├─ synchronizer
+        # │  └─ fs
+        # └─ sharing
+        #    └─ backend_connection
 
-        self.nursery = None
+        self.components_dep_order = (
+            "backend_events_manager",
+            "backend_connection",
+            "backend_storage",
+            "local_storage",
+            "manifests_manager",
+            "blocks_manager",
+            "fs",
+            "fuse_manager",
+            "synchronizer",
+            "sharing",
+        )
+        for cname in self.components_dep_order:
+            setattr(self, cname, None)
+
         # TODO: create a context object to store/manipulate auth_* data
+        self.auth_lock = trio.Lock()
         self.auth_device = None
         self.auth_privkey = None
         self.auth_subscribed_events = None
         self.auth_events = None
-        self.fs = None
-        self.synchronizer = None
-        self.sharing = None
-        self.backend_connection = None
-        self.devices_manager = DevicesManager(config.base_settings_path)
-        self.fuse_manager = None
-        self.mountpoint = None
 
-    async def init(self, nursery):
+        # TODO: replace this by signal passing
+        self._config_try_pendings = {}
+
+    async def _init(self, nursery):
         self.nursery = nursery
 
-    async def shutdown(self):
-        if self.auth_device:
+    async def _teardown(self):
+        try:
             await self.logout()
+        except NotLoggedError:
+            pass
 
     async def login(self, device):
-        # TODO: create a login/logout lock to avoid concurrency crash
-        # during logout
-        self.auth_subscribed_events = {}
-        self.auth_events = trio.Queue(100)
-        self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
-        self.backend_connection = BackendConnection(
-            device, self.config.backend_addr, self.signal_ns
-        )
-        await self.backend_connection.init(self.nursery)
-        try:
-            self.fs = await fs_factory(device, self.config, self.backend_connection)
-            if self.config.auto_sync:
-                self.synchronizer = Synchronizer()
-                await self.synchronizer.init(self.nursery, self.fs)
-            try:
-                # local_storage = LocalStorage()
-                # backend_storage = BackendStorage()
-                # manifests_manager = ManifestsManager(self.auth_device,
-                #                                      local_storage,
-                #                                      backend_storage)
-                # blocks_manager = BlocksManager(self.auth_device, local_storage, backend_storage)
-                # # await manifests_manager.init()
-                # # await blocks_manager.init()
-                # self.fs = FS(manifests_manager, blocks_manager)
-                await self.fs.init()
-                try:
-                    self.sharing = Sharing(device, self.signal_ns, self.fs, self.backend_connection)
-                    await self.sharing.init(self.nursery)
-                except BaseException:
-                    await self.fs.teardown()
-                    raise
+        async with self.auth_lock:
+            if self.auth_device:
+                raise AlreadyLoggedError("Already logged as `%s`" % self.auth_device)
 
-            except BaseException:
-                if self.synchronizer:
-                    await self.synchronizer.teardown()
+            # First create components
+            self.backend_events_manager = BackendEventsManager(
+                device, self.config.backend_addr, self.signal_ns
+            )
+            self.backend_connection = BackendConnectionsMultiplexer(
+                device, self.config.backend_addr
+            )
+            self.local_storage = LocalStorage(device.local_storage_db_path)
+            self.backend_storage = BackendStorage(self.backend_connection)
+            self.manifests_manager = ManifestsManager(
+                device, self.local_storage, self.backend_storage, self.backend_connection
+            )
+            self.blocks_manager = BlocksManager(self.local_storage, self.backend_storage)
+            self.fs = FS(self.manifests_manager, self.blocks_manager)
+            self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
+            self.synchronizer = Synchronizer(self.config.auto_sync, self.fs)
+            self.sharing = Sharing(
+                device,
+                self.fs,
+                self.backend_connection,
+                self.backend_events_manager,
+                self.signal_ns,
+            )
+
+            # Then initialize them, order must respect dependencies here !
+            try:
+                for cname in self.components_dep_order:
+                    component = getattr(self, cname)
+                    await component.init(self.nursery)
+
+                # Keep this last to guarantee login was ok if it is set
+                self.auth_subscribed_events = {}
+                self.auth_events = trio.Queue(100)
+                self.auth_device = device
+
+            except Exception:
+                # Make sure to teardown all the already initialized components
+                # if something goes wrong
+                for cname_ in reversed(self.components_dep_order):
+                    component_ = getattr(self, cname_)
+                    try:
+                        await component_.teardown()
+                    except NotInitializedError:
+                        pass
+                # Don't unset components and auth_* stuff after teardown to
+                # easier post-mortem debugging
                 raise
 
-        except BaseException:
-            await self.backend_connection.teardown()
-            raise
-
-        # Keep this last to guarantee login was ok if it is set
-        self.auth_device = device
-
     async def logout(self):
-        self._handle_new_message = None
-        await self.fuse_manager.teardown()
-        await self.sharing.teardown()
-        await self.fs.teardown()
-        if self.synchronizer:
-            await self.synchronizer.teardown()
-        await self.backend_connection.teardown()
-        self.backend_connection = None
-        # await self.fs.manifests_manager.teardown()
-        # await self.fs.blocks_manager.teardown()
-        self.auth_device = None
+        async with self.auth_lock:
+            await self._logout_no_lock()
+
+    async def _logout_no_lock(self):
+        if not self.auth_device:
+            raise NotLoggedError("No user logged")
+
+        # Teardown in init reverse order
+        for cname in reversed(self.components_dep_order):
+            component = getattr(self, cname)
+            await component.teardown()
+            setattr(self, cname, None)
+
+        # Keep this last to guarantee logout was ok if it is unset
         self.auth_subscribed_events = None
         self.auth_events = None
-        self.synchronizer = None
-        self.fs = None
-        self.sharing = None
-        self.fuse_manager = None
+        self.auth_device = None
 
     async def handle_client(self, sockstream):
         from parsec.core.api import dispatch_request
 
         await serve_client(lambda req, ctx: dispatch_request(req, ctx, self), sockstream)
-
-
-Core = CoreApp
