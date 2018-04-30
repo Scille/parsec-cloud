@@ -31,6 +31,7 @@ build_exe_options = {
         "pkg_resources._vendor",
         "swiftclient",
         "setuptools.msvc",
+        "unittest.mock",
     ],
     # nacl store it cffi shared lib in a very strange place...
     "include_files": _extract_libs_cffi_backend(),

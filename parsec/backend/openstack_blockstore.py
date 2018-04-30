@@ -1,8 +1,23 @@
-import swiftclient
-from swiftclient.exceptions import ClientException
+from unittest.mock import Mock
+import pbr.version
 
 from parsec.backend.blockstore import BaseBlockStoreComponent
 from parsec.backend.exceptions import AlreadyExistsError, NotFoundError
+
+original_version_info = pbr.version.VersionInfo
+
+
+def side_effect(key):
+    if key == "python-swiftclient":
+        return "3.5.0"
+    else:
+        return original_version_info(key)
+
+
+pbr.version.VersionInfo = Mock(side_effect=side_effect)
+
+import swiftclient  # noqa
+from swiftclient.exceptions import ClientException  # noqa
 
 
 class OpenStackBlockStoreComponent(BaseBlockStoreComponent):
