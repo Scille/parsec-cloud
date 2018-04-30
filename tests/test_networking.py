@@ -3,18 +3,51 @@ import trio
 import trio.testing
 import json
 
-# from hypothesis import given, strategies as st
-# from string import printable; from pprint import pprint
+from hypothesis import given, strategies as st
+from string import printable
+from pprint import pprint
 
 from parsec.networking import CookedSocket
 
 from tests.open_tcp_stream_mock_wrapper import offline
 
 
-# TODO: use hypothesis once @given support async functions
-# json_nested = st.recursive(st.none() | st.booleans() | st.floats() | st.text(printable),
-#     lambda children: st.lists(children) | st.dictionaries(st.text(printable), children))
-# json = st.dictionaries(st.text(printable), json_nested)
+json_nested = st.recursive(
+    st.none()
+    | st.booleans()
+    | st.floats(allow_nan=False, allow_infinity=False)
+    | st.text(printable),
+    lambda children: st.lists(children) | st.dictionaries(st.text(printable), children),
+)
+json_dict = st.dictionaries(st.text(printable), json_nested)
+
+
+# TODO: Improve this (see https://github.com/python-trio/pytest-trio/issues/42)
+class TestCookedSocketHypothesis:
+
+    @given(json_dict)
+    async def test_base(self, payload):
+        rserver, rclient = trio.testing.memory_stream_pair()
+        cclient = CookedSocket(rclient)
+        cserver = CookedSocket(rserver)
+
+        await cclient.send(payload)
+        server_payload = await cserver.recv()
+        assert server_payload == payload
+
+        await cserver.send(server_payload)
+        roundtrip_payload = await cclient.recv()
+        assert roundtrip_payload == payload
+
+    def execute_example(self, f):
+        # Nothing but a dirty hack...
+        from unittest.mock import Mock
+
+        node = Mock()
+        node.function = f
+        from pytest_trio.plugin import _trio_test_runner_factory
+
+        return _trio_test_runner_factory(node)()
 
 
 class TestCookedSocket:
@@ -23,20 +56,6 @@ class TestCookedSocket:
         self.rserver, self.rclient = trio.testing.memory_stream_pair()
         self.cclient = CookedSocket(self.rclient)
         self.cserver = CookedSocket(self.rserver)
-
-    @pytest.mark.trio
-    @pytest.mark.parametrize(
-        "payload",
-        [{}, {"foo": 42, "spam": None}, {"foo": "bar", "spam": [1, "two", {"three": True}]}],
-    )
-    async def test_base(self, payload):
-        await self.cclient.send(payload)
-        server_payload = await self.cserver.recv()
-        assert server_payload == payload
-
-        await self.cserver.send(server_payload)
-        roundtrip_payload = await self.cclient.recv()
-        assert roundtrip_payload == payload
 
     @pytest.mark.trio
     async def test_peer_diconnected_during_send(self):
