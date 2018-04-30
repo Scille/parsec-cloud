@@ -15,28 +15,29 @@ async def backend_event_manager(nursery, running_backend, signal_ns, alice):
         await em.teardown()
 
 
+def connect_as_event(signal_ns, signal_name):
+    event = trio.Event()
+
+    def set_event(*args):
+        event.set()
+
+    event._cb = set_event  # Prevent wearef destruction
+    signal_ns.signal(signal_name).connect(set_event)
+    return event
+
+
 @pytest.mark.trio
 async def test_subscribe_backend_event(running_backend, signal_ns, backend_event_manager):
+    backend_ready = connect_as_event(signal_ns, 'backend_event_manager_listener_started')
     # Dummy event (not provided by backend)
     await backend_event_manager.subscribe_backend_event("ping")
+    await backend_ready.wait()
 
-    ping_received = trio.Event()
+    ping_received = connect_as_event(signal_ns, 'ping')
 
-    def on_ping(*args):
-        ping_received.set()
-
-    signal_ns.signal("ping").connect(on_ping)
-
-    # It's possible the signal is sent before the connection with the backend
-    # has been setup, in such case we wait a bit an retry.
-    for tries in range(1, 4):
-        with trio.move_on_after(0.01):
-            running_backend.backend.signal_ns.signal("ping").send()
-            await ping_received.wait()
-            break
-
-    else:
-        raise RuntimeError("Not signal received after %s tentatives" % tries)
+    with trio.fail_after(1.0):
+        running_backend.backend.signal_ns.signal("ping").send()
+        await ping_received.wait()
 
 
 @pytest.mark.trio
@@ -54,10 +55,13 @@ async def test_subscribe_already_subscribed_backend_event(running_backend, backe
 
 @pytest.mark.trio
 async def test_unsbuscribe_backend_event(running_backend, signal_ns, backend_event_manager):
+    backend_ready = connect_as_event(signal_ns, 'backend_event_manager_listener_started')
     await backend_event_manager.subscribe_backend_event("ping")
-    await trio.sleep(0.01)
+    await backend_ready.wait()
+
+    backend_ready.clear()
     await backend_event_manager.unsubscribe_backend_event("ping")
-    await trio.sleep(0.01)
+    await backend_ready.wait()
 
     def on_ping(*args):
         raise RuntimeError("Expected not to receive this event !")
