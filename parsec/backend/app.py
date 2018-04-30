@@ -31,8 +31,18 @@ from parsec.backend.drivers.postgresql import (
 )
 
 from parsec.backend.exceptions import NotFoundError
-from parsec.backend.s3_blockstore import S3BlockStoreComponent
-from parsec.backend.openstack_blockstore import OpenStackBlockStoreComponent
+try:
+    from parsec.backend.s3_blockstore import S3BlockStoreComponent
+
+    S3_AVAILABLE = True
+except ImportError:
+    S3_AVAILABLE = False
+try:
+    from parsec.backend.openstack_blockstore import OpenStackBlockStoreComponent
+
+    OPENSTACK_AVAILABLE = True
+except ImportError:
+    OPENSTACK_AVAILABLE = False
 
 
 logger = logbook.Logger("parsec.backend.app")
@@ -104,11 +114,11 @@ class BackendApp:
             # TODO: validate BLOCKSTORE_URL value
             if self.blockstore_url == "backend://":
                 self.blockstore = MemoryBlockStoreComponent(self.signal_ns)
-            elif self.blockstore_url and self.blockstore_url.startswith("s3"):
+            elif S3_AVAILABLE and self.blockstore_url and self.blockstore_url.startswith("s3"):
                 self.blockstore = S3BlockStoreComponent(
                     self.signal_ns, *self.blockstore_url.split(":")[1:]
                 )
-            elif self.blockstore_url and self.blockstore_url.startswith("openstack"):
+            elif OPENSTACK_AVAILABLE and self.blockstore_url and self.blockstore_url.startswith("openstack"):
                 self.blockstore = OpenStackBlockStoreComponent(
                     self.signal_ns, *self.blockstore_url.split(":")[1:]
                 )
