@@ -3,7 +3,6 @@ import click
 import trio
 import blinker
 import multiprocessing
-import sys
 
 from parsec.core.base import BaseAsyncComponent
 
@@ -13,6 +12,9 @@ try:
     FUSE_AVAILABLE = True
 except ImportError:
     FUSE_AVAILABLE = False
+
+
+multiprocessing.freeze_support()
 
 
 def _die_if_fuse_not_available():
@@ -86,8 +88,6 @@ class FuseManager(BaseAsyncComponent):
                     os.makedirs(mountpoint)
                 except FileExistsError:
                     pass
-            elif os.name == "nt":
-                multiprocessing.set_executable(os.path.join(sys.exec_prefix, "pythonw.exe"))
             fuse_process = multiprocessing.Process(
                 target=start_fuse, kwargs={**self._start_fuse_config, "mountpoint": mountpoint}
             )
