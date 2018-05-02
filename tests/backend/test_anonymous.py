@@ -19,7 +19,6 @@ async def test_connect_as_anonymous(backend):
         "user_create",
         "blockstore_post",
         "blockstore_get",
-        "blockstore_get_url",
         "vlob_create",
         "vlob_read",
         "vlob_update",

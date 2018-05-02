@@ -11,13 +11,6 @@ def _get_existing_block(backend):
 
 
 @pytest.mark.trio
-async def test_blockstore_get_url(alice_backend_sock):
-    await alice_backend_sock.send({"cmd": "blockstore_get_url"})
-    rep = await alice_backend_sock.recv()
-    assert rep == {"status": "ok", "url": "backend://"}
-
-
-@pytest.mark.trio
 async def test_blockstore_post_and_get(backend, alice, bob):
     async with connect_backend(backend, auth_as=alice) as sock:
         block = to_jsonb64(b"Hodi ho !")

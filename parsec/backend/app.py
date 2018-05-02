@@ -180,7 +180,6 @@ class BackendApp:
             "device_refuse_configuration_try": self.user.api_device_refuse_configuration_try,
             "blockstore_post": self._api_blockstore_post,
             "blockstore_get": self._api_blockstore_get,
-            "blockstore_get_url": self._api_blockstore_get_url,
             "vlob_create": self.vlob.api_vlob_create,
             "vlob_read": self.vlob.api_vlob_read,
             "vlob_update": self.vlob.api_vlob_update,
@@ -219,9 +218,6 @@ class BackendApp:
             return {"status": "not_available", "reason": "Blockstore not available"}
 
         return await self.blockstore.api_blockstore_get(client_ctx, msg)
-
-    async def _api_blockstore_get_url(self, client_ctx, msg):
-        return {"status": "ok", "url": self.blockstore_url}
 
     async def _api_event_subscribe(self, client_ctx, msg):
         msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(msg)
