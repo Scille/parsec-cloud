@@ -80,9 +80,6 @@ class Core(BaseAsyncComponent):
         self.auth_subscribed_events = None
         self.auth_events = None
 
-        # TODO: replace this by signal passing
-        self._config_try_pendings = {}
-
     async def _init(self, nursery):
         self.nursery = nursery
 
