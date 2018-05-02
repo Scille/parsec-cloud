@@ -141,7 +141,7 @@ class BackendApp:
             self.dbh = PGHandler(self.config.dburl, self.signal_ns)
 
             if self.blockstore_postgresql:
-                self.blockstore = MemoryBlockStoreComponent(self.signal_ns)
+                self.blockstore = PGBlockStoreComponent(self.dbh, self.signal_ns)
             elif S3_AVAILABLE and self.blockstore_s3:
                 self.blockstore = S3BlockStoreComponent(
                     self.signal_ns, *self.blockstore_s3.split(":")
