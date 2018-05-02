@@ -1,3 +1,4 @@
+import sys
 import trio
 import click
 import logbook
@@ -21,7 +22,6 @@ DEFAULT_CORE_UNIX_SOCKET = "tcp://127.0.0.1:6776"
 def run_with_pdb(cmd, *args, **kwargs):
     import pdb
     import traceback
-    import sys
 
     # Stolen from pdb.main
     pdb_context = pdb.Pdb()
@@ -57,11 +57,22 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option("--port", "-P", default=6777, type=int, help=("Port to listen on (default: 6777)"))
 @click.option("--store", "-s", default=None, help="Store configuration (default: in memory)")
 @click.option(
-    "--block-store",
-    "-b",
-    default=None,
+    "--blockstore-postgresql",
+    is_flag=True,
     help="URL of the block store the clients should write into (default: "
     "backend creates it own in-memory block store).",
+)
+@click.option(
+    "--blockstore-openstack",
+    default=None,
+    help="URL of OpenStack Swift the clients should write into (example: "
+    "<container>:<username>:<tenant>@<password>:<host>:<port>/<endpoint>).",
+)
+@click.option(
+    "--blockstore-s3",
+    default=None,
+    help="URL of Amazon S3 the clients should write into (example: "
+    "<region>:<container>:<key>:<secret>).",
 )
 @click.option(
     "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
@@ -69,6 +80,14 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option("--debug", "-d", is_flag=True)
 @click.option("--pdb", is_flag=True)
 def backend_cmd(**kwargs):
+    found = False
+    for key in ["blockstore_postgresql", "blockstore_openstack", "blockstore_s3"]:
+        if kwargs[key]:
+            if found:
+                print("--blockstore options are mutually exclusive")
+                sys.exit(1)
+            else:
+                found = True
     if kwargs.pop("pdb"):
         return run_with_pdb(_backend, **kwargs)
 
@@ -76,12 +95,28 @@ def backend_cmd(**kwargs):
         return _backend(**kwargs)
 
 
-def _backend(host, port, pubkeys, store, block_store, debug, log_level):
+def _backend(
+    host,
+    port,
+    pubkeys,
+    store,
+    blockstore_postgresql,
+    blockstore_openstack,
+    blockstore_s3,
+    debug,
+    log_level,
+):
     log_handler = logbook.StderrHandler(level=log_level.upper())
     # Push globally the log handler make it work across threads
     log_handler.push_application()
     config = BackendConfig(
-        debug=debug, blockstore_url=block_store, dburl=store, host=host, port=port
+        debug=debug,
+        blockstore_postgresql=blockstore_postgresql,
+        blockstore_openstack=blockstore_openstack,
+        blockstore_s3=blockstore_s3,
+        dburl=store,
+        host=host,
+        port=port,
     )
     backend = BackendApp(config)
 

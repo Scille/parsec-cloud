@@ -27,12 +27,15 @@ class OpenStackBlockStoreComponent(BaseBlockStoreComponent):
         signal_ns,
         openstack_auth_url,
         openstack_container,
-        openstack_user_tenant,
-        openstack_key,
+        openstack_user,
+        openstack_tenant,
+        openstack_password,
     ):
         super().__init__(signal_ns)
         self.swift_client = swiftclient.Connection(
-            authurl=openstack_auth_url, user=openstack_user_tenant, key=openstack_key
+            authurl=openstack_auth_url,
+            user=":".join([openstack_user, openstack_tenant]),
+            key=openstack_password,
         )
         self._openstack_container = openstack_container
 

@@ -109,23 +109,25 @@ class BackendApp:
         self.signal_ns = blinker.Namespace()
         self.config = config
         self.nursery = None
-        self.blockstore_url = config.blockstore_url
+        self.blockstore_postgresql = config.blockstore_postgresql
+        self.blockstore_openstack = config.blockstore_openstack
+        self.blockstore_s3 = config.blockstore_s3
         self.dbh = None
 
         if self.config.dburl in [None, "mocked://"]:
-            # TODO: validate BLOCKSTORE_URL value
-            if self.blockstore_url == "backend://":
+            # TODO: validate BLOCKSTORE value
+            if self.blockstore_postgresql:
                 self.blockstore = MemoryBlockStoreComponent(self.signal_ns)
-            elif S3_AVAILABLE and self.blockstore_url and self.blockstore_url.startswith("s3"):
+            elif S3_AVAILABLE and self.blockstore_s3:
                 self.blockstore = S3BlockStoreComponent(
-                    self.signal_ns, *self.blockstore_url.split(":")[1:]
+                    self.signal_ns, *self.blockstore_s3.split(":")
                 )
-            elif OPENSTACK_AVAILABLE and self.blockstore_url and self.blockstore_url.startswith(
-                "openstack"
-            ):
-                arguments = re.split(r"(?<!\\):", self.blockstore_url)[1:]
-                arguments = [arg.replace("\\", "") for arg in arguments]
-                self.blockstore = OpenStackBlockStoreComponent(self.signal_ns, *arguments)
+            elif OPENSTACK_AVAILABLE and self.blockstore_openstack:
+                container, user, tenant_password, url = self.blockstore_openstack.split(":", 3)
+                tenant, password = tenant_password.split("@")
+                self.blockstore = OpenStackBlockStoreComponent(
+                    self.signal_ns, url, container, user, tenant, password
+                )
             else:
                 self.blockstore = None
 
