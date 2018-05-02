@@ -141,4 +141,6 @@ class FuseManager(BaseAsyncComponent):
             path = os.path.join(self.mountpoint + "/", path[1:])
         else:
             path = os.path.join(self.mountpoint, path[1:])
-        click.launch(path)
+        click_process = multiprocessing.Process(target=click.launch, args=(path,))
+        click_process.daemon = True
+        click_process.started()
