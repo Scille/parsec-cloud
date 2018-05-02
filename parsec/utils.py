@@ -51,6 +51,10 @@ class ParsecError(Exception):
 
 
 def abort(status="bad_message", **kwargs):
+    """
+    Raises:
+        ParsecError
+    """
     error = ParsecError(**kwargs)
     error.status = status
     raise error

@@ -1,13 +1,21 @@
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 
-from parsec.schema import BaseCmdSchema, fields
+from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields
 from parsec.core.app import Core, ClientContext
 from parsec.core.backend_connection import BackendNotAvailable, backend_send_anonymous_cmd
 from parsec.utils import to_jsonb64, from_jsonb64
 
 
-# TODO: move complex stuff out of the api
+class BackendGetConfigurationTrySchema(UnknownCheckedSchema):
+    status = fields.CheckedConstant("ok", required=True)
+    device_name = fields.String(required=True)
+    configuration_status = fields.String(required=True)
+    device_verify_key = fields.Base64Bytes(required=True)
+    user_privkey_cypherkey = fields.Base64Bytes(required=True)
+
+
+backend_get_configuration_try_schema = BackendGetConfigurationTrySchema()
 
 
 class cmd_USER_INVITE_Schema(BaseCmdSchema):
@@ -142,11 +150,24 @@ async def device_accept_configuration_try(req: dict, client_ctx: ClientContext, 
 
     msg = cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema().load_or_abort(req)
 
-    conf_try = core._config_try_pendings.get(msg["configuration_try_id"])
-    if not conf_try:
-        return {"status": "unknown_configuration_try_id", "reason": "Unknown configuration try id"}
+    try:
+        rep = await core.backend_connection.send(
+            {
+                "cmd": "device_get_configuration_try",
+                "configuration_try_id": msg["configuration_try_id"],
+            }
+        )
+    except BackendNotAvailable:
+        return {"status": "backend_not_availabled", "reason": "Backend not available"}
 
-    user_privkey_cypherkey_raw = from_jsonb64(conf_try["user_privkey_cypherkey"])
+    data, errors = backend_get_configuration_try_schema.load(rep)
+    if errors:
+        return {
+            "status": "backend_error",
+            "reason": "Bad response from backend: %r (%r)" % (rep, errors),
+        }
+
+    user_privkey_cypherkey_raw = data["user_privkey_cypherkey"]
     box = SealedBox(PublicKey(user_privkey_cypherkey_raw))
     cyphered_user_privkey = box.encrypt(core.auth_device.user_privkey.encode())
 

@@ -2,13 +2,25 @@ import trio
 import logbook
 
 from parsec.core.app import Core, ClientContext
-from parsec.schema import BaseCmdSchema, fields, validate
+from parsec.core.backend_connection import BackendNotAvailable
+from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields, validate
 
 
 logger = logbook.Logger("parsec.api.event")
 
 ALLOWED_SIGNALS = {"ping"}
 ALLOWED_BACKEND_EVENTS = {"device_try_claim_submitted"}
+
+
+class BackendGetConfigurationTrySchema(UnknownCheckedSchema):
+    status = fields.CheckedConstant("ok", required=True)
+    device_name = fields.String(required=True)
+    configuration_status = fields.String(required=True)
+    device_verify_key = fields.Base64Bytes(required=True)
+    user_privkey_cypherkey = fields.Base64Bytes(required=True)
+
+
+backend_get_configuration_try_schema = BackendGetConfigurationTrySchema()
 
 
 class cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
@@ -90,11 +102,19 @@ async def event_listen(req: dict, client_ctx: ClientContext, core: Core) -> dict
 
     # TODO: make more generic
     if event == "device_try_claim_submitted":
-        rep = await core.backend_connection.send(
-            {"cmd": "device_get_configuration_try", "configuration_try_id": subject}
-        )
-        assert rep["status"] == "ok"
-        core._config_try_pendings[subject] = rep
+        try:
+            rep = await core.backend_connection.send(
+                {"cmd": "device_get_configuration_try", "configuration_try_id": subject}
+            )
+        except BackendNotAvailable:
+            return {"status": "backend_not_availabled", "reason": "Backend not available"}
+
+        _, errors = backend_get_configuration_try_schema.load(rep)
+        if errors:
+            return {
+                "status": "backend_error",
+                "reason": "Bad response from backend: %r (%r)" % (rep, errors),
+            }
         return {
             "status": "ok",
             "event": event,

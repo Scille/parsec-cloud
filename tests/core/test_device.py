@@ -14,8 +14,7 @@ from tests.common import connect_core, core_factory
             "password": "S3cr37",
             "configure_device_token": "123456",
         },
-        # TODO: mocking configuraton_try_id is a PITA right now...
-        # {'cmd': 'device_accept_configuration_try', 'configuration_try_id': '123456'},
+        {"cmd": "device_accept_configuration_try", "configuration_try_id": "123456"},
     ],
 )
 async def test_device_cmd_backend_offline(core, alice_core_sock, cmd):

@@ -5,14 +5,14 @@ import pytest
 async def test_event_api_subscribe_bad_event(core, alice_core_sock):
     await alice_core_sock.send({"cmd": "event_subscribe", "event": "dummy"})
     rep = await alice_core_sock.recv()
-    assert rep == {'errors': {'event': ['Not a valid choice.']}, 'status': 'bad_message'}
+    assert rep == {"errors": {"event": ["Not a valid choice."]}, "status": "bad_message"}
 
 
 @pytest.mark.trio
 async def test_event_api_unsubscribe_bad_event(core, alice_core_sock):
     await alice_core_sock.send({"cmd": "event_unsubscribe", "event": "dummy"})
     rep = await alice_core_sock.recv()
-    assert rep == {'errors': {'event': ['Not a valid choice.']}, 'status': 'bad_message'}
+    assert rep == {"errors": {"event": ["Not a valid choice."]}, "status": "bad_message"}
 
 
 @pytest.mark.trio
