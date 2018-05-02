@@ -194,7 +194,7 @@ async def move(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if src == dst:
         return {"status": "invalid_path", "reason": "Cannot move `%s` to itself" % src}
 
-    if dst.startswith(src):
+    if dst.startswith(src + "/"):
         return {
             "status": "invalid_path", "reason": "Cannot move `%s` to a subdirectory of itself" % src
         }
