@@ -85,7 +85,7 @@ class OracleFS:
         if src == "/" or dst == "/":
             return "invalid_path"
 
-        if src == dst or dst.startswith(src):
+        if src == dst or dst.startswith(src + "/"):
             return "invalid_path"
 
         parent_src, name_src = src.rsplit("/", 1)
