@@ -18,6 +18,7 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
             "s3", region_name=s3_region, aws_access_key_id=s3_key, aws_secret_access_key=s3_secret
         )
         self._s3_bucket = s3_bucket
+        self._s3.head_bucket(Bucket=s3_bucket)
 
     async def get(self, id):
         try:

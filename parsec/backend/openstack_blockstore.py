@@ -38,6 +38,7 @@ class OpenStackBlockStoreComponent(BaseBlockStoreComponent):
             key=openstack_password,
         )
         self._openstack_container = openstack_container
+        self.swift_client.head_container(openstack_container)
 
     async def get(self, id):
         try:
