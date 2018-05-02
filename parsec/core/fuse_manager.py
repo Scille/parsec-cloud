@@ -137,4 +137,8 @@ class FuseManager(BaseAsyncComponent):
         if not self.is_started():
             raise FuseNotStarted("Fuse is not started")
 
-        click.launch(os.path.join(self.mountpoint, path[1:]))
+        if os.name == "nt":
+            path = os.path.join(self.mountpoint + '/', path[1:])
+        else:
+            path = os.path.join(self.mountpoint, path[1:])
+        click.launch(path)
