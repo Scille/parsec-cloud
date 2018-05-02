@@ -152,7 +152,7 @@ def default_devices(alice, bob):
 @pytest.fixture
 async def backend(nursery, default_devices, backend_store, config={}):
     async with backend_factory(
-        **{"blockstore_url": "backend://", "dburl": backend_store, **config}
+        **{"blockstore_postgresql": True, "dburl": backend_store, **config}
     ) as backend:
 
         with freeze_time("2000-01-01"):

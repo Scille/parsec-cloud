@@ -48,7 +48,7 @@ async def test_online_core_tree_and_sync_multicore(
             mocked_local_storage_connection.reset()
 
             type(self).count += 1
-            backend_config = {"blockstore_url": "backend://"}
+            backend_config = {"blockstore_postgresql": True}
             core_config = {
                 "base_settings_path": tmpdir.mkdir("try-%s" % self.count).strpath,
                 "backend_addr": backend_addr,
