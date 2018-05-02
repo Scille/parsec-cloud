@@ -88,7 +88,7 @@ extra_requirements = {
     "fuse": ["fusepy==3.0.0"],
     "postgresql": ["psycopg2==2.7.1", "aiopg==0.13.0"],
     "s3": ["boto3==1.4.4", "botocore==1.5.46"],
-    "openstack": ["python-swiftclient==3.5.0", "pbr==4.0.2"],
+    "openstack": ["python-swiftclient==3.5.0", "pbr==4.0.2", "futures==3.2.0"],
     "dev": test_requirements,
 }
 extra_requirements["all"] = sum(extra_requirements.values(), [])
