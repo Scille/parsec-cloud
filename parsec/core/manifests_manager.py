@@ -1,7 +1,7 @@
 import json
 from nacl.public import Box
 from nacl.secret import SecretBox
-from nacl.signing import SignedMessage, VerifyKey
+from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError, CryptoError
 
 from parsec.core.base import BaseAsyncComponent

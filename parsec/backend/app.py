@@ -6,7 +6,6 @@ import traceback
 from nacl.public import PublicKey
 from nacl.signing import VerifyKey
 from json import JSONDecodeError
-import re
 
 from parsec.utils import ParsecError
 from parsec.networking import CookedSocket

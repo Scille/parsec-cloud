@@ -2,7 +2,6 @@
 
 import os
 import signal
-import time
 import socket
 import traceback
 import threading

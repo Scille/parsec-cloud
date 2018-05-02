@@ -1,6 +1,5 @@
 from parsec.core.app import Core, ClientContext
 from parsec.core.fs import BaseFolderEntry, BaseFileEntry
-from parsec.core.backend_connection import BackendNotAvailable
 from parsec.utils import to_jsonb64
 from parsec.schema import BaseCmdSchema, fields, validate
 

@@ -1,7 +1,6 @@
 import pytest
 import trio
 import attr
-from collections import deque
 
 from parsec.core.backend_connections_multiplexer import (
     BackendConnectionsMultiplexer,

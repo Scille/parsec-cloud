@@ -5,11 +5,8 @@ import json
 
 from hypothesis import given, strategies as st
 from string import printable
-from pprint import pprint
 
 from parsec.networking import CookedSocket
-
-from tests.open_tcp_stream_mock_wrapper import offline
 
 
 json_nested = st.recursive(

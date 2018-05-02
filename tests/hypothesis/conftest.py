@@ -4,7 +4,7 @@ import queue
 from functools import partial
 from contextlib import contextmanager
 import hypothesis
-from hypothesis.stateful import RuleBasedStateMachine, run_state_machine_as_test, invariant
+from hypothesis.stateful import RuleBasedStateMachine, run_state_machine_as_test
 
 
 class ThreadToTrioCommunicator:
