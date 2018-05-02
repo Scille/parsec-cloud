@@ -1,9 +1,8 @@
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 
-from parsec.networking import ClientContext
 from parsec.schema import BaseCmdSchema, fields
-from parsec.core.app import Core
+from parsec.core.app import Core, ClientContext
 from parsec.core.backend_connection import BackendNotAvailable, backend_send_anonymous_cmd
 from parsec.utils import to_jsonb64, from_jsonb64
 

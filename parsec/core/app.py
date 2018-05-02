@@ -1,4 +1,5 @@
 import trio
+import attr
 import blinker
 import logbook
 
@@ -166,4 +167,36 @@ class Core(BaseAsyncComponent):
     async def handle_client(self, sockstream):
         from parsec.core.api import dispatch_request
 
-        await serve_client(lambda req, ctx: dispatch_request(req, ctx, self), sockstream)
+        ctx = ClientContext(self.signal_ns)
+        await serve_client(lambda req: dispatch_request(req, ctx, self), sockstream)
+
+
+@attr.s
+class ClientContext:
+
+    @property
+    def ctxid(self):
+        return id(self)
+
+    _signal_ns = attr.ib()
+    registered_signals = attr.ib(default=attr.Factory(dict))
+    received_signals = attr.ib(default=attr.Factory(lambda: trio.Queue(100)))
+
+    def subscribe_signal(self, signal_name, subject=blinker.ANY):
+        key = (signal_name, subject)
+        if key in self.registered_signals:
+            raise KeyError("%s@%s already subscribed" % key)
+
+        def _handle_event(sender):
+            try:
+                self.received_signals.put_nowait((signal_name, sender))
+            except trio.WouldBlock:
+                logger.warning("{!r}: event queue is full", self)
+
+        self.registered_signals[key] = _handle_event
+        self._signal_ns.signal(signal_name).connect(_handle_event, sender=subject, weak=True)
+
+    def unsubscribe_signal(self, signal_name, subject=blinker.ANY):
+        key = (signal_name, subject)
+        # Weakref on _handle_event in signal connection will do the rest
+        del self.registered_signals[key]

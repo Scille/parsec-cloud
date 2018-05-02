@@ -1,7 +1,6 @@
-from parsec.networking import ClientContext
 from parsec.core.fs import FSInvalidPath
 from parsec.core.fs.base import SecurityError
-from parsec.core.app import Core
+from parsec.core.app import Core, ClientContext
 from parsec.core.api.event import (
     event_subscribe,
     event_unsubscribe,
@@ -39,6 +38,7 @@ from parsec.core.api.fs import (
     file_truncate,
 )
 from parsec.core.api.sharing import share
+from parsec.utils import ParsecError
 
 
 CMDS_DISPATCH = {
@@ -90,6 +90,9 @@ async def dispatch_request(req: dict, client_ctx: ClientContext, core: Core) -> 
         return await cmd_func(req, client_ctx, core)
 
     # Protect againsts generic exceptions
+    except ParsecError as exc:
+        return exc.to_dict()
+
     except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
 

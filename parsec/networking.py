@@ -13,20 +13,8 @@ from collections import deque
 logger = logbook.Logger("parsec.networking")
 
 
-@attr.s
-class ClientContext:
-
-    @property
-    def ctxid(self):
-        return id(self)
-
-    registered_events = attr.ib(default=attr.Factory(dict))
-    pending_events = attr.ib(default=attr.Factory(dict))
-
-
 async def serve_client(dispatch_request, sockstream) -> None:
     try:
-        ctx = ClientContext()
         sock = CookedSocket(sockstream)
         while True:
             try:
@@ -41,7 +29,7 @@ async def serve_client(dispatch_request, sockstream) -> None:
                 return
 
             logger.debug("REQ {}", req)
-            rep = await dispatch_request(req, ctx)
+            rep = await dispatch_request(req)
             logger.debug("REP {}", rep)
             await sock.send(rep)
     except trio.BrokenStreamError:

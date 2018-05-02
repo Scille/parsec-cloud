@@ -1,15 +1,14 @@
 import trio
 import logbook
 
-from parsec.networking import ClientContext
-from parsec.core.app import Core
-from parsec.schema import BaseCmdSchema, fields
-
-
-# TODO: move event handling into networking module
+from parsec.core.app import Core, ClientContext
+from parsec.schema import BaseCmdSchema, fields, validate
 
 
 logger = logbook.Logger("parsec.api.event")
+
+ALLOWED_SIGNALS = {"ping"}
+ALLOWED_BACKEND_EVENTS = {"device_try_claim_submitted"}
 
 
 class cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
@@ -17,7 +16,9 @@ class cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
 
 
 class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
-    event = fields.String(required=True)
+    event = fields.String(
+        required=True, validate=validate.OneOf(ALLOWED_SIGNALS | ALLOWED_BACKEND_EVENTS)
+    )
     subject = fields.String(missing=None)
 
 
@@ -29,19 +30,25 @@ async def event_subscribe(req: dict, client_ctx: ClientContext, core: Core) -> d
     event = msg["event"]
     subject = msg["subject"]
 
-    def _handle_event(sender):
-        try:
-            core.auth_events.put_nowait((event, sender))
-        except trio.WouldBlock:
-            logger.warning("event queue is full")
+    try:
+        # Note here we consider `None` as `blinker.ANY` for simplicity sake
+        if subject:
+            client_ctx.subscribe_signal(event, subject)
+        else:
+            client_ctx.subscribe_signal(event)
+    except KeyError as exc:
+        return {
+            "status": "already_subscribed",
+            "reason": "Already subscribed to this event/subject couple",
+        }
 
-    core.auth_subscribed_events[event, subject] = _handle_event
-    if event == "device_try_claim_submitted":
-        await core.backend_events_manager.subscribe_backend_event(event, subject)
-    if subject:
-        core.signal_ns.signal(event).connect(_handle_event, sender=subject, weak=True)
-    else:
-        core.signal_ns.signal(event).connect(_handle_event, weak=True)
+    if event in ALLOWED_BACKEND_EVENTS:
+        try:
+            await core.backend_events_manager.subscribe_backend_event(event, subject)
+        except KeyError:
+            # Event already registered by another client context
+            pass
+
     return {"status": "ok"}
 
 
@@ -50,10 +57,20 @@ async def event_unsubscribe(req: dict, client_ctx: ClientContext, core: Core) ->
         return {"status": "login_required", "reason": "Login required"}
 
     msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(req)
+    event = msg["event"]
+    subject = msg["subject"]
+
     try:
-        del core.auth_subscribed_events[msg["event"], msg["subject"]]
-    except KeyError:
+        # Note here we consider `None` as `blinker.ANY` for simplicity sake
+        if subject:
+            client_ctx.unsubscribe_signal(event, subject)
+        else:
+            client_ctx.unsubscribe_signal(event)
+    except KeyError as exc:
         return {"status": "not_subscribed", "reason": "Not subscribed to this event/subject couple"}
+
+    # Cannot unsubscribe the backend event given it could be in use by another
+    # client context...
 
     return {"status": "ok"}
 
@@ -64,10 +81,10 @@ async def event_listen(req: dict, client_ctx: ClientContext, core: Core) -> dict
 
     msg = cmd_EVENT_LISTEN_Schema().load_or_abort(req)
     if msg["wait"]:
-        event, subject = await core.auth_events.get()
+        event, subject = await client_ctx.received_signals.get()
     else:
         try:
-            event, subject = core.auth_events.get_nowait()
+            event, subject = client_ctx.received_signals.get_nowait()
         except trio.WouldBlock:
             return {"status": "ok"}
 
@@ -94,4 +111,4 @@ async def event_list_subscribed(req: dict, client_ctx: ClientContext, core: Core
         return {"status": "login_required", "reason": "Login required"}
 
     BaseCmdSchema().load_or_abort(req)  # empty msg expected
-    return {"status": "ok", "subscribed": list(core.auth_subscribed_events.keys())}
+    return {"status": "ok", "subscribed": list(client_ctx.registered_signals.keys())}
