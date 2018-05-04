@@ -295,7 +295,7 @@ class BaseFileEntry(BaseEntry):
                 merged_blocks.append(block)
             normalized_blocks = []
             curr_file_offset = 0
-            for block_group in get_normalized_blocks(merged_blocks, 4096):
+            for block_group in get_normalized_blocks(merged_blocks):
                 if len(block_group) == 1:
                     block, offset, end = block_group[0]
                     if offset == 0 and end == block.size:
@@ -430,7 +430,7 @@ def get_merged_blocks(file_blocks, file_dirty_blocks, file_size):
     return blocks
 
 
-def get_normalized_blocks(blocks, block_size=4096):
+def get_normalized_blocks(blocks, block_size=512000):
     size = sum([block.size for block in blocks])
     if size <= block_size:
         block_list = [(block, 0, block.size) for block in blocks if block.size]
