@@ -6,12 +6,16 @@ from nacl.signing import VerifyKey
 
 from parsec.schema import UnknownCheckedSchema, fields
 from parsec.core.base import BaseAsyncComponent
-from parsec.utils import from_jsonb64, ejson_loads
+from parsec.utils import from_jsonb64, ejson_loads, ParsecError
 from parsec.core.fs import FSInvalidPath
 from parsec.core.backend_connection import BackendNotAvailable, BackendError
 
 
 logger = logbook.Logger("parsec.core.sharing")
+
+
+class SharingError(ParsecError):
+    status = "sharing_error"
 
 
 class BackendMessageGetRepMessagesSchema(UnknownCheckedSchema):
@@ -73,15 +77,7 @@ class Sharing(BaseAsyncComponent):
         if self._message_listener_task_cancel_scope:
             self._message_listener_task_cancel_scope.cancel()
 
-    async def _process_last_message(self):
-        # TODO: limit messages recuperation
-        rep = await self._backend_connection.send({"cmd": "message_get"})
-        rep, errors = backend_message_get_rep_schema.load(rep)
-        if errors:
-            raise BackendMessageError("Cannot retreive user messages: %r" % rep)
-
-        msg = rep["messages"][-1]
-
+    async def _process_message(self, msg):
         sender_user_id, sender_device_name = msg["sender_id"].split("@")
         rep = await self._backend_connection.send({"cmd": "user_get", "user_id": sender_user_id})
         rep, errors = backend_user_get_rep_schema.load(rep)
@@ -106,31 +102,50 @@ class Sharing(BaseAsyncComponent):
         sharing_msg = ejson_loads(sharing_msg_clear.decode("utf8"))
 
         # TODO: handle other type of message
-        assert sharing_msg["type"] == "share"
-        sharing_access = self.fs._vlob_access_cls(
-            sharing_msg["content"]["id"],
-            sharing_msg["content"]["rts"],
-            sharing_msg["content"]["wts"],
-            from_jsonb64(sharing_msg["content"]["key"]),
+        # assert sharing_msg["type"] == "share"
+        if sharing_msg["type"] == "share":
+            sharing_access = self.fs._vlob_access_cls(
+                sharing_msg["content"]["id"],
+                sharing_msg["content"]["rts"],
+                sharing_msg["content"]["wts"],
+                from_jsonb64(sharing_msg["content"]["key"]),
+            )
+
+            shared_with_folder_name = "shared-with-%s" % sender_user_id
+            if shared_with_folder_name not in self.fs.root:
+                shared_with_folder = await self.fs.root.create_folder(shared_with_folder_name)
+            else:
+                shared_with_folder = await self.fs.root.fetch_child(shared_with_folder_name)
+            sharing_name = sharing_msg["name"]
+            while True:
+                try:
+                    child = await shared_with_folder.insert_child_from_access(
+                        sharing_name, sharing_access
+                    )
+                    break
+
+                except FSInvalidPath:
+                    sharing_name += "-dup"
+            self._signal_ns.signal("new_sharing").send(child.path)
+        elif sharing_msg["type"] == "ping":
+            self._signal_ns.signal("ping").send(sharing_msg["ping"])
+
+        self.fs.root._last_processed_message = msg["count"]
+
+    async def _process_all_last_messages(self):
+        rep = await self._backend_connection.send(
+            {"cmd": "message_get", "offset": self.fs.root._last_processed_message}
         )
 
-        shared_with_folder_name = "shared-with-%s" % sender_user_id
-        if shared_with_folder_name not in self.fs.root:
-            shared_with_folder = await self.fs.root.create_folder(shared_with_folder_name)
-        else:
-            shared_with_folder = await self.fs.root.fetch_child(shared_with_folder_name)
-        sharing_name = sharing_msg["name"]
-        while True:
+        rep, errors = backend_message_get_rep_schema.load(rep)
+        if errors:
+            raise BackendMessageError("Cannot retreive user messages: %r" % rep)
+
+        for msg in rep["messages"]:
             try:
-                child = await shared_with_folder.insert_child_from_access(
-                    sharing_name, sharing_access
-                )
-                break
-
-            except FSInvalidPath:
-                sharing_name += "-dup"
-
-        self._signal_ns.signal("new_sharing").send(child.path)
+                await self._process_message(msg)
+            except SharingError as exc:
+                logger.warning(exc.args[0])
 
     async def _message_listener_task(self, *, task_status=trio.TASK_STATUS_IGNORED):
         with trio.open_cancel_scope() as cancel_scope:
@@ -139,9 +154,7 @@ class Sharing(BaseAsyncComponent):
                 try:
                     await self.msg_arrived.wait()
                     self.msg_arrived.clear()
-                    # TODO: should keep a message counter in the user manifest
-                    # too know which message should be processed here
-                    await self._process_last_message()
+                    await self._process_all_last_messages()
                 except BackendNotAvailable:
                     pass
                 except BackendError:

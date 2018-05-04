@@ -51,6 +51,7 @@ class FolderManifestSchema(UnknownCheckedSchema):
 
 class UserManifestSchema(FolderManifestSchema):
     type = fields.CheckedConstant("user_manifest", required=True)
+    last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
 
 
 # Local data

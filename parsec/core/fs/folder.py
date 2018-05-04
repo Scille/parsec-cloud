@@ -411,6 +411,11 @@ class BaseFolderEntry(BaseEntry):
 
 
 class BaseRootEntry(BaseFolderEntry):
+    _last_processed_message = attr.ib()
+
+    def __init__(self, *args, last_processed_message=0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._last_processed_message = last_processed_message
 
     async def flush_no_lock(self, recursive=False):
         if recursive:
@@ -429,6 +434,7 @@ class BaseRootEntry(BaseFolderEntry):
             "type": "local_user_manifest",
             "user_id": self._user_id,
             "device_name": self._device_name,
+            "last_processed_message": self._last_processed_message,
             "need_sync": self._need_sync,
             "base_version": self._base_version,
             "created": self._created,
@@ -450,6 +456,7 @@ class BaseRootEntry(BaseFolderEntry):
                 if manifest and manifest["version"] != self.base_version:
                     self._user_id = manifest["user_id"]
                     self._device_name = manifest["device_name"]
+                    self._last_processed_message = manifest["last_processed_message"]
                     self._created = manifest["created"]
                     self._updated = manifest["updated"]
                     self._base_version = manifest["version"]
@@ -470,6 +477,7 @@ class BaseRootEntry(BaseFolderEntry):
                 "type": "user_manifest",
                 "user_id": self._user_id,
                 "device_name": self._device_name,
+                "last_processed_message": self._last_processed_message,
                 "version": self._base_version + 1,
                 "created": self._created,
                 "updated": self._updated,
