@@ -141,6 +141,7 @@ class FuseManager(BaseAsyncComponent):
             path = os.path.join(self.mountpoint + "/", path[1:])
         else:
             path = os.path.join(self.mountpoint, path[1:])
+        # Run a separate process, interlocking problem on Windows
         click_process = multiprocessing.Process(target=click.launch, args=(path,))
         click_process.daemon = True
-        click_process.started()
+        click_process.start()
