@@ -8,9 +8,6 @@ echo 'pre-push: checking black version...'
 # Black is fairly new, so the we stay bleeding edge
 pip install -U black | grep -v up-to-date
 
-# Remove cache
-rm -f ~/.cache/black/*/cache.*.pickle
-
 echo 'pre-push: checking style...'
 2>&1 1>/dev/null $BASEDIR/autoformat.sh --check | grep 'reformat'
 if ( [ $? -eq 0 ] )
@@ -25,7 +22,6 @@ then
     fi
     case $yn in
       [Yy])
-        rm -f ~/.cache/black/*/cache.*.pickle
         $BASEDIR/autoformat.sh && git commit -a --amend --no-edit
         exit $?
         ;;
