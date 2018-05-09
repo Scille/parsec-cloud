@@ -7,7 +7,7 @@ from hypothesis.stateful import Bundle
 from copy import deepcopy
 
 from tests.common import connect_core, core_factory, backend_factory, run_app
-from tests.hypothesis.common import OracleFS, rule, normalize_path
+from tests.hypothesis.common import OracleFS, rule, normalize_path, rule_once
 
 
 class OracleFSWithSync:
@@ -167,7 +167,7 @@ async def test_online_core_tree_and_sync(
                     finally:
                         tcp_stream_spy.install_hook(backend_addr, None)
 
-        @rule(target=Folders)
+        @rule_once(target=Folders)
         def get_root(self):
             return "/"
 
