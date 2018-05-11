@@ -1,3 +1,4 @@
+from parsec.backend.exceptions import VersionError
 from parsec.core.fs.access import BasePlaceHolderAccess, BaseVlobAccess, BaseUserVlobAccess
 from parsec.core.fs.base import BaseNotLoadedEntry, FSInvalidPath
 from parsec.core.fs.block import BaseBlock, BaseBlockAccess, BaseDirtyBlockAccess
@@ -81,17 +82,27 @@ class FS:
         if self.root:
             await self.root.flush(recursive=True)
 
-    async def fetch_path(self, path):
+    async def fetch_path(self, path, versions=None):
         if not path.startswith("/"):
             raise FSInvalidPath("Path must be absolute")
 
         hops = [n for n in path.split("/") if n]
+        if versions and len(versions) != len(hops) + 1:
+            raise VersionError("Bad version list length")
         entry = self.root
-        for hop in hops:
+        if versions and versions[0] and versions[0] != entry._base_version:
+            entry = self._not_loaded_entry_cls(entry._access, entry.name, entry.parent)
+            await entry.load(versions[0])
+
+        for index, hop in enumerate(hops):
             if not isinstance(entry, BaseFolderEntry):
                 raise FSInvalidPath("Path `%s` doesn't exists" % path)
 
-            entry = await entry.fetch_child(hop)
+            if versions:
+                version = versions[index + 1]
+            else:
+                version = None
+            entry = await entry.fetch_child(hop, version=version)
         return entry
 
     def _load_entry(self, access, user_id, device_name, name, parent, manifest):

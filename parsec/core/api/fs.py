@@ -1,3 +1,5 @@
+from marshmallow import ValidationError, validates_schema
+from parsec.backend.exceptions import VersionError
 from parsec.core.app import Core, ClientContext
 from parsec.core.fs import BaseFolderEntry, BaseFileEntry
 from parsec.utils import to_jsonb64
@@ -10,6 +12,16 @@ class PathOnlySchema(BaseCmdSchema):
     path = fields.String(required=True)
 
 
+class VersionedPathOnlySchema(BaseCmdSchema):
+    path = fields.String(required=True)
+    versions = fields.List(fields.Integer(validate=validate.Range(min=-1)), missing=None)
+
+    @validates_schema
+    def validate_numbers(self, data):
+        if "versions" in data and data["versions"] and 0 in data["versions"]:
+            raise ValidationError("Versions must be positives integer or -1")
+
+
 class cmd_CREATE_GROUP_MANIFEST_Schema(BaseCmdSchema):
     group = fields.String()
 
@@ -18,18 +30,15 @@ class cmd_SHOW_dustbin_Schema(BaseCmdSchema):
     path = fields.String(missing=None)
 
 
-class cmd_HISTORY_Schema(BaseCmdSchema):
+class cmd_HISTORY_Schema(VersionedPathOnlySchema):
     first_version = fields.Integer(missing=1, validate=lambda n: n >= 1)
-    last_version = fields.Integer(missing=None, validate=lambda n: n >= 1)
-    summary = fields.Boolean(missing=False)
 
 
 class cmd_RESTORE_MANIFEST_Schema(BaseCmdSchema):
     version = fields.Integer(missing=None, validate=lambda n: n >= 1)
 
 
-class cmd_FILE_READ_Schema(BaseCmdSchema):
-    path = fields.String(required=True)
+class cmd_FILE_READ_Schema(VersionedPathOnlySchema):
     offset = fields.Integer(missing=0, validate=validate.Range(min=0))
     size = fields.Integer(missing=None, validate=validate.Range(min=0))
 
@@ -43,12 +52,6 @@ class cmd_FILE_WRITE_Schema(BaseCmdSchema):
 class cmd_FILE_TRUNCATE_Schema(BaseCmdSchema):
     path = fields.String(required=True)
     length = fields.Integer(required=True, validate=validate.Range(min=0))
-
-
-class cmd_FILE_HISTORY_Schema(BaseCmdSchema):
-    path = fields.String(required=True)
-    first_version = fields.Integer(missing=1, validate=validate.Range(min=1))
-    last_version = fields.Integer(missing=None, validate=validate.Range(min=1))
 
 
 class cmd_FILE_RESTORE_Schema(BaseCmdSchema):
@@ -90,7 +93,12 @@ async def file_read(req: dict, client_ctx: ClientContext, core: Core) -> dict:
         return {"status": "login_required", "reason": "Login required"}
 
     req = cmd_FILE_READ_Schema().load_or_abort(req)
-    file = await core.fs.fetch_path(req["path"])
+    if req["versions"]:
+        versions = [i if i != -1 else None for i in req["versions"]]
+    else:
+        nb_versions = len(req["path"].split("/"))
+        versions = [None] * nb_versions
+    file = await core.fs.fetch_path(req["path"], versions)
     if not isinstance(file, BaseFileEntry):
         return {"status": "invalid_path", "reason": "Path `%s` is not a file" % file.path}
 
@@ -128,8 +136,11 @@ async def stat(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = PathOnlySchema().load_or_abort(req)
-    obj = await core.fs.fetch_path(req["path"])
+    req = VersionedPathOnlySchema().load_or_abort(req)
+    versions = None
+    if req["versions"]:
+        versions = [i if i != -1 else None for i in req["versions"]]
+    obj = await core.fs.fetch_path(req["path"], versions)
     if isinstance(obj, BaseFolderEntry):
         return {
             "status": "ok",
@@ -155,6 +166,36 @@ async def stat(req: dict, client_ctx: ClientContext, core: Core) -> dict:
             "need_flush": obj.need_flush,
             "size": obj.size,
         }
+
+
+async def history(req: dict, client_ctx: ClientContext, core: Core) -> dict:
+    if not core.fs:
+        return {"status": "login_required", "reason": "Login required"}
+
+    req = cmd_HISTORY_Schema().load_or_abort(req)
+    if req["versions"]:
+        versions = req["versions"]
+        versions = [i if i != -1 else None for i in req["versions"]]
+    else:
+        nb_versions = len(req["path"].split("/"))
+        versions = [None] * nb_versions
+        req["versions"] = [-1] * nb_versions
+    obj = await core.fs.fetch_path(req["path"], versions)
+    history = []
+    first_version = req.pop("first_version")
+    req["cmd"] = "stat"
+    if first_version > obj._base_version:
+        raise VersionError("First version doesn't exist")
+    for version in range(first_version, obj._base_version + 1):
+        req["versions"][-1] = version
+        stat_response = await stat(req, client_ctx, core)
+        entry_type = stat_response["type"]
+        for field in ["status", "is_placeholder", "need_sync", "need_flush", "created", "type"]:
+            del stat_response[field]
+        stat_response["date"] = stat_response.pop("updated")
+        stat_response["version"] = stat_response.pop("base_version")
+        history.append(stat_response)
+    return {"status": "ok", "type": entry_type, "history": history}
 
 
 async def folder_create(req: dict, client_ctx: ClientContext, core: Core) -> dict:
