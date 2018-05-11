@@ -90,7 +90,7 @@ class FileObj(IOBase):
             raise OSError("[Errno 9] Bad file descriptor")
 
         content = self._get_content()
-        return content[self._offset:self._offset + size]
+        return content[self._offset : self._offset + size]
 
     def write(self, data):
         if not self._can_write:

@@ -92,16 +92,14 @@ class FS:
         entry = self.root
         if versions and versions[0] and versions[0] != entry._base_version:
             entry = self._not_loaded_entry_cls(entry._access, entry.name, entry.parent)
-            await entry.load(versions[0])
+            entry = await entry.load(versions[0])
 
-        for index, hop in enumerate(hops):
+        if not versions:
+            versions = [None] * (len(hops) + 1)
+        for version, hop in zip(versions[1:], hops):
             if not isinstance(entry, BaseFolderEntry):
                 raise FSInvalidPath("Path `%s` doesn't exists" % path)
 
-            if versions:
-                version = versions[index + 1]
-            else:
-                version = None
             entry = await entry.fetch_child(hop, version=version)
         return entry
 

@@ -120,6 +120,7 @@ async def test_need_login_cmds(core):
             "synchronize",
             "flush",
             "stat",
+            "history",
             "folder_create",
             "move",
             "delete",

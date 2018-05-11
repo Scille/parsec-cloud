@@ -135,5 +135,8 @@ def merge_folder_manifest(base, diverged, target, on_conflict=simple_rename, inp
         updated = diverged["updated"]
 
     return {
-        **target, "version": target["version"] + 1, "updated": updated, "children": resolved
+        **target,
+        "version": target["version"] + 1,
+        "updated": updated,
+        "children": resolved,
     }, modified

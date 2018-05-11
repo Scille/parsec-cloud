@@ -140,8 +140,8 @@ class Monitor(Instrument):
                             while not self._closing.is_set():
                                 index = buffer.find(b"\n")
                                 if index >= 0:
-                                    line = buffer[:index + 1].decode("latin-1")
-                                    del buffer[:index + 1]
+                                    line = buffer[: index + 1].decode("latin-1")
+                                    del buffer[: index + 1]
                                     yield line
 
                                 try:

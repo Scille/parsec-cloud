@@ -122,10 +122,7 @@ class BaseNotLoadedEntry(BaseEntry):
             if self._loaded:
                 return self._loaded
 
-            if version:
-                manifest = await self._access.fetch(version)
-            else:
-                manifest = await self._access.fetch()
+            manifest = await self._access.fetch(version)
             if manifest:
                 # The idea here is to create a new entry object that will replace the
                 # current one and represent the fact it is now loaded in memory.

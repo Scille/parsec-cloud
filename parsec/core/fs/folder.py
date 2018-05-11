@@ -313,7 +313,7 @@ class BaseFolderEntry(BaseEntry):
         async with self.acquire_read():
             # Check entry exists and return it if already loaded
             entry = self._get_child(name)
-        if version and (isinstance(entry, BaseNotLoadedEntry) or version < entry._base_version):
+        if version and (isinstance(entry, BaseNotLoadedEntry) or version != entry._base_version):
             entry = self._fs._not_loaded_entry_cls(entry._access, entry.name, entry.parent)
             return await entry.load(version)
         # If entry hasn't been loaded yet, we must do it now

@@ -69,7 +69,8 @@ class BasePlaceHolderAccess(BaseAccess):
     id = attr.ib(default=attr.Factory(lambda: uuid4().hex))
     key = attr.ib(default=attr.Factory(generate_sym_key))
 
-    async def fetch(self):
+    async def fetch(self, version=None):
+        assert not version
         return await self._fs.manifests_manager.fetch_from_local(self.id, self.key)
 
     def dump(self, with_type=True):

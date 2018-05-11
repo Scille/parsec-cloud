@@ -32,14 +32,14 @@ class BackendStorage(BaseAsyncComponent):
             return from_jsonb64(rep["blob"])
 
         else:
-            raise BackendError("Error %s: %s" % (rep.pop("status"), rep.pop("reason")))
+            raise BackendError("Error %s: %s" % (rep["status"], rep["reason"]))
 
     async def sync_user_manifest(self, version, blob):
         rep = await self._backend_connection.send(
             {"cmd": "user_vlob_update", "version": version, "blob": to_jsonb64(blob)}
         )
         if rep["status"] != "ok":
-            raise BackendConcurrencyError("Error %s: %s" % (rep.pop("status"), rep.pop("reason")))
+            raise BackendConcurrencyError("Error %s: %s" % (rep["status"], rep["reason"]))
 
     async def fetch_manifest(self, id, rts, version=None):
         payload = {"cmd": "vlob_read", "id": id, "trust_seed": rts}
@@ -50,7 +50,7 @@ class BackendStorage(BaseAsyncComponent):
             return from_jsonb64(rep["blob"])
 
         else:
-            raise BackendError("Error %s: %s" % (rep.pop("status"), rep.pop("reason")))
+            raise BackendError("Error %s: %s" % (rep["status"], rep["reason"]))
 
     async def sync_manifest(self, id, wts, version, blob):
         rep = await self._backend_connection.send(
@@ -63,12 +63,12 @@ class BackendStorage(BaseAsyncComponent):
             }
         )
         if rep["status"] != "ok":
-            raise BackendConcurrencyError("Error %s: %s" % (rep.pop("status"), rep.pop("reason")))
+            raise BackendConcurrencyError("Error %s: %s" % (rep["status"], rep["reason"]))
 
     async def sync_new_manifest(self, blob):
         rep = await self._backend_connection.send({"cmd": "vlob_create", "blob": to_jsonb64(blob)})
         if rep["status"] != "ok":
-            raise BackendError("Error %s: %s" % (rep.pop("status"), rep.pop("reason")))
+            raise BackendError("Error %s: %s" % (rep["status"], rep["reason"]))
 
         return rep["id"], rep["read_trust_seed"], rep["write_trust_seed"]
 
@@ -77,7 +77,7 @@ class BackendStorage(BaseAsyncComponent):
             {"cmd": "blockstore_post", "block": to_jsonb64(block)}
         )
         if rep["status"] != "ok":
-            raise BackendError("Error %s: %s" % (rep.pop("status"), rep.pop("reason")))
+            raise BackendError("Error %s: %s" % (rep["status"], rep["reason"]))
 
         return rep["id"]
 
@@ -87,4 +87,4 @@ class BackendStorage(BaseAsyncComponent):
             return from_jsonb64(rep["block"])
 
         else:
-            raise BackendError("Error %s: %s" % (rep.pop("status"), rep.pop("reason")))
+            raise BackendError("Error %s: %s" % (rep["status"], rep["reason"]))

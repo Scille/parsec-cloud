@@ -48,19 +48,23 @@ def manifests_manager(alice_cleartext_device, tmpdir):
 
 @pytest.fixture
 def original_manifest():
-    return TypedManifestSchema(strict=False).dump(
-        {
-            "type": "folder_manifest",
-            "user_id": "alice",
-            "device_name": "test",
-            "children": {},
-            "size": 0,
-            "version": 1,
-            "updated": datetime(2017, 1, 1),
-            "created": datetime(2017, 1, 1),
-            "format": 1,
-        }
-    ).data
+    return (
+        TypedManifestSchema(strict=False)
+        .dump(
+            {
+                "type": "folder_manifest",
+                "user_id": "alice",
+                "device_name": "test",
+                "children": {},
+                "size": 0,
+                "version": 1,
+                "updated": datetime(2017, 1, 1),
+                "created": datetime(2017, 1, 1),
+                "format": 1,
+            }
+        )
+        .data
+    )
 
 
 @pytest.mark.usefixtures("bob_cleartext_device")

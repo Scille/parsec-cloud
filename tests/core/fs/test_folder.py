@@ -455,10 +455,16 @@ async def test_sync_with_children(fs, mocked_manifests_manager):
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "children": {
                 "bar": {
-                    "id": "<bar id>", "rts": "<bar rts>", "wts": "<bar wts>", "key": b"<bar key>"
+                    "id": "<bar id>",
+                    "rts": "<bar rts>",
+                    "wts": "<bar wts>",
+                    "key": b"<bar key>",
                 },
                 "baz": {
-                    "id": "<baz id>", "rts": "<baz rts>", "wts": "<baz wts>", "key": b"<baz key>"
+                    "id": "<baz id>",
+                    "rts": "<baz rts>",
+                    "wts": "<baz wts>",
+                    "key": b"<baz key>",
                 },
                 "spam.txt": {
                     "id": "<spam.txt id>",
@@ -519,61 +525,58 @@ async def test_sync_with_placeholder_children(fs, mocked_manifests_manager):
     mocked_manifests_manager.fetch_from_local.assert_called_with(
         "<mysterious id>", b"<mysterious key>"
     )
-    assert (
-        mocked_manifests_manager.sync_new_entry_with_backend.call_args_list
-        == [
-            [
-                (
-                    b"<bar key>",
-                    {
-                        "format": 1,
-                        "type": "folder_manifest",
-                        "user_id": "alice",
-                        "device_name": "test",
-                        "version": 1,
-                        "created": datetime(2017, 1, 1),
-                        "updated": datetime(2017, 1, 1),
-                        "children": {},
-                    },
-                ),
-                {},
-            ],
-            [
-                (
-                    b"<spam.txt key>",
-                    {
-                        "format": 1,
-                        "type": "file_manifest",
-                        "user_id": "alice",
-                        "device_name": "test",
-                        "version": 1,
-                        "created": datetime(2017, 1, 1),
-                        "updated": datetime(2017, 1, 1),
-                        "blocks": {},
-                        "size": 0,
-                    },
-                ),
-                {},
-            ],
-            [
-                (
-                    b"<mysterious key>",
-                    {
-                        "format": 1,
-                        "type": "file_manifest",
-                        "user_id": "alice",
-                        "device_name": "test",
-                        "version": 1,
-                        "created": datetime(2017, 1, 1),
-                        "updated": datetime(2017, 1, 1),
-                        "blocks": {},
-                        "size": 0,
-                    },
-                ),
-                {},
-            ],
-        ]
-    )
+    assert mocked_manifests_manager.sync_new_entry_with_backend.call_args_list == [
+        [
+            (
+                b"<bar key>",
+                {
+                    "format": 1,
+                    "type": "folder_manifest",
+                    "user_id": "alice",
+                    "device_name": "test",
+                    "version": 1,
+                    "created": datetime(2017, 1, 1),
+                    "updated": datetime(2017, 1, 1),
+                    "children": {},
+                },
+            ),
+            {},
+        ],
+        [
+            (
+                b"<spam.txt key>",
+                {
+                    "format": 1,
+                    "type": "file_manifest",
+                    "user_id": "alice",
+                    "device_name": "test",
+                    "version": 1,
+                    "created": datetime(2017, 1, 1),
+                    "updated": datetime(2017, 1, 1),
+                    "blocks": {},
+                    "size": 0,
+                },
+            ),
+            {},
+        ],
+        [
+            (
+                b"<mysterious key>",
+                {
+                    "format": 1,
+                    "type": "file_manifest",
+                    "user_id": "alice",
+                    "device_name": "test",
+                    "version": 1,
+                    "created": datetime(2017, 1, 1),
+                    "updated": datetime(2017, 1, 1),
+                    "blocks": {},
+                    "size": 0,
+                },
+            ),
+            {},
+        ],
+    ]
 
     # TODO: also check local storage flushes
 
@@ -593,10 +596,16 @@ async def test_sync_with_placeholder_children(fs, mocked_manifests_manager):
             "children": {
                 "bar": {"id": "<id 1>", "rts": "<rts 1>", "wts": "<wts 1>", "key": b"<bar key>"},
                 "spam.txt": {
-                    "id": "<id 2>", "rts": "<rts 2>", "wts": "<wts 2>", "key": b"<spam.txt key>"
+                    "id": "<id 2>",
+                    "rts": "<rts 2>",
+                    "wts": "<wts 2>",
+                    "key": b"<spam.txt key>",
                 },
                 "mysterious": {
-                    "id": "<id 3>", "rts": "<rts 3>", "wts": "<wts 3>", "key": b"<mysterious key>"
+                    "id": "<id 3>",
+                    "rts": "<rts 3>",
+                    "wts": "<wts 3>",
+                    "key": b"<mysterious key>",
                 },
             },
         },
@@ -613,7 +622,8 @@ async def test_sync_with_concurrent_updates(fs, mocked_manifests_manager):
 
     # Each placeholder will trigger a vlob creation in backend
     mocked_manifests_manager.sync_new_entry_with_backend.side_effect = [
-        ("<id 1>", "<rts 1>", "<wts 1>"), ("<id 2>", "<rts 2>", "<wts 2>")
+        ("<id 1>", "<rts 1>", "<wts 1>"),
+        ("<id 2>", "<rts 2>", "<wts 2>"),
     ]
 
     async def _sync_with_backend(*args, **kwargs):
