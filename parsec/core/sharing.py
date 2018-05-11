@@ -1,12 +1,12 @@
 import trio
 import logbook
 import traceback
-from nacl.public import SealedBox
+from nacl.public import SealedBox, PublicKey
 from nacl.signing import VerifyKey
 
 from parsec.schema import UnknownCheckedSchema, fields
 from parsec.core.base import BaseAsyncComponent
-from parsec.utils import from_jsonb64, ejson_loads, ParsecError
+from parsec.utils import from_jsonb64, to_jsonb64, ejson_loads, ejson_dumps, ParsecError
 from parsec.core.fs import FSInvalidPath
 from parsec.core.backend_connection import BackendNotAvailable, BackendError
 
@@ -159,6 +159,45 @@ class Sharing(BaseAsyncComponent):
                     pass
                 except BackendError:
                     logger.exception("Error with backend: " % traceback.format_exc())
+
+    async def share(self, path, recipient):
+        entry = await self.fs.fetch_path(path)
+        # Cannot share a placeholder !
+        if entry.is_placeholder:
+            # TODO: use minimal_sync_if_placeholder ?
+            try:
+                await entry.sync()
+            except BackendNotAvailable:
+                raise SharingError(status="backend_not_available", reason="Backend not available")
+        sharing_msg = {
+            "type": "share",
+            "author": self.device.id,
+            "content": entry._access.dump(with_type=False),
+            "name": entry.name,
+        }
+
+        rep = await self._backend_connection.send({"cmd": "user_get", "user_id": recipient})
+        if rep["status"] != "ok":
+            raise SharingError(status="not_found", reason="No user with id `%s`." % recipient)
+
+        broadcast_key = PublicKey(from_jsonb64(rep["broadcast_key"]))
+        box = SealedBox(broadcast_key)
+        sharing_msg_clear = ejson_dumps(sharing_msg).encode("utf8")
+        sharing_msg_signed = self.device.device_signkey.sign(sharing_msg_clear)
+        sharing_msg_encrypted = box.encrypt(sharing_msg_signed)
+
+        rep = await self._backend_connection.send(
+            {
+                "cmd": "message_new",
+                "recipient": recipient,
+                "body": to_jsonb64(sharing_msg_encrypted),
+            }
+        )
+        if rep["status"] != "ok":
+            raise SharingError(
+                status="backend_not_available",
+                reason="Error %s: %s" % (rep["status"], rep["reason"]),
+            )
 
     def _msg_arrived_cb(self, sender):
         self.msg_arrived.set()
