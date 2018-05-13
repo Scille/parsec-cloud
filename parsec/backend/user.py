@@ -47,10 +47,10 @@ class DeviceSchema(UnknownCheckedSchema):
 
 class UserSchema(BaseCmdSchema):
     user_id = fields.String(required=True)
-    created_on = fields.DateTime()
-    created_by = fields.String()
-    broadcast_key = fields.Base64Bytes()
-    devices = fields.Map(fields.String(), fields.Nested(DeviceSchema))
+    created_on = fields.DateTime(required=True)
+    created_by = fields.String(required=True)
+    broadcast_key = fields.Base64Bytes(required=True)
+    devices = fields.Map(fields.String(), fields.Nested(DeviceSchema), required=True)
 
 
 class UserClaimSchema(BaseCmdSchema):
