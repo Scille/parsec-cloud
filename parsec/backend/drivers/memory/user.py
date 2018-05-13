@@ -91,8 +91,8 @@ class MemoryUserComponent(BaseUserComponent):
         except KeyError:
             raise NotFoundError(user_id)
 
-    async def declare_device(self, user_id, device_name):
-        if user_id in self._users:
+    async def create_device(self, user_id, device_name, verify_key):
+        if user_id not in self._users:
             raise NotFoundError("User `%s` doesn't exists" % user_id)
 
         user = self._users[user_id]
@@ -101,9 +101,9 @@ class MemoryUserComponent(BaseUserComponent):
 
         user["devices"][device_name] = {
             "created_on": pendulum.utcnow(),
-            "verify_key": None,
+            "verify_key": verify_key,
             "revocated_on": None,
-            "configured": False,
+            "configured": True,
         }
 
     async def configure_device(self, user_id, device_name, device_verify_key):
