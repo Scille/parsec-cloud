@@ -34,6 +34,7 @@ async def test_online_core_tree_and_sync_multicore(
     backend_addr,
     tmpdir,
     alice,
+    alice2,
 ):
 
     st_entry_name = st.text(min_size=1).filter(lambda x: "/" not in x)
@@ -62,7 +63,10 @@ async def test_online_core_tree_and_sync_multicore(
                     author="<backend-fixture>",
                     user_id=alice.user_id,
                     broadcast_key=alice.user_pubkey.encode(),
-                    devices=[(alice.device_name, alice.device_verifykey.encode())],
+                    devices=[
+                        (alice.device_name, alice.device_verifykey.encode()),
+                        (alice2.device_name, alice2.device_verifykey.encode()),
+                    ],
                 )
 
                 async with run_app(backend) as backend_connection_factory:
@@ -74,7 +78,7 @@ async def test_online_core_tree_and_sync_multicore(
                         ) as self.core_2:
 
                             await self.core_1.login(alice)
-                            await self.core_2.login(alice)
+                            await self.core_2.login(alice2)
 
                             async with connect_core(self.core_1) as sock_1, connect_core(
                                 self.core_2
@@ -155,8 +159,11 @@ async def test_online_core_tree_and_sync_multicore(
 
         @rule()
         def sync_all_the_files(self):
+            print('~~~ SYNC 1 ~~~')
             rep1 = self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})
+            print('~~~ SYNC 2 ~~~')
             rep2 = self.core_cmd("core_2", {"cmd": "synchronize", "path": "/"})
+            print('~~~ SYNC 1 ~~~')
             rep3 = self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})
             note((rep1, rep2, rep3))
 
