@@ -5,6 +5,7 @@ from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields, validate
 from parsec.core.app import Core, ClientContext
 from parsec.core.backend_connection import BackendNotAvailable, backend_send_anonymous_cmd
 from parsec.core import devices_manager
+from parsec.core.devices_manager import DeviceSavingError
 from parsec.utils import to_jsonb64, from_jsonb64
 
 
@@ -78,10 +79,12 @@ async def user_claim(req: dict, client_ctx: ClientContext, core: Core) -> dict:
         )
     except BackendNotAvailable:
         return {"status": "backend_not_availabled", "reason": "Backend not available"}
-
-    core.devices_manager.register_new_device(
-        msg["id"], user_privkey.encode(), device_signkey.encode(), msg["password"]
-    )
+    try:
+        core.devices_manager.register_new_device(
+            msg["id"], user_privkey.encode(), device_signkey.encode(), msg["password"]
+        )
+    except DeviceSavingError:
+        return {"status": "already_exists", "reason": "User config already exists"}
     return rep
 
 
