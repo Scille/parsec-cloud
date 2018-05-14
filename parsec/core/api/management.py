@@ -1,9 +1,10 @@
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 
-from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields
+from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields, validate
 from parsec.core.app import Core, ClientContext
 from parsec.core.backend_connection import BackendNotAvailable, backend_send_anonymous_cmd
+from parsec.core import devices_manager
 from parsec.utils import to_jsonb64, from_jsonb64
 
 
@@ -19,12 +20,14 @@ backend_get_configuration_try_schema = BackendGetConfigurationTrySchema()
 
 
 class cmd_USER_INVITE_Schema(BaseCmdSchema):
-    user_id = fields.String(required=True)
+    user_id = fields.String(
+        validate=validate.Regexp(devices_manager.USER_ID_PATTERN), required=True
+    )
 
 
 class cmd_USER_CLAIM_Schema(BaseCmdSchema):
     # TODO: change id to user_id/device_name ?
-    id = fields.String(required=True)
+    id = fields.String(validate=validate.Regexp(devices_manager.DEVICE_ID_PATTERN), required=True)
     invitation_token = fields.String(required=True)
     password = fields.String(required=True)
 
