@@ -5,7 +5,6 @@ from collections import defaultdict
 
 
 class MemoryUserVlobComponent(BaseUserVlobComponent):
-
     def __init__(self, *args):
         super().__init__(*args)
         self.vlobs = defaultdict(list)

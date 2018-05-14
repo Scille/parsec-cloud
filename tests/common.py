@@ -17,7 +17,6 @@ from parsec.backend import BackendApp, BackendConfig
 
 
 class AsyncMock(Mock):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         spec = kwargs.get("spec")
@@ -68,13 +67,17 @@ class FreezeTestOnBrokenStreamCookedSocket(CookedSocket):
             await trio.sleep_forever()
 
 
+async def _handle_client(app, left):
+    await app.handle_client(left)
+
+
 @asynccontextmanager
 async def run_app(app):
     async with trio.open_nursery() as nursery:
 
         async def connection_factory(*args, **kwargs):
             right, left = trio.testing.memory_stream_pair()
-            nursery.start_soon(app.handle_client, left)
+            nursery.start_soon(_handle_client, app, left)
             return right
 
         try:
@@ -88,14 +91,12 @@ async def run_app(app):
 async def backend_factory(**config):
     config = BackendConfig(**config)
     backend = BackendApp(config)
-    async with trio.open_nursery() as nursery:
-        await backend.init(nursery)
-        try:
-            yield backend
+    await backend.init()
+    try:
+        yield backend
 
-        finally:
-            await backend.teardown()
-            nursery.cancel_scope.cancel()
+    finally:
+        await backend.teardown()
 
 
 @asynccontextmanager

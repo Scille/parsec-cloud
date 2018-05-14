@@ -5,9 +5,7 @@ from huepy import red, bold
 
 
 def rule(**config):
-
     def dec(fn):
-
         @vanilla_rule(**config)
         @wraps(fn)
         def wrapper(*args, **kwargs):

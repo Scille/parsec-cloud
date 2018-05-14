@@ -9,15 +9,14 @@ from tests.common import connect_core, core_factory, backend_factory, run_app
 
 
 class FileOracle:
-
     def __init__(self):
         self._buffer = bytearray()
 
     def read(self, size, offset):
-        return self._buffer[offset:size + offset]
+        return self._buffer[offset : size + offset]
 
     def write(self, offset, content):
-        self._buffer[offset:len(content) + offset] = content
+        self._buffer[offset : len(content) + offset] = content
 
 
 @pytest.mark.slow
@@ -30,9 +29,7 @@ async def test_online(
     tmpdir,
     alice,
 ):
-
     class RestartCore(Exception):
-
         def __init__(self, reset_local_storage=False):
             self.reset_local_storage = reset_local_storage
 

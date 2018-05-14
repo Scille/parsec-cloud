@@ -6,7 +6,6 @@ from parsec.core.fs.folder import BaseFolderEntry, BaseRootEntry
 
 
 class FS:
-
     def __init__(self, manifests_manager, blocks_manager):
         self.manifests_manager = manifests_manager
         self.blocks_manager = blocks_manager
@@ -14,7 +13,6 @@ class FS:
         self.root = None
 
     def _entry_cls_factory(self):
-
         class FileEntry(BaseFileEntry):
             _fs = self
 

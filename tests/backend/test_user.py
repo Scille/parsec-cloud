@@ -17,23 +17,20 @@ async def test_user_get_ok(backend, alice, bob):
     async with connect_backend(backend, auth_as=alice) as sock:
         await sock.send({"cmd": "user_get", "user_id": "bob"})
         rep = await sock.recv()
-    assert (
-        rep
-        == {
-            "status": "ok",
-            "user_id": "bob",
-            "broadcast_key": "PJyDuQC6ZXlhLqnwP9cwLZE9ye18fydKmzAgT/dvS04=\n",
-            "created_by": "<backend-fixture>",
-            "created_on": "2000-01-01T00:00:00+00:00",
-            "devices": {
-                "test": {
-                    "created_on": "2000-01-01T00:00:00+00:00",
-                    "revocated_on": None,
-                    "verify_key": "p9KzHZjz4qjlFSTvMNNMU4QVD5CfdWEJ/Yprw/G9Xl4=\n",
-                }
-            },
-        }
-    )
+    assert rep == {
+        "status": "ok",
+        "user_id": "bob",
+        "broadcast_key": "PJyDuQC6ZXlhLqnwP9cwLZE9ye18fydKmzAgT/dvS04=\n",
+        "created_by": "<backend-fixture>",
+        "created_on": "2000-01-01T00:00:00+00:00",
+        "devices": {
+            "test": {
+                "created_on": "2000-01-01T00:00:00+00:00",
+                "revocated_on": None,
+                "verify_key": "p9KzHZjz4qjlFSTvMNNMU4QVD5CfdWEJ/Yprw/G9Xl4=\n",
+            }
+        },
+    }
 
 
 @pytest.mark.parametrize(
@@ -128,20 +125,17 @@ async def test_user_claim_token(backend, invitation_token, mallory):
     async with connect_backend(backend, auth_as=mallory) as sock:
         await sock.send({"cmd": "user_get", "user_id": "mallory"})
         rep = await sock.recv()
-    assert (
-        rep
-        == {
-            "status": "ok",
-            "user_id": "mallory",
-            "created_by": "alice@test",
-            "created_on": "2017-07-07T00:59:00+00:00",
-            "broadcast_key": "KDXG2SYSdeTl+EBvZwPpsOfRkhEVVimOwH9hB459QWg=\n",
-            "devices": {
-                "test": {
-                    "created_on": "2017-07-07T00:59:00+00:00",
-                    "revocated_on": None,
-                    "verify_key": "YH9SOadvA66vf4GZn7wCbKVQ5RsiSkxW2deBeFVuzco=\n",
-                }
-            },
-        }
-    )
+    assert rep == {
+        "status": "ok",
+        "user_id": "mallory",
+        "created_by": "alice@test",
+        "created_on": "2017-07-07T00:59:00+00:00",
+        "broadcast_key": "KDXG2SYSdeTl+EBvZwPpsOfRkhEVVimOwH9hB459QWg=\n",
+        "devices": {
+            "test": {
+                "created_on": "2017-07-07T00:59:00+00:00",
+                "revocated_on": None,
+                "verify_key": "YH9SOadvA66vf4GZn7wCbKVQ5RsiSkxW2deBeFVuzco=\n",
+            }
+        },
+    }

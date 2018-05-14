@@ -49,7 +49,9 @@ async def test_device_declare_bad_msg(backend, alice, bad_msg):
 @pytest.mark.trio
 async def test_device_configure(backend, alice, configure_device_token, mock_generate_token):
     mock_generate_token.side_effect = ["<config_try_id>"]
-    verifykey = b"0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-"
+    verifykey = (
+        b"0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-"
+    )
     cypherkey = b"\x8b\xfc\xc1\x88\xb7\xd7\x16t\xce<\x7f\xd2j_fTI\x14r':\rF!\xff~\xa8\r\x912\xe3N"
 
     async with connect_backend(backend, auth_as="anonymous") as anonymous_sock, connect_backend(
@@ -79,10 +81,11 @@ async def test_device_configure(backend, alice, configure_device_token, mock_gen
 
         await alice_sock.send({"cmd": "event_listen"})
         rep = await alice_sock.recv()
-        assert (
-            rep
-            == {"status": "ok", "event": "device_try_claim_submitted", "subject": "<config_try_id>"}
-        )
+        assert rep == {
+            "status": "ok",
+            "event": "device_try_claim_submitted",
+            "subject": "<config_try_id>",
+        }
 
         # 4) Existing device retreive configuration try informations
 
@@ -90,16 +93,13 @@ async def test_device_configure(backend, alice, configure_device_token, mock_gen
             {"cmd": "device_get_configuration_try", "configuration_try_id": "<config_try_id>"}
         )
         rep = await alice_sock.recv()
-        assert (
-            rep
-            == {
-                "status": "ok",
-                "configuration_status": "waiting_answer",
-                "device_name": "phone2",
-                "device_verify_key": "MLqfWdG0RJMN9qdb6Kr57mG4AZjBfmltfUP63lzmoS0=\n",
-                "user_privkey_cypherkey": "i/zBiLfXFnTOPH/Sal9mVEkUcic6DUYh/36oDZEy404=\n",
-            }
-        )
+        assert rep == {
+            "status": "ok",
+            "configuration_status": "waiting_answer",
+            "device_name": "phone2",
+            "device_verify_key": "MLqfWdG0RJMN9qdb6Kr57mG4AZjBfmltfUP63lzmoS0=\n",
+            "user_privkey_cypherkey": "i/zBiLfXFnTOPH/Sal9mVEkUcic6DUYh/36oDZEy404=\n",
+        }
         user_privkey_cypherkey = PrivateKey(from_jsonb64(rep["user_privkey_cypherkey"]))
 
         # 5) Existing device accept configuration
@@ -157,10 +157,11 @@ async def test_device_configure_und_get_refused(
 
         await alice_sock.send({"cmd": "event_listen"})
         rep = await alice_sock.recv()
-        assert (
-            rep
-            == {"status": "ok", "event": "device_try_claim_submitted", "subject": "<config_try_id>"}
-        )
+        assert rep == {
+            "status": "ok",
+            "event": "device_try_claim_submitted",
+            "subject": "<config_try_id>",
+        }
 
         # 5) Existing device refuse the configuration
 
@@ -201,13 +202,10 @@ async def test_device_configure_timeout(autojump_clock, backend, alice, configur
         # Configuration should timeout after 5mn without answer (autojump_clock
         # fixture make this instantaneous)
         rep = await anonymous_sock.recv()
-        assert (
-            rep
-            == {
-                "status": "timeout",
-                "reason": "Timeout while waiting for existing device to validate our configuration.",
-            }
-        )
+        assert rep == {
+            "status": "timeout",
+            "reason": "Timeout while waiting for existing device to validate our configuration.",
+        }
 
 
 @pytest.mark.trio

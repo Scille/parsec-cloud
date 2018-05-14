@@ -4,7 +4,6 @@ from parsec.core.base import BaseAsyncComponent
 
 
 class BlocksManager(BaseAsyncComponent):
-
     def __init__(self, local_storage, backend_storage):
         super().__init__()
         self.local_storage = local_storage

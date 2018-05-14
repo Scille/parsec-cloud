@@ -43,7 +43,6 @@ class FuseStoppingError(FuseManagerError):
 
 
 class FuseManager(BaseAsyncComponent):
-
     def __init__(
         self,
         core_addr: str,
@@ -57,7 +56,9 @@ class FuseManager(BaseAsyncComponent):
         self._fuse_mountpoint_need_stop = signal_ns.signal("fuse_mountpoint_need_stop")
         self._fuse_mountpoint_stopped = signal_ns.signal("fuse_mountpoint_stopped")
         self._start_fuse_config = {
-            "socket_address": core_addr, "debug": debug, "nothreads": nothreads
+            "socket_address": core_addr,
+            "debug": debug,
+            "nothreads": nothreads,
         }
         self.mountpoint = None
         self.drive_letter = None

@@ -6,7 +6,6 @@ from parsec.utils import generate_sym_key
 
 @attr.s(slots=True, frozen=True)
 class BaseAccess:
-
     @property
     def _fs(self):
         raise NotImplementedError()

@@ -11,7 +11,6 @@ from parsec.backend.exceptions import (
 
 
 class PGUserComponent(BaseUserComponent):
-
     def __init__(self, dbh, *args):
         super().__init__(*args)
         self.dbh = dbh
@@ -25,15 +24,15 @@ class PGUserComponent(BaseUserComponent):
         try:
             ts, author, invitation_token, claim_tries = await self.dbh.fetch_one(
                 """SELECT ts, author, invitation_token, claim_tries
-                FROM invitations WHERE user_id = %s
+                FROM invitations WHERE user_id = $1
                 """,
-                (user_id,),
+                user_id,
             )
         except (TypeError, ValueError):
             raise NotFoundError("No invitation for user `%s`" % user_id)
 
         ts = pendulum.from_timestamp(ts)
-        user = await self.dbh.fetch_one("SELECT 1 FROM users WHERE user_id = %s", (user_id,))
+        user = await self.dbh.fetch_one("SELECT 1 FROM users WHERE user_id = $1", user_id)
 
         try:
             if user is not None:
@@ -51,12 +50,13 @@ class PGUserComponent(BaseUserComponent):
             claim_tries = claim_tries + 1
 
             if claim_tries > 3:
-                await self.dbh.delete_one("DELETE FROM invitations WHERE user_id = %s", (user_id,))
+                await self.dbh.delete_one("DELETE FROM invitations WHERE user_id = $1", user_id)
 
             else:
                 await self.dbh.update_one(
-                    "UPDATE invitations SET claim_tries = %s WHERE user_id = %s",
-                    (claim_tries, user_id),
+                    "UPDATE invitations SET claim_tries = $1 WHERE user_id = $2",
+                    claim_tries,
+                    user_id,
                 )
 
             raise
@@ -66,7 +66,7 @@ class PGUserComponent(BaseUserComponent):
         )
 
     async def create_invitation(self, invitation_token, author, user_id):
-        user = await self.dbh.fetch_one("SELECT 1 FROM users WHERE user_id = %s", (user_id,))
+        user = await self.dbh.fetch_one("SELECT 1 FROM users WHERE user_id = $1", user_id)
 
         if user is not None:
             raise AlreadyExistsError("User `%s` already exists" % user_id)
@@ -76,14 +76,17 @@ class PGUserComponent(BaseUserComponent):
             """
             INSERT INTO invitations (
                 user_id, ts, author, invitation_token, claim_tries
-            ) VALUES (%s, %s, %s, %s, 0)
+            ) VALUES ($1, $2, $3, $4, 0)
             ON CONFLICT (user_id) DO UPDATE SET
                 ts=EXCLUDED.ts,
                 author=EXCLUDED.author,
                 invitation_token=EXCLUDED.invitation_token,
                 claim_tries=EXCLUDED.claim_tries
             """,
-            (user_id, pendulum.utcnow().int_timestamp, author, invitation_token),
+            user_id,
+            pendulum.utcnow().int_timestamp,
+            author,
+            invitation_token,
         )
 
     async def create(self, author, user_id, broadcast_key, devices):
@@ -95,23 +98,24 @@ class PGUserComponent(BaseUserComponent):
         for _, key in devices:
             assert isinstance(key, (bytes, bytearray))
 
-        user = await self.dbh.fetch_one("SELECT 1 FROM users WHERE user_id = %s", (user_id,))
+        user = await self.dbh.fetch_one("SELECT 1 FROM users WHERE user_id = $1", user_id)
 
         if user is not None:
             raise AlreadyExistsError("User `%s` already exists" % user_id)
 
         now = pendulum.utcnow().int_timestamp
-
         await self.dbh.insert_one(
             """INSERT INTO users (user_id, created_on, created_by, broadcast_key)
-            VALUES (%s, %s, %s, %s)
+            VALUES ($1, $2, $3, $4)
             """,
-            (user_id, now, author, broadcast_key),
+            user_id,
+            now,
+            author,
+            broadcast_key,
         )
-
         await self.dbh.insert_many(
             """INSERT INTO user_devices (user_id, device_name, created_on, verify_key, revocated_on)
-            VALUES (%s, %s, %s, %s, NULL)
+            VALUES ($1, $2, $3, $4, NULL)
             """,
             [(user_id, name, now, key) for name, key in devices],
         )
@@ -119,22 +123,22 @@ class PGUserComponent(BaseUserComponent):
     async def get(self, user_id):
         try:
             created_on, created_by, broadcast_key = await self.dbh.fetch_one(
-                "SELECT created_on, created_by, broadcast_key FROM users WHERE user_id = %s",
-                (user_id,),
+                "SELECT created_on, created_by, broadcast_key FROM users WHERE user_id = $1",
+                user_id,
             )
         except (TypeError, ValueError):
             raise NotFoundError(user_id)
 
         user = {
             "user_id": user_id,
-            "broadcast_key": broadcast_key.tobytes(),
+            "broadcast_key": broadcast_key,
             "created_by": created_by,
             "created_on": pendulum.from_timestamp(created_on),
             "devices": {
                 d_name: {
                     "created_on": pendulum.from_timestamp(d_created_on),
                     "configure_token": d_configure_token,
-                    "verify_key": d_verify_key.tobytes() if d_verify_key else None,
+                    "verify_key": d_verify_key if d_verify_key else None,
                     "revocated_on": (
                         pendulum.from_timestamp(d_revocated_on) if d_revocated_on else None
                     ),
@@ -142,9 +146,9 @@ class PGUserComponent(BaseUserComponent):
                 for d_name, d_created_on, d_configure_token, d_verify_key, d_revocated_on in await self.dbh.fetch_many(
                     """
                     SELECT device_name, created_on, configure_token, verify_key, revocated_on
-                    FROM user_devices WHERE user_id = %s
+                    FROM user_devices WHERE user_id = $1
                     """,
-                    (user_id,),
+                    user_id,
                 )
             },
         }
@@ -153,7 +157,7 @@ class PGUserComponent(BaseUserComponent):
 
     async def declare_device(self, user_id, device_name):
         devices = await self.dbh.fetch_many(
-            "SELECT device_name FROM user_devices WHERE user_id = %s", (user_id,)
+            "SELECT device_name FROM user_devices WHERE user_id = $1", user_id
         )
         if not devices:
             raise NotFoundError("User `%s` doesn't exists" % user_id)
@@ -161,16 +165,21 @@ class PGUserComponent(BaseUserComponent):
         if device_name in itertools.chain(*devices):
             raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
 
+        # TODO add verify key
         await self.dbh.insert_one(
-            "INSERT INTO user_devices (user_id, device_name, created_on) VALUES (%s, %s, %s)",
-            (user_id, device_name, pendulum.utcnow().int_timestamp),
+            "INSERT INTO user_devices (user_id, device_name, created_on) VALUES ($1, $2, $3)",
+            user_id,
+            device_name,
+            pendulum.utcnow().int_timestamp,
         )
 
     async def configure_device(self, user_id, device_name, device_verify_key):
         updated = await self.dbh.update_one(
-            "UPDATE user_devices SET verify_key = %s WHERE user_id=%s AND device_name=%s",
-            # 'SELECT device_name FROM user_devices WHERE user_id=%s AND device_name=%s',
-            (device_verify_key, user_id, device_name),
+            "UPDATE user_devices SET verify_key = $1 WHERE user_id=$2 AND device_name=$3",
+            # 'SELECT device_name FROM user_devices WHERE user_id=$1 AND device_name=$2',
+            device_verify_key,
+            user_id,
+            device_name,
         )
         if not updated:
             raise NotFoundError("User `%s` doesn't exists" % user_id)
@@ -180,7 +189,7 @@ class PGUserComponent(BaseUserComponent):
 
     async def declare_unconfigured_device(self, token, user_id, device_name):
         devices = await self.dbh.fetch_many(
-            "SELECT device_name FROM user_devices WHERE user_id = %s", (user_id,)
+            "SELECT device_name FROM user_devices WHERE user_id = $1", user_id
         )
         if not devices:
             raise NotFoundError("User `%s` doesn't exists" % user_id)
@@ -192,8 +201,11 @@ class PGUserComponent(BaseUserComponent):
             """
             INSERT INTO user_devices (
                 user_id, device_name, created_on, configure_token
-            ) VALUES (%s, %s, %s, %s)""",
-            (user_id, device_name, pendulum.utcnow().int_timestamp, token),
+            ) VALUES ($1, $2, $3, $4)""",
+            user_id,
+            device_name,
+            pendulum.utcnow().int_timestamp,
+            token,
         )
 
     async def register_device_configuration_try(
@@ -205,16 +217,14 @@ class PGUserComponent(BaseUserComponent):
             INSERT INTO device_configure_tries (
                 user_id, config_try_id, status, device_name, device_verify_key,
                 user_privkey_cypherkey
-            ) VALUES (%s, %s, %s, %s, %s, %s)
+            ) VALUES ($1, $2, $3, $4, $5, $6)
             """,
-            (
-                user_id,
-                config_try_id,
-                "waiting_answer",
-                device_name,
-                device_verify_key,
-                user_privkey_cypherkey,
-            ),
+            user_id,
+            config_try_id,
+            "waiting_answer",
+            device_name,
+            device_verify_key,
+            user_privkey_cypherkey,
         )
         return config_try_id
 
@@ -223,9 +233,10 @@ class PGUserComponent(BaseUserComponent):
             """
             SELECT status, device_name, device_verify_key, user_privkey_cypherkey,
                 cyphered_user_privkey, refused_reason
-            FROM device_configure_tries WHERE user_id = %s AND config_try_id = %s
+            FROM device_configure_tries WHERE user_id = $1 AND config_try_id = $2
             """,
-            (user_id, config_try_id),
+            user_id,
+            config_try_id,
         )
         if not config_try:
             raise NotFoundError()
@@ -244,12 +255,16 @@ class PGUserComponent(BaseUserComponent):
     async def accept_device_configuration_try(self, config_try_id, user_id, cyphered_user_privkey):
         updated = await self.dbh.update_one(
             """
-            UPDATE device_configure_tries SET status = %s, cyphered_user_privkey = %s
-            WHERE user_id=%s AND config_try_id=%s and status=%s
+            UPDATE device_configure_tries SET status = $1, cyphered_user_privkey = $2
+            WHERE user_id=$3 AND config_try_id=$4 and status=$5
             """,
-            ("accepted", cyphered_user_privkey, user_id, config_try_id, "waiting_answer"),
+            "accepted",
+            cyphered_user_privkey,
+            user_id,
+            config_try_id,
+            "waiting_answer",
         )
-        if not updated:
+        if updated == "UPDATE 0":
             raise NotFoundError()
 
     # TODO: handle this error
@@ -259,12 +274,16 @@ class PGUserComponent(BaseUserComponent):
     async def refuse_device_configuration_try(self, config_try_id, user_id, reason):
         updated = await self.dbh.update_one(
             """
-            UPDATE device_configure_tries SET status = %s, refused_reason = %s
-            WHERE user_id=%s AND config_try_id=%s and status=%s,
+            UPDATE device_configure_tries SET status = $1, refused_reason = $2
+            WHERE user_id=$3 AND config_try_id=$4 and status=$5
             """,
-            ("refused", reason, user_id, config_try_id, "waiting_answer"),
+            "refused",
+            reason,
+            user_id,
+            config_try_id,
+            "waiting_answer",
         )
-        if not updated:
+        if updated == "UPDATE 0":
             raise NotFoundError()
 
 

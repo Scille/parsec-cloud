@@ -3,7 +3,6 @@ from parsec.backend.exceptions import TrustSeedError, VersionError, NotFoundErro
 
 
 class PGVlob:
-
     def __init__(self, *args, **kwargs):
         atom = VlobAtom(*args, **kwargs)
         self.id = atom.id
@@ -13,15 +12,17 @@ class PGVlob:
 
 
 class PGVlobComponent(BaseVlobComponent):
-
     def __init__(self, dbh, *args):
         super().__init__(*args)
         self.dbh = dbh
 
     async def create(self, id, rts, wts, blob):
         await self.dbh.insert_one(
-            "INSERT INTO vlobs (id, rts, wts, version, blob) VALUES (%s, %s, %s, 1, %s)",
-            (id, rts, wts, blob),
+            "INSERT INTO vlobs (id, rts, wts, version, blob) VALUES ($1, $2, $3, 1, $4)",
+            id,
+            rts,
+            wts,
+            blob,
         )
 
         return VlobAtom(id=id, read_trust_seed=rts, write_trust_seed=wts, blob=blob)
@@ -30,9 +31,9 @@ class PGVlobComponent(BaseVlobComponent):
         if version is None:
             data = await self.dbh.fetch_one(
                 """
-                SELECT rts, wts, version, blob FROM vlobs WHERE id=%s ORDER BY version DESC limit 1
+                SELECT rts, wts, version, blob FROM vlobs WHERE id=$1 ORDER BY version DESC limit 1
                 """,
-                (id,),
+                id,
             )
             if not data:
                 raise NotFoundError("Vlob not found.")
@@ -41,11 +42,11 @@ class PGVlobComponent(BaseVlobComponent):
                 rts, wts, version, blob = data
         else:
             data = await self.dbh.fetch_one(
-                "SELECT rts, wts, blob FROM vlobs WHERE id=%s AND version=%s", (id, version)
+                "SELECT rts, wts, blob FROM vlobs WHERE id=$1 AND version=$2", id, version
             )
             if not data:
                 # TODO: not cool to need 2nd request to know the error...
-                exists = await self.dbh.fetch_one("SELECT true FROM vlobs WHERE id=%s", (id,))
+                exists = await self.dbh.fetch_one("SELECT true FROM vlobs WHERE id=$1", id)
                 if exists:
                     raise VersionError("Wrong blob version.")
 
@@ -63,7 +64,7 @@ class PGVlobComponent(BaseVlobComponent):
         )
 
     async def update(self, id, trust_seed, version, blob):
-        vlobs = await self.dbh.fetch_many("SELECT id, rts, wts FROM vlobs WHERE id = %s", (id,))
+        vlobs = await self.dbh.fetch_many("SELECT id, rts, wts FROM vlobs WHERE id = $1", id)
         vlobcount = len(vlobs)
 
         if vlobcount == 0:
@@ -78,8 +79,12 @@ class PGVlobComponent(BaseVlobComponent):
             raise VersionError("Wrong blob version.")
 
         await self.dbh.insert_one(
-            "INSERT INTO vlobs (id, rts, wts, version, blob) VALUES (%s, %s, %s, %s, %s)",
-            (id, rts, wts, version, blob),
+            "INSERT INTO vlobs (id, rts, wts, version, blob) VALUES ($1, $2, $3, $4, $5)",
+            id,
+            rts,
+            wts,
+            version,
+            blob,
         )
 
         self._signal_vlob_updated.send(id)

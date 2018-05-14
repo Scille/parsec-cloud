@@ -8,7 +8,6 @@ from hypothesis.stateful import RuleBasedStateMachine, run_state_machine_as_test
 
 
 class ThreadToTrioCommunicator:
-
     def __init__(self, portal, timeout=None):
         self.timeout = timeout
         self.portal = portal
@@ -66,7 +65,6 @@ def hypothesis_settings(request):
 
 @pytest.fixture
 async def TrioDriverRuleBasedStateMachine(nursery, portal, loghandler, hypothesis_settings):
-
     class TrioDriverRuleBasedStateMachine(RuleBasedStateMachine):
         _portal = portal
         _nursery = nursery

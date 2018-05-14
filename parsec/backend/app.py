@@ -103,11 +103,9 @@ class ClientContext:
 
 
 class BackendApp:
-
     def __init__(self, config):
         self.signal_ns = blinker.Namespace()
         self.config = config
-        self.nursery = None
         self.blockstore_postgresql = config.blockstore_postgresql
         self.blockstore_openstack = config.blockstore_openstack
         self.blockstore_s3 = config.blockstore_s3
@@ -193,9 +191,9 @@ class BackendApp:
             "ping": self._api_ping,
         }
 
-    async def init(self, nursery):
+    async def init(self):
         if self.dbh:
-            await self.dbh.init(nursery)
+            await self.dbh.init()
 
     async def teardown(self):
         if self.dbh:
@@ -223,10 +221,11 @@ class BackendApp:
         event = msg["event"]
         subject = msg["subject"]
 
-        if (
-            event in ("user_vlob_updated", "message_arrived", "device_try_claim")
-            and subject not in (None, client_ctx.user_id)
-        ):
+        if event in (
+            "user_vlob_updated",
+            "message_arrived",
+            "device_try_claim",
+        ) and subject not in (None, client_ctx.user_id):
             # TODO: is the `subject == None` valid here ?
             return {"status": "private_event", "reason": "This type of event is private."}
 
@@ -249,7 +248,8 @@ class BackendApp:
             del client_ctx.subscribed_events[msg["event"], msg["subject"]]
         except KeyError:
             return {
-                "status": "not_subscribed", "reason": "Not subscribed to this event/subject couple"
+                "status": "not_subscribed",
+                "reason": "Not subscribed to this event/subject couple",
             }
 
         return {"status": "ok"}

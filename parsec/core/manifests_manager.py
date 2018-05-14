@@ -19,7 +19,6 @@ class ManifestDecryptionError(ParsecError):
 
 
 class ManifestsManager(BaseAsyncComponent):
-
     def __init__(self, device, local_storage, backend_storage, backend_connection):
         super().__init__()
         self.device = device

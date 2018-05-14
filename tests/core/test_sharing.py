@@ -53,7 +53,6 @@ async def test_share_file(
 async def test_multiple_messages(
     already_synced, core, core2, alice_core_sock, bob_core2_sock, running_backend, bob
 ):
-
     def _build_ping_body(destination):
         ping_body = {"type": "ping", "ping": destination}
         broadcast_key = PublicKey(bob.user_privkey.public_key.encode())

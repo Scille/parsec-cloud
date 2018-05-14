@@ -21,7 +21,6 @@ from swiftclient.exceptions import ClientException  # noqa
 
 
 class OpenStackBlockStoreComponent(BaseBlockStoreComponent):
-
     def __init__(
         self,
         signal_ns,

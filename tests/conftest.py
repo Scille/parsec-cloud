@@ -1,3 +1,5 @@
+import trio_asyncio
+from trio_asyncio import trio2aio
 import os
 import pytest
 import attr
@@ -5,6 +7,7 @@ import socket
 import blinker
 import contextlib
 from unittest.mock import patch
+from async_generator import asynccontextmanager
 
 from parsec.core.local_storage import LocalStorage
 from parsec.core.devices_manager import Device
@@ -47,15 +50,25 @@ def postgresql_url():
     return os.environ.get("PARSEC_POSTGRESQL_TEST_URL", DEFAULT_POSTGRESQL_TEST_URL)
 
 
+@trio2aio
+async def _backend_store(url):
+    pg_driver = pytest.importorskip("parsec.backend.drivers.postgresql")
+    await pg_driver.handler.init_db(url, True)
+
+
+@pytest.fixture
+async def asyncio_loop():
+    async with trio_asyncio.open_loop() as loop:
+        yield loop
+
+
 @pytest.fixture(params=["mocked", "postgresql"])
-def backend_store(request):
+async def backend_store(asyncio_loop, request):
     if request.param == "postgresql":
         if pytest.config.getoption("--no-postgresql"):
             pytest.skip("`--no-postgresql` option provided")
-        pg_driver = pytest.importorskip("parsec.backend.drivers.postgresql")
         url = postgresql_url()
-        conn = pg_driver.handler.init_db(url, force=True)
-        conn.close()
+        await _backend_store(url)
         return url
 
     else:
@@ -150,7 +163,7 @@ def default_devices(alice, bob):
 
 
 @pytest.fixture
-async def backend(nursery, default_devices, backend_store, config={}):
+async def backend(asyncio_loop, nursery, default_devices, backend_store, config={}):
     async with backend_factory(
         **{"blockstore_postgresql": True, "dburl": backend_store, **config}
     ) as backend:
@@ -203,7 +216,7 @@ async def alice_backend_sock(backend, alice):
 
 
 @pytest.fixture
-async def core(nursery, backend_addr, tmpdir, default_devices, config={}):
+async def core(asyncio_loop, nursery, backend_addr, tmpdir, default_devices, config={}):
     async with core_factory(
         **{
             "base_settings_path": tmpdir.mkdir("core_fixture").strpath,
@@ -221,7 +234,7 @@ async def core(nursery, backend_addr, tmpdir, default_devices, config={}):
 
 
 @pytest.fixture
-async def core2(nursery, backend_addr, tmpdir, default_devices, config={}):
+async def core2(asyncio_loop, nursery, backend_addr, tmpdir, default_devices, config={}):
     # TODO: refacto with core fixture
     async with core_factory(
         **{

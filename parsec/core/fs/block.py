@@ -79,7 +79,6 @@ class BaseDirtyBlockAccess(BaseAccess):
 
 
 class BaseBlock:
-
     def __init__(self, access, data=None):
         self._access = access
         self._data = data

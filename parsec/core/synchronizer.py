@@ -11,7 +11,6 @@ logger = logbook.Logger("parsec.core.synchronizer")
 
 
 class Synchronizer(BaseAsyncComponent):
-
     def __init__(self, auto_sync, fs):
         super().__init__()
         self.auto_sync = auto_sync

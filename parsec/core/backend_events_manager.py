@@ -116,7 +116,9 @@ class BackendEventsManager(BaseAsyncComponent):
                     sock = await bc.backend_connection_factory(self.backend_addr, self.device)
                     await _event_pump(sock)
                 except (
-                    bc.BackendNotAvailable, trio.BrokenStreamError, trio.ClosedStreamError
+                    bc.BackendNotAvailable,
+                    trio.BrokenStreamError,
+                    trio.ClosedStreamError,
                 ) as exc:
                     # In case of connection failure, wait a bit and restart
                     logger.debug("Connection lost with backend ({}), restarting connection...", exc)

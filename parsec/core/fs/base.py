@@ -20,7 +20,6 @@ class FSLoadError(Exception):
 
 
 class BaseEntry:
-
     def __init__(self, access, name="", parent=None):
         self._access = access
         self._name = name
@@ -96,7 +95,6 @@ class BaseEntry:
 
 
 class BaseNotLoadedEntry(BaseEntry):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._loaded = None

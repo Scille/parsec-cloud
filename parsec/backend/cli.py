@@ -1,5 +1,6 @@
 import sys
 import trio
+import trio_asyncio
 import click
 import logbook
 
@@ -60,7 +61,7 @@ def run_with_pdb(cmd, *args, **kwargs):
     "--blockstore-postgresql",
     is_flag=True,
     help="URL of the block store the clients should write into (default: "
-    "backend creates it own in-memory block store).",
+    "backend creates its own block store in memory or postgresql store).",
 )
 @click.option(
     "--blockstore-openstack",
@@ -121,26 +122,25 @@ def _backend(
     backend = BackendApp(config)
 
     async def _run_and_register_johndoe():
-        async with trio.open_nursery() as nursery:
-            await backend.init(nursery)
+        await backend.init()
 
-            try:
-                await backend.user.get(JOHN_DOE_USER_ID)
-            except NotFoundError:
-                await backend.user.create(
-                    "<backend-mock>",
-                    JOHN_DOE_USER_ID,
-                    JOHN_DOE_PUBLIC_KEY,
-                    devices={JOHN_DOE_DEVICE_NAME: JOHN_DOE_DEVICE_VERIFY_KEY},
-                )
+        try:
+            await backend.user.get(JOHN_DOE_USER_ID)
+        except NotFoundError:
+            await backend.user.create(
+                "<backend-mock>",
+                JOHN_DOE_USER_ID,
+                JOHN_DOE_PUBLIC_KEY,
+                devices={JOHN_DOE_DEVICE_NAME: JOHN_DOE_DEVICE_VERIFY_KEY},
+            )
 
-            try:
-                await trio.serve_tcp(backend.handle_client, port)
-            finally:
-                await backend.teardown()
+        try:
+            await trio.serve_tcp(backend.handle_client, port)
+        finally:
+            await backend.teardown()
 
     print("Starting Parsec Backend on %s:%s" % (host, port))
     try:
-        trio.run(_run_and_register_johndoe)
+        trio_asyncio.run(_run_and_register_johndoe)
     except KeyboardInterrupt:
         print("bye ;-)")

@@ -3,7 +3,6 @@ from parsec.backend.group import BaseGroupComponent, Group
 
 
 class MemoryGroupComponent(BaseGroupComponent):
-
     def __init__(self, *args):
         super().__init__(*args)
         self._groups = {}

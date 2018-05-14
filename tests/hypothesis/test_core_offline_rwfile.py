@@ -8,15 +8,14 @@ from tests.common import connect_core, core_factory
 
 
 class FileOracle:
-
     def __init__(self):
         self._buffer = bytearray()
 
     def read(self, size, offset):
-        return self._buffer[offset:size + offset]
+        return self._buffer[offset : size + offset]
 
     def write(self, offset, content):
-        self._buffer[offset:len(content) + offset] = content
+        self._buffer[offset : len(content) + offset] = content
 
 
 @pytest.mark.slow
@@ -24,7 +23,6 @@ class FileOracle:
 async def test_core_offline_rwfile(
     TrioDriverRuleBasedStateMachine, mocked_local_storage_connection, backend_addr, tmpdir, alice
 ):
-
     class CoreOfflineRWFile(TrioDriverRuleBasedStateMachine):
         count = 0
 

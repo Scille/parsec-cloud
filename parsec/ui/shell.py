@@ -14,7 +14,7 @@ class ReloadShell(Exception):
 async def repl(socket_path):
     try:
         if socket_path.startswith("unix://"):
-            sockstream = await trio.open_unix_stream(socket_path[len("unix://"):])
+            sockstream = await trio.open_unix_stream(socket_path[len("unix://") :])
         elif socket_path.startswith("tcp://"):
             parsed = urlparse(socket_path)
             sockstream = await trio.open_tcp_stream(port=parsed.port, host=parsed.hostname)

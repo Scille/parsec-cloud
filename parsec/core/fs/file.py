@@ -151,13 +151,13 @@ class BaseFileEntry(BaseEntry):
             else:
                 data = await block.fetch_data()
                 if block.offset <= offset and block.end < end:
-                    out[:block.end - offset] = data[offset - block.offset:]
+                    out[: block.end - offset] = data[offset - block.offset :]
                 elif block.offset > offset and block.end <= end:
-                    out[block.offset - offset:block.end - offset] = data
+                    out[block.offset - offset : block.end - offset] = data
                 elif block.offset > offset and block.end > end:
-                    out[block.offset - offset:] = data[:end - block.offset]
+                    out[block.offset - offset :] = data[: end - block.offset]
                 else:
-                    out[:] = data[offset - block.offset:end - block.offset]
+                    out[:] = data[offset - block.offset : end - block.offset]
         # Dirty block are historically ordered, so they can be applied
         # one on top of another and we get the right result in the end
         for block in self._dirty_blocks:
@@ -167,13 +167,13 @@ class BaseFileEntry(BaseEntry):
             else:
                 data = await block.fetch_data()
                 if block.offset <= offset and block.end < end:
-                    out[:block.end - offset] = data[offset - block.offset:]
+                    out[: block.end - offset] = data[offset - block.offset :]
                 elif block.offset > offset and block.end <= end:
-                    out[block.offset - offset:block.end - offset] = data
+                    out[block.offset - offset : block.end - offset] = data
                 elif block.offset > offset and block.end > end:
-                    out[block.offset - offset:] = data[:end - block.offset]
+                    out[block.offset - offset :] = data[: end - block.offset]
                 else:
-                    out[:] = data[offset - block.offset:end - block.offset]
+                    out[:] = data[offset - block.offset : end - block.offset]
 
         return out
 

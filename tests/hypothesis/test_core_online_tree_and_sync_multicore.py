@@ -10,7 +10,6 @@ from tests.hypothesis.common import rule
 
 
 async def get_tree_from_core(core):
-
     async def get_tree_from_folder_entry(entry):
         tree = {}
         for k, v in entry._children.items():

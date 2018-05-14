@@ -30,7 +30,6 @@ class NotLoggedError(Exception):
 
 
 class Core(BaseAsyncComponent):
-
     def __init__(self, config):
         super().__init__()
         self.nursery = None
@@ -170,7 +169,6 @@ class Core(BaseAsyncComponent):
 
 @attr.s
 class ClientContext:
-
     @property
     def ctxid(self):
         return id(self)

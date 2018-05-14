@@ -9,7 +9,6 @@ async def _broken_stream(*args, **kwargs):
 
 
 class OpenTCPStreamMockWrapper:
-
     def __init__(self):
         self.socks = defaultdict(list)
         self._hooks = {}

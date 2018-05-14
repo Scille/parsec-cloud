@@ -74,9 +74,8 @@ def add_block(
             file._fs.blocks_manager.fetch_from_local
         )
 
-    count = (
-        len(file._fs.blocks_manager.fetch_from_backend.data)
-        + len(file._fs.blocks_manager.fetch_from_local.data)
+    count = len(file._fs.blocks_manager.fetch_from_backend.data) + len(
+        file._fs.blocks_manager.fetch_from_local.data
     )
     # count = len(file._blocks) + len(file._dirty_blocks)
     name = name or "block-%s" % count
@@ -198,10 +197,10 @@ async def test_read_blocks(fs, mocked_blocks_manager):
     mocked_blocks_manager.fetch_from_local.side_effect = blocks_data
     content = await foo.read()
     assert content == b"Hello... world !"
-    assert (
-        mocked_blocks_manager.fetch_from_local.call_args_list
-        == [[("<block 1 id>", b"<block 1 key>"), {}], [("<block 2 id>", b"<block 2 key>"), {}]]
-    )
+    assert mocked_blocks_manager.fetch_from_local.call_args_list == [
+        [("<block 1 id>", b"<block 1 key>"), {}],
+        [("<block 2 id>", b"<block 2 key>"), {}],
+    ]
 
 
 @pytest.mark.trio
@@ -216,10 +215,9 @@ async def test_read_corrupted_blocks(fs, mocked_blocks_manager):
     mocked_blocks_manager.fetch_from_backend.side_effect = blocks_data
     with pytest.raises(BlockHashError):
         await foo.read()
-    assert (
-        mocked_blocks_manager.fetch_from_backend.call_args_list
-        == [[("<block 1 id>", b"<block 1 key>"), {}]]
-    )
+    assert mocked_blocks_manager.fetch_from_backend.call_args_list == [
+        [("<block 1 id>", b"<block 1 key>"), {}]
+    ]
 
 
 @pytest.mark.trio
@@ -486,7 +484,7 @@ def test_get_merged_blocks(random, dirty_blocks_count, synced_file_size, synced_
         expected_data = (
             expected_data[:dirty_block_offset]
             + dirty_block_payload
-            + expected_data[dirty_block_offset + dirty_block_size:]
+            + expected_data[dirty_block_offset + dirty_block_size :]
         )
     note("Dirty blocks: %s" % dirty_blocks)
     # Simulate truncate
