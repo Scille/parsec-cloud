@@ -84,7 +84,7 @@ async def test_device_configure(backend, alice, configure_device_token, mock_gen
             == {"status": "ok", "event": "device_try_claim_submitted", "subject": "<config_try_id>"}
         )
 
-        # 4) Existing device retreive configuration try informations
+        # 4) Existing device retrieve configuration try informations
 
         await alice_sock.send(
             {"cmd": "device_get_configuration_try", "configuration_try_id": "<config_try_id>"}

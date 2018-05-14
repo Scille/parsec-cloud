@@ -9,6 +9,7 @@ from parsec.core.base import BaseAsyncComponent
 from parsec.utils import from_jsonb64, to_jsonb64, ejson_loads, ejson_dumps, ParsecError
 from parsec.core.fs import FSInvalidPath
 from parsec.core.backend_connection import BackendNotAvailable, BackendError
+from parsec.backend.exceptions import NotFoundError
 
 
 logger = logbook.Logger("parsec.core.sharing")
@@ -83,7 +84,7 @@ class Sharing(BaseAsyncComponent):
         rep, errors = backend_user_get_rep_schema.load(rep)
         if errors:
             raise BackendMessageError(
-                "Cannot retreive message %r sender's device informations: %r" % (msg, rep)
+                "Cannot retrieve message %r sender's device informations: %r" % (msg, rep)
             )
 
         try:
@@ -139,7 +140,7 @@ class Sharing(BaseAsyncComponent):
 
         rep, errors = backend_message_get_rep_schema.load(rep)
         if errors:
-            raise BackendMessageError("Cannot retreive user messages: %r" % rep)
+            raise BackendMessageError("Cannot retrieve user messages: %r" % rep)
 
         for msg in rep["messages"]:
             try:
@@ -165,10 +166,7 @@ class Sharing(BaseAsyncComponent):
         # Cannot share a placeholder !
         if entry.is_placeholder:
             # TODO: use minimal_sync_if_placeholder ?
-            try:
-                await entry.sync()
-            except BackendNotAvailable:
-                raise SharingError(status="backend_not_available", reason="Backend not available")
+            await entry.sync()
         sharing_msg = {
             "type": "share",
             "author": self.device.id,
@@ -178,7 +176,7 @@ class Sharing(BaseAsyncComponent):
 
         rep = await self._backend_connection.send({"cmd": "user_get", "user_id": recipient})
         if rep["status"] != "ok":
-            raise SharingError(status="not_found", reason="No user with id `%s`." % recipient)
+            raise NotFoundError("No user with id `%s`." % recipient)
 
         broadcast_key = PublicKey(from_jsonb64(rep["broadcast_key"]))
         box = SealedBox(broadcast_key)
@@ -194,10 +192,7 @@ class Sharing(BaseAsyncComponent):
             }
         )
         if rep["status"] != "ok":
-            raise SharingError(
-                status="backend_not_available",
-                reason="Error %s: %s" % (rep["status"], rep["reason"]),
-            )
+            raise SharingError("Cannot send sharing message to backend: %r" % rep)
 
     def _msg_arrived_cb(self, sender):
         self.msg_arrived.set()
