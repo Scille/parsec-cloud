@@ -8,10 +8,12 @@ import tempfile
 import logbook
 from urllib.parse import urlparse
 
-from parsec.core import Core, CoreConfig, Device
+from parsec.core import Core, CoreConfig, Device, config
 
 
 logger = logbook.Logger("parsec.core.app")
+logger.handlers.append(logbook.FileHandler(config.get_log_path(), level="WARNING"))
+
 
 JOHN_DOE_DEVICE_ID = "johndoe@test"
 JOHN_DOE_PRIVATE_KEY = (
