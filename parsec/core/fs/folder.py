@@ -182,6 +182,8 @@ class BaseFolderEntry(BaseEntry):
             )
             self._base_version = 1
             self._access = self._fs._vlob_access_cls(id, rts, wts, key)
+            # If the folder is empty, we actually synchronized it !
+            self._need_sync = bool(self._children)
             self._need_flush = True
             await self.flush_no_lock()
 
@@ -192,7 +194,43 @@ class BaseFolderEntry(BaseEntry):
 
         async with self.acquire_write():
 
-            if not await _recursive_need_sync(self):
+            # Convert placeholder children into proper synchronized children
+            for name, entry in self._children.items():
+                if ignore_placeholders and entry.is_placeholder:
+                    continue
+
+                else:
+                    if recursive:
+                        try:
+                            await entry.sync(recursive=True)
+                        except BackendConcurrencyError:
+                            # File already modified, must rename it to avoid losing data!
+                            print(bad("concurrency error sync %s" % self.path))
+
+                            original_name = entry.name
+                            diverged_entry = self._children.pop(original_name)
+                            diverged_entry._access = self._fs._placeholder_access_cls()
+                            self._children[original_name] = self._fs._not_loaded_entry_cls(
+                                entry._access, original_name, self)
+                            self._modified()
+
+                            duplicated_name = original_name
+                            while True:
+                                duplicated_name += ".conflict"
+                                if duplicated_name not in self._children:
+                                    self._children[duplicated_name] = diverged_entry
+                                    diverged_entry._name = duplicated_name
+                                    break
+
+                            await diverged_entry.minimal_sync_if_placeholder()
+                            # TODO: of course in case two cores are both trying to
+                            # create a `foo.conflict`, one of them will crash here...
+                    else:
+                        await entry.minimal_sync_if_placeholder()
+                # TODO: Synchronize with up-to-date data and flush to avoid
+                # having to re-synchronize placeholders
+
+            if not self._need_sync:
                 # This folder (and it children) hasn't been modified locally,
                 # just download last version from the backend if any.
                 manifest = await self._fs.manifests_manager.fetch_from_backend(
@@ -210,10 +248,8 @@ class BaseFolderEntry(BaseEntry):
                         )
                         for k, v in manifest["children"].items()
                     }
-                    return
+                return
 
-            # TODO: useful ?
-            # await self.flush_no_lock()
             # Make a snapshot of ourself to avoid concurrency
             # Serialize as local folder manifest
             manifest = {
@@ -224,26 +260,12 @@ class BaseFolderEntry(BaseEntry):
                 "version": self._base_version + 1,
                 "created": self._created,
                 "updated": self._updated,
-                "children": {},
+                "children": {k: v._access.dump(with_type=False) for k, v in self._children.items()},
             }
-            children = self._children.copy()
+
             access = self._access
 
             # TODO: should release the lock here
-
-            # Convert placeholder children into proper synchronized children
-            for name, entry in children.items():
-                if ignore_placeholders and entry.is_placeholder:
-                    continue
-
-                else:
-                    if recursive:
-                        await entry.sync(recursive=True)
-                    else:
-                        await entry.minimal_sync_if_placeholder()
-                # TODO: Synchronize with up-to-date data and flush to avoid
-                # having to re-synchronize placeholders
-                manifest["children"][name] = entry._access.dump(with_type=False)
 
             # Upload the file manifest as new vlob version
             while True:
@@ -337,6 +359,10 @@ class BaseFolderEntry(BaseEntry):
         self._modified()
         # Disconnect entry to be able to re-insert it somewhere else
         entry._parent = None
+        # TODO: shitty fix...
+        if hasattr(entry, '_loaded'):
+            # `entry._loaded.name` is no longer valid
+            entry._loaded = None
         return entry
 
     async def insert_child_from_access(self, name, access):
@@ -364,6 +390,7 @@ class BaseFolderEntry(BaseEntry):
             raise FSInvalidPath("Path `%s/%s` already exists" % (self.path, name))
 
         child._parent = self
+        child._name = name
         self._children[name] = child
         self._modified()
 
@@ -377,8 +404,8 @@ class BaseFolderEntry(BaseEntry):
 
         entry = self._fs._folder_entry_cls(
             access=self._fs._placeholder_access_cls(),
-            user_id=self._fs.manifests_manager.device.user_id,
-            device_name=self._fs.manifests_manager.device.device_name,
+            user_id=self._fs.device.user_id,
+            device_name=self._fs.device.device_name,
             name=name,
             parent=self,
             need_sync=True,
@@ -398,8 +425,8 @@ class BaseFolderEntry(BaseEntry):
 
         entry = self._fs._file_entry_cls(
             access=self._fs._placeholder_access_cls(),
-            user_id=self._fs.manifests_manager.device.user_id,
-            device_name=self._fs.manifests_manager.device.device_name,
+            user_id=self._fs.device.user_id,
+            device_name=self._fs.device.device_name,
             name=name,
             parent=self,
             need_sync=True,
@@ -449,8 +476,44 @@ class BaseRootEntry(BaseFolderEntry):
     async def sync(self, recursive=False, ignore_placeholders=False):
         async with self.acquire_write():
 
-            if not await _recursive_need_sync(self):
-                # This folder (and it children) hasn't been modified locally,
+            # Convert placeholder children into proper synchronized children
+            for name, entry in self._children.items():
+                if ignore_placeholders and entry.is_placeholder:
+                    continue
+
+                else:
+                    if recursive:
+                        try:
+                            await entry.sync(recursive=True)
+                        except BackendConcurrencyError:
+                            # File already modified, must rename it to avoid losing data!
+                            print(bad("concurrency error sync %s" % self.path))
+
+                            original_name = entry.name
+                            diverged_entry = self._children.pop(original_name)
+                            diverged_entry._access = self._fs._placeholder_access_cls()
+                            self._children[original_name] = self._fs._not_loaded_entry_cls(
+                                entry._access, original_name, self)
+                            self._modified()
+
+                            duplicated_name = original_name
+                            while True:
+                                duplicated_name += ".conflict"
+                                if duplicated_name not in self._children:
+                                    self._children[duplicated_name] = diverged_entry
+                                    diverged_entry._name = duplicated_name
+                                    break
+
+                            await diverged_entry.minimal_sync_if_placeholder()
+                            # TODO: of course in case two cores are both trying to
+                            # create a `foo.conflict`, one of them will crash here...
+                    else:
+                        await entry.minimal_sync_if_placeholder()
+                # TODO: Synchronize with up-to-date data and flush to avoid
+                # having to re-synchronize placeholders
+
+            if not self._need_sync:
+                # This folder hasn't been modified locally,
                 # just download last version from the backend if any.
                 manifest = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
                 if manifest and manifest["version"] != self.base_version:
@@ -468,8 +531,6 @@ class BaseRootEntry(BaseFolderEntry):
                     }
                 return
 
-            # TODO: seems not useful...
-            # await self.flush_no_lock()
             # Make a snapshot of ourself to avoid concurrency
             # Serialize as local folder manifest
             manifest = {
@@ -481,25 +542,10 @@ class BaseRootEntry(BaseFolderEntry):
                 "version": self._base_version + 1,
                 "created": self._created,
                 "updated": self._updated,
-                "children": {},
+                "children": {k: v._access.dump(with_type=False) for k, v in self._children.items()},
             }
-            children = self._children.copy()
 
             # TODO: should release the lock here
-
-            # Convert placeholder children into proper synchronized children
-            for name, entry in children.items():
-                if ignore_placeholders and entry.is_placeholder:
-                    continue
-
-                else:
-                    if recursive:
-                        await entry.sync(recursive=True)
-                    else:
-                        await entry.minimal_sync_if_placeholder()
-                # TODO: Synchronize with up-to-date data and flush to avoid
-                # having to re-synchronize placeholders
-                manifest["children"][name] = entry._access.dump(with_type=False)
 
             # Upload the file manifest as new vlob version
             while True:

@@ -221,6 +221,9 @@ class BaseFileEntry(BaseEntry):
         # Don't actually synchronize the data to save to, otherwise
         # consider version 1 is the newly created pristine object
         async with self.acquire_write():
+            if not self.is_placeholder:
+                return
+
             manifest = {
                 "format": 1,
                 "type": "file_manifest",
@@ -239,6 +242,8 @@ class BaseFileEntry(BaseEntry):
             )
             self._base_version = 1
             self._access = self._fs._vlob_access_cls(id, rts, wts, key)
+            # If the file is empty, we actually synchronized it !
+            self._need_sync = self._size != 0
             self._need_flush = True
             await self.flush_no_lock()
 
@@ -263,7 +268,7 @@ class BaseFileEntry(BaseEntry):
                         self._fs._block_cls(self._fs._block_access_cls(**v))
                         for v in manifest["blocks"]
                     ]
-                    return
+                return
 
             # Make sure data are flushed on disk
             await self.flush_no_lock()
@@ -331,32 +336,8 @@ class BaseFileEntry(BaseEntry):
             )
             print(que("sync %s %s" % (self.path, manifest)))
         except BackendConcurrencyError:
-            # File already modified, must rename ourself in the parent directory
-            # to avoid losing data !
             print(bad("concurrency error sync %s" % self.path))
-            original_access = self._access
-            original_name = self._name
-
-            async with self.acquire_write(), self.parent.acquire_write():
-
-                self._access = self._fs._placeholder_access_cls()
-                entry = self._parent._children.pop(self._name)
-                while True:
-                    self._name += ".conflict"
-                    if self._name not in self._parent._children:
-                        self._parent._children[self._name] = entry
-                        break
-
-                self._parent._children[original_name] = self._fs._not_loaded_entry_cls(
-                    original_access
-                )
-                # Merge&flush
-                self._blocks = normalized_blocks
-                self._dirty_blocks = self._dirty_blocks[dirty_blocks_count:]
-                self._base_version = manifest["version"]
-                self._need_flush = True
-                await self.flush_no_lock()
-                return
+            raise
 
         async with self.acquire_write():
             # Merge our synced data with up-to-date dirty_blocks and patches
