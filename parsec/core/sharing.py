@@ -139,7 +139,9 @@ class Sharing(BaseAsyncComponent):
 
         rep, errors = backend_message_get_rep_schema.load(rep)
         if errors:
-            raise BackendMessageError("Cannot retreive user messages: %r" % rep)
+            raise BackendMessageError(
+                "Cannot retreive user messages: %r (errors: %r)" % (rep, errors)
+            )
 
         for msg in rep["messages"]:
             try:
