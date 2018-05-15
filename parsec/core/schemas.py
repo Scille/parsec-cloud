@@ -108,6 +108,7 @@ class LocalFolderManifestSchema(UnknownCheckedSchema):
 
 class LocalUserManifestSchema(LocalFolderManifestSchema):
     type = fields.CheckedConstant("local_user_manifest", required=True)
+    last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
 
 
 class TypedManifestSchema(OneOfSchema):

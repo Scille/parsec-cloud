@@ -139,8 +139,10 @@ class FS:
             }
             if manifest["type"] == "folder_manifest":
                 entry_cls = self._folder_entry_cls
+                extra_kwargs = {}
             else:
                 entry_cls = self._root_entry_cls
+                extra_kwargs = {"last_processed_message": manifest["last_processed_message"]}
             return entry_cls(
                 access=access,
                 user_id=user_id,
@@ -153,6 +155,7 @@ class FS:
                 updated=manifest["updated"],
                 base_version=manifest["version"],
                 children_accesses=children_accesses,
+                **extra_kwargs
             )
 
         elif manifest["type"] in ("local_folder_manifest", "local_user_manifest"):
@@ -168,8 +171,10 @@ class FS:
 
             if manifest["type"] == "local_folder_manifest":
                 entry_cls = self._folder_entry_cls
+                extra_kwargs = {}
             else:
                 entry_cls = self._root_entry_cls
+                extra_kwargs = {"last_processed_message": manifest["last_processed_message"]}
             return entry_cls(
                 access=access,
                 user_id=user_id,
@@ -182,6 +187,7 @@ class FS:
                 updated=manifest["updated"],
                 base_version=manifest["base_version"],
                 children_accesses=children_accesses,
+                **extra_kwargs
             )
 
         else:

@@ -4,6 +4,7 @@ import blinker
 import logbook
 
 from parsec.networking import serve_client
+from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.base import BaseAsyncComponent, NotInitializedError
 from parsec.core.sharing import Sharing
 from parsec.core.fs import FS
@@ -141,6 +142,12 @@ class Core(BaseAsyncComponent):
                 # Don't unset components and auth_* stuff after teardown to
                 # easier post-mortem debugging
                 raise
+
+            try:
+                await self.fs.root.sync()
+                await self.sharing._process_all_last_messages()
+            except BackendNotAvailable:
+                pass
 
     async def logout(self):
         async with self.auth_lock:

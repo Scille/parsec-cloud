@@ -132,6 +132,7 @@ class Sharing(BaseAsyncComponent):
             self._signal_ns.signal("ping").send(sharing_msg["ping"])
 
         self.fs.root._last_processed_message = msg["count"]
+        self.fs.root._modified()
 
     async def _process_all_last_messages(self):
         rep = await self._backend_connection.send(
