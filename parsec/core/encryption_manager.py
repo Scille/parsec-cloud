@@ -26,7 +26,9 @@ class BackendUserGetRepSchema(UnknownCheckedSchema):
     created_on = fields.DateTime(required=True)
     created_by = fields.String(required=True)
     broadcast_key = fields.Base64Bytes(required=True)
-    devices = fields.Map(fields.String(), fields.Nested(BackendUserGetRepDevicesSchema), required=True)
+    devices = fields.Map(
+        fields.String(), fields.Nested(BackendUserGetRepDevicesSchema), required=True
+    )
 
 
 backend_user_get_rep_schema = BackendUserGetRepSchema()
@@ -211,8 +213,10 @@ class EncryptionManager(BaseAsyncComponent):
             # In the meantime, this is a hack to keep offline tests working
             if user_id == self.device.user_id:
                 return RemoteUser(
-                    self.device.user_id, self.device.user_pubkey.encode(),
-                    {self.device.device_name: self.device.device_verifykey.encode()})
+                    self.device.user_id,
+                    self.device.user_pubkey.encode(),
+                    {self.device.device_name: self.device.device_verifykey.encode()},
+                )
         rep, errors = backend_user_get_rep_schema.load(raw_rep)
         if errors:
             if raw_rep.get("status") == "not_found":
