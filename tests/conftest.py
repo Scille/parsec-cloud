@@ -269,10 +269,10 @@ async def alice_core_sock(core, alice):
 
 
 @pytest.fixture
-async def alice_core2_sock(core2, alice):
+async def alice2_core2_sock(core2, alice2):
     assert not core2.auth_device, "Core already logged"
     async with connect_core(core2) as sock:
-        await core2.login(alice)
+        await core2.login(alice2)
         yield sock
 
 
