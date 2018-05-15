@@ -11,9 +11,6 @@ class LocalStorage(BaseAsyncComponent):
         self.conn = None
 
     async def _init(self, nursery):
-        self._init_conn()
-
-    def _init_conn(self):
         self.conn = sqlite3.connect(self.path)
         cur = self.conn.cursor()
         cur.execute(

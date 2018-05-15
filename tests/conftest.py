@@ -289,44 +289,25 @@ def mocked_local_storage_connection():
     # Persistent local storage is achieve by using sqlite storing in FS.
     # However it is a lot faster to store in memory and just pass around the
     # sqlite connection object.
-    # Given each core should have it own device, no inter-core concurrency
-    # should occurs.
+    import sqlite3
 
-    class MockedLocalStorageConnection:
-        _conn = None
+    class InMemoryDatabaseManager:
+
+        def __init__(self, vanilla_connect):
+            self.vanilla_connect = vanilla_connect
+            self.databases = {}
 
         def reset(self):
-            if self._conn:
-                self._conn.close()
-            ls = LocalStorage(":memory:")
-            ls._init_conn()
-            self._conn = ls.conn
+            self.databases = {}
 
-        @property
-        def conn(self):
-            if not self._conn:
-                self.reset()
-            return self._conn
+        def connect(self, database, *args, **kwargs):
+            if database not in self.databases:
+                self.databases[database] = self.vanilla_connect(":memory:")
+            return self.databases[database]
 
-    mock = MockedLocalStorageConnection()
-
-    async def mock_init(self, nursery):
-        self.conn = mock.conn
-
-    async def mock_teardown(self):
-        self.conn = None
-
-    vanilla_init = LocalStorage.init
-    vanilla_teardown = LocalStorage.teardown
-    LocalStorage._init = mock_init
-    LocalStorage._teardown = mock_teardown
-
-    try:
-        yield mock
-
-    finally:
-        LocalStorage._init = vanilla_init
-        LocalStorage._teardown = vanilla_teardown
+    manager = InMemoryDatabaseManager(sqlite3.connect)
+    with patch("sqlite3.connect", new=manager.connect):
+        yield manager
 
 
 @pytest.fixture
