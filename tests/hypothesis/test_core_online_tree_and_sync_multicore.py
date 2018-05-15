@@ -1,7 +1,7 @@
 import os
 import pytest
 from hypothesis import strategies as st, note
-from hypothesis.stateful import Bundle
+from hypothesis.stateful import Bundle, invariant
 
 from parsec.utils import to_jsonb64
 
@@ -111,42 +111,44 @@ async def test_online_core_tree_and_sync_multicore(
             path = os.path.join(parent, name)
             rep = self.core_cmd(core, {"cmd": "file_create", "path": path})
             note(rep)
-            assert rep['status'] in ('ok', 'invalid_path')
+            assert rep["status"] in ("ok", "invalid_path")
             return path
 
         @rule(core=st_core, path=Files)
         def update_file(self, core, path):
-            b64content = to_jsonb64(b'a')
-            rep = self.core_cmd(core, {"cmd": "file_write", "path": path, 'offset': 0, 'content': b64content})
+            b64content = to_jsonb64(b"a")
+            rep = self.core_cmd(
+                core, {"cmd": "file_write", "path": path, "offset": 0, "content": b64content}
+            )
             note(rep)
-            assert rep['status'] in ('ok', 'invalid_path')
+            assert rep["status"] in ("ok", "invalid_path")
 
         @rule(target=Folders, core=st_core, parent=Folders, name=st_entry_name)
         def create_folder(self, core, parent, name):
             path = os.path.join(parent, name)
             rep = self.core_cmd(core, {"cmd": "folder_create", "path": path})
             note(rep)
-            assert rep['status'] in ('ok', 'invalid_path')
+            assert rep["status"] in ("ok", "invalid_path")
             return path
 
         @rule(path=Files, core=st_core)
         def delete_file(self, core, path):
             rep = self.core_cmd(core, {"cmd": "delete", "path": path})
             note(rep)
-            assert rep['status'] in ('ok', 'invalid_path')
+            assert rep["status"] in ("ok", "invalid_path")
 
         @rule(path=Folders, core=st_core)
         def delete_folder(self, core, path):
             rep = self.core_cmd(core, {"cmd": "delete", "path": path})
             note(rep)
-            assert rep['status'] in ('ok', 'invalid_path')
+            assert rep["status"] in ("ok", "invalid_path")
 
         @rule(target=Files, core=st_core, src=Files, dst_parent=Folders, dst_name=st_entry_name)
         def move_file(self, core, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd(core, {"cmd": "move", "src": src, "dst": dst})
             note(rep)
-            assert rep['status'] in ('ok', 'invalid_path')
+            assert rep["status"] in ("ok", "invalid_path")
             return dst
 
         @rule(target=Folders, core=st_core, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
@@ -154,17 +156,20 @@ async def test_online_core_tree_and_sync_multicore(
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd(core, {"cmd": "move", "src": src, "dst": dst})
             note(rep)
-            assert rep['status'] in ('ok', 'invalid_path')
+            assert rep["status"] in ("ok", "invalid_path")
             return dst
 
         @rule()
         def sync_all_the_files(self):
-            print('~~~ SYNC 1 ~~~')
+            print("~~~ SYNC 1 ~~~")
             rep1 = self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})
-            print('~~~ SYNC 2 ~~~')
+            assert rep1["status"] == "ok"
+            print("~~~ SYNC 2 ~~~")
             rep2 = self.core_cmd("core_2", {"cmd": "synchronize", "path": "/"})
-            print('~~~ SYNC 1 ~~~')
+            assert rep2["status"] == "ok"
+            print("~~~ SYNC 1 ~~~")
             rep3 = self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})
+            assert rep3["status"] == "ok"
             note((rep1, rep2, rep3))
 
             note("core_1 fs %r" % self.core_1.fs.root._children)
@@ -173,8 +178,6 @@ async def test_online_core_tree_and_sync_multicore(
             synced_tree_2 = self.sys_cmd("core_2", "get_tree_from_core")
             note((synced_tree_1, synced_tree_2))
 
-            assert rep1["status"] == "ok"
-            assert rep2["status"] == "ok"
             assert not self.core_1.fs.root.need_sync
             assert not self.core_2.fs.root.need_sync
             assert self.core_1.fs.root.base_version == self.core_2.fs.root.base_version

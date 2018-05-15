@@ -27,8 +27,9 @@ def rule(**config):
 
 
 def rule_once(*args, **kwargs):
+
     def accept(f):
-        key = '__%s_hypothesis_initialized' % f.__name__
+        key = "__%s_hypothesis_initialized" % f.__name__
 
         def bootstrap(obj):
             if not getattr(obj, key, False):
@@ -37,11 +38,8 @@ def rule_once(*args, **kwargs):
             else:
                 return False
 
-        return precondition(bootstrap)(
-            rule(*args, **kwargs)(
-                f
-            )
-        )
+        return precondition(bootstrap)(rule(*args, **kwargs)(f))
+
     return accept
 
 
