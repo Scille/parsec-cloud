@@ -7,7 +7,8 @@ from parsec.core.fs.folder import BaseFolderEntry, BaseRootEntry
 
 class FS:
 
-    def __init__(self, manifests_manager, blocks_manager):
+    def __init__(self, device, manifests_manager, blocks_manager):
+        self.device = device
         self.manifests_manager = manifests_manager
         self.blocks_manager = blocks_manager
         self._entry_cls_factory()
@@ -58,14 +59,17 @@ class FS:
 
     async def init(self, nursery):
         access = self._user_vlob_access_cls(None)  # TODO...
+        # TODO: try to fetch from backend before fallback to local storage
+        # or empty v0 if it failed
+
         # Note we don't try to get the user manifest from the backend here
         # The reason is we already know version 0 of the manifest (i.e. empty
         # user manifest), so we fallback to it if there is nothing better in
         # the local storage. This way init can be done no matter if the
         # backend is not available.
         user_manifest = await self.manifests_manager.fetch_user_manifest_from_local()
-        user_id = self.manifests_manager.device.user_id
-        device_name = self.manifests_manager.device.device_name
+        user_id = self.device.user_id
+        device_name = self.device.device_name
         if not user_manifest:
             self.root = self._root_entry_cls(
                 access, user_id, device_name, name="", need_flush=False, need_sync=False
