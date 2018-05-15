@@ -205,13 +205,19 @@ class BaseFolderEntry(BaseEntry):
                             await entry.sync(recursive=True)
                         except BackendConcurrencyError:
                             # File already modified, must rename it to avoid losing data!
-                            print(bad("concurrency error sync %s" % self.path))
+                            print(
+                                bad(
+                                    "concurrency error in %s recursive sync: %s"
+                                    % (self.path, entry.path)
+                                )
+                            )
 
                             original_name = entry.name
+                            original_access = entry._access
                             diverged_entry = self._children.pop(original_name)
                             diverged_entry._access = self._fs._placeholder_access_cls()
                             self._children[original_name] = self._fs._not_loaded_entry_cls(
-                                entry._access, original_name, self
+                                original_access, original_name, self
                             )
                             self._modified()
 
@@ -223,7 +229,7 @@ class BaseFolderEntry(BaseEntry):
                                     diverged_entry._name = duplicated_name
                                     break
 
-                            await diverged_entry.minimal_sync_if_placeholder()
+                            await diverged_entry.sync()
                             # TODO: of course in case two cores are both trying to
                             # create a `foo.conflict`, one of them will crash here...
                     else:
@@ -477,8 +483,10 @@ class BaseRootEntry(BaseFolderEntry):
     async def sync(self, recursive=False, ignore_placeholders=False):
         async with self.acquire_write():
 
+            # Copy children given it will change size during iteration in case of concurrency
+            children = self._children.copy()
             # Convert placeholder children into proper synchronized children
-            for name, entry in self._children.items():
+            for name, entry in children.items():
                 if ignore_placeholders and entry.is_placeholder:
                     continue
 
@@ -488,13 +496,14 @@ class BaseRootEntry(BaseFolderEntry):
                             await entry.sync(recursive=True)
                         except BackendConcurrencyError:
                             # File already modified, must rename it to avoid losing data!
-                            print(bad("concurrency error sync %s" % self.path))
+                            print(bad("concurrency error in root recursive sync: %s" % entry.path))
 
                             original_name = entry.name
+                            original_access = entry._access
                             diverged_entry = self._children.pop(original_name)
                             diverged_entry._access = self._fs._placeholder_access_cls()
                             self._children[original_name] = self._fs._not_loaded_entry_cls(
-                                entry._access, original_name, self
+                                original_access, original_name, self
                             )
                             self._modified()
 
@@ -506,7 +515,7 @@ class BaseRootEntry(BaseFolderEntry):
                                     diverged_entry._name = duplicated_name
                                     break
 
-                            await diverged_entry.minimal_sync_if_placeholder()
+                            await diverged_entry.sync()
                             # TODO: of course in case two cores are both trying to
                             # create a `foo.conflict`, one of them will crash here...
                     else:
