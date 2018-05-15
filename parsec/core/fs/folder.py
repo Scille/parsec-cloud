@@ -211,7 +211,8 @@ class BaseFolderEntry(BaseEntry):
                             diverged_entry = self._children.pop(original_name)
                             diverged_entry._access = self._fs._placeholder_access_cls()
                             self._children[original_name] = self._fs._not_loaded_entry_cls(
-                                entry._access, original_name, self)
+                                entry._access, original_name, self
+                            )
                             self._modified()
 
                             duplicated_name = original_name
@@ -360,7 +361,7 @@ class BaseFolderEntry(BaseEntry):
         # Disconnect entry to be able to re-insert it somewhere else
         entry._parent = None
         # TODO: shitty fix...
-        if hasattr(entry, '_loaded'):
+        if hasattr(entry, "_loaded"):
             # `entry._loaded.name` is no longer valid
             entry._loaded = None
         return entry
@@ -493,7 +494,8 @@ class BaseRootEntry(BaseFolderEntry):
                             diverged_entry = self._children.pop(original_name)
                             diverged_entry._access = self._fs._placeholder_access_cls()
                             self._children[original_name] = self._fs._not_loaded_entry_cls(
-                                entry._access, original_name, self)
+                                entry._access, original_name, self
+                            )
                             self._modified()
 
                             duplicated_name = original_name
