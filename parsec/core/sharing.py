@@ -73,6 +73,15 @@ class Sharing(BaseAsyncComponent):
             "message_arrived", self.device.user_id
         )
         self._signal_ns.signal("message_arrived").connect(self._msg_arrived_cb, weak=True)
+        try:
+            user_manifest = await self.fs.manifests_manager.fetch_user_manifest_from_backend()
+        except BackendNotAvailable:
+            pass
+        else:
+            if user_manifest:
+                await self._process_all_last_messages(user_manifest["last_processed_message"])
+            else:
+                await self._process_all_last_messages(0)
 
     async def _teardown(self):
         if self._message_listener_task_cancel_scope:
@@ -131,13 +140,12 @@ class Sharing(BaseAsyncComponent):
         elif sharing_msg["type"] == "ping":
             self._signal_ns.signal("ping").send(sharing_msg["ping"])
 
-        self.fs.root._last_processed_message = msg["count"]
-        self.fs.root._modified()
+        await self.fs.update_last_processed_message(msg["count"])
 
-    async def _process_all_last_messages(self):
-        rep = await self._backend_connection.send(
-            {"cmd": "message_get", "offset": self.fs.root._last_processed_message}
-        )
+    async def _process_all_last_messages(self, offset=None):
+        if not offset:
+            offset = self.fs.root._last_processed_message
+        rep = await self._backend_connection.send({"cmd": "message_get", "offset": offset})
 
         rep, errors = backend_message_get_rep_schema.load(rep)
         if errors:
@@ -166,7 +174,6 @@ class Sharing(BaseAsyncComponent):
         entry = await self.fs.fetch_path(path)
         # Cannot share a placeholder !
         if entry.is_placeholder:
-            # TODO: use minimal_sync_if_placeholder ?
             await entry.sync()
         sharing_msg = {
             "type": "share",
@@ -179,6 +186,7 @@ class Sharing(BaseAsyncComponent):
         if rep["status"] != "ok":
             raise NotFoundError("No user with id `%s`." % recipient)
 
+        # TODO Build the broadcast_key with the encryption manager
         broadcast_key = PublicKey(from_jsonb64(rep["broadcast_key"]))
         box = SealedBox(broadcast_key)
         sharing_msg_clear = ejson_dumps(sharing_msg).encode("utf8")

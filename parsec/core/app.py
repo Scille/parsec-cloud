@@ -108,7 +108,7 @@ class Core(BaseAsyncComponent):
                 device, self.local_storage, self.backend_storage, self.backend_connection
             )
             self.blocks_manager = BlocksManager(self.local_storage, self.backend_storage)
-            self.fs = FS(self.manifests_manager, self.blocks_manager)
+            self.fs = FS(device, self.manifests_manager, self.blocks_manager)
             self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
             self.synchronizer = Synchronizer(self.config.auto_sync, self.fs)
             self.sharing = Sharing(
@@ -142,12 +142,6 @@ class Core(BaseAsyncComponent):
                 # Don't unset components and auth_* stuff after teardown to
                 # easier post-mortem debugging
                 raise
-
-            try:
-                await self.fs.root.sync()
-                await self.sharing._process_all_last_messages()
-            except BackendNotAvailable:
-                pass
 
     async def logout(self):
         async with self.auth_lock:

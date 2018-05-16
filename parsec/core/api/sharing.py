@@ -19,9 +19,9 @@ async def share(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     try:
         await core.sharing.share(req["path"], req["recipient"])
     except NotFoundError as exc:
-        return {"status": "not_found", "reason": exc.kwargs["reason"]}
+        return {"status": "not_found", "reason": str(exc)}
     except BackendNotAvailable as exc:
         return {"status": "backend_not_available", "reason": "Backend not available"}
     except SharingError as exc:
-        return {"status": "sharing_error", "reason": exc.kwargs["reason"]}
+        return {"status": "sharing_error", "reason": str(exc)}
     return {"status": "ok"}

@@ -7,7 +7,8 @@ from parsec.core.fs.folder import BaseFolderEntry, BaseRootEntry
 
 class FS:
 
-    def __init__(self, manifests_manager, blocks_manager):
+    def __init__(self, device, manifests_manager, blocks_manager):
+        self.device = device
         self.manifests_manager = manifests_manager
         self.blocks_manager = blocks_manager
         self._entry_cls_factory()
@@ -93,6 +94,11 @@ class FS:
 
             entry = await entry.fetch_child(hop)
         return entry
+
+    async def update_last_processed_message(self, offset):
+        async with self.root.acquire_write():
+            self.root._last_processed_message = offset
+            self.root._modified()
 
     def _load_entry(self, access, user_id, device_name, name, parent, manifest):
         if manifest["type"] == "file_manifest":
