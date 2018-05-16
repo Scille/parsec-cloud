@@ -9,7 +9,6 @@ from nacl.secret import SecretBox
 import nacl.utils
 
 from parsec.schema import UnknownCheckedSchema, fields, validate
-from parsec.core import config
 
 
 logger = logging.getLogger("parsec")
@@ -110,10 +109,6 @@ class DevicesManager:
             device_ids = os.listdir(self.devices_conf_path)
         except FileNotFoundError:
             return devices
-
-        log_path = config.get_log_path()
-        if log_path in device_ids:
-            device_ids.remove(log_path)
 
         for device_id in device_ids:
             _, errors = self._load_device_conf(device_id)

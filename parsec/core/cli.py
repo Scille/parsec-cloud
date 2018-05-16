@@ -8,11 +8,10 @@ import tempfile
 import logbook
 from urllib.parse import urlparse
 
-from parsec.core import Core, CoreConfig, Device, config
+from parsec.core import Core, CoreConfig, Device
 
 
 logger = logbook.Logger("parsec.core.app")
-logger.handlers.append(logbook.FileHandler(config.get_log_path(), level="WARNING"))
 
 
 JOHN_DOE_DEVICE_ID = "johndoe@test"
@@ -76,13 +75,17 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option(
     "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
 )
+@click.option("--log-file", "-o")
 @click.option("--pdb", is_flag=True)
 # @click.option('--identity', '-i', default=None)
 # @click.option('--identity-key', '-I', type=click.File('rb'), default=None)
 @click.option("--I-am-John", is_flag=True, help="Log as dummy John Doe user")
 # @click.option('--cache-size', help='Max number of elements in cache', default=1000)
-def core_cmd(log_level, pdb, **kwargs):
-    log_handler = logbook.StderrHandler(level=log_level.upper())
+def core_cmd(log_level, log_file, pdb, **kwargs):
+    if log_file:
+        log_handler = logbook.FileHandler(log_file, level=log_level.upper())
+    else:
+        log_handler = logbook.StderrHandler(level=log_level.upper())
     # Push globally the log handler make it work across threads
     log_handler.push_application()
 

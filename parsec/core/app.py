@@ -1,3 +1,4 @@
+import os
 import trio
 import attr
 import blinker
@@ -35,7 +36,7 @@ class Core(BaseAsyncComponent):
         super().__init__()
         self.nursery = None
         self.signal_ns = blinker.Namespace()
-        self.devices_manager = DevicesManager(config.base_settings_path)
+        self.devices_manager = DevicesManager(os.path.join(config.base_settings_path, "devices"))
 
         self.config = config
         self.backend_addr = config.backend_addr

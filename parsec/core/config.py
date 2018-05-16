@@ -14,14 +14,6 @@ def get_settings_path():
     return os.path.expandvars("%APPDATA%\parsec" if os.name == "nt" else "$HOME/.config/parsec")
 
 
-def get_log_path():
-    return os.path.expandvars(
-        "%APPDATA%\parsec\parsec-core.log"
-        if os.name == "nt"
-        else "$HOME/.config/parsec/parsec-core.log"
-    )
-
-
 @attr.s(slots=True, frozen=True)
 class CoreConfig:
     debug = attr.ib(default=config("DEBUG", cast=bool, default=False))
