@@ -568,3 +568,8 @@ class BaseRootEntry(BaseFolderEntry):
 
     async def minimal_sync_if_placeholder(self):
         raise RuntimeError("Don't do that on root !")
+
+    async def update_last_processed_message(self, offset):
+        async with self.root.acquire_write():
+            self.root._last_processed_message = offset
+            self.root._modified()
