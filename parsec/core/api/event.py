@@ -107,7 +107,7 @@ async def event_listen(req: dict, client_ctx: ClientContext, core: Core) -> dict
                 {"cmd": "device_get_configuration_try", "configuration_try_id": subject}
             )
         except BackendNotAvailable:
-            return {"status": "backend_not_availabled", "reason": "Backend not available"}
+            return {"status": "backend_not_available", "reason": "Backend not available"}
 
         _, errors = backend_get_configuration_try_schema.load(rep)
         if errors:

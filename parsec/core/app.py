@@ -4,6 +4,7 @@ import blinker
 import logbook
 
 from parsec.networking import serve_client
+from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.base import BaseAsyncComponent, NotInitializedError
 from parsec.core.sharing import Sharing
 from parsec.core.fs import FS
@@ -107,7 +108,7 @@ class Core(BaseAsyncComponent):
                 device, self.local_storage, self.backend_storage, self.backend_connection
             )
             self.blocks_manager = BlocksManager(self.local_storage, self.backend_storage)
-            self.fs = FS(self.manifests_manager, self.blocks_manager)
+            self.fs = FS(device, self.manifests_manager, self.blocks_manager)
             self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
             self.synchronizer = Synchronizer(self.config.auto_sync, self.fs)
             self.sharing = Sharing(

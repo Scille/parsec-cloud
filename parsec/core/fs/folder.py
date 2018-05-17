@@ -137,8 +137,8 @@ class BaseFolderEntry(BaseEntry):
         manifest = {
             "format": 1,
             "type": "local_folder_manifest",
-            "user_id": self._user_id,
-            "device_name": self._device_name,
+            "user_id": self._fs.device.user_id,
+            "device_name": self._fs.device.device_name,
             "need_sync": self._need_sync,
             "base_version": self._base_version,
             "created": self._created,
@@ -168,8 +168,8 @@ class BaseFolderEntry(BaseEntry):
             manifest = {
                 "format": 1,
                 "type": "folder_manifest",
-                "user_id": self._user_id,
-                "device_name": self._device_name,
+                "user_id": self._fs.device.user_id,
+                "device_name": self._fs.device.device_name,
                 "version": 1,
                 "created": self._created,
                 "updated": self._created,
@@ -219,8 +219,8 @@ class BaseFolderEntry(BaseEntry):
             manifest = {
                 "format": 1,
                 "type": "folder_manifest",
-                "user_id": self._user_id,
-                "device_name": self._device_name,
+                "user_id": self._fs.device.user_id,
+                "device_name": self._fs.device.device_name,
                 "version": self._base_version + 1,
                 "created": self._created,
                 "updated": self._updated,
@@ -377,8 +377,8 @@ class BaseFolderEntry(BaseEntry):
 
         entry = self._fs._folder_entry_cls(
             access=self._fs._placeholder_access_cls(),
-            user_id=self._fs.manifests_manager.device.user_id,
-            device_name=self._fs.manifests_manager.device.device_name,
+            user_id=self._fs.device.user_id,
+            device_name=self._fs.device.device_name,
             name=name,
             parent=self,
             need_sync=True,
@@ -398,8 +398,8 @@ class BaseFolderEntry(BaseEntry):
 
         entry = self._fs._file_entry_cls(
             access=self._fs._placeholder_access_cls(),
-            user_id=self._fs.manifests_manager.device.user_id,
-            device_name=self._fs.manifests_manager.device.device_name,
+            user_id=self._fs.device.user_id,
+            device_name=self._fs.device.device_name,
             name=name,
             parent=self,
             need_sync=True,
@@ -432,8 +432,8 @@ class BaseRootEntry(BaseFolderEntry):
         manifest = {
             "format": 1,
             "type": "local_user_manifest",
-            "user_id": self._user_id,
-            "device_name": self._device_name,
+            "user_id": self._fs.device.user_id,
+            "device_name": self._fs.device.device_name,
             "last_processed_message": self._last_processed_message,
             "need_sync": self._need_sync,
             "base_version": self._base_version,
@@ -475,8 +475,8 @@ class BaseRootEntry(BaseFolderEntry):
             manifest = {
                 "format": 1,
                 "type": "user_manifest",
-                "user_id": self._user_id,
-                "device_name": self._device_name,
+                "user_id": self._fs.device.user_id,
+                "device_name": self._fs.device.device_name,
                 "last_processed_message": self._last_processed_message,
                 "version": self._base_version + 1,
                 "created": self._created,
@@ -568,3 +568,8 @@ class BaseRootEntry(BaseFolderEntry):
 
     async def minimal_sync_if_placeholder(self):
         raise RuntimeError("Don't do that on root !")
+
+    async def update_last_processed_message(self, offset):
+        async with self.acquire_write():
+            self._last_processed_message = offset
+            self._modified()

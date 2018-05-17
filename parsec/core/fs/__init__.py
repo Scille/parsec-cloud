@@ -7,7 +7,8 @@ from parsec.core.fs.folder import BaseFolderEntry, BaseRootEntry
 
 class FS:
 
-    def __init__(self, manifests_manager, blocks_manager):
+    def __init__(self, device, manifests_manager, blocks_manager):
+        self.device = device
         self.manifests_manager = manifests_manager
         self.blocks_manager = blocks_manager
         self._entry_cls_factory()
@@ -94,6 +95,9 @@ class FS:
             entry = await entry.fetch_child(hop)
         return entry
 
+    async def update_last_processed_message(self, offset):
+        await self.root.update_last_processed_message(offset)
+
     def _load_entry(self, access, user_id, device_name, name, parent, manifest):
         if manifest["type"] == "file_manifest":
             blocks_accesses = [self._block_access_cls(**v) for v in manifest["blocks"]]
@@ -139,8 +143,10 @@ class FS:
             }
             if manifest["type"] == "folder_manifest":
                 entry_cls = self._folder_entry_cls
+                extra_kwargs = {}
             else:
                 entry_cls = self._root_entry_cls
+                extra_kwargs = {"last_processed_message": manifest["last_processed_message"]}
             return entry_cls(
                 access=access,
                 user_id=user_id,
@@ -153,6 +159,7 @@ class FS:
                 updated=manifest["updated"],
                 base_version=manifest["version"],
                 children_accesses=children_accesses,
+                **extra_kwargs
             )
 
         elif manifest["type"] in ("local_folder_manifest", "local_user_manifest"):
@@ -168,8 +175,10 @@ class FS:
 
             if manifest["type"] == "local_folder_manifest":
                 entry_cls = self._folder_entry_cls
+                extra_kwargs = {}
             else:
                 entry_cls = self._root_entry_cls
+                extra_kwargs = {"last_processed_message": manifest["last_processed_message"]}
             return entry_cls(
                 access=access,
                 user_id=user_id,
@@ -182,6 +191,7 @@ class FS:
                 updated=manifest["updated"],
                 base_version=manifest["base_version"],
                 children_accesses=children_accesses,
+                **extra_kwargs
             )
 
         else:

@@ -52,7 +52,7 @@ async def user_invite(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     try:
         rep = await core.backend_connection.send({"cmd": "user_invite", "user_id": msg["user_id"]})
     except BackendNotAvailable:
-        return {"status": "backend_not_availabled", "reason": "Backend not available"}
+        return {"status": "backend_not_available", "reason": "Backend not available"}
 
     return rep
 
@@ -78,7 +78,7 @@ async def user_claim(req: dict, client_ctx: ClientContext, core: Core) -> dict:
             },
         )
     except BackendNotAvailable:
-        return {"status": "backend_not_availabled", "reason": "Backend not available"}
+        return {"status": "backend_not_available", "reason": "Backend not available"}
     try:
         core.devices_manager.register_new_device(
             msg["id"], user_privkey.encode(), device_signkey.encode(), msg["password"]
@@ -92,7 +92,7 @@ async def _backend_passthrough(core: Core, req: dict) -> dict:
     try:
         rep = await core.backend_connection.send(req)
     except BackendNotAvailable:
-        return {"status": "backend_not_availabled", "reason": "Backend not available"}
+        return {"status": "backend_not_available", "reason": "Backend not available"}
 
     return rep
 
@@ -126,7 +126,7 @@ async def device_configure(req: dict, client_ctx: ClientContext, core: Core) -> 
             },
         )
     except BackendNotAvailable:
-        return {"status": "backend_not_availabled", "reason": "Backend not available"}
+        return {"status": "backend_not_available", "reason": "Backend not available"}
 
     if rep["status"] != "ok":
         return rep
@@ -164,7 +164,7 @@ async def device_accept_configuration_try(req: dict, client_ctx: ClientContext, 
             }
         )
     except BackendNotAvailable:
-        return {"status": "backend_not_availabled", "reason": "Backend not available"}
+        return {"status": "backend_not_available", "reason": "Backend not available"}
 
     data, errors = backend_get_configuration_try_schema.load(rep)
     if errors:
@@ -186,7 +186,7 @@ async def device_accept_configuration_try(req: dict, client_ctx: ClientContext, 
             }
         )
     except BackendNotAvailable:
-        return {"status": "backend_not_availabled", "reason": "Backend not available"}
+        return {"status": "backend_not_available", "reason": "Backend not available"}
 
     if rep != "ok":
         return rep

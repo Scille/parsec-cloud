@@ -107,8 +107,8 @@ class BaseFileEntry(BaseEntry):
         manifest = {
             "format": 1,
             "type": "local_file_manifest",
-            "user_id": self._user_id,
-            "device_name": self._device_name,
+            "user_id": self._fs.device.user_id,
+            "device_name": self._fs.device.device_name,
             "need_sync": self._need_sync,
             "base_version": self._base_version,
             "created": self._created,
@@ -224,8 +224,8 @@ class BaseFileEntry(BaseEntry):
             manifest = {
                 "format": 1,
                 "type": "file_manifest",
-                "user_id": self._user_id,
-                "device_name": self._device_name,
+                "user_id": self._fs.device.user_id,
+                "device_name": self._fs.device.device_name,
                 "version": 1,
                 "created": self._created,
                 "updated": self._created,
@@ -271,8 +271,8 @@ class BaseFileEntry(BaseEntry):
             manifest = {
                 "format": 1,
                 "type": "file_manifest",
-                "user_id": self._user_id,
-                "device_name": self._device_name,
+                "user_id": self._fs.device.user_id,
+                "device_name": self._fs.device.device_name,
                 "version": self._base_version + 1,
                 "created": self._created,
                 "updated": self._updated,
