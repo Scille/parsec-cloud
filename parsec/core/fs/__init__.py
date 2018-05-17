@@ -96,7 +96,7 @@ class FS:
         return entry
 
     async def update_last_processed_message(self, offset):
-        self.root.update_last_processed_message(offset)
+        await self.root.update_last_processed_message(offset)
 
     def _load_entry(self, access, user_id, device_name, name, parent, manifest):
         if manifest["type"] == "file_manifest":

@@ -570,6 +570,6 @@ class BaseRootEntry(BaseFolderEntry):
         raise RuntimeError("Don't do that on root !")
 
     async def update_last_processed_message(self, offset):
-        async with self.root.acquire_write():
-            self.root._last_processed_message = offset
-            self.root._modified()
+        async with self.acquire_write():
+            self._last_processed_message = offset
+            self._modified()
