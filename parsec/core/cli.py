@@ -106,7 +106,7 @@ def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
                     print("Logged as %s" % user.id)
 
                 if socket.startswith("unix://"):
-                    await trio.serve_unix(core.handle_client, socket[len("unix://"):])
+                    await trio.serve_unix(core.handle_client, socket[len("unix://") :])
                 elif socket.startswith("tcp://"):
                     parsed = urlparse(socket)
                     await trio.serve_tcp(core.handle_client, parsed.port, host=parsed.hostname)

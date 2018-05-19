@@ -35,6 +35,7 @@ def rule_once(*args, **kwargs):
             if not getattr(obj, key, False):
                 setattr(obj, key, True)
                 return True
+
             else:
                 return False
 

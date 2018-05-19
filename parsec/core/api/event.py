@@ -115,6 +115,7 @@ async def event_listen(req: dict, client_ctx: ClientContext, core: Core) -> dict
                 "status": "backend_error",
                 "reason": "Bad response from backend: %r (%r)" % (rep, errors),
             }
+
         return {
             "status": "ok",
             "event": event,

@@ -13,10 +13,10 @@ class FileOracle:
         self._buffer = bytearray()
 
     def read(self, size, offset):
-        return self._buffer[offset:size + offset]
+        return self._buffer[offset : size + offset]
 
     def write(self, offset, content):
-        self._buffer[offset:len(content) + offset] = content
+        self._buffer[offset : len(content) + offset] = content
 
 
 @pytest.mark.slow

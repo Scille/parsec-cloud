@@ -230,12 +230,12 @@ class BaseFolderEntry(BaseEntry):
                                     break
 
                             await diverged_entry.sync()
-                            # TODO: of course in case two cores are both trying to
-                            # create a `foo.conflict`, one of them will crash here...
+                    # TODO: of course in case two cores are both trying to
+                    # create a `foo.conflict`, one of them will crash here...
                     else:
                         await entry.minimal_sync_if_placeholder()
-                # TODO: Synchronize with up-to-date data and flush to avoid
-                # having to re-synchronize placeholders
+            # TODO: Synchronize with up-to-date data and flush to avoid
+            # having to re-synchronize placeholders
 
             if not self._need_sync:
                 # This folder (and it children) hasn't been modified locally,
@@ -522,12 +522,12 @@ class BaseRootEntry(BaseFolderEntry):
                                     break
 
                             await diverged_entry.sync()
-                            # TODO: of course in case two cores are both trying to
-                            # create a `foo.conflict`, one of them will crash here...
+                    # TODO: of course in case two cores are both trying to
+                    # create a `foo.conflict`, one of them will crash here...
                     else:
                         await entry.minimal_sync_if_placeholder()
-                # TODO: Synchronize with up-to-date data and flush to avoid
-                # having to re-synchronize placeholders
+            # TODO: Synchronize with up-to-date data and flush to avoid
+            # having to re-synchronize placeholders
 
             if not self._need_sync:
                 # This folder hasn't been modified locally,

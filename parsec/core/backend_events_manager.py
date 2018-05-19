@@ -89,6 +89,7 @@ class BackendEventsManager(BaseAsyncComponent):
                     raise SubscribeBackendEventError(
                         "Cannot subscribe to event `%s@%s`: %r" % (event, subject, rep)
                     )
+
             # Useful for tests to know when we actually start to listen for backend events
             self._signal_ns.signal("backend_event_manager_listener_started").send()
 
@@ -116,7 +117,9 @@ class BackendEventsManager(BaseAsyncComponent):
                     sock = await bc.backend_connection_factory(self.backend_addr, self.device)
                     await _event_pump(sock)
                 except (
-                    bc.BackendNotAvailable, trio.BrokenStreamError, trio.ClosedStreamError
+                    bc.BackendNotAvailable,
+                    trio.BrokenStreamError,
+                    trio.ClosedStreamError,
                 ) as exc:
                     # In case of connection failure, wait a bit and restart
                     logger.debug("Connection lost with backend ({}), restarting connection...", exc)

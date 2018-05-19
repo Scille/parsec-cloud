@@ -57,7 +57,9 @@ class FuseManager(BaseAsyncComponent):
         self._fuse_mountpoint_need_stop = signal_ns.signal("fuse_mountpoint_need_stop")
         self._fuse_mountpoint_stopped = signal_ns.signal("fuse_mountpoint_stopped")
         self._start_fuse_config = {
-            "socket_address": core_addr, "debug": debug, "nothreads": nothreads
+            "socket_address": core_addr,
+            "debug": debug,
+            "nothreads": nothreads,
         }
         self.mountpoint = None
         self.drive_letter = None
@@ -120,6 +122,7 @@ class FuseManager(BaseAsyncComponent):
                 raise FuseStoppingError(
                     "Fuse process (pid: %s) refuse to stop" % self.fuse_process.pid
                 )
+
             elif os.name == "posix":
                 os.rmdir(self.mountpoint)
 

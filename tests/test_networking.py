@@ -20,6 +20,8 @@ json_dict = st.dictionaries(st.text(printable), json_nested)
 
 
 # TODO: Improve this (see https://github.com/python-trio/pytest-trio/issues/42)
+
+
 class TestCookedSocketHypothesis:
 
     @pytest.mark.slow

@@ -21,10 +21,7 @@ async def get_tree_from_core(core):
             if isinstance(v, core.fs._file_entry_cls):
                 tree[k] = v._access.dump()
             else:
-                tree[k] = {
-                    **v._access.dump(),
-                    'children': await get_tree_from_folder_entry(v),
-                }
+                tree[k] = {**v._access.dump(), "children": await get_tree_from_folder_entry(v)}
         return tree
 
     return await get_tree_from_folder_entry(core.fs.root)
@@ -170,20 +167,20 @@ async def test_online_core_tree_and_sync_multicore(
             print("~~~ SYNC 1 ~~~")
             rep1 = self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})
             assert rep1["status"] == "ok"
-            note('sync 1: %r' % rep1)
+            note("sync 1: %r" % rep1)
             print("~~~ SYNC 2 ~~~")
             rep2 = self.core_cmd("core_2", {"cmd": "synchronize", "path": "/"})
             assert rep2["status"] == "ok"
-            note('sync 2: %r' % rep2)
+            note("sync 2: %r" % rep2)
             print("~~~ SYNC 1 ~~~")
             rep3 = self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})
             assert rep3["status"] == "ok"
-            note('sync 1: %r' % rep3)
+            note("sync 1: %r" % rep3)
 
             synced_tree_1 = self.sys_cmd("core_1", "get_tree_from_core")
             synced_tree_2 = self.sys_cmd("core_2", "get_tree_from_core")
-            note('core_1 fs ' + pprint.pformat(synced_tree_1))
-            note('core_2 fs ' + pprint.pformat(synced_tree_2))
+            note("core_1 fs " + pprint.pformat(synced_tree_1))
+            note("core_2 fs " + pprint.pformat(synced_tree_2))
 
             assert not self.core_1.fs.root.need_sync
             assert not self.core_2.fs.root.need_sync

@@ -10,6 +10,7 @@ original_version_info = pbr.version.VersionInfo
 def side_effect(key):
     if key == "python-swiftclient":
         return "3.5.0"
+
     else:
         return original_version_info(key)
 
@@ -46,8 +47,10 @@ class OpenStackBlockStoreComponent(BaseBlockStoreComponent):
         except ClientException as exc:
             if exc.http_status == 404:
                 raise NotFoundError("Unknown block id.")
+
             else:
                 raise exc
+
         return obj
 
     async def post(self, id, block):
@@ -59,6 +62,7 @@ class OpenStackBlockStoreComponent(BaseBlockStoreComponent):
                 self.swift_client.put_object(self._openstack_container, id, block)
             else:
                 raise exc
+
         else:
             raise AlreadyExistsError("A block already exists with id `%s`." % id)
 

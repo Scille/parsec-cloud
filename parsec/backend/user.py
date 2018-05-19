@@ -92,7 +92,8 @@ class BaseUserComponent:
             await self.create_invitation(token, client_ctx.id, msg["user_id"])
         except AlreadyExistsError:
             return {
-                "status": "already_exists", "reason": "User `%s` already exists." % msg["user_id"]
+                "status": "already_exists",
+                "reason": "User `%s` already exists." % msg["user_id"],
             }
 
         return {"status": "ok", "user_id": msg["user_id"], "invitation_token": token}
@@ -132,7 +133,8 @@ class BaseUserComponent:
         device = user["devices"].get(msg["device_name"])
         if not device:
             return {
-                "status": "not_found", "reason": "Device `%s` doesn't exists." % msg["device_name"]
+                "status": "not_found",
+                "reason": "Device `%s` doesn't exists." % msg["device_name"],
             }
 
         if device["configure_token"] != msg["configure_device_token"]:
@@ -176,7 +178,8 @@ class BaseUserComponent:
         await self.configure_device(user_id, msg["device_name"], msg["device_verify_key"])
 
         return {
-            "status": "ok", "cyphered_user_privkey": to_jsonb64(config_try["cyphered_user_privkey"])
+            "status": "ok",
+            "cyphered_user_privkey": to_jsonb64(config_try["cyphered_user_privkey"]),
         }
 
     async def api_device_get_configuration_try(self, client_ctx, msg):

@@ -89,6 +89,7 @@ def extract_meta_from_signature(signed_with_meta: bytes) -> tuple:
     try:
         user_id, device_name, signed = signed_with_meta.split(b"@", 2)
         return user_id.decode("utf-8"), device_name.decode("utf-8"), signed
+
     except (ValueError, UnicodeDecodeError) as exc:
         raise InvalidMessageError(
             "Message doesn't contain author metadata along with signed message"
@@ -111,6 +112,7 @@ def encrypt_for(author: Device, recipient: RemoteUser, msg: dict) -> bytes:
         encoded_msg = json.dumps(msg).encode()
     except TypeError as exc:
         raise InvalidMessageError("Cannot encode message as JSON") from exc
+
     signed_msg_with_meta = sign_and_add_meta(author, encoded_msg)
     box = SealedBox(recipient.user_pubkey)
     return box.encrypt(signed_msg_with_meta)
@@ -147,6 +149,7 @@ def verify_signature_from(author: RemoteDevice, signed_text: bytes) -> dict:
     encoded_msg = author.device_verifykey.verify(signed_text)
     try:
         return json.loads(encoded_msg)
+
     except json.JSONDecodeError as exc:
         raise InvalidMessageError("Message is not valid json data") from exc
 
@@ -163,6 +166,7 @@ def encrypt_with_secret_key(author: Device, key: bytes, msg: dict) -> bytes:
         encoded_msg = json.dumps(msg).encode()
     except TypeError as exc:
         raise InvalidMessageError("Cannot encode message as JSON") from exc
+
     signed_msg_with_meta = sign_and_add_meta(author, encoded_msg)
     box = SecretBox(key)
     return box.encrypt(signed_msg_with_meta)
@@ -217,14 +221,17 @@ class EncryptionManager(BaseAsyncComponent):
                     self.device.user_pubkey.encode(),
                     {self.device.device_name: self.device.device_verifykey.encode()},
                 )
+
         rep, errors = backend_user_get_rep_schema.load(raw_rep)
         if errors:
             if raw_rep.get("status") == "not_found":
                 raise BackendUserNotFound("Cannot retreive user %s" % user_id)
+
             else:
                 raise BackendGetUserError(
                     "Cannot retreive user %s: %r (errors: %r)" % (user_id, rep, errors)
                 )
+
         user = RemoteUser(
             user_id,
             rep["broadcast_key"],
@@ -249,6 +256,7 @@ class EncryptionManager(BaseAsyncComponent):
                 "Message is signed by %s@%s, but this user doesn't have device with this name."
                 % (user_id, device_name)
             )
+
         return verify_signature_from(author_device, signed_msg)
 
     async def encrypt_with_secret_key(self, key: bytes, msg: dict) -> bytes:
@@ -264,4 +272,5 @@ class EncryptionManager(BaseAsyncComponent):
                 "Message is signed by %s@%s, but this user doesn't have device with this name."
                 % (user_id, device_name)
             )
+
         return verify_signature_from(author_device, signed_msg)
