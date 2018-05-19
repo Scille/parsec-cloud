@@ -240,10 +240,12 @@ class BaseFolderEntry(BaseEntry):
             if not self._need_sync:
                 # This folder (and it children) hasn't been modified locally,
                 # just download last version from the backend if any.
+                print(que("check remote version: %s" % self.path))
                 manifest = await self._fs.manifests_manager.fetch_from_backend(
                     self._access.id, self._access.rts, self._access.key
                 )
                 if manifest["version"] != self.base_version:
+                    print(bad("update to remote version: %s\n%s" % (self.path, manifest)))
                     self._user_id = manifest["user_id"]
                     self._device_name = manifest["device_name"]
                     self._created = manifest["created"]
@@ -255,6 +257,8 @@ class BaseFolderEntry(BaseEntry):
                         )
                         for k, v in manifest["children"].items()
                     }
+                    self._need_flush = True
+                    await self.flush_no_lock()
                 return
 
             # Make a snapshot of ourself to avoid concurrency
@@ -352,6 +356,8 @@ class BaseFolderEntry(BaseEntry):
                 # in the meantime (e.g. entry deleted or moved)
                 if self._children.get(name) is not_loaded_entry:
                     self._children[name] = entry
+                else:
+                    entry = self._get_child(name)
         return entry
 
     async def delete_child(self, name):
@@ -526,8 +532,10 @@ class BaseRootEntry(BaseFolderEntry):
             if not self._need_sync:
                 # This folder hasn't been modified locally,
                 # just download last version from the backend if any.
+                print(que("check remote version for root"))
                 manifest = await self._fs.manifests_manager.fetch_user_manifest_from_backend()
                 if manifest and manifest["version"] != self.base_version:
+                    print(bad("update to remote version for root"))
                     self._user_id = manifest["user_id"]
                     self._device_name = manifest["device_name"]
                     self._last_processed_message = manifest["last_processed_message"]
@@ -540,6 +548,8 @@ class BaseRootEntry(BaseFolderEntry):
                         )
                         for k, v in manifest["children"].items()
                     }
+                    self._need_flush = True
+                    await self.flush_no_lock()
                 return
 
             # Make a snapshot of ourself to avoid concurrency
