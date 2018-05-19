@@ -3,12 +3,12 @@ import pytest
 import pprint
 from string import ascii_lowercase
 from hypothesis import strategies as st, note
-from hypothesis.stateful import Bundle, invariant
+from hypothesis.stateful import Bundle
 
 from parsec.utils import to_jsonb64
 
 from tests.common import connect_core, core_factory, backend_factory, run_app
-from tests.hypothesis.common import rule, rule_once
+from tests.hypothesis.common import rule, rule_once, failure_reproducer, reproduce_rule
 
 
 def compare_fs_dumps(entry_1, entry_2):
@@ -49,6 +49,19 @@ async def test_online_core_tree_and_sync_multicore(
     st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
     st_core = st.sampled_from(["core_1", "core_2"])
 
+    @failure_reproducer(
+        """
+import pytest
+import os
+
+from parsec.utils import to_jsonb64
+
+
+@pytest.mark.trio
+async def test_reproduce(running_backend, alice_core_sock, alice2_core2_sock):
+    socks = {'core_1': alice_core_sock, 'core_2': alice2_core2_sock}
+"""
+    )
     class MultiCoreTreeAndSync(TrioDriverRuleBasedStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")
@@ -109,6 +122,14 @@ async def test_online_core_tree_and_sync_multicore(
             return "/"
 
         @rule(target=Files, core=st_core, parent=Folders, name=st_entry_name)
+        @reproduce_rule(
+            """
+path = os.path.join({parent}, {name})
+await socks[{core}].send({{"cmd": "file_create", "path": path}})
+rep = await socks[{core}].recv()
+assert rep["status"] in ("ok", "invalid_path")
+"""
+        )
         def create_file(self, core, parent, name):
             path = os.path.join(parent, name)
             rep = self.core_cmd(core, {"cmd": "file_create", "path": path})
@@ -117,6 +138,15 @@ async def test_online_core_tree_and_sync_multicore(
             return path
 
         @rule(core=st_core, path=Files)
+        @reproduce_rule(
+            """
+await socks[{core}].send({{
+    "cmd": "file_write", "path": {path}, "offset": 0, "content": to_jsonb64(b"a")
+}})
+rep = await socks[{core}].recv()
+assert rep["status"] in ("ok", "invalid_path")
+"""
+        )
         def update_file(self, core, path):
             b64content = to_jsonb64(b"a")
             rep = self.core_cmd(
@@ -126,6 +156,14 @@ async def test_online_core_tree_and_sync_multicore(
             assert rep["status"] in ("ok", "invalid_path")
 
         @rule(target=Folders, core=st_core, parent=Folders, name=st_entry_name)
+        @reproduce_rule(
+            """
+path = os.path.join({parent}, {name})
+await socks[{core}].send({{"cmd": "folder_create", "path": path}})
+rep = await socks[{core}].recv()
+assert rep["status"] in ("ok", "invalid_path")
+"""
+        )
         def create_folder(self, core, parent, name):
             path = os.path.join(parent, name)
             rep = self.core_cmd(core, {"cmd": "folder_create", "path": path})
@@ -134,18 +172,40 @@ async def test_online_core_tree_and_sync_multicore(
             return path
 
         @rule(path=Files, core=st_core)
+        @reproduce_rule(
+            """
+await socks[{core}].send({{"cmd": "delete", "path": {path} }})
+rep = await socks[{core}].recv()
+assert rep["status"] in ("ok", "invalid_path")
+"""
+        )
         def delete_file(self, core, path):
             rep = self.core_cmd(core, {"cmd": "delete", "path": path})
             note(rep)
             assert rep["status"] in ("ok", "invalid_path")
 
         @rule(path=Folders, core=st_core)
+        @reproduce_rule(
+            """
+await socks[{core}].send({{"cmd": "delete", "path": {path}}})
+rep = await socks[{core}].recv()
+assert rep["status"] in ("ok", "invalid_path")
+"""
+        )
         def delete_folder(self, core, path):
             rep = self.core_cmd(core, {"cmd": "delete", "path": path})
             note(rep)
             assert rep["status"] in ("ok", "invalid_path")
 
         @rule(target=Files, core=st_core, src=Files, dst_parent=Folders, dst_name=st_entry_name)
+        @reproduce_rule(
+            """
+dst = os.path.join({dst_parent}, {dst_name})
+await socks[{core}].send({{"cmd": "move", "src": {src}, "dst": dst}})
+rep = await socks[{core}].recv()
+assert rep["status"] in ("ok", "invalid_path")
+"""
+        )
         def move_file(self, core, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd(core, {"cmd": "move", "src": src, "dst": dst})
@@ -154,6 +214,14 @@ async def test_online_core_tree_and_sync_multicore(
             return dst
 
         @rule(target=Folders, core=st_core, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
+        @reproduce_rule(
+            """
+dst = os.path.join({dst_parent}, {dst_name})
+await socks[{core}].send({{"cmd": "move", "src": {src}, "dst": dst}})
+rep = await socks[{core}].recv()
+assert rep["status"] in ("ok", "invalid_path")
+"""
+        )
         def move_folder(self, core, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd(core, {"cmd": "move", "src": src, "dst": dst})
@@ -162,6 +230,19 @@ async def test_online_core_tree_and_sync_multicore(
             return dst
 
         @rule()
+        @reproduce_rule(
+            """
+await socks["core_1"].send({{"cmd": "synchronize", "path": "/"}})
+rep = await socks["core_1"].recv()
+assert rep["status"] == "ok"
+await socks["core_2"].send({{"cmd": "synchronize", "path": "/"}})
+rep = await socks["core_2"].recv()
+assert rep["status"] == "ok"
+await socks["core_1"].send({{"cmd": "synchronize", "path": "/"}})
+rep = await socks["core_1"].recv()
+assert rep["status"] == "ok"
+"""
+        )
         def sync_all_the_files(self):
             print("~~~ SYNC 1 ~~~")
             rep1 = self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})

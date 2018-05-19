@@ -1,6 +1,6 @@
 import attr
 from functools import wraps
-from hypothesis.stateful import rule as vanilla_rule, precondition
+from hypothesis.stateful import RuleBasedStateMachine, rule as vanilla_rule, precondition
 from huepy import red, bold
 
 
@@ -152,3 +152,64 @@ class OracleFS:
 
     def sync(self, path):
         return "ok" if self.get_path(path) is not None else "invalid_path"
+
+
+class BaseFailureReproducer:
+
+    _FAILURE_REPRODUCER_CODE_HEADER = """import pytest
+
+
+@pytest.mark.trio
+async def test_reproduce(alice_core_sock, alice2_core2_sock):
+"""
+
+    def print_start(self):
+        super().print_start()
+        self._failure_reproducer_code = [self._FAILURE_REPRODUCER_CODE_HEADER]
+
+    def print_end(self):
+        super().print_end()
+        print("============================ REPRODUCE CODE ========================")
+        print("\n".join(self._failure_reproducer_code))
+        print("====================================================================")
+
+    def print_step(self, step):
+        super().print_step(step)
+
+        rule, data = step
+        template = getattr(rule.function, "_reproduce_template", None)
+        rule_brief = "%s(%r)" % (rule.function.__name__, data)
+        if not template:
+            self._failure_reproducer_code.append("    # Nothing to do for rule %s" % rule_brief)
+            return
+        else:
+            self._failure_reproducer_code.append("\n    # Rule %s" % rule_brief)
+
+        resolved_data = {}
+        for k, v in data.items():
+            if isinstance(v, VarReference):
+                resolved_data[k] = repr(self.names_to_values[v.name])
+            else:
+                resolved_data[k] = repr(v)
+
+        code = template.format(**resolved_data)
+        self._failure_reproducer_code.append("    " + "\n    ".join(code.strip().split("\n")))
+
+
+def failure_reproducer(init=BaseFailureReproducer._FAILURE_REPRODUCER_CODE_HEADER):
+
+    def wrapper(cls):
+        assert issubclass(cls, RuleBasedStateMachine)
+        nmspc = {"_FAILURE_REPRODUCER_CODE_HEADER": init}
+        return type("%sWithFailureReproducer" % cls.__name__, (BaseFailureReproducer, cls), nmspc)
+
+    return wrapper
+
+
+def reproduce_rule(template):
+
+    def wrapper(fn):
+        fn._reproduce_template = template
+        return fn
+
+    return wrapper
