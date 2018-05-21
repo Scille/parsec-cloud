@@ -50,6 +50,7 @@ class CheckedConstant(Field):
     """Make sure the value is present during deserialization"""
 
     def __init__(self, constant, **kwargs):
+        kwargs.setdefault("default", constant)
         super().__init__(**kwargs)
         self.constant = constant
 

@@ -291,6 +291,11 @@ def mocked_local_storage_connection():
     # sqlite connection object.
     import sqlite3
 
+    class CloseProtectedConnection(sqlite3.Connection):
+
+        def close(self):
+            pass
+
     class InMemoryDatabaseManager:
 
         def __init__(self, vanilla_connect):
@@ -298,11 +303,15 @@ def mocked_local_storage_connection():
             self.databases = {}
 
         def reset(self):
+            # Now we can actually close the connections
+            for db in self.databases.values():
+                sqlite3.Connection.close(db)
             self.databases = {}
 
         def connect(self, database, *args, **kwargs):
             if database not in self.databases:
-                self.databases[database] = self.vanilla_connect(":memory:")
+                connection = self.vanilla_connect(":memory:", factory=CloseProtectedConnection)
+                self.databases[database] = connection
             return self.databases[database]
 
     manager = InMemoryDatabaseManager(sqlite3.connect)

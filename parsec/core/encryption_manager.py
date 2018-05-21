@@ -80,6 +80,26 @@ class RemoteDevice:
         return self.user.user_id
 
 
+def encrypt_for_local(key: bytes, msg: dict) -> bytes:
+    try:
+        encoded_msg = json.dumps(msg).encode()
+    except TypeError as exc:
+        raise InvalidMessageError("Cannot encode message as JSON") from exc
+
+    box = SecretBox(key)
+    return box.encrypt(encoded_msg)
+
+
+def decrypt_for_local(key: bytes, ciphered_msg: bytes) -> dict:
+    box = SecretBox(key)
+    encoded_msg = box.decrypt(ciphered_msg)
+    try:
+        return json.loads(encoded_msg)
+
+    except json.JSONDecodeError as exc:
+        raise InvalidMessageError("Message is not valid json data") from exc
+
+
 def sign_and_add_meta(device: Device, raw_msg: bytes) -> bytes:
     signed = device.device_signkey.sign(raw_msg)
     return device.id.encode("utf-8") + b"@" + signed

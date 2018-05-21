@@ -91,6 +91,9 @@ async def dispatch_request(req: dict, client_ctx: ClientContext, core: Core) -> 
 
     # Protect againsts generic exceptions
     except ParsecError as exc:
+        import pdb
+
+        pdb.set_trace()
         return exc.to_dict()
 
     except FSInvalidPath as exc:

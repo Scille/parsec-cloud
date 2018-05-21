@@ -11,20 +11,26 @@ from tests.common import connect_core, core_factory, backend_factory, run_app
 from tests.hypothesis.common import rule, rule_once
 
 
-async def get_tree_from_core(core):
+def compare_fs_dumps(entry_1, entry_2):
 
-    async def get_tree_from_folder_entry(entry):
-        tree = {}
-        for k, v in entry._children.items():
-            if not v.is_loaded:
-                v = await v.load()
-            if isinstance(v, core.fs._file_entry_cls):
-                tree[k] = v._access.dump()
-            else:
-                tree[k] = {**v._access.dump(), "children": await get_tree_from_folder_entry(v)}
-        return tree
+    def cook_entry(entry):
+        if "children" in entry:
+            return {**entry, "children": {k: v["access"] for k, v in entry["children"].items()}}
+        else:
+            return entry
 
-    return await get_tree_from_folder_entry(core.fs.root)
+    assert not entry_1.get("need_sync", False)
+    assert not entry_2.get("need_sync", False)
+
+    if "need_sync" not in entry_1 or "need_sync" not in entry_2:
+        # One of the entry is not loaded
+        return
+
+    assert cook_entry(entry_1) == cook_entry(entry_2)
+    if "children" in entry_1:
+        for key, child_for_entry_1 in entry_1["children"].items():
+            child_for_entry_2 = entry_2["children"][key]
+            compare_fs_dumps(child_for_entry_1, child_for_entry_2)
 
 
 @pytest.mark.slow
@@ -58,8 +64,7 @@ async def test_online_core_tree_and_sync_multicore(
                 "backend_addr": backend_addr,
             }
 
-            self.sys_cmd = lambda x, y: self.communicator.send(("sys", x, y))
-            self.core_cmd = lambda x, y: self.communicator.send(("core", x, y))
+            self.core_cmd = lambda x, y: self.communicator.send((x, y))
 
             async with backend_factory(**backend_config) as backend:
                 await backend.user.create(
@@ -91,16 +96,10 @@ async def test_online_core_tree_and_sync_multicore(
                                 sockets = {"core_1": sock_1, "core_2": sock_2}
 
                                 while True:
-                                    target, core, msg = await self.communicator.trio_recv()
-                                    if target == "core":
-                                        await sockets[core].send(msg)
-                                        rep = await sockets[core].recv()
-                                        await self.communicator.trio_respond(rep)
-                                    elif msg == "get_tree_from_core":
-                                        core = self.core_1 if core == "core_1" else self.core_2
-                                        await self.communicator.trio_respond(
-                                            await get_tree_from_core(core)
-                                        )
+                                    core, msg = await self.communicator.trio_recv()
+                                    await sockets[core].send(msg)
+                                    rep = await sockets[core].recv()
+                                    await self.communicator.trio_respond(rep)
 
                     finally:
                         tcp_stream_spy.install_hook(backend_addr, None)
@@ -177,14 +176,10 @@ async def test_online_core_tree_and_sync_multicore(
             assert rep3["status"] == "ok"
             note("sync 1: %r" % rep3)
 
-            synced_tree_1 = self.sys_cmd("core_1", "get_tree_from_core")
-            synced_tree_2 = self.sys_cmd("core_2", "get_tree_from_core")
-            note("core_1 fs " + pprint.pformat(synced_tree_1))
-            note("core_2 fs " + pprint.pformat(synced_tree_2))
-
-            assert not self.core_1.fs.root.need_sync
-            assert not self.core_2.fs.root.need_sync
-            assert self.core_1.fs.root.base_version == self.core_2.fs.root.base_version
-            assert synced_tree_1 == synced_tree_2
+            fs_dump_1 = self.core_1.fs._dump_local_fs()
+            fs_dump_2 = self.core_2.fs._dump_local_fs()
+            note("core_1 fs dump: " + pprint.pformat(fs_dump_1))
+            note("core_2 fs dump: " + pprint.pformat(fs_dump_2))
+            compare_fs_dumps(fs_dump_1, fs_dump_2)
 
     await MultiCoreTreeAndSync.run_test()

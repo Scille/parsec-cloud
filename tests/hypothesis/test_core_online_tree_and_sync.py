@@ -79,6 +79,7 @@ async def test_online_core_tree_and_sync(
     backend_addr,
     tmpdir,
     alice,
+    monitor,
 ):
 
     class RestartCore(Exception):
@@ -131,14 +132,17 @@ async def test_online_core_tree_and_sync(
             async def bootstrap_core(core):
                 task_status.started()
 
-            async def restart_core_done(core):
+            async def reset_core_done(core):
                 # Core won't try to fetch the user manifest from backend when
                 # starting (given a modified version can be present on disk,
                 # or we could be offline).
                 # If we reset local storage however, we want to force the core
                 # to load the data from the backend.
-                if core.fs.root.base_version == 0 and not core.fs.root.need_sync:
-                    await core.fs.root.sync()
+                await core.fs.sync("/")
+                core.fs._debug_pocav("RESET SYNC")
+                await self.communicator.trio_respond(True)
+
+            async def restart_core_done(core):
                 await self.communicator.trio_respond(True)
 
             async with backend_factory(**backend_config) as backend:
@@ -160,9 +164,11 @@ async def test_online_core_tree_and_sync(
                             try:
                                 await run_core(on_ready)
                             except RestartCore as exc:
-                                on_ready = restart_core_done
                                 if exc.reset_local_storage:
+                                    on_ready = reset_core_done
                                     mocked_local_storage_connection.reset()
+                                else:
+                                    on_ready = restart_core_done
 
                     finally:
                         tcp_stream_spy.install_hook(backend_addr, None)
