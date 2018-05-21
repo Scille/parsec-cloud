@@ -35,9 +35,6 @@ class MemoryVlobComponent(BaseVlobComponent):
                 raise TrustSeedError()
 
         except KeyError:
-            import pdb
-
-            pdb.set_trace()
             raise NotFoundError("Vlob not found.")
 
         version = version or len(vlob.blob_versions)
