@@ -29,6 +29,23 @@ class LocalStorage(BaseAsyncComponent):
                 PRIMARY KEY (id)
             )"""
         )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                user_id TEXT NOT NULL,
+                pubkey TEXT NOT NULL,
+                PRIMARY KEY (user_id)
+            )"""
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS devices (
+                user_id TEXT NOT NULL,
+                device_name TEXT NOT NULL,
+                verifykey TEXT NOT NULL,
+                PRIMARY KEY (user_id, device_name)
+            )"""
+        )
         self.conn.commit()
 
     async def _teardown(self):
@@ -91,4 +108,36 @@ class LocalStorage(BaseAsyncComponent):
     def flush_dirty_block(self, id, blob):
         cur = self.conn.cursor()
         cur.execute("INSERT OR REPLACE INTO blocks (id, blob) VALUES (?, ?)", (id, blob))
+        self.conn.commit()
+
+    def fetch_user_pubkey(self, user_id):
+        cur = self.conn.cursor()
+        cur.execute("SELECT pubkey FROM users WHERE user_id=?", (user_id,))
+        res = cur.fetchone()
+        if res is not None:
+            return res[0]
+
+    def flush_user_pubkey(self, user_id, pubkey):
+        cur = self.conn.cursor()
+        cur.execute(
+            "INSERT OR REPLACE INTO users (user_id, pubkey) VALUES (?, ?)", (user_id, pubkey)
+        )
+        self.conn.commit()
+
+    def fetch_device_verifykey(self, user_id, device_name):
+        cur = self.conn.cursor()
+        cur.execute(
+            "SELECT verifykey FROM devices WHERE user_id=? AND device_name=?",
+            (user_id, device_name),
+        )
+        res = cur.fetchone()
+        if res is not None:
+            return res[0]
+
+    def flush_device_verifykey(self, user_id, device_name, verifykey):
+        cur = self.conn.cursor()
+        cur.execute(
+            "INSERT OR REPLACE INTO devices (user_id, device_name, verifykey) VALUES (?, ?, ?)",
+            (user_id, device_name, verifykey),
+        )
         self.conn.commit()

@@ -47,3 +47,26 @@ async def test_move_manifest_manifest(local_storage):
     assert old is None
     new = local_storage.fetch_manifest("<id#2>")
     assert new == b"<manifest>"
+
+
+@pytest.mark.trio
+async def test_flush_and_fetch_user_pubkey(local_storage):
+    data = [("<user_id#%s>" % i, ("<pubkey#%s>" % i).encode()) for i in range(3)]
+    for user_id, pubkey in data:
+        local_storage.flush_user_pubkey(user_id, pubkey)
+    for user_id, expected_pubkey in data:
+        verifykey = local_storage.fetch_user_pubkey(user_id)
+        assert verifykey == expected_pubkey
+
+
+@pytest.mark.trio
+async def test_flush_and_fetch_device_verifykey(local_storage):
+    data = [
+        ("<user_id#%s>" % i, "<device_name#%s>" % i, ("<verifykey#%s>" % i).encode())
+        for i in range(3)
+    ]
+    for user_id, device_name, verifykey in data:
+        local_storage.flush_device_verifykey(user_id, device_name, verifykey)
+    for user_id, device_name, expected_verifykey in data:
+        verifykey = local_storage.fetch_device_verifykey(user_id, device_name)
+        assert verifykey == expected_verifykey
