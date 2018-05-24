@@ -209,10 +209,11 @@ def decrypt_with_secret_key(key: bytes, ciphered_msg: dict) -> tuple:
 
 class EncryptionManager(BaseAsyncComponent):
 
-    def __init__(self, device, backend_connection):
+    def __init__(self, device, backend_connection, local_storage):
         super().__init__()
         self.device = device
         self._backend_connection = backend_connection
+        self._local_storage = local_storage
 
     async def _init(self, nursery):
         pass
@@ -231,7 +232,7 @@ class EncryptionManager(BaseAsyncComponent):
         """
         try:
             raw_rep = await self._backend_connection.send({"cmd": "user_get", "user_id": user_id})
-        except BackendNotAvailable:
+        except BackendNotAvailable as exc:
             # TODO: in case backend is not available we should store remote
             # users informations in the local storage.
             # In the meantime, this is a hack to keep offline tests working
@@ -241,6 +242,8 @@ class EncryptionManager(BaseAsyncComponent):
                     self.device.user_pubkey.encode(),
                     {self.device.device_name: self.device.device_verifykey.encode()},
                 )
+            else:
+                raise exc
 
         rep, errors = backend_user_get_rep_schema.load(raw_rep)
         if errors:
@@ -260,37 +263,43 @@ class EncryptionManager(BaseAsyncComponent):
         return user
 
     async def encrypt(self, recipient: str, msg: dict) -> bytes:
-        user = await self.fetch_remote_user(recipient)
+        pubkey = self._local_storage.fetch_user_pubkey(recipient)
+        if pubkey:
+            user = RemoteUser(recipient, pubkey)
+        else:
+            user = await self.fetch_remote_user(recipient)
+            self._local_storage.flush_user_pubkey(recipient, user.user_pubkey.encode())
         return encrypt_for(self.device, user, msg)
 
     async def encrypt_for_self(self, msg: dict) -> bytes:
         return encrypt_for_self(self.device, msg)
 
-    async def decrypt(self, ciphered_msg: bytes) -> dict:
-        user_id, device_name, signed_msg = decrypt_for(self.device, ciphered_msg)
-        user = await self.fetch_remote_user(user_id)
-        try:
-            author_device = user.devices[device_name]
-        except KeyError:
-            raise BackendUserNotFound(
-                "Message is signed by %s@%s, but this user doesn't have device with this name."
-                % (user_id, device_name)
-            )
-
-        return verify_signature_from(author_device, signed_msg)
-
     async def encrypt_with_secret_key(self, key: bytes, msg: dict) -> bytes:
         return encrypt_with_secret_key(self.device, key, msg)
 
+    async def _decrypt(self, user_id, device_name, signed_msg) -> dict:
+        verifykey = self._local_storage.fetch_device_verifykey(user_id, device_name)
+        if verifykey:
+            author_device = RemoteDevice(user_id, device_name, verifykey)
+        else:
+            user = await self.fetch_remote_user(user_id)
+            try:
+                author_device = user.devices[device_name]
+            except KeyError:
+                raise BackendUserNotFound(
+                    "Message is signed by %s@%s, but this user doesn't have device with this name."
+                    % (user_id, device_name)
+                )
+            else:
+                self._local_storage.flush_device_verifykey(
+                    user_id, device_name, author_device.device_verifykey.encode()
+                )
+        return verify_signature_from(author_device, signed_msg)
+
+    async def decrypt(self, ciphered_msg: bytes) -> dict:
+        user_id, device_name, signed_msg = decrypt_for(self.device, ciphered_msg)
+        return await self._decrypt(user_id, device_name, signed_msg)
+
     async def decrypt_with_secret_key(self, key: bytes, msg: dict) -> dict:
         user_id, device_name, signed_msg = decrypt_with_secret_key(key, msg)
-        user = await self.fetch_remote_user(user_id)
-        try:
-            author_device = user.devices[device_name]
-        except KeyError:
-            raise BackendUserNotFound(
-                "Message is signed by %s@%s, but this user doesn't have device with this name."
-                % (user_id, device_name)
-            )
-
-        return verify_signature_from(author_device, signed_msg)
+        return await self._decrypt(user_id, device_name, signed_msg)

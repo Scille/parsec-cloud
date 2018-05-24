@@ -1,14 +1,8 @@
-import json
-from nacl.public import Box
-from nacl.secret import SecretBox
-from nacl.signing import VerifyKey
-from nacl.exceptions import BadSignatureError, CryptoError
-
 from parsec.core.encryption_manager import encrypt_for_local, decrypt_for_local
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.schemas import TypedManifestSchema
 from parsec.core.fs.base import SecurityError
-from parsec.utils import ParsecError, from_jsonb64
+from parsec.utils import ParsecError
 
 
 class ManifestSignatureError(SecurityError):
