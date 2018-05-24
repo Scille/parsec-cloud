@@ -6,11 +6,13 @@ import blinker
 import contextlib
 from unittest.mock import patch
 
+from parsec.core.backend_connections_multiplexer import BackendConnectionsMultiplexer
 from parsec.core.local_storage import LocalStorage
 from parsec.core.devices_manager import Device
 from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
 
 from tests.common import (
+    AsyncMock,
     freeze_time,
     run_app,
     backend_factory,
@@ -19,7 +21,6 @@ from tests.common import (
     connect_core,
 )
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
-from tests.core.test_devices_manager import alice_cleartext_device, bob_cleartext_device
 
 
 def pytest_addoption(parser):
@@ -324,3 +325,15 @@ def monitor():
     from tests.monitor import Monitor
 
     return Monitor()
+
+
+@pytest.fixture
+async def local_storage(nursery):
+    ls = LocalStorage(":memory:")
+    await ls.init(nursery)
+    return ls
+
+
+@pytest.fixture
+def mock_bcm():
+    return AsyncMock(spec=BackendConnectionsMultiplexer)

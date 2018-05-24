@@ -48,7 +48,8 @@ class Core(BaseAsyncComponent):
         # ├─ fs
         # │  ├─ manifests_manager
         # │  │  ├─ encryption_manager
-        # │  │  │  └─ backend_connection
+        # │  │  │  ├─ backend_connection
+        # │  │  │  └─ local_storage
         # │  │  ├─ local_storage
         # │  │  └─ backend_storage
         # │  │     └─ backend_connection

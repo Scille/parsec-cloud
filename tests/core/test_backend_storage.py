@@ -2,17 +2,7 @@ import pytest
 
 from parsec.utils import to_jsonb64
 from parsec.core.backend_storage import BackendStorage, BackendError, BackendConcurrencyError
-from parsec.core.backend_connections_multiplexer import (
-    BackendConnectionsMultiplexer,
-    BackendNotAvailable,
-)
-
-from tests.common import AsyncMock
-
-
-@pytest.fixture
-def mock_bcm():
-    return AsyncMock(spec=BackendConnectionsMultiplexer)
+from parsec.core.backend_connections_multiplexer import BackendNotAvailable
 
 
 @pytest.mark.parametrize(
