@@ -9,6 +9,7 @@ import logbook
 from urllib.parse import urlparse
 
 from parsec.core import Core, CoreConfig, Device
+from parsec.utils import get_sentry_handler
 
 
 logger = logbook.Logger("parsec.core.app")
@@ -103,6 +104,11 @@ def core_cmd(log_level, log_file, pdb, **kwargs):
 
 
 def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
+
+    sentry_handler = get_sentry_handler()
+    if sentry_handler:
+        sentry_handler.push_application()
+
     async def _login_and_run(user=None):
         async with trio.open_nursery() as nursery:
             await core.init(nursery)

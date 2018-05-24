@@ -58,6 +58,7 @@ requirements = [
     "python-decouple==3.1",
     "trio==0.4.0",
     "python-interface==1.4.0",
+    "raven==6.8.0",
 ]
 dependency_links = [
     # need to use --process-dependency-links option for this
