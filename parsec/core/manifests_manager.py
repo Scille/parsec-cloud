@@ -81,6 +81,9 @@ class ManifestsManager(BaseAsyncComponent):
             manifest, _ = TypedManifestSchema(strict=True).load(msg)
             return manifest
 
+    def remove_from_local2(self, id):
+        self._local_storage.remove_manifest_local_data(id)
+
     async def fetch_from_local(self, id, key):
         ciphered_msg = self._local_storage.fetch_manifest(id)
         if ciphered_msg:

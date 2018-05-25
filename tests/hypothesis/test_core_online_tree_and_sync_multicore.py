@@ -257,8 +257,8 @@ assert rep["status"] == "ok"
             assert rep3["status"] == "ok"
             note("sync 1: %r" % rep3)
 
-            fs_dump_1 = self.core_1.fs._dump_local_fs()
-            fs_dump_2 = self.core_2.fs._dump_local_fs()
+            fs_dump_1 = self.core_1.fs._local_tree.dump()
+            fs_dump_2 = self.core_2.fs._local_tree.dump()
             note("core_1 fs dump: " + pprint.pformat(fs_dump_1))
             note("core_2 fs dump: " + pprint.pformat(fs_dump_2))
             compare_fs_dumps(fs_dump_1, fs_dump_2)

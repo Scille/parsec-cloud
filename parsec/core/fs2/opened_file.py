@@ -52,3 +52,44 @@ def fast_forward_file_manifest(new_base, current):
     merged["base_version"] = new_base["version"]
     merged["need_sync"] = False
     return merged
+
+
+@attr.s
+class OpenedFilesManager:
+    device = attr.ib()
+    manifests_manager = attr.ib()
+    blocks_manager = attr.ib()
+    _opened_files = attr.ib(default=attr.Factory(dict))
+
+    def is_opened(self, access):
+        need_flush = access["id"] in self._opened_files
+
+
+#         # size, in_ram, in_local, in_remote = entry.get_read_map(size, offset)
+
+#         return b""
+#         # TODO: finish this...
+
+#         # fd = self._open_file(access, manifest)
+
+#         # # Start of atomic operations
+
+#         # size, in_ram, in_local, in_remote = entry.get_read_map(size, offset)
+
+#         # buffer = bytearray(size)
+
+#         # for start, end, content in in_ram:
+#         #     buffer[start, end] = content
+
+#         # for start, end, id in in_local:
+#         #     content = self.store.get_block(id)
+#         #     buffer[start, end] = content
+
+#         # # End of atomic operations
+
+#         # for start, end, content in in_remote:
+#         #     await self.blocks_manager.fetch_from_backend()
+#         #     content = await self.store.get_remote_block(id)
+#         #     buffer[start, end] = content
+
+#         # return content

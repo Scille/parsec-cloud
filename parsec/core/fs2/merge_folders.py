@@ -4,6 +4,7 @@ def compare_entries(a, b):
     try:
         return a["id"] == b["id"]
     except KeyError:
+        # TODO: useful ?
         return a["local_id"] == b["local_id"]
 
 
@@ -80,13 +81,15 @@ def merge_remote_folder_manifests(base, diverged, target):
     assert version + 1 == diverged["version"]
     assert target["version"] >= diverged["version"]
 
-    children, modified = merge_children(base_children, diverged["children"], target["children"])
+    children, modified = merge_children(
+        base_children, diverged["children"], target["children"]
+    )
 
     if target["updated"] > diverged["updated"]:
         updated = target["updated"]
     else:
         updated = diverged["updated"]
-    return {**target, "updated": updated, "children": children}, modified
+    return {**target, "updated": updated, "children": children}
 
 
 def merge_local_folder_manifests(base, diverged, target):
@@ -99,10 +102,14 @@ def merge_local_folder_manifests(base, diverged, target):
     assert version == diverged["base_version"]
     assert target["base_version"] > diverged["base_version"]
 
-    children, modified = merge_children(base_children, diverged["children"], target["children"])
+    children, modified = merge_children(
+        base_children, diverged["children"], target["children"]
+    )
 
+    # TODO: potentially unsafe if two modifications are done within the same millisecond
+    need_sync = base["updated"] < diverged["updated"]
     if target["updated"] > diverged["updated"]:
         updated = target["updated"]
     else:
         updated = diverged["updated"]
-    return {**target, "updated": updated, "children": children}, modified
+    return {**target, "need_sync": need_sync, "updated": updated, "children": children}

@@ -69,6 +69,11 @@ class LocalStorage(BaseAsyncComponent):
         cur.execute("UPDATE manifests SET id=? WHERE id=?", (new_id, id))
         self.conn.commit()
 
+    def remove_manifest_local_data(self, id):
+        cur = self.conn.cursor()
+        cur.execute("DELETE FROM manifests WHERE id=?", (id,))
+        self.conn.commit()
+
     def fetch_block(self, id):
         cur = self.conn.cursor()
         cur.execute("SELECT blob FROM blocks WHERE id=?", (id,))
