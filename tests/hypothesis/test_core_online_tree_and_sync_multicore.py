@@ -56,9 +56,11 @@ import os
 
 from parsec.utils import to_jsonb64
 
+from tests.hypothesis.test_core_online_tree_and_sync_multicore import compare_fs_dumps
+
 
 @pytest.mark.trio
-async def test_reproduce(running_backend, alice_core_sock, alice2_core2_sock):
+async def test_reproduce(running_backend, core, alice_core_sock, core2, alice2_core2_sock):
     socks = {'core_1': alice_core_sock, 'core_2': alice2_core2_sock}
 """
     )
@@ -174,7 +176,7 @@ assert rep["status"] in ("ok", "invalid_path")
         @rule(path=Files, core=st_core)
         @reproduce_rule(
             """
-await socks[{core}].send({{"cmd": "delete", "path": {path} }})
+await socks[{core}].send({{"cmd": "delete", "path": {path}}})
 rep = await socks[{core}].recv()
 assert rep["status"] in ("ok", "invalid_path")
 """
@@ -241,6 +243,10 @@ assert rep["status"] == "ok"
 await socks["core_1"].send({{"cmd": "synchronize", "path": "/"}})
 rep = await socks["core_1"].recv()
 assert rep["status"] == "ok"
+
+fs_dump_1 = core.fs._local_tree.dump()
+fs_dump_2 = core2.fs._local_tree.dump()
+compare_fs_dumps(fs_dump_1, fs_dump_2)
 """
         )
         def sync_all_the_files(self):

@@ -1,6 +1,11 @@
 import attr
 from functools import wraps
-from hypothesis.stateful import RuleBasedStateMachine, rule as vanilla_rule, precondition
+from hypothesis.stateful import (
+    RuleBasedStateMachine,
+    rule as vanilla_rule,
+    precondition,
+    VarReference,
+)
 from huepy import red, bold
 
 
@@ -163,18 +168,18 @@ class BaseFailureReproducer:
 async def test_reproduce(alice_core_sock, alice2_core2_sock):
 """
 
-    def print_start(self):
-        super().print_start()
-        self._failure_reproducer_code = [self._FAILURE_REPRODUCER_CODE_HEADER]
-
-    def print_end(self):
-        super().print_end()
-        print("============================ REPRODUCE CODE ========================")
-        print("\n".join(self._failure_reproducer_code))
-        print("====================================================================")
+    def teardown(self):
+        super().teardown()
+        if hasattr(self, "_failure_reproducer_code"):
+            print("============================ REPRODUCE CODE ========================")
+            print("\n".join(self._failure_reproducer_code))
+            print("====================================================================")
 
     def print_step(self, step):
         super().print_step(step)
+
+        if not hasattr(self, "_failure_reproducer_code"):
+            self._failure_reproducer_code = [self._FAILURE_REPRODUCER_CODE_HEADER]
 
         rule, data = step
         template = getattr(rule.function, "_reproduce_template", None)

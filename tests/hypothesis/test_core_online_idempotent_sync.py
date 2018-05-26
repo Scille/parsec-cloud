@@ -12,10 +12,10 @@ from tests.hypothesis.common import rule, rule_once
 
 
 def check_fs_dump(entry):
-    assert not entry['need_sync']
-    assert entry['base_version'] == 1
-    if 'children' in entry:
-        for k, v in entry['children'].items():
+    assert not entry["need_sync"]
+    assert entry["base_version"] == 1
+    if "children" in entry:
+        for k, v in entry["children"].items():
             check_fs_dump(v)
 
 
@@ -56,9 +56,7 @@ async def test_online_core_idempotent_sync(
                     author="<backend-fixture>",
                     user_id=alice.user_id,
                     broadcast_key=alice.user_pubkey.encode(),
-                    devices=[
-                        (alice.device_name, alice.device_verifykey.encode()),
-                    ],
+                    devices=[(alice.device_name, alice.device_verifykey.encode())],
                 )
 
                 async with run_app(backend) as backend_connection_factory:
@@ -69,10 +67,10 @@ async def test_online_core_idempotent_sync(
 
                             await self.core.login(alice)
 
-                            await self.core.fs.file_create('/good_file.txt')
-                            await self.core.fs.folder_create('/good_folder')
-                            await self.core.fs.file_create('/good_folder/good_sub_file.txt')
-                            await self.core.fs.sync('/')
+                            await self.core.fs.file_create("/good_file.txt")
+                            await self.core.fs.folder_create("/good_folder")
+                            await self.core.fs.file_create("/good_folder/good_sub_file.txt")
+                            await self.core.fs.sync("/")
 
                             async with connect_core(self.core) as sock:
                                 task_status.started()
@@ -88,9 +86,14 @@ async def test_online_core_idempotent_sync(
 
         @rule_once(target=BadPath)
         def init_bad_path(self):
-            return '/dummy'
+            return "/dummy"
 
-        @rule(target=GoodPath, path=st.sampled_from(['/', '/good_file.txt', '/good_folder', '/good_folder/good_sub_file.txt']))
+        @rule(
+            target=GoodPath,
+            path=st.sampled_from(
+                ["/", "/good_file.txt", "/good_folder", "/good_folder/good_sub_file.txt"]
+            ),
+        )
         def init_good_path(self, path):
             return path
 
@@ -126,7 +129,7 @@ async def test_online_core_idempotent_sync(
 
         @rule(src=BadPath, dst_name=st_entry_name)
         def try_to_move_bad_src(self, src, dst_name):
-            dst = '/%s' % dst_name
+            dst = "/%s" % dst_name
             rep = self.core_cmd({"cmd": "move", "src": src, "dst": dst})
             note(rep)
             assert rep["status"] == "invalid_path"
