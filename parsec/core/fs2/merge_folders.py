@@ -14,7 +14,7 @@ def merge_children(base, diverged, target):
     # resolved.
     all_entries = diverged.keys() | target.keys()
     resolved = {}
-    modified = False
+    need_sync = False
 
     for entry_name in all_entries:
         base_entry = base.get(entry_name)
@@ -30,6 +30,7 @@ def merge_children(base, diverged, target):
 
         elif compare_entries(target_entry, base_entry):
             # Entry has been modified on diverged side only
+            need_sync = True
             if diverged_entry:
                 resolved[entry_name] = diverged_entry
 
@@ -41,18 +42,21 @@ def merge_children(base, diverged, target):
         else:
             # Entry modified on both side...
             if not target_entry:
+                need_sync = True
                 # Entry removed on target side, apply diverged modifications
-                # not to loose them (unless it is a remove of course)
+                # not to loose them
                 # TODO: rename entry to `<name>.deleted` ?
                 resolved[entry_name] = diverged_entry
 
             elif not diverged_entry:
+                need_sync = True
                 # Entry removed on diverged side and modified (no remove) on
                 # target side, just apply them
                 # TODO: rename entry to `<name>.deleted` ?
                 resolved[entry_name] = target_entry
 
             else:
+                need_sync = True
                 # Entry modified on both side (no remove), conflict !
                 resolved[entry_name] = target_entry
                 conflict_entry_name = entry_name
@@ -66,9 +70,7 @@ def merge_children(base, diverged, target):
                         resolved[conflict_entry_name] = diverged[entry_name]
                         break
 
-        modified = True
-
-    return resolved, modified
+    return resolved, need_sync
 
 
 def merge_remote_folder_manifests(base, diverged, target):
@@ -81,15 +83,17 @@ def merge_remote_folder_manifests(base, diverged, target):
     assert version + 1 == diverged["version"]
     assert target["version"] >= diverged["version"]
 
-    children, modified = merge_children(
-        base_children, diverged["children"], target["children"]
-    )
+    children, need_sync = merge_children(base_children, diverged["children"], target["children"])
 
-    if target["updated"] > diverged["updated"]:
+    if not need_sync:
         updated = target["updated"]
     else:
-        updated = diverged["updated"]
-    return {**target, "updated": updated, "children": children}
+        if target["updated"] > diverged["updated"]:
+            updated = target["updated"]
+        else:
+            updated = diverged["updated"]
+
+    return {**target, "updated": updated, "children": children}, need_sync
 
 
 def merge_local_folder_manifests(base, diverged, target):
@@ -102,14 +106,15 @@ def merge_local_folder_manifests(base, diverged, target):
     assert version == diverged["base_version"]
     assert target["base_version"] > diverged["base_version"]
 
-    children, modified = merge_children(
-        base_children, diverged["children"], target["children"]
-    )
+    children, need_sync = merge_children(base_children, diverged["children"], target["children"])
 
-    # TODO: potentially unsafe if two modifications are done within the same millisecond
-    need_sync = base["updated"] < diverged["updated"]
-    if target["updated"] > diverged["updated"]:
+    if not need_sync:
         updated = target["updated"]
     else:
-        updated = diverged["updated"]
+        # TODO: potentially unsafe if two modifications are done within the same millisecond
+        if target["updated"] > diverged["updated"]:
+            updated = target["updated"]
+        else:
+            updated = diverged["updated"]
+
     return {**target, "need_sync": need_sync, "updated": updated, "children": children}

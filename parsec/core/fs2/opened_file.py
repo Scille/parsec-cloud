@@ -46,12 +46,20 @@ class OpenedFile:
         pass
 
 
-def fast_forward_file_manifest(new_base, current):
+def fast_forward_file_manifest(new_remote_base, current):
     # TODO: must be greatly improved...
-    merged = deepcopy(current)
-    merged["base_version"] = new_base["version"]
-    merged["need_sync"] = False
-    return merged
+    return {
+        "type": "local_file_manifest",
+        "blocks": new_remote_base["blocks"],
+        "created": new_remote_base["created"],
+        "device_name": new_remote_base["device_name"],
+        "dirty_blocks": [],
+        "need_sync": False,
+        "base_version": new_remote_base["version"],
+        "size": new_remote_base["size"],
+        "updated": new_remote_base["updated"],
+        "user_id": new_remote_base["user_id"],
+    }
 
 
 @attr.s

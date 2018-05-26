@@ -15,11 +15,7 @@ from parsec.core.fs2.utils import (
     convert_to_remote_manifest,
     convert_to_local_manifest,
 )
-from parsec.core.fs2.opened_file import (
-    OpenedFile,
-    fast_forward_file_manifest,
-    OpenedFilesManager,
-)
+from parsec.core.fs2.opened_file import OpenedFile, fast_forward_file_manifest, OpenedFilesManager
 from parsec.core.fs2.merge_folders import (
     merge_remote_folder_manifests,
     merge_local_folder_manifests,
@@ -34,9 +30,7 @@ class FSOpsMixin(FSBase):
             raise InvalidPath("Path `/` already exists")
 
         parent_path, file_name = normalize_path(path)
-        parent_access, parent_manifest = await self._local_tree.retrieve_entry(
-            parent_path
-        )
+        parent_access, parent_manifest = await self._local_tree.retrieve_entry(parent_path)
         if not is_folder_manifest(parent_manifest):
             raise InvalidPath("Path `%s` is not a folder" % parent_path)
         if file_name in parent_manifest["children"]:
@@ -134,40 +128,48 @@ class FSOpsMixin(FSBase):
 
         src_parent_path, src_file_name = normalize_path(src)
         dst_parent_path, dst_file_name = normalize_path(dst)
-        (src_parent_access, src_parent_manifest), (
-            dst_parent_access,
-            dst_parent_manifest,
-        ) = await self._local_tree.retrieve_entries(src_parent_path, dst_parent_path)
+        if src_parent_path == dst_parent_path:
+            parent_access, parent_manifest = await self._local_tree.retrieve_entry(src_parent_path)
 
-        if not is_folder_manifest(src_parent_manifest):
-            raise InvalidPath("Path `%s` is not a folder" % src_parent_path)
-        if not is_folder_manifest(dst_parent_manifest):
-            raise InvalidPath("Path `%s` is not a folder" % dst_parent_path)
+            if not is_folder_manifest(parent_manifest):
+                raise InvalidPath("Path `%s` is not a folder" % src_parent_path)
 
-        if src_file_name not in src_parent_manifest["children"]:
-            raise InvalidPath("Path `%s` doesn't exists" % src)
+            if dst_file_name in parent_manifest["children"]:
+                raise InvalidPath("Path `%s` already exists" % dst)
 
-        if dst_file_name in dst_parent_manifest["children"]:
-            raise InvalidPath("Path `%s` already exists" % dst)
+            try:
+                target_access = parent_manifest["children"].pop(src_file_name)
+            except KeyError:
+                raise InvalidPath("Path `%s` doesn't exists" % src)
+            parent_manifest["children"][dst_file_name] = target_access
 
-        # TODO: useful ?
-        if src == dst:
-            return {
-                "status": "invalid_path",
-                "reason": "Cannot move `%s` to itself" % src,
-            }
+            self._local_tree.update_entry(parent_access, parent_manifest)
 
-        if dst.startswith(src + "/"):
-            raise InvalidPath("Cannot move `%s` to a subdirectory of itself" % src)
+        else:
+            (src_parent_access, src_parent_manifest), (
+                dst_parent_access,
+                dst_parent_manifest,
+            ) = await self._local_tree.retrieve_entries(src_parent_path, dst_parent_path)
 
-        try:
-            target_access = src_parent_manifest["children"].pop(src_file_name)
-        except KeyError:
-            raise InvalidPath("Path `%s` doesn't exists" % src)
-        dst_parent_manifest["children"][dst_file_name] = target_access
+            if not is_folder_manifest(src_parent_manifest):
+                raise InvalidPath("Path `%s` is not a folder" % src_parent_path)
+            if not is_folder_manifest(dst_parent_manifest):
+                raise InvalidPath("Path `%s` is not a folder" % dst_parent_path)
 
-        self._local_tree.update_entry(src_parent_access, src_parent_manifest)
-        self._local_tree.update_entry(dst_parent_access, dst_parent_manifest)
+            if dst_file_name in dst_parent_manifest["children"]:
+                raise InvalidPath("Path `%s` already exists" % dst)
+
+            if dst.startswith(src + "/"):
+                raise InvalidPath("Cannot move `%s` to a subdirectory of itself" % src)
+
+            try:
+                target_access = src_parent_manifest["children"].pop(src_file_name)
+            except KeyError:
+                raise InvalidPath("Path `%s` doesn't exists" % src)
+            dst_parent_manifest["children"][dst_file_name] = target_access
+
+            self._local_tree.update_entry(src_parent_access, src_parent_manifest)
+            self._local_tree.update_entry(dst_parent_access, dst_parent_manifest)
 
     # async def copy(self):
     #     pass
@@ -176,9 +178,7 @@ class FSOpsMixin(FSBase):
         if path == "/":
             raise InvalidPath("Cannot delete `/` root folder")
         parent_path, file_name = normalize_path(path)
-        parent_access, parent_manifest = await self._local_tree.retrieve_entry(
-            parent_path
-        )
+        parent_access, parent_manifest = await self._local_tree.retrieve_entry(parent_path)
 
         try:
             file_access = parent_manifest["children"].pop(file_name)

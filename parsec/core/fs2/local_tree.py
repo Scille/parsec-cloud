@@ -7,6 +7,7 @@ from parsec.core.fs2.utils import (
     is_placeholder_access,
     is_folder_manifest,
     copy_manifest,
+    convert_to_local_manifest,
 )
 from parsec.core.fs2.exceptions import InvalidPath
 
@@ -54,35 +55,28 @@ class LocalTree:
 
     def _recursive_load_local_manifests(self, folder_manifest):
         for access in folder_manifest["children"].values():
-            manifest = self.manifests_manager.fetch_from_local2(
-                access["id"], access["key"]
-            )
+            manifest = self.manifests_manager.fetch_from_local2(access["id"], access["key"])
             if not manifest:
                 # This entry is not in local storage, just skip it
                 continue
             # Sanity check: make sure each manifest is not present multiple
             # times in our tree to avoid loops and cache corruptions
             if access["id"] in self._manifests_cache:
-                raise RuntimeError(
-                    "Access %r is present in multiple manifests" % access
-                )
+                raise RuntimeError("Access %r is present in multiple manifests" % access)
             self._manifests_cache[access["id"]] = manifest
             if "children" in manifest:
                 self._recursive_load_local_manifests(manifest)
 
     def retrieve_entry_by_access(self, access):
         if not access:
-            return self._root_manifest_cache
+            return copy_manifest(self._root_manifest_cache)
         try:
-            return self._manifests_cache[access["id"]]
+            return copy_manifest(self._manifests_cache[access["id"]])
         except KeyError:
-            if (
-                is_placeholder_access(access)
-                and access["id"] in self._resolved_placeholder_accesses
-            ):
-                resolved_access = self._resolved_placeholder_accesses.get(access["id"])
-                if resolved_access:
-                    return self.retrieve_entry_by_access(resolved_access)
+            if is_placeholder_access(access):
+                resolved_access_id = self._resolved_placeholder_accesses.get(access["id"])
+                if resolved_access_id:
+                    return copy_manifest(self._manifests_cache[resolved_access_id])
             raise
 
     async def retrieve_entries(self, *paths):
@@ -115,7 +109,7 @@ class LocalTree:
                     # Local cache miss, nothing we can do here
                     raise NotInLocalTreeError(access)
 
-        return access, current
+        return access, copy_manifest(current)
 
     async def retrieve_entry(self, path):
         while True:
@@ -135,19 +129,15 @@ class LocalTree:
                     # No concurrent write, it's up to us to update the
                     # local cache with this new entry
                     self._manifests_cache[access["id"]] = manifest
-                    self.manifests_manager.flush_on_local2(
-                        access["id"], access["key"], manifest
-                    )
+                    self.manifests_manager.flush_on_local2(access["id"], access["key"], manifest)
 
     def overwrite_entry(self, access, manifest):
         if not access:
-            self._root_manifest_cache = manifest
             self.manifests_manager.flush_user_manifest_on_local2(manifest)
+            self._root_manifest_cache = manifest
         else:
+            self.manifests_manager.flush_on_local2(access["id"], access["key"], manifest)
             self._manifests_cache[access["id"]] = manifest
-            self.manifests_manager.flush_on_local2(
-                access["id"], access["key"], manifest
-            )
 
     def update_entry(self, access, manifest):
         manifest["updated"] = pendulum.now()
@@ -156,28 +146,21 @@ class LocalTree:
 
     def resolve_placeholder_access(self, placeholder_access, resolved_access):
         manifest = self._manifests_cache.pop(placeholder_access["id"])
+        self.manifests_manager.flush_on_local2(
+            resolved_access["id"], resolved_access["key"], manifest
+        )
         self._manifests_cache[resolved_access["id"]] = manifest
-        self._resolved_placeholder_accesses[placeholder_access["id"]] = resolved_access[
-            "id"
-        ]
+        self._resolved_placeholder_accesses[placeholder_access["id"]] = resolved_access["id"]
+        self.manifests_manager.remove_from_local2(placeholder_access["id"])
 
-    def move_modified_entry_to_placeholder(
-        self, parent_access, parent_manifest, access, diverged_manifest, diverged_name
-    ):
-
-        # First create a new placeholder containing the diverged data
-        new_access = self.insert_new_entry(diverged_manifest)
-
-        # Now udpate the parent manifest to link to the new placeholder
-        parent_manifest["children"][diverged_name] = new_access
-        self.update_entry(parent_access, parent_manifest)
-
-        # Finally we can rollback the original diverged entry by removing
-        # it local data. Note this must be done last to avoid losing data
-        # if something goes wrong.
-        self.manifests_manager.remove_from_local2(access["id"])
-
-        return new_access
+    def move_entry_modifications(self, old_access, new_access):
+        try:
+            manifest = self._manifests_cache.pop(old_access["id"])
+        except KeyError:
+            pass
+        self._manifests_cache[new_access["id"]] = manifest
+        self.manifests_manager.flush_on_local2(new_access["id"], new_access["key"], manifest)
+        self.manifests_manager.remove_from_local2(old_access["id"])
 
     def insert_new_entry(self, manifest):
         access = new_placeholder_access()

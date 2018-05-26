@@ -3,6 +3,8 @@ import pendulum
 from uuid import uuid4
 from copy import deepcopy
 from async_generator import asynccontextmanager
+from itertools import count
+from huepy import good, bad, run, info, que
 
 from parsec.core.fs2.base import FSBase
 from parsec.core.fs2.utils import (
@@ -14,11 +16,7 @@ from parsec.core.fs2.utils import (
     convert_to_remote_manifest,
     convert_to_local_manifest,
 )
-from parsec.core.fs2.opened_file import (
-    OpenedFile,
-    fast_forward_file_manifest,
-    OpenedFilesManager,
-)
+from parsec.core.fs2.opened_file import OpenedFile, fast_forward_file_manifest, OpenedFilesManager
 from parsec.core.fs2.merge_folders import (
     merge_remote_folder_manifests,
     merge_local_folder_manifests,
@@ -31,16 +29,13 @@ def find_conflicting_name_for_child_entry(parent_manifest, original_name):
         base_name, extension = original_name.rsplit(".")
     except ValueError:
         extension = None
+        base_name = original_name
 
     now = pendulum.now()
     for tentative in count():
         tentative_str = "" if not tentative else " n°%s" % (tentative + 1)
         # TODO: Also add device id in the naming ?
-        diverged_name = "%s (conflict%s %s)" % (
-            base_name,
-            tentative_str,
-            now.to_datetime_string(),
-        )
+        diverged_name = "%s (conflict%s %s)" % (base_name, tentative_str, now.to_datetime_string())
         if extension:
             diverged_name += ".%s" % extension
 
@@ -49,6 +44,7 @@ def find_conflicting_name_for_child_entry(parent_manifest, original_name):
             break
 
 
+@attr.s
 class SyncConcurrencyError(Exception):
     access = attr.ib()
     manifest = attr.ib()
@@ -61,11 +57,11 @@ class FSSyncMixin(FSBase):
         assert path == "/"
         normalize_path(path)
         access, manifest = await self._local_tree.retrieve_entry(path)
-        await self._sync(access, manifest)
+        await self._sync(access, manifest, recursive=True)
 
-    async def _sync(self, access, manifest):
+    async def _sync(self, access, manifest, recursive=False):
         if is_folder_manifest(manifest):
-            return await self._sync_folder(access, manifest)
+            return await self._sync_folder(access, manifest, recursive=recursive)
         else:
             return await self._sync_file(access, manifest)
 
@@ -83,21 +79,25 @@ class FSSyncMixin(FSBase):
             # Build a list of the children to synchronize. This children created
             # during the synchronization are ignored.
             if isinstance(recursive, (set, tuple, list)):
-                to_sync = {
-                    k: v for k, v in manifest["children"].items() if k in recursive
-                }
+                to_sync = {k: v for k, v in manifest["children"].items() if k in recursive}
             else:
-                to_sync = manifest["children"].copy()
+                to_sync = manifest["children"]
 
             # Synchronize the children.
             for child_name, child_access in to_sync.items():
                 async with self._rename_entry_on_concurrency_error(access):
+                    try:
+                        child_manifest = self._local_tree.retrieve_entry_by_access(child_access)
+                    except KeyError:
+                        # Entry not present in local, nothing to sync then
+                        continue
+
                     if is_placeholder_access(child_access):
                         await self._sync_placeholder(
-                            access, child_access, child_manifest
+                            access, child_access, child_manifest, recursive=True
                         )
                     else:
-                        await self._sync(child_access, child_manifest)
+                        await self._sync(child_access, child_manifest, recursive=True)
 
         base_manifest = self._local_tree.retrieve_entry_by_access(access)
         # Now we can synchronize the folder if needed
@@ -110,17 +110,18 @@ class FSSyncMixin(FSBase):
                 )
             else:
                 # Placeholder means we need synchro !
-                assert access["type"] != "placeholder"
+                assert not is_placeholder_access(access)
                 target_remote_manifest = await self._manifests_manager.fetch_from_backend(
                     access["id"], access["rts"], access["key"]
                 )
             if (
                 not target_remote_manifest
-                or target_remote_manifest["version"] == manifest["base_version"]
+                or target_remote_manifest["version"] == base_manifest["base_version"]
             ):
                 return access
+            final_access = access
         else:
-            access, target_remote_manifest = await self._sync_folder_actual_sync(
+            final_access, target_remote_manifest = await self._sync_folder_actual_sync(
                 access, base_manifest
             )
 
@@ -133,7 +134,7 @@ class FSSyncMixin(FSBase):
         )
         self._local_tree.overwrite_entry(access, final_manifest)
 
-        return access
+        return final_access
 
     async def _sync_folder_actual_sync(self, access, manifest):
         # The trick here is to retreive the current version of the manifest
@@ -141,17 +142,13 @@ class FSSyncMixin(FSBase):
         # the start of our sync)
         to_sync_manifest = convert_to_remote_manifest(manifest)
         to_sync_manifest["children"] = {
-            k: v
-            for k, v in manifest["children"].items()
-            if not is_placeholder_access(v)
+            k: v for k, v in manifest["children"].items() if not is_placeholder_access(v)
         }
         # Upload the file manifest as new vlob version
         while True:
             try:
                 if not access:
-                    await self._manifests_manager.sync_user_manifest_with_backend(
-                        to_sync_manifest
-                    )
+                    await self._manifests_manager.sync_user_manifest_with_backend(to_sync_manifest)
                 elif is_placeholder_access(access):
                     id, rts, wts = await self._manifests_manager.sync_new_entry_with_backend(
                         access["key"], to_sync_manifest
@@ -173,14 +170,17 @@ class FSSyncMixin(FSBase):
                 # Do a 3-ways merge to fix the concurrency error, first we must
                 # fetch the base version and the new one present in the backend
                 # TODO: base should be available locally
+                print(bad("CONCURRENCY ERROR ! %s" % access))
                 if not access:
                     base = await self._manifests_manager.fetch_user_manifest_from_backend(
                         version=to_sync_manifest["version"] - 1
                     )
-                    target = (
-                        await self._manifests_manager.fetch_user_manifest_from_backend()
-                    )
+                    target = await self._manifests_manager.fetch_user_manifest_from_backend()
+
                 else:
+                    # Placeholder don't have remote version, so no concurrency is possible
+                    assert not is_placeholder_access(access)
+
                     base = await self._manifests_manager.fetch_from_backend(
                         access["id"],
                         access["rts"],
@@ -191,25 +191,40 @@ class FSSyncMixin(FSBase):
                         access["id"], access["rts"], access["key"]
                     )
                 # 3-ways merge between base, modified and target versions
-                to_sync_manifest = merge_remote_folder_manifests(
+                to_sync_manifest, sync_needed = merge_remote_folder_manifests(
                     base, to_sync_manifest, target
                 )
+                if not sync_needed:
+                    print(info("SYNC NOT NEEDED %s %s" % (access, to_sync_manifest)))
+                    # It maybe possible the changes that cause the concurrency
+                    # error were the same than the one we wanted to make in the
+                    # first place (e.g. when removing the same file)
+                    break
                 to_sync_manifest["version"] = target["version"] + 1
 
         return access, to_sync_manifest
 
-    async def _sync_placeholder(self, parent_access, access, manifest):
+    async def _sync_placeholder(self, parent_access, access, manifest, recursive):
         assert is_placeholder_access(access)
-        new_access = await self._sync(access, manifest)
+        new_access = await self._sync(access, manifest, recursive=recursive)
 
         parent_manifest = self._local_tree.retrieve_entry_by_access(parent_access)
         assert is_folder_manifest(parent_manifest)
+        try:
+            name = next(
+                n for n, a in parent_manifest["children"].items() if a["id"] == access["id"]
+            )
+        except StopIteration:
+            # Entry is no longer present in the parent manifest (must have
+            # been removed in the meantime), just forget about it
+            return
+        parent_manifest["children"][name] = new_access
 
-        parent_manifest["children"][new_name] = new_access
         self._local_tree.update_entry(parent_access, parent_manifest)
+        self._local_tree.resolve_placeholder_access(access, new_access)
 
     @asynccontextmanager
-    async def _rename_entry_on_concurrency_error(parent_access):
+    async def _rename_entry_on_concurrency_error(self, parent_access):
         try:
             yield
 
@@ -239,9 +254,7 @@ class FSSyncMixin(FSBase):
                 return
 
             # Find a new cool name and save the parent manifest in local storage.
-            new_name = find_conflicting_name_for_child_entry(
-                parent_manifest, original_name
-            )
+            new_name = find_conflicting_name_for_child_entry(parent_manifest, original_name)
             parent_manifest["children"][new_name] = new_access
             self._local_tree.update_entry(parent_access, parent_manifest)
 
@@ -250,51 +263,67 @@ class FSSyncMixin(FSBase):
             # It's possible the conflicting data have been updated since we
             # tried synchronizing them. To avoid another concurrency error,
             # we simply move those changes to our new entry.
-            self._local_tree.move_local_manifest(exc.access, new_access)
+            # TODO: improve the way we access local tree
+            current_manifest = self._local_tree.retrieve_entry_by_access(exc.access)
+            final_manifest = fast_forward_file_manifest(exc.manifest, current_manifest)
+            self._local_tree.move_entry_modifications(exc.access, new_access)
+            self._local_tree.overwrite_entry(new_access, final_manifest)
 
     async def _sync_file(self, access, manifest):
         if not manifest["need_sync"]:
             # Placeholder means we need synchro !
-            assert access["type"] != "placeholder"
+            assert not is_placeholder_access(access)
 
             # This file hasn't been modified locally,
             # just download last version from the backend if any.
-            target_manifest = await self._manifests_manager.fetch_from_backend(
+            target_remote_manifest = await self._manifests_manager.fetch_from_backend(
                 access["id"], access["rts"], access["key"]
             )
-            if target_manifest["version"] != manifest["base_version"]:
-                if manifest["need_sync"]:
-                    raise SyncConcurrencyError(access, manifest)
-                else:
-                    target_manifest = convert_to_local_manifest(target_manifest)
-                    self._manifests_cache[access["id"]] = target_manifest
-                    self._flush_entry(access, target_manifest)
+
+            current_manifest = self._local_tree.retrieve_entry_by_access(access)
+            if target_remote_manifest["version"] != current_manifest["base_version"]:
+                if current_manifest["need_sync"]:
+                    raise SyncConcurrencyError(access, convert_to_remote_manifest(current_manifest))
+            final_access = access
 
         else:
             # The file has been locally modified, time to sync it with the backend !
             # TODO
             # fd = self._open_file(access, manifest)
             # ...
-            snapshot_manifest = convert_to_remote_manifest(manifest)
+
+            to_sync_manifest = convert_to_remote_manifest(manifest)
             try:
-                if access["type"] == "placeholder":
+                if is_placeholder_access(access):
+                    print(info("placeholder sync %s %s" % (access, to_sync_manifest)))
                     id, rts, wts = await self._manifests_manager.sync_new_entry_with_backend(
-                        access["key"], snapshot_manifest
+                        access["key"], to_sync_manifest
                     )
-                    access.update(id=id, rts=rts, wts=wts, type="vlob")
+                    final_access = {
+                        "key": access["key"],
+                        "id": id,
+                        "rts": rts,
+                        "wts": wts,
+                        "type": "vlob",
+                    }
                 else:
+                    print(info("SYNC FILE %s %s" % (access, to_sync_manifest)))
                     await self._manifests_manager.sync_with_backend(
-                        access["id"], access["wts"], access["key"], snapshot_manifest
+                        access["id"], access["wts"], access["key"], to_sync_manifest
                     )
+                    final_access = access
+                target_remote_manifest = to_sync_manifest
+
             except BackendConcurrencyError as exc:
-                raise SyncConcurrencyError(access, manifest) from exc
+                print(bad("CONCURRENCY ERROR ! %s" % access))
+                raise SyncConcurrencyError(access, to_sync_manifest) from exc
 
-            # Finally fast forward the manifest with it new base version
-            # TODO
-            manifest = fast_forward_file_manifest(snapshot_manifest, manifest)
-            # Note the manifest is still kept in the cache with it
-            # previous placeholder id
-            self._manifests_cache[access["id"]] = manifest
-            self._flush_entry(access, manifest)
+            current_manifest = self._local_tree.retrieve_entry_by_access(access)
 
-        return access
+        # Finally fast forward the current version of the manifest which may
+        # have been modified in the meantime
+        final_manifest = fast_forward_file_manifest(target_remote_manifest, current_manifest)
+        print(info("SYNC FILE DONE %s %s" % (final_access, final_manifest)))
+        self._local_tree.overwrite_entry(access, final_manifest)
+
+        return final_access

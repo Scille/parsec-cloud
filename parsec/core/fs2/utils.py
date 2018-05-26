@@ -91,12 +91,13 @@ def copy_manifest(manifest):
 
 
 def convert_to_remote_manifest(local_manifest):
-    manifest = deepcopy(local_manifest)
+    manifest = copy_manifest(local_manifest)
     del manifest["need_sync"]
     manifest["version"] = manifest.pop("base_version") + 1
     local_type = manifest["type"]
     if local_type == "local_file_manifest":
         manifest["type"] = "file_manifest"
+        del manifest["dirty_blocks"]
     elif local_type == "local_folder_manifest":
         manifest["type"] = "folder_manifest"
     elif local_type == "local_user_manifest":
@@ -110,12 +111,13 @@ def convert_to_remote_manifest(local_manifest):
 
 
 def convert_to_local_manifest(manifest):
-    local_manifest = deepcopy(manifest)
+    local_manifest = copy_manifest(manifest)
     local_manifest["need_sync"] = False
     local_manifest["base_version"] = local_manifest.pop("version")
     remote_type = manifest["type"]
     if remote_type == "file_manifest":
         local_manifest["type"] = "local_file_manifest"
+        local_manifest["dirty_blocks"] = []
     elif remote_type == "folder_manifest":
         local_manifest["type"] = "local_folder_manifest"
     elif remote_type == "user_manifest":
