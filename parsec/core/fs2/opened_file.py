@@ -1,6 +1,8 @@
 import attr
 import pendulum
-from copy import deepcopy
+from itertools import dropwhile
+
+from parsec.core.fs2.buffer_ordering import quick_filter_block_accesses, Buffer, merge_buffers
 
 
 @attr.s(slots=True)
@@ -9,9 +11,13 @@ class WriteCmd:
     buffer = attr.ib()
     datetime = attr.ib(default=attr.Factory(pendulum.now))
 
+    @property
+    def end(self):
+        return self.offset + len(self.buffer)
+
 
 @attr.s(slots=True)
-class SnapshotCmd:
+class MarkerCmd:
     datetime = attr.ib(default=attr.Factory(pendulum.now))
 
 
@@ -22,28 +28,101 @@ class TruncateCmd:
 
 
 @attr.s(slots=True)
+class RamBuffer(Buffer):
+    pass
+
+
+@attr.s(slots=True)
+class DirtyBlockBuffer(Buffer):
+    pass
+
+
+@attr.s(slots=True)
+class BlockBuffer(Buffer):
+    pass
+
+
 class OpenedFile:
-    access = attr.ib()
-    manifest = attr.ib()
-    _cmds_list = attr.ib(default=attr.Factory(list))
+    def __init__(self, access, manifest):
+        self.access = access
+        self.manifest = manifest
+        self.size = manifest['size']
+        self._cmds_list = []
 
     def write(self, content: bytes, offset: int = -1):
-        self._cmds_list.append(WriteCmd(content, offset))
+        if offset == -1 or offset > self.size:
+            offset = self.size
+        self._cmds_list.append(WriteCmd(offset, content))
+        end = offset + len(content)
+        if end > self.size:
+            self.size = end
 
     def truncate(self, length):
-        self._cmds_list.append(TruncateCmd(length))
+        if length < self.size:
+            self.size = length
 
     def compact(self):
         pass
 
     def get_read_map(self, size: int = -1, offset: int = 0):
-        return (0, [], [], [])
+        if offset >= self.size:
+            return 0, (), (), ()
 
-    def snapshot(self):
-        self._cmds_list.append(SnapshotCmd())
+        start = offset
+        end = offset + size
+
+        in_ram = [RamBuffer(x.offset, x.end, x.buffer) for x in self._cmds_list if isinstance(x, WriteCmd)]
+        dirty_blocks = [DirtyBlockBuffer(*x) for x in quick_filter_block_accesses(self.manifest['dirty_blocks'], start, end)]
+        blocks = [BlockBuffer(*x) for x in quick_filter_block_accesses(self.manifest['blocks'], start, end)]
+
+        merged = merge_buffers(in_ram + dirty_blocks + blocks, size, offset)
+        assert len(merged.spaces) == 1
+
+        opened_file_rm = []
+        dirty_blocks_rm = []
+        blocks_rm = []
+        for bs in merged.spaces[0].buffers:
+            if isinstance(bs.buffer, RamBuffer):
+                opened_file_rm.append(bs)
+            elif isinstance(bs.buffer, DirtyBlockBuffer):
+                blocks_rm.append(bs)
+            else:  # BlockBuffer
+                dirty_blocks_rm.append(bs)
+
+        return merged.size, opened_file_rm, dirty_blocks_rm, blocks_rm
+
+    def create_marker(self):
+        marker = MarkerCmd()
+        self._cmds_list.append(marker)
+        return marker
+
+    def drop_until_marker(self, marker):
+        marker_found = False
+
+        def drop_until_marker_is_found(x):
+            nonlocal marker_found
+            marker_found = x is marker
+            return marker_found
+
+        tmp_list = list(dropwhile(drop_until_marker_is_found, self._cmds_list))
+        # In case two concurrent marker have been created, it's possible
+        # the second has destroyed the first if it finishes first
+        if marker_found:
+            self._cmds_list = tmp_list
 
     def get_flush_map(self):
-        pass
+        in_ram = [RamBuffer(x.offset, x.end, x.buffer) for x in self._cmds_list if isinstance(x, WriteCmd)]
+
+        merged = merge_buffers(in_ram)
+
+        buffers = []
+        for cs in merged.spaces:
+            data = bytearray(cs.size)
+            for bs in cs.buffers:
+                data[bs.start: bs.end] = bs.buffer.data[bs.buffer_slice_start: bs.buffer_slice_end]
+            buffers.append(Buffer(cs.start, cs.end, data))
+
+        return self.size, buffers
 
 
 def fast_forward_file_manifest(new_remote_base, current):
@@ -67,17 +146,44 @@ class OpenedFilesManager:
     device = attr.ib()
     manifests_manager = attr.ib()
     blocks_manager = attr.ib()
-    _opened_files = attr.ib(default=attr.Factory(dict))
+    _opened_files = attr.ib(factory=dict)
+    _resolved_placeholder_accesses = attr.ib(factory=dict)
 
     def is_opened(self, access):
         return access["id"] in self._opened_files
 
+    def _file_lookup(self, id):
+        try:
+            return self._opened_files[id]
+        except KeyError:
+            try:
+                return self._opened_files[self._resolved_placeholder_accesses[id]]
+            except KeyError:
+                return None
+
     def open_file(self, access, manifest):
-        fd = self._opened_files.get(access["id"])
+        fd = self._file_lookup(access['id'])
         if not fd:
             fd = OpenedFile(access, manifest)
         self._opened_files[access["id"]] = fd
         return fd
+
+    def close_file(self, access):
+        id = access['id']
+        try:
+            res = self._opened_files.pop(id)
+            self._resolved_placeholder_accesses = {k: v for k, v in self._resolved_placeholder_accesses.items() if v != id}
+            return res
+        except KeyError:
+            id = self._resolved_placeholder_accesses.pop(id)
+            return self._opened_files.pop(id)
+
+    def resolve_placeholder_access(self, placeholder_access, resolved_access):
+        try:
+            self._opened_files[resolved_access['id']] = self._opened_files.pop(placeholder_access['id'])
+        except KeyError:
+            return
+        self._resolved_placeholder_accesses[placeholder_access['id']] = resolved_access['id']
 
     def flush_all(self):
         pass

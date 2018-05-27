@@ -61,7 +61,8 @@ from tests.hypothesis.test_core_online_tree_and_sync_multicore import compare_fs
 
 @pytest.mark.trio
 async def test_reproduce(running_backend, core, alice_core_sock, core2, alice2_core2_sock):
-    socks = {'core_1': alice_core_sock, 'core_2': alice2_core2_sock}
+    socks = {{'core_1': alice_core_sock, 'core_2': alice2_core2_sock}}
+    {body}
 """
     )
     class MultiCoreTreeAndSync(TrioDriverRuleBasedStateMachine):

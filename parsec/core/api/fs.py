@@ -89,7 +89,7 @@ async def file_read(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
     req = cmd_FILE_READ_Schema().load_or_abort(req)
     try:
-        content = await core.fs.file_read(req["path"], req["offset"])
+        content = await core.fs.file_read(req["path"], req["size"], req["offset"])
     except InvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
     return {"status": "ok", "content": to_jsonb64(content)}

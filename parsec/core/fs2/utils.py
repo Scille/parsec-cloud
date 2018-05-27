@@ -45,6 +45,10 @@ def new_placeholder_access():
     return {"type": "placeholder", "id": uuid4().hex, "key": generate_sym_key()}
 
 
+def new_dirty_block_access(offset, size):
+    return {"id": uuid4().hex, "key": generate_sym_key(), 'offset': offset, 'size': size}
+
+
 def new_user_manifest(author):
     now = pendulum.now()
     return {

@@ -6,6 +6,7 @@ from parsec.core.fs2.utils import (
     is_folder_manifest,
     new_file_manifest,
     new_folder_manifest,
+    new_dirty_block_access,
 )
 from parsec.core.fs2.opened_file import OpenedFile, fast_forward_file_manifest, OpenedFilesManager
 from parsec.core.fs2.exceptions import InvalidPath
@@ -52,8 +53,24 @@ class FSOpsMixin(FSBase):
         if not is_file_manifest(manifest):
             raise InvalidPath("Path `%s` is not a file" % path)
 
+        if size == 0:
+            return b''
+
         fd = self._opened_files.open_file(access, manifest)
-        return await fd.read(size, offset)
+        size, opened_file_rm, dirty_blocks_rm, blocks_rm = fd.get_read_map(size, offset)
+
+        data = bytearray(size)
+        for bs in opened_file_rm:
+            data[bs.start: bs.end] = bs.buffer.data[bs.buffer_slice_start: bs.buffer_slice_end]
+
+        for bs in dirty_blocks_rm:
+            buff = self._blocks_manager.fetch_from_local(bs.data)
+            data[bs.start: bs.end] = buff[bs.buffer_slice_start: bs.buffer_slice_end]
+
+        # for bs in blocks_rm:
+        #     data[bs.start: bs.end] = bs.data[bs.buffer_slice_start: bs.buffer_slice_end]
+
+        return data
 
     async def file_write(self, path, buffer: bytes, offset: int = -1):
         if path == "/":
@@ -63,16 +80,11 @@ class FSOpsMixin(FSBase):
         if not is_file_manifest(manifest):
             raise InvalidPath("Path `%s` is not a file" % path)
 
+        if not buffer:
+            return
+
         fd = self._opened_files.open_file(access, manifest)
         fd.write(buffer, offset)
-
-        # self._local_tree.update_entry(access, manifest)
-
-        # TODO
-        # fd = self._open_file(access, manifest)
-        # fd.write(buffer, offset)
-        # Provide some gc mechanism to auto flush if needed here ?
-        # mark_updated(manifest)
 
     async def file_truncate(self, path: str, length: int):
         if path == "/":
@@ -82,10 +94,8 @@ class FSOpsMixin(FSBase):
         if not is_file_manifest(manifest):
             raise InvalidPath("Path `%s` is not a file" % path)
 
-        self._local_tree.update_entry(access, manifest)
-        # TODO
-        # fd = self._open_file(access, manifest)
-        # fd.truncate(length)
+        fd = self._opened_files.open_file(access, manifest)
+        fd.truncate(length)
 
     async def file_flush(self, path: str):
         if path == "/":
@@ -100,9 +110,16 @@ class FSOpsMixin(FSBase):
             return
 
         fd = self._opened_files.open_file(access, manifest)
-        flush_map = fd.get_flush_map()
 
-        # self.manifests_manager.flush_on_local2(access['id'], access['key'], manifest)
+        new_size, new_dirty_blocks = fd.get_flush_map()
+        for ndb in new_dirty_blocks:
+            ndba = new_dirty_block_access(ndb.start, ndb.size)
+            self._blocks_manager.flush_on_local(ndba['id'], ndba['key'], ndb.data)
+            manifest['dirty_blocks'].append(ndba)
+        manifest['size'] = new_size
+        self._local_tree.update_entry(access, manifest)
+
+        self._opened_files.close_file(access)
 
     async def move(self, src: str, dst: str):
         if src == "/":

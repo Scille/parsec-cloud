@@ -57,6 +57,13 @@ class UserManifestSchema(FolderManifestSchema):
 # Local data
 
 
+class DirtyBlockAccessSchema(UnknownCheckedSchema):
+    id = fields.String(required=True, validate=validate.Length(min=1, max=32))
+    key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
+    offset = fields.Integer(required=True, validate=validate.Range(min=0))
+    size = fields.Integer(required=True, validate=validate.Range(min=0))
+
+
 class LocalVlobAccessSchema(SyncedAccessSchema):
     type = fields.CheckedConstant("vlob")
 
@@ -87,7 +94,7 @@ class LocalFileManifestSchema(UnknownCheckedSchema):
     updated = fields.DateTime(required=True)
     size = fields.Integer(required=True, validate=validate.Range(min=0))
     blocks = fields.List(fields.Nested(BlockAccessSchema), required=True)
-    dirty_blocks = fields.List(fields.Nested(BlockAccessSchema), required=True)
+    dirty_blocks = fields.List(fields.Nested(DirtyBlockAccessSchema), required=True)
 
 
 class LocalFolderManifestSchema(UnknownCheckedSchema):

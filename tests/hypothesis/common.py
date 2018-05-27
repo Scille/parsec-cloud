@@ -1,3 +1,4 @@
+import re
 import attr
 from functools import wraps
 from hypothesis.stateful import (
@@ -172,23 +173,37 @@ async def test_reproduce(alice_core_sock, alice2_core2_sock):
         super().teardown()
         if hasattr(self, "_failure_reproducer_code"):
             print("============================ REPRODUCE CODE ========================")
-            print("\n".join(self._failure_reproducer_code))
+            print(
+                self._failure_reproducer_template.format(
+                    body='\n'.join(self._failure_reproducer_code).strip()
+                )
+            )
             print("====================================================================")
 
     def print_step(self, step):
         super().print_step(step)
 
         if not hasattr(self, "_failure_reproducer_code"):
-            self._failure_reproducer_code = [self._FAILURE_REPRODUCER_CODE_HEADER]
+            assert '{body}' in self._FAILURE_REPRODUCER_CODE_HEADER
+            self._failure_reproducer_template = self._FAILURE_REPRODUCER_CODE_HEADER
+            self._failure_reproducer_code = []
+            match = re.search(r'^( *)\{body\}', self._failure_reproducer_template, flags=re.MULTILINE)
+            self._failure_reproducer_indent = match.group(1)
+
+        def indent(code):
+            if not isinstance(code, list):
+                code = code.strip().split("\n")
+            return [self._failure_reproducer_indent + x for x in code]
 
         rule, data = step
         template = getattr(rule.function, "_reproduce_template", None)
         rule_brief = "%s(%r)" % (rule.function.__name__, data)
         if not template:
-            self._failure_reproducer_code.append("    # Nothing to do for rule %s" % rule_brief)
+            self._failure_reproducer_code += indent("# Nothing to do for rule %s" % rule_brief)
             return
         else:
-            self._failure_reproducer_code.append("\n    # Rule %s" % rule_brief)
+            self._failure_reproducer_code.append('')
+            self._failure_reproducer_code += indent("# Rule %s" % rule_brief)
 
         resolved_data = {}
         for k, v in data.items():
@@ -198,7 +213,7 @@ async def test_reproduce(alice_core_sock, alice2_core2_sock):
                 resolved_data[k] = repr(v)
 
         code = template.format(**resolved_data)
-        self._failure_reproducer_code.append("    " + "\n    ".join(code.strip().split("\n")))
+        self._failure_reproducer_code += indent(code)
 
 
 def failure_reproducer(init=BaseFailureReproducer._FAILURE_REPRODUCER_CODE_HEADER):
