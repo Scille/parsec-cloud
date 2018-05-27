@@ -139,7 +139,7 @@ assert rep["status"] in ("ok", "invalid_path")
             assert rep["status"] in ("ok", "invalid_path")
             return path
 
-        @rule(core=st_core, path=Files)
+        @rule(core=st_core, path=Files, with_flush=st.booleans())
         @reproduce_rule(
             """
 await socks[{core}].send({{
@@ -147,15 +147,25 @@ await socks[{core}].send({{
 }})
 rep = await socks[{core}].recv()
 assert rep["status"] in ("ok", "invalid_path")
+if {with_flush} and rep['status'] == 'ok':
+    await socks[{core}].send({{"cmd": "flush", "path": {path}}})
+    rep2 = await socks[{core}].recv()
+    assert rep2["status"] == "ok"
 """
         )
-        def update_file(self, core, path):
+        def update_file(self, core, path, with_flush):
             b64content = to_jsonb64(b"a")
             rep = self.core_cmd(
                 core, {"cmd": "file_write", "path": path, "offset": 0, "content": b64content}
             )
             note(rep)
             assert rep["status"] in ("ok", "invalid_path")
+            if with_flush and rep['status'] == 'ok':
+                rep2 = self.core_cmd(
+                    core, {"cmd": "flush", "path": path}
+                )
+                assert rep2["status"] == "ok"
+
 
         @rule(target=Folders, core=st_core, parent=Folders, name=st_entry_name)
         @reproduce_rule(
