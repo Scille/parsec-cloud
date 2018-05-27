@@ -45,16 +45,6 @@ def new_placeholder_access():
     return {"type": "placeholder", "id": uuid4().hex, "key": generate_sym_key()}
 
 
-def new_access():
-    return {
-        "type": "vlob",
-        "id": uuid4().hex,
-        "key": generate_sym_key(),
-        "rts": uuid4().hex,
-        "wts": uuid4().hex,
-    }
-
-
 def new_user_manifest(author):
     now = pendulum.now()
     return {
