@@ -1,8 +1,3 @@
-import attr
-import pendulum
-from uuid import uuid4
-from copy import deepcopy
-
 from parsec.core.fs2.base import FSBase
 from parsec.core.fs2.utils import (
     normalize_path,
@@ -11,15 +6,8 @@ from parsec.core.fs2.utils import (
     is_folder_manifest,
     new_file_manifest,
     new_folder_manifest,
-    new_placeholder_access,
-    convert_to_remote_manifest,
-    convert_to_local_manifest,
 )
 from parsec.core.fs2.opened_file import OpenedFile, fast_forward_file_manifest, OpenedFilesManager
-from parsec.core.fs2.merge_folders import (
-    merge_remote_folder_manifests,
-    merge_local_folder_manifests,
-)
 from parsec.core.fs2.exceptions import InvalidPath
 
 
@@ -64,11 +52,8 @@ class FSOpsMixin(FSBase):
         if not is_file_manifest(manifest):
             raise InvalidPath("Path `%s` is not a file" % path)
 
-        return b""
-        # TODO
-
-        # fd = self._opened_files.open_file(access, manifest)
-        # return await fd.read(size, offset)
+        fd = self._opened_files.open_file(access, manifest)
+        return await fd.read(size, offset)
 
     async def file_write(self, path, buffer: bytes, offset: int = -1):
         if path == "/":
@@ -78,7 +63,10 @@ class FSOpsMixin(FSBase):
         if not is_file_manifest(manifest):
             raise InvalidPath("Path `%s` is not a file" % path)
 
-        self._local_tree.update_entry(access, manifest)
+        fd = self._opened_files.open_file(access, manifest)
+        fd.write(buffer, offset)
+
+        # self._local_tree.update_entry(access, manifest)
 
         # TODO
         # fd = self._open_file(access, manifest)
@@ -111,12 +99,8 @@ class FSOpsMixin(FSBase):
             # raise InvalidPath("Path `%s` doesn't point to a file")
             return
 
-        if access["id"] not in self._opened_files:
-            return
-        # TODO: finish this...
-
-        # fd = self._opened_files[access['id']]
-        # flush_map = fd.get_flush_map()
+        fd = self._opened_files.open_file(access, manifest)
+        flush_map = fd.get_flush_map()
 
         # self.manifests_manager.flush_on_local2(access['id'], access['key'], manifest)
 

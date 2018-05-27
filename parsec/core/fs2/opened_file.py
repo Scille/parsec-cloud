@@ -70,7 +70,19 @@ class OpenedFilesManager:
     _opened_files = attr.ib(default=attr.Factory(dict))
 
     def is_opened(self, access):
-        need_flush = access["id"] in self._opened_files
+        return access["id"] in self._opened_files
+
+    def open_file(self, access, manifest):
+        fd = self._opened_files.get(access["id"])
+        if not fd:
+            fd = OpenedFile(access, manifest)
+        self._opened_files[access["id"]] = fd
+        return fd
+
+    def flush_all(self):
+        pass
+        # for id, fd in self._opened_files.items():
+        #     self.manifests_manager.
 
 
 #         # size, in_ram, in_local, in_remote = entry.get_read_map(size, offset)

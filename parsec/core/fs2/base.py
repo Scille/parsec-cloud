@@ -22,5 +22,4 @@ class FSBase(BaseAsyncComponent):
 
     async def _teardown(self):
         # TODO
-        # self._opened_files.flush_all()
-        pass
+        self._opened_files.flush_all()
