@@ -61,11 +61,11 @@ class FSOpsMixin(FSBase):
 
         data = bytearray(size)
         for bs in opened_file_rm:
-            data[bs.start: bs.end] = bs.buffer.data[bs.buffer_slice_start: bs.buffer_slice_end]
+            data[bs.start - offset: bs.end - offset] = bs.get_data()
 
         for bs in dirty_blocks_rm:
-            buff = self._blocks_manager.fetch_from_local(bs.data)
-            data[bs.start: bs.end] = buff[bs.buffer_slice_start: bs.buffer_slice_end]
+            buff = self._blocks_manager.fetch_from_local2(bs.buffer.data['id'], bs.buffer.data['key'])
+            data[bs.start-offset: bs.end-offset] = buff[bs.buffer_slice_start: bs.buffer_slice_end]
 
         # for bs in blocks_rm:
         #     data[bs.start: bs.end] = bs.data[bs.buffer_slice_start: bs.buffer_slice_end]
@@ -114,10 +114,12 @@ class FSOpsMixin(FSBase):
         new_size, new_dirty_blocks = fd.get_flush_map()
         for ndb in new_dirty_blocks:
             ndba = new_dirty_block_access(ndb.start, ndb.size)
-            self._blocks_manager.flush_on_local(ndba['id'], ndba['key'], ndb.data)
+            self._blocks_manager.flush_on_local2(ndba['id'], ndba['key'], ndb.data)
             manifest['dirty_blocks'].append(ndba)
         manifest['size'] = new_size
         self._local_tree.update_entry(access, manifest)
+        # TODO: big fat hack
+        fd.manifest = manifest
 
         self._opened_files.close_file(access)
 

@@ -2,7 +2,7 @@ import attr
 import pendulum
 from itertools import dropwhile
 
-from parsec.core.fs2.buffer_ordering import quick_filter_block_accesses, Buffer, merge_buffers
+from parsec.core.fs2.buffer_ordering import quick_filter_block_accesses, Buffer, merge_buffers, merge_buffers_with_limits
 
 
 @attr.s(slots=True)
@@ -75,7 +75,7 @@ class OpenedFile:
         dirty_blocks = [DirtyBlockBuffer(*x) for x in quick_filter_block_accesses(self.manifest['dirty_blocks'], start, end)]
         blocks = [BlockBuffer(*x) for x in quick_filter_block_accesses(self.manifest['blocks'], start, end)]
 
-        merged = merge_buffers(in_ram + dirty_blocks + blocks, size, offset)
+        merged = merge_buffers_with_limits(blocks + dirty_blocks + in_ram, offset, offset + size)
         assert len(merged.spaces) == 1
 
         opened_file_rm = []
@@ -85,9 +85,9 @@ class OpenedFile:
             if isinstance(bs.buffer, RamBuffer):
                 opened_file_rm.append(bs)
             elif isinstance(bs.buffer, DirtyBlockBuffer):
-                blocks_rm.append(bs)
-            else:  # BlockBuffer
                 dirty_blocks_rm.append(bs)
+            else:  # BlockBuffer
+                blocks_rm.append(bs)
 
         return merged.size, opened_file_rm, dirty_blocks_rm, blocks_rm
 
@@ -112,6 +112,7 @@ class OpenedFile:
 
     def get_flush_map(self):
         in_ram = [RamBuffer(x.offset, x.end, x.buffer) for x in self._cmds_list if isinstance(x, WriteCmd)]
+        # TODO: we should determine which dirty block is no longer needed here
 
         merged = merge_buffers(in_ram)
 
@@ -119,7 +120,7 @@ class OpenedFile:
         for cs in merged.spaces:
             data = bytearray(cs.size)
             for bs in cs.buffers:
-                data[bs.start: bs.end] = bs.buffer.data[bs.buffer_slice_start: bs.buffer_slice_end]
+                data[bs.start - cs.start: bs.end - cs.start] = bs.buffer.data[bs.buffer_slice_start: bs.buffer_slice_end]
             buffers.append(Buffer(cs.start, cs.end, data))
 
         return self.size, buffers
@@ -146,18 +147,18 @@ class OpenedFilesManager:
     device = attr.ib()
     manifests_manager = attr.ib()
     blocks_manager = attr.ib()
-    _opened_files = attr.ib(factory=dict)
+    opened_files = attr.ib(factory=dict)
     _resolved_placeholder_accesses = attr.ib(factory=dict)
 
     def is_opened(self, access):
-        return access["id"] in self._opened_files
+        return access["id"] in self.opened_files
 
     def _file_lookup(self, id):
         try:
-            return self._opened_files[id]
+            return self.opened_files[id]
         except KeyError:
             try:
-                return self._opened_files[self._resolved_placeholder_accesses[id]]
+                return self.opened_files[self._resolved_placeholder_accesses[id]]
             except KeyError:
                 return None
 
@@ -165,29 +166,41 @@ class OpenedFilesManager:
         fd = self._file_lookup(access['id'])
         if not fd:
             fd = OpenedFile(access, manifest)
-        self._opened_files[access["id"]] = fd
+        self.opened_files[access["id"]] = fd
         return fd
 
     def close_file(self, access):
         id = access['id']
         try:
-            res = self._opened_files.pop(id)
+            res = self.opened_files.pop(id)
             self._resolved_placeholder_accesses = {k: v for k, v in self._resolved_placeholder_accesses.items() if v != id}
             return res
         except KeyError:
             id = self._resolved_placeholder_accesses.pop(id)
-            return self._opened_files.pop(id)
+            return self.opened_files.pop(id)
 
     def resolve_placeholder_access(self, placeholder_access, resolved_access):
         try:
-            self._opened_files[resolved_access['id']] = self._opened_files.pop(placeholder_access['id'])
+            self.opened_files[resolved_access['id']] = self.opened_files.pop(placeholder_access['id'])
         except KeyError:
             return
         self._resolved_placeholder_accesses[placeholder_access['id']] = resolved_access['id']
 
     def flush_all(self):
-        pass
-        # for id, fd in self._opened_files.items():
+
+        fd = self.opened_files.open_file(access, manifest)
+
+        new_size, new_dirty_blocks = fd.get_flush_map()
+        for ndb in new_dirty_blocks:
+            ndba = new_dirty_block_access(ndb.start, ndb.size)
+            self._blocks_manager.flush_on_local2(ndba['id'], ndba['key'], ndb.data)
+            manifest['dirty_blocks'].append(ndba)
+        manifest['size'] = new_size
+        self._local_tree.update_entry(access, manifest)
+
+        self.opened_files.close_file(access)
+
+        # for id, fd in self.opened_files.items():
         #     self.manifests_manager.
 
 

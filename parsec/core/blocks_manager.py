@@ -36,12 +36,23 @@ class BlocksManager(BaseAsyncComponent):
         if crypted:
             return self._decrypt_block(key, crypted)
 
+    def fetch_from_local2(self, id, key):
+        crypted = self.local_storage.fetch_dirty_block(id)
+        if not crypted:
+            crypted = self.local_storage.fetch_block(id)
+        if crypted:
+            return self._decrypt_block(key, crypted)
+
     async def fetch_from_backend(self, id, key):
         crypted = await self.backend_storage.fetch_block(id)
         if crypted:
             return self._decrypt_block(key, crypted)
 
     async def flush_on_local(self, id, key, block):
+        crypted = self._encrypt_block(key, block)
+        self.local_storage.flush_block(id, crypted)
+
+    def flush_on_local2(self, id, key, block):
         crypted = self._encrypt_block(key, block)
         self.local_storage.flush_block(id, crypted)
 

@@ -50,6 +50,12 @@ class InBufferSpace(BaseOrderedSpace):
         self.buffer_slice_start = self.start - self.buffer.start
         self.buffer_slice_end = self.end - self.buffer.start
 
+    def get_data(self):
+        if self.slice_needed():
+            return self.buffer.data[self.buffer_slice_start:self.buffer_slice_end]
+        else:
+            return self.buffer.data
+
     @property
     def size(self):
         return self.end - self.start
@@ -123,22 +129,17 @@ def _merge_in_contiguous_space(overlaid_contiguous_spaces, buff):
     return ContiguousSpace(start, end, sorted(unsorted_spaces))
 
 
-def merge_buffers(buffers, size=inf, offset=0):
+def merge_buffers(buffers):
     # Bruteforce mode: Insert one buffer after another and modify the
     # elements already present in the list if needed.
     # Should be fine enough for a small number of buffers.
 
     spaces = []
-    expected_start = offset
-    expected_end = offset + size
     min_start = inf
     max_end = -inf
 
     for buff in buffers:
         if not buff.size:
-            continue
-
-        if buff.end <= expected_start or buff.start >= expected_end:
             continue
 
         if buff.start < min_start:
