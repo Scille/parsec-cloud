@@ -1,6 +1,7 @@
 import pendulum
 from uuid import uuid4
 from copy import deepcopy
+from nacl.hash import sha256
 
 from parsec.utils import generate_sym_key
 
@@ -47,6 +48,16 @@ def new_placeholder_access():
 
 def new_dirty_block_access(offset, size):
     return {"id": uuid4().hex, "key": generate_sym_key(), "offset": offset, "size": size}
+
+
+def new_block_access(offset, data, id=None):
+    return {
+        "id": id,
+        "key": generate_sym_key(),
+        "offset": offset,
+        "size": len(data),
+        "digest": sha256(data),
+    }
 
 
 def new_user_manifest(author):

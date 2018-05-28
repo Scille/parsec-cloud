@@ -44,6 +44,7 @@ class BlocksManager(BaseAsyncComponent):
             return self._decrypt_block(key, crypted)
 
     async def fetch_from_backend(self, id, key):
+        # TODO: add local cache
         crypted = await self.backend_storage.fetch_block(id)
         if crypted:
             return self._decrypt_block(key, crypted)
@@ -57,5 +58,6 @@ class BlocksManager(BaseAsyncComponent):
         self.local_storage.flush_block(id, crypted)
 
     async def sync_new_block_with_backend(self, key, block):
+        # TODO: add local cache
         crypted = self._encrypt_block(key, block)
         return await self.backend_storage.sync_new_block(crypted)

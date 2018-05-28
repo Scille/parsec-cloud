@@ -97,6 +97,78 @@ def _trim_buffers(buffers, new_start=None, new_end=None):
     return trimmed
 
 
+def _trim_contiguous_space(cs, new_start=None, new_end=None):
+    trimmed_buffers = _trim_buffers(cs.buffers, new_start=new_start, new_end=new_end)
+    if trimmed_buffers:
+        trimmed_start = trimmed_buffers[0].start
+        trimmed_end = trimmed_buffers[-1].end
+    else:
+        trimmed_start = new_start if new_start is not None else cs.start
+        trimmed_end = trimmed_start
+
+    return ContiguousSpace(trimmed_start, trimmed_end, trimmed_buffers)
+
+
+def _trim_uncontiguous_space(ucs, new_start=None, new_end=None):
+    trimmed_start = ucs.start if new_start is None else new_start
+    trimmed_end = ucs.end if new_end is None else new_end
+    trimmed_spaces = ucs.spaces
+
+    if new_start is not None and ucs.start < new_start:
+        trimmed_spaces = list(dropwhile(lambda x: x.end <= new_start, trimmed_spaces))
+        if trimmed_spaces:
+            trimmed_spaces[0] = _trim_contiguous_space(trimmed_spaces[0], new_start=new_start)
+
+    if new_end is not None and ucs.end > new_end:
+        trimmed_spaces = list(
+            reversed(list(dropwhile(lambda x: x.start >= new_end, reversed(trimmed_spaces))))
+        )
+        if trimmed_spaces:
+            trimmed_spaces[-1] = _trim_contiguous_space(trimmed_spaces[-1], new_end=new_end)
+
+    return UncontiguousSpace(trimmed_start, trimmed_end, trimmed_spaces or [])
+
+
+def _split_aligned_contiguous_space(cs, block_size):
+    assert not cs.size % block_size
+    if cs.size == block_size:
+        return [cs]
+
+    splitted_spaces = []
+    overflowing_bs = None
+
+    def take_next_buffer_space():
+        nonlocal overflowing_bs
+        for buff in cs.buffers:
+            yield buff
+            while overflowing_bs:
+                buff = overflowing_bs
+                overflowing_bs = None
+                yield buff
+
+    curr_acs_remain_space = block_size
+    curr_acs_buffers = []
+    curr_acs_start = cs.start
+    for bs in take_next_buffer_space():
+        if bs.size > curr_acs_remain_space:
+            # Current buffer must be splitted in two
+            split_offset = curr_acs_start + block_size
+            overflowing_bs = InBufferSpace(split_offset, bs.end, bs.buffer)
+            bs = InBufferSpace(bs.start, split_offset, bs.buffer)
+
+        curr_acs_buffers.append(bs)
+        curr_acs_remain_space -= bs.size
+
+        if not curr_acs_remain_space:
+            end = curr_acs_start + block_size
+            splitted_spaces.append(ContiguousSpace(curr_acs_start, end, curr_acs_buffers))
+            curr_acs_start = end
+            curr_acs_remain_space = block_size
+            curr_acs_buffers = []
+
+    return splitted_spaces
+
+
 def _merge_in_contiguous_space(overlaid_contiguous_spaces, buff):
     ibs = InBufferSpace(buff.start, buff.end, buff)
     start = ibs.start
@@ -172,37 +244,31 @@ def merge_buffers(buffers):
 def merge_buffers_with_limits(buffers, start, end):
     nolimit = merge_buffers(buffers)
 
-    if not nolimit.spaces:
-        nolimit.start = nolimit.end = start
+    return _trim_uncontiguous_space(nolimit, new_start=start, new_end=end)
 
-    if nolimit.start < start:
-        spaces = list(dropwhile(lambda x: x.end <= start, nolimit.spaces))
-        if spaces:
-            cs = spaces[0]
-            cs.buffers = _trim_buffers(cs.buffers, new_start=start)
-            nolimit.spaces = spaces
-            nolimit.start = start
-            if cs.start < start:
-                cs.start = start
-        else:
-            nolimit.start = nolimit.end = start
-            nolimit.spaces = []
 
-    if nolimit.end > end:
-        rspaces = list(dropwhile(lambda x: x.start >= end, reversed(nolimit.spaces)))
-        if rspaces:
-            spaces = list(reversed(rspaces))
-            cs = spaces[-1]
-            cs.buffers = _trim_buffers(cs.buffers, new_end=end)
-            nolimit.spaces = spaces
-            nolimit.end = end
-            if cs.end > end:
-                cs.end = end
-        else:
-            nolimit.start = nolimit.end = start
-            nolimit.spaces = []
+def merge_buffers_with_limits_and_alignment(buffers, start, end, block_size):
+    """
+    Note:
+        Buffers must not form holes
+        start and end must be aligned on block_size
+    """
+    assert not start % block_size
+    assert not end % block_size
 
-    return nolimit
+    unaligned = merge_buffers(buffers)
+    assert len(unaligned.spaces) <= 1
+    aligned = _trim_uncontiguous_space(unaligned, new_start=start, new_end=end)
+
+    if aligned.spaces:
+        splitted_spaces = _split_aligned_contiguous_space(aligned.spaces[0], block_size)
+        assert splitted_spaces[0].start == start
+        assert splitted_spaces[-1].end == end
+    else:
+        splitted_spaces = []
+    assert aligned.start == start
+    assert aligned.end == end
+    return UncontiguousSpace(start, end, splitted_spaces)
 
 
 def quick_filter_block_accesses(block_entries, start, end):

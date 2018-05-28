@@ -45,6 +45,31 @@ class FSOpsMixin(FSBase):
             self._opened_files[access["id"]] = fd
             return fd
 
+    async def _build_data_from_contiguous_space(self, cs):
+        data = bytearray(cs.size)
+        for bs in cs.get_in_ram_buffers():
+            data[bs.start - cs.start : bs.end - cs.start] = bs.get_data()
+
+        for bs in cs.get_dirty_blocks():
+            buff = self._blocks_manager.fetch_from_local2(
+                bs.buffer.data["id"], bs.buffer.data["key"]
+            )
+            assert buff
+            data[bs.start - cs.start : bs.end - cs.start] = buff[
+                bs.buffer_slice_start : bs.buffer_slice_end
+            ]
+
+        for bs in cs.get_blocks():
+            buff = await self._blocks_manager.fetch_from_backend(
+                bs.buffer.data["id"], bs.buffer.data["key"]
+            )
+            assert buff
+            data[bs.start - cs.start : bs.end - cs.start] = buff[
+                bs.buffer_slice_start : bs.buffer_slice_end
+            ]
+
+        return data
+
     async def file_read(self, path: str, size: int = -1, offset: int = 0):
         if path == "/":
             raise InvalidPath("Path `/` is not a file")
@@ -57,24 +82,8 @@ class FSOpsMixin(FSBase):
             return b""
 
         fd = self._opened_files.open_file(access, manifest)
-        size, opened_file_rm, dirty_blocks_rm, blocks_rm = fd.get_read_map(size, offset)
-
-        data = bytearray(size)
-        for bs in opened_file_rm:
-            data[bs.start - offset : bs.end - offset] = bs.get_data()
-
-        for bs in dirty_blocks_rm:
-            buff = self._blocks_manager.fetch_from_local2(
-                bs.buffer.data["id"], bs.buffer.data["key"]
-            )
-            data[bs.start - offset : bs.end - offset] = buff[
-                bs.buffer_slice_start : bs.buffer_slice_end
-            ]
-
-        # for bs in blocks_rm:
-        #     data[bs.start: bs.end] = bs.data[bs.buffer_slice_start: bs.buffer_slice_end]
-
-        return data
+        cs = fd.get_read_map(size, offset)
+        return await self._build_data_from_contiguous_space(cs)
 
     async def file_write(self, path, buffer: bytes, offset: int = -1):
         if path == "/":

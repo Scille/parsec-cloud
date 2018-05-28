@@ -12,6 +12,7 @@ from parsec.core.fs2.utils import (
     is_placeholder_access,
     is_folder_manifest,
     new_placeholder_access,
+    new_block_access,
     copy_manifest,
     convert_to_remote_manifest,
     convert_to_local_manifest,
@@ -288,36 +289,9 @@ class FSSyncMixin(FSBase):
 
         else:
             # The file has been locally modified, time to sync it with the backend !
-            # TODO
-            # fd = self._open_file(access, manifest)
-            # ...
-
-            to_sync_manifest = convert_to_remote_manifest(manifest)
-            try:
-                if is_placeholder_access(access):
-                    print(info("placeholder sync %s %s" % (access, to_sync_manifest)))
-                    id, rts, wts = await self._manifests_manager.sync_new_entry_with_backend(
-                        access["key"], to_sync_manifest
-                    )
-                    final_access = {
-                        "key": access["key"],
-                        "id": id,
-                        "rts": rts,
-                        "wts": wts,
-                        "type": "vlob",
-                    }
-                else:
-                    print(info("SYNC FILE %s %s" % (access, to_sync_manifest)))
-                    await self._manifests_manager.sync_with_backend(
-                        access["id"], access["wts"], access["key"], to_sync_manifest
-                    )
-                    final_access = access
-                target_remote_manifest = to_sync_manifest
-
-            except BackendConcurrencyError as exc:
-                print(bad("CONCURRENCY ERROR ! %s" % access))
-                raise SyncConcurrencyError(access, to_sync_manifest) from exc
-
+            final_access, target_remote_manifest = await self._sync_file_actual_sync(
+                access, manifest
+            )
             current_manifest = self._local_tree.retrieve_entry_by_access(access)
 
         # Finally fast forward the current version of the manifest which may
@@ -327,3 +301,53 @@ class FSSyncMixin(FSBase):
         self._local_tree.overwrite_entry(access, final_manifest)
 
         return final_access
+
+    async def _sync_file_actual_sync(self, access, manifest):
+        fd = self._opened_files.open_file(access, manifest)
+        marker = fd.create_marker()
+
+        to_sync_manifest = convert_to_remote_manifest(manifest)
+        blocks = []
+        ucs = fd.get_sync_map()
+        for cs in ucs.spaces:
+            if not cs.need_sync:
+                blocks += [bs.data for bs in cs.buffers]
+                continue
+            # Create a new block from existing data
+            data = await self._build_data_from_contiguous_space(cs)
+            block_access = new_block_access()
+            block_access["id"] = await self._blocks_manager.sync_new_block_with_backend(
+                block_access["key"], data
+            )
+            blocks.append(block_access)
+        to_sync_manifest["block"] = blocks
+        to_sync_manifest["size"] = fd.size
+
+        try:
+            if is_placeholder_access(access):
+                print(info("placeholder sync %s %s" % (access, to_sync_manifest)))
+                id, rts, wts = await self._manifests_manager.sync_new_entry_with_backend(
+                    access["key"], to_sync_manifest
+                )
+                final_access = {
+                    "key": access["key"],
+                    "id": id,
+                    "rts": rts,
+                    "wts": wts,
+                    "type": "vlob",
+                }
+            else:
+                print(info("SYNC FILE %s %s" % (access, to_sync_manifest)))
+                await self._manifests_manager.sync_with_backend(
+                    access["id"], access["wts"], access["key"], to_sync_manifest
+                )
+                final_access = access
+
+        except BackendConcurrencyError as exc:
+            assert not is_placeholder_access(access)
+            print(bad("CONCURRENCY ERROR ! %s" % access))
+            raise SyncConcurrencyError(access, to_sync_manifest) from exc
+
+        fd.drop_until_marker(marker)
+
+        return final_access, to_sync_manifest

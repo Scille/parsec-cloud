@@ -1,12 +1,15 @@
 import attr
 import pendulum
 from itertools import dropwhile
+from math import inf
 
 from parsec.core.fs2.buffer_ordering import (
     quick_filter_block_accesses,
     Buffer,
+    ContiguousSpace,
     merge_buffers,
     merge_buffers_with_limits,
+    merge_buffers_with_limits_and_alignment,
 )
 
 
@@ -47,9 +50,26 @@ class BlockBuffer(Buffer):
     pass
 
 
+@attr.s(slots=True)
+class MultiLocationsContiguousSpace(ContiguousSpace):
+
+    def get_blocks(self):
+        return [bs for bs in self.buffers if isinstance(bs.buffer, BlockBuffer)]
+
+    def get_dirty_blocks(self):
+        return [bs for bs in self.buffers if isinstance(bs.buffer, DirtyBlockBuffer)]
+
+    def get_in_ram_buffers(self):
+        return [bs for bs in self.buffers if isinstance(bs.buffer, RamBuffer)]
+
+    def need_sync(self):
+        return self.get_dirty_blocks() or self.get_in_ram_buffers()
+
+
 class OpenedFile:
 
     def __init__(self, access, manifest):
+        self.block_size = 2 ** 16
         self.access = access
         self.manifest = manifest
         self.size = manifest["size"]
@@ -70,13 +90,35 @@ class OpenedFile:
     def compact(self):
         pass
 
-    def get_read_map(self, size: int = -1, offset: int = 0):
-        if offset >= self.size:
-            return 0, (), (), ()
+    def get_not_synced_bounds(self):
+        start = inf
+        end = -inf
 
-        start = offset
-        end = offset + size
+        for dba in self.manifest["dirty_blocks"]:
+            if dba["offset"] < start:
+                start = dba["offset"]
+            dba_end = dba["offset"] + dba["size"]
+            if dba_end > end:
+                end = dba_end
 
+        for cmd in self._cmds_list:
+            if isinstance(cmd, WriteCmd):
+                if cmd.offset < start:
+                    start = cmd.offset
+                if cmd.end > end:
+                    end = cmd.end
+            elif isinstance(cmd, TruncateCmd):
+                if end > cmd.length:
+                    end = cmd.length
+
+        if start == inf:
+            start = 0
+        if end == -inf:
+            end = 0
+
+        return start, end
+
+    def _get_quickly_filtered_blocks(self, start, end):
         in_ram = [
             RamBuffer(x.offset, x.end, x.buffer) for x in self._cmds_list if isinstance(x, WriteCmd)
         ]
@@ -89,21 +131,52 @@ class OpenedFile:
             for x in quick_filter_block_accesses(self.manifest["blocks"], start, end)
         ]
 
-        merged = merge_buffers_with_limits(blocks + dirty_blocks + in_ram, offset, offset + size)
+        return blocks + dirty_blocks + in_ram
+
+    def get_read_map(self, size: int = -1, offset: int = 0):
+        if offset >= self.size:
+            return MultiLocationsContiguousSpace(offset, offset, [])
+
+        blocks = self._get_quickly_filtered_blocks(offset, offset + size)
+        merged = merge_buffers_with_limits(blocks, offset, offset + size)
         assert len(merged.spaces) == 1
+        assert merged.size <= size
+        assert merged.start == offset
 
-        opened_file_rm = []
-        dirty_blocks_rm = []
-        blocks_rm = []
-        for bs in merged.spaces[0].buffers:
-            if isinstance(bs.buffer, RamBuffer):
-                opened_file_rm.append(bs)
-            elif isinstance(bs.buffer, DirtyBlockBuffer):
-                dirty_blocks_rm.append(bs)
-            else:  # BlockBuffer
-                blocks_rm.append(bs)
+        cs = merged.spaces[0]
+        return MultiLocationsContiguousSpace(cs.start, cs.end, cs.buffers)
 
-        return merged.size, opened_file_rm, dirty_blocks_rm, blocks_rm
+        # opened_file_rm = []
+        # dirty_blocks_rm = []
+        # blocks_rm = []
+        # for bs in merged.spaces[0].buffers:
+        #     if isinstance(bs.buffer, RamBuffer):
+        #         opened_file_rm.append(bs)
+        #     elif isinstance(bs.buffer, DirtyBlockBuffer):
+        #         dirty_blocks_rm.append(bs)
+        #     else:  # BlockBuffer
+        #         blocks_rm.append(bs)
+
+        # return merged.size, opened_file_rm, dirty_blocks_rm, blocks_rm
+
+    def get_sync_map(self):
+        start, end = self.get_not_synced_bounds()
+        aligned_start = start - start % self.block_size
+        if not end % self.block_size:
+            aligned_end = end
+        else:
+            aligned_end = end + (self.block_size - end % self.block_size)
+
+        blocks = self._get_quickly_filtered_blocks(aligned_start, aligned_end)
+        merged = merge_buffers_with_limits_and_alignment(
+            blocks, aligned_start, aligned_end, self.block_size
+        )
+        assert len(merged.spaces) == 1
+        assert merged.size == self.size
+        assert merged.start == 0
+
+        cs = merged.spaces[0]
+        return MultiLocationsContiguousSpace(cs.start, cs.end, cs.buffers)
 
     def create_marker(self):
         marker = MarkerCmd()
