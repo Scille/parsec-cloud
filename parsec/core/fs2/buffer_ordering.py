@@ -52,7 +52,7 @@ class InBufferSpace(BaseOrderedSpace):
 
     def get_data(self):
         if self.slice_needed():
-            return self.buffer.data[self.buffer_slice_start:self.buffer_slice_end]
+            return self.buffer.data[self.buffer_slice_start : self.buffer_slice_end]
         else:
             return self.buffer.data
 
@@ -66,8 +66,10 @@ class InBufferSpace(BaseOrderedSpace):
 
 def is_overlaid(buff1, buff2):
     return (
-        buff1.start <= buff2.start <= buff1.end or buff1.start <= buff2.end <= buff1.end or
-        buff2.start < buff1.start < buff2.end or buff2.start < buff1.end <= buff2.end
+        buff1.start <= buff2.start <= buff1.end
+        or buff1.start <= buff2.end <= buff1.end
+        or buff2.start < buff1.start < buff2.end
+        or buff2.start < buff1.end <= buff2.end
     )
 
 
@@ -206,9 +208,13 @@ def merge_buffers_with_limits(buffers, start, end):
 def quick_filter_block_accesses(block_entries, start, end):
     interestings = []
     for candidate in block_entries:
-        candidate_start = candidate['offset']
-        candidate_end = candidate_start + candidate['size']
-        if (start <= candidate_start <= end or start <= candidate_end <= end or
-                candidate_start < start < candidate_end or candidate_start < end <= candidate_end):
+        candidate_start = candidate["offset"]
+        candidate_end = candidate_start + candidate["size"]
+        if (
+            start <= candidate_start <= end
+            or start <= candidate_end <= end
+            or candidate_start < start < candidate_end
+            or candidate_start < end <= candidate_end
+        ):
             interestings.append((candidate_start, candidate_end, candidate))
     return interestings

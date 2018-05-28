@@ -161,12 +161,9 @@ if {with_flush} and rep['status'] == 'ok':
             )
             note(rep)
             assert rep["status"] in ("ok", "invalid_path")
-            if with_flush and rep['status'] == 'ok':
-                rep2 = self.core_cmd(
-                    core, {"cmd": "flush", "path": path}
-                )
+            if with_flush and rep["status"] == "ok":
+                rep2 = self.core_cmd(core, {"cmd": "flush", "path": path})
                 assert rep2["status"] == "ok"
-
 
         @rule(target=Folders, core=st_core, parent=Folders, name=st_entry_name)
         @reproduce_rule(

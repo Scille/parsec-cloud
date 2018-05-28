@@ -1,11 +1,11 @@
 import pytest
 from copy import deepcopy
 from hypothesis import strategies as st, note
-from hypothesis.stateful import rule
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
 from tests.common import connect_core, core_factory, backend_factory, run_app
+from tests.hypothesis.common import rule, failure_reproducer, reproduce_rule
 
 
 class FileOracle:
@@ -36,6 +36,68 @@ async def test_online(
         def __init__(self, reset_local_storage=False):
             self.reset_local_storage = reset_local_storage
 
+    @failure_reproducer(
+        """
+import pytest
+import os
+from copy import deepcopy
+
+from parsec.utils import to_jsonb64, from_jsonb64
+
+from tests.common import connect_core, core_factory
+from tests.hypothesis.test_core_offline_restart_and_rwfile import FileOracle
+
+class RestartCore(Exception):
+    pass
+
+class ResetCore(Exception):
+    pass
+
+@pytest.mark.trio
+async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_local_storage_connection):
+    config = {{
+        "base_settings_path": tmpdir.strpath,
+        "backend_addr": backend_addr,
+    }}
+    bootstrapped = False
+    file_oracle = FileOracle()
+    file_oracle_synced = FileOracle()
+    to_run_rules = rule_selector()
+    done = False
+    need_boostrap_sync = True
+
+    while not done:
+        try:
+            async with core_factory(**config) as core:
+                await core.login(alice)
+                if not bootstrapped:
+                    await core.fs.file_create("/foo.txt")
+                    bootstrapped = True
+                if need_boostrap_sync:
+                    need_boostrap_sync = False
+                    await core.fs.sync("/")
+
+                async with connect_core(core) as sock:
+                    while True:
+                        afunc = next(to_run_rules, None)
+                        if not afunc:
+                            done = True
+                            break
+                        file_oracle_synced = await afunc(sock, file_oracle) or file_oracle_synced
+
+        except RestartCore:
+            pass
+
+        except ResetCore:
+            file_oracle = deepcopy(file_oracle_synced)
+            mocked_local_storage_connection.reset()
+            need_boostrap_sync = True
+
+def rule_selector():
+    {body}
+    yield
+"""
+    )
     class CoreOnline(TrioDriverRuleBasedStateMachine):
         count = 0
 
@@ -73,19 +135,21 @@ async def test_online(
                                 raise RestartCore(reset_local_storage=True)
 
             async def bootstrap_core(core):
-                await core.fs.root.create_file("foo.txt")
-                await core.fs.root.sync(recursive=True)
+                await core.fs.file_create("/foo.txt")
+                await core.fs.sync("/")
 
                 task_status.started()
 
-            async def restart_core_done(core):
+            async def reset_core_done(core):
                 # Core won't try to fetch the user manifest from backend when
                 # starting (given a modified version can be present on disk,
                 # or we could be offline).
                 # If we reset local storage however, we want to force the core
                 # to load the data from the backend.
-                if core.fs.root.base_version == 0 and not core.fs.root.need_sync:
-                    await core.fs.root.sync()
+                await core.fs.sync("/")
+                await self.communicator.trio_respond(True)
+
+            async def restart_core_done(core):
                 await self.communicator.trio_respond(True)
 
             async with backend_factory(**backend_config) as backend:
@@ -107,9 +171,11 @@ async def test_online(
                             try:
                                 await run_core(on_ready)
                             except RestartCore as exc:
-                                on_ready = restart_core_done
                                 if exc.reset_local_storage:
+                                    on_ready = reset_core_done
                                     mocked_local_storage_connection.reset()
+                                else:
+                                    on_ready = restart_core_done
 
                     finally:
                         tcp_stream_spy.install_hook(backend_addr, None)
@@ -117,6 +183,17 @@ async def test_online(
         @rule(
             size=st.integers(min_value=0, max_value=100),
             offset=st.integers(min_value=0, max_value=100),
+        )
+        @reproduce_rule(
+            """
+async def afunc(sock, file_oracle):
+    await sock.send({{"cmd": "file_read", "path": "/foo.txt", "offset": {offset}, "size": {size}}})
+    rep = await sock.recv()
+    assert rep["status"] == "ok"
+    expected_content = file_oracle.read({size}, {offset})
+    assert from_jsonb64(rep["content"]) == expected_content
+yield afunc
+"""
         )
         def read(self, size, offset):
             rep = self.core_cmd(
@@ -128,19 +205,49 @@ async def test_online(
             assert from_jsonb64(rep["content"]) == expected_content
 
         @rule()
+        @reproduce_rule(
+            """
+async def afunc(sock, file_oracle):
+    await sock.send({{"cmd": "flush", "path": "/foo.txt"}})
+    rep = await sock.recv()
+    assert rep["status"] == "ok"
+yield afunc
+"""
+        )
         def flush(self):
             rep = self.core_cmd({"cmd": "flush", "path": "/foo.txt"})
             note(rep)
             assert rep["status"] == "ok"
 
         @rule()
+        @reproduce_rule(
+            """
+async def afunc(sock, file_oracle):
+    await sock.send({{"cmd": "synchronize", "path": "/"}})
+    rep = await sock.recv()
+    assert rep["status"] == "ok"
+    return deepcopy(file_oracle)
+yield afunc
+"""
+        )
         def sync(self):
-            rep = self.core_cmd({"cmd": "synchronize", "path": "/foo.txt"})
+            rep = self.core_cmd({"cmd": "synchronize", "path": "/"})
             note(rep)
             assert rep["status"] == "ok"
             self.file_oracle_synced = deepcopy(self.file_oracle)
 
         @rule(offset=st.integers(min_value=0, max_value=100), content=st.binary())
+        @reproduce_rule(
+            """
+async def afunc(sock, file_oracle):
+    b64content = to_jsonb64({content})
+    await sock.send({{"cmd": "file_write", "path": "/foo.txt", "offset": {offset}, "content": b64content}})
+    rep = await sock.recv()
+    assert rep["status"] == "ok"
+    file_oracle.write({offset}, {content})
+yield afunc
+"""
+        )
         def write(self, offset, content):
             b64content = to_jsonb64(content)
             rep = self.core_cmd(
@@ -151,11 +258,21 @@ async def test_online(
             self.file_oracle.write(offset, content)
 
         @rule()
+        @reproduce_rule(
+            """
+raise RestartCore()
+"""
+        )
         def restart_core(self):
             rep = self.sys_cmd("restart_core!")
             assert rep is True
 
         @rule()
+        @reproduce_rule(
+            """
+raise ResetCore()
+"""
+        )
         def reset_core(self):
             rep = self.sys_cmd("reset_core!")
             assert rep is True

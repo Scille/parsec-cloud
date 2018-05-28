@@ -2,7 +2,12 @@ import attr
 import pendulum
 from itertools import dropwhile
 
-from parsec.core.fs2.buffer_ordering import quick_filter_block_accesses, Buffer, merge_buffers, merge_buffers_with_limits
+from parsec.core.fs2.buffer_ordering import (
+    quick_filter_block_accesses,
+    Buffer,
+    merge_buffers,
+    merge_buffers_with_limits,
+)
 
 
 @attr.s(slots=True)
@@ -43,10 +48,11 @@ class BlockBuffer(Buffer):
 
 
 class OpenedFile:
+
     def __init__(self, access, manifest):
         self.access = access
         self.manifest = manifest
-        self.size = manifest['size']
+        self.size = manifest["size"]
         self._cmds_list = []
 
     def write(self, content: bytes, offset: int = -1):
@@ -71,9 +77,17 @@ class OpenedFile:
         start = offset
         end = offset + size
 
-        in_ram = [RamBuffer(x.offset, x.end, x.buffer) for x in self._cmds_list if isinstance(x, WriteCmd)]
-        dirty_blocks = [DirtyBlockBuffer(*x) for x in quick_filter_block_accesses(self.manifest['dirty_blocks'], start, end)]
-        blocks = [BlockBuffer(*x) for x in quick_filter_block_accesses(self.manifest['blocks'], start, end)]
+        in_ram = [
+            RamBuffer(x.offset, x.end, x.buffer) for x in self._cmds_list if isinstance(x, WriteCmd)
+        ]
+        dirty_blocks = [
+            DirtyBlockBuffer(*x)
+            for x in quick_filter_block_accesses(self.manifest["dirty_blocks"], start, end)
+        ]
+        blocks = [
+            BlockBuffer(*x)
+            for x in quick_filter_block_accesses(self.manifest["blocks"], start, end)
+        ]
 
         merged = merge_buffers_with_limits(blocks + dirty_blocks + in_ram, offset, offset + size)
         assert len(merged.spaces) == 1
@@ -111,7 +125,9 @@ class OpenedFile:
             self._cmds_list = tmp_list
 
     def get_flush_map(self):
-        in_ram = [RamBuffer(x.offset, x.end, x.buffer) for x in self._cmds_list if isinstance(x, WriteCmd)]
+        in_ram = [
+            RamBuffer(x.offset, x.end, x.buffer) for x in self._cmds_list if isinstance(x, WriteCmd)
+        ]
         # TODO: we should determine which dirty block is no longer needed here
 
         merged = merge_buffers(in_ram)
@@ -120,7 +136,9 @@ class OpenedFile:
         for cs in merged.spaces:
             data = bytearray(cs.size)
             for bs in cs.buffers:
-                data[bs.start - cs.start: bs.end - cs.start] = bs.buffer.data[bs.buffer_slice_start: bs.buffer_slice_end]
+                data[bs.start - cs.start : bs.end - cs.start] = bs.buffer.data[
+                    bs.buffer_slice_start : bs.buffer_slice_end
+                ]
             buffers.append(Buffer(cs.start, cs.end, data))
 
         return self.size, buffers
@@ -163,17 +181,19 @@ class OpenedFilesManager:
                 return None
 
     def open_file(self, access, manifest):
-        fd = self._file_lookup(access['id'])
+        fd = self._file_lookup(access["id"])
         if not fd:
             fd = OpenedFile(access, manifest)
         self.opened_files[access["id"]] = fd
         return fd
 
     def close_file(self, access):
-        id = access['id']
+        id = access["id"]
         try:
             res = self.opened_files.pop(id)
-            self._resolved_placeholder_accesses = {k: v for k, v in self._resolved_placeholder_accesses.items() if v != id}
+            self._resolved_placeholder_accesses = {
+                k: v for k, v in self._resolved_placeholder_accesses.items() if v != id
+            }
             return res
         except KeyError:
             id = self._resolved_placeholder_accesses.pop(id)
@@ -181,10 +201,12 @@ class OpenedFilesManager:
 
     def resolve_placeholder_access(self, placeholder_access, resolved_access):
         try:
-            self.opened_files[resolved_access['id']] = self.opened_files.pop(placeholder_access['id'])
+            self.opened_files[resolved_access["id"]] = self.opened_files.pop(
+                placeholder_access["id"]
+            )
         except KeyError:
             return
-        self._resolved_placeholder_accesses[placeholder_access['id']] = resolved_access['id']
+        self._resolved_placeholder_accesses[placeholder_access["id"]] = resolved_access["id"]
 
     def flush_all(self):
 
@@ -193,9 +215,9 @@ class OpenedFilesManager:
         new_size, new_dirty_blocks = fd.get_flush_map()
         for ndb in new_dirty_blocks:
             ndba = new_dirty_block_access(ndb.start, ndb.size)
-            self._blocks_manager.flush_on_local2(ndba['id'], ndba['key'], ndb.data)
-            manifest['dirty_blocks'].append(ndba)
-        manifest['size'] = new_size
+            self._blocks_manager.flush_on_local2(ndba["id"], ndba["key"], ndb.data)
+            manifest["dirty_blocks"].append(ndba)
+        manifest["size"] = new_size
         self._local_tree.update_entry(access, manifest)
 
         self.opened_files.close_file(access)

@@ -42,7 +42,7 @@ class RestartCore(Exception):
     pass
 
 @pytest.mark.trio
-async def test_reproduce(tmpdir, running_backend, backend_addr, alice):
+async def test_reproduce(tmpdir, backend_addr, alice):
     config = {{
         "base_settings_path": tmpdir.strpath,
         "backend_addr": backend_addr,
@@ -56,13 +56,11 @@ async def test_reproduce(tmpdir, running_backend, backend_addr, alice):
         try:
             async with core_factory(**config) as core:
                 await core.login(alice)
+                if not bootstrapped:
+                    await core.fs.file_create("/foo.txt")
+                    bootstrapped = True
 
                 async with connect_core(core) as sock:
-                    if not bootstrapped:
-                        await sock.send({{"cmd": "file_create", "path": "/foo.txt"}})
-                        rep = await sock.recv()
-                        assert rep == {{"status": "ok"}}
-                        bootstrapped = True
                     while True:
                         afunc = next(to_run_rules, None)
                         if not afunc:
@@ -76,7 +74,8 @@ async def test_reproduce(tmpdir, running_backend, backend_addr, alice):
 
 def rule_selector():
     {body}
-""")
+"""
+    )
     class CoreOfflineRestartAndRWFile(TrioDriverRuleBasedStateMachine):
         count = 0
 
@@ -126,9 +125,11 @@ def rule_selector():
                     on_ready = restart_core_done
 
         @rule()
-        @reproduce_rule("""
+        @reproduce_rule(
+            """
 raise RestartCore()
-""")
+"""
+        )
         def restart(self):
             rep = self.sys_cmd("restart!")
             assert rep is True
@@ -137,7 +138,8 @@ raise RestartCore()
             size=st.integers(min_value=0, max_value=100),
             offset=st.integers(min_value=0, max_value=100),
         )
-        @reproduce_rule("""
+        @reproduce_rule(
+            """
 async def afunc(sock, file_oracle):
     await sock.send({{"cmd": "file_read", "path": "/foo.txt", "offset": {offset}, "size": {size}}})
     rep = await sock.recv()
@@ -145,7 +147,8 @@ async def afunc(sock, file_oracle):
     expected_content = file_oracle.read({size}, {offset})
     assert from_jsonb64(rep["content"]) == expected_content
 yield afunc
-""")
+"""
+        )
         def read(self, size, offset):
             rep = self.core_cmd(
                 {"cmd": "file_read", "path": "/foo.txt", "offset": offset, "size": size}
@@ -156,20 +159,23 @@ yield afunc
             assert from_jsonb64(rep["content"]) == expected_content
 
         @rule()
-        @reproduce_rule("""
+        @reproduce_rule(
+            """
 async def afunc(sock, file_oracle):
     await sock.send({{"cmd": "flush", "path": "/foo.txt"}})
     rep = await sock.recv()
     assert rep["status"] == "ok"
 yield afunc
-""")
+"""
+        )
         def flush(self):
             rep = self.core_cmd({"cmd": "flush", "path": "/foo.txt"})
             note(rep)
             assert rep["status"] == "ok"
 
         @rule(offset=st.integers(min_value=0, max_value=100), content=st.binary())
-        @reproduce_rule("""
+        @reproduce_rule(
+            """
 async def afunc(sock, file_oracle):
     b64content = to_jsonb64({content})
     await sock.send({{"cmd": "file_write", "path": "/foo.txt", "offset": {offset}, "content": b64content}})
@@ -177,7 +183,8 @@ async def afunc(sock, file_oracle):
     assert rep["status"] == "ok"
     file_oracle.write({offset}, {content})
 yield afunc
-""")
+"""
+        )
         def write(self, offset, content):
             b64content = to_jsonb64(content)
             rep = self.core_cmd(

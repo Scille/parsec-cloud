@@ -46,7 +46,7 @@ def new_placeholder_access():
 
 
 def new_dirty_block_access(offset, size):
-    return {"id": uuid4().hex, "key": generate_sym_key(), 'offset': offset, 'size': size}
+    return {"id": uuid4().hex, "key": generate_sym_key(), "offset": offset, "size": size}
 
 
 def new_user_manifest(author):

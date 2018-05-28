@@ -175,7 +175,7 @@ async def test_reproduce(alice_core_sock, alice2_core2_sock):
             print("============================ REPRODUCE CODE ========================")
             print(
                 self._failure_reproducer_template.format(
-                    body='\n'.join(self._failure_reproducer_code).strip()
+                    body="\n".join(self._failure_reproducer_code).strip()
                 )
             )
             print("====================================================================")
@@ -184,10 +184,12 @@ async def test_reproduce(alice_core_sock, alice2_core2_sock):
         super().print_step(step)
 
         if not hasattr(self, "_failure_reproducer_code"):
-            assert '{body}' in self._FAILURE_REPRODUCER_CODE_HEADER
+            assert "{body}" in self._FAILURE_REPRODUCER_CODE_HEADER
             self._failure_reproducer_template = self._FAILURE_REPRODUCER_CODE_HEADER
             self._failure_reproducer_code = []
-            match = re.search(r'^( *)\{body\}', self._failure_reproducer_template, flags=re.MULTILINE)
+            match = re.search(
+                r"^( *)\{body\}", self._failure_reproducer_template, flags=re.MULTILINE
+            )
             self._failure_reproducer_indent = match.group(1)
 
         def indent(code):
@@ -202,7 +204,7 @@ async def test_reproduce(alice_core_sock, alice2_core2_sock):
             self._failure_reproducer_code += indent("# Nothing to do for rule %s" % rule_brief)
             return
         else:
-            self._failure_reproducer_code.append('')
+            self._failure_reproducer_code.append("")
             self._failure_reproducer_code += indent("# Rule %s" % rule_brief)
 
         resolved_data = {}
