@@ -66,6 +66,8 @@ async def test_reproduce(tmpdir, backend_addr, alice):
                         if not afunc:
                             done = True
                             break
+                        if isinstance(afunc, Exception):
+                            raise afunc
                         await afunc(sock, file_oracle)
 
         except RestartCore:
@@ -127,7 +129,7 @@ def rule_selector():
         @rule()
         @reproduce_rule(
             """
-raise RestartCore()
+yield RestartCore()
 """
         )
         def restart(self):

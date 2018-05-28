@@ -22,7 +22,7 @@ class FileOracle:
 
 @pytest.mark.slow
 @pytest.mark.trio
-async def test_online(
+async def test_core_online_rw_and_sync(
     TrioDriverRuleBasedStateMachine,
     mocked_local_storage_connection,
     tcp_stream_spy,
@@ -83,6 +83,8 @@ async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_lo
                         if not afunc:
                             done = True
                             break
+                        if isinstance(afunc, Exception):
+                            raise afunc
                         file_oracle_synced = await afunc(sock, file_oracle) or file_oracle_synced
 
         except RestartCore:
@@ -95,7 +97,6 @@ async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_lo
 
 def rule_selector():
     {body}
-    yield
 """
     )
     class CoreOnline(TrioDriverRuleBasedStateMachine):
@@ -260,7 +261,7 @@ yield afunc
         @rule()
         @reproduce_rule(
             """
-raise RestartCore()
+yield RestartCore()
 """
         )
         def restart_core(self):
@@ -270,7 +271,7 @@ raise RestartCore()
         @rule()
         @reproduce_rule(
             """
-raise ResetCore()
+yield ResetCore()
 """
         )
         def reset_core(self):
