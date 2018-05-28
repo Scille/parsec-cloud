@@ -1,6 +1,7 @@
 import attr
 import bisect
 from math import inf
+from itertools import dropwhile
 
 
 @attr.s(slots=True)
@@ -88,7 +89,8 @@ def _trim_buffers(buffers, new_start=None, new_end=None):
     return trimmed
 
 
-def _merge_in_contiguous_space(overlaid_contiguous_spaces, ibs):
+def _merge_in_contiguous_space(overlaid_contiguous_spaces, buff):
+    ibs = InBufferSpace(buff.start, buff.end, buff)
     start = ibs.start
     end = ibs.end
     unsorted_spaces = [ibs]
@@ -129,7 +131,7 @@ def merge_buffers(buffers, size=inf, offset=0):
     spaces = []
     expected_start = offset
     expected_end = offset + size
-    max_start = inf
+    min_start = inf
     max_end = -inf
 
     for buff in buffers:
@@ -139,32 +141,65 @@ def merge_buffers(buffers, size=inf, offset=0):
         if buff.end <= expected_start or buff.start >= expected_end:
             continue
 
-        ibs_start = expected_start if buff.start < expected_start else buff.start
-        ibs_end = expected_end if buff.end > expected_end else buff.end
-
-        if ibs_start < max_start:
-            max_start = ibs_start
-        if ibs_end > max_end:
-            max_end = ibs_end
+        if buff.start < min_start:
+            min_start = buff.start
+        if buff.end > max_end:
+            max_end = buff.end
 
         # Retrieve the spaces our buffer overlaid to merge them all
         overlaid = [cs for cs in spaces if is_overlaid(cs, buff)]
-        ibs = InBufferSpace(ibs_start, ibs_end, buff)
         if overlaid:
             # All the overlaid spaces now constitute a contiguous space
-            new_cs = _merge_in_contiguous_space(overlaid, ibs)
+            new_cs = _merge_in_contiguous_space(overlaid, buff)
             for to_remove in overlaid:
                 spaces.remove(to_remove)
             bisect.insort(spaces, new_cs)
         else:
             # The buffer create a new contiguous space on it own
-            bisect.insort(spaces, ContiguousSpace(ibs_start, ibs_end, [ibs]))
+            ibs = InBufferSpace(buff.start, buff.end, buff)
+            bisect.insort(spaces, ContiguousSpace(buff.start, buff.end, [ibs]))
 
     if not spaces:
-        max_start = 0
+        min_start = 0
         max_end = 0
 
-    return UncontiguousSpace(max_start, max_end, spaces)
+    return UncontiguousSpace(min_start, max_end, spaces)
+
+
+def merge_buffers_with_limits(buffers, start, end):
+    nolimit = merge_buffers(buffers)
+
+    if not nolimit.spaces:
+        nolimit.start = nolimit.end = start
+
+    if nolimit.start < start:
+        spaces = list(dropwhile(lambda x: x.end <= start, nolimit.spaces))
+        if spaces:
+            cs = spaces[0]
+            cs.buffers = _trim_buffers(cs.buffers, new_start=start)
+            nolimit.spaces = spaces
+            nolimit.start = start
+            if cs.start < start:
+                cs.start = start
+        else:
+            nolimit.start = nolimit.end = start
+            nolimit.spaces = []
+
+    if nolimit.end > end:
+        rspaces = list(dropwhile(lambda x: x.start >= end, reversed(nolimit.spaces)))
+        if rspaces:
+            spaces = list(reversed(rspaces))
+            cs = spaces[-1]
+            cs.buffers = _trim_buffers(cs.buffers, new_end=end)
+            nolimit.spaces = spaces
+            nolimit.end = end
+            if cs.end > end:
+                cs.end = end
+        else:
+            nolimit.start = nolimit.end = start
+            nolimit.spaces = []
+
+    return nolimit
 
 
 def quick_filter_block_accesses(block_entries, start, end):
