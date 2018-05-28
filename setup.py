@@ -45,7 +45,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "attrs==17.4.0",
+    "attrs==18.1.0",
     "blinker==1.4.0",
     "click==6.7",
     "huepy==0.9.6",
