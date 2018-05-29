@@ -41,13 +41,9 @@ class TestCookedSocketHypothesis:
 
     def execute_example(self, f):
         # Nothing but a dirty hack...
-        from unittest.mock import Mock
-
-        node = Mock()
-        node.function = f
         from pytest_trio.plugin import _trio_test_runner_factory
 
-        return _trio_test_runner_factory(node)()
+        return _trio_test_runner_factory(f)()
 
 
 class TestCookedSocket:
