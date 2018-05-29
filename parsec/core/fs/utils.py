@@ -6,12 +6,16 @@ from nacl.hash import sha256
 from parsec.utils import generate_sym_key
 
 
+class FSInvalidPath(Exception):
+    pass
+
+
 def normalize_path(path):
     hops = path.split("/")
     for hop in hops:
         # TODO: enable this later
         # if hop == '.' or hop == '..':
-        #     raise InvalidPath('Path %r is invalid' % path)
+        #     raise FSInvalidPath('Path %r is invalid' % path)
         pass
     return "/".join(hops[:-1]), hop
 

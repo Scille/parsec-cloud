@@ -1,29 +1,20 @@
-import attr
 import pendulum
-from uuid import uuid4
-from copy import deepcopy
 from async_generator import asynccontextmanager
 from itertools import count
 from huepy import good, bad, run, info, que
 
-from parsec.core.fs2.base import FSBase
-from parsec.core.fs2.exceptions import InvalidPath
-from parsec.core.fs2.utils import (
+from parsec.core.fs.base import FSBase
+from parsec.core.fs.utils import (
     normalize_path,
     is_placeholder_access,
     is_folder_manifest,
     is_file_manifest,
     new_placeholder_access,
     new_block_access,
-    copy_manifest,
     convert_to_remote_manifest,
     convert_to_local_manifest,
 )
-from parsec.core.fs2.opened_file import OpenedFile, OpenedFilesManager
-from parsec.core.fs2.merge_folders import (
-    merge_remote_folder_manifests,
-    merge_local_folder_manifests,
-)
+from parsec.core.fs.merge_folders import merge_remote_folder_manifests, merge_local_folder_manifests
 from parsec.core.backend_storage import BackendConcurrencyError
 
 

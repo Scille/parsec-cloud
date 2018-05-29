@@ -1,7 +1,7 @@
 import pytest
 from hypothesis import given, strategies as st, note, assume
 
-from parsec.core.fs2.buffer_ordering import (
+from parsec.core.fs.buffer_ordering import (
     merge_buffers,
     merge_buffers_with_limits,
     merge_buffers_with_limits_and_alignment,

@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from itertools import dropwhile
 from math import inf
 
-from parsec.core.fs2.buffer_ordering import (
+from parsec.core.fs.buffer_ordering import (
     quick_filter_block_accesses,
     Buffer,
     ContiguousSpace,

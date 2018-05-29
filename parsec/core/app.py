@@ -7,7 +7,6 @@ from parsec.networking import serve_client
 from parsec.core.base import BaseAsyncComponent, NotInitializedError
 from parsec.core.sharing import Sharing
 from parsec.core.fs import FS
-from parsec.core.fs2 import FS2
 from parsec.core.synchronizer import Synchronizer
 from parsec.core.devices_manager import DevicesManager
 from parsec.core.backend_connections_multiplexer import BackendConnectionsMultiplexer
@@ -113,8 +112,7 @@ class Core(BaseAsyncComponent):
                 self.local_storage, self.backend_storage, self.encryption_manager
             )
             self.blocks_manager = BlocksManager(self.local_storage, self.backend_storage)
-            # self.fs = FS(device, self.manifests_manager, self.blocks_manager)
-            self.fs = FS2(device, self.manifests_manager, self.blocks_manager)
+            self.fs = FS(device, self.manifests_manager, self.blocks_manager)
             self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
             self.synchronizer = Synchronizer(self.config.auto_sync, self.fs)
             self.sharing = Sharing(

@@ -1,7 +1,6 @@
 from parsec.core.app import Core, ClientContext
 
-# from parsec.core.fs import BaseFolderEntry, BaseFileEntry
-from parsec.core.fs2 import InvalidPath
+from parsec.core.fs import FSInvalidPath
 from parsec.utils import to_jsonb64
 from parsec.schema import BaseCmdSchema, fields, validate
 
@@ -78,7 +77,7 @@ async def file_create(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     req = PathOnlySchema().load_or_abort(req)
     try:
         await core.fs.file_create(req["path"])
-    except InvalidPath as exc:
+    except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
     return {"status": "ok"}
 
@@ -90,7 +89,7 @@ async def file_read(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     req = cmd_FILE_READ_Schema().load_or_abort(req)
     try:
         content = await core.fs.file_read(req["path"], req["size"], req["offset"])
-    except InvalidPath as exc:
+    except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
     return {"status": "ok", "content": to_jsonb64(content)}
 
@@ -102,7 +101,7 @@ async def file_write(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     req = cmd_FILE_WRITE_Schema().load_or_abort(req)
     try:
         await core.fs.file_write(req["path"], req["content"], req["offset"])
-    except InvalidPath as exc:
+    except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
     return {"status": "ok"}
 
@@ -114,7 +113,7 @@ async def file_truncate(req: dict, client_ctx: ClientContext, core: Core) -> dic
     req = cmd_FILE_TRUNCATE_Schema().load_or_abort(req)
     try:
         await core.fs.file_truncate(req["path"], req["length"])
-    except InvalidPath as exc:
+    except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
     return {"status": "ok"}
 
@@ -126,7 +125,7 @@ async def stat(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     req = PathOnlySchema().load_or_abort(req)
     try:
         stat = await core.fs.file_truncate(req["path"])
-    except InvalidPath as exc:
+    except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
     return {"status": "ok", **stat}
 
@@ -138,7 +137,7 @@ async def folder_create(req: dict, client_ctx: ClientContext, core: Core) -> dic
     req = PathOnlySchema().load_or_abort(req)
     try:
         await core.fs.folder_create(req["path"])
-    except InvalidPath as exc:
+    except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
     return {"status": "ok"}
 
@@ -150,7 +149,7 @@ async def move(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     req = cmd_MOVE_Schema().load_or_abort(req)
     try:
         await core.fs.move(req["src"], req["dst"])
-    except InvalidPath as exc:
+    except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
     return {"status": "ok"}
 
@@ -165,7 +164,7 @@ async def delete(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     req = PathOnlySchema().load_or_abort(req)
     try:
         await core.fs.delete(req["path"])
-    except InvalidPath as exc:
+    except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
     return {"status": "ok"}
 
@@ -177,7 +176,7 @@ async def flush(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     req = PathOnlySchema().load_or_abort(req)
     try:
         await core.fs.file_flush(req["path"])
-    except InvalidPath as exc:
+    except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
     return {"status": "ok"}
 
@@ -189,6 +188,6 @@ async def synchronize(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     req = PathOnlySchema().load_or_abort(req)
     try:
         await core.fs.sync(req["path"])
-    except InvalidPath as exc:
+    except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
     return {"status": "ok"}

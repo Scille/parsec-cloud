@@ -1,5 +1,6 @@
-from parsec.core.fs2.base import FSBase
-from parsec.core.fs2.utils import (
+from parsec.core.fs.base import FSBase
+from parsec.core.fs.utils import (
+    FSInvalidPath,
     normalize_path,
     is_placeholder_access,
     is_file_manifest,
@@ -8,22 +9,20 @@ from parsec.core.fs2.utils import (
     new_folder_manifest,
     new_dirty_block_access,
 )
-from parsec.core.fs2.opened_file import OpenedFile, OpenedFilesManager
-from parsec.core.fs2.exceptions import InvalidPath
 
 
 class FSOpsMixin(FSBase):
 
     async def _insert_new(self, path, manifest):
         if path == "/":
-            raise InvalidPath("Path `/` already exists")
+            raise FSInvalidPath("Path `/` already exists")
 
         parent_path, file_name = normalize_path(path)
         parent_access, parent_manifest = await self._local_tree.retrieve_entry(parent_path)
         if not is_folder_manifest(parent_manifest):
-            raise InvalidPath("Path `%s` is not a folder" % parent_path)
+            raise FSInvalidPath("Path `%s` is not a folder" % parent_path)
         if file_name in parent_manifest["children"]:
-            raise InvalidPath("Path `%s` already exists" % path)
+            raise FSInvalidPath("Path `%s` already exists" % path)
 
         access = self._local_tree.insert_new_entry(manifest)
         parent_manifest["children"][file_name] = access
@@ -43,7 +42,7 @@ class FSOpsMixin(FSBase):
             data[bs.start - cs.start : bs.end - cs.start] = bs.get_data()
 
         for bs in cs.get_dirty_blocks():
-            buff = self._blocks_manager.fetch_from_local2(
+            buff = self._blocks_manager.fetch_from_local(
                 bs.buffer.data["id"], bs.buffer.data["key"]
             )
             assert buff
@@ -64,11 +63,11 @@ class FSOpsMixin(FSBase):
 
     async def file_read(self, path: str, size: int = -1, offset: int = 0):
         if path == "/":
-            raise InvalidPath("Path `/` is not a file")
+            raise FSInvalidPath("Path `/` is not a file")
         normalize_path(path)
         access, manifest = await self._local_tree.retrieve_entry(path)
         if not is_file_manifest(manifest):
-            raise InvalidPath("Path `%s` is not a file" % path)
+            raise FSInvalidPath("Path `%s` is not a file" % path)
 
         if size == 0:
             return b""
@@ -79,11 +78,11 @@ class FSOpsMixin(FSBase):
 
     async def file_write(self, path, buffer: bytes, offset: int = -1):
         if path == "/":
-            raise InvalidPath("Path `/` is not a file")
+            raise FSInvalidPath("Path `/` is not a file")
         normalize_path(path)
         access, manifest = await self._local_tree.retrieve_entry(path)
         if not is_file_manifest(manifest):
-            raise InvalidPath("Path `%s` is not a file" % path)
+            raise FSInvalidPath("Path `%s` is not a file" % path)
 
         if not buffer:
             return
@@ -93,11 +92,11 @@ class FSOpsMixin(FSBase):
 
     async def file_truncate(self, path: str, length: int):
         if path == "/":
-            raise InvalidPath("Path `/` is not a file")
+            raise FSInvalidPath("Path `/` is not a file")
         normalize_path(path)
         access, manifest = await self._local_tree.retrieve_entry(path)
         if not is_file_manifest(manifest):
-            raise InvalidPath("Path `%s` is not a file" % path)
+            raise FSInvalidPath("Path `%s` is not a file" % path)
 
         fd = self._opened_files.open_file(access, manifest)
         fd.truncate(length)
@@ -105,7 +104,7 @@ class FSOpsMixin(FSBase):
     async def file_flush(self, path: str):
         if path == "/":
             # TODO: done for compatibility
-            # raise InvalidPath("Path `/` is not a file")
+            # raise FSInvalidPath("Path `/` is not a file")
             return
         normalize_path(path)
 
@@ -113,7 +112,7 @@ class FSOpsMixin(FSBase):
             access, manifest = await self._local_tree.retrieve_entry(path)
             if not is_file_manifest(manifest):
                 # TODO: done for compatibility
-                # raise InvalidPath("Path `%s` doesn't point to a file")
+                # raise FSInvalidPath("Path `%s` doesn't point to a file")
                 return
 
             fd = self._opened_files.open_file(access, manifest)
@@ -129,7 +128,7 @@ class FSOpsMixin(FSBase):
             new_size, new_dirty_blocks = fd.get_flush_map()
             for ndb in new_dirty_blocks:
                 ndba = new_dirty_block_access(ndb.start, ndb.size)
-                self._blocks_manager.flush_on_local2(ndba["id"], ndba["key"], ndb.data)
+                self._blocks_manager.flush_on_local(ndba["id"], ndba["key"], ndb.data)
                 manifest["dirty_blocks"].append(ndba)
             manifest["size"] = new_size
             self._local_tree.update_entry(access, manifest)
@@ -139,9 +138,9 @@ class FSOpsMixin(FSBase):
 
     async def move(self, src: str, dst: str):
         if src == "/":
-            raise InvalidPath("Cannot move `/` root folder")
+            raise FSInvalidPath("Cannot move `/` root folder")
         if dst == "/":
-            raise InvalidPath("Path `/` already exists")
+            raise FSInvalidPath("Path `/` already exists")
 
         src_parent_path, src_file_name = normalize_path(src)
         dst_parent_path, dst_file_name = normalize_path(dst)
@@ -149,15 +148,15 @@ class FSOpsMixin(FSBase):
             parent_access, parent_manifest = await self._local_tree.retrieve_entry(src_parent_path)
 
             if not is_folder_manifest(parent_manifest):
-                raise InvalidPath("Path `%s` is not a folder" % src_parent_path)
+                raise FSInvalidPath("Path `%s` is not a folder" % src_parent_path)
 
             if dst_file_name in parent_manifest["children"]:
-                raise InvalidPath("Path `%s` already exists" % dst)
+                raise FSInvalidPath("Path `%s` already exists" % dst)
 
             try:
                 target_access = parent_manifest["children"].pop(src_file_name)
             except KeyError:
-                raise InvalidPath("Path `%s` doesn't exists" % src)
+                raise FSInvalidPath("Path `%s` doesn't exists" % src)
             parent_manifest["children"][dst_file_name] = target_access
 
             self._local_tree.update_entry(parent_access, parent_manifest)
@@ -169,20 +168,20 @@ class FSOpsMixin(FSBase):
             ) = await self._local_tree.retrieve_entries(src_parent_path, dst_parent_path)
 
             if not is_folder_manifest(src_parent_manifest):
-                raise InvalidPath("Path `%s` is not a folder" % src_parent_path)
+                raise FSInvalidPath("Path `%s` is not a folder" % src_parent_path)
             if not is_folder_manifest(dst_parent_manifest):
-                raise InvalidPath("Path `%s` is not a folder" % dst_parent_path)
+                raise FSInvalidPath("Path `%s` is not a folder" % dst_parent_path)
 
             if dst_file_name in dst_parent_manifest["children"]:
-                raise InvalidPath("Path `%s` already exists" % dst)
+                raise FSInvalidPath("Path `%s` already exists" % dst)
 
             if dst.startswith(src + "/"):
-                raise InvalidPath("Cannot move `%s` to a subdirectory of itself" % src)
+                raise FSInvalidPath("Cannot move `%s` to a subdirectory of itself" % src)
 
             try:
                 target_access = src_parent_manifest["children"].pop(src_file_name)
             except KeyError:
-                raise InvalidPath("Path `%s` doesn't exists" % src)
+                raise FSInvalidPath("Path `%s` doesn't exists" % src)
             dst_parent_manifest["children"][dst_file_name] = target_access
 
             self._local_tree.update_entry(src_parent_access, src_parent_manifest)
@@ -193,14 +192,14 @@ class FSOpsMixin(FSBase):
 
     async def delete(self, path: str):
         if path == "/":
-            raise InvalidPath("Cannot delete `/` root folder")
+            raise FSInvalidPath("Cannot delete `/` root folder")
         parent_path, entry_name = normalize_path(path)
         parent_access, parent_manifest = await self._local_tree.retrieve_entry(parent_path)
 
         try:
             entry_access = parent_manifest["children"].pop(entry_name)
         except KeyError:
-            raise InvalidPath("Path `%s` doesn't exists" % path)
+            raise FSInvalidPath("Path `%s` doesn't exists" % path)
 
         self._recursive_clean_local_modifications(entry_access)
         self._local_tree.update_entry(parent_access, parent_manifest)

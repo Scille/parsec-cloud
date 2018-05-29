@@ -1,7 +1,7 @@
-import attr
 import pendulum
 
-from parsec.core.fs2.utils import (
+from parsec.core.fs.utils import (
+    FSInvalidPath,
     new_user_manifest,
     new_placeholder_access,
     is_placeholder_access,
@@ -9,11 +9,11 @@ from parsec.core.fs2.utils import (
     copy_manifest,
     convert_to_local_manifest,
 )
-from parsec.core.fs2.exceptions import InvalidPath
 
 
 # Custom exception only used internally
 class NotInLocalTreeError(Exception):
+
     def __init__(self, access):
         self.access = access
 
@@ -28,7 +28,7 @@ class LocalTree:
         self._resolved_placeholder_accesses = {}
 
         # Fetch from local storage the data tree
-        manifest = self.manifests_manager.fetch_user_manifest_from_local2()
+        manifest = self.manifests_manager.fetch_user_manifest_from_local()
         if manifest:
             self._root_manifest_cache = manifest
         else:
@@ -55,7 +55,7 @@ class LocalTree:
 
     def _recursive_load_local_manifests(self, folder_manifest):
         for access in folder_manifest["children"].values():
-            manifest = self.manifests_manager.fetch_from_local2(access["id"], access["key"])
+            manifest = self.manifests_manager.fetch_from_local(access["id"], access["key"])
             if not manifest:
                 # This entry is not in local storage, just skip it
                 continue
@@ -101,7 +101,7 @@ class LocalTree:
                 access = current["children"][hop]
             except KeyError:
                 # Either current is not a folder or it has no valid child
-                raise InvalidPath("Path `%s` doesn't exists" % path)
+                raise FSInvalidPath("Path `%s` doesn't exists" % path)
             try:
                 current = self._manifests_cache[access["id"]]
             except KeyError:
@@ -131,14 +131,14 @@ class LocalTree:
                     # No concurrent write, it's up to us to update the
                     # local cache with this new entry
                     self._manifests_cache[access["id"]] = manifest
-                    self.manifests_manager.flush_on_local2(access["id"], access["key"], manifest)
+                    self.manifests_manager.flush_on_local(access["id"], access["key"], manifest)
 
     def overwrite_entry(self, access, manifest):
         if not access:
-            self.manifests_manager.flush_user_manifest_on_local2(manifest)
+            self.manifests_manager.flush_user_manifest_on_local(manifest)
             self._root_manifest_cache = manifest
         else:
-            self.manifests_manager.flush_on_local2(access["id"], access["key"], manifest)
+            self.manifests_manager.flush_on_local(access["id"], access["key"], manifest)
             self._manifests_cache[access["id"]] = manifest
 
     def update_entry(self, access, manifest):
@@ -148,12 +148,12 @@ class LocalTree:
 
     def resolve_placeholder_access(self, placeholder_access, resolved_access):
         manifest = self._manifests_cache.pop(placeholder_access["id"])
-        self.manifests_manager.flush_on_local2(
+        self.manifests_manager.flush_on_local(
             resolved_access["id"], resolved_access["key"], manifest
         )
         self._manifests_cache[resolved_access["id"]] = manifest
         self._resolved_placeholder_accesses[placeholder_access["id"]] = resolved_access["id"]
-        self.manifests_manager.remove_from_local2(placeholder_access["id"])
+        self.manifests_manager.remove_from_local(placeholder_access["id"])
 
     def move_modifications(self, old_access, new_access, manifest=None):
         try:
@@ -165,15 +165,15 @@ class LocalTree:
             # Nothing to move
             return
         self._manifests_cache[new_access["id"]] = manifest
-        self.manifests_manager.flush_on_local2(new_access["id"], new_access["key"], manifest)
-        self.manifests_manager.remove_from_local2(old_access["id"])
+        self.manifests_manager.flush_on_local(new_access["id"], new_access["key"], manifest)
+        self.manifests_manager.remove_from_local(old_access["id"])
 
     def insert_new_entry(self, manifest):
         access = new_placeholder_access()
         manifest["need_sync"] = True
 
         self._manifests_cache[access["id"]] = manifest
-        self.manifests_manager.flush_on_local2(access["id"], access["key"], manifest)
+        self.manifests_manager.flush_on_local(access["id"], access["key"], manifest)
 
         return access
 
@@ -184,4 +184,4 @@ class LocalTree:
             # Entry simply not available locally
             pass
 
-        self.manifests_manager.remove_from_local2(access["id"])
+        self.manifests_manager.remove_from_local(access["id"])

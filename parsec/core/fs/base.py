@@ -1,163 +1,48 @@
-from parsec.rwlock import RWLock
-from parsec.utils import ParsecError
-from parsec.core.fs.access import BasePlaceHolderAccess
+from parsec.core.base import BaseAsyncComponent
+from parsec.core.fs.local_tree import LocalTree
+from parsec.core.fs.opened_file import OpenedFilesManager
+from parsec.core.fs.utils import new_dirty_block_access
 
 
-class SecurityError(ParsecError):
+class FSInvalidPath(Exception):
     pass
 
 
-class FSInvalidPath(ParsecError):
-    status = "invalid_path"
+class FSBase(BaseAsyncComponent):
 
+    def __init__(self, device, manifests_manager, blocks_manager):
+        super().__init__()
+        self._device = device
+        self._manifests_manager = manifests_manager
+        self._blocks_manager = blocks_manager
+        self._local_tree = None
+        self._opened_files = None
 
-class FSError(Exception):
-    pass
+    async def _init(self, nursery):
+        # Fetch from local storage the data tree
+        self._local_tree = LocalTree(self._device, self._manifests_manager)
+        self._opened_files = OpenedFilesManager(
+            self._device, self._manifests_manager, self._blocks_manager
+        )
 
+    async def _teardown(self):
+        # TODO: not really elegant way to do this...
+        # Flush all opened file before leaving
+        for fd in self._opened_files.opened_files.values():
+            # No concurrent coroutine should be working at this point
+            assert not fd.is_syncing()
 
-class FSLoadError(Exception):
-    pass
-
-
-class BaseEntry:
-
-    def __init__(self, access, name="", parent=None):
-        self._access = access
-        self._name = name
-        self._parent = parent
-        self._rwlock = RWLock()
-
-    @property
-    def id(self):
-        return self._access.id
-
-    @property
-    def is_loaded(self):
-        return True
-
-    def __repr__(self):
-        return "<%s(path=%r)>" % (self.__class__.__name__, self.path)
-
-    def acquire_read(self):
-        return self._rwlock.acquire_read()
-
-    def acquire_write(self):
-        return self._rwlock.acquire_write()
-
-    @property
-    def path(self):
-        path_items = []
-        item = self
-        while item:
-            path_items.append(item.name)
-            item = item.parent
-        path = "/" + "/".join(reversed(path_items))
-        # TODO: too cumbersome to handle the root-without-name case this way
-        if path.startswith("//"):
-            path = path[1:]
-        if path == "/":
-            return ""
-
-        else:
-            return path
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def parent(self):
-        return self._parent
-
-    @property
-    def is_placeholder(self):
-        return isinstance(self._access, BasePlaceHolderAccess)
-
-    @property
-    def need_sync(self):
-        raise NotImplementedError()
-
-    @property
-    def need_flush(self):
-        raise NotImplementedError()
-
-    @property
-    def _fs(self):
-        raise NotImplementedError()
-
-    async def flush(self, recursive=False):
-        raise NotImplementedError()
-
-    async def sync(self, recursive=False):
-        raise NotImplementedError()
-
-    async def minimal_sync_if_placeholder(self):
-        raise NotImplementedError()
-
-
-class BaseNotLoadedEntry(BaseEntry):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._loaded = None
-
-    @property
-    def is_loaded(self):
-        return False
-
-    @property
-    def need_sync(self):
-        return False
-
-    @property
-    def need_flush(self):
-        return False
-
-    async def load(self):
-        if self._loaded:
-            return self._loaded
-
-        async with self.acquire_write():
-            # Make sure this entry hasn't been loaded while we were waiting
-            if self._loaded:
-                return self._loaded
-
-            manifest = await self._access.fetch()
-            if manifest:
-                # The idea here is to create a new entry object that will replace the
-                # current one and represent the fact it is now loaded in memory.
-                # Hence we must share `_access` and `_rwlock` between the two.
-                self._loaded = self._fs._load_entry(
-                    self._access,
-                    manifest["user_id"],
-                    manifest["device_name"],
-                    self.name,
-                    self.parent,
-                    manifest,
-                )
-                self._loaded._rwlock = self._rwlock
-                return self._loaded
-
-            else:
-                raise FSLoadError("%s: cannot fetch access %r" % (self.path, self._access))
-
-    async def flush(self, recursive=False):
-        # If the entry is not loaded, then there is nothing to be flushed
-        pass
-
-    async def sync(self, recursive=False):
-        loaded_entry = await self.load()
-        await loaded_entry.sync(recursive=recursive)
-        # TODO: should be modified while lock is held
-        # in case access was a placeholder
-        self._access = loaded_entry._access
-
-    async def minimal_sync_if_placeholder(self):
-        if not self.is_placeholder:
-            return
-
-        # TODO: A bit too cumbersome to acquire multiple times the lock and modify ?
-        loaded_entry = await self.load()
-        await loaded_entry.minimal_sync_if_placeholder()
-        async with self.acquire_write():
-            self._access = loaded_entry._access
+            try:
+                manifest = self._local_tree.retrieve_entry_by_access(fd.access)
+            except KeyError:
+                continue
+            if not fd.need_flush(manifest):
+                continue
+            new_size, new_dirty_blocks = fd.get_flush_map()
+            for ndb in new_dirty_blocks:
+                ndba = new_dirty_block_access(ndb.start, ndb.size)
+                self._blocks_manager.flush_on_local(ndba["id"], ndba["key"], ndb.data)
+                manifest["dirty_blocks"].append(ndba)
+            # TODO: clean useless dirty blocks
+            manifest["size"] = new_size
+            self._local_tree.update_entry(fd.access, manifest)
