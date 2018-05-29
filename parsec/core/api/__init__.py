@@ -1,5 +1,6 @@
 from parsec.core.fs import FSInvalidPath
 from parsec.core.app import Core, ClientContext
+from parsec.schema import InvalidCmd
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.api.event import (
     event_subscribe,
@@ -95,6 +96,9 @@ async def dispatch_request(req: dict, client_ctx: ClientContext, core: Core) -> 
 
         pdb.set_trace()
         return exc.to_dict()
+
+    except InvalidCmd as exc:
+        return {"status": "bad_message", "errors": exc.args[0]}
 
     except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}

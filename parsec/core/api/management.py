@@ -48,7 +48,7 @@ async def user_invite(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_USER_INVITE_Schema().load_or_abort(req)
+    msg = cmd_USER_INVITE_Schema().load(req)
     try:
         rep = await core.backend_connection.send({"cmd": "user_invite", "user_id": msg["user_id"]})
     except BackendNotAvailable:
@@ -61,7 +61,7 @@ async def user_claim(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if core.auth_device:
         return {"status": "already_logged", "reason": "Already logged"}
 
-    msg = cmd_USER_CLAIM_Schema().load_or_abort(req)
+    msg = cmd_USER_CLAIM_Schema().load(req)
     user_privkey = PrivateKey.generate()
     device_signkey = SigningKey.generate()
     user_id, device_name = msg["id"].split("@")
@@ -107,7 +107,7 @@ async def device_declare(req: dict, client_ctx: ClientContext, core: Core) -> di
 
 
 async def device_configure(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    msg = cmd_DEVICE_CONFIGURE_Schema().load_or_abort(req)
+    msg = cmd_DEVICE_CONFIGURE_Schema().load(req)
 
     user_id, device_name = msg["device_id"].split("@")
     user_privkey_cypherkey_privkey = PrivateKey.generate()
@@ -156,7 +156,7 @@ async def device_accept_configuration_try(req: dict, client_ctx: ClientContext, 
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema().load_or_abort(req)
+    msg = cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema().load(req)
 
     try:
         rep = await core.backend_connection.send(

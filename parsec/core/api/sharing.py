@@ -17,7 +17,7 @@ async def share(req: dict, client_ctx: ClientContext, core: Core) -> dict:
         return {"status": "login_required", "reason": "Login required"}
 
     try:
-        cmd_SHARE_Schema().load_or_abort(req)
+        cmd_SHARE_Schema().load(req)
         entry = await core.fs.fetch_path(req["path"])
         # Cannot share a placeholder !
         if entry.is_placeholder:

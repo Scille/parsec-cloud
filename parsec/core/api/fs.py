@@ -74,7 +74,7 @@ async def file_create(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = PathOnlySchema().load_or_abort(req)
+    req = PathOnlySchema().load(req)
     try:
         await core.fs.file_create(req["path"])
     except FSInvalidPath as exc:
@@ -86,7 +86,7 @@ async def file_read(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = cmd_FILE_READ_Schema().load_or_abort(req)
+    req = cmd_FILE_READ_Schema().load(req)
     try:
         content = await core.fs.file_read(req["path"], req["size"], req["offset"])
     except FSInvalidPath as exc:
@@ -98,7 +98,7 @@ async def file_write(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = cmd_FILE_WRITE_Schema().load_or_abort(req)
+    req = cmd_FILE_WRITE_Schema().load(req)
     try:
         await core.fs.file_write(req["path"], req["content"], req["offset"])
     except FSInvalidPath as exc:
@@ -110,7 +110,7 @@ async def file_truncate(req: dict, client_ctx: ClientContext, core: Core) -> dic
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = cmd_FILE_TRUNCATE_Schema().load_or_abort(req)
+    req = cmd_FILE_TRUNCATE_Schema().load(req)
     try:
         await core.fs.file_truncate(req["path"], req["length"])
     except FSInvalidPath as exc:
@@ -122,7 +122,7 @@ async def stat(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = PathOnlySchema().load_or_abort(req)
+    req = PathOnlySchema().load(req)
     try:
         stat = await core.fs.file_truncate(req["path"])
     except FSInvalidPath as exc:
@@ -134,7 +134,7 @@ async def folder_create(req: dict, client_ctx: ClientContext, core: Core) -> dic
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = PathOnlySchema().load_or_abort(req)
+    req = PathOnlySchema().load(req)
     try:
         await core.fs.folder_create(req["path"])
     except FSInvalidPath as exc:
@@ -146,7 +146,7 @@ async def move(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = cmd_MOVE_Schema().load_or_abort(req)
+    req = cmd_MOVE_Schema().load(req)
     try:
         await core.fs.move(req["src"], req["dst"])
     except FSInvalidPath as exc:
@@ -161,7 +161,7 @@ async def delete(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if req["path"] == "/":
         return {"status": "invalid_path", "reason": "Cannot remove `/` root folder"}
 
-    req = PathOnlySchema().load_or_abort(req)
+    req = PathOnlySchema().load(req)
     try:
         await core.fs.delete(req["path"])
     except FSInvalidPath as exc:
@@ -173,7 +173,7 @@ async def flush(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = PathOnlySchema().load_or_abort(req)
+    req = PathOnlySchema().load(req)
     try:
         await core.fs.file_flush(req["path"])
     except FSInvalidPath as exc:
@@ -185,7 +185,7 @@ async def synchronize(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = PathOnlySchema().load_or_abort(req)
+    req = PathOnlySchema().load(req)
     try:
         await core.fs.sync(req["path"])
     except FSInvalidPath as exc:

@@ -38,7 +38,7 @@ async def event_subscribe(req: dict, client_ctx: ClientContext, core: Core) -> d
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(req)
+    msg = cmd_EVENT_SUBSCRIBE_Schema().load(req)
     event = msg["event"]
     subject = msg["subject"]
 
@@ -68,7 +68,7 @@ async def event_unsubscribe(req: dict, client_ctx: ClientContext, core: Core) ->
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(req)
+    msg = cmd_EVENT_SUBSCRIBE_Schema().load(req)
     event = msg["event"]
     subject = msg["subject"]
 
@@ -91,7 +91,7 @@ async def event_listen(req: dict, client_ctx: ClientContext, core: Core) -> dict
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_EVENT_LISTEN_Schema().load_or_abort(req)
+    msg = cmd_EVENT_LISTEN_Schema().load(req)
     if msg["wait"]:
         event, subject = await client_ctx.received_signals.get()
     else:
@@ -131,5 +131,5 @@ async def event_list_subscribed(req: dict, client_ctx: ClientContext, core: Core
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    BaseCmdSchema().load_or_abort(req)  # empty msg expected
+    BaseCmdSchema().load(req)  # empty msg expected
     return {"status": "ok", "subscribed": list(client_ctx.registered_signals.keys())}
