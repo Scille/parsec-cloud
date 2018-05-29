@@ -8,7 +8,7 @@ from parsec.core.fs2.utils import (
     new_folder_manifest,
     new_dirty_block_access,
 )
-from parsec.core.fs2.opened_file import OpenedFile, fast_forward_file_manifest, OpenedFilesManager
+from parsec.core.fs2.opened_file import OpenedFile, OpenedFilesManager
 from parsec.core.fs2.exceptions import InvalidPath
 
 
@@ -36,14 +36,6 @@ class FSOpsMixin(FSBase):
     async def folder_create(self, path: str):
         manifest = new_folder_manifest(self._device)
         await self._insert_new(path, manifest)
-
-    def _open_file(self, access, manifest):
-        try:
-            return self._opened_files[access["id"]]
-        except KeyError:
-            fd = OpenedFile(access, manifest)
-            self._opened_files[access["id"]] = fd
-            return fd
 
     async def _build_data_from_contiguous_space(self, cs):
         data = bytearray(cs.size)
@@ -82,7 +74,7 @@ class FSOpsMixin(FSBase):
             return b""
 
         fd = self._opened_files.open_file(access, manifest)
-        cs = fd.get_read_map(size, offset)
+        cs = fd.get_read_map(manifest, size, offset)
         return await self._build_data_from_contiguous_space(cs)
 
     async def file_write(self, path, buffer: bytes, offset: int = -1):
@@ -116,25 +108,34 @@ class FSOpsMixin(FSBase):
             # raise InvalidPath("Path `/` is not a file")
             return
         normalize_path(path)
-        access, manifest = await self._local_tree.retrieve_entry(path)
-        if not is_file_manifest(manifest):
-            # TODO: done for compatibility
-            # raise InvalidPath("Path `%s` doesn't point to a file")
-            return
 
-        fd = self._opened_files.open_file(access, manifest)
+        while True:
+            access, manifest = await self._local_tree.retrieve_entry(path)
+            if not is_file_manifest(manifest):
+                # TODO: done for compatibility
+                # raise InvalidPath("Path `%s` doesn't point to a file")
+                return
 
-        new_size, new_dirty_blocks = fd.get_flush_map()
-        for ndb in new_dirty_blocks:
-            ndba = new_dirty_block_access(ndb.start, ndb.size)
-            self._blocks_manager.flush_on_local2(ndba["id"], ndba["key"], ndb.data)
-            manifest["dirty_blocks"].append(ndba)
-        manifest["size"] = new_size
-        self._local_tree.update_entry(access, manifest)
-        # TODO: big fat hack
-        fd.manifest = manifest
+            fd = self._opened_files.open_file(access, manifest)
+            if not fd.need_flush(manifest):
+                return
 
-        self._opened_files.close_file(access)
+            if fd.is_syncing():
+                # This file is in the middle of a sync, wait for it to
+                # end and retry everything to avoid concurrency issues
+                await fd.wait_not_syncing()
+                continue
+
+            new_size, new_dirty_blocks = fd.get_flush_map()
+            for ndb in new_dirty_blocks:
+                ndba = new_dirty_block_access(ndb.start, ndb.size)
+                self._blocks_manager.flush_on_local2(ndba["id"], ndba["key"], ndb.data)
+                manifest["dirty_blocks"].append(ndba)
+            manifest["size"] = new_size
+            self._local_tree.update_entry(access, manifest)
+
+            self._opened_files.close_file(access)
+            break
 
     async def move(self, src: str, dst: str):
         if src == "/":
@@ -193,16 +194,28 @@ class FSOpsMixin(FSBase):
     async def delete(self, path: str):
         if path == "/":
             raise InvalidPath("Cannot delete `/` root folder")
-        parent_path, file_name = normalize_path(path)
+        parent_path, entry_name = normalize_path(path)
         parent_access, parent_manifest = await self._local_tree.retrieve_entry(parent_path)
 
         try:
-            file_access = parent_manifest["children"].pop(file_name)
+            entry_access = parent_manifest["children"].pop(entry_name)
         except KeyError:
             raise InvalidPath("Path `%s` doesn't exists" % path)
 
-        self._local_tree.delete_entry(file_access)
+        self._recursive_clean_local_modifications(entry_access)
         self._local_tree.update_entry(parent_access, parent_manifest)
+
+    def _recursive_clean_local_modifications(self, entry_access):
+        manifest = self._local_tree.delete_entry(entry_access)
+        if manifest:
+            if is_folder_manifest(manifest):
+                for child_access in manifest["children"].values():
+                    self._recursive_clean_local_modifications(child_access)
+            else:
+                try:
+                    self._opened_files.close_file(entry_access)
+                except KeyError:
+                    pass
 
     async def stat(self, path: str):
         if path == "/":

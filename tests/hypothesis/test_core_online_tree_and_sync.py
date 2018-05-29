@@ -139,7 +139,6 @@ async def test_online_core_tree_and_sync(
                 # If we reset local storage however, we want to force the core
                 # to load the data from the backend.
                 await core.fs.sync("/")
-                core.fs._debug_pocav("RESET SYNC")
                 await self.communicator.trio_respond(True)
 
             async def restart_core_done(core):

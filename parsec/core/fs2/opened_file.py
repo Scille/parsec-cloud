@@ -1,5 +1,7 @@
 import attr
+import trio
 import pendulum
+from contextlib import contextmanager
 from itertools import dropwhile
 from math import inf
 
@@ -26,12 +28,6 @@ class WriteCmd:
 
 @attr.s(slots=True)
 class MarkerCmd:
-    datetime = attr.ib(default=attr.Factory(pendulum.now))
-
-
-@attr.s(slots=True)
-class TruncateCmd:
-    length = attr.ib()
     datetime = attr.ib(default=attr.Factory(pendulum.now))
 
 
@@ -66,14 +62,48 @@ class MultiLocationsContiguousSpace(ContiguousSpace):
         return self.get_dirty_blocks() or self.get_in_ram_buffers()
 
 
+@attr.s
 class OpenedFile:
 
-    def __init__(self, access, manifest):
-        self.block_size = 2 ** 16
-        self.access = access
-        self.manifest = manifest
-        self.size = manifest["size"]
-        self._cmds_list = []
+    access = attr.ib()
+    size = attr.ib()
+    _cmds_list = attr.ib(factory=list)
+    block_size = attr.ib(default=2 ** 16)
+    # To symplify concurrency, we use this event to prohibe flushes during
+    # sync and multiple concurrent syncs
+    _not_syncing_event = attr.ib(factory=trio.Event)
+
+    def __attrs_post_init__(self):
+        self._not_syncing_event.set()
+
+    def need_sync(self, manifest):
+        return (
+            manifest["need_sync"]
+            or manifest["size"] != self.size
+            or any(x for x in self._cmds_list if isinstance(x, WriteCmd))
+        )
+
+    def need_flush(self, manifest):
+        return manifest["size"] != self.size or any(
+            x for x in self._cmds_list if isinstance(x, WriteCmd)
+        )
+
+    @contextmanager
+    def start_syncing(self):
+        if self.is_syncing():
+            raise RuntimeError("Already syncing !")
+        self._not_syncing_event.clear()
+        try:
+            yield
+
+        finally:
+            self._not_syncing_event.set()
+
+    def is_syncing(self):
+        return not self._not_syncing_event.is_set()
+
+    async def wait_not_syncing(self):
+        return self._not_syncing_event.wait()
 
     def write(self, content: bytes, offset: int = -1):
         if offset == -1 or offset > self.size:
@@ -87,14 +117,11 @@ class OpenedFile:
         if length < self.size:
             self.size = length
 
-    def compact(self):
-        pass
-
-    def get_not_synced_bounds(self):
+    def get_not_synced_bounds(self, manifest):
         start = inf
         end = -inf
 
-        for dba in self.manifest["dirty_blocks"]:
+        for dba in manifest["dirty_blocks"]:
             if dba["offset"] < start:
                 start = dba["offset"]
             dba_end = dba["offset"] + dba["size"]
@@ -107,76 +134,64 @@ class OpenedFile:
                     start = cmd.offset
                 if cmd.end > end:
                     end = cmd.end
-            elif isinstance(cmd, TruncateCmd):
-                if end > cmd.length:
-                    end = cmd.length
 
         if start == inf:
             start = 0
         if end == -inf:
             end = 0
+        if end > self.size:
+            end = self.size
 
         return start, end
 
-    def _get_quickly_filtered_blocks(self, start, end):
+    def _get_quickly_filtered_blocks(self, manifest, start, end):
         in_ram = [
             RamBuffer(x.offset, x.end, x.buffer) for x in self._cmds_list if isinstance(x, WriteCmd)
         ]
         dirty_blocks = [
             DirtyBlockBuffer(*x)
-            for x in quick_filter_block_accesses(self.manifest["dirty_blocks"], start, end)
+            for x in quick_filter_block_accesses(manifest["dirty_blocks"], start, end)
         ]
         blocks = [
-            BlockBuffer(*x)
-            for x in quick_filter_block_accesses(self.manifest["blocks"], start, end)
+            BlockBuffer(*x) for x in quick_filter_block_accesses(manifest["blocks"], start, end)
         ]
 
         return blocks + dirty_blocks + in_ram
 
-    def get_read_map(self, size: int = -1, offset: int = 0):
+    def get_read_map(self, manifest, size: int = -1, offset: int = 0):
         if offset >= self.size:
             return MultiLocationsContiguousSpace(offset, offset, [])
 
-        blocks = self._get_quickly_filtered_blocks(offset, offset + size)
+        blocks = self._get_quickly_filtered_blocks(manifest, offset, offset + size)
         merged = merge_buffers_with_limits(blocks, offset, offset + size)
-        assert len(merged.spaces) == 1
+        assert len(merged.spaces) <= 1
         assert merged.size <= size
         assert merged.start == offset
+        if merged.spaces:
+            cs = merged.spaces[0]
+            return MultiLocationsContiguousSpace(cs.start, cs.end, cs.buffers)
+        else:
+            return MultiLocationsContiguousSpace(offset, offset, [])
 
-        cs = merged.spaces[0]
-        return MultiLocationsContiguousSpace(cs.start, cs.end, cs.buffers)
-
-        # opened_file_rm = []
-        # dirty_blocks_rm = []
-        # blocks_rm = []
-        # for bs in merged.spaces[0].buffers:
-        #     if isinstance(bs.buffer, RamBuffer):
-        #         opened_file_rm.append(bs)
-        #     elif isinstance(bs.buffer, DirtyBlockBuffer):
-        #         dirty_blocks_rm.append(bs)
-        #     else:  # BlockBuffer
-        #         blocks_rm.append(bs)
-
-        # return merged.size, opened_file_rm, dirty_blocks_rm, blocks_rm
-
-    def get_sync_map(self):
-        start, end = self.get_not_synced_bounds()
+    def get_sync_map(self, manifest):
+        start, end = self.get_not_synced_bounds(manifest)
         aligned_start = start - start % self.block_size
         if not end % self.block_size:
             aligned_end = end
         else:
             aligned_end = end + (self.block_size - end % self.block_size)
 
-        blocks = self._get_quickly_filtered_blocks(aligned_start, aligned_end)
+        blocks = self._get_quickly_filtered_blocks(manifest, aligned_start, aligned_end)
         merged = merge_buffers_with_limits_and_alignment(
             blocks, aligned_start, aligned_end, self.block_size
         )
-        assert len(merged.spaces) == 1
-        assert merged.size == self.size
+        assert len(merged.spaces) <= 1
         assert merged.start == 0
 
-        cs = merged.spaces[0]
-        return MultiLocationsContiguousSpace(cs.start, cs.end, cs.buffers)
+        merged.spaces = [
+            MultiLocationsContiguousSpace(x.start, x.end, x.buffers) for x in merged.spaces
+        ]
+        return merged
 
     def create_marker(self):
         marker = MarkerCmd()
@@ -189,7 +204,7 @@ class OpenedFile:
         def drop_until_marker_is_found(x):
             nonlocal marker_found
             marker_found = x is marker
-            return marker_found
+            return not marker_found
 
         tmp_list = list(dropwhile(drop_until_marker_is_found, self._cmds_list))
         # In case two concurrent marker have been created, it's possible
@@ -217,22 +232,6 @@ class OpenedFile:
         return self.size, buffers
 
 
-def fast_forward_file_manifest(new_remote_base, current):
-    # TODO: must be greatly improved...
-    return {
-        "type": "local_file_manifest",
-        "blocks": new_remote_base["blocks"],
-        "created": new_remote_base["created"],
-        "device_name": new_remote_base["device_name"],
-        "dirty_blocks": [],
-        "need_sync": False,
-        "base_version": new_remote_base["version"],
-        "size": new_remote_base["size"],
-        "updated": new_remote_base["updated"],
-        "user_id": new_remote_base["user_id"],
-    }
-
-
 @attr.s
 class OpenedFilesManager:
     device = attr.ib()
@@ -242,7 +241,7 @@ class OpenedFilesManager:
     _resolved_placeholder_accesses = attr.ib(factory=dict)
 
     def is_opened(self, access):
-        return access["id"] in self.opened_files
+        return self.opened_files.get(access["id"])
 
     def _file_lookup(self, id):
         try:
@@ -256,8 +255,8 @@ class OpenedFilesManager:
     def open_file(self, access, manifest):
         fd = self._file_lookup(access["id"])
         if not fd:
-            fd = OpenedFile(access, manifest)
-        self.opened_files[access["id"]] = fd
+            fd = OpenedFile(access, manifest["size"])
+            self.opened_files[access["id"]] = fd
         return fd
 
     def close_file(self, access):
@@ -281,49 +280,10 @@ class OpenedFilesManager:
             return
         self._resolved_placeholder_accesses[placeholder_access["id"]] = resolved_access["id"]
 
-    def flush_all(self):
-
-        fd = self.opened_files.open_file(access, manifest)
-
-        new_size, new_dirty_blocks = fd.get_flush_map()
-        for ndb in new_dirty_blocks:
-            ndba = new_dirty_block_access(ndb.start, ndb.size)
-            self._blocks_manager.flush_on_local2(ndba["id"], ndba["key"], ndb.data)
-            manifest["dirty_blocks"].append(ndba)
-        manifest["size"] = new_size
-        self._local_tree.update_entry(access, manifest)
-
-        self.opened_files.close_file(access)
-
-        # for id, fd in self.opened_files.items():
-        #     self.manifests_manager.
-
-
-#         # size, in_ram, in_local, in_remote = entry.get_read_map(size, offset)
-
-#         return b""
-#         # TODO: finish this...
-
-#         # fd = self._open_file(access, manifest)
-
-#         # # Start of atomic operations
-
-#         # size, in_ram, in_local, in_remote = entry.get_read_map(size, offset)
-
-#         # buffer = bytearray(size)
-
-#         # for start, end, content in in_ram:
-#         #     buffer[start, end] = content
-
-#         # for start, end, id in in_local:
-#         #     content = self.store.get_block(id)
-#         #     buffer[start, end] = content
-
-#         # # End of atomic operations
-
-#         # for start, end, content in in_remote:
-#         #     await self.blocks_manager.fetch_from_backend()
-#         #     content = await self.store.get_remote_block(id)
-#         #     buffer[start, end] = content
-
-#         # return content
+    def move_modifications(self, old_access, new_access):
+        try:
+            fd = self.opened_files.pop(old_access["id"])
+        except KeyError:
+            # Nothing to move
+            return
+        self.opened_files[new_access["id"]] = fd

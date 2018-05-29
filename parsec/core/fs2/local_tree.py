@@ -13,9 +13,9 @@ from parsec.core.fs2.exceptions import InvalidPath
 
 
 # Custom exception only used internally
-@attr.s
 class NotInLocalTreeError(Exception):
-    access = attr.ib()
+    def __init__(self, access):
+        self.access = access
 
 
 class LocalTree:
@@ -88,6 +88,8 @@ class LocalTree:
             # do the atomic retrieval
             for path in paths:
                 await self.retrieve_entry(path)
+            # TODO: in very weird case this can fail (if a path entry is
+            # removed from cache during another retrieve_entry)
             return [self.retrieve_entry_sync(path) for path in paths]
 
     def retrieve_entry_sync(self, path):
@@ -153,11 +155,15 @@ class LocalTree:
         self._resolved_placeholder_accesses[placeholder_access["id"]] = resolved_access["id"]
         self.manifests_manager.remove_from_local2(placeholder_access["id"])
 
-    def move_entry_modifications(self, old_access, new_access):
+    def move_modifications(self, old_access, new_access, manifest=None):
         try:
-            manifest = self._manifests_cache.pop(old_access["id"])
+            if not manifest:
+                manifest = self._manifests_cache.pop(old_access["id"])
+            else:
+                del self._manifests_cache[old_access["id"]]
         except KeyError:
-            pass
+            # Nothing to move
+            return
         self._manifests_cache[new_access["id"]] = manifest
         self.manifests_manager.flush_on_local2(new_access["id"], new_access["key"], manifest)
         self.manifests_manager.remove_from_local2(old_access["id"])
@@ -173,10 +179,9 @@ class LocalTree:
 
     def delete_entry(self, access):
         try:
-            del self._manifests_cache[access["id"]]
+            return self._manifests_cache.pop(access["id"])
         except KeyError:
             # Entry simply not available locally
             pass
 
-        # TODO
-        # self.manifests_manager.remove_from_local2(access['id'])
+        self.manifests_manager.remove_from_local2(access["id"])

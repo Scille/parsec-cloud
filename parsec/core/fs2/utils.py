@@ -56,7 +56,7 @@ def new_block_access(offset, data, id=None):
         "key": generate_sym_key(),
         "offset": offset,
         "size": len(data),
-        "digest": sha256(data),
+        "digest": sha256(bytes(data)),
     }
 
 
@@ -115,10 +115,15 @@ def convert_to_remote_manifest(local_manifest):
     return manifest
 
 
-def convert_to_local_manifest(manifest):
+def convert_to_local_manifest(manifest, as_need_sync=False):
     local_manifest = copy_manifest(manifest)
-    local_manifest["need_sync"] = False
     local_manifest["base_version"] = local_manifest.pop("version")
+    if as_need_sync:
+        local_manifest["need_sync"] = True
+        local_manifest["base_version"] -= 1
+        assert local_manifest["base_version"] >= 0
+    else:
+        local_manifest["need_sync"] = False
     remote_type = manifest["type"]
     if remote_type == "file_manifest":
         local_manifest["type"] = "local_file_manifest"

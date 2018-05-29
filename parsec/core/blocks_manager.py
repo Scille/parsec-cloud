@@ -17,6 +17,7 @@ class BlocksManager(BaseAsyncComponent):
         pass
 
     def _encrypt_block(self, key, block):
+        # TODO: handle block size padding here
         box = SecretBox(key)
         # signed = self.user.signkey.sign(raw)
         # return box.encrypt(signed)

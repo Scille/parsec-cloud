@@ -130,7 +130,6 @@ def _trim_uncontiguous_space(ucs, new_start=None, new_end=None):
 
 
 def _split_aligned_contiguous_space(cs, block_size):
-    assert not cs.size % block_size
     if cs.size == block_size:
         return [cs]
 
@@ -165,6 +164,12 @@ def _split_aligned_contiguous_space(cs, block_size):
             curr_acs_start = end
             curr_acs_remain_space = block_size
             curr_acs_buffers = []
+
+    # Last space maybe smaller than block size
+    if curr_acs_remain_space < block_size:
+        splitted_spaces.append(
+            ContiguousSpace(curr_acs_start, block_size - curr_acs_remain_space, curr_acs_buffers)
+        )
 
     return splitted_spaces
 
@@ -258,16 +263,22 @@ def merge_buffers_with_limits_and_alignment(buffers, start, end, block_size):
 
     unaligned = merge_buffers(buffers)
     assert len(unaligned.spaces) <= 1
-    aligned = _trim_uncontiguous_space(unaligned, new_start=start, new_end=end)
 
-    if aligned.spaces:
-        splitted_spaces = _split_aligned_contiguous_space(aligned.spaces[0], block_size)
-        assert splitted_spaces[0].start == start
-        assert splitted_spaces[-1].end == end
-    else:
-        splitted_spaces = []
+    aligned = _trim_uncontiguous_space(unaligned, new_start=start, new_end=end)
     assert aligned.start == start
     assert aligned.end == end
+    assert len(aligned.spaces) <= 1
+
+    if aligned.spaces:
+        cs = aligned.spaces[0]
+        splitted_spaces = _split_aligned_contiguous_space(cs, block_size)
+        assert splitted_spaces[0].start == start
+        assert splitted_spaces[-1].end <= end
+        end = cs.end
+    else:
+        end = start
+        splitted_spaces = []
+
     return UncontiguousSpace(start, end, splitted_spaces)
 
 
