@@ -55,7 +55,6 @@ class BackendMessageError(Exception):
 
 
 class Sharing(BaseAsyncComponent):
-
     def __init__(self, device, fs, backend_connection, backend_event_manager, signal_ns):
         super().__init__()
         self._signal_ns = signal_ns

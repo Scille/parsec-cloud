@@ -292,12 +292,10 @@ def mocked_local_storage_connection():
     import sqlite3
 
     class CloseProtectedConnection(sqlite3.Connection):
-
         def close(self):
             pass
 
     class InMemoryDatabaseManager:
-
         def __init__(self, vanilla_connect):
             self.vanilla_connect = vanilla_connect
             self.databases = {}

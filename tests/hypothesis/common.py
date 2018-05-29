@@ -11,9 +11,7 @@ from huepy import red, bold
 
 
 def rule(**config):
-
     def dec(fn):
-
         @vanilla_rule(**config)
         @wraps(fn)
         def wrapper(*args, **kwargs):
@@ -33,7 +31,6 @@ def rule(**config):
 
 
 def rule_once(*args, **kwargs):
-
     def accept(f):
         key = "__%s_hypothesis_initialized" % f.__name__
 
@@ -219,7 +216,6 @@ async def test_reproduce(alice_core_sock, alice2_core2_sock):
 
 
 def failure_reproducer(init=BaseFailureReproducer._FAILURE_REPRODUCER_CODE_HEADER):
-
     def wrapper(cls):
         assert issubclass(cls, RuleBasedStateMachine)
         nmspc = {"_FAILURE_REPRODUCER_CODE_HEADER": init}
@@ -229,7 +225,6 @@ def failure_reproducer(init=BaseFailureReproducer._FAILURE_REPRODUCER_CODE_HEADE
 
 
 def reproduce_rule(template):
-
     def wrapper(fn):
         fn._reproduce_template = template
         return fn

@@ -4,7 +4,6 @@ from parsec.core.base import BaseAsyncComponent
 
 
 class LocalStorage(BaseAsyncComponent):
-
     def __init__(self, path):
         super().__init__()
         self.path = path

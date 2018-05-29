@@ -3,7 +3,6 @@ from parsec.backend.group import BaseGroupComponent
 
 
 class PGGroupComponent(BaseGroupComponent):
-
     def __init__(self, dbh, *args):
         super().__init__(*args)
         self.dbh = dbh

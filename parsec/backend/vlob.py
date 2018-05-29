@@ -46,7 +46,6 @@ class cmd_UPDATE_Schema(BaseCmdSchema):
 
 
 class BaseVlobComponent:
-
     def __init__(self, signal_ns):
         self._signal_vlob_updated = signal_ns.signal("vlob_updated")
 

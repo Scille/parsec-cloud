@@ -76,7 +76,6 @@ def _socket_send_cmd(sock, msg):
 
 
 def start_shutdown_watcher(socket_address, mountpoint):
-
     def _shutdown_watcher():
         logger.debug("Starting shutdown watcher")
         sock = _socket_init(socket_address)
@@ -105,7 +104,6 @@ def start_shutdown_watcher(socket_address, mountpoint):
 
 
 class ContentBuilder:
-
     def __init__(self):
         self.contents = {}
 
@@ -171,7 +169,6 @@ def cli(mountpoint, debug, log_level, nothreads, socket):
 
 
 class File:
-
     def __init__(self, operations, path, fd, flags=0):
         self.fd = fd
         self.path = path
@@ -239,7 +236,6 @@ class File:
 
 
 class FuseOperations(LoggingMixIn, Operations):
-
     def __init__(self, socket_address):
         self.fds = {}
         self._fs_id_generator = count(1)

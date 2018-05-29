@@ -13,13 +13,11 @@ from parsec.core.fs.utils import (
 
 # Custom exception only used internally
 class NotInLocalTreeError(Exception):
-
     def __init__(self, access):
         self.access = access
 
 
 class LocalTree:
-
     def __init__(self, device, manifests_manager):
         self.device = device
         self.manifests_manager = manifests_manager
@@ -36,7 +34,6 @@ class LocalTree:
         self._recursive_load_local_manifests(self._root_manifest_cache)
 
     def dump(self):
-
         def recursive_resolve(manifest):
             dump = copy_manifest(manifest)
             if is_folder_manifest(dump):

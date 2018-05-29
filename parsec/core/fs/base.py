@@ -9,7 +9,6 @@ class FSInvalidPath(Exception):
 
 
 class FSBase(BaseAsyncComponent):
-
     def __init__(self, device, manifests_manager, blocks_manager):
         super().__init__()
         self._device = device

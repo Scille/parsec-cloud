@@ -12,7 +12,6 @@ class ManifestDecryptionError(Exception):
 
 
 class ManifestsManager(BaseAsyncComponent):
-
     def __init__(self, local_storage, backend_storage, encryption_manager):
         super().__init__()
         self._encryption_manager = encryption_manager

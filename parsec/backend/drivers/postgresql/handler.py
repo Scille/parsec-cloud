@@ -140,7 +140,6 @@ def init_db(url, force=False):
 
 
 class PGHandler:
-
     def __init__(self, url, signal_ns, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -353,7 +352,6 @@ class PGHandler:
                 raise resp.get("error", RuntimeError("Unknown error"))
 
     def get_signal_handler(self, signal):
-
         def signal_handler(sender, propagate=True):
             if propagate:
                 self.reqqueue.put({"type": "notify", "signal": signal, "sender": sender})

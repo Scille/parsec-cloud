@@ -23,7 +23,6 @@ json_dict = st.dictionaries(st.text(printable), json_nested)
 
 
 class TestCookedSocketHypothesis:
-
     @pytest.mark.slow
     @given(json_dict)
     async def test_cooked_socket_communication(self, payload):
@@ -47,7 +46,6 @@ class TestCookedSocketHypothesis:
 
 
 class TestCookedSocket:
-
     def setup_method(self):
         self.rserver, self.rclient = trio.testing.memory_stream_pair()
         self.cclient = CookedSocket(self.rclient)

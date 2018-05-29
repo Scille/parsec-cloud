@@ -15,7 +15,6 @@ async def test_online(
     tmpdir,
     alice,
 ):
-
     class CoreOnline(TrioDriverRuleBasedStateMachine):
         count = 0
 

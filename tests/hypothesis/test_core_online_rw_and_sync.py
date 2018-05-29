@@ -9,7 +9,6 @@ from tests.hypothesis.common import rule, failure_reproducer, reproduce_rule
 
 
 class FileOracle:
-
     def __init__(self):
         self._buffer = bytearray()
 
@@ -30,9 +29,7 @@ async def test_core_online_rw_and_sync(
     tmpdir,
     alice,
 ):
-
     class RestartCore(Exception):
-
         def __init__(self, reset_local_storage=False):
             self.reset_local_storage = reset_local_storage
 

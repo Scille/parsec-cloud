@@ -48,7 +48,6 @@ class BlockBuffer(Buffer):
 
 @attr.s(slots=True)
 class MultiLocationsContiguousSpace(ContiguousSpace):
-
     def get_blocks(self):
         return [bs for bs in self.buffers if isinstance(bs.buffer, BlockBuffer)]
 

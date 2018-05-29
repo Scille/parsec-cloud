@@ -11,7 +11,6 @@ from parsec.backend.exceptions import (
 
 
 class PGUserComponent(BaseUserComponent):
-
     def __init__(self, dbh, *args):
         super().__init__(*args)
         self.dbh = dbh

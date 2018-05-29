@@ -100,7 +100,6 @@ class Device:
 
 
 class DevicesManager:
-
     def __init__(self, devices_conf_path):
         self.devices_conf_path = devices_conf_path
 

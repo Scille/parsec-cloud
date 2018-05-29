@@ -8,7 +8,6 @@ from tests.hypothesis.common import rule, failure_reproducer, reproduce_rule
 
 
 class FileOracle:
-
     def __init__(self):
         self._buffer = bytearray()
 
@@ -24,7 +23,6 @@ class FileOracle:
 async def test_core_offline_restart_and_rwfile(
     TrioDriverRuleBasedStateMachine, mocked_local_storage_connection, backend_addr, tmpdir, alice
 ):
-
     class RestartCore(Exception):
         pass
 

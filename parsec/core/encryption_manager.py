@@ -208,7 +208,6 @@ def decrypt_with_secret_key(key: bytes, ciphered_msg: dict) -> tuple:
 
 
 class EncryptionManager(BaseAsyncComponent):
-
     def __init__(self, device, backend_connection):
         super().__init__()
         self.device = device

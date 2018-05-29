@@ -66,7 +66,6 @@ def _generate_token():
 
 
 class BaseUserComponent:
-
     def __init__(self, signal_ns):
         self._signal_user_claimed = signal_ns.signal("user_claimed")
         self._signal_device_try_claim_submitted = signal_ns.signal("device_try_claim_submitted")

@@ -39,7 +39,6 @@ def find_conflicting_name_for_child_entry(parent_manifest, original_name):
 
 
 class FileSyncConcurrencyError(Exception):
-
     def __init__(self, access, target_remote_manifest=None):
         self.access = access
         self.target_remote_manifest = target_remote_manifest
@@ -50,7 +49,6 @@ class RetrySync(Exception):
 
 
 class FSSyncMixin(FSBase):
-
     async def sync(self, path: str):
         # TODO: handle arbitrary path sync
         assert path == "/"

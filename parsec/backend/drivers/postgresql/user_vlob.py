@@ -3,7 +3,6 @@ from parsec.backend.exceptions import VersionError
 
 
 class PGUserVlobComponent(BaseUserVlobComponent):
-
     def __init__(self, dbh, *args):
         super().__init__(*args)
         self.dbh = dbh

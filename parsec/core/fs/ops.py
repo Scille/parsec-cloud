@@ -12,7 +12,6 @@ from parsec.core.fs.utils import (
 
 
 class FSOpsMixin(FSBase):
-
     async def _insert_new(self, path, manifest):
         if path == "/":
             raise FSInvalidPath("Path `/` already exists")

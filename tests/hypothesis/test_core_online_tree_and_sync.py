@@ -11,7 +11,6 @@ from tests.hypothesis.common import OracleFS, rule, normalize_path, rule_once
 
 
 class OracleFSWithSync:
-
     def __init__(self):
         self.core_fs = OracleFS()
         self.synced_fs = OracleFS()
@@ -81,9 +80,7 @@ async def test_online_core_tree_and_sync(
     alice,
     monitor,
 ):
-
     class RestartCore(Exception):
-
         def __init__(self, reset_local_storage=False):
             self.reset_local_storage = reset_local_storage
 

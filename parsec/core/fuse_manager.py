@@ -43,7 +43,6 @@ class FuseStoppingError(FuseManagerError):
 
 
 class FuseManager(BaseAsyncComponent):
-
     def __init__(
         self,
         core_addr: str,

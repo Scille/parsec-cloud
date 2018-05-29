@@ -3,7 +3,6 @@ from parsec.backend.blockstore import BaseBlockStoreComponent
 
 
 class PGBlockStoreComponent(BaseBlockStoreComponent):
-
     def __init__(self, dbh, *args):
         super().__init__(*args)
         self.dbh = dbh

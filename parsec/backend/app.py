@@ -103,7 +103,6 @@ class ClientContext:
 
 
 class BackendApp:
-
     def __init__(self, config):
         self.signal_ns = blinker.Namespace()
         self.config = config

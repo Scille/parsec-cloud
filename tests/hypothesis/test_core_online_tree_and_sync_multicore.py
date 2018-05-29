@@ -12,7 +12,6 @@ from tests.hypothesis.common import rule, rule_once, failure_reproducer, reprodu
 
 
 def compare_fs_dumps(entry_1, entry_2):
-
     def cook_entry(entry):
         if "children" in entry:
             return {**entry, "children": {k: v["access"] for k, v in entry["children"].items()}}

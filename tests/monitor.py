@@ -69,7 +69,6 @@ def render_task_tree(task=None):
 
 
 class Monitor(Instrument):
-
     def __init__(self, host=MONITOR_HOST, port=MONITOR_PORT):
         self.address = (host, port)
         self._portal = None
@@ -227,7 +226,6 @@ class Monitor(Instrument):
         )
 
     def command_stats(self, sout):
-
         async def get_current_statistics():
             return current_statistics()
 

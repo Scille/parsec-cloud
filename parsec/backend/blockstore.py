@@ -13,7 +13,6 @@ class cmd_POST_Schema(BaseCmdSchema):
 
 
 class BaseBlockStoreComponent:
-
     def __init__(self, signal_ns):
         pass
 

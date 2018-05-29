@@ -12,7 +12,6 @@ from tests.hypothesis.common import OracleFS, rule, rule_once
 async def test_core_offline_restart_and_tree(
     TrioDriverRuleBasedStateMachine, mocked_local_storage_connection, backend_addr, tmpdir, alice
 ):
-
     class RestartCore(Exception):
         pass
 
