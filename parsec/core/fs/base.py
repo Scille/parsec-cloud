@@ -46,3 +46,13 @@ class FSBase(BaseAsyncComponent):
             # TODO: clean useless dirty blocks
             manifest["size"] = new_size
             self._local_tree.update_entry(fd.access, manifest)
+
+    def update_last_processed_message(self, index):
+        root_access, root_manifest = self._local_tree.retrieve_entry_sync('/')
+        assert index > root_manifest['last_processed_message']
+        root_manifest['last_processed_message'] = index
+        self._local_tree.update_entry(root_access, root_manifest)
+
+    def get_last_processed_message(self):
+        _, root_manifest = self._local_tree.retrieve_entry_sync('/')
+        return root_manifest['last_processed_message']
