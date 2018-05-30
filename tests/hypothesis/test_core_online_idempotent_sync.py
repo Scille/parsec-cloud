@@ -140,9 +140,9 @@ async def test_online_core_idempotent_sync(
             note(rep)
             assert rep["status"] == "invalid_path"
 
-        @rule()
-        def sync(self):
-            rep = self.core_cmd({"cmd": "synchronize", "path": "/"})
+        @rule(path=st.one_of(GoodPath))
+        def sync(self, path):
+            rep = self.core_cmd({"cmd": "synchronize", "path": path})
             assert rep["status"] == "ok"
             note("sync: %r" % rep)
 
