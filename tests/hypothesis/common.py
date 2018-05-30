@@ -192,13 +192,13 @@ class OracleFS:
         return "invalid_path"
 
     def _recursive_children_sync(self, entry):
-            if isinstance(entry, OracleFSFolder):
-                for child_entry in entry.values():
-                    if child_entry.need_sync:
-                        child_entry.need_flush = False
-                        child_entry.need_sync = False
-                        child_entry.base_version += 1
-                    self._recursive_children_sync(child_entry)
+        if isinstance(entry, OracleFSFolder):
+            for child_entry in entry.values():
+                if child_entry.need_sync:
+                    child_entry.need_flush = False
+                    child_entry.need_sync = False
+                    child_entry.base_version += 1
+                self._recursive_children_sync(child_entry)
 
     def _backward_recursive_sync(self, path):
         curr_path = path
@@ -218,7 +218,7 @@ class OracleFS:
                 break
 
             if entry_was_placeholder:
-                curr_path, name = curr_path.rsplit('/', 1)
+                curr_path, name = curr_path.rsplit("/", 1)
                 child_asked_for_sync = name
             else:
                 break

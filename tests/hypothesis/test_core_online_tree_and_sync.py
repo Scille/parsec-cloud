@@ -6,7 +6,15 @@ from hypothesis.stateful import Bundle
 from copy import deepcopy
 
 from tests.common import connect_core, core_factory, backend_factory, run_app
-from tests.hypothesis.common import OracleFS, OracleFSFolder, rule, normalize_path, rule_once, failure_reproducer, reproduce_rule
+from tests.hypothesis.common import (
+    OracleFS,
+    OracleFSFolder,
+    rule,
+    normalize_path,
+    rule_once,
+    failure_reproducer,
+    reproduce_rule,
+)
 
 
 class OracleFSWithSync:
@@ -45,10 +53,10 @@ class OracleFSWithSync:
 
     def _sync_oracles(self, path):
         path = normalize_path(path)
-        if path == '/':
+        if path == "/":
             self.synced_fs = deepcopy(self.core_fs)
         else:
-            *parent_hops, name = path.split('/')
+            *parent_hops, name = path.split("/")
             parent_dir = self.synced_fs.root
             for hop in parent_hops:
                 if hop and hop not in parent_dir:
@@ -119,7 +127,8 @@ async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_lo
 
 def rule_selector():
     {body}
-""")
+"""
+    )
     class CoreOnlineTreeAndSync(TrioDriverRuleBasedStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")

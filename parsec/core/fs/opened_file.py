@@ -91,7 +91,9 @@ class OpenedFile:
         self._not_syncing_event.set()
 
     def need_sync(self, manifest):
-        return is_placeholder_access(self.access) or manifest["need_sync"] or self.need_flush(manifest)
+        return (
+            is_placeholder_access(self.access) or manifest["need_sync"] or self.need_flush(manifest)
+        )
 
     def need_flush(self, manifest):
         return manifest["size"] != self.size or any(

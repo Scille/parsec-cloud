@@ -52,7 +52,7 @@ class FSSyncMixin(FSBase):
     async def sync(self, path: str, recursive=True):
         print(que("start syncing %s" % path))
         parent_path, entry_name = normalize_path(path)
-        if path == '/':
+        if path == "/":
             access, manifest = await self._local_tree.retrieve_entry(path)
             await self._sync(access, manifest, recursive=recursive)
         else:
@@ -64,12 +64,14 @@ class FSSyncMixin(FSBase):
                 curr_ancestor_access = access
                 curr_ancestor_path = path
                 while is_placeholder_access(curr_ancestor_access):
-                    curr_ancestor_path, name = curr_ancestor_path.rsplit('/', 1)
+                    curr_ancestor_path, name = curr_ancestor_path.rsplit("/", 1)
                     to_sync_recursive_map = {name: to_sync_recursive_map}
                     # No risk of missing entry here given we retrieved the whole path earlier
-                    curr_ancestor_access, _ = self._local_tree.retrieve_entry_sync(curr_ancestor_path)
+                    curr_ancestor_access, _ = self._local_tree.retrieve_entry_sync(
+                        curr_ancestor_path
+                    )
                     if not curr_ancestor_access:
-                        curr_ancestor_path = '/'
+                        curr_ancestor_path = "/"
                         break
                 await self.sync(curr_ancestor_path, recursive=to_sync_recursive_map)
             else:

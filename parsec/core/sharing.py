@@ -103,26 +103,28 @@ class Sharing(BaseAsyncComponent):
         # TODO: handle other type of message
         # assert sharing_msg["type"] == "share"
         if sharing_msg["type"] == "share":
-            sharing_access = sharing_msg['content']
-            sharing_access['key'] = from_jsonb64(sharing_access['key'])
+            sharing_access = sharing_msg["content"]
+            sharing_access["key"] = from_jsonb64(sharing_access["key"])
 
             shared_with_folder_name = "shared-with-%s" % sender_user_id
             # TODO: leaky abstraction...
             parent_manifest = None
-            parent_path = '/%s' % shared_with_folder_name
+            parent_path = "/%s" % shared_with_folder_name
             while not parent_manifest:
                 try:
-                    parent_access, parent_manifest = await self.fs._local_tree.retrieve_entry(parent_path)
+                    parent_access, parent_manifest = await self.fs._local_tree.retrieve_entry(
+                        parent_path
+                    )
                 except FSInvalidPath:
                     await self.fs.folder_create(parent_path)
 
             # TODO: if parent is a file, this is going to fail...
-            sharing_name = sharing_msg['name']
-            while sharing_name in parent_manifest['children']:
-                sharing_name += '-dup'
-            parent_manifest['children'][sharing_msg['name']] = sharing_access
+            sharing_name = sharing_msg["name"]
+            while sharing_name in parent_manifest["children"]:
+                sharing_name += "-dup"
+            parent_manifest["children"][sharing_msg["name"]] = sharing_access
             self.fs._local_tree.update_entry(parent_access, parent_manifest)
-            self._signal_ns.signal("new_sharing").send('%s/%s' % (parent_path, sharing_name))
+            self._signal_ns.signal("new_sharing").send("%s/%s" % (parent_path, sharing_name))
         elif sharing_msg["type"] == "ping":
             self._signal_ns.signal("ping").send(sharing_msg["ping"])
 

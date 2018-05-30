@@ -23,11 +23,12 @@ async def share(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     req = cmd_SHARE_Schema().load(req)
     while True:
         try:
-            return await _share(core, req['recipient'], req['path'])
+            return await _share(core, req["recipient"], req["path"])
         except RetrySharing:
             continue
         except BackendNotAvailable:
             return {"status": "backend_not_availabled", "reason": "Backend not available"}
+
 
 async def _share(core, recipient, path):
     # TODO: leaky abstraction...
@@ -59,11 +60,7 @@ async def _share(core, recipient, path):
     sharing_msg_encrypted = box.encrypt(sharing_msg_signed)
 
     rep = await core.backend_connection.send(
-        {
-            "cmd": "message_new",
-            "recipient": recipient,
-            "body": to_jsonb64(sharing_msg_encrypted),
-        }
+        {"cmd": "message_new", "recipient": recipient, "body": to_jsonb64(sharing_msg_encrypted)}
     )
     if rep["status"] != "ok":
         # TODO: better cooking of the answer
