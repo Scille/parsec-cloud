@@ -47,12 +47,33 @@ def rule_once(*args, **kwargs):
     return accept
 
 
-class File:
-    pass
+@attr.s
+class OracleFSFile:
+    need_sync = attr.ib(default=True)
+    need_flush = attr.ib(default=False)
+    base_version = attr.ib(default=0)
+
+    @property
+    def is_placeholder(self):
+        return self.base_version == 0
 
 
-class Folder(dict):
-    pass
+@attr.s
+class OracleFSFolder(dict):
+    need_sync = attr.ib(default=True)
+    need_flush = attr.ib(default=False)
+    base_version = attr.ib(default=0)
+
+    @property
+    def is_placeholder(self):
+        return self.base_version == 0
+
+
+@attr.s
+class OracleFSRootFolder(OracleFSFolder):
+    @property
+    def is_placeholder(self):
+        return False
 
 
 def normalize_path(path):
@@ -61,28 +82,30 @@ def normalize_path(path):
 
 @attr.s
 class OracleFS:
-    root = attr.ib(default=attr.Factory(Folder))
+    root = attr.ib(factory=OracleFSRootFolder)
 
     def create_file(self, path):
         path = normalize_path(path)
         parent_path, name = path.rsplit("/", 1)
 
-        parent_folder = self.get_folder(parent_path)
-        if parent_folder is None or name in parent_folder:
+        parent_dir = self.get_folder(parent_path)
+        if parent_dir is None or name in parent_dir:
             return "invalid_path"
 
-        parent_folder[name] = File()
+        parent_dir[name] = OracleFSFile()
+        parent_dir.need_sync = True
         return "ok"
 
     def create_folder(self, path):
         path = normalize_path(path)
         parent_path, name = path.rsplit("/", 1)
 
-        parent_folder = self.get_folder(parent_path)
-        if parent_folder is None or name in parent_folder:
+        parent_dir = self.get_folder(parent_path)
+        if parent_dir is None or name in parent_dir:
             return "invalid_path"
 
-        parent_folder[name] = Folder()
+        parent_dir[name] = OracleFSFolder()
+        parent_dir.need_sync = True
         return "ok"
 
     def delete(self, path):
@@ -92,8 +115,9 @@ class OracleFS:
 
         parent_path, name = path.rsplit("/", 1)
         parent_dir = self.get_path(parent_path or "/")
-        if isinstance(parent_dir, Folder) and name in parent_dir:
+        if isinstance(parent_dir, OracleFSFolder) and name in parent_dir:
             del parent_dir[name]
+            parent_dir.need_sync = True
             return "ok"
 
         else:
@@ -122,19 +146,21 @@ class OracleFS:
             return "invalid_path"
 
         parent_dir_dst[name_dst] = parent_dir_src.pop(name_src)
+        parent_dir_dst.need_sync = True
+        parent_dir_src.need_sync = True
         return "ok"
 
     def get_folder(self, path):
         path = normalize_path(path)
 
         elem = self.get_path(path)
-        return elem if isinstance(elem, Folder) else None
+        return elem if isinstance(elem, OracleFSFolder) else None
 
     def get_file(self, path):
         path = normalize_path(path)
 
         elem = self.get_path(path)
-        return elem if isinstance(elem, File) else None
+        return elem if isinstance(elem, OracleFSFile) else None
 
     def get_path(self, path):
         path = normalize_path(path)
@@ -151,11 +177,39 @@ class OracleFS:
         return current_entry
 
     def flush(self, path):
-        return "ok" if self.get_path(path) is not None else "invalid_path"
+        entry = self.get_path(path)
+        if entry is not None:
+            entry.need_flush = False
+            return "ok"
+        return "invalid_path"
 
     def sync(self, path):
-        return "ok" if self.get_path(path) is not None else "invalid_path"
+        entry = self.get_path(path)
+        if entry is not None:
+            if entry.need_sync:
+                entry.need_flush = False
+                entry.need_sync = False
+                entry.base_version += 1
+            if isinstance(entry, OracleFSFolder):
+                for child in entry.keys():
+                    self.sync('%s/%s' % (path, child))
+            return "ok"
+        return "invalid_path"
 
+    def stat(self, path):
+        entry = self.get_path(path)
+        if entry is not None:
+            return {
+                'status': 'ok',
+                'base_version': entry.base_version,
+                'is_placeholder': entry.is_placeholder,
+                'need_flush': entry.need_flush,
+                'need_sync': entry.need_sync,
+            }
+        else:
+            return {
+                'status': 'invalid_path'
+            }
 
 class BaseFailureReproducer:
 

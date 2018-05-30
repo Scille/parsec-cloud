@@ -2,7 +2,6 @@ import os
 import pytest
 from hypothesis import strategies as st, note
 
-# from hypothesis.stateful import Bundle, rule
 from hypothesis.stateful import Bundle
 from copy import deepcopy
 
@@ -16,20 +15,16 @@ class OracleFSWithSync:
         self.synced_fs = OracleFS()
 
     def create_file(self, path):
-        res = self.core_fs.create_file(path)
-        return res
+        return self.core_fs.create_file(path)
 
     def create_folder(self, path):
-        res = self.core_fs.create_folder(path)
-        return res
+        return self.core_fs.create_folder(path)
 
     def delete(self, path):
-        res = self.core_fs.delete(path)
-        return res
+        return self.core_fs.delete(path)
 
     def move(self, src, dst):
-        res = self.core_fs.move(src, dst)
-        return res
+        return self.core_fs.move(src, dst)
 
     def flush(self, path):
         return self.core_fs.flush(path)
@@ -40,8 +35,13 @@ class OracleFSWithSync:
             self._sync_oracles(path)
         return res
 
+    def stat(self, path):
+        return self.core_fs.stat(path)
+
     def reset_core(self):
         self.core_fs = deepcopy(self.synced_fs)
+        # Mimic what is done in CoreOnlineRWFile.reset_core_done
+        self.core_fs.sync("/")
 
     def _sync_oracles(self, path):
         path = normalize_path(path)
@@ -78,7 +78,6 @@ async def test_online_core_tree_and_sync(
     backend_addr,
     tmpdir,
     alice,
-    monitor,
 ):
     class RestartCore(Exception):
         def __init__(self, reset_local_storage=False):
@@ -190,6 +189,20 @@ async def test_online_core_tree_and_sync(
             expected_status = self.oracle_fs.create_folder(path)
             assert rep["status"] == expected_status
             return path
+
+        @rule(path=st.one_of(Files, Folders))
+        def stat(self, path):
+            rep = self.core_cmd(
+                {"cmd": "stat", "path": path}
+            )
+            note(rep)
+            expected = self.oracle_fs.stat(path)
+            assert rep["status"] == expected['status']
+            if expected['status'] == 'ok':
+                assert rep['base_version'] == expected['base_version']
+                assert rep['is_placeholder'] == expected['is_placeholder']
+                assert rep['need_flush'] == expected['need_flush']
+                assert rep['need_sync'] == expected['need_sync']
 
         @rule(path=Files)
         def delete_file(self, path):

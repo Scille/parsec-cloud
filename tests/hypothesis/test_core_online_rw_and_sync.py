@@ -9,14 +9,46 @@ from tests.hypothesis.common import rule, failure_reproducer, reproduce_rule
 
 
 class FileOracle:
-    def __init__(self):
+    def __init__(self, base_version=0):
         self._buffer = bytearray()
+        self._synced_buffer = bytearray()
+        self.base_version = base_version
+        self.need_flush = base_version == 0
+        self.need_sync = base_version == 0
 
     def read(self, size, offset):
         return self._buffer[offset : size + offset]
 
     def write(self, offset, content):
         self._buffer[offset : len(content) + offset] = content
+        if content:
+            self.need_flush = True
+            self.need_sync = True
+
+    def truncate(self, length):
+        if length >= len(self._buffer):
+            return
+        self._buffer = self._buffer[:length]
+        self.need_flush = True
+        self.need_sync = True
+
+    def flush(self):
+        self.need_flush = False
+
+    def sync(self):
+        self._synced_buffer = self._buffer.copy()
+        if self.need_sync:
+            self.base_version += 1
+        self.need_sync = False
+        self.need_flush = False
+
+    def reset_core(self):
+        self._buffer = self._synced_buffer.copy()
+        self.need_flush = False
+        self.need_sync = False
+
+    def restart_core(self):
+        self.need_flush = False
 
 
 @pytest.mark.slow
@@ -42,7 +74,7 @@ from copy import deepcopy
 from parsec.utils import to_jsonb64, from_jsonb64
 
 from tests.common import connect_core, core_factory
-from tests.hypothesis.test_core_offline_restart_and_rwfile import FileOracle
+from tests.hypothesis.test_core_online_rw_and_sync import FileOracle
 
 class RestartCore(Exception):
     pass
@@ -57,8 +89,7 @@ async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_lo
         "backend_addr": backend_addr,
     }}
     bootstrapped = False
-    file_oracle = FileOracle()
-    file_oracle_synced = FileOracle()
+    file_oracle = FileOracle(base_version=1)
     to_run_rules = rule_selector()
     done = False
     need_boostrap_sync = True
@@ -82,13 +113,12 @@ async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_lo
                             break
                         if isinstance(afunc, Exception):
                             raise afunc
-                        file_oracle_synced = await afunc(sock, file_oracle) or file_oracle_synced
+                        await afunc(sock, file_oracle)
 
         except RestartCore:
             pass
 
         except ResetCore:
-            file_oracle = deepcopy(file_oracle_synced)
             mocked_local_storage_connection.reset()
             need_boostrap_sync = True
 
@@ -109,8 +139,7 @@ def rule_selector():
             }
             self.sys_cmd = lambda x: self.communicator.send(("sys", x))
             self.core_cmd = lambda x: self.communicator.send(("core", x))
-            self.file_oracle = FileOracle()
-            self.file_oracle_synced = FileOracle()
+            self.file_oracle = FileOracle(base_version=1)
 
             async def run_core(on_ready):
                 async with core_factory(**core_config) as core:
@@ -209,6 +238,7 @@ async def afunc(sock, file_oracle):
     await sock.send({{"cmd": "flush", "path": "/foo.txt"}})
     rep = await sock.recv()
     assert rep["status"] == "ok"
+    file_oracle.flush()
 yield afunc
 """
         )
@@ -216,6 +246,7 @@ yield afunc
             rep = self.core_cmd({"cmd": "flush", "path": "/foo.txt"})
             note(rep)
             assert rep["status"] == "ok"
+            self.file_oracle.flush()
 
         @rule()
         @reproduce_rule(
@@ -224,7 +255,7 @@ async def afunc(sock, file_oracle):
     await sock.send({{"cmd": "synchronize", "path": "/"}})
     rep = await sock.recv()
     assert rep["status"] == "ok"
-    return deepcopy(file_oracle)
+    file_oracle.sync()
 yield afunc
 """
         )
@@ -232,7 +263,7 @@ yield afunc
             rep = self.core_cmd({"cmd": "synchronize", "path": "/"})
             note(rep)
             assert rep["status"] == "ok"
-            self.file_oracle_synced = deepcopy(self.file_oracle)
+            self.file_oracle.sync()
 
         @rule(offset=st.integers(min_value=0, max_value=100), content=st.binary())
         @reproduce_rule(
@@ -255,25 +286,72 @@ yield afunc
             assert rep["status"] == "ok"
             self.file_oracle.write(offset, content)
 
+        @rule(length=st.integers(min_value=0, max_value=100))
+        @reproduce_rule(
+            """
+async def afunc(sock, file_oracle):
+    await sock.send({{"cmd": "file_truncate", "path": "/foo.txt", "length": {length}}})
+    rep = await sock.recv()
+    assert rep["status"] == "ok"
+    file_oracle.truncate({length})
+yield afunc
+"""
+        )
+        def truncate(self, length):
+            rep = self.core_cmd(
+                {"cmd": "file_truncate", "path": "/foo.txt", "length": length}
+            )
+            note(rep)
+            assert rep["status"] == "ok"
+            self.file_oracle.truncate(length)
+
         @rule()
         @reproduce_rule(
             """
+async def afunc(sock, file_oracle):
+    await sock.send({{"cmd": "stat", "path": "/foo.txt"}})
+    rep = await sock.recv()
+    assert rep["status"] == "ok"
+    assert rep["base_version"] == file_oracle.base_version
+    assert not rep["is_placeholder"]
+    assert rep["need_flush"] == file_oracle.need_flush
+    assert rep["need_sync"] == file_oracle.need_sync
+yield afunc
+"""
+        )
+        def stat(self):
+            rep = self.core_cmd(
+                {"cmd": "stat", "path": "/foo.txt"}
+            )
+            note(rep)
+            assert rep["status"] == "ok"
+            assert rep['base_version'] == self.file_oracle.base_version
+            assert not rep['is_placeholder']
+            assert rep['need_flush'] == self.file_oracle.need_flush
+            assert rep['need_sync'] == self.file_oracle.need_sync
+
+        @rule()
+        @reproduce_rule(
+            """
+file_oracle.restart_core()
 yield RestartCore()
 """
         )
         def restart_core(self):
             rep = self.sys_cmd("restart_core!")
             assert rep is True
+            self.file_oracle.restart_core()
 
         @rule()
         @reproduce_rule(
             """
+file_oracle.reset_core()
 yield ResetCore()
 """
         )
         def reset_core(self):
             rep = self.sys_cmd("reset_core!")
             assert rep is True
-            self.file_oracle = deepcopy(self.file_oracle_synced)
+            self.file_oracle.reset_core()
 
     await CoreOnline.run_test()

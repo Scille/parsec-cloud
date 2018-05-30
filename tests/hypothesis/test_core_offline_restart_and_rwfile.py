@@ -17,6 +17,9 @@ class FileOracle:
     def write(self, offset, content):
         self._buffer[offset : len(content) + offset] = content
 
+    def truncate(self, length):
+        self._buffer = self._buffer[:length]
+
 
 @pytest.mark.slow
 @pytest.mark.trio
@@ -193,5 +196,24 @@ yield afunc
             note(rep)
             assert rep["status"] == "ok"
             self.file_oracle.write(offset, content)
+
+        @rule(length=st.integers(min_value=0, max_value=100))
+        @reproduce_rule(
+            """
+async def afunc(sock, file_oracle):
+    await sock.send({{"cmd": "file_truncate", "path": "/foo.txt", "length": {length}}})
+    rep = await sock.recv()
+    assert rep["status"] == "ok"
+    file_oracle.truncate({length})
+yield afunc
+"""
+        )
+        def truncate(self, length):
+            rep = self.core_cmd(
+                {"cmd": "file_truncate", "path": "/foo.txt", "length": length}
+            )
+            note(rep)
+            assert rep["status"] == "ok"
+            self.file_oracle.truncate(length)
 
     await CoreOfflineRestartAndRWFile.run_test()
