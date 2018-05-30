@@ -209,6 +209,15 @@ def _merge_in_contiguous_space(overlaid_contiguous_spaces, buff):
 
 
 def merge_buffers(buffers):
+    """
+    Flatten multiple (possibly overlapping) buffers.
+
+    Args:
+        buffers: list of :class:`Buffer` to merge.
+
+    Returns:
+        An :class:`UncontiguousSpace`.
+    """
     # Bruteforce mode: Insert one buffer after another and modify the
     # elements already present in the list if needed.
     # Should be fine enough for a small number of buffers.
@@ -247,6 +256,17 @@ def merge_buffers(buffers):
 
 
 def merge_buffers_with_limits(buffers, start, end):
+    """
+    Flatten multiple (possibly overlapping) buffers between the given bounds.
+
+    Args:
+        buffers: list of :class:`Buffer` to merge.
+        start: starting offset, everything before will be ignored.
+        end: ending offset, everything after will be ignored.
+
+    Returns:
+        An :class:`UncontiguousSpace`.
+    """
     nolimit = merge_buffers(buffers)
 
     return _trim_uncontiguous_space(nolimit, new_start=start, new_end=end)
@@ -254,29 +274,40 @@ def merge_buffers_with_limits(buffers, start, end):
 
 def merge_buffers_with_limits_and_alignment(buffers, start, end, block_size):
     """
-    Note:
-        Buffers must not form holes
-        start and end must be aligned on block_size
+    Flatten multiple (possibly overlapping) buffers between the given bounds
+    and split the result in mutiple :class:`ContiguousSpace` of block_size size.
+
+    Args:
+        buffers: list of :class:`Buffer` to merge. Those buffers must form
+            a contiguous space.
+        start: starting offset, everything before will be ignored.
+               Must be aligned on block_size.
+        end: ending offset, everything after will be ignored.
+        block_size: size of the alignment
+
+    Raises:
+        ValueError: If a hole is detected between the buffers or if start is
+                    not a multiple of block_size
+
+    Returns:
+        An :class:`UncontiguousSpace`.
     """
-    assert not start % block_size
-    assert not end % block_size
+    if start % block_size:
+        raise ValueError("start must be a multiple of block_size")
 
     unaligned = merge_buffers(buffers)
-    assert len(unaligned.spaces) <= 1
-
     aligned = _trim_uncontiguous_space(unaligned, new_start=start, new_end=end)
     assert aligned.start == start
     assert aligned.end == end
-    assert len(aligned.spaces) <= 1
 
     if aligned.spaces:
+        if len(aligned.spaces) > 1:
+            raise ValueError("buffers cannot be merged as a single contiguous space")
         cs = aligned.spaces[0]
         splitted_spaces = _split_aligned_contiguous_space(cs, block_size)
         assert splitted_spaces[0].start == start
         assert splitted_spaces[-1].end <= end
-        end = cs.end
     else:
-        end = start
         splitted_spaces = []
 
     return UncontiguousSpace(start, end, splitted_spaces)
