@@ -8,6 +8,10 @@ from tests.common import connect_core, core_factory, backend_factory, run_app
 from tests.hypothesis.common import rule, failure_reproducer, reproduce_rule
 
 
+BLOCK_SIZE = 16
+PLAYGROUND_SIZE = BLOCK_SIZE * 10
+
+
 class FileOracle:
     def __init__(self, base_version=0):
         self._buffer = bytearray()
@@ -74,7 +78,7 @@ from copy import deepcopy
 from parsec.utils import to_jsonb64, from_jsonb64
 
 from tests.common import connect_core, core_factory
-from tests.hypothesis.test_core_online_rw_and_sync import FileOracle
+from tests.hypothesis.test_core_online_rw_and_sync import FileOracle, BLOCK_SIZE
 
 class RestartCore(Exception):
     pass
@@ -87,6 +91,7 @@ async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_lo
     config = {{
         "base_settings_path": tmpdir.strpath,
         "backend_addr": backend_addr,
+        "block_size": BLOCK_SIZE,
     }}
     bootstrapped = False
     file_oracle = FileOracle(base_version=1)
@@ -111,8 +116,6 @@ async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_lo
                         if not afunc:
                             done = True
                             break
-                        if isinstance(afunc, Exception):
-                            raise afunc
                         await afunc(sock, file_oracle)
 
         except RestartCore:
@@ -136,6 +139,7 @@ def rule_selector():
             core_config = {
                 "base_settings_path": tmpdir.mkdir("try-%s" % self.count).strpath,
                 "backend_addr": backend_addr,
+                "block_size": BLOCK_SIZE,
             }
             self.sys_cmd = lambda x: self.communicator.send(("sys", x))
             self.core_cmd = lambda x: self.communicator.send(("core", x))
@@ -208,8 +212,8 @@ def rule_selector():
                         tcp_stream_spy.install_hook(backend_addr, None)
 
         @rule(
-            size=st.integers(min_value=0, max_value=100),
-            offset=st.integers(min_value=0, max_value=100),
+            size=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
+            offset=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
         )
         @reproduce_rule(
             """
@@ -265,7 +269,10 @@ yield afunc
             assert rep["status"] == "ok"
             self.file_oracle.sync()
 
-        @rule(offset=st.integers(min_value=0, max_value=100), content=st.binary())
+        @rule(
+            offset=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
+            content=st.binary(max_size=PLAYGROUND_SIZE),
+        )
         @reproduce_rule(
             """
 async def afunc(sock, file_oracle):
@@ -286,7 +293,7 @@ yield afunc
             assert rep["status"] == "ok"
             self.file_oracle.write(offset, content)
 
-        @rule(length=st.integers(min_value=0, max_value=100))
+        @rule(length=st.integers(min_value=0, max_value=PLAYGROUND_SIZE))
         @reproduce_rule(
             """
 async def afunc(sock, file_oracle):
@@ -298,9 +305,7 @@ yield afunc
 """
         )
         def truncate(self, length):
-            rep = self.core_cmd(
-                {"cmd": "file_truncate", "path": "/foo.txt", "length": length}
-            )
+            rep = self.core_cmd({"cmd": "file_truncate", "path": "/foo.txt", "length": length})
             note(rep)
             assert rep["status"] == "ok"
             self.file_oracle.truncate(length)
@@ -320,21 +325,21 @@ yield afunc
 """
         )
         def stat(self):
-            rep = self.core_cmd(
-                {"cmd": "stat", "path": "/foo.txt"}
-            )
+            rep = self.core_cmd({"cmd": "stat", "path": "/foo.txt"})
             note(rep)
             assert rep["status"] == "ok"
-            assert rep['base_version'] == self.file_oracle.base_version
-            assert not rep['is_placeholder']
-            assert rep['need_flush'] == self.file_oracle.need_flush
-            assert rep['need_sync'] == self.file_oracle.need_sync
+            assert rep["base_version"] == self.file_oracle.base_version
+            assert not rep["is_placeholder"]
+            assert rep["need_flush"] == self.file_oracle.need_flush
+            assert rep["need_sync"] == self.file_oracle.need_sync
 
         @rule()
         @reproduce_rule(
             """
-file_oracle.restart_core()
-yield RestartCore()
+async def afunc(sock, file_oracle):
+    file_oracle.restart_core()
+    raise RestartCore()
+yield afunc
 """
         )
         def restart_core(self):
@@ -345,8 +350,10 @@ yield RestartCore()
         @rule()
         @reproduce_rule(
             """
-file_oracle.reset_core()
-yield ResetCore()
+async def afunc(sock, file_oracle):
+    file_oracle.reset_core()
+    raise ResetCore()
+yield afunc
 """
         )
         def reset_core(self):

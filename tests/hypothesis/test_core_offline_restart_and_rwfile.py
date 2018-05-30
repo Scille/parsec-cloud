@@ -7,6 +7,10 @@ from tests.common import connect_core, core_factory
 from tests.hypothesis.common import rule, failure_reproducer, reproduce_rule
 
 
+BLOCK_SIZE = 16
+PLAYGROUND_SIZE = BLOCK_SIZE * 10
+
+
 class FileOracle:
     def __init__(self):
         self._buffer = bytearray()
@@ -37,7 +41,7 @@ import os
 from parsec.utils import to_jsonb64, from_jsonb64
 
 from tests.common import connect_core, core_factory
-from tests.hypothesis.test_core_offline_restart_and_rwfile import FileOracle
+from tests.hypothesis.test_core_offline_restart_and_rwfile import FileOracle, BLOCK_SIZE
 
 class RestartCore(Exception):
     pass
@@ -47,6 +51,7 @@ async def test_reproduce(tmpdir, backend_addr, alice):
     config = {{
         "base_settings_path": tmpdir.strpath,
         "backend_addr": backend_addr,
+        "block_size": BLOCK_SIZE,
     }}
     bootstrapped = False
     file_oracle = FileOracle()
@@ -88,6 +93,7 @@ def rule_selector():
             config = {
                 "base_settings_path": tmpdir.mkdir("try-%s" % self.count).strpath,
                 "backend_addr": backend_addr,
+                "block_size": BLOCK_SIZE,
             }
 
             self.sys_cmd = lambda x: self.communicator.send(("sys", x))
@@ -138,8 +144,8 @@ yield RestartCore()
             assert rep is True
 
         @rule(
-            size=st.integers(min_value=0, max_value=100),
-            offset=st.integers(min_value=0, max_value=100),
+            size=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
+            offset=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
         )
         @reproduce_rule(
             """
@@ -176,7 +182,10 @@ yield afunc
             note(rep)
             assert rep["status"] == "ok"
 
-        @rule(offset=st.integers(min_value=0, max_value=100), content=st.binary())
+        @rule(
+            offset=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
+            content=st.binary(max_size=PLAYGROUND_SIZE),
+        )
         @reproduce_rule(
             """
 async def afunc(sock, file_oracle):
@@ -197,7 +206,7 @@ yield afunc
             assert rep["status"] == "ok"
             self.file_oracle.write(offset, content)
 
-        @rule(length=st.integers(min_value=0, max_value=100))
+        @rule(length=st.integers(min_value=0, max_value=PLAYGROUND_SIZE))
         @reproduce_rule(
             """
 async def afunc(sock, file_oracle):
@@ -209,9 +218,7 @@ yield afunc
 """
         )
         def truncate(self, length):
-            rep = self.core_cmd(
-                {"cmd": "file_truncate", "path": "/foo.txt", "length": length}
-            )
+            rep = self.core_cmd({"cmd": "file_truncate", "path": "/foo.txt", "length": length})
             note(rep)
             assert rep["status"] == "ok"
             self.file_oracle.truncate(length)

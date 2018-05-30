@@ -192,7 +192,7 @@ class OracleFS:
                 entry.base_version += 1
             if isinstance(entry, OracleFSFolder):
                 for child in entry.keys():
-                    self.sync('%s/%s' % (path, child))
+                    self.sync("%s/%s" % (path, child))
             return "ok"
         return "invalid_path"
 
@@ -200,16 +200,15 @@ class OracleFS:
         entry = self.get_path(path)
         if entry is not None:
             return {
-                'status': 'ok',
-                'base_version': entry.base_version,
-                'is_placeholder': entry.is_placeholder,
-                'need_flush': entry.need_flush,
-                'need_sync': entry.need_sync,
+                "status": "ok",
+                "base_version": entry.base_version,
+                "is_placeholder": entry.is_placeholder,
+                "need_flush": entry.need_flush,
+                "need_sync": entry.need_sync,
             }
         else:
-            return {
-                'status': 'invalid_path'
-            }
+            return {"status": "invalid_path"}
+
 
 class BaseFailureReproducer:
 

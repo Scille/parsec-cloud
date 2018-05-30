@@ -192,17 +192,15 @@ async def test_online_core_tree_and_sync(
 
         @rule(path=st.one_of(Files, Folders))
         def stat(self, path):
-            rep = self.core_cmd(
-                {"cmd": "stat", "path": path}
-            )
+            rep = self.core_cmd({"cmd": "stat", "path": path})
             note(rep)
             expected = self.oracle_fs.stat(path)
-            assert rep["status"] == expected['status']
-            if expected['status'] == 'ok':
-                assert rep['base_version'] == expected['base_version']
-                assert rep['is_placeholder'] == expected['is_placeholder']
-                assert rep['need_flush'] == expected['need_flush']
-                assert rep['need_sync'] == expected['need_sync']
+            assert rep["status"] == expected["status"]
+            if expected["status"] == "ok":
+                assert rep["base_version"] == expected["base_version"]
+                assert rep["is_placeholder"] == expected["is_placeholder"]
+                assert rep["need_flush"] == expected["need_flush"]
+                assert rep["need_sync"] == expected["need_sync"]
 
         @rule(path=Files)
         def delete_file(self, path):
