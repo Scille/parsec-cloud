@@ -111,7 +111,9 @@ class Core(BaseAsyncComponent):
                 self.local_storage, self.backend_storage, self.encryption_manager
             )
             self.blocks_manager = BlocksManager(self.local_storage, self.backend_storage)
-            self.fs = FS(device, self.manifests_manager, self.blocks_manager)
+            self.fs = FS(
+                device, self.manifests_manager, self.blocks_manager, self.config.block_size
+            )
             self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
             self.synchronizer = Synchronizer(self.config.auto_sync, self.fs)
             self.sharing = Sharing(

@@ -124,10 +124,15 @@ async def stat(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
     req = PathOnlySchema().load(req)
     try:
-        stat = await core.fs.file_truncate(req["path"])
+        stat = await core.fs.stat(req["path"])
     except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
-    return {"status": "ok", **stat}
+    return {
+        "status": "ok",
+        **stat,
+        "created": stat["created"].to_iso8601_string(extended=True),
+        "updated": stat["updated"].to_iso8601_string(extended=True),
+    }
 
 
 async def folder_create(req: dict, client_ctx: ClientContext, core: Core) -> dict:

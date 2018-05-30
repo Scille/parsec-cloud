@@ -351,6 +351,8 @@ class FSSyncMixin(FSBase):
     async def _sync_file(self, access, manifest):
         fd = self._opened_files.open_file(access, manifest)
         if fd.is_syncing():
+            # This file is in the middle of a sync, wait for it to
+            # end and retry everything to avoid concurrency issues
             await fd.wait_not_syncing()
             raise RetrySync()
 
@@ -413,7 +415,7 @@ class FSSyncMixin(FSBase):
         ucs = fd.get_sync_map(manifest)
         for cs in ucs.spaces:
             if not cs.need_sync():
-                blocks += [bs.data for bs in cs.buffers]
+                blocks += [bs.buffer.data for bs in cs.buffers]
                 continue
             # Create a new block from existing data
             data = await self._build_data_from_contiguous_space(cs)
@@ -422,8 +424,10 @@ class FSSyncMixin(FSBase):
                 block_access["key"], data
             )
             blocks.append(block_access)
+
         to_sync_manifest["blocks"] = blocks
         to_sync_manifest["size"] = ucs.size
+        assert to_sync_manifest["size"] == sum(b["size"] for b in to_sync_manifest["blocks"])
 
         try:
             if is_placeholder_access(access):
@@ -461,5 +465,6 @@ class FSSyncMixin(FSBase):
             raise FileSyncConcurrencyError(access) from exc
 
         fd.drop_until_marker(marker)
+        fd.base_version = to_sync_manifest["version"]
 
         return final_access, to_sync_manifest

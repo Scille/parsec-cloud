@@ -19,6 +19,7 @@ class ColoredBuffer(Buffer):
     debugging much easier if each buffer is made of a single caracter
     (mostly) per-buffer unique.
     """
+
     COLOR_CHOICES = string.ascii_lowercase + string.digits
 
     def __init__(self, start, end, data=None):
@@ -31,20 +32,8 @@ class ColoredBuffer(Buffer):
 
 buffer_size_strategy = st.integers(min_value=0, max_value=DATA_MAX_SIZE)
 buffer_oversize_strategy = st.integers(min_value=0, max_value=int(DATA_MAX_SIZE * 1.2))
-buffer_bounds_strategy = st.builds(
-    sorted,
-    st.tuples(
-        buffer_size_strategy,
-        buffer_size_strategy,
-    )
-)
-limits_strategy = st.builds(
-    sorted,
-    st.tuples(
-        buffer_oversize_strategy,
-        buffer_oversize_strategy,
-    )
-)
+buffer_bounds_strategy = st.builds(sorted, st.tuples(buffer_size_strategy, buffer_size_strategy))
+limits_strategy = st.builds(sorted, st.tuples(buffer_oversize_strategy, buffer_oversize_strategy))
 buffer_strategy = st.builds(lambda x: ColoredBuffer(*x), buffer_bounds_strategy)
 
 
@@ -53,7 +42,7 @@ def _build_data_from_buffers(buffers, size=None):
         size = max((b.end for b in buffers), default=0)
     data = bytearray(size)
     for b in buffers:
-        data[b.start:b.end] = b.data
+        data[b.start : b.end] = b.data
     return data
 
 
@@ -61,7 +50,9 @@ def _build_data_from_uncontiguous_space(ucs):
     data = bytearray(ucs.end)
     for cs in ucs.spaces:
         for buff in cs.buffers:
-            data[buff.start:buff.end] = buff.buffer.data[buff.buffer_slice_start:buff.buffer_slice_end]
+            data[buff.start : buff.end] = buff.buffer.data[
+                buff.buffer_slice_start : buff.buffer_slice_end
+            ]
     return data
 
 
@@ -149,8 +140,7 @@ def _contiguous_buffers_strategy_builder(buffers):
 
 
 contiguous_buffers_strategy = st.builds(
-    _contiguous_buffers_strategy_builder,
-    st.lists(elements=buffer_strategy)
+    _contiguous_buffers_strategy_builder, st.lists(elements=buffer_strategy)
 )
 
 

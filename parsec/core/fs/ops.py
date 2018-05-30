@@ -223,12 +223,21 @@ class FSOpsMixin(FSBase):
             normalize_path(path)
             access, manifest = await self._local_tree.retrieve_entry(path)
             is_placeholder = is_placeholder_access(access)
-            if is_file_manifest(manifest):
-                need_flush = self._opened_files.is_opened(access)
-            else:
-                need_flush = False
 
-        if "children" in manifest:
+        if is_file_manifest(manifest):
+            fd = self._opened_files.open_file(access, manifest)
+            return {
+                "type": "file",
+                "created": manifest["created"],
+                "updated": manifest["updated"],
+                "base_version": manifest["base_version"],
+                "is_placeholder": is_placeholder,
+                "need_sync": fd.need_sync(manifest),
+                "need_flush": fd.need_flush(manifest),
+                "size": fd.size,
+            }
+
+        else:
             return {
                 "type": "folder",
                 "created": manifest["created"],
@@ -236,19 +245,6 @@ class FSOpsMixin(FSBase):
                 "base_version": manifest["base_version"],
                 "is_placeholder": is_placeholder,
                 "need_sync": manifest["need_sync"],
-                "need_flush": need_flush,
+                "need_flush": False,
                 "children": list(sorted(manifest["children"].keys())),
-            }
-        else:
-            # Ignore the modification that are currently in the opened file
-            # system given they are not flush on the disk yet.
-            return {
-                "type": "file",
-                "created": manifest["created"],
-                "updated": manifest["updated"],
-                "base_version": manifest["base_version"],
-                "is_placeholder": is_placeholder,
-                "need_sync": manifest["need_sync"],
-                "need_flush": need_flush,
-                "size": manifest["size"],
             }

@@ -8,11 +8,13 @@ from math import inf
 from parsec.core.fs.buffer_ordering import (
     quick_filter_block_accesses,
     Buffer,
+    UncontiguousSpace,
     ContiguousSpace,
     merge_buffers,
     merge_buffers_with_limits,
     merge_buffers_with_limits_and_alignment,
 )
+from parsec.core.fs.utils import is_placeholder_access
 
 
 @attr.s(slots=True)
@@ -27,7 +29,13 @@ class WriteCmd:
 
 
 @attr.s(slots=True)
+class TruncateCmd:
+    length = attr.ib()
+
+
+@attr.s(slots=True)
 class MarkerCmd:
+    file_size = attr.ib()
     datetime = attr.ib(default=attr.Factory(pendulum.now))
 
 
@@ -58,14 +66,21 @@ class MultiLocationsContiguousSpace(ContiguousSpace):
         return [bs for bs in self.buffers if isinstance(bs.buffer, RamBuffer)]
 
     def need_sync(self):
-        return self.get_dirty_blocks() or self.get_in_ram_buffers()
+        for bs in self.buffers:
+            if isinstance(bs.buffer, (RamBuffer, DirtyBlockBuffer)):
+                return True
+            if bs.buffer.end > self.end:
+                # Existing buffer, but must be truncated
+                return True
+        return False
 
 
-@attr.s
+@attr.s(repr=False)
 class OpenedFile:
 
     access = attr.ib()
     size = attr.ib()
+    base_version = attr.ib()
     _cmds_list = attr.ib(factory=list)
     block_size = attr.ib(default=2 ** 16)
     # To symplify concurrency, we use this event to prohibe flushes during
@@ -76,11 +91,7 @@ class OpenedFile:
         self._not_syncing_event.set()
 
     def need_sync(self, manifest):
-        return (
-            manifest["need_sync"]
-            or manifest["size"] != self.size
-            or any(x for x in self._cmds_list if isinstance(x, WriteCmd))
-        )
+        return manifest["need_sync"] or self.need_flush(manifest)
 
     def need_flush(self, manifest):
         return manifest["size"] != self.size or any(
@@ -105,6 +116,9 @@ class OpenedFile:
         return self._not_syncing_event.wait()
 
     def write(self, content: bytes, offset: int = -1):
+        if not content:
+            return
+
         if offset == -1 or offset > self.size:
             offset = self.size
         self._cmds_list.append(WriteCmd(offset, content))
@@ -114,9 +128,14 @@ class OpenedFile:
 
     def truncate(self, length):
         if length < self.size:
+            # TODO: useful ?
+            self._cmds_list.append(TruncateCmd(length))
             self.size = length
 
     def get_not_synced_bounds(self, manifest):
+        if is_placeholder_access(self.access):
+            return 0, self.size
+
         start = inf
         end = -inf
 
@@ -136,8 +155,18 @@ class OpenedFile:
 
         if start == inf:
             start = 0
+        try:
+            # Retreive the original size from the block access given the
+            # size field is overwritten when flushing
+            last_block = manifest["blocks"][-1]
+            original_size = last_block["offset"] + last_block["size"]
+            if original_size != self.size:
+                end = self.size
+        except IndexError:
+            pass
         if end == -inf:
             end = 0
+        # Needed to handle truncate on not synced data
         if end > self.size:
             end = self.size
 
@@ -154,12 +183,19 @@ class OpenedFile:
         blocks = [
             BlockBuffer(*x) for x in quick_filter_block_accesses(manifest["blocks"], start, end)
         ]
+        # dirty_blocks = [DirtyBlockBuffer(x['offset'], x['offset'] + x['size'], x) for x in manifest['dirty_blocks']]
+        # blocks = [DirtyBlockBuffer(x['offset'], x['offset'] + x['size'], x) for x in manifest['blocks']]
 
         return blocks + dirty_blocks + in_ram
 
     def get_read_map(self, manifest, size: int = -1, offset: int = 0):
         if offset >= self.size:
             return MultiLocationsContiguousSpace(offset, offset, [])
+
+        if size < 0:
+            size = self.size
+        if offset + size > self.size:
+            size = self.size - offset
 
         blocks = self._get_quickly_filtered_blocks(manifest, offset, offset + size)
         merged = merge_buffers_with_limits(blocks, offset, offset + size)
@@ -175,25 +211,29 @@ class OpenedFile:
     def get_sync_map(self, manifest):
         start, end = self.get_not_synced_bounds(manifest)
         aligned_start = start - start % self.block_size
-        if not end % self.block_size:
-            aligned_end = end
-        else:
-            aligned_end = end + (self.block_size - end % self.block_size)
+        if end % self.block_size:
+            aligned_end = end + self.block_size - (end % self.block_size)
+            if aligned_end < self.size:
+                end = aligned_end
+            else:
+                end = self.size
 
-        blocks = self._get_quickly_filtered_blocks(manifest, aligned_start, aligned_end)
+        blocks = self._get_quickly_filtered_blocks(manifest, 0, self.size)
+        # blocks = self._get_quickly_filtered_blocks(manifest, aligned_start, end)
         merged = merge_buffers_with_limits_and_alignment(
-            blocks, aligned_start, aligned_end, self.block_size
+            blocks, aligned_start, end, self.block_size
         )
         assert len(merged.spaces) <= 1
         assert merged.start == 0
 
-        merged.spaces = [
-            MultiLocationsContiguousSpace(x.start, x.end, x.buffers) for x in merged.spaces
-        ]
-        return merged
+        spaces = [MultiLocationsContiguousSpace(x.start, x.end, x.buffers) for x in merged.spaces]
+        return UncontiguousSpace(0, self.size, spaces)
 
     def create_marker(self):
-        marker = MarkerCmd()
+        if any(x for x in self._cmds_list if isinstance(x, MarkerCmd)):
+            raise RuntimeError("A marker is already set !")
+
+        marker = MarkerCmd(self.size)
         self._cmds_list.append(marker)
         return marker
 
@@ -202,14 +242,17 @@ class OpenedFile:
 
         def drop_until_marker_is_found(x):
             nonlocal marker_found
-            marker_found = x is marker
+            if x is marker:
+                marker_found = True
+                return True  # Also drop the marker
             return not marker_found
 
         tmp_list = list(dropwhile(drop_until_marker_is_found, self._cmds_list))
-        # In case two concurrent marker have been created, it's possible
-        # the second has destroyed the first if it finishes first
-        if marker_found:
-            self._cmds_list = tmp_list
+        # Given sync must be done with a lock held, no concurrent marker that
+        # could potentialy remove our own marker is allowed
+        assert marker_found
+        assert not any(x for x in tmp_list if isinstance(x, MarkerCmd))
+        self._cmds_list = tmp_list
 
     def get_flush_map(self):
         in_ram = [
@@ -236,6 +279,7 @@ class OpenedFilesManager:
     device = attr.ib()
     manifests_manager = attr.ib()
     blocks_manager = attr.ib()
+    block_size = attr.ib()
     opened_files = attr.ib(factory=dict)
     _resolved_placeholder_accesses = attr.ib(factory=dict)
 
@@ -254,8 +298,10 @@ class OpenedFilesManager:
     def open_file(self, access, manifest):
         fd = self._file_lookup(access["id"])
         if not fd:
-            fd = OpenedFile(access, manifest["size"])
+            fd = OpenedFile(access, manifest["size"], manifest["base_version"])
             self.opened_files[access["id"]] = fd
+        else:
+            assert fd.base_version == manifest["base_version"]
         return fd
 
     def close_file(self, access):
@@ -272,9 +318,9 @@ class OpenedFilesManager:
 
     def resolve_placeholder_access(self, placeholder_access, resolved_access):
         try:
-            self.opened_files[resolved_access["id"]] = self.opened_files.pop(
-                placeholder_access["id"]
-            )
+            fd = self.opened_files.pop(placeholder_access["id"])
+            fd.access = resolved_access
+            self.opened_files[resolved_access["id"]] = fd
         except KeyError:
             return
         self._resolved_placeholder_accesses[placeholder_access["id"]] = resolved_access["id"]
@@ -285,4 +331,5 @@ class OpenedFilesManager:
         except KeyError:
             # Nothing to move
             return
+        fd.access = new_access
         self.opened_files[new_access["id"]] = fd
