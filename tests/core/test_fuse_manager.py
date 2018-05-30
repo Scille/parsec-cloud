@@ -34,6 +34,7 @@ async def test_fuse_not_available(signal_ns):
             fm.open_file("/foo/bar")
 
 
+@pytest.mark.xfail
 @pytest.mark.trio
 @pytest.mark.slow
 @pytest.mark.skipif(not FUSE_AVAILABLE, reason="libfuse/fusepy not installed")
