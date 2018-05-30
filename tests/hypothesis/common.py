@@ -186,15 +186,42 @@ class OracleFS:
     def sync(self, path):
         entry = self.get_path(path)
         if entry is not None:
-            if entry.need_sync:
+            self._backward_recursive_sync(path)
+            self._recursive_children_sync(entry)
+            return "ok"
+        return "invalid_path"
+
+    def _recursive_children_sync(self, entry):
+            if isinstance(entry, OracleFSFolder):
+                for child_entry in entry.values():
+                    if child_entry.need_sync:
+                        child_entry.need_flush = False
+                        child_entry.need_sync = False
+                        child_entry.base_version += 1
+                    self._recursive_children_sync(child_entry)
+
+    def _backward_recursive_sync(self, path):
+        curr_path = path
+        child_asked_for_sync = None
+        while True:
+            entry = self.get_path(curr_path)
+            entry_was_placeholder = entry.is_placeholder
+            if child_asked_for_sync:
+                entry.base_version += 1
+                entry.need_flush = False
+                entry.need_sync = entry.keys() != {child_asked_for_sync}
+            elif entry.need_sync:
                 entry.need_flush = False
                 entry.need_sync = False
                 entry.base_version += 1
-            if isinstance(entry, OracleFSFolder):
-                for child in entry.keys():
-                    self.sync("%s/%s" % (path, child))
-            return "ok"
-        return "invalid_path"
+            else:
+                break
+
+            if entry_was_placeholder:
+                curr_path, name = curr_path.rsplit('/', 1)
+                child_asked_for_sync = name
+            else:
+                break
 
     def stat(self, path):
         entry = self.get_path(path)

@@ -180,7 +180,7 @@ assert rep["status"] in ("ok", "invalid_path")
             assert rep["status"] in ("ok", "invalid_path")
             return path
 
-        @rule(path=Files, core=st_core)
+        @rule(path=st.one_of(Folders, Files), core=st_core)
         @reproduce_rule(
             """
 await socks[{core}].send({{"cmd": "delete", "path": {path}}})
@@ -188,20 +188,7 @@ rep = await socks[{core}].recv()
 assert rep["status"] in ("ok", "invalid_path")
 """
         )
-        def delete_file(self, core, path):
-            rep = self.core_cmd(core, {"cmd": "delete", "path": path})
-            note(rep)
-            assert rep["status"] in ("ok", "invalid_path")
-
-        @rule(path=Folders, core=st_core)
-        @reproduce_rule(
-            """
-await socks[{core}].send({{"cmd": "delete", "path": {path}}})
-rep = await socks[{core}].recv()
-assert rep["status"] in ("ok", "invalid_path")
-"""
-        )
-        def delete_folder(self, core, path):
+        def delete(self, core, path):
             rep = self.core_cmd(core, {"cmd": "delete", "path": path})
             note(rep)
             assert rep["status"] in ("ok", "invalid_path")

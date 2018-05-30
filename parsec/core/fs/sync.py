@@ -49,19 +49,31 @@ class RetrySync(Exception):
 
 
 class FSSyncMixin(FSBase):
-    async def sync(self, path: str):
+    async def sync(self, path: str, recursive=True):
         print(que("start syncing %s" % path))
-        parent_path, _ = normalize_path(path)
+        parent_path, entry_name = normalize_path(path)
         if path == '/':
             access, manifest = await self._local_tree.retrieve_entry(path)
-            await self._sync(access, manifest, recursive=True)
+            await self._sync(access, manifest, recursive=recursive)
         else:
-            (parent_access, _), (access, manifest) = await self._local_tree.retrieve_entries(
-                parent_path, path)
+            access, manifest = await self._local_tree.retrieve_entry(path)
             if is_placeholder_access(access):
-                await self._sync_placeholder(parent_access, access, manifest, recursive=True)
+                # We must sync parents before ourself. The trick is we want to sync
+                # the minimal path to the entry we were originally asked to sync
+                to_sync_recursive_map = recursive
+                curr_ancestor_access = access
+                curr_ancestor_path = path
+                while is_placeholder_access(curr_ancestor_access):
+                    curr_ancestor_path, name = curr_ancestor_path.rsplit('/', 1)
+                    to_sync_recursive_map = {name: to_sync_recursive_map}
+                    # No risk of missing entry here given we retrieved the whole path earlier
+                    curr_ancestor_access, _ = self._local_tree.retrieve_entry_sync(curr_ancestor_path)
+                    if not curr_ancestor_access:
+                        curr_ancestor_path = '/'
+                        break
+                await self.sync(curr_ancestor_path, recursive=to_sync_recursive_map)
             else:
-                await self._sync(access, manifest, recursive=True)
+                await self._sync(access, manifest, recursive=recursive)
         print(que("done syncing %s" % path))
 
     async def _sync(self, access, manifest, recursive=False):
@@ -98,8 +110,14 @@ class FSSyncMixin(FSBase):
             # during the synchronization are ignored.
             if isinstance(recursive, (set, tuple, list)):
                 to_sync = {k: v for k, v in manifest["children"].items() if k in recursive}
+                determine_child_recursiveness = lambda x: True
+            elif isinstance(recursive, dict):
+                # Such overkill recursive system is needed when asking to
+                determine_child_recursiveness = lambda x: recursive[x]
+                to_sync = {k: v for k, v in manifest["children"].items() if k in recursive.keys()}
             else:
                 to_sync = manifest["children"]
+                determine_child_recursiveness = lambda x: True
 
             # Synchronize the children.
             for child_name, child_access in to_sync.items():
@@ -109,7 +127,7 @@ class FSSyncMixin(FSBase):
                     except KeyError:
                         # Entry not present in local, nothing to sync then
                         continue
-
+                    child_recursive = determine_child_recursiveness(child_name)
                     if is_placeholder_access(child_access):
                         print(
                             info(
@@ -117,14 +135,20 @@ class FSSyncMixin(FSBase):
                             )
                         )
                         await self._sync_placeholder(
-                            access, child_access, child_manifest, recursive=True
+                            access, child_access, child_manifest, recursive=child_recursive
                         )
                     else:
                         print(info("asked to sync %s %s" % (child_name, child_access["id"])))
-                        await self._sync(child_access, child_manifest, recursive=True)
+                        await self._sync(child_access, child_manifest, recursive=child_recursive)
 
         try:
+            # The trick here is to retreive the current version of the manifest
+            # and remove it placeholders (those are the children created since
+            # the start of our sync)
             base_manifest = self._local_tree.retrieve_entry_by_access(access)
+            base_manifest["children"] = {
+                k: v for k, v in base_manifest["children"].items() if not is_placeholder_access(v)
+            }
         except KeyError:
             # Either the entry is no longer available locally or it has
             # been removed, either way there is nothing to sync anymore
@@ -187,13 +211,7 @@ class FSSyncMixin(FSBase):
         return final_access
 
     async def _sync_folder_actual_sync(self, access, manifest):
-        # The trick here is to retreive the current version of the manifest
-        # and remove it placeholders (those are the children created since
-        # the start of our sync)
         to_sync_manifest = convert_to_remote_manifest(manifest)
-        to_sync_manifest["children"] = {
-            k: v for k, v in manifest["children"].items() if not is_placeholder_access(v)
-        }
         # Upload the file manifest as new vlob version
         while True:
             try:

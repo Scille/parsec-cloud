@@ -21,7 +21,7 @@ def normalize_path(path):
 
 
 def is_placeholder_access(access):
-    return access["type"] == "placeholder"
+    return access and access["type"] == "placeholder"
 
 
 def is_file_manifest(manifest):

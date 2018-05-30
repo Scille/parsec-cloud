@@ -6,7 +6,7 @@ from hypothesis.stateful import Bundle
 from copy import deepcopy
 
 from tests.common import connect_core, core_factory, backend_factory, run_app
-from tests.hypothesis.common import OracleFS, rule, normalize_path, rule_once
+from tests.hypothesis.common import OracleFS, OracleFSFolder, rule, normalize_path, rule_once, failure_reproducer, reproduce_rule
 
 
 class OracleFSWithSync:
@@ -45,28 +45,17 @@ class OracleFSWithSync:
 
     def _sync_oracles(self, path):
         path = normalize_path(path)
-        if path != "/":
-            raise NotImplementedError("Oracle can only sync root yet :'(")
-
-        self.synced_fs = deepcopy(self.core_fs)
-
-
-# TODO: allow arbitrary path sync
-# if path == '/':
-#     self.synced_fs = deepcopy(self.core_fs)
-# else:
-#     entry = self.core_fs.get_path(path)
-#     *parents, entry_name = path.strip('/').split('/')
-#     # Make sure folder path exists in sync
-#     folder_path = '/'
-#     for parent in parents:
-#         cur_path = _normalize_path('%s/%s' % (folder_path, parent))
-#         if cur_path in self._just_deleted:
-#             self.synced_fs.delete(cur_path)
-#         self.synced_fs.create_folder(folder_path, parent)
-#         folder_path += '%s/' % parent
-#     sync_parent_entry = self.synced_fs.get_path(folder_path)
-#     sync_parent_entry[entry_name] = deepcopy(entry)
+        if path == '/':
+            self.synced_fs = deepcopy(self.core_fs)
+        else:
+            *parent_hops, name = path.split('/')
+            parent_dir = self.synced_fs.root
+            for hop in parent_hops:
+                if hop and hop not in parent_dir:
+                    parent_dir[hop] = OracleFSFolder(False, False, 1)
+                    parent_dir = parent_dir[hop]
+            entry = self.core_fs.get_path(path)
+            parent_dir[name] = deepcopy(entry)
 
 
 @pytest.mark.slow
@@ -85,7 +74,53 @@ async def test_online_core_tree_and_sync(
 
     st_entry_name = st.text(min_size=1).filter(lambda x: "/" not in x)
 
-    class CoreOnlineRWFile(TrioDriverRuleBasedStateMachine):
+    @failure_reproducer(
+        """
+import pytest
+import os
+
+from tests.common import connect_core, core_factory
+from tests.hypothesis.test_core_online_tree_and_sync import OracleFSWithSync
+
+class RestartCore(Exception):
+    pass
+
+class ResetCore(Exception):
+    pass
+
+@pytest.mark.trio
+async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_local_storage_connection):
+    config = {{
+        "base_settings_path": tmpdir.strpath,
+        "backend_addr": backend_addr,
+    }}
+    oracle_fs = OracleFSWithSync()
+    to_run_rules = rule_selector()
+    done = False
+
+    while not done:
+        try:
+            async with core_factory(**config) as core:
+                await core.login(alice)
+
+                async with connect_core(core) as sock:
+                    while True:
+                        afunc = next(to_run_rules, None)
+                        if not afunc:
+                            done = True
+                            break
+                        await afunc(sock, oracle_fs)
+
+        except RestartCore:
+            pass
+
+        except ResetCore:
+            mocked_local_storage_connection.reset()
+
+def rule_selector():
+    {body}
+""")
+    class CoreOnlineTreeAndSync(TrioDriverRuleBasedStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")
         count = 0
@@ -173,6 +208,17 @@ async def test_online_core_tree_and_sync(
             return "/"
 
         @rule(target=Files, parent=Folders, name=st_entry_name)
+        @reproduce_rule(
+            """
+async def afunc(sock, oracle_fs):
+    path = os.path.join({parent}, {name})
+    await sock.send({{"cmd": "file_create", "path": path}})
+    rep = await sock.recv()
+    expected_status = oracle_fs.create_folder(path)
+    assert rep["status"] == expected_status
+yield afunc
+"""
+        )
         def create_file(self, parent, name):
             path = os.path.join(parent, name)
             rep = self.core_cmd({"cmd": "file_create", "path": path})
@@ -182,6 +228,17 @@ async def test_online_core_tree_and_sync(
             return path
 
         @rule(target=Folders, parent=Folders, name=st_entry_name)
+        @reproduce_rule(
+            """
+async def afunc(sock, oracle_fs):
+    path = os.path.join({parent}, {name})
+    await sock.send({{"cmd": "folder_create", "path": path}})
+    rep = await sock.recv()
+    expected_status = oracle_fs.create_folder(path)
+    assert rep["status"] == expected_status
+yield afunc
+"""
+        )
         def create_folder(self, parent, name):
             path = os.path.join(parent, name)
             rep = self.core_cmd({"cmd": "folder_create", "path": path})
@@ -191,6 +248,21 @@ async def test_online_core_tree_and_sync(
             return path
 
         @rule(path=st.one_of(Files, Folders))
+        @reproduce_rule(
+            """
+async def afunc(sock, oracle_fs):
+    await sock.send({{"cmd": "stat", "path": {path}}})
+    rep = await sock.recv()
+    expected = oracle_fs.stat({path})
+    assert rep["status"] == expected["status"]
+    if expected["status"] == "ok":
+        assert rep["base_version"] == expected["base_version"]
+        assert rep["is_placeholder"] == expected["is_placeholder"]
+        assert rep["need_flush"] == expected["need_flush"]
+        assert rep["need_sync"] == expected["need_sync"]
+yield afunc
+"""
+        )
         def stat(self, path):
             rep = self.core_cmd({"cmd": "stat", "path": path})
             note(rep)
@@ -202,21 +274,35 @@ async def test_online_core_tree_and_sync(
                 assert rep["need_flush"] == expected["need_flush"]
                 assert rep["need_sync"] == expected["need_sync"]
 
-        @rule(path=Files)
-        def delete_file(self, path):
-            rep = self.core_cmd({"cmd": "delete", "path": path})
-            note(rep)
-            expected_status = self.oracle_fs.delete(path)
-            assert rep["status"] == expected_status
-
-        @rule(path=Folders)
-        def delete_folder(self, path):
+        @rule(path=st.one_of(Files, Folders))
+        @reproduce_rule(
+            """
+async def afunc(sock, oracle_fs):
+    await sock.send({{"cmd": "delete", "path": {path}}})
+    rep = await sock.recv()
+    expected_status = oracle_fs.delete(path)
+    assert rep["status"] == expected_status
+yield afunc
+"""
+        )
+        def delete(self, path):
             rep = self.core_cmd({"cmd": "delete", "path": path})
             note(rep)
             expected_status = self.oracle_fs.delete(path)
             assert rep["status"] == expected_status
 
         @rule(target=Files, src=Files, dst_parent=Folders, dst_name=st_entry_name)
+        @reproduce_rule(
+            """
+async def afunc(sock, oracle_fs):
+    dst = os.path.join({dst_parent}, {dst_name})
+    await sock.send({{"cmd": "move", "src": {src}, "dst": dst}})
+    rep = await sock.recv()
+    expected_status = oracle_fs.move(src, dst)
+    assert rep["status"] == expected_status
+yield afunc
+"""
+        )
         def move_file(self, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd({"cmd": "move", "src": src, "dst": dst})
@@ -226,6 +312,17 @@ async def test_online_core_tree_and_sync(
             return dst
 
         @rule(target=Folders, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
+        @reproduce_rule(
+            """
+async def afunc(sock, oracle_fs):
+    dst = os.path.join({dst_parent}, {dst_name})
+    await sock.send({{"cmd": "move", "src": {src}, "dst": dst}})
+    rep = await sock.recv()
+    expected_status = oracle_fs.move(src, dst)
+    assert rep["status"] == expected_status
+yield afunc
+"""
+        )
         def move_folder(self, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
             rep = self.core_cmd({"cmd": "move", "src": src, "dst": dst})
@@ -234,39 +331,47 @@ async def test_online_core_tree_and_sync(
             assert rep["status"] == expected_status
             return dst
 
-        @rule()
-        def sync_root(self):
-            rep = self.core_cmd({"cmd": "synchronize", "path": "/"})
+        @rule(path=st.one_of(Folders, Files))
+        @reproduce_rule(
+            """
+async def afunc(sock, oracle_fs):
+    await sock.send({{"cmd": "synchronize", "path": {path}}})
+    rep = await sock.recv()
+    expected_status = oracle_fs.sync({path})
+    assert rep["status"] == expected_status
+yield afunc
+"""
+        )
+        def sync(self, path):
+            rep = self.core_cmd({"cmd": "synchronize", "path": path})
             note(rep)
-            expected_status = self.oracle_fs.sync("/")
+            expected_status = self.oracle_fs.sync(path)
             assert rep["status"] == expected_status
 
-        # @rule(path=Files)
-        # def sync_file(self, path):
-        #     rep = self.core_cmd({'cmd': 'synchronize', 'path': path})
-        #     note(rep)
-        #     expected_status = self.oracle_fs.sync(*path.rsplit('/', 1))
-        #     assert rep['status'] == expected_status
-
-        # @rule(path=Folders)
-        # def sync_folder(self, path):
-        #     rep = self.core_cmd({'cmd': 'synchronize', 'path': path})
-        #     note(rep)
-        #     if path == '/':
-        #         expected_status = 'ok'
-        #     else:
-        #         expected_status = self.oracle_fs.sync(*path.rsplit('/', 1))
-        #     assert rep['status'] == expected_status
-
         @rule()
+        @reproduce_rule(
+            """
+async def afunc(sock, oracle_fs):
+    raise RestartCore()
+yield afunc
+"""
+        )
         def restart_core(self):
             rep = self.sys_cmd("restart_core!")
             assert rep is True
 
         @rule()
+        @reproduce_rule(
+            """
+async def afunc(sock, oracle_fs):
+    oracle_fs.reset_core()
+    raise ResetCore()
+yield afunc
+"""
+        )
         def reset_core(self):
             rep = self.sys_cmd("reset_core!")
             assert rep is True
             self.oracle_fs.reset_core()
 
-    await CoreOnlineRWFile.run_test()
+    await CoreOnlineTreeAndSync.run_test()
