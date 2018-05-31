@@ -21,6 +21,7 @@ class OracleFSWithSync:
     def __init__(self):
         self.core_fs = OracleFS()
         self.synced_fs = OracleFS()
+        self.synced_fs.sync("/")
 
     def create_file(self, path):
         return self.core_fs.create_file(path)
@@ -56,14 +57,42 @@ class OracleFSWithSync:
         if path == "/":
             self.synced_fs = deepcopy(self.core_fs)
         else:
+            # Synchronize arbitrary path is a real landmine when dealing
+            # with placeholders
             *parent_hops, name = path.split("/")
             parent_dir = self.synced_fs.root
+            curr_path = ""
+            minimal_sync_on_existing_parent = None
+            # Make sure the path to reach the entry is defined (otherwise
+            # it means it is currently made of placeholders which should be
+            # synchronized)
             for hop in parent_hops:
+                curr_path = "%s/%s" % (curr_path, hop) if hop else curr_path
                 if hop and hop not in parent_dir:
+                    if not minimal_sync_on_existing_parent:
+                        minimal_sync_on_existing_parent = curr_path, parent_dir
                     parent_dir[hop] = OracleFSFolder(False, False, 1)
                     parent_dir = parent_dir[hop]
-            entry = self.core_fs.get_path(path)
-            parent_dir[name] = deepcopy(entry)
+
+            core_entry = self.core_fs.get_path(path)
+
+            # If the entry to sync is a placeholder, we have to do a minimal
+            # sync on it parent. The trick is a previously valid entry could
+            # have been deleted then recreated (hence being a placeholder in
+            # core_fs that will be omitted by the minimal sync and a regular
+            # entry in synced_fs...)
+            if not minimal_sync_on_existing_parent and core_entry.base_version == 1:
+                minimal_sync_on_existing_parent = "/".join(parent_hops), parent_dir
+
+            if minimal_sync_on_existing_parent:
+                synced_parent_entry_path, synced_parent_entry = minimal_sync_on_existing_parent
+                synced_parent_entry.base_version += 1
+                core_parent_entry = self.core_fs.get_path(synced_parent_entry_path)
+                for child_name, child_core_entry in core_parent_entry.items():
+                    if child_core_entry.is_placeholder:
+                        synced_parent_entry.pop(child_name, None)
+
+            parent_dir[name] = deepcopy(core_entry)
 
 
 @pytest.mark.slow
@@ -104,12 +133,16 @@ async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_lo
     }}
     oracle_fs = OracleFSWithSync()
     to_run_rules = rule_selector()
+    need_reset_sync = False
     done = False
 
     while not done:
         try:
             async with core_factory(**config) as core:
                 await core.login(alice)
+                if need_reset_sync:
+                    need_reset_sync = False
+                    await core.fs.sync('/')
 
                 async with connect_core(core) as sock:
                     while True:
@@ -123,6 +156,7 @@ async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_lo
             pass
 
         except ResetCore:
+            need_reset_sync = True
             mocked_local_storage_connection.reset()
 
 def rule_selector():
@@ -223,7 +257,7 @@ async def afunc(sock, oracle_fs):
     path = os.path.join({parent}, {name})
     await sock.send({{"cmd": "file_create", "path": path}})
     rep = await sock.recv()
-    expected_status = oracle_fs.create_folder(path)
+    expected_status = oracle_fs.create_file(path)
     assert rep["status"] == expected_status
 yield afunc
 """
@@ -289,7 +323,7 @@ yield afunc
 async def afunc(sock, oracle_fs):
     await sock.send({{"cmd": "delete", "path": {path}}})
     rep = await sock.recv()
-    expected_status = oracle_fs.delete(path)
+    expected_status = oracle_fs.delete({path})
     assert rep["status"] == expected_status
 yield afunc
 """
@@ -340,21 +374,39 @@ yield afunc
             assert rep["status"] == expected_status
             return dst
 
-        @rule(path=st.one_of(Folders, Files))
+        # TODO: really complex to implement...
+        #         @rule(path=st.one_of(Folders, Files))
+        #         @reproduce_rule(
+        #             """
+        # async def afunc(sock, oracle_fs):
+        #     await sock.send({{"cmd": "synchronize", "path": {path}}})
+        #     rep = await sock.recv()
+        #     expected_status = oracle_fs.sync({path})
+        #     assert rep["status"] == expected_status
+        # yield afunc
+        # """
+        #         )
+        #         def sync(self, path):
+        #             rep = self.core_cmd({"cmd": "synchronize", "path": path})
+        #             note(rep)
+        #             expected_status = self.oracle_fs.sync(path)
+        #             assert rep["status"] == expected_status
+
+        @rule()
         @reproduce_rule(
             """
 async def afunc(sock, oracle_fs):
-    await sock.send({{"cmd": "synchronize", "path": {path}}})
+    await sock.send({{"cmd": "synchronize", "path": '/'}})
     rep = await sock.recv()
-    expected_status = oracle_fs.sync({path})
+    expected_status = oracle_fs.sync('/')
     assert rep["status"] == expected_status
 yield afunc
 """
         )
-        def sync(self, path):
-            rep = self.core_cmd({"cmd": "synchronize", "path": path})
+        def sync_root(self):
+            rep = self.core_cmd({"cmd": "synchronize", "path": "/"})
             note(rep)
-            expected_status = self.oracle_fs.sync(path)
+            expected_status = self.oracle_fs.sync("/")
             assert rep["status"] == expected_status
 
         @rule()
