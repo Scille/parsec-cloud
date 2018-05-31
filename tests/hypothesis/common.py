@@ -58,18 +58,28 @@ class OracleFSFile:
         return self.base_version == 0
 
 
-@attr.s
+@attr.s(repr=False)
 class OracleFSFolder(dict):
     need_sync = attr.ib(default=True)
     need_flush = attr.ib(default=False)
     base_version = attr.ib(default=0)
+
+    def __repr__(self):
+        children = {k: v for k, v in self.items()}
+        return (
+            "{type}("
+            "need_sync={self.need_sync}, "
+            "need_flush={self.need_flush}, "
+            "base_version={self.base_version}, "
+            "children={children})"
+        ).format(type=type(self).__name__, self=self, children=children)
 
     @property
     def is_placeholder(self):
         return self.base_version == 0
 
 
-@attr.s
+@attr.s(repr=False)
 class OracleFSRootFolder(OracleFSFolder):
     @property
     def is_placeholder(self):
