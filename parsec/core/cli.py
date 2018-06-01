@@ -77,24 +77,27 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option("--pdb", is_flag=True)
 # @click.option('--identity', '-i', default=None)
 # @click.option('--identity-key', '-I', type=click.File('rb'), default=None)
-
-
 @click.option("--I-am-John", is_flag=True, help="Log as dummy John Doe user")
 # @click.option('--cache-size', help='Max number of elements in cache', default=1000)
-
-
-def core_cmd(**kwargs):
-    if kwargs.pop("pdb"):
-        return run_with_pdb(_core, **kwargs)
-
-    else:
-        return _core(**kwargs)
-
-
-def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
+def core_cmd(log_level, pdb, **kwargs):
     log_handler = logbook.StderrHandler(level=log_level.upper())
     # Push globally the log handler make it work across threads
     log_handler.push_application()
+
+    if pdb:
+        return run_with_pdb(_core, **kwargs)
+
+    else:
+        while True:
+            try:
+                return _core(**kwargs)
+            except Exception:
+                logger.error(traceback.format_exc())
+                logger.error("Core crashed... Restarting!")
+                time.sleep(1)
+
+
+def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
 
     async def _login_and_run(user=None):
         async with trio.open_nursery() as nursery:
@@ -124,33 +127,26 @@ def _core(socket, backend_addr, backend_watchdog, debug, log_level, i_am_john):
         auto_sync=True,
     )
 
-    while True:
-        core = Core(config)
+    core = Core(config)
 
-        print("Starting Parsec Core on %s (with backend on %s)" % (socket, config.backend_addr))
+    print("Starting Parsec Core on %s (with backend on %s)" % (socket, config.backend_addr))
 
-        try:
-            if i_am_john:
-                john_conf_dir = tempfile.mkdtemp(prefix="parsec-jdoe-conf-")
-                try:
-                    user = Device(
-                        id=JOHN_DOE_DEVICE_ID,
-                        user_privkey=JOHN_DOE_PRIVATE_KEY,
-                        device_signkey=JOHN_DOE_DEVICE_SIGNING_KEY,
-                        local_storage_db_path=os.path.join(john_conf_dir, "db.sqlite"),
-                    )
-                    print("Hello Mr. Doe, your conf dir is `%s`" % john_conf_dir)
-                    trio.run(_login_and_run, user)
-                finally:
-                    shutil.rmtree(john_conf_dir)
-            else:
-                trio.run(_login_and_run)
+    try:
+        if i_am_john:
+            john_conf_dir = tempfile.mkdtemp(prefix="parsec-jdoe-conf-")
+            try:
+                user = Device(
+                    id=JOHN_DOE_DEVICE_ID,
+                    user_privkey=JOHN_DOE_PRIVATE_KEY,
+                    device_signkey=JOHN_DOE_DEVICE_SIGNING_KEY,
+                    local_storage_db_path=os.path.join(john_conf_dir, "db.sqlite"),
+                )
+                print("Hello Mr. Doe, your conf dir is `%s`" % john_conf_dir)
+                trio.run(_login_and_run, user)
+            finally:
+                shutil.rmtree(john_conf_dir)
+        else:
+            trio.run(_login_and_run)
 
-        except KeyboardInterrupt:
-            print("bye ;-)")
-            break
-
-        except Exception:
-            logger.error(traceback.format_exc())
-            logger.error("Core crashed... Restarting!")
-            time.sleep(1)
+    except KeyboardInterrupt:
+        print("bye ;-)")
