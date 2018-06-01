@@ -64,7 +64,7 @@ class InBufferSpace(BaseOrderedSpace):
         return self.buffer_slice_start != 0 or self.buffer_slice_end != self.buffer.size
 
 
-def is_overlaid(buff1, buff2):
+def _is_overlaid(buff1, buff2):
     return (
         buff1.start <= buff2.start <= buff1.end
         or buff1.start <= buff2.end <= buff1.end
@@ -236,7 +236,7 @@ def merge_buffers(buffers):
             max_end = buff.end
 
         # Retrieve the spaces our buffer overlaid to merge them all
-        overlaid = [cs for cs in spaces if is_overlaid(cs, buff)]
+        overlaid = [cs for cs in spaces if _is_overlaid(cs, buff)]
         if overlaid:
             # All the overlaid spaces now constitute a contiguous space
             new_cs = _merge_in_contiguous_space(overlaid, buff)
@@ -314,6 +314,10 @@ def merge_buffers_with_limits_and_alignment(buffers, start, end, block_size):
 
 
 def quick_filter_block_accesses(block_entries, start, end):
+    """
+    Filter a list of block accesses to only return the ones fitting in the
+    given range.
+    """
     interestings = []
     for candidate in block_entries:
         candidate_start = candidate["offset"]

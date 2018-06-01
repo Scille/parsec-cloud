@@ -186,9 +186,6 @@ class FSOpsMixin(FSBase):
             self._local_tree.update_entry(src_parent_access, src_parent_manifest)
             self._local_tree.update_entry(dst_parent_access, dst_parent_manifest)
 
-    # async def copy(self):
-    #     pass
-
     async def delete(self, path: str):
         if path == "/":
             raise FSInvalidPath("Cannot delete `/` root folder")

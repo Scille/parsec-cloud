@@ -70,22 +70,22 @@ class MultiLocationsContiguousSpace(ContiguousSpace):
             if isinstance(bs.buffer, (RamBuffer, DirtyBlockBuffer)):
                 return True
             if bs.buffer.end > self.end:
-                # Existing buffer, but must be truncated
+                # Already synchronized block, but must be truncated
                 return True
         return False
 
 
-@attr.s(repr=False)
+@attr.s()
 class OpenedFile:
 
     access = attr.ib()
     size = attr.ib()
     base_version = attr.ib()
-    _cmds_list = attr.ib(factory=list)
     block_size = attr.ib(default=2 ** 16)
+    _cmds_list = attr.ib(factory=list, repr=False)
     # To symplify concurrency, we use this event to prohibe flushes during
     # sync and multiple concurrent syncs
-    _not_syncing_event = attr.ib(factory=trio.Event)
+    _not_syncing_event = attr.ib(factory=trio.Event, repr=False)
 
     def __attrs_post_init__(self):
         self._not_syncing_event.set()
@@ -185,8 +185,6 @@ class OpenedFile:
         blocks = [
             BlockBuffer(*x) for x in quick_filter_block_accesses(manifest["blocks"], start, end)
         ]
-        # dirty_blocks = [DirtyBlockBuffer(x['offset'], x['offset'] + x['size'], x) for x in manifest['dirty_blocks']]
-        # blocks = [DirtyBlockBuffer(x['offset'], x['offset'] + x['size'], x) for x in manifest['blocks']]
 
         return blocks + dirty_blocks + in_ram
 
@@ -221,7 +219,6 @@ class OpenedFile:
                 end = self.size
 
         blocks = self._get_quickly_filtered_blocks(manifest, 0, self.size)
-        # blocks = self._get_quickly_filtered_blocks(manifest, aligned_start, end)
         merged = merge_buffers_with_limits_and_alignment(
             blocks, aligned_start, end, self.block_size
         )
