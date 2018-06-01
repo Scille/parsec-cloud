@@ -91,12 +91,14 @@ async def run_app(app):
 async def backend_factory(**config):
     config = BackendConfig(**config)
     backend = BackendApp(config)
-    await backend.init()
-    try:
-        yield backend
+    async with trio.open_nursery() as nursery:
+        await backend.init(nursery)
+        try:
+            yield backend
 
-    finally:
-        await backend.teardown()
+        finally:
+            await backend.teardown()
+            nursery.cancel_scope.cancel()
 
 
 @asynccontextmanager

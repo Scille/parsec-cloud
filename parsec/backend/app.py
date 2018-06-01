@@ -106,6 +106,7 @@ class BackendApp:
     def __init__(self, config):
         self.signal_ns = blinker.Namespace()
         self.config = config
+        self.nursery = None
         self.blockstore_postgresql = config.blockstore_postgresql
         self.blockstore_openstack = config.blockstore_openstack
         self.blockstore_s3 = config.blockstore_s3
@@ -191,9 +192,9 @@ class BackendApp:
             "ping": self._api_ping,
         }
 
-    async def init(self):
+    async def init(self, nursery):
         if self.dbh:
-            await self.dbh.init()
+            await self.dbh.init(nursery)
 
     async def teardown(self):
         if self.dbh:

@@ -1,5 +1,6 @@
 import asyncpg
 from trio_asyncio import trio2aio
+import trio
 
 
 async def init_db(url, force=False):
@@ -144,19 +145,49 @@ class PGHandler:
         self.signal_ns = signal_ns
         self.signals = ["message_arrived", "user_claimed", "user_vlob_updated", "vlob_updated"]
 
+        self.signal_handlers = {}
         for signal in self.signals:
-            sighandler = self.signal_ns.signal("message_arrived")
-            sighandler.connect(self.get_signal_handler(signal))
+            sighandler = self.signal_ns.signal(signal)
+            self.signal_handlers[signal] = self.get_signal_handler(signal)
+            sighandler.connect(self.signal_handlers[signal])
 
-    @trio2aio
-    async def init(self):
-        await init_db(self.url)
-        self.pool = await asyncpg.create_pool(self.url)
+        self.queue = trio.Queue(100)
 
-        for signal in self.signals:
+    async def init(self, nursery):
+        @trio2aio
+        async def _init():
+            await init_db(self.url)
+
+            self.pool = await asyncpg.create_pool(self.url)
+            self.conn = await asyncpg.connect(self.url)
+
+            for signal in self.signals:
+                await self.conn.add_listener(signal, self.notification_handler)
+
+        await _init()
+        await nursery.start(self.notification_sender)
+
+    def notification_handler(self, connection, pid, channel, payload):
+        signal = self.signal_ns.signal(channel)
+        signal.send(payload, propagate=False)
+
+    async def notification_sender(self, task_status=trio.TASK_STATUS_IGNORED):
+        @trio2aio
+        async def send(signal, sender):
             async with self.pool.acquire() as conn:
-                await conn.add_listener(signal, self.notification_handler)
-                await conn.execute("LISTEN %s" % signal)
+                await conn.execute("SELECT pg_notify($1, $2)", signal, sender)
+
+        task_status.started()
+        while True:
+            req = await self.queue.get()
+            await send(req["signal"], req["sender"])
+
+    def get_signal_handler(self, signal):
+        def signal_handler(sender, propagate=True):
+            if propagate:
+                self.queue.put_nowait({"signal": signal, "sender": sender})
+
+        return signal_handler
 
     @trio2aio
     async def teardown(self):
@@ -201,18 +232,3 @@ class PGHandler:
     async def delete_many(self, sql, *paramslist):
         async with self.pool.acquire() as conn:
             return await conn.executemany(sql, *paramslist)
-
-    def notification_handler(self, connection, pid, channel, payload):
-        signal = self.signal_ns.signal(channel)
-        signal.send(payload, propagate=False)
-
-    def get_signal_handler(self, signal):
-        @trio2aio
-        def signal_handler(sender, propagate=True):
-            if propagate:
-
-                async def notify(self, signal=None, sender=None):
-                    async with self.pool.acquire() as conn:
-                        await conn.execute("NOTIFY $1, $2", signal, sender)
-
-        return signal_handler

@@ -181,6 +181,7 @@ async def test_device_configure_und_get_refused(
         assert rep == {"status": "configuration_refused", "reason": "Not in the mood."}
 
 
+@pytest.mark.xfail
 @pytest.mark.trio
 async def test_device_configure_timeout(autojump_clock, backend, alice, configure_device_token):
 
