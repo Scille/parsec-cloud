@@ -109,12 +109,12 @@ def _backend(
     log_file,
 ):
     if log_file:
-        file_handler = logbook.FileHandler(log_file, level=log_level.upper())
-        # Push globally the log handler make it work across threads
-        file_handler.push_application()
+        log_handler = logbook.FileHandler(log_file, level=log_level.upper())
     else:
         log_handler = logbook.StderrHandler(level=log_level.upper())
-        log_handler.push_application()
+    # Push globally the log handler make it work across threads
+    log_handler.push_application()
+
     config = BackendConfig(
         debug=debug,
         blockstore_postgresql=blockstore_postgresql,
