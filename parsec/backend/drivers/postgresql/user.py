@@ -8,6 +8,7 @@ from parsec.backend.exceptions import (
     UserClaimError,
     OutOfDateError,
 )
+from .handler import atomic
 
 
 class PGUserComponent(BaseUserComponent):
@@ -15,14 +16,16 @@ class PGUserComponent(BaseUserComponent):
         super().__init__(*args)
         self.dbh = dbh
 
+    @atomic
     async def claim_invitation(
-        self, user_id, invitation_token, broadcast_key, device_name, device_verify_key
+        self, conn, user_id, invitation_token, broadcast_key, device_name, device_verify_key
     ):
         assert isinstance(broadcast_key, (bytes, bytearray))
         assert isinstance(device_verify_key, (bytes, bytearray))
 
         try:
             ts, author, invitation_token, claim_tries = await self.dbh.fetch_one(
+                conn,
                 """SELECT ts, author, invitation_token, claim_tries
                 FROM invitations WHERE user_id = $1
                 """,
@@ -32,7 +35,7 @@ class PGUserComponent(BaseUserComponent):
             raise NotFoundError("No invitation for user `%s`" % user_id)
 
         ts = pendulum.from_timestamp(ts)
-        user = await self.dbh.fetch_one("SELECT 1 FROM users WHERE user_id = $1", user_id)
+        user = await self.dbh.fetch_one(conn, "SELECT 1 FROM users WHERE user_id = $1", user_id)
 
         try:
             if user is not None:
@@ -50,10 +53,13 @@ class PGUserComponent(BaseUserComponent):
             claim_tries = claim_tries + 1
 
             if claim_tries > 3:
-                await self.dbh.delete_one("DELETE FROM invitations WHERE user_id = $1", user_id)
+                await self.dbh.delete_one(
+                    conn, "DELETE FROM invitations WHERE user_id = $1", user_id
+                )
 
             else:
                 await self.dbh.update_one(
+                    conn,
                     "UPDATE invitations SET claim_tries = $1 WHERE user_id = $2",
                     claim_tries,
                     user_id,
@@ -62,17 +68,19 @@ class PGUserComponent(BaseUserComponent):
             raise
 
         await self.create(
-            author, user_id, broadcast_key, devices=[(device_name, device_verify_key)]
+            conn, author, user_id, broadcast_key, devices=[(device_name, device_verify_key)]
         )
 
-    async def create_invitation(self, invitation_token, author, user_id):
-        user = await self.dbh.fetch_one("SELECT 1 FROM users WHERE user_id = $1", user_id)
+    @atomic
+    async def create_invitation(self, conn, invitation_token, author, user_id):
+        user = await self.dbh.fetch_one(conn, "SELECT 1 FROM users WHERE user_id = $1", user_id)
 
         if user is not None:
             raise AlreadyExistsError("User `%s` already exists" % user_id)
 
         # Overwrite previous invitation if any
         await self.dbh.insert_one(
+            conn,
             """
             INSERT INTO invitations (
                 user_id, ts, author, invitation_token, claim_tries
@@ -89,7 +97,8 @@ class PGUserComponent(BaseUserComponent):
             invitation_token,
         )
 
-    async def create(self, author, user_id, broadcast_key, devices):
+    @atomic
+    async def create(self, conn, author, user_id, broadcast_key, devices):
         assert isinstance(broadcast_key, (bytes, bytearray))
 
         if isinstance(devices, dict):
@@ -98,13 +107,14 @@ class PGUserComponent(BaseUserComponent):
         for _, key in devices:
             assert isinstance(key, (bytes, bytearray))
 
-        user = await self.dbh.fetch_one("SELECT 1 FROM users WHERE user_id = $1", user_id)
+        user = await self.dbh.fetch_one(conn, "SELECT 1 FROM users WHERE user_id = $1", user_id)
 
         if user is not None:
             raise AlreadyExistsError("User `%s` already exists" % user_id)
 
         now = pendulum.utcnow().int_timestamp
         await self.dbh.insert_one(
+            conn,
             """INSERT INTO users (user_id, created_on, created_by, broadcast_key)
             VALUES ($1, $2, $3, $4)
             """,
@@ -114,15 +124,18 @@ class PGUserComponent(BaseUserComponent):
             broadcast_key,
         )
         await self.dbh.insert_many(
+            conn,
             """INSERT INTO user_devices (user_id, device_name, created_on, verify_key, revocated_on)
             VALUES ($1, $2, $3, $4, NULL)
             """,
             [(user_id, name, now, key) for name, key in devices],
         )
 
-    async def get(self, user_id):
+    @atomic
+    async def get(self, conn, user_id):
         try:
             created_on, created_by, broadcast_key = await self.dbh.fetch_one(
+                conn,
                 "SELECT created_on, created_by, broadcast_key FROM users WHERE user_id = $1",
                 user_id,
             )
@@ -144,6 +157,7 @@ class PGUserComponent(BaseUserComponent):
                     ),
                 }
                 for d_name, d_created_on, d_configure_token, d_verify_key, d_revocated_on in await self.dbh.fetch_many(
+                    conn,
                     """
                     SELECT device_name, created_on, configure_token, verify_key, revocated_on
                     FROM user_devices WHERE user_id = $1
@@ -155,9 +169,10 @@ class PGUserComponent(BaseUserComponent):
 
         return user
 
-    async def declare_device(self, user_id, device_name):
+    @atomic
+    async def declare_device(self, conn, user_id, device_name):
         devices = await self.dbh.fetch_many(
-            "SELECT device_name FROM user_devices WHERE user_id = $1", user_id
+            conn, "SELECT device_name FROM user_devices WHERE user_id = $1", user_id
         )
         if not devices:
             raise NotFoundError("User `%s` doesn't exists" % user_id)
@@ -167,14 +182,17 @@ class PGUserComponent(BaseUserComponent):
 
         # TODO add verify key
         await self.dbh.insert_one(
+            conn,
             "INSERT INTO user_devices (user_id, device_name, created_on) VALUES ($1, $2, $3)",
             user_id,
             device_name,
             pendulum.utcnow().int_timestamp,
         )
 
-    async def configure_device(self, user_id, device_name, device_verify_key):
+    @atomic
+    async def configure_device(self, conn, user_id, device_name, device_verify_key):
         updated = await self.dbh.update_one(
+            conn,
             "UPDATE user_devices SET verify_key = $1 WHERE user_id=$2 AND device_name=$3",
             # 'SELECT device_name FROM user_devices WHERE user_id=$1 AND device_name=$2',
             device_verify_key,
@@ -187,9 +205,10 @@ class PGUserComponent(BaseUserComponent):
     # TODO
     # raise NotFoundError("Device `%s@%s` doesn't exists" % (user_id, device_name))
 
-    async def declare_unconfigured_device(self, token, user_id, device_name):
+    @atomic
+    async def declare_unconfigured_device(self, conn, token, user_id, device_name):
         devices = await self.dbh.fetch_many(
-            "SELECT device_name FROM user_devices WHERE user_id = $1", user_id
+            conn, "SELECT device_name FROM user_devices WHERE user_id = $1", user_id
         )
         if not devices:
             raise NotFoundError("User `%s` doesn't exists" % user_id)
@@ -198,6 +217,7 @@ class PGUserComponent(BaseUserComponent):
             raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
 
         await self.dbh.insert_one(
+            conn,
             """
             INSERT INTO user_devices (
                 user_id, device_name, created_on, configure_token
@@ -208,11 +228,13 @@ class PGUserComponent(BaseUserComponent):
             token,
         )
 
+    @atomic
     async def register_device_configuration_try(
-        self, config_try_id, user_id, device_name, device_verify_key, user_privkey_cypherkey
+        self, conn, config_try_id, user_id, device_name, device_verify_key, user_privkey_cypherkey
     ):
         # TODO: handle multiple configuration tries on a given device
         await self.dbh.insert_one(
+            conn,
             """
             INSERT INTO device_configure_tries (
                 user_id, config_try_id, status, device_name, device_verify_key,
@@ -228,8 +250,10 @@ class PGUserComponent(BaseUserComponent):
         )
         return config_try_id
 
-    async def retrieve_device_configuration_try(self, config_try_id, user_id):
+    @atomic
+    async def retrieve_device_configuration_try(self, conn, config_try_id, user_id):
         config_try = await self.dbh.fetch_one(
+            conn,
             """
             SELECT status, device_name, device_verify_key, user_privkey_cypherkey,
                 cyphered_user_privkey, refused_reason
@@ -252,8 +276,12 @@ class PGUserComponent(BaseUserComponent):
 
         return config_try
 
-    async def accept_device_configuration_try(self, config_try_id, user_id, cyphered_user_privkey):
+    @atomic
+    async def accept_device_configuration_try(
+        self, conn, config_try_id, user_id, cyphered_user_privkey
+    ):
         updated = await self.dbh.update_one(
+            conn,
             """
             UPDATE device_configure_tries SET status = $1, cyphered_user_privkey = $2
             WHERE user_id=$3 AND config_try_id=$4 and status=$5
@@ -271,8 +299,10 @@ class PGUserComponent(BaseUserComponent):
     # if config_try['status'] != 'waiting_answer':
     #     raise AlreadyExistsError('Device configuration try already done.')
 
-    async def refuse_device_configuration_try(self, config_try_id, user_id, reason):
+    @atomic
+    async def refuse_device_configuration_try(self, conn, config_try_id, user_id, reason):
         updated = await self.dbh.update_one(
+            conn,
             """
             UPDATE device_configure_tries SET status = $1, refused_reason = $2
             WHERE user_id=$3 AND config_try_id=$4 and status=$5

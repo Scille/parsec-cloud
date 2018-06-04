@@ -1,6 +1,25 @@
+from functools import wraps
 import asyncpg
+from asyncpg.pool import PoolConnectionProxy
 from trio_asyncio import trio2aio
 import trio
+
+
+def atomic(proc):
+    @trio2aio
+    async def _call(self, *args, **kwargs):
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                return await proc(self, conn, *args, **kwargs)
+
+    @wraps(proc)
+    async def call(self, *args, **kwargs):
+        if len(args) > 0 and isinstance(args[0], PoolConnectionProxy):
+            return await proc(self, args[0], *args[1:], **kwargs)
+        else:
+            return await _call(self, *args, **kwargs)
+
+    return call
 
 
 async def init_db(url, force=False):
@@ -191,44 +210,29 @@ class PGHandler:
 
     @trio2aio
     async def teardown(self):
+        await self.conn.close()
         await self.pool.close()
 
-    @trio2aio
-    async def fetch_one(self, sql, *params):
-        async with self.pool.acquire() as conn:
-            return await conn.fetchrow(sql, *params)
+    async def fetch_one(self, conn, sql, *params):
+        return await conn.fetchrow(sql, *params)
 
-    @trio2aio
-    async def fetch_many(self, sql, *params):
-        async with self.pool.acquire() as conn:
-            return await conn.fetch(sql, *params)
+    async def fetch_many(self, conn, sql, *params):
+        return await conn.fetch(sql, *params)
 
-    @trio2aio
-    async def insert_one(self, sql, *params):
-        async with self.pool.acquire() as conn:
-            return await conn.execute(sql, *params)
+    async def insert_one(self, conn, sql, *params):
+        return await conn.execute(sql, *params)
 
-    @trio2aio
-    async def insert_many(self, sql, *paramslist):
-        async with self.pool.acquire() as conn:
-            return await conn.executemany(sql, *paramslist)
+    async def insert_many(self, conn, sql, *paramslist):
+        return await conn.executemany(sql, *paramslist)
 
-    @trio2aio
-    async def update_one(self, sql, *params):
-        async with self.pool.acquire() as conn:
-            return await conn.execute(sql, *params)
+    async def update_one(self, conn, sql, *params):
+        return await conn.execute(sql, *params)
 
-    @trio2aio
-    async def update_many(self, sql, *paramslist):
-        async with self.pool.acquire() as conn:
-            return await conn.executemany(sql, *paramslist)
+    async def update_many(self, conn, sql, *paramslist):
+        return await conn.executemany(sql, *paramslist)
 
-    @trio2aio
-    async def delete_one(self, sql, *params):
-        async with self.pool.acquire() as conn:
-            return await conn.execute(sql, *params)
+    async def delete_one(self, conn, sql, *params):
+        return await conn.execute(sql, *params)
 
-    @trio2aio
-    async def delete_many(self, sql, *paramslist):
-        async with self.pool.acquire() as conn:
-            return await conn.executemany(sql, *paramslist)
+    async def delete_many(self, conn, sql, *paramslist):
+        return await conn.executemany(sql, *paramslist)
