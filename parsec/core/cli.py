@@ -98,7 +98,6 @@ def core_cmd(log_level, pdb, **kwargs):
 
 
 def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
-
     async def _login_and_run(user=None):
         async with trio.open_nursery() as nursery:
             await core.init(nursery)

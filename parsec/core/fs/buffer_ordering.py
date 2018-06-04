@@ -168,7 +168,11 @@ def _split_aligned_contiguous_space(cs, block_size):
     # Last space maybe smaller than block size
     if curr_acs_remain_space < block_size:
         splitted_spaces.append(
-            ContiguousSpace(curr_acs_start, block_size - curr_acs_remain_space, curr_acs_buffers)
+            ContiguousSpace(
+                curr_acs_start,
+                curr_acs_start + block_size - curr_acs_remain_space,
+                curr_acs_buffers,
+            )
         )
 
     return splitted_spaces

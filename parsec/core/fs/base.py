@@ -36,7 +36,7 @@ class FSBase(BaseAsyncComponent):
                 manifest = self._local_tree.retrieve_entry_by_access(fd.access)
             except KeyError:
                 continue
-            if not fd.need_flush(manifest):
+            if not fd.need_flush():
                 continue
             new_size, new_dirty_blocks = fd.get_flush_map()
             for ndb in new_dirty_blocks:

@@ -72,7 +72,7 @@ class FSOpsMixin(FSBase):
             return b""
 
         fd = self._opened_files.open_file(access, manifest)
-        cs = fd.get_read_map(manifest, size, offset)
+        cs = fd.get_read_map(size, offset)
         return await self._build_data_from_contiguous_space(cs)
 
     async def file_write(self, path, buffer: bytes, offset: int = -1):
@@ -115,7 +115,7 @@ class FSOpsMixin(FSBase):
                 return
 
             fd = self._opened_files.open_file(access, manifest)
-            if not fd.need_flush(manifest):
+            if not fd.need_flush():
                 return
 
             if fd.is_syncing():
@@ -229,9 +229,9 @@ class FSOpsMixin(FSBase):
                 "updated": manifest["updated"],
                 "base_version": manifest["base_version"],
                 "is_placeholder": is_placeholder,
-                "need_sync": fd.need_sync(manifest),
-                "need_flush": fd.need_flush(manifest),
-                "size": fd.size,
+                "need_sync": fd.need_sync(),
+                "need_flush": fd.need_flush(),
+                "size": manifest["size"],
             }
 
         else:

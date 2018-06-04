@@ -382,8 +382,8 @@ class FSSyncMixin(FSBase):
             await fd.wait_not_syncing()
             raise RetrySync()
 
-        with fd.start_syncing():
-            if not fd.need_sync(manifest):
+        with fd.start_syncing() as sync_point:
+            if not fd.need_sync():
                 # Placeholder means we need synchro !
                 assert not is_placeholder_access(access)
 
@@ -408,7 +408,7 @@ class FSSyncMixin(FSBase):
                     return access
                 else:
                     fd = self._opened_files.open_file(access, manifest)
-                    if fd.need_sync(manifest):
+                    if fd.need_sync():
                         raise FileSyncConcurrencyError(
                             access, target_remote_manifest=target_remote_manifest
                         )
@@ -417,28 +417,28 @@ class FSSyncMixin(FSBase):
                         # but this information will change with the new file version
                         self._opened_files.close_file(access)
                 final_access = access
+                final_manifest = convert_to_local_manifest(target_remote_manifest)
 
             else:
                 # The file has been locally modified, time to sync it with the backend !
-                final_access, target_remote_manifest = await self._sync_file_actual_sync(
-                    access, manifest, fd
+                final_access, final_manifest = await self._sync_file_actual_sync(
+                    access, manifest, fd, sync_point
                 )
 
-            final_manifest = convert_to_local_manifest(target_remote_manifest)
             self._local_tree.overwrite_entry(access, final_manifest)
 
         print(good("file sync done %s %s" % (final_access["id"], final_manifest)))
 
         return final_access
 
-    async def _sync_file_actual_sync(self, access, manifest, fd):
-        marker = fd.create_marker()
-
+    async def _sync_file_actual_sync(self, access, manifest, fd, sync_point):
         to_sync_manifest = convert_to_remote_manifest(manifest)
 
         # Compute the file's blocks and upload the new ones
         blocks = []
-        ucs = fd.get_sync_map(manifest)
+        ucs = fd.get_sync_map()
+
+        # Upload the new blocks
         for cs in ucs.spaces:
             if not cs.need_sync():
                 blocks += [bs.buffer.data for bs in cs.buffers]
@@ -486,11 +486,11 @@ class FSSyncMixin(FSBase):
             new_manifest = convert_to_local_manifest(to_sync_manifest, as_need_sync=True)
             assert new_manifest["base_version"] == manifest["base_version"]
             self._local_tree.update_entry(access, new_manifest)
-            fd.drop_until_marker(marker)
+            sync_point.resolve(new_manifest=new_manifest)
 
             raise FileSyncConcurrencyError(access) from exc
 
-        fd.drop_until_marker(marker)
-        fd.base_version = to_sync_manifest["version"]
+        final_manifest = convert_to_local_manifest(to_sync_manifest)
+        sync_point.resolve(new_manifest=final_manifest)
 
-        return final_access, to_sync_manifest
+        return final_access, final_manifest
