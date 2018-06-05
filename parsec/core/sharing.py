@@ -55,7 +55,6 @@ class BackendMessageError(Exception):
 
 
 class Sharing(BaseAsyncComponent):
-
     def __init__(self, device, fs, backend_connection, backend_event_manager, signal_ns):
         super().__init__()
         self._signal_ns = signal_ns
@@ -104,42 +103,43 @@ class Sharing(BaseAsyncComponent):
         # TODO: handle other type of message
         # assert sharing_msg["type"] == "share"
         if sharing_msg["type"] == "share":
-            sharing_access = self.fs._vlob_access_cls(
-                sharing_msg["content"]["id"],
-                sharing_msg["content"]["rts"],
-                sharing_msg["content"]["wts"],
-                from_jsonb64(sharing_msg["content"]["key"]),
-            )
+            sharing_access = sharing_msg["content"]
+            sharing_access["key"] = from_jsonb64(sharing_access["key"])
 
             shared_with_folder_name = "shared-with-%s" % sender_user_id
-            if shared_with_folder_name not in self.fs.root:
-                shared_with_folder = await self.fs.root.create_folder(shared_with_folder_name)
-            else:
-                shared_with_folder = await self.fs.root.fetch_child(shared_with_folder_name)
-            sharing_name = sharing_msg["name"]
-            while True:
+            # TODO: leaky abstraction...
+            parent_manifest = None
+            parent_path = "/%s" % shared_with_folder_name
+            while not parent_manifest:
                 try:
-                    child = await shared_with_folder.insert_child_from_access(
-                        sharing_name, sharing_access
+                    parent_access, parent_manifest = await self.fs._local_tree.retrieve_entry(
+                        parent_path
                     )
-                    break
-
                 except FSInvalidPath:
-                    sharing_name += "-dup"
-            self._signal_ns.signal("new_sharing").send(child.path)
+                    await self.fs.folder_create(parent_path)
+
+            # TODO: if parent is a file, this is going to fail...
+            sharing_name = sharing_msg["name"]
+            while sharing_name in parent_manifest["children"]:
+                sharing_name += "-dup"
+            parent_manifest["children"][sharing_msg["name"]] = sharing_access
+            self.fs._local_tree.update_entry(parent_access, parent_manifest)
+            self._signal_ns.signal("new_sharing").send("%s/%s" % (parent_path, sharing_name))
         elif sharing_msg["type"] == "ping":
             self._signal_ns.signal("ping").send(sharing_msg["ping"])
 
-        self.fs.root._last_processed_message = msg["count"]
+        self.fs.update_last_processed_message(msg["count"])
 
     async def _process_all_last_messages(self):
         rep = await self._backend_connection.send(
-            {"cmd": "message_get", "offset": self.fs.root._last_processed_message}
+            {"cmd": "message_get", "offset": self.fs.get_last_processed_message()}
         )
 
         rep, errors = backend_message_get_rep_schema.load(rep)
         if errors:
-            raise BackendMessageError("Cannot retreive user messages: %r" % rep)
+            raise BackendMessageError(
+                "Cannot retreive user messages: %r (errors: %r)" % (rep, errors)
+            )
 
         for msg in rep["messages"]:
             try:

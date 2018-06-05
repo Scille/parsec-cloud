@@ -2,7 +2,6 @@ from parsec.backend.message import BaseMessageComponent
 
 
 class PGMessageComponent(BaseMessageComponent):
-
     def __init__(self, dbh, *args):
         super().__init__(*args)
         self.dbh = dbh

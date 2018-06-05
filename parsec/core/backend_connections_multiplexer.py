@@ -10,7 +10,6 @@ logger = logbook.Logger("parsec.core.backend_connections_multiplexer")
 
 
 class BackendConnectionsMultiplexer(BaseAsyncComponent):
-
     def __init__(self, device: Device, backend_addr: str):
         super().__init__()
         self.device = device

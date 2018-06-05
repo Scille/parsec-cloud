@@ -3,7 +3,6 @@ from parsec.backend.exceptions import TrustSeedError, VersionError, NotFoundErro
 
 
 class PGVlob:
-
     def __init__(self, *args, **kwargs):
         atom = VlobAtom(*args, **kwargs)
         self.id = atom.id
@@ -13,7 +12,6 @@ class PGVlob:
 
 
 class PGVlobComponent(BaseVlobComponent):
-
     def __init__(self, dbh, *args):
         super().__init__(*args)
         self.dbh = dbh

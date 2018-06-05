@@ -31,7 +31,6 @@ class cmd_REMOVE_IDENTITIES_Schema(BaseCmdSchema):
 
 
 class BaseGroupComponent:
-
     def __init__(self, signal_ns):
         pass
 

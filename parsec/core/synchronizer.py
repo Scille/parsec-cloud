@@ -3,7 +3,6 @@ import logbook
 import traceback
 
 from parsec.core.base import BaseAsyncComponent
-from parsec.core.fs.folder import BaseFolderEntry
 from parsec.core.backend_connection import BackendNotAvailable, BackendError
 
 
@@ -11,7 +10,6 @@ logger = logbook.Logger("parsec.core.synchronizer")
 
 
 class Synchronizer(BaseAsyncComponent):
-
     def __init__(self, auto_sync, fs):
         super().__init__()
         self.auto_sync = auto_sync
@@ -34,19 +32,19 @@ class Synchronizer(BaseAsyncComponent):
                 # trigger_time = pendulum.now() + pendulum.interval(seconds=1)
                 try:
                     # TODO: quick'n dirty fix...
-                    await self.fs.root.sync(recursive=True)
+                    await self.fs.sync("/")
                 # await self._scan_and_sync_fs(self.fs.root, trigger_time)
                 except BackendNotAvailable:
                     pass
                 except BackendError:
                     logger.warning("Error with backend: %s" % traceback.format_exc())
 
-    async def _scan_and_sync_fs(self, entry, trigger_time):
-        if entry.need_sync and entry.updated < trigger_time:
-            logger.debug("sync {}", entry.path)
-            await entry.sync(recursive=True)
-        elif isinstance(entry, BaseFolderEntry):
-            # TODO: not really elegant to access _children like this.
-            # However we don't want to skip the not loadded entries...
-            for children_entry in entry._children.values():
-                await self._scan_and_sync_fs(children_entry, trigger_time)
+    # async def _scan_and_sync_fs(self, entry, trigger_time):
+    #     if entry.need_sync and entry.updated < trigger_time:
+    #         logger.debug("sync {}", entry.path)
+    #         await entry.sync(recursive=True)
+    #     elif isinstance(entry, BaseFolderEntry):
+    #         # TODO: not really elegant to access _children like this.
+    #         # However we don't want to skip the not loadded entries...
+    #         for children_entry in entry._children.values():
+    #             await self._scan_and_sync_fs(children_entry, trigger_time)

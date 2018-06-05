@@ -76,7 +76,6 @@ def _socket_send_cmd(sock, msg):
 
 
 def start_shutdown_watcher(socket_address, mountpoint):
-
     def _shutdown_watcher():
         logger.debug("Starting shutdown watcher")
         sock = _socket_init(socket_address)
@@ -105,7 +104,6 @@ def start_shutdown_watcher(socket_address, mountpoint):
 
 
 class ContentBuilder:
-
     def __init__(self):
         self.contents = {}
 
@@ -117,13 +115,13 @@ class ContentBuilder:
             current_content = self.contents[current_offset]
             # Insert inside
             if offset >= current_offset and end_offset <= current_offset + len(current_content):
-                new_data = current_content[:offset - current_offset]
+                new_data = current_content[: offset - current_offset]
                 new_data += data
-                new_data += current_content[offset - current_offset + len(data):]
+                new_data += current_content[offset - current_offset + len(data) :]
                 offset = current_offset
             # Insert before and merge
             elif offset <= current_offset and end_offset >= current_offset:
-                new_data = data + current_content[offset + len(data) - current_offset:]
+                new_data = data + current_content[offset + len(data) - current_offset :]
                 offsets_to_delete.append(current_offset)
             # Insert after
             elif offset == current_offset + len(current_content):
@@ -139,7 +137,7 @@ class ContentBuilder:
             if current_offset > length:
                 offsets_to_delete.append(current_offset)
             elif current_offset + len(self.contents[current_offset]) > length:
-                data = self.contents[current_offset][:length - current_offset]
+                data = self.contents[current_offset][: length - current_offset]
                 self.contents[current_offset] = data
         for offset_to_delete in offsets_to_delete:
             del self.contents[offset_to_delete]
@@ -171,7 +169,6 @@ def cli(mountpoint, debug, log_level, nothreads, socket):
 
 
 class File:
-
     def __init__(self, operations, path, fd, flags=0):
         self.fd = fd
         self.path = path
@@ -239,7 +236,6 @@ class File:
 
 
 class FuseOperations(LoggingMixIn, Operations):
-
     def __init__(self, socket_address):
         self.fds = {}
         self._fs_id_generator = count(1)

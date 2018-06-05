@@ -11,7 +11,6 @@ from parsec.backend.exceptions import (
 
 
 class PGUserComponent(BaseUserComponent):
-
     def __init__(self, dbh, *args):
         super().__init__(*args)
         self.dbh = dbh
@@ -151,7 +150,7 @@ class PGUserComponent(BaseUserComponent):
 
         return user
 
-    async def declare_device(self, user_id, device_name):
+    async def create_device(self, user_id, device_name, verify_key):
         devices = await self.dbh.fetch_many(
             "SELECT device_name FROM user_devices WHERE user_id = %s", (user_id,)
         )
@@ -162,8 +161,8 @@ class PGUserComponent(BaseUserComponent):
             raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
 
         await self.dbh.insert_one(
-            "INSERT INTO user_devices (user_id, device_name, created_on) VALUES (%s, %s, %s)",
-            (user_id, device_name, pendulum.utcnow().int_timestamp),
+            "INSERT INTO user_devices (user_id, device_name, created_on, verify_key) VALUES (%s, %s, %s, %s)",
+            (user_id, device_name, pendulum.utcnow().int_timestamp, verify_key),
         )
 
     async def configure_device(self, user_id, device_name, device_verify_key):

@@ -1,6 +1,7 @@
 from parsec.core.fs import FSInvalidPath
-from parsec.core.fs.base import SecurityError
 from parsec.core.app import Core, ClientContext
+from parsec.schema import InvalidCmd
+from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.api.event import (
     event_subscribe,
     event_unsubscribe,
@@ -91,13 +92,19 @@ async def dispatch_request(req: dict, client_ctx: ClientContext, core: Core) -> 
 
     # Protect againsts generic exceptions
     except ParsecError as exc:
+        import pdb
+
+        pdb.set_trace()
         return exc.to_dict()
+
+    except InvalidCmd as exc:
+        return {"status": "bad_message", "errors": exc.args[0]}
 
     except FSInvalidPath as exc:
         return {"status": "invalid_path", "reason": str(exc)}
 
-    except SecurityError as exc:
-        return {"status": "security_error", "reason": str(exc)}
+    except BackendNotAvailable as exc:
+        return {"status": "backend_not_available", "reason": str(exc)}
 
 
 __all__ = ("dispatch_request",)

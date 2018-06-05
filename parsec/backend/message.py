@@ -13,7 +13,6 @@ class cmd_GET_Schema(BaseCmdSchema):
 
 
 class BaseMessageComponent:
-
     def __init__(self, signal_ns):
         self._signal_message_arrived = signal_ns.signal("message_arrived")
 

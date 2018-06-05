@@ -4,16 +4,12 @@ from parsec.core.base import BaseAsyncComponent
 
 
 class LocalStorage(BaseAsyncComponent):
-
     def __init__(self, path):
         super().__init__()
         self.path = path
         self.conn = None
 
     async def _init(self, nursery):
-        self._init_conn()
-
-    def _init_conn(self):
         self.conn = sqlite3.connect(self.path)
         cur = self.conn.cursor()
         cur.execute(
@@ -70,6 +66,11 @@ class LocalStorage(BaseAsyncComponent):
     def move_manifest(self, id, new_id):
         cur = self.conn.cursor()
         cur.execute("UPDATE manifests SET id=? WHERE id=?", (new_id, id))
+        self.conn.commit()
+
+    def remove_manifest_local_data(self, id):
+        cur = self.conn.cursor()
+        cur.execute("DELETE FROM manifests WHERE id=?", (id,))
         self.conn.commit()
 
     def fetch_block(self, id):

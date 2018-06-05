@@ -3,7 +3,6 @@ from parsec.backend.blockstore import BaseBlockStoreComponent
 
 
 class MemoryBlockStoreComponent(BaseBlockStoreComponent):
-
     def __init__(self, *args):
         super().__init__(*args)
         self.blocks = {}

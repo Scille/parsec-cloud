@@ -21,7 +21,6 @@ class cmd_UPDATE_Schema(BaseCmdSchema):
 
 
 class BaseUserVlobComponent:
-
     def __init__(self, signal_ns):
         self._signal_user_vlob_updated = signal_ns.signal("user_vlob_updated")
 

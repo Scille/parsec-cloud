@@ -69,7 +69,6 @@ def render_task_tree(task=None):
 
 
 class Monitor(Instrument):
-
     def __init__(self, host=MONITOR_HOST, port=MONITOR_PORT):
         self.address = (host, port)
         self._portal = None
@@ -140,8 +139,8 @@ class Monitor(Instrument):
                             while not self._closing.is_set():
                                 index = buffer.find(b"\n")
                                 if index >= 0:
-                                    line = buffer[:index + 1].decode("latin-1")
-                                    del buffer[:index + 1]
+                                    line = buffer[: index + 1].decode("latin-1")
+                                    del buffer[: index + 1]
                                     yield line
 
                                 try:
@@ -227,7 +226,6 @@ class Monitor(Instrument):
         )
 
     def command_stats(self, sout):
-
         async def get_current_statistics():
             return current_statistics()
 

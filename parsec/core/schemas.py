@@ -12,6 +12,7 @@ class BlockAccessSchema(UnknownCheckedSchema):
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
     size = fields.Integer(required=True, validate=validate.Range(min=0))
+    # TODO: provide digest as hexa string
     digest = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
 
 
@@ -57,20 +58,27 @@ class UserManifestSchema(FolderManifestSchema):
 # Local data
 
 
-class TypedVlobAccessSchema(SyncedAccessSchema):
+class DirtyBlockAccessSchema(UnknownCheckedSchema):
+    id = fields.String(required=True, validate=validate.Length(min=1, max=32))
+    key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
+    offset = fields.Integer(required=True, validate=validate.Range(min=0))
+    size = fields.Integer(required=True, validate=validate.Range(min=0))
+
+
+class LocalVlobAccessSchema(SyncedAccessSchema):
     type = fields.CheckedConstant("vlob")
 
 
-class TypedPlaceHolderAccessSchema(UnknownCheckedSchema):
+class LocalPlaceHolderAccessSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("placeholder")
     id = fields.String(required=True, validate=validate.Length(min=1, max=32))
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
 
 
-class TypedAccessSchema(OneOfSchema):
+class LocalAccessSchema(OneOfSchema):
     type_field = "type"
     type_field_remove = False
-    type_schemas = {"placeholder": TypedPlaceHolderAccessSchema, "vlob": TypedVlobAccessSchema}
+    type_schemas = {"placeholder": LocalPlaceHolderAccessSchema, "vlob": LocalVlobAccessSchema}
 
     def get_obj_type(self, obj):
         return obj["type"]
@@ -87,7 +95,7 @@ class LocalFileManifestSchema(UnknownCheckedSchema):
     updated = fields.DateTime(required=True)
     size = fields.Integer(required=True, validate=validate.Range(min=0))
     blocks = fields.List(fields.Nested(BlockAccessSchema), required=True)
-    dirty_blocks = fields.List(fields.Nested(BlockAccessSchema), required=True)
+    dirty_blocks = fields.List(fields.Nested(DirtyBlockAccessSchema), required=True)
 
 
 class LocalFolderManifestSchema(UnknownCheckedSchema):
@@ -101,13 +109,14 @@ class LocalFolderManifestSchema(UnknownCheckedSchema):
     updated = fields.DateTime(required=True)
     children = fields.Map(
         fields.String(validate=validate.Length(min=1, max=256)),
-        fields.Nested(TypedAccessSchema),
+        fields.Nested(LocalAccessSchema),
         required=True,
     )
 
 
 class LocalUserManifestSchema(LocalFolderManifestSchema):
     type = fields.CheckedConstant("local_user_manifest", required=True)
+    last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
 
 
 class TypedManifestSchema(OneOfSchema):

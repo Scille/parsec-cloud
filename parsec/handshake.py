@@ -124,7 +124,6 @@ class ClientHandshake:
 
 @attr.s
 class AnonymousClientHandshake:
-
     def process_challenge_req(self, req):
         data, errors = HandshakeChallengeSchema().load(req)
         if errors:

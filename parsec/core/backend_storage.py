@@ -12,7 +12,6 @@ class BackendConcurrencyError(BackendError):
 
 
 class BackendStorage(BaseAsyncComponent):
-
     def __init__(self, backend_connection):
         super().__init__()
         self._backend_connection = backend_connection

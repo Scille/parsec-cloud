@@ -1,29 +1,20 @@
-import json
-from nacl.public import Box
-from nacl.secret import SecretBox
-from nacl.signing import VerifyKey
-from nacl.exceptions import BadSignatureError, CryptoError
-
+from parsec.core.encryption_manager import encrypt_for_local, decrypt_for_local
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.schemas import TypedManifestSchema
-from parsec.core.fs.base import SecurityError
-from parsec.utils import ParsecError, from_jsonb64
 
 
-class ManifestSignatureError(SecurityError):
+class ManifestSignatureError(Exception):
     status = "invalid_signature"
 
 
-class ManifestDecryptionError(ParsecError):
+class ManifestDecryptionError(Exception):
     status = "decryption_error"
 
 
 class ManifestsManager(BaseAsyncComponent):
-
-    def __init__(self, device, local_storage, backend_storage, backend_connection):
+    def __init__(self, local_storage, backend_storage, encryption_manager):
         super().__init__()
-        self.device = device
-        self._backend_connection = backend_connection
+        self._encryption_manager = encryption_manager
         self._local_storage = local_storage
         self._backend_storage = backend_storage
 
@@ -33,124 +24,65 @@ class ManifestsManager(BaseAsyncComponent):
     async def _teardown(self):
         pass
 
-    async def _verify(self, signed):
-        unsigned_message = json.loads(signed[64:].decode())
-        if (
-            unsigned_message["user_id"] == self.device.user_id
-            and unsigned_message["device_name"] == self.device.device_name
-        ):
-            verify_key = self.device.device_verifykey
-        else:
-            # TODO: create a component (or methods in backend_storage ?)
-            # dedicated to retrieve user infos
-            rep = await self._backend_connection.send(
-                {"cmd": "user_get", "user_id": unsigned_message["user_id"]}
-            )
-            assert rep["status"] == "ok"
-            # TODO: handle crash, handle key validity expiration
-            verify_key = VerifyKey(
-                from_jsonb64(rep["devices"][unsigned_message["device_name"]]["verify_key"])
-            )
-        return verify_key.verify(signed)
-
-    def _encrypt_manifest(self, key, manifest):
-        raw = json.dumps(manifest).encode()
-        box = SecretBox(key)
-        signed = self.device.device_signkey.sign(raw)
-        return box.encrypt(signed)
-
-    async def _decrypt_manifest(self, key, blob):
-        box = SecretBox(key)
-        try:
-            signed = box.decrypt(blob)
-            raw = await self._verify(signed)
-
-        except json.decoder.JSONDecodeError as exc:
-            raise exc
-
-        except BadSignatureError as exc:
-            raise ManifestSignatureError() from exc
-
-        except (CryptoError, ValueError) as exc:
-            raise ManifestDecryptionError() from exc
-
-        return json.loads(raw.decode())
-
-    def _encrypt_user_manifest(self, manifest):
-        raw = json.dumps(manifest).encode()
-        box = Box(self.device.user_privkey, self.device.user_pubkey)
-        signed = self.device.device_signkey.sign(raw)
-        return box.encrypt(signed)
-
-    async def _decrypt_user_manifest(self, blob):
-        box = Box(self.device.user_privkey, self.device.user_pubkey)
-        try:
-            signed = box.decrypt(blob)
-            raw = await self._verify(signed)
-        except json.decoder.JSONDecodeError as exc:
-            raise exc
-
-        except BadSignatureError as exc:
-            raise ManifestSignatureError() from exc
-
-        except (CryptoError, ValueError) as exc:
-            raise ManifestDecryptionError() from exc
-
-        return json.loads(raw.decode())
-
-    async def fetch_user_manifest_from_local(self):
-        blob = self._local_storage.fetch_user_manifest()
-        if blob:
-            decrypted = await self._decrypt_user_manifest(blob)
-            data, _ = TypedManifestSchema(strict=True).load(decrypted)
-            return data
+    def fetch_user_manifest_from_local(self):
+        ciphered_msg = self._local_storage.fetch_user_manifest()
+        if ciphered_msg:
+            key = b"0" * 32  # TODO: of course I'm kidding...
+            msg = decrypt_for_local(key, ciphered_msg)
+            manifest, _ = TypedManifestSchema(strict=True).load(msg)
+            del manifest["format"]
+            return manifest
 
     async def fetch_user_manifest_from_backend(self, version=None):
-        blob = await self._backend_storage.fetch_user_manifest(version=version)
-        if blob:
-            decrypted = await self._decrypt_user_manifest(blob)
-            data, _ = TypedManifestSchema(strict=True).load(decrypted)
-            return data
+        ciphered_msg = await self._backend_storage.fetch_user_manifest(version=version)
+        if ciphered_msg:
+            msg = await self._encryption_manager.decrypt(ciphered_msg)
+            manifest, _ = TypedManifestSchema(strict=True).load(msg)
+            del manifest["format"]
+            return manifest
 
-    async def flush_user_manifest_on_local(self, manifest):
-        data, _ = TypedManifestSchema(strict=True).dump(manifest)
-        blob = self._encrypt_user_manifest(data)
-        self._local_storage.flush_user_manifest(blob)
+    def flush_user_manifest_on_local(self, manifest):
+        msg, _ = TypedManifestSchema(strict=True).dump(manifest)
+        key = b"0" * 32  # TODO: of course I'm kidding...
+        ciphered_msg = encrypt_for_local(key, msg)
+        self._local_storage.flush_user_manifest(ciphered_msg)
 
     async def sync_user_manifest_with_backend(self, manifest):
-        data, _ = TypedManifestSchema(strict=True).dump(manifest)
-        blob = self._encrypt_user_manifest(data)
-        # if b'"children": {"0"' in blob:
-        #     import pdb; pdb.set_trace()
-        await self._backend_storage.sync_user_manifest(manifest["version"], blob)
+        msg, _ = TypedManifestSchema(strict=True).dump(manifest)
+        ciphered_msg = await self._encryption_manager.encrypt_for_self(msg)
+        await self._backend_storage.sync_user_manifest(manifest["version"], ciphered_msg)
 
-    async def fetch_from_local(self, id, key):
-        blob = self._local_storage.fetch_manifest(id)
-        if blob:
-            decrypted = await self._decrypt_manifest(key, blob)
-            data, _ = TypedManifestSchema(strict=True).load(decrypted)
-            return data
+    def fetch_from_local(self, id, key):
+        ciphered_msg = self._local_storage.fetch_manifest(id)
+        if ciphered_msg:
+            msg = decrypt_for_local(key, ciphered_msg)
+            manifest, _ = TypedManifestSchema(strict=True).load(msg)
+            return manifest
+
+    def remove_from_local(self, id):
+        self._local_storage.remove_manifest_local_data(id)
 
     async def fetch_from_backend(self, id, rts, key, version=None):
-        blob = await self._backend_storage.fetch_manifest(id, rts, version=version)
-        if blob:
+        ciphered_msg = await self._backend_storage.fetch_manifest(id, rts, version=version)
+        if ciphered_msg:
             # TODO: store cache in local ?
-            decrypted = await self._decrypt_manifest(key, blob)
-            data, _ = TypedManifestSchema(strict=True).load(decrypted)
-            return data
+            msg = await self._encryption_manager.decrypt_with_secret_key(key, ciphered_msg)
+            manifest, _ = TypedManifestSchema(strict=True).load(msg)
+            del manifest["format"]
+            return manifest
 
-    async def flush_on_local(self, id, key, manifest):
-        data, _ = TypedManifestSchema(strict=True).dump(manifest)
-        blob = self._encrypt_manifest(key, data)
-        self._local_storage.flush_manifest(id, blob)
+    def flush_on_local(self, id, key, manifest):
+        msg, _ = TypedManifestSchema(strict=True).dump(manifest)
+        ciphered_msg = encrypt_for_local(key, msg)
+        self._local_storage.flush_manifest(id, ciphered_msg)
 
     async def sync_new_entry_with_backend(self, key, manifest):
-        data, _ = TypedManifestSchema(strict=True).dump(manifest)
-        blob = self._encrypt_manifest(key, data)
-        return await self._backend_storage.sync_new_manifest(blob)
+        msg, _ = TypedManifestSchema(strict=True).dump(manifest)
+        ciphered_msg = await self._encryption_manager.encrypt_with_secret_key(key, msg)
+        return await self._backend_storage.sync_new_manifest(ciphered_msg)
 
     async def sync_with_backend(self, id, wts, key, manifest):
         version = manifest["version"]
-        data, _ = TypedManifestSchema(strict=True).dump(manifest)
-        blob = self._encrypt_manifest(key, data)
-        await self._backend_storage.sync_manifest(id, wts, version, blob)
+        msg, _ = TypedManifestSchema(strict=True).dump(manifest)
+        ciphered_msg = await self._encryption_manager.encrypt_with_secret_key(key, msg)
+        await self._backend_storage.sync_manifest(id, wts, version, ciphered_msg)

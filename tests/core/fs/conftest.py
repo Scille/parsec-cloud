@@ -23,6 +23,6 @@ def mocked_blocks_manager():
 
 
 @pytest.fixture
-def fs(mocked_manifests_manager, mocked_blocks_manager):
-    fs = FS(mocked_manifests_manager, mocked_blocks_manager)
+def fs(alice, mocked_manifests_manager, mocked_blocks_manager):
+    fs = FS(alice, mocked_manifests_manager, mocked_blocks_manager)
     return fs

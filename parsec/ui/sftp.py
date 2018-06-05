@@ -21,7 +21,6 @@ from ..vfs.vfs_pb2 import Stat
 
 
 class SFTPUIServer(BaseServer):
-
     def __init__(
         self,
         vfs: BaseVFSClient,
@@ -66,7 +65,6 @@ class SFTPUIServer(BaseServer):
 
 
 class FileObj(IOBase):
-
     def __init__(self, vfs, path, seek=0, append=False, read=False, write=False):
         self._vfs = vfs
         self._path = path
@@ -90,7 +88,7 @@ class FileObj(IOBase):
             raise OSError("[Errno 9] Bad file descriptor")
 
         content = self._get_content()
-        return content[self._offset:self._offset + size]
+        return content[self._offset : self._offset + size]
 
     def write(self, data):
         if not self._can_write:
@@ -114,7 +112,6 @@ class FileObj(IOBase):
 
 
 class ParsecSFTPServer(SFTPServer):
-
     def __init__(self, conn, vfs):
         self._vfs = vfs
         super().__init__(conn)

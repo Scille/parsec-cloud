@@ -103,7 +103,6 @@ class ClientContext:
 
 
 class BackendApp:
-
     def __init__(self, config):
         self.signal_ns = blinker.Namespace()
         self.config = config
@@ -223,10 +222,11 @@ class BackendApp:
         event = msg["event"]
         subject = msg["subject"]
 
-        if (
-            event in ("user_vlob_updated", "message_arrived", "device_try_claim")
-            and subject not in (None, client_ctx.user_id)
-        ):
+        if event in (
+            "user_vlob_updated",
+            "message_arrived",
+            "device_try_claim",
+        ) and subject not in (None, client_ctx.user_id):
             # TODO: is the `subject == None` valid here ?
             return {"status": "private_event", "reason": "This type of event is private."}
 
@@ -249,7 +249,8 @@ class BackendApp:
             del client_ctx.subscribed_events[msg["event"], msg["subject"]]
         except KeyError:
             return {
-                "status": "not_subscribed", "reason": "Not subscribed to this event/subject couple"
+                "status": "not_subscribed",
+                "reason": "Not subscribed to this event/subject couple",
             }
 
         return {"status": "ok"}

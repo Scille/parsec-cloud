@@ -46,7 +46,6 @@ class cmd_UPDATE_Schema(BaseCmdSchema):
 
 
 class BaseVlobComponent:
-
     def __init__(self, signal_ns):
         self._signal_vlob_updated = signal_ns.signal("vlob_updated")
 
@@ -67,7 +66,10 @@ class BaseVlobComponent:
         msg = cmd_READ_Schema().load_or_abort(msg)
         atom = await self.read(**msg)
         return {
-            "status": "ok", "id": atom.id, "blob": to_jsonb64(atom.blob), "version": atom.version
+            "status": "ok",
+            "id": atom.id,
+            "blob": to_jsonb64(atom.blob),
+            "version": atom.version,
         }
 
     async def api_vlob_update(self, client_ctx, msg):

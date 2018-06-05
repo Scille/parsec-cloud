@@ -7,16 +7,22 @@ from parsec.utils import to_jsonb64, from_jsonb64
 from tests.common import connect_core, core_factory
 
 
-class FileOracle:
+BLOCK_SIZE = 16
+PLAYGROUND_SIZE = BLOCK_SIZE * 10
 
+
+class FileOracle:
     def __init__(self):
         self._buffer = bytearray()
 
     def read(self, size, offset):
-        return self._buffer[offset:size + offset]
+        return self._buffer[offset : size + offset]
 
     def write(self, offset, content):
-        self._buffer[offset:len(content) + offset] = content
+        self._buffer[offset : len(content) + offset] = content
+
+    def truncate(self, length):
+        self._buffer = self._buffer[:length]
 
 
 @pytest.mark.slow
@@ -24,7 +30,6 @@ class FileOracle:
 async def test_core_offline_rwfile(
     TrioDriverRuleBasedStateMachine, mocked_local_storage_connection, backend_addr, tmpdir, alice
 ):
-
     class CoreOfflineRWFile(TrioDriverRuleBasedStateMachine):
         count = 0
 
@@ -34,6 +39,7 @@ async def test_core_offline_rwfile(
             config = {
                 "base_settings_path": tmpdir.mkdir("try-%s" % self.count).strpath,
                 "backend_addr": backend_addr,
+                "block_size": BLOCK_SIZE,
             }
 
             async with core_factory(**config) as core:
@@ -54,7 +60,10 @@ async def test_core_offline_rwfile(
                         rep = await sock.recv()
                         await self.communicator.trio_respond(rep)
 
-        @rule(size=st.integers(min_value=0), offset=st.integers(min_value=0))
+        @rule(
+            size=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
+            offset=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
+        )
         def read(self, size, offset):
             rep = self.core_cmd(
                 {"cmd": "file_read", "path": "/foo.txt", "offset": offset, "size": size}
@@ -70,7 +79,10 @@ async def test_core_offline_rwfile(
             note(rep)
             assert rep["status"] == "ok"
 
-        @rule(offset=st.integers(min_value=0), content=st.binary())
+        @rule(
+            offset=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
+            content=st.binary(max_size=PLAYGROUND_SIZE),
+        )
         def write(self, offset, content):
             b64content = to_jsonb64(content)
             rep = self.core_cmd(
@@ -79,5 +91,12 @@ async def test_core_offline_rwfile(
             note(rep)
             assert rep["status"] == "ok"
             self.file_oracle.write(offset, content)
+
+        @rule(length=st.integers(min_value=0, max_value=PLAYGROUND_SIZE))
+        def truncate(self, length):
+            rep = self.core_cmd({"cmd": "file_truncate", "path": "/foo.txt", "length": length})
+            note(rep)
+            assert rep["status"] == "ok"
+            self.file_oracle.truncate(length)
 
     await CoreOfflineRWFile.run_test()

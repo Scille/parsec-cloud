@@ -2,7 +2,7 @@ from nacl.public import PublicKey, SealedBox
 import pytest
 import trio
 
-from parsec.utils import ejson_dumps, from_jsonb64, to_jsonb64
+from parsec.utils import ejson_dumps
 
 
 @pytest.mark.trio
@@ -10,8 +10,8 @@ from parsec.utils import ejson_dumps, from_jsonb64, to_jsonb64
 async def test_share_file(
     already_synced, core, core2, alice_core_sock, bob_core2_sock, running_backend
 ):
-    assert core.fs.root._last_processed_message == 0
-    assert core2.fs.root._last_processed_message == 0
+    assert core.fs.get_last_processed_message() == 0
+    assert core2.fs.get_last_processed_message() == 0
 
     # Bob stays idle waiting for a sharing from alice
     await bob_core2_sock.send({"cmd": "event_subscribe", "event": "new_sharing"})
@@ -20,10 +20,10 @@ async def test_share_file(
     await bob_core2_sock.send({"cmd": "event_listen"})
 
     # First, create a file and sync it on backend
-    alice_file = await core.fs.root.create_file("foo.txt")
-    await alice_file.write(b"Hello from Alice !")
+    await core.fs.file_create("/foo.txt")
+    await core.fs.file_write("/foo.txt", b"Hello from Alice !")
     if already_synced:
-        await alice_file.sync()
+        await core.fs.sync("/foo.txt")
 
     # Now we can share this file with Bob
     await alice_core_sock.send({"cmd": "share", "path": "/foo.txt", "recipient": "bob"})
@@ -37,15 +37,15 @@ async def test_share_file(
     assert rep == {"status": "ok", "event": "new_sharing", "subject": "/shared-with-alice/foo.txt"}
 
     # Now Bob can access the file just like Alice would do
-    bob_file = await core2.fs.fetch_path("/shared-with-alice/foo.txt")
-    assert bob_file.created == alice_file.created
-    assert bob_file.updated == alice_file.updated
-    assert bob_file.base_version == alice_file.base_version
-    bob_file_data = await bob_file.read()
+    alice_file_stat = await core.fs.stat("/foo.txt")
+    bob_file_stat = await core2.fs.stat("/shared-with-alice/foo.txt")
+    assert bob_file_stat == alice_file_stat
+
+    bob_file_data = await core.fs.file_read("/foo.txt")
     assert bob_file_data == b"Hello from Alice !"
 
-    assert core.fs.root._last_processed_message == 0
-    assert core2.fs.root._last_processed_message == 1
+    assert core.fs.get_last_processed_message() == 0
+    assert core2.fs.get_last_processed_message() == 1
 
 
 @pytest.mark.trio
@@ -53,7 +53,6 @@ async def test_share_file(
 async def test_multiple_messages(
     already_synced, core, core2, alice_core_sock, bob_core2_sock, running_backend, bob
 ):
-
     def _build_ping_body(destination):
         ping_body = {"type": "ping", "ping": destination}
         broadcast_key = PublicKey(bob.user_privkey.public_key.encode())
@@ -62,8 +61,8 @@ async def test_multiple_messages(
         sharing_msg_signed = core.auth_device.device_signkey.sign(sharing_msg_clear)
         return box.encrypt(sharing_msg_signed)
 
-    assert core.fs.root._last_processed_message == 0
-    assert core2.fs.root._last_processed_message == 0
+    assert core.fs.get_last_processed_message() == 0
+    assert core2.fs.get_last_processed_message() == 0
 
     await bob_core2_sock.send({"cmd": "event_subscribe", "event": "ping"})
     rep = await bob_core2_sock.recv()
@@ -89,8 +88,8 @@ async def test_multiple_messages(
     assert not cancel_scope.cancelled_caught
     assert rep == {"event": "ping", "status": "ok", "subject": "bar"}
 
-    assert core.fs.root._last_processed_message == 0
-    assert core2.fs.root._last_processed_message == 2
+    assert core.fs.get_last_processed_message() == 0
+    assert core2.fs.get_last_processed_message() == 2
 
     # Next message received
     await running_backend.backend.message.perform_message_new(
@@ -103,8 +102,8 @@ async def test_multiple_messages(
     assert not cancel_scope.cancelled_caught
     assert rep == {"event": "ping", "status": "ok", "subject": "baz"}
 
-    assert core.fs.root._last_processed_message == 0
-    assert core2.fs.root._last_processed_message == 3
+    assert core.fs.get_last_processed_message() == 0
+    assert core2.fs.get_last_processed_message() == 3
 
 
 # @pytest.mark.trio
@@ -116,7 +115,7 @@ async def test_multiple_messages(
 
 @pytest.mark.trio
 async def test_share_backend_offline(core, alice_core_sock, bob):
-    await core.fs.root.create_file("foo.txt")
+    await core.fs.file_create("/foo.txt")
 
     await alice_core_sock.send({"cmd": "share", "path": "/foo.txt", "recipient": bob.user_id})
     rep = await alice_core_sock.recv()
@@ -132,7 +131,7 @@ async def test_share_bad_entry(alice_core_sock, running_backend, bob):
 
 @pytest.mark.trio
 async def test_share_bad_recipient(core, alice_core_sock, running_backend):
-    await core.fs.root.create_file("foo.txt")
+    await core.fs.file_create("/foo.txt")
 
     await alice_core_sock.send({"cmd": "share", "path": "/foo.txt", "recipient": "dummy"})
     rep = await alice_core_sock.recv()

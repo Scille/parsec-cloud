@@ -10,7 +10,6 @@ class AlreadyInitializedError(Exception):
 
 
 class BaseAsyncComponent:
-
     def __init__(self):
         self._lock = trio.Lock()
         self.is_initialized = False

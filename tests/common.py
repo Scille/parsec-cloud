@@ -17,7 +17,6 @@ from parsec.backend import BackendApp, BackendConfig
 
 
 class AsyncMock(Mock):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         spec = kwargs.get("spec")

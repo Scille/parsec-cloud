@@ -16,6 +16,7 @@ from parsec.core.local_storage import LocalStorage
 from parsec.core.backend_storage import BackendStorage
 from parsec.core.manifests_manager import ManifestsManager
 from parsec.core.blocks_manager import BlocksManager
+from parsec.core.encryption_manager import EncryptionManager
 
 
 logger = logbook.Logger("parsec.core.app")
@@ -30,7 +31,6 @@ class NotLoggedError(Exception):
 
 
 class Core(BaseAsyncComponent):
-
     def __init__(self, config):
         super().__init__()
         self.nursery = None
@@ -45,7 +45,8 @@ class Core(BaseAsyncComponent):
         # ├─ backend_events_manager
         # ├─ fs
         # │  ├─ manifests_manager
-        # │  │  ├─ backend_connection
+        # │  │  ├─ encryption_manager
+        # │  │  │  └─ backend_connection
         # │  │  ├─ local_storage
         # │  │  └─ backend_storage
         # │  │     └─ backend_connection
@@ -56,6 +57,7 @@ class Core(BaseAsyncComponent):
         # ├─ synchronizer
         # │  └─ fs
         # └─ sharing
+        #    ├─ encryption_manager
         #    └─ backend_connection
 
         self.components_dep_order = (
@@ -63,6 +65,7 @@ class Core(BaseAsyncComponent):
             "backend_connection",
             "backend_storage",
             "local_storage",
+            "encryption_manager",
             "manifests_manager",
             "blocks_manager",
             "fs",
@@ -102,12 +105,15 @@ class Core(BaseAsyncComponent):
                 device, self.config.backend_addr
             )
             self.local_storage = LocalStorage(device.local_storage_db_path)
+            self.encryption_manager = EncryptionManager(device, self.backend_connection)
             self.backend_storage = BackendStorage(self.backend_connection)
             self.manifests_manager = ManifestsManager(
-                device, self.local_storage, self.backend_storage, self.backend_connection
+                self.local_storage, self.backend_storage, self.encryption_manager
             )
             self.blocks_manager = BlocksManager(self.local_storage, self.backend_storage)
-            self.fs = FS(self.manifests_manager, self.blocks_manager)
+            self.fs = FS(
+                device, self.manifests_manager, self.blocks_manager, self.config.block_size
+            )
             self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
             self.synchronizer = Synchronizer(self.config.auto_sync, self.fs)
             self.sharing = Sharing(
@@ -170,7 +176,6 @@ class Core(BaseAsyncComponent):
 
 @attr.s
 class ClientContext:
-
     @property
     def ctxid(self):
         return id(self)
