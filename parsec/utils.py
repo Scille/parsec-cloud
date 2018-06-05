@@ -63,6 +63,6 @@ def abort(status="bad_message", **kwargs):
 
 
 def get_sentry_handler():
-    sentry_url = os.getenv('SENTRY_URL')
+    sentry_url = os.getenv("SENTRY_URL")
     if sentry_url:
-        return SentryHandler(sentry_url, level='WARNING')
+        return SentryHandler(sentry_url, level="WARNING")

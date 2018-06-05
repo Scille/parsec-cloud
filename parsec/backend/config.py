@@ -16,3 +16,4 @@ class BackendConfig:
         default=config("CONFIG_HANDSHAKE_CHALLENGE_SIZE", cast=int, default=48)
     )
     dburl = attr.ib(default=config("PARSEC_DB_URL", default=None))
+    sentry_url = attr.ib(default=config("SENTRY_URL", default=""))

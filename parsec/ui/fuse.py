@@ -2,6 +2,7 @@ import os
 import socket
 import click
 import logbook
+from raven.handlers.logbook import SentryHandler
 import threading
 from dateutil.parser import parse as dateparse
 from itertools import count
@@ -14,7 +15,8 @@ except ImportError:
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
-from parsec.utils import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads, get_sentry_handler
+from parsec.core import CoreConfig
+from parsec.utils import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 
 
 logger = logbook.Logger("parsec.fuse")
@@ -170,8 +172,9 @@ def cli(mountpoint, debug, log_level, log_file, nothreads, socket):
     # Push globally the log handler make it work across threads
     log_handler.push_application()
 
-    sentry_handler = get_sentry_handler()
-    if sentry_handler:
+    config = CoreConfig()
+    if config.sentry_url:
+        sentry_handler = SentryHandler(config.sentry_url, level="WARNING")
         sentry_handler.push_application()
 
     start_fuse(socket, mountpoint, debug=debug, nothreads=nothreads)
