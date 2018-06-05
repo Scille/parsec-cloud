@@ -77,6 +77,7 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option(
     "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
 )
+@click.option("--log-file", "-o")
 @click.option("--debug", "-d", is_flag=True)
 @click.option("--pdb", is_flag=True)
 def backend_cmd(**kwargs):
@@ -105,10 +106,15 @@ def _backend(
     blockstore_s3,
     debug,
     log_level,
+    log_file,
 ):
-    log_handler = logbook.StderrHandler(level=log_level.upper())
+    if log_file:
+        log_handler = logbook.FileHandler(log_file, level=log_level.upper())
+    else:
+        log_handler = logbook.StderrHandler(level=log_level.upper())
     # Push globally the log handler make it work across threads
     log_handler.push_application()
+
     config = BackendConfig(
         debug=debug,
         blockstore_postgresql=blockstore_postgresql,

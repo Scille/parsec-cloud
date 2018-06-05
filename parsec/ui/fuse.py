@@ -154,6 +154,7 @@ class ContentBuilder:
 @click.option(
     "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
 )
+@click.option("--log-file", "-o")
 @click.option("--nothreads", is_flag=True, default=False)
 @click.option(
     "--socket",
@@ -161,10 +162,14 @@ class ContentBuilder:
     default=DEFAULT_CORE_UNIX_SOCKET,
     help="Path to the UNIX socket (default: %s)." % DEFAULT_CORE_UNIX_SOCKET,
 )
-def cli(mountpoint, debug, log_level, nothreads, socket):
-    log_handler = logbook.StderrHandler(level=log_level.upper())
+def cli(mountpoint, debug, log_level, log_file, nothreads, socket):
+    if log_file:
+        log_handler = logbook.FileHandler(log_file, level=log_level.upper())
+    else:
+        log_handler = logbook.StderrHandler(level=log_level.upper())
     # Push globally the log handler make it work across threads
     log_handler.push_application()
+
     start_fuse(socket, mountpoint, debug=debug, nothreads=nothreads)
 
 
