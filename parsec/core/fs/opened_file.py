@@ -28,18 +28,19 @@ def _shorten_data_repr(data):
 @attr.s(slots=True, repr=False)
 class WriteCmd:
     offset = attr.ib()
-    buffer = attr.ib()
+    data = attr.ib()
     datetime = attr.ib(default=attr.Factory(pendulum.now))
 
     @property
     def end(self):
-        return self.offset + len(self.buffer)
+        return self.offset + len(self.data)
 
     def __repr__(self):
-        return "%s(offset=%s, buffer=%s, datetime=%s)" % (
+        return "%s(offset=%s, data=%s, datetime=%r)" % (
             type(self).__name__,
             self.offset,
             _shorten_data_repr(self.data),
+            self.datetime,
         )
 
 
@@ -211,7 +212,7 @@ class OpenedFile:
 
     def _get_quickly_filtered_blocks(self, start, end):
         in_ram = [
-            RamBuffer(x.offset, x.end, x.buffer) for x in self._cmds_list if isinstance(x, WriteCmd)
+            RamBuffer(x.offset, x.end, x.data) for x in self._cmds_list if isinstance(x, WriteCmd)
         ]
         dirty_blocks = [
             DirtyBlockBuffer(*x)
@@ -325,7 +326,7 @@ class OpenedFile:
 
     def get_flush_map(self):
         in_ram = [
-            RamBuffer(x.offset, x.end, x.buffer) for x in self._cmds_list if isinstance(x, WriteCmd)
+            RamBuffer(x.offset, x.end, x.data) for x in self._cmds_list if isinstance(x, WriteCmd)
         ]
         # TODO: we should determine which dirty block is no longer needed here
 
