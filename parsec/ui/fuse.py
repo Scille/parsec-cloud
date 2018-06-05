@@ -16,7 +16,7 @@ except ImportError:
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_get_context, _libfuse
 
-from parsec.core import CoreConfig
+from parsec.core.config import CoreConfig
 from parsec.utils import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 
 
