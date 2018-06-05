@@ -6,6 +6,7 @@ import click
 import shutil
 import tempfile
 import logbook
+from raven.handlers.logbook import SentryHandler
 from urllib.parse import urlparse
 
 from parsec.core import Core, CoreConfig, Device
@@ -130,6 +131,10 @@ def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
         backend_watchdog=backend_watchdog,
         auto_sync=True,
     )
+
+    if config.sentry_url:
+        sentry_handler = SentryHandler(config.sentry_url, level="WARNING")
+        sentry_handler.push_application()
 
     core = Core(config)
 

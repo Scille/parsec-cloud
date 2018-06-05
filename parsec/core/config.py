@@ -27,3 +27,4 @@ class CoreConfig:
     base_settings_path = attr.ib(default=config("BASE_SETTINGS_PATH", default=get_settings_path()))
     auto_sync = attr.ib(default=False)
     block_size = attr.ib(default=2 ** 16)
+    sentry_url = attr.ib(default=config("SENTRY_URL", default=""))

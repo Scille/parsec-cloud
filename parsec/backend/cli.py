@@ -2,6 +2,7 @@ import sys
 import trio
 import click
 import logbook
+from raven.handlers.logbook import SentryHandler
 
 from parsec.backend import BackendApp, BackendConfig
 from parsec.backend.user import NotFoundError
@@ -80,7 +81,7 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option("--log-file", "-o")
 @click.option("--debug", "-d", is_flag=True)
 @click.option("--pdb", is_flag=True)
-def backend_cmd(**kwargs):
+def backend_cmd(log_level, log_file, pdb, **kwargs):
     found = False
     for key in ["blockstore_postgresql", "blockstore_openstack", "blockstore_s3"]:
         if kwargs[key]:
@@ -89,7 +90,16 @@ def backend_cmd(**kwargs):
                 sys.exit(1)
             else:
                 found = True
-    if kwargs.pop("pdb"):
+
+    if log_file:
+        log_handler = logbook.FileHandler(log_file, level=log_level.upper())
+    else:
+        log_handler = logbook.StderrHandler(level=log_level.upper())
+
+    # Push globally the log handler make it work across threads
+    log_handler.push_application()
+
+    if pdb:
         return run_with_pdb(_backend, **kwargs)
 
     else:
@@ -97,24 +107,8 @@ def backend_cmd(**kwargs):
 
 
 def _backend(
-    host,
-    port,
-    pubkeys,
-    store,
-    blockstore_postgresql,
-    blockstore_openstack,
-    blockstore_s3,
-    debug,
-    log_level,
-    log_file,
+    host, port, pubkeys, store, blockstore_postgresql, blockstore_openstack, blockstore_s3, debug
 ):
-    if log_file:
-        log_handler = logbook.FileHandler(log_file, level=log_level.upper())
-    else:
-        log_handler = logbook.StderrHandler(level=log_level.upper())
-    # Push globally the log handler make it work across threads
-    log_handler.push_application()
-
     config = BackendConfig(
         debug=debug,
         blockstore_postgresql=blockstore_postgresql,
@@ -124,6 +118,11 @@ def _backend(
         host=host,
         port=port,
     )
+
+    if config.sentry_url:
+        sentry_handler = SentryHandler(config.sentry_url, level="WARNING")
+        sentry_handler.push_application()
+
     backend = BackendApp(config)
 
     async def _run_and_register_johndoe():
