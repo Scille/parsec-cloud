@@ -49,9 +49,7 @@ async def test_device_declare_bad_msg(backend, alice, bad_msg):
 @pytest.mark.trio
 async def test_device_configure(backend, alice, configure_device_token, mock_generate_token):
     mock_generate_token.side_effect = ["<config_try_id>"]
-    verifykey = (
-        b"0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-"
-    )
+    verifykey = b"0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-"
     cypherkey = b"\x8b\xfc\xc1\x88\xb7\xd7\x16t\xce<\x7f\xd2j_fTI\x14r':\rF!\xff~\xa8\r\x912\xe3N"
 
     async with connect_backend(backend, auth_as="anonymous") as anonymous_sock, connect_backend(
