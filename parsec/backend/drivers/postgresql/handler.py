@@ -1,25 +1,6 @@
-from functools import wraps
 import asyncpg
-from asyncpg.pool import PoolConnectionProxy
 from trio_asyncio import trio2aio
 import trio
-
-
-def atomic(proc):
-    @trio2aio
-    async def _call(self, *args, **kwargs):
-        async with self.dbh.pool.acquire() as conn:
-            async with conn.transaction():
-                return await proc(self, conn, *args, **kwargs)
-
-    @wraps(proc)
-    async def call(self, *args, **kwargs):
-        if len(args) > 0 and isinstance(args[0], PoolConnectionProxy):
-            return await proc(self, args[0], *args[1:], **kwargs)
-        else:
-            return await _call(self, *args, **kwargs)
-
-    return call
 
 
 async def init_db(url, force=False):
@@ -213,26 +194,54 @@ class PGHandler:
         await self.conn.close()
         await self.pool.close()
 
+    @trio2aio
     async def fetch_one(self, conn, sql, *params):
         return await conn.fetchrow(sql, *params)
 
+    @trio2aio
     async def fetch_many(self, conn, sql, *params):
         return await conn.fetch(sql, *params)
 
+    @trio2aio
     async def insert_one(self, conn, sql, *params):
         return await conn.execute(sql, *params)
 
+    @trio2aio
     async def insert_many(self, conn, sql, *paramslist):
         return await conn.executemany(sql, *paramslist)
 
+    @trio2aio
     async def update_one(self, conn, sql, *params):
         return await conn.execute(sql, *params)
 
+    @trio2aio
     async def update_many(self, conn, sql, *paramslist):
         return await conn.executemany(sql, *paramslist)
 
+    @trio2aio
     async def delete_one(self, conn, sql, *params):
         return await conn.execute(sql, *params)
 
+    @trio2aio
     async def delete_many(self, conn, sql, *paramslist):
         return await conn.executemany(sql, *paramslist)
+
+
+class TrioPG:
+    def __init__(self, url):
+        self.url = url
+
+    @trio2aio
+    async def __aenter__(self):
+        self.conn = await asyncpg.connect(self.url)
+        self.tr = self.conn.transaction()
+        await self.tr.start()
+        return self.conn
+
+    @trio2aio
+    async def __aexit__(self, type, value, tb):
+        if tb is None:
+            await self.tr.commit()
+        else:
+            await self.tr.rollback()
+        await self.conn.close()
