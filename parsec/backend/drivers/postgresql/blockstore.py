@@ -1,6 +1,5 @@
 from parsec.backend.exceptions import AlreadyExistsError, NotFoundError
 from parsec.backend.blockstore import BaseBlockStoreComponent
-from .handler import TrioPG
 
 
 class PGBlockStoreComponent(BaseBlockStoreComponent):
@@ -9,24 +8,28 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
         self.dbh = dbh
 
     async def get(self, id):
-        async with TrioPG(self.dbh.url) as conn:
-            try:
-                block, = await self.dbh.fetch_one(
-                    conn, "SELECT block FROM blockstore WHERE id = $1", id
-                )
-            except (TypeError, ValueError):
-                raise NotFoundError("Unknown block id.")
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                try:
+                    block, = await self.dbh.fetch_one(
+                        conn, "SELECT block FROM blockstore WHERE id = $1", id
+                    )
+                except (TypeError, ValueError):
+                    raise NotFoundError("Unknown block id.")
 
         return block
 
     async def post(self, id, block):
-        async with TrioPG(self.dbh.url) as conn:
-            exists = await self.dbh.fetch_one(conn, "SELECT 1 FROM blockstore WHERE id = $1", id)
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                exists = await self.dbh.fetch_one(
+                    conn, "SELECT 1 FROM blockstore WHERE id = $1", id
+                )
 
-            if exists is not None:
-                # Should never happen
-                raise AlreadyExistsError("A block already exists with id `%s`." % id)
+                if exists is not None:
+                    # Should never happen
+                    raise AlreadyExistsError("A block already exists with id `%s`." % id)
 
-            await self.dbh.insert_one(
-                conn, "INSERT INTO blockstore (id, block) VALUES ($1, $2)", id, block
-            )
+                await self.dbh.insert_one(
+                    conn, "INSERT INTO blockstore (id, block) VALUES ($1, $2)", id, block
+                )

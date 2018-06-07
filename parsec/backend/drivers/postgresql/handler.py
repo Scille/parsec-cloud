@@ -1,10 +1,10 @@
-import asyncpg
-from trio_asyncio import trio2aio
 import trio
+
+from parsec.backend.drivers.postgresql import triopg
 
 
 async def init_db(url, force=False):
-    conn = await asyncpg.connect(url)
+    conn = await triopg.connect(url)
 
     async with conn.transaction():
 
@@ -154,12 +154,11 @@ class PGHandler:
         self.queue = trio.Queue(100)
 
     async def init(self, nursery):
-        @trio2aio
         async def _init():
             await init_db(self.url)
 
-            self.pool = await asyncpg.create_pool(self.url)
-            self.conn = await asyncpg.connect(self.url)
+            self.pool = await triopg.create_pool(self.url)
+            self.conn = await triopg.connect(self.url)
 
             for signal in self.signals:
                 await self.conn.add_listener(signal, self.notification_handler)
@@ -172,7 +171,6 @@ class PGHandler:
         signal.send(payload, propagate=False)
 
     async def notification_sender(self, task_status=trio.TASK_STATUS_IGNORED):
-        @trio2aio
         async def send(signal, sender):
             async with self.pool.acquire() as conn:
                 await conn.execute("SELECT pg_notify($1, $2)", signal, sender)
@@ -189,59 +187,30 @@ class PGHandler:
 
         return signal_handler
 
-    @trio2aio
     async def teardown(self):
         await self.conn.close()
         await self.pool.close()
 
-    @trio2aio
     async def fetch_one(self, conn, sql, *params):
         return await conn.fetchrow(sql, *params)
 
-    @trio2aio
     async def fetch_many(self, conn, sql, *params):
         return await conn.fetch(sql, *params)
 
-    @trio2aio
     async def insert_one(self, conn, sql, *params):
         return await conn.execute(sql, *params)
 
-    @trio2aio
     async def insert_many(self, conn, sql, *paramslist):
         return await conn.executemany(sql, *paramslist)
 
-    @trio2aio
     async def update_one(self, conn, sql, *params):
         return await conn.execute(sql, *params)
 
-    @trio2aio
     async def update_many(self, conn, sql, *paramslist):
         return await conn.executemany(sql, *paramslist)
 
-    @trio2aio
     async def delete_one(self, conn, sql, *params):
         return await conn.execute(sql, *params)
 
-    @trio2aio
     async def delete_many(self, conn, sql, *paramslist):
         return await conn.executemany(sql, *paramslist)
-
-
-class TrioPG:
-    def __init__(self, url):
-        self.url = url
-
-    @trio2aio
-    async def __aenter__(self):
-        self.conn = await asyncpg.connect(self.url)
-        self.tr = self.conn.transaction()
-        await self.tr.start()
-        return self.conn
-
-    @trio2aio
-    async def __aexit__(self, type, value, tb):
-        if tb is None:
-            await self.tr.commit()
-        else:
-            await self.tr.rollback()
-        await self.conn.close()

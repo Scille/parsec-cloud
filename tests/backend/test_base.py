@@ -1,7 +1,7 @@
 import pytest
 
 from tests.common import connect_backend
-from parsec.backend.drivers.postgresql.handler import TrioPG
+from parsec.backend.drivers.postgresql import triopg
 from trio_asyncio import trio2aio
 
 
@@ -27,35 +27,3 @@ async def test_bad_msg_format(backend, alice):
         await sock.sockstream.send_all(b"fooo\n")
         rep = await sock.recv()
         assert rep == {"status": "invalid_msg_format", "reason": "Invalid message format"}
-
-
-@pytest.mark.trio
-async def test_triopg(backend_store):
-    if not backend_store.startswith("postgresql"):
-        pytest.skip()
-
-    @trio2aio
-    async def _execute(sql):
-        return await conn.execute(sql)
-
-    async with TrioPG(backend_store) as conn:
-        res = await _execute("""SELECT * FROM users""")
-        assert res == "SELECT 0"
-
-    async with TrioPG(backend_store) as conn:
-        await _execute("INSERT INTO users (user_id) VALUES (1)")
-
-    async with TrioPG(backend_store) as conn:
-        res = await _execute("""SELECT * FROM users""")
-        assert res == "SELECT 1"
-
-    try:
-        async with TrioPG(backend_store) as conn:
-            await _execute("INSERT INTO users (user_id) VALUES (2)")
-            raise Exception
-    except Exception:
-        pass
-
-    async with TrioPG(backend_store) as conn:
-        res = await _execute("""SELECT * FROM users""")
-        assert res == "SELECT 1"

@@ -50,7 +50,6 @@ def postgresql_url():
     return os.environ.get("PARSEC_POSTGRESQL_TEST_URL", DEFAULT_POSTGRESQL_TEST_URL)
 
 
-@trio2aio
 async def _backend_store(url):
     pg_driver = pytest.importorskip("parsec.backend.drivers.postgresql")
     await pg_driver.handler.init_db(url, True)
