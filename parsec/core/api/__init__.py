@@ -104,7 +104,7 @@ async def dispatch_request(req: dict, client_ctx: ClientContext, core: Core) -> 
         return {"status": "invalid_path", "reason": str(exc)}
 
     except BackendNotAvailable as exc:
-        return {"status": "backend_not_available", "reason": str(exc)}
+        return {"status": "backend_not_availabled", "reason": str(exc) or "Backend not available"}
 
 
 __all__ = ("dispatch_request",)

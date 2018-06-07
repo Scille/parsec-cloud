@@ -135,7 +135,7 @@ async def test_share_bad_recipient(core, alice_core_sock, running_backend):
 
     await alice_core_sock.send({"cmd": "share", "path": "/foo.txt", "recipient": "dummy"})
     rep = await alice_core_sock.recv()
-    assert rep == {"status": "not_found", "reason": "No user with id `dummy`."}
+    assert rep == {"status": "unknown_recipient", "reason": "No user with id `dummy`."}
 
 
 # @pytest.mark.trio
