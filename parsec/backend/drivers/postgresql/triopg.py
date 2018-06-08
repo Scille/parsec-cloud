@@ -1,6 +1,5 @@
 from functools import wraps
 import asyncpg
-from asyncpg import exceptions
 import trio_asyncio
 
 

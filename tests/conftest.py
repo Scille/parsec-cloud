@@ -1,3 +1,4 @@
+from trio.testing import MockClock
 import trio_asyncio
 from trio_asyncio import trio2aio
 import os
@@ -44,6 +45,10 @@ def pytest_runtest_setup(item):
 # Use current unix user's credential, don't forget to do
 # `psql -c 'CREATE DATABASE parsec_test;'` prior to run tests
 DEFAULT_POSTGRESQL_TEST_URL = "postgresql:///parsec_test"
+
+# Use current unix user's credential, don't forget to do
+# `psql -c 'CREATE DATABASE triopg_test;'` prior to run tests
+TRIOPG_POSTGRESQL_TEST_URL = "postgresql:///triopg_test"
 
 
 def postgresql_url():
@@ -325,3 +330,8 @@ def monitor():
     from tests.monitor import Monitor
 
     return Monitor()
+
+
+@pytest.fixture
+def mock_clock():
+    return MockClock()
