@@ -80,7 +80,7 @@ test_requirements = [
     "flake8",
     "hypothesis",
     "bumpversion",
-    "black",
+    "black==18.6b1",  # Pin black to avoid flaky style check
 ]
 
 extra_requirements = {
