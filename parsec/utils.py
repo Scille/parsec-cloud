@@ -1,7 +1,7 @@
 import base64
 import json
 import os
-from pendulum import Pendulum
+from pendulum import DateTime as PendulumDateTime
 from nacl.secret import SecretBox
 import nacl.utils
 from raven.handlers.logbook import SentryHandler
@@ -21,7 +21,7 @@ def from_jsonb64(msg: str):
 
 def _json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
-    if isinstance(obj, Pendulum):
+    if isinstance(obj, PendulumDateTime):
         serial = obj.isoformat()
         return serial
 

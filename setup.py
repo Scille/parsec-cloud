@@ -52,7 +52,7 @@ requirements = [
     "Logbook==1.2.1",
     "marshmallow==2.14.0",
     "marshmallow-oneofschema==1.0.5",
-    "pendulum==1.3.1",
+    "pendulum==2.0.2",
     "PyNaCl==1.2.0",
     "simplejson==3.10.0",
     "python-decouple==3.1",
