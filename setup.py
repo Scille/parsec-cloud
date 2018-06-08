@@ -71,9 +71,11 @@ test_requirements = [
     "pytest-cov",
     "pytest-trio",
     "pytest-logbook",
-    # Libfaketime is much faster than Freezegun but UNIX only
-    'pytest-libfaketime;platform_system!="Windows"',
-    'freezegun;platform_system=="Windows"',
+    # TODO: uncomment this once https://github.com/sdispater/pendulum/issues/232 is solved
+    "freezegun",
+    # # Libfaketime is much faster than Freezegun but UNIX only
+    # 'pytest-libfaketime;platform_system!="Windows"',
+    # 'freezegun;platform_system=="Windows"',
     "tox",
     "wheel",
     "Sphinx",
