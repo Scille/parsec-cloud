@@ -28,7 +28,7 @@ async def login(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if core.auth_device:
         return {"status": "already_logged", "reason": "Already logged"}
 
-    msg = cmd_LOGIN_Schema().load_or_abort(req)
+    msg = cmd_LOGIN_Schema().load(req)
     try:
         device = core.devices_manager.load_device(msg["id"], msg["password"])
     except DeviceLoadingError:
@@ -80,7 +80,7 @@ async def fuse_start(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_FUSE_START_Schema().load_or_abort(req)
+    msg = cmd_FUSE_START_Schema().load(req)
 
     try:
         await core.fuse_manager.start_mountpoint(msg["mountpoint"])
@@ -97,7 +97,7 @@ async def fuse_stop(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    BaseCmdSchema().load_or_abort(req)  # empty msg expected
+    BaseCmdSchema().load(req)  # empty msg expected
 
     try:
         await core.fuse_manager.stop_mountpoint()
@@ -114,7 +114,7 @@ async def fuse_open(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = PathOnlySchema().load_or_abort(req)
+    msg = PathOnlySchema().load(req)
 
     try:
         core.fuse_manager.open_file(msg["path"])

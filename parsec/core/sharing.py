@@ -1,21 +1,35 @@
 import trio
 import logbook
 import traceback
-from nacl.public import SealedBox
+from nacl.public import SealedBox, PublicKey
 from nacl.signing import VerifyKey
 
-from parsec.schema import UnknownCheckedSchema, fields
+from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
+from parsec.core.schemas import LocalVlobAccessSchema
 from parsec.core.base import BaseAsyncComponent
-from parsec.utils import from_jsonb64, ejson_loads, ParsecError
 from parsec.core.fs import FSInvalidPath
-from parsec.core.backend_connection import BackendNotAvailable, BackendError
+from parsec.core.fs.utils import is_placeholder_access, normalize_path, is_file_manifest
+from parsec.core.backend_connection import BackendNotAvailable
+from parsec.utils import to_jsonb64
 
 
 logger = logbook.Logger("parsec.core.sharing")
 
 
-class SharingError(ParsecError):
-    status = "sharing_error"
+class SharingError(Exception):
+    pass
+
+
+class SharingBackendMessageError(SharingError):
+    pass
+
+
+class SharingUnknownRecipient(SharingError):
+    pass
+
+
+class SharingInvalidMessageError(SharingError):
+    pass
 
 
 class BackendMessageGetRepMessagesSchema(UnknownCheckedSchema):
@@ -50,8 +64,31 @@ class BackendUserGetRepSchema(UnknownCheckedSchema):
 backend_user_get_rep_schema = BackendUserGetRepSchema()
 
 
-class BackendMessageError(Exception):
-    pass
+class SharingMessageContentSchema(UnknownCheckedSchema):
+    type = fields.CheckedConstant("share", required=True)
+    author = fields.String(required=True)
+    access = fields.Nested(LocalVlobAccessSchema, required=True)
+    name = fields.String(required=True)
+
+
+sharing_message_content_schema = SharingMessageContentSchema()
+
+
+class PingMessageContentSchema(UnknownCheckedSchema):
+    type = fields.CheckedConstant("ping", required=True)
+    ping = fields.String(required=True)
+
+
+class GenericMessageContentSchema(OneOfSchema):
+    type_field = "type"
+    type_field_remove = False
+    type_schemas = {"share": SharingMessageContentSchema, "ping": PingMessageContentSchema}
+
+    def get_obj_type(self, obj):
+        return obj["type"]
+
+
+generic_message_content_schema = GenericMessageContentSchema()
 
 
 class Sharing(BaseAsyncComponent):
@@ -76,73 +113,84 @@ class Sharing(BaseAsyncComponent):
         if self._message_listener_task_cancel_scope:
             self._message_listener_task_cancel_scope.cancel()
 
-    async def _process_message(self, msg):
-        sender_user_id, sender_device_name = msg["sender_id"].split("@")
-        rep = await self._backend_connection.send({"cmd": "user_get", "user_id": sender_user_id})
-        rep, errors = backend_user_get_rep_schema.load(rep)
+    async def _retrieve_device(self, user_id):
+        rep = await self._backend_connection.send({"cmd": "user_get", "user_id": user_id})
+        loaded_rep, errors = backend_user_get_rep_schema.load(rep)
         if errors:
-            raise BackendMessageError(
-                "Cannot retreive message %r sender's device informations: %r" % (msg, rep)
-            )
+            if rep.get("status") == "not_found":
+                raise SharingUnknownRecipient(rep.get("reason", "Unknown user %r" % user_id))
+            else:
+                raise SharingBackendMessageError(
+                    "Error while trying to retreive user %r from the backend: %r" % (user_id, rep)
+                )
+        return loaded_rep
+
+    async def _process_message(self, sender_id, body):
+        sender_user_id, sender_device_name = sender_id.split("@")
+        rep = await self._retrieve_device(sender_user_id)
 
         try:
             device = rep["devices"][sender_device_name]
         except KeyError:
-            raise BackendMessageError("Message %r sender device doesn't exists" % msg)
+            raise SharingBackendMessageError("Message sender %r device doesn't exists" % sender_id)
 
         # TODO: handle key validity expiration
         sender_verifykey = VerifyKey(device["verify_key"])
         box = SealedBox(self.device.user_privkey)
 
         # TODO: handle bad signature, bad encryption, bad json, bad payload...
-        sharing_msg_encrypted = msg["body"]
-        sharing_msg_signed = box.decrypt(sharing_msg_encrypted)
-        sharing_msg_clear = sender_verifykey.verify(sharing_msg_signed)
-        sharing_msg = ejson_loads(sharing_msg_clear.decode("utf8"))
+        msg_encrypted = body
+        msg_signed = box.decrypt(msg_encrypted)
+        msg_clear = sender_verifykey.verify(msg_signed)
 
-        # TODO: handle other type of message
-        # assert sharing_msg["type"] == "share"
-        if sharing_msg["type"] == "share":
-            sharing_access = self.fs._vlob_access_cls(
-                sharing_msg["content"]["id"],
-                sharing_msg["content"]["rts"],
-                sharing_msg["content"]["wts"],
-                from_jsonb64(sharing_msg["content"]["key"]),
-            )
+        msg, errors = generic_message_content_schema.loads(msg_clear.decode("utf-8"))
+        if errors:
+            raise SharingInvalidMessageError("Not a valid message: %r" % errors)
 
+        if msg["type"] == "share":
             shared_with_folder_name = "shared-with-%s" % sender_user_id
-            if shared_with_folder_name not in self.fs.root:
-                shared_with_folder = await self.fs.root.create_folder(shared_with_folder_name)
-            else:
-                shared_with_folder = await self.fs.root.fetch_child(shared_with_folder_name)
-            sharing_name = sharing_msg["name"]
-            while True:
+            # TODO: leaky abstraction...
+            parent_manifest = None
+            parent_path = "/%s" % shared_with_folder_name
+            while not parent_manifest:
                 try:
-                    child = await shared_with_folder.insert_child_from_access(
-                        sharing_name, sharing_access
+                    parent_access, parent_manifest = await self.fs._local_tree.retrieve_entry(
+                        parent_path
                     )
-                    break
-
+                    # If we are really unlucky, parent_path exists but is a file.
+                    # In such a case we must create a new folder elsewhere.
+                    if is_file_manifest(parent_manifest):
+                        parent_manifest = None
+                        parent_path += "-dup"
+                        continue
                 except FSInvalidPath:
-                    sharing_name += "-dup"
-            self._signal_ns.signal("new_sharing").send(child.path)
-        elif sharing_msg["type"] == "ping":
-            self._signal_ns.signal("ping").send(sharing_msg["ping"])
+                    await self.fs.folder_create(parent_path)
 
-        self.fs.root._last_processed_message = msg["count"]
+            sharing_name = msg["name"]
+            while sharing_name in parent_manifest["children"]:
+                sharing_name += "-dup"
+            parent_manifest["children"][sharing_name] = msg["access"]
+            self.fs._local_tree.update_entry(parent_access, parent_manifest)
+            self._signal_ns.signal("new_sharing").send("%s/%s" % (parent_path, sharing_name))
+
+        elif msg["type"] == "ping":
+            self._signal_ns.signal("ping").send(msg["ping"])
 
     async def _process_all_last_messages(self):
         rep = await self._backend_connection.send(
-            {"cmd": "message_get", "offset": self.fs.root._last_processed_message}
+            {"cmd": "message_get", "offset": self.fs.get_last_processed_message()}
         )
 
-        rep, errors = backend_message_get_rep_schema.load(rep)
+        loaded_rep, errors = backend_message_get_rep_schema.load(rep)
         if errors:
-            raise BackendMessageError("Cannot retreive user messages: %r" % rep)
+            raise SharingBackendMessageError(
+                "Cannot retreive user messages: %r (errors: %r)" % (rep, errors)
+            )
 
-        for msg in rep["messages"]:
+        for msg in loaded_rep["messages"]:
             try:
-                await self._process_message(msg)
+                await self._process_message(msg["sender_id"], msg["body"])
+                self.fs.update_last_processed_message(msg["count"])
             except SharingError as exc:
                 logger.warning(exc.args[0])
 
@@ -156,8 +204,48 @@ class Sharing(BaseAsyncComponent):
                     await self._process_all_last_messages()
                 except BackendNotAvailable:
                     pass
-                except BackendError:
+                except SharingError:
                     logger.exception("Error with backend: " % traceback.format_exc())
 
     def _msg_arrived_cb(self, sender):
         self.msg_arrived.set()
+
+    async def share(self, path, recipient):
+        # TODO: leaky abstraction...
+        # Retreive the entry and make sure it is not a placeholder
+        _, entry_name = normalize_path(path)
+        while True:
+            access, _ = await self.fs._local_tree.retrieve_entry(path)
+            # Cannot share a placeholder !
+            if is_placeholder_access(access):
+                await self.fs.sync(path)
+            else:
+                break
+
+        sharing_msg = {
+            "type": "share",
+            "author": self.device.id,
+            "access": access,
+            "name": entry_name,
+        }
+
+        rep = await self._retrieve_device(recipient)
+
+        # TODO Build the broadcast_key with the encryption manager
+        broadcast_key = PublicKey(rep["broadcast_key"])
+        box = SealedBox(broadcast_key)
+        sharing_msg_clear, errors = sharing_message_content_schema.dumps(sharing_msg)
+        if errors:
+            raise RuntimeError("Cannot dump sharing message %r: %r" % (sharing_msg, errors))
+        sharing_msg_signed = self.device.device_signkey.sign(sharing_msg_clear.encode("utf-8"))
+        sharing_msg_encrypted = box.encrypt(sharing_msg_signed)
+
+        rep = await self._backend_connection.send(
+            {
+                "cmd": "message_new",
+                "recipient": recipient,
+                "body": to_jsonb64(sharing_msg_encrypted),
+            }
+        )
+        if rep["status"] != "ok":
+            raise SharingError("Error while trying to send sharing message to backend: %r" % rep)

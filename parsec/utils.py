@@ -1,8 +1,10 @@
 import base64
 import json
-from pendulum import Pendulum
+import os
+from pendulum import DateTime as PendulumDateTime
 from nacl.secret import SecretBox
 import nacl.utils
+from raven.handlers.logbook import SentryHandler
 
 
 def generate_sym_key():
@@ -19,7 +21,7 @@ def from_jsonb64(msg: str):
 
 def _json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
-    if isinstance(obj, Pendulum):
+    if isinstance(obj, PendulumDateTime):
         serial = obj.isoformat()
         return serial
 
@@ -58,3 +60,9 @@ def abort(status="bad_message", **kwargs):
     error = ParsecError(**kwargs)
     error.status = status
     raise error
+
+
+def get_sentry_handler():
+    sentry_url = os.getenv("SENTRY_URL")
+    if sentry_url:
+        return SentryHandler(sentry_url, level="WARNING")

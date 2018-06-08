@@ -1,10 +1,10 @@
 import os
 import pytest
 from hypothesis import strategies as st, note
-from hypothesis.stateful import Bundle, rule
+from hypothesis.stateful import Bundle
 
 from tests.common import connect_core, core_factory
-from tests.hypothesis.common import OracleFS
+from tests.hypothesis.common import OracleFS, rule, rule_once
 
 
 @pytest.mark.slow
@@ -66,7 +66,7 @@ async def test_core_offline_restart_and_tree(
                 except RestartCore:
                     on_ready = restart_core_done
 
-        @rule(target=Folders)
+        @rule_once(target=Folders)
         def init_root(self):
             return "/"
 

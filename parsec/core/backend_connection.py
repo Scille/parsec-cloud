@@ -2,7 +2,6 @@ import trio
 import logbook
 from urllib.parse import urlparse
 
-from parsec.utils import ParsecError
 from parsec.networking import CookedSocket
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake, HandshakeError
 from parsec.core.devices_manager import Device
@@ -11,10 +10,7 @@ from parsec.core.devices_manager import Device
 logger = logbook.Logger("parsec.core.backend_connection")
 
 
-# TODO: remove this exception
-
-
-class BackendError(ParsecError):
+class BackendError(Exception):
     pass
 
 

@@ -1,7 +1,9 @@
+import ctypes
 import os
 import socket
 import click
 import logbook
+from raven.handlers.logbook import SentryHandler
 import threading
 from dateutil.parser import parse as dateparse
 from itertools import count
@@ -12,8 +14,9 @@ try:
 except ImportError:
     from errno import EBADF as EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
-from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
+from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_get_context, _libfuse
 
+from parsec.core.config import CoreConfig
 from parsec.utils import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
 
 
@@ -23,25 +26,6 @@ DEFAULT_CORE_UNIX_SOCKET = "tcp://127.0.0.1:6776"
 
 # TODO: Currently call fuse_exit from a non fuse thread is not possible
 # (see https://github.com/fusepy/fusepy/issues/116).
-
-_need_closing = False
-
-
-def shutdown_fuse_if_needed():
-    if _need_closing:
-        fuse_exit()
-        raise FuseOSError(ENOENT)
-
-
-def shutdown_fuse(mountpoint):
-    global _need_closing
-    _need_closing = True
-    # Ask for dummy file just to force a fuse operation that will
-    # call the `fuse_exit` from a valid context
-    try:
-        os.path.exists("%s/__shutdown_fuse__" % mountpoint)
-    except OSError:
-        pass
 
 
 class CoreConectionLostError(Exception):
@@ -75,7 +59,7 @@ def _socket_send_cmd(sock, msg):
     return ejson_loads(raw_reps[:-1].decode())
 
 
-def start_shutdown_watcher(socket_address, mountpoint):
+def start_shutdown_watcher(operations, socket_address, mountpoint):
     def _shutdown_watcher():
         logger.debug("Starting shutdown watcher")
         sock = _socket_init(socket_address)
@@ -96,9 +80,13 @@ def start_shutdown_watcher(socket_address, mountpoint):
                 logger.warning("Connection with core has been lost, exiting...")
                 break
 
-        shutdown_fuse(mountpoint)
-
-    # fuse_exit()
+        operations.fuse_exit()
+        # Ask for dummy file just to force a fuse operation that will
+        # process the `fuse_exit` from a valid context
+        try:
+            os.path.exists("%s/__shutdown_fuse__" % mountpoint)
+        except OSError:
+            pass
 
     threading.Thread(target=_shutdown_watcher, daemon=True).start()
 
@@ -154,6 +142,7 @@ class ContentBuilder:
 @click.option(
     "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
 )
+@click.option("--log-file", "-o")
 @click.option("--nothreads", is_flag=True, default=False)
 @click.option(
     "--socket",
@@ -161,10 +150,19 @@ class ContentBuilder:
     default=DEFAULT_CORE_UNIX_SOCKET,
     help="Path to the UNIX socket (default: %s)." % DEFAULT_CORE_UNIX_SOCKET,
 )
-def cli(mountpoint, debug, log_level, nothreads, socket):
-    log_handler = logbook.StderrHandler(level=log_level.upper())
+def cli(mountpoint, debug, log_level, log_file, nothreads, socket):
+    if log_file:
+        log_handler = logbook.FileHandler(log_file, level=log_level.upper())
+    else:
+        log_handler = logbook.StderrHandler(level=log_level.upper())
     # Push globally the log handler make it work across threads
     log_handler.push_application()
+
+    config = CoreConfig()
+    if config.sentry_url:
+        sentry_handler = SentryHandler(config.sentry_url, level="WARNING")
+        sentry_handler.push_application()
+
     start_fuse(socket, mountpoint, debug=debug, nothreads=nothreads)
 
 
@@ -237,19 +235,25 @@ class File:
 
 class FuseOperations(LoggingMixIn, Operations):
     def __init__(self, socket_address):
+        super().__init__()
         self.fds = {}
         self._fs_id_generator = count(1)
         self._socket_address = socket_address
         # TODO: create a per-thread socket instead of using a lock
         self._socket_lock = threading.Lock()
         self._socket = None
+        self._fuse_ptr = None
+
+    def fuse_exit(self):
+        if not self._fuse_ptr:
+            raise SystemError("Fuse not started")
+        _libfuse.fuse_exit(self._fuse_ptr)
 
     def get_fd_id(self):
         return next(self._fs_id_generator)
 
     @property
     def sock(self):
-        shutdown_fuse_if_needed()
         if not self._socket:
             self._socket = _socket_init(self._socket_address)
         return self._socket
@@ -271,6 +275,9 @@ class FuseOperations(LoggingMixIn, Operations):
             raise FuseOSError(ENOENT)
 
         return response["current"]["id"]
+
+    def init(self, path):
+        self._fuse_ptr = ctypes.c_void_p(_libfuse.fuse_get_context().contents.fuse)
 
     def getattr(self, path, fh=None):
         stat = self.send_cmd(cmd="stat", path=path)
@@ -397,7 +404,7 @@ class FuseOperations(LoggingMixIn, Operations):
 
 def start_fuse(socket_address: str, mountpoint: str, debug: bool = False, nothreads: bool = False):
     operations = FuseOperations(socket_address)
-    start_shutdown_watcher(socket_address, mountpoint)
+    start_shutdown_watcher(operations, socket_address, mountpoint)
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)
 
 

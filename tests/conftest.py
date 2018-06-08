@@ -12,6 +12,7 @@ from async_generator import asynccontextmanager
 
 from parsec.core.local_storage import LocalStorage
 from parsec.core.devices_manager import Device
+from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
 
 from tests.common import (
     freeze_time,
@@ -98,6 +99,19 @@ def alice(tmpdir):
 
 
 @pytest.fixture
+def alice2(tmpdir):
+    return Device(
+        "alice@otherdevice",
+        (
+            b"\xceZ\x9f\xe4\x9a\x19w\xbc\x12\xc8\x98\xd1CB\x02vS\xa4\xfe\xc8\xc5"
+            b"\xa6\xcd\x87\x90\xd7\xabJ\x1f$\x87\xc4"
+        ),
+        (b"s\x9cA\xb0|\xa4\x1a84z\xfe\xbe\x16\xc0y1.\x05Z\xe2#\x9em>WQ\xd0\x82y\t\x94\x8b"),
+        tmpdir.join("alice@otherdevice.sqlite").strpath,
+    )
+
+
+@pytest.fixture
 def bob(tmpdir):
     return Device(
         "bob@test",
@@ -162,8 +176,8 @@ def signal_ns():
 
 
 @pytest.fixture
-def default_devices(alice, bob):
-    return (alice, bob)
+def default_devices(alice, alice2, bob):
+    return (alice, alice2, bob)
 
 
 @pytest.fixture
@@ -174,12 +188,19 @@ async def backend(asyncio_loop, nursery, default_devices, backend_store, config=
 
         with freeze_time("2000-01-01"):
             for device in default_devices:
-                await backend.user.create(
-                    author="<backend-fixture>",
-                    user_id=device.user_id,
-                    broadcast_key=device.user_pubkey.encode(),
-                    devices=[(device.device_name, device.device_verifykey.encode())],
-                )
+                try:
+                    await backend.user.create(
+                        author="<backend-fixture>",
+                        user_id=device.user_id,
+                        broadcast_key=device.user_pubkey.encode(),
+                        devices=[(device.device_name, device.device_verifykey.encode())],
+                    )
+                except UserAlreadyExistsError:
+                    await backend.user.create_device(
+                        user_id=device.user_id,
+                        device_name=device.device_name,
+                        verify_key=device.device_verifykey.encode(),
+                    )
 
         yield backend
 
@@ -265,10 +286,10 @@ async def alice_core_sock(core, alice):
 
 
 @pytest.fixture
-async def alice_core2_sock(core2, alice):
+async def alice2_core2_sock(core2, alice2):
     assert not core2.auth_device, "Core already logged"
     async with connect_core(core2) as sock:
-        await core2.login(alice)
+        await core2.login(alice2)
         yield sock
 
 
@@ -285,44 +306,32 @@ def mocked_local_storage_connection():
     # Persistent local storage is achieve by using sqlite storing in FS.
     # However it is a lot faster to store in memory and just pass around the
     # sqlite connection object.
-    # Given each core should have it own device, no inter-core concurrency
-    # should occurs.
+    import sqlite3
 
-    class MockedLocalStorageConnection:
-        _conn = None
+    class CloseProtectedConnection(sqlite3.Connection):
+        def close(self):
+            pass
+
+    class InMemoryDatabaseManager:
+        def __init__(self, vanilla_connect):
+            self.vanilla_connect = vanilla_connect
+            self.databases = {}
 
         def reset(self):
-            if self._conn:
-                self._conn.close()
-            ls = LocalStorage(":memory:")
-            ls._init_conn()
-            self._conn = ls.conn
+            # Now we can actually close the connections
+            for db in self.databases.values():
+                sqlite3.Connection.close(db)
+            self.databases = {}
 
-        @property
-        def conn(self):
-            if not self._conn:
-                self.reset()
-            return self._conn
+        def connect(self, database, *args, **kwargs):
+            if database not in self.databases:
+                connection = self.vanilla_connect(":memory:", factory=CloseProtectedConnection)
+                self.databases[database] = connection
+            return self.databases[database]
 
-    mock = MockedLocalStorageConnection()
-
-    async def mock_init(self, nursery):
-        self.conn = mock.conn
-
-    async def mock_teardown(self):
-        self.conn = None
-
-    vanilla_init = LocalStorage.init
-    vanilla_teardown = LocalStorage.teardown
-    LocalStorage._init = mock_init
-    LocalStorage._teardown = mock_teardown
-
-    try:
-        yield mock
-
-    finally:
-        LocalStorage._init = vanilla_init
-        LocalStorage._teardown = vanilla_teardown
+    manager = InMemoryDatabaseManager(sqlite3.connect)
+    with patch("sqlite3.connect", new=manager.connect):
+        yield manager
 
 
 @pytest.fixture

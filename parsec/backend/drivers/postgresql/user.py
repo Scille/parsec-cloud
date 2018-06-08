@@ -43,9 +43,9 @@ class PGUserComponent(BaseUserComponent):
                     if user is not None:
                         raise UserClaimError("User `%s` has already been registered" % user_id)
 
-                    now = pendulum.utcnow()
+                    now = pendulum.now()
 
-                    if (now - ts) > pendulum.interval(hours=1):
+                    if (now - ts) > pendulum.duration(hours=1):
                         raise OutOfDateError("Claim code is too old.")
 
                     if invitation_token != invitation_token:
@@ -97,7 +97,7 @@ class PGUserComponent(BaseUserComponent):
                         claim_tries=EXCLUDED.claim_tries
                     """,
                     user_id,
-                    pendulum.utcnow().int_timestamp,
+                    pendulum.now().int_timestamp,
                     author,
                     invitation_token,
                 )
@@ -120,7 +120,8 @@ class PGUserComponent(BaseUserComponent):
                 if user is not None:
                     raise AlreadyExistsError("User `%s` already exists" % user_id)
 
-                now = pendulum.utcnow().int_timestamp
+                now = pendulum.now().int_timestamp
+
                 await self.dbh.insert_one(
                     conn,
                     """INSERT INTO users (user_id, created_on, created_by, broadcast_key)
@@ -176,9 +177,9 @@ class PGUserComponent(BaseUserComponent):
                     },
                 }
 
-                return user
+        return user
 
-    async def declare_device(self, user_id, device_name):
+    async def create_device(self, user_id, device_name, verify_key):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 devices = await self.dbh.fetch_many(
@@ -192,13 +193,13 @@ class PGUserComponent(BaseUserComponent):
                         "Device `%s@%s` already exists" % (user_id, device_name)
                     )
 
-                # TODO add verify key
                 await self.dbh.insert_one(
                     conn,
-                    "INSERT INTO user_devices (user_id, device_name, created_on) VALUES ($1, $2, $3)",
+                    "INSERT INTO user_devices (user_id, device_name, created_on, verify_key) VALUES ($1, $2, $3, $4)",
                     user_id,
                     device_name,
-                    pendulum.utcnow().int_timestamp,
+                    pendulum.now().int_timestamp,
+                    verify_key,
                 )
 
     async def configure_device(self, user_id, device_name, device_verify_key):
@@ -240,7 +241,7 @@ class PGUserComponent(BaseUserComponent):
                     ) VALUES ($1, $2, $3, $4)""",
                     user_id,
                     device_name,
-                    pendulum.utcnow().int_timestamp,
+                    pendulum.now().int_timestamp,
                     token,
                 )
 
@@ -292,6 +293,8 @@ class PGUserComponent(BaseUserComponent):
             "refused_reason": config_try[5],
         }
 
+        return config_try
+
     async def accept_device_configuration_try(self, config_try_id, user_id, cyphered_user_privkey):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
@@ -307,7 +310,7 @@ class PGUserComponent(BaseUserComponent):
                     config_try_id,
                     "waiting_answer",
                 )
-                if updated == "UPDATE 0":
+                if not updated:
                     raise NotFoundError()
 
     # TODO: handle this error
@@ -329,8 +332,8 @@ class PGUserComponent(BaseUserComponent):
                     config_try_id,
                     "waiting_answer",
                 )
-            if updated == "UPDATE 0":
-                raise NotFoundError()
+                if not updated:
+                    raise NotFoundError()
 
 
 # TODO: handle this error

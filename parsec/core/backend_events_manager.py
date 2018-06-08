@@ -89,6 +89,7 @@ class BackendEventsManager(BaseAsyncComponent):
                     raise SubscribeBackendEventError(
                         "Cannot subscribe to event `%s@%s`: %r" % (event, subject, rep)
                     )
+
             # Useful for tests to know when we actually start to listen for backend events
             self._signal_ns.signal("backend_event_manager_listener_started").send()
 

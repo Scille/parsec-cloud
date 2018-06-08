@@ -2,7 +2,7 @@ import trio
 import random
 import string
 
-from parsec.schema import BaseCmdSchema, fields
+from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields
 from parsec.utils import to_jsonb64
 from parsec.backend.exceptions import NotFoundError, AlreadyExistsError, UserClaimError
 
@@ -39,7 +39,7 @@ class DeviceConfigureSchema(BaseCmdSchema):
     user_privkey_cypherkey = fields.Base64Bytes(required=True)
 
 
-class DeviceSchema(BaseCmdSchema):
+class DeviceSchema(UnknownCheckedSchema):
     created_on = fields.DateTime(required=True)
     revocated_on = fields.DateTime()
     verify_key = fields.Base64Bytes(required=True)
@@ -47,10 +47,10 @@ class DeviceSchema(BaseCmdSchema):
 
 class UserSchema(BaseCmdSchema):
     user_id = fields.String(required=True)
-    created_on = fields.DateTime()
-    created_by = fields.String()
-    broadcast_key = fields.Base64Bytes()
-    devices = fields.Map(fields.String(), fields.Nested(DeviceSchema))
+    created_on = fields.DateTime(required=True)
+    created_by = fields.String(required=True)
+    broadcast_key = fields.Base64Bytes(required=True)
+    devices = fields.Map(fields.String(), fields.Nested(DeviceSchema), required=True)
 
 
 class UserClaimSchema(BaseCmdSchema):
@@ -254,6 +254,9 @@ class BaseUserComponent:
         raise NotImplementedError()
 
     async def create(self, author, user_id, broadcast_key, devices):
+        raise NotImplementedError()
+
+    async def create_device(self, user_id, device_name, verify_key):
         raise NotImplementedError()
 
     async def get(self, id):

@@ -121,6 +121,7 @@ class FuseManager(BaseAsyncComponent):
                 raise FuseStoppingError(
                     "Fuse process (pid: %s) refuse to stop" % self.fuse_process.pid
                 )
+
             elif os.name == "posix":
                 os.rmdir(self.mountpoint)
 
