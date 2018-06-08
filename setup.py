@@ -58,6 +58,7 @@ requirements = [
     "python-decouple==3.1",
     "trio==0.4.0",
     "python-interface==1.4.0",
+    "async_generator >= 1.9",
     "raven==6.8.0",
 ]
 dependency_links = [
@@ -73,7 +74,6 @@ test_requirements = [
     # Libfaketime is much faster than Freezegun but UNIX only
     'pytest-libfaketime;platform_system!="Windows"',
     'freezegun;platform_system=="Windows"',
-    "async_generator >= 1.9",
     "tox",
     "wheel",
     "Sphinx",
