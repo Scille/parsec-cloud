@@ -13,7 +13,6 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 help:
 	@echo "clean - remove all build, test, coverage and Python artifacts"
-	@echo "clean-build - remove build artifacts"
 	@echo "clean-pyc - remove Python file artifacts"
 	@echo "clean-test - remove test and coverage artifacts"
 	@echo "lint - check style with flake8"
@@ -25,14 +24,7 @@ help:
 	@echo "dist - package"
 	@echo "install - install the package to the active Python's site-packages"
 
-clean: clean-build clean-pyc clean-test
-
-clean-build:
-	rm -fr build/
-	rm -fr dist/
-	rm -fr .eggs/
-	find . -name '*.egg-info' -exec rm -fr {} +
-	find . -name '*.egg' -exec rm -rf {} +
+clean: clean-pyc clean-test
 
 clean-pyc:
 	find . -name '*.pyc' -exec rm -f {} +
@@ -87,6 +79,3 @@ gen_protobufs:
 	tools/protoc/bin/protoc -I=. --python_out=. parsec/vfs/vfs.proto
 	tools/protoc/bin/protoc -I=. --python_out=. parsec/crypto/crypto.proto
 	tools/protoc/bin/protoc -I=. --python_out=. parsec/volume/volume.proto
-
-deb:
-	dpkg-buildpackage -us -uc -b
