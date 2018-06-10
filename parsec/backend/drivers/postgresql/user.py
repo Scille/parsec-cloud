@@ -38,7 +38,7 @@ class PGUserComponent(BaseUserComponent):
             if user is not None:
                 raise UserClaimError("User `%s` has already been registered" % user_id)
 
-            now = pendulum.now()
+            now = pendulum.now(tz="UTC")
 
             if (now - ts) > pendulum.duration(hours=1):
                 raise OutOfDateError("Claim code is too old.")
@@ -82,7 +82,7 @@ class PGUserComponent(BaseUserComponent):
                 invitation_token=EXCLUDED.invitation_token,
                 claim_tries=EXCLUDED.claim_tries
             """,
-            (user_id, pendulum.now().int_timestamp, author, invitation_token),
+            (user_id, pendulum.now(tz="UTC").int_timestamp, author, invitation_token),
         )
 
     async def create(self, author, user_id, broadcast_key, devices):
@@ -99,7 +99,7 @@ class PGUserComponent(BaseUserComponent):
         if user is not None:
             raise AlreadyExistsError("User `%s` already exists" % user_id)
 
-        now = pendulum.now().int_timestamp
+        now = pendulum.now(tz="UTC").int_timestamp
 
         await self.dbh.insert_one(
             """INSERT INTO users (user_id, created_on, created_by, broadcast_key)
@@ -162,7 +162,7 @@ class PGUserComponent(BaseUserComponent):
 
         await self.dbh.insert_one(
             "INSERT INTO user_devices (user_id, device_name, created_on, verify_key) VALUES (%s, %s, %s, %s)",
-            (user_id, device_name, pendulum.now().int_timestamp, verify_key),
+            (user_id, device_name, pendulum.now(tz="UTC").int_timestamp, verify_key),
         )
 
     async def configure_device(self, user_id, device_name, device_verify_key):
@@ -192,7 +192,7 @@ class PGUserComponent(BaseUserComponent):
             INSERT INTO user_devices (
                 user_id, device_name, created_on, configure_token
             ) VALUES (%s, %s, %s, %s)""",
-            (user_id, device_name, pendulum.now().int_timestamp, token),
+            (user_id, device_name, pendulum.now(tz="UTC").int_timestamp, token),
         )
 
     async def register_device_configuration_try(
