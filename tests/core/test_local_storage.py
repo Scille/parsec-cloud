@@ -1,14 +1,5 @@
 import pytest
 
-from parsec.core.local_storage import LocalStorage
-
-
-@pytest.fixture
-async def local_storage(nursery):
-    ls = LocalStorage(":memory:")
-    await ls.init(nursery)
-    return ls
-
 
 @pytest.mark.trio
 async def test_fetch_user_manifest_not_available(local_storage):

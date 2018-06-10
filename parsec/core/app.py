@@ -47,7 +47,8 @@ class Core(BaseAsyncComponent):
         # ├─ fs
         # │  ├─ manifests_manager
         # │  │  ├─ encryption_manager
-        # │  │  │  └─ backend_connection
+        # │  │  │  ├─ backend_connection
+        # │  │  │  └─ local_storage
         # │  │  ├─ local_storage
         # │  │  └─ backend_storage
         # │  │     └─ backend_connection
@@ -106,7 +107,9 @@ class Core(BaseAsyncComponent):
                 device, self.config.backend_addr
             )
             self.local_storage = LocalStorage(device.local_storage_db_path)
-            self.encryption_manager = EncryptionManager(device, self.backend_connection)
+            self.encryption_manager = EncryptionManager(
+                device, self.backend_connection, self.local_storage
+            )
             self.backend_storage = BackendStorage(self.backend_connection)
             self.manifests_manager = ManifestsManager(
                 self.local_storage, self.backend_storage, self.encryption_manager
