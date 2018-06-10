@@ -17,6 +17,7 @@ async def execute_queries(triopg_conn, asyncpg_conn):
     async def _aio_query(sql):
         return await asyncpg_conn.execute(sql)
 
+    # Execute without transaction
     await triopg_conn.execute(
         """
         DROP TABLE IF EXISTS users;
@@ -27,9 +28,12 @@ async def execute_queries(triopg_conn, asyncpg_conn):
     )
 
     assert await _aio_query("""SELECT * FROM users""") == "SELECT 0"
-    await triopg_conn.execute("INSERT INTO users (user_id) VALUES (1)")
+    # Execute in transaction without exception
+    async with triopg_conn.transaction():
+        await triopg_conn.execute("INSERT INTO users (user_id) VALUES (1)")
     assert await _aio_query("""SELECT * FROM users""") == "SELECT 1"
 
+    # Execute in transaction raising exception
     with pytest.raises(Exception):
         async with triopg_conn.transaction():
             await triopg_conn.execute("INSERT INTO users (user_id) VALUES (2)")
