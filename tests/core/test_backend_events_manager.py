@@ -31,7 +31,8 @@ async def test_subscribe_backend_event(running_backend, signal_ns, backend_event
     backend_ready = connect_as_event(signal_ns, "backend_event_manager_listener_started")
     # Dummy event (not provided by backend)
     await backend_event_manager.subscribe_backend_event("ping")
-    await backend_ready.wait()
+    with trio.fail_after(1.0):
+        await backend_ready.wait()
 
     ping_received = connect_as_event(signal_ns, "ping")
 
@@ -57,11 +58,13 @@ async def test_subscribe_already_subscribed_backend_event(running_backend, backe
 async def test_unsbuscribe_backend_event(running_backend, signal_ns, backend_event_manager):
     backend_ready = connect_as_event(signal_ns, "backend_event_manager_listener_started")
     await backend_event_manager.subscribe_backend_event("ping")
-    await backend_ready.wait()
+    with trio.fail_after(1.0):
+        await backend_ready.wait()
 
     backend_ready.clear()
     await backend_event_manager.unsubscribe_backend_event("ping")
-    await backend_ready.wait()
+    with trio.fail_after(1.0):
+        await backend_ready.wait()
 
     def on_ping(*args):
         raise RuntimeError("Expected not to receive this event !")

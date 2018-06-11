@@ -1,4 +1,5 @@
 import pytest
+import trio
 
 from tests.common import connect_core, core_factory
 
@@ -63,7 +64,8 @@ async def test_device_declare_then_accepted(
             # 3) Existing device receive configuration event
 
             await alice_core_sock.send({"cmd": "event_listen"})
-            rep = await alice_core_sock.recv()
+            with trio.fail_after(1):
+                rep = await alice_core_sock.recv()
             assert rep["status"] == "ok"
             assert rep["event"] == "device_try_claim_submitted"
             assert rep["device_name"] == "device2"
