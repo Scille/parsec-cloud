@@ -130,8 +130,8 @@ async def stat(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     return {
         "status": "ok",
         **stat,
-        "created": stat["created"].to_iso8601_string(),
-        "updated": stat["updated"].to_iso8601_string(),
+        "created": stat["created"].to_iso8601_string(extended=True),
+        "updated": stat["updated"].to_iso8601_string(extended=True),
     }
 
 

@@ -30,8 +30,8 @@ class MemoryUserComponent(BaseUserComponent):
             if user_id in self._users:
                 raise AlreadyExistsError("User `%s` has already been registered" % user_id)
 
-            now = pendulum.now(tz="UTC")
-            if (now - invitation["date"]) > pendulum.duration(hours=1):
+            now = pendulum.utcnow()
+            if (now - invitation["date"]) > pendulum.interval(hours=1):
                 raise OutOfDateError("Claim code is too old.")
 
             if invitation["invitation_token"] != invitation_token:
@@ -53,7 +53,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         # Overwrite previous invitation if any
         self._invitations[user_id] = {
-            "date": pendulum.now(tz="UTC"),
+            "date": pendulum.utcnow(),
             "author": author,
             "invitation_token": invitation_token,
             "claim_tries": 0,
@@ -71,7 +71,7 @@ class MemoryUserComponent(BaseUserComponent):
         if user_id in self._users:
             raise AlreadyExistsError("User `%s` already exists" % user_id)
 
-        now = pendulum.now(tz="UTC")
+        now = pendulum.utcnow()
         self._users[user_id] = {
             "user_id": user_id,
             "created_on": now,
@@ -99,7 +99,7 @@ class MemoryUserComponent(BaseUserComponent):
             raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
 
         user["devices"][device_name] = {
-            "created_on": pendulum.now(tz="UTC"),
+            "created_on": pendulum.utcnow(),
             "verify_key": verify_key,
             "revocated_on": None,
             "configured": True,
@@ -123,7 +123,7 @@ class MemoryUserComponent(BaseUserComponent):
             raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
 
         user["devices"][device_name] = {
-            "created_on": pendulum.now(tz="UTC"),
+            "created_on": pendulum.utcnow(),
             "configure_token": token,
             "verify_key": None,
             "revocated_on": None,
