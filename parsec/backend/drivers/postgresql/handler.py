@@ -146,6 +146,8 @@ class PGHandler:
         self.url = url
         self.signal_ns = signal_ns
         self.signals = ["message_arrived", "user_claimed", "user_vlob_updated", "vlob_updated"]
+        self.notifications_to_ignore = []
+        self.signals_to_ignore = []
 
         self.signal_handlers = {}
         for signal in self.signals:
@@ -159,16 +161,20 @@ class PGHandler:
         await init_db(self.url)
 
         self.pool = await triopg.create_pool(self.url)
+        self.conn = await triopg.connect(self.url)
 
-        async with self.pool.acquire() as conn:
-            for signal in self.signals:
-                await conn.add_listener(signal, self.notification_handler)
+        for signal in self.signals:
+            await self.conn.add_listener(signal, self.notification_handler)
 
         await nursery.start(self.notification_sender)
 
     def notification_handler(self, connection, pid, channel, payload):
-        signal = self.signal_ns.signal(channel)
-        signal.send(payload, propagate=False)
+        try:
+            self.notifications_to_ignore.remove((channel, payload))
+        except ValueError:
+            signal = self.signal_ns.signal(channel)
+            signal.send(payload)
+            self.notifications_to_ignore.append((channel, payload))
 
     async def notification_sender(self, task_status=trio.TASK_STATUS_IGNORED):
         async def send(signal, sender):
@@ -178,13 +184,18 @@ class PGHandler:
         task_status.started()
         while True:
             req = await self.queue.get()
+            self.notifications_to_ignore.append((req["signal"], req["sender"]))
             await send(req["signal"], req["sender"])
 
     def get_signal_handler(self, signal):
         def signal_handler(sender):
-            self.queue.put_nowait({"signal": signal, "sender": sender})
+            try:
+                self.signals_to_ignore.remove((signal, sender))
+            except ValueError:
+                self.queue.put_nowait({"signal": signal, "sender": sender})
 
         return signal_handler
 
     async def teardown(self):
+        await self.conn.close()
         await self.pool.close()
