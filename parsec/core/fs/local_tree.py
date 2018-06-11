@@ -1,4 +1,6 @@
+import trio
 import pendulum
+from contextlib import contextmanager
 
 from parsec.core.fs.utils import (
     FSInvalidPath,
@@ -139,6 +141,13 @@ class LocalTree:
             self._manifests_cache[access["id"]] = manifest
 
     def update_entry(self, access, manifest):
+        # Sanity check: we should use overwrite_entry to modify manifest's base_version
+        try:
+            old_manifest = self.retrieve_entry_by_access(access)
+            assert old_manifest["base_version"] == manifest["base_version"]
+        except KeyError:
+            pass
+
         manifest["updated"] = pendulum.now()
         manifest["need_sync"] = True
         self.overwrite_entry(access, manifest)

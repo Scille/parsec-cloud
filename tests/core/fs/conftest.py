@@ -9,11 +9,10 @@ from tests.common import AsyncMock
 
 
 @pytest.fixture
-def mocked_manifests_manager():
+def mocked_manifests_manager(alice):
     mocked_manifests_manager = AsyncMock(spec=ManifestsManager)
-    mocked_manifests_manager.device = Mock()
-    mocked_manifests_manager.device.user_id = "alice"
-    mocked_manifests_manager.device.device_name = "test"
+    mocked_manifests_manager.device = alice
+    mocked_manifests_manager.fetch_user_manifest_from_local.return_value = None
     return mocked_manifests_manager
 
 

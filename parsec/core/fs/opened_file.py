@@ -1,8 +1,5 @@
 import attr
-import trio
 import pendulum
-from contextlib import contextmanager
-from itertools import dropwhile
 from math import inf
 
 from parsec.core.fs.buffer_ordering import (
@@ -29,7 +26,7 @@ def _shorten_data_repr(data):
 class WriteCmd:
     offset = attr.ib()
     data = attr.ib()
-    datetime = attr.ib(default=attr.Factory(pendulum.now))
+    datetime = attr.ib(factory=pendulum.now)
 
     @property
     def end(self):
@@ -45,21 +42,10 @@ class WriteCmd:
 
 
 @attr.s(slots=True)
-class TruncateCmd:
-    length = attr.ib()
-
-
-@attr.s(slots=True)
-class MarkerCmd:
+class OpenedFileSnapshotState:
     file_size = attr.ib()
-    new_manifest = attr.ib(default=None)
-    datetime = attr.ib(default=attr.Factory(pendulum.now))
-    synced_until_this_point = attr.ib(default=False)
-
-    def resolve(self, new_manifest=None):
-        if new_manifest is not None:
-            self.new_manifest = new_manifest
-        self.synced_until_this_point = attr.ib()
+    last_cmd_index = attr.ib()
+    sanity_first_cmd = attr.ib()
 
 
 @attr.s(slots=True, repr=False)
@@ -111,10 +97,8 @@ class OpenedFile:
     _manifest = attr.ib()
     size = attr.ib(default=None)
     block_size = attr.ib(default=2 ** 16)
+    # TODO: rename to _write_buffers
     _cmds_list = attr.ib(factory=list, repr=False)
-    # To simplify concurrency, we use this event to prohibit flushes during
-    # sync and multiple concurrent syncs
-    _not_syncing_event = attr.ib(factory=trio.Event, repr=False)
 
     @property
     def base_version(self):
@@ -122,7 +106,21 @@ class OpenedFile:
 
     def __attrs_post_init__(self):
         self.size = self._manifest["size"]
-        self._not_syncing_event.set()
+
+    def create_snapshot_state(self):
+        sanity_first_cmd = self._cmds_list[0] if self._cmds_list else None
+        return OpenedFileSnapshotState(self.size, len(self._cmds_list), sanity_first_cmd)
+
+    def fast_forward(self, snapshot_state=None, new_manifest=None):
+        if snapshot_state:
+            if snapshot_state.sanity_first_cmd:
+                expected_sanity_first_cmd = self._cmds_list[0] if self._cmds_list else None
+                assert expected_sanity_first_cmd is snapshot_state.sanity_first_cmd
+            self._cmds_list = self._cmds_list[snapshot_state.last_cmd_index :]
+        if new_manifest:
+            self._manifest = new_manifest
+            if not snapshot_state:
+                self.size = new_manifest["size"]
 
     def need_sync(self):
         return (
@@ -133,25 +131,6 @@ class OpenedFile:
         return self._manifest["size"] != self.size or any(
             x for x in self._cmds_list if isinstance(x, WriteCmd)
         )
-
-    @contextmanager
-    def start_syncing(self):
-        if self.is_syncing():
-            raise RuntimeError("Already syncing !")
-        self._not_syncing_event.clear()
-        try:
-            marker = self.create_marker()
-            yield marker
-
-        finally:
-            self.clean_marker(marker)
-            self._not_syncing_event.set()
-
-    def is_syncing(self):
-        return not self._not_syncing_event.is_set()
-
-    async def wait_not_syncing(self):
-        return self._not_syncing_event.wait()
 
     def write(self, content: bytes, offset: int = -1):
         if not content:
@@ -166,8 +145,6 @@ class OpenedFile:
 
     def truncate(self, length):
         if length < self.size:
-            # TODO: useful ?
-            self._cmds_list.append(TruncateCmd(length))
             self.size = length
 
     def get_not_synced_bounds(self):
@@ -290,39 +267,6 @@ class OpenedFile:
             spaces.append(MultiLocationsContiguousSpace(0, aligned_start, buffers))
 
         return UncontiguousSpace(0, self.size, spaces)
-
-    def create_marker(self):
-        if any(x for x in self._cmds_list if isinstance(x, MarkerCmd)):
-            raise RuntimeError("A marker is already set !")
-
-        marker = MarkerCmd(self.size)
-        self._cmds_list.append(marker)
-        return marker
-
-    def clean_marker(self, marker):
-        if marker.new_manifest is not None:
-            self._manifest = marker.new_manifest
-        if not marker.synced_until_this_point:
-            # Just remove the marker
-            tmp_list = [x for x in self._cmds_list if x is not marker]
-        else:
-            # Remove everything up to the marker
-            marker_found = False
-
-            def drop_until_marker_is_found(x):
-                nonlocal marker_found
-                if x is marker:
-                    marker_found = True
-                    return True  # Also drop the marker
-                return not marker_found
-
-            tmp_list = list(dropwhile(drop_until_marker_is_found, self._cmds_list))
-            # Given sync must be done with a lock held, no concurrent marker that
-            # could potentially remove our own marker is allowed
-            assert marker_found
-
-        assert not any(x for x in tmp_list if isinstance(x, MarkerCmd))
-        self._cmds_list = tmp_list
 
     def get_flush_map(self):
         in_ram = [

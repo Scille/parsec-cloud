@@ -42,7 +42,7 @@ class PGUserComponent(BaseUserComponent):
 
                     now = pendulum.now()
 
-                    if (now - ts) > pendulum.duration(hours=1):
+                    if (now - ts) > pendulum.interval(hours=1):
                         raise OutOfDateError("Claim code is too old.")
 
                     if retrieved_invitation_token != invitation_token:

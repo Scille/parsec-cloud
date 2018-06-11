@@ -9,14 +9,14 @@ from string import printable
 from parsec.networking import CookedSocket
 
 
-json_nested = st.recursive(
+json_nested_strategy = st.recursive(
     st.none()
     | st.booleans()
     | st.floats(allow_nan=False, allow_infinity=False)
     | st.text(printable),
     lambda children: st.lists(children) | st.dictionaries(st.text(printable), children),
 )
-json_dict = st.dictionaries(st.text(printable), json_nested)
+json_dict_strategy = st.dictionaries(st.text(printable), json_nested_strategy)
 
 
 # TODO: Improve this (see https://github.com/python-trio/pytest-trio/issues/42)
@@ -24,7 +24,7 @@ json_dict = st.dictionaries(st.text(printable), json_nested)
 
 class TestCookedSocketHypothesis:
     @pytest.mark.slow
-    @given(json_dict)
+    @given(json_dict_strategy)
     async def test_cooked_socket_communication(self, payload):
         rserver, rclient = trio.testing.memory_stream_pair()
         cclient = CookedSocket(rclient)

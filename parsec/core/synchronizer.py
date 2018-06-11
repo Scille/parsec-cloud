@@ -29,7 +29,7 @@ class Synchronizer(BaseAsyncComponent):
             task_status.started(cancel_scope)
             while True:
                 await trio.sleep(1)
-                # trigger_time = pendulum.now() + pendulum.duration(seconds=1)
+                # trigger_time = pendulum.now() + pendulum.interval(seconds=1)
                 try:
                     # TODO: quick'n dirty fix...
                     await self.fs.sync("/")
