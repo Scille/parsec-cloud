@@ -67,17 +67,13 @@ class FreezeTestOnBrokenStreamCookedSocket(CookedSocket):
             await trio.sleep_forever()
 
 
-async def _handle_client(app, left):
-    await app.handle_client(left)
-
-
 @asynccontextmanager
 async def run_app(app):
     async with trio.open_nursery() as nursery:
 
         async def connection_factory(*args, **kwargs):
             right, left = trio.testing.memory_stream_pair()
-            nursery.start_soon(_handle_client, app, left)
+            nursery.start_soon(app.handle_client, left)
             return right
 
         try:

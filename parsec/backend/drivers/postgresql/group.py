@@ -10,27 +10,23 @@ class PGGroupComponent(BaseGroupComponent):
     async def perform_group_create(self, name):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                group = await self.dbh.fetch_one(conn, "SELECT 1 FROM groups WHERE name = $1", name)
+                group = await conn.execute("SELECT 1 FROM groups WHERE name = $1", name)
 
-                if group is not None:
+                if group:
                     raise AlreadyExistsError("Group Already exists.")
 
-                await self.dbh.insert_one(conn, "INSERT INTO groups (name) VALUES ($1)", name)
+                await conn.execute("INSERT INTO groups (name) VALUES ($1)", name)
 
     async def perform_group_read(self, name):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                group = await self.dbh.fetch_one(
-                    conn, "SELECT id, name FROM groups WHERE name = $1", name
-                )
+                group = await conn.fetchrow("SELECT id, name FROM groups WHERE name = $1", name)
 
                 if group is None:
                     raise NotFoundError("Group not found.")
 
-                identities = await self.dbh.fetch_many(
-                    conn,
-                    "SELECT name, admin FROM group_identities WHERE group_id = $1",
-                    group["id"],
+                identities = await conn.fetch(
+                    "SELECT name, admin FROM group_identities WHERE group_id = $1", group["id"]
                 )
 
         group = Group(group["name"])
@@ -47,15 +43,12 @@ class PGGroupComponent(BaseGroupComponent):
     async def perform_group_add_identities(self, name, identities, admin):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                group = await self.dbh.fetch_one(
-                    conn, "SELECT id, name FROM groups WHERE name = $1", name
-                )
+                group = await conn.fetchrow("SELECT id, name FROM groups WHERE name = $1", name)
 
                 if group is None:
                     raise NotFoundError("Group not found.")
 
-                await self.dbh.insert_many(
-                    conn,
+                await conn.executemany(
                     """INSERT INTO group_identities (group_id, name, admin) VALUES ($1, $2, $3)
                     ON CONFLICT DO NOTHING
                     """,
@@ -67,15 +60,12 @@ class PGGroupComponent(BaseGroupComponent):
     async def perform_group_remove_identities(self, name, identities, admin):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                group = await self.dbh.fetch_one(
-                    conn, "SELECT id, name FROM groups WHERE name = $1", name
-                )
+                group = await conn.fetchrow("SELECT id, name FROM groups WHERE name = $1", name)
 
                 if group is None:
                     raise NotFoundError("Group not found.")
 
-                await self.dbh.delete_many(
-                    conn,
+                await conn.executemany(
                     "DELETE FROM group_identities WHERE group_id = $1 AND name = $2 AND admin = $3",
                     [(group["id"], identity, admin) for identity in identities],
                 )

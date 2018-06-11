@@ -14,28 +14,28 @@ async def create_pool(url):
 
 
 class TrioTransactionProxy:
-    def __init__(self, transaction):
-        self.transaction = transaction
+    def __init__(self, asyncpg_transaction):
+        self._asyncpg_transaction = asyncpg_transaction
 
     @trio_asyncio.trio2aio
     async def __aenter__(self, *args):
-        return await self.transaction.__aenter__(*args)
+        return await self._asyncpg_transaction.__aenter__(*args)
 
     @trio_asyncio.trio2aio
     async def __aexit__(self, *args):
-        return await self.transaction.__aexit__(*args)
+        return await self._asyncpg_transaction.__aexit__(*args)
 
 
 class TrioConnectionProxy:
-    def __init__(self, conn):
-        self.conn = conn
+    def __init__(self, asyncpg_conn):
+        self._asyncpg_conn = asyncpg_conn
 
     def transaction(self, *args, **kwargs):
-        transaction = self.conn.transaction(*args, **kwargs)
+        transaction = self._asyncpg_conn.transaction(*args, **kwargs)
         return TrioTransactionProxy(transaction)
 
     def __getattr__(self, attr):
-        target = getattr(self.conn, attr)
+        target = getattr(self._asyncpg_conn, attr)
 
         @wraps(target)
         @trio_asyncio.trio2aio
@@ -48,26 +48,26 @@ class TrioConnectionProxy:
 
 
 class TrioPoolAcquireContextProxy:
-    def __init__(self, acquire_context):
-        self.acquire_context = acquire_context
+    def __init__(self, asyncpg_acquire_context):
+        self._asyncpg_acquire_context = asyncpg_acquire_context
 
     @trio_asyncio.trio2aio
     async def __aenter__(self, *args):
-        proxy = await self.acquire_context.__aenter__(*args)
+        proxy = await self._asyncpg_acquire_context.__aenter__(*args)
         return TrioConnectionProxy(proxy._con)
 
     @trio_asyncio.trio2aio
     async def __aexit__(self, *args):
-        return await self.acquire_context.__aexit__(*args)
+        return await self._asyncpg_acquire_context.__aexit__(*args)
 
 
 class TrioPoolProxy:
-    def __init__(self, pool):
-        self.pool = pool
+    def __init__(self, asyncpg_pool):
+        self._asyncpg_pool = asyncpg_pool
 
     def acquire(self):
-        return TrioPoolAcquireContextProxy(self.pool.acquire())
+        return TrioPoolAcquireContextProxy(self._asyncpg_pool.acquire())
 
     @trio_asyncio.trio2aio
     async def close(self):
-        return await self.pool.close()
+        return await self._asyncpg_pool.close()

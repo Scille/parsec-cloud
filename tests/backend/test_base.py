@@ -1,8 +1,6 @@
 import pytest
 
 from tests.common import connect_backend
-from parsec.backend.drivers.postgresql import triopg
-from trio_asyncio import trio2aio
 
 
 @pytest.mark.trio

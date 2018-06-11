@@ -9,20 +9,22 @@ async def init_db(url, force=False):
     async with conn.transaction():
 
         if force:
-            for table in (
-                "blockstore",
-                "groups",
-                "group_identities",
-                "messages",
-                "pubkeys",
-                "users",
-                "user_devices",
-                "invitations",
-                "vlobs",
-                "user_vlobs",
-                "device_configure_tries",
-            ):
-                await conn.execute("DROP TABLE IF EXISTS %s" % table)
+            await conn.execute(
+                """
+                DROP TABLE IF EXISTS
+                    blockstore,
+                    groups,
+                    group_identities,
+                    messages,
+                    pubkeys,
+                    users,
+                    user_devices,
+                    invitations,
+                    vlobs,
+                    user_vlobs,
+                    device_configure_tries
+                """
+            )
 
         await conn.execute(
             """
@@ -154,16 +156,14 @@ class PGHandler:
         self.queue = trio.Queue(100)
 
     async def init(self, nursery):
-        async def _init():
-            await init_db(self.url)
+        await init_db(self.url)
 
-            self.pool = await triopg.create_pool(self.url)
-            self.conn = await triopg.connect(self.url)
+        self.pool = await triopg.create_pool(self.url)
 
+        async with self.pool.acquire() as conn:
             for signal in self.signals:
-                await self.conn.add_listener(signal, self.notification_handler)
+                await conn.add_listener(signal, self.notification_handler)
 
-        await _init()
         await nursery.start(self.notification_sender)
 
     def notification_handler(self, connection, pid, channel, payload):
@@ -181,36 +181,10 @@ class PGHandler:
             await send(req["signal"], req["sender"])
 
     def get_signal_handler(self, signal):
-        def signal_handler(sender, propagate=True):
-            if propagate:
-                self.queue.put_nowait({"signal": signal, "sender": sender})
+        def signal_handler(sender):
+            self.queue.put_nowait({"signal": signal, "sender": sender})
 
         return signal_handler
 
     async def teardown(self):
-        await self.conn.close()
         await self.pool.close()
-
-    async def fetch_one(self, conn, sql, *params):
-        return await conn.fetchrow(sql, *params)
-
-    async def fetch_many(self, conn, sql, *params):
-        return await conn.fetch(sql, *params)
-
-    async def insert_one(self, conn, sql, *params):
-        return await conn.execute(sql, *params)
-
-    async def insert_many(self, conn, sql, *paramslist):
-        return await conn.executemany(sql, *paramslist)
-
-    async def update_one(self, conn, sql, *params):
-        return await conn.execute(sql, *params)
-
-    async def update_many(self, conn, sql, *paramslist):
-        return await conn.executemany(sql, *paramslist)
-
-    async def delete_one(self, conn, sql, *params):
-        return await conn.execute(sql, *params)
-
-    async def delete_many(self, conn, sql, *paramslist):
-        return await conn.executemany(sql, *paramslist)

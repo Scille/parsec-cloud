@@ -1,6 +1,4 @@
-from trio.testing import MockClock
 import trio_asyncio
-from trio_asyncio import trio2aio
 import os
 import pytest
 import attr
@@ -8,11 +6,10 @@ import socket
 import blinker
 import contextlib
 from unittest.mock import patch
-from async_generator import asynccontextmanager
 
-from parsec.core.local_storage import LocalStorage
 from parsec.core.devices_manager import Device
 from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
+from parsec.backend.drivers import postgresql as pg_driver
 
 from tests.common import (
     freeze_time,
@@ -23,7 +20,6 @@ from tests.common import (
     connect_core,
 )
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
-from tests.core.test_devices_manager import alice_cleartext_device, bob_cleartext_device
 
 
 def pytest_addoption(parser):
@@ -56,11 +52,6 @@ def postgresql_url():
     return os.environ.get("PARSEC_POSTGRESQL_TEST_URL", DEFAULT_POSTGRESQL_TEST_URL)
 
 
-async def _backend_store(url):
-    pg_driver = pytest.importorskip("parsec.backend.drivers.postgresql")
-    await pg_driver.handler.init_db(url, True)
-
-
 @pytest.fixture
 async def asyncio_loop():
     async with trio_asyncio.open_loop() as loop:
@@ -73,7 +64,7 @@ async def backend_store(asyncio_loop, request):
         if pytest.config.getoption("--no-postgresql"):
             pytest.skip("`--no-postgresql` option provided")
         url = postgresql_url()
-        await _backend_store(url)
+        await pg_driver.handler.init_db(url, True)
         return url
 
     else:
@@ -181,7 +172,7 @@ def default_devices(alice, alice2, bob):
 
 
 @pytest.fixture
-async def backend(asyncio_loop, nursery, default_devices, backend_store, config={}):
+async def backend(nursery, default_devices, backend_store, config={}):
     async with backend_factory(
         **{"blockstore_postgresql": True, "dburl": backend_store, **config}
     ) as backend:
@@ -339,8 +330,3 @@ def monitor():
     from tests.monitor import Monitor
 
     return Monitor()
-
-
-@pytest.fixture
-def mock_clock():
-    return MockClock()

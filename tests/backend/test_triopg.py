@@ -14,7 +14,7 @@ async def asyncpg_conn(asyncio_loop):
 
 async def execute_queries(triopg_conn, asyncpg_conn):
     @trio_asyncio.trio2aio
-    async def _aio_query(sql):
+    async def _asyncpg_query(sql):
         return await asyncpg_conn.execute(sql)
 
     # Execute without transaction
@@ -27,11 +27,11 @@ async def execute_queries(triopg_conn, asyncpg_conn):
         )"""
     )
 
-    assert await _aio_query("""SELECT * FROM users""") == "SELECT 0"
+    assert await _asyncpg_query("""SELECT * FROM users""") == "SELECT 0"
     # Execute in transaction without exception
     async with triopg_conn.transaction():
         await triopg_conn.execute("INSERT INTO users (user_id) VALUES (1)")
-    assert await _aio_query("""SELECT * FROM users""") == "SELECT 1"
+    assert await _asyncpg_query("""SELECT * FROM users""") == "SELECT 1"
 
     # Execute in transaction raising exception
     with pytest.raises(Exception):
@@ -39,10 +39,7 @@ async def execute_queries(triopg_conn, asyncpg_conn):
             await triopg_conn.execute("INSERT INTO users (user_id) VALUES (2)")
             raise Exception
 
-    assert await _aio_query("""SELECT * FROM users""") == "SELECT 1"
-
-    # Test get attribute
-    triopg_conn._addr
+    assert await _asyncpg_query("""SELECT * FROM users""") == "SELECT 1"
 
 
 @pytest.mark.trio

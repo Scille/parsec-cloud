@@ -18,54 +18,45 @@ class PGVlobComponent(BaseVlobComponent):
 
     async def create(self, id, rts, wts, blob):
         async with self.dbh.pool.acquire() as conn:
-            async with conn.transaction():
-                await self.dbh.insert_one(
-                    conn,
-                    "INSERT INTO vlobs (id, rts, wts, version, blob) VALUES ($1, $2, $3, 1, $4)",
-                    id,
-                    rts,
-                    wts,
-                    blob,
-                )
+            await conn.execute(
+                "INSERT INTO vlobs (id, rts, wts, version, blob) VALUES ($1, $2, $3, 1, $4)",
+                id,
+                rts,
+                wts,
+                blob,
+            )
 
         return VlobAtom(id=id, read_trust_seed=rts, write_trust_seed=wts, blob=blob)
 
     async def read(self, id, trust_seed, version=None):
         async with self.dbh.pool.acquire() as conn:
-            async with conn.transaction():
-                if version is None:
-                    data = await self.dbh.fetch_one(
-                        conn,
-                        """
-                        SELECT rts, wts, version, blob FROM vlobs WHERE id=$1 ORDER BY version DESC limit 1
-                        """,
-                        id,
-                    )
-                    if not data:
+            if version is None:
+                data = await conn.fetchrow(
+                    """
+                    SELECT rts, wts, version, blob FROM vlobs WHERE id=$1 ORDER BY version DESC limit 1
+                    """,
+                    id,
+                )
+                if not data:
+                    raise NotFoundError("Vlob not found.")
+
+                else:
+                    rts, wts, version, blob = data
+            else:
+                data = await conn.fetchrow(
+                    "SELECT rts, wts, blob FROM vlobs WHERE id=$1 AND version=$2", id, version
+                )
+                if not data:
+                    # TODO: not cool to need 2nd request to know the error...
+                    exists = await conn.fetchrow("SELECT true FROM vlobs WHERE id=$1", id)
+                    if exists:
+                        raise VersionError("Wrong blob version.")
+
+                    else:
                         raise NotFoundError("Vlob not found.")
 
-                    else:
-                        rts, wts, version, blob = data
                 else:
-                    data = await self.dbh.fetch_one(
-                        conn,
-                        "SELECT rts, wts, blob FROM vlobs WHERE id=$1 AND version=$2",
-                        id,
-                        version,
-                    )
-                    if not data:
-                        # TODO: not cool to need 2nd request to know the error...
-                        exists = await self.dbh.fetch_one(
-                            conn, "SELECT true FROM vlobs WHERE id=$1", id
-                        )
-                        if exists:
-                            raise VersionError("Wrong blob version.")
-
-                        else:
-                            raise NotFoundError("Vlob not found.")
-
-                    else:
-                        rts, wts, blob = data
+                    rts, wts, blob = data
 
         if rts != trust_seed:
             raise TrustSeedError()
@@ -77,9 +68,7 @@ class PGVlobComponent(BaseVlobComponent):
     async def update(self, id, trust_seed, version, blob):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                vlobs = await self.dbh.fetch_many(
-                    conn, "SELECT id, rts, wts FROM vlobs WHERE id = $1", id
-                )
+                vlobs = await conn.fetch("SELECT id, rts, wts FROM vlobs WHERE id = $1", id)
                 vlobcount = len(vlobs)
 
                 if vlobcount == 0:
@@ -93,8 +82,7 @@ class PGVlobComponent(BaseVlobComponent):
                 if version - 1 != vlobcount:
                     raise VersionError("Wrong blob version.")
 
-                await self.dbh.insert_one(
-                    conn,
+                await conn.execute(
                     "INSERT INTO vlobs (id, rts, wts, version, blob) VALUES ($1, $2, $3, $4, $5)",
                     id,
                     rts,
