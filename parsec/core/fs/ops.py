@@ -107,6 +107,7 @@ class FSOpsMixin(FSBase):
             return
         normalize_path(path)
 
+        # Acquire sync lock (because file sync and flush doesn't mix well)
         while True:
             access, manifest = await self._local_tree.retrieve_entry(path)
             if not is_file_manifest(manifest):
@@ -118,11 +119,15 @@ class FSOpsMixin(FSBase):
             if not fd.need_flush():
                 return
 
-            if fd.is_syncing():
-                # This file is in the middle of a sync, wait for it to
-                # end and retry everything to avoid concurrency issues
-                await fd.wait_not_syncing()
-                continue
+            if not self._sync_locks.is_locked(access["id"]):
+                break
+
+            # This file is in the middle of a sync, wait for it to
+            # end and retry everything to avoid concurrency issues
+            await self._sync_locks.wait_not_locked(access["id"])
+
+        with self._sync_locks.lock(access["id"]):
+            fd_snapshot_state = fd.create_snapshot_state()
 
             new_size, new_dirty_blocks = fd.get_flush_map()
             for ndb in new_dirty_blocks:
@@ -130,10 +135,9 @@ class FSOpsMixin(FSBase):
                 self._blocks_manager.flush_on_local(ndba["id"], ndba["key"], ndb.data)
                 manifest["dirty_blocks"].append(ndba)
             manifest["size"] = new_size
-            self._local_tree.update_entry(access, manifest)
 
-            self._opened_files.close_file(access)
-            break
+            self._local_tree.update_entry(access, manifest)
+            fd.fast_forward(snapshot_state=fd_snapshot_state, new_manifest=manifest)
 
     async def move(self, src: str, dst: str):
         if src == "/":
