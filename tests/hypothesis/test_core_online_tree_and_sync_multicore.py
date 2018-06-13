@@ -11,6 +11,11 @@ from tests.common import connect_core, core_factory, backend_factory, run_app
 from tests.hypothesis.common import rule, rule_once, failure_reproducer, reproduce_rule
 
 
+# The point is not to find breaking filenames here, so keep it simple
+st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
+st_core = st.sampled_from(["core_1", "core_2"])
+
+
 def compare_fs_dumps(entry_1, entry_2):
     def cook_entry(entry):
         if "children" in entry:
@@ -43,11 +48,6 @@ async def test_online_core_tree_and_sync_multicore(
     alice,
     alice2,
 ):
-
-    # The point is not to find breaking filenames here, so keep it simple
-    st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
-    st_core = st.sampled_from(["core_1", "core_2"])
-
     @failure_reproducer(
         """
 import pytest

@@ -1,5 +1,6 @@
 import os
 import pytest
+from string import ascii_lowercase
 from hypothesis import strategies as st, note
 from hypothesis.stateful import Bundle
 
@@ -7,14 +8,15 @@ from tests.common import connect_core, core_factory
 from tests.hypothesis.common import OracleFS, rule_once, rule
 
 
+# The point is not to find breaking filenames here, so keep it simple
+st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
+
+
 @pytest.mark.slow
 @pytest.mark.trio
 async def test_offline_core_tree(
     TrioDriverRuleBasedStateMachine, mocked_local_storage_connection, backend_addr, tmpdir, alice
 ):
-
-    st_entry_name = st.text(min_size=1).filter(lambda x: "/" not in x)
-
     class CoreOfflineRWFile(TrioDriverRuleBasedStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")

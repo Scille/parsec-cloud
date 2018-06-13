@@ -11,6 +11,10 @@ from tests.common import connect_core, core_factory, backend_factory, run_app
 from tests.hypothesis.common import rule, rule_once
 
 
+# The point is not to find breaking filenames here, so keep it simple
+st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
+
+
 def check_fs_dump(entry):
     assert not entry["need_sync"]
     assert entry["base_version"] == 1
@@ -30,8 +34,6 @@ async def test_online_core_idempotent_sync(
     alice,
 ):
 
-    # The point is not to find breaking filenames here, so keep it simple
-    st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
     st_entry_type = st.sampled_from(["file", "folder"])
 
     class MultiCoreTreeAndSync(TrioDriverRuleBasedStateMachine):
