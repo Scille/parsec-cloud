@@ -1,3 +1,5 @@
+from asyncpg.exceptions import UniqueViolationError
+
 from parsec.backend.vlob import VlobAtom, BaseVlobComponent
 from parsec.backend.exceptions import TrustSeedError, VersionError, NotFoundError
 
@@ -82,13 +84,16 @@ class PGVlobComponent(BaseVlobComponent):
                 if version - 1 != vlobcount:
                     raise VersionError("Wrong blob version.")
 
-                await conn.execute(
-                    "INSERT INTO vlobs (id, rts, wts, version, blob) VALUES ($1, $2, $3, $4, $5)",
-                    id,
-                    rts,
-                    wts,
-                    version,
-                    blob,
-                )
+                try:
+                    await conn.execute(
+                        "INSERT INTO vlobs (id, rts, wts, version, blob) VALUES ($1, $2, $3, $4, $5)",
+                        id,
+                        rts,
+                        wts,
+                        version,
+                        blob,
+                    )
+                except UniqueViolationError:
+                    raise VersionError("Wrong blob version.")
 
         self._signal_vlob_updated.send(id)

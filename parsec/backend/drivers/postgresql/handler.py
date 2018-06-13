@@ -124,7 +124,8 @@ async def init_db(url, force=False):
                 version INTEGER,
                 rts TEXT,
                 wts TEXT,
-                blob BYTEA
+                blob BYTEA,
+                UNIQUE(id, version)
             )"""
         )
         await conn.execute(
@@ -133,7 +134,8 @@ async def init_db(url, force=False):
                 _id SERIAL PRIMARY KEY,
                 user_id VARCHAR(32),
                 version INTEGER,
-                blob BYTEA
+                blob BYTEA,
+                UNIQUE(user_id, version)
             )"""
         )
 
