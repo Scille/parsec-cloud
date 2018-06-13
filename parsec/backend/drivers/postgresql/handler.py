@@ -13,8 +13,6 @@ async def init_db(url, force=False):
                 """
                 DROP TABLE IF EXISTS
                     blockstore,
-                    groups,
-                    group_identities,
                     messages,
                     pubkeys,
                     users,
@@ -32,23 +30,6 @@ async def init_db(url, force=False):
                 _id SERIAL PRIMARY KEY,
                 id VARCHAR(32),
                 block BYTEA
-            )"""
-        )
-        await conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS groups (
-                id SERIAL PRIMARY KEY,
-                name TEXT UNIQUE
-            )"""
-        )
-        await conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS group_identities (
-                id SERIAL PRIMARY KEY,
-                group_id INTEGER,
-                name TEXT,
-                admin BOOLEAN,
-                UNIQUE (group_id, name)
             )"""
         )
         await conn.execute(

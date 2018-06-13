@@ -16,7 +16,6 @@ from parsec.backend.drivers.memory import (
     MemoryUserComponent,
     MemoryVlobComponent,
     MemoryUserVlobComponent,
-    MemoryGroupComponent,
     MemoryMessageComponent,
     MemoryBlockStoreComponent,
 )
@@ -25,7 +24,6 @@ from parsec.backend.drivers.postgresql import (
     PGUserComponent,
     PGVlobComponent,
     PGUserVlobComponent,
-    PGGroupComponent,
     PGMessageComponent,
     PGBlockStoreComponent,
 )
@@ -133,7 +131,6 @@ class BackendApp:
             self.vlob = MemoryVlobComponent(self.signal_ns)
             self.user_vlob = MemoryUserVlobComponent(self.signal_ns)
             self.message = MemoryMessageComponent(self.signal_ns)
-            self.group = MemoryGroupComponent(self.signal_ns)
 
         else:
             self.dbh = PGHandler(self.config.dburl, self.signal_ns)
@@ -157,7 +154,6 @@ class BackendApp:
             self.vlob = PGVlobComponent(self.dbh, self.signal_ns)
             self.user_vlob = PGUserVlobComponent(self.dbh, self.signal_ns)
             self.message = PGMessageComponent(self.dbh, self.signal_ns)
-            self.group = PGGroupComponent(self.dbh, self.signal_ns)
 
         self.anonymous_cmds = {
             "user_claim": self.user.api_user_claim,
@@ -183,10 +179,6 @@ class BackendApp:
             "vlob_update": self.vlob.api_vlob_update,
             "user_vlob_read": self.user_vlob.api_user_vlob_read,
             "user_vlob_update": self.user_vlob.api_user_vlob_update,
-            "group_read": self.group.api_group_read,
-            "group_create": self.group.api_group_create,
-            "group_add_identities": self.group.api_group_add_identities,
-            "group_remove_identities": self.group.api_group_remove_identities,
             "message_get": self.message.api_message_get,
             "message_new": self.message.api_message_new,
             "ping": self._api_ping,

@@ -11,10 +11,6 @@ class PathOnlySchema(BaseCmdSchema):
     path = fields.String(required=True)
 
 
-class cmd_CREATE_GROUP_MANIFEST_Schema(BaseCmdSchema):
-    group = fields.String()
-
-
 class cmd_SHOW_dustbin_Schema(BaseCmdSchema):
     path = fields.String(missing=None)
 
