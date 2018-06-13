@@ -53,5 +53,7 @@ async def test_triopg_connection(asyncpg_conn):
 async def test_triopg_pool(asyncpg_conn):
     pool = await triopg.create_pool(TRIOPG_POSTGRESQL_TEST_URL)
     async with pool.acquire() as conn:
+        async with pool.acquire() as conn2:
+            assert conn != conn2
         await execute_queries(conn, asyncpg_conn)
     await pool.close()
