@@ -33,6 +33,33 @@ class FSState:
         total = sum(stats.values())
         return sorted([(k, (v * 100 // total)) for k, v in stats.items()], key=lambda x: -x[1])
 
+    def get_tree(self):
+        def is_direct_child_of(parent, candidate):
+            if candidate.startswith(parent):
+                relative_candidate = candidate[len(parent) :]
+                if relative_candidate.startswith("/"):
+                    relative_candidate = relative_candidate[1:]
+                if relative_candidate and "/" not in relative_candidate:
+                    return relative_candidate
+            return None
+
+        def recursive_build_tree(path):
+            tree = {}
+
+            for candidate_child in self.folders:
+                candidate_relative_path = is_direct_child_of(path, candidate_child)
+                if candidate_relative_path:
+                    tree[candidate_relative_path] = recursive_build_tree(candidate_child)
+
+            for candidate_child in self.files:
+                candidate_relative_path = is_direct_child_of(path, candidate_child)
+                if candidate_relative_path:
+                    tree[candidate_relative_path] = "<File>"
+
+            return tree
+
+        return recursive_build_tree("/")
+
     def add_stat(self, fuzzer_id, type):
         self.stats[fuzzer_id][type] += 1
 
@@ -54,7 +81,14 @@ class FSState:
         try:
             self.files.remove(path)
         except ValueError:
-            self.folders.remove(path)
+            if path == "/":
+                self.folders = {}
+                self.files = {}
+            else:
+                if not path.endswith("/"):
+                    path += "/"
+                self.folders = [x for x in self.folders if not x.startswith(path)]
+                self.files = [x for x in self.files if not x.startswith(path)]
 
     def replace_path(self, old_path, new_path):
         try:
@@ -185,6 +219,19 @@ async def test_fuzz_core(request, running_backend, core, alice):
             nursery.start_soon(fuzzer, i, core, fs_state)
         await trio.sleep(FUZZ_TIME)
         nursery.cancel_scope.cancel()
+
+    def prettify(tree, indent=0):
+        for key, value in tree.items():
+            if isinstance(value, dict):
+                print("  " * indent + key + " <Folder>")
+                prettify(value, indent + 1)
+            else:
+                print("  " * indent + key + " <File>")
+
+    print("Final fs tree generated:")
+    print("/")
+
+    prettify(fs_state.get_tree(), 1)
     print("Stats:")
     for k, v in fs_state.get_cooked_stats():
         print(" - %s: %s%%" % (k, v))
