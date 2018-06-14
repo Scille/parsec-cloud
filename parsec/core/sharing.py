@@ -24,6 +24,10 @@ class SharingBackendMessageError(SharingError):
     pass
 
 
+class SharingInvalidRecipient(SharingError):
+    pass
+
+
 class SharingUnknownRecipient(SharingError):
     pass
 
@@ -211,6 +215,8 @@ class Sharing(BaseAsyncComponent):
         self.msg_arrived.set()
 
     async def share(self, path, recipient):
+        if self.device.user_id == recipient:
+            raise SharingInvalidRecipient("Cannot share to oneself.")
         # TODO: leaky abstraction...
         # Retreive the entry and make sure it is not a placeholder
         _, entry_name = normalize_path(path)

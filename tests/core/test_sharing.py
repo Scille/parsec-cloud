@@ -138,6 +138,15 @@ async def test_share_bad_recipient(core, alice_core_sock, running_backend):
     assert rep == {"status": "unknown_recipient", "reason": "No user with id `dummy`."}
 
 
+@pytest.mark.trio
+async def test_share_invalid_recipient(core, alice_core_sock, running_backend):
+    await core.fs.file_create("/foo.txt")
+
+    await alice_core_sock.send({"cmd": "share", "path": "/foo.txt", "recipient": "alice"})
+    rep = await alice_core_sock.recv()
+    assert rep == {"status": "invalid_recipient", "reason": "Cannot share to oneself."}
+
+
 # @pytest.mark.trio
 # async def test_share_with_receiver_concurrency(alice_core_sock, running_backend):
 #     # Bob is connected on multiple cores, which will fight to update the
