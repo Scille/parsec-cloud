@@ -37,13 +37,15 @@ class TrioConnectionProxy:
     def __getattr__(self, attr):
         target = getattr(self._asyncpg_conn, attr)
 
-        @wraps(target)
-        @trio_asyncio.trio2aio
-        async def wrapper(*args, **kwargs):
-            return await target(*args, **kwargs)
-
         if callable(target):
+
+            @wraps(target)
+            @trio_asyncio.trio2aio
+            async def wrapper(*args, **kwargs):
+                return await target(*args, **kwargs)
+
             return wrapper
+
         return target
 
 

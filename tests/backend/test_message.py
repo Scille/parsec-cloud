@@ -2,10 +2,9 @@ import pytest
 
 from parsec.utils import to_jsonb64
 
-from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
 from parsec.backend.drivers import postgresql as pg_driver
 from tests.common import connect_backend
-from tests.conftest import backend, backend_factory, postgresql_url
+from tests.conftest import backend_factory, postgresql_url
 
 
 @pytest.mark.trio
@@ -44,27 +43,26 @@ async def test_message_from_bob_to_alice(backend, alice, bob):
 
 
 @pytest.mark.trio
-async def test_message_from_bob_to_alice_multi_backends(asyncio_loop, default_devices, alice, bob):
+async def test_message_from_bob_to_alice_multi_backends(asyncio_loop, alice, bob):
     url = postgresql_url()
     await pg_driver.handler.init_db(url, True)
     async with backend_factory(
         **{"blockstore_postgresql": True, "dburl": url}
     ) as backend_1, backend_factory(**{"blockstore_postgresql": True, "dburl": url}) as backend_2:
 
-        for device in default_devices:
-            try:
-                await backend_1.user.create(
-                    author="<backend-fixture>",
-                    user_id=device.user_id,
-                    broadcast_key=device.user_pubkey.encode(),
-                    devices=[(device.device_name, device.device_verifykey.encode())],
-                )
-            except UserAlreadyExistsError:
-                await backend_1.user.create_device(
-                    user_id=device.user_id,
-                    device_name=device.device_name,
-                    verify_key=device.device_verifykey.encode(),
-                )
+        await backend_1.user.create(
+            author="<backend-fixture>",
+            user_id=alice.user_id,
+            broadcast_key=alice.user_pubkey.encode(),
+            devices=[(alice.device_name, alice.device_verifykey.encode())],
+        )
+
+        await backend_1.user.create(
+            author="<backend-fixture>",
+            user_id=bob.user_id,
+            broadcast_key=bob.user_pubkey.encode(),
+            devices=[(bob.device_name, bob.device_verifykey.encode())],
+        )
 
         async with connect_backend(backend_1, auth_as=alice) as alice_sock, connect_backend(
             backend_2, auth_as=bob

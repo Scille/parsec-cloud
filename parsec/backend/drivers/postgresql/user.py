@@ -1,6 +1,7 @@
 import itertools
 import pendulum
 
+from parsec.utils import ParsecError
 from parsec.backend.user import BaseUserComponent
 from parsec.backend.exceptions import (
     AlreadyExistsError,
@@ -21,51 +22,59 @@ class PGUserComponent(BaseUserComponent):
         assert isinstance(broadcast_key, (bytes, bytearray))
         assert isinstance(device_verify_key, (bytes, bytearray))
 
+        error = None
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                try:
-                    ts, author, retrieved_invitation_token, claim_tries = await conn.fetchrow(
-                        """SELECT ts, author, invitation_token, claim_tries
-                        FROM invitations WHERE user_id = $1
-                        """,
-                        user_id,
-                    )
-                except (TypeError, ValueError):
+                results = await conn.fetchrow(
+                    """SELECT ts, author, invitation_token, claim_tries
+                    FROM invitations WHERE user_id = $1
+                    """,
+                    user_id,
+                )
+                if results:
+                    ts, author, retrieved_invitation_token, claim_tries = results
+                else:
                     raise NotFoundError("No invitation for user `%s`" % user_id)
 
                 ts = pendulum.from_timestamp(ts)
                 user = await conn.fetchrow("SELECT 1 FROM users WHERE user_id = $1", user_id)
 
-                try:
-                    if user:
-                        raise UserClaimError("User `%s` has already been registered" % user_id)
+                if user or retrieved_invitation_token != invitation_token:
+                    claim_tries = claim_tries + 1
 
+                    if claim_tries > 3:
+                        result = await conn.execute(
+                            "DELETE FROM invitations WHERE user_id = $1", user_id
+                        )
+                        if result != "DELETE 1":
+                            raise ParsecError("Deletion error.")
+
+                    else:
+                        result = await conn.execute(
+                            "UPDATE invitations SET claim_tries = $1 WHERE user_id = $2",
+                            claim_tries,
+                            user_id,
+                        )
+                        if result != "UPDATE 1":
+                            raise ParsecError("Update error.")
+
+                    if user:
+                        error = "User `%s` has already been registered" % user_id
+                    else:
+                        error = "Invalid invitation token"
+
+                else:
                     now = pendulum.now()
 
                     if (now - ts) > pendulum.interval(hours=1):
                         raise OutOfDateError("Claim code is too old.")
 
-                    if retrieved_invitation_token != invitation_token:
-                        raise UserClaimError("Invalid invitation token")
-
-                except UserClaimError:
-                    claim_tries = claim_tries + 1
-
-                    if claim_tries > 3:
-                        await conn.execute("DELETE FROM invitations WHERE user_id = $1", user_id)
-
-                    else:
-                        await conn.execute(
-                            "UPDATE invitations SET claim_tries = $1 WHERE user_id = $2",
-                            claim_tries,
-                            user_id,
-                        )
-
-                    raise
-
-                await self.create(
-                    author, user_id, broadcast_key, devices=[(device_name, device_verify_key)]
-                )
+                if not error:
+                    await self.create(
+                        author, user_id, broadcast_key, devices=[(device_name, device_verify_key)]
+                    )
+        if error:
+            raise UserClaimError(error)
 
     async def create_invitation(self, invitation_token, author, user_id):
         async with self.dbh.pool.acquire() as conn:
@@ -76,7 +85,7 @@ class PGUserComponent(BaseUserComponent):
                     raise AlreadyExistsError("User `%s` already exists" % user_id)
 
                 # Overwrite previous invitation if any
-                await conn.execute(
+                result = await conn.execute(
                     """
                     INSERT INTO invitations (
                         user_id, ts, author, invitation_token, claim_tries
@@ -92,6 +101,8 @@ class PGUserComponent(BaseUserComponent):
                     author,
                     invitation_token,
                 )
+                if result != "INSERT 0 1":
+                    raise ParsecError("Insertion error.")
 
     async def create(self, author, user_id, broadcast_key, devices):
         assert isinstance(broadcast_key, (bytes, bytearray))
@@ -111,7 +122,7 @@ class PGUserComponent(BaseUserComponent):
 
                 now = pendulum.now().int_timestamp
 
-                await conn.execute(
+                result = await conn.execute(
                     """INSERT INTO users (user_id, created_on, created_by, broadcast_key)
                     VALUES ($1, $2, $3, $4)
                     """,
@@ -120,6 +131,8 @@ class PGUserComponent(BaseUserComponent):
                     author,
                     broadcast_key,
                 )
+                if result != "INSERT 0 1":
+                    raise ParsecError("Insertion error.")
                 await conn.executemany(
                     """INSERT INTO user_devices (user_id, device_name, created_on, verify_key, revocated_on)
                     VALUES ($1, $2, $3, $4, NULL)
@@ -130,12 +143,13 @@ class PGUserComponent(BaseUserComponent):
     async def get(self, user_id):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                try:
-                    created_on, created_by, broadcast_key = await conn.fetchrow(
-                        "SELECT created_on, created_by, broadcast_key FROM users WHERE user_id = $1",
-                        user_id,
-                    )
-                except (TypeError, ValueError):
+                results = await conn.fetchrow(
+                    "SELECT created_on, created_by, broadcast_key FROM users WHERE user_id = $1",
+                    user_id,
+                )
+                if results:
+                    created_on, created_by, broadcast_key = results
+                else:
                     raise NotFoundError(user_id)
 
                 user = {
@@ -143,24 +157,30 @@ class PGUserComponent(BaseUserComponent):
                     "broadcast_key": broadcast_key,
                     "created_by": created_by,
                     "created_on": pendulum.from_timestamp(created_on),
-                    "devices": {
-                        d_name: {
-                            "created_on": pendulum.from_timestamp(d_created_on),
-                            "configure_token": d_configure_token,
-                            "verify_key": d_verify_key if d_verify_key else None,
-                            "revocated_on": (
-                                pendulum.from_timestamp(d_revocated_on) if d_revocated_on else None
-                            ),
-                        }
-                        for d_name, d_created_on, d_configure_token, d_verify_key, d_revocated_on in await conn.fetch(
-                            """
-                            SELECT device_name, created_on, configure_token, verify_key, revocated_on
-                            FROM user_devices WHERE user_id = $1
-                            """,
-                            user_id,
-                        )
-                    },
+                    "devices": {},
                 }
+                user_devices = await conn.fetch(
+                    """
+                    SELECT device_name, created_on, configure_token, verify_key, revocated_on
+                    FROM user_devices WHERE user_id = $1
+                    """,
+                    user_id,
+                )
+                for (
+                    d_name,
+                    d_created_on,
+                    d_configure_token,
+                    d_verify_key,
+                    d_revocated_on,
+                ) in user_devices:
+                    user["devices"][d_name] = {
+                        "created_on": pendulum.from_timestamp(d_created_on),
+                        "configure_token": d_configure_token,
+                        "verify_key": d_verify_key if d_verify_key else None,
+                        "revocated_on": (
+                            pendulum.from_timestamp(d_revocated_on) if d_revocated_on else None
+                        ),
+                    }
 
         return user
 
@@ -178,13 +198,15 @@ class PGUserComponent(BaseUserComponent):
                         "Device `%s@%s` already exists" % (user_id, device_name)
                     )
 
-                await conn.execute(
+                result = await conn.execute(
                     "INSERT INTO user_devices (user_id, device_name, created_on, verify_key) VALUES ($1, $2, $3, $4)",
                     user_id,
                     device_name,
                     pendulum.now().int_timestamp,
                     verify_key,
                 )
+                if result != "INSERT 0 1":
+                    raise ParsecError("Insertion error.")
 
     async def configure_device(self, user_id, device_name, device_verify_key):
         async with self.dbh.pool.acquire() as conn:
@@ -215,7 +237,7 @@ class PGUserComponent(BaseUserComponent):
                         "Device `%s@%s` already exists" % (user_id, device_name)
                     )
 
-                await conn.execute(
+                result = await conn.execute(
                     """
                     INSERT INTO user_devices (
                         user_id, device_name, created_on, configure_token
@@ -225,13 +247,15 @@ class PGUserComponent(BaseUserComponent):
                     pendulum.now().int_timestamp,
                     token,
                 )
+                if result != "INSERT 0 1":
+                    raise ParsecError("Insertion error.")
 
     async def register_device_configuration_try(
         self, config_try_id, user_id, device_name, device_verify_key, user_privkey_cypherkey
     ):
         async with self.dbh.pool.acquire() as conn:
             # TODO: handle multiple configuration tries on a given device
-            await conn.execute(
+            result = await conn.execute(
                 """
                 INSERT INTO device_configure_tries (
                     user_id, config_try_id, status, device_name, device_verify_key,
@@ -245,6 +269,8 @@ class PGUserComponent(BaseUserComponent):
                 device_verify_key,
                 user_privkey_cypherkey,
             )
+            if result != "INSERT 0 1":
+                raise ParsecError("Insertion error.")
         return config_try_id
 
     async def retrieve_device_configuration_try(self, config_try_id, user_id):

@@ -1,5 +1,6 @@
 from asyncpg.exceptions import UniqueViolationError
 
+from parsec.utils import ParsecError
 from parsec.backend.user_vlob import BaseUserVlobComponent, UserVlobAtom
 from parsec.backend.exceptions import VersionError
 
@@ -49,12 +50,14 @@ class PGUserVlobComponent(BaseUserVlobComponent):
                     raise VersionError("Wrong blob version.")
 
                 try:
-                    await conn.execute(
+                    result = await conn.execute(
                         "INSERT INTO user_vlobs (user_id, version, blob) VALUES ($1, $2, $3)",
                         user_id,
                         version,
                         blob,
                     )
+                    if result != "INSERT 0 1":
+                        raise ParsecError("Insertion error.")
                 except UniqueViolationError:
                     raise VersionError("Wrong blob version.")
         self._signal_user_vlob_updated.send(user_id)

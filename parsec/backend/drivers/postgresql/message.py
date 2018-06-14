@@ -1,3 +1,4 @@
+from parsec.utils import ParsecError
 from parsec.backend.message import BaseMessageComponent
 
 
@@ -8,12 +9,14 @@ class PGMessageComponent(BaseMessageComponent):
 
     async def perform_message_new(self, sender_device_id, recipient_user_id, body):
         async with self.dbh.pool.acquire() as conn:
-            await conn.execute(
+            result = await conn.execute(
                 "INSERT INTO messages (sender_device_id, recipient_user_id, body) VALUES ($1, $2, $3)",
                 sender_device_id,
                 recipient_user_id,
                 body,
             )
+            if result != "INSERT 0 1":
+                raise ParsecError("Insertion error")
         self._signal_message_arrived.send(recipient_user_id)
 
     async def perform_message_get(self, recipient_user_id, offset):
