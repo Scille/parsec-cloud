@@ -52,6 +52,9 @@ class LocalTree:
 
         return recursive_resolve(self._root_manifest_cache)
 
+    def get_possibly_resolved_access(self, access):
+        return self._resolved_placeholder_accesses.get(access["id"], access)
+
     def _recursive_load_local_manifests(self, folder_manifest):
         for access in folder_manifest["children"].values():
             manifest = self.manifests_manager.fetch_from_local(access["id"], access["key"])
@@ -73,9 +76,9 @@ class LocalTree:
             return copy_manifest(self._manifests_cache[access["id"]])
         except KeyError:
             if is_placeholder_access(access):
-                resolved_access_id = self._resolved_placeholder_accesses.get(access["id"])
-                if resolved_access_id:
-                    return copy_manifest(self._manifests_cache[resolved_access_id])
+                resolved_access = self._resolved_placeholder_accesses.get(access["id"])
+                if resolved_access:
+                    return copy_manifest(self._manifests_cache[resolved_access["id"]])
             raise
 
     async def retrieve_entries(self, *paths):
@@ -158,7 +161,7 @@ class LocalTree:
             resolved_access["id"], resolved_access["key"], manifest
         )
         self._manifests_cache[resolved_access["id"]] = manifest
-        self._resolved_placeholder_accesses[placeholder_access["id"]] = resolved_access["id"]
+        self._resolved_placeholder_accesses[placeholder_access["id"]] = resolved_access
         self.manifests_manager.remove_from_local(placeholder_access["id"])
 
     def move_modifications(self, old_access, new_access, manifest=None):

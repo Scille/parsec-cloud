@@ -39,6 +39,10 @@ class FSSyncFileMixin(FSBase):
             except KeyError:
                 # Entry has been removed in the meantime, nothing to do then
                 return
+            # Note if the access is a placeholder, it could have been resolved
+            # in the meantine
+            if is_placeholder_access(access):
+                access = self._local_tree.get_possibly_resolved_access(access)
 
         with self._sync_locks.lock(access["id"]):
             # Note from here on, not concurrent sync or flush are allowed,

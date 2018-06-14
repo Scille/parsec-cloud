@@ -1,6 +1,0 @@
-#!/usr/bin/make -f
-override_dh_virtualenv:
-	dh_virtualenv --python /usr/bin/python3.6 --extra-pip-arg='.[all]' --extra-pip-arg='--no-binary' --extra-pip-arg=':all:' --extra-pip-arg='--process-dependency-links' --no-test
-
-%:
-	dh $@ --python /usr/bin/python3.6 --with python-virtualenv --no-test

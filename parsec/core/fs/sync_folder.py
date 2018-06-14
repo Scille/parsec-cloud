@@ -39,10 +39,6 @@ def find_conflicting_name_for_child_entry(parent_manifest, original_name):
             break
 
 
-class RetrySync(Exception):
-    pass
-
-
 class FSSyncFolderMixin(FSBase):
     async def _sync_folder(self, access, manifest, recursive=False):
         """
@@ -67,6 +63,11 @@ class FSSyncFolderMixin(FSBase):
             except KeyError:
                 # Entry has been removed in the meantime, nothing to do then
                 return
+            # Note if the access is a placeholder, it could have been resolved
+            # in the meantine
+            if is_placeholder_access(access):
+                access = self._local_tree.get_possibly_resolved_access(access)
+                access_id = access["id"]
 
         with self._sync_locks.lock(access_id):
             # Synchronizing a folder is divided into three steps:
@@ -288,6 +289,7 @@ class FSSyncFolderMixin(FSBase):
 
         self._local_tree.update_entry(parent_access, parent_manifest)
         self._local_tree.resolve_placeholder_access(access, new_access)
+        self._opened_files.resolve_placeholder_access(access, new_access)
 
         print(good("placeholder resolved %s => %s" % (access["id"], new_access)))
 
@@ -307,7 +309,7 @@ class FSSyncFolderMixin(FSBase):
             # Given we are the first catching it (or so we hope...), the lock
             # should be free and we don't fear modifying access or manifest.
             # Furthermore, given we do everything synchronously we can go
-            # "hold me beer" style and don't take the lock.
+            # "hold my beer" style and don't take the lock.
             assert not self._sync_locks.is_locked(exc.access["id"])
 
             try:

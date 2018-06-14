@@ -1,7 +1,7 @@
 import os
 import pytest
+from string import ascii_lowercase
 from hypothesis import strategies as st, note
-
 from hypothesis.stateful import Bundle
 from copy import deepcopy
 
@@ -15,6 +15,10 @@ from tests.hypothesis.common import (
     failure_reproducer,
     reproduce_rule,
 )
+
+
+# The point is not to find breaking filenames here, so keep it simple
+st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 
 class OracleFSWithSync:
@@ -108,8 +112,6 @@ async def test_online_core_tree_and_sync(
     class RestartCore(Exception):
         def __init__(self, reset_local_storage=False):
             self.reset_local_storage = reset_local_storage
-
-    st_entry_name = st.text(min_size=1).filter(lambda x: "/" not in x)
 
     @failure_reproducer(
         """
