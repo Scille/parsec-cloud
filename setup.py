@@ -60,6 +60,7 @@ requirements = [
     "python-interface==1.4.0",
     "async_generator >= 1.9",
     "raven==6.8.0",
+    'contextvars==2.1;python_version<"3.7"',
 ]
 dependency_links = [
     # need to use --process-dependency-links option for this

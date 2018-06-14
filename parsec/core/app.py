@@ -1,10 +1,10 @@
 import os
 import trio
 import attr
-import blinker
 import logbook
 
 from parsec.networking import serve_client
+from parsec.signals import SignalsContext, get_signal, ANY
 from parsec.core.base import BaseAsyncComponent, NotInitializedError
 from parsec.core.sharing import Sharing
 from parsec.core.fs import FS
@@ -35,7 +35,7 @@ class Core(BaseAsyncComponent):
     def __init__(self, config):
         super().__init__()
         self.nursery = None
-        self.signal_ns = blinker.Namespace()
+        self.signals_context = SignalsContext()
         self.devices_manager = DevicesManager(os.path.join(config.base_settings_path, "devices"))
 
         self.config = config
@@ -86,6 +86,7 @@ class Core(BaseAsyncComponent):
         self.auth_events = None
 
     async def _init(self, nursery):
+        self.signals_context.push()
         self.nursery = nursery
 
     async def _teardown(self):
@@ -93,6 +94,7 @@ class Core(BaseAsyncComponent):
             await self.logout()
         except NotLoggedError:
             pass
+        self.signals_context.pop()
 
     async def login(self, device):
         async with self.auth_lock:
@@ -100,9 +102,7 @@ class Core(BaseAsyncComponent):
                 raise AlreadyLoggedError("Already logged as `%s`" % self.auth_device)
 
             # First create components
-            self.backend_events_manager = BackendEventsManager(
-                device, self.config.backend_addr, self.signal_ns
-            )
+            self.backend_events_manager = BackendEventsManager(device, self.config.backend_addr)
             self.backend_connection = BackendConnectionsMultiplexer(
                 device, self.config.backend_addr
             )
@@ -118,14 +118,10 @@ class Core(BaseAsyncComponent):
             self.fs = FS(
                 device, self.manifests_manager, self.blocks_manager, self.config.block_size
             )
-            self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
+            self.fuse_manager = FuseManager(self.config.addr)
             self.synchronizer = Synchronizer(self.config.auto_sync, self.fs)
             self.sharing = Sharing(
-                device,
-                self.fs,
-                self.backend_connection,
-                self.backend_events_manager,
-                self.signal_ns,
+                device, self.fs, self.backend_connection, self.backend_events_manager
             )
 
             # Then initialize them, order must respect dependencies here !
@@ -174,7 +170,7 @@ class Core(BaseAsyncComponent):
     async def handle_client(self, sockstream):
         from parsec.core.api import dispatch_request
 
-        ctx = ClientContext(self.signal_ns)
+        ctx = ClientContext()
         await serve_client(lambda req: dispatch_request(req, ctx, self), sockstream)
 
 
@@ -184,11 +180,10 @@ class ClientContext:
     def ctxid(self):
         return id(self)
 
-    _signal_ns = attr.ib()
     registered_signals = attr.ib(default=attr.Factory(dict))
     received_signals = attr.ib(default=attr.Factory(lambda: trio.Queue(100)))
 
-    def subscribe_signal(self, signal_name, subject=blinker.ANY):
+    def subscribe_signal(self, signal_name, subject=ANY):
         key = (signal_name, subject)
         if key in self.registered_signals:
             raise KeyError("%s@%s already subscribed" % key)
@@ -200,9 +195,9 @@ class ClientContext:
                 logger.warning("{!r}: event queue is full", self)
 
         self.registered_signals[key] = _handle_event
-        self._signal_ns.signal(signal_name).connect(_handle_event, sender=subject, weak=True)
+        get_signal(signal_name).connect(_handle_event, sender=subject, weak=True)
 
-    def unsubscribe_signal(self, signal_name, subject=blinker.ANY):
+    def unsubscribe_signal(self, signal_name, subject=ANY):
         key = (signal_name, subject)
         # Weakref on _handle_event in signal connection will do the rest
         del self.registered_signals[key]

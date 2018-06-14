@@ -4,6 +4,7 @@ import traceback
 from nacl.public import SealedBox, PublicKey
 from nacl.signing import VerifyKey
 
+from parsec.signals import get_signal
 from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.core.schemas import LocalVlobAccessSchema
 from parsec.core.base import BaseAsyncComponent
@@ -96,9 +97,8 @@ generic_message_content_schema = GenericMessageContentSchema()
 
 
 class Sharing(BaseAsyncComponent):
-    def __init__(self, device, fs, backend_connection, backend_event_manager, signal_ns):
+    def __init__(self, device, fs, backend_connection, backend_event_manager):
         super().__init__()
-        self._signal_ns = signal_ns
         self.fs = fs
         self._backend_connection = backend_connection
         self._backend_event_manager = backend_event_manager
@@ -111,7 +111,7 @@ class Sharing(BaseAsyncComponent):
         await self._backend_event_manager.subscribe_backend_event(
             "message_arrived", self.device.user_id
         )
-        self._signal_ns.signal("message_arrived").connect(self._msg_arrived_cb, weak=True)
+        get_signal("message_arrived").connect(self._msg_arrived_cb, weak=True)
 
     async def _teardown(self):
         if self._message_listener_task_cancel_scope:
@@ -175,10 +175,10 @@ class Sharing(BaseAsyncComponent):
                 sharing_name += "-dup"
             parent_manifest["children"][sharing_name] = msg["access"]
             self.fs._local_tree.update_entry(parent_access, parent_manifest)
-            self._signal_ns.signal("new_sharing").send("%s/%s" % (parent_path, sharing_name))
+            get_signal("new_sharing").send("%s/%s" % (parent_path, sharing_name))
 
         elif msg["type"] == "ping":
-            self._signal_ns.signal("ping").send(msg["ping"])
+            get_signal("ping").send(msg["ping"])
 
     async def _process_all_last_messages(self):
         rep = await self._backend_connection.send(

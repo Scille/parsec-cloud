@@ -2,6 +2,7 @@ import trio
 import logbook
 import json
 
+from parsec.signals import get_signal
 from parsec.schema import UnknownCheckedSchema, fields
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.devices_manager import Device
@@ -35,11 +36,10 @@ class BackendEventsManager(BaseAsyncComponent):
     - events are message sent downstream from the backend to the client core
     """
 
-    def __init__(self, device: Device, backend_addr: str, signal_ns):
+    def __init__(self, device: Device, backend_addr: str):
         super().__init__()
         self.device = device
         self.backend_addr = backend_addr
-        self._signal_ns = signal_ns
         self._nursery = None
         self._subscribed_events = set()
 
@@ -91,7 +91,7 @@ class BackendEventsManager(BaseAsyncComponent):
                     )
 
             # Useful for tests to know when we actually start to listen for backend events
-            self._signal_ns.signal("backend_event_manager_listener_started").send()
+            get_signal("backend_event_manager_listener_started").send()
 
             while True:
                 await sock.send({"cmd": "event_listen"})
@@ -105,9 +105,9 @@ class BackendEventsManager(BaseAsyncComponent):
                 subject = rep.get("subject")
                 event = rep.get("event")
                 if subject is None:
-                    self._signal_ns.signal(event).send()
+                    get_signal(event).send()
                 else:
-                    self._signal_ns.signal(event).send(subject)
+                    get_signal(event).send(subject)
 
         with trio.open_cancel_scope() as cancel:
             task_status.started(cancel)
@@ -132,4 +132,4 @@ class BackendEventsManager(BaseAsyncComponent):
                     # Only thing we can do is sending a signal to notify the
                     # trouble...
                     # TODO: think about this kind of signal format
-                    self._signal_ns.signal("panic").send(exc)
+                    get_signal("panic").send(exc)

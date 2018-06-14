@@ -3,20 +3,8 @@ from unittest.mock import patch
 import os
 import attr
 import trio
-import blinker
 
-from parsec.core.fuse_manager import (
-    FuseManager,
-    FuseNotAvailable,
-    FuseAlreadyStarted,
-    FuseNotStarted,
-    FUSE_AVAILABLE,
-)
-
-
-@pytest.fixture
-def signal_ns():
-    return blinker.Namespace()
+from parsec.core.fuse_manager import FuseManager, FuseNotAvailable, FUSE_AVAILABLE
 
 
 @pytest.mark.trio

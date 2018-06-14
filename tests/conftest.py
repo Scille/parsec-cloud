@@ -3,11 +3,12 @@ import os
 import pytest
 import attr
 import socket
-import blinker
 import asyncpg
 import contextlib
 from unittest.mock import patch
 
+from parsec.signals import SignalsContext
+from parsec.core.local_storage import LocalStorage
 from parsec.core.devices_manager import Device
 from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
 from parsec.backend.drivers import postgresql as pg_driver
@@ -179,7 +180,8 @@ def unused_tcp_addr(unused_tcp_port):
 
 @pytest.fixture
 def signal_ns():
-    return blinker.Namespace()
+    with SignalsContext() as ctx:
+        yield ctx.signals_namespace
 
 
 @pytest.fixture
@@ -245,6 +247,10 @@ async def running_backend(tcp_stream_spy, backend, backend_addr):
 async def alice_backend_sock(backend, alice):
     async with connect_backend(backend, auth_as=alice) as sock:
         yield sock
+
+
+def core_signal_ns(core):
+    return core.signals_context.signals_namespace
 
 
 @pytest.fixture

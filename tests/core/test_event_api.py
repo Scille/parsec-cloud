@@ -16,15 +16,15 @@ async def test_event_api_unsubscribe_bad_event(core, alice_core_sock):
 
 
 @pytest.mark.trio
-async def test_event_api_subscribe_and_receive(core, alice_core_sock):
+async def test_event_api_subscribe_and_receive(core, core_signal_ns, alice_core_sock):
     await alice_core_sock.send({"cmd": "event_subscribe", "event": "ping", "subject": "foo"})
     rep = await alice_core_sock.recv()
     assert rep == {"status": "ok"}
 
     await alice_core_sock.send({"cmd": "event_listen"})
-    core.signal_ns.signal("not me !").send("foo")
-    core.signal_ns.signal("ping").send("not this one !")
-    core.signal_ns.signal("ping").send("foo")
+    core_signal_ns.signal("not me !").send("foo")
+    core_signal_ns.signal("ping").send("not this one !")
+    core_signal_ns.signal("ping").send("foo")
     rep = await alice_core_sock.recv()
     assert rep == {"status": "ok", "event": "ping", "subject": "foo"}
 
@@ -38,9 +38,9 @@ async def test_event_api_subscribe_and_receive(core, alice_core_sock):
     assert rep == {"status": "ok"}
 
     # Nothing should be received now
-    core.signal_ns.signal("not me !").send("foo")
-    core.signal_ns.signal("ping").send("not this one !")
-    core.signal_ns.signal("ping").send("foo")
+    core_signal_ns.signal("not me !").send("foo")
+    core_signal_ns.signal("ping").send("not this one !")
+    core_signal_ns.signal("ping").send("foo")
 
     await alice_core_sock.send({"cmd": "event_listen", "wait": False})
     rep = await alice_core_sock.recv()

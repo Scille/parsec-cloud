@@ -6,7 +6,7 @@ from parsec.core.backend_events_manager import BackendEventsManager
 
 @pytest.fixture
 async def backend_event_manager(nursery, running_backend, signal_ns, alice):
-    em = BackendEventsManager(alice, running_backend.addr, signal_ns)
+    em = BackendEventsManager(alice, running_backend.addr)
     await em.init(nursery)
     try:
         yield em
