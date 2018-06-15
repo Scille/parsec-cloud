@@ -144,10 +144,12 @@ class PGHandler:
         await init_db(self.url)
 
         self.pool = await triopg.create_pool(self.url)
-        self.conn = await triopg.connect(self.url)
+        # This connection is dedicated to the notifications listening, so it
+        # would only complicate stuff to include it into the connection pool
+        self.notification_conn = await triopg.connect(self.url)
 
         for signal in self.signals:
-            await self.conn.add_listener(signal, self.notification_handler)
+            await self.notification_conn.add_listener(signal, self.notification_handler)
 
         await nursery.start(self.notification_sender)
 
@@ -180,5 +182,5 @@ class PGHandler:
         return signal_handler
 
     async def teardown(self):
-        await self.conn.close()
         await self.pool.close()
+        await self.notification_conn.close()
