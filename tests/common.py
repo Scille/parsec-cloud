@@ -1,3 +1,4 @@
+import os
 import trio
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
@@ -5,6 +6,9 @@ from async_generator import asynccontextmanager
 
 try:
     from libfaketime import freeze_time
+
+    # see https://github.com/simon-weber/python-libfaketime/issues/45
+    os.environ.setdefault("DONT_FAKE_MONOTONIC", "1")
 except ImportError:
     from freezegun import freeze_time
 
