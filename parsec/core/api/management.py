@@ -80,6 +80,9 @@ async def user_claim(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     except BackendNotAvailable:
         return {"status": "backend_not_availabled", "reason": "Backend not available"}
 
+    if rep["status"] != "ok":
+        return rep
+
     try:
         core.devices_manager.register_new_device(
             msg["id"], user_privkey.encode(), device_signkey.encode(), msg["password"]
