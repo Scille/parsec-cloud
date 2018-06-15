@@ -188,7 +188,7 @@ def default_devices(alice, alice2, bob):
 
 
 @pytest.fixture
-async def backend(nursery, default_devices, backend_store, config={}):
+async def backend(default_devices, backend_store, config={}):
     async with backend_factory(
         **{"blockstore_postgresql": True, "dburl": backend_store, **config}
     ) as backend:
@@ -248,7 +248,7 @@ async def alice_backend_sock(backend, alice):
 
 
 @pytest.fixture
-async def core(asyncio_loop, nursery, backend_addr, tmpdir, default_devices, config={}):
+async def core(asyncio_loop, backend_addr, tmpdir, default_devices, config={}):
     async with core_factory(
         **{
             "base_settings_path": tmpdir.mkdir("core_fixture").strpath,
@@ -266,7 +266,7 @@ async def core(asyncio_loop, nursery, backend_addr, tmpdir, default_devices, con
 
 
 @pytest.fixture
-async def core2(asyncio_loop, nursery, backend_addr, tmpdir, default_devices, config={}):
+async def core2(asyncio_loop, backend_addr, tmpdir, default_devices, config={}):
     # TODO: refacto with core fixture
     async with core_factory(
         **{

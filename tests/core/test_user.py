@@ -82,7 +82,6 @@ async def test_user_invite_then_claim_timeout(
     async with core_factory(
         base_settings_path=tmpdir.mkdir("mallory_core"), backend_addr=backend_addr
     ) as mallory_core:
-        # Create a brand new core and try to use the token to register
         async with connect_core(mallory_core) as mallory_core_sock:
             with freeze_time("2017-01-02"):
                 await mallory_core_sock.send(

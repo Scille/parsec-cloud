@@ -83,7 +83,8 @@ async def test_device_declare_then_accepted(
 
             # 5) Wannabe device get it answer: device has been accepted !
 
-            rep = await new_device_core_sock.recv()
+            with trio.fail_after(1):
+                rep = await new_device_core_sock.recv()
             assert rep["status"] == "ok"
 
     # Device config should have been stored on local storage so restarting
