@@ -4,6 +4,7 @@ import pytest
 import attr
 import socket
 import blinker
+import asyncpg
 import contextlib
 from unittest.mock import patch
 
@@ -35,6 +36,8 @@ def pytest_addoption(parser):
 
 
 def pytest_runtest_setup(item):
+    # Mock and non-UTC timezones are a really bad mix, so keep things simple
+    os.environ.setdefault("TZ", "UTC")
     if "slow" in item.keywords and not item.config.getoption("--runslow"):
         pytest.skip("need --runslow option to run")
 
@@ -48,8 +51,15 @@ DEFAULT_POSTGRESQL_TEST_URL = "postgresql:///parsec_test"
 TRIOPG_POSTGRESQL_TEST_URL = "postgresql:///triopg_test"
 
 
-def postgresql_url():
+def get_postgresql_url():
     return os.environ.get("PARSEC_POSTGRESQL_TEST_URL", DEFAULT_POSTGRESQL_TEST_URL)
+
+
+@pytest.fixture
+def postgresql_url(request):
+    if pytest.config.getoption("--no-postgresql"):
+        pytest.skip("`--no-postgresql` option provided")
+    return get_postgresql_url()
 
 
 @pytest.fixture
@@ -59,12 +69,18 @@ async def asyncio_loop():
 
 
 @pytest.fixture(params=["mocked", "postgresql"])
-async def backend_store(asyncio_loop, request):
+async def backend_store(request, asyncio_loop):
     if request.param == "postgresql":
         if pytest.config.getoption("--no-postgresql"):
             pytest.skip("`--no-postgresql` option provided")
-        url = postgresql_url()
-        await pg_driver.handler.init_db(url, True)
+        url = get_postgresql_url()
+        try:
+            await pg_driver.handler.init_db(url, True)
+        except asyncpg.exceptions.InvalidCatalogNameError as exc:
+            raise RuntimeError(
+                "Is `parsec_test` a valid database in PostgreSQL ?\n"
+                "Running `psql -c 'CREATE DATABASE parsec_test;'` may fix this"
+            ) from exc
         return url
 
     else:

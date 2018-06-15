@@ -1,10 +1,10 @@
 import pytest
+import trio
 
 from parsec.utils import to_jsonb64
 
 from parsec.backend.drivers import postgresql as pg_driver
-from tests.common import connect_backend
-from tests.conftest import backend_factory, postgresql_url
+from tests.common import connect_backend, backend_factory
 
 
 @pytest.mark.trio
@@ -29,7 +29,8 @@ async def test_message_from_bob_to_alice(backend, alice, bob):
         rep = await bob_sock.recv()
         assert rep == {"status": "ok"}
 
-        rep = await alice_sock.recv()
+        with trio.fail_after(1):
+            rep = await alice_sock.recv()
         assert rep == {"status": "ok", "event": "message_arrived", "subject": alice.user_id}
 
         await alice_sock.send({"cmd": "message_get"})
@@ -43,12 +44,11 @@ async def test_message_from_bob_to_alice(backend, alice, bob):
 
 
 @pytest.mark.trio
-async def test_message_from_bob_to_alice_multi_backends(asyncio_loop, alice, bob):
-    url = postgresql_url()
-    await pg_driver.handler.init_db(url, True)
+async def test_message_from_bob_to_alice_multi_backends(asyncio_loop, postgresql_url, alice, bob):
+    await pg_driver.handler.init_db(postgresql_url, True)
     async with backend_factory(
-        **{"blockstore_postgresql": True, "dburl": url}
-    ) as backend_1, backend_factory(**{"blockstore_postgresql": True, "dburl": url}) as backend_2:
+        blockstore_postgresql=True, dburl=postgresql_url
+    ) as backend_1, backend_factory(blockstore_postgresql=True, dburl=postgresql_url) as backend_2:
 
         await backend_1.user.create(
             author="<backend-fixture>",
@@ -84,7 +84,8 @@ async def test_message_from_bob_to_alice_multi_backends(asyncio_loop, alice, bob
             rep = await bob_sock.recv()
             assert rep == {"status": "ok"}
 
-            rep = await alice_sock.recv()
+            with trio.fail_after(1):
+                rep = await alice_sock.recv()
             assert rep == {"status": "ok", "event": "message_arrived", "subject": alice.user_id}
 
             await alice_sock.send({"cmd": "message_get"})

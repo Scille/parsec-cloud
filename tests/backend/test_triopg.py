@@ -9,7 +9,13 @@ from tests.conftest import TRIOPG_POSTGRESQL_TEST_URL
 @pytest.fixture()
 @trio_asyncio.trio2aio
 async def asyncpg_conn(asyncio_loop):
-    return await asyncpg.connect(TRIOPG_POSTGRESQL_TEST_URL)
+    try:
+        return await asyncpg.connect(TRIOPG_POSTGRESQL_TEST_URL)
+    except asyncpg.exceptions.InvalidCatalogNameError as exc:
+        raise RuntimeError(
+            "Is `triopg_test` a valid database in PostgreSQL ?\n"
+            "Running `psql -c 'CREATE DATABASE triopg_test;'` may fix this"
+        ) from exc
 
 
 async def execute_queries(triopg_conn, asyncpg_conn):
