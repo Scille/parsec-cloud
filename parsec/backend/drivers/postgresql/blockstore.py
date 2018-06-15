@@ -1,3 +1,4 @@
+from parsec.utils import ParsecError
 from parsec.backend.exceptions import AlreadyExistsError, NotFoundError
 from parsec.backend.blockstore import BaseBlockStoreComponent
 
@@ -8,19 +9,23 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
         self.dbh = dbh
 
     async def get(self, id):
-        try:
-            block, = await self.dbh.fetch_one("SELECT block FROM blockstore WHERE id = %s", (id,))
-        except (TypeError, ValueError):
-            raise NotFoundError("Unknown block id.")
-
-        return block.tobytes()
+        async with self.dbh.pool.acquire() as conn:
+            block = await conn.fetchrow("SELECT block FROM blockstore WHERE id = $1", id)
+            if not block:
+                raise NotFoundError("Unknown block id.")
+        return block[0]
 
     async def post(self, id, block):
-        # TODO: non atomic operation !
-        exists = await self.dbh.fetch_one("SELECT 1 FROM blockstore WHERE id = %s", (id,))
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                exists = await conn.fetchrow("SELECT 1 FROM blockstore WHERE id = $1", id)
 
-        if exists is not None:
-            # Should never happen
-            raise AlreadyExistsError("A block already exists with id `%s`." % id)
+                if exists:
+                    # Should never happen
+                    raise AlreadyExistsError("A block already exists with id `%s`." % id)
 
-        await self.dbh.insert_one("INSERT INTO blockstore (id, block) VALUES (%s, %s)", (id, block))
+                result = await conn.execute(
+                    "INSERT INTO blockstore (id, block) VALUES ($1, $2)", id, block
+                )
+                if result != "INSERT 0 1":
+                    raise ParsecError("Insertion error.")

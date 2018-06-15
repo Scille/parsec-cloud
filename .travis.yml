@@ -13,6 +13,7 @@ install:
 before_script:
   - sudo modprobe fuse
   - psql -c 'create database parsec_test;' -U postgres
+  - psql -c 'create database triopg_test;' -U postgres
 script:
 # Only print output if check failed
 - OUT=$(2>&1 ./misc/autoformat.sh --check) || (echo $OUT; $(exit 1))

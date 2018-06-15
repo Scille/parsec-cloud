@@ -29,3 +29,7 @@ class UserClaimError(ParsecError):
 class OutOfDateError(ParsecError):
     status = "out_of_date_error"
     reason = "Out of date error."
+
+
+class TimeoutError(ParsecError):
+    status = "timeout"

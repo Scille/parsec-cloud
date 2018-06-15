@@ -180,7 +180,7 @@ async def test_device_configure_und_get_refused(
 
 
 @pytest.mark.trio
-async def test_device_configure_timeout(autojump_clock, backend, alice, configure_device_token):
+async def test_device_configure_timeout(backend, alice, configure_device_token, mock_clock):
 
     async with connect_backend(backend, auth_as="anonymous") as anonymous_sock:
 
@@ -197,8 +197,9 @@ async def test_device_configure_timeout(autojump_clock, backend, alice, configur
             }
         )
 
-        # Configuration should timeout after 5mn without answer (autojump_clock
-        # fixture make this instantaneous)
+        # Configuration should timeout after 5mn without answer
+        mock_clock.rate = 1
+        mock_clock.autojump_threshold = 0.1
         rep = await anonymous_sock.recv()
         assert rep == {
             "status": "timeout",

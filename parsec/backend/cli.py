@@ -1,5 +1,6 @@
 import sys
 import trio
+import trio_asyncio
 import click
 import logbook
 from raven.handlers.logbook import SentryHandler
@@ -61,7 +62,7 @@ def run_with_pdb(cmd, *args, **kwargs):
     "--blockstore-postgresql",
     is_flag=True,
     help="URL of the block store the clients should write into (default: "
-    "backend creates it own in-memory block store).",
+    "backend creates its own block store in memory or postgresql store).",
 )
 @click.option(
     "--blockstore-openstack",
@@ -146,6 +147,6 @@ def _backend(
 
     print("Starting Parsec Backend on %s:%s" % (host, port))
     try:
-        trio.run(_run_and_register_johndoe)
+        trio_asyncio.run(_run_and_register_johndoe)
     except KeyboardInterrupt:
         print("bye ;-)")
