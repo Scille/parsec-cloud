@@ -17,7 +17,7 @@ before_script:
 script:
 # Only print output if check failed
 - OUT=$(2>&1 ./misc/autoformat.sh --check) || (echo $OUT; $(exit 1))
-- py.test tests --runslow -v --no-postgresql
+- py.test tests --runslow -vvv
 after_success:
 - coveralls
 deploy:
