@@ -104,18 +104,19 @@ class Sharing(BaseAsyncComponent):
         self._backend_event_manager = backend_event_manager
         self.device = device
         self.msg_arrived = trio.Event()
-        self._message_listener_task_cancel_scope = None
+        self._message_listener_task_info = None
 
     async def _init(self, nursery):
-        self._message_listener_task_cancel_scope = await nursery.start(self._message_listener_task)
+        self._message_listener_task_info = await nursery.start(self._message_listener_task)
         await self._backend_event_manager.subscribe_backend_event(
             "message_arrived", self.device.user_id
         )
         get_signal("message_arrived").connect(self._msg_arrived_cb, weak=True)
 
     async def _teardown(self):
-        if self._message_listener_task_cancel_scope:
-            self._message_listener_task_cancel_scope.cancel()
+        cancel_scope, closed_event = self._message_listener_task_info
+        cancel_scope.cancel()
+        await closed_event.wait()
 
     async def _retrieve_device(self, user_id):
         rep = await self._backend_connection.send({"cmd": "user_get", "user_id": user_id})
@@ -199,17 +200,21 @@ class Sharing(BaseAsyncComponent):
                 logger.warning(exc.args[0])
 
     async def _message_listener_task(self, *, task_status=trio.TASK_STATUS_IGNORED):
-        with trio.open_cancel_scope() as cancel_scope:
-            task_status.started(cancel_scope)
-            while True:
-                try:
-                    await self.msg_arrived.wait()
-                    self.msg_arrived.clear()
-                    await self._process_all_last_messages()
-                except BackendNotAvailable:
-                    pass
-                except SharingError:
-                    logger.exception("Error with backend: " % traceback.format_exc())
+        try:
+            closed_event = trio.Event()
+            with trio.open_cancel_scope() as cancel_scope:
+                task_status.started((cancel_scope, closed_event))
+                while True:
+                    try:
+                        await self.msg_arrived.wait()
+                        self.msg_arrived.clear()
+                        await self._process_all_last_messages()
+                    except BackendNotAvailable:
+                        pass
+                    except SharingError:
+                        logger.exception("Error with backend: " % traceback.format_exc())
+        finally:
+            closed_event.set()
 
     def _msg_arrived_cb(self, sender):
         self.msg_arrived.set()

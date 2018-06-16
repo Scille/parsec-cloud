@@ -131,6 +131,7 @@ class PGHandler:
         self.signals = ["message_arrived", "user_claimed", "user_vlob_updated", "vlob_updated"]
         self.notifications_to_ignore = []
         self.signals_to_ignore = []
+        self._notification_sender_task_info = None
 
         self.signal_handlers = {}
         for signal in self.signals:
@@ -149,11 +150,11 @@ class PGHandler:
         self.notification_conn = await triopg.connect(self.url)
 
         for signal in self.signals:
-            await self.notification_conn.add_listener(signal, self.notification_handler)
+            await self.notification_conn.add_listener(signal, self._notification_handler)
 
-        await nursery.start(self.notification_sender)
+        self._notification_sender_task_info = await nursery.start(self._notification_sender)
 
-    def notification_handler(self, connection, pid, channel, payload):
+    def _notification_handler(self, connection, pid, channel, payload):
         try:
             self.notifications_to_ignore.remove((channel, payload))
         except ValueError:
@@ -161,16 +162,21 @@ class PGHandler:
             signal.send(payload)
             self.notifications_to_ignore.append((channel, payload))
 
-    async def notification_sender(self, task_status=trio.TASK_STATUS_IGNORED):
+    async def _notification_sender(self, task_status=trio.TASK_STATUS_IGNORED):
         async def send(signal, sender):
             async with self.pool.acquire() as conn:
                 await conn.execute("SELECT pg_notify($1, $2)", signal, sender)
 
-        task_status.started()
-        while True:
-            req = await self.queue.get()
-            self.notifications_to_ignore.append((req["signal"], req["sender"]))
-            await send(req["signal"], req["sender"])
+        try:
+            closed_event = trio.Event()
+            with trio.open_cancel_scope() as cancel_scope:
+                task_status.started((cancel_scope, closed_event))
+                while True:
+                    req = await self.queue.get()
+                    self.notifications_to_ignore.append((req["signal"], req["sender"]))
+                    await send(req["signal"], req["sender"])
+        finally:
+            closed_event.set()
 
     def get_signal_handler(self, signal):
         def signal_handler(sender):
@@ -182,5 +188,8 @@ class PGHandler:
         return signal_handler
 
     async def teardown(self):
+        cancel_scope, closed_event = self._notification_sender_task_info
+        cancel_scope.cancel()
+        await closed_event.wait()
         await self.pool.close()
         await self.notification_conn.close()

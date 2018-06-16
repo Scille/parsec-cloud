@@ -42,13 +42,16 @@ class BackendEventsManager(BaseAsyncComponent):
         self.backend_addr = backend_addr
         self._nursery = None
         self._subscribed_events = set()
+        self._event_listener_task_info = None
 
     async def _init(self, nursery):
         self._nursery = nursery
-        self._event_listener_task_cancel_scope = await nursery.start(self._event_listener_task)
+        self._event_listener_task_info = await nursery.start(self._event_listener_task)
 
     async def _teardown(self):
-        self._event_listener_task_cancel_scope.cancel()
+        cancel_scope, closed_event = self._event_listener_task_info
+        cancel_scope.cancel()
+        await closed_event.wait()
 
     async def subscribe_backend_event(self, event, subject=None):
         """
@@ -109,27 +112,39 @@ class BackendEventsManager(BaseAsyncComponent):
                 else:
                     get_signal(event).send(subject)
 
-        with trio.open_cancel_scope() as cancel:
-            task_status.started(cancel)
+        try:
+            closed_event = trio.Event()
+            with trio.open_cancel_scope() as cancel_scope:
+                task_status.started((cancel_scope, closed_event))
 
-            while True:
-                try:
-                    sock = await bc.backend_connection_factory(self.backend_addr, self.device)
-                    await _event_pump(sock)
-                except (
-                    bc.BackendNotAvailable,
-                    trio.BrokenStreamError,
-                    trio.ClosedStreamError,
-                ) as exc:
-                    # In case of connection failure, wait a bit and restart
-                    logger.debug("Connection lost with backend ({}), restarting connection...", exc)
-                    await trio.sleep(1)
-                except (SubscribeBackendEventError, ListenBackendEventError, json.JSONDecodeError):
-                    logger.exception("Invalid response sent by backend, restarting connection...")
-                    await trio.sleep(1)
-                except bc.HandshakeError as exc:
-                    # Handshake error means there is no need retrying the connection
-                    # Only thing we can do is sending a signal to notify the
-                    # trouble...
-                    # TODO: think about this kind of signal format
-                    get_signal("panic").send(exc)
+                while True:
+                    try:
+                        sock = await bc.backend_connection_factory(self.backend_addr, self.device)
+                        await _event_pump(sock)
+                    except (
+                        bc.BackendNotAvailable,
+                        trio.BrokenStreamError,
+                        trio.ClosedStreamError,
+                    ) as exc:
+                        # In case of connection failure, wait a bit and restart
+                        logger.debug(
+                            "Connection lost with backend ({}), restarting connection...", exc
+                        )
+                        await trio.sleep(1)
+                    except (
+                        SubscribeBackendEventError,
+                        ListenBackendEventError,
+                        json.JSONDecodeError,
+                    ):
+                        logger.exception(
+                            "Invalid response sent by backend, restarting connection..."
+                        )
+                        await trio.sleep(1)
+                    except bc.HandshakeError as exc:
+                        # Handshake error means there is no need retrying the connection
+                        # Only thing we can do is sending a signal to notify the
+                        # trouble...
+                        # TODO: think about this kind of signal format
+                        get_signal("panic").send(exc)
+        finally:
+            closed_event.set()

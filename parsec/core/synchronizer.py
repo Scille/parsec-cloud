@@ -14,30 +14,36 @@ class Synchronizer(BaseAsyncComponent):
         super().__init__()
         self.auto_sync = auto_sync
         self.fs = fs
-        self._synchronizer_task_cancel_scope = None
+        self._synchronizer_task_info = None
 
     async def _init(self, nursery):
         if self.auto_sync:
-            self._synchronizer_task_cancel_scope = await nursery.start(self._synchronizer_task)
+            self._synchronizer_task_info = await nursery.start(self._synchronizer_task)
 
     async def _teardown(self):
-        if self._synchronizer_task_cancel_scope:
-            self._synchronizer_task_cancel_scope.cancel()
+        if self._synchronizer_task_info:
+            cancel_scope, closed_event = self._synchronizer_task_info
+            cancel_scope.cancel()
+            await closed_event.wait()
 
     async def _synchronizer_task(self, *, task_status=trio.TASK_STATUS_IGNORED):
-        with trio.open_cancel_scope() as cancel_scope:
-            task_status.started(cancel_scope)
-            while True:
-                await trio.sleep(1)
-                # trigger_time = pendulum.now() + pendulum.interval(seconds=1)
-                try:
-                    # TODO: quick'n dirty fix...
-                    await self.fs.sync("/")
-                # await self._scan_and_sync_fs(self.fs.root, trigger_time)
-                except BackendNotAvailable:
-                    pass
-                except BackendError:
-                    logger.warning("Error with backend: %s" % traceback.format_exc())
+        try:
+            closed_event = trio.Event()
+            with trio.open_cancel_scope() as cancel_scope:
+                task_status.started(cancel_scope, closed_event)
+                while True:
+                    await trio.sleep(1)
+                    # trigger_time = pendulum.now() + pendulum.interval(seconds=1)
+                    try:
+                        # TODO: quick'n dirty fix...
+                        await self.fs.sync("/")
+                    # await self._scan_and_sync_fs(self.fs.root, trigger_time)
+                    except BackendNotAvailable:
+                        pass
+                    except BackendError:
+                        logger.warning("Error with backend: %s" % traceback.format_exc())
+        finally:
+            closed_event.set()
 
     # async def _scan_and_sync_fs(self, entry, trigger_time):
     #     if entry.need_sync and entry.updated < trigger_time:
