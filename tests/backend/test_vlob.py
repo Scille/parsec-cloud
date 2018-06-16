@@ -1,4 +1,5 @@
 import pytest
+import trio
 
 from parsec.utils import to_jsonb64
 
@@ -207,3 +208,55 @@ async def test_update_bad_seed(backend, alice_backend_sock):
     rep = await alice_backend_sock.recv()
 
     assert rep == {"status": "trust_seed_error", "reason": "Invalid write trust seed."}
+
+
+@pytest.mark.trio
+async def test_update_get_event(backend, alice_backend_sock, bob_backend_sock):
+    await populate_backend_vlob(backend)
+
+    async def update_vlob(id, version):
+        await alice_backend_sock.send(
+            {
+                "cmd": "vlob_update",
+                "id": id,
+                "trust_seed": "<%s wts>" % id,
+                "version": version,
+                "blob": to_jsonb64(b""),
+            }
+        )
+        rep = await alice_backend_sock.recv()
+        assert rep == {"status": "ok"}
+
+    # Update before event registration should be ignored
+    await update_vlob("1", 3)
+
+    # Register to event
+    await bob_backend_sock.send({"cmd": "event_subscribe", "event": "vlob_updated", "subject": "1"})
+    rep = await bob_backend_sock.recv()
+    assert rep == {"status": "ok"}
+
+    # Multiple events should stack up
+    await update_vlob("1", 4)
+    await update_vlob("1", 5)
+
+    # Unrelated event should be ignored
+    await update_vlob("2", 2)
+
+    # Time to retrieve the events...
+    async def get_event():
+        await bob_backend_sock.send({"cmd": "event_listen", "wait": False})
+        return await bob_backend_sock.recv()
+
+    e1 = await get_event()
+    assert e1 == {"status": "ok", "event": "vlob_updated", "status": "ok", "subject": "1"}
+    e2 = await get_event()
+    assert e2 == {"status": "ok", "event": "vlob_updated", "status": "ok", "subject": "1"}
+    e3 = await get_event()
+    assert e3 == {"status": "no_events"}  # No more events
+
+    # Test the waiting mode as well
+    await bob_backend_sock.send({"cmd": "event_listen", "wait": True})
+    await update_vlob("1", 6)
+    with trio.fail_after(1):
+        rep = await bob_backend_sock.recv()
+    assert rep == {"status": "ok", "event": "vlob_updated", "status": "ok", "subject": "1"}

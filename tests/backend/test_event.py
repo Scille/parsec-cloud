@@ -73,7 +73,7 @@ async def test_event_listen(backend, alice, bob):
 
         await alice_sock.send({"cmd": "event_listen", "wait": False})
         rep = await alice_sock.recv()
-        assert rep == {"status": "ok"}
+        assert rep == {"status": "no_events"}
 
         await subscribe(alice_sock, "ping", "foo")
 

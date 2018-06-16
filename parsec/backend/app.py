@@ -255,7 +255,7 @@ class BackendApp:
             try:
                 event, subject = client_ctx.events.get_nowait()
             except trio.WouldBlock:
-                return {"status": "ok"}
+                return {"status": "no_events"}
 
         return {"status": "ok", "event": event, "subject": subject}
 

@@ -248,6 +248,12 @@ async def alice_backend_sock(backend, alice):
 
 
 @pytest.fixture
+async def bob_backend_sock(backend, bob):
+    async with connect_backend(backend, auth_as=bob) as sock:
+        yield sock
+
+
+@pytest.fixture
 async def core(asyncio_loop, backend_addr, tmpdir, default_devices, config={}):
     async with core_factory(
         **{
