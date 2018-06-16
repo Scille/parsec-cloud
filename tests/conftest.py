@@ -249,14 +249,15 @@ async def alice_backend_sock(backend, alice):
         yield sock
 
 
-def core_signal_ns(core):
-    return core.signals_context.signals_namespace
-
-
 @pytest.fixture
 async def bob_backend_sock(backend, bob):
     async with connect_backend(backend, auth_as=bob) as sock:
         yield sock
+
+
+@pytest.fixture
+def core_signal_ns(core):
+    return core.signals_context.signals_namespace
 
 
 @pytest.fixture
