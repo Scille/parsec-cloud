@@ -4,8 +4,7 @@ from string import ascii_lowercase
 from hypothesis import strategies as st, note
 from hypothesis.stateful import Bundle
 
-from tests.common import connect_core, core_factory
-from tests.hypothesis.common import OracleFS, rule, rule_once
+from tests.hypothesis.common import rule, rule_once
 
 
 # The point is not to find breaking filenames here, so keep it simple
@@ -15,7 +14,11 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 @pytest.mark.slow
 @pytest.mark.trio
 async def test_core_offline_restart_and_tree(
-    TrioDriverRuleBasedStateMachine, mocked_local_storage_connection, backend_addr, tmpdir, alice
+    TrioDriverRuleBasedStateMachine,
+    oracle_fs_factory,
+    core_factory,
+    core_sock_factory,
+    device_factory,
 ):
     class RestartCore(Exception):
         pass
@@ -23,38 +26,34 @@ async def test_core_offline_restart_and_tree(
     class CoreOfflineRestartAndTree(TrioDriverRuleBasedStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")
-        count = 0
 
         async def trio_runner(self, task_status):
-            mocked_local_storage_connection.reset()
+            device = device_factory()
 
-            type(self).count += 1
-            config = {
-                "base_settings_path": tmpdir.mkdir("try-%s" % self.count).strpath,
-                "backend_addr": backend_addr,
-            }
-
+            self.core = None
             self.sys_cmd = lambda x: self.communicator.send(("sys", x))
             self.core_cmd = lambda x: self.communicator.send(("core", x))
-            self.oracle_fs = OracleFS()
+            self.oracle_fs = oracle_fs_factory()
 
             async def run_core(on_ready):
-                async with core_factory(**config) as core:
-                    self.core = core
+                self.core = await core_factory(devices=[device], config={"auto_sync": False})
+                try:
+                    await self.core.login(device)
+                    sock = core_sock_factory(self.core)
 
-                    await core.login(alice)
-                    async with connect_core(core) as sock:
+                    await on_ready(sock)
 
-                        await on_ready(sock)
+                    while True:
+                        target, msg = await self.communicator.trio_recv()
+                        if target == "core":
+                            await sock.send(msg)
+                            rep = await sock.recv()
+                            await self.communicator.trio_respond(rep)
+                        elif msg == "restart!":
+                            raise RestartCore()
 
-                        while True:
-                            target, msg = await self.communicator.trio_recv()
-                            if target == "core":
-                                await sock.send(msg)
-                                rep = await sock.recv()
-                                await self.communicator.trio_respond(rep)
-                            elif msg == "restart!":
-                                raise RestartCore()
+                finally:
+                    await self.core.teardown()
 
             async def bootstrap_core(sock):
                 task_status.started()
@@ -127,14 +126,5 @@ async def test_core_offline_restart_and_tree(
         def restart(self):
             rep = self.sys_cmd("restart!")
             assert rep is True
-
-        @rule(path=st.one_of(Folders, Files))
-        def flush(self, path):
-            # Note that fs api should automatically do the flush when creating
-            # files/folders. So manual flush such as here has no effect.
-            rep = self.core_cmd({"cmd": "flush", "path": path})
-            note(rep)
-            expected_status = self.oracle_fs.flush(path)
-            assert rep["status"] == expected_status
 
     await CoreOfflineRestartAndTree.run_test()

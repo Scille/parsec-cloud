@@ -1,6 +1,7 @@
 from collections import defaultdict
 from contextlib import contextmanager
 from unittest.mock import patch
+import inspect
 import trio
 
 
@@ -14,19 +15,31 @@ class OpenTCPStreamMockWrapper:
         self._hooks = {}
         self._offlines = set()
 
+    @contextmanager
     def install_hook(self, addr, hook):
-        if not hook:
-            self._hooks.pop(addr, None)
-        else:
-            self._hooks[addr] = hook
+        self.push_hook(addr, hook)
+        try:
+            yield
+        finally:
+            self.pop_hook(addr)
+
+    def push_hook(self, addr, hook):
+        assert addr not in self._hooks
+        self._hooks[addr] = hook
+
+    def pop_hook(self, addr):
+        self._hooks.pop(addr)
 
     async def __call__(self, host, port, **kwargs):
         addr = "tcp://%s:%s" % (host, port)
         hook = self._hooks.get(addr)
         if hook and addr not in self._offlines:
-            sock = await hook(host, port, **kwargs)
+            if inspect.iscoroutinefunction(hook):
+                sock = await hook(host, port, **kwargs)
+            else:
+                sock = hook(host, port, **kwargs)
         else:
-            raise ConnectionRefusedError("[Errno 111] Connection refused")
+            raise ConnectionRefusedError(111, "Connection refused")
 
         self.socks[addr].append(sock)
         return sock
@@ -36,6 +49,7 @@ class OpenTCPStreamMockWrapper:
             return
 
         for sock in self.socks[addr]:
+            # TODO: keep old hook ?
             sock.send_stream.send_all_hook = _broken_stream
             sock.receive_stream.receive_some_hook = _broken_stream
         self._offlines.add(addr)

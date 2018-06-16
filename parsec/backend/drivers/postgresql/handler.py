@@ -92,8 +92,8 @@ async def init_db(url, force=False):
                 status TEXT,
                 device_name TEXT,
                 device_verify_key BYTEA,
-                user_privkey_cypherkey BYTEA,
-                cyphered_user_privkey BYTEA,
+                exchange_cipherkey BYTEA,
+                ciphered_user_privkey BYTEA,
                 refused_reason TEXT
             )"""
         )

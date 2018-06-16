@@ -3,7 +3,6 @@ import click
 import trio
 import multiprocessing
 
-from parsec.signals import get_signal
 from parsec.core.base import BaseAsyncComponent
 
 try:
@@ -43,12 +42,12 @@ class FuseStoppingError(FuseManagerError):
 
 
 class FuseManager(BaseAsyncComponent):
-    def __init__(self, core_addr: str, debug: bool = False, nothreads: bool = False):
+    def __init__(self, core_addr: str, signal_ns, debug: bool = False, nothreads: bool = False):
         super().__init__()
         # TODO: make fuse process send events to synchronise with the manager
-        self._fuse_mountpoint_started = get_signal("fuse_mountpoint_started")
-        self._fuse_mountpoint_need_stop = get_signal("fuse_mountpoint_need_stop")
-        self._fuse_mountpoint_stopped = get_signal("fuse_mountpoint_stopped")
+        self._fuse_mountpoint_started = signal_ns.signal("fuse_mountpoint_started")
+        self._fuse_mountpoint_need_stop = signal_ns.signal("fuse_mountpoint_need_stop")
+        self._fuse_mountpoint_stopped = signal_ns.signal("fuse_mountpoint_stopped")
         self._start_fuse_config = {
             "socket_address": core_addr,
             "debug": debug,

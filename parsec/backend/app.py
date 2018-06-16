@@ -1,29 +1,28 @@
 import attr
 import trio
-import blinker
 import logbook
 import traceback
 from nacl.public import PublicKey
 from nacl.signing import VerifyKey
 from json import JSONDecodeError
 
+from parsec.signals import Namespace as SignalNamespace
 from parsec.utils import ParsecError
 from parsec.networking import CookedSocket
 from parsec.handshake import HandshakeFormatError, ServerHandshake
-from parsec.schema import BaseCmdSchema, fields, validate
+from parsec.schema import BaseCmdSchema, fields, OneOfSchema
 
 from parsec.backend.drivers.memory import (
     MemoryUserComponent,
     MemoryVlobComponent,
-    MemoryUserVlobComponent,
     MemoryMessageComponent,
     MemoryBlockStoreComponent,
+    MemoryBeaconComponent,
 )
 from parsec.backend.drivers.postgresql import (
     PGHandler,
     PGUserComponent,
     PGVlobComponent,
-    PGUserVlobComponent,
     PGMessageComponent,
     PGBlockStoreComponent,
 )
@@ -56,20 +55,36 @@ class cmd_PING_Schema(BaseCmdSchema):
     ping = fields.String(required=True)
 
 
-class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
-    event = fields.String(
-        required=True,
-        validate=validate.OneOf(
-            [
-                "vlob_updated",
-                "user_vlob_updated",
-                "message_arrived",
-                "ping",
-                "device_try_claim_submitted",
-            ]
-        ),
-    )
-    subject = fields.String(missing=None)
+class cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema(BaseCmdSchema):
+    event = fields.CheckedConstant("beacon.updated")
+    beacon_id = fields.String(missing=None)
+
+
+class cmd_EVENT_SUBSCRIBE_MessageReceivedSchema(BaseCmdSchema):
+    event = fields.CheckedConstant("message.received")
+
+
+class cmd_EVENT_SUBSCRIBE_DeviceTryclaimSubmittedSchema(BaseCmdSchema):
+    event = fields.CheckedConstant("device.try_claim_submitted")
+
+
+class cmd_EVENT_SUBSCRIBE_PingedSchema(BaseCmdSchema):
+    event = fields.CheckedConstant("pinged")
+    ping = fields.String(missing=None)
+
+
+class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema, OneOfSchema):
+    type_field = "event"
+    type_field_remove = False
+    type_schemas = {
+        "beacon.updated": cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema(),
+        "message.received": cmd_EVENT_SUBSCRIBE_MessageReceivedSchema(),
+        "device.try_claim_submitted": cmd_EVENT_SUBSCRIBE_DeviceTryclaimSubmittedSchema(),
+        "pinged": cmd_EVENT_SUBSCRIBE_PingedSchema(),  # TODO: rename to "pinged"
+    }
+
+    def get_obj_type(self, obj):
+        return obj["event"]
 
 
 class cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
@@ -101,8 +116,8 @@ class ClientContext:
 
 
 class BackendApp:
-    def __init__(self, config):
-        self.signal_ns = blinker.Namespace()
+    def __init__(self, config, signal_ns=None):
+        self.signal_ns = signal_ns or SignalNamespace()
         self.config = config
         self.nursery = None
         self.blockstore_postgresql = config.blockstore_postgresql
@@ -128,9 +143,9 @@ class BackendApp:
                 self.blockstore = None
 
             self.user = MemoryUserComponent(self.signal_ns)
-            self.vlob = MemoryVlobComponent(self.signal_ns)
-            self.user_vlob = MemoryUserVlobComponent(self.signal_ns)
             self.message = MemoryMessageComponent(self.signal_ns)
+            self.beacon = MemoryBeaconComponent(self.signal_ns)
+            self.vlob = MemoryVlobComponent(self.signal_ns, self.beacon)
 
         else:
             self.dbh = PGHandler(self.config.dburl, self.signal_ns)
@@ -152,7 +167,6 @@ class BackendApp:
 
             self.user = PGUserComponent(self.dbh, self.signal_ns)
             self.vlob = PGVlobComponent(self.dbh, self.signal_ns)
-            self.user_vlob = PGUserVlobComponent(self.dbh, self.signal_ns)
             self.message = PGMessageComponent(self.dbh, self.signal_ns)
 
         self.anonymous_cmds = {
@@ -174,17 +188,18 @@ class BackendApp:
             "device_refuse_configuration_try": self.user.api_device_refuse_configuration_try,
             "blockstore_post": self._api_blockstore_post,
             "blockstore_get": self._api_blockstore_get,
+            "vlob_group_check": self.vlob.api_vlob_group_check,
             "vlob_create": self.vlob.api_vlob_create,
             "vlob_read": self.vlob.api_vlob_read,
             "vlob_update": self.vlob.api_vlob_update,
-            "user_vlob_read": self.user_vlob.api_user_vlob_read,
-            "user_vlob_update": self.user_vlob.api_user_vlob_update,
+            "beacon_read": self.beacon.api_beacon_read,
             "message_get": self.message.api_message_get,
             "message_new": self.message.api_message_new,
             "ping": self._api_ping,
         }
 
     async def init(self, nursery):
+        self.nursery = nursery
         if self.dbh:
             await self.dbh.init(nursery)
 
@@ -194,7 +209,7 @@ class BackendApp:
 
     async def _api_ping(self, client_ctx, msg):
         msg = cmd_PING_Schema().load_or_abort(msg)
-        self.signal_ns.signal("ping").send(msg["ping"])
+        self.signal_ns.signal("pinged").send(client_ctx.id, author=client_ctx.id, ping=msg["ping"])
         return {"status": "ok", "pong": msg["ping"]}
 
     async def _api_blockstore_post(self, client_ctx, msg):
@@ -212,52 +227,88 @@ class BackendApp:
     async def _api_event_subscribe(self, client_ctx, msg):
         msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(msg)
         event = msg["event"]
-        subject = msg["subject"]
 
-        if event in (
-            "user_vlob_updated",
-            "message_arrived",
-            "device_try_claim",
-        ) and subject not in (None, client_ctx.user_id):
-            # TODO: is the `subject == None` valid here ?
-            return {"status": "private_event", "reason": "This type of event is private."}
+        if event == "beacon.updated":
+            expected_beacon_id = msg["beacon_id"]
+            key = (event, expected_beacon_id)
 
-        def _handle_event(sender):
+            def _build_event_msg(author, beacon_id, index, src_id, src_version):
+                if beacon_id != expected_beacon_id:
+                    return None
+                return {
+                    "event": event,
+                    "beacon_id": beacon_id,
+                    "index": index,
+                    "src_id": src_id,
+                    "src_version": src_version,
+                }
+
+        elif event == "message.received":
+            key = event
+
+            def _build_event_msg(author, recipient, index):
+                if recipient != client_ctx.user_id:
+                    return None
+                return {"event": event, "index": index}
+
+        elif event == "device.try_claim_submitted":
+            key = event
+
+            def _build_event_msg(author, user_id, device_name, config_try_id):
+                if user_id != client_ctx.user_id:
+                    return None
+                return {"event": event, "device_name": device_name, "config_try_id": config_try_id}
+
+        elif event == "pinged":
+            expected_ping = msg["ping"]
+            key = (event, expected_ping)
+
+            def _build_event_msg(author, ping):
+                if expected_ping and ping != expected_ping:
+                    return None
+                return {"event": event, "ping": ping}
+
+        def _handle_event(sender, author, **kwargs):
+            if author == client_ctx.id:
+                return
             try:
-                client_ctx.events.put_nowait((event, sender))
+                msg = _build_event_msg(author, **kwargs)
+                if msg:
+                    client_ctx.events.put_nowait(msg)
             except trio.WouldBlock:
                 logger.warning("event queue is full for %s" % client_ctx.id)
 
-        client_ctx.subscribed_events[event, subject] = _handle_event
-        if subject:
-            self.signal_ns.signal(event).connect(_handle_event, sender=subject, weak=True)
-        else:
-            self.signal_ns.signal(event).connect(_handle_event, weak=True)
+        client_ctx.subscribed_events[key] = _handle_event
+        self.signal_ns.signal(event).connect(_handle_event, weak=True)
         return {"status": "ok"}
 
     async def _api_event_unsubscribe(self, client_ctx, msg):
         msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(msg)
+        if msg["event"] == "pinged":
+            key = (msg["event"], msg["ping"])
+        elif msg["event"] == "beacon.updated":
+            key = (msg["event"], msg["beacon_id"])
+        else:
+            key = msg["event"]
+
         try:
-            del client_ctx.subscribed_events[msg["event"], msg["subject"]]
+            del client_ctx.subscribed_events[key]
         except KeyError:
-            return {
-                "status": "not_subscribed",
-                "reason": "Not subscribed to this event/subject couple",
-            }
+            return {"status": "not_subscribed", "reason": f"Not subscribed to {key!r}"}
 
         return {"status": "ok"}
 
     async def _api_event_listen(self, client_ctx, msg):
         msg = cmd_EVENT_LISTEN_Schema().load_or_abort(msg)
         if msg["wait"]:
-            event, subject = await client_ctx.events.get()
+            event_data = await client_ctx.events.get()
         else:
             try:
-                event, subject = client_ctx.events.get_nowait()
+                event_data = client_ctx.events.get_nowait()
             except trio.WouldBlock:
                 return {"status": "no_events"}
 
-        return {"status": "ok", "event": event, "subject": subject}
+        return {"status": "ok", **event_data}
 
     async def _api_event_list_subscribed(self, client_ctx, msg):
         BaseCmdSchema().load_or_abort(msg)  # empty msg expected

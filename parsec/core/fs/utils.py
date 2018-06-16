@@ -76,6 +76,7 @@ def new_user_manifest(author):
         "updated": now,
         "children": {},
         "last_processed_message": 0,
+        "sharing": {"owner": author.user_id, "guests": [], "notify_sink": uuid4().hex},
     }
 
 

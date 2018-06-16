@@ -2,8 +2,6 @@ import pytest
 
 from parsec.utils import to_jsonb64
 
-from tests.common import connect_backend
-
 
 def _get_existing_block(backend):
     # Backend must have been populated before that
@@ -11,17 +9,16 @@ def _get_existing_block(backend):
 
 
 @pytest.mark.trio
-async def test_blockstore_post_and_get(backend, alice, bob):
-    async with connect_backend(backend, auth_as=alice) as sock:
-        block = to_jsonb64(b"Hodi ho !")
-        await sock.send({"cmd": "blockstore_post", "block": block})
-        rep = await sock.recv()
-    assert rep["status"] == "ok"
-    assert rep["id"]
+async def test_blockstore_post_and_get(alice_backend_sock, bob_backend_sock):
+    block_id = "123"
 
-    async with connect_backend(backend, auth_as=bob) as sock:
-        await sock.send({"cmd": "blockstore_get", "id": rep["id"]})
-        rep = await sock.recv()
+    block = to_jsonb64(b"Hodi ho !")
+    await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block})
+    rep = await alice_backend_sock.recv()
+    assert rep["status"] == "ok"
+
+    await bob_backend_sock.send({"cmd": "blockstore_get", "id": block_id})
+    rep = await bob_backend_sock.recv()
     assert rep == {"status": "ok", "block": block}
 
 
@@ -29,10 +26,12 @@ async def test_blockstore_post_and_get(backend, alice, bob):
     "bad_msg",
     [
         {},
-        {"blob": to_jsonb64(b"..."), "bad_field": "foo"},
-        {"blob": 42},
-        {"blob": None},
-        {"id": "123", "blob": to_jsonb64(b"...")},
+        {"id": "123", "blob": to_jsonb64(b"..."), "bad_field": "foo"},
+        {"id": 42, "blob": to_jsonb64(b"...")},
+        {"id": None, "blob": to_jsonb64(b"...")},
+        {"id": "123", "blob": 42},
+        {"id": "123", "blob": None},
+        {"blob": to_jsonb64(b"...")},
     ],
 )
 @pytest.mark.trio

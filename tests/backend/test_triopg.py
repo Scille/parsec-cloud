@@ -3,14 +3,13 @@ import trio_asyncio
 import pytest
 
 from parsec.backend.drivers.postgresql import triopg
-from tests.conftest import TRIOPG_POSTGRESQL_TEST_URL
 
 
 @pytest.fixture()
 @trio_asyncio.trio2aio
-async def asyncpg_conn(asyncio_loop):
+async def asyncpg_conn(asyncio_loop, postgresql_url):
     try:
-        return await asyncpg.connect(TRIOPG_POSTGRESQL_TEST_URL)
+        return await asyncpg.connect(postgresql_url)
     except asyncpg.exceptions.InvalidCatalogNameError as exc:
         raise RuntimeError(
             "Is `triopg_test` a valid database in PostgreSQL ?\n"
@@ -49,15 +48,15 @@ async def execute_queries(triopg_conn, asyncpg_conn):
 
 
 @pytest.mark.trio
-async def test_triopg_connection(asyncpg_conn):
-    conn = await triopg.connect(TRIOPG_POSTGRESQL_TEST_URL)
+async def test_triopg_connection(asyncpg_conn, postgresql_url):
+    conn = await triopg.connect(postgresql_url)
     await execute_queries(conn, asyncpg_conn)
     await conn.close()
 
 
 @pytest.mark.trio
-async def test_triopg_pool(asyncpg_conn):
-    pool = await triopg.create_pool(TRIOPG_POSTGRESQL_TEST_URL)
+async def test_triopg_pool(asyncpg_conn, postgresql_url):
+    pool = await triopg.create_pool(postgresql_url)
     async with pool.acquire() as conn:
         async with pool.acquire() as conn2:
             assert conn != conn2

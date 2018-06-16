@@ -277,14 +277,16 @@ io_statistics:
                         yield coro.cr_frame, coro.cr_frame.f_lineno
 
                         coro = coro.cr_await
-                    else:
+                    elif hasattr(coro, "gi_frame"):
                         # A generator decorated with @types.coroutine
                         yield coro.gi_frame, coro.gi_frame.f_lineno
 
                         coro = coro.gi_yieldfrom
+                    else:
+                        # A coroutine wrapper (used by AsyncGenerator for
+                        # instance), cannot go further
+                        return
 
-            # tb = ''.join(traceback.format_stack(task.coro.cr_frame))
-            # TODO: not working with <init> coroutine...
             ss = traceback.StackSummary.extract(walk_coro_stack(task.coro))
             tb = "".join(ss.format())
             sout.write(tb + "\n")

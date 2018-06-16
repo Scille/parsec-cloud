@@ -130,13 +130,13 @@ class MemoryUserComponent(BaseUserComponent):
         }
 
     async def register_device_configuration_try(
-        self, config_try_id, user_id, device_name, device_verify_key, user_privkey_cypherkey
+        self, config_try_id, user_id, device_name, device_verify_key, exchange_cipherkey
     ):
         self._device_configuration_tries[(user_id, config_try_id)] = {
             "status": "waiting_answer",
             "device_name": device_name,
             "device_verify_key": device_verify_key,
-            "user_privkey_cypherkey": user_privkey_cypherkey,
+            "exchange_cipherkey": exchange_cipherkey,
         }
         return config_try_id
 
@@ -147,7 +147,9 @@ class MemoryUserComponent(BaseUserComponent):
 
         return config_try
 
-    async def accept_device_configuration_try(self, config_try_id, user_id, cyphered_user_privkey):
+    async def accept_device_configuration_try(
+        self, config_try_id, user_id, ciphered_user_privkey, ciphered_user_manifest_access
+    ):
         config_try = self._device_configuration_tries.get((user_id, config_try_id))
         if not config_try:
             raise NotFoundError()
@@ -156,7 +158,8 @@ class MemoryUserComponent(BaseUserComponent):
             raise AlreadyExistsError("Device configuration try already done.")
 
         config_try["status"] = "accepted"
-        config_try["cyphered_user_privkey"] = cyphered_user_privkey
+        config_try["ciphered_user_privkey"] = ciphered_user_privkey
+        config_try["ciphered_user_manifest_access"] = ciphered_user_manifest_access
 
     async def refuse_device_configuration_try(self, config_try_id, user_id, reason):
         config_try = self._device_configuration_tries.get((user_id, config_try_id))

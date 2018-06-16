@@ -1,7 +1,6 @@
-import os
 import re
 import logging
-import attr
+from pathlib import Path
 from nacl.public import PrivateKey
 from nacl.signing import SigningKey
 from nacl.pwhash import argon2i
@@ -9,6 +8,7 @@ from nacl.secret import SecretBox
 import nacl.utils
 
 from parsec.schema import UnknownCheckedSchema, fields, validate
+from parsec.core.local_db import LocalDB
 
 
 logger = logging.getLogger("parsec")
@@ -50,11 +50,33 @@ class DeviceConfSchema(UnknownCheckedSchema):
     device_id = fields.String(validate=validate.Regexp(DEVICE_ID_PATTERN), required=True)
     user_privkey = fields.Base64Bytes(required=True)
     device_signkey = fields.Base64Bytes(required=True)
+    user_manifest_access = fields.Base64Bytes(required=True)
+    local_symkey = fields.Base64Bytes(required=True)
     encryption = fields.String(validate=validate.OneOf({"quedalle", "password"}), required=True)
     salt = fields.Base64Bytes()
 
 
+class UserManifestAccessSchema(UnknownCheckedSchema):
+    id = fields.String(required=True)
+    rts = fields.String(required=True)
+    wts = fields.String(required=True)
+    key = fields.Base64Bytes(required=True, validate=validate.Length(min=32, max=32))
+
+
 device_conf_schema = DeviceConfSchema()
+user_manifest_access_schema = UserManifestAccessSchema()
+
+
+def dumps_user_manifest_access(access):
+    user_manifest_access_raw, errors = user_manifest_access_schema.dumps(access)
+    assert not errors
+    return user_manifest_access_raw.encode()
+
+
+def loads_user_manifest_access(data):
+    user_manifest_access, errors = user_manifest_access_schema.loads(data.decode())
+    assert not errors
+    return user_manifest_access
 
 
 def _secret_box_factory(password, salt):
@@ -68,27 +90,21 @@ def _generate_salt():
     return nacl.utils.random(argon2i.SALTBYTES)
 
 
-@attr.s(init=False, slots=True)
 class Device:
-    id = attr.ib()
-    user_privkey = attr.ib()
-    device_signkey = attr.ib()
-    local_storage_db_path = attr.ib()
+    def __repr__(self):
+        return f"<{type(self).__name__}(id={self.id!r}, local_db={self.local_db!r})>"
 
-    def __init__(self, id, user_privkey, device_signkey, local_storage_db_path):
+    def __init__(
+        self, id, user_privkey, device_signkey, local_symkey, user_manifest_access, local_db
+    ):
         assert is_valid_device_id(id)
         self.id = id
-        self.local_storage_db_path = local_storage_db_path
+        self.user_id, self.device_name = id.split("@")
         self.user_privkey = PrivateKey(user_privkey)
         self.device_signkey = SigningKey(device_signkey)
-
-    @property
-    def user_id(self):
-        return self.id.split("@")[0]
-
-    @property
-    def device_name(self):
-        return self.id.split("@")[1]
+        self.local_symkey = local_symkey
+        self.user_manifest_access = user_manifest_access
+        self.local_db = local_db
 
     @property
     def user_pubkey(self):
@@ -101,25 +117,22 @@ class Device:
 
 class DevicesManager:
     def __init__(self, devices_conf_path):
-        self.devices_conf_path = devices_conf_path
+        self.devices_conf_path = Path(devices_conf_path)
 
     def list_available_devices(self):
-        devices = []
         try:
-            device_ids = os.listdir(self.devices_conf_path)
+            candidate_pathes = list(self.devices_conf_path.iterdir())
         except FileNotFoundError:
-            return devices
+            return []
 
-        for device_id in device_ids:
-            _, errors = self._load_device_conf(device_id)
+        # Sanity check
+        devices = []
+        for device_path in candidate_pathes:
+            _, errors = self._load_device_conf(device_path.name)
             if errors:
-                device_conf_path = os.path.join(self.devices_conf_path, device_id)
-                logger.warning(
-                    "Invalid %s device config:\n%s"
-                    % (device_conf_path, "\n".join(["- %s: %s" % kv for kv in errors.items()]))
-                )
+                logger.warning(f"Invalid `{device_path}` device config: {errors}")
             else:
-                devices.append(device_id)
+                devices.append(device_path.name)
         return devices
 
     def _load_device_conf(self, device_id):
@@ -129,33 +142,29 @@ class DevicesManager:
             errors[device_id] = "Invalid device id"
             return None, errors
 
-        device_key_path = os.path.join(self.devices_conf_path, device_id, "key.json")
-        if not os.path.isfile(device_key_path):
+        device_key_path = self.devices_conf_path / device_id / "key.json"
+        if not device_key_path.is_file():
             errors[device_key_path] = "Missing key file"
             return None, errors
 
-        with open(device_key_path) as fd:
-            device_conf, errors = device_conf_schema.loads(fd.read())
+        device_conf, errors = device_conf_schema.loads(device_key_path.read_text())
         if errors:
             return None, errors
 
         return device_conf, errors
 
-    def _ensure_devices_conf_path_exists(self):
+    def register_new_device(
+        self, device_id, user_privkey, device_signkey, user_manifest_access, password=None
+    ):
+        device_conf_path = self.devices_conf_path / device_id
         try:
-            os.mkdir(self.devices_conf_path)
-        except FileExistsError:
-            pass
+            device_conf_path.mkdir(parents=True)
+        except FileExistsError as exc:
+            raise DeviceSavingError(f"Device config `{device_conf_path}` already exists") from exc
 
-    def register_new_device(self, device_id, user_privkey, device_signkey, password=None):
-        self._ensure_devices_conf_path_exists()
-        device_conf_path = os.path.join(self.devices_conf_path, device_id)
-        if os.path.exists(device_conf_path):
-            raise DeviceSavingError("Device config %s already exists" % device_conf_path)
-
-        os.mkdir(device_conf_path)
-
+        user_manifest_access_raw, _ = user_manifest_access_schema.dumps(user_manifest_access)
         device_conf = {"device_id": device_id}
+        local_symkey = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
         if password:
             salt = _generate_salt()
             box = _secret_box_factory(password.encode("utf-8"), salt)
@@ -163,62 +172,75 @@ class DevicesManager:
             device_conf["encryption"] = "password"
             device_conf["device_signkey"] = box.encrypt(device_signkey)
             device_conf["user_privkey"] = box.encrypt(user_privkey)
+            device_conf["local_symkey"] = box.encrypt(local_symkey)
+            device_conf["user_manifest_access"] = box.encrypt(user_manifest_access_raw.encode())
         else:
             device_conf["encryption"] = "quedalle"
             # Feel dirty just writting this...
             device_conf["device_signkey"] = device_signkey
             device_conf["user_privkey"] = user_privkey
+            device_conf["local_symkey"] = local_symkey
+            device_conf["user_manifest_access"] = user_manifest_access_raw.encode()
 
-        device_key_path = os.path.join(device_conf_path, "key.json")
+        device_key_path = device_conf_path / "key.json"
         data, errors = device_conf_schema.dumps(device_conf)
         if errors:
             raise DeviceSavingError(
-                "Invalid device config to save for %s: %s" % (device_conf_path, errors)
+                f"Invalid device config to save for `{self.devices_conf_path}`: {errors}"
             )
 
-        with open(device_key_path, "w") as fd:
-            fd.write(data)
+        device_key_path.write_text(data)
 
     def load_device(self, device_id, password=None):
-        device_conf_path = os.path.join(self.devices_conf_path, device_id)
-        local_storage_db_path = os.path.join(device_conf_path, "local_storage.sqlite")
+        device_conf_path = self.devices_conf_path / device_id
 
         device_conf, errors = self._load_device_conf(device_id)
         if errors:
-            raise DeviceLoadingError(
-                "Invalid %s device config:\n%s"
-                % (device_conf_path, "\n".join(["- %s: %s" % kv for kv in errors.items()]))
-            )
+            raise DeviceLoadingError(f"Invalid {device_conf_path} device config: {errors}")
 
         if password:
             if device_conf["encryption"] != "password":
                 raise DeviceLoadingError(
-                    "Invalid %s device config: password provided but encryption is %s"
-                    % (device_conf_path, device_conf["encryption"])
+                    f"Invalid `{self.devices_conf_path}` device config: password "
+                    f"provided but encryption is `{device_conf['encryption']}`"
                 )
 
             box = _secret_box_factory(password.encode("utf-8"), device_conf["salt"])
             try:
                 user_privkey = box.decrypt(device_conf["user_privkey"])
                 device_signkey = box.decrypt(device_conf["device_signkey"])
+                local_symkey = box.decrypt(device_conf["local_symkey"])
+                user_manifest_access_raw = box.decrypt(device_conf["user_manifest_access"]).decode()
+                user_manifest_access, errors = user_manifest_access_schema.loads(
+                    user_manifest_access_raw
+                )
+                # TODO: improve data validation
+                assert not errors
             except nacl.exceptions.CryptoError as exc:
                 raise DeviceLoadingError(
-                    "Invalid %s device config: decryption key failure" % device_conf_path
+                    f"Invalid `{device_conf_path}` device config: decryption key failure"
                 ) from exc
 
         else:
             if device_conf["encryption"] != "quedalle":
                 raise DeviceLoadingError(
-                    "Invalid %s device config: no password provided but encryption is %s"
-                    % (device_conf_path, device_conf["encryption"])
+                    f"Invalid `{device_conf_path}` device config: no password "
+                    f"provided but encryption is `{device_conf['encryption']}`"
                 )
 
             user_privkey = device_conf["user_privkey"]
             device_signkey = device_conf["device_signkey"]
+            local_symkey = device_conf["local_symkey"]
+            user_manifest_access, errors = user_manifest_access_schema.loads(
+                device_conf["user_manifest_access"]
+            )
+            assert not errors
 
         return Device(
             id=device_id,
             user_privkey=user_privkey,
             device_signkey=device_signkey,
-            local_storage_db_path=local_storage_db_path,
+            local_symkey=local_symkey,
+            local_db=LocalDB(device_conf_path / "local_storage"),
+            user_manifest_access=user_manifest_access,
         )

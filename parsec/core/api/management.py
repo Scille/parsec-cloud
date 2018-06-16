@@ -2,10 +2,11 @@ from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 
 from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields, validate
+from parsec.core.fs.data import new_access
 from parsec.core.app import Core, ClientContext
 from parsec.core.backend_connection import BackendNotAvailable, backend_send_anonymous_cmd
 from parsec.core import devices_manager
-from parsec.core.devices_manager import DeviceSavingError
+from parsec.core.devices_manager import DeviceSavingError, user_manifest_access_schema
 from parsec.utils import to_jsonb64, from_jsonb64
 
 
@@ -14,7 +15,7 @@ class BackendGetConfigurationTrySchema(UnknownCheckedSchema):
     device_name = fields.String(required=True)
     configuration_status = fields.String(required=True)
     device_verify_key = fields.Base64Bytes(required=True)
-    user_privkey_cypherkey = fields.Base64Bytes(required=True)
+    exchange_cipherkey = fields.Base64Bytes(required=True)
 
 
 backend_get_configuration_try_schema = BackendGetConfigurationTrySchema()
@@ -41,7 +42,7 @@ class cmd_DEVICE_CONFIGURE_Schema(BaseCmdSchema):
 
 
 class cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema(BaseCmdSchema):
-    configuration_try_id = fields.String(required=True)
+    config_try_id = fields.String(required=True)
 
 
 async def user_invite(req: dict, client_ctx: ClientContext, core: Core) -> dict:
@@ -50,7 +51,7 @@ async def user_invite(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
     msg = cmd_USER_INVITE_Schema().load(req)
     try:
-        rep = await core.backend_connection.send({"cmd": "user_invite", "user_id": msg["user_id"]})
+        rep = await core.backend_cmds_sender.send({"cmd": "user_invite", "user_id": msg["user_id"]})
     except BackendNotAvailable:
         return {"status": "backend_not_availabled", "reason": "Backend not available"}
 
@@ -64,6 +65,7 @@ async def user_claim(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     msg = cmd_USER_CLAIM_Schema().load(req)
     user_privkey = PrivateKey.generate()
     device_signkey = SigningKey.generate()
+    user_manifest_access = new_access()
     user_id, device_name = msg["id"].split("@")
     try:
         rep = await backend_send_anonymous_cmd(
@@ -85,7 +87,11 @@ async def user_claim(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
     try:
         core.devices_manager.register_new_device(
-            msg["id"], user_privkey.encode(), device_signkey.encode(), msg["password"]
+            msg["id"],
+            user_privkey.encode(),
+            device_signkey.encode(),
+            user_manifest_access,
+            msg["password"],
         )
     except DeviceSavingError:
         return {"status": "already_exists", "reason": "User config already exists"}
@@ -95,7 +101,7 @@ async def user_claim(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
 async def _backend_passthrough(core: Core, req: dict) -> dict:
     try:
-        rep = await core.backend_connection.send(req)
+        rep = await core.backend_cmds_sender.send(req)
     except BackendNotAvailable:
         return {"status": "backend_not_availabled", "reason": "Backend not available"}
 
@@ -113,7 +119,7 @@ async def device_configure(req: dict, client_ctx: ClientContext, core: Core) -> 
     msg = cmd_DEVICE_CONFIGURE_Schema().load(req)
 
     user_id, device_name = msg["device_id"].split("@")
-    user_privkey_cypherkey_privkey = PrivateKey.generate()
+    exchange_cipherkey_privkey = PrivateKey.generate()
     device_signkey = SigningKey.generate()
 
     try:
@@ -125,9 +131,7 @@ async def device_configure(req: dict, client_ctx: ClientContext, core: Core) -> 
                 "device_name": device_name,
                 "configure_device_token": msg["configure_device_token"],
                 "device_verify_key": to_jsonb64(device_signkey.verify_key.encode()),
-                "user_privkey_cypherkey": to_jsonb64(
-                    user_privkey_cypherkey_privkey.public_key.encode()
-                ),
+                "exchange_cipherkey": to_jsonb64(exchange_cipherkey_privkey.public_key.encode()),
             },
         )
     except BackendNotAvailable:
@@ -136,13 +140,23 @@ async def device_configure(req: dict, client_ctx: ClientContext, core: Core) -> 
     if rep["status"] != "ok":
         return rep
 
-    cyphered = from_jsonb64(rep["cyphered_user_privkey"])
-    box = SealedBox(user_privkey_cypherkey_privkey)
-    user_privkey_raw = box.decrypt(cyphered)
+    ciphered = from_jsonb64(rep["ciphered_user_privkey"])
+    box = SealedBox(exchange_cipherkey_privkey)
+    user_privkey_raw = box.decrypt(ciphered)
     user_privkey = PrivateKey(user_privkey_raw)
 
+    ciphered = from_jsonb64(rep["ciphered_user_manifest_access"])
+    user_manifest_access_raw = box.decrypt(ciphered)
+    user_manifest_access, errors = user_manifest_access_schema.loads(user_manifest_access_raw)
+    # TODO: improve data validation
+    assert not errors
+
     core.devices_manager.register_new_device(
-        msg["device_id"], user_privkey.encode(), device_signkey.encode(), msg["password"]
+        msg["device_id"],
+        user_privkey.encode(),
+        device_signkey.encode(),
+        user_manifest_access,
+        msg["password"],
     )
 
     return {"status": "ok"}
@@ -162,11 +176,8 @@ async def device_accept_configuration_try(req: dict, client_ctx: ClientContext, 
     msg = cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema().load(req)
 
     try:
-        rep = await core.backend_connection.send(
-            {
-                "cmd": "device_get_configuration_try",
-                "configuration_try_id": msg["configuration_try_id"],
-            }
+        rep = await core.backend_cmds_sender.send(
+            {"cmd": "device_get_configuration_try", "config_try_id": msg["config_try_id"]}
         )
     except BackendNotAvailable:
         return {"status": "backend_not_availabled", "reason": "Backend not available"}
@@ -178,16 +189,22 @@ async def device_accept_configuration_try(req: dict, client_ctx: ClientContext, 
             "reason": "Bad response from backend: %r (%r)" % (rep, errors),
         }
 
-    user_privkey_cypherkey_raw = data["user_privkey_cypherkey"]
-    box = SealedBox(PublicKey(user_privkey_cypherkey_raw))
-    cyphered_user_privkey = box.encrypt(core.auth_device.user_privkey.encode())
+    exchange_cipherkey_raw = data["exchange_cipherkey"]
+    box = SealedBox(PublicKey(exchange_cipherkey_raw))
+    ciphered_user_privkey = box.encrypt(core.auth_device.user_privkey.encode())
+
+    user_manifest_access_raw, _ = user_manifest_access_schema.dumps(
+        core.auth_device.user_manifest_access
+    )
+    ciphered_user_manifest_access = box.encrypt(user_manifest_access_raw.encode())
 
     try:
-        rep = await core.backend_connection.send(
+        rep = await core.backend_cmds_sender.send(
             {
                 "cmd": "device_accept_configuration_try",
-                "configuration_try_id": msg["configuration_try_id"],
-                "cyphered_user_privkey": to_jsonb64(cyphered_user_privkey),
+                "config_try_id": msg["config_try_id"],
+                "ciphered_user_privkey": to_jsonb64(ciphered_user_privkey),
+                "ciphered_user_manifest_access": to_jsonb64(ciphered_user_manifest_access),
             }
         )
     except BackendNotAvailable:

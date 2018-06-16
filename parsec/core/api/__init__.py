@@ -1,4 +1,3 @@
-from parsec.core.fs import FSInvalidPath
 from parsec.core.app import Core, ClientContext
 from parsec.schema import InvalidCmd
 from parsec.core.backend_connection import BackendNotAvailable
@@ -30,7 +29,6 @@ from parsec.core.api.fs import (
     file_create,
     file_read,
     file_write,
-    flush,
     synchronize,
     stat,
     folder_create,
@@ -64,7 +62,6 @@ CMDS_DISPATCH = {
     "file_create": file_create,
     "file_read": file_read,
     "file_write": file_write,
-    "flush": flush,
     "synchronize": synchronize,
     "stat": stat,
     "folder_create": folder_create,
@@ -99,9 +96,6 @@ async def dispatch_request(req: dict, client_ctx: ClientContext, core: Core) -> 
 
     except InvalidCmd as exc:
         return {"status": "bad_message", "errors": exc.args[0]}
-
-    except FSInvalidPath as exc:
-        return {"status": "invalid_path", "reason": str(exc)}
 
     except BackendNotAvailable as exc:
         return {"status": "backend_not_availabled", "reason": str(exc) or "Backend not available"}

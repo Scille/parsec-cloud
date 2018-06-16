@@ -1,15 +1,18 @@
 import attr
 import logbook
 import json
+import pickle
+import hashlib
 from nacl.public import SealedBox, PublicKey
 from nacl.secret import SecretBox
 from nacl.signing import VerifyKey
 from nacl.exceptions import CryptoError
 
 from parsec.schema import UnknownCheckedSchema, fields
+from parsec.utils import from_jsonb64, to_jsonb64
+from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.devices_manager import Device, is_valid_user_id, is_valid_device_name
-from parsec.core.backend_connection import BackendNotAvailable
 
 
 logger = logbook.Logger("parsec.core.encryption_manager")
@@ -92,40 +95,28 @@ class RemoteDevice:
         return "%s@%s" % (self.user.user_id, self.name)
 
 
-def encrypt_for_local(key: bytes, msg: dict) -> bytes:
+def encrypt_with_symkey(key: bytes, data: bytes) -> bytes:
     """
     Raises:
-        MessageFormatError: if msg is not JSON-encodable.
-        MessageEncryptionError: if key is invalid.
-    """
-    try:
-        encoded_msg = json.dumps(msg).encode()
-    except TypeError as exc:
-        raise MessageFormatError("Cannot encode message as JSON") from exc
-
-    try:
-        box = SecretBox(key)
-        return box.encrypt(encoded_msg)
-    except CryptoError as exc:
-        raise MessageEncryptionError() from exc
-
-
-def decrypt_for_local(key: bytes, ciphered_msg: bytes) -> dict:
-    """
-    Raises:
-        MessageFormatError: if deciphered message is not JSON-decodable.
         MessageEncryptionError: if key is invalid.
     """
     try:
         box = SecretBox(key)
-        encoded_msg = box.decrypt(ciphered_msg)
+        return box.encrypt(data)
     except CryptoError as exc:
         raise MessageEncryptionError() from exc
 
+
+def decrypt_with_symkey(key: bytes, ciphered: bytes) -> bytes:
+    """
+    Raises:
+        MessageEncryptionError: if key is invalid.
+    """
     try:
-        return json.loads(encoded_msg)
-    except json.JSONDecodeError as exc:
-        raise MessageFormatError("Message is not valid json data") from exc
+        box = SecretBox(key)
+        return box.decrypt(ciphered)
+    except CryptoError as exc:
+        raise MessageEncryptionError() from exc
 
 
 def sign_and_add_meta(device: Device, raw_msg: bytes) -> bytes:
@@ -155,32 +146,26 @@ def extract_meta_from_signature(signed_with_meta: bytes) -> tuple:
         ) from exc
 
 
-def encrypt_for_self(author: Device, msg: dict) -> bytes:
-    return encrypt_for(author, author, msg)
+def encrypt_for_self(author: Device, data: bytes) -> bytes:
+    return encrypt_for(author, author, data)
 
 
-def encrypt_for(author: Device, recipient: RemoteUser, msg: dict) -> bytes:
+def encrypt_for(author: Device, recipient: RemoteUser, data: bytes) -> bytes:
     """
     Sign and encrypt a message.
 
     Raises:
-        MessageFormatError: if the message is not JSON-serializable.
         MessageEncryptionError: if encryption fails.
         MessageSignatureError: if signature fails.
     """
     try:
-        encoded_msg = json.dumps(msg).encode()
-    except TypeError as exc:
-        raise MessageFormatError("Cannot encode message as JSON") from exc
-
-    try:
-        signed_msg_with_meta = sign_and_add_meta(author, encoded_msg)
+        signed_with_meta = sign_and_add_meta(author, data)
     except CryptoError as exc:
         raise MessageSignatureError() from exc
 
     try:
         box = SealedBox(recipient.user_pubkey)
-        return box.encrypt(signed_msg_with_meta)
+        return box.encrypt(signed_with_meta)
     except CryptoError as exc:
         raise MessageEncryptionError() from exc
 
@@ -214,45 +199,32 @@ def verify_signature_from(author: RemoteDevice, signed_text: bytes) -> dict:
     Returns: The plain text message as a dict.
 
     Raises:
-        MessageFormatError: if the message is not valid JSON.
         MessageSignatureError: if signature was forged or otherwise corrupt.
     """
     try:
-        encoded_msg = author.device_verifykey.verify(signed_text)
+        return author.device_verifykey.verify(signed_text)
     except CryptoError as exc:
         raise MessageSignatureError() from exc
 
-    try:
-        return json.loads(encoded_msg)
 
-    except json.JSONDecodeError as exc:
-        raise MessageFormatError("Message is not valid json data") from exc
-
-
-def encrypt_with_secret_key(author: Device, key: bytes, msg: dict) -> bytes:
+def encrypt_with_secret_key(author: Device, key: bytes, data: bytes) -> bytes:
     """
     Sign and encrypt a message with a symetric key.
 
     Raises:
-        MessageFormatError: if the message is not JSON-serializable.
         MessageSignatureError: if the signature operation fails
         MessageEncryptionError: if encryption operation fails.
     """
-    try:
-        encoded_msg = json.dumps(msg).encode()
-    except TypeError as exc:
-        raise MessageFormatError("Cannot encode message as JSON") from exc
-
-    signed_msg_with_meta = sign_and_add_meta(author, encoded_msg)
+    signed_with_meta = sign_and_add_meta(author, data)
 
     try:
         box = SecretBox(key)
-        return box.encrypt(signed_msg_with_meta)
+        return box.encrypt(signed_with_meta)
     except CryptoError as exc:
         raise MessageEncryptionError() from exc
 
 
-def decrypt_with_secret_key(key: bytes, ciphered_msg: dict) -> tuple:
+def decrypt_with_secret_key(key: bytes, ciphered_msg: bytes) -> tuple:
     """
     Decrypt a message with a symetric key.
 
@@ -275,11 +247,12 @@ def decrypt_with_secret_key(key: bytes, ciphered_msg: dict) -> tuple:
 
 
 class EncryptionManager(BaseAsyncComponent):
-    def __init__(self, device, backend_connection, local_storage):
+    def __init__(self, device, backend_cmds_sender):
         super().__init__()
         self.device = device
-        self._backend_connection = backend_connection
-        self._local_storage = local_storage
+        self.backend_cmds_sender = backend_cmds_sender
+        self._local_db = device.local_db
+        self._mem_cache = {}
 
     async def _init(self, nursery):
         pass
@@ -287,8 +260,8 @@ class EncryptionManager(BaseAsyncComponent):
     async def _teardown(self):
         pass
 
-    async def _populate_remote_user_cache_in_local_storage(self, user_id: str):
-        raw_rep = await self._backend_connection.send({"cmd": "user_get", "user_id": user_id})
+    async def _populate_remote_user_cache(self, user_id: str):
+        raw_rep = await self.backend_cmds_sender.send({"cmd": "user_get", "user_id": user_id})
         rep, errors = backend_user_get_rep_schema.load(raw_rep)
         if errors:
             if raw_rep.get("status") == "not_found":
@@ -298,11 +271,44 @@ class EncryptionManager(BaseAsyncComponent):
                 raise BackendGetUserError(
                     "Cannot retreive user `%s`: %r (errors: %r)" % (user_id, raw_rep, errors)
                 )
+        user_data = {
+            "user_id": rep["user_id"],
+            "broadcast_key": to_jsonb64(rep["broadcast_key"]),
+            "devices": {k: to_jsonb64(v["verify_key"]) for k, v in rep["devices"].items()},
+        }
+        # TODO: use schema here
+        raw_user_data = pickle.dumps(user_data)
+        self._local_db.set(self._build_remote_user_local_access(user_id), raw_user_data)
 
-        pubkey = rep["broadcast_key"]
-        self._local_storage.flush_user_pubkey(user_id, pubkey)
-        for device_name, device in rep["devices"].items():
-            self._local_storage.flush_device_verifykey(user_id, device_name, device["verify_key"])
+    def _build_remote_user_local_access(self, user_id):
+        return {
+            "id": hashlib.sha256(user_id.encode("utf-8")).hexdigest(),
+            "key": self.device.local_symkey,
+        }
+
+    def _fetch_remote_user_from_local(self, user_id):
+        try:
+            raw_user_data = self._local_db.get(self._build_remote_user_local_access(user_id))
+            user_data = pickle.loads(raw_user_data)
+            return RemoteUser(user_id, from_jsonb64(user_data["broadcast_key"]))
+
+        except LocalDBMissingEntry as exc:
+            return None
+
+    def _fetch_remote_device_from_local(self, user_id, device_name):
+        try:
+            raw_user_data = self._local_db.get(self._build_remote_user_local_access(user_id))
+            user_data = pickle.loads(raw_user_data)
+            try:
+                device_b64_pubkey = user_data["devices"][device_name]
+            except KeyError:
+                return None
+            return RemoteDevice(user_id, device_name, from_jsonb64(device_b64_pubkey))
+            user_data["devices"] = {k: from_jsonb64(v) for k, v in user_data["devices"].items()}
+            return RemoteUser(user_id, from_jsonb64(user_data["broadcast_key"]))
+
+        except LocalDBMissingEntry as exc:
+            return None
 
     async def fetch_remote_device(self, user_id: str, device_name: str) -> RemoteDevice:
         """
@@ -314,22 +320,30 @@ class EncryptionManager(BaseAsyncComponent):
             BackendNotAvailable: if the backend is offline.
             BackendGetUserError: if the reponse returned by the backend is invalid.
         """
+        # First, try the quick win with the memory cache
+        key = (user_id, device_name)
+        try:
+            return self._mem_cache[key]
+        except KeyError:
+            pass
+
         if user_id == self.device.user_id and device_name == self.device.device_name:
-            return RemoteDevice(
+            remote_device = RemoteDevice(
                 self.device.user_id, self.device.device_name, self.device.device_verifykey.encode()
             )
+        else:
+            # First try to retreive from the local cache
+            remote_device = self._fetch_remote_device_from_local(user_id, device_name)
+            if not remote_device:
+                # Cache miss ! Fetch data from the backend and retry
+                await self._populate_remote_user_cache(user_id)
+                remote_device = self._fetch_remote_device_from_local(user_id, device_name)
+                if not remote_device:
+                    # Still nothing found, the device doesn't exist
+                    return None
 
-        # First try to retreive from the local cache
-        verifykey = self._local_storage.fetch_device_verifykey(user_id, device_name)
-        if not verifykey:
-            # Cache miss ! Fetch data from the backend and retry
-            await self._populate_remote_user_cache_in_local_storage(user_id)
-            verifykey = self._local_storage.fetch_device_verifykey(user_id, device_name)
-            if not verifykey:
-                # Still nothing found, the device doesn't exist
-                return None
-
-        return RemoteDevice(user_id, device_name, verifykey)
+        self._mem_cache[key] = remote_device
+        return remote_device
 
     async def fetch_remote_user(self, user_id: str) -> RemoteUser:
         """
@@ -341,22 +355,29 @@ class EncryptionManager(BaseAsyncComponent):
             BackendNotAvailable: if the backend is offline.
             BackendGetUserError: if the reponse returned by the backend is invalid.
         """
+        # First, try the quick win with the memory cache
+        try:
+            return self._mem_cache[user_id]
+        except KeyError:
+            pass
+
+        # Now try to retreive from the local cache
         if user_id == self.device.user_id:
-            return RemoteUser(self.device.user_id, self.device.user_pubkey.encode())
+            remote_user = RemoteUser(self.device.user_id, self.device.user_pubkey.encode())
+        else:
+            remote_user = self._fetch_remote_user_from_local(user_id)
+            if not remote_user:
+                # Cache miss ! Fetch data from the backend and retry
+                await self._populate_remote_user_cache(user_id)
+                remote_user = self._fetch_remote_user_from_local(user_id)
+                if not remote_user:
+                    # Still nothing found, the device doesn't exist
+                    return None
 
-        # First try to retreive from the local cache
-        pubkey = self._local_storage.fetch_user_pubkey(user_id)
-        if not pubkey:
-            # Cache miss ! Fetch data from the backend and retry
-            await self._populate_remote_user_cache_in_local_storage(user_id)
-            pubkey = self._local_storage.fetch_user_pubkey(user_id)
-            if not pubkey:
-                # Still nothing found, the user doesn't exist
-                return None
+        self._mem_cache[user_id] = remote_user
+        return remote_user
 
-        return RemoteUser(user_id, pubkey)
-
-    async def encrypt(self, recipient: str, msg: dict) -> bytes:
+    async def encrypt_for(self, recipient: str, msg: dict) -> bytes:
         user = await self.fetch_remote_user(recipient)
         if not user:
             raise MessageEncryptionError("Unknown recipient `%s`" % recipient)
@@ -365,25 +386,25 @@ class EncryptionManager(BaseAsyncComponent):
     async def encrypt_for_self(self, msg: dict) -> bytes:
         return encrypt_for_self(self.device, msg)
 
-    async def decrypt(self, ciphered_msg: bytes) -> dict:
+    async def decrypt_for(self, ciphered_msg: bytes) -> dict:
         user_id, device_name, signed_msg = decrypt_for(self.device, ciphered_msg)
         author_device = await self.fetch_remote_device(user_id, device_name)
         if not author_device:
             raise MessageSignatureError(
-                "Message is signed by `%s@%s`, but this device cannot be found on the backend."
+                "Message is said to be signed by `%s@%s`, but this device cannot be found on the backend."
                 % (user_id, device_name)
             )
         return verify_signature_from(author_device, signed_msg)
 
-    async def encrypt_with_secret_key(self, key: bytes, msg: dict) -> bytes:
-        return encrypt_with_secret_key(self.device, key, msg)
+    def encrypt_with_secret_key(self, key: bytes, data: bytes) -> bytes:
+        return encrypt_with_secret_key(self.device, key, data)
 
-    async def decrypt_with_secret_key(self, key: bytes, msg: dict) -> dict:
-        user_id, device_name, signed_msg = decrypt_with_secret_key(key, msg)
+    async def decrypt_with_secret_key(self, key: bytes, ciphered: bytes) -> dict:
+        user_id, device_name, signed = decrypt_with_secret_key(key, ciphered)
         author_device = await self.fetch_remote_device(user_id, device_name)
         if not author_device:
             raise MessageSignatureError(
-                "Message is signed by `%s@%s`, but this device cannot be found on the backend."
+                "Message is said to be signed by `%s@%s`, but this device cannot be found on the backend."
                 % (user_id, device_name)
             )
-        return verify_signature_from(author_device, signed_msg)
+        return verify_signature_from(author_device, signed)

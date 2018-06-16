@@ -1,10 +1,9 @@
 import attr
 import random
 import string
-from uuid import uuid4
 
 from parsec.utils import to_jsonb64
-from parsec.schema import BaseCmdSchema, fields
+from parsec.schema import BaseCmdSchema, UnknownCheckedSchema, fields, validate
 
 
 TRUST_SEED_LENGTH = 12
@@ -21,46 +20,55 @@ def generate_trust_seed():
 @attr.s
 class VlobAtom:
     id = attr.ib()
-    read_trust_seed = attr.ib(default=attr.Factory(generate_trust_seed))
-    write_trust_seed = attr.ib(default=attr.Factory(generate_trust_seed))
+    read_trust_seed = attr.ib(factory=generate_trust_seed)
+    write_trust_seed = attr.ib(factory=generate_trust_seed)
     blob = attr.ib(default=b"")
     version = attr.ib(default=1)
+    is_sink = attr.ib(default=False)
+
+
+class CheckEntrySchema(UnknownCheckedSchema):
+    id = fields.String(required=True)
+    rts = fields.String(required=True)
+    version = fields.Integer(required=True)
+
+
+class cmd_GROUP_CHECK_Schema(BaseCmdSchema):
+    to_check = fields.List(fields.Nested(CheckEntrySchema()), required=True)
 
 
 class cmd_CREATE_Schema(BaseCmdSchema):
-    # TODO: blob must be present
-    blob = fields.Base64Bytes(missing=to_jsonb64(b""))
+    id = fields.String(required=True, validate=validate.Length(min=1, max=32))
+    rts = fields.String(required=True)
+    wts = fields.String(required=True)
+    blob = fields.Base64Bytes(required=True)
+    notify_beacons = fields.List(fields.String())
 
 
 class cmd_READ_Schema(BaseCmdSchema):
     id = fields.String(required=True)
-    version = fields.Integer(validate=lambda n: n >= 1)
-    trust_seed = fields.String(required=True)
+    version = fields.Integer(validate=lambda n: n >= 1, allow_none=True)
+    rts = fields.String(required=True)
 
 
 class cmd_UPDATE_Schema(BaseCmdSchema):
     id = fields.String(required=True)
     version = fields.Integer(validate=lambda n: n > 1)
-    trust_seed = fields.String(required=True)
+    wts = fields.String(required=True)
     blob = fields.Base64Bytes(required=True)
+    notify_beacons = fields.List(fields.String())
 
 
 class BaseVlobComponent:
-    def __init__(self, signal_ns):
-        self._signal_vlob_updated = signal_ns.signal("vlob_updated")
+    async def api_vlob_group_check(self, client_ctx, msg):
+        msg = cmd_GROUP_CHECK_Schema().load_or_abort(msg)
+        changed = await self.group_check(**msg)
+        return {"status": "ok", "changed": changed}
 
     async def api_vlob_create(self, client_ctx, msg):
         msg = cmd_CREATE_Schema().load_or_abort(msg)
-        id = uuid4().hex
-        rts = uuid4().hex
-        wts = uuid4().hex
-        atom = await self.create(id, rts, wts, msg["blob"])
-        return {
-            "status": "ok",
-            "id": atom.id,
-            "read_trust_seed": atom.read_trust_seed,
-            "write_trust_seed": atom.write_trust_seed,
-        }
+        await self.create(**msg, author=client_ctx.id)
+        return {"status": "ok"}
 
     async def api_vlob_read(self, client_ctx, msg):
         msg = cmd_READ_Schema().load_or_abort(msg)
@@ -74,14 +82,17 @@ class BaseVlobComponent:
 
     async def api_vlob_update(self, client_ctx, msg):
         msg = cmd_UPDATE_Schema().load_or_abort(msg)
-        await self.update(**msg)
+        await self.update(**msg, author=client_ctx.id)
         return {"status": "ok"}
 
-    async def create(self, rts, wts, blob):
+    async def group_check(self, to_check):
         raise NotImplementedError()
 
-    async def read(self, id, trust_seed, version=None):
+    async def create(self, id, rts, wts, blob, notify_beacons=(), author="anonymous"):
         raise NotImplementedError()
 
-    async def update(self, id, trust_seed, version, blob):
+    async def read(self, id, rts, version=None):
+        raise NotImplementedError()
+
+    async def update(self, id, wts, version, blob, notify_beacons=(), author="anonymous"):
         raise NotImplementedError()

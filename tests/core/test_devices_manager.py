@@ -3,20 +3,8 @@ from unittest.mock import patch
 import json
 
 from parsec.core.devices_manager import DevicesManager, DeviceSavingError, DeviceLoadingError
+from parsec.core.fs.data import new_access
 from parsec.utils import to_jsonb64
-
-
-def cleartext_device(basedir, device_id, user_privkey, device_signkey):
-    conf_path = basedir.mkdir(device_id)
-    conf = {
-        "device_id": device_id,
-        "encryption": "quedalle",
-        "user_privkey": to_jsonb64(user_privkey),
-        "device_signkey": to_jsonb64(device_signkey),
-    }
-    with open(conf_path.join("key.json"), "w") as fd:
-        json.dump(conf, fd)
-    return device_id
 
 
 @pytest.fixture
@@ -32,14 +20,23 @@ def fast_crypto():
 
 @pytest.fixture
 def alice_cleartext_device(tmpdir, alice):
-    return cleartext_device(
-        tmpdir, alice.id, alice.user_privkey.encode(), alice.device_signkey.encode()
+    dm = DevicesManager(tmpdir.strpath)
+    dm.register_new_device(
+        alice.id,
+        alice.user_privkey.encode(),
+        alice.device_signkey.encode(),
+        alice.user_manifest_access,
     )
+    return alice.id
 
 
 @pytest.fixture
 def bob_cleartext_device(tmpdir, bob):
-    return cleartext_device(tmpdir, bob.id, bob.user_privkey.encode(), bob.device_signkey.encode())
+    dm = DevicesManager(tmpdir.strpath)
+    dm.register_new_device(
+        bob.id, bob.user_privkey.encode(), bob.device_signkey.encode(), bob.user_manifest_access
+    )
+    return bob.id
 
 
 def test_non_existant_base_path_list_devices(tmpdir):
@@ -49,51 +46,60 @@ def test_non_existant_base_path_list_devices(tmpdir):
 
 
 def test_list_no_devices(tmpdir):
-    dm = DevicesManager(str(tmpdir))
+    dm = DevicesManager(tmpdir.strpath)
     devices = dm.list_available_devices()
     assert not devices
 
 
 def test_list_devices(tmpdir, alice_cleartext_device, bob_cleartext_device):
-    dm = DevicesManager(str(tmpdir))
+    dm = DevicesManager(tmpdir.strpath)
     devices = dm.list_available_devices()
     assert set(devices) == {alice_cleartext_device, bob_cleartext_device}
 
 
 def test_load_cleartext_device(tmpdir, alice_cleartext_device, alice):
-    dm = DevicesManager(str(tmpdir))
+    dm = DevicesManager(tmpdir.strpath)
     device = dm.load_device(alice_cleartext_device)
     assert device.id == alice_cleartext_device
-    assert alice.user_privkey == device.user_privkey
-    assert alice.device_signkey == device.device_signkey
-    assert device.local_storage_db_path == tmpdir.join("alice@test", "local_storage.sqlite")
+    assert device.user_privkey == alice.user_privkey
+    assert device.device_signkey == alice.device_signkey
+    assert device.user_manifest_access == alice.user_manifest_access
+    assert device.local_db.path == tmpdir.join(alice.id, "local_storage").strpath
 
 
 def test_register_new_cleartext_device(tmpdir, alice):
     device_id = alice.id
     device_signkey = alice.device_signkey
     user_privkey = alice.user_privkey
+    user_manifest_access = alice.user_manifest_access
 
-    dm1 = DevicesManager(str(tmpdir))
-    dm1.register_new_device(device_id, user_privkey.encode(), device_signkey.encode())
+    dm1 = DevicesManager(tmpdir.strpath)
+    dm1.register_new_device(
+        device_id, user_privkey.encode(), device_signkey.encode(), user_manifest_access
+    )
 
-    dm2 = DevicesManager(str(tmpdir))
+    dm2 = DevicesManager(tmpdir.strpath)
     device = dm2.load_device(device_id)
 
     assert device.id == device_id
     assert device.user_privkey == user_privkey
     assert device.device_signkey == device_signkey
-    assert device.local_storage_db_path == tmpdir.join("alice@test", "local_storage.sqlite")
+    assert device.user_manifest_access == user_manifest_access
+    assert device.local_db.path == tmpdir.join(alice.id, "local_storage").strpath
 
 
 def test_register_already_exists_device(tmpdir, alice_cleartext_device, alice):
     device_signkey = alice.device_signkey
     user_privkey = alice.user_privkey
+    user_manifest_access = new_access()
 
-    dm = DevicesManager(str(tmpdir))
+    dm = DevicesManager(tmpdir.strpath)
     with pytest.raises(DeviceSavingError):
         dm.register_new_device(
-            alice_cleartext_device, user_privkey.encode(), device_signkey.encode()
+            alice_cleartext_device,
+            user_privkey.encode(),
+            device_signkey.encode(),
+            user_manifest_access,
         )
 
 
@@ -103,20 +109,26 @@ def test_register_new_encrypted_device(tmpdir, fast_crypto, alice):
     device_id = alice.id
     device_signkey = alice.device_signkey
     user_privkey = alice.user_privkey
+    user_manifest_access = new_access()
 
-    dm1 = DevicesManager(str(tmpdir))
+    dm1 = DevicesManager(tmpdir.strpath)
     dm1.register_new_device(
-        device_id, user_privkey.encode(), device_signkey.encode(), password=password
+        device_id,
+        user_privkey.encode(),
+        device_signkey.encode(),
+        user_manifest_access,
+        password=password,
     )
 
-    dm2 = DevicesManager(str(tmpdir))
+    dm2 = DevicesManager(tmpdir.strpath)
     device = dm2.load_device(device_id, password=password)
 
     assert device.id == device_id
     assert device.user_privkey == user_privkey
     assert device.device_signkey == device_signkey
-    assert device.local_storage_db_path == tmpdir.join("alice@test", "local_storage.sqlite")
+    assert device.user_manifest_access == user_manifest_access
+    assert device.local_db.path == tmpdir.join(alice.id, "local_storage").strpath
 
-    dm2 = DevicesManager(str(tmpdir))
+    dm2 = DevicesManager(tmpdir.strpath)
     with pytest.raises(DeviceLoadingError):
         dm2.load_device(device_id, password="bad pwd")

@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from parsec.utils import to_jsonb64
 from parsec.schema import BaseCmdSchema, fields
 
@@ -9,6 +7,7 @@ class cmd_GET_Schema(BaseCmdSchema):
 
 
 class cmd_POST_Schema(BaseCmdSchema):
+    id = fields.String(required=True, validate=lambda n: 0 < len(n) <= 32)
     block = fields.Base64Bytes(required=True)
 
 
@@ -23,9 +22,8 @@ class BaseBlockStoreComponent:
 
     async def api_blockstore_post(self, client_ctx, msg):
         msg = cmd_POST_Schema().load_or_abort(msg)
-        id = uuid4().hex
-        await self.post(id, msg["block"])
-        return {"status": "ok", "id": id}
+        await self.post(**msg)
+        return {"status": "ok"}
 
     async def get(self, id):
         raise NotImplementedError()

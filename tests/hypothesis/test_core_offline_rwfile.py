@@ -4,67 +4,48 @@ from hypothesis.stateful import rule
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
-from tests.common import connect_core, core_factory
+from tests.hypothesis.common import FileOracle
 
 
 BLOCK_SIZE = 16
 PLAYGROUND_SIZE = BLOCK_SIZE * 10
 
 
-class FileOracle:
-    def __init__(self):
-        self._buffer = bytearray()
-
-    def read(self, size, offset):
-        return self._buffer[offset : size + offset]
-
-    def write(self, offset, content):
-        self._buffer[offset : len(content) + offset] = content
-
-    def truncate(self, length):
-        self._buffer = self._buffer[:length]
-
-
 @pytest.mark.slow
 @pytest.mark.trio
 async def test_core_offline_rwfile(
-    TrioDriverRuleBasedStateMachine, mocked_local_storage_connection, backend_addr, tmpdir, alice
+    TrioDriverRuleBasedStateMachine, core_factory, core_sock_factory, device_factory
 ):
     class CoreOfflineRWFile(TrioDriverRuleBasedStateMachine):
-        count = 0
-
         async def trio_runner(self, task_status):
-            mocked_local_storage_connection.reset()
-            type(self).count += 1
-            config = {
-                "base_settings_path": tmpdir.mkdir("try-%s" % self.count).strpath,
-                "backend_addr": backend_addr,
-                "block_size": BLOCK_SIZE,
-            }
 
-            async with core_factory(**config) as core:
-                await core.login(alice)
-                async with connect_core(core) as sock:
+            device = device_factory()
+            config = {"block_size": BLOCK_SIZE}
+            core = await core_factory(devices=[device], config=config)
+            try:
+                await core.login(device)
+                sock = core_sock_factory(core)
 
-                    await sock.send({"cmd": "file_create", "path": "/foo.txt"})
+                await core.fs.file_create("/foo.txt")
+                self.file_oracle = FileOracle()
+
+                self.core_cmd = self.communicator.send
+                task_status.started()
+
+                while True:
+                    msg = await self.communicator.trio_recv()
+                    await sock.send(msg)
                     rep = await sock.recv()
-                    assert rep == {"status": "ok"}
-                    self.file_oracle = FileOracle()
+                    await self.communicator.trio_respond(rep)
 
-                    self.core_cmd = self.communicator.send
-                    task_status.started()
-
-                    while True:
-                        msg = await self.communicator.trio_recv()
-                        await sock.send(msg)
-                        rep = await sock.recv()
-                        await self.communicator.trio_respond(rep)
+            finally:
+                await core.teardown()
 
         @rule(
             size=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
             offset=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
         )
-        def read(self, size, offset):
+        def atomic_read(self, size, offset):
             rep = self.core_cmd(
                 {"cmd": "file_read", "path": "/foo.txt", "offset": offset, "size": size}
             )
@@ -73,17 +54,11 @@ async def test_core_offline_rwfile(
             expected_content = self.file_oracle.read(size, offset)
             assert from_jsonb64(rep["content"]) == expected_content
 
-        @rule()
-        def flush(self):
-            rep = self.core_cmd({"cmd": "flush", "path": "/foo.txt"})
-            note(rep)
-            assert rep["status"] == "ok"
-
         @rule(
             offset=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
             content=st.binary(max_size=PLAYGROUND_SIZE),
         )
-        def write(self, offset, content):
+        def atomic_write(self, offset, content):
             b64content = to_jsonb64(content)
             rep = self.core_cmd(
                 {"cmd": "file_write", "path": "/foo.txt", "offset": offset, "content": b64content}
@@ -93,7 +68,7 @@ async def test_core_offline_rwfile(
             self.file_oracle.write(offset, content)
 
         @rule(length=st.integers(min_value=0, max_value=PLAYGROUND_SIZE))
-        def truncate(self, length):
+        def atomic_truncate(self, length):
             rep = self.core_cmd({"cmd": "file_truncate", "path": "/foo.txt", "length": length})
             note(rep)
             assert rep["status"] == "ok"

@@ -33,10 +33,11 @@ class BackendStorage(BaseAsyncComponent):
         else:
             raise BackendError("Error %s: %s" % (rep.pop("status"), rep))
 
-    async def sync_user_manifest(self, version, blob):
-        rep = await self._backend_connection.send(
-            {"cmd": "user_vlob_update", "version": version, "blob": to_jsonb64(blob)}
-        )
+    async def sync_user_manifest(self, version, blob, notify=()):
+        msg = {"cmd": "user_vlob_update", "version": version, "blob": to_jsonb64(blob)}
+        if notify:
+            msg["notify_sinks"] = list(notify)
+        rep = await self._backend_connection.send(msg)
         if rep["status"] != "ok":
             raise BackendConcurrencyError("Error %s: %s" % (rep.pop("status"), rep))
 
@@ -51,21 +52,26 @@ class BackendStorage(BaseAsyncComponent):
         else:
             raise BackendError("Error %s: %s" % (rep.pop("status"), rep))
 
-    async def sync_manifest(self, id, wts, version, blob):
-        rep = await self._backend_connection.send(
-            {
-                "cmd": "vlob_update",
-                "id": id,
-                "trust_seed": wts,
-                "version": version,
-                "blob": to_jsonb64(blob),
-            }
-        )
+    async def sync_manifest(self, id, wts, version, blob, notify=()):
+        msg = {
+            "cmd": "vlob_update",
+            "id": id,
+            "trust_seed": wts,
+            "version": version,
+            "blob": to_jsonb64(blob),
+        }
+        if notify:
+            msg["notify_sinks"] = list(notify)
+
+        rep = await self._backend_connection.send(msg)
         if rep["status"] != "ok":
             raise BackendConcurrencyError("Error %s: %s" % (rep.pop("status"), rep))
 
-    async def sync_new_manifest(self, blob):
-        rep = await self._backend_connection.send({"cmd": "vlob_create", "blob": to_jsonb64(blob)})
+    async def sync_new_manifest(self, blob, notify=()):
+        msg = {"cmd": "vlob_create", "blob": to_jsonb64(blob)}
+        if notify:
+            msg["notify_sinks"] = list(notify)
+        rep = await self._backend_connection.send(msg)
         if rep["status"] != "ok":
             raise BackendError("Error %s: %s" % (rep.pop("status"), rep))
 

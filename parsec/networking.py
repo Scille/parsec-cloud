@@ -35,12 +35,16 @@ async def serve_client(dispatch_request, sockstream) -> None:
     except trio.BrokenStreamError:
         # Client has closed connection
         pass
-    except Exception:
+    except Exception as exc:
+        print(exc)
         # If we are here, something unexpected happened...
         logger.error(traceback.format_exc())
         # TODO: do we need to close the socket (i.e. sockstream) here ?
         # or should we let the caller (most certainly the server) handle this ?
         await sock.aclose()
+        import pdb
+
+        pdb.set_trace()
         raise
 
 

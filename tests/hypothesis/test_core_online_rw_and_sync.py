@@ -4,7 +4,6 @@ from hypothesis import strategies as st, note
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
-from tests.common import connect_core, core_factory, backend_factory, run_app
 from tests.hypothesis.common import rule, failure_reproducer, reproduce_rule
 
 
@@ -17,53 +16,52 @@ class FileOracle:
         self._buffer = bytearray()
         self._synced_buffer = bytearray()
         self.base_version = base_version
-        self.need_flush = base_version == 0
         self.need_sync = base_version == 0
 
     def read(self, size, offset):
         return self._buffer[offset : size + offset]
 
     def write(self, offset, content):
-        self._buffer[offset : len(content) + offset] = content
-        if content:
-            self.need_flush = True
-            self.need_sync = True
-
-    def truncate(self, length):
-        if length >= len(self._buffer):
+        if not content:
             return
-        self._buffer = self._buffer[:length]
-        self.need_flush = True
+
+        if offset > len(self._buffer):
+            self.truncate(offset + len(content))
+        self._buffer[offset : len(content) + offset] = content
         self.need_sync = True
 
-    def flush(self):
-        self.need_flush = False
+    def truncate(self, length):
+        if length == len(self._buffer):
+            return
+        new_buffer = bytearray(length)
+        truncate_length = min(length, len(self._buffer))
+        new_buffer[:truncate_length] = self._buffer[:truncate_length]
+        self._buffer = new_buffer
+        self.need_sync = True
 
     def sync(self):
         self._synced_buffer = self._buffer.copy()
         if self.need_sync:
             self.base_version += 1
         self.need_sync = False
-        self.need_flush = False
 
     def reset_core(self):
         self._buffer = self._synced_buffer.copy()
-        self.need_flush = False
         self.need_sync = False
 
     def restart_core(self):
-        self.need_flush = False
+        pass
 
 
 @pytest.mark.slow
 @pytest.mark.trio
 async def test_core_online_rw_and_sync(
     TrioDriverRuleBasedStateMachine,
-    mocked_local_storage_connection,
-    tcp_stream_spy,
-    backend_addr,
-    tmpdir,
-    alice,
+    server_factory,
+    backend_factory,
+    core_factory_cm,
+    core_sock_factory,
+    device_factory,
 ):
     class RestartCore(Exception):
         def __init__(self, reset_local_storage=False):
@@ -77,7 +75,6 @@ from copy import deepcopy
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
-from tests.common import connect_core, core_factory
 from tests.hypothesis.test_core_online_rw_and_sync import FileOracle, BLOCK_SIZE
 
 class RestartCore(Exception):
@@ -87,12 +84,7 @@ class ResetCore(Exception):
     pass
 
 @pytest.mark.trio
-async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_local_storage_connection):
-    config = {{
-        "base_settings_path": tmpdir.strpath,
-        "backend_addr": backend_addr,
-        "block_size": BLOCK_SIZE,
-    }}
+async def test_reproduce(running_backend, alice, core_factory_cm, core_sock_factory):
     bootstrapped = False
     file_oracle = FileOracle(base_version=1)
     to_run_rules = rule_selector()
@@ -101,7 +93,7 @@ async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_lo
 
     while not done:
         try:
-            async with core_factory(**config) as core:
+            async with core_factory_cm(devices=[alice], config={{"block_size": BLOCK_SIZE}}) as core:
                 await core.login(alice)
                 if not bootstrapped:
                     await core.fs.file_create("/foo.txt")
@@ -110,60 +102,56 @@ async def test_reproduce(tmpdir, running_backend, backend_addr, alice, mocked_lo
                     need_boostrap_sync = False
                     await core.fs.sync("/")
 
-                async with connect_core(core) as sock:
-                    while True:
-                        afunc = next(to_run_rules, None)
-                        if not afunc:
-                            done = True
-                            break
-                        await afunc(sock, file_oracle)
+                sock = core_sock_factory(core, nursery=core.nursery)
+                while True:
+                    afunc = next(to_run_rules, None)
+                    if not afunc:
+                        done = True
+                        break
+                    await afunc(sock, file_oracle)
 
         except RestartCore:
             pass
 
         except ResetCore:
-            mocked_local_storage_connection.reset()
+            alice.local_db._data.clear()  # TODO: improve this
             need_boostrap_sync = True
 
 def rule_selector():
     {body}
 """
     )
-    class CoreOnline(TrioDriverRuleBasedStateMachine):
+    class CoreOnlineRwAndSync(TrioDriverRuleBasedStateMachine):
         count = 0
 
         async def trio_runner(self, task_status):
-            mocked_local_storage_connection.reset()
-            type(self).count += 1
-            backend_config = {"blockstore_postgresql": True}
-            core_config = {
-                "base_settings_path": tmpdir.mkdir("try-%s" % self.count).strpath,
-                "backend_addr": backend_addr,
-                "block_size": BLOCK_SIZE,
-            }
             self.sys_cmd = lambda x: self.communicator.send(("sys", x))
             self.core_cmd = lambda x: self.communicator.send(("core", x))
             self.file_oracle = FileOracle(base_version=1)
 
+            device = device_factory()
+            backend = await backend_factory(devices=[device])
+            server = server_factory(backend.handle_client)
+
             async def run_core(on_ready):
-                async with core_factory(**core_config) as core:
+                async with core_factory_cm(
+                    devices=[device], config={"backend_addr": server.addr, "block_size": BLOCK_SIZE}
+                ) as core:
+                    await core.login(device)
+                    sock = core_sock_factory(core, nursery=core.nursery)
 
-                    await core.login(alice)
-                    async with connect_core(core) as sock:
+                    await on_ready(core)
+                    while True:
+                        target, msg = await self.communicator.trio_recv()
+                        if target == "core":
+                            await sock.send(msg)
+                            rep = await sock.recv()
+                            await self.communicator.trio_respond(rep)
+                        elif msg == "restart_core!":
+                            raise RestartCore()
 
-                        await on_ready(core)
-
-                        while True:
-                            target, msg = await self.communicator.trio_recv()
-                            if target == "core":
-                                await sock.send(msg)
-                                rep = await sock.recv()
-                                await self.communicator.trio_respond(rep)
-                            elif msg == "restart_core!":
-                                raise RestartCore()
-
-                            elif msg == "reset_core!":
-                                raise RestartCore(reset_local_storage=True)
+                        elif msg == "reset_core!":
+                            raise RestartCore(reset_local_storage=True)
 
             async def bootstrap_core(core):
                 await core.fs.file_create("/foo.txt")
@@ -183,33 +171,16 @@ def rule_selector():
             async def restart_core_done(core):
                 await self.communicator.trio_respond(True)
 
-            async with backend_factory(**backend_config) as backend:
-
-                await backend.user.create(
-                    author="<backend-fixture>",
-                    user_id=alice.user_id,
-                    broadcast_key=alice.user_pubkey.encode(),
-                    devices=[(alice.device_name, alice.device_verifykey.encode())],
-                )
-
-                async with run_app(backend) as backend_connection_factory:
-
-                    tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
-                    try:
-
-                        on_ready = bootstrap_core
-                        while True:
-                            try:
-                                await run_core(on_ready)
-                            except RestartCore as exc:
-                                if exc.reset_local_storage:
-                                    on_ready = reset_core_done
-                                    mocked_local_storage_connection.reset()
-                                else:
-                                    on_ready = restart_core_done
-
-                    finally:
-                        tcp_stream_spy.install_hook(backend_addr, None)
+            on_ready = bootstrap_core
+            while True:
+                try:
+                    await run_core(on_ready)
+                except RestartCore as exc:
+                    if exc.reset_local_storage:
+                        on_ready = reset_core_done
+                        device.local_db._data.clear()  # TODO: improve this
+                    else:
+                        on_ready = restart_core_done
 
         @rule(
             size=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
@@ -234,23 +205,6 @@ yield afunc
             assert rep["status"] == "ok"
             expected_content = self.file_oracle.read(size, offset)
             assert from_jsonb64(rep["content"]) == expected_content
-
-        @rule()
-        @reproduce_rule(
-            """
-async def afunc(sock, file_oracle):
-    await sock.send({{"cmd": "flush", "path": "/foo.txt"}})
-    rep = await sock.recv()
-    assert rep["status"] == "ok"
-    file_oracle.flush()
-yield afunc
-"""
-        )
-        def flush(self):
-            rep = self.core_cmd({"cmd": "flush", "path": "/foo.txt"})
-            note(rep)
-            assert rep["status"] == "ok"
-            self.file_oracle.flush()
 
         @rule()
         @reproduce_rule(
@@ -319,7 +273,6 @@ async def afunc(sock, file_oracle):
     assert rep["status"] == "ok"
     assert rep["base_version"] == file_oracle.base_version
     assert not rep["is_placeholder"]
-    assert rep["need_flush"] == file_oracle.need_flush
     assert rep["need_sync"] == file_oracle.need_sync
 yield afunc
 """
@@ -330,7 +283,6 @@ yield afunc
             assert rep["status"] == "ok"
             assert rep["base_version"] == self.file_oracle.base_version
             assert not rep["is_placeholder"]
-            assert rep["need_flush"] == self.file_oracle.need_flush
             assert rep["need_sync"] == self.file_oracle.need_sync
 
         @rule()
@@ -361,4 +313,4 @@ yield afunc
             assert rep is True
             self.file_oracle.reset_core()
 
-    await CoreOnline.run_test()
+    await CoreOnlineRwAndSync.run_test()

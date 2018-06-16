@@ -4,12 +4,13 @@ import logbook
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.backend_connection import BackendNotAvailable, backend_connection_factory
 from parsec.core.devices_manager import Device
+from parsec.handshake import HandshakeBadIdentity
 
 
-logger = logbook.Logger("parsec.core.backend_connections_multiplexer")
+logger = logbook.Logger("parsec.core.backend_cmds_sender")
 
 
-class BackendConnectionsMultiplexer(BaseAsyncComponent):
+class BackendCmdsSender(BaseAsyncComponent):
     def __init__(self, device: Device, backend_addr: str):
         super().__init__()
         self.device = device
@@ -29,7 +30,11 @@ class BackendConnectionsMultiplexer(BaseAsyncComponent):
     async def _init_send_connection(self):
         if self._sock:
             await self._sock.aclose()
-        self._sock = await backend_connection_factory(self.backend_addr, self.device)
+        try:
+            self._sock = await backend_connection_factory(self.backend_addr, self.device)
+        except HandshakeBadIdentity as exc:
+            # TODO: think about the handling of this kind of exception...
+            raise BackendNotAvailable() from exc
 
     async def _naive_send(self, req):
         if not self._sock:

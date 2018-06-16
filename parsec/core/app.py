@@ -3,21 +3,14 @@ import trio
 import attr
 import logbook
 
+from parsec.signals import Namespace as SignalNamespace
 from parsec.networking import serve_client
-from parsec.signals import SignalsContext, get_signal, ANY
 from parsec.core.base import BaseAsyncComponent, NotInitializedError
-from parsec.core.sharing import Sharing
-from parsec.core.fs import FS
-from parsec.core.synchronizer import Synchronizer
+from parsec.core.fs import FSManager
 from parsec.core.devices_manager import DevicesManager
-from parsec.core.backend_connections_multiplexer import BackendConnectionsMultiplexer
-from parsec.core.backend_events_manager import BackendEventsManager
-from parsec.core.fuse_manager import FuseManager
-from parsec.core.local_storage import LocalStorage
-from parsec.core.backend_storage import BackendStorage
-from parsec.core.manifests_manager import ManifestsManager
-from parsec.core.blocks_manager import BlocksManager
 from parsec.core.encryption_manager import EncryptionManager
+from parsec.core.backend_cmds_sender import BackendCmdsSender
+from parsec.core.backend_events_manager import BackendEventsManager
 
 
 logger = logbook.Logger("parsec.core.app")
@@ -32,10 +25,10 @@ class NotLoggedError(Exception):
 
 
 class Core(BaseAsyncComponent):
-    def __init__(self, config):
+    def __init__(self, config, signal_ns=None):
         super().__init__()
         self.nursery = None
-        self.signals_context = SignalsContext()
+        self.signal_ns = signal_ns or SignalNamespace()
         self.devices_manager = DevicesManager(os.path.join(config.base_settings_path, "devices"))
 
         self.config = config
@@ -44,36 +37,26 @@ class Core(BaseAsyncComponent):
         # Components dependencies tree:
         # app
         # ├─ backend_events_manager
+        # ├─ backend_cmds_sender
+        # ├─ encryption_manager
+        # │  └─ backend_cmds_sender
         # ├─ fs
-        # │  ├─ manifests_manager
-        # │  │  ├─ encryption_manager
-        # │  │  │  ├─ backend_connection
-        # │  │  │  └─ local_storage
-        # │  │  ├─ local_storage
-        # │  │  └─ backend_storage
-        # │  │     └─ backend_connection
-        # │  └─ blocks_manager
-        # │     ├─ local_storage
-        # │     └─ backend_storage
+        # │  ├─ encryption_manager
+        # │  └─ backend_cmds_sender
         # ├─ fuse_manager
-        # ├─ synchronizer
-        # │  └─ fs
         # └─ sharing
         #    ├─ encryption_manager
-        #    └─ backend_connection
+        #    └─ backend_cmds_sender
 
         self.components_dep_order = (
-            "backend_events_manager",
-            "backend_connection",
-            "backend_storage",
-            "local_storage",
+            "backend_cmds_sender",
             "encryption_manager",
-            "manifests_manager",
-            "blocks_manager",
             "fs",
-            "fuse_manager",
-            "synchronizer",
-            "sharing",
+            # "fuse_manager",
+            # "sharing",
+            # Keep event manager last, so it will know what events the other
+            # modules need before connecting to the backend
+            "backend_events_manager",
         )
         for cname in self.components_dep_order:
             setattr(self, cname, None)
@@ -86,7 +69,6 @@ class Core(BaseAsyncComponent):
         self.auth_events = None
 
     async def _init(self, nursery):
-        self.signals_context.push()
         self.nursery = nursery
 
     async def _teardown(self):
@@ -94,7 +76,6 @@ class Core(BaseAsyncComponent):
             await self.logout()
         except NotLoggedError:
             pass
-        self.signals_context.pop()
 
     async def login(self, device):
         async with self.auth_lock:
@@ -102,27 +83,22 @@ class Core(BaseAsyncComponent):
                 raise AlreadyLoggedError("Already logged as `%s`" % self.auth_device)
 
             # First create components
-            self.backend_events_manager = BackendEventsManager(device, self.config.backend_addr)
-            self.backend_connection = BackendConnectionsMultiplexer(
-                device, self.config.backend_addr
+            self.backend_events_manager = BackendEventsManager(
+                device, self.config.backend_addr, self.signal_ns
             )
-            self.local_storage = LocalStorage(device.local_storage_db_path)
-            self.encryption_manager = EncryptionManager(
-                device, self.backend_connection, self.local_storage
+            self.backend_cmds_sender = BackendCmdsSender(device, self.config.backend_addr)
+            self.encryption_manager = EncryptionManager(device, self.backend_cmds_sender)
+            self.fs = FSManager(
+                device,
+                self.backend_cmds_sender,
+                self.encryption_manager,
+                self.signal_ns,
+                auto_sync=self.config.auto_sync,
             )
-            self.backend_storage = BackendStorage(self.backend_connection)
-            self.manifests_manager = ManifestsManager(
-                self.local_storage, self.backend_storage, self.encryption_manager
-            )
-            self.blocks_manager = BlocksManager(self.local_storage, self.backend_storage)
-            self.fs = FS(
-                device, self.manifests_manager, self.blocks_manager, self.config.block_size
-            )
-            self.fuse_manager = FuseManager(self.config.addr)
-            self.synchronizer = Synchronizer(self.config.auto_sync, self.fs)
-            self.sharing = Sharing(
-                device, self.fs, self.backend_connection, self.backend_events_manager
-            )
+            # self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
+            # self.sharing = Sharing(
+            #     device, self.fs, self.backend_cmds_sender, self.backend_events_manager
+            # )
 
             # Then initialize them, order must respect dependencies here !
             try:
@@ -170,7 +146,7 @@ class Core(BaseAsyncComponent):
     async def handle_client(self, sockstream):
         from parsec.core.api import dispatch_request
 
-        ctx = ClientContext()
+        ctx = ClientContext(self.signal_ns)
         await serve_client(lambda req: dispatch_request(req, ctx, self), sockstream)
 
 
@@ -180,24 +156,65 @@ class ClientContext:
     def ctxid(self):
         return id(self)
 
+    signal_ns = attr.ib()
     registered_signals = attr.ib(default=attr.Factory(dict))
     received_signals = attr.ib(default=attr.Factory(lambda: trio.Queue(100)))
 
-    def subscribe_signal(self, signal_name, subject=ANY):
-        key = (signal_name, subject)
-        if key in self.registered_signals:
-            raise KeyError("%s@%s already subscribed" % key)
+    # TODO: rework this
+    def subscribe_signal(self, signal_name, arg=None):
 
-        def _handle_event(sender):
+        # TODO: remove the deprecated naming
+        if signal_name in ("device_try_claim_submitted", "backend.device.try_claim_submitted"):
+            event_name = "backend.device.try_claim_submitted"
+
+            def _build_event_msg(device_name, config_try_id):
+                return {
+                    "event": signal_name,
+                    "device_name": device_name,
+                    "config_try_id": config_try_id,
+                }
+
+            key = (event_name,)
+
+        elif signal_name == "pinged":
+            event_name = "pinged"
+            expected_ping = arg
+            key = (event_name, expected_ping)
+
+            def _build_event_msg(ping):
+                if ping != expected_ping:
+                    return None
+                return {"event": signal_name, "ping": ping}
+
+        else:
+            raise NotImplementedError()
+
+        if key in self.registered_signals:
+            raise KeyError(f"{key} already subscribed")
+
+        def _handle_event(sender, **kwargs):
             try:
-                self.received_signals.put_nowait((signal_name, sender))
+                msg = _build_event_msg(**kwargs)
+                if msg:
+                    self.received_signals.put_nowait(msg)
             except trio.WouldBlock:
-                logger.warning("{!r}: event queue is full", self)
+                logger.warning(f"Event queue is full for {self.id}")
 
         self.registered_signals[key] = _handle_event
-        get_signal(signal_name).connect(_handle_event, sender=subject, weak=True)
+        self.signal_ns.signal(event_name).connect(_handle_event, weak=True)
 
-    def unsubscribe_signal(self, signal_name, subject=ANY):
-        key = (signal_name, subject)
+    def unsubscribe_signal(self, signal_name, arg=None):
+        if signal_name in ("device_try_claim_submitted", "backend.device.try_claim_submitted"):
+            event_name = "backend.device.try_claim_submitted"
+            key = (event_name,)
+
+        elif signal_name == "pinged":
+            event_name = "pinged"
+            expected_ping = arg
+            key = (event_name, expected_ping)
+
+        else:
+            raise NotImplementedError()
+
         # Weakref on _handle_event in signal connection will do the rest
         del self.registered_signals[key]

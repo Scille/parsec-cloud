@@ -14,10 +14,16 @@ from parsec.core.encryption_manager import (
 from parsec.core.backend_connection import BackendNotAvailable
 
 from tests.open_tcp_stream_mock_wrapper import offline
+from tests.conftest import realcrypto
+
+
+@pytest.fixture(scope="module", autouse=True)
+def force_realcrypto():
+    yield from realcrypto()
 
 
 def test_encrypt_for_self(alice):
-    msg = {"foo": "bar"}
+    msg = b"Hello world !"
     ciphered_msg = encrypt_for_self(alice, msg)
     assert isinstance(ciphered_msg, bytes)
 
@@ -31,7 +37,7 @@ def test_encrypt_for_self(alice):
 
 
 def test_encrypt_for_other(alice, bob):
-    msg = {"foo": "bar"}
+    msg = b"Hello world !"
     ciphered_msg = encrypt_for(alice, bob, msg)
     assert isinstance(ciphered_msg, bytes)
 
@@ -45,7 +51,7 @@ def test_encrypt_for_other(alice, bob):
 
 
 def test_encrypt_with_secret_key(alice):
-    msg = {"foo": "bar"}
+    msg = b"Hello world !"
     key = generate_sym_key()
     ciphered_msg = encrypt_with_secret_key(alice, key, msg)
     assert isinstance(ciphered_msg, bytes)

@@ -1,27 +1,31 @@
 import pytest
-from unittest.mock import Mock
 
-from parsec.core.fs import FS
-from parsec.core.manifests_manager import ManifestsManager
-from parsec.core.blocks_manager import BlocksManager
-
-from tests.common import AsyncMock
+from parsec.core.fs.local_folder_fs import LocalFolderFS
+from parsec.core.fs.local_file_fs import LocalFileFS
 
 
 @pytest.fixture
-def mocked_manifests_manager(alice):
-    mocked_manifests_manager = AsyncMock(spec=ManifestsManager)
-    mocked_manifests_manager.device = alice
-    mocked_manifests_manager.fetch_user_manifest_from_local.return_value = None
-    return mocked_manifests_manager
+def local_folder_fs_factory(alice, signal_ns):
+    def _local_folder_fs_factory(device=alice):
+        return LocalFolderFS(device, signal_ns)
+
+    return _local_folder_fs_factory
 
 
 @pytest.fixture
-def mocked_blocks_manager():
-    return AsyncMock(spec=BlocksManager)
+def local_folder_fs(local_folder_fs_factory):
+    return local_folder_fs_factory()
 
 
 @pytest.fixture
-def fs(alice, mocked_manifests_manager, mocked_blocks_manager):
-    fs = FS(alice, mocked_manifests_manager, mocked_blocks_manager)
-    return fs
+def local_file_fs_factory(alice, local_folder_fs_factory, signal_ns):
+    def _local_file_fs_factory(device=alice, local_folder_fs=None):
+        local_folder_fs = local_folder_fs or local_folder_fs_factory(device)
+        return LocalFileFS(device, local_folder_fs, signal_ns)
+
+    return _local_file_fs_factory
+
+
+@pytest.fixture
+def local_file_fs(local_file_fs_factory):
+    return local_file_fs_factory()

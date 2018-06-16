@@ -5,7 +5,7 @@ from collections import defaultdict
 from random import randrange, choice
 from string import ascii_lowercase
 
-from parsec.core.fs import FSInvalidPath
+from parsec.core.sharing import SharingInvalidRecipient
 
 
 FUZZ_PARALLELISM = 10
@@ -115,14 +115,14 @@ async def fuzzer(id, core, fs_state):
 
 
 async def _fuzzer_cmd(id, core, fs_state):
-    x = randrange(0, 100)
+    x = randrange(0, 110)
     await trio.sleep(x * 0.01)
 
     if x < 10:
         try:
             await core.fs.stat(fs_state.get_path())
             fs_state.add_stat(id, "stat_ok")
-        except FSInvalidPath:
+        except OSError:
             fs_state.add_stat(id, "stat_bad")
 
     elif x < 20:
@@ -131,7 +131,7 @@ async def _fuzzer_cmd(id, core, fs_state):
             await core.fs.file_create(path)
             fs_state.files.append(path)
             fs_state.add_stat(id, "file_create_ok")
-        except FSInvalidPath:
+        except OSError:
             fs_state.add_stat(id, "file_create_bad")
 
     elif x < 30:
@@ -140,7 +140,7 @@ async def _fuzzer_cmd(id, core, fs_state):
         try:
             await core.fs.file_read(path, size=size)
             fs_state.add_stat(id, "file_read_ok")
-        except FSInvalidPath:
+        except OSError:
             fs_state.add_stat(id, "file_read_bad")
 
     elif x < 40:
@@ -150,7 +150,7 @@ async def _fuzzer_cmd(id, core, fs_state):
         try:
             await core.fs.file_write(path, buffer, offset=offset)
             fs_state.add_stat(id, "file_write_ok")
-        except FSInvalidPath:
+        except OSError:
             fs_state.add_stat(id, "file_write_bad")
 
     elif x < 50:
@@ -159,7 +159,7 @@ async def _fuzzer_cmd(id, core, fs_state):
         try:
             await core.fs.file_truncate(path, length)
             fs_state.add_stat(id, "file_truncate_ok")
-        except FSInvalidPath as exc:
+        except OSError as exc:
             fs_state.add_stat(id, "file_truncate_bad")
 
     elif x < 60:
@@ -168,7 +168,7 @@ async def _fuzzer_cmd(id, core, fs_state):
             await core.fs.folder_create(path)
             fs_state.folders.append(path)
             fs_state.add_stat(id, "folder_create_ok")
-        except FSInvalidPath:
+        except OSError:
             fs_state.add_stat(id, "folder_create_bad")
 
     elif x < 70:
@@ -181,7 +181,7 @@ async def _fuzzer_cmd(id, core, fs_state):
             await core.fs.move(old_path, new_path)
             fs_state.replace_path(old_path, new_path)
             fs_state.add_stat(id, "move_ok")
-        except FSInvalidPath as exc:
+        except OSError as exc:
             fs_state.add_stat(id, "move_bad")
 
     elif x < 80:
@@ -190,7 +190,7 @@ async def _fuzzer_cmd(id, core, fs_state):
             await core.fs.delete(path)
             fs_state.remove_path(path)
             fs_state.add_stat(id, "delete_ok")
-        except FSInvalidPath:
+        except OSError:
             fs_state.add_stat(id, "delete_bad")
 
     elif x < 90:
@@ -198,20 +198,29 @@ async def _fuzzer_cmd(id, core, fs_state):
         try:
             await core.fs.file_flush(path)
             fs_state.add_stat(id, "flush_ok")
-        except FSInvalidPath:
+        except OSError:
             fs_state.add_stat(id, "flush_bad")
 
-    else:
+    elif x < 100:
         path = fs_state.get_path()
         try:
             await core.fs.sync(path)
             fs_state.add_stat(id, "sync_ok")
-        except FSInvalidPath:
+        except OSError:
             fs_state.add_stat(id, "sync_bad")
 
+    else:
+        path = fs_state.get_path()
+        try:
+            await core.sharing.share(path, "bob")
+            fs_state.add_stat(id, "share_ok")
+        except (OSError, SharingInvalidRecipient):
+            fs_state.add_stat(id, "share_bad")
 
+
+@pytest.mark.xfail
 @pytest.mark.trio
-async def test_fuzz_core(request, running_backend, core, alice):
+async def test_fuzz_core(request, running_backend, core, alice, bob):
     await core.login(alice)
     async with trio.open_nursery() as nursery:
         fs_state = FSState()

@@ -1,20 +1,16 @@
 import pytest
 
-from tests.common import connect_backend
+
+@pytest.mark.trio
+async def test_connect_as_anonymous(anonymous_backend_sock):
+    await anonymous_backend_sock.send({"cmd": "ping", "ping": "foo"})
+    rep = await anonymous_backend_sock.recv()
+    assert rep == {"status": "ok", "pong": "foo"}
 
 
 @pytest.mark.trio
-async def test_connect_as_anonymous(backend):
-    async with connect_backend(backend, auth_as="anonymous") as sock:
-        await sock.send({"cmd": "ping", "ping": "foo"})
-        rep = await sock.recv()
-        assert rep == {"status": "ok", "pong": "foo"}
-
-
-@pytest.mark.trio
-@pytest.mark.parametrize(
-    "cmd",
-    [
+async def test_anonymous_has_limited_access(anonymous_backend_sock):
+    for cmd in [
         "user_get",
         "user_create",
         "blockstore_post",
@@ -27,10 +23,7 @@ async def test_connect_as_anonymous(backend):
         "message_get",
         "message_new",
         "pubkey_get",
-    ],
-)
-async def test_anonymous_has_limited_access(backend, cmd):
-    async with connect_backend(backend, auth_as="anonymous") as sock:
-        await sock.send({"cmd": cmd})
-        rep = await sock.recv()
+    ]:
+        await anonymous_backend_sock.send({"cmd": cmd})
+        rep = await anonymous_backend_sock.recv()
         assert rep == {"status": "unknown_command", "reason": "Unknown command"}

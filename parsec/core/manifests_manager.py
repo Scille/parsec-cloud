@@ -47,10 +47,10 @@ class ManifestsManager(BaseAsyncComponent):
         ciphered_msg = encrypt_for_local(key, msg)
         self._local_storage.flush_user_manifest(ciphered_msg)
 
-    async def sync_user_manifest_with_backend(self, manifest):
+    async def sync_user_manifest_with_backend(self, manifest, notify=()):
         msg, _ = TypedManifestSchema(strict=True).dump(manifest)
         ciphered_msg = await self._encryption_manager.encrypt_for_self(msg)
-        await self._backend_storage.sync_user_manifest(manifest["version"], ciphered_msg)
+        await self._backend_storage.sync_user_manifest(manifest["version"], ciphered_msg, notify)
 
     def fetch_from_local(self, id, key):
         ciphered_msg = self._local_storage.fetch_manifest(id)
@@ -76,13 +76,13 @@ class ManifestsManager(BaseAsyncComponent):
         ciphered_msg = encrypt_for_local(key, msg)
         self._local_storage.flush_manifest(id, ciphered_msg)
 
-    async def sync_new_entry_with_backend(self, key, manifest):
+    async def sync_new_entry_with_backend(self, key, manifest, notify=()):
         msg, _ = TypedManifestSchema(strict=True).dump(manifest)
         ciphered_msg = await self._encryption_manager.encrypt_with_secret_key(key, msg)
-        return await self._backend_storage.sync_new_manifest(ciphered_msg)
+        return await self._backend_storage.sync_new_manifest(ciphered_msg, notify)
 
-    async def sync_with_backend(self, id, wts, key, manifest):
+    async def sync_with_backend(self, id, wts, key, manifest, notify=()):
         version = manifest["version"]
         msg, _ = TypedManifestSchema(strict=True).dump(manifest)
         ciphered_msg = await self._encryption_manager.encrypt_with_secret_key(key, msg)
-        await self._backend_storage.sync_manifest(id, wts, version, ciphered_msg)
+        await self._backend_storage.sync_manifest(id, wts, version, ciphered_msg, notify)

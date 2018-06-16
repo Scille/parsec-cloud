@@ -3,97 +3,76 @@ import pytest
 import pprint
 from string import ascii_lowercase
 from hypothesis import strategies as st, note
-from hypothesis.stateful import Bundle, invariant
+from hypothesis.stateful import Bundle, invariant, initialize
 
 from parsec.utils import to_jsonb64
 
-from tests.common import connect_core, core_factory, backend_factory, run_app
-from tests.hypothesis.common import rule, rule_once
+from tests.hypothesis.common import rule
 
 
 # The point is not to find breaking filenames here, so keep it simple
 st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 
-def check_fs_dump(entry):
+def check_fs_dump(entry, is_root=True):
     assert not entry["need_sync"]
-    assert entry["base_version"] == 1
+    assert entry["base_version"] == 2 if is_root else 1
     if "children" in entry:
         for k, v in entry["children"].items():
-            check_fs_dump(v)
+            check_fs_dump(v, is_root=False)
 
 
+@pytest.mark.xfail
 @pytest.mark.slow
 @pytest.mark.trio
 async def test_online_core_idempotent_sync(
     TrioDriverRuleBasedStateMachine,
-    mocked_local_storage_connection,
-    tcp_stream_spy,
-    backend_addr,
-    tmpdir,
-    alice,
+    server_factory,
+    backend_factory,
+    core_factory_cm,
+    core_sock_factory,
+    device_factory,
 ):
 
     st_entry_type = st.sampled_from(["file", "folder"])
 
-    class MultiCoreTreeAndSync(TrioDriverRuleBasedStateMachine):
+    class OnlineCoreIdempotentSync(TrioDriverRuleBasedStateMachine):
         BadPath = Bundle("bad_path")
         GoodPath = Bundle("good_path")
-        count = 0
 
         async def trio_runner(self, task_status):
-            mocked_local_storage_connection.reset()
-
-            type(self).count += 1
-            backend_config = {"blockstore_postgresql": True}
-            core_config = {
-                "base_settings_path": tmpdir.mkdir("try-%s" % self.count).strpath,
-                "backend_addr": backend_addr,
-            }
-
             self.core_cmd = self.communicator.send
 
-            async with backend_factory(**backend_config) as backend:
-                await backend.user.create(
-                    author="<backend-fixture>",
-                    user_id=alice.user_id,
-                    broadcast_key=alice.user_pubkey.encode(),
-                    devices=[(alice.device_name, alice.device_verifykey.encode())],
-                )
+            self.device = device_factory()
+            self.backend = await backend_factory(devices=[self.device])
+            server = server_factory(self.backend.handle_client)
+            async with core_factory_cm(
+                devices=[self.device], config={"backend_addr": server.addr, "auto_sync": False}
+            ) as self.core:
+                await self.core.login(self.device)
 
-                async with run_app(backend) as backend_connection_factory:
-                    tcp_stream_spy.install_hook(backend_addr, backend_connection_factory)
+                await self.core.fs.file_create("/good_file.txt")
+                await self.core.fs.folder_create("/good_folder")
+                await self.core.fs.file_create("/good_folder/good_sub_file.txt")
+                await self.core.fs.sync("/")
 
-                    try:
-                        async with core_factory(**core_config) as self.core:
+                sock = core_sock_factory(self.core)
+                task_status.started()
 
-                            await self.core.login(alice)
+                while True:
+                    msg = await self.communicator.trio_recv()
+                    await sock.send(msg)
+                    rep = await sock.recv()
+                    await self.communicator.trio_respond(rep)
 
-                            await self.core.fs.file_create("/good_file.txt")
-                            await self.core.fs.folder_create("/good_folder")
-                            await self.core.fs.file_create("/good_folder/good_sub_file.txt")
-                            await self.core.fs.sync("/")
-
-                            async with connect_core(self.core) as sock:
-                                task_status.started()
-
-                                while True:
-                                    msg = await self.communicator.trio_recv()
-                                    await sock.send(msg)
-                                    rep = await sock.recv()
-                                    await self.communicator.trio_respond(rep)
-
-                    finally:
-                        tcp_stream_spy.install_hook(backend_addr, None)
-
-        @rule_once(target=BadPath)
+        @initialize(target=BadPath)
         def init_bad_path(self):
             return "/dummy"
 
         @rule(
             target=GoodPath,
             path=st.sampled_from(
-                ["/", "/good_file.txt", "/good_folder", "/good_folder/good_sub_file.txt"]
+                ["/", "/good_file.txt", "/good_folder/", "/good_folder/good_sub_file.txt"]
             ),
         )
         def init_good_path(self, path):
@@ -136,7 +115,7 @@ async def test_online_core_idempotent_sync(
             note(rep)
             assert rep["status"] == "invalid_path"
 
-        @rule(src=GoodPath, dst=GoodPath)
+        @rule(src=GoodPath, dst=GoodPath.filter(lambda x: x.endswith("/")))
         def try_to_move_bad_dst(self, src, dst):
             rep = self.core_cmd({"cmd": "move", "src": src, "dst": dst})
             note(rep)
@@ -150,9 +129,8 @@ async def test_online_core_idempotent_sync(
 
         @invariant()
         def check_fs(self):
-            fs_dump = self.core.fs._local_tree.dump()
+            fs_dump = self.core.fs._local_folder_fs.dump()
             note("core fs dump: " + pprint.pformat(fs_dump))
-            pprint.pprint(fs_dump)
             check_fs_dump(fs_dump)
 
-    await MultiCoreTreeAndSync.run_test()
+    await OnlineCoreIdempotentSync.run_test()
