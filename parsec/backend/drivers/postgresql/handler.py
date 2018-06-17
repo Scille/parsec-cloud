@@ -160,7 +160,7 @@ class PGHandler:
         except ValueError:
             signal = self.signal_ns.signal(channel)
             signal.send(payload)
-            self.notifications_to_ignore.append((channel, payload))
+            self.signals_to_ignore.append((channel, payload))
 
     async def _notification_sender(self, task_status=trio.TASK_STATUS_IGNORED):
         async def send(signal, sender):
