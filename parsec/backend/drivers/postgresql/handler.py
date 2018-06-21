@@ -95,6 +95,7 @@ async def init_db(url, force=False):
                 exchange_cipherkey BYTEA,
                 ciphered_user_privkey BYTEA,
                 refused_reason TEXT
+                salt BYTEA
             )"""
         )
         await conn.execute(

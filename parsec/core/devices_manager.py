@@ -1,14 +1,17 @@
 import re
+import attr
 import logging
 from pathlib import Path
-from nacl.public import PrivateKey
+from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 from nacl.pwhash import argon2i
 from nacl.secret import SecretBox
 import nacl.utils
 
 from parsec.schema import UnknownCheckedSchema, fields, validate
+from parsec.core.backend_connection import backend_send_anonymous_cmd
 from parsec.core.local_db import LocalDB
+from parsec.utils import to_jsonb64, from_jsonb64
 
 
 logger = logging.getLogger("parsec")
@@ -26,6 +29,26 @@ class DeviceLoadingError(Exception):
 
 
 class DeviceSavingError(Exception):
+    pass
+
+
+class DeviceConfigureError(Exception):
+    pass
+
+
+class DeviceConfigureBackendError(DeviceConfigureError):
+    pass
+
+
+class DeviceConfigureNoFoundError(DeviceConfigureError):
+    pass
+
+
+class DeviceConfigurationPasswordError(DeviceConfigureError):
+    pass
+
+
+class DeviceConfigureOutOfDate(DeviceConfigureError):
     pass
 
 
@@ -63,8 +86,18 @@ class UserManifestAccessSchema(UnknownCheckedSchema):
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=32, max=32))
 
 
+class BackendGetConfigurationTryRepSchema(UnknownCheckedSchema):
+    status = fields.CheckedConstant("ok", required=True)
+    device_name = fields.String(required=True)
+    configuration_status = fields.String(required=True)
+    device_verify_key = fields.Base64Bytes(required=True)
+    exchange_cipherkey = fields.Base64Bytes(required=True)
+    salt = fields.Base64Bytes(required=True)
+
+
 device_conf_schema = DeviceConfSchema()
 user_manifest_access_schema = UserManifestAccessSchema()
+backend_get_configuration_try_rep_schema = BackendGetConfigurationTryRepSchema()
 
 
 def dumps_user_manifest_access(access):
@@ -115,7 +148,7 @@ class Device:
         return self.device_signkey.verify_key
 
 
-class DevicesManager:
+class LocalDevicesManager:
     def __init__(self, devices_conf_path):
         self.devices_conf_path = Path(devices_conf_path)
 
@@ -244,3 +277,173 @@ class DevicesManager:
             local_db=LocalDB(device_conf_path / "local_storage"),
             user_manifest_access=user_manifest_access,
         )
+
+
+async def configure_new_device(backend_addr, device_id, configure_device_token, password):
+    """
+    Raises:
+        BackendNotAvailable
+        DeviceConfigureError
+    """
+    salt = _generate_salt()
+    box = _secret_box_factory(password.encode("utf-8"), salt)
+    user_id, device_name = device_id.split("@")
+    exchange_cipherkey_privkey = PrivateKey.generate()
+    device_signkey = SigningKey.generate()
+
+    rep = await backend_send_anonymous_cmd(
+        backend_addr,
+        {
+            "cmd": "device_configure",
+            "user_id": user_id,
+            "device_name": device_name,
+            "configure_device_token": configure_device_token,
+            "device_verify_key": to_jsonb64(device_signkey.verify_key.encode()),
+            "exchange_cipherkey": to_jsonb64(
+                box.encrypt(exchange_cipherkey_privkey.public_key.encode())
+            ),
+            "salt": to_jsonb64(salt),
+        },
+    )
+
+    # TODO: better answer deserialization
+    if rep["status"] != "ok":
+        raise DeviceConfigureError(rep["reason"])
+
+    ciphered = from_jsonb64(rep["ciphered_user_privkey"])
+    box = SealedBox(exchange_cipherkey_privkey)
+    try:
+        user_privkey_raw = box.decrypt(ciphered)
+        user_privkey = PrivateKey(user_privkey_raw)
+    except nacl.exceptions.CryptoError as exc:
+        raise DeviceConfigureError() from exc
+
+    ciphered = from_jsonb64(rep["ciphered_user_manifest_access"])
+    try:
+        user_manifest_access_raw = box.decrypt(ciphered)
+    except nacl.exceptions.CryptoError as exc:
+        raise DeviceConfigureError() from exc
+    user_manifest_access, errors = user_manifest_access_schema.loads(user_manifest_access_raw)
+    # TODO: improve data validation
+    assert not errors
+
+    return user_privkey, device_signkey, user_manifest_access
+
+
+@attr.s
+class ConfigurationTry:
+    device_name = attr.ib()
+    configuration_status = attr.ib()
+    device_verify_key = attr.ib()
+    exchange_cipherkey = attr.ib()
+    salt = attr.ib()
+
+
+async def get_device_configuration_try(backend_cmds_sender, config_try_id):
+    """
+    Raises:
+        BackendNotAvailable
+        DeviceConfigureNoFoundError
+    """
+    rep = await backend_cmds_sender.send(
+        {"cmd": "device_get_configuration_try", "config_try_id": config_try_id}
+    )
+    data, errors = backend_get_configuration_try_rep_schema.load(rep)
+    if errors:
+        if data.get("status") == "not_found":
+            raise DeviceConfigureNoFoundError
+        raise DeviceConfigureBackendError(f"Bad response from backend: {rep!r} ({errors!r})")
+
+    # TODO: deserialization
+    if rep["status"] != "ok":
+        raise DeviceConfigureBackendError()
+    return ConfigurationTry(
+        device_name=rep["device_name"],
+        configuration_status=rep["configuration_status"],
+        device_verify_key=from_jsonb64(rep["device_verify_key"]),
+        exchange_cipherkey=from_jsonb64(rep["exchange_cipherkey"]),
+        salt=rep["salt"],
+    )
+
+
+async def accept_device_configuration_try(backend_cmds_sender, device, config_try_id, password):
+    """
+    Raises:
+        BackendNotAvailable
+        DeviceConfigurationPasswordError
+    """
+    config_try = await get_device_configuration_try(backend_cmds_sender, config_try_id)
+
+    try:
+        box = _secret_box_factory(password.encode("utf-8"), config_try.salt)
+        exchange_cipherkey_raw = box.decrypt(config_try.exchange_cipherkey)
+        box = SealedBox(PublicKey(exchange_cipherkey_raw))
+        ciphered_user_privkey = box.encrypt(device.user_privkey.encode())
+        user_manifest_access_raw, errors = user_manifest_access_schema.dumps(
+            device.user_manifest_access
+        )
+        assert not errors, errors
+        ciphered_user_manifest_access = box.encrypt(user_manifest_access_raw.encode())
+    except nacl.exceptions.CryptoError as exc:
+        raise DeviceConfigurationPasswordError(str(exc)) from exc
+
+    rep = await backend_cmds_sender.send(
+        {
+            "cmd": "device_accept_configuration_try",
+            "config_try_id": config_try_id,
+            "ciphered_user_privkey": to_jsonb64(ciphered_user_privkey),
+            "ciphered_user_manifest_access": to_jsonb64(ciphered_user_manifest_access),
+        }
+    )
+    # TODO: deserialization
+    if rep["status"] != "ok":
+        raise DeviceConfigureBackendError()
+
+
+async def refuse_device_configuration_try(backend_cmds_sender, config_try_id, reason):
+    """
+    Raises:
+        BackendNotAvailable
+        DeviceConfigureBackendError
+    """
+    rep = await backend_cmds_sender.send(
+        {"cmd": "device_refuse_configuration_try", "config_try_id": config_try_id, "reason": reason}
+    )
+    # TODO: deserialization
+    if rep["status"] != "ok":
+        raise DeviceConfigureBackendError()
+
+
+async def invite_user(backend_cmds_sender, user_id):
+    """
+    Raises:
+        BackendNotAvailable
+        DeviceConfigureBackendError
+    """
+    rep = await backend_cmds_sender.send({"cmd": "user_invite", "user_id": user_id})
+    # TODO: deserialization
+    if rep["status"] != "ok":
+        raise DeviceConfigureBackendError()
+    return rep["invitation_token"]
+
+
+async def claim_user(backend_addr, user_id, device_name, invitation_token):
+    user_privkey = PrivateKey.generate()
+    device_signkey = SigningKey.generate()
+    rep = await backend_send_anonymous_cmd(
+        backend_addr,
+        {
+            "cmd": "user_claim",
+            "user_id": user_id,
+            "device_name": device_name,
+            "invitation_token": invitation_token,
+            "broadcast_key": to_jsonb64(user_privkey.public_key.encode()),
+            "device_verify_key": to_jsonb64(device_signkey.verify_key.encode()),
+        },
+    )
+    # TODO: deserialization
+    if rep["status"] != "ok":
+        if rep.get("status") == "out_of_date_error":
+            raise DeviceConfigureOutOfDate("Claim code is too old.")
+        raise DeviceConfigureBackendError()
+    return user_privkey, device_signkey

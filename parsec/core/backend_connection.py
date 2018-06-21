@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 
 from parsec.networking import CookedSocket
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake, HandshakeError
-from parsec.core.devices_manager import Device
 
 
 logger = logbook.Logger("parsec.core.backend_connection")
@@ -18,7 +17,7 @@ class BackendNotAvailable(BackendError):
     pass
 
 
-async def backend_connection_factory(addr: str, device: Device = None) -> CookedSocket:
+async def backend_connection_factory(addr: str, device=None) -> CookedSocket:
     """
     Connect and authenticate to the given backend.
 

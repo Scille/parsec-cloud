@@ -18,6 +18,7 @@ class BackendGetConfigurationTrySchema(UnknownCheckedSchema):
     configuration_status = fields.String(required=True)
     device_verify_key = fields.Base64Bytes(required=True)
     exchange_cipherkey = fields.Base64Bytes(required=True)
+    salt = fields.Base64Bytes(required=True)
 
 
 backend_get_configuration_try_schema = BackendGetConfigurationTrySchema()
@@ -93,7 +94,7 @@ async def event_listen(req: dict, client_ctx: ClientContext, core: Core) -> dict
                 {"cmd": "device_get_configuration_try", "config_try_id": config_try_id}
             )
         except BackendNotAvailable:
-            return {"status": "backend_not_availabled", "reason": "Backend not available"}
+            return {"status": "backend_not_available", "reason": "Backend not available"}
 
         _, errors = backend_get_configuration_try_schema.load(rep)
         if errors:

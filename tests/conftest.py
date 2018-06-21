@@ -433,7 +433,7 @@ def core_factory(tmpdir, nursery, signal_ns_factory, backend_addr, default_devic
         await core.init(nursery)
 
         for device in devices:
-            core.devices_manager.register_new_device(
+            core.local_devices_manager.register_new_device(
                 device.id,
                 device.user_privkey.encode(),
                 device.device_signkey.encode(),

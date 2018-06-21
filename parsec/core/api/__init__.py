@@ -91,16 +91,13 @@ async def dispatch_request(req: dict, client_ctx: ClientContext, core: Core) -> 
 
     # Protect againsts generic exceptions
     except ParsecError as exc:
-        import pdb
-
-        pdb.set_trace()
         return exc.to_dict()
 
     except InvalidCmd as exc:
         return {"status": "bad_message", "errors": exc.args[0]}
 
     except BackendNotAvailable as exc:
-        return {"status": "backend_not_availabled", "reason": str(exc) or "Backend not available"}
+        return {"status": "backend_not_available", "reason": str(exc) or "Backend not available"}
 
 
 __all__ = ("dispatch_request",)
