@@ -269,7 +269,7 @@ class EncryptionManager(BaseAsyncComponent):
                 return
             else:
                 raise BackendGetUserError(
-                    "Cannot retreive user `%s`: %r (errors: %r)" % (user_id, raw_rep, errors)
+                    "Cannot retrieve user `%s`: %r (errors: %r)" % (user_id, raw_rep, errors)
                 )
         user_data = {
             "user_id": rep["user_id"],
@@ -332,7 +332,7 @@ class EncryptionManager(BaseAsyncComponent):
                 self.device.user_id, self.device.device_name, self.device.device_verifykey.encode()
             )
         else:
-            # First try to retreive from the local cache
+            # First try to retrieve from the local cache
             remote_device = self._fetch_remote_device_from_local(user_id, device_name)
             if not remote_device:
                 # Cache miss ! Fetch data from the backend and retry
@@ -361,7 +361,7 @@ class EncryptionManager(BaseAsyncComponent):
         except KeyError:
             pass
 
-        # Now try to retreive from the local cache
+        # Now try to retrieve from the local cache
         if user_id == self.device.user_id:
             remote_user = RemoteUser(self.device.user_id, self.device.user_pubkey.encode())
         else:

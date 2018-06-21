@@ -174,7 +174,7 @@ async def test_device_configure_and_get_refused(
         "config_try_id": "<config_try_id>",
     }
 
-    # 5) Existing device refuse the configuration
+    # 4) Existing device refuse the configuration
 
     await alice_sock.send(
         {
@@ -186,7 +186,7 @@ async def test_device_configure_and_get_refused(
     rep = await alice_sock.recv()
     assert rep == {"status": "ok"}
 
-    # 6) Wannabe device get it answer: device is not accepted :'-(
+    # 5) Wannabe device get it answer: device is not accepted :'-(
 
     rep = await anonymous_sock.recv()
     assert rep == {"status": "configuration_refused", "reason": "Not in the mood."}
