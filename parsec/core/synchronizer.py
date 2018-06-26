@@ -30,7 +30,7 @@ class Synchronizer(BaseAsyncComponent):
         try:
             closed_event = trio.Event()
             with trio.open_cancel_scope() as cancel_scope:
-                task_status.started(cancel_scope, closed_event)
+                task_status.started((cancel_scope, closed_event))
                 while True:
                     await trio.sleep(1)
                     # trigger_time = pendulum.now() + pendulum.interval(seconds=1)
