@@ -4,7 +4,7 @@ import string
 from uuid import uuid4
 
 from parsec.utils import to_jsonb64
-from parsec.schema import BaseCmdSchema, fields
+from parsec.schema import _BaseCmdSchema, fields
 
 
 TRUST_SEED_LENGTH = 12
@@ -27,22 +27,27 @@ class VlobAtom:
     version = attr.ib(default=1)
 
 
-class cmd_CREATE_Schema(BaseCmdSchema):
+class _cmd_CREATE_Schema(_BaseCmdSchema):
     # TODO: blob must be present
     blob = fields.Base64Bytes(missing=to_jsonb64(b""))
 
 
-class cmd_READ_Schema(BaseCmdSchema):
+class _cmd_READ_Schema(_BaseCmdSchema):
     id = fields.String(required=True)
     version = fields.Integer(validate=lambda n: n >= 1)
     trust_seed = fields.String(required=True)
 
 
-class cmd_UPDATE_Schema(BaseCmdSchema):
+class _cmd_UPDATE_Schema(_BaseCmdSchema):
     id = fields.String(required=True)
     version = fields.Integer(validate=lambda n: n > 1)
     trust_seed = fields.String(required=True)
     blob = fields.Base64Bytes(required=True)
+
+
+cmd_CREATE_Schema = _cmd_CREATE_Schema()
+cmd_READ_Schema = _cmd_READ_Schema()
+cmd_UPDATE_Schema = _cmd_UPDATE_Schema()
 
 
 class BaseVlobComponent:
@@ -50,7 +55,7 @@ class BaseVlobComponent:
         self._signal_vlob_updated = signal_ns.signal("vlob_updated")
 
     async def api_vlob_create(self, client_ctx, msg):
-        msg = cmd_CREATE_Schema().load_or_abort(msg)
+        msg = cmd_CREATE_Schema.load_or_abort(msg)
         id = uuid4().hex
         rts = uuid4().hex
         wts = uuid4().hex
@@ -63,7 +68,7 @@ class BaseVlobComponent:
         }
 
     async def api_vlob_read(self, client_ctx, msg):
-        msg = cmd_READ_Schema().load_or_abort(msg)
+        msg = cmd_READ_Schema.load_or_abort(msg)
         atom = await self.read(**msg)
         return {
             "status": "ok",
@@ -73,7 +78,7 @@ class BaseVlobComponent:
         }
 
     async def api_vlob_update(self, client_ctx, msg):
-        msg = cmd_UPDATE_Schema().load_or_abort(msg)
+        msg = cmd_UPDATE_Schema.load_or_abort(msg)
         await self.update(**msg)
         return {"status": "ok"}
 

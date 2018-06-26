@@ -1,4 +1,4 @@
-from parsec.schema import BaseCmdSchema, fields
+from parsec.schema import _BaseCmdSchema, fields
 from parsec.core.app import Core, ClientContext
 from parsec.core.sharing import (
     SharingUnknownRecipient,
@@ -7,19 +7,19 @@ from parsec.core.sharing import (
 )
 
 
-class cmd_SHARE_Schema(BaseCmdSchema):
+class _cmd_SHARE_Schema(_BaseCmdSchema):
     path = fields.String(required=True)
     recipient = fields.String(required=True)
 
 
-cmd_share_schema = cmd_SHARE_Schema()
+cmd_SHARE_Schema = _cmd_SHARE_Schema()
 
 
 async def share(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = cmd_share_schema.load(req)
+    req = cmd_SHARE_Schema.load(req)
     try:
         await core.sharing.share(req["path"], req["recipient"])
     except SharingInvalidRecipient as exc:

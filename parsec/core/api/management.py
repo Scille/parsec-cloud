@@ -1,7 +1,7 @@
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 
-from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields, validate
+from parsec.schema import _UnknownCheckedSchema, _BaseCmdSchema, fields, validate
 from parsec.core.app import Core, ClientContext
 from parsec.core.backend_connection import BackendNotAvailable, backend_send_anonymous_cmd
 from parsec.core import devices_manager
@@ -9,7 +9,7 @@ from parsec.core.devices_manager import DeviceSavingError
 from parsec.utils import to_jsonb64, from_jsonb64
 
 
-class BackendGetConfigurationTrySchema(UnknownCheckedSchema):
+class _BackendGetConfigurationTrySchema(_UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
     device_name = fields.String(required=True)
     configuration_status = fields.String(required=True)
@@ -17,38 +17,42 @@ class BackendGetConfigurationTrySchema(UnknownCheckedSchema):
     user_privkey_cypherkey = fields.Base64Bytes(required=True)
 
 
-backend_get_configuration_try_schema = BackendGetConfigurationTrySchema()
-
-
-class cmd_USER_INVITE_Schema(BaseCmdSchema):
+class _cmd_USER_INVITE_Schema(_BaseCmdSchema):
     user_id = fields.String(
         validate=validate.Regexp(devices_manager.USER_ID_PATTERN), required=True
     )
 
 
-class cmd_USER_CLAIM_Schema(BaseCmdSchema):
+class _cmd_USER_CLAIM_Schema(_BaseCmdSchema):
     # TODO: change id to user_id/device_name ?
     id = fields.String(validate=validate.Regexp(devices_manager.DEVICE_ID_PATTERN), required=True)
     invitation_token = fields.String(required=True)
     password = fields.String(required=True)
 
 
-class cmd_DEVICE_CONFIGURE_Schema(BaseCmdSchema):
+class _cmd_DEVICE_CONFIGURE_Schema(_BaseCmdSchema):
     # TODO: add regex validation
     device_id = fields.String(required=True)
     password = fields.String(required=True)
     configure_device_token = fields.String(required=True)
 
 
-class cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema(BaseCmdSchema):
+class _cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema(_BaseCmdSchema):
     configuration_try_id = fields.String(required=True)
+
+
+BackendGetConfigurationTrySchema = _BackendGetConfigurationTrySchema()
+cmd_USER_INVITE_Schema = _cmd_USER_INVITE_Schema()
+cmd_USER_CLAIM_Schema = _cmd_USER_CLAIM_Schema()
+cmd_DEVICE_CONFIGURE_Schema = _cmd_DEVICE_CONFIGURE_Schema()
+cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema = _cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema()
 
 
 async def user_invite(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_USER_INVITE_Schema().load(req)
+    msg = cmd_USER_INVITE_Schema.load(req)
     try:
         rep = await core.backend_connection.send({"cmd": "user_invite", "user_id": msg["user_id"]})
     except BackendNotAvailable:
@@ -61,7 +65,7 @@ async def user_claim(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if core.auth_device:
         return {"status": "already_logged", "reason": "Already logged"}
 
-    msg = cmd_USER_CLAIM_Schema().load(req)
+    msg = cmd_USER_CLAIM_Schema.load(req)
     user_privkey = PrivateKey.generate()
     device_signkey = SigningKey.generate()
     user_id, device_name = msg["id"].split("@")
@@ -110,7 +114,7 @@ async def device_declare(req: dict, client_ctx: ClientContext, core: Core) -> di
 
 
 async def device_configure(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    msg = cmd_DEVICE_CONFIGURE_Schema().load(req)
+    msg = cmd_DEVICE_CONFIGURE_Schema.load(req)
 
     user_id, device_name = msg["device_id"].split("@")
     user_privkey_cypherkey_privkey = PrivateKey.generate()
@@ -159,7 +163,7 @@ async def device_accept_configuration_try(req: dict, client_ctx: ClientContext, 
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema().load(req)
+    msg = cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema.load(req)
 
     try:
         rep = await core.backend_connection.send(
@@ -171,7 +175,7 @@ async def device_accept_configuration_try(req: dict, client_ctx: ClientContext, 
     except BackendNotAvailable:
         return {"status": "backend_not_availabled", "reason": "Backend not available"}
 
-    data, errors = backend_get_configuration_try_schema.load(rep)
+    data, errors = BackendGetConfigurationTrySchema.load(rep)
     if errors:
         return {
             "status": "backend_error",

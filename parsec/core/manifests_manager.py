@@ -29,7 +29,7 @@ class ManifestsManager(BaseAsyncComponent):
         if ciphered_msg:
             key = b"0" * 32  # TODO: of course I'm kidding...
             msg = decrypt_for_local(key, ciphered_msg)
-            manifest, _ = TypedManifestSchema(strict=True).load(msg)
+            manifest, _ = TypedManifestSchema.load(msg)
             del manifest["format"]
             return manifest
 
@@ -37,18 +37,18 @@ class ManifestsManager(BaseAsyncComponent):
         ciphered_msg = await self._backend_storage.fetch_user_manifest(version=version)
         if ciphered_msg:
             msg = await self._encryption_manager.decrypt(ciphered_msg)
-            manifest, _ = TypedManifestSchema(strict=True).load(msg)
+            manifest, _ = TypedManifestSchema.load(msg)
             del manifest["format"]
             return manifest
 
     def flush_user_manifest_on_local(self, manifest):
-        msg, _ = TypedManifestSchema(strict=True).dump(manifest)
+        msg, _ = TypedManifestSchema.dump(manifest)
         key = b"0" * 32  # TODO: of course I'm kidding...
         ciphered_msg = encrypt_for_local(key, msg)
         self._local_storage.flush_user_manifest(ciphered_msg)
 
     async def sync_user_manifest_with_backend(self, manifest):
-        msg, _ = TypedManifestSchema(strict=True).dump(manifest)
+        msg, _ = TypedManifestSchema.dump(manifest)
         ciphered_msg = await self._encryption_manager.encrypt_for_self(msg)
         await self._backend_storage.sync_user_manifest(manifest["version"], ciphered_msg)
 
@@ -56,7 +56,7 @@ class ManifestsManager(BaseAsyncComponent):
         ciphered_msg = self._local_storage.fetch_manifest(id)
         if ciphered_msg:
             msg = decrypt_for_local(key, ciphered_msg)
-            manifest, _ = TypedManifestSchema(strict=True).load(msg)
+            manifest, _ = TypedManifestSchema.load(msg)
             return manifest
 
     def remove_from_local(self, id):
@@ -67,22 +67,22 @@ class ManifestsManager(BaseAsyncComponent):
         if ciphered_msg:
             # TODO: store cache in local ?
             msg = await self._encryption_manager.decrypt_with_secret_key(key, ciphered_msg)
-            manifest, _ = TypedManifestSchema(strict=True).load(msg)
+            manifest, _ = TypedManifestSchema.load(msg)
             del manifest["format"]
             return manifest
 
     def flush_on_local(self, id, key, manifest):
-        msg, _ = TypedManifestSchema(strict=True).dump(manifest)
+        msg, _ = TypedManifestSchema.dump(manifest)
         ciphered_msg = encrypt_for_local(key, msg)
         self._local_storage.flush_manifest(id, ciphered_msg)
 
     async def sync_new_entry_with_backend(self, key, manifest):
-        msg, _ = TypedManifestSchema(strict=True).dump(manifest)
+        msg, _ = TypedManifestSchema.dump(manifest)
         ciphered_msg = await self._encryption_manager.encrypt_with_secret_key(key, msg)
         return await self._backend_storage.sync_new_manifest(ciphered_msg)
 
     async def sync_with_backend(self, id, wts, key, manifest):
         version = manifest["version"]
-        msg, _ = TypedManifestSchema(strict=True).dump(manifest)
+        msg, _ = TypedManifestSchema.dump(manifest)
         ciphered_msg = await self._encryption_manager.encrypt_with_secret_key(key, msg)
         await self._backend_storage.sync_manifest(id, wts, version, ciphered_msg)
