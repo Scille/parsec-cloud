@@ -10,7 +10,7 @@ from json import JSONDecodeError
 from parsec.utils import ParsecError
 from parsec.networking import CookedSocket
 from parsec.handshake import HandshakeFormatError, ServerHandshake
-from parsec.schema import BaseCmdSchema, fields, validate
+from parsec.schema import _BaseCmdSchema, fields, validate
 
 from parsec.backend.drivers.memory import (
     MemoryUserComponent,
@@ -47,16 +47,16 @@ except ImportError:
 logger = logbook.Logger("parsec.backend.app")
 
 
-class cmd_LOGIN_Schema(BaseCmdSchema):
+class _cmd_LOGIN_Schema(_BaseCmdSchema):
     id = fields.String(required=True)
     password = fields.String(missing=None)
 
 
-class cmd_PING_Schema(BaseCmdSchema):
+class _cmd_PING_Schema(_BaseCmdSchema):
     ping = fields.String(required=True)
 
 
-class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
+class _cmd_EVENT_SUBSCRIBE_Schema(_BaseCmdSchema):
     event = fields.String(
         required=True,
         validate=validate.OneOf(
@@ -72,8 +72,14 @@ class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
     subject = fields.String(missing=None)
 
 
-class cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
+class _cmd_EVENT_LISTEN_Schema(_BaseCmdSchema):
     wait = fields.Boolean(missing=True)
+
+
+cmd_LOGIN_Schema = _cmd_LOGIN_Schema()
+cmd_PING_Schema = _cmd_PING_Schema()
+cmd_EVENT_SUBSCRIBE_Schema = _cmd_EVENT_SUBSCRIBE_Schema()
+cmd_EVENT_LISTEN_Schema = _cmd_EVENT_LISTEN_Schema()
 
 
 @attr.s
@@ -193,7 +199,7 @@ class BackendApp:
             await self.dbh.teardown()
 
     async def _api_ping(self, client_ctx, msg):
-        msg = cmd_PING_Schema().load_or_abort(msg)
+        msg = cmd_PING_Schema.load_or_abort(msg)
         self.signal_ns.signal("ping").send(msg["ping"])
         return {"status": "ok", "pong": msg["ping"]}
 
@@ -210,7 +216,7 @@ class BackendApp:
         return await self.blockstore.api_blockstore_get(client_ctx, msg)
 
     async def _api_event_subscribe(self, client_ctx, msg):
-        msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(msg)
+        msg = cmd_EVENT_SUBSCRIBE_Schema.load_or_abort(msg)
         event = msg["event"]
         subject = msg["subject"]
 
@@ -236,7 +242,7 @@ class BackendApp:
         return {"status": "ok"}
 
     async def _api_event_unsubscribe(self, client_ctx, msg):
-        msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(msg)
+        msg = cmd_EVENT_SUBSCRIBE_Schema.load_or_abort(msg)
         try:
             del client_ctx.subscribed_events[msg["event"], msg["subject"]]
         except KeyError:
@@ -248,7 +254,7 @@ class BackendApp:
         return {"status": "ok"}
 
     async def _api_event_listen(self, client_ctx, msg):
-        msg = cmd_EVENT_LISTEN_Schema().load_or_abort(msg)
+        msg = cmd_EVENT_LISTEN_Schema.load_or_abort(msg)
         if msg["wait"]:
             event, subject = await client_ctx.events.get()
         else:
@@ -260,7 +266,7 @@ class BackendApp:
         return {"status": "ok", "event": event, "subject": subject}
 
     async def _api_event_list_subscribed(self, client_ctx, msg):
-        BaseCmdSchema().load_or_abort(msg)  # empty msg expected
+        _BaseCmdSchema.load_or_abort(msg)  # empty msg expected
         return {"status": "ok", "subscribed": list(client_ctx.subscribed_events.keys())}
 
     async def _do_handshake(self, sock):

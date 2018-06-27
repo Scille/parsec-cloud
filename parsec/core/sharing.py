@@ -5,7 +5,7 @@ from nacl.public import SealedBox, PublicKey
 from nacl.signing import VerifyKey
 
 from parsec.signals import get_signal
-from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
+from parsec.schema import _UnknownCheckedSchema, OneOfSchema, fields
 from parsec.core.schemas import LocalVlobAccessSchema
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.fs import FSInvalidPath
@@ -37,54 +37,49 @@ class SharingInvalidMessageError(SharingError):
     pass
 
 
-class BackendMessageGetRepMessagesSchema(UnknownCheckedSchema):
+class _BackendMessageGetRepMessagesSchema(_UnknownCheckedSchema):
     count = fields.Int(required=True)
     body = fields.Base64Bytes(required=True)
     sender_id = fields.String(required=True)
 
 
-class BackendMessageGetRepSchema(UnknownCheckedSchema):
+class _BackendMessageGetRepSchema(_UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
-    messages = fields.List(fields.Nested(BackendMessageGetRepMessagesSchema), required=True)
+    messages = fields.List(fields.Nested(_BackendMessageGetRepMessagesSchema), required=True)
 
 
-backend_message_get_rep_schema = BackendMessageGetRepSchema()
-
-
-class BackendUserGetRepDeviceSchema(UnknownCheckedSchema):
+class _BackendUserGetRepDeviceSchema(_UnknownCheckedSchema):
     created_on = fields.DateTime(required=True)
     revocated_on = fields.DateTime(missing=None)
     verify_key = fields.Base64Bytes(required=True)
 
 
-class BackendUserGetRepSchema(UnknownCheckedSchema):
+class _BackendUserGetRepSchema(_UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
     user_id = fields.String(required=True)
     created_on = fields.DateTime(required=True)
     created_by = fields.String(required=True)
     broadcast_key = fields.Base64Bytes(required=True)
-    devices = fields.Map(fields.String(), fields.Nested(BackendUserGetRepDeviceSchema), missing={})
+    devices = fields.Map(fields.String(), fields.Nested(_BackendUserGetRepDeviceSchema), missing={})
 
 
-backend_user_get_rep_schema = BackendUserGetRepSchema()
-
-
-class SharingMessageContentSchema(UnknownCheckedSchema):
+class _SharingMessageContentSchema(_UnknownCheckedSchema):
     type = fields.CheckedConstant("share", required=True)
     author = fields.String(required=True)
     access = fields.Nested(LocalVlobAccessSchema, required=True)
     name = fields.String(required=True)
 
 
-sharing_message_content_schema = SharingMessageContentSchema()
-
-
-class PingMessageContentSchema(UnknownCheckedSchema):
+class _PingMessageContentSchema(_UnknownCheckedSchema):
     type = fields.CheckedConstant("ping", required=True)
     ping = fields.String(required=True)
 
 
-class GenericMessageContentSchema(OneOfSchema):
+SharingMessageContentSchema = _SharingMessageContentSchema()
+PingMessageContentSchema = _PingMessageContentSchema()
+
+
+class _GenericMessageContentSchema(OneOfSchema):
     type_field = "type"
     type_field_remove = False
     type_schemas = {"share": SharingMessageContentSchema, "ping": PingMessageContentSchema}
@@ -93,7 +88,11 @@ class GenericMessageContentSchema(OneOfSchema):
         return obj["type"]
 
 
-generic_message_content_schema = GenericMessageContentSchema()
+BackendMessageGetRepMessagesSchema = _BackendMessageGetRepMessagesSchema()
+BackendMessageGetRepSchema = _BackendMessageGetRepSchema()
+BackendUserGetRepDeviceSchema = _BackendUserGetRepDeviceSchema()
+BackendUserGetRepSchema = _BackendUserGetRepSchema()
+GenericMessageContentSchema = _GenericMessageContentSchema()
 
 
 class Sharing(BaseAsyncComponent):
@@ -120,7 +119,7 @@ class Sharing(BaseAsyncComponent):
 
     async def _retrieve_device(self, user_id):
         rep = await self._backend_connection.send({"cmd": "user_get", "user_id": user_id})
-        loaded_rep, errors = backend_user_get_rep_schema.load(rep)
+        loaded_rep, errors = BackendUserGetRepSchema.load(rep)
         if errors:
             if rep.get("status") == "not_found":
                 raise SharingUnknownRecipient(rep.get("reason", "Unknown user %r" % user_id))
@@ -148,7 +147,7 @@ class Sharing(BaseAsyncComponent):
         msg_signed = box.decrypt(msg_encrypted)
         msg_clear = sender_verifykey.verify(msg_signed)
 
-        msg, errors = generic_message_content_schema.loads(msg_clear.decode("utf-8"))
+        msg, errors = GenericMessageContentSchema.loads(msg_clear.decode("utf-8"))
         if errors:
             raise SharingInvalidMessageError("Not a valid message: %r" % errors)
 
@@ -186,7 +185,7 @@ class Sharing(BaseAsyncComponent):
             {"cmd": "message_get", "offset": self.fs.get_last_processed_message()}
         )
 
-        loaded_rep, errors = backend_message_get_rep_schema.load(rep)
+        loaded_rep, errors = BackendMessageGetRepSchema.load(rep)
         if errors:
             raise SharingBackendMessageError(
                 "Cannot retreive user messages: %r (errors: %r)" % (rep, errors)
@@ -245,7 +244,7 @@ class Sharing(BaseAsyncComponent):
         # TODO Build the broadcast_key with the encryption manager
         broadcast_key = PublicKey(rep["broadcast_key"])
         box = SealedBox(broadcast_key)
-        sharing_msg_clear, errors = sharing_message_content_schema.dumps(sharing_msg)
+        sharing_msg_clear, errors = SharingMessageContentSchema.dumps(sharing_msg)
         if errors:
             raise RuntimeError("Cannot dump sharing message %r: %r" % (sharing_msg, errors))
         sharing_msg_signed = self.device.device_signkey.sign(sharing_msg_clear.encode("utf-8"))

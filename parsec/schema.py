@@ -1,12 +1,12 @@
 from marshmallow import Schema, ValidationError, validates_schema, post_load
 from marshmallow import validate  # noqa: republishing
-from marshmallow_oneofschema import OneOfSchema  # noqa: republishing
 
 from parsec import schema_fields as fields  # noqa: republishing
+from parsec.one_of_schema import OneOfSchema  # noqa: republishing
 from parsec.utils import abort
 
 
-class UnknownCheckedSchema(Schema):
+class _UnknownCheckedSchema(Schema):
 
     """
     ModelSchema with check for unknown field
@@ -23,7 +23,7 @@ class InvalidCmd(Exception):
     pass
 
 
-class BaseCmdSchema(UnknownCheckedSchema):
+class _BaseCmdSchema(_UnknownCheckedSchema):
     cmd = fields.String(required=True)
 
     @post_load
@@ -50,3 +50,7 @@ class BaseCmdSchema(UnknownCheckedSchema):
 
         else:
             return parsed_msg
+
+
+BaseCmdSchema = _BaseCmdSchema()
+UnknownCheckedSchema = _UnknownCheckedSchema()

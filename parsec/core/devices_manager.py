@@ -8,7 +8,7 @@ from nacl.pwhash import argon2i
 from nacl.secret import SecretBox
 import nacl.utils
 
-from parsec.schema import UnknownCheckedSchema, fields, validate
+from parsec.schema import _UnknownCheckedSchema, fields, validate
 
 
 logger = logging.getLogger("parsec")
@@ -46,7 +46,7 @@ def is_valid_device_id(tocheck):
     return bool(re.match(DEVICE_ID_PATTERN, tocheck))
 
 
-class DeviceConfSchema(UnknownCheckedSchema):
+class _DeviceConfSchema(_UnknownCheckedSchema):
     device_id = fields.String(validate=validate.Regexp(DEVICE_ID_PATTERN), required=True)
     user_privkey = fields.Base64Bytes(required=True)
     device_signkey = fields.Base64Bytes(required=True)
@@ -54,7 +54,7 @@ class DeviceConfSchema(UnknownCheckedSchema):
     salt = fields.Base64Bytes()
 
 
-device_conf_schema = DeviceConfSchema()
+DeviceConfSchema = _DeviceConfSchema()
 
 
 def _secret_box_factory(password, salt):
@@ -135,7 +135,7 @@ class DevicesManager:
             return None, errors
 
         with open(device_key_path) as fd:
-            device_conf, errors = device_conf_schema.loads(fd.read())
+            device_conf, errors = DeviceConfSchema.loads(fd.read())
         if errors:
             return None, errors
 
@@ -170,7 +170,7 @@ class DevicesManager:
             device_conf["user_privkey"] = user_privkey
 
         device_key_path = os.path.join(device_conf_path, "key.json")
-        data, errors = device_conf_schema.dumps(device_conf)
+        data, errors = DeviceConfSchema.dumps(device_conf)
         if errors:
             raise DeviceSavingError(
                 "Invalid device config to save for %s: %s" % (device_conf_path, errors)

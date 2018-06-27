@@ -1,15 +1,19 @@
 from parsec.utils import to_jsonb64
-from parsec.schema import BaseCmdSchema, fields
+from parsec.schema import _BaseCmdSchema, fields
 
 
-class cmd_NEW_Schema(BaseCmdSchema):
+class _cmd_NEW_Schema(_BaseCmdSchema):
     recipient = fields.String(required=True)
     body = fields.Base64Bytes(required=True)
 
 
-class cmd_GET_Schema(BaseCmdSchema):
+class _cmd_GET_Schema(_BaseCmdSchema):
     # TODO: accept negative offset to fetch only last message ?
     offset = fields.Integer(missing=0)
+
+
+cmd_NEW_Schema = _cmd_NEW_Schema()
+cmd_GET_Schema = _cmd_GET_Schema()
 
 
 class BaseMessageComponent:
@@ -23,14 +27,14 @@ class BaseMessageComponent:
         raise NotImplementedError()
 
     async def api_message_new(self, client_ctx, msg):
-        msg = cmd_NEW_Schema().load_or_abort(msg)
+        msg = cmd_NEW_Schema.load_or_abort(msg)
         await self.perform_message_new(
             sender_device_id=client_ctx.id, recipient_user_id=msg["recipient"], body=msg["body"]
         )
         return {"status": "ok"}
 
     async def api_message_get(self, client_ctx, msg):
-        msg = cmd_GET_Schema().load_or_abort(msg)
+        msg = cmd_GET_Schema.load_or_abort(msg)
         offset = msg["offset"]
         messages = await self.perform_message_get(client_ctx.user_id, offset)
         return {

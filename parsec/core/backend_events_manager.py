@@ -3,7 +3,7 @@ import logbook
 import json
 
 from parsec.signals import get_signal
-from parsec.schema import UnknownCheckedSchema, fields
+from parsec.schema import _UnknownCheckedSchema, fields
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.devices_manager import Device
 from parsec.core import backend_connection as bc
@@ -12,13 +12,13 @@ from parsec.core import backend_connection as bc
 logger = logbook.Logger("parsec.core.backend_events_manager")
 
 
-class BackendEventListenRepSchema(UnknownCheckedSchema):
+class _BackendEventListenRepSchema(_UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
     event = fields.String(required=True)
     subject = fields.String(missing=None)
 
 
-backend_event_listen_rep_schema = BackendEventListenRepSchema()
+BackendEventListenRepSchema = _BackendEventListenRepSchema()
 
 
 class SubscribeBackendEventError(Exception):
@@ -99,7 +99,7 @@ class BackendEventsManager(BaseAsyncComponent):
             while True:
                 await sock.send({"cmd": "event_listen"})
                 rep = await sock.recv()
-                _, errors = backend_event_listen_rep_schema.load(rep)
+                _, errors = BackendEventListenRepSchema.load(rep)
                 if errors:
                     raise ListenBackendEventError(
                         "Bad reponse %r while listening for event: %r" % (rep, errors)

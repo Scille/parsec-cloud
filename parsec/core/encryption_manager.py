@@ -6,7 +6,7 @@ from nacl.secret import SecretBox
 from nacl.signing import VerifyKey
 from nacl.exceptions import CryptoError
 
-from parsec.schema import UnknownCheckedSchema, fields
+from parsec.schema import _UnknownCheckedSchema, fields
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.devices_manager import Device, is_valid_user_id, is_valid_device_name
 from parsec.core.backend_connection import BackendNotAvailable
@@ -43,24 +43,25 @@ class MessageSignatureError(EncryptionManagerError):
     pass
 
 
-class BackendUserGetRepDevicesSchema(UnknownCheckedSchema):
+class _BackendUserGetRepDevicesSchema(_UnknownCheckedSchema):
     created_on = fields.DateTime(required=True)
     revocated_on = fields.DateTime(allow_none=True)
     verify_key = fields.Base64Bytes(required=True)
 
 
-class BackendUserGetRepSchema(UnknownCheckedSchema):
+class _BackendUserGetRepSchema(_UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
     user_id = fields.String(required=True)
     created_on = fields.DateTime(required=True)
     created_by = fields.String(required=True)
     broadcast_key = fields.Base64Bytes(required=True)
     devices = fields.Map(
-        fields.String(), fields.Nested(BackendUserGetRepDevicesSchema), required=True
+        fields.String(), fields.Nested(_BackendUserGetRepDevicesSchema), required=True
     )
 
 
-backend_user_get_rep_schema = BackendUserGetRepSchema()
+BackendUserGetRepDevicesSchema = _BackendUserGetRepDevicesSchema()
+BackendUserGetRepSchema = _BackendUserGetRepSchema()
 
 
 @attr.s(init=False, slots=True)
@@ -289,7 +290,7 @@ class EncryptionManager(BaseAsyncComponent):
 
     async def _populate_remote_user_cache_in_local_storage(self, user_id: str):
         raw_rep = await self._backend_connection.send({"cmd": "user_get", "user_id": user_id})
-        rep, errors = backend_user_get_rep_schema.load(raw_rep)
+        rep, errors = BackendUserGetRepSchema.load(raw_rep)
         if errors:
             if raw_rep.get("status") == "not_found":
                 # User doesn't exit, nothing to populate then

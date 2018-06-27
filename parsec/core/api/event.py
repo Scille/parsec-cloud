@@ -3,7 +3,7 @@ import logbook
 
 from parsec.core.app import Core, ClientContext
 from parsec.core.backend_connection import BackendNotAvailable
-from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields, validate
+from parsec.schema import _UnknownCheckedSchema, _BaseCmdSchema, fields, validate
 
 
 logger = logbook.Logger("parsec.api.event")
@@ -12,7 +12,7 @@ ALLOWED_SIGNALS = {"ping", "fuse_mountpoint_need_stop", "new_sharing"}
 ALLOWED_BACKEND_EVENTS = {"device_try_claim_submitted"}
 
 
-class BackendGetConfigurationTrySchema(UnknownCheckedSchema):
+class _BackendGetConfigurationTrySchema(_UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
     device_name = fields.String(required=True)
     configuration_status = fields.String(required=True)
@@ -20,25 +20,27 @@ class BackendGetConfigurationTrySchema(UnknownCheckedSchema):
     user_privkey_cypherkey = fields.Base64Bytes(required=True)
 
 
-backend_get_configuration_try_schema = BackendGetConfigurationTrySchema()
-
-
-class cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
+class _cmd_EVENT_LISTEN_Schema(_BaseCmdSchema):
     wait = fields.Boolean(missing=True)
 
 
-class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
+class _cmd_EVENT_SUBSCRIBE_Schema(_BaseCmdSchema):
     event = fields.String(
         required=True, validate=validate.OneOf(ALLOWED_SIGNALS | ALLOWED_BACKEND_EVENTS)
     )
     subject = fields.String(missing=None)
 
 
+BackendGetConfigurationTrySchema = _BackendGetConfigurationTrySchema()
+cmd_EVENT_LISTEN_Schema = _cmd_EVENT_LISTEN_Schema()
+cmd_EVENT_SUBSCRIBE_Schema = _cmd_EVENT_SUBSCRIBE_Schema()
+
+
 async def event_subscribe(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_EVENT_SUBSCRIBE_Schema().load(req)
+    msg = cmd_EVENT_SUBSCRIBE_Schema.load(req)
     event = msg["event"]
     subject = msg["subject"]
 
@@ -68,7 +70,7 @@ async def event_unsubscribe(req: dict, client_ctx: ClientContext, core: Core) ->
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_EVENT_SUBSCRIBE_Schema().load(req)
+    msg = cmd_EVENT_SUBSCRIBE_Schema.load(req)
     event = msg["event"]
     subject = msg["subject"]
 
@@ -91,7 +93,7 @@ async def event_listen(req: dict, client_ctx: ClientContext, core: Core) -> dict
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_EVENT_LISTEN_Schema().load(req)
+    msg = cmd_EVENT_LISTEN_Schema.load(req)
     if msg["wait"]:
         event, subject = await client_ctx.received_signals.get()
     else:
@@ -109,7 +111,7 @@ async def event_listen(req: dict, client_ctx: ClientContext, core: Core) -> dict
         except BackendNotAvailable:
             return {"status": "backend_not_availabled", "reason": "Backend not available"}
 
-        _, errors = backend_get_configuration_try_schema.load(rep)
+        _, errors = BackendGetConfigurationTrySchema.load(rep)
         if errors:
             return {
                 "status": "backend_error",
@@ -131,5 +133,5 @@ async def event_list_subscribed(req: dict, client_ctx: ClientContext, core: Core
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    BaseCmdSchema().load(req)  # empty msg expected
+    _BaseCmdSchema.load(req)  # empty msg expected
     return {"status": "ok", "subscribed": list(client_ctx.registered_signals.keys())}

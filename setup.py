@@ -50,8 +50,6 @@ requirements = [
     "click==6.7",
     "huepy==0.9.6",
     "Logbook==1.2.1",
-    "marshmallow==2.14.0",
-    "marshmallow-oneofschema==1.0.5",
     "pendulum==1.3.1",
     "PyNaCl==1.2.0",
     "simplejson==3.10.0",
@@ -61,6 +59,7 @@ requirements = [
     "async_generator >= 1.9",
     "raven==6.8.0",
     'contextvars==2.1;python_version<"3.7"',
+    "toastedmarshmallow==0.2.6",
 ]
 dependency_links = [
     # need to use --process-dependency-links option for this
