@@ -1,8 +1,8 @@
 from marshmallow import Schema, ValidationError, validates_schema, post_load
 from marshmallow import validate  # noqa: republishing
-from marshmallow_oneofschema import OneOfSchema  # noqa: republishing
 
 from parsec import schema_fields as fields  # noqa: republishing
+from parsec.one_of_schema import OneOfSchema  # noqa: republishing
 from parsec.utils import abort
 
 
