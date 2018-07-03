@@ -10,7 +10,7 @@ except ImportError:
 
     @click.command()
     def fuse_cli():
-        raise RuntimeError("No available, is fusepy installed ?")
+        raise RuntimeError("No available, is llfuse installed ?")
 
 
 except NameError:

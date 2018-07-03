@@ -1,5 +1,8 @@
-import ctypes
 import os
+from os import fsencode, fsdecode
+from collections import defaultdict
+import faulthandler
+import signal
 import socket
 import click
 import logbook
@@ -9,12 +12,9 @@ from dateutil.parser import parse as dateparse
 from itertools import count
 from errno import ENOENT
 
-try:
-    from errno import EBADFD
-except ImportError:
-    from errno import EBADF as EBADFD
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
-from fuse import FUSE, FuseOSError, Operations, LoggingMixIn, fuse_get_context, _libfuse
+import llfuse
+from llfuse import FUSEError
 
 from parsec.core.config import CoreConfig
 from parsec.utils import from_jsonb64, to_jsonb64, ejson_dumps, ejson_loads
@@ -24,8 +24,13 @@ logger = logbook.Logger("parsec.fuse")
 
 DEFAULT_CORE_UNIX_SOCKET = "tcp://127.0.0.1:6776"
 
-# TODO: Currently call fuse_exit from a non fuse thread is not possible
-# (see https://github.com/fusepy/fusepy/issues/116).
+
+faulthandler.enable()
+
+
+# apt-get install libfuse-dev libattr1-dev
+# python setup.py install --user
+# export PYTHONPATH=$PYTHONPATH:/home/rossigneux/.local/lib/python3.6/site-packages/
 
 
 class CoreConectionLostError(Exception):
@@ -81,12 +86,6 @@ def start_shutdown_watcher(operations, socket_address, mountpoint):
                 break
 
         operations.fuse_exit()
-        # Ask for dummy file just to force a fuse operation that will
-        # process the `fuse_exit` from a valid context
-        try:
-            os.path.exists("%s/__shutdown_fuse__" % mountpoint)
-        except OSError:
-            pass
 
     threading.Thread(target=_shutdown_watcher, daemon=True).start()
 
@@ -167,8 +166,8 @@ def cli(mountpoint, debug, log_level, log_file, nothreads, socket):
 
 
 class File:
-    def __init__(self, operations, path, fd, flags=0):
-        self.fd = fd
+    def __init__(self, operations, path, flags=0):
+        self.attr = None
         self.path = path
         self._operations = operations
         self.flags = flags
@@ -183,7 +182,7 @@ class File:
             cmd="file_read", path=self.path, size=size, offset=offset
         )
         if response["status"] != "ok":
-            raise FuseOSError(ENOENT)
+            raise FUSEError(ENOENT)
 
         return from_jsonb64(response["content"])
 
@@ -221,7 +220,7 @@ class File:
                 cmd="file_truncate", path=self.path, length=shortest_truncate
             )
             if response["status"] != "ok":
-                raise FuseOSError(ENOENT)
+                raise FUSEError(ENOENT)
 
         # Write new contents
         for offset, content in builder.contents.items():
@@ -230,27 +229,29 @@ class File:
                 cmd="file_write", path=self.path, content=to_jsonb64(content), offset=offset
             )
             if response["status"] != "ok":
-                raise FuseOSError(ENOENT)
+                raise FUSEError(ENOENT)
+        # Flush
+        response = self._operations.send_cmd(cmd="flush", path=self.path)
+        if response["status"] != "ok":
+            raise FUSEError(ENOENT)
 
 
-class FuseOperations(LoggingMixIn, Operations):
+class Operations(llfuse.Operations):
     def __init__(self, socket_address):
         super().__init__()
-        self.fds = {}
-        self._fs_id_generator = count(1)
-        self._socket_address = socket_address
-        # TODO: create a per-thread socket instead of using a lock
         self._socket_lock = threading.Lock()
         self._socket = None
-        self._fuse_ptr = None
-
-    def fuse_exit(self):
-        if not self._fuse_ptr:
-            raise SystemError("Fuse not started")
-        _libfuse.fuse_exit(self._fuse_ptr)
-
-    def get_fd_id(self):
-        return next(self._fs_id_generator)
+        self._socket_address = socket_address
+        self._inode_path_map = {llfuse.ROOT_INODE: "/"}
+        self._path_inode_map = {"/": llfuse.ROOT_INODE}
+        self._fd_inode_map = dict()
+        self._inode_fd_map = dict()
+        self._fd_fh_map = dict()
+        self._fh_fd_map = dict()
+        self._lookup_count = defaultdict(lambda: 0)
+        self._fd_open_count = defaultdict(lambda: 0)
+        self._fd_id_generator = count(2)
+        self._inode_generator = count(2)
 
     @property
     def sock(self):
@@ -262,150 +263,261 @@ class FuseOperations(LoggingMixIn, Operations):
         with self._socket_lock:
             return _socket_send_cmd(self.sock, msg)
 
-    def _get_fd(self, fh):
-        try:
-            return self.fds[fh]
+    def fuse_exit(self):
+        os.kill(os.getpid(), signal.SIGTERM)
 
-        except KeyError:
-            raise FuseOSError(EBADFD)
+    def get_fh(self):
+        return next(self._fd_id_generator)
 
-    def _get_file_id(self, path):
-        response = self.send_cmd(cmd="list_dir", path=path)
-        if response["status"] != "ok":
-            raise FuseOSError(ENOENT)
+    def get_inode(self):
+        return next(self._inode_generator)
 
-        return response["current"]["id"]
+    def _add_inode_path(self, inode, path):
+        self._lookup_count[inode] += 1
+        self._inode_path_map[inode] = path
+        self._path_inode_map[path] = inode
 
-    def init(self, path):
-        self._fuse_ptr = ctypes.c_void_p(_libfuse.fuse_get_context().contents.fuse)
+    def _add_fd_inode(self, fd, fh):
+        self._fd_open_count[fd] += 1
+        self._fd_inode_map[fd] = fh
+        self._inode_fd_map[fh] = fd
 
-    def getattr(self, path, fh=None):
+    def _add_fd_fh(self, fd, fh):
+        self._fd_fh_map[fd] = fh
+        self._fh_fd_map[fh] = fd
+
+    def forget(self, inode_list):
+        for (inode, nlookup) in inode_list:
+            if self._lookup_count[inode] > nlookup:
+                self._lookup_count[inode] -= nlookup
+                continue
+            assert inode not in self._inode_fd_map
+            del self._lookup_count[inode]
+            try:
+                path = self._inode_path_map[inode]
+                del self._inode_path_map[inode]
+                del self._path_inode_map[path]
+            except KeyError:  # may have been deleted
+                pass
+
+    def lookup(self, inode_p, name, ctx=None):
+        name = fsdecode(name)
+        path = os.path.join(self._inode_path_map[inode_p], name)
+        attr = self._getattr(path=path)
+        if name != "." and name != "..":
+            self._add_inode_path(attr.st_ino, path)
+        return attr
+
+    def getattr(self, inode, ctx=None):
+        if inode in self._inode_fd_map:
+            return self._getattr(fd=self._inode_fd_map[inode])
+        else:
+            return self._getattr(path=self._inode_path_map[inode])
+
+    def _getattr(self, path=None, fd=None):
+        if fd:
+            path = self._inode_path_map[self._fd_inode_map[fd]]
         stat = self.send_cmd(cmd="stat", path=path)
         if stat["status"] != "ok":
-            raise FuseOSError(ENOENT)
+            raise FUSEError(ENOENT)
 
-        fuse_stat = {}
+        entry = llfuse.EntryAttributes()
         # Set it to 777 access
-        fuse_stat["st_mode"] = 0
+        entry.st_mode = 0
+        if path not in self._path_inode_map:
+            inode = next(self._inode_generator)
+            self._add_inode_path(inode, path)
+        entry.st_ino = self._path_inode_map[path]
         if stat["type"] == "folder":
-            fuse_stat["st_mode"] |= S_IFDIR
-            fuse_stat["st_nlink"] = 2
+            entry.st_mode |= S_IFDIR
+            entry.st_nlink = 2
         else:
-            fuse_stat["st_mode"] |= S_IFREG
-            fuse_stat["st_size"] = stat.get("size", 0)
-            fuse_stat["st_ctime"] = dateparse(
-                stat["created"]
-            ).timestamp()  # TODO change to local timezone
-            fuse_stat["st_mtime"] = dateparse(stat["updated"]).timestamp()
-            fuse_stat["st_atime"] = dateparse(stat["updated"]).timestamp()  # TODO not supported ?
-            fuse_stat["st_nlink"] = 1
-        fuse_stat["st_mode"] |= S_IRWXU | S_IRWXG | S_IRWXO
-        uid, gid, _ = fuse_get_context()
-        fuse_stat["st_uid"] = uid
-        fuse_stat["st_gid"] = gid
-        return fuse_stat
+            entry.st_mode |= S_IFREG
+            entry.st_size = stat.get("size", 0)
+            entry.st_ctime_ns = (
+                dateparse(stat["created"]).timestamp() * 10e9
+            )  # TODO change to local timezone
+            entry.st_mtime_ns = dateparse(stat["updated"]).timestamp() * 10e9
+            entry.st_atime_ns = (
+                dateparse(stat["updated"]).timestamp() * 10e9
+            )  # TODO not supported ?
+            entry.st_nlink = 1
+        entry.st_mode |= S_IRWXU | S_IRWXG | S_IRWXO
+        entry.st_uid = os.getuid()
+        entry.st_gid = os.getgid()
+        return entry
 
-    def readdir(self, path, fh):
+    def setattr(self, inode, attr, fields, fh, ctx=None):
+        if fields.update_size:
+            fd = self._inode_fd_map[inode]
+            fd.truncate(attr.st_size)
+            fd.flush()
+        return self.getattr(inode)
+
+    def opendir(self, inode, ctx):
+        return inode
+
+    def readdir(self, inode, off):
+        path = self._inode_path_map[inode]
         resp = self.send_cmd(cmd="stat", path=path)
         # TODO: make sure error code for path is not a folder is ENOENT
         if resp["status"] != "ok" or resp["type"] != "folder":
-            raise FuseOSError(ENOENT)
-
-        return [".", ".."] + list(resp["children"])
-
-    def create(self, path, mode):
-        response = self.send_cmd(cmd="file_create", path=path)
-        if response["status"] != "ok":
-            raise FuseOSError(ENOENT)
-
-        return self.open(path)
-
-    def open(self, path, flags=0):
-        fd_id = self.get_fd_id()
-        resp = self.send_cmd(cmd="stat", path=path)
-        if resp["status"] != "ok" or resp["type"] != "file":
-            raise FuseOSError(ENOENT)
-
-        file = File(self, path, fd_id, flags)
-        self.fds[fd_id] = file
-        return fd_id
-
-    def release(self, path, fh):
-        try:
-            file = self.fds.pop(fh)
-            file.flush()
-        except KeyError:
-            raise FuseOSError(EBADFD)
-
-    def read(self, path, size, offset, fh):
-        fd = self._get_fd(fh)
-        return fd.read(size, offset)
-
-    def write(self, path, data, offset, fh):
-        fd = self._get_fd(fh)
-        fd.write(data, offset)
-        return len(data)
-
-    def truncate(self, path, length, fh=None):
-        if not fh:
+            raise FUSEError(ENOENT)
+        entries = []
+        for name in list(resp["children"]):
             try:
-                fh = self.open(path, flags=0)
-                fd = self._get_fd(fh)
-                fd.truncate(length)
-            finally:
-                self.release(path, fh)
-        else:
-            fd = self._get_fd(fh)
-            fd.truncate(length)
+                attr = self._getattr(path=os.path.join(path, name))
+            except FUSEError:
+                pass
+            else:
+                entries.append((attr.st_ino, name, attr))
+        for (ino, name, attr) in sorted(entries):
+            if ino <= off:
+                continue
+            yield (fsencode(name), attr, attr.st_ino)
 
-    def unlink(self, path):
-        # TODO: check path is a file
+    def unlink(self, inode_p, name, ctx):
+        name = fsdecode(name)
+        parent = self._inode_path_map[inode_p]
+        path = os.path.join(parent, name)
         response = self.send_cmd(cmd="delete", path=path)
         if response["status"] != "ok":
-            raise FuseOSError(ENOENT)
+            raise FUSEError(ENOENT)
 
-    def mkdir(self, path, mode):
+        inode = self._path_inode_map[path]
+        del self._inode_path_map[inode]
+        del self._path_inode_map[path]
+
+    def rmdir(self, inode_p, name, ctx):
+        name = fsdecode(name)
+        parent = self._inode_path_map[inode_p]
+        path = os.path.join(parent, name)
+        response = self.send_cmd(cmd="delete", path=path)
+        if response["status"] != "ok":
+            raise FUSEError(ENOENT)
+
+        inode = self._path_inode_map[path]
+        del self._inode_path_map[inode]
+        del self._path_inode_map[path]
+
+    def rename(self, inode_p_old, name_old, inode_p_new, name_new, ctx):
+        name_old = fsdecode(name_old)
+        name_new = fsdecode(name_new)
+        parent_old = self._inode_path_map[inode_p_old]
+        parent_new = self._inode_path_map[inode_p_new]
+        path_old = os.path.join(parent_old, name_old)
+        path_new = os.path.join(parent_new, name_new)
+
+        self.send_cmd(cmd="delete", path=path_new)
+        response = self.send_cmd(cmd="move", src=path_old, dst=path_new)
+        if response["status"] != "ok":
+            raise FUSEError(ENOENT)
+
+        inode = self._path_inode_map[path_old]
+        self._path_inode_map[path_new] = inode
+        del self._path_inode_map[path_old]
+        self._inode_path_map[inode] = path_new
+
+        for path in list(self._path_inode_map):
+            if path.startswith(path_old):
+                new_path = path_new + path[len(path_old) :]
+                inode = self._path_inode_map[path]
+                del self._inode_path_map[inode]
+                del self._path_inode_map[path]
+                self._inode_path_map[inode] = new_path
+                self._path_inode_map[new_path] = inode
+
+    def mkdir(self, inode_p, name, mode, ctx):
+        path = os.path.join(self._inode_path_map[inode_p], fsdecode(name))
         response = self.send_cmd(cmd="folder_create", path=path)
         if response["status"] != "ok":
-            raise FuseOSError(ENOENT)
+            raise FUSEError(ENOENT)
+        attr = self._getattr(path=path)
+        self._add_inode_path(attr.st_ino, path)
+        return attr
 
-        return 0
+    def open(self, inode, flags, ctx):
+        if inode in self._inode_fd_map:
+            fd = self._inode_fd_map[inode]
+            self._fd_open_count[fd] += 1
+            return self._fd_fh_map[fd]
 
-    def rmdir(self, path):
-        # TODO: check directory is empty
-        # TODO: check path is a directory
-        response = self.send_cmd(cmd="delete", path=path)
+        resp = self.send_cmd(cmd="stat", path=self._inode_path_map[inode])
+        if resp["status"] != "ok" or resp["type"] != "file":
+            raise FUSEError(ENOENT)
+
+        try:
+            fd = self._inode_fd_map[inode]
+        except KeyError:
+            fd = File(self, self._inode_path_map[inode], flags)
+            self._add_fd_inode(fd, inode)
+        try:
+            fh = self._fd_fh_map[fd]
+        except KeyError:
+            fh = self.get_fh()
+            self._add_fd_fh(fd, fh)
+        return fh
+
+    def create(self, inode_p, name, mode, flags, ctx):
+        path = os.path.join(self._inode_path_map[inode_p], fsdecode(name))
+
+        response = self.send_cmd(cmd="file_create", path=path)
         if response["status"] != "ok":
-            raise FuseOSError(ENOENT)
+            raise FUSEError(ENOENT)
 
-        return 0
+        new_inode = next(self._inode_generator)
+        self._add_inode_path(new_inode, path)
+        fh = self.open(new_inode, flags, ctx)
+        attr = self._getattr(path=path)
+        return (fh, attr)
 
-    def rename(self, src, dst):
-        # Unix allows to overwrite the destination, so make sure to have
-        # space before calling the move
-        self.send_cmd(cmd="delete", path=dst)
-        response = self.send_cmd(cmd="move", src=src, dst=dst)
-        if response["status"] != "ok":
-            raise FuseOSError(ENOENT)
+    def read(self, fh, offset, length):
+        return self._fh_fd_map[fh].read(length, offset)
 
-        return 0
+    def write(self, fh, offset, buf):
+        self._fh_fd_map[fh].write(buf, offset)
+        return len(buf)
 
-    def flush(self, path, fh):
-        fd = self._get_fd(fh)
+    def flush(self, fh):
+        fd = self._fh_fd_map[fh]
         fd.flush()
-        return 0
 
-    def fsync(self, path, datasync, fh):
-        return 0  # TODO
+    def release(self, fh):
+        fd = self._fh_fd_map[fh]
+        if self._fd_open_count[fd] > 1:
+            self._fd_open_count[fd] -= 1
+            return
 
-    def fsyncdir(self, path, datasync, fh):
-        return 0  # TODO
+        if fd in self._fd_open_count:
+            del self._fd_open_count[fd]
+        inode = self._fd_inode_map[fd]
+        del self._inode_fd_map[inode]
+        del self._fd_inode_map[fd]
+
+        fh = self._fd_fh_map[fd]
+        del self._fd_fh_map[fd]
+        del self._fh_fd_map[fh]
+
+    def releasedir(self, fh):
+        pass
 
 
 def start_fuse(socket_address: str, mountpoint: str, debug: bool = False, nothreads: bool = False):
-    operations = FuseOperations(socket_address)
+    operations = Operations(socket_address)
     start_shutdown_watcher(operations, socket_address, mountpoint)
-    FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)
+
+    fuse_options = set(llfuse.default_options)
+    fuse_options.discard("default_permissions")
+    if debug:
+        fuse_options.add("debug")
+    llfuse.init(operations, mountpoint, fuse_options)
+    try:
+        llfuse.main(workers=1)
+    except:
+        llfuse.close(unmount=False)
+        raise
+
+    llfuse.close()
 
 
 # TODO: shutdown watcher should be able to send here a command to the
