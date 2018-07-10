@@ -3,6 +3,7 @@
 
 
 from setuptools import setup, find_packages
+from parsec import __version__
 
 try:
     from cx_Freeze import setup, Executable
@@ -61,6 +62,7 @@ requirements = [
     "async_generator >= 1.9",
     "raven==6.8.0",
     'contextvars==2.1;python_version<"3.7"',
+    "PyUpdater==2.5.3",
 ]
 dependency_links = [
     # need to use --process-dependency-links option for this
@@ -100,7 +102,7 @@ extra_requirements["oeuf-jambon-fromage"] = extra_requirements["all"]
 
 setup(
     name="parsec-cloud",
-    version="0.5.0",
+    version=__version__,
     description="Secure cloud framework",
     long_description=readme + "\n\n" + history,
     author="Scille SAS",
@@ -113,7 +115,11 @@ setup(
     install_requires=requirements,
     dependency_links=dependency_links,
     extras_require=extra_requirements,
-    entry_points={"console_scripts": ["parsec = parsec.cli:cli"]},
+    provides=["pyupdater.plugins"],
+    entry_points={
+        "console_scripts": ["parsec = parsec.cli:main"],
+        "pyupdater.plugins": ["s3 = parsec.s3_uploader:S3Uploader"],
+    },
     options={"build_exe": build_exe_options},
     executables=[Executable("parsec/cli.py", targetName="parsec")],
     license="GPLv3",
