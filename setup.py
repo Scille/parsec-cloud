@@ -101,7 +101,7 @@ extra_requirements["oeuf-jambon-fromage"] = extra_requirements["all"]
 
 setup(
     name="parsec-cloud",
-    version="0.5.0",
+    version="version='0.6.0'",
     description="Secure cloud framework",
     long_description=readme + "\n\n" + history,
     author="Scille SAS",
