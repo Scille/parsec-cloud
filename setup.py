@@ -3,7 +3,6 @@
 
 
 from setuptools import setup, find_packages
-from parsec import __version__
 
 try:
     from cx_Freeze import setup, Executable
@@ -102,7 +101,7 @@ extra_requirements["oeuf-jambon-fromage"] = extra_requirements["all"]
 
 setup(
     name="parsec-cloud",
-    version=__version__,
+    version="0.5.0",
     description="Secure cloud framework",
     long_description=readme + "\n\n" + history,
     author="Scille SAS",
