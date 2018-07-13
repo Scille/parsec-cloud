@@ -1,6 +1,7 @@
 import os
 import click
 import trio
+import time
 import multiprocessing
 
 from parsec.core.base import BaseAsyncComponent
@@ -45,9 +46,9 @@ class FuseManager(BaseAsyncComponent):
     def __init__(self, core_addr: str, signal_ns, debug: bool = False, nothreads: bool = False):
         super().__init__()
         # TODO: make fuse process send events to synchronise with the manager
-        self._fuse_mountpoint_started = signal_ns.signal("fuse_mountpoint_started")
-        self._fuse_mountpoint_need_stop = signal_ns.signal("fuse_mountpoint_need_stop")
-        self._fuse_mountpoint_stopped = signal_ns.signal("fuse_mountpoint_stopped")
+        self._fuse_mountpoint_started = signal_ns.signal("fuse.mountpoint.started")
+        self._fuse_mountpoint_need_stop = signal_ns.signal("fuse.mountpoint.need_stop")
+        self._fuse_mountpoint_stopped = signal_ns.signal("fuse.mountpoint.stopped")
         self._start_fuse_config = {
             "socket_address": core_addr,
             "debug": debug,
@@ -85,14 +86,31 @@ class FuseManager(BaseAsyncComponent):
             fuse_process = multiprocessing.Process(
                 target=start_fuse, kwargs={**self._start_fuse_config, "mountpoint": mountpoint}
             )
-            fuse_process.start()
 
-            # TODO: waiting event fuse_started
-            await trio.sleep(1)
+            def start_fuse_process():
+                # Given st_dev is a unique id of a drive, it must change
+                # once the folder is mounted
+                try:
+                    original_st_dev = os.stat(mountpoint).st_dev
+                except FileNotFoundError:
+                    original_st_dev = None
+
+                fuse_process.start()
+
+                while True:
+                    try:
+                        new_st_dev = os.stat(mountpoint).st_dev
+                    except FileNotFoundError:
+                        new_st_dev = None
+                    if new_st_dev != original_st_dev:
+                        return
+                    time.sleep(0.01)
+
+            await trio.run_sync_in_worker_thread(start_fuse_process)
 
             self.mountpoint = mountpoint
             self.fuse_process = fuse_process
-            self._fuse_mountpoint_started.send(mountpoint)
+            self._fuse_mountpoint_started.send(None, mountpoint=mountpoint)
 
     async def stop_mountpoint(self):
         _die_if_fuse_not_available()
@@ -104,7 +122,7 @@ class FuseManager(BaseAsyncComponent):
             raise FuseNotStarted("Fuse is not started")
 
         # Fuse process should be listening to this event
-        self._fuse_mountpoint_need_stop.send(self.mountpoint)
+        self._fuse_mountpoint_need_stop.send(None, mountpoint=self.mountpoint)
 
         def close_fuse_process():
             # Once the need stop event received, fuse should close itself,
@@ -118,14 +136,13 @@ class FuseManager(BaseAsyncComponent):
             elif os.name == "posix":
                 os.rmdir(self.mountpoint)
 
+        # Wait the process's end in a separate thread to avoid blocking the event loop
         await trio.run_sync_in_worker_thread(close_fuse_process)
 
-        # TODO: multiprocess start/stop can make async loop unresponsive,
-        # we should use a thread executor do to this
         old_mountpoint = self.mountpoint
         self.mountpoint = self.fuse_process = None
 
-        self._fuse_mountpoint_stopped.send(old_mountpoint)
+        self._fuse_mountpoint_stopped.send(None, mountpoint=old_mountpoint)
 
     def open_file(self, path: str):
         _die_if_fuse_not_available()

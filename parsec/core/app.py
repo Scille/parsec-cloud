@@ -7,6 +7,7 @@ from parsec.signals import Namespace as SignalNamespace
 from parsec.networking import serve_client
 from parsec.core.base import BaseAsyncComponent, NotInitializedError
 from parsec.core.fs import FSManager
+from parsec.core.fuse_manager import FuseManager
 from parsec.core.devices_manager import DevicesManager
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.backend_cmds_sender import BackendCmdsSender
@@ -52,7 +53,7 @@ class Core(BaseAsyncComponent):
             "backend_cmds_sender",
             "encryption_manager",
             "fs",
-            # "fuse_manager",
+            "fuse_manager",
             # "sharing",
             # Keep event manager last, so it will know what events the other
             # modules need before connecting to the backend
@@ -95,7 +96,7 @@ class Core(BaseAsyncComponent):
                 self.signal_ns,
                 auto_sync=self.config.auto_sync,
             )
-            # self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
+            self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
             # self.sharing = Sharing(
             #     device, self.fs, self.backend_cmds_sender, self.backend_events_manager
             # )
@@ -186,6 +187,16 @@ class ClientContext:
                     return None
                 return {"event": signal_name, "ping": ping}
 
+        elif signal_name == "fuse_mountpoint_need_stop":
+            event_name = "fuse.mountpoint.need_stop"
+            expected_mountpoint = arg
+            key = (event_name, expected_mountpoint)
+
+            def _build_event_msg(mountpoint):
+                if mountpoint != expected_mountpoint:
+                    return None
+                return {"event": signal_name, "mountpoint": mountpoint}
+
         else:
             raise NotImplementedError()
 
@@ -212,6 +223,11 @@ class ClientContext:
             event_name = "pinged"
             expected_ping = arg
             key = (event_name, expected_ping)
+
+        elif signal_name == "fuse_mountpoint_need_stop":
+            event_name = "fuse.mountpoint.need_stop"
+            expected_mountpoint = arg
+            key = (event_name, expected_mountpoint)
 
         else:
             raise NotImplementedError()

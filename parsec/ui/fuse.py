@@ -28,7 +28,7 @@ DEFAULT_CORE_UNIX_SOCKET = "tcp://127.0.0.1:6776"
 # (see https://github.com/fusepy/fusepy/issues/116).
 
 
-class CoreConectionLostError(Exception):
+class CoreConnectionLostError(Exception):
     pass
 
 
@@ -47,12 +47,12 @@ def _socket_send_cmd(sock, msg):
     sock.send(req)
     raw_reps = sock.recv(4096)
     if not raw_reps:
-        raise CoreConectionLostError()
+        raise CoreConnectionLostError()
 
     while raw_reps[-1] != ord(b"\n"):
         buff = sock.recv(4096)
         if not buff:
-            raise CoreConectionLostError()
+            raise CoreConnectionLostError()
 
         raw_reps += buff
     logger.debug("Received: %r" % raw_reps)
@@ -63,20 +63,24 @@ def start_shutdown_watcher(operations, socket_address, mountpoint):
     def _shutdown_watcher():
         logger.debug("Starting shutdown watcher")
         sock = _socket_init(socket_address)
-        _socket_send_cmd(
+        rep = _socket_send_cmd(
             sock,
             {"cmd": "event_subscribe", "event": "fuse_mountpoint_need_stop", "subject": mountpoint},
         )
+        if rep["status"] != "ok":
+            msg = f"Cannot subscrib to event `fuse_mountpoint_need_stop`: {rep}"
+            logger.error(msg)
+            raise RuntimeError(msg)
         logger.debug("Shutdown watcher Started")
         while True:
             try:
                 rep = _socket_send_cmd(sock, {"cmd": "event_listen"})
                 assert rep["status"] == "ok"
-                if rep["event"] == "fuse_mountpoint_need_stop" and rep["subject"] == mountpoint:
+                if rep["event"] == "fuse_mountpoint_need_stop" and rep["mountpoint"] == mountpoint:
                     logger.warning("Received need stop event, exiting...")
                     break
 
-            except CoreConectionLostError as exc:
+            except CoreConnectionLostError as exc:
                 logger.warning("Connection with core has been lost, exiting...")
                 break
 
