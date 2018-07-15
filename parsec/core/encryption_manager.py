@@ -119,13 +119,13 @@ def decrypt_with_symkey(key: bytes, ciphered: bytes) -> bytes:
         raise MessageEncryptionError() from exc
 
 
-def sign_and_add_meta(device: Device, raw_msg: bytes) -> bytes:
+def sign_and_add_meta(device: Device, data: bytes) -> bytes:
     """
     Raises:
         MessageSignatureError: if the signature operation fails.
     """
     try:
-        signed = device.device_signkey.sign(raw_msg)
+        signed = device.device_signkey.sign(data)
     except CryptoError as exc:
         raise MessageSignatureError() from exc
 
@@ -170,7 +170,7 @@ def encrypt_for(author: Device, recipient: RemoteUser, data: bytes) -> bytes:
         raise MessageEncryptionError() from exc
 
 
-def decrypt_for(recipient: Device, ciphered_msg: bytes) -> tuple:
+def decrypt_for(recipient: Device, ciphered: bytes) -> tuple:
     """
     Decrypt a message and return it signed data and author metadata.
 
@@ -185,11 +185,11 @@ def decrypt_for(recipient: Device, ciphered_msg: bytes) -> tuple:
     """
     try:
         box = SealedBox(recipient.user_privkey)
-        signed_msg_with_meta = box.decrypt(ciphered_msg)
+        signed_with_meta = box.decrypt(ciphered)
     except CryptoError as exc:
         raise MessageEncryptionError() from exc
 
-    return extract_meta_from_signature(signed_msg_with_meta)
+    return extract_meta_from_signature(signed_with_meta)
 
 
 def verify_signature_from(author: RemoteDevice, signed_text: bytes) -> dict:
@@ -224,7 +224,7 @@ def encrypt_with_secret_key(author: Device, key: bytes, data: bytes) -> bytes:
         raise MessageEncryptionError() from exc
 
 
-def decrypt_with_secret_key(key: bytes, ciphered_msg: bytes) -> tuple:
+def decrypt_with_secret_key(key: bytes, ciphered: bytes) -> tuple:
     """
     Decrypt a message with a symetric key.
 
@@ -239,11 +239,11 @@ def decrypt_with_secret_key(key: bytes, ciphered_msg: bytes) -> tuple:
     """
     try:
         box = SecretBox(key)
-        signed_msg_with_meta = box.decrypt(ciphered_msg)
+        signed_with_meta = box.decrypt(ciphered)
     except CryptoError as exc:
         raise MessageEncryptionError() from exc
 
-    return extract_meta_from_signature(signed_msg_with_meta)
+    return extract_meta_from_signature(signed_with_meta)
 
 
 class EncryptionManager(BaseAsyncComponent):
@@ -377,24 +377,24 @@ class EncryptionManager(BaseAsyncComponent):
         self._mem_cache[user_id] = remote_user
         return remote_user
 
-    async def encrypt_for(self, recipient: str, msg: dict) -> bytes:
+    async def encrypt_for(self, recipient: str, data: bytes) -> bytes:
         user = await self.fetch_remote_user(recipient)
         if not user:
             raise MessageEncryptionError("Unknown recipient `%s`" % recipient)
-        return encrypt_for(self.device, user, msg)
+        return encrypt_for(self.device, user, data)
 
-    async def encrypt_for_self(self, msg: dict) -> bytes:
-        return encrypt_for_self(self.device, msg)
+    async def encrypt_for_self(self, data: bytes) -> bytes:
+        return encrypt_for_self(self.device, data)
 
-    async def decrypt_for(self, ciphered_msg: bytes) -> dict:
-        user_id, device_name, signed_msg = decrypt_for(self.device, ciphered_msg)
+    async def decrypt_for_self(self, ciphered: bytes) -> bytes:
+        user_id, device_name, signed_data = decrypt_for(self.device, ciphered)
         author_device = await self.fetch_remote_device(user_id, device_name)
         if not author_device:
             raise MessageSignatureError(
                 "Message is said to be signed by `%s@%s`, but this device cannot be found on the backend."
                 % (user_id, device_name)
             )
-        return verify_signature_from(author_device, signed_msg)
+        return user_id, device_name, verify_signature_from(author_device, signed_data)
 
     def encrypt_with_secret_key(self, key: bytes, data: bytes) -> bytes:
         return encrypt_with_secret_key(self.device, key, data)

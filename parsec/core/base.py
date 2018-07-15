@@ -9,6 +9,12 @@ class AlreadyInitializedError(Exception):
     pass
 
 
+# TODO: Currently monitors (e.e. `SyncMonitor`) inherit from `BaseAsyncComponent`
+# however the init/teardown functions is maybe misleading in this case
+# given it use only use to start/stop the monitoring coroutine. Typically during
+# unit tests we may want to use the monitor without calling those methods prior.
+
+
 class BaseAsyncComponent:
     def __init__(self):
         self._lock = trio.Lock()

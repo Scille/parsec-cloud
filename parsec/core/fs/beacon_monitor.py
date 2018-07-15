@@ -23,7 +23,7 @@ class BeaconMonitor(BaseAsyncComponent):
         super().__init__()
         self._device = device
         self.local_folder_fs = local_folder_fs
-        self._task_cancel_scope = None
+        self._task_info = None
         self._workspaces = {}
         self.signal_ns = signal_ns
 
@@ -31,10 +31,13 @@ class BeaconMonitor(BaseAsyncComponent):
         for beacon_id in self.local_folder_fs.get_local_beacons():
             self.signal_ns.signal("backend.beacon.listen").send(None, beacon_id=beacon_id)
 
-        self._task_cancel_scope = await nursery.start(self._task)
+        self._task_info = await nursery.start(self._task)
 
     async def _teardown(self):
-        self._task_cancel_scope.cancel()
+        cancel_scope, closed_event = self._task_info
+        cancel_scope.cancel()
+        await closed_event.wait()
+        self._task_info = None
 
     def _retreive_beacon_key(self, beacon_id):
         root_manifest = self.local_folder_fs.get_manifest(self._device.user_manifest_access)
@@ -69,6 +72,10 @@ class BeaconMonitor(BaseAsyncComponent):
         self.signal_ns.signal("fs.workspace.unloaded").connect(_on_workspace_unloaded, weak=True)
         self.signal_ns.signal("backend.beacon.updated").connect(_on_beacon_updated, weak=True)
 
-        with trio.open_cancel_scope() as cancel_scope:
-            task_status.started(cancel_scope)
-            await trio.sleep_forever()
+        closed_event = trio.Event()
+        try:
+            with trio.open_cancel_scope() as cancel_scope:
+                task_status.started((cancel_scope, closed_event))
+                await trio.sleep_forever()
+        finally:
+            closed_event.set()

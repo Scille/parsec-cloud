@@ -1,14 +1,10 @@
 from parsec.schema import BaseCmdSchema, fields
 from parsec.core.app import Core, ClientContext
-from parsec.core.sharing import (
-    SharingUnknownRecipient,
-    SharingInvalidRecipient,
-    SharingBackendMessageError,
-)
+from parsec.core.fs.sharing import SharingRecipientError, SharingBackendMessageError, SharingError
 
 
 class cmd_SHARE_Schema(BaseCmdSchema):
-    path = fields.String(required=True)
+    path = fields.Path(required=True)
     recipient = fields.String(required=True)
 
 
@@ -21,11 +17,14 @@ async def share(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
     req = cmd_share_schema.load(req)
     try:
-        await core.sharing.share(req["path"], req["recipient"])
-    except SharingInvalidRecipient as exc:
-        return {"status": "invalid_recipient", "reason": str(exc)}
-    except SharingUnknownRecipient as exc:
-        return {"status": "unknown_recipient", "reason": str(exc)}
+        await core.fs.share(req["path"], req["recipient"])
+    except OSError as exc:
+        return {"status": "invalid_path", "reason": str(exc)}
+    except SharingRecipientError as exc:
+        return {"status": "bad_recipient", "reason": str(exc)}
     except SharingBackendMessageError as exc:
         return {"status": "backend_error", "reason": str(exc)}
+    except SharingError as exc:
+        return {"status": "sharing_error", "reason": str(exc)}
+
     return {"status": "ok"}

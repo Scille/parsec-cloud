@@ -6,6 +6,7 @@ from parsec.core.fs.data import (
     is_file_manifest,
     is_folder_manifest,
     new_access,
+    new_local_workspace_manifest,
     new_local_folder_manifest,
     new_local_file_manifest,
 )
@@ -79,6 +80,10 @@ class LocalFolderFS:
         raw = dumps_manifest(manifest)
         self._local_db.set(access, raw)
 
+    def update_manifest(self, access, manifest):
+        mark_manifest_modified(manifest)
+        self.set_manifest(access, manifest)
+
     def mark_outdated_manifest(self, access):
         self._local_db.clear(access)
 
@@ -119,8 +124,8 @@ class LocalFolderFS:
         return found
 
     def _retrieve_entry(self, path, collector=None):
-        assert "//" not in path
-        assert path.startswith("/")
+        assert "//" not in path, path
+        assert path.startswith("/"), path
 
         def _retrieve_entry_recursive(curr_access, curr_path, hops):
             curr_manifest = self.get_manifest(curr_access)
@@ -217,17 +222,25 @@ class LocalFolderFS:
         self.signal_ns.signal("fs.entry.modified").send("local", id=access["id"])
         self.signal_ns.signal("fs.entry.created").send("local", id=child_access["id"])
 
-    def mkdir(self, path):
+    def mkdir(self, path, workspace=False):
         path = normalize_path(path)
         parent_path, child_name = path.rsplit("/", 1)
-        access, manifest = self._retrieve_entry(parent_path or "/")
+        parent_path = parent_path or "/"
+        access, manifest = self._retrieve_entry(parent_path)
         if not is_folder_manifest(manifest):
             raise NotADirectoryError(20, "Not a directory", parent_path)
         if child_name in manifest["children"]:
             raise FileExistsError(17, "File exists", path)
 
         child_access = new_access()
-        child_manifest = new_local_folder_manifest(self.local_author)
+        if workspace:
+            if parent_path != "/":
+                raise PermissionError(
+                    13, "Permission denied (workspace only allowed at root level)", path
+                )
+            child_manifest = new_local_workspace_manifest(self.local_author)
+        else:
+            child_manifest = new_local_folder_manifest(self.local_author)
         manifest["children"][child_name] = child_access
         mark_manifest_modified(manifest)
         self.set_manifest(access, manifest)

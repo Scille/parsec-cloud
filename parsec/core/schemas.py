@@ -56,10 +56,14 @@ class FolderManifestSchema(UnknownCheckedSchema):
     sharing = fields.Nested(SharingSchema)
 
 
-class UserManifestSchema(FolderManifestSchema):
+class WorkspaceManifestSchema(FolderManifestSchema):
+    type = fields.CheckedConstant("workspace_manifest", required=True)
+    beacon_id = fields.String(required=True)
+
+
+class UserManifestSchema(WorkspaceManifestSchema):
     type = fields.CheckedConstant("user_manifest", required=True)
     last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
-    beacon_id = fields.String(required=True)
 
 
 # Local data
@@ -104,10 +108,14 @@ class LocalFolderManifestSchema(UnknownCheckedSchema):
     sharing = fields.Nested(SharingSchema)
 
 
-class LocalUserManifestSchema(LocalFolderManifestSchema):
+class LocalWorkspaceManifest(LocalFolderManifestSchema):
+    type = fields.CheckedConstant("local_workspace_manifest", required=True)
+    beacon_id = fields.String(required=True)
+
+
+class LocalUserManifestSchema(LocalWorkspaceManifest):
     type = fields.CheckedConstant("local_user_manifest", required=True)
     last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
-    beacon_id = fields.String(required=True)
 
 
 class TypedManifestSchema(OneOfSchema):
@@ -115,8 +123,10 @@ class TypedManifestSchema(OneOfSchema):
     type_field_remove = False
     type_schemas = {
         "local_user_manifest": LocalUserManifestSchema,
+        "local_workspace_manifest": LocalWorkspaceManifest,
         "local_folder_manifest": LocalFolderManifestSchema,
         "local_file_manifest": LocalFileManifestSchema,
+        "workspace_manifest": WorkspaceManifestSchema,
         "user_manifest": UserManifestSchema,
         "folder_manifest": FolderManifestSchema,
         "file_manifest": FileManifestSchema,
@@ -131,11 +141,11 @@ typed_manifest_schema = TypedManifestSchema()
 
 def dumps_manifest(manifest: dict):
     raw, errors = typed_manifest_schema.dumps(manifest)
-    assert not errors
+    assert not errors, errors
     return raw.encode("utf-8")
 
 
 def loads_manifest(raw: bytes):
     manifest, errors = typed_manifest_schema.loads(raw.decode("utf-8"))
-    assert not errors
+    assert not errors, errors
     return manifest

@@ -19,7 +19,7 @@ class SyncMonitor(BaseAsyncComponent):
         super().__init__()
         self._local_manifest_fs = local_manifest_fs
         self._syncer = syncer
-        self._task_cancel_scope = None
+        self._task_info = None
         self._updated_entries = {}
         self._new_event = trio.Event()
         self.signal_ns = signal_ns
@@ -33,10 +33,13 @@ class SyncMonitor(BaseAsyncComponent):
         await self._not_syncing_event.wait()
 
     async def _init(self, nursery):
-        self._task_cancel_scope = await nursery.start(self._task)
+        self._task_info = await nursery.start(self._task)
 
     async def _teardown(self):
-        self._task_cancel_scope.cancel()
+        cancel_scope, closed_event = self._task_info
+        cancel_scope.cancel()
+        await closed_event.wait()
+        self._task_info = None
 
     async def _task(self, *, task_status=trio.TASK_STATUS_IGNORED):
         backend_online_event = trio.Event()
@@ -52,20 +55,24 @@ class SyncMonitor(BaseAsyncComponent):
 
         self.signal_ns.signal("backend.offline").connect(_on_backend_offline, weak=True)
 
-        async with trio.open_nursery() as nursery:
-            task_status.started(nursery.cancel_scope)
-            while True:
-                try:
-                    with trio.open_cancel_scope() as event_listener_scope:
-                        self._not_syncing_event.clear()
-                        try:
-                            await self._syncer.full_sync()
-                        finally:
-                            self._not_syncing_event.set()
-                        await self._listen_sync_loop()
+        closed_event = trio.Event()
+        try:
+            async with trio.open_nursery() as nursery:
+                task_status.started((nursery.cancel_scope, closed_event))
+                while True:
+                    try:
+                        with trio.open_cancel_scope() as event_listener_scope:
+                            self._not_syncing_event.clear()
+                            try:
+                                await self._syncer.full_sync()
+                            finally:
+                                self._not_syncing_event.set()
+                            await self._listen_sync_loop()
 
-                except BackendNotAvailable:
-                    await backend_online_event.wait()
+                    except BackendNotAvailable:
+                        await backend_online_event.wait()
+        finally:
+            closed_event.set()
 
     async def _listen_sync_loop(self):
         updated_entries = {}

@@ -65,13 +65,14 @@ def merge_children(base, diverged, target):
 
 def merge_remote_folder_manifests(base, diverged, target):
     if base is None:
-        version = 0
+        base_version = 0
         base_children = {}
     else:
-        version = base["version"]
+        base_version = base["version"]
         base_children = base["children"]
-    assert version + 1 == diverged["version"]
+    assert base_version + 1 == diverged["version"]
     assert target["version"] >= diverged["version"]
+    assert diverged["created"] == target["created"]
 
     children, need_sync = merge_children(base_children, diverged["children"], target["children"])
 
@@ -85,18 +86,25 @@ def merge_remote_folder_manifests(base, diverged, target):
 
     merged = {**target, "updated": updated, "children": children}
 
+    # Only user manifest has this field
+    if "last_processed_message" in target:
+        merged["last_processed_message"] = max(
+            diverged["last_processed_message"], target["last_processed_message"]
+        )
+
     return merged, need_sync
 
 
 def merge_local_folder_manifests(base, diverged, target):
     if base is None:
-        version = 0
+        base_version = 0
         base_children = {}
     else:
-        version = base["base_version"]
+        base_version = base["base_version"]
         base_children = base["children"]
-    assert version == diverged["base_version"]
+    assert base_version == diverged["base_version"]
     assert target["base_version"] > diverged["base_version"]
+    assert diverged["created"] == target["created"]
 
     children, need_sync = merge_children(base_children, diverged["children"], target["children"])
 
@@ -109,4 +117,12 @@ def merge_local_folder_manifests(base, diverged, target):
         else:
             updated = diverged["updated"]
 
-    return {**target, "need_sync": need_sync, "updated": updated, "children": children}
+    merged = {**target, "need_sync": need_sync, "updated": updated, "children": children}
+
+    # Only user manifest has this field
+    if "last_processed_message" in target:
+        merged["last_processed_message"] = max(
+            diverged["last_processed_message"], target["last_processed_message"]
+        )
+
+    return merged

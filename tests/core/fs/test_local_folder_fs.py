@@ -59,6 +59,13 @@ def test_file_create(local_folder_fs):
     }
 
 
+def test_noot_root_child_bad_workspace_create(local_folder_fs):
+    local_folder_fs.mkdir("/foo")
+    with pytest.raises(PermissionError):
+        local_folder_fs.mkdir("/foo/bar", workspace=True)
+    local_folder_fs.mkdir("/spam", workspace=True)
+
+
 def test_access_not_loaded_entry(alice, local_folder_fs):
     user_manifest = local_folder_fs.get_manifest(alice.user_manifest_access)
     with freeze_time("2000-01-02"):

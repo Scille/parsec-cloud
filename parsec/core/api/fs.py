@@ -145,6 +145,19 @@ async def folder_create(req: dict, client_ctx: ClientContext, core: Core) -> dic
     return {"status": "ok"}
 
 
+async def workspace_create(req: dict, client_ctx: ClientContext, core: Core) -> dict:
+    if not core.fs:
+        return {"status": "login_required", "reason": "Login required"}
+
+    req = PathOnlySchema().load(req)
+    # Right now
+    try:
+        await core.fs.workspace_create(req["path"])
+    except OSError as exc:
+        return {"status": "invalid_path", "reason": str(exc)}
+    return {"status": "ok"}
+
+
 async def move(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}

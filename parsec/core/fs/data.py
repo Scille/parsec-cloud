@@ -148,6 +148,10 @@ def is_folder_manifest(manifest):
     return False
 
 
+def is_workspace_manifest(manifest):
+    return manifest["type"].endswith("workspace_manifest")
+
+
 def remote_to_local_manifest(manifest):
     local_manifest = manifest.copy()
     local_manifest["base_version"] = manifest["version"]

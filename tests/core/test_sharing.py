@@ -1,207 +1,119 @@
-# from nacl.public import PublicKey, SealedBox
-# import pytest
-# import trio
-
-# from parsec.utils import ejson_dumps
+import pytest
+import trio
 
 
-# @pytest.mark.trio
-# @pytest.mark.parametrize("already_synced", [True, False])
-# async def test_share_file(
-#     already_synced, core, core2, alice_core_sock, bob_core2_sock, running_backend
-# ):
-#     assert core.fs.get_last_processed_message() == 0
-#     assert core2.fs.get_last_processed_message() == 0
-
-#     # Bob stays idle waiting for a sharing from alice
-#     await bob_core2_sock.send({"cmd": "event_subscribe", "event": "new_sharing"})
-#     rep = await bob_core2_sock.recv()
-#     assert rep == {"status": "ok"}
-#     await bob_core2_sock.send({"cmd": "event_listen"})
-
-#     # First, create a file and sync it on backend
-#     await core.fs.file_create("/foo.txt")
-#     await core.fs.file_write("/foo.txt", b"Hello from Alice !")
-#     if already_synced:
-#         await core.fs.sync("/foo.txt")
-
-#     # Now we can share this file with Bob
-#     await alice_core_sock.send({"cmd": "share", "path": "/foo.txt", "recipient": "bob"})
-#     rep = await alice_core_sock.recv()
-#     assert rep == {"status": "ok"}
-
-#     # Bob should get a notification
-#     with trio.move_on_after(seconds=1) as cancel_scope:
-#         rep = await bob_core2_sock.recv()
-#     assert not cancel_scope.cancelled_caught
-#     assert rep == {"status": "ok", "event": "new_sharing", "subject": "/shared-with-alice/foo.txt"}
-
-#     # Now Bob can access the file just like Alice would do
-#     alice_file_stat = await core.fs.stat("/foo.txt")
-#     bob_file_stat = await core2.fs.stat("/shared-with-alice/foo.txt")
-#     assert bob_file_stat == alice_file_stat
-
-#     bob_file_data = await core2.fs.file_read("/shared-with-alice/foo.txt")
-#     assert bob_file_data == b"Hello from Alice !"
-
-#     assert core.fs.get_last_processed_message() == 0
-#     assert core2.fs.get_last_processed_message() == 1
+from tests.common import connect_signal_as_event
 
 
-# @pytest.mark.trio
-# @pytest.mark.parametrize("already_synced", [True, False])
-# async def test_share_nested_folder(
-#     already_synced, core, core2, alice_core_sock, bob_core2_sock, running_backend
-# ):
-#     assert core.fs.get_last_processed_message() == 0
-#     assert core2.fs.get_last_processed_message() == 0
+@pytest.mark.trio
+@pytest.mark.parametrize("already_synced", [True, False])
+async def test_share_workspace(
+    already_synced, core, core2, alice_core_sock, bob_core2_sock, running_backend
+):
+    # Bob stays idle waiting for a sharing from alice
+    core2_received_sharing = connect_signal_as_event(core2.signal_ns, "sharing.new")
 
-#     # Bob stays idle waiting for a sharing from alice
-#     await bob_core2_sock.send({"cmd": "event_subscribe", "event": "new_sharing"})
-#     rep = await bob_core2_sock.recv()
-#     assert rep == {"status": "ok"}
-#     await bob_core2_sock.send({"cmd": "event_listen"})
+    # First, create a folder and sync it on backend
+    await core.fs.workspace_create("/foo")
+    await core.fs.folder_create("/foo/spam")
+    await core.fs.folder_create("/foo/spam/zob")
+    await core.fs.file_create("/foo/spam/bar.txt")
+    await core.fs.file_write("/foo/spam/bar.txt", b"Hello from Alice !")
+    if already_synced:
+        await core.fs.sync("/foo")
 
-#     # First, create a folder and sync it on backend
-#     await core.fs.folder_create("/foo")
-#     await core.fs.folder_create("/foo/spam")
-#     await core.fs.folder_create("/foo/spam/zob")
-#     await core.fs.file_create("/foo/spam/bar.txt")
-#     await core.fs.file_write("/foo/spam/bar.txt", b"Hello from Alice !")
-#     if already_synced:
-#         await core.fs.sync("/foo/spam")
+    # Now we can share this workspace with Bob
+    await alice_core_sock.send({"cmd": "share", "path": "/foo", "recipient": "bob"})
+    rep = await alice_core_sock.recv()
+    assert rep == {"status": "ok"}
 
-#     # Now we can share this file with Bob
-#     await alice_core_sock.send({"cmd": "share", "path": "/foo/spam", "recipient": "bob"})
-#     rep = await alice_core_sock.recv()
-#     assert rep == {"status": "ok"}
+    # Bob should get a notification
+    with trio.fail_after(seconds=1):
+        await core2_received_sharing.wait()
+        assert len(core2_received_sharing.cb.call_args_list) == 1
 
-#     # Bob should get a notification
-#     with trio.move_on_after(seconds=1) as cancel_scope:
-#         rep = await bob_core2_sock.recv()
-#     assert not cancel_scope.cancelled_caught
-#     assert rep == {"status": "ok", "event": "new_sharing", "subject": "/shared-with-alice/spam"}
+    # Now Bob can access the file just like Alice would do
+    bob_foo_name = "foo (shared by alice)"
+    bob_root_stat = await core2.fs.stat("/")
+    assert bob_root_stat["children"] == [bob_foo_name]
+    for path in ("", "/spam", "/spam/zob", "/spam/bar.txt"):
+        alice_path = f"/foo{path}"
+        bob_path = f"/{bob_foo_name}{path}"
+        alice_file_stat = await core.fs.stat(alice_path)
+        bob_file_stat = await core2.fs.stat(bob_path)
+        assert bob_file_stat == alice_file_stat
 
-#     # Now Bob can access the file just like Alice would do
-#     alice_file_stat = await core.fs.stat("/foo/spam")
-#     bob_file_stat = await core2.fs.stat("/shared-with-alice/spam")
-#     assert bob_file_stat == alice_file_stat
-
-#     bob_file_data = await core2.fs.file_read("/shared-with-alice/spam/bar.txt")
-#     assert bob_file_data == b"Hello from Alice !"
-
-#     assert core.fs.get_last_processed_message() == 0
-#     assert core2.fs.get_last_processed_message() == 1
+    bob_file_data = await core2.fs.file_read(f"/{bob_foo_name}/spam/bar.txt")
+    assert bob_file_data == b"Hello from Alice !"
 
 
-# @pytest.mark.trio
-# @pytest.mark.parametrize("already_synced", [True, False])
-# async def test_multiple_messages(
-#     already_synced, core, core2, alice_core_sock, bob_core2_sock, running_backend, bob
-# ):
-#     def _build_ping_body(destination):
-#         ping_body = {"type": "ping", "ping": destination}
-#         broadcast_key = PublicKey(bob.user_privkey.public_key.encode())
-#         box = SealedBox(broadcast_key)
-#         sharing_msg_clear = ejson_dumps(ping_body).encode("utf8")
-#         sharing_msg_signed = core.auth_device.device_signkey.sign(sharing_msg_clear)
-#         return box.encrypt(sharing_msg_signed)
+@pytest.mark.trio
+async def test_share_backend_offline(core, alice_core_sock, bob):
+    await core.fs.workspace_create("/foo")
 
-#     assert core.fs.get_last_processed_message() == 0
-#     assert core2.fs.get_last_processed_message() == 0
-
-#     await bob_core2_sock.send({"cmd": "event_subscribe", "event": "ping"})
-#     rep = await bob_core2_sock.recv()
-#     assert rep == {"status": "ok"}
-
-#     # Two messages received at once
-#     await running_backend.backend.message.perform_message_new(
-#         sender_device_id="alice@test", recipient_user_id="bob", body=_build_ping_body("foo")
-#     )
-#     await running_backend.backend.message.perform_message_new(
-#         sender_device_id="alice@test", recipient_user_id="bob", body=_build_ping_body("bar")
-#     )
-
-#     await bob_core2_sock.send({"cmd": "event_listen"})
-#     with trio.move_on_after(seconds=1) as cancel_scope:
-#         rep = await bob_core2_sock.recv()
-#     assert not cancel_scope.cancelled_caught
-#     assert rep == {"event": "ping", "status": "ok", "subject": "foo"}
-
-#     await bob_core2_sock.send({"cmd": "event_listen"})
-#     with trio.move_on_after(seconds=1) as cancel_scope:
-#         rep = await bob_core2_sock.recv()
-#     assert not cancel_scope.cancelled_caught
-#     assert rep == {"event": "ping", "status": "ok", "subject": "bar"}
-
-#     assert core.fs.get_last_processed_message() == 0
-#     assert core2.fs.get_last_processed_message() == 2
-
-#     # Next message received
-#     await running_backend.backend.message.perform_message_new(
-#         sender_device_id="alice@test", recipient_user_id="bob", body=_build_ping_body("baz")
-#     )
-
-#     await bob_core2_sock.send({"cmd": "event_listen"})
-#     with trio.move_on_after(seconds=1) as cancel_scope:
-#         rep = await bob_core2_sock.recv()
-#     assert not cancel_scope.cancelled_caught
-#     assert rep == {"event": "ping", "status": "ok", "subject": "baz"}
-
-#     assert core.fs.get_last_processed_message() == 0
-#     assert core2.fs.get_last_processed_message() == 3
+    await alice_core_sock.send({"cmd": "share", "path": "/foo", "recipient": bob.user_id})
+    rep = await alice_core_sock.recv()
+    assert rep == {"status": "backend_not_availabled", "reason": "Backend not available"}
 
 
-# # @pytest.mark.trio
-# # @pytest.mark.parametrize('already_synced', [True, False])
-# # async def test_share_folder(already_synced, alice_core_sock, bob_core2_sock, backend):
-# #     # TODO
-# #     pass
+@pytest.mark.trio
+async def test_share_bad_entry(alice_core_sock, running_backend, bob):
+    await alice_core_sock.send({"cmd": "share", "path": "/dummy", "recipient": bob.user_id})
+    rep = await alice_core_sock.recv()
+    assert rep == {
+        "status": "invalid_path",
+        "reason": "[Errno 2] No such file or directory: '/dummy'",
+    }
+
+
+@pytest.mark.trio
+async def test_share_not_a_valid_path(alice_core_sock, running_backend, bob):
+    await alice_core_sock.send({"cmd": "share", "path": "dummy", "recipient": bob.user_id})
+    rep = await alice_core_sock.recv()
+    assert rep == {"status": "bad_message", "errors": {"path": ["Path must be absolute"]}}
+
+
+@pytest.mark.trio
+async def test_share_bad_recipient(core, alice_core_sock, running_backend):
+    await core.fs.workspace_create("/foo")
+
+    await alice_core_sock.send({"cmd": "share", "path": "/foo", "recipient": "dummy"})
+    rep = await alice_core_sock.recv()
+    assert rep == {"status": "bad_recipient", "reason": "Cannot create message for `dummy`"}
+
+
+@pytest.mark.trio
+async def test_share_not_a_workspace(core, bob, alice_core_sock, running_backend):
+    await core.fs.file_create("/foo.txt")
+    await core.fs.folder_create("/spam")
+
+    for path in ["/foo.txt", "/spam"]:
+        await alice_core_sock.send({"cmd": "share", "path": path, "recipient": bob.user_id})
+        rep = await alice_core_sock.recv()
+        assert rep == {
+            "status": "sharing_error",
+            "reason": f"`{path}` is not a workspace, hence cannot be shared",
+        }
+
+
+@pytest.mark.trio
+async def test_share_invalid_recipient(core, alice_core_sock, running_backend):
+    await core.fs.workspace_create("/foo")
+
+    await alice_core_sock.send({"cmd": "share", "path": "/foo.txt", "recipient": "alice"})
+    rep = await alice_core_sock.recv()
+    assert rep == {"status": "bad_recipient", "reason": "Cannot share to oneself."}
 
 
 # @pytest.mark.trio
-# async def test_share_backend_offline(core, alice_core_sock, bob):
-#     await core.fs.file_create("/foo.txt")
-
-#     await alice_core_sock.send({"cmd": "share", "path": "/foo.txt", "recipient": bob.user_id})
-#     rep = await alice_core_sock.recv()
-#     assert rep == {"status": "backend_not_availabled", "reason": "Backend not available"}
-
-
-# @pytest.mark.trio
-# async def test_share_bad_entry(alice_core_sock, running_backend, bob):
-#     await alice_core_sock.send({"cmd": "share", "path": "/dummy.txt", "recipient": bob.user_id})
-#     rep = await alice_core_sock.recv()
-#     assert rep == {"status": "invalid_path", "reason": "Path `/dummy.txt` doesn't exists"}
+# async def test_share_with_receiver_concurrency(alice_core_sock, running_backend):
+#     # Bob is connected on multiple cores, which will fight to update the
+#     # main manifest.
+#     # TODO
+#     pass
 
 
 # @pytest.mark.trio
-# async def test_share_bad_recipient(core, alice_core_sock, running_backend):
-#     await core.fs.file_create("/foo.txt")
-
-#     await alice_core_sock.send({"cmd": "share", "path": "/foo.txt", "recipient": "dummy"})
-#     rep = await alice_core_sock.recv()
-#     assert rep == {"status": "unknown_recipient", "reason": "No user with id `dummy`."}
-
-
-# @pytest.mark.trio
-# async def test_share_invalid_recipient(core, alice_core_sock, running_backend):
-#     await core.fs.file_create("/foo.txt")
-
-#     await alice_core_sock.send({"cmd": "share", "path": "/foo.txt", "recipient": "alice"})
-#     rep = await alice_core_sock.recv()
-#     assert rep == {"status": "invalid_recipient", "reason": "Cannot share to oneself."}
-
-
-# # @pytest.mark.trio
-# # async def test_share_with_receiver_concurrency(alice_core_sock, running_backend):
-# #     # Bob is connected on multiple cores, which will fight to update the
-# #     # main manifest.
-# #     # TODO
-# #     pass
-
-
-# # @pytest.mark.trio
-# # async def test_share_with_sharing_name_already_taken(alice_core_sock, running_backend):
-# #     # TODO
-# #     pass
+# async def test_share_with_sharing_name_already_taken(alice_core_sock, running_backend):
+#     # TODO
+#     pass

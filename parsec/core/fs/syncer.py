@@ -10,6 +10,7 @@ from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.schemas import dumps_manifest, loads_manifest
 from parsec.utils import to_jsonb64, from_jsonb64
 
+
 DEFAULT_BLOCK_SIZE = 2 ** 16  # 65Kio
 
 

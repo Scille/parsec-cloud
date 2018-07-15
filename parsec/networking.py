@@ -38,13 +38,11 @@ async def serve_client(dispatch_request, sockstream) -> None:
     except Exception as exc:
         print(exc)
         # If we are here, something unexpected happened...
-        logger.error(traceback.format_exc())
+        tb = traceback.format_exc()
+        logger.error(tb)
         # TODO: do we need to close the socket (i.e. sockstream) here ?
         # or should we let the caller (most certainly the server) handle this ?
         await sock.aclose()
-        import pdb
-
-        pdb.set_trace()
         raise
 
 

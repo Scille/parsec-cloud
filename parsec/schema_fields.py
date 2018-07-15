@@ -6,6 +6,25 @@ from marshmallow.fields import *  # noqa: republishing
 from parsec.utils import to_jsonb64, from_jsonb64
 
 
+# TODO: test this field and use it everywhere in the api !
+
+
+class Path(Field):
+    """Absolute path"""
+
+    def _deserialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        if not value.startswith("/"):
+            raise ValidationError("Path must be absolute")
+        if value != "/":
+            for item in value.split("/")[1:]:
+                if item in (".", "..", ""):
+                    raise ValidationError("Invalid path")
+        return value
+
+
 class Base64Bytes(Field):
     """Pass bytes through json by encoding them into base64"""
 
