@@ -5,7 +5,7 @@ from collections import defaultdict
 from random import randrange, choice
 from string import ascii_lowercase
 
-from parsec.core.sharing import SharingInvalidRecipient
+from parsec.core.fs.sharing import SharingError
 
 
 FUZZ_PARALLELISM = 10
@@ -115,7 +115,7 @@ async def fuzzer(id, core, fs_state):
 
 
 async def _fuzzer_cmd(id, core, fs_state):
-    x = randrange(0, 110)
+    x = randrange(0, 100)
     await trio.sleep(x * 0.01)
 
     if x < 10:
@@ -194,14 +194,6 @@ async def _fuzzer_cmd(id, core, fs_state):
             fs_state.add_stat(id, "delete_bad")
 
     elif x < 90:
-        path = fs_state.get_file()
-        try:
-            await core.fs.file_flush(path)
-            fs_state.add_stat(id, "flush_ok")
-        except OSError:
-            fs_state.add_stat(id, "flush_bad")
-
-    elif x < 100:
         path = fs_state.get_path()
         try:
             await core.fs.sync(path)
@@ -212,13 +204,12 @@ async def _fuzzer_cmd(id, core, fs_state):
     else:
         path = fs_state.get_path()
         try:
-            await core.sharing.share(path, "bob")
+            await core.fs.share(path, "bob")
             fs_state.add_stat(id, "share_ok")
-        except (OSError, SharingInvalidRecipient):
+        except (OSError, SharingError):
             fs_state.add_stat(id, "share_bad")
 
 
-@pytest.mark.xfail
 @pytest.mark.trio
 async def test_fuzz_core(request, running_backend, core, alice, bob):
     await core.login(alice)
