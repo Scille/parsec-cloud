@@ -30,7 +30,7 @@ async def login(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
     msg = cmd_LOGIN_Schema().load(req)
     try:
-        device = core.devices_manager.load_device(msg["id"], msg["password"])
+        device = core.local_devices_manager.load_device(msg["id"], msg["password"])
     except DeviceLoadingError:
         return {"status": "unknown_user", "reason": "Unknown user"}
 
@@ -57,7 +57,7 @@ async def info(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
 
 async def list_available_logins(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    devices = core.devices_manager.list_available_devices()
+    devices = core.local_devices_manager.list_available_devices()
     return {"status": "ok", "devices": devices}
 
 

@@ -63,6 +63,7 @@ async def test_device_configure(
     mock_generate_token.side_effect = ["<config_try_id>"]
     verifykey = b"0\xba\x9fY\xd1\xb4D\x93\r\xf6\xa7[\xe8\xaa\xf9\xeea\xb8\x01\x98\xc1~im}C\xfa\xde\\\xe6\xa1-"
     cipherkey = b"\x8b\xfc\xc1\x88\xb7\xd7\x16t\xce<\x7f\xd2j_fTI\x14r':\rF!\xff~\xa8\r\x912\xe3N"
+    salt = b"\xb3\x00X\xec\x97\xbf\xd9r\n/\x1d\xf3\xf2\x11\xaaU"
 
     # 1) Existing device start listening for device configuration
 
@@ -80,6 +81,7 @@ async def test_device_configure(
             "configure_device_token": configure_device_token,
             "device_verify_key": to_jsonb64(verifykey),
             "exchange_cipherkey": to_jsonb64(cipherkey),
+            "salt": to_jsonb64(salt),
         }
     )
 
@@ -107,6 +109,7 @@ async def test_device_configure(
         "device_name": "phone2",
         "device_verify_key": "MLqfWdG0RJMN9qdb6Kr57mG4AZjBfmltfUP63lzmoS0=\n",
         "exchange_cipherkey": "i/zBiLfXFnTOPH/Sal9mVEkUcic6DUYh/36oDZEy404=\n",
+        "salt": "swBY7Je/2XIKLx3z8hGqVQ==\n",
     }
     exchange_cipherkey = PrivateKey(from_jsonb64(rep["exchange_cipherkey"]))
 
@@ -142,6 +145,7 @@ async def test_device_configure_and_get_refused(
 ):
     mock_generate_token.side_effect = ["<config_try_id>"]
     alice_sock, anonymous_sock = alice_backend_sock, anonymous_backend_sock
+    salt = b"\xb3\x00X\xec\x97\xbf\xd9r\n/\x1d\xf3\xf2\x11\xaaU"
 
     # 1) Existing device start listening for device configuration
 
@@ -159,6 +163,7 @@ async def test_device_configure_and_get_refused(
             "configure_device_token": configure_device_token,
             "device_verify_key": to_jsonb64(b"<verifykey>"),
             "exchange_cipherkey": to_jsonb64(b"<cipherkey>"),
+            "salt": to_jsonb64(salt),
         }
     )
 
@@ -174,7 +179,7 @@ async def test_device_configure_and_get_refused(
         "config_try_id": "<config_try_id>",
     }
 
-    # 5) Existing device refuse the configuration
+    # 4) Existing device refuse the configuration
 
     await alice_sock.send(
         {
@@ -186,7 +191,7 @@ async def test_device_configure_and_get_refused(
     rep = await alice_sock.recv()
     assert rep == {"status": "ok"}
 
-    # 6) Wannabe device get it answer: device is not accepted :'-(
+    # 5) Wannabe device get it answer: device is not accepted :'-(
 
     rep = await anonymous_sock.recv()
     assert rep == {"status": "configuration_refused", "reason": "Not in the mood."}
@@ -195,6 +200,7 @@ async def test_device_configure_and_get_refused(
 @pytest.mark.trio
 async def test_device_configure_timeout(anonymous_backend_sock, configure_device_token, mock_clock):
     anonymous_sock = anonymous_backend_sock
+    salt = b"\xb3\x00X\xec\x97\xbf\xd9r\n/\x1d\xf3\xf2\x11\xaaU"
 
     # Wannabe device start configuration
 
@@ -206,6 +212,7 @@ async def test_device_configure_timeout(anonymous_backend_sock, configure_device
             "configure_device_token": configure_device_token,
             "device_verify_key": to_jsonb64(b"<verifykey>"),
             "exchange_cipherkey": to_jsonb64(b"<cipherkey>"),
+            "salt": to_jsonb64(salt),
         }
     )
 

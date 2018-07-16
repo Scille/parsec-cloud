@@ -7,8 +7,8 @@ from parsec.signals import Namespace as SignalNamespace
 from parsec.networking import serve_client
 from parsec.core.base import BaseAsyncComponent, NotInitializedError
 from parsec.core.fs import FSManager
+from parsec.core.devices_manager import LocalDevicesManager
 from parsec.core.fuse_manager import FuseManager
-from parsec.core.devices_manager import DevicesManager
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.backend_cmds_sender import BackendCmdsSender
 from parsec.core.backend_events_manager import BackendEventsManager
@@ -30,10 +30,11 @@ class Core(BaseAsyncComponent):
         super().__init__()
         self.nursery = None
         self.signal_ns = signal_ns or SignalNamespace()
-        self.devices_manager = DevicesManager(os.path.join(config.base_settings_path, "devices"))
-
         self.config = config
         self.backend_addr = config.backend_addr
+        self.local_devices_manager = LocalDevicesManager(
+            os.path.join(config.base_settings_path, "devices")
+        )
 
         # Components dependencies tree:
         # app
@@ -44,17 +45,13 @@ class Core(BaseAsyncComponent):
         # ├─ fs
         # │  ├─ encryption_manager
         # │  └─ backend_cmds_sender
-        # ├─ fuse_manager
-        # └─ sharing
-        #    ├─ encryption_manager
-        #    └─ backend_cmds_sender
+        # └─ fuse_manager
 
         self.components_dep_order = (
             "backend_cmds_sender",
             "encryption_manager",
             "fs",
             "fuse_manager",
-            # "sharing",
             # Keep event manager last, so it will know what events the other
             # modules need before connecting to the backend
             "backend_events_manager",
@@ -97,9 +94,6 @@ class Core(BaseAsyncComponent):
                 auto_sync=self.config.auto_sync,
             )
             self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
-            # self.sharing = Sharing(
-            #     device, self.fs, self.backend_cmds_sender, self.backend_events_manager
-            # )
 
             # Then initialize them, order must respect dependencies here !
             try:

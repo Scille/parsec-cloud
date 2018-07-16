@@ -38,6 +38,7 @@ class DeviceConfigureSchema(BaseCmdSchema):
     # TODO: should be itself ciphered with a password-derived key
     # to mitigate man-in-the-middle attack
     exchange_cipherkey = fields.Base64Bytes(required=True)
+    salt = fields.Base64Bytes(required=True)
 
 
 class DeviceSchema(UnknownCheckedSchema):
@@ -139,7 +140,12 @@ class BaseUserComponent:
 
         config_try_id = _generate_token()
         await self.register_device_configuration_try(
-            config_try_id, user_id, device_name, msg["device_verify_key"], msg["exchange_cipherkey"]
+            config_try_id,
+            user_id,
+            msg["device_name"],
+            msg["device_verify_key"],
+            msg["exchange_cipherkey"],
+            msg["salt"],
         )
 
         claim_answered = trio.Event()
@@ -199,6 +205,7 @@ class BaseUserComponent:
             "configuration_status": config_try["status"],
             "device_verify_key": to_jsonb64(config_try["device_verify_key"]),
             "exchange_cipherkey": to_jsonb64(config_try["exchange_cipherkey"]),
+            "salt": to_jsonb64(config_try["salt"]),
         }
 
     async def api_device_accept_configuration_try(self, client_ctx, msg):

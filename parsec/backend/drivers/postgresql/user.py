@@ -251,7 +251,7 @@ class PGUserComponent(BaseUserComponent):
                     raise ParsecError("Insertion error.")
 
     async def register_device_configuration_try(
-        self, config_try_id, user_id, device_name, device_verify_key, exchange_cipherkey
+        self, config_try_id, user_id, device_name, device_verify_key, exchange_cipherkey, salt
     ):
         async with self.dbh.pool.acquire() as conn:
             # TODO: handle multiple configuration tries on a given device
@@ -259,8 +259,8 @@ class PGUserComponent(BaseUserComponent):
                 """
                 INSERT INTO device_configure_tries (
                     user_id, config_try_id, status, device_name, device_verify_key,
-                    exchange_cipherkey
-                ) VALUES ($1, $2, $3, $4, $5, $6)
+                    exchange_cipherkey, salt
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7)
                 """,
                 user_id,
                 config_try_id,
@@ -268,6 +268,7 @@ class PGUserComponent(BaseUserComponent):
                 device_name,
                 device_verify_key,
                 exchange_cipherkey,
+                salt,
             )
             if result != "INSERT 0 1":
                 raise ParsecError("Insertion error.")
@@ -278,7 +279,7 @@ class PGUserComponent(BaseUserComponent):
             config_try = await conn.fetchrow(
                 """
                 SELECT status, device_name, device_verify_key, exchange_cipherkey,
-                    ciphered_user_privkey, refused_reason
+                    cyphered_user_privkey, refused_reason, salt
                 FROM device_configure_tries WHERE user_id = $1 AND config_try_id = $2
                 """,
                 user_id,
@@ -294,6 +295,7 @@ class PGUserComponent(BaseUserComponent):
             "exchange_cipherkey": config_try[3],
             "ciphered_user_privkey": config_try[4],
             "refused_reason": config_try[5],
+            "salt": config_try[6],
         }
 
         return config_try

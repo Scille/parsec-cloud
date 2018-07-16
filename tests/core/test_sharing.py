@@ -1,7 +1,6 @@
 import pytest
 import trio
 
-
 from tests.common import connect_signal_as_event
 
 
@@ -53,7 +52,7 @@ async def test_share_backend_offline(core, alice_core_sock, bob):
 
     await alice_core_sock.send({"cmd": "share", "path": "/foo", "recipient": bob.user_id})
     rep = await alice_core_sock.recv()
-    assert rep == {"status": "backend_not_availabled", "reason": "Backend not available"}
+    assert rep == {"status": "backend_not_available", "reason": "Backend not available"}
 
 
 @pytest.mark.trio

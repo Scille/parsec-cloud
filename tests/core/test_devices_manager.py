@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch
 import json
 
-from parsec.core.devices_manager import DevicesManager, DeviceSavingError, DeviceLoadingError
+from parsec.core.devices_manager import LocalDevicesManager, DeviceSavingError, DeviceLoadingError
 from parsec.core.fs.data import new_access
 from parsec.utils import to_jsonb64
 
@@ -20,7 +20,7 @@ def fast_crypto():
 
 @pytest.fixture
 def alice_cleartext_device(tmpdir, alice):
-    dm = DevicesManager(tmpdir.strpath)
+    dm = LocalDevicesManager(tmpdir.strpath)
     dm.register_new_device(
         alice.id,
         alice.user_privkey.encode(),
@@ -32,7 +32,7 @@ def alice_cleartext_device(tmpdir, alice):
 
 @pytest.fixture
 def bob_cleartext_device(tmpdir, bob):
-    dm = DevicesManager(tmpdir.strpath)
+    dm = LocalDevicesManager(tmpdir.strpath)
     dm.register_new_device(
         bob.id, bob.user_privkey.encode(), bob.device_signkey.encode(), bob.user_manifest_access
     )
@@ -40,25 +40,25 @@ def bob_cleartext_device(tmpdir, bob):
 
 
 def test_non_existant_base_path_list_devices(tmpdir):
-    dm = DevicesManager(str(tmpdir.join("dummy")))
+    dm = LocalDevicesManager(str(tmpdir.join("dummy")))
     devices = dm.list_available_devices()
     assert not devices
 
 
 def test_list_no_devices(tmpdir):
-    dm = DevicesManager(tmpdir.strpath)
+    dm = LocalDevicesManager(tmpdir.strpath)
     devices = dm.list_available_devices()
     assert not devices
 
 
 def test_list_devices(tmpdir, alice_cleartext_device, bob_cleartext_device):
-    dm = DevicesManager(tmpdir.strpath)
+    dm = LocalDevicesManager(tmpdir.strpath)
     devices = dm.list_available_devices()
     assert set(devices) == {alice_cleartext_device, bob_cleartext_device}
 
 
 def test_load_cleartext_device(tmpdir, alice_cleartext_device, alice):
-    dm = DevicesManager(tmpdir.strpath)
+    dm = LocalDevicesManager(tmpdir.strpath)
     device = dm.load_device(alice_cleartext_device)
     assert device.id == alice_cleartext_device
     assert device.user_privkey == alice.user_privkey
@@ -73,12 +73,12 @@ def test_register_new_cleartext_device(tmpdir, alice):
     user_privkey = alice.user_privkey
     user_manifest_access = alice.user_manifest_access
 
-    dm1 = DevicesManager(tmpdir.strpath)
+    dm1 = LocalDevicesManager(tmpdir.strpath)
     dm1.register_new_device(
         device_id, user_privkey.encode(), device_signkey.encode(), user_manifest_access
     )
 
-    dm2 = DevicesManager(tmpdir.strpath)
+    dm2 = LocalDevicesManager(tmpdir.strpath)
     device = dm2.load_device(device_id)
 
     assert device.id == device_id
@@ -93,7 +93,7 @@ def test_register_already_exists_device(tmpdir, alice_cleartext_device, alice):
     user_privkey = alice.user_privkey
     user_manifest_access = new_access()
 
-    dm = DevicesManager(tmpdir.strpath)
+    dm = LocalDevicesManager(tmpdir.strpath)
     with pytest.raises(DeviceSavingError):
         dm.register_new_device(
             alice_cleartext_device,
@@ -111,7 +111,7 @@ def test_register_new_encrypted_device(tmpdir, fast_crypto, alice):
     user_privkey = alice.user_privkey
     user_manifest_access = new_access()
 
-    dm1 = DevicesManager(tmpdir.strpath)
+    dm1 = LocalDevicesManager(tmpdir.strpath)
     dm1.register_new_device(
         device_id,
         user_privkey.encode(),
@@ -120,7 +120,7 @@ def test_register_new_encrypted_device(tmpdir, fast_crypto, alice):
         password=password,
     )
 
-    dm2 = DevicesManager(tmpdir.strpath)
+    dm2 = LocalDevicesManager(tmpdir.strpath)
     device = dm2.load_device(device_id, password=password)
 
     assert device.id == device_id
@@ -129,6 +129,6 @@ def test_register_new_encrypted_device(tmpdir, fast_crypto, alice):
     assert device.user_manifest_access == user_manifest_access
     assert device.local_db.path == tmpdir.join(alice.id, "local_storage").strpath
 
-    dm2 = DevicesManager(tmpdir.strpath)
+    dm3 = LocalDevicesManager(tmpdir.strpath)
     with pytest.raises(DeviceLoadingError):
-        dm2.load_device(device_id, password="bad pwd")
+        dm3.load_device(device_id, password="bad pwd")

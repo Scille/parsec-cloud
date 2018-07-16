@@ -130,13 +130,14 @@ class MemoryUserComponent(BaseUserComponent):
         }
 
     async def register_device_configuration_try(
-        self, config_try_id, user_id, device_name, device_verify_key, exchange_cipherkey
+        self, config_try_id, user_id, device_name, device_verify_key, exchange_cipherkey, salt
     ):
         self._device_configuration_tries[(user_id, config_try_id)] = {
             "status": "waiting_answer",
             "device_name": device_name,
             "device_verify_key": device_verify_key,
             "exchange_cipherkey": exchange_cipherkey,
+            "salt": salt,
         }
         return config_try_id
 

@@ -1,5 +1,4 @@
 import trio
-import pickle
 
 from parsec.core.base import BaseAsyncComponent
 
