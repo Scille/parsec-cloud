@@ -365,7 +365,7 @@ class BackendApp:
         except trio.BrokenStreamError:
             # Client has closed connection
             pass
-        except Exception:
+        except Exception as exc:
             # If we are here, something unexpected happened...
             logger.error(traceback.format_exc())
             await sock.aclose()

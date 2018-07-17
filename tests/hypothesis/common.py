@@ -39,23 +39,6 @@ def initialize(**config):
     return dec
 
 
-def rule_once(*args, **kwargs):
-    def accept(f):
-        key = "__%s_hypothesis_initialized" % f.__name__
-
-        def bootstrap(obj):
-            if not getattr(obj, key, False):
-                setattr(obj, key, True)
-                return True
-
-            else:
-                return False
-
-        return precondition(bootstrap)(rule(*args, **kwargs)(f))
-
-    return accept
-
-
 class FileOracle:
     def __init__(self):
         self._buffer = bytearray()
@@ -116,11 +99,10 @@ class BaseFailureReproducer:
     _FAILURE_REPRODUCER_CODE_HEADER = """import pytest
 
 
-@pytest.mark.trio
-async def test_reproduce(alice_core_sock, alice2_core2_sock):
+def test_reproduce(alice_core_sock, alice2_core2_sock):
 """
 
-    def teardown(self):
+    async def teardown(self):
         super().teardown()
         if hasattr(self, "_failure_reproducer_code"):
             reproduce_code = self._failure_reproducer_template.format(

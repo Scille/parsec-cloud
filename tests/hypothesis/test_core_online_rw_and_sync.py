@@ -1,10 +1,10 @@
 import pytest
-from copy import deepcopy
 from hypothesis import strategies as st, note
+from hypothesis_trio.stateful import run_state_machine_as_test
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
-from tests.hypothesis.common import rule, failure_reproducer, reproduce_rule
+from tests.hypothesis.common import rule, initialize, failure_reproducer, reproduce_rule
 
 
 BLOCK_SIZE = 16
@@ -53,20 +53,8 @@ class FileOracle:
         pass
 
 
-@pytest.mark.slow
-@pytest.mark.trio
-async def test_core_online_rw_and_sync(
-    TrioDriverRuleBasedStateMachine,
-    server_factory,
-    backend_factory,
-    core_factory_cm,
-    core_sock_factory,
-    device_factory,
-):
-    class RestartCore(Exception):
-        def __init__(self, reset_local_storage=False):
-            self.reset_local_storage = reset_local_storage
-
+@pytest.fixture
+def CoreOnlineRwAndSync(BaseCoreWithBackendStateMachine):
     @failure_reproducer(
         """
 import pytest
@@ -77,110 +65,36 @@ from parsec.utils import to_jsonb64, from_jsonb64
 
 from tests.hypothesis.test_core_online_rw_and_sync import FileOracle, BLOCK_SIZE
 
-class RestartCore(Exception):
-    pass
-
-class ResetCore(Exception):
-    pass
-
 @pytest.mark.trio
-async def test_reproduce(running_backend, alice, core_factory_cm, core_sock_factory):
-    bootstrapped = False
+async def test_reproduce(running_backend, alice, core_factory, core_sock_factory):
     file_oracle = FileOracle(base_version=1)
-    to_run_rules = rule_selector()
-    done = False
-    need_boostrap_sync = True
 
-    while not done:
-        try:
-            async with core_factory_cm(devices=[alice], config={{"block_size": BLOCK_SIZE}}) as core:
-                await core.login(alice)
-                if not bootstrapped:
-                    await core.fs.file_create("/foo.txt")
-                    bootstrapped = True
-                if need_boostrap_sync:
-                    need_boostrap_sync = False
-                    await core.fs.sync("/")
+    async def restart_core(old_core=None, reset_local_db=False):
+        if old_core:
+            await old_core.teardown()
+        if reset_local_db:
+            alice.local_db._data.clear()
+            file_oracle.reset_core()
+        else:
+            file_oracle.restart_core()
+        core = await core_factory(config={{"block_size": BLOCK_SIZE}})
+        await core.login(alice)
+        sock = core_sock_factory(core)
+        return core, sock
 
-                sock = core_sock_factory(core, nursery=core.nursery)
-                while True:
-                    afunc = next(to_run_rules, None)
-                    if not afunc:
-                        done = True
-                        break
-                    await afunc(sock, file_oracle)
+    core, sock = await restart_core()
+    await core.fs.file_create("/foo.txt")
+    await core.fs.sync("/")
 
-        except RestartCore:
-            pass
-
-        except ResetCore:
-            alice.local_db._data.clear()  # TODO: improve this
-            need_boostrap_sync = True
-
-def rule_selector():
     {body}
 """
     )
-    class CoreOnlineRwAndSync(TrioDriverRuleBasedStateMachine):
-        count = 0
-
-        async def trio_runner(self, task_status):
-            self.sys_cmd = lambda x: self.communicator.send(("sys", x))
-            self.core_cmd = lambda x: self.communicator.send(("core", x))
+    class CoreOnlineRwAndSync(BaseCoreWithBackendStateMachine):
+        @initialize(core=BaseCoreWithBackendStateMachine.Cores)
+        async def init_oracle_and_fs(self, core):
+            await core.fs.file_create("/foo.txt")
+            await core.fs.sync("/")
             self.file_oracle = FileOracle(base_version=1)
-
-            device = device_factory()
-            backend = await backend_factory(devices=[device])
-            server = server_factory(backend.handle_client)
-
-            async def run_core(on_ready):
-                async with core_factory_cm(
-                    devices=[device], config={"backend_addr": server.addr, "block_size": BLOCK_SIZE}
-                ) as core:
-                    await core.login(device)
-                    sock = core_sock_factory(core, nursery=core.nursery)
-
-                    await on_ready(core)
-                    while True:
-                        target, msg = await self.communicator.trio_recv()
-                        if target == "core":
-                            await sock.send(msg)
-                            rep = await sock.recv()
-                            await self.communicator.trio_respond(rep)
-                        elif msg == "restart_core!":
-                            raise RestartCore()
-
-                        elif msg == "reset_core!":
-                            raise RestartCore(reset_local_storage=True)
-
-            async def bootstrap_core(core):
-                await core.fs.file_create("/foo.txt")
-                await core.fs.sync("/")
-
-                task_status.started()
-
-            async def reset_core_done(core):
-                # Core won't try to fetch the user manifest from backend when
-                # starting (given a modified version can be present on disk,
-                # or we could be offline).
-                # If we reset local storage however, we want to force the core
-                # to load the data from the backend.
-                await core.fs.sync("/")
-                await self.communicator.trio_respond(True)
-
-            async def restart_core_done(core):
-                await self.communicator.trio_respond(True)
-
-            on_ready = bootstrap_core
-            while True:
-                try:
-                    await run_core(on_ready)
-                except RestartCore as exc:
-                    if exc.reset_local_storage:
-                        on_ready = reset_core_done
-                        device.local_db._data.clear()  # TODO: improve this
-                    else:
-                        on_ready = restart_core_done
 
         @rule(
             size=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
@@ -188,17 +102,15 @@ def rule_selector():
         )
         @reproduce_rule(
             """
-async def afunc(sock, file_oracle):
-    await sock.send({{"cmd": "file_read", "path": "/foo.txt", "offset": {offset}, "size": {size}}})
-    rep = await sock.recv()
-    assert rep["status"] == "ok"
-    expected_content = file_oracle.read({size}, {offset})
-    assert from_jsonb64(rep["content"]) == expected_content
-yield afunc
+await sock.send({{"cmd": "file_read", "path": "/foo.txt", "offset": {offset}, "size": {size}}})
+rep = await sock.recv()
+assert rep["status"] == "ok"
+expected_content = file_oracle.read({size}, {offset})
+assert from_jsonb64(rep["content"]) == expected_content
 """
         )
-        def read(self, size, offset):
-            rep = self.core_cmd(
+        async def read(self, size, offset):
+            rep = await self.core_cmd(
                 {"cmd": "file_read", "path": "/foo.txt", "offset": offset, "size": size}
             )
             note(rep)
@@ -209,16 +121,14 @@ yield afunc
         @rule()
         @reproduce_rule(
             """
-async def afunc(sock, file_oracle):
-    await sock.send({{"cmd": "synchronize", "path": "/"}})
-    rep = await sock.recv()
-    assert rep["status"] == "ok"
-    file_oracle.sync()
-yield afunc
+await sock.send({{"cmd": "synchronize", "path": "/"}})
+rep = await sock.recv()
+assert rep["status"] == "ok"
+file_oracle.sync()
 """
         )
-        def sync(self):
-            rep = self.core_cmd({"cmd": "synchronize", "path": "/"})
+        async def sync(self):
+            rep = await self.core_cmd({"cmd": "synchronize", "path": "/"})
             note(rep)
             assert rep["status"] == "ok"
             self.file_oracle.sync()
@@ -229,18 +139,16 @@ yield afunc
         )
         @reproduce_rule(
             """
-async def afunc(sock, file_oracle):
-    b64content = to_jsonb64({content})
-    await sock.send({{"cmd": "file_write", "path": "/foo.txt", "offset": {offset}, "content": b64content}})
-    rep = await sock.recv()
-    assert rep["status"] == "ok"
-    file_oracle.write({offset}, {content})
-yield afunc
+b64content = to_jsonb64({content})
+await sock.send({{"cmd": "file_write", "path": "/foo.txt", "offset": {offset}, "content": b64content}})
+rep = await sock.recv()
+assert rep["status"] == "ok"
+file_oracle.write({offset}, {content})
 """
         )
-        def write(self, offset, content):
+        async def write(self, offset, content):
             b64content = to_jsonb64(content)
-            rep = self.core_cmd(
+            rep = await self.core_cmd(
                 {"cmd": "file_write", "path": "/foo.txt", "offset": offset, "content": b64content}
             )
             note(rep)
@@ -250,16 +158,16 @@ yield afunc
         @rule(length=st.integers(min_value=0, max_value=PLAYGROUND_SIZE))
         @reproduce_rule(
             """
-async def afunc(sock, file_oracle):
-    await sock.send({{"cmd": "file_truncate", "path": "/foo.txt", "length": {length}}})
-    rep = await sock.recv()
-    assert rep["status"] == "ok"
-    file_oracle.truncate({length})
-yield afunc
+await sock.send({{"cmd": "file_truncate", "path": "/foo.txt", "length": {length}}})
+rep = await sock.recv()
+assert rep["status"] == "ok"
+file_oracle.truncate({length})
 """
         )
-        def truncate(self, length):
-            rep = self.core_cmd({"cmd": "file_truncate", "path": "/foo.txt", "length": length})
+        async def truncate(self, length):
+            rep = await self.core_cmd(
+                {"cmd": "file_truncate", "path": "/foo.txt", "length": length}
+            )
             note(rep)
             assert rep["status"] == "ok"
             self.file_oracle.truncate(length)
@@ -267,18 +175,16 @@ yield afunc
         @rule()
         @reproduce_rule(
             """
-async def afunc(sock, file_oracle):
-    await sock.send({{"cmd": "stat", "path": "/foo.txt"}})
-    rep = await sock.recv()
-    assert rep["status"] == "ok"
-    assert rep["base_version"] == file_oracle.base_version
-    assert not rep["is_placeholder"]
-    assert rep["need_sync"] == file_oracle.need_sync
-yield afunc
+await sock.send({{"cmd": "stat", "path": "/foo.txt"}})
+rep = await sock.recv()
+assert rep["status"] == "ok"
+assert rep["base_version"] == file_oracle.base_version
+assert not rep["is_placeholder"]
+assert rep["need_sync"] == file_oracle.need_sync
 """
         )
-        def stat(self):
-            rep = self.core_cmd({"cmd": "stat", "path": "/foo.txt"})
+        async def stat(self):
+            rep = await self.core_cmd({"cmd": "stat", "path": "/foo.txt"})
             note(rep)
             assert rep["status"] == "ok"
             assert rep["base_version"] == self.file_oracle.base_version
@@ -286,31 +192,20 @@ yield afunc
             assert rep["need_sync"] == self.file_oracle.need_sync
 
         @rule()
-        @reproduce_rule(
-            """
-async def afunc(sock, file_oracle):
-    file_oracle.restart_core()
-    raise RestartCore()
-yield afunc
-"""
-        )
-        def restart_core(self):
-            rep = self.sys_cmd("restart_core!")
-            assert rep is True
+        @reproduce_rule("""core, sock = await restart_core(core)""")
+        async def restart(self):
+            await self.restart_core()
             self.file_oracle.restart_core()
 
         @rule()
-        @reproduce_rule(
-            """
-async def afunc(sock, file_oracle):
-    file_oracle.reset_core()
-    raise ResetCore()
-yield afunc
-"""
-        )
-        def reset_core(self):
-            rep = self.sys_cmd("reset_core!")
-            assert rep is True
+        @reproduce_rule("""core, sock = await restart_core(core, reset_local_db=True)""")
+        async def reset(self):
+            await self.restart_core(reset_local_db=True)
             self.file_oracle.reset_core()
 
-    await CoreOnlineRwAndSync.run_test()
+    return CoreOnlineRwAndSync
+
+
+@pytest.mark.slow
+def test_core_online_rw_and_sync(CoreOnlineRwAndSync, hypothesis_settings):
+    run_state_machine_as_test(CoreOnlineRwAndSync, settings=hypothesis_settings)

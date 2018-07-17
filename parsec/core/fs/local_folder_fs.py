@@ -206,6 +206,8 @@ class LocalFolderFS:
 
     def touch(self, path):
         path = normalize_path(path)
+        if path == "/":
+            raise FileExistsError(17, "File exists", path)
         parent_path, child_name = path.rsplit("/", 1)
         access, manifest = self._retrieve_entry(parent_path or "/")
         if not is_folder_manifest(manifest):
@@ -224,6 +226,8 @@ class LocalFolderFS:
 
     def mkdir(self, path, workspace=False):
         path = normalize_path(path)
+        if path == "/":
+            raise FileExistsError(17, "File exists", path)
         parent_path, child_name = path.rsplit("/", 1)
         parent_path = parent_path or "/"
         access, manifest = self._retrieve_entry(parent_path)
@@ -288,9 +292,11 @@ class LocalFolderFS:
         # TODO: To symplify synchro we currently move the entry into a brand
         # new access. However this is not recursive (i.e. the entry's
         # children will keep there original access)...
-
         src = normalize_path(src)
         dst = normalize_path(dst)
+
+        if src == "/" or dst == "/":
+            raise PermissionError(13, "Permission denied", src, dst)
 
         parent_src, child_src = src.rsplit("/", 1)
         parent_dst, child_dst = dst.rsplit("/", 1)

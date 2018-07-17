@@ -138,7 +138,6 @@ class BackendEventsManager(BaseAsyncComponent):
         closed_event = trio.Event()
         try:
             async with trio.open_nursery() as nursery:
-
                 # If backend is online, we want to wait before calling
                 # `task_status.started` until we are connected to the backend
                 # with events listener ready.
@@ -181,13 +180,15 @@ class BackendEventsManager(BaseAsyncComponent):
             except (BackendNotAvailable, trio.BrokenStreamError, trio.ClosedStreamError) as exc:
                 # In case of connection failure, wait a bit and restart
                 self._event_pump_lost()
-                logger.debug("Connection lost with backend ({}), restarting connection...", exc)
+                logger.debug(
+                    "Connection lost with backend ({}), restarting connection in 1s...", exc
+                )
                 # TODO: add backoff factor
                 await trio.sleep(1)
 
             except (SubscribeBackendEventError, ListenBackendEventError, json.JSONDecodeError):
                 self._event_pump_lost()
-                logger.exception("Invalid response sent by backend, restarting connection...")
+                logger.exception("Invalid response sent by backend, restarting connection in 1s...")
                 # TODO: remove the event that provoked the error ?
                 await trio.sleep(1)
 
@@ -197,12 +198,16 @@ class BackendEventsManager(BaseAsyncComponent):
                 # trouble...
                 # TODO: think about this kind of signal format
                 self._event_pump_lost()
+                logger.exception("Handshake error with backend, retrying in 1s...")
                 self.signal_ns.signal("panic").send(None, exc=exc)
+                await trio.sleep(1)
+
             except Exception as exc:
                 import pdb
 
                 pdb.set_trace()
                 print(exc)
+                raise exc
 
     async def _event_pump(self, *, task_status=trio.TASK_STATUS_IGNORED):
         with trio.open_cancel_scope() as cancel_scope:

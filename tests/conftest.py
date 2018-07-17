@@ -286,13 +286,13 @@ def default_devices(alice, alice2, bob):
 
 
 @pytest.fixture(params=["mocked", "postgresql"])
-async def backend_store(request, asyncio_loop):
+def backend_store(request, asyncio_loop):
     if request.param == "postgresql":
         if not pytest.config.getoption("--postgresql"):
             pytest.skip("`--postgresql` option not provided")
         url = get_postgresql_url()
         try:
-            await pg_driver.handler.init_db(url, True)
+            trio.run(pg_driver.handler.init_db, url, True)
         except asyncpg.exceptions.InvalidCatalogNameError as exc:
             raise RuntimeError(
                 "Is `parsec_test` a valid database in PostgreSQL ?\n"

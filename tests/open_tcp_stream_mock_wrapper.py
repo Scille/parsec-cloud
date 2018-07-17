@@ -5,10 +5,6 @@ import inspect
 import trio
 
 
-async def _broken_stream(*args, **kwargs):
-    raise trio.BrokenStreamError()
-
-
 class OpenTCPStreamMockWrapper:
     def __init__(self):
         self.socks = defaultdict(list)
@@ -49,9 +45,16 @@ class OpenTCPStreamMockWrapper:
             return
 
         for sock in self.socks[addr]:
-            # TODO: keep old hook ?
+
+            async def _broken_stream(*args, **kwargs):
+                raise trio.BrokenStreamError()
+
+            _broken_stream.old_send_all_hook = sock.send_stream.send_all_hook
+            _broken_stream.old_receive_some_hook = sock.receive_stream.receive_some_hook
+
             sock.send_stream.send_all_hook = _broken_stream
             sock.receive_stream.receive_some_hook = _broken_stream
+
         self._offlines.add(addr)
 
     def switch_online(self, addr):
@@ -59,9 +62,20 @@ class OpenTCPStreamMockWrapper:
             return
 
         for sock in self.socks[addr]:
-            sock.send_stream.send_all_hook = None
-            sock.receive_stream.receive_some_hook = None
+            sock.send_stream.send_all_hook = sock.send_stream.send_all_hook.old_send_all_hook
+            sock.receive_stream.receive_some_hook = (
+                sock.receive_stream.receive_some_hook.old_receive_some_hook
+            )
         self._offlines.remove(addr)
+
+    @contextmanager
+    def offline(self, addr):
+        self.switch_offline(addr)
+        try:
+            yield
+
+        finally:
+            self.switch_online(addr)
 
 
 @contextmanager

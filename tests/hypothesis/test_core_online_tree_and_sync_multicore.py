@@ -4,10 +4,11 @@ import pprint
 from string import ascii_lowercase
 from hypothesis import strategies as st, note
 from hypothesis.stateful import Bundle
+from hypothesis_trio.stateful import run_state_machine_as_test
 
 from parsec.utils import to_jsonb64
 
-from tests.hypothesis.common import rule, rule_once, failure_reproducer, reproduce_rule
+from tests.hypothesis.common import rule, initialize, failure_reproducer, reproduce_rule
 
 
 # The point is not to find breaking filenames here, so keep it simple
@@ -37,14 +38,8 @@ def compare_fs_dumps(entry_1, entry_2):
 
 
 @pytest.mark.slow
-@pytest.mark.trio
-async def test_online_core_tree_and_sync_multicore(
-    TrioDriverRuleBasedStateMachine,
-    server_factory,
-    backend_factory,
-    core_factory_cm,
-    core_sock_factory,
-    device_factory,
+def test_online_core_tree_and_sync_multicore(
+    BaseParsecStateMachine, device_factory, hypothesis_settings
 ):
     @failure_reproducer(
         """
@@ -56,51 +51,38 @@ from parsec.utils import to_jsonb64
 from tests.hypothesis.test_core_online_tree_and_sync_multicore import compare_fs_dumps
 
 
-@pytest.mark.trio
-async def test_reproduce(running_backend, alice, alice2, core_factory_cm, core_sock_factory):
+def test_reproduce(running_backend, alice, alice2, core_factory_cm, core_sock_factory):
     async with core_factory_cm(config={{"auto_sync": False}}) as core, \\
             core_factory_cm(config={{"auto_sync": False}}) as core2:
         await core.login(alice)
         await core2.login(alice2)
         socks = {{'core_1': core_sock_factory(core), 'core_2': core_sock_factory(core2)}}
+
         {body}
 """
     )
-    class MultiCoreTreeAndSync(TrioDriverRuleBasedStateMachine):
+    class MultiCoreTreeAndSync(BaseParsecStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")
 
-        async def trio_runner(self, task_status):
-            self.core_cmd = lambda x, y: self.communicator.send((x, y))
-
-            device1 = device_factory()
-            device2 = device_factory(user_id=device1.user_id)
-            backend = await backend_factory(devices=[device1, device2])
-            server = server_factory(backend.handle_client)
-
-            async with core_factory_cm(
-                devices=[device1], config={"backend_addr": server.addr, "auto_sync": False}
-            ) as self.core_1, core_factory_cm(
-                devices=[device2], config={"backend_addr": server.addr, "auto_sync": False}
-            ) as self.core_2:
-                await self.core_1.login(device1)
-                await self.core_2.login(device2)
-                sockets = {
-                    "core_1": core_sock_factory(self.core_1, nursery=self.core_1.nursery),
-                    "core_2": core_sock_factory(self.core_2, nursery=self.core_2.nursery),
-                }
-
-                task_status.started()
-
-                while True:
-                    core, msg = await self.communicator.trio_recv()
-                    await sockets[core].send(msg)
-                    rep = await sockets[core].recv()
-                    await self.communicator.trio_respond(rep)
-
-        @rule_once(target=Folders)
-        def get_root(self):
+        @initialize(target=Folders)
+        async def init(self):
+            self.device_1 = device_factory()
+            self.device_2 = device_factory(user_id=self.device_1.user_id)
+            self.backend_info = await self.start_backend(devices=[self.device_1, self.device_2])
+            self.core_1_info = await self.start_core(
+                self.device_1, backend_addr=self.backend_info.server.addr
+            )
+            self.core_2_info = await self.start_core(
+                self.device_2, backend_addr=self.backend_info.server.addr
+            )
+            self.core_1 = self.core_1_info.core
+            self.core_2 = self.core_2_info.core
+            self.cores = {"core_1": self.core_1_info, "core_2": self.core_2_info}
             return "/"
+
+        async def core_cmd(self, core, msg):
+            return await self.cores[core].core_cmd(msg)
 
         @rule(target=Files, core=st_core, parent=Folders, name=st_entry_name)
         @reproduce_rule(
@@ -111,9 +93,9 @@ rep = await socks[{core}].recv()
 assert rep["status"] in ("ok", "invalid_path")
 """
         )
-        def create_file(self, core, parent, name):
+        async def create_file(self, core, parent, name):
             path = os.path.join(parent, name)
-            rep = self.core_cmd(core, {"cmd": "file_create", "path": path})
+            rep = await self.core_cmd(core, {"cmd": "file_create", "path": path})
             note(rep)
             assert rep["status"] in ("ok", "invalid_path")
             return path
@@ -128,9 +110,9 @@ rep = await socks[{core}].recv()
 assert rep["status"] in ("ok", "invalid_path")
 """
         )
-        def update_file(self, core, path):
+        async def update_file(self, core, path):
             b64content = to_jsonb64(b"a")
-            rep = self.core_cmd(
+            rep = await self.core_cmd(
                 core, {"cmd": "file_write", "path": path, "offset": 0, "content": b64content}
             )
             note(rep)
@@ -145,9 +127,9 @@ rep = await socks[{core}].recv()
 assert rep["status"] in ("ok", "invalid_path")
 """
         )
-        def create_folder(self, core, parent, name):
+        async def create_folder(self, core, parent, name):
             path = os.path.join(parent, name)
-            rep = self.core_cmd(core, {"cmd": "folder_create", "path": path})
+            rep = await self.core_cmd(core, {"cmd": "folder_create", "path": path})
             note(rep)
             assert rep["status"] in ("ok", "invalid_path")
             return path
@@ -160,8 +142,8 @@ rep = await socks[{core}].recv()
 assert rep["status"] in ("ok", "invalid_path")
 """
         )
-        def delete(self, core, path):
-            rep = self.core_cmd(core, {"cmd": "delete", "path": path})
+        async def delete(self, core, path):
+            rep = await self.core_cmd(core, {"cmd": "delete", "path": path})
             note(rep)
             assert rep["status"] in ("ok", "invalid_path")
 
@@ -174,9 +156,9 @@ rep = await socks[{core}].recv()
 assert rep["status"] in ("ok", "invalid_path")
 """
         )
-        def move_file(self, core, src, dst_parent, dst_name):
+        async def move_file(self, core, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
-            rep = self.core_cmd(core, {"cmd": "move", "src": src, "dst": dst})
+            rep = await self.core_cmd(core, {"cmd": "move", "src": src, "dst": dst})
             note(rep)
             assert rep["status"] in ("ok", "invalid_path")
             return dst
@@ -190,9 +172,9 @@ rep = await socks[{core}].recv()
 assert rep["status"] in ("ok", "invalid_path")
 """
         )
-        def move_folder(self, core, src, dst_parent, dst_name):
+        async def move_folder(self, core, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
-            rep = self.core_cmd(core, {"cmd": "move", "src": src, "dst": dst})
+            rep = await self.core_cmd(core, {"cmd": "move", "src": src, "dst": dst})
             note(rep)
             assert rep["status"] in ("ok", "invalid_path")
             return dst
@@ -221,21 +203,21 @@ fs_dump_2 = core2.fs._local_folder_fs.dump()
 compare_fs_dumps(fs_dump_1, fs_dump_2)
 """
         )
-        def sync_all_the_files(self):
+        async def sync_all_the_files(self):
             print("~~~ SYNC 1 ~~~")
             # Send two sync in a row given file conflict results are not synced
             # once created
-            rep1 = self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})
-            rep1 = self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})
+            rep1 = await self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})
+            rep1 = await self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})
             assert rep1["status"] == "ok"
             note("sync 1: %r" % rep1)
             print("~~~ SYNC 2 ~~~")
-            rep2 = self.core_cmd("core_2", {"cmd": "synchronize", "path": "/"})
-            rep2 = self.core_cmd("core_2", {"cmd": "synchronize", "path": "/"})
+            rep2 = await self.core_cmd("core_2", {"cmd": "synchronize", "path": "/"})
+            rep2 = await self.core_cmd("core_2", {"cmd": "synchronize", "path": "/"})
             assert rep2["status"] == "ok"
             note("sync 2: %r" % rep2)
             print("~~~ SYNC 1 ~~~")
-            rep3 = self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})
+            rep3 = await self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})
             assert rep3["status"] == "ok"
             note("sync 1: %r" % rep3)
 
@@ -245,4 +227,4 @@ compare_fs_dumps(fs_dump_1, fs_dump_2)
             note("core_2 fs dump: " + pprint.pformat(fs_dump_2))
             compare_fs_dumps(fs_dump_1, fs_dump_2)
 
-    await MultiCoreTreeAndSync.run_test()
+    run_state_machine_as_test(MultiCoreTreeAndSync, settings=hypothesis_settings)

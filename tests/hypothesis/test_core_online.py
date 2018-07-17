@@ -1,45 +1,33 @@
 import pytest
 from hypothesis import note
-from hypothesis.stateful import rule
+from hypothesis_trio.stateful import run_state_machine_as_test
+
+from tests.hypothesis.common import rule
 
 
 @pytest.mark.slow
-@pytest.mark.trio
-async def test_online(
-    TrioDriverRuleBasedStateMachine,
-    server_factory,
-    backend_factory,
-    core_factory,
-    core_sock_factory,
-    device_factory,
-):
-    class CoreOnline(TrioDriverRuleBasedStateMachine):
-        async def trio_runner(self, task_status):
-            self.core_cmd = self.communicator.send
-            self.device = device_factory()
-            self.backend = await backend_factory(devices=[self.device])
-            server = server_factory(self.backend.handle_client)
-            self.core = await core_factory(
-                devices=[self.device], config={"backend_addr": server.addr}
-            )
-            try:
-                await self.core.login(self.device)
-                sock = core_sock_factory(self.core)
-                task_status.started()
-
-                while True:
-                    msg = await self.communicator.trio_recv()
-                    await sock.send(msg)
-                    rep = await sock.recv()
-                    await self.communicator.trio_respond(rep)
-
-            finally:
-                await self.core.teardown()
+def test_online(tcp_stream_spy, BaseCoreWithBackendStateMachine, hypothesis_settings):
+    class CoreOnline(BaseCoreWithBackendStateMachine):
+        backend_online = True
 
         @rule()
-        def get_core_state(self):
-            rep = self.core_cmd({"cmd": "get_core_state"})
+        async def get_core_state(self):
+            print("get state...")
+            rep = await self.core_cmd({"cmd": "get_core_state"})
             note(rep)
-            assert rep == {"status": "ok", "login": self.device.id, "backend_online": True}
+            print(rep)
+            assert rep == {
+                "status": "ok",
+                "login": self.device.id,
+                "backend_online": self.backend_online,
+            }
 
-    await CoreOnline.run_test()
+        @rule()
+        async def switch_backend_availability(self):
+            if self.backend_online:
+                tcp_stream_spy.switch_offline(self.backend_info.server.addr)
+            else:
+                tcp_stream_spy.switch_online(self.backend_info.server.addr)
+            self.backend_online = not self.backend_online
+
+    run_state_machine_as_test(CoreOnline, settings=hypothesis_settings)

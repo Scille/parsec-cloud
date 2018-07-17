@@ -77,6 +77,7 @@ test_requirements = [
     "Sphinx",
     "flake8",
     "hypothesis",
+    "hypothesis-trio>=0.2.1",
     "bumpversion",
     "black==18.6b1",  # Pin black to avoid flaky style check
 ]
