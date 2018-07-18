@@ -1,15 +1,13 @@
 import time
 import traceback
 import trio
-import os.path
 import click
-import shutil
-import tempfile
 import logbook
 from raven.handlers.logbook import SentryHandler
 from urllib.parse import urlparse
 
-from parsec.core import Core, CoreConfig, Device
+from parsec.core import Core, CoreConfig
+from parsec.core.devices_manager import DeviceSavingError
 
 
 logger = logbook.Logger("parsec.core.app")
@@ -24,6 +22,15 @@ JOHN_DOE_DEVICE_SIGNING_KEY = (
     b"w\xac\xd8\xb4\x88B:i\xd6G\xb9\xd6\xc5\x0f\xf6\x99"
     b"\xccH\xfa\xaeY\x00:\xdeP\x84\t@\xfe\xf8\x8a\xa5"
 )
+JOHN_DOE_USER_MANIFEST_ACCESS = {
+    "id": "230165e6acd441f4a0b4f2c8c0dc91f0",
+    "rts": "c7121459551b40e78e35f49115097594",
+    "wts": "3c7d3cb553854ffea524092487674a0b",
+    "key": (
+        b"\x8d\xa3k\xb8\xd8'a6?\xf8\xc7\xf2p\xba\xc8=\xb9\r\x9a"
+        b"\x0e\xea\xb1\xb8\x93\xae\xc2\xc2\x8c\x16\x8e\xa4\xc3"
+    ),
+}
 DEFAULT_CORE_SOCKET = "tcp://127.0.0.1:6776"
 
 
@@ -119,7 +126,7 @@ def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
                     parsed = urlparse(socket)
                     await trio.serve_tcp(core.handle_client, parsed.port, host=parsed.hostname)
                 else:
-                    raise SystemExit("Error: Invalid --socket value `%s`" % socket)
+                    raise SystemExit(f"Error: Invalid --socket value `{socket}`")
 
             finally:
                 await core.teardown()
@@ -138,22 +145,23 @@ def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
 
     core = Core(config)
 
-    print("Starting Parsec Core on %s (with backend on %s)" % (socket, config.backend_addr))
+    print(f"Starting Parsec Core on {socket} (with backend on {config.backend_addr})")
 
     try:
         if i_am_john:
-            john_conf_dir = tempfile.mkdtemp(prefix="parsec-jdoe-conf-")
             try:
-                user = Device(
-                    id=JOHN_DOE_DEVICE_ID,
-                    user_privkey=JOHN_DOE_PRIVATE_KEY,
-                    device_signkey=JOHN_DOE_DEVICE_SIGNING_KEY,
-                    local_storage_db_path=os.path.join(john_conf_dir, "db.sqlite"),
+                core.local_devices_manager.register_new_device(
+                    JOHN_DOE_DEVICE_ID,
+                    JOHN_DOE_PRIVATE_KEY,
+                    JOHN_DOE_DEVICE_SIGNING_KEY,
+                    JOHN_DOE_USER_MANIFEST_ACCESS,
                 )
-                print("Hello Mr. Doe, your conf dir is `%s`" % john_conf_dir)
-                trio.run(_login_and_run, user)
-            finally:
-                shutil.rmtree(john_conf_dir)
+            except DeviceSavingError:
+                pass
+            device = core.local_devices_manager.load_device(JOHN_DOE_DEVICE_ID)
+
+            print(f"Hello Mr. Doe, your conf dir is `{device.local_db.path}`")
+            trio.run(_login_and_run, device)
         else:
             trio.run(_login_and_run)
 
