@@ -269,4 +269,4 @@ class LocalFileFS:
         self.local_folder_fs.set_manifest(cursor.access, manifest)
 
         hf.pending_writes.clear()
-        self.signal_ns.signal("fs.entry.modified").send("local", id=cursor.access["id"])
+        self.signal_ns.signal("fs.entry.updated").send("local", id=cursor.access["id"])

@@ -221,8 +221,8 @@ class LocalFolderFS:
         mark_manifest_modified(manifest)
         self.set_manifest(access, manifest)
         self.set_manifest(child_access, child_manifest)
-        self.signal_ns.signal("fs.entry.modified").send("local", id=access["id"])
-        self.signal_ns.signal("fs.entry.created").send("local", id=child_access["id"])
+        self.signal_ns.signal("fs.entry.updated").send("local", id=access["id"])
+        self.signal_ns.signal("fs.entry.updated").send("local", id=child_access["id"])
 
     def mkdir(self, path, workspace=False):
         path = normalize_path(path)
@@ -249,8 +249,8 @@ class LocalFolderFS:
         mark_manifest_modified(manifest)
         self.set_manifest(access, manifest)
         self.set_manifest(child_access, child_manifest)
-        self.signal_ns.signal("fs.entry.modified").send("local", id=access["id"])
-        self.signal_ns.signal("fs.entry.created").send("local", id=child_access["id"])
+        self.signal_ns.signal("fs.entry.updated").send("local", id=access["id"])
+        self.signal_ns.signal("fs.entry.updated").send("local", id=child_access["id"])
 
     def _delete(self, path, expect=None):
         path = normalize_path(path)
@@ -277,7 +277,7 @@ class LocalFolderFS:
 
         mark_manifest_modified(parent_manifest)
         self.set_manifest(parent_access, parent_manifest)
-        self.signal_ns.signal("fs.entry.modified").send("local", id=parent_access["id"])
+        self.signal_ns.signal("fs.entry.updated").send("local", id=parent_access["id"])
 
     def delete(self, path):
         self._delete(path)
@@ -341,7 +341,7 @@ class LocalFolderFS:
             mark_manifest_modified(parent_manifest)
 
             self.set_manifest(parent_access, parent_manifest)
-            self.signal_ns.signal("fs.entry.modified").send("local", id=parent_access["id"])
+            self.signal_ns.signal("fs.entry.updated").send("local", id=parent_access["id"])
 
         else:
             parent_src_access, parent_src_manifest = self._retrieve_entry(parent_src)
@@ -386,5 +386,5 @@ class LocalFolderFS:
             self.set_manifest(parent_src_access, parent_src_manifest)
             self.set_manifest(parent_dst_access, parent_dst_manifest)
 
-            self.signal_ns.signal("fs.entry.modified").send("local", id=parent_src_access["id"])
-            self.signal_ns.signal("fs.entry.modified").send("local", id=parent_dst_access["id"])
+            self.signal_ns.signal("fs.entry.updated").send("local", id=parent_src_access["id"])
+            self.signal_ns.signal("fs.entry.updated").send("local", id=parent_dst_access["id"])
