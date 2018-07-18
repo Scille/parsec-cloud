@@ -119,33 +119,8 @@ def test_merge_buffers_with_limits(buffers, limits):
     assert result[start:end] == expected[start:end]
 
 
-def _contiguous_buffers_strategy_builder(buffers):
-    def shift(offset, buffers):
-        lower_buffer = min(buffers, key=lambda b: b.start)
-        if lower_buffer.start > offset:
-            shift_amount = lower_buffer.start - offset
-            for b in buffers:
-                b.start -= shift_amount
-                b.end -= shift_amount
-        return lower_buffer.end
-
-    offset = 0
-    need_shift = buffers
-    while need_shift:
-        offset = shift(offset, need_shift)
-        need_shift = [b for b in need_shift if b.start > offset]
-        if not need_shift:
-            break
-    return buffers
-
-
-contiguous_buffers_strategy = st.builds(
-    _contiguous_buffers_strategy_builder, st.lists(elements=buffer_strategy)
-)
-
-
 @given(
-    buffers=contiguous_buffers_strategy,
+    buffers=st.lists(elements=buffer_strategy),
     limits=limits_strategy,
     alignment=buffer_oversize_strategy.filter(lambda x: x != 0),
 )

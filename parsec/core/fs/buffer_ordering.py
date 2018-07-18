@@ -30,6 +30,13 @@ class Buffer(BaseOrderedSpace):
 
 
 @attr.s(slots=True)
+class NullFillerBuffer(BaseOrderedSpace):
+    @property
+    def data(self):
+        return bytearray(self.size)
+
+
+@attr.s(slots=True)
 class ContiguousSpace(BaseOrderedSpace):
     buffers = attr.ib()
 
@@ -279,19 +286,19 @@ def merge_buffers_with_limits(buffers, start, end):
 def merge_buffers_with_limits_and_alignment(buffers, start, end, block_size):
     """
     Flatten multiple (possibly overlapping) buffers between the given bounds
-    and split the result in mutiple :class:`ContiguousSpace` of block_size size.
+    and split the result in multiples :class:`ContiguousSpace` of block_size size.
 
     Args:
-        buffers: list of :class:`Buffer` to merge. Those buffers must form
-            a contiguous space.
+        buffers: list of :class:`Buffer` to merge. If those buffers doesn't
+                 form a contiguous space, the returned :class:`ContiguousSpace`
+                 will contains :class:`NullFillerBuffer` buffers as padding.
         start: starting offset, everything before will be ignored.
                Must be aligned on block_size.
         end: ending offset, everything after will be ignored.
         block_size: size of the alignment
 
     Raises:
-        ValueError: If a hole is detected between the buffers or if start is
-                    not a multiple of block_size
+        ValueError: If start is not a multiple of block_size
 
     Returns:
         An :class:`UncontiguousSpace`.
@@ -305,9 +312,19 @@ def merge_buffers_with_limits_and_alignment(buffers, start, end, block_size):
     assert aligned.end == end
 
     if aligned.spaces:
-        if len(aligned.spaces) > 1:
-            raise ValueError("buffers cannot be merged as a single contiguous space")
-        cs = aligned.spaces[0]
+        if len(aligned.spaces) > 1 or aligned.spaces[0].start != start:
+            curr_pos = start
+            forced_contiguous_buffers = []
+            for cs in aligned.spaces:
+                if curr_pos != cs.start:
+                    forced_contiguous_buffers.append(
+                        InBufferSpace(curr_pos, cs.start, NullFillerBuffer(curr_pos, cs.start))
+                    )
+                forced_contiguous_buffers += cs.buffers
+                curr_pos = cs.end
+            cs = ContiguousSpace(start, end, forced_contiguous_buffers)
+        else:
+            cs = aligned.spaces[0]
         splitted_spaces = _split_aligned_contiguous_space(cs, block_size)
         assert splitted_spaces[0].start == start
         assert splitted_spaces[-1].end <= end

@@ -7,7 +7,7 @@ from parsec.core.fs.utils import is_file_manifest, new_block_access
 from parsec.core.fs.buffer_ordering import (
     quick_filter_block_accesses,
     Buffer,
-    BaseOrderedSpace,
+    NullFillerBuffer,
     merge_buffers_with_limits,
 )
 from parsec.core.fs.local_folder_fs import mark_manifest_modified
@@ -44,13 +44,6 @@ class DirtyBlockBuffer(Buffer):
 class BlockBuffer(Buffer):
     access = attr.ib()
     data = attr.ib(default=None)
-
-
-@attr.s(slots=True)
-class NullFillerBuffer(BaseOrderedSpace):
-    @property
-    def data(self):
-        return bytearray(self.size)
 
 
 class FSBlocksLocalMiss(Exception):
