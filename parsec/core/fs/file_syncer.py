@@ -4,7 +4,7 @@ from itertools import count
 
 from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignment
 from parsec.core.fs.local_folder_fs import mark_manifest_modified
-from parsec.core.fs.local_file_fs import DirtyBlockBuffer, BlockBuffer
+from parsec.core.fs.local_file_fs import DirtyBlockBuffer, BlockBuffer, NullFillerBuffer
 from parsec.core.fs.sync_base import SyncConcurrencyError
 from parsec.core.fs.utils import (
     is_file_manifest,
@@ -71,9 +71,11 @@ class FileSyncerMixin:
         for bs in cs.buffers:
             if isinstance(bs.buffer, BlockBuffer):
                 buff = await self._backend_block_get(bs.buffer.access)
-            else:
-                assert isinstance(bs.buffer, DirtyBlockBuffer)
+            elif isinstance(bs.buffer, DirtyBlockBuffer):
                 buff = self.local_file_fs.get_block(bs.buffer.access)
+            else:
+                assert isinstance(bs.buffer, NullFillerBuffer)
+                buff = bs.buffer.data
             assert buff
             data[bs.start - cs.start : bs.end - cs.start] = buff[
                 bs.buffer_slice_start : bs.buffer_slice_end
