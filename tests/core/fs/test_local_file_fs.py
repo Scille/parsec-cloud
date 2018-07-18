@@ -6,7 +6,7 @@ from hypothesis import strategies as st
 
 from parsec.core.fs.local_file_fs import FSInvalidFileDescriptor, FSBlocksLocalMiss
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
-from parsec.core.fs.data import new_block_access, new_access, new_local_file_manifest
+from parsec.core.fs.utils import new_block_access, new_access, new_local_file_manifest
 
 from tests.common import freeze_time
 

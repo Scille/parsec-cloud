@@ -6,7 +6,7 @@ from itertools import count
 from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.core.schemas import ManifestAccessSchema
 from parsec.core.base import BaseAsyncComponent
-from parsec.core.fs.data import is_placeholder_manifest, is_workspace_manifest
+from parsec.core.fs.utils import is_placeholder_manifest, is_workspace_manifest
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.encryption_manager import EncryptionManagerError
 from parsec.utils import to_jsonb64

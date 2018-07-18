@@ -9,7 +9,7 @@ from nacl.secret import SecretBox
 import nacl.utils
 
 from parsec.schema import UnknownCheckedSchema, fields, validate
-from parsec.core.fs.data import new_access, new_local_user_manifest, local_to_remote_manifest
+from parsec.core.fs.utils import new_access, new_local_user_manifest, local_to_remote_manifest
 from parsec.core.backend_connection import backend_send_anonymous_cmd, backend_connection_factory
 from parsec.core.schemas import dumps_manifest
 from parsec.core.local_db import LocalDB

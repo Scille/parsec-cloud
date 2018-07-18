@@ -1,5 +1,5 @@
 from parsec.schema import BaseCmdSchema, fields, validate
-from parsec.core.fs.data import new_access
+from parsec.core.fs.utils import new_access
 from parsec.core.app import Core, ClientContext
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core import devices_manager

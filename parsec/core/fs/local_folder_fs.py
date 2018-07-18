@@ -2,7 +2,7 @@ import pendulum
 
 from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.schemas import dumps_manifest, loads_manifest
-from parsec.core.fs.data import (
+from parsec.core.fs.utils import (
     is_file_manifest,
     is_folder_manifest,
     new_access,

@@ -2,7 +2,7 @@ from hashlib import sha256
 
 from parsec.utils import from_jsonb64
 from parsec.core.schemas import loads_manifest, dumps_manifest
-from parsec.core.fs.data import remote_to_local_manifest
+from parsec.core.fs.utils import remote_to_local_manifest
 from parsec.core.encryption_manager import decrypt_with_symkey
 
 

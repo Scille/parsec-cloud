@@ -3,7 +3,7 @@ from unittest.mock import patch
 import json
 
 from parsec.core.devices_manager import LocalDevicesManager, DeviceSavingError, DeviceLoadingError
-from parsec.core.fs.data import new_access
+from parsec.core.fs.utils import new_access
 from parsec.utils import to_jsonb64
 
 

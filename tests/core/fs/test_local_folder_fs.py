@@ -14,7 +14,7 @@ from hypothesis.stateful import (
 from hypothesis import strategies as st
 
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
-from parsec.core.fs.data import new_access, new_local_file_manifest
+from parsec.core.fs.utils import new_access, new_local_file_manifest
 
 from tests.common import freeze_time
 

@@ -3,7 +3,7 @@ from typing import NewType
 from math import inf
 
 from parsec.core.local_db import LocalDBMissingEntry
-from parsec.core.fs.data import is_file_manifest, new_block_access
+from parsec.core.fs.utils import is_file_manifest, new_block_access
 from parsec.core.fs.buffer_ordering import (
     quick_filter_block_accesses,
     Buffer,

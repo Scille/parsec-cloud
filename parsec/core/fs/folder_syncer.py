@@ -1,6 +1,6 @@
 import os
 
-from parsec.core.fs.data import (
+from parsec.core.fs.utils import (
     is_folder_manifest,
     is_placeholder_manifest,
     local_to_remote_manifest,

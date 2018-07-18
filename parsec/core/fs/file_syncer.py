@@ -6,7 +6,7 @@ from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignme
 from parsec.core.fs.local_folder_fs import mark_manifest_modified
 from parsec.core.fs.local_file_fs import DirtyBlockBuffer, BlockBuffer
 from parsec.core.fs.sync_base import SyncConcurrencyError
-from parsec.core.fs.data import (
+from parsec.core.fs.utils import (
     is_file_manifest,
     new_access,
     new_block_access,
@@ -152,7 +152,6 @@ class FileSyncerMixin:
 
         to_sync_manifest["blocks"] = blocks
         to_sync_manifest["size"] = sync_map.size  # TODO: useful ?
-        assert to_sync_manifest["size"] == sum(b["size"] for b in to_sync_manifest["blocks"])
 
         # Upload the file manifest as new vlob version
         try:

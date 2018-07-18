@@ -17,7 +17,7 @@ import nacl
 from parsec.signals import Namespace as SignalNamespace
 from parsec.core import Core, CoreConfig
 from parsec.core.schemas import loads_manifest, dumps_manifest
-from parsec.core.fs.data import new_access, new_local_user_manifest, local_to_remote_manifest
+from parsec.core.fs.utils import new_access, new_local_user_manifest, local_to_remote_manifest
 from parsec.core.encryption_manager import encrypt_with_secret_key
 from parsec.core.devices_manager import Device
 from parsec.backend import BackendApp, BackendConfig

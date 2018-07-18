@@ -1,6 +1,6 @@
 import trio
 
-from parsec.core.fs.data import is_folder_manifest
+from parsec.core.fs.utils import is_folder_manifest
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
 from parsec.core.fs.sync_base import SyncConcurrencyError
 from parsec.core.fs.folder_syncer import FolderSyncerMixin
