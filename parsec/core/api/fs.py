@@ -139,7 +139,11 @@ async def folder_create(req: dict, client_ctx: ClientContext, core: Core) -> dic
 
     req = PathOnlySchema().load(req)
     try:
-        await core.fs.folder_create(req["path"])
+        # TODO: big hack until the front support workspace creation
+        if req["path"].count("/") == 1:
+            await core.fs.workspace_create(req["path"])
+        else:
+            await core.fs.folder_create(req["path"])
     except OSError as exc:
         return {"status": "invalid_path", "reason": str(exc)}
     return {"status": "ok"}
