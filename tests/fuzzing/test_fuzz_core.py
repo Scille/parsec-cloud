@@ -1,6 +1,7 @@
 import pytest
 import trio
 import attr
+from time import monotonic
 from collections import defaultdict
 from random import randrange, choice
 from string import ascii_lowercase
@@ -19,6 +20,7 @@ def generate_name():
 @attr.s
 class FSState:
     stats = defaultdict(lambda: defaultdict(lambda: 0))
+    logs = attr.ib(factory=list)
     files = attr.ib(factory=list)
     folders = attr.ib(factory=lambda: ["/"])
 
@@ -60,8 +62,15 @@ class FSState:
 
         return recursive_build_tree("/")
 
-    def add_stat(self, fuzzer_id, type):
+    def add_stat(self, fuzzer_id, type, log):
         self.stats[fuzzer_id][type] += 1
+        self.logs.append((monotonic(), fuzzer_id, type, log))
+
+    def format_logs(self):
+        logs = []
+        for ts, fuzzer_id, type, log in self.logs:
+            logs.append(f"{ts}[{fuzzer_id}]:{type}:{log}")
+        return "\n".join(logs)
 
     def get_folder(self):
         return self.folders[randrange(0, len(self.folders))].replace("//", "/")
@@ -111,7 +120,7 @@ async def fuzzer(id, core, fs_state):
         try:
             await _fuzzer_cmd(id, core, fs_state)
         except SkipCommand:
-            fs_state.add_stat(id, "skipped command")
+            fs_state.add_stat(id, "skipped command", "...")
 
 
 async def _fuzzer_cmd(id, core, fs_state):
@@ -119,29 +128,32 @@ async def _fuzzer_cmd(id, core, fs_state):
     await trio.sleep(x * 0.01)
 
     if x < 10:
+        path = fs_state.get_path()
         try:
-            await core.fs.stat(fs_state.get_path())
-            fs_state.add_stat(id, "stat_ok")
-        except OSError:
-            fs_state.add_stat(id, "stat_bad")
+            stat = await core.fs.stat(path)
+            fs_state.add_stat(id, "stat_ok", f"path={path}, returned stats={stat!r}")
+        except OSError as exc:
+            fs_state.add_stat(id, "stat_bad", f"path={path}, raised {exc!r}")
 
     elif x < 20:
         path = fs_state.get_new_path()
         try:
             await core.fs.file_create(path)
             fs_state.files.append(path)
-            fs_state.add_stat(id, "file_create_ok")
-        except OSError:
-            fs_state.add_stat(id, "file_create_bad")
+            fs_state.add_stat(id, "file_create_ok", f"path={path}")
+        except OSError as exc:
+            fs_state.add_stat(id, "file_create_bad", f"path={path}, raised {exc!r}")
 
     elif x < 30:
         path = fs_state.get_file()
         size = randrange(0, 2000)
         try:
-            await core.fs.file_read(path, size=size)
-            fs_state.add_stat(id, "file_read_ok")
-        except OSError:
-            fs_state.add_stat(id, "file_read_bad")
+            ret = await core.fs.file_read(path, size=size)
+            fs_state.add_stat(
+                id, "file_read_ok", f"path={path}, size={size}, returned {len(ret)} bytes"
+            )
+        except OSError as exc:
+            fs_state.add_stat(id, "file_read_bad", f"path={path}, size={size}, raised {exc!r}")
 
     elif x < 40:
         path = fs_state.get_file()
@@ -149,27 +161,35 @@ async def _fuzzer_cmd(id, core, fs_state):
         offset = randrange(0, 100)
         try:
             await core.fs.file_write(path, buffer, offset=offset)
-            fs_state.add_stat(id, "file_write_ok")
-        except OSError:
-            fs_state.add_stat(id, "file_write_bad")
+            fs_state.add_stat(
+                id, "file_write_ok", f"path={path}, buffer size={len(buffer)}, offset={offset}"
+            )
+        except OSError as exc:
+            fs_state.add_stat(
+                id,
+                "file_write_bad",
+                f"path={path}, buffer size={len(buffer)}, offset={offset}, raised {exc!r}",
+            )
 
     elif x < 50:
         path = fs_state.get_file()
         length = randrange(0, 100)
         try:
             await core.fs.file_truncate(path, length)
-            fs_state.add_stat(id, "file_truncate_ok")
+            fs_state.add_stat(id, "file_truncate_ok", f"path={path}, length={length}")
         except OSError as exc:
-            fs_state.add_stat(id, "file_truncate_bad")
+            fs_state.add_stat(
+                id, "file_truncate_bad", f"path={path}, length={length}, raised {exc!r}"
+            )
 
     elif x < 60:
         path = fs_state.get_new_path()
         try:
             await core.fs.folder_create(path)
             fs_state.folders.append(path)
-            fs_state.add_stat(id, "folder_create_ok")
-        except OSError:
-            fs_state.add_stat(id, "folder_create_bad")
+            fs_state.add_stat(id, "folder_create_ok", f"path={path}")
+        except OSError as exc:
+            fs_state.add_stat(id, "folder_create_bad", f"path={path}, raised {exc!r}")
 
     elif x < 70:
         old_path = fs_state.get_path()
@@ -180,58 +200,63 @@ async def _fuzzer_cmd(id, core, fs_state):
         try:
             await core.fs.move(old_path, new_path)
             fs_state.replace_path(old_path, new_path)
-            fs_state.add_stat(id, "move_ok")
+            fs_state.add_stat(id, "move_ok", f"src={old_path}, dst={new_path}")
         except OSError as exc:
-            fs_state.add_stat(id, "move_bad")
+            fs_state.add_stat(id, "move_bad", f"src={old_path}, dst={new_path}, raised {exc!r}")
 
     elif x < 80:
         path = fs_state.get_path()
         try:
             await core.fs.delete(path)
             fs_state.remove_path(path)
-            fs_state.add_stat(id, "delete_ok")
-        except OSError:
-            fs_state.add_stat(id, "delete_bad")
+            fs_state.add_stat(id, "delete_ok", f"path={path}")
+        except OSError as exc:
+            fs_state.add_stat(id, "delete_bad", f"path={path}, raised {exc!r}")
 
     elif x < 90:
         path = fs_state.get_path()
         try:
             await core.fs.sync(path)
-            fs_state.add_stat(id, "sync_ok")
-        except OSError:
-            fs_state.add_stat(id, "sync_bad")
+            fs_state.add_stat(id, "sync_ok", f"path={path}")
+        except OSError as exc:
+            fs_state.add_stat(id, "sync_bad", f"path={path}, raised {exc!r}")
 
     else:
         path = fs_state.get_path()
         try:
             await core.fs.share(path, "bob")
-            fs_state.add_stat(id, "share_ok")
-        except (OSError, SharingError):
-            fs_state.add_stat(id, "share_bad")
+            fs_state.add_stat(id, "share_ok", f"path={path}")
+        except (OSError, SharingError) as exc:
+            fs_state.add_stat(id, "share_bad", f"path={path}, raised {exc!r}")
 
 
 @pytest.mark.trio
 async def test_fuzz_core(request, running_backend, core, alice, bob):
-    await core.login(alice)
-    async with trio.open_nursery() as nursery:
-        fs_state = FSState()
-        for i in range(FUZZ_PARALLELISM):
-            nursery.start_soon(fuzzer, i, core, fs_state)
-        await trio.sleep(FUZZ_TIME)
-        nursery.cancel_scope.cancel()
+    try:
+        await core.login(alice)
+        async with trio.open_nursery() as nursery:
+            fs_state = FSState()
+            for i in range(FUZZ_PARALLELISM):
+                nursery.start_soon(fuzzer, i, core, fs_state)
+            await trio.sleep(FUZZ_TIME)
+            nursery.cancel_scope.cancel()
+    except:
+        print(fs_state.format_logs())
+        raise
+    finally:
 
-    def prettify(tree, indent=0):
-        for key, value in tree.items():
-            if isinstance(value, dict):
-                print("  " * indent + key + " <Folder>")
-                prettify(value, indent + 1)
-            else:
-                print("  " * indent + key + " <File>")
+        def prettify(tree, indent=0):
+            for key, value in tree.items():
+                if isinstance(value, dict):
+                    print("  " * indent + key + " <Folder>")
+                    prettify(value, indent + 1)
+                else:
+                    print("  " * indent + key + " <File>")
 
-    print("Final fs tree generated:")
-    print("/")
-
-    prettify(fs_state.get_tree(), 1)
-    print("Stats:")
-    for k, v in fs_state.get_cooked_stats():
-        print(" - %s: %s%%" % (k, v))
+        print("Final fs tree generated:")
+        print("/")
+        prettify(fs_state.get_tree(), 1)
+        print()
+        print("Stats:")
+        for k, v in fs_state.get_cooked_stats():
+            print(" - %s: %s%%" % (k, v))
