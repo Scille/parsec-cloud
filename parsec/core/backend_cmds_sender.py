@@ -31,7 +31,9 @@ class BackendCmdsSender(BaseAsyncComponent):
         if self._sock:
             await self._sock.aclose()
         try:
-            self._sock = await backend_connection_factory(self.backend_addr, self.device)
+            self._sock = await backend_connection_factory(
+                self.backend_addr, self.device.id, self.device.device_signkey
+            )
         except HandshakeBadIdentity as exc:
             # TODO: think about the handling of this kind of exception...
             raise BackendNotAvailable() from exc

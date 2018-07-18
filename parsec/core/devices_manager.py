@@ -9,7 +9,9 @@ from nacl.secret import SecretBox
 import nacl.utils
 
 from parsec.schema import UnknownCheckedSchema, fields, validate
-from parsec.core.backend_connection import backend_send_anonymous_cmd
+from parsec.core.fs.data import new_access, new_local_user_manifest, local_to_remote_manifest
+from parsec.core.backend_connection import backend_send_anonymous_cmd, backend_connection_factory
+from parsec.core.schemas import dumps_manifest
 from parsec.core.local_db import LocalDB
 from parsec.utils import to_jsonb64, from_jsonb64
 
@@ -428,6 +430,9 @@ async def invite_user(backend_cmds_sender, user_id):
 
 
 async def claim_user(backend_addr, user_id, device_name, invitation_token):
+    # TODO: fix recursive import
+    from parsec.core.encryption_manager import encrypt_with_secret_key
+
     user_privkey = PrivateKey.generate()
     device_signkey = SigningKey.generate()
     rep = await backend_send_anonymous_cmd(
@@ -446,4 +451,33 @@ async def claim_user(backend_addr, user_id, device_name, invitation_token):
         if rep.get("status") == "out_of_date_error":
             raise DeviceConfigureOutOfDate("Claim code is too old.")
         raise DeviceConfigureBackendError()
-    return user_privkey, device_signkey
+
+    # Upload the very first version of user manifest
+    user_manifest_access = new_access()
+    device_id = f"{user_id}@{device_name}"
+    local_user_manifest = new_local_user_manifest(device_id)
+    remote_user_manifest = local_to_remote_manifest(local_user_manifest)
+    remote_user_manifest["version"] = 1
+    ciphered = encrypt_with_secret_key(
+        device_id, device_signkey, user_manifest_access["key"], dumps_manifest(remote_user_manifest)
+    )
+
+    auth_sock = await backend_connection_factory(backend_addr, device_id, device_signkey)
+    try:
+        await auth_sock.send(
+            {
+                "cmd": "vlob_create",
+                "id": user_manifest_access["id"],
+                "rts": user_manifest_access["rts"],
+                "wts": user_manifest_access["wts"],
+                "blob": to_jsonb64(ciphered),
+            }
+        )
+        rep = await auth_sock.recv()
+    finally:
+        await auth_sock.aclose()
+
+    # TODO: deserialization
+    assert rep["status"] == "ok"
+
+    return user_privkey, device_signkey, user_manifest_access

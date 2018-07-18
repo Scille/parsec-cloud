@@ -13,7 +13,7 @@ from parsec.networking import CookedSocket
 
 @pytest.mark.trio
 async def test_base(running_backend, alice):
-    conn = await backend_connection_factory(running_backend.addr, alice)
+    conn = await backend_connection_factory(running_backend.addr, alice.id, alice.device_signkey)
     await conn.send({"cmd": "ping", "ping": "hello"})
     rep = await conn.recv()
     assert rep == {"status": "ok", "pong": "hello"}
@@ -22,13 +22,13 @@ async def test_base(running_backend, alice):
 @pytest.mark.trio
 async def test_backend_offline(backend_addr, alice):
     with pytest.raises(BackendNotAvailable):
-        await backend_connection_factory(backend_addr, alice)
+        await backend_connection_factory(backend_addr, alice.id, alice.device_signkey)
 
 
 @pytest.mark.trio
 async def test_backend_bad_handshake(running_backend, mallory):
     with pytest.raises(HandshakeError):
-        await backend_connection_factory(running_backend.addr, mallory)
+        await backend_connection_factory(running_backend.addr, mallory.id, mallory.device_signkey)
 
 
 @pytest.mark.trio
@@ -48,7 +48,7 @@ async def test_backend_disconnect_during_handshake(nursery, tcp_stream_spy, alic
 
     with tcp_stream_spy.install_hook(backend_addr, connection_factory):
         with pytest.raises(BackendNotAvailable):
-            await backend_connection_factory(backend_addr, alice)
+            await backend_connection_factory(backend_addr, alice.id, alice.device_signkey)
 
 
 @pytest.mark.trio

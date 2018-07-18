@@ -211,7 +211,9 @@ class BackendEventsManager(BaseAsyncComponent):
 
     async def _event_pump(self, *, task_status=trio.TASK_STATUS_IGNORED):
         with trio.open_cancel_scope() as cancel_scope:
-            sock = await backend_connection_factory(self.backend_addr, self.device)
+            sock = await backend_connection_factory(
+                self.backend_addr, self.device.id, self.device.device_signkey
+            )
 
             # Copy `self._subscribed_events` to avoid concurrent modifications
             subscribed_events = self._subscribed_events.copy()

@@ -17,13 +17,15 @@ class BackendNotAvailable(BackendError):
     pass
 
 
-async def backend_connection_factory(addr: str, device=None) -> CookedSocket:
+async def backend_connection_factory(addr: str, auth_id=None, auth_signkey=None) -> CookedSocket:
     """
     Connect and authenticate to the given backend.
 
     Args:
         addr: Address of the backend.
-        device: Device to authenticate as.
+        auth_id: Device ID to authenticate as. If left to None, anonymous
+                 authentifaction will be performed.
+        auth_signkey: Device signkey to use for authentication
 
     Raises:
         BackendNotAvailable: if connection with backend failed.
@@ -32,12 +34,15 @@ async def backend_connection_factory(addr: str, device=None) -> CookedSocket:
     Returns:
         A cooked socket ready to communicate with the backend.
     """
+    if auth_id and not auth_signkey:
+        raise ValueError("Signing key is mandatory for non anonymous authentication")
+
     parsed_addr = urlparse(addr)
     logger.debug(
         "Connecting to backend {}:{} as {}",
         parsed_addr.hostname,
         parsed_addr.port,
-        device or "<anonymous>",
+        auth_id or "<anonymous>",
     )
 
     try:
@@ -49,10 +54,10 @@ async def backend_connection_factory(addr: str, device=None) -> CookedSocket:
 
     try:
         sock = CookedSocket(sockstream)
-        if not device:
+        if not auth_id:
             ch = AnonymousClientHandshake()
         else:
-            ch = ClientHandshake(device.id, device.device_signkey)
+            ch = ClientHandshake(auth_id, auth_signkey)
         challenge_req = await sock.recv()
         answer_req = ch.process_challenge_req(challenge_req)
         await sock.send(answer_req)

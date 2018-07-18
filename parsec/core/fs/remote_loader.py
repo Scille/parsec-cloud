@@ -15,11 +15,11 @@ class RemoteLoader:
     async def load_block(self, access):
         rep = await self.backend_cmds_sender.send({"cmd": "blockstore_get", "id": access["id"]})
         # TODO: validate answer
-        assert rep["status"] == "ok"
+        assert rep["status"] == "ok", rep
         ciphered = from_jsonb64(rep["block"])
         block = decrypt_with_symkey(access["key"], ciphered)
         # TODO: better exceptions
-        assert sha256(block).hexdigest() == access["digest"]
+        assert sha256(block).hexdigest() == access["digest"], access
 
         self.local_db.set(access, block)
 
@@ -28,7 +28,7 @@ class RemoteLoader:
             {"cmd": "vlob_read", "id": access["id"], "rts": access["rts"]}
         )
         # TODO: validate answer
-        assert rep["status"] == "ok"
+        assert rep["status"] == "ok", rep
         ciphered = from_jsonb64(rep["blob"])
         raw_remote_manifest = await self.encryption_manager.decrypt_with_secret_key(
             access["key"], ciphered

@@ -66,7 +66,7 @@ async def user_claim(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     msg = cmd_USER_CLAIM_Schema().load(req)
     user_id, device_name = msg["id"].split("@")
     try:
-        user_privkey, device_signkey = await claim_user(
+        user_privkey, device_signkey, user_manifest_access = await claim_user(
             core.backend_addr, user_id, device_name, msg["invitation_token"]
         )
     except BackendNotAvailable:
@@ -75,9 +75,6 @@ async def user_claim(req: dict, client_ctx: ClientContext, core: Core) -> dict:
         return {"status": "out_of_date_error", "reason": "Claim code is too old."}
     except DeviceConfigureBackendError as exc:
         return {"stauts": "backend_error", "reason": str(exc)}
-
-    # TODO: should we upload user manifest in backend here ?
-    user_manifest_access = new_access()
 
     try:
         core.local_devices_manager.register_new_device(

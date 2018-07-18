@@ -9,57 +9,6 @@ def _generate_secret_key():
     return nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
 
 
-def new_user_manifest(author):
-    manifest = new_workspace_manifest(author)
-    manifest["last_processed_message"] = 0
-    manifest["type"] = "user_manifest"
-    return manifest
-
-
-def new_workspace_manifest(author):
-    assert "@" in author
-    now = pendulum.now()
-
-    return {
-        "type": "workspace_manifest",
-        "author": author,
-        "beacon_id": uuid4().hex,
-        "created": now,
-        "updated": now,
-        "version": 0,
-        "children": {},
-    }
-
-
-def new_folder_manifest(author):
-    assert "@" in author
-    now = pendulum.now()
-
-    return {
-        "type": "folder_manifest",
-        "author": author,
-        "created": now,
-        "updated": now,
-        "version": 0,
-        "children": {},
-    }
-
-
-def new_file_manifest(author):
-    assert "@" in author
-    now = pendulum.now()
-
-    return {
-        "type": "file_manifest",
-        "author": author,
-        "created": now,
-        "updated": now,
-        "version": 0,
-        "size": 0,
-        "blocks": [],
-    }
-
-
 def new_access():
     id = uuid4().hex
     return {"id": id, "rts": uuid4().hex, "wts": uuid4().hex, "key": _generate_secret_key()}

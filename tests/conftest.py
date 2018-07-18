@@ -330,7 +330,10 @@ def backend_factory(nursery, signal_ns_factory, backend_store, default_devices):
                     local_user_manifest = loads_manifest(device.local_db.get(access))
                     remote_user_manifest = local_to_remote_manifest(local_user_manifest)
                     ciphered = encrypt_with_secret_key(
-                        device, access["key"], dumps_manifest(remote_user_manifest)
+                        device.id,
+                        device.device_signkey,
+                        access["key"],
+                        dumps_manifest(remote_user_manifest),
                     )
 
                     await backend.vlob.create(access["id"], access["rts"], access["wts"], ciphered)
