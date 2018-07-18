@@ -1,8 +1,12 @@
 import trio
 from trio.hazmat import current_clock
+import logbook
 
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.backend_connection import BackendNotAvailable
+
+
+logger = logbook.Logger("parsec.core.fs.sync_monitor")
 
 
 MIN_WAIT = 1
@@ -84,7 +88,6 @@ class SyncMonitor(BaseAsyncComponent):
                 last_updated = timestamp()
             except KeyError:
                 first_updated = last_updated = timestamp()
-            print("UDPATED", self, id)
             updated_entries[id] = (first_updated, last_updated)
             new_event.set()
 
@@ -105,8 +108,8 @@ class SyncMonitor(BaseAsyncComponent):
                     nursery.start_soon(_wait)
 
     async def _listen_sync_step(self, updated_entries):
+        logger.debug("sync step on entries: {!r}", updated_entries)
         now = timestamp()
-        print("WAKE UP MR. FREEMAN !", updated_entries.keys())
 
         for id, (first_updated, last_updated) in updated_entries.items():
             if now - first_updated > MAX_WAIT:
