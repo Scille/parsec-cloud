@@ -114,7 +114,7 @@ def remote_to_local_manifest(manifest):
 
 def local_to_remote_manifest(manifest):
     remote_manifest = manifest.copy()
-    remote_manifest["version"] = manifest["base_version"]
+    remote_manifest["version"] = remote_manifest.pop("base_version")
     del remote_manifest["need_sync"]
     del remote_manifest["is_placeholder"]
     remote_manifest["type"] = manifest["type"][len("local_") :]

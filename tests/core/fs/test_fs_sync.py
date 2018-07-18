@@ -85,6 +85,28 @@ async def test_sync_then_clean_start(autojump_clock, alice, alice2, fs_factory, 
 
 
 @pytest.mark.trio
+async def test_sync_growth_by_truncate_file(
+    autojump_clock, alice, alice2, fs_factory, signal_ns_factory
+):
+    fs = await fs_factory(alice)
+
+    async with wait_for_entries_synced(fs.signal_ns, ["/", "/foo.txt"]):
+
+        with freeze_time("2000-01-02"):
+            await fs.file_create("/foo.txt")
+
+        with freeze_time("2000-01-03"):
+            await fs.file_truncate("/foo.txt", length=24)
+
+        await fs.sync("/foo.txt")
+
+    stat = await fs.stat("/foo.txt")
+    assert stat["size"] == 24
+    data = await fs.file_read("/foo.txt")
+    assert data == b"\x00" * 24
+
+
+@pytest.mark.trio
 async def test_fast_forward_on_offline_during_sync(
     autojump_clock, signal_ns_factory, fs_factory, alice, alice2
 ):
