@@ -228,6 +228,10 @@ class BackendEventsManager(BaseAsyncComponent):
                 if rep.get("status") != "ok":
                     raise SubscribeBackendEventError(f"Cannot subscribe to event {args}: {rep}")
 
+            # Given the backend won't notify us for messages that arrived while
+            # we were offline, we must actively check this ourself.
+            self.signal_ns.signal("backend.message.polling_needed").send(None)
+
             task_status.started(cancel_scope)
             while True:
                 await sock.send({"cmd": "event_listen"})

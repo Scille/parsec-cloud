@@ -131,9 +131,14 @@ class FSManager(FS, BaseAsyncComponent):
     def __init__(self, device, backend_cmds_sender, encryption_manager, signal_ns, auto_sync=True):
         super().__init__(device, backend_cmds_sender, encryption_manager, signal_ns)
         self._beacon_monitor = BeaconMonitor(device, self._local_folder_fs, signal_ns)
-        self._sync_monitor = SyncMonitor(self._local_folder_fs, self._syncer, signal_ns)
+        self._sync_monitor = SyncMonitor(self._syncer, signal_ns)
         self._sharing_monitor = SharingMonitor(
-            device, backend_cmds_sender, encryption_manager, self._local_folder_fs, signal_ns
+            device,
+            backend_cmds_sender,
+            encryption_manager,
+            self._remote_loader,
+            self._local_folder_fs,
+            signal_ns,
         )
         self.auto_sync = auto_sync
 

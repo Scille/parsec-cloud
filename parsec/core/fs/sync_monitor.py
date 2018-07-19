@@ -19,14 +19,13 @@ def timestamp():
 
 
 class SyncMonitor(BaseAsyncComponent):
-    def __init__(self, local_manifest_fs, syncer, signal_ns):
+    def __init__(self, syncer, signal_ns):
         super().__init__()
-        self._local_manifest_fs = local_manifest_fs
-        self._syncer = syncer
+        self.syncer = syncer
+        self.signal_ns = signal_ns
         self._task_info = None
         self._updated_entries = {}
         self._new_event = trio.Event()
-        self.signal_ns = signal_ns
         self._not_syncing_event = trio.Event()
         self._not_syncing_event.set()
 
@@ -68,7 +67,7 @@ class SyncMonitor(BaseAsyncComponent):
                         with trio.open_cancel_scope() as event_listener_scope:
                             self._not_syncing_event.clear()
                             try:
-                                await self._syncer.full_sync()
+                                await self.syncer.full_sync()
                             finally:
                                 self._not_syncing_event.set()
                             await self._listen_sync_loop()
@@ -115,7 +114,7 @@ class SyncMonitor(BaseAsyncComponent):
             if now - first_updated > MAX_WAIT:
                 self._not_syncing_event.clear()
                 try:
-                    await self._syncer.sync_by_id(id)
+                    await self.syncer.sync_by_id(id)
                 finally:
                     self._not_syncing_event.set()
                 break
@@ -125,7 +124,7 @@ class SyncMonitor(BaseAsyncComponent):
                 if now - last_updated > MIN_WAIT:
                     self._not_syncing_event.clear()
                     try:
-                        await self._syncer.sync_by_id(id)
+                        await self.syncer.sync_by_id(id)
                     finally:
                         self._not_syncing_event.set()
                     break
