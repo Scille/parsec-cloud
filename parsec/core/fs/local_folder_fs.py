@@ -1,5 +1,4 @@
 import pendulum
-from copy import deepcopy
 
 from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.schemas import dumps_manifest, loads_manifest
@@ -11,6 +10,24 @@ from parsec.core.fs.utils import (
     new_local_folder_manifest,
     new_local_file_manifest,
 )
+
+
+def copy_manifest(manifest):
+    """
+    Basically an optimized version of deepcopy
+    """
+
+    def _recursive_copy(old):
+        return {
+            k: [_recursive_copy(e) for e in v]
+            if isinstance(v, (tuple, list))
+            else _recursive_copy(v)
+            if isinstance(v, dict)
+            else v
+            for k, v in old.items()
+        }
+
+    return _recursive_copy(manifest)
 
 
 def mark_manifest_modified(manifest):
@@ -86,7 +103,7 @@ class LocalFolderFS:
 
     def get_manifest(self, access):
         try:
-            return deepcopy(self._manifests_cache[access["id"]])
+            return copy_manifest(self._manifests_cache[access["id"]])
         except KeyError:
             pass
         try:
@@ -94,18 +111,18 @@ class LocalFolderFS:
         except LocalDBMissingEntry as exc:
             raise FSManifestLocalMiss(access) from exc
         manifest = loads_manifest(raw)
-        self._manifests_cache[access["id"]] = deepcopy(manifest)
+        self._manifests_cache[access["id"]] = copy_manifest(manifest)
         return manifest
 
     def set_manifest(self, access, manifest):
         raw = dumps_manifest(manifest)
         self._local_db.set(access, raw)
-        self._manifests_cache[access["id"]] = deepcopy(manifest)
+        self._manifests_cache[access["id"]] = copy_manifest(manifest)
 
     def update_manifest(self, access, manifest):
         mark_manifest_modified(manifest)
         self.set_manifest(access, manifest)
-        self._manifests_cache[access["id"]] = deepcopy(manifest)
+        self._manifests_cache[access["id"]] = copy_manifest(manifest)
 
     def mark_outdated_manifest(self, access):
         self._local_db.clear(access)
@@ -134,7 +151,7 @@ class LocalFolderFS:
         def _recursive_search(access, path):
             manifest = self._get_manifest_read_only(access)
             if access["id"] == entry_id:
-                return path, access, deepcopy(manifest)
+                return path, access, copy_manifest(manifest)
 
             if is_folder_manifest(manifest):
                 for child_name, child_access in manifest["children"].items():
@@ -148,6 +165,10 @@ class LocalFolderFS:
         return found
 
     def _retrieve_entry(self, path, collector=None):
+        access, read_only_manifest = self._retrieve_entry_read_only(path, collector)
+        return access, copy_manifest(read_only_manifest)
+
+    def _retrieve_entry_read_only(self, path, collector=None):
         assert "//" not in path, path
         assert path.startswith("/"), path
 
@@ -157,7 +178,7 @@ class LocalFolderFS:
             if not hops:
                 if collector:
                     collector(curr_access, curr_manifest)
-                return curr_access, deepcopy(curr_manifest)
+                return curr_access, curr_manifest
 
             if not is_folder_manifest(curr_manifest):
                 raise NotADirectoryError(20, "Not a directory", curr_path)
@@ -184,7 +205,7 @@ class LocalFolderFS:
         for hop in path.split("/")[1:]:
             curr_parent_path = curr_path
             curr_path += hop if curr_path.endswith("/") else ("/" + hop)
-            _, curr_manifest = self._retrieve_entry(curr_path)
+            _, curr_manifest = self._retrieve_entry_read_only(curr_path)
             if curr_manifest["is_placeholder"]:
                 sync_path = curr_parent_path
                 break
@@ -200,12 +221,12 @@ class LocalFolderFS:
 
     def get_access(self, path):
         path = normalize_path(path)
-        access, _ = self._retrieve_entry(path)
+        access, _ = self._retrieve_entry_read_only(path)
         return access
 
     def stat(self, path):
         path = normalize_path(path)
-        access, manifest = self._retrieve_entry(path)
+        access, manifest = self._retrieve_entry_read_only(path)
         if is_file_manifest(manifest):
             return {
                 "type": "file",
