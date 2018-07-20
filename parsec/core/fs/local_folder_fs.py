@@ -76,7 +76,7 @@ class LocalFolderFS:
         def _recursive_dump(access):
             dump_data = {"access": access}
             try:
-                manifest = self._get_manifest_read_only(access)
+                manifest = self.get_manifest(access)
             except FSManifestLocalMiss:
                 return dump_data
             dump_data.update(manifest)
