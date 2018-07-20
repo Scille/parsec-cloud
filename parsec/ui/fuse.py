@@ -414,3 +414,5 @@ def start_fuse(socket_address: str, mountpoint: str, debug: bool = False, nothre
 
 # TODO: shutdown watcher should be able to send here a command to the
 # core to signify it has been successfully closed
+if __name__ == "__main__":
+    cli()

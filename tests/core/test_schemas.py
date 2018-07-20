@@ -17,7 +17,7 @@ class TestBlockAccessSchema:
     }
 
     def test_load_and_dump(self):
-        loaded, errors = BlockAccessSchema().load(self.ORIGINAL)
+        loaded, errors = BlockAccessSchema.load(self.ORIGINAL)
         assert not errors
         assert loaded == {
             "id": "4f55b4d5b08544e2a784daf73754c7e2",
@@ -26,7 +26,7 @@ class TestBlockAccessSchema:
             "size": 4096,
             "digest": "63b0a598a7f3a679d6bff87e6692ae7248bc88b3d0c23444e25d5b8567039953",
         }
-        dumped, errors = BlockAccessSchema().dump(loaded)
+        dumped, errors = BlockAccessSchema.dump(loaded)
         assert not errors
         assert dumped == self.ORIGINAL
 
@@ -59,7 +59,7 @@ class TestBlockAccessSchema:
     def test_bad_load(self, bad_patch):
         bad_data = {**self.ORIGINAL, **bad_patch}
         bad_data = {k: v for k, v in bad_data.items() if v is not REMOVE_FIELD}
-        data, errors = BlockAccessSchema().load(bad_data)
+        data, errors = BlockAccessSchema.load(bad_data)
         assert errors
 
 
@@ -92,7 +92,7 @@ class TestFileManifestSchema:
 
     @pytest.mark.xfail
     def test_load_and_dump(self):
-        loaded, errors = FileManifestSchema().load(self.ORIGINAL)
+        loaded, errors = FileManifestSchema.load(self.ORIGINAL)
         assert not errors
         assert loaded == {
             "format": 1,
@@ -119,7 +119,7 @@ class TestFileManifestSchema:
                 },
             ],
         }
-        dumped, errors = FileManifestSchema().dump(loaded)
+        dumped, errors = FileManifestSchema.dump(loaded)
         assert not errors
         assert dumped == self.ORIGINAL
 
@@ -151,7 +151,7 @@ class TestFileManifestSchema:
     def test_bad_load(self, bad_patch):
         bad_data = {**self.ORIGINAL, **bad_patch}
         bad_data = {k: v for k, v in bad_data.items() if v is not REMOVE_FIELD}
-        data, errors = FileManifestSchema().load(bad_data)
+        data, errors = FileManifestSchema.load(bad_data)
         assert errors
 
 
@@ -180,7 +180,7 @@ class TestFolderManifestSchema:
     }
 
     def test_load_and_dump(self):
-        loaded, errors = FolderManifestSchema().load(self.ORIGINAL)
+        loaded, errors = FolderManifestSchema.load(self.ORIGINAL)
         assert not errors
         assert loaded == {
             "format": 1,
@@ -204,7 +204,7 @@ class TestFolderManifestSchema:
                 },
             },
         }
-        dumped, errors = FolderManifestSchema().dump(loaded)
+        dumped, errors = FolderManifestSchema.dump(loaded)
         assert not errors
         assert dumped == self.ORIGINAL
 
@@ -233,7 +233,7 @@ class TestFolderManifestSchema:
     def test_bad_load(self, bad_patch):
         bad_data = {**self.ORIGINAL, **bad_patch}
         bad_data = {k: v for k, v in bad_data.items() if v is not REMOVE_FIELD}
-        data, errors = FolderManifestSchema().load(bad_data)
+        data, errors = FolderManifestSchema.load(bad_data)
         assert errors
 
 
@@ -289,7 +289,7 @@ class TestLocalFileManifestSchema:
 
     @pytest.mark.xfail
     def test_load_and_dump(self):
-        loaded, errors = LocalFileManifestSchema().load(self.ORIGINAL)
+        loaded, errors = LocalFileManifestSchema.load(self.ORIGINAL)
         assert not errors
         assert loaded == {
             "format": 1,
@@ -334,7 +334,7 @@ class TestLocalFileManifestSchema:
                 },
             ],
         }
-        dumped, errors = LocalFileManifestSchema().dump(loaded)
+        dumped, errors = LocalFileManifestSchema.dump(loaded)
         assert not errors
         assert dumped == self.ORIGINAL
 
@@ -372,7 +372,7 @@ class TestLocalFileManifestSchema:
     def test_bad_load(self, bad_patch):
         bad_data = {**self.ORIGINAL, **bad_patch}
         bad_data = {k: v for k, v in bad_data.items() if v is not REMOVE_FIELD}
-        data, errors = LocalFileManifestSchema().load(bad_data)
+        data, errors = LocalFileManifestSchema.load(bad_data)
         assert errors
 
 
@@ -403,7 +403,7 @@ class TestLocalFolderManifestSchema:
     }
 
     def test_load_and_dump(self):
-        loaded, errors = LocalFolderManifestSchema().load(self.ORIGINAL)
+        loaded, errors = LocalFolderManifestSchema.load(self.ORIGINAL)
         assert not errors
         assert loaded == {
             "format": 1,
@@ -429,7 +429,7 @@ class TestLocalFolderManifestSchema:
                 },
             },
         }
-        dumped, errors = LocalFolderManifestSchema().dump(loaded)
+        dumped, errors = LocalFolderManifestSchema.dump(loaded)
         assert not errors
         assert dumped == self.ORIGINAL
 
@@ -461,7 +461,7 @@ class TestLocalFolderManifestSchema:
     def test_bad_load(self, bad_patch):
         bad_data = {**self.ORIGINAL, **bad_patch}
         bad_data = {k: v for k, v in bad_data.items() if v is not REMOVE_FIELD}
-        data, errors = LocalFolderManifestSchema().load(bad_data)
+        data, errors = LocalFolderManifestSchema.load(bad_data)
         assert errors
 
 

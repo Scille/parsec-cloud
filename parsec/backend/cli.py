@@ -174,3 +174,7 @@ def _backend(
         trio_asyncio.run(_run_and_register_johndoe)
     except KeyboardInterrupt:
         print("bye ;-)")
+
+
+if __name__ == "__main__":
+    backend_cmd()

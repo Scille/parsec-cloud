@@ -46,49 +46,67 @@ except ImportError:
 logger = logbook.Logger("parsec.backend.app")
 
 
-class cmd_LOGIN_Schema(BaseCmdSchema):
-    id = fields.String(required=True)
-    password = fields.String(missing=None)
-
-
-class cmd_PING_Schema(BaseCmdSchema):
+class _cmd_PING_Schema(BaseCmdSchema):
     ping = fields.String(required=True)
 
 
-class cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema(BaseCmdSchema):
+cmd_PING_Schema = _cmd_PING_Schema()
+
+
+class _cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema(BaseCmdSchema):
     event = fields.CheckedConstant("beacon.updated")
     beacon_id = fields.String(missing=None)
 
 
-class cmd_EVENT_SUBSCRIBE_MessageReceivedSchema(BaseCmdSchema):
+cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema = _cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema()
+
+
+class _cmd_EVENT_SUBSCRIBE_MessageReceivedSchema(BaseCmdSchema):
     event = fields.CheckedConstant("message.received")
 
 
-class cmd_EVENT_SUBSCRIBE_DeviceTryclaimSubmittedSchema(BaseCmdSchema):
+cmd_EVENT_SUBSCRIBE_MessageReceivedSchema = _cmd_EVENT_SUBSCRIBE_MessageReceivedSchema()
+
+
+class _cmd_EVENT_SUBSCRIBE_DeviceTryclaimSubmittedSchema(BaseCmdSchema):
     event = fields.CheckedConstant("device.try_claim_submitted")
 
 
-class cmd_EVENT_SUBSCRIBE_PingedSchema(BaseCmdSchema):
+cmd_EVENT_SUBSCRIBE_DeviceTryclaimSubmittedSchema = (
+    _cmd_EVENT_SUBSCRIBE_DeviceTryclaimSubmittedSchema()
+)
+
+
+class _cmd_EVENT_SUBSCRIBE_PingedSchema(BaseCmdSchema):
     event = fields.CheckedConstant("pinged")
     ping = fields.String(missing=None)
 
 
-class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema, OneOfSchema):
+cmd_EVENT_SUBSCRIBE_PingedSchema = _cmd_EVENT_SUBSCRIBE_PingedSchema()
+
+
+class _cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema, OneOfSchema):
     type_field = "event"
     type_field_remove = False
     type_schemas = {
-        "beacon.updated": cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema(),
-        "message.received": cmd_EVENT_SUBSCRIBE_MessageReceivedSchema(),
-        "device.try_claim_submitted": cmd_EVENT_SUBSCRIBE_DeviceTryclaimSubmittedSchema(),
-        "pinged": cmd_EVENT_SUBSCRIBE_PingedSchema(),  # TODO: rename to "pinged"
+        "beacon.updated": cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema,
+        "message.received": cmd_EVENT_SUBSCRIBE_MessageReceivedSchema,
+        "device.try_claim_submitted": cmd_EVENT_SUBSCRIBE_DeviceTryclaimSubmittedSchema,
+        "pinged": cmd_EVENT_SUBSCRIBE_PingedSchema,
     }
 
     def get_obj_type(self, obj):
         return obj["event"]
 
 
-class cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
+cmd_EVENT_SUBSCRIBE_Schema = _cmd_EVENT_SUBSCRIBE_Schema()
+
+
+class _cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
     wait = fields.Boolean(missing=True)
+
+
+cmd_EVENT_LISTEN_Schema = _cmd_EVENT_LISTEN_Schema()
 
 
 @attr.s
@@ -208,7 +226,7 @@ class BackendApp:
             await self.dbh.teardown()
 
     async def _api_ping(self, client_ctx, msg):
-        msg = cmd_PING_Schema().load_or_abort(msg)
+        msg = cmd_PING_Schema.load_or_abort(msg)
         self.signal_ns.signal("pinged").send(client_ctx.id, author=client_ctx.id, ping=msg["ping"])
         return {"status": "ok", "pong": msg["ping"]}
 
@@ -225,7 +243,7 @@ class BackendApp:
         return await self.blockstore.api_blockstore_get(client_ctx, msg)
 
     async def _api_event_subscribe(self, client_ctx, msg):
-        msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(msg)
+        msg = cmd_EVENT_SUBSCRIBE_Schema.load_or_abort(msg)
         event = msg["event"]
 
         if event == "beacon.updated":
@@ -283,7 +301,7 @@ class BackendApp:
         return {"status": "ok"}
 
     async def _api_event_unsubscribe(self, client_ctx, msg):
-        msg = cmd_EVENT_SUBSCRIBE_Schema().load_or_abort(msg)
+        msg = cmd_EVENT_SUBSCRIBE_Schema.load_or_abort(msg)
         if msg["event"] == "pinged":
             key = (msg["event"], msg["ping"])
         elif msg["event"] == "beacon.updated":
@@ -299,7 +317,7 @@ class BackendApp:
         return {"status": "ok"}
 
     async def _api_event_listen(self, client_ctx, msg):
-        msg = cmd_EVENT_LISTEN_Schema().load_or_abort(msg)
+        msg = cmd_EVENT_LISTEN_Schema.load_or_abort(msg)
         if msg["wait"]:
             event_data = await client_ctx.events.get()
         else:
@@ -311,7 +329,7 @@ class BackendApp:
         return {"status": "ok", **event_data}
 
     async def _api_event_list_subscribed(self, client_ctx, msg):
-        BaseCmdSchema().load_or_abort(msg)  # empty msg expected
+        BaseCmdSchema.load_or_abort(msg)  # empty msg expected
         return {"status": "ok", "subscribed": list(client_ctx.subscribed_events.keys())}
 
     async def _do_handshake(self, sock):

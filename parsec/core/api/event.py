@@ -24,11 +24,14 @@ class BackendGetConfigurationTrySchema(UnknownCheckedSchema):
 backend_get_configuration_try_schema = BackendGetConfigurationTrySchema()
 
 
-class cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
+class _cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
     wait = fields.Boolean(missing=True)
 
 
-class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
+cmd_EVENT_LISTEN_Schema = _cmd_EVENT_LISTEN_Schema()
+
+
+class _cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
     event = fields.String(
         required=True,
         validate=validate.OneOf(
@@ -38,12 +41,15 @@ class cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
     subject = fields.String(missing=None)
 
 
+cmd_EVENT_SUBSCRIBE_Schema = _cmd_EVENT_SUBSCRIBE_Schema()
+
+
 async def event_subscribe(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
     # TODO: change this api along with front
-    msg = cmd_EVENT_SUBSCRIBE_Schema().load(req)
+    msg = cmd_EVENT_SUBSCRIBE_Schema.load(req)
 
     try:
         client_ctx.subscribe_signal(msg["event"], msg["subject"])
@@ -60,7 +66,7 @@ async def event_unsubscribe(req: dict, client_ctx: ClientContext, core: Core) ->
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_EVENT_SUBSCRIBE_Schema().load(req)
+    msg = cmd_EVENT_SUBSCRIBE_Schema.load(req)
 
     try:
         client_ctx.unsubscribe_signal(msg["event"], msg["subject"])
@@ -77,7 +83,7 @@ async def event_listen(req: dict, client_ctx: ClientContext, core: Core) -> dict
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_EVENT_LISTEN_Schema().load(req)
+    msg = cmd_EVENT_LISTEN_Schema.load(req)
     if msg["wait"]:
         event_msg = await client_ctx.received_signals.get()
     else:
@@ -110,5 +116,5 @@ async def event_list_subscribed(req: dict, client_ctx: ClientContext, core: Core
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    BaseCmdSchema().load(req)  # empty msg expected
+    BaseCmdSchema.load(req)  # empty msg expected
     return {"status": "ok", "subscribed": list(client_ctx.registered_signals.keys())}

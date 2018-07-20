@@ -1,5 +1,4 @@
 from parsec.schema import BaseCmdSchema, fields, validate
-from parsec.core.fs.utils import new_access
 from parsec.core.app import Core, ClientContext
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core import devices_manager
@@ -15,40 +14,55 @@ from parsec.core.devices_manager import (
 )
 
 
-class cmd_USER_INVITE_Schema(BaseCmdSchema):
+class _cmd_USER_INVITE_Schema(BaseCmdSchema):
     user_id = fields.String(
         validate=validate.Regexp(devices_manager.USER_ID_PATTERN), required=True
     )
 
 
-class cmd_USER_CLAIM_Schema(BaseCmdSchema):
+cmd_USER_INVITE_Schema = _cmd_USER_INVITE_Schema()
+
+
+class _cmd_USER_CLAIM_Schema(BaseCmdSchema):
     # TODO: change id to user_id/device_name ?
     id = fields.String(validate=validate.Regexp(devices_manager.DEVICE_ID_PATTERN), required=True)
     invitation_token = fields.String(required=True)
     password = fields.String(required=True)
 
 
-class cmd_DEVICE_DECLARE_Schema(BaseCmdSchema):
+cmd_USER_CLAIM_Schema = _cmd_USER_CLAIM_Schema()
+
+
+class _cmd_DEVICE_DECLARE_Schema(BaseCmdSchema):
     device_name = fields.String(required=True)
 
 
-class cmd_DEVICE_CONFIGURE_Schema(BaseCmdSchema):
+cmd_DEVICE_DECLARE_Schema = _cmd_DEVICE_DECLARE_Schema()
+
+
+class _cmd_DEVICE_CONFIGURE_Schema(BaseCmdSchema):
     # TODO: add regex validation
     device_id = fields.String(required=True)
     password = fields.String(required=True)
     configure_device_token = fields.String(required=True)
 
 
-class cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema(BaseCmdSchema):
+cmd_DEVICE_CONFIGURE_Schema = _cmd_DEVICE_CONFIGURE_Schema()
+
+
+class _cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema(BaseCmdSchema):
     config_try_id = fields.String(required=True)
     password = fields.String(required=True)
+
+
+cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema = _cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema()
 
 
 async def user_invite(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_USER_INVITE_Schema().load(req)
+    msg = cmd_USER_INVITE_Schema.load(req)
     try:
         invitation_token = await invite_user(core.backend_cmds_sender, msg["user_id"])
     except BackendNotAvailable:
@@ -63,7 +77,7 @@ async def user_claim(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if core.auth_device:
         return {"status": "already_logged", "reason": "Already logged"}
 
-    msg = cmd_USER_CLAIM_Schema().load(req)
+    msg = cmd_USER_CLAIM_Schema.load(req)
     user_id, device_name = msg["id"].split("@")
     try:
         user_privkey, device_signkey, user_manifest_access = await claim_user(
@@ -94,7 +108,7 @@ async def device_declare(req: dict, client_ctx: ClientContext, core: Core) -> di
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_DEVICE_DECLARE_Schema().load(req)
+    msg = cmd_DEVICE_DECLARE_Schema.load(req)
     try:
         return await core.backend_cmds_sender.send({"cmd": "device_declare", **msg})
     except BackendNotAvailable as exc:
@@ -102,7 +116,7 @@ async def device_declare(req: dict, client_ctx: ClientContext, core: Core) -> di
 
 
 async def device_configure(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    msg = cmd_DEVICE_CONFIGURE_Schema().load(req)
+    msg = cmd_DEVICE_CONFIGURE_Schema.load(req)
 
     try:
         user_privkey, device_signkey, user_manifest_access = await configure_new_device(
@@ -142,7 +156,7 @@ async def device_accept_configuration_try(req: dict, client_ctx: ClientContext, 
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    msg = cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema().load(req)
+    msg = cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema.load(req)
 
     try:
         await accept_device_configuration_try(

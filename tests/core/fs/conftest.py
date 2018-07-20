@@ -18,9 +18,8 @@ def local_folder_fs(local_folder_fs_factory):
 
 
 @pytest.fixture
-def local_file_fs_factory(alice, local_folder_fs_factory, signal_ns):
-    def _local_file_fs_factory(device=alice, local_folder_fs=None):
-        local_folder_fs = local_folder_fs or local_folder_fs_factory(device)
+def local_file_fs_factory(alice, local_folder_fs, signal_ns):
+    def _local_file_fs_factory(device=alice, local_folder_fs=local_folder_fs):
         return LocalFileFS(device, local_folder_fs, signal_ns)
 
     return _local_file_fs_factory

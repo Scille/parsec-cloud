@@ -4,16 +4,19 @@ from parsec import schema_fields as fields
 from parsec.schema import UnknownCheckedSchema, OneOfSchema
 
 
-class SharingSchema(UnknownCheckedSchema):
+class _SharingSchema(UnknownCheckedSchema):
     owner = fields.String(required=True)
     guests = fields.List(fields.String(), required=True)
     notify_sink = fields.String(required=True)
 
 
+SharingSchema = _SharingSchema()
+
+
 # Synchronized with backend data
 
 
-class BlockAccessSchema(UnknownCheckedSchema):
+class _BlockAccessSchema(UnknownCheckedSchema):
     id = fields.String(required=True, validate=validate.Length(min=1, max=32))
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
@@ -22,14 +25,20 @@ class BlockAccessSchema(UnknownCheckedSchema):
     digest = fields.String(required=True, validate=validate.Length(min=1, max=64))
 
 
-class ManifestAccessSchema(UnknownCheckedSchema):
+BlockAccessSchema = _BlockAccessSchema()
+
+
+class _ManifestAccessSchema(UnknownCheckedSchema):
     id = fields.String(required=True, validate=validate.Length(min=1, max=32))
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
     rts = fields.String(required=True, validate=validate.Length(min=1, max=32))
     wts = fields.String(required=True, validate=validate.Length(min=1, max=32))
 
 
-class FileManifestSchema(UnknownCheckedSchema):
+ManifestAccessSchema = _ManifestAccessSchema()
+
+
+class _FileManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("file_manifest", required=True)
     author = fields.String(required=True)
@@ -41,7 +50,10 @@ class FileManifestSchema(UnknownCheckedSchema):
     sharing = fields.Nested(SharingSchema)
 
 
-class FolderManifestSchema(UnknownCheckedSchema):
+FileManifestSchema = _FileManifestSchema()
+
+
+class _FolderManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("folder_manifest", required=True)
     author = fields.String(required=True)
@@ -56,27 +68,39 @@ class FolderManifestSchema(UnknownCheckedSchema):
     sharing = fields.Nested(SharingSchema)
 
 
-class WorkspaceManifestSchema(FolderManifestSchema):
+FolderManifestSchema = _FolderManifestSchema()
+
+
+class _WorkspaceManifestSchema(_FolderManifestSchema):
     type = fields.CheckedConstant("workspace_manifest", required=True)
     beacon_id = fields.String(required=True)
 
 
-class UserManifestSchema(WorkspaceManifestSchema):
+WorkspaceManifestSchema = _WorkspaceManifestSchema()
+
+
+class _UserManifestSchema(_WorkspaceManifestSchema):
     type = fields.CheckedConstant("user_manifest", required=True)
     last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
+
+
+UserManifestSchema = _UserManifestSchema()
 
 
 # Local data
 
 
-class DirtyBlockAccessSchema(UnknownCheckedSchema):
+class _DirtyBlockAccessSchema(UnknownCheckedSchema):
     id = fields.String(required=True, validate=validate.Length(min=1, max=32))
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
     size = fields.Integer(required=True, validate=validate.Range(min=0))
 
 
-class LocalFileManifestSchema(UnknownCheckedSchema):
+DirtyBlockAccessSchema = _DirtyBlockAccessSchema()
+
+
+class _LocalFileManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_file_manifest", required=True)
     author = fields.String(required=True)
@@ -91,7 +115,10 @@ class LocalFileManifestSchema(UnknownCheckedSchema):
     sharing = fields.Nested(SharingSchema)
 
 
-class LocalFolderManifestSchema(UnknownCheckedSchema):
+LocalFileManifestSchema = _LocalFileManifestSchema()
+
+
+class _LocalFolderManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_folder_manifest", required=True)
     author = fields.String(required=True)
@@ -108,14 +135,23 @@ class LocalFolderManifestSchema(UnknownCheckedSchema):
     sharing = fields.Nested(SharingSchema)
 
 
-class LocalWorkspaceManifest(LocalFolderManifestSchema):
+LocalFolderManifestSchema = _LocalFolderManifestSchema()
+
+
+class _LocalWorkspaceManifest(_LocalFolderManifestSchema):
     type = fields.CheckedConstant("local_workspace_manifest", required=True)
     beacon_id = fields.String(required=True)
 
 
-class LocalUserManifestSchema(LocalWorkspaceManifest):
+LocalWorkspaceManifest = _LocalWorkspaceManifest()
+
+
+class _LocalUserManifestSchema(_LocalWorkspaceManifest):
     type = fields.CheckedConstant("local_user_manifest", required=True)
     last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
+
+
+LocalUserManifestSchema = _LocalUserManifestSchema()
 
 
 class TypedManifestSchema(OneOfSchema):

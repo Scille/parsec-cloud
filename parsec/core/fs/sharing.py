@@ -36,27 +36,33 @@ class SharingInvalidMessageError(SharingError):
     pass
 
 
-class BackendMessageGetRepMessagesSchema(UnknownCheckedSchema):
+class _BackendMessageGetRepMessagesSchema(UnknownCheckedSchema):
     count = fields.Int(required=True)
     body = fields.Base64Bytes(required=True)
     sender_id = fields.String(required=True)
 
 
-class BackendMessageGetRepSchema(UnknownCheckedSchema):
+BackendMessageGetRepMessagesSchema = _BackendMessageGetRepMessagesSchema()
+
+
+class _BackendMessageGetRepSchema(UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
     messages = fields.List(fields.Nested(BackendMessageGetRepMessagesSchema), required=True)
 
 
-backend_message_get_rep_schema = BackendMessageGetRepSchema()
+backend_message_get_rep_schema = _BackendMessageGetRepSchema()
 
 
-class BackendUserGetRepDeviceSchema(UnknownCheckedSchema):
+class _BackendUserGetRepDeviceSchema(UnknownCheckedSchema):
     created_on = fields.DateTime(required=True)
     revocated_on = fields.DateTime(missing=None)
     verify_key = fields.Base64Bytes(required=True)
 
 
-class BackendUserGetRepSchema(UnknownCheckedSchema):
+BackendUserGetRepDeviceSchema = _BackendUserGetRepDeviceSchema()
+
+
+class _BackendUserGetRepSchema(UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
     user_id = fields.String(required=True)
     created_on = fields.DateTime(required=True)
@@ -65,34 +71,37 @@ class BackendUserGetRepSchema(UnknownCheckedSchema):
     devices = fields.Map(fields.String(), fields.Nested(BackendUserGetRepDeviceSchema), missing={})
 
 
-backend_user_get_rep_schema = BackendUserGetRepSchema()
+backend_user_get_rep_schema = _BackendUserGetRepSchema()
 
 
-class SharingMessageContentSchema(UnknownCheckedSchema):
+class _SharingMessageContentSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("share", required=True)
     author = fields.String(required=True)
     access = fields.Nested(ManifestAccessSchema, required=True)
     name = fields.String(required=True)
 
 
-sharing_message_content_schema = SharingMessageContentSchema()
+sharing_message_content_schema = _SharingMessageContentSchema()
 
 
-class PingMessageContentSchema(UnknownCheckedSchema):
+class _PingMessageContentSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("ping", required=True)
     ping = fields.String(required=True)
 
 
-class GenericMessageContentSchema(OneOfSchema):
+PingMessageContentSchema = _PingMessageContentSchema()
+
+
+class _GenericMessageContentSchema(OneOfSchema):
     type_field = "type"
     type_field_remove = False
-    type_schemas = {"share": SharingMessageContentSchema, "ping": PingMessageContentSchema}
+    type_schemas = {"share": sharing_message_content_schema, "ping": PingMessageContentSchema}
 
     def get_obj_type(self, obj):
         return obj["type"]
 
 
-generic_message_content_schema = GenericMessageContentSchema()
+generic_message_content_schema = _GenericMessageContentSchema()
 
 
 class Sharing:

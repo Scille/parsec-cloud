@@ -27,17 +27,23 @@ class VlobAtom:
     is_sink = attr.ib(default=False)
 
 
-class CheckEntrySchema(UnknownCheckedSchema):
+class _CheckEntrySchema(UnknownCheckedSchema):
     id = fields.String(required=True)
     rts = fields.String(required=True)
     version = fields.Integer(required=True)
 
 
-class cmd_GROUP_CHECK_Schema(BaseCmdSchema):
-    to_check = fields.List(fields.Nested(CheckEntrySchema()), required=True)
+CheckEntrySchema = _CheckEntrySchema()
 
 
-class cmd_CREATE_Schema(BaseCmdSchema):
+class _cmd_GROUP_CHECK_Schema(BaseCmdSchema):
+    to_check = fields.List(fields.Nested(CheckEntrySchema), required=True)
+
+
+cmd_GROUP_CHECK_Schema = _cmd_GROUP_CHECK_Schema()
+
+
+class _cmd_CREATE_Schema(BaseCmdSchema):
     id = fields.String(required=True, validate=validate.Length(min=1, max=32))
     rts = fields.String(required=True)
     wts = fields.String(required=True)
@@ -45,13 +51,19 @@ class cmd_CREATE_Schema(BaseCmdSchema):
     notify_beacons = fields.List(fields.String())
 
 
-class cmd_READ_Schema(BaseCmdSchema):
+cmd_CREATE_Schema = _cmd_CREATE_Schema()
+
+
+class _cmd_READ_Schema(BaseCmdSchema):
     id = fields.String(required=True)
     version = fields.Integer(validate=lambda n: n >= 1, allow_none=True)
     rts = fields.String(required=True)
 
 
-class cmd_UPDATE_Schema(BaseCmdSchema):
+cmd_READ_Schema = _cmd_READ_Schema()
+
+
+class _cmd_UPDATE_Schema(BaseCmdSchema):
     id = fields.String(required=True)
     version = fields.Integer(validate=lambda n: n > 1)
     wts = fields.String(required=True)
@@ -59,19 +71,22 @@ class cmd_UPDATE_Schema(BaseCmdSchema):
     notify_beacons = fields.List(fields.String())
 
 
+cmd_UPDATE_Schema = _cmd_UPDATE_Schema()
+
+
 class BaseVlobComponent:
     async def api_vlob_group_check(self, client_ctx, msg):
-        msg = cmd_GROUP_CHECK_Schema().load_or_abort(msg)
+        msg = cmd_GROUP_CHECK_Schema.load_or_abort(msg)
         changed = await self.group_check(**msg)
         return {"status": "ok", "changed": changed}
 
     async def api_vlob_create(self, client_ctx, msg):
-        msg = cmd_CREATE_Schema().load_or_abort(msg)
+        msg = cmd_CREATE_Schema.load_or_abort(msg)
         await self.create(**msg, author=client_ctx.id)
         return {"status": "ok"}
 
     async def api_vlob_read(self, client_ctx, msg):
-        msg = cmd_READ_Schema().load_or_abort(msg)
+        msg = cmd_READ_Schema.load_or_abort(msg)
         atom = await self.read(**msg)
         return {
             "status": "ok",
@@ -81,7 +96,7 @@ class BaseVlobComponent:
         }
 
     async def api_vlob_update(self, client_ctx, msg):
-        msg = cmd_UPDATE_Schema().load_or_abort(msg)
+        msg = cmd_UPDATE_Schema.load_or_abort(msg)
         await self.update(**msg, author=client_ctx.id)
         return {"status": "ok"}
 

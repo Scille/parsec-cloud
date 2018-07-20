@@ -6,59 +6,92 @@ from parsec.schema import BaseCmdSchema, fields, validate
 # TODO: catch BackendNotAvailable in api functions
 
 
-class PathOnlySchema(BaseCmdSchema):
+class _PathOnlySchema(BaseCmdSchema):
     path = fields.String(required=True)
 
 
-class cmd_SHOW_dustbin_Schema(BaseCmdSchema):
+PathOnlySchema = _PathOnlySchema()
+
+
+class _cmd_SHOW_dustbin_Schema(BaseCmdSchema):
     path = fields.String(missing=None)
 
 
-class cmd_HISTORY_Schema(BaseCmdSchema):
+cmd_SHOW_dustbin_Schema = _cmd_SHOW_dustbin_Schema()
+
+
+class _cmd_HISTORY_Schema(BaseCmdSchema):
     first_version = fields.Integer(missing=1, validate=lambda n: n >= 1)
     last_version = fields.Integer(missing=None, validate=lambda n: n >= 1)
     summary = fields.Boolean(missing=False)
 
 
-class cmd_RESTORE_MANIFEST_Schema(BaseCmdSchema):
+cmd_HISTORY_Schema = _cmd_HISTORY_Schema()
+
+
+class _cmd_RESTORE_MANIFEST_Schema(BaseCmdSchema):
     version = fields.Integer(missing=None, validate=lambda n: n >= 1)
 
 
-class cmd_FILE_READ_Schema(BaseCmdSchema):
+cmd_RESTORE_MANIFEST_Schema = _cmd_RESTORE_MANIFEST_Schema()
+
+
+class _cmd_FILE_READ_Schema(BaseCmdSchema):
     path = fields.String(required=True)
     offset = fields.Integer(missing=0, validate=validate.Range(min=0))
     size = fields.Integer(missing=None, validate=validate.Range(min=0))
 
 
-class cmd_FILE_WRITE_Schema(BaseCmdSchema):
+cmd_FILE_READ_Schema = _cmd_FILE_READ_Schema()
+
+
+class _cmd_FILE_WRITE_Schema(BaseCmdSchema):
     path = fields.String(required=True)
     offset = fields.Integer(missing=0, validate=validate.Range(min=0))
     content = fields.Base64Bytes(required=True, validate=validate.Length(min=0))
 
 
-class cmd_FILE_TRUNCATE_Schema(BaseCmdSchema):
+cmd_FILE_WRITE_Schema = _cmd_FILE_WRITE_Schema()
+
+
+class _cmd_FILE_TRUNCATE_Schema(BaseCmdSchema):
     path = fields.String(required=True)
     length = fields.Integer(required=True, validate=validate.Range(min=0))
 
 
-class cmd_FILE_HISTORY_Schema(BaseCmdSchema):
+cmd_FILE_TRUNCATE_Schema = _cmd_FILE_TRUNCATE_Schema()
+
+
+class _cmd_FILE_HISTORY_Schema(BaseCmdSchema):
     path = fields.String(required=True)
     first_version = fields.Integer(missing=1, validate=validate.Range(min=1))
     last_version = fields.Integer(missing=None, validate=validate.Range(min=1))
 
 
-class cmd_FILE_RESTORE_Schema(BaseCmdSchema):
+cmd_FILE_HISTORY_Schema = _cmd_FILE_HISTORY_Schema()
+
+
+class _cmd_FILE_RESTORE_Schema(BaseCmdSchema):
     path = fields.String(required=True)
     version = fields.Integer(required=True, validate=validate.Range(min=1))
 
 
-class cmd_MOVE_Schema(BaseCmdSchema):
+cmd_FILE_RESTORE_Schema = _cmd_FILE_RESTORE_Schema()
+
+
+class _cmd_MOVE_Schema(BaseCmdSchema):
     src = fields.String(required=True)
     dst = fields.String(required=True)
 
 
-class cmd_UNDELETE_Schema(BaseCmdSchema):
+cmd_MOVE_Schema = _cmd_MOVE_Schema()
+
+
+class _cmd_UNDELETE_Schema(BaseCmdSchema):
     vlob = fields.String(required=True)
+
+
+cmd_UNDELETE_Schema = _cmd_UNDELETE_Schema()
 
 
 def _normalize_path(path):
@@ -72,7 +105,7 @@ async def file_create(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = PathOnlySchema().load(req)
+    req = PathOnlySchema.load(req)
     try:
         await core.fs.file_create(req["path"])
     except OSError as exc:
@@ -84,7 +117,7 @@ async def file_read(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = cmd_FILE_READ_Schema().load(req)
+    req = cmd_FILE_READ_Schema.load(req)
     try:
         content = await core.fs.file_read(req["path"], req["size"], req["offset"])
     except OSError as exc:
@@ -96,7 +129,7 @@ async def file_write(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = cmd_FILE_WRITE_Schema().load(req)
+    req = cmd_FILE_WRITE_Schema.load(req)
     try:
         await core.fs.file_write(req["path"], req["content"], req["offset"])
     except OSError as exc:
@@ -108,7 +141,7 @@ async def file_truncate(req: dict, client_ctx: ClientContext, core: Core) -> dic
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = cmd_FILE_TRUNCATE_Schema().load(req)
+    req = cmd_FILE_TRUNCATE_Schema.load(req)
     try:
         await core.fs.file_truncate(req["path"], req["length"])
     except OSError as exc:
@@ -120,7 +153,7 @@ async def stat(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = PathOnlySchema().load(req)
+    req = PathOnlySchema.load(req)
     try:
         stat = await core.fs.stat(req["path"])
     except OSError as exc:
@@ -137,7 +170,7 @@ async def folder_create(req: dict, client_ctx: ClientContext, core: Core) -> dic
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = PathOnlySchema().load(req)
+    req = PathOnlySchema.load(req)
     try:
         # TODO: big hack until the front support workspace creation
         if req["path"].count("/") == 1:
@@ -153,7 +186,7 @@ async def workspace_create(req: dict, client_ctx: ClientContext, core: Core) -> 
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = PathOnlySchema().load(req)
+    req = PathOnlySchema.load(req)
     # Right now
     try:
         await core.fs.workspace_create(req["path"])
@@ -166,7 +199,7 @@ async def move(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = cmd_MOVE_Schema().load(req)
+    req = cmd_MOVE_Schema.load(req)
     try:
         await core.fs.move(req["src"], req["dst"])
     except OSError as exc:
@@ -181,7 +214,7 @@ async def delete(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if req["path"] == "/":
         return {"status": "invalid_path", "reason": "Cannot remove `/` root folder"}
 
-    req = PathOnlySchema().load(req)
+    req = PathOnlySchema.load(req)
     try:
         await core.fs.delete(req["path"])
     except OSError as exc:
@@ -193,7 +226,7 @@ async def synchronize(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.fs:
         return {"status": "login_required", "reason": "Login required"}
 
-    req = PathOnlySchema().load(req)
+    req = PathOnlySchema.load(req)
     try:
         await core.fs.sync(req["path"])
     except OSError as exc:

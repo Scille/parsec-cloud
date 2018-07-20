@@ -1,14 +1,17 @@
 from parsec.schema import BaseCmdSchema, fields
 
 
-class cmd_READ_Schema(BaseCmdSchema):
+class _cmd_READ_Schema(BaseCmdSchema):
     id = fields.String(required=True)
     offset = fields.Integer(required=True)
 
 
+cmd_READ_Schema = _cmd_READ_Schema()
+
+
 class BaseBeaconComponent:
     async def api_beacon_read(self, client_ctx, msg):
-        msg = cmd_READ_Schema().load_or_abort(msg)
+        msg = cmd_READ_Schema.load_or_abort(msg)
         items = await self.read(**msg)
         return {
             "status": "ok",

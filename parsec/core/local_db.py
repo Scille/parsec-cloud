@@ -28,10 +28,10 @@ class LocalDB:
     def get(self, access):
         file = self._path / access["id"]
         try:
-            raw = file.read_bytes()
+            ciphered = file.read_bytes()
         except FileNotFoundError:
             raise LocalDBMissingEntry(access)
-        return self._decrypt_with_symkey(access["key"], raw)
+        return self._decrypt_with_symkey(access["key"], ciphered)
 
     def set(self, access, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))

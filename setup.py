@@ -50,8 +50,9 @@ requirements = [
     "click==6.7",
     "huepy==0.9.6",
     "Logbook==1.2.1",
-    "marshmallow==2.14.0",
-    "marshmallow-oneofschema==1.0.5",
+    # Can use marshmallow or the toasted flavour as you like ;-)
+    # "marshmallow==2.14.0",
+    "toastedmarshmallow==0.2.6",
     "pendulum==1.3.1",
     "PyNaCl==1.2.0",
     "simplejson==3.10.0",

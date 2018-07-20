@@ -1,4 +1,5 @@
 import pendulum
+from copy import deepcopy
 
 from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.schemas import dumps_manifest, loads_manifest
@@ -34,17 +35,18 @@ class LocalFolderFS:
         self.root_access = device.user_manifest_access
         self._local_db = device.local_db
         self.signal_ns = signal_ns
+        self._manifests_cache = {}
 
     def get_local_beacons(self):
         # Only user manifest and workspace manifests have a beacon id
         beacons = []
         try:
-            root_manifest = self.get_manifest(self.root_access)
+            root_manifest = self._get_manifest_read_only(self.root_access)
             beacons.append(root_manifest["beacon_id"])
             # Currently workspace can only direct children of the user manifest
             for child_access in root_manifest["children"].values():
                 try:
-                    child_manifest = self.get_manifest(child_access)
+                    child_manifest = self._get_manifest_read_only(child_access)
                 except FSManifestLocalMiss as exc:
                     continue
                 if "beacon_id" in child_manifest:
@@ -57,7 +59,7 @@ class LocalFolderFS:
         def _recursive_dump(access):
             dump_data = {"access": access}
             try:
-                manifest = self.get_manifest(access)
+                manifest = self._get_manifest_read_only(access)
             except FSManifestLocalMiss:
                 return dump_data
             dump_data.update(manifest)
@@ -69,23 +71,45 @@ class LocalFolderFS:
 
         return _recursive_dump(self.root_access)
 
-    def get_manifest(self, access):
+    def _get_manifest_read_only(self, access):
+        try:
+            return self._manifests_cache[access["id"]]
+        except KeyError:
+            pass
         try:
             raw = self._local_db.get(access)
         except LocalDBMissingEntry as exc:
             raise FSManifestLocalMiss(access) from exc
-        return loads_manifest(raw)
+        manifest = loads_manifest(raw)
+        self._manifests_cache[access["id"]] = manifest
+        return manifest
+
+    def get_manifest(self, access):
+        try:
+            return deepcopy(self._manifests_cache[access["id"]])
+        except KeyError:
+            pass
+        try:
+            raw = self._local_db.get(access)
+        except LocalDBMissingEntry as exc:
+            raise FSManifestLocalMiss(access) from exc
+        manifest = loads_manifest(raw)
+        self._manifests_cache[access["id"]] = deepcopy(manifest)
+        return manifest
 
     def set_manifest(self, access, manifest):
         raw = dumps_manifest(manifest)
         self._local_db.set(access, raw)
+        self._manifests_cache[access["id"]] = deepcopy(manifest)
 
     def update_manifest(self, access, manifest):
         mark_manifest_modified(manifest)
         self.set_manifest(access, manifest)
+        self._manifests_cache[access["id"]] = deepcopy(manifest)
 
     def mark_outdated_manifest(self, access):
         self._local_db.clear(access)
+        self._manifests_cache.pop(access["id"], None)
 
     def get_beacons(self, path):
         path = normalize_path(path)
@@ -108,9 +132,9 @@ class LocalFolderFS:
 
         # Brute force style
         def _recursive_search(access, path):
-            manifest = self.get_manifest(access)
+            manifest = self._get_manifest_read_only(access)
             if access["id"] == entry_id:
-                return path, access, manifest
+                return path, access, deepcopy(manifest)
 
             if is_folder_manifest(manifest):
                 for child_name, child_access in manifest["children"].items():
@@ -128,12 +152,12 @@ class LocalFolderFS:
         assert path.startswith("/"), path
 
         def _retrieve_entry_recursive(curr_access, curr_path, hops):
-            curr_manifest = self.get_manifest(curr_access)
+            curr_manifest = self._get_manifest_read_only(curr_access)
 
             if not hops:
                 if collector:
                     collector(curr_access, curr_manifest)
-                return curr_access, curr_manifest
+                return curr_access, deepcopy(curr_manifest)
 
             if not is_folder_manifest(curr_manifest):
                 raise NotADirectoryError(20, "Not a directory", curr_path)
