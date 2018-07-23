@@ -106,7 +106,7 @@ def is_workspace_manifest(manifest):
 
 def remote_to_local_manifest(manifest):
     local_manifest = manifest.copy()
-    local_manifest["base_version"] = manifest["version"]
+    local_manifest["base_version"] = local_manifest.pop("version")
     local_manifest["need_sync"] = False
     local_manifest["is_placeholder"] = False
     local_manifest["type"] = "local_" + manifest["type"]

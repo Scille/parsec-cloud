@@ -1,4 +1,3 @@
-import os
 import pendulum
 from itertools import count
 
@@ -187,8 +186,7 @@ class FileSyncerMixin:
             # been modified in the meantime
             current_manifest = self.local_folder_fs.get_manifest(access)
             assert is_file_manifest(current_manifest)
-            target_manifest = remote_to_local_manifest(to_sync_manifest)
-            final_manifest = fast_forward_file(manifest, current_manifest, target_manifest)
+            final_manifest = fast_forward_file(manifest, current_manifest, to_sync_manifest)
             self.local_folder_fs.set_manifest(access, final_manifest)
 
     async def _sync_file_nolock(self, path, access, manifest, notify_beacons):
