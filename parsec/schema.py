@@ -14,14 +14,7 @@ from parsec.utils import abort
 try:
     import toastedmarshmallow
 
-    counter = set()
-
     class BaseSchema(Schema):
-        def __init__(self, *args, **kwargs):
-            assert type(self) not in counter
-            counter.add(type(self))
-            super().__init__(*args, **kwargs)
-
         class Meta:
             jit = toastedmarshmallow.Jit
 
