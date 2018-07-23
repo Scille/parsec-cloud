@@ -33,6 +33,9 @@ class _cmd_FUSE_START_Schema(BaseCmdSchema):
 cmd_FUSE_START_Schema = _cmd_FUSE_START_Schema()
 
 
+cmd_FUSE_STOP_Schema = BaseCmdSchema()
+
+
 async def login(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if core.auth_device:
         return {"status": "already_logged", "reason": "Already logged"}
@@ -106,7 +109,7 @@ async def fuse_stop(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    BaseCmdSchema.load(req)  # empty msg expected
+    cmd_FUSE_STOP_Schema.load(req)  # empty msg expected
 
     try:
         await core.fuse_manager.stop_mountpoint()
