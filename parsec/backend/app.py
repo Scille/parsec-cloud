@@ -109,6 +109,9 @@ class _cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
 cmd_EVENT_LISTEN_Schema = _cmd_EVENT_LISTEN_Schema()
 
 
+cmd_EVENT_LIST_SUBSCRIBED = BaseCmdSchema()
+
+
 @attr.s
 class AnonymousClientContext:
     id = "anonymous"
@@ -329,7 +332,7 @@ class BackendApp:
         return {"status": "ok", **event_data}
 
     async def _api_event_list_subscribed(self, client_ctx, msg):
-        BaseCmdSchema.load_or_abort(msg)  # empty msg expected
+        cmd_EVENT_LIST_SUBSCRIBED.load_or_abort(msg)  # empty msg expected
         return {"status": "ok", "subscribed": list(client_ctx.subscribed_events.keys())}
 
     async def _do_handshake(self, sock):

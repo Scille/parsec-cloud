@@ -44,6 +44,9 @@ class _cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema):
 cmd_EVENT_SUBSCRIBE_Schema = _cmd_EVENT_SUBSCRIBE_Schema()
 
 
+cmd_EVENT_LIST_SUBSCRIBED = BaseCmdSchema()
+
+
 async def event_subscribe(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
@@ -116,5 +119,5 @@ async def event_list_subscribed(req: dict, client_ctx: ClientContext, core: Core
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
-    BaseCmdSchema.load(req)  # empty msg expected
+    cmd_EVENT_LIST_SUBSCRIBED.load(req)  # empty msg expected
     return {"status": "ok", "subscribed": list(client_ctx.registered_signals.keys())}
