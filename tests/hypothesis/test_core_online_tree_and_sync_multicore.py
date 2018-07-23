@@ -51,7 +51,8 @@ from parsec.utils import to_jsonb64
 from tests.hypothesis.test_core_online_tree_and_sync_multicore import compare_fs_dumps
 
 
-def test_reproduce(running_backend, alice, alice2, core_factory_cm, core_sock_factory):
+@pytest.mark.trio
+async def test_reproduce(running_backend, alice, alice2, core_factory_cm, core_sock_factory):
     async with core_factory_cm(config={{"auto_sync": False}}) as core, \\
             core_factory_cm(config={{"auto_sync": False}}) as core2:
         await core.login(alice)
@@ -205,7 +206,7 @@ compare_fs_dumps(fs_dump_1, fs_dump_2)
         )
         async def sync_all_the_files(self):
             print("~~~ SYNC 1 ~~~")
-            # Send two sync in a row given file conflict results are not synced
+            # Send two syncs in a row given file conflict results are not synced
             # once created
             rep1 = await self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})
             rep1 = await self.core_cmd("core_1", {"cmd": "synchronize", "path": "/"})

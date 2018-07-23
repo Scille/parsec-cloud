@@ -36,6 +36,7 @@ def new_local_workspace_manifest(author):
     now = pendulum.now()
 
     return {
+        "format": 1,
         "type": "local_workspace_manifest",
         "need_sync": True,
         "is_placeholder": True,
@@ -53,6 +54,7 @@ def new_local_folder_manifest(author):
     now = pendulum.now()
 
     return {
+        "format": 1,
         "type": "local_folder_manifest",
         "need_sync": True,
         "is_placeholder": True,
@@ -69,6 +71,7 @@ def new_local_file_manifest(author):
     now = pendulum.now()
 
     return {
+        "format": 1,
         "type": "local_file_manifest",
         "need_sync": True,
         "is_placeholder": True,
