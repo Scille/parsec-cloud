@@ -99,15 +99,8 @@ def core_cmd(log_level, log_file, pdb, **kwargs):
 
     if pdb:
         return run_with_pdb(_core, **kwargs)
-
     else:
-        while True:
-            try:
-                return _core(**kwargs)
-            except Exception:
-                logger.error(traceback.format_exc())
-                logger.error("Core crashed... Restarting!")
-                time.sleep(1)
+        return _core(**kwargs)
 
 
 def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
