@@ -228,8 +228,7 @@ def test_folder_operations(
             with expect_raises(expected_exc):
                 self.local_folder_fs.rmdir(path.to_parsec())
 
-        @rule(target=Folders | Files, src=Files, dst_parent=Folders, dst_name=st_entry_name)
-        def move(self, src, dst_parent, dst_name):
+        def _move(self, src, dst_parent, dst_name):
             dst = dst_parent / dst_name
 
             expected_exc = None
@@ -242,5 +241,13 @@ def test_folder_operations(
                 self.local_folder_fs.move(src.to_parsec(), dst.to_parsec())
 
             return dst
+
+        @rule(target=Files, src=Files, dst_parent=Folders, dst_name=st_entry_name)
+        def move_file(self, src, dst_parent, dst_name):
+            return self._move(src, dst_parent, dst_name)
+
+        @rule(target=Folders, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
+        def move_folder(self, src, dst_parent, dst_name):
+            return self._move(src, dst_parent, dst_name)
 
     run_state_machine_as_test(FileOperationsStateMachine, settings=hypothesis_settings)

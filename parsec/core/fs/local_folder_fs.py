@@ -340,13 +340,19 @@ class LocalFolderFS:
         src = normalize_path(src)
         dst = normalize_path(dst)
 
-        if src == "/" or dst == "/":
-            raise PermissionError(13, "Permission denied", src, dst)
-
         parent_src, child_src = src.rsplit("/", 1)
         parent_dst, child_dst = dst.rsplit("/", 1)
         parent_src = parent_src or "/"
         parent_dst = parent_dst or "/"
+
+        if src == "/":
+            # Raise FileNotFoundError if parent_dst doesn't exists
+            self._retrieve_entry(parent_dst)
+            raise PermissionError(13, "Permission denied", src, dst)
+        elif dst == "/":
+            # Raise FileNotFoundError if parent_src doesn't exists
+            self._retrieve_entry(parent_src)
+            raise PermissionError(13, "Permission denied", src, dst)
 
         if parent_src == parent_dst:
             parent_access, parent_manifest = self._retrieve_entry(parent_src)
