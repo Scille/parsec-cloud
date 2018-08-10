@@ -154,13 +154,12 @@ class BaseUserComponent:
         user_id = msg["user_id"]
         device_name = msg["device_name"]
         try:
-            user = await self.get(user_id)
+            device = await self.get_unconfigured_device(user_id, device_name)
         except NotFoundError:
-            return {"status": "not_found", "reason": "No user with id `%s`." % msg["user_id"]}
-
-        device = user["devices"].get(device_name)
-        if not device:
-            return {"status": "not_found", "reason": "Device `%s` doesn't exists." % device_name}
+            return {
+                "status": "not_found",
+                "reason": f"No unconfigured device `{user_id}@{device_name}`.",
+            }
 
         if device["configure_token"] != msg["configure_device_token"]:
             return {"status": "invalid_token", "reason": "Wrong device configuration token."}
@@ -182,7 +181,6 @@ class BaseUserComponent:
                 claim_answered.set()
 
         with self._signal_device_try_claim_answered.connected_to(_on_claim_answered):
-            print("-----> send event ")
             self._signal_device_try_claim_submitted.send(
                 None,
                 author=client_ctx.id,

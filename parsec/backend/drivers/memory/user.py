@@ -15,6 +15,7 @@ class MemoryUserComponent(BaseUserComponent):
         self._users = {}
         self._invitations = {}
         self._device_configuration_tries = {}
+        self._unconfigured_devices = {}
 
     async def claim_invitation(
         self, invitation_token, user_id, broadcast_key, device_name, device_verify_key
@@ -106,13 +107,20 @@ class MemoryUserComponent(BaseUserComponent):
         }
 
     async def configure_device(self, user_id, device_name, device_verify_key):
-        user = self._users.get(user_id, {})
-        device = user["devices"].get(device_name)
-        if not device:
-            raise NotFoundError("Device `%s@%s` doesn't exists" % (user_id, device_name))
+        key = (user_id, device_name)
+        try:
+            device = self._unconfigured_devices[key]
+        except KeyError:
+            raise NotFoundError(f"Device `{user_id}@{device_name}` doesn't exists")
+        device["verify_key"] = device_verify_key
 
-        # TODO: configured useful ?
-        device.update({"configured": True, "verify_key": device_verify_key})
+        try:
+            user = self._users[user_id]
+        except KeyError:
+            raise NotFoundError("User `%s` doesn't exists" % user_id)
+
+        user["devices"][device_name] = device
+        del self._unconfigured_devices[key]
 
     async def declare_unconfigured_device(self, token, user_id, device_name):
         if user_id not in self._users:
@@ -122,12 +130,17 @@ class MemoryUserComponent(BaseUserComponent):
         if device_name in user["devices"]:
             raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
 
-        user["devices"][device_name] = {
+        key = (user_id, device_name)
+        self._unconfigured_devices[key] = {
             "created_on": pendulum.utcnow(),
             "configure_token": token,
-            "verify_key": None,
-            "revocated_on": None,
         }
+
+    async def get_unconfigured_device(self, user_id, device_name):
+        try:
+            return self._unconfigured_devices[(user_id, device_name)]
+        except KeyError:
+            raise NotFoundError(f"Unconfigured device `{user_id}@{device_name}` doesn't exists")
 
     async def register_device_configuration_try(
         self, config_try_id, user_id, device_name, device_verify_key, exchange_cipherkey, salt
