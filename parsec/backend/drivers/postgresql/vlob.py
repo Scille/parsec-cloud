@@ -15,8 +15,8 @@ class PGVlob:
 
 
 class PGVlobComponent(BaseVlobComponent):
-    def __init__(self, dbh, *args):
-        super().__init__(*args)
+    def __init__(self, dbh, signal_ns, beacon_component):
+        self._beacon_component = beacon_component
         self.dbh = dbh
 
     async def create(self, id, rts, wts, blob):

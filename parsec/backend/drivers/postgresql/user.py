@@ -12,8 +12,7 @@ from parsec.backend.exceptions import (
 
 
 class PGUserComponent(BaseUserComponent):
-    def __init__(self, dbh, *args):
-        super().__init__(*args)
+    def __init__(self, dbh, signal_ns):
         self.dbh = dbh
 
     async def claim_invitation(
@@ -250,6 +249,9 @@ class PGUserComponent(BaseUserComponent):
                 if result != "INSERT 0 1":
                     raise ParsecError("Insertion error.")
 
+    async def get_unconfigured_device(self, user_id, device_name):
+        raise NotImplementedError()
+
     async def register_device_configuration_try(
         self, config_try_id, user_id, device_name, device_verify_key, exchange_cipherkey, salt
     ):
@@ -300,7 +302,10 @@ class PGUserComponent(BaseUserComponent):
 
         return config_try
 
-    async def accept_device_configuration_try(self, config_try_id, user_id, ciphered_user_privkey):
+    async def accept_device_configuration_try(
+        self, config_try_id, user_id, ciphered_user_privkey, ciphered_user_manifest_access
+    ):
+        # async def accept_device_configuration_try(self, config_try_id, user_id, ciphered_user_privkey):
         async with self.dbh.pool.acquire() as conn:
             updated = await conn.execute(
                 """

@@ -1,6 +1,5 @@
 import trio
-
-from parsec.backend.drivers.postgresql import triopg
+import triopg
 
 
 async def init_db(url, force=False):
@@ -94,7 +93,7 @@ async def init_db(url, force=False):
                 device_verify_key BYTEA,
                 exchange_cipherkey BYTEA,
                 ciphered_user_privkey BYTEA,
-                refused_reason TEXT
+                refused_reason TEXT,
                 salt BYTEA
             )"""
         )
@@ -125,11 +124,11 @@ async def init_db(url, force=False):
 
 
 class PGHandler:
-    def __init__(self, url, signal_ns, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, url, signal_ns):
         self.url = url
         self.signal_ns = signal_ns
         self.signals = ["message_arrived", "user_claimed", "user_vlob_updated", "vlob_updated"]
+        self.pool = None
         self.notifications_to_ignore = []
         self.signals_to_ignore = []
         self._notification_sender_task_info = None

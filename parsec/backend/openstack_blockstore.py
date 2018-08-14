@@ -24,14 +24,12 @@ from swiftclient.exceptions import ClientException  # noqa
 class OpenStackBlockStoreComponent(BaseBlockStoreComponent):
     def __init__(
         self,
-        signal_ns,
         openstack_auth_url,
         openstack_container,
         openstack_user,
         openstack_tenant,
         openstack_password,
     ):
-        super().__init__(signal_ns)
         self.swift_client = swiftclient.Connection(
             authurl=openstack_auth_url,
             user=":".join([openstack_user, openstack_tenant]),

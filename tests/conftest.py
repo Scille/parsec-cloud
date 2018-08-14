@@ -21,7 +21,6 @@ from parsec.core.fs.utils import new_access, new_local_user_manifest, local_to_r
 from parsec.core.encryption_manager import encrypt_with_secret_key
 from parsec.core.devices_manager import Device
 from parsec.backend import BackendApp, BackendConfig
-from parsec.backend.drivers import postgresql as pg_driver
 from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 
@@ -286,13 +285,16 @@ def default_devices(alice, alice2, bob):
 
 
 @pytest.fixture(params=["mocked", "postgresql"])
-def backend_store(request, asyncio_loop):
+async def backend_store(request, asyncio_loop):
     if request.param == "postgresql":
         if not pytest.config.getoption("--postgresql"):
             pytest.skip("`--postgresql` option not provided")
+
+        from parsec.backend.drivers import postgresql as pg_driver
+
         url = get_postgresql_url()
         try:
-            trio.run(pg_driver.handler.init_db, url, True)
+            await pg_driver.handler.init_db(url, True)
         except asyncpg.exceptions.InvalidCatalogNameError as exc:
             raise RuntimeError(
                 "Is `parsec_test` a valid database in PostgreSQL ?\n"
@@ -303,16 +305,27 @@ def backend_store(request, asyncio_loop):
     else:
         if pytest.config.getoption("--only-postgresql"):
             pytest.skip("`--only-postgresql` option provided")
-        return "mocked://"
+        return "MOCKED"
 
 
 @pytest.fixture
-def backend_factory(nursery, signal_ns_factory, backend_store, default_devices):
+def blockstore(backend_store):
+    if backend_store.startswith("postgresql://"):
+        return "POSTGRESQL"
+    else:
+        return "MOCKED"
+
+
+@pytest.fixture
+def backend_factory(nursery, signal_ns_factory, blockstore, backend_store, default_devices):
     async def _backend_factory(devices=default_devices, config={}, signal_ns=None, nursery=nursery):
-        config = BackendConfig(**{"blockstore_postgresql": True, "dburl": backend_store, **config})
+        config = BackendConfig(
+            **{"blockstore_db_url": blockstore, "metadata_db_url": backend_store, **config}
+        )
         if not signal_ns:
             signal_ns = signal_ns_factory()
         backend = BackendApp(config, signal_ns=signal_ns)
+        await backend.init(nursery)
 
         # Need to initialize backend with users/devices, and for each user
         # store it user manifest
@@ -345,7 +358,6 @@ def backend_factory(nursery, signal_ns_factory, backend_store, default_devices):
                         verify_key=device.device_verifykey.encode(),
                     )
 
-        await backend.init(nursery)
         return backend
 
     return _backend_factory

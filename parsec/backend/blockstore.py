@@ -18,9 +18,6 @@ cmd_POST_Schema = _cmd_POST_Schema()
 
 
 class BaseBlockStoreComponent:
-    def __init__(self, signal_ns):
-        pass
-
     async def api_blockstore_get(self, client_ctx, msg):
         msg = cmd_GET_Schema.load_or_abort(msg)
         block = await self.get(msg["id"])

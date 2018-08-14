@@ -25,25 +25,43 @@ from parsec.backend.drivers.postgresql import (
     PGVlobComponent,
     PGMessageComponent,
     PGBlockStoreComponent,
+    PGBeaconComponent,
 )
 
 from parsec.backend.exceptions import NotFoundError
 
-try:
-    from parsec.backend.s3_blockstore import S3BlockStoreComponent
-
-    S3_AVAILABLE = True
-except ImportError:
-    S3_AVAILABLE = False
-try:
-    from parsec.backend.openstack_blockstore import OpenStackBlockStoreComponent
-
-    OPENSTACK_AVAILABLE = True
-except ImportError:
-    OPENSTACK_AVAILABLE = False
-
 
 logger = logbook.Logger("parsec.backend.app")
+
+
+def blockstore_factory(db_url, postgresql_dbh=None):
+    if db_url == "MOCKED":
+        return MemoryBlockStoreComponent()
+
+    elif db_url == "POSTGRESQL":
+        if not postgresql_dbh:
+            raise ValueError("PostgreSQL blockstore is not available")
+        return PGBlockStoreComponent(postgresql_dbh)
+
+    config = db_url.split(":")
+    if config[0] == "s3":
+        try:
+            from parsec.backend.s3_blockstore import S3BlockStoreComponent
+
+            return S3BlockStoreComponent(*config[1:])
+        except ImportError:
+            raise ValueError("S3 blockstore is not available")
+
+    elif config[0] == "openstack":
+        try:
+            from parsec.backend.openstack_blockstore import OpenStackBlockStoreComponent
+
+            return OpenStackBlockStoreComponent(*config[1:])
+        except ImportError:
+            raise ValueError("OpenStack blockstore is not available")
+
+    else:
+        raise ValueError(f"Unknown blockstore type `{db_url}`")
 
 
 class _cmd_PING_Schema(BaseCmdSchema):
@@ -141,54 +159,25 @@ class BackendApp:
         self.signal_ns = signal_ns or SignalNamespace()
         self.config = config
         self.nursery = None
-        self.blockstore_postgresql = config.blockstore_postgresql
-        self.blockstore_openstack = config.blockstore_openstack
-        self.blockstore_s3 = config.blockstore_s3
         self.dbh = None
 
-        if self.config.dburl in [None, "mocked://"]:
-            # TODO: validate BLOCKSTORE value
-            if self.blockstore_postgresql:
-                self.blockstore = MemoryBlockStoreComponent(self.signal_ns)
-            elif S3_AVAILABLE and self.blockstore_s3:
-                self.blockstore = S3BlockStoreComponent(
-                    self.signal_ns, *self.blockstore_s3.split(":")
-                )
-            elif OPENSTACK_AVAILABLE and self.blockstore_openstack:
-                container, user, tenant_password, url = self.blockstore_openstack.split(":", 3)
-                tenant, password = tenant_password.split("@")
-                self.blockstore = OpenStackBlockStoreComponent(
-                    self.signal_ns, url, container, user, tenant, password
-                )
-            else:
-                self.blockstore = None
-
+        if self.config.metadata_db_url == "MOCKED":
             self.user = MemoryUserComponent(self.signal_ns)
             self.message = MemoryMessageComponent(self.signal_ns)
             self.beacon = MemoryBeaconComponent(self.signal_ns)
             self.vlob = MemoryVlobComponent(self.signal_ns, self.beacon)
 
+            self.blockstore = blockstore_factory(self.config.blockstore_db_url)
         else:
-            self.dbh = PGHandler(self.config.dburl, self.signal_ns)
-
-            if self.blockstore_postgresql:
-                self.blockstore = PGBlockStoreComponent(self.dbh, self.signal_ns)
-            elif S3_AVAILABLE and self.blockstore_s3:
-                self.blockstore = S3BlockStoreComponent(
-                    self.signal_ns, *self.blockstore_s3.split(":")
-                )
-            elif OPENSTACK_AVAILABLE and self.blockstore_openstack:
-                container, user, tenant_password, url = self.blockstore_openstack.split(":", 3)
-                tenant, password = tenant_password.split("@")
-                self.blockstore = OpenStackBlockStoreComponent(
-                    self.signal_ns, url, container, user, tenant, password
-                )
-            else:
-                self.blockstore = None
-
+            self.dbh = PGHandler(self.config.metadata_db_url, self.signal_ns)
             self.user = PGUserComponent(self.dbh, self.signal_ns)
-            self.vlob = PGVlobComponent(self.dbh, self.signal_ns)
             self.message = PGMessageComponent(self.dbh, self.signal_ns)
+            self.beacon = PGBeaconComponent(self.dbh, self.signal_ns)
+            self.vlob = PGVlobComponent(self.dbh, self.signal_ns, self.beacon)
+
+            self.blockstore = blockstore_factory(
+                self.config.blockstore_db_url, postgresql_dbh=self.dbh
+            )
 
         self.anonymous_cmds = {
             "user_claim": self.user.api_user_claim,

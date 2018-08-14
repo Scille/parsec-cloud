@@ -1,19 +1,40 @@
 import attr
-from decouple import config
+from dynaconf import settings
 
 
 @attr.s(slots=True, frozen=True)
 class BackendConfig:
-    debug = attr.ib(default=config("DEBUG", cast=bool, default=False))
-    blockstore_postgresql = attr.ib(
-        default=config("BLOCKSTORE_POSTGRESQL", cast=bool, default=False)
-    )
-    blockstore_openstack = attr.ib(default=config("BLOCKSTORE_OPENSTACK", default=None))
-    blockstore_s3 = attr.ib(default=config("BLOCKSTORE_S3", default=None))
-    host = attr.ib(default=config("BACKEND_HOST", default=None))
-    port = attr.ib(default=config("BACKEND_PORT", cast=int, default=6777))
+
+    blockstore_db_url = attr.ib(factory=lambda: settings.BLOCKSTORE_DB_URL)
+
+    @blockstore_db_url.validator
+    def _validate_blockstore_db_url(self, field, val):
+        if val == "MOCKED":
+            return val
+        elif val == "POSTGRESQL":
+            return val
+        elif val.startswith("s3:") and len(val.split(":")) == 5:
+            return val
+        elif val.startswith("openstack:") and len(val.split(":")) == 5:
+            return val
+        raise ValueError(
+            "BLOCKSTORE_DB_URL must be `MOCKED`, `POSTGRESQL`, `s3:<region>:<bucket>:<key>:<secret>`,"
+            " or `openstack:<auth_url>:<container>:<user>:<tenant>:<password>:"
+        )
+
+    metadata_db_url = attr.ib(factory=lambda: settings.METADATA_DB_URL)
+
+    @metadata_db_url.validator
+    def _validate_metadata_db_url(self, field, val):
+        if val == "MOCKED":
+            return val
+        elif val.startswith("postgresql://"):
+            return val
+        raise ValueError("METADATA_DB_URL must be `MOCKED` or `postgresql://...`")
+
+    sentry_url = attr.ib(default=settings.get("SENTRY_URL"))
+
+    debug = attr.ib(default=settings.as_bool("DEBUG"))
     handshake_challenge_size = attr.ib(
-        default=config("CONFIG_HANDSHAKE_CHALLENGE_SIZE", cast=int, default=48)
+        settings.get("CONFIG_HANDSHAKE_CHALLENGE_SIZE", cast="@int", default=48)
     )
-    dburl = attr.ib(default=config("PARSEC_DB_URL", default=None))
-    sentry_url = attr.ib(default=config("SENTRY_URL", default=""))

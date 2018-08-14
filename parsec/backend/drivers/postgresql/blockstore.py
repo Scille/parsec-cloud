@@ -4,8 +4,7 @@ from parsec.backend.blockstore import BaseBlockStoreComponent
 
 
 class PGBlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, dbh, *args):
-        super().__init__(*args)
+    def __init__(self, dbh):
         self.dbh = dbh
 
     async def get(self, id):

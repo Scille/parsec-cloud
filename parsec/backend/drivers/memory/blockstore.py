@@ -3,8 +3,7 @@ from parsec.backend.blockstore import BaseBlockStoreComponent
 
 
 class MemoryBlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self):
         self.blocks = {}
 
     async def get(self, id):

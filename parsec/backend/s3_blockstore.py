@@ -9,8 +9,7 @@ from parsec.backend.exceptions import AlreadyExistsError, NotFoundError
 
 
 class S3BlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, signal_ns, s3_region, s3_bucket, s3_key, s3_secret):
-        super().__init__(signal_ns)
+    def __init__(self, s3_region, s3_bucket, s3_key, s3_secret):
         self._s3 = None
         self._s3_bucket = None
         self._s3 = boto3.client(

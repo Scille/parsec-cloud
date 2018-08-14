@@ -3,8 +3,8 @@ from parsec.backend.message import BaseMessageComponent
 
 
 class PGMessageComponent(BaseMessageComponent):
-    def __init__(self, dbh, *args):
-        super().__init__(*args)
+    def __init__(self, dbh, signal_ns):
+        self._signal_message_received = signal_ns.signal("message.received")
         self.dbh = dbh
 
     async def perform_message_new(self, sender_device_id, recipient_user_id, body):
