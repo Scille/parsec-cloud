@@ -10,7 +10,7 @@ def _get_existing_block(backend):
 
 @pytest.mark.trio
 async def test_blockstore_post_and_get(alice_backend_sock, bob_backend_sock):
-    block_id = "123"
+    block_id = "b00008dba3834f08abc6eb3aec280c6a"
 
     block = to_jsonb64(b"Hodi ho !")
     await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block})
@@ -26,11 +26,12 @@ async def test_blockstore_post_and_get(alice_backend_sock, bob_backend_sock):
     "bad_msg",
     [
         {},
-        {"id": "123", "blob": to_jsonb64(b"..."), "bad_field": "foo"},
+        {"id": "b00008dba3834f08abc6eb3aec280c6a", "blob": to_jsonb64(b"..."), "bad_field": "foo"},
+        {"id": "not an uuid", "blob": to_jsonb64(b"...")},
         {"id": 42, "blob": to_jsonb64(b"...")},
         {"id": None, "blob": to_jsonb64(b"...")},
-        {"id": "123", "blob": 42},
-        {"id": "123", "blob": None},
+        {"id": "b00008dba3834f08abc6eb3aec280c6a", "blob": 42},
+        {"id": "b00008dba3834f08abc6eb3aec280c6a", "blob": None},
         {"blob": to_jsonb64(b"...")},
     ],
 )
@@ -43,13 +44,22 @@ async def test_blockstore_post_bad_msg(alice_backend_sock, bad_msg):
 
 @pytest.mark.trio
 async def test_blockstore_get_not_found(alice_backend_sock):
-    await alice_backend_sock.send({"cmd": "blockstore_get", "id": "1234"})
+    await alice_backend_sock.send(
+        {"cmd": "blockstore_get", "id": "b00008dba3834f08abc6eb3aec280c6a"}
+    )
     rep = await alice_backend_sock.recv()
     assert rep == {"status": "not_found_error", "reason": "Unknown block id."}
 
 
 @pytest.mark.parametrize(
-    "bad_msg", [{"id": "1234", "bad_field": "foo"}, {"id": 42}, {"id": None}, {}]
+    "bad_msg",
+    [
+        {"id": "b00008dba3834f08abc6eb3aec280c6a", "bad_field": "foo"},
+        {"id": "not_an_uuid"},
+        {"id": 42},
+        {"id": None},
+        {},
+    ],
 )
 @pytest.mark.trio
 async def test_blockstore_get_bad_msg(alice_backend_sock, bad_msg):
@@ -62,7 +72,7 @@ async def test_blockstore_get_bad_msg(alice_backend_sock, bad_msg):
 
 @pytest.mark.trio
 async def test_blockstore_conflicting_id(alice_backend_sock):
-    block_id = "123"
+    block_id = "b00008dba3834f08abc6eb3aec280c6a"
 
     block_v1 = to_jsonb64(b"v1")
     await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block_v1})

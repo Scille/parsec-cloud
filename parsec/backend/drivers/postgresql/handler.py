@@ -18,7 +18,6 @@ async def init_db(url, force=False):
                     user_devices,
                     invitations,
                     vlobs,
-                    user_vlobs,
                     device_configure_tries
                 """
             )
@@ -27,7 +26,7 @@ async def init_db(url, force=False):
             """
             CREATE TABLE IF NOT EXISTS blockstore (
                 _id SERIAL PRIMARY KEY,
-                id VARCHAR(32) NOT NULL UNIQUE,
+                id UUID NOT NULL UNIQUE,
                 block BYTEA NOT NULL
             )"""
         )
@@ -35,9 +34,9 @@ async def init_db(url, force=False):
             """
             CREATE TABLE IF NOT EXISTS messages (
                 id SERIAL PRIMARY KEY,
-                recipient_user_id TEXT,
-                sender_device_id TEXT,
-                body BYTEA
+                recipient_user_id TEXT NOT NULL,
+                sender_device_id TEXT NOT NULL,
+                body BYTEA NOT NULL
             )"""
         )
         await conn.execute(
@@ -109,16 +108,6 @@ async def init_db(url, force=False):
                 UNIQUE(id, version)
             )"""
         )
-        await conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS user_vlobs (
-                _id SERIAL PRIMARY KEY,
-                user_id VARCHAR(32),
-                version INTEGER,
-                blob BYTEA,
-                UNIQUE(user_id, version)
-            )"""
-        )
 
     await conn.close()
 
@@ -127,7 +116,7 @@ class PGHandler:
     def __init__(self, url, signal_ns):
         self.url = url
         self.signal_ns = signal_ns
-        self.signals = ["message_arrived", "user_claimed", "user_vlob_updated", "vlob_updated"]
+        self.signals = ["message_arrived", "user_claimed", "vlob_updated"]
         self.pool = None
         self.notifications_to_ignore = []
         self.signals_to_ignore = []

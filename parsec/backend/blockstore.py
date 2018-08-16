@@ -3,14 +3,14 @@ from parsec.schema import BaseCmdSchema, fields
 
 
 class _cmd_GET_Schema(BaseCmdSchema):
-    id = fields.String(required=True, validate=lambda n: 0 < len(n) <= 32)
+    id = fields.UUID(required=True)
 
 
 cmd_GET_Schema = _cmd_GET_Schema()
 
 
 class _cmd_POST_Schema(BaseCmdSchema):
-    id = fields.String(required=True, validate=lambda n: 0 < len(n) <= 32)
+    id = fields.UUID(required=True)
     block = fields.Base64Bytes(required=True)
 
 
