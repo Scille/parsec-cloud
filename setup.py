@@ -88,7 +88,7 @@ extra_requirements = {
     "drive": ["pydrive==1.3.1"],
     "dropbox": ["dropbox==7.2.1"],
     "fuse": ["fusepy==3.0.0"],
-    "postgresql": ["triopg==0.1.0"],
+    "postgresql": ["triopg==0.2.0"],
     "s3": ["boto3==1.4.4", "botocore==1.5.46"],
     "openstack": ["python-swiftclient==3.5.0", "pbr==4.0.2", "futures==3.1.1"],
     "dev": test_requirements,
