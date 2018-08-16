@@ -22,9 +22,7 @@ class PGMessageComponent(BaseMessageComponent):
     async def perform_message_get(self, recipient_user_id, offset):
         async with self.dbh.pool.acquire() as conn:
             return await conn.fetch(
-                """
-                    SELECT sender_device_id, body FROM messages WHERE recipient_user_id = $1 OFFSET $2
-                    """,
+                "SELECT sender_device_id, body FROM messages WHERE recipient_user_id = $1 OFFSET $2",
                 recipient_user_id,
                 offset,
             )

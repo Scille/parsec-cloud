@@ -5,19 +5,11 @@ from parsec.backend.vlob import VlobAtom, BaseVlobComponent
 from parsec.backend.exceptions import TrustSeedError, VersionError, NotFoundError
 
 
-class PGVlob:
-    def __init__(self, *args, **kwargs):
-        atom = VlobAtom(*args, **kwargs)
-        self.id = atom.id
-        self.read_trust_seed = atom.read_trust_seed
-        self.write_trust_seed = atom.write_trust_seed
-        self.blob_versions = [atom.blob]
-
-
 class PGVlobComponent(BaseVlobComponent):
     def __init__(self, dbh, signal_ns, beacon_component):
-        self._beacon_component = beacon_component
         self.dbh = dbh
+        self.beacon_component = beacon_component
+        self._signal_vlob_updated = signal_ns.signal("vlob_updated")
 
     async def create(self, id, rts, wts, blob):
         async with self.dbh.pool.acquire() as conn:
