@@ -27,8 +27,8 @@ async def init_db(url, force=False):
             """
             CREATE TABLE IF NOT EXISTS blockstore (
                 _id SERIAL PRIMARY KEY,
-                id VARCHAR(32),
-                block BYTEA
+                id VARCHAR(32) NOT NULL UNIQUE,
+                block BYTEA NOT NULL
             )"""
         )
         await conn.execute(

@@ -58,3 +58,22 @@ async def test_blockstore_get_bad_msg(alice_backend_sock, bad_msg):
     # Id and trust_seed are invalid anyway, but here we test another layer
     # so it's not important as long as we get our `bad_message` status
     assert rep["status"] == "bad_message"
+
+
+@pytest.mark.trio
+async def test_blockstore_conflicting_id(alice_backend_sock):
+    block_id = "123"
+
+    block_v1 = to_jsonb64(b"v1")
+    await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block_v1})
+    rep = await alice_backend_sock.recv()
+    assert rep["status"] == "ok"
+
+    block_v2 = to_jsonb64(b"v2")
+    await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block_v2})
+    rep = await alice_backend_sock.recv()
+    assert rep["status"] == "already_exists_error"
+
+    await alice_backend_sock.send({"cmd": "blockstore_get", "id": block_id})
+    rep = await alice_backend_sock.recv()
+    assert rep == {"status": "ok", "block": block_v1}
