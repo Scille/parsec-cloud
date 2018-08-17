@@ -9,7 +9,6 @@ class MemoryVlob:
         self.read_trust_seed = atom.read_trust_seed
         self.write_trust_seed = atom.write_trust_seed
         self.blob_versions = [atom.blob]
-        self.is_sink = atom.is_sink
 
 
 class MemoryVlobComponent(BaseVlobComponent):
