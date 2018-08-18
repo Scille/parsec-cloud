@@ -9,6 +9,8 @@ import logbook
 import traceback
 from collections import deque
 
+from parsec.utils import ejson_dumps
+
 
 logger = logbook.Logger("parsec.networking")
 
@@ -75,7 +77,7 @@ class CookedSocket:
         if not isinstance(req, dict):
             raise TypeError("req must be a dict")
 
-        payload = json.dumps(req).encode() + b"\n"
+        payload = ejson_dumps(req).encode() + b"\n"
         await self.sockstream.send_all(payload)
 
     async def recv(self) -> dict:

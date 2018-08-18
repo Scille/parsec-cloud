@@ -44,7 +44,7 @@ cmd_GROUP_CHECK_Schema = _cmd_GROUP_CHECK_Schema()
 
 
 class _cmd_CREATE_Schema(BaseCmdSchema):
-    id = fields.UUID(required=True, validate=validate.Length(min=1, max=32))
+    id = fields.UUID(required=True)
     rts = fields.String(required=True)
     wts = fields.String(required=True)
     blob = fields.Base64Bytes(required=True)

@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+from uuid import UUID
 from pendulum import Pendulum
 from nacl.secret import SecretBox
 import nacl.utils
@@ -24,6 +25,9 @@ def _json_serial(obj):
     if isinstance(obj, Pendulum):
         serial = obj.isoformat()
         return serial
+
+    if isinstance(obj, UUID):
+        return obj.hex
 
     elif isinstance(obj, bytes):
         return to_jsonb64(obj)
