@@ -119,11 +119,20 @@ class PGUserComponent(BaseUserComponent):
                 if user:
                     raise AlreadyExistsError("User `%s` already exists" % user_id)
 
-                now = pendulum.now().int_timestamp
+                now = pendulum.now()
 
                 result = await conn.execute(
-                    """INSERT INTO users (user_id, created_on, created_by, broadcast_key)
-                    VALUES ($1, $2, $3, $4)
+                    """
+                    INSERT INTO users (user_id, created_on, created_by, broadcast_key)
+                    VALUES (
+                        $1,
+                        $2,
+                        (IF $3 = NULL
+                            THEN (SELECT _id FROM devices WHERE device_id = $3)
+                            ELSE NULL
+                        END IF),
+                        $4
+                    )
                     """,
                     user_id,
                     now,
@@ -133,10 +142,21 @@ class PGUserComponent(BaseUserComponent):
                 if result != "INSERT 0 1":
                     raise ParsecError("Insertion error.")
                 await conn.executemany(
-                    """INSERT INTO user_devices (user_id, device_name, created_on, verify_key, revocated_on)
-                    VALUES ($1, $2, $3, $4, NULL)
+                    """INSERT INTO user_devices (
+                        user_, device_id, device_name, created_on, created_by, verify_key
+
+                        user_, device_name, created_on, verify_key, revocated_on
+                    )
+                    VALUES (
+                        (SELECT _id FROM users WHERE user_id = $1),
+                        $2,
+                        $3,
+                        $4
+                        (SELECT _id FROM devices WHERE device_id = $5),
+                        $6
+                    )
                     """,
-                    [(user_id, name, now, key) for name, key in devices],
+                    [(user_id, name, f"{user_id}@{name}", now, author, key) for name, key in devices],
                 )
 
     async def get(self, user_id):

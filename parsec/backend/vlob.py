@@ -28,7 +28,7 @@ class VlobAtom:
 
 
 class _CheckEntrySchema(UnknownCheckedSchema):
-    id = fields.String(required=True)
+    id = fields.UUID(required=True)
     rts = fields.String(required=True)
     version = fields.Integer(required=True)
 
@@ -44,7 +44,7 @@ cmd_GROUP_CHECK_Schema = _cmd_GROUP_CHECK_Schema()
 
 
 class _cmd_CREATE_Schema(BaseCmdSchema):
-    id = fields.String(required=True, validate=validate.Length(min=1, max=32))
+    id = fields.UUID(required=True, validate=validate.Length(min=1, max=32))
     rts = fields.String(required=True)
     wts = fields.String(required=True)
     blob = fields.Base64Bytes(required=True)
@@ -55,7 +55,7 @@ cmd_CREATE_Schema = _cmd_CREATE_Schema()
 
 
 class _cmd_READ_Schema(BaseCmdSchema):
-    id = fields.String(required=True)
+    id = fields.UUID(required=True)
     version = fields.Integer(validate=lambda n: n >= 1, allow_none=True)
     rts = fields.String(required=True)
 
@@ -64,7 +64,7 @@ cmd_READ_Schema = _cmd_READ_Schema()
 
 
 class _cmd_UPDATE_Schema(BaseCmdSchema):
-    id = fields.String(required=True)
+    id = fields.UUID(required=True)
     version = fields.Integer(validate=lambda n: n > 1)
     wts = fields.String(required=True)
     blob = fields.Base64Bytes(required=True)

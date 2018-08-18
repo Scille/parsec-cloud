@@ -11,101 +11,147 @@ async def init_db(url, force=False):
             await conn.execute(
                 """
                 DROP TABLE IF EXISTS
-                    blockstore,
-                    messages,
-                    pubkeys,
                     users,
-                    user_devices,
-                    invitations,
+                    devices,
+
+                    user_invitations,
+                    device_invitations,
+                    device_conf_tries,
+
+                    messages,
                     vlobs,
-                    device_configure_tries
+                    beacons,
+
+                    blockstore
+                CASCADE;
+
+                DROP TYPE IF EXISTS
+                    USER_INVITATION_STATUS,
+                    DEVICE_INVITATION_STATUS,
+                    DEVICE_CONF_TRY_STATUS
+                CASCADE;
                 """
             )
+        else:
+            db_initialized = await conn.execute("""
+            SELECT exists (
+                SELECT 1 FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_name = 'users'
+            )
+            """)
+            if db_initialized:
+                return
 
         await conn.execute(
             """
-            CREATE TABLE IF NOT EXISTS blockstore (
+            CREATE TABLE users (
                 _id SERIAL PRIMARY KEY,
-                id UUID NOT NULL UNIQUE,
-                block BYTEA NOT NULL
-            )"""
+                user_id VARCHAR(32) UNIQUE NOT NULL,
+                created_on TIMESTAMP NOT NULL,
+                created_by INTEGER NOT NULL,
+                broadcast_key BYTEA NOT NULL
+            );
+
+            CREATE TABLE devices (
+                _id SERIAL PRIMARY KEY,
+                user_ INTEGER REFERENCES users (_id) NOT NULL,
+                device_id VARCHAR(65) NOT NULL,
+                device_name VARCHAR(32) NOT NULL,
+                created_on TIMESTAMP NOT NULL,
+                created_by INTEGER,
+                verify_key BYTEA NOT NULL,
+                revocated_on TIMESTAMP,
+                UNIQUE (user_, device_name)
+            );
+
+            ALTER TABLE users ADD CONSTRAINT users_created_by_fk FOREIGN KEY (created_by) REFERENCES devices (_id);
+            ALTER TABLE devices ADD CONSTRAINT devices_created_by_fk FOREIGN KEY (created_by) REFERENCES devices (_id);
+            """
         )
+
         await conn.execute(
             """
-            CREATE TABLE IF NOT EXISTS messages (
-                id SERIAL PRIMARY KEY,
-                recipient_user_id TEXT NOT NULL,
-                sender_device_id TEXT NOT NULL,
+            CREATE TYPE USER_INVITATION_STATUS AS ENUM ('pending', 'claimed', 'rejected');
+            CREATE TABLE user_invitations (
+                _id SERIAL PRIMARY KEY,
+                status USER_INVITATION_STATUS NOT NULL,
+                user_id VARCHAR(32) NOT NULL,
+                device_name VARCHAR(32) NOT NULL,
+                invited_on TIMESTAMP NOT NULL,
+                invited_by INTEGER REFERENCES devices (_id) NOT NULL,
+                invitation_token TEXT NOT NULL,
+                claim_tries INTEGER NOT NULL,
+                claimed_on TIMESTAMP
+            )"""
+        )
+
+        await conn.execute(
+            """
+            CREATE TYPE DEVICE_INVITATION_STATUS AS ENUM ('pending', 'claimed', 'rejected');
+            CREATE TABLE device_invitations (
+                _id SERIAL PRIMARY KEY,
+                status DEVICE_INVITATION_STATUS NOT NULL,
+                user_ INTEGER REFERENCES users (_id) NOT NULL,
+                device_name VARCHAR(32) NOT NULL,
+                invited_on TIMESTAMP NOT NULL,
+                invited_by INTEGER REFERENCES devices (_id) NOT NULL,
+                invitation_token TEXT NOT NULL,
+                claim_tries INTEGER NOT NULL,
+                claimed_on TIMESTAMP
+            )"""
+        )
+
+        await conn.execute(
+            """
+            CREATE TYPE DEVICE_CONF_TRY_STATUS AS ENUM ('pending', 'accepted', 'refused');
+            CREATE TABLE device_conf_tries (
+                _id SERIAL PRIMARY KEY,
+                status DEVICE_CONF_TRY_STATUS NOT NULL,
+                invitation INTEGER REFERENCES device_invitations (_id) NOT NULL,
+                device_verify_key BYTEA NOT NULL,
+                exchange_cipherkey BYTEA NOT NULL,
+                salt BYTEA NOT NULL
+            )"""
+        )
+
+        await conn.execute(
+            """
+            CREATE TABLE messages (
+                _id SERIAL PRIMARY KEY,
+                recipient INTEGER REFERENCES users (_id) NOT NULL,
+                sender INTEGER REFERENCES devices (_id) NOT NULL,
                 body BYTEA NOT NULL
             )"""
         )
+
         await conn.execute(
             """
-            CREATE TABLE IF NOT EXISTS pubkeys (
+            CREATE TABLE vlobs (
                 _id SERIAL PRIMARY KEY,
-                id VARCHAR(32) UNIQUE,
-                pubkey BYTEA,
-                verifykey BYTEA
+                vlob_id UUID UNIQUE NOT NULL,
+                version INTEGER NOT NULL,
+                rts TEXT NOT NULL,
+                wts TEXT NOT NULL,
+                blob BYTEA NOT NULL,
+                UNIQUE(vlob_id, version)
             )"""
         )
+
         await conn.execute(
             """
-            CREATE TABLE IF NOT EXISTS users (
+            CREATE TABLE beacons (
                 _id SERIAL PRIMARY KEY,
-                user_id VARCHAR(32) UNIQUE,
-                created_on INTEGER,
-                created_by VARCHAR(32),
-                broadcast_key BYTEA
+                src INTEGER REFERENCES vlobs (_id) NOT NULL,
+                src_version INTEGER NOT NULL
             )"""
         )
+
         await conn.execute(
             """
-            CREATE TABLE IF NOT EXISTS user_devices (
+            CREATE TABLE blockstore (
                 _id SERIAL PRIMARY KEY,
-                user_id VARCHAR(32),
-                device_name TEXT,
-                created_on INTEGER,
-                configure_token TEXT,
-                verify_key BYTEA,
-                revocated_on INTEGER
-            )"""
-        )
-        await conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS invitations (
-                _id SERIAL PRIMARY KEY,
-                user_id VARCHAR(32) UNIQUE,
-                ts INTEGER,
-                author VARCHAR(32),
-                invitation_token TEXT,
-                claim_tries INTEGER
-            )"""
-        )
-        await conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS device_configure_tries (
-                _id SERIAL PRIMARY KEY,
-                user_id VARCHAR(32),
-                config_try_id TEXT,
-                status TEXT,
-                device_name TEXT,
-                device_verify_key BYTEA,
-                exchange_cipherkey BYTEA,
-                ciphered_user_privkey BYTEA,
-                refused_reason TEXT,
-                salt BYTEA
-            )"""
-        )
-        await conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS vlobs (
-                _id SERIAL PRIMARY KEY,
-                id VARCHAR(32),
-                version INTEGER,
-                rts TEXT,
-                wts TEXT,
-                blob BYTEA,
-                UNIQUE(id, version)
+                block_id UUID UNIQUE NOT NULL,
+                block BYTEA NOT NULL
             )"""
         )
 
