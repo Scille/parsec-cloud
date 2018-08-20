@@ -57,7 +57,6 @@ requirements = [
     "PyNaCl==1.2.0",
     "simplejson==3.10.0",
     "python-decouple==3.1",
-    "dynaconf==1.0.3",
     "trio==0.4.0",
     "python-interface==1.4.0",
     "async_generator >= 1.9",

@@ -161,22 +161,22 @@ class BackendApp:
         self.nursery = None
         self.dbh = None
 
-        if self.config.metadata_db_url == "MOCKED":
+        if self.config.db_url == "MOCKED":
             self.user = MemoryUserComponent(self.signal_ns)
             self.message = MemoryMessageComponent(self.signal_ns)
             self.beacon = MemoryBeaconComponent(self.signal_ns)
             self.vlob = MemoryVlobComponent(self.signal_ns, self.beacon)
 
-            self.blockstore = blockstore_factory(self.config.blockstore_db_url)
+            self.blockstore = blockstore_factory(self.config.blockstore_url)
         else:
-            self.dbh = PGHandler(self.config.metadata_db_url, self.signal_ns)
+            self.dbh = PGHandler(self.config.db_url, self.signal_ns)
             self.user = PGUserComponent(self.dbh, self.signal_ns)
             self.message = PGMessageComponent(self.dbh, self.signal_ns)
             self.beacon = PGBeaconComponent(self.dbh, self.signal_ns)
             self.vlob = PGVlobComponent(self.dbh, self.signal_ns, self.beacon)
 
             self.blockstore = blockstore_factory(
-                self.config.blockstore_db_url, postgresql_dbh=self.dbh
+                self.config.blockstore_url, postgresql_dbh=self.dbh
             )
 
         self.anonymous_cmds = {

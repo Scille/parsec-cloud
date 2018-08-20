@@ -319,9 +319,7 @@ def blockstore(backend_store):
 @pytest.fixture
 def backend_factory(nursery, signal_ns_factory, blockstore, backend_store, default_devices):
     async def _backend_factory(devices=default_devices, config={}, signal_ns=None, nursery=nursery):
-        config = BackendConfig(
-            **{"blockstore_db_url": blockstore, "metadata_db_url": backend_store, **config}
-        )
+        config = BackendConfig(**{"blockstore_url": blockstore, "db_url": backend_store, **config})
         if not signal_ns:
             signal_ns = signal_ns_factory()
         backend = BackendApp(config, signal_ns=signal_ns)

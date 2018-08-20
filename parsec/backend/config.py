@@ -1,14 +1,27 @@
+from os import environ
 import attr
-from dynaconf import settings
+
+
+def config_factory(raw_conf):
+    raw_conf = {k.upper(): v for k, v in raw_conf.items() if v not in (None, "")}
+
+    for mandatory in ("BLOCKSTORE_URL", "DB_URL"):
+        if not raw_conf.get(mandatory):
+            raise ValueError(f"Missing mandatory config {mandatory}")
+
+    if "SENTRY_URL" not in raw_conf:
+        raw_conf["SENTRY_URL"] = environ.get("SENTRY_URL") or None
+
+    return BackendConfig(**{k.lower(): v for k, v in raw_conf.items()})
 
 
 @attr.s(slots=True, frozen=True)
 class BackendConfig:
 
-    blockstore_db_url = attr.ib(factory=lambda: settings.BLOCKSTORE_DB_URL)
+    blockstore_url = attr.ib()
 
-    @blockstore_db_url.validator
-    def _validate_blockstore_db_url(self, field, val):
+    @blockstore_url.validator
+    def _validate_blockstore_url(self, field, val):
         if val == "MOCKED":
             return val
         elif val == "POSTGRESQL":
@@ -18,23 +31,21 @@ class BackendConfig:
         elif val.startswith("openstack:") and len(val.split(":")) == 5:
             return val
         raise ValueError(
-            "BLOCKSTORE_DB_URL must be `MOCKED`, `POSTGRESQL`, `s3:<region>:<bucket>:<key>:<secret>`,"
-            " or `openstack:<auth_url>:<container>:<user>:<tenant>:<password>:"
+            "BLOCKSTORE_URL must be `MOCKED`, `POSTGRESQL`, `s3:<region>:<bucket>:<key>:<secret>`,"
+            " or `openstack:<auth_url>:<tenant>:<container>:<user>:<password>`"
         )
 
-    metadata_db_url = attr.ib(factory=lambda: settings.METADATA_DB_URL)
+    db_url = attr.ib()
 
-    @metadata_db_url.validator
-    def _validate_metadata_db_url(self, field, val):
+    @db_url.validator
+    def _validate_db_url(self, field, val):
         if val == "MOCKED":
             return val
         elif val.startswith("postgresql://"):
             return val
-        raise ValueError("METADATA_DB_URL must be `MOCKED` or `postgresql://...`")
+        raise ValueError("DB_URL must be `MOCKED` or `postgresql://...`")
 
-    sentry_url = attr.ib(default=settings.get("SENTRY_URL"))
+    sentry_url = attr.ib(default=None)
 
-    debug = attr.ib(default=settings.as_bool("DEBUG"))
-    handshake_challenge_size = attr.ib(
-        settings.get("CONFIG_HANDSHAKE_CHALLENGE_SIZE", cast="@int", default=48)
-    )
+    debug = attr.ib(default=False)
+    handshake_challenge_size = attr.ib(default=48)

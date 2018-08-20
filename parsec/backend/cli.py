@@ -5,7 +5,7 @@ import click
 import logbook
 from raven.handlers.logbook import SentryHandler
 
-from parsec.backend import BackendApp, BackendConfig
+from parsec.backend import BackendApp, config_factory
 from parsec.backend.user import NotFoundError
 
 
@@ -80,24 +80,14 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option("--pubkeys", default=None)
 @click.option("--host", "-H", default="127.0.0.1", help="Host to listen on (default: 127.0.0.1)")
 @click.option("--port", "-P", default=6777, type=int, help=("Port to listen on (default: 6777)"))
-@click.option("--store", "-s", default=None, help="Store configuration (default: in memory)")
 @click.option(
-    "--blockstore-postgresql",
-    is_flag=True,
-    help="URL of the block store the clients should write into (default: "
-    "backend creates its own block store in memory or postgresql store).",
+    "--store", "-s", default="MOCKED", help="Store configuration (default: mocked in memory)"
 )
 @click.option(
-    "--blockstore-openstack",
-    default=None,
-    help="URL of OpenStack Swift the clients should write into (example: "
-    "<container>:<username>:<tenant>@<password>:<host>:<port>/<endpoint>).",
-)
-@click.option(
-    "--blockstore-s3",
-    default=None,
-    help="URL of Amazon S3 the clients should write into (example: "
-    "<region>:<container>:<key>:<secret>).",
+    "--blockstore",
+    "-b",
+    default="MOCKED",
+    help="URL of the block store the clients should write into (default: mocked in memory)",
 )
 @click.option(
     "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
@@ -106,15 +96,6 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option("--debug", "-d", is_flag=True)
 @click.option("--pdb", is_flag=True)
 def backend_cmd(log_level, log_file, pdb, **kwargs):
-    found = False
-    for key in ["blockstore_postgresql", "blockstore_openstack", "blockstore_s3"]:
-        if kwargs[key]:
-            if found:
-                print("--blockstore options are mutually exclusive")
-                sys.exit(1)
-            else:
-                found = True
-
     if log_file:
         log_handler = logbook.FileHandler(log_file, level=log_level.upper())
     else:
@@ -130,18 +111,11 @@ def backend_cmd(log_level, log_file, pdb, **kwargs):
         return _backend(**kwargs)
 
 
-def _backend(
-    host, port, pubkeys, store, blockstore_postgresql, blockstore_openstack, blockstore_s3, debug
-):
-    config = BackendConfig(
-        debug=debug,
-        blockstore_postgresql=blockstore_postgresql,
-        blockstore_openstack=blockstore_openstack,
-        blockstore_s3=blockstore_s3,
-        dburl=store,
-        host=host,
-        port=port,
-    )
+def _backend(host, port, pubkeys, store, blockstore, debug):
+    try:
+        config = config_factory({"debug": debug, "blockstore_url": blockstore, "db_url": store})
+    except ValueError as exc:
+        raise SystemExit(f"Invalid configuration: {exc}")
 
     if config.sentry_url:
         sentry_handler = SentryHandler(config.sentry_url, level="WARNING")
