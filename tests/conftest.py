@@ -5,6 +5,7 @@ import os
 import socket
 import asyncpg
 import contextlib
+from uuid import UUID
 from unittest.mock import patch
 import trio
 import trio_asyncio
@@ -333,7 +334,6 @@ def backend_factory(nursery, signal_ns_factory, blockstore, backend_store, defau
             for device in devices:
                 try:
                     await backend.user.create(
-                        author=None,
                         user_id=device.user_id,
                         broadcast_key=device.user_pubkey.encode(),
                         devices=[(device.device_name, device.device_verifykey.encode())],
@@ -348,8 +348,9 @@ def backend_factory(nursery, signal_ns_factory, blockstore, backend_store, defau
                         access["key"],
                         dumps_manifest(remote_user_manifest),
                     )
-
-                    await backend.vlob.create(access["id"], access["rts"], access["wts"], ciphered)
+                    await backend.vlob.create(
+                        UUID(access["id"]), access["rts"], access["wts"], ciphered
+                    )
 
                 except UserAlreadyExistsError:
                     await backend.user.create_device(

@@ -264,7 +264,7 @@ async def test_update_bad_seed(backend, alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_group_check(backend, alice_backend_sock):
+async def test_group_check(monitor, backend, alice_backend_sock):
     await populate_backend_vlob(backend)
 
     await alice_backend_sock.send(

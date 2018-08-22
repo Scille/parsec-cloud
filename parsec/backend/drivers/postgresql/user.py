@@ -1,5 +1,6 @@
 import itertools
 import pendulum
+from triopg.exceptions import UniqueViolationError
 
 from parsec.utils import ParsecError
 from parsec.backend.user import BaseUserComponent
@@ -13,7 +14,40 @@ from parsec.backend.exceptions import (
 
 class PGUserComponent(BaseUserComponent):
     def __init__(self, dbh, signal_ns):
+        super().__init__(signal_ns)
         self.dbh = dbh
+
+    async def create_invitation(self, invitation_token, user_id):
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                # TODO: combine this in the next SQL request
+                user = await conn.fetchrow("SELECT 1 FROM users WHERE user_id = $1", user_id)
+
+                if user:
+                    raise AlreadyExistsError("User `%s` already exists" % user_id)
+
+                result = await conn.execute(
+                    """
+                    INSERT INTO user_invitations (
+                        status,
+                        user_id,
+                        invited_on,
+                        invitation_token,
+                        claim_tries
+                    ) VALUES (
+                        'pending',
+                        $1,
+                        $2,
+                        $3,
+                        0
+                    )
+                    """,
+                    user_id,
+                    pendulum.now(),
+                    invitation_token,
+                )
+                if result != "INSERT 0 1":
+                    raise ParsecError("Insertion error.")
 
     async def claim_invitation(
         self, user_id, invitation_token, broadcast_key, device_name, device_verify_key
@@ -21,89 +55,293 @@ class PGUserComponent(BaseUserComponent):
         assert isinstance(broadcast_key, (bytes, bytearray))
         assert isinstance(device_verify_key, (bytes, bytearray))
 
-        error = None
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                results = await conn.fetchrow(
-                    """SELECT ts, author, invitation_token, claim_tries
-                    FROM invitations WHERE user_id = $1
+
+                rows = await conn.fetch(
+                    """
+                    SELECT
+                        _id,
+                        status,
+                        invited_on,
+                        invitation_token,
+                        claim_tries
+                    FROM user_invitations WHERE
+                        user_id = $1
                     """,
                     user_id,
                 )
-                if results:
-                    ts, author, retrieved_invitation_token, claim_tries = results
+
+                if not rows:
+                    raise NotFoundError(f"No invitation for user `{user_id}`")
+
+                for (rowid, status, invited_on, expected_invitation_token, claim_tries) in rows:
+                    if expected_invitation_token == invitation_token:
+                        break
                 else:
-                    raise NotFoundError("No invitation for user `%s`" % user_id)
-
-                ts = pendulum.from_timestamp(ts)
-                user = await conn.fetchrow("SELECT 1 FROM users WHERE user_id = $1", user_id)
-
-                if user or retrieved_invitation_token != invitation_token:
-                    claim_tries = claim_tries + 1
-
-                    if claim_tries > 3:
-                        result = await conn.execute(
-                            "DELETE FROM invitations WHERE user_id = $1", user_id
-                        )
-                        if result != "DELETE 1":
-                            raise ParsecError("Deletion error.")
-
-                    else:
-                        result = await conn.execute(
-                            "UPDATE invitations SET claim_tries = $1 WHERE user_id = $2",
-                            claim_tries,
-                            user_id,
-                        )
-                        if result != "UPDATE 1":
-                            raise ParsecError("Update error.")
-
-                    if user:
-                        error = "User `%s` has already been registered" % user_id
-                    else:
-                        error = "Invalid invitation token"
-
-                else:
-                    now = pendulum.now()
-
-                    if (now - ts) > pendulum.interval(hours=1):
-                        raise OutOfDateError("Claim code is too old.")
-
-                if not error:
-                    await self.create(
-                        author, user_id, broadcast_key, devices=[(device_name, device_verify_key)]
+                    await conn.executemany(
+                        """
+                        UPDATE user_invitations SET status = $2, claim_tries = $3 WHERE _id = $1
+                        """,
+                        rowid,
+                        "pending" if claim_tries < 3 else "rejected",
+                        claim_tries,
                     )
-        if error:
-            raise UserClaimError(error)
+                    await conn.commit()
+                    raise UserClaimError("Invalid invitation token")
 
-    async def create_invitation(self, invitation_token, author, user_id):
-        async with self.dbh.pool.acquire() as conn:
-            async with conn.transaction():
-                user = await conn.fetchrow("SELECT 1 FROM users WHERE user_id = $1", user_id)
+                now = pendulum.now()
+                if (now - invited_on) > pendulum.interval(hours=1):
+                    raise OutOfDateError("Claim code is too old.")
 
-                if user:
-                    raise AlreadyExistsError("User `%s` already exists" % user_id)
+                claim_tries += 1
+                if status == "claimed":
+                    raise UserClaimError(f"User `{user_id}` has already been registered")
+                elif status == "rejected":
+                    raise UserClaimError("Invalid invitation token")
 
-                # Overwrite previous invitation if any
                 result = await conn.execute(
                     """
-                    INSERT INTO invitations (
-                        user_id, ts, author, invitation_token, claim_tries
-                    ) VALUES ($1, $2, $3, $4, 0)
-                    ON CONFLICT (user_id) DO UPDATE SET
-                        ts=EXCLUDED.ts,
-                        author=EXCLUDED.author,
-                        invitation_token=EXCLUDED.invitation_token,
-                        claim_tries=EXCLUDED.claim_tries
+                    UPDATE user_invitations SET status = 'claimed', claim_tries = $2, claimed_on = $3 WHERE _id = $1
+                    """,
+                    rowid,
+                    claim_tries,
+                    now,
+                )
+                if result != "UPDATE 1":
+                    raise ParsecError("Update error.")
+
+                await self._create_user(
+                    conn, now, user_id, broadcast_key, devices=[(device_name, device_verify_key)]
+                )
+
+    async def configure_device(self, user_id, device_name, device_verify_key):
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                row = await conn.fetchrow(
+                    """
+                    SELECT 
+                        created_on
+                    FROM unconfigured_devices
+                    WHERE user_id = $1 AND device_name = $2
                     """,
                     user_id,
-                    pendulum.now().int_timestamp,
-                    author,
-                    invitation_token,
+                    device_name,
+                )
+            if not row:
+                raise NotFoundError(f"Device `{user_id}@{device_name}` doesn't exists")
+
+            await self._create_device(conn, user_id, device_name, row[0], device_verify_key)
+
+            result = await conn.execute(
+                """
+                DELETE FROM unconfigured_devices
+                WHERE user_id = $1 AND device_name = $2
+                """,
+                user_id,
+                device_name,
+            )
+            if result != "DELETE 1":
+                raise ParsecError("Update error.")
+
+    async def declare_unconfigured_device(self, token, user_id, device_name):
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                devices = await conn.fetch(
+                    "SELECT device_name FROM devices WHERE user_id = $1", user_id
+                )
+                if not devices:
+                    raise NotFoundError("User `%s` doesn't exists" % user_id)
+
+                if device_name in itertools.chain(*devices):
+                    raise AlreadyExistsError(
+                        "Device `%s@%s` already exists" % (user_id, device_name)
+                    )
+
+                result = await conn.execute(
+                    """
+                    INSERT INTO unconfigured_devices (
+                        user_id,
+                        device_name,
+                        created_on,
+                        configure_token
+                    ) VALUES (
+                        $1,
+                        $2,
+                        $3,
+                        $4
+                    ) ON CONFLICT (user_id, device_name) DO UPDATE SET
+                        created_on=EXCLUDED.created_on,
+                        configure_token=EXCLUDED.configure_token
+                    """,
+                    user_id,
+                    device_name,
+                    pendulum.now(),
+                    token,
                 )
                 if result != "INSERT 0 1":
                     raise ParsecError("Insertion error.")
 
-    async def create(self, author, user_id, broadcast_key, devices):
+    async def get_unconfigured_device(self, user_id, device_name):
+        async with self.dbh.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT
+                    created_on,
+                    configure_token
+                FROM unconfigured_devices WHERE
+                    user_id = $1 AND device_name = $2
+                """,
+                user_id,
+                device_name,
+            )
+
+            if not row:
+                raise NotFoundError(f"No invitation for device `{user_id@device_name}`")
+
+            return {"created_on": row[0], "configure_token": row[1]}
+
+    async def register_device_configuration_try(
+        self, config_try_id, user_id, device_name, device_verify_key, exchange_cipherkey, salt
+    ):
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                result = await conn.execute(
+                    """
+                    INSERT INTO device_configuration_tries (
+                        config_try_id,
+                        status,
+                        user_id,
+                        device_name,
+                        device_verify_key,
+                        exchange_cipherkey,
+                        salt
+                    ) VALUES (
+                        $1,
+                        'waiting_answer',
+                        $2,
+                        $3,
+                        $4,
+                        $5,
+                        $6
+                    ) ON CONFLICT (user_id, config_try_id) DO UPDATE SET
+                        status=EXCLUDED.status,
+                        device_name=EXCLUDED.device_name,
+                        device_verify_key=EXCLUDED.device_verify_key,
+                        exchange_cipherkey=EXCLUDED.exchange_cipherkey,
+                        salt=EXCLUDED.salt
+                    """,
+                    config_try_id,
+                    user_id,
+                    device_name,
+                    device_verify_key,
+                    exchange_cipherkey,
+                    salt,
+                )
+                if result != "INSERT 0 1":
+                    raise ParsecError("Insertion error.")
+
+    async def retrieve_device_configuration_try(self, config_try_id, user_id):
+        async with self.dbh.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT
+                    status,
+                    refused_reason,
+                    device_name,
+                    device_verify_key,
+                    exchange_cipherkey,
+                    salt,
+                    ciphered_user_privkey,
+                    ciphered_user_manifest_access
+                FROM device_configuration_tries WHERE
+                    user_id = $1 AND config_try_id = $2
+                """,
+                user_id,
+                config_try_id,
+            )
+
+            if not row:
+                raise NotFoundError()
+
+            return {
+                "status": row[0],
+                "refused_reason": row[1],
+                "device_name": row[2],
+                "device_verify_key": row[3],
+                "exchange_cipherkey": row[4],
+                "salt": row[5],
+                "ciphered_user_privkey": row[6],
+                "ciphered_user_manifest_access": row[7],
+            }
+
+    async def accept_device_configuration_try(
+        self, config_try_id, user_id, ciphered_user_privkey, ciphered_user_manifest_access
+    ):
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                row = await conn.fetchrow(
+                    """
+                    SELECT
+                        status, device_name, device_verify_key
+                    FROM device_configuration_tries
+                    WHERE user_id = $1 AND config_try_id = $2
+                    """,
+                    user_id,
+                    config_try_id,
+                )
+                if not row:
+                    raise NotFoundError()
+                status, device_name, device_verify_key = row
+                if status != "waiting_answer":
+                    raise AlreadyExistsError("Device configuration try already done.")
+
+                result = await conn.execute(
+                    """
+                    UPDATE device_configuration_tries SET
+                        status = 'accepted',
+                        ciphered_user_privkey = $1,
+                        ciphered_user_manifest_access = $2
+                    WHERE user_id = $3 AND config_try_id = $4
+                    """,
+                    ciphered_user_privkey,
+                    ciphered_user_manifest_access,
+                    user_id,
+                    config_try_id,
+                )
+                if result != "UPDATE 1":
+                    raise ParsecError("Update error.")
+
+    async def refuse_device_configuration_try(self, config_try_id, user_id, reason):
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                row = await conn.fetchrow(
+                    """
+                    SELECT status FROM device_configuration_tries WHERE user_id = $1 AND config_try_id = $2
+                    """,
+                    user_id,
+                    config_try_id,
+                )
+                if not row:
+                    raise NotFoundError()
+                if row[0] != "waiting_answer":
+                    raise AlreadyExistsError("Device configuration try already done.")
+
+                result = await conn.execute(
+                    """
+                    UPDATE device_configuration_tries SET
+                        status = 'refused',
+                        refused_reason = $1
+                    WHERE user_id = $2 AND config_try_id = $3
+                    """,
+                    reason,
+                    user_id,
+                    config_try_id,
+                )
+                if result != "UPDATE 1":
+                    raise ParsecError("Update error.")
+
+    async def _create_user(self, conn, created_on, user_id, broadcast_key, devices):
         assert isinstance(broadcast_key, (bytes, bytearray))
 
         if isinstance(devices, dict):
@@ -112,256 +350,90 @@ class PGUserComponent(BaseUserComponent):
         for _, key in devices:
             assert isinstance(key, (bytes, bytearray))
 
+        try:
+            result = await conn.execute(
+                """
+                INSERT INTO users (user_id, created_on, broadcast_key)
+                VALUES ($1, $2, $3)
+                """,
+                user_id,
+                created_on,
+                broadcast_key,
+            )
+        except UniqueViolationError as exc:
+            raise AlreadyExistsError("User `%s` already exists" % user_id)
+
+        if result != "INSERT 0 1":
+            raise ParsecError("Insertion error.")
+
+        await conn.executemany(
+            """INSERT INTO devices (
+                device_id, user_id, device_name, created_on, verify_key
+            )
+            VALUES ($1, $2, $3, $4, $5)
+            """,
+            [(f"{user_id}@{name}", user_id, name, created_on, key) for name, key in devices],
+        )
+
+    async def _create_device(self, conn, user_id, device_name, created_on, verify_key):
+        devices = await conn.fetch("SELECT device_name FROM devices WHERE user_id = $1", user_id)
+        if not devices:
+            raise NotFoundError("User `%s` doesn't exists" % user_id)
+
+        if device_name in itertools.chain(*devices):
+            raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
+
+        result = await conn.execute(
+            "INSERT INTO user_devices (user_id, device_name, created_on, verify_key) VALUES ($1, $2, $3, $4)",
+            user_id,
+            device_name,
+            pendulum.now().int_timestamp,
+            verify_key,
+        )
+        if result != "INSERT 0 1":
+            raise ParsecError("Insertion error.")
+
+    async def create(self, user_id, broadcast_key, devices):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                user = await conn.fetchrow("SELECT 1 FROM users WHERE user_id = $1", user_id)
+                await self._create_user(conn, pendulum.now(), user_id, broadcast_key, devices)
 
-                if user:
-                    raise AlreadyExistsError("User `%s` already exists" % user_id)
-
-                now = pendulum.now()
-
-                result = await conn.execute(
-                    """
-                    INSERT INTO users (user_id, created_on, created_by, broadcast_key)
-                    VALUES (
-                        $1,
-                        $2,
-                        (IF $3 = NULL
-                            THEN (SELECT _id FROM devices WHERE device_id = $3)
-                            ELSE NULL
-                        END IF),
-                        $4
-                    )
-                    """,
-                    user_id,
-                    now,
-                    author,
-                    broadcast_key,
-                )
-                if result != "INSERT 0 1":
-                    raise ParsecError("Insertion error.")
-                await conn.executemany(
-                    """INSERT INTO user_devices (
-                        user_, device_id, device_name, created_on, created_by, verify_key
-
-                        user_, device_name, created_on, verify_key, revocated_on
-                    )
-                    VALUES (
-                        (SELECT _id FROM users WHERE user_id = $1),
-                        $2,
-                        $3,
-                        $4
-                        (SELECT _id FROM devices WHERE device_id = $5),
-                        $6
-                    )
-                    """,
-                    [(user_id, name, f"{user_id}@{name}", now, author, key) for name, key in devices],
-                )
+    async def create_device(self, user_id, device_name, verify_key):
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                await self._create_device(conn, user_id, device_name, pendulum.now(), verify_key)
 
     async def get(self, user_id):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 results = await conn.fetchrow(
-                    "SELECT created_on, created_by, broadcast_key FROM users WHERE user_id = $1",
-                    user_id,
+                    "SELECT created_on, broadcast_key FROM users WHERE user_id = $1", user_id
                 )
                 if results:
-                    created_on, created_by, broadcast_key = results
+                    created_on, broadcast_key = results
                 else:
                     raise NotFoundError(user_id)
 
                 user = {
                     "user_id": user_id,
                     "broadcast_key": broadcast_key,
-                    "created_by": created_by,
-                    "created_on": pendulum.from_timestamp(created_on),
+                    "created_on": pendulum.instance(created_on),
                     "devices": {},
                 }
                 user_devices = await conn.fetch(
                     """
-                    SELECT device_name, created_on, configure_token, verify_key, revocated_on
-                    FROM user_devices WHERE user_id = $1
+                    SELECT device_name, created_on, verify_key, revocated_on
+                    FROM devices WHERE user_id = $1
                     """,
                     user_id,
                 )
-                for (
-                    d_name,
-                    d_created_on,
-                    d_configure_token,
-                    d_verify_key,
-                    d_revocated_on,
-                ) in user_devices:
+                for (d_name, d_created_on, d_verify_key, d_revocated_on) in user_devices:
                     user["devices"][d_name] = {
-                        "created_on": pendulum.from_timestamp(d_created_on),
-                        "configure_token": d_configure_token,
+                        "created_on": pendulum.instance(d_created_on),
                         "verify_key": d_verify_key if d_verify_key else None,
                         "revocated_on": (
-                            pendulum.from_timestamp(d_revocated_on) if d_revocated_on else None
+                            pendulum.instance(d_revocated_on) if d_revocated_on else None
                         ),
                     }
 
         return user
-
-    async def create_device(self, user_id, device_name, verify_key):
-        async with self.dbh.pool.acquire() as conn:
-            async with conn.transaction():
-                devices = await conn.fetch(
-                    "SELECT device_name FROM user_devices WHERE user_id = $1", user_id
-                )
-                if not devices:
-                    raise NotFoundError("User `%s` doesn't exists" % user_id)
-
-                if device_name in itertools.chain(*devices):
-                    raise AlreadyExistsError(
-                        "Device `%s@%s` already exists" % (user_id, device_name)
-                    )
-
-                result = await conn.execute(
-                    "INSERT INTO user_devices (user_id, device_name, created_on, verify_key) VALUES ($1, $2, $3, $4)",
-                    user_id,
-                    device_name,
-                    pendulum.now().int_timestamp,
-                    verify_key,
-                )
-                if result != "INSERT 0 1":
-                    raise ParsecError("Insertion error.")
-
-    async def configure_device(self, user_id, device_name, device_verify_key):
-        async with self.dbh.pool.acquire() as conn:
-            updated = await conn.execute(
-                "UPDATE user_devices SET verify_key = $1 WHERE user_id=$2 AND device_name=$3",
-                # 'SELECT device_name FROM user_devices WHERE user_id=$1 AND device_name=$2',
-                device_verify_key,
-                user_id,
-                device_name,
-            )
-            if updated == "UPDATE 0":
-                raise NotFoundError("User `%s` doesn't exists" % user_id)
-
-    # TODO
-    # raise NotFoundError("Device `%s@%s` doesn't exists" % (user_id, device_name))
-
-    async def declare_unconfigured_device(self, token, user_id, device_name):
-        async with self.dbh.pool.acquire() as conn:
-            async with conn.transaction():
-                devices = await conn.fetch(
-                    "SELECT device_name FROM user_devices WHERE user_id = $1", user_id
-                )
-                if not devices:
-                    raise NotFoundError("User `%s` doesn't exists" % user_id)
-
-                if device_name in itertools.chain(*devices):
-                    raise AlreadyExistsError(
-                        "Device `%s@%s` already exists" % (user_id, device_name)
-                    )
-
-                result = await conn.execute(
-                    """
-                    INSERT INTO user_devices (
-                        user_id, device_name, created_on, configure_token
-                    ) VALUES ($1, $2, $3, $4)""",
-                    user_id,
-                    device_name,
-                    pendulum.now().int_timestamp,
-                    token,
-                )
-                if result != "INSERT 0 1":
-                    raise ParsecError("Insertion error.")
-
-    async def get_unconfigured_device(self, user_id, device_name):
-        raise NotImplementedError()
-
-    async def register_device_configuration_try(
-        self, config_try_id, user_id, device_name, device_verify_key, exchange_cipherkey, salt
-    ):
-        async with self.dbh.pool.acquire() as conn:
-            # TODO: handle multiple configuration tries on a given device
-            result = await conn.execute(
-                """
-                INSERT INTO device_configure_tries (
-                    user_id, config_try_id, status, device_name, device_verify_key,
-                    exchange_cipherkey, salt
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-                """,
-                user_id,
-                config_try_id,
-                "waiting_answer",
-                device_name,
-                device_verify_key,
-                exchange_cipherkey,
-                salt,
-            )
-            if result != "INSERT 0 1":
-                raise ParsecError("Insertion error.")
-        return config_try_id
-
-    async def retrieve_device_configuration_try(self, config_try_id, user_id):
-        async with self.dbh.pool.acquire() as conn:
-            config_try = await conn.fetchrow(
-                """
-                SELECT status, device_name, device_verify_key, exchange_cipherkey,
-                    cyphered_user_privkey, refused_reason, salt
-                FROM device_configure_tries WHERE user_id = $1 AND config_try_id = $2
-                """,
-                user_id,
-                config_try_id,
-            )
-            if not config_try:
-                raise NotFoundError()
-
-        return {
-            "status": config_try[0],
-            "device_name": config_try[1],
-            "device_verify_key": config_try[2],
-            "exchange_cipherkey": config_try[3],
-            "ciphered_user_privkey": config_try[4],
-            "refused_reason": config_try[5],
-            "salt": config_try[6],
-        }
-
-        return config_try
-
-    async def accept_device_configuration_try(
-        self, config_try_id, user_id, ciphered_user_privkey, ciphered_user_manifest_access
-    ):
-        # async def accept_device_configuration_try(self, config_try_id, user_id, ciphered_user_privkey):
-        async with self.dbh.pool.acquire() as conn:
-            updated = await conn.execute(
-                """
-                UPDATE device_configure_tries SET status = $1, ciphered_user_privkey = $2
-                WHERE user_id=$3 AND config_try_id=$4 and status=$5
-                """,
-                "accepted",
-                ciphered_user_privkey,
-                user_id,
-                config_try_id,
-                "waiting_answer",
-            )
-            if updated == "UPDATE 0":
-                raise NotFoundError()
-
-    # TODO: handle this error
-    # if config_try['status'] != 'waiting_answer':
-    #     raise AlreadyExistsError('Device configuration try already done.')
-
-    async def refuse_device_configuration_try(self, config_try_id, user_id, reason):
-        async with self.dbh.pool.acquire() as conn:
-            updated = await conn.execute(
-                """
-                UPDATE device_configure_tries SET status = $1, refused_reason = $2
-                WHERE user_id=$3 AND config_try_id=$4 and status=$5
-                """,
-                "refused",
-                reason,
-                user_id,
-                config_try_id,
-                "waiting_answer",
-            )
-            if updated == "UPDATE 0":
-                raise NotFoundError()
-
-
-# TODO: handle this error
-# if config_try['status'] != 'waiting_answer':
-#     raise AlreadyExistsError('Device configuration try already done.')

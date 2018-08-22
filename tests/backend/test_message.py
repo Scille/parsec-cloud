@@ -32,34 +32,22 @@ async def test_message_from_bob_to_alice(alice, bob, alice_backend_sock, bob_bac
     }
 
 
+# TODO: this test should be postgresql-only but is run twice because of
+# backend_factory's dependency on blockstore fixture
 @pytest.mark.trio
 async def test_message_from_bob_to_alice_multi_backends(
     asyncio_loop, postgresql_url, alice, bob, backend_factory, backend_sock_factory
 ):
     await pg_driver.handler.init_db(postgresql_url, True)
     backend_1 = await backend_factory(
-        config={"blockstore_postgresql": True, "dburl": postgresql_url}
+        config={"blockstore_url": "POSTGRESQL", "db_url": postgresql_url}
     )
     backend_2 = await backend_factory(
-        config={"blockstore_postgresql": True, "dburl": postgresql_url}
+        devices=(), config={"blockstore_url": "POSTGRESQL", "db_url": postgresql_url}
     )
 
-    await backend_1.user.create(
-        author="<backend-fixture>",
-        user_id=alice.user_id,
-        broadcast_key=alice.user_pubkey.encode(),
-        devices=[(alice.device_name, alice.device_verifykey.encode())],
-    )
-
-    await backend_1.user.create(
-        author="<backend-fixture>",
-        user_id=bob.user_id,
-        broadcast_key=bob.user_pubkey.encode(),
-        devices=[(bob.device_name, bob.device_verifykey.encode())],
-    )
-
-    alice_backend_sock = backend_sock_factory(backend_1, alice)
-    bob_backend_sock = backend_sock_factory(backend_2, bob)
+    alice_backend_sock = await backend_sock_factory(backend_1, alice)
+    bob_backend_sock = await backend_sock_factory(backend_2, bob)
 
     await alice_backend_sock.send({"cmd": "event_subscribe", "event": "message.received"})
     rep = await alice_backend_sock.recv()
@@ -82,6 +70,6 @@ async def test_message_from_bob_to_alice_multi_backends(
     assert rep == {
         "status": "ok",
         "messages": [
-            {"body": to_jsonb64(b"Hello from Bob !"), "sender_id": "bob@test", "count": 1}
+            {"body": to_jsonb64(b"Hello from Bob !"), "sender_id": "bob@dev1", "count": 1}
         ],
     }

@@ -22,25 +22,16 @@ from swiftclient.exceptions import ClientException  # noqa
 
 
 class OpenStackBlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(
-        self,
-        openstack_auth_url,
-        openstack_container,
-        openstack_user,
-        openstack_tenant,
-        openstack_password,
-    ):
+    def __init__(self, auth_url, tenant, container, user, password):
         self.swift_client = swiftclient.Connection(
-            authurl=openstack_auth_url,
-            user=":".join([openstack_user, openstack_tenant]),
-            key=openstack_password,
+            authurl=auth_url, user=":".join([user, tenant]), key=password
         )
-        self._openstack_container = openstack_container
-        self.swift_client.head_container(openstack_container)
+        self._container = container
+        self.swift_client.head_container(container)
 
     async def get(self, id):
         try:
-            _, obj = self.swift_client.get_object(self._openstack_container, id)
+            _, obj = self.swift_client.get_object(self._container, id)
         except ClientException as exc:
             if exc.http_status == 404:
                 raise NotFoundError("Unknown block id.")
@@ -53,10 +44,10 @@ class OpenStackBlockStoreComponent(BaseBlockStoreComponent):
     async def post(self, id, block):
         # TODO find a more efficient way to check if block already exists
         try:
-            _, obj = self.swift_client.get_object(self._openstack_container, id)
+            _, obj = self.swift_client.get_object(self._container, id)
         except ClientException as exc:
             if exc.http_status == 404:
-                self.swift_client.put_object(self._openstack_container, id, block)
+                self.swift_client.put_object(self._container, id, block)
             else:
                 raise exc
 

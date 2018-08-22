@@ -71,7 +71,6 @@ DeviceSchema = _DeviceSchema()
 class _UserSchema(BaseCmdSchema):
     user_id = fields.String(required=True)
     created_on = fields.DateTime(required=True)
-    created_by = fields.String(required=True)
     broadcast_key = fields.Base64Bytes(required=True)
     devices = fields.Map(fields.String(), fields.Nested(DeviceSchema), required=True)
 
@@ -116,7 +115,7 @@ class BaseUserComponent:
         msg = UserIDSchema.load_or_abort(msg)
         token = _generate_token()
         try:
-            await self.create_invitation(token, client_ctx.id, msg["user_id"])
+            await self.create_invitation(token, msg["user_id"])
         except AlreadyExistsError:
             return {
                 "status": "already_exists",
@@ -270,15 +269,18 @@ class BaseUserComponent:
         )
         return {"status": "ok"}
 
+    async def create_invitation(self, invitation_token, author, user_id):
+        raise NotImplementedError()
+
     async def claim_invitation(
         self, invitation_token, user_id, broadcast_key, device_name, device_verify_key
     ):
         raise NotImplementedError()
 
-    async def create_invitation(self, invitation_token, author, user_id):
+    async def declare_unconfigured_device(self, token, author, user_id, device_name):
         raise NotImplementedError()
 
-    async def declare_unconfigured_device(self, token, user_id, device_name):
+    async def get_unconfigured_device(self, user_id, device_name):
         raise NotImplementedError()
 
     async def register_device_configuration_try(

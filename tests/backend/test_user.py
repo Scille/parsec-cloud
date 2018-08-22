@@ -20,7 +20,6 @@ async def test_user_get_ok(backend, alice_backend_sock, bob):
         "status": "ok",
         "user_id": "bob",
         "broadcast_key": to_jsonb64(bob.user_pubkey.encode()),
-        "created_by": "<backend-fixture>",
         "created_on": "2000-01-01T00:00:00+00:00",
         "devices": {
             bob.device_name: {
@@ -74,10 +73,10 @@ async def test_user_claim_unknown_token(anonymous_backend_sock, mallory):
 
 
 @pytest.fixture
-async def invitation_token(backend, alice, mallory):
+async def invitation_token(backend, mallory):
     token = "1234567890"
     with freeze_time("2017-07-07T00:00:00"):
-        await backend.user.create_invitation(token, alice.id, mallory.user_id)
+        await backend.user.create_invitation(token, mallory.user_id)
     return token
 
 
@@ -123,7 +122,6 @@ async def test_user_claim_token(
     assert rep == {
         "status": "ok",
         "user_id": "mallory",
-        "created_by": alice.id,
         "created_on": "2017-07-07T00:59:00+00:00",
         "broadcast_key": to_jsonb64(mallory.user_pubkey.encode()),
         "devices": {

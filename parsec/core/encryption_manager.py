@@ -56,7 +56,6 @@ class BackendUserGetRepSchema(UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
     user_id = fields.String(required=True)
     created_on = fields.DateTime(required=True)
-    created_by = fields.String(required=True)
     broadcast_key = fields.Base64Bytes(required=True)
     devices = fields.Map(
         fields.String(), fields.Nested(BackendUserGetRepDevicesSchema), required=True
