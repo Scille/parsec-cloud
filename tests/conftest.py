@@ -196,11 +196,13 @@ def contextify(factory, teardown=lambda x: None):
                 res = await factory(*args, **kwargs, nursery=nursery)
             else:
                 res = factory(*args, **kwargs, nursery=nursery)
-            yield res
-            if inspect.iscoroutinefunction(teardown):
-                await teardown(res)
-            else:
-                teardown(res)
+            try:
+                yield res
+            finally:
+                if inspect.iscoroutinefunction(teardown):
+                    await teardown(res)
+                else:
+                    teardown(res)
             nursery.cancel_scope.cancel()
 
     return _contextified
@@ -331,7 +333,7 @@ def backend_factory(nursery, signal_ns_factory, blockstore, backend_store, defau
             for device in devices:
                 try:
                     await backend.user.create(
-                        author="<backend-fixture>",
+                        author=None,
                         user_id=device.user_id,
                         broadcast_key=device.user_pubkey.encode(),
                         devices=[(device.device_name, device.device_verifykey.encode())],
@@ -370,8 +372,9 @@ def backend_factory_cm(backend_factory):
 
 
 @pytest.fixture
-async def backend(backend_factory):
-    return await backend_factory()
+async def backend(backend_factory_cm):
+    async with backend_factory_cm() as backend:
+        yield backend
 
 
 @pytest.fixture
@@ -468,8 +471,9 @@ def core_factory_cm(core_factory):
 
 
 @pytest.fixture
-async def core(core_factory):
-    return await core_factory()
+async def core(core_factory_cm):
+    async with core_factory_cm() as core:
+        yield core
 
 
 @pytest.fixture
