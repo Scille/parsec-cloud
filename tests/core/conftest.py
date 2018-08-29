@@ -1,4 +1,6 @@
 import pytest
+import trio
+from async_generator import asynccontextmanager
 
 from parsec.signals import Namespace as SignalNamespace
 from parsec.core.backend_cmds_sender import BackendCmdsSender
@@ -12,43 +14,65 @@ def signal_ns_factory():
 
 
 @pytest.fixture
-def encryption_manager_factory(nursery, alice, backend_cmds_sender_factory):
+def encryption_manager_factory(alice, backend_cmds_sender_factory):
+    @asynccontextmanager
     async def _encryption_manager_factory(device, backend_addr=None):
-        bcs = await backend_cmds_sender_factory(alice, backend_addr=backend_addr)
-        em = EncryptionManager(alice, bcs)
-        await em.init(nursery)
-        return em
+        async with backend_cmds_sender_factory(alice, backend_addr=backend_addr) as bcs:
+            em = EncryptionManager(alice, bcs)
+            async with trio.open_nursery() as nursery:
+                await em.init(nursery)
+                try:
+                    yield em
+                finally:
+                    await em.teardown()
 
     return _encryption_manager_factory
 
 
 @pytest.fixture
 async def encryption_manager(encryption_manager_factory, alice):
-    return await encryption_manager_factory(alice)
+    async with encryption_manager_factory(alice) as em:
+        yield em
 
 
 @pytest.fixture
-def backend_cmds_sender_factory(nursery, running_backend):
+def backend_cmds_sender_factory(running_backend):
+    @asynccontextmanager
     async def _backend_cmds_sender_factory(device, backend_addr=None):
         if not backend_addr:
             backend_addr = running_backend.addr
         bcs = BackendCmdsSender(device, backend_addr)
-        await bcs.init(nursery)
-        return bcs
+        async with trio.open_nursery() as nursery:
+            await bcs.init(nursery)
+            try:
+                yield bcs
+            finally:
+                await bcs.teardown()
 
     return _backend_cmds_sender_factory
 
 
 @pytest.fixture
-def fs_factory(nursery, backend_cmds_sender_factory, encryption_manager_factory, signal_ns_factory):
-    async def _fs_factory(device, backend_addr=None, signal_ns=None):
+def fs_factory(backend_cmds_sender_factory, encryption_manager_factory, signal_ns_factory):
+    @asynccontextmanager
+    async def _fs_factory(device, backend_addr=None, signal_ns=None, auto_sync=True):
         if not signal_ns:
             signal_ns = signal_ns_factory()
-        encryption_manager = await encryption_manager_factory(device, backend_addr=backend_addr)
-        backend_cmds_sender = await backend_cmds_sender_factory(device, backend_addr=backend_addr)
-        fs = FSManager(device, backend_cmds_sender, encryption_manager, signal_ns)
-        await fs.init(nursery)
-        return fs
+
+        async with encryption_manager_factory(
+            device, backend_addr=backend_addr
+        ) as encryption_manager, backend_cmds_sender_factory(
+            device, backend_addr=backend_addr
+        ) as backend_cmds_sender:
+            fs = FSManager(
+                device, backend_cmds_sender, encryption_manager, signal_ns, auto_sync=auto_sync
+            )
+            async with trio.open_nursery() as nursery:
+                await fs.init(nursery)
+                try:
+                    yield fs
+                finally:
+                    await fs.teardown()
 
     return _fs_factory
 
@@ -59,8 +83,9 @@ async def backend_cmds_sender(alice):
 
 
 @pytest.fixture
-async def fs(fs_factory, alice):
-    return fs_factory(alice)
+async def alice_fs(fs_factory, alice):
+    async with fs_factory(alice) as fs:
+        yield fs
 
 
 @pytest.fixture
@@ -71,7 +96,7 @@ def backend_addr_factory(running_backend, tcp_stream_spy):
 
     def _backend_addr_factory():
         nonlocal counter
-        addr = f"tcp://{counter}.placeholder.com:9999"
+        addr = f"tcp://backend-addr-{counter}.localhost:9999"
         tcp_stream_spy.push_hook(addr, running_backend.connection_factory)
         counter += 1
         return addr

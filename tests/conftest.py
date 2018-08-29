@@ -1,5 +1,4 @@
 import pytest
-import inspect
 import attr
 import os
 import socket
@@ -9,8 +8,8 @@ from uuid import UUID
 from unittest.mock import patch
 import trio
 import trio_asyncio
-import hypothesis
 from async_generator import asynccontextmanager
+import hypothesis
 from nacl.public import PrivateKey
 from nacl.signing import SigningKey
 import nacl
@@ -32,9 +31,10 @@ from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 def pytest_addoption(parser):
     parser.addoption("--hypothesis-max-examples", default=100, type=int)
     parser.addoption("--hypothesis-derandomize", action="store_true")
-    parser.addoption("--postgresql", action="store_true", help="Run tests making use of PostgreSQL")
     parser.addoption(
-        "--only-postgresql", action="store_true", help="Only run tests making use of PostgreSQL"
+        "--postgresql",
+        action="store_true",
+        help="Use PostgreSQL backend instead of default memory mock",
     )
     parser.addoption("--runslow", action="store_true", help="Don't skip slow tests")
     parser.addoption(
@@ -53,7 +53,7 @@ def hypothesis_settings(request):
 def pytest_runtest_setup(item):
     # Mock and non-UTC timezones are a really bad mix, so keep things simple
     os.environ.setdefault("TZ", "UTC")
-    if "slow" in item.keywords and not item.config.getoption("--runslow"):
+    if item.get_closest_marker("slow") and not item.config.getoption("--runslow"):
         pytest.skip("need --runslow option to run")
 
 
@@ -105,8 +105,12 @@ def postgresql_url(request):
 
 @pytest.fixture
 async def asyncio_loop():
-    async with trio_asyncio.open_loop() as loop:
-        yield loop
+    # When a ^C happens, trio send a Cancelled exception to each running
+    # coroutine. We must protect this one to avoid deadlock if it is cancelled
+    # before another coroutine that uses trio-asyncio.
+    with trio.open_cancel_scope(shield=True):
+        async with trio_asyncio.open_loop() as loop:
+            yield loop
 
 
 @pytest.fixture
@@ -168,50 +172,31 @@ class AppServer:
 
 
 @pytest.fixture
-def server_factory(nursery, tcp_stream_spy):
+def server_factory(tcp_stream_spy):
     count = 0
 
-    def _server_factory(entry_point, url=None, nursery=nursery):
+    @asynccontextmanager
+    async def _server_factory(entry_point, url=None):
         nonlocal count
         count += 1
 
         if not url:
-            url = f"tcp://server-{count}.placeholder.com:9999"
+            url = f"tcp://server-{count}.localhost:9999"
 
-        def connection_factory(*args, **kwargs):
-            right, left = trio.testing.memory_stream_pair()
-            nursery.start_soon(entry_point, left)
-            return right
-
-        tcp_stream_spy.push_hook(url, connection_factory)
-        return AppServer(entry_point, url, connection_factory)
-
-    return _server_factory
-
-
-def contextify(factory, teardown=lambda x: None):
-    @asynccontextmanager
-    async def _contextified(*args, **kwargs):
         async with trio.open_nursery() as nursery:
-            if inspect.iscoroutinefunction(factory):
-                res = await factory(*args, **kwargs, nursery=nursery)
-            else:
-                res = factory(*args, **kwargs, nursery=nursery)
-            try:
-                yield res
-            finally:
-                if inspect.iscoroutinefunction(teardown):
-                    await teardown(res)
-                else:
-                    teardown(res)
+
+            def connection_factory(*args, **kwargs):
+                right, left = trio.testing.memory_stream_pair()
+                nursery.start_soon(entry_point, left)
+                return right
+
+            tcp_stream_spy.push_hook(url, connection_factory)
+
+            yield AppServer(entry_point, url, connection_factory)
+
             nursery.cancel_scope.cancel()
 
-    return _contextified
-
-
-@pytest.fixture
-def server_factory_cm(server_factory):
-    return contextify(server_factory)
+    return _server_factory
 
 
 @pytest.fixture
@@ -287,32 +272,41 @@ def default_devices(alice, alice2, bob):
     return (alice, alice2, bob)
 
 
-@pytest.fixture(params=["mocked", "postgresql"])
-async def backend_store(request, asyncio_loop):
-    if request.param == "postgresql":
-        if not pytest.config.getoption("--postgresql"):
-            pytest.skip("`--postgresql` option not provided")
+@pytest.fixture
+def bootstrap_postgresql(url):
+    from threading import Thread
+    from parsec.backend.drivers import postgresql as pg_driver
 
-        from parsec.backend.drivers import postgresql as pg_driver
+    def _bootstrap():
+        trio_asyncio.run(pg_driver.handler.init_db, url, True)
 
+    t = Thread(target=_bootstrap)
+    t.start()
+    t.join()
+
+
+@pytest.fixture()
+def backend_store(request):
+    if pytest.config.getoption("--postgresql"):
+        # TODO: would be better to create a new postgresql cluster for each test
         url = get_postgresql_url()
         try:
-            await pg_driver.handler.init_db(url, True)
+            bootstrap_postgresql(url)
         except asyncpg.exceptions.InvalidCatalogNameError as exc:
             raise RuntimeError(
                 "Is `parsec_test` a valid database in PostgreSQL ?\n"
                 "Running `psql -c 'CREATE DATABASE parsec_test;'` may fix this"
             ) from exc
         return url
-
+    elif request.node.get_closest_marker("postgresql"):
+        pytest.skip("`Test is postgresql-only")
     else:
-        if pytest.config.getoption("--only-postgresql"):
-            pytest.skip("`--only-postgresql` option provided")
         return "MOCKED"
 
 
 @pytest.fixture
 def blockstore(backend_store):
+    # TODO: allow to test against swift ?
     if backend_store.startswith("postgresql://"):
         return "POSTGRESQL"
     else:
@@ -320,118 +314,148 @@ def blockstore(backend_store):
 
 
 @pytest.fixture
-def backend_factory(nursery, signal_ns_factory, blockstore, backend_store, default_devices):
-    async def _backend_factory(devices=default_devices, config={}, signal_ns=None, nursery=nursery):
-        config = BackendConfig(**{"blockstore_url": blockstore, "db_url": backend_store, **config})
-        if not signal_ns:
-            signal_ns = signal_ns_factory()
-        backend = BackendApp(config, signal_ns=signal_ns)
-        await backend.init(nursery)
+async def nursery():
+    # A word about the nursery fixture:
+    # The whole point of trio is to be able to build a graph of coroutines to
+    # simplify teardown. Using a single top level nursery kind of mitigate this
+    # given unrelated coroutines will end up there and be closed all together.
+    # Worst, among those coroutine it could exists a relationship that will be lost
+    # in a more or less subtle way (typically using a factory fixture that use the
+    # default nursery behind the scene).
+    # Bonus points occur if using trio-asyncio that creates yet another hidden
+    # layer of relationship that could end up in cryptic dead lock hardened enough
+    # to survive ^C.
+    # Finally if your still no convinced, factory fixtures not depending on async
+    # fixtures (like nursery is) can be used inside the Hypothesis tests.
+    # I know you love Hypothesis. Checkmate. You won't use this fixture ;-)
+    raise RuntimeError("Bad kitty ! Bad !!!")
 
-        # Need to initialize backend with users/devices, and for each user
-        # store it user manifest
-        with freeze_time("2000-01-01"):
-            for device in devices:
-                try:
-                    await backend.user.create(
-                        user_id=device.user_id,
-                        broadcast_key=device.user_pubkey.encode(),
-                        devices=[(device.device_name, device.device_verifykey.encode())],
-                    )
 
-                    access = device.user_manifest_access
-                    local_user_manifest = loads_manifest(device.local_db.get(access))
-                    remote_user_manifest = local_to_remote_manifest(local_user_manifest)
-                    ciphered = encrypt_with_secret_key(
-                        device.id,
-                        device.device_signkey,
-                        access["key"],
-                        dumps_manifest(remote_user_manifest),
-                    )
-                    await backend.vlob.create(
-                        UUID(access["id"]), access["rts"], access["wts"], ciphered
-                    )
+@pytest.fixture
+def backend_factory(asyncio_loop, signal_ns_factory, blockstore, backend_store, default_devices):
+    # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
+    # the backend should inherit from the one with the asyncio loop context manager.
+    # This mean the nursery fixture cannot use the backend object otherwise we
+    # can end up in a dead lock if the asyncio loop is torndown before the
+    # nursery fixture is done with calling the backend's postgresql stuff.
 
-                except UserAlreadyExistsError:
-                    await backend.user.create_device(
-                        user_id=device.user_id,
-                        device_name=device.device_name,
-                        verify_key=device.device_verifykey.encode(),
-                    )
+    @asynccontextmanager
+    async def _backend_factory(devices=default_devices, config={}, signal_ns=None):
+        async with trio.open_nursery() as nursery:
+            config = BackendConfig(
+                **{"blockstore_url": blockstore, "db_url": backend_store, **config}
+            )
+            if not signal_ns:
+                signal_ns = signal_ns_factory()
+            backend = BackendApp(config, signal_ns=signal_ns)
+            await backend.init(nursery)
 
-        return backend
+            # Need to initialize backend with users/devices, and for each user
+            # store it user manifest
+            with freeze_time("2000-01-01"):
+                for device in devices:
+                    try:
+                        await backend.user.create(
+                            user_id=device.user_id,
+                            broadcast_key=device.user_pubkey.encode(),
+                            devices=[(device.device_name, device.device_verifykey.encode())],
+                        )
+
+                        access = device.user_manifest_access
+                        local_user_manifest = loads_manifest(device.local_db.get(access))
+                        remote_user_manifest = local_to_remote_manifest(local_user_manifest)
+                        ciphered = encrypt_with_secret_key(
+                            device.id,
+                            device.device_signkey,
+                            access["key"],
+                            dumps_manifest(remote_user_manifest),
+                        )
+                        await backend.vlob.create(
+                            UUID(access["id"]), access["rts"], access["wts"], ciphered
+                        )
+
+                    except UserAlreadyExistsError:
+                        await backend.user.create_device(
+                            user_id=device.user_id,
+                            device_name=device.device_name,
+                            verify_key=device.device_verifykey.encode(),
+                        )
+            try:
+                yield backend
+            finally:
+                await backend.teardown()
+                # Don't do `nursery.cancel_scope.cancel()` given `backend.teardown()`
+                # should have stopped all our coroutines (i.e. if the nursery is
+                # hanging, something on top of us should be fixed...)
 
     return _backend_factory
 
 
 @pytest.fixture
-def backend_factory_cm(backend_factory):
-    async def teardown(backend):
-        await backend.teardown()
-
-    return contextify(backend_factory, teardown)
-
-
-@pytest.fixture
-async def backend(backend_factory_cm):
-    async with backend_factory_cm() as backend:
+async def backend(backend_factory):
+    async with backend_factory() as backend:
         yield backend
 
 
 @pytest.fixture
-def backend_addr(tcp_stream_spy):
-    return "tcp://placeholder.com:9999"
+def backend_addr():
+    return "tcp://parsec-backend.localhost:9999"
 
 
 @pytest.fixture
-def running_backend(server_factory, backend_addr, backend):
-    server = server_factory(backend.handle_client, backend_addr)
-    server.backend = backend
-    return server
+async def running_backend(server_factory, backend_addr, backend):
+    async with server_factory(backend.handle_client, backend_addr) as server:
+        server.backend = backend
+        yield server
 
 
 @pytest.fixture
-def backend_sock_factory(server_factory, nursery):
-    async def _backend_sock_factory(backend, auth_as, nursery=nursery):
-        server = server_factory(backend.handle_client, nursery=nursery)
-        sockstream = server.connection_factory()
-        sock = FreezeTestOnBrokenStreamCookedSocket(sockstream)
-        if auth_as:
-            # Handshake
-            if auth_as == "anonymous":
-                ch = AnonymousClientHandshake()
-            else:
-                ch = ClientHandshake(auth_as.id, auth_as.device_signkey)
-            challenge_req = await sock.recv()
-            answer_req = ch.process_challenge_req(challenge_req)
-            await sock.send(answer_req)
-            result_req = await sock.recv()
-            ch.process_result_req(result_req)
-        return sock
+def backend_sock_factory(server_factory):
+    @asynccontextmanager
+    async def _backend_sock_factory(backend, auth_as):
+        async with server_factory(backend.handle_client) as server:
+            sockstream = server.connection_factory()
+            sock = FreezeTestOnBrokenStreamCookedSocket(sockstream)
+            if auth_as:
+                # Handshake
+                if auth_as == "anonymous":
+                    ch = AnonymousClientHandshake()
+                else:
+                    ch = ClientHandshake(auth_as.id, auth_as.device_signkey)
+                challenge_req = await sock.recv()
+                answer_req = ch.process_challenge_req(challenge_req)
+                await sock.send(answer_req)
+                result_req = await sock.recv()
+                ch.process_result_req(result_req)
+            yield sock
 
     return _backend_sock_factory
 
 
 @pytest.fixture
 async def anonymous_backend_sock(backend_sock_factory, backend):
-    return await backend_sock_factory(backend, "anonymous")
+    async with backend_sock_factory(backend, "anonymous") as sock:
+        yield sock
 
 
 @pytest.fixture
 async def alice_backend_sock(backend_sock_factory, backend, alice):
-    return await backend_sock_factory(backend, alice)
+    async with backend_sock_factory(backend, alice) as sock:
+        yield sock
 
 
 @pytest.fixture
 async def bob_backend_sock(backend_sock_factory, backend, bob):
-    return await backend_sock_factory(backend, bob)
+    async with backend_sock_factory(backend, bob) as sock:
+        yield sock
 
 
 @pytest.fixture
-def core_factory(tmpdir, nursery, signal_ns_factory, backend_addr, default_devices):
+def core_factory(tmpdir, signal_ns_factory, backend_addr, default_devices):
     count = 0
 
-    async def _core_factory(devices=default_devices, config={}, signal_ns=None, nursery=nursery):
+    @asynccontextmanager
+    async def _core_factory(devices=default_devices, config={}, signal_ns=None):
         nonlocal count
         count += 1
 
@@ -447,49 +471,44 @@ def core_factory(tmpdir, nursery, signal_ns_factory, backend_addr, default_devic
         if not signal_ns:
             signal_ns = signal_ns_factory()
         core = Core(config, signal_ns=signal_ns)
-        await core.init(nursery)
+        async with trio.open_nursery() as nursery:
+            await core.init(nursery)
 
-        for device in devices:
-            core.local_devices_manager.register_new_device(
-                device.id,
-                device.user_privkey.encode(),
-                device.device_signkey.encode(),
-                device.user_manifest_access,
-                "<secret>",
-            )
+            for device in devices:
+                core.local_devices_manager.register_new_device(
+                    device.id,
+                    device.user_privkey.encode(),
+                    device.device_signkey.encode(),
+                    device.user_manifest_access,
+                    "<secret>",
+                )
 
-        return core
+            try:
+                yield core
+            finally:
+                await core.teardown()
+                # Don't do `nursery.cancel_scope.cancel()` given `core.teardown()`
+                # should have stopped all our coroutines (i.e. if the nursery is
+                # hanging, something on top of us should be fixed...)
 
     return _core_factory
 
 
 @pytest.fixture
-def core_factory_cm(core_factory):
-    async def teardown(core):
-        await core.teardown()
-
-    return contextify(core_factory, teardown)
-
-
-@pytest.fixture
-async def core(core_factory_cm):
-    async with core_factory_cm() as core:
+async def core(core_factory):
+    async with core_factory() as core:
         yield core
 
 
 @pytest.fixture
-def core_sock_factory(server_factory, nursery):
-    def _core_sock_factory(core, nursery=nursery):
-        server = server_factory(core.handle_client, nursery=nursery)
-        sockstream = server.connection_factory()
-        return FreezeTestOnBrokenStreamCookedSocket(sockstream)
+def core_sock_factory(server_factory):
+    @asynccontextmanager
+    async def _core_sock_factory(core):
+        async with server_factory(core.handle_client) as server:
+            sockstream = server.connection_factory()
+            yield FreezeTestOnBrokenStreamCookedSocket(sockstream)
 
     return _core_sock_factory
-
-
-@pytest.fixture
-def core_sock_factory_cm(core_sock_factory):
-    return contextify(core_sock_factory)
 
 
 @pytest.fixture
@@ -501,12 +520,14 @@ async def alice_core(core, alice):
 
 @pytest.fixture
 async def alice_core_sock(core_sock_factory, alice_core):
-    return core_sock_factory(alice_core)
+    async with core_sock_factory(alice_core) as sock:
+        yield sock
 
 
 @pytest.fixture
 async def core2(core_factory):
-    return await core_factory()
+    async with core_factory() as core2:
+        yield core2
 
 
 @pytest.fixture
@@ -525,9 +546,11 @@ async def bob_core2(core2, bob):
 
 @pytest.fixture
 async def alice2_core2_sock(core_sock_factory, alice2_core2):
-    return core_sock_factory(alice2_core2)
+    async with core_sock_factory(alice2_core2) as sock:
+        yield sock
 
 
 @pytest.fixture
 async def bob_core2_sock(core_sock_factory, bob_core2):
-    return core_sock_factory(bob_core2)
+    async with core_sock_factory(bob_core2) as sock:
+        yield sock

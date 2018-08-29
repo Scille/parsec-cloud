@@ -114,4 +114,34 @@ async def test_event_listen(alice_backend_sock, bob_backend_sock):
     assert rep == {"status": "no_events"}
 
 
+@pytest.mark.trio
+@pytest.mark.postgresql
+async def test_cross_backend_event(backend_factory, backend_sock_factory, alice, bob):
+    async with backend_factory() as backend_1, backend_factory(devices=()) as backend_2:
+        async with backend_sock_factory(backend_1, alice) as alice_sock, backend_sock_factory(
+            backend_2, bob
+        ) as bob_sock:
+
+            await subscribe_ping(alice_sock, "foo")
+
+            await alice_sock.send({"cmd": "event_listen"})
+
+            await ping(bob_sock, "bar")
+            await ping(bob_sock, "foo")
+
+            with trio.fail_after(1):
+                rep = await alice_sock.recv()
+            assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}
+
+            await ping(bob_sock, "foo")
+
+            await alice_sock.send({"cmd": "event_listen", "wait": False})
+            rep = await alice_sock.recv()
+            assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}
+
+            await alice_sock.send({"cmd": "event_listen", "wait": False})
+            rep = await alice_sock.recv()
+            assert rep == {"status": "no_events"}
+
+
 # TODO: test private events

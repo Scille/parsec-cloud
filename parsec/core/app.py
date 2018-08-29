@@ -76,6 +76,8 @@ class Core(BaseAsyncComponent):
             pass
 
     async def login(self, device):
+        # TODO: would be good to raise an exception when backend is online
+        # but we get a HandshakeError from it...
         async with self.auth_lock:
             if self.auth_device:
                 raise AlreadyLoggedError("Already logged as `%s`" % self.auth_device)

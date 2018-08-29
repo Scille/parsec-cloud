@@ -1,5 +1,6 @@
 import trio
 from trio.hazmat import current_clock
+from functools import partial
 import logbook
 
 from parsec.core.base import BaseAsyncComponent
@@ -58,10 +59,20 @@ class SyncMonitor(BaseAsyncComponent):
 
         self.signal_ns.signal("backend.offline").connect(_on_backend_offline, weak=True)
 
+        # `_listen_sync_loop` is going to connect to `fs.entry.updated` signal
+        # we must want for this before calling ourself started, hence we must
+        # provide it with a callback.
+        first_started_cb_call = True
+
+        def started_cb():
+            nonlocal first_started_cb_call
+            if first_started_cb_call:
+                task_status.started((nursery.cancel_scope, closed_event))
+                first_started_cb_call = False
+
         closed_event = trio.Event()
         try:
             async with trio.open_nursery() as nursery:
-                task_status.started((nursery.cancel_scope, closed_event))
                 while True:
                     try:
                         with trio.open_cancel_scope() as event_listener_scope:
@@ -70,14 +81,15 @@ class SyncMonitor(BaseAsyncComponent):
                                 await self.syncer.full_sync()
                             finally:
                                 self._not_syncing_event.set()
-                            await self._listen_sync_loop()
+                            await self._listen_sync_loop(started_cb)
 
                     except BackendNotAvailable:
+                        started_cb()
                         await backend_online_event.wait()
         finally:
             closed_event.set()
 
-    async def _listen_sync_loop(self):
+    async def _listen_sync_loop(self, started_cb):
         updated_entries = {}
         new_event = trio.Event()
 
@@ -94,6 +106,7 @@ class SyncMonitor(BaseAsyncComponent):
 
         async with trio.open_nursery() as nursery:
             while True:
+                started_cb()
                 await new_event.wait()
                 new_event.clear()
                 await self._listen_sync_step(updated_entries)
@@ -107,7 +120,6 @@ class SyncMonitor(BaseAsyncComponent):
                     nursery.start_soon(_wait)
 
     async def _listen_sync_step(self, updated_entries):
-        logger.debug("sync step on entries: {!r}", updated_entries)
         now = timestamp()
 
         for id, (first_updated, last_updated) in updated_entries.items():

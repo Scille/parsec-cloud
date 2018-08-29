@@ -1,4 +1,4 @@
-from asyncpg.exceptions import UniqueViolationError
+from triopg import UniqueViolationError
 
 from parsec.utils import ParsecError
 from parsec.backend.vlob import VlobAtom, BaseVlobComponent
@@ -23,7 +23,10 @@ class PGVlobComponent(BaseVlobComponent):
         async with self.dbh.pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-            SELECT vlob_id, rts, version FROM vlobs WHERE vlob_id = any($1::uuid[])
+                SELECT DISTINCT ON (vlob_id) vlob_id, rts, version
+                FROM vlobs
+                WHERE vlob_id = any($1::uuid[])
+                ORDER BY vlob_id, version DESC
             """,
                 to_check_dict.keys(),
             )
@@ -107,14 +110,17 @@ class PGVlobComponent(BaseVlobComponent):
                     raise VersionError("Wrong blob version.")
 
                 rts = previous[2]
-                result = await conn.execute(
-                    "INSERT INTO vlobs (vlob_id, rts, wts, version, blob) VALUES ($1, $2, $3, $4, $5)",
-                    id,
-                    rts,
-                    wts,
-                    version,
-                    blob,
-                )
+                try:
+                    result = await conn.execute(
+                        "INSERT INTO vlobs (vlob_id, rts, wts, version, blob) VALUES ($1, $2, $3, $4, $5)",
+                        id,
+                        rts,
+                        wts,
+                        version,
+                        blob,
+                    )
+                except UniqueViolationError:
+                    raise VersionError("Wrong blob version.")
 
                 if result != "INSERT 0 1":
                     raise ParsecError("Insertion error.")

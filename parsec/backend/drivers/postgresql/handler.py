@@ -1,11 +1,14 @@
-from parsec.utils import ejson_dumps, ejson_loads
-import trio
 import triopg
+import logbook
+
+from parsec.utils import ejson_dumps, ejson_loads
+
+
+logger = logbook.Logger("parsec.backend.driver")
 
 
 async def init_db(url, force=False):
     conn = await triopg.connect(url)
-
     async with conn.transaction():
 
         if force:
@@ -156,8 +159,6 @@ async def init_db(url, force=False):
             )"""
         )
 
-    await conn.close()
-
 
 class PGHandler:
     def __init__(self, url, signal_ns):
@@ -168,42 +169,29 @@ class PGHandler:
     async def init(self, nursery):
         await init_db(self.url)
 
-        # TODO: AsyncPG represent timestamp with `datetime.datetime`, it would be
-        # better to use `pendulum.Pendulum` instead
-        # async def _init_connection(conn):
-        #     await conn.set_type_codec(
-        #         'timestamp', schema='pg_catalog', format='tuple',
-        #         encoder=lambda x: (int(x.timestamp()), ),
-        #         decoder=pendulum.from_timestamp)
-        # self.pool = await triopg.create_pool(self.url, init=_init_connection)
-
         self.pool = await triopg.create_pool(self.url)
         # This connection is dedicated to the notifications listening, so it
         # would only complicate stuff to include it into the connection pool
         self.notification_conn = await triopg.connect(self.url)
+
         await self.notification_conn.add_listener("app_notification", self._on_notification)
 
     def _on_notification(self, connection, pid, channel, payload):
         data = ejson_loads(payload)
         signal = data.pop("__signal__")
+        logger.debug("notif received {}, {}, {}", pid, channel, payload)
         self.signal_ns.signal(signal).send(None, **data)
 
-    def get_signal_handler(self, signal):
-        def signal_handler(sender):
-            try:
-                self.signals_to_ignore.remove((signal, sender))
-            except ValueError:
-                self.queue.put_nowait({"signal": signal, "sender": sender})
-
-        return signal_handler
-
     async def teardown(self):
-        try:
-            await self.pool.close()
-        finally:
-            await self.notification_conn.close()
+        await self.notification_conn.close()
+        await self.pool.close()
+
+    async def ping(self, author, ping):
+        async with self.pool.acquire() as conn:
+            await send_signal(conn, "pinged", author=author, ping=ping)
 
 
 async def send_signal(conn, signal, **kwargs):
     raw_data = ejson_dumps({"__signal__": signal, **kwargs})
     await conn.execute("SELECT pg_notify($1, $2)", "app_notification", raw_data)
+    logger.debug("notif sent {}", raw_data)

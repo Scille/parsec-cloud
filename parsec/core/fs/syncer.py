@@ -50,7 +50,6 @@ class Syncer(FolderSyncerMixin, FileSyncerMixin):
             if is_folder_manifest(manifest):
                 for child_access in manifest["children"].values():
                     _recursive_get_local_entries_ids(child_access)
-            print(access)
 
             entries.append(
                 {"id": access["id"], "rts": access["rts"], "version": manifest["base_version"]}
@@ -81,7 +80,10 @@ class Syncer(FolderSyncerMixin, FileSyncerMixin):
                 # Entry not locally present, nothing to do
                 return
             notify_beacons = self.local_folder_fs.get_beacons(path)
-            await self._sync_nolock(path, access, recursive=False, notify_beacons=notify_beacons)
+            # TODO: Instead of going recursive here, we should have do a minimal
+            # children sync (i.e. sync empty file and folder with the backend)
+            # to save time.
+            await self._sync_nolock(path, access, recursive=True, notify_beacons=notify_beacons)
 
     async def sync(self, path, recursive=True):
         # Only allow a single synchronizing operation at a time to simplify

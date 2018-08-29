@@ -116,19 +116,19 @@ async def test_user_claim_token(
     assert rep == {"status": "ok"}
 
     # Finally make sure this user is accepted by the backend
-    mallory_sock = await backend_sock_factory(backend, mallory)
-    await mallory_sock.send({"cmd": "user_get", "user_id": mallory.user_id})
-    rep = await mallory_sock.recv()
-    assert rep == {
-        "status": "ok",
-        "user_id": "mallory",
-        "created_on": "2017-07-07T00:59:00+00:00",
-        "broadcast_key": to_jsonb64(mallory.user_pubkey.encode()),
-        "devices": {
-            mallory.device_name: {
-                "created_on": "2017-07-07T00:59:00+00:00",
-                "revocated_on": None,
-                "verify_key": to_jsonb64(mallory.device_verifykey.encode()),
-            }
-        },
-    }
+    async with backend_sock_factory(backend, mallory) as mallory_sock:
+        await mallory_sock.send({"cmd": "user_get", "user_id": mallory.user_id})
+        rep = await mallory_sock.recv()
+        assert rep == {
+            "status": "ok",
+            "user_id": "mallory",
+            "created_on": "2017-07-07T00:59:00+00:00",
+            "broadcast_key": to_jsonb64(mallory.user_pubkey.encode()),
+            "devices": {
+                mallory.device_name: {
+                    "created_on": "2017-07-07T00:59:00+00:00",
+                    "revocated_on": None,
+                    "verify_key": to_jsonb64(mallory.device_verifykey.encode()),
+                }
+            },
+        }

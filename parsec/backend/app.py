@@ -219,7 +219,10 @@ class BackendApp:
 
     async def _api_ping(self, client_ctx, msg):
         msg = cmd_PING_Schema.load_or_abort(msg)
-        self.signal_ns.signal("pinged").send(client_ctx.id, author=client_ctx.id, ping=msg["ping"])
+        if self.dbh:
+            await self.dbh.ping(author=client_ctx.id, ping=msg["ping"])
+        else:
+            self.signal_ns.signal("pinged").send(None, author=client_ctx.id, ping=msg["ping"])
         return {"status": "ok", "pong": msg["ping"]}
 
     async def _api_blockstore_post(self, client_ctx, msg):

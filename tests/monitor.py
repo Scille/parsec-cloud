@@ -111,7 +111,7 @@ class Monitor(Instrument):
     #     print("### finished I/O check (took {} seconds)".format(duration))
 
     def after_run(self):
-        LOGGER.info("Stoping Trio monitor ui thread")
+        LOGGER.info("Stopping Trio monitor ui thread")
         self._closing.set()
         self._ui_thread.join()
 

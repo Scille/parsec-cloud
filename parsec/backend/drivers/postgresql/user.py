@@ -384,10 +384,11 @@ class PGUserComponent(BaseUserComponent):
             raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
 
         result = await conn.execute(
-            "INSERT INTO user_devices (user_id, device_name, created_on, verify_key) VALUES ($1, $2, $3, $4)",
+            "INSERT INTO devices (device_id, user_id, device_name, created_on, verify_key) VALUES ($1, $2, $3, $4, $5)",
+            f"{user_id}@{device_name}",
             user_id,
             device_name,
-            pendulum.now().int_timestamp,
+            pendulum.now(),
             verify_key,
         )
         if result != "INSERT 0 1":
