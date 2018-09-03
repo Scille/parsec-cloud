@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="file">images/file.png</file>
+        <file alias="folder_empty">images/folder_empty.png</file>
+        <file alias="folder_full">images/folder_full.png</file>
+        <file alias="home">images/home.png</file>
+        <file alias="parsec">images/parsec_icon.png</file>
+        <file alias="search">images/search.png</file>
+        <file alias="settings">images/settings.png</file>
+        <file alias="users">images/users.png</file>
+    </qresource>
+    <qresource prefix="/logos">
+        <file alias="parsec">images/parsec.png</file>
+        <file alias="scille">images/scille.png</file>
+    </qresource>
+    <qresource prefix="/translations">
+        <file alias="parsec_de">translations/parsec_de.qm</file>
+        <file alias="parsec_es">translations/parsec_es.qm</file>
+        <file alias="parsec_fr">translations/parsec_fr.qm</file>
+    </qresource>
+</RCC>
