@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 
 from parsec.core import Core, CoreConfig
 from parsec.core.devices_manager import DeviceSavingError
-from parsec.core.ui.gui import run_ui
+from parsec.core.gui import run_gui
 
 
 logger = logbook.Logger("parsec.core.app")
@@ -174,8 +174,7 @@ def _core(socket, backend_addr, backend_watchdog, debug, i_am_john, no_ui):
             trio_thread.start()
             portal = portal_queue.get()
             cancel_scope = portal_queue.get()
-            run_ui(core, portal, cancel_scope)
-            portal_queue.put(None)
+            run_gui(core, portal, cancel_scope)
             trio_thread.join()
     except KeyboardInterrupt:
         print("bye ;-)")

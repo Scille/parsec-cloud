@@ -62,7 +62,7 @@ requirements = [
     "async_generator >= 1.9",
     "raven==6.8.0",
     'contextvars==2.1;python_version<"3.7"',
-    "Qt5==5.11.2",
+    "PyQt5==5.11.2",
 ]
 dependency_links = [
     # need to use --process-dependency-links option for this
