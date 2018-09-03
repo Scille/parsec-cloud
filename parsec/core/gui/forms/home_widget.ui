@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>655</width>
-    <height>674</height>
+    <height>185</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -26,7 +26,7 @@
       <string/>
      </property>
      <property name="pixmap">
-      <pixmap resource="../rc/resources.qrc">:/logos/parsec</pixmap>
+      <pixmap resource="../rc/resources.qrc">:/logos/images/logos/parsec.png</pixmap>
      </property>
      <property name="scaledContents">
       <bool>false</bool>

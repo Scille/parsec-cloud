@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../rc/resources.qrc">
-    <normaloff>:/icons/parsec_icon</normaloff>:/icons/parsec_icon</iconset>
+    <normaloff>:/icons/images/icons/parsec.png</normaloff>:/icons/images/icons/parsec.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -31,7 +31,7 @@
         </property>
         <property name="icon">
          <iconset resource="../rc/resources.qrc">
-          <normaloff>:/icons/home</normaloff>:/icons/home</iconset>
+          <normaloff>:/icons/images/icons/home.png</normaloff>:/icons/images/icons/home.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -44,6 +44,9 @@
         </property>
         <property name="checked">
          <bool>false</bool>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -63,7 +66,7 @@
         </property>
         <property name="icon">
          <iconset resource="../rc/resources.qrc">
-          <normaloff>:/icons/folder_full</normaloff>:/icons/folder_full</iconset>
+          <normaloff>:/icons/images/icons/files.png</normaloff>:/icons/images/icons/files.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -72,6 +75,9 @@
          </size>
         </property>
         <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoRaise">
          <bool>true</bool>
         </property>
        </widget>
@@ -86,7 +92,7 @@
         </property>
         <property name="icon">
          <iconset resource="../rc/resources.qrc">
-          <normaloff>:/icons/users</normaloff>:/icons/users</iconset>
+          <normaloff>:/icons/images/icons/users_manage.png</normaloff>:/icons/images/icons/users_manage.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -95,6 +101,9 @@
          </size>
         </property>
         <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoRaise">
          <bool>true</bool>
         </property>
        </widget>
@@ -109,7 +118,7 @@
         </property>
         <property name="icon">
          <iconset resource="../rc/resources.qrc">
-          <normaloff>:/icons/settings</normaloff>:/icons/settings</iconset>
+          <normaloff>:/icons/images/icons/settings.png</normaloff>:/icons/images/icons/settings.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -118,6 +127,9 @@
          </size>
         </property>
         <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoRaise">
          <bool>true</bool>
         </property>
        </widget>
@@ -171,7 +183,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_file">
@@ -190,11 +202,19 @@
    <addaction name="menu_help"/>
   </widget>
   <action name="action_quit">
+   <property name="icon">
+    <iconset resource="../rc/resources.qrc">
+     <normaloff>:/icons/images/icons/exit.png</normaloff>:/icons/images/icons/exit.png</iconset>
+   </property>
    <property name="text">
     <string>Quit</string>
    </property>
   </action>
   <action name="action_about_parsec">
+   <property name="icon">
+    <iconset resource="../rc/resources.qrc">
+     <normaloff>:/icons/images/icons/parsec.png</normaloff>:/icons/images/icons/parsec.png</iconset>
+   </property>
    <property name="text">
     <string>About Parsec</string>
    </property>

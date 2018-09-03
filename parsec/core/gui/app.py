@@ -1,17 +1,16 @@
-from PyQt5.QtCore import QTranslator, QLibraryInfo, QLocale, QFile
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QSettings
 
-from .main_window import MainWindow
+from parsec.core.gui import lang
+from parsec.core.gui.main_window import MainWindow
 
 
 def run_gui(parsec_core, trio_portal, cancel_scope):
     print("Starting UI")
 
     app = QApplication([])
-
-    translator = QTranslator()
-    translator.load(':/translations/parsec_{}'.format(QLocale.system().name()[:2]))
-    app.installTranslator(translator)
+    app.setOrganizationName('Scille')
+    app.setOrganizationDomain('parsec.cloud')
+    app.setApplicationName('Parsec')
 
     win = MainWindow(parsec_core, trio_portal, cancel_scope)
     win.show()
