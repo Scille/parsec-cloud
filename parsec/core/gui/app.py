@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QApplication, QSettings
+from PyQt5.QtCore import QSettings
+from PyQt5.QtWidgets import QApplication
 
 from parsec.core.gui import lang
 from parsec.core.gui.main_window import MainWindow

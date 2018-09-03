@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_AboutDialog(object):
     def setupUi(self, AboutDialog):
         AboutDialog.setObjectName("AboutDialog")
-        AboutDialog.resize(490, 376)
+        AboutDialog.resize(490, 330)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/icons/parsec_icon"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         AboutDialog.setWindowIcon(icon)
@@ -20,7 +20,7 @@ class Ui_AboutDialog(object):
         self.verticalLayout.setObjectName("verticalLayout")
         self.label = QtWidgets.QLabel(AboutDialog)
         self.label.setText("")
-        self.label.setPixmap(QtGui.QPixmap(":/logos/parsec"))
+        self.label.setPixmap(QtGui.QPixmap(":/logos/images/logos/parsec.png"))
         self.label.setScaledContents(False)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.setObjectName("label")
@@ -32,7 +32,7 @@ class Ui_AboutDialog(object):
         self.verticalLayout.addWidget(self.label_3)
         self.label_2 = QtWidgets.QLabel(AboutDialog)
         self.label_2.setText("")
-        self.label_2.setPixmap(QtGui.QPixmap(":/logos/scille"))
+        self.label_2.setPixmap(QtGui.QPixmap(":/logos/images/logos/scille.png"))
         self.label_2.setAlignment(QtCore.Qt.AlignCenter)
         self.label_2.setObjectName("label_2")
         self.verticalLayout.addWidget(self.label_2)
@@ -43,7 +43,7 @@ class Ui_AboutDialog(object):
         self.buttonBox = QtWidgets.QDialogButtonBox(AboutDialog)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Close)
-        self.buttonBox.setCenterButtons(False)
+        self.buttonBox.setCenterButtons(True)
         self.buttonBox.setObjectName("buttonBox")
         self.verticalLayout.addWidget(self.buttonBox)
 

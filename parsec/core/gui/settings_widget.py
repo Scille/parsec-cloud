@@ -27,7 +27,8 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
         self.button_switch_language.setDisabled(lang.get_current_language_name == text)
 
     def switch_language(self):
-        if not lang.switch_to_language(self.combo_languages.currentText()):
+        print('Lets switch to {}'.format(self.combo_languages.currentText()))
+        if not lang.switch_to_language_name(self.combo_languages.currentText()):
             QMessageBox.information(
                 self,
                 lang.translate(self, 'Information'),

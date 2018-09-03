@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QTranslator, QLibraryInfo, QLocale, QFile, QCoreApplication
+from PyQt5.QtCore import QTranslator, QLocale, QCoreApplication
 
 
 _LANGUAGES = {
@@ -9,7 +9,9 @@ _LANGUAGES = {
     '中文': 'zh'
 }
 
-_CURRENT_LANGUAGE = 'en'
+_current_language = 'en'
+
+_current_translator = QTranslator()
 
 
 def translate(cls, text):
@@ -17,11 +19,14 @@ def translate(cls, text):
 
 
 def switch_to_locale():
-    translator = QTranslator()
+    global _current_language
+    global _current_translator
+
+    _current_translator = QTranslator()
     locale = QLocale.system().name()[:2]
-    translator.load(':/translations/parsec_{}'.format(locale))
-    if QCoreApplication.installTranslator(translator):
-        _CURRENT_LANGUAGE = locale
+    _current_translator.load(':/translations/parsec_{}'.format(locale))
+    if QCoreApplication.installTranslator(_current_translator):
+        _current_language = locale
         return True
     return False
 
@@ -32,19 +37,24 @@ def switch_to_language_name(lang_name):
 
 
 def switch_to_language_key(lang_key):
+    global _current_language
+    global _current_translator
+
     if not lang_key:
         return False
     translator = QTranslator()
     translator.load(':/translations/parsec_{}'.format(lang_key))
+    QCoreApplication.removeTranslator(_current_translator)
     if QCoreApplication.installTranslator(translator):
-        _CURRENT_LANGUAGE = lang_key
+        _current_language = lang_key
+        _current_translator = translator
         return True
     return False
 
 
 def get_current_language_name():
     for lang_name, lang_key in _LANGUAGES.items():
-        if _CURRENT_LANGUAGE == lang_key:
+        if _current_language == lang_key:
             return lang_name
     return 'English'
 
@@ -54,4 +64,4 @@ def get_language_name_from_key(lang_key):
 
 
 def get_current_language_key():
-    return _CURRENT_LANGUAGE
+    return _current_language

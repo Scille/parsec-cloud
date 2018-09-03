@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtCore import QCoreApplication, QSettings
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 
 from parsec.core.gui import lang
@@ -26,16 +26,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_home.setChecked(True)
         self.main_widget_layout.addWidget(self.home_widget)
         self.label_title.setText(
-            QCoreApplication.translate(
-                'MainWindow','<span style="font-size:16pt;">Home</span> - Welcome to Parsec'))
+            lang.translate(
+                self, '<span style="font-size:16pt;">Home</span> - Welcome to Parsec'))
         self.connect_all()
 
         self.init_language()
 
-    def init_language():
+    def init_language(self):
         settings = QSettings()
 
-        lang_key = settings.getValue('language')
+        lang_key = settings.value('language')
         if not lang_key:
             if not lang.switch_to_locale():
                 QMessageBox.information(

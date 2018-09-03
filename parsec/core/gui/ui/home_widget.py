@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_HomeWidget(object):
     def setupUi(self, HomeWidget):
         HomeWidget.setObjectName("HomeWidget")
-        HomeWidget.resize(655, 674)
+        HomeWidget.resize(655, 185)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -21,7 +21,7 @@ class Ui_HomeWidget(object):
         self.verticalLayout.setObjectName("verticalLayout")
         self.label_2 = QtWidgets.QLabel(HomeWidget)
         self.label_2.setText("")
-        self.label_2.setPixmap(QtGui.QPixmap(":/logos/parsec"))
+        self.label_2.setPixmap(QtGui.QPixmap(":/logos/images/logos/parsec.png"))
         self.label_2.setScaledContents(False)
         self.label_2.setAlignment(QtCore.Qt.AlignCenter)
         self.label_2.setObjectName("label_2")

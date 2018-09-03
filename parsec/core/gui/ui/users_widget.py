@@ -12,6 +12,8 @@ class Ui_UsersWidget(object):
     def setupUi(self, UsersWidget):
         UsersWidget.setObjectName("UsersWidget")
         UsersWidget.resize(400, 300)
+        self.verticalLayout = QtWidgets.QVBoxLayout(UsersWidget)
+        self.verticalLayout.setObjectName("verticalLayout")
 
         self.retranslateUi(UsersWidget)
         QtCore.QMetaObject.connectSlotsByName(UsersWidget)

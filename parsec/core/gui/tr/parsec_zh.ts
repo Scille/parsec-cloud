@@ -153,11 +153,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="102"/>
-        <source>Network</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../forms/settings_widget.ui" line="34"/>
         <source>Languages</source>
         <translation type="unfinished"></translation>
@@ -170,6 +165,11 @@
     <message>
         <location filename="../forms/settings_widget.ui" line="85"/>
         <source>Switch to language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="102"/>
+        <source>Network</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
