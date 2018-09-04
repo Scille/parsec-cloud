@@ -10,14 +10,16 @@ from tests.open_tcp_stream_mock_wrapper import offline
 
 
 @pytest.fixture
-async def backend_event_manager(nursery, signal_ns, running_backend, alice):
-    em = BackendEventsManager(alice, running_backend.addr, signal_ns)
-    await em.init(nursery)
-    try:
-        yield em
+async def backend_event_manager(signal_ns, running_backend, alice):
+    async with trio.open_nursery() as nursery:
+        em = BackendEventsManager(alice, running_backend.addr, signal_ns)
+        await em.init(nursery)
+        try:
+            yield em
 
-    finally:
-        await em.teardown()
+        finally:
+            await em.teardown()
+            nursery.cancel_scope.cancel()
 
 
 @asynccontextmanager
@@ -45,13 +47,16 @@ async def ensure_signal_not_sent(signal_ns, signal):
 
 
 @pytest.mark.trio
-async def test_listen_beacon_on_init(nursery, signal_ns, running_backend, alice):
-    em = BackendEventsManager(alice, running_backend.addr, signal_ns)
+async def test_listen_beacon_on_init(signal_ns, running_backend, alice):
+    async with trio.open_nursery() as nursery:
+        em = BackendEventsManager(alice, running_backend.addr, signal_ns)
 
-    signal_ns.signal("backend.beacon.listen").send(None, beacon_id="123")
+        signal_ns.signal("backend.beacon.listen").send(None, beacon_id="123")
 
-    async with wait_event_subscribed(signal_ns, {("beacon.updated", "123")}):
-        await em.init(nursery)
+        async with wait_event_subscribed(signal_ns, {("beacon.updated", "123")}):
+            await em.init(nursery)
+
+        nursery.cancel_scope.cancel()
 
 
 @pytest.mark.trio

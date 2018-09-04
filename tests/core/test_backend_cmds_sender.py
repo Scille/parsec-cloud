@@ -7,14 +7,16 @@ from tests.open_tcp_stream_mock_wrapper import offline
 
 
 @pytest.fixture
-async def backend_cmds(nursery, running_backend, backend_addr, alice):
-    backend_cmds = BackendCmdsSender(alice, running_backend.addr)
-    await backend_cmds.init(nursery)
-    try:
-        yield backend_cmds
+async def backend_cmds(running_backend, backend_addr, alice):
+    async with trio.open_nursery() as nursery:
+        backend_cmds = BackendCmdsSender(alice, running_backend.addr)
+        await backend_cmds.init(nursery)
+        try:
+            yield backend_cmds
 
-    finally:
-        await backend_cmds.teardown()
+        finally:
+            await backend_cmds.teardown()
+            nursery.cancel_scope.cancel()
 
 
 @pytest.mark.trio
@@ -49,16 +51,18 @@ async def test_concurrency_sends(backend_cmds):
 
 
 @pytest.mark.trio
-async def test_backend_offline(nursery, unused_tcp_addr, alice):
-    backend_cmds = BackendCmdsSender(alice, unused_tcp_addr)
-    await backend_cmds.init(nursery)
+async def test_backend_offline(unused_tcp_addr, alice):
+    async with trio.open_nursery() as nursery:
+        backend_cmds = BackendCmdsSender(alice, unused_tcp_addr)
+        await backend_cmds.init(nursery)
 
-    with pytest.raises(BackendNotAvailable):
-        await backend_cmds.send({"cmd": "ping", "ping": "hello"})
-    with pytest.raises(BackendNotAvailable):
-        await backend_cmds.send({"cmd": "ping", "ping": "hello"})
+        with pytest.raises(BackendNotAvailable):
+            await backend_cmds.send({"cmd": "ping", "ping": "hello"})
+        with pytest.raises(BackendNotAvailable):
+            await backend_cmds.send({"cmd": "ping", "ping": "hello"})
 
-    await backend_cmds.teardown()
+        await backend_cmds.teardown()
+        nursery.cancel_scope.cancel()
 
 
 @pytest.mark.trio
