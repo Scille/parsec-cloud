@@ -11,7 +11,7 @@ _LANGUAGES = {
 
 _current_language = 'en'
 
-_current_translator = QTranslator()
+_current_translator = None
 
 
 def translate(cls, text):
@@ -22,10 +22,12 @@ def switch_to_locale():
     global _current_language
     global _current_translator
 
-    _current_translator = QTranslator()
+    translator = QTranslator()
     locale = QLocale.system().name()[:2]
-    _current_translator.load(':/translations/parsec_{}'.format(locale))
-    if QCoreApplication.installTranslator(_current_translator):
+    translator.load(':/translations/parsec_{}'.format(locale))
+    if QCoreApplication.installTranslator(translator):
+        QCoreApplication.removeTranslator(_current_translator)
+        _current_translator = translator
         _current_language = locale
         return True
     return False
@@ -44,8 +46,8 @@ def switch_to_language_key(lang_key):
         return False
     translator = QTranslator()
     translator.load(':/translations/parsec_{}'.format(lang_key))
-    QCoreApplication.removeTranslator(_current_translator)
     if QCoreApplication.installTranslator(translator):
+        QCoreApplication.removeTranslator(_current_translator)
         _current_language = lang_key
         _current_translator = translator
         return True

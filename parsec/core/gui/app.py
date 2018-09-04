@@ -13,6 +13,8 @@ def run_gui(parsec_core, trio_portal, cancel_scope):
     app.setOrganizationDomain('parsec.cloud')
     app.setApplicationName('Parsec')
 
+    lang.switch_to_locale()
+
     win = MainWindow(parsec_core, trio_portal, cancel_scope)
     win.show()
 

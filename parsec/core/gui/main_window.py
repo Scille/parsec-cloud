@@ -1,7 +1,6 @@
-from PyQt5.QtCore import QCoreApplication, QSettings
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
+from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtWidgets import QMainWindow
 
-from parsec.core.gui import lang
 from parsec.core.gui.home_widget import HomeWidget
 from parsec.core.gui.files_widget import FilesWidget
 from parsec.core.gui.users_widget import UsersWidget
@@ -26,40 +25,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_home.setChecked(True)
         self.main_widget_layout.addWidget(self.home_widget)
         self.label_title.setText(
-            lang.translate(
-                self, '<span style="font-size:16pt;">Home</span> - Welcome to Parsec'))
+            QCoreApplication.translate(
+                self.__class__.__name__,
+                '<span style="font-size:16pt;">Home</span> - Welcome to Parsec'))
         self.connect_all()
-
-        self.init_language()
-
-    def init_language(self):
-        settings = QSettings()
-
-        lang_key = settings.value('language')
-        if not lang_key:
-            if not lang.switch_to_locale():
-                QMessageBox.information(
-                    self,
-                    lang.translate(self, 'Information'),
-                    lang.translate(
-                        self,
-                        'Parsec is not available in your system language, '
-                        'so it will use English by default. You can change this '
-                        'setting in Settings/Global/Languages.'))
-            else:
-                settings.setValue('language', lang.get_current_language_key())
-                settings.sync()
-        elif lang_key and lang_key != lang.get_current_language_key():
-            if not lang.switch_to_language_key(lang_key):
-                QMessageBox.information(
-                    self,
-                    lang.translate(self, 'Information'),
-                    lang.translate(
-                        self,
-                        'We tried to switch Parsec to language {} but it failed. '
-                        'We will use English by default. You can change this setting '
-                        'in Settings/Global/Languages.'.format(
-                            lang.get_language_name_from_key(lang_key))))
 
     def connect_all(self):
         self.action_about_parsec.triggered.connect(self.show_about_dialog)
@@ -81,8 +50,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.main_widget_layout.addWidget(self.home_widget)
         self._hide_all_central_widgets()
         self.label_title.setText(
-            lang.translate(
-                self,
+            QCoreApplication.translate(
+                self.__class__.__name__,
                 '<span style="font-size:16pt;">Home</span> - Welcome to Parsec'))
         self.button_home.setChecked(True)
         self.home_widget.show()
@@ -93,8 +62,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.main_widget_layout.addWidget(self.files_widget)
         self._hide_all_central_widgets()
         self.label_title.setText(
-            lang.translate(
-                self,
+            QCoreApplication.translate(
+                self.__class__.__name__,
                 '<span style="font-size:16pt;">Files</span> - Manage your files'))
         self.button_files.setChecked(True)
         self.files_widget.show()
@@ -105,8 +74,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.main_widget_layout.addWidget(self.users_widget)
         self._hide_all_central_widgets()
         self.label_title.setText(
-            lang.translate(
-                self,
+            QCoreApplication.translate(
+                self.__class__.__name__,
                 '<span style="font-size:16pt;">Users</span> - Manage the users'))
         self.button_users.setChecked(True)
         self.users_widget.show()
@@ -117,8 +86,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.main_widget_layout.addWidget(self.settings_widget)
         self._hide_all_central_widgets()
         self.label_title.setText(
-            lang.translate(
-                self,
+            QCoreApplication.translate(
+                self.__class__.__name__,
                 '<span style="font-size:16pt;">Settings</span> - Configure Parsec'))
         self.button_settings.setChecked(True)
         self.settings_widget.show()
