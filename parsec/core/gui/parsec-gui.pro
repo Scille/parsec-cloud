@@ -21,7 +21,8 @@ FORMS += forms/main_window.ui \
          forms/files_widget.ui \
          forms/users_widget.ui \
          forms/settings_widget.ui \
-         forms/file_item_widget.ui
+         forms/file_item_widget.ui \
+         forms/parent_folder_widget.ui
 
 
 RESOURCES += rc/resources.qrc

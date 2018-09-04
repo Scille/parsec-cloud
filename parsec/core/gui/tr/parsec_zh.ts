@@ -59,8 +59,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="65"/>
+        <location filename="../forms/files_widget.ui" line="72"/>
         <source>Search files or folders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/files_widget.ui" line="26"/>
+        <source>Test</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -137,6 +142,19 @@
     <message>
         <location filename="../forms/main_window.ui" line="219"/>
         <source>About Parsec</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ParentFolderWidget</name>
+    <message>
+        <location filename="../forms/parent_folder_widget.ui" line="32"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/parent_folder_widget.ui" line="57"/>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Parent folder&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

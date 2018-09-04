@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtWidgets import QMainWindow
 
+from parsec.core.gui.core_call import core_call
 from parsec.core.gui.home_widget import HomeWidget
 from parsec.core.gui.files_widget import FilesWidget
 from parsec.core.gui.users_widget import UsersWidget
@@ -10,12 +11,9 @@ from parsec.core.gui.ui.main_window import Ui_MainWindow
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
-    def __init__(self, parsec_core, portal, cancel_scope, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._parsec_core = parsec_core
-        self._portal = portal
-        self._cancel_scope = cancel_scope
         self.setupUi(self)
         self.about_dialog = None
         self.files_widget = None
@@ -27,7 +25,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_title.setText(
             QCoreApplication.translate(
                 self.__class__.__name__,
-                '<span style="font-size:16pt;">Home</span> - Welcome to Parsec'))
+                '<span style="font-size:16pt;">Home</span>'
+                ' - Welcome to Parsec'))
         self.connect_all()
 
     def connect_all(self):
@@ -38,7 +37,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_settings.clicked.connect(self.show_settings_widget)
 
     def closeEvent(self, event):
-        self._portal.run_sync(self._cancel_scope.cancel)
+        core_call().cancel()
 
     def show_about_dialog(self):
         self.about_dialog = AboutDialog(parent=self)
@@ -52,7 +51,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_title.setText(
             QCoreApplication.translate(
                 self.__class__.__name__,
-                '<span style="font-size:16pt;">Home</span> - Welcome to Parsec'))
+                '<span style="font-size:16pt;">Home'
+                '</span> - Welcome to Parsec'))
         self.button_home.setChecked(True)
         self.home_widget.show()
 
@@ -64,7 +64,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_title.setText(
             QCoreApplication.translate(
                 self.__class__.__name__,
-                '<span style="font-size:16pt;">Files</span> - Manage your files'))
+                '<span style="font-size:16pt;">Files'
+                '</span> - Manage your files'))
         self.button_files.setChecked(True)
         self.files_widget.show()
 
@@ -76,7 +77,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_title.setText(
             QCoreApplication.translate(
                 self.__class__.__name__,
-                '<span style="font-size:16pt;">Users</span> - Manage the users'))
+                '<span style="font-size:16pt;">Users'
+                '</span> - Manage the users'))
         self.button_users.setChecked(True)
         self.users_widget.show()
 
@@ -88,7 +90,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_title.setText(
             QCoreApplication.translate(
                 self.__class__.__name__,
-                '<span style="font-size:16pt;">Settings</span> - Configure Parsec'))
+                '<span style="font-size:16pt;">'
+                'Settings</span> - Configure Parsec'))
         self.button_settings.setChecked(True)
         self.settings_widget.show()
 
