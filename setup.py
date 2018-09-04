@@ -69,7 +69,7 @@ dependency_links = [
 ]
 
 test_requirements = [
-    "pytest",
+    "pytest>=3.6",
     "pytest-cov",
     "pytest-trio",
     "pytest-logbook",
