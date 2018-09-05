@@ -19,9 +19,6 @@ class Ui_FilesWidget(object):
         FilesWidget.setSizePolicy(sizePolicy)
         self.verticalLayout = QtWidgets.QVBoxLayout(FilesWidget)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.button_test = QtWidgets.QPushButton(FilesWidget)
-        self.button_test.setObjectName("button_test")
-        self.verticalLayout.addWidget(self.button_test)
         self.label_current_directory = QtWidgets.QLabel(FilesWidget)
         self.label_current_directory.setText("")
         self.label_current_directory.setObjectName("label_current_directory")
@@ -63,6 +60,5 @@ class Ui_FilesWidget(object):
     def retranslateUi(self, FilesWidget):
         _translate = QtCore.QCoreApplication.translate
         FilesWidget.setWindowTitle(_translate("FilesWidget", "Form"))
-        self.button_test.setText(_translate("FilesWidget", "Test"))
         self.edit_search.setPlaceholderText(_translate("FilesWidget", "Search files or folders"))
 

@@ -10,6 +10,12 @@
     <height>356</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
@@ -21,7 +27,7 @@
      </property>
      <widget class="QWidget" name="tab_app">
       <attribute name="icon">
-       <iconset>
+       <iconset resource="../rc/resources.qrc">
         <normaloff>:/icons/images/icons/settings.png</normaloff>:/icons/images/icons/settings.png</iconset>
       </attribute>
       <attribute name="title">
@@ -31,7 +37,7 @@
      </widget>
      <widget class="QWidget" name="tab_network">
       <attribute name="icon">
-       <iconset>
+       <iconset resource="../rc/resources.qrc">
         <normaloff>:/icons/images/icons/cloud.png</normaloff>:/icons/images/icons/cloud.png</iconset>
       </attribute>
       <attribute name="title">
@@ -42,6 +48,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../rc/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -59,26 +59,31 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="72"/>
+        <location filename="../forms/files_widget.ui" line="65"/>
         <source>Search files or folders</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/files_widget.ui" line="26"/>
-        <source>Test</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>HomeWidget</name>
+    <name>LoginWidget</name>
     <message>
-        <location filename="../forms/home_widget.ui" line="20"/>
+        <location filename="../forms/login_widget.ui" line="20"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/home_widget.ui" line="42"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Welcome to Parsec&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <location filename="../forms/login_widget.ui" line="26"/>
+        <source>Login</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="36"/>
+        <source>Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="61"/>
+        <source>Log In</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -90,57 +95,52 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="30"/>
-        <source>...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/main_window.ui" line="56"/>
+        <location filename="../forms/main_window.ui" line="33"/>
         <source>Display and manage your files and folders.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="65"/>
+        <location filename="../forms/main_window.ui" line="42"/>
         <source>Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="88"/>
+        <location filename="../forms/main_window.ui" line="68"/>
         <source>Display and manage your users.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="91"/>
+        <location filename="../forms/main_window.ui" line="71"/>
         <source>Users</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="114"/>
+        <location filename="../forms/main_window.ui" line="97"/>
         <source>Configure the application.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="117"/>
+        <location filename="../forms/main_window.ui" line="100"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="191"/>
+        <location filename="../forms/main_window.ui" line="190"/>
         <source>File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="197"/>
+        <location filename="../forms/main_window.ui" line="196"/>
         <source>Help</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="210"/>
+        <location filename="../forms/main_window.ui" line="209"/>
         <source>Quit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="219"/>
+        <location filename="../forms/main_window.ui" line="218"/>
         <source>About Parsec</source>
         <translation type="unfinished"></translation>
     </message>
@@ -161,17 +161,17 @@
 <context>
     <name>SettingsWidget</name>
     <message>
-        <location filename="../forms/settings_widget.ui" line="14"/>
+        <location filename="../forms/settings_widget.ui" line="20"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="28"/>
+        <location filename="../forms/settings_widget.ui" line="34"/>
         <source>Global</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="38"/>
+        <location filename="../forms/settings_widget.ui" line="44"/>
         <source>Network</source>
         <translation type="unfinished"></translation>
     </message>

@@ -21,13 +21,6 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QPushButton" name="button_test">
-     <property name="text">
-      <string>Test</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QLabel" name="label_current_directory">
      <property name="text">
       <string/>
