@@ -1,5 +1,11 @@
+import os
+import shutil
+import pathlib
+
 from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtWidgets import QMainWindow
+
+from parsec.core.devices_manager import DeviceLoadingError
 
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.login_widget import LoginWidget
@@ -20,6 +26,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.settings_widget = None
         self.users_widget = None
         self.login_widget = LoginWidget(parent=self)
+        for device_name in core_call().get_devices():
+            self.login_widget.add_device(device_name)
         self.main_widget_layout.insertWidget(1, self.login_widget)
         self.label_title.setText(
             QCoreApplication.translate(
@@ -32,6 +40,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_files.setDisabled(False)
         self.button_users.setDisabled(False)
         self.button_settings.setDisabled(False)
+        self.action_disconnect.setDisabled(False)
 
     def connect_all(self):
         self.action_about_parsec.triggered.connect(self.show_about_dialog)
@@ -40,29 +49,57 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_settings.clicked.connect(self.show_settings_widget)
         self.login_widget.loginClicked.connect(self.login)
         self.login_widget.registerClicked.connect(self.register)
+        self.action_disconnect.triggered.connect(self.logout)
 
-    def login(self):
-        import os
-        import shutil
-
-        device_name = core_call().get_devices()[0]
-        device = core_call().load_device(device_name)
+    def logout(self):
+        if core_call().is_mounted():
+            core_call().unmount()
+        core_call().logout()
+        self._hide_all_central_widgets()
+        self.login_widget.reset()
+        self.login_widget.show()
+        self.action_disconnect.setDisabled(True)
+        self.button_files.setDisabled(True)
+        self.button_users.setDisabled(True)
+        self.button_settings.setDisabled(True)
+        self.action_disconnect.setDisabled(True)
+        device = core_call().load_device('johndoe@test')
         core_call().login(device)
-        if os.path.exists('/home/max/osef'):
-            shutil.rmtree('/home/max/osef')
-        core_call().mount('/home/max/osef')
-        self.logged_in()
-        self.login_widget.hide()
-        self.show_files_widget()
+
+    def perform_login(self, device_id, password):
+        try:
+            device = core_call().load_device(device_id, password)
+            core_call().logout()
+            core_call().login(device)
+            mountpoint = os.path.join(str(pathlib.Path.home()), 'parsec', device_id)
+            if os.path.exists(mountpoint):
+                shutil.rmtree(mountpoint)
+            core_call().mount(mountpoint)
+            self.logged_in()
+            self.login_widget.hide()
+            self.show_files_widget()
+        except DeviceLoadingError:
+            return 'Invalid password'
+
+    def login(self, device_id, password):
+        err = self.perform_login(device_id, password)
+        if err:
+            self.login_widget.set_login_error(err)
 
     def register(self, login, password, device):
-        token = core_call().invite_user(login)
-        privkey, signkey, manifest = core_call().claim_user(login, device, token)
-        privkey = privkey.encode()
-        signkey = signkey.encode()
-        core_call().register_new_device('{}@{}'.format(login, device),
-                                        privkey, signkey, manifest, password)
-        core_call().load_device('{}@{}'.format(login, device), password)
+        try:
+            token = core_call().invite_user(login)
+            privkey, signkey, manifest = core_call().claim_user(login, device, token)
+            privkey = privkey.encode()
+            signkey = signkey.encode()
+            core_call().register_new_device('{}@{}'.format(login, device),
+                                            privkey, signkey, manifest, password)
+            self.login_widget.add_device(device)
+            err = self.perform_login('{}@{}'.format(login, device), password)
+            if err:
+                self.login_widget.set_register_error(err)
+        except DeviceLoadingError:
+            pass
 
     def closeEvent(self, event):
         if core_call().is_mounted():

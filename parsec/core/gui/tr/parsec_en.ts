@@ -72,17 +72,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="106"/>
+        <location filename="../forms/login_widget.ui" line="112"/>
         <source>Login</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="116"/>
+        <location filename="../forms/login_widget.ui" line="122"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="74"/>
+        <location filename="../forms/login_widget.ui" line="70"/>
         <source>Log In</source>
         <translation type="unfinished"></translation>
     </message>
@@ -92,22 +92,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="96"/>
+        <location filename="../forms/login_widget.ui" line="102"/>
         <source>Or register a new user</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="126"/>
+        <location filename="../forms/login_widget.ui" line="132"/>
         <source>Password check</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="133"/>
+        <location filename="../forms/login_widget.ui" line="139"/>
         <source>Device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="158"/>
+        <location filename="../forms/login_widget.ui" line="164"/>
         <source>Register</source>
         <translation type="unfinished"></translation>
     </message>
@@ -155,18 +155,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="196"/>
+        <location filename="../forms/main_window.ui" line="197"/>
         <source>Help</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="209"/>
+        <location filename="../forms/main_window.ui" line="210"/>
         <source>Quit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="218"/>
+        <location filename="../forms/main_window.ui" line="219"/>
         <source>About Parsec</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/main_window.ui" line="227"/>
+        <source>Disconnect</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

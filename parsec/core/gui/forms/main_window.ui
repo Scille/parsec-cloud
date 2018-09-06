@@ -189,6 +189,7 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="action_disconnect"/>
     <addaction name="action_quit"/>
    </widget>
    <widget class="QMenu" name="menu_help">
@@ -216,6 +217,14 @@
    </property>
    <property name="text">
     <string>About Parsec</string>
+   </property>
+  </action>
+  <action name="action_disconnect">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Disconnect</string>
    </property>
   </action>
  </widget>

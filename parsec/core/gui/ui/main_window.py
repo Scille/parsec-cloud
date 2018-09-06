@@ -90,6 +90,10 @@ class Ui_MainWindow(object):
         self.action_about_parsec = QtWidgets.QAction(MainWindow)
         self.action_about_parsec.setIcon(icon)
         self.action_about_parsec.setObjectName("action_about_parsec")
+        self.action_disconnect = QtWidgets.QAction(MainWindow)
+        self.action_disconnect.setEnabled(False)
+        self.action_disconnect.setObjectName("action_disconnect")
+        self.menu_file.addAction(self.action_disconnect)
         self.menu_file.addAction(self.action_quit)
         self.menu_help.addAction(self.action_about_parsec)
         self.menubar.addAction(self.menu_file.menuAction())
@@ -112,5 +116,6 @@ class Ui_MainWindow(object):
         self.menu_help.setTitle(_translate("MainWindow", "Help"))
         self.action_quit.setText(_translate("MainWindow", "Quit"))
         self.action_about_parsec.setText(_translate("MainWindow", "About Parsec"))
+        self.action_disconnect.setText(_translate("MainWindow", "Disconnect"))
 
 from parsec.core.gui import resources_rc

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>632</width>
-    <height>390</height>
+    <width>613</width>
+    <height>366</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -34,11 +34,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QLineEdit" name="line_edit_login">
-     <property name="placeholderText">
-      <string>Login</string>
-     </property>
-    </widget>
+    <widget class="QComboBox" name="combo_devices"/>
    </item>
    <item>
     <widget class="QLineEdit" name="line_edit_password">
@@ -79,8 +75,18 @@
    </item>
    <item>
     <widget class="QLabel" name="label_error">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
      <property name="text">
       <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
      </property>
     </widget>
    </item>
@@ -163,6 +169,13 @@
    </item>
    <item>
     <widget class="QLabel" name="label_register_error">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
      <property name="text">
       <string/>
      </property>
