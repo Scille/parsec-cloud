@@ -39,6 +39,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_users.clicked.connect(self.show_users_widget)
         self.button_settings.clicked.connect(self.show_settings_widget)
         self.login_widget.loginClicked.connect(self.login)
+        self.login_widget.registerClicked.connect(self.register)
 
     def login(self):
         import os
@@ -53,6 +54,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.logged_in()
         self.login_widget.hide()
         self.show_files_widget()
+
+    def register(self, login, password, device):
+        token = core_call().invite_user(login)
+        privkey, signkey, manifest = core_call().claim_user(login, device, token)
+        privkey = privkey.encode()
+        signkey = signkey.encode()
+        core_call().register_new_device('{}@{}'.format(login, device),
+                                        privkey, signkey, manifest, password)
+        core_call().load_device('{}@{}'.format(login, device), password)
 
     def closeEvent(self, event):
         if core_call().is_mounted():

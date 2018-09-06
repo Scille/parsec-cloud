@@ -72,18 +72,43 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="26"/>
+        <location filename="../forms/login_widget.ui" line="106"/>
         <source>Login</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="36"/>
+        <location filename="../forms/login_widget.ui" line="116"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="61"/>
+        <location filename="../forms/login_widget.ui" line="74"/>
         <source>Log In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="32"/>
+        <source>Log in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="96"/>
+        <source>Or register a new user</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="126"/>
+        <source>Password check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="133"/>
+        <source>Device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="158"/>
+        <source>Register</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

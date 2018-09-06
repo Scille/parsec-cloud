@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QApplication, QSplashScreen
 from PyQt5.QtGui import QPixmap
 
 from parsec.core.gui import lang
-from parsec.core.gui.core_call import init_core_call
+from parsec.core.gui.core_call import init_core_call, core_call
 from parsec.core.gui.main_window import MainWindow
 from parsec.core.gui.core_call import core_call
 

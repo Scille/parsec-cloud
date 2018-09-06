@@ -1,3 +1,5 @@
+from parsec.core.devices_manager import invite_user, claim_user
+
 
 class _CoreCall:
     def __init__(self, parsec_core, trio_portal, cancel_scope):
@@ -28,16 +30,31 @@ class _CoreCall:
             *args, **kwargs)
 
     def is_mounted(self, *args, **kwargs):
-        return self._parsec_core.fuse_manager.is_started()
+        return self._parsec_core.fuse_manager.is_started(*args, **kwargs)
 
     def login(self, *args, **kwargs):
         self._trio_portal.run(self._parsec_core.login, *args, **kwargs)
 
+    def logout(self, *args, **kwargs):
+        self._trio_portal.run(self._parsec_core.logout, *args, **kwargs)
+
     def get_devices(self, *args, **kwargs):
         return self._parsec_core.local_devices_manager.list_available_devices()
 
-    def load_device(self, *args, **kwargs):
-        return self._parsec_core.local_devices_manager.load_device(*args, **kwargs)
+    def register_new_device(self, *args):
+        return self._parsec_core.local_devices_manager.register_new_device(
+            *args)
+
+    def load_device(self, *args):
+        return self._parsec_core.local_devices_manager.load_device(*args)
+
+    def invite_user(self, *args):
+        return self._trio_portal.run(invite_user, self._parsec_core.backend_cmds_sender,
+                                     *args)
+
+    def claim_user(self, *args):
+        return self._trio_portal.run(claim_user, self._parsec_core.backend_addr,
+                                     *args)
 
 
 _CORE_CALL = None
