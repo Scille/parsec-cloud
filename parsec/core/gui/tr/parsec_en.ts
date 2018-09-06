@@ -72,12 +72,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="112"/>
+        <location filename="../forms/login_widget.ui" line="122"/>
         <source>Login</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="122"/>
+        <location filename="../forms/login_widget.ui" line="132"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
@@ -87,28 +87,43 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="32"/>
-        <source>Log in</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="102"/>
-        <source>Or register a new user</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="132"/>
+        <location filename="../forms/login_widget.ui" line="142"/>
         <source>Password check</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="139"/>
+        <location filename="../forms/login_widget.ui" line="149"/>
         <source>Device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="164"/>
+        <location filename="../forms/login_widget.ui" line="181"/>
         <source>Register</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="32"/>
+        <source>Register a new account instead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="99"/>
+        <source>Register a new account</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="112"/>
+        <source>Log In instead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="156"/>
+        <source>Token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="105"/>
+        <source>To register, you need another user to create an account and get a token.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -211,6 +226,26 @@
     <message>
         <location filename="../forms/users_widget.ui" line="14"/>
         <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/users_widget.ui" line="20"/>
+        <source>Add a user</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/users_widget.ui" line="28"/>
+        <source>New user name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/users_widget.ui" line="35"/>
+        <source>Register a new user</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/users_widget.ui" line="44"/>
+        <source>Transmit these information to the new user so they can set up their account. </source>
         <translation type="unfinished"></translation>
     </message>
 </context>

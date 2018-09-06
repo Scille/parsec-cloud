@@ -29,6 +29,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         for device_name in core_call().get_devices():
             self.login_widget.add_device(device_name)
         self.main_widget_layout.insertWidget(1, self.login_widget)
+        self.users_widget = UsersWidget(parent=self)
+        self.main_widget_layout.insertWidget(1, self.users_widget)
+        self.users_widget.hide()
         self.label_title.setText(
             QCoreApplication.translate(
                 self.__class__.__name__,
@@ -48,12 +51,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_users.clicked.connect(self.show_users_widget)
         self.button_settings.clicked.connect(self.show_settings_widget)
         self.login_widget.loginClicked.connect(self.login)
-        self.login_widget.registerClicked.connect(self.register)
+        self.login_widget.claimClicked.connect(self.claim)
         self.action_disconnect.triggered.connect(self.logout)
+        self.users_widget.registerClicked.connect(self.register)
 
     def logout(self):
-        if core_call().is_mounted():
-            core_call().unmount()
+        # if core_call().is_mounted():
+        #     core_call().unmount()
         core_call().logout()
         self._hide_all_central_widgets()
         self.login_widget.reset()
@@ -86,9 +90,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if err:
             self.login_widget.set_login_error(err)
 
-    def register(self, login, password, device):
+    def register(self, login):
+        token = core_call().invite_user(login)
+        self.users_widget.set_claim_infos(login, token)
+
+    def claim(self, login, password, device, token):
         try:
-            token = core_call().invite_user(login)
             privkey, signkey, manifest = core_call().claim_user(login, device, token)
             privkey = privkey.encode()
             signkey = signkey.encode()
@@ -102,8 +109,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             pass
 
     def closeEvent(self, event):
-        if core_call().is_mounted():
-            core_call().unmount()
+        # if core_call().is_mounted():
+        #     core_call().unmount()
         core_call().stop()
 
     def show_about_dialog(self):
@@ -124,9 +131,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.files_widget.show()
 
     def show_users_widget(self):
-        if not self.users_widget:
-            self.users_widget = UsersWidget(parent=self)
-            self.main_widget_layout.insertWidget(1, self.users_widget)
         self._hide_all_central_widgets()
         self.label_title.setText(
             QCoreApplication.translate(

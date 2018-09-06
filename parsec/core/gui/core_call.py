@@ -30,6 +30,7 @@ class _CoreCall:
             *args, **kwargs)
 
     def is_mounted(self, *args, **kwargs):
+        return True
         return self._parsec_core.fuse_manager.is_started(*args, **kwargs)
 
     def login(self, *args, **kwargs):

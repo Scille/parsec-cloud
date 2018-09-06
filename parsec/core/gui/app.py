@@ -1,13 +1,8 @@
-import time
-
-from PyQt5.QtCore import QSettings
-from PyQt5.QtWidgets import QApplication, QSplashScreen
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QApplication
 
 from parsec.core.gui import lang
 from parsec.core.gui.core_call import init_core_call, core_call
 from parsec.core.gui.main_window import MainWindow
-from parsec.core.gui.core_call import core_call
 
 
 def run_gui(parsec_core, trio_portal, cancel_scope):
