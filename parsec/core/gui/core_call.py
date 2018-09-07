@@ -30,8 +30,9 @@ class _CoreCall:
             *args, **kwargs)
 
     def is_mounted(self, *args, **kwargs):
-        return True
-        return self._parsec_core.fuse_manager.is_started(*args, **kwargs)
+        if self._parsec_core.fuse_manager:
+            return self._parsec_core.fuse_manager.is_started(*args, **kwargs)
+        return False
 
     def login(self, *args, **kwargs):
         self._trio_portal.run(self._parsec_core.login, *args, **kwargs)

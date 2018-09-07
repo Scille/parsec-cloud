@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, QSysInfo
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
@@ -14,6 +14,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.setupUi(self)
         self.group_claim.hide()
         self.connect_all()
+        self.line_edit_claim_device.setText(QSysInfo.productType())
 
     def connect_all(self):
         self.button_login.clicked.connect(self.emit_login)
@@ -41,9 +42,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.line_edit_claim_device.setText('')
         self.line_edit_password.setText('')
         self.button_claim.setDisabled(True)
-        self.button_login.setDisabled(True)
         self.label_error.setText('')
         self.label_claim_error.setText('')
+        self.group_login.show()
+        self.group_claim.hide()
 
     def emit_login(self):
         self.loginClicked.emit(self.combo_devices.currentText(), self.line_edit_password.text())

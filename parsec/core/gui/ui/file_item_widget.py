@@ -11,14 +11,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_FileItemWidget(object):
     def setupUi(self, FileItemWidget):
         FileItemWidget.setObjectName("FileItemWidget")
-        FileItemWidget.resize(650, 57)
+        FileItemWidget.resize(655, 65)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(FileItemWidget.sizePolicy().hasHeightForWidth())
         FileItemWidget.setSizePolicy(sizePolicy)
         FileItemWidget.setMinimumSize(QtCore.QSize(0, 32))
-        FileItemWidget.setMaximumSize(QtCore.QSize(16777215, 57))
+        FileItemWidget.setMaximumSize(QtCore.QSize(16777215, 65))
         FileItemWidget.setBaseSize(QtCore.QSize(0, 32))
         self.horizontalLayout = QtWidgets.QHBoxLayout(FileItemWidget)
         self.horizontalLayout.setSizeConstraint(QtWidgets.QLayout.SetMaximumSize)
@@ -34,7 +34,6 @@ class Ui_FileItemWidget(object):
         self.label_file_type.setMinimumSize(QtCore.QSize(24, 24))
         self.label_file_type.setMaximumSize(QtCore.QSize(24, 24))
         self.label_file_type.setText("")
-        self.label_file_type.setPixmap(QtGui.QPixmap(":/icons/images/icons/file_ok.png"))
         self.label_file_type.setScaledContents(True)
         self.label_file_type.setObjectName("label_file_type")
         self.horizontalLayout.addWidget(self.label_file_type)
@@ -96,10 +95,10 @@ class Ui_FileItemWidget(object):
     def retranslateUi(self, FileItemWidget):
         _translate = QtCore.QCoreApplication.translate
         FileItemWidget.setWindowTitle(_translate("FileItemWidget", "Form"))
-        self.label_file_name.setText(_translate("FileItemWidget", "<html><head/><body><p><span style=\" font-size:12pt;\">File1.txt</span></p></body></html>"))
-        self.label_file_size.setText(_translate("FileItemWidget", "<html><head/><body><p>42 Ko</p></body></html>"))
-        self.label_created.setText(_translate("FileItemWidget", "<html><head/><body><p><span style=\" font-size:9pt; font-style:italic;\">Created on 01/01/2018 by Max</span></p></body></html>"))
-        self.label_modified.setText(_translate("FileItemWidget", "<html><head/><body><p><span style=\" font-size:9pt; font-style:italic;\">Last modified on 02/01/2018 by Max</span></p></body></html>"))
+        self.label_file_name.setText(_translate("FileItemWidget", "<html><head/><body><p><br/></p><p><br/></p></body></html>"))
+        self.label_file_size.setText(_translate("FileItemWidget", "<html><head/><body><p><br/></p></body></html>"))
+        self.label_created.setText(_translate("FileItemWidget", "<html><head/><body><p><br/></p></body></html>"))
+        self.label_modified.setText(_translate("FileItemWidget", "<html><head/><body><p><br/></p></body></html>"))
         self.button_delete.setText(_translate("FileItemWidget", "..."))
 
 from parsec.core.gui import resources_rc

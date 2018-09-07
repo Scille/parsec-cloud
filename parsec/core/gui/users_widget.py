@@ -28,3 +28,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.label_help.show()
         self.label_new_user_login.setText(login)
         self.label_new_user_token.setText(token)
+
+    def reset(self):
+        self.label_new_user_login.setText('')
+        self.label_new_user_token.setText('')
+        self.label_help.hide()
+        self.line_edit_new_login.setText('')
+        self.button_register.setEnabled(False)
