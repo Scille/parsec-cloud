@@ -10,13 +10,13 @@ class _CoreCall:
     def stop(self):
         self._trio_portal.run_sync(self._cancel_scope.cancel)
 
-    def run_stat(self, *args, **kwargs):
+    def stat(self, *args, **kwargs):
         return self._trio_portal.run(self._parsec_core.fs.stat, *args, **kwargs)
 
-    def run_create_folder(self, *args, **kwargs):
+    def create_folder(self, *args, **kwargs):
         return self._trio_portal.run(self._parsec_core.fs.folder_create, *args, **kwargs)
 
-    def run_delete_folder(self, *args, **kargs):
+    def delete_folder(self, *args, **kargs):
         return self._trio_portal.run(self._parsec_core.fs.delete, *args, **kargs)
 
     def mount(self, *args, **kwargs):
@@ -58,6 +58,8 @@ class _CoreCall:
         return self._trio_portal.run(claim_user, self._parsec_core.backend_addr,
                                      *args)
 
+    def create_workspace(self, *args):
+        return self._trio_portal.run(self._parsec_core.fs.workspace_create, *args)
 
 _CORE_CALL = None
 

@@ -49,18 +49,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="49"/>
+        <location filename="../forms/files_widget.ui" line="79"/>
         <source>Search files or folders</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="67"/>
+        <location filename="../forms/files_widget.ui" line="97"/>
         <source>New workspace name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="74"/>
+        <location filename="../forms/files_widget.ui" line="104"/>
         <source>Add a workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/files_widget.ui" line="37"/>
+        <source>Return to workspaces list</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

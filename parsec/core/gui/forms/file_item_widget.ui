@@ -66,14 +66,14 @@
      </property>
      <property name="minimumSize">
       <size>
-       <width>24</width>
-       <height>24</height>
+       <width>48</width>
+       <height>48</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>24</width>
-       <height>24</height>
+       <width>48</width>
+       <height>48</height>
       </size>
      </property>
      <property name="text">
@@ -103,14 +103,14 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string/>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="label_file_size">
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string/>
          </property>
         </widget>
        </item>
@@ -154,14 +154,14 @@
      </property>
      <property name="minimumSize">
       <size>
-       <width>24</width>
-       <height>24</height>
+       <width>48</width>
+       <height>48</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>24</width>
-       <height>24</height>
+       <width>48</width>
+       <height>48</height>
       </size>
      </property>
      <property name="text">
@@ -173,8 +173,8 @@
      </property>
      <property name="iconSize">
       <size>
-       <width>24</width>
-       <height>24</height>
+       <width>48</width>
+       <height>48</height>
       </size>
      </property>
      <property name="toolButtonStyle">
