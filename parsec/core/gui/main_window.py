@@ -59,6 +59,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.users_widget.registerClicked.connect(self.register)
 
     def logout(self):
+        self.files_widget.set_mountpoint(None)
         if core_call().is_mounted():
             core_call().unmount()
         core_call().logout()
@@ -84,6 +85,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if os.path.exists(mountpoint):
                 shutil.rmtree(mountpoint)
             core_call().mount(mountpoint)
+            self.files_widget.set_mountpoint(mountpoint)
             self.logged_in()
             self.login_widget.hide()
             self.show_files_widget()

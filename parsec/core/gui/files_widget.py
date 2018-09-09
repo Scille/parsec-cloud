@@ -1,6 +1,8 @@
+import os
+
 from PyQt5.QtCore import QFileInfo, QUrl, Qt, QSize
 from PyQt5.QtGui import QDesktopServices, QIcon, QPixmap
-from PyQt5.QtWidgets import QWidget, QListWidgetItem, QLabel, QGridLayout
+from PyQt5.QtWidgets import QWidget, QListWidgetItem, QLabel, QGridLayout, QMenu
 
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.file_size import get_filesize
@@ -11,11 +13,12 @@ from parsec.core.gui.ui.file_item_widget import Ui_FileItemWidget
 
 
 class FileItemWidget(QWidget, Ui_FileItemWidget):
-    def __init__(self, parent, item, *args, **kwargs):
+    def __init__(self, parent, item, full_path, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.item = item
         self.parent = parent
+        self.full_path = full_path
         self.button_delete.clicked.connect(self.delete_file)
 
     def delete_file(self):
@@ -36,6 +39,26 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.workspaces_number = 0
         self.line_edit_new_workspace.textChanged.connect(self.disable_add_workspace)
         self.button_add_workspace.clicked.connect(self.add_workspace)
+        self.list_files.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.list_files.customContextMenuRequested.connect(self.show_context_menu)
+        self.mountpoint = None
+
+    def set_mountpoint(self, mountpoint):
+        self.mountpoint = mountpoint
+
+    def show_context_menu(self, pos):
+        if not self.list_files.itemAt(pos):
+            return
+        global_pos = self.list_files.mapToGlobal(pos)
+        menu = QMenu()
+        action = menu.addAction("Open")
+        action.triggered.connect(self.action_open_file)
+        menu.exec(global_pos)
+
+    def action_open_file(self):
+        item = self.list_files.currentItem()
+        widget = self.list_files.itemWidget(item)
+        self.open_file('{}/{}'.format(self.mountpoint, widget.full_path))
 
     def show(self, *args, **kwargs):
         super().show(*args, **kwargs)
@@ -73,7 +96,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         for file_name in result.get('children', []):
             file_infos = core_call().stat('{}/{}'.format(workspace, file_name))
             item = QListWidgetItem()
-            widget = FileItemWidget(self, item)
+            widget = FileItemWidget(self, item, '/{}/{}'.format(workspace, file_name))
             widget.label_file_name.setText(
                 '<html><head/><body><p><span style="font-size:14pt;">{}'
                 '</span></p></body></html>'.format(file_name))
