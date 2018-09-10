@@ -19,6 +19,9 @@ class _CoreCall:
     def delete_folder(self, *args, **kargs):
         return self._trio_portal.run(self._parsec_core.fs.delete, *args, **kargs)
 
+    def delete_file(self, *args, **kargs):
+        return self._trio_portal.run(self._parsec_core.fs.delete, *args, **kargs)
+
     def mount(self, *args, **kwargs):
         self._trio_portal.run(
             self._parsec_core.fuse_manager.start_mountpoint,

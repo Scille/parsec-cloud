@@ -25,7 +25,6 @@ def switch_to_locale():
     translator = QTranslator()
     locale = QLocale.system().name()[:2]
     if not translator.load(':/translations/parsec_{}'.format(locale)):
-        print('Nop')
         return False
     if QCoreApplication.installTranslator(translator):
         QCoreApplication.removeTranslator(_current_translator)

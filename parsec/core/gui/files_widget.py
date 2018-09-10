@@ -2,7 +2,7 @@ import os
 
 from PyQt5.QtCore import Qt, QSize, QCoreApplication
 from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import QWidget, QListWidgetItem, QGridLayout, QMenu
+from PyQt5.QtWidgets import QWidget, QListWidgetItem, QGridLayout, QMenu, QMessageBox
 
 from parsec.core.gui import desktop
 from parsec.core.gui.core_call import core_call
@@ -35,10 +35,10 @@ class FileItemWidget(QWidget, Ui_FileItemWidget):
         elif self.file_infos['type'] == 'folder':
             if file_infos.get('children', []):
                 self.label_file_type.setPixmap(
-                    QPixmap(':/icons/images/icons/folder_empty.png'))
+                    QPixmap(':/icons/images/icons/folder_full.png'))
             else:
                 self.label_file_type.setPixmap(
-                    QPixmap(':/icons/images/icons/folder_full.png'))
+                    QPixmap(':/icons/images/icons/folder_empty.png'))
         self.label_file_type.setScaledContents(True)
         self.label_created.setText(
             QCoreApplication.translate(self.__class__.__name__,
@@ -61,6 +61,8 @@ class ParentFolderWidget(QWidget, Ui_ParentFolderWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.label_icon.setPixmap(
+            QPixmap(':/icons/images/icons/up_arrow.png'))
 
 
 class FilesWidget(QWidget, Ui_FilesWidget):
@@ -87,21 +89,30 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         menu = QMenu()
         item = self.list_files.itemAt(pos)
         widget = self.list_files.itemWidget(item)
+        if isinstance(widget, ParentFolderWidget):
+            return
         if widget.file_type == 'file':
             action = menu.addAction(QCoreApplication.translate(self.__class__.__name__,
                                                                "Open"))
         elif widget.file_type == 'folder':
             action = menu.addAction(QCoreApplication.translate(self.__class__.__name__,
-                                                               "Open in Explorer"))
+                                                               "Open in file explorer"))
         action.triggered.connect(self.action_open_file_clicked)
         menu.exec(global_pos)
 
     def item_double_clicked(self, item):
         widget = self.list_files.itemWidget(item)
-        if widget.file_type == 'file':
-            self.open_file(item)
+        if isinstance(widget, ParentFolderWidget):
+            self.load_directory(
+                self.current_workspace,
+                os.path.dirname(self.current_directory))
         else:
-            print('FOLDER !')
+            if widget.file_type == 'file':
+                self.open_file(item)
+            else:
+                self.load_directory(
+                    self.current_workspace,
+                    os.path.join(self.current_directory, widget.file_name))
 
     def action_open_file_clicked(self):
         item = self.list_files.currentItem()
@@ -178,7 +189,24 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.widget_files.show()
 
     def remove_item(self, item):
-        self.list_files.takeItem(self.list_files.row(item))
+        widget = self.list_files.itemWidget(item)
+        file_path = os.path.join(self.current_workspace,
+                                 self.current_directory,
+                                 widget.file_name)
+        if widget.file_type == 'folder':
+            result = QMessageBox.question(
+                self, 'Confirmation',
+                'Are you sure you want to delete folder "{}"'.format(widget.file_name))
+            if result == QMessageBox.Yes:
+                core_call().delete_folder(file_path)
+                self.list_files.takeItem(self.list_files.row(item))
+        elif widget.file_type == 'file':
+            result = QMessageBox.question(
+                self, 'Confirmation',
+                'Are you sure you want to delete file "{}"'.format(widget.file_name))
+            if result == QMessageBox.Yes:
+                core_call().delete_file(file_path)
+                self.list_files.takeItem(self.list_files.row(item))
 
     def reset(self):
         self.widget_files.hide()
