@@ -1,9 +1,10 @@
 import os
 
-from PyQt5.QtCore import QFileInfo, QUrl, Qt, QSize
-from PyQt5.QtGui import QDesktopServices, QIcon, QPixmap
-from PyQt5.QtWidgets import QWidget, QListWidgetItem, QLabel, QGridLayout, QMenu
+from PyQt5.QtCore import Qt, QSize, QCoreApplication
+from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtWidgets import QWidget, QListWidgetItem, QGridLayout, QMenu
 
+from parsec.core.gui import desktop
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.file_size import get_filesize
 from parsec.core.gui.custom_widgets import ToolButton
@@ -13,13 +14,44 @@ from parsec.core.gui.ui.file_item_widget import Ui_FileItemWidget
 
 
 class FileItemWidget(QWidget, Ui_FileItemWidget):
-    def __init__(self, parent, item, full_path, *args, **kwargs):
+    def __init__(self, parent, item, file_name, file_infos, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.item = item
         self.parent = parent
-        self.full_path = full_path
+        self.file_infos = file_infos
+        self.file_name = file_name
         self.button_delete.clicked.connect(self.delete_file)
+
+        self.label_file_name.setText(
+            '<html><head/><body><p><span style="font-size:14pt;">{}'
+            '</span></p></body></html>'.format(file_name))
+        if self.file_infos['type'] == 'file':
+            self.label_file_type.setPixmap(QPixmap(':/icons/images/icons/file.png'))
+            self.label_file_size.setText(
+                '<html><head/><body><p><span style="font-style:italic;">{}'
+                '</span></p></body></html>'.format(get_filesize(self.file_infos['size']))
+            )
+        elif self.file_infos['type'] == 'folder':
+            if file_infos.get('children', []):
+                self.label_file_type.setPixmap(
+                    QPixmap(':/icons/images/icons/folder_empty.png'))
+            else:
+                self.label_file_type.setPixmap(
+                    QPixmap(':/icons/images/icons/folder_full.png'))
+        self.label_file_type.setScaledContents(True)
+        self.label_created.setText(
+            QCoreApplication.translate(self.__class__.__name__,
+            '<html><head/><body><p><span style="font-style:italic;">'
+            'Created on {}</span></p></body></html>'.format(self.file_infos['created'])))
+        self.label_modified.setText(
+            QCoreApplication.translate(self.__class__.__name__,
+            '<html><head/><body><p><span style="font-style:italic;">'
+            'Updated on {}</span></p></body></html>'.format(self.file_infos['updated'])))
+
+    @property
+    def file_type(self):
+        return self.file_infos['type']
 
     def delete_file(self):
         self.parent.remove_item(self.item)
@@ -41,24 +73,46 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.button_add_workspace.clicked.connect(self.add_workspace)
         self.list_files.setContextMenuPolicy(Qt.CustomContextMenu)
         self.list_files.customContextMenuRequested.connect(self.show_context_menu)
-        self.mountpoint = None
+        self.list_files.itemDoubleClicked.connect(self.item_double_clicked)
+        self.current_workspace = None
+        self.current_directory = None
 
     def set_mountpoint(self, mountpoint):
-        self.mountpoint = mountpoint
+        self.label_mountpoint.setText(mountpoint)
 
     def show_context_menu(self, pos):
         if not self.list_files.itemAt(pos):
             return
         global_pos = self.list_files.mapToGlobal(pos)
         menu = QMenu()
-        action = menu.addAction("Open")
-        action.triggered.connect(self.action_open_file)
+        item = self.list_files.itemAt(pos)
+        widget = self.list_files.itemWidget(item)
+        if widget.file_type == 'file':
+            action = menu.addAction(QCoreApplication.translate(self.__class__.__name__,
+                                                               "Open"))
+        elif widget.file_type == 'folder':
+            action = menu.addAction(QCoreApplication.translate(self.__class__.__name__,
+                                                               "Open in Explorer"))
+        action.triggered.connect(self.action_open_file_clicked)
         menu.exec(global_pos)
 
-    def action_open_file(self):
-        item = self.list_files.currentItem()
+    def item_double_clicked(self, item):
         widget = self.list_files.itemWidget(item)
-        self.open_file('{}/{}'.format(self.mountpoint, widget.full_path))
+        if widget.file_type == 'file':
+            self.open_file(item)
+        else:
+            print('FOLDER !')
+
+    def action_open_file_clicked(self):
+        item = self.list_files.currentItem()
+        self.open_file(item)
+
+    def open_file(self, item):
+        widget = self.list_files.itemWidget(item)
+        file_name = widget.file_name
+        desktop.open_file(os.path.join(
+            self.label_mountpoint.text(), self.current_workspace,
+            self.current_directory, file_name))
 
     def show(self, *args, **kwargs):
         super().show(*args, **kwargs)
@@ -90,36 +144,22 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         else:
             self.button_add_workspace.setEnabled(False)
 
-    def load_workspace(self, workspace):
+    def load_directory(self, workspace, directory):
+        self.current_directory = directory
         self.list_files.clear()
-        result = core_call().stat(workspace)
-        for file_name in result.get('children', []):
-            file_infos = core_call().stat('{}/{}'.format(workspace, file_name))
+        result = core_call().stat(os.path.join(workspace, directory))
+
+        if len(self.current_directory):
             item = QListWidgetItem()
-            widget = FileItemWidget(self, item, '/{}/{}'.format(workspace, file_name))
-            widget.label_file_name.setText(
-                '<html><head/><body><p><span style="font-size:14pt;">{}'
-                '</span></p></body></html>'.format(file_name))
-            if file_infos['type'] == 'file':
-                widget.label_file_type.setPixmap(QPixmap(':/icons/images/icons/file.png'))
-                widget.label_file_size.setText(
-                    '<html><head/><body><p><span style="font-style:italic;">{}'
-                    '</span></p></body></html>'.format(get_filesize(file_infos['size']))
-                )
-            elif file_infos['type'] == 'folder':
-                if file_infos.get('children', []):
-                    widget.label_file_type.setPixmap(
-                        QPixmap(':/icons/images/icons/folder_empty.png'))
-                else:
-                    widget.label_file_type.setPixmap(
-                        QPixmap(':/icons/images/icons/folder_full.png'))
-            widget.label_file_type.setScaledContents(True)
-            widget.label_created.setText(
-                '<html><head/><body><p><span style="font-style:italic;">'
-                'Created on {}</span></p></body></html>'.format(file_infos['created']))
-            widget.label_modified.setText(
-                '<html><head/><body><p><span style="font-style:italic;">'
-                'Updated on {}</span></p></body></html>'.format(file_infos['updated']))
+            widget = ParentFolderWidget()
+            item.setSizeHint(widget.sizeHint())
+            self.list_files.addItem(item)
+            self.list_files.setItemWidget(item, widget)
+
+        for file_name in result.get('children', []):
+            file_infos = core_call().stat(os.path.join(workspace, directory, file_name))
+            item = QListWidgetItem()
+            widget = FileItemWidget(self, item, file_name, file_infos)
             item.setSizeHint(widget.sizeHint())
             self.list_files.addItem(item)
             self.list_files.setItemWidget(item, widget)
@@ -127,15 +167,18 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.label_current_directory.setText(
             '<html><head/><body><p><span style="font-size:16pt;">/{}'
             '</span></p></body></html>'.format(workspace))
-        self.label_cd_elems.setText('{} elements'.format(len(result.get('children', []))))
+        self.label_cd_elems.setText(
+            QCoreApplication.translate(self.__class__.__name__,
+                                       '{} element(s)'.format(len(result.get('children', [])))))
+
+    def load_workspace(self, workspace):
+        self.current_workspace = workspace
+        self.load_directory(workspace, '')
         self.widget_workspaces.hide()
         self.widget_files.show()
 
     def remove_item(self, item):
         self.list_files.takeItem(self.list_files.row(item))
-
-    def open_file(self, path):
-        QDesktopServices.openUrl(QUrl(QFileInfo(path).absoluteFilePath()))
 
     def reset(self):
         self.widget_files.hide()
@@ -146,3 +189,5 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.widget_workspaces.layout().insertLayout(1, self.layout_workspaces)
         self.line_edit_new_workspace.setText('')
         self.button_add_workspace.setDisabled(True)
+        self.current_directory = None
+        self.current_workspace = None

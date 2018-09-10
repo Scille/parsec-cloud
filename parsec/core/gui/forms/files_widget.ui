@@ -61,6 +61,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="label_mountpoint">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="label_cd_elems">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">

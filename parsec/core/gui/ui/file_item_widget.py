@@ -49,9 +49,11 @@ class Ui_FileItemWidget(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_file_name.sizePolicy().hasHeightForWidth())
         self.label_file_name.setSizePolicy(sizePolicy)
+        self.label_file_name.setText("")
         self.label_file_name.setObjectName("label_file_name")
         self.horizontalLayout_2.addWidget(self.label_file_name)
         self.label_file_size = QtWidgets.QLabel(FileItemWidget)
+        self.label_file_size.setText("")
         self.label_file_size.setObjectName("label_file_size")
         self.horizontalLayout_2.addWidget(self.label_file_size)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
@@ -95,8 +97,6 @@ class Ui_FileItemWidget(object):
     def retranslateUi(self, FileItemWidget):
         _translate = QtCore.QCoreApplication.translate
         FileItemWidget.setWindowTitle(_translate("FileItemWidget", "Form"))
-        self.label_file_name.setText(_translate("FileItemWidget", "<html><head/><body><p><br/></p><p><br/></p></body></html>"))
-        self.label_file_size.setText(_translate("FileItemWidget", "<html><head/><body><p><br/></p></body></html>"))
         self.label_created.setText(_translate("FileItemWidget", "<html><head/><body><p><br/></p></body></html>"))
         self.label_modified.setText(_translate("FileItemWidget", "<html><head/><body><p><br/></p></body></html>"))
         self.button_delete.setText(_translate("FileItemWidget", "..."))

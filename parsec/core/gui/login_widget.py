@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal, QSysInfo
+from PyQt5.QtCore import pyqtSignal, QSysInfo, QCoreApplication
 from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
@@ -55,7 +55,9 @@ class LoginWidget(QWidget, Ui_LoginWidget):
              len(self.line_edit_claim_password_check.text()) > 0):
             if (self.line_edit_claim_password.text() !=
                  self.line_edit_claim_password_check.text()):
-                self.set_claim_error("Passwords don't match.")
+                self.set_claim_error(
+                    QCoreApplication.translate(self.__class__.__name__,
+                                               "Passwords don't match."))
                 return
         self.claimClicked.emit(self.line_edit_claim_login.text(),
                                   self.line_edit_claim_password.text(),

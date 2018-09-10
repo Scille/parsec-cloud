@@ -35,11 +35,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.files_widget = FilesWidget(parent=self)
         self.main_widget_layout.insertWidget(1, self.files_widget)
         self.files_widget.hide()
-        self.label_title.setText(
-            QCoreApplication.translate(
-                self.__class__.__name__,
-                '<span style="font-size:16pt;">Home</span>'
-                ' - Welcome to Parsec'))
         self.connect_all()
 
     def logged_in(self):
@@ -90,7 +85,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.login_widget.hide()
             self.show_files_widget()
         except DeviceLoadingError:
-            return 'Invalid password'
+            return QCoreApplication.translate(self.__class__.__name__, 'Invalid password')
 
     def login(self, device_id, password):
         err = self.perform_login(device_id, password)
@@ -128,21 +123,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def show_files_widget(self):
         self._hide_all_central_widgets()
-        self.label_title.setText(
-            QCoreApplication.translate(
-                self.__class__.__name__,
-                '<span style="font-size:16pt;">Files'
-                '</span> - Manage your files'))
         self.button_files.setChecked(True)
         self.files_widget.show()
 
     def show_users_widget(self):
         self._hide_all_central_widgets()
-        self.label_title.setText(
-            QCoreApplication.translate(
-                self.__class__.__name__,
-                '<span style="font-size:16pt;">Users'
-                '</span> - Manage the users'))
         self.button_users.setChecked(True)
         self.users_widget.show()
 
@@ -151,11 +136,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.settings_widget = SettingsWidget(parent=self)
             self.main_widget_layout.insertWidget(1, self.settings_widget)
         self._hide_all_central_widgets()
-        self.label_title.setText(
-            QCoreApplication.translate(
-                self.__class__.__name__,
-                '<span style="font-size:16pt;">'
-                'Settings</span> - Configure Parsec'))
         self.button_settings.setChecked(True)
         self.settings_widget.show()
 
