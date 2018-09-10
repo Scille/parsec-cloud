@@ -2,7 +2,8 @@ import os
 
 from PyQt5.QtCore import Qt, QSize, QCoreApplication
 from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import QWidget, QListWidgetItem, QGridLayout, QMenu, QMessageBox
+from PyQt5.QtWidgets import (QWidget, QListWidgetItem, QGridLayout, QMenu,
+                             QMessageBox, QInputDialog)
 
 from parsec.core.gui import desktop
 from parsec.core.gui.core_call import core_call
@@ -76,8 +77,20 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.list_files.setContextMenuPolicy(Qt.CustomContextMenu)
         self.list_files.customContextMenuRequested.connect(self.show_context_menu)
         self.list_files.itemDoubleClicked.connect(self.item_double_clicked)
+        self.button_create_folder.clicked.connect(self.create_folder_clicked)
         self.current_workspace = None
         self.current_directory = None
+
+    def create_folder_clicked(self):
+        dir_name, ok = QInputDialog.getText(self, 'New folder', 'Enter new folder name')
+        if not ok or not dir_name:
+            return
+        try:
+            core_call().create_folder(
+                os.path.join(self.current_workspace, self.current_directory, dir_name))
+            self.load_directory(self.current_workspace, self.current_directory)
+        except FileExistsError:
+            QMessageBox.warning(self, 'Error', 'A folder with the same name already exists.')
 
     def set_mountpoint(self, mountpoint):
         self.label_mountpoint.setText(mountpoint)
