@@ -3,7 +3,7 @@ import shutil
 import pathlib
 
 from PyQt5.QtCore import QCoreApplication
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QMessageBox
 
 from parsec.core.devices_manager import DeviceLoadingError
 
@@ -79,7 +79,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             mountpoint = os.path.join(str(pathlib.Path.home()), 'parsec', device_id)
             if os.path.exists(mountpoint):
                 shutil.rmtree(mountpoint)
-            core_call().mount(mountpoint)
+            try:
+                core_call().mount('/home/max/mount')
+            except RuntimeError:
+                QMessageBox.warning(self, 'Error', 'Can not mount "{}"'.format(mountpoint))
             self.files_widget.set_mountpoint(mountpoint)
             self.logged_in()
             self.login_widget.hide()

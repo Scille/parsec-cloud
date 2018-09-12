@@ -64,6 +64,7 @@ class _CoreCall:
     def create_workspace(self, *args):
         return self._trio_portal.run(self._parsec_core.fs.workspace_create, *args)
 
+
 _CORE_CALL = None
 
 

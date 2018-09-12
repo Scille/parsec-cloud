@@ -226,9 +226,19 @@
         <translation>Globale</translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="44"/>
+        <location filename="../forms/settings_widget.ui" line="91"/>
         <source>Network</source>
         <translation>Réseau</translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="46"/>
+        <source>Mount options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="61"/>
+        <source>Choose mount folder</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
