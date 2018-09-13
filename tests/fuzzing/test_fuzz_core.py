@@ -231,6 +231,7 @@ async def _fuzzer_cmd(id, core, fs_state):
 
 
 @pytest.mark.trio
+@pytest.mark.slow
 async def test_fuzz_core(request, running_backend, core, alice, bob):
     try:
         await core.login(alice)
