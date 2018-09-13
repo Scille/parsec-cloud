@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QMainWindow, QMessageBox
 
 from parsec.core.devices_manager import DeviceLoadingError
 
+from parsec.core.gui import settings
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.files_widget import FilesWidget
@@ -32,9 +33,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.users_widget = UsersWidget(parent=self)
         self.main_widget_layout.insertWidget(1, self.users_widget)
         self.users_widget.hide()
+        self.settings_widget = SettingsWidget(parent=self)
+        self.settings_widget.hide()
+        self.main_widget_layout.insertWidget(1, self.settings_widget)
         self.files_widget = FilesWidget(parent=self)
         self.main_widget_layout.insertWidget(1, self.files_widget)
         self.files_widget.hide()
+        self.current_device = None
         self.connect_all()
 
     def logged_in(self):
@@ -42,6 +47,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_users.setDisabled(False)
         self.button_settings.setDisabled(False)
         self.action_disconnect.setDisabled(False)
+        self.action_remount.setDisabled(False)
 
     def connect_all(self):
         self.action_about_parsec.triggered.connect(self.show_about_dialog)
@@ -52,6 +58,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.login_widget.claimClicked.connect(self.claim)
         self.action_disconnect.triggered.connect(self.logout)
         self.users_widget.registerClicked.connect(self.register)
+        self.action_remount.triggered.connect(self.remount)
 
     def logout(self):
         self.files_widget.set_mountpoint(None)
@@ -68,22 +75,52 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_users.setDisabled(True)
         self.button_settings.setDisabled(True)
         self.action_disconnect.setDisabled(True)
+        self.action_remounte.setDisabled(True)
         device = core_call().load_device('johndoe@test')
         core_call().login(device)
+        self.current_device = device
+
+    def remount(self):
+        base_mountpoint = settings.get_value('mountpoint')
+        if not base_mountpoint:
+            QMessageBox.warning(
+                'Mountpoint is not defined, go to Settings/Global to set a mountpoint,'
+                ' then File/Remount to mount it.')
+            return
+        mountpoint = os.path.join(base_mountpoint, self.current_device.id)
+        if core_call().is_mounted():
+            core_call().unmount()
+        try:
+            if os.path.exists(mountpoint):
+                shutil.rmtree(mountpoint)
+            core_call().mount(mountpoint)
+            self.files_widget.set_mountpoint(mountpoint)
+            self.button_settings.setDisabled(False)
+            self.action_disconnect.setDisabled(False)
+            self.action_remount.setDisabled(False)
+            self._hide_all_central_widgets()
+            self.show_files_widget()
+            return True
+        except (RuntimeError, PermissionError):
+            QMessageBox.warning(
+                self, 'Error', 'Can not mount in "{}" (permissions problems ?). Go '
+                'to Settings/Global to a set mountpoint, then File/Remount to '
+                'mount it.'.format(base_mountpoint))
+            self.button_settings.setDisabled(False)
+            self.action_disconnect.setDisabled(False)
+            self.action_remount.setDisabled(False)
+            self._hide_all_central_widgets()
+            self.show_settings_widget()
+            return False
 
     def perform_login(self, device_id, password):
         try:
             device = core_call().load_device(device_id, password)
+            self.current_device = device
             core_call().logout()
             core_call().login(device)
-            mountpoint = os.path.join(str(pathlib.Path.home()), 'parsec', device_id)
-            if os.path.exists(mountpoint):
-                shutil.rmtree(mountpoint)
-            try:
-                core_call().mount('/home/max/mount')
-            except RuntimeError:
-                QMessageBox.warning(self, 'Error', 'Can not mount "{}"'.format(mountpoint))
-            self.files_widget.set_mountpoint(mountpoint)
+            if not self.remount():
+                return
             self.logged_in()
             self.login_widget.hide()
             self.show_files_widget()
@@ -135,20 +172,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.users_widget.show()
 
     def show_settings_widget(self):
-        if not self.settings_widget:
-            self.settings_widget = SettingsWidget(parent=self)
-            self.main_widget_layout.insertWidget(1, self.settings_widget)
         self._hide_all_central_widgets()
         self.button_settings.setChecked(True)
         self.settings_widget.show()
 
     def _hide_all_central_widgets(self):
-        if self.files_widget:
-            self.files_widget.hide()
-        if self.users_widget:
-            self.users_widget.hide()
-        if self.settings_widget:
-            self.settings_widget.hide()
+        self.files_widget.hide()
+        self.users_widget.hide()
+        self.settings_widget.hide()
+        self.login_widget.hide()
         self.button_files.setChecked(False)
         self.button_users.setChecked(False)
         self.button_settings.setChecked(False)

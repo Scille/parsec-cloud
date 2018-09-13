@@ -15,4 +15,6 @@ def get_value(key, default=None):
 def set_value(key, value):
     if key not in KEYS:
         raise KeyError(key)
-    QSettings().setValue(key, value)
+    settings = QSettings()
+    settings.setValue(key, value)
+    settings.sync()

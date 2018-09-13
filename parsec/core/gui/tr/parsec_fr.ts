@@ -44,28 +44,33 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="110"/>
+        <location filename="../forms/files_widget.ui" line="133"/>
         <source>Search files or folders</source>
         <translation>Rechercher un fichier ou un dossier</translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="128"/>
+        <location filename="../forms/files_widget.ui" line="151"/>
         <source>New workspace name</source>
         <translation>Nouvel espace de travail</translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="135"/>
+        <location filename="../forms/files_widget.ui" line="158"/>
         <source>Add a workspace</source>
         <translation>Ajouter un espace de travail</translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="37"/>
+        <location filename="../forms/files_widget.ui" line="67"/>
         <source>Return to workspaces list</source>
         <translation>Retourner à la liste des espaces de travail</translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="88"/>
+        <location filename="../forms/files_widget.ui" line="111"/>
         <source>Create new folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/files_widget.ui" line="34"/>
+        <source>Mounted on</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -175,24 +180,29 @@
         <translation>Fichier</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="162"/>
+        <location filename="../forms/main_window.ui" line="163"/>
         <source>Help</source>
         <translation>Aide</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="175"/>
+        <location filename="../forms/main_window.ui" line="176"/>
         <source>Quit</source>
         <translation>Quitter</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="184"/>
+        <location filename="../forms/main_window.ui" line="185"/>
         <source>About Parsec</source>
         <translation>À propos de Parsec</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="192"/>
+        <location filename="../forms/main_window.ui" line="193"/>
         <source>Disconnect</source>
         <translation>Se déconnecter</translation>
+    </message>
+    <message>
+        <location filename="../forms/main_window.ui" line="201"/>
+        <source>Remount</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

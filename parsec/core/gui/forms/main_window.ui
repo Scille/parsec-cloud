@@ -154,6 +154,7 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="action_remount"/>
     <addaction name="action_disconnect"/>
     <addaction name="action_quit"/>
    </widget>
@@ -190,6 +191,14 @@
    </property>
    <property name="text">
     <string>Disconnect</string>
+   </property>
+  </action>
+  <action name="action_remount">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Remount</string>
    </property>
   </action>
  </widget>

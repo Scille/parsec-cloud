@@ -81,6 +81,10 @@ class Ui_MainWindow(object):
         self.action_disconnect = QtWidgets.QAction(MainWindow)
         self.action_disconnect.setEnabled(False)
         self.action_disconnect.setObjectName("action_disconnect")
+        self.action_remount = QtWidgets.QAction(MainWindow)
+        self.action_remount.setEnabled(False)
+        self.action_remount.setObjectName("action_remount")
+        self.menu_file.addAction(self.action_remount)
         self.menu_file.addAction(self.action_disconnect)
         self.menu_file.addAction(self.action_quit)
         self.menu_help.addAction(self.action_about_parsec)
@@ -105,5 +109,6 @@ class Ui_MainWindow(object):
         self.action_quit.setText(_translate("MainWindow", "Quit"))
         self.action_about_parsec.setText(_translate("MainWindow", "About Parsec"))
         self.action_disconnect.setText(_translate("MainWindow", "Disconnect"))
+        self.action_remount.setText(_translate("MainWindow", "Remount"))
 
 from parsec.core.gui import resources_rc
