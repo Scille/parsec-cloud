@@ -12,6 +12,7 @@ from parsec.core.backend_connection import (
 )
 
 
+MAX_COOLDOWN = 30
 logger = logbook.Logger("parsec.core.backend_events_manager")
 
 
@@ -160,6 +161,7 @@ class BackendEventsManager(BaseAsyncComponent):
             closed_event.set()
 
     async def _event_listener_manager(self):
+        backend_connection_failures = 0
         while True:
             try:
 
@@ -168,6 +170,7 @@ class BackendEventsManager(BaseAsyncComponent):
                     # TODO: seems like a trio bug: sometime this line throw a HandshakeBadIdentity (
                     # which is fine) that won't be caught by the surrounding try/except...
                     event_pump_cancel_scope = await nursery.start(self._event_pump)
+                    backend_connection_failures = 0
                     self._event_pump_ready()
                     while True:
                         await self._subscribed_events_changed.wait()
@@ -180,11 +183,16 @@ class BackendEventsManager(BaseAsyncComponent):
             except (BackendNotAvailable, trio.BrokenStreamError, trio.ClosedStreamError) as exc:
                 # In case of connection failure, wait a bit and restart
                 self._event_pump_lost()
+                cooldown_time = 2 ** backend_connection_failures
+                backend_connection_failures += 1
+                if cooldown_time > MAX_COOLDOWN:
+                    cooldown_time = MAX_COOLDOWN
                 logger.debug(
-                    "Connection lost with backend ({}), restarting connection in 1s...", exc
+                    "Connection lost with backend ({!r}), restarting connection in {}s...",
+                    exc,
+                    cooldown_time,
                 )
-                # TODO: add backoff factor
-                await trio.sleep(1)
+                await trio.sleep(cooldown_time)
 
             except (SubscribeBackendEventError, ListenBackendEventError, json.JSONDecodeError):
                 self._event_pump_lost()
