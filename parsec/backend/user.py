@@ -299,7 +299,7 @@ class BaseUserComponent:
     async def refuse_device_configuration_try(self, config_try_id, user_id, reason):
         raise NotImplementedError()
 
-    async def create(self, author, user_id, broadcast_key, devices):
+    async def create(self, user_id, broadcast_key, devices):
         raise NotImplementedError()
 
     async def create_device(self, user_id, device_name, verify_key):

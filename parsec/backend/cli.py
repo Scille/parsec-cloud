@@ -77,6 +77,22 @@ def run_with_pdb(cmd, *args, **kwargs):
 
 
 @click.command()
+@click.option("--store", "-s", required=True, help="PostgreSQL database url")
+@click.option("--force", "-f", is_flag=True)
+def init_cmd(store, force):
+    """
+    Initialize a new backend's PostgreSQL database.
+    """
+    if not store.startswith("postgresql://"):
+        raise SystemExit("Can only initialize a PostgreSQL database.")
+
+    from parsec.backend.drivers.postgresql import init_db
+    import trio_asyncio
+
+    trio_asyncio.run(lambda: init_db(store, force=force))
+
+
+@click.command()
 @click.option("--pubkeys", default=None)
 @click.option("--host", "-H", default="127.0.0.1", help="Host to listen on (default: 127.0.0.1)")
 @click.option("--port", "-P", default=6777, type=int, help=("Port to listen on (default: 6777)"))
@@ -131,7 +147,6 @@ def _backend(host, port, pubkeys, store, blockstore, debug):
                 await backend.user.get(JOHN_DOE_USER_ID)
             except NotFoundError:
                 await backend.user.create(
-                    "<backend-mock>",
                     JOHN_DOE_USER_ID,
                     JOHN_DOE_PUBLIC_KEY,
                     devices={JOHN_DOE_DEVICE_NAME: JOHN_DOE_DEVICE_VERIFY_KEY},

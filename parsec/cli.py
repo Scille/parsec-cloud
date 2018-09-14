@@ -1,7 +1,7 @@
 import click
 
 from parsec.core.cli import core_cmd
-from parsec.backend.cli import backend_cmd
+from parsec.backend.cli import backend_cmd, init_cmd
 from parsec.ui import shell
 
 try:
@@ -24,6 +24,7 @@ def cli():
 
 cli.add_command(core_cmd, "core")
 cli.add_command(backend_cmd, "backend")
+cli.add_command(init_cmd, "init")
 try:
     cli.add_command(fuse_cli, "fuse")
 except NameError:
