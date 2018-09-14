@@ -1,6 +1,5 @@
-import pytest
 import string
-from hypothesis import given, strategies as st, note, assume
+from hypothesis import given, strategies as st
 
 from parsec.core.fs.buffer_ordering import (
     merge_buffers,

@@ -1,13 +1,11 @@
 import os
 import re
 import attr
-from pathlib import Path
 from functools import wraps
 from hypothesis.stateful import (
     RuleBasedStateMachine,
     rule as vanilla_rule,
     initialize as vanilla_initialize,
-    precondition,
     VarReference,
 )
 from huepy import red, bold
