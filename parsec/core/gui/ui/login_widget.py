@@ -18,6 +18,8 @@ class Ui_LoginWidget(object):
         sizePolicy.setHeightForWidth(LoginWidget.sizePolicy().hasHeightForWidth())
         LoginWidget.setSizePolicy(sizePolicy)
         self.verticalLayout = QtWidgets.QVBoxLayout(LoginWidget)
+        self.verticalLayout.setContentsMargins(5, 5, 5, 5)
+        self.verticalLayout.setSpacing(5)
         self.verticalLayout.setObjectName("verticalLayout")
         self.group_login = QtWidgets.QGroupBox(LoginWidget)
         self.group_login.setObjectName("group_login")

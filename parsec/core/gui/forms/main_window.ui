@@ -91,7 +91,7 @@
       <item>
        <widget class="QToolButton" name="button_settings">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="toolTip">
          <string>Configure the application.</string>
@@ -154,6 +154,7 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="action_login"/>
     <addaction name="action_remount"/>
     <addaction name="action_disconnect"/>
     <addaction name="action_quit"/>
@@ -174,6 +175,12 @@
    </property>
    <property name="text">
     <string>Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::ApplicationShortcut</enum>
    </property>
   </action>
   <action name="action_about_parsec">
@@ -199,6 +206,11 @@
    </property>
    <property name="text">
     <string>Remount</string>
+   </property>
+  </action>
+  <action name="action_login">
+   <property name="text">
+    <string>Log In</string>
    </property>
   </action>
  </widget>

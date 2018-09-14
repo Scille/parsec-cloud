@@ -20,6 +20,21 @@
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>5</number>
+   </property>
+   <property name="leftMargin">
+    <number>5</number>
+   </property>
+   <property name="topMargin">
+    <number>5</number>
+   </property>
+   <property name="rightMargin">
+    <number>5</number>
+   </property>
+   <property name="bottomMargin">
+    <number>5</number>
+   </property>
    <item>
     <widget class="QTabWidget" name="tab_settings">
      <property name="currentIndex">
@@ -27,7 +42,7 @@
      </property>
      <widget class="QWidget" name="tab_app">
       <attribute name="icon">
-       <iconset>
+       <iconset resource="../rc/resources.qrc">
         <normaloff>:/icons/images/icons/settings.png</normaloff>:/icons/images/icons/settings.png</iconset>
       </attribute>
       <attribute name="title">
@@ -84,7 +99,7 @@
      </widget>
      <widget class="QWidget" name="tab_network">
       <attribute name="icon">
-       <iconset>
+       <iconset resource="../rc/resources.qrc">
         <normaloff>:/icons/images/icons/cloud.png</normaloff>:/icons/images/icons/cloud.png</iconset>
       </attribute>
       <attribute name="title">
@@ -95,6 +110,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../rc/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

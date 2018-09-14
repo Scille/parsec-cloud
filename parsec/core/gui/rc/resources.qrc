@@ -69,6 +69,8 @@
         <file>images/icons/scille.png</file>
         <file>images/icons/parsec.png</file>
         <file>images/icons/up_arrow.png</file>
+        <file>images/icons/folder_parent.png</file>
+        <file>images/icons/workspace.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>

@@ -18,6 +18,8 @@ class Ui_SettingsWidget(object):
         sizePolicy.setHeightForWidth(SettingsWidget.sizePolicy().hasHeightForWidth())
         SettingsWidget.setSizePolicy(sizePolicy)
         self.verticalLayout = QtWidgets.QVBoxLayout(SettingsWidget)
+        self.verticalLayout.setContentsMargins(5, 5, 5, 5)
+        self.verticalLayout.setSpacing(5)
         self.verticalLayout.setObjectName("verticalLayout")
         self.tab_settings = QtWidgets.QTabWidget(SettingsWidget)
         self.tab_settings.setObjectName("tab_settings")
@@ -69,3 +71,4 @@ class Ui_SettingsWidget(object):
         self.tab_settings.setTabText(self.tab_settings.indexOf(self.tab_app), _translate("SettingsWidget", "Global"))
         self.tab_settings.setTabText(self.tab_settings.indexOf(self.tab_network), _translate("SettingsWidget", "Network"))
 
+from parsec.core.gui import resources_rc

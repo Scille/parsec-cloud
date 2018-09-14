@@ -14,6 +14,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.setupUi(self)
         self.group_claim.hide()
         self.connect_all()
+        self.label_error.hide()
+        self.label_claim_error.hide()
         self.line_edit_claim_device.setText(QSysInfo.productType())
 
     def connect_all(self):
@@ -46,6 +48,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.label_claim_error.setText('')
         self.group_login.show()
         self.group_claim.hide()
+        self.label_error.hide()
+        self.label_claim_error.hide()
 
     def emit_login(self):
         self.loginClicked.emit(self.combo_devices.currentText(), self.line_edit_password.text())
@@ -58,14 +62,17 @@ class LoginWidget(QWidget, Ui_LoginWidget):
                 self.set_claim_error(
                     QCoreApplication.translate(self.__class__.__name__,
                                                "Passwords don't match."))
+                self.label_claim_error.show()
                 return
         self.claimClicked.emit(self.line_edit_claim_login.text(),
-                                  self.line_edit_claim_password.text(),
-                                  self.line_edit_claim_device.text(),
-                                  self.line_edit_claim_token.text())
+                               self.line_edit_claim_password.text(),
+                               self.line_edit_claim_device.text(),
+                               self.line_edit_claim_token.text())
 
     def set_login_error(self, error):
         self.label_error.setText(error)
+        self.label_error.show()
 
     def set_claim_error(self, error):
         self.label_claim_error.setText(error)
+        self.label_claim_error.show()

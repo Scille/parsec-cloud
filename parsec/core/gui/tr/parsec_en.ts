@@ -26,11 +26,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/file_item_widget.ui" line="168"/>
-        <source>...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../forms/file_item_widget.ui" line="141"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
@@ -44,32 +39,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="133"/>
+        <location filename="../forms/files_widget.ui" line="152"/>
         <source>Search files or folders</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="151"/>
-        <source>New workspace name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/files_widget.ui" line="158"/>
+        <location filename="../forms/files_widget.ui" line="170"/>
         <source>Add a workspace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="67"/>
+        <location filename="../forms/files_widget.ui" line="82"/>
         <source>Return to workspaces list</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="111"/>
+        <location filename="../forms/files_widget.ui" line="126"/>
         <source>Create new folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="34"/>
+        <location filename="../forms/files_widget.ui" line="49"/>
         <source>Mounted on</source>
         <translation type="unfinished"></translation>
     </message>
@@ -82,57 +72,57 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="122"/>
+        <location filename="../forms/login_widget.ui" line="137"/>
         <source>Login</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="132"/>
+        <location filename="../forms/login_widget.ui" line="147"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="70"/>
+        <location filename="../forms/login_widget.ui" line="85"/>
         <source>Log In</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="142"/>
+        <location filename="../forms/login_widget.ui" line="157"/>
         <source>Password check</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="149"/>
+        <location filename="../forms/login_widget.ui" line="164"/>
         <source>Device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="181"/>
+        <location filename="../forms/login_widget.ui" line="196"/>
         <source>Register</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="32"/>
+        <location filename="../forms/login_widget.ui" line="47"/>
         <source>Register a new account instead</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="99"/>
+        <location filename="../forms/login_widget.ui" line="114"/>
         <source>Register a new account</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="112"/>
+        <location filename="../forms/login_widget.ui" line="127"/>
         <source>Log In instead</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="156"/>
+        <location filename="../forms/login_widget.ui" line="171"/>
         <source>Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="105"/>
+        <location filename="../forms/login_widget.ui" line="120"/>
         <source>To register, you need another user to create an account and get a token.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -180,28 +170,38 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="163"/>
+        <location filename="../forms/main_window.ui" line="164"/>
         <source>Help</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="176"/>
+        <location filename="../forms/main_window.ui" line="177"/>
         <source>Quit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="185"/>
+        <location filename="../forms/main_window.ui" line="192"/>
         <source>About Parsec</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="193"/>
+        <location filename="../forms/main_window.ui" line="200"/>
         <source>Disconnect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="201"/>
+        <location filename="../forms/main_window.ui" line="208"/>
         <source>Remount</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/main_window.ui" line="213"/>
+        <source>Log In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/main_window.ui" line="180"/>
+        <source>Ctrl+Q</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -226,22 +226,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="34"/>
+        <location filename="../forms/settings_widget.ui" line="49"/>
         <source>Global</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="91"/>
+        <location filename="../forms/settings_widget.ui" line="106"/>
         <source>Network</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="46"/>
+        <location filename="../forms/settings_widget.ui" line="61"/>
         <source>Mount options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="61"/>
+        <location filename="../forms/settings_widget.ui" line="76"/>
         <source>Choose mount folder</source>
         <translation type="unfinished"></translation>
     </message>
@@ -254,22 +254,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="20"/>
+        <location filename="../forms/users_widget.ui" line="35"/>
         <source>Add a user</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="28"/>
-        <source>New user name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/users_widget.ui" line="35"/>
+        <location filename="../forms/users_widget.ui" line="43"/>
         <source>Register a new user</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="44"/>
+        <location filename="../forms/users_widget.ui" line="65"/>
         <source>Transmit these information to the new user so they can set up their account. </source>
         <translation type="unfinished"></translation>
     </message>
