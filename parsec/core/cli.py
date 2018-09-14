@@ -1,5 +1,7 @@
 import time
+import queue
 import traceback
+import threading
 import trio
 import click
 import logbook
@@ -8,6 +10,7 @@ from urllib.parse import urlparse
 
 from parsec.core import Core, CoreConfig
 from parsec.core.devices_manager import DeviceSavingError
+from parsec.core.gui import run_gui
 
 
 logger = logbook.Logger("parsec.core.app")
@@ -89,6 +92,7 @@ def run_with_pdb(cmd, *args, **kwargs):
 # @click.option('--identity-key', '-I', type=click.File('rb'), default=None)
 @click.option("--I-am-John", is_flag=True, help="Log as dummy John Doe user")
 # @click.option('--cache-size', help='Max number of elements in cache', default=1000)
+@click.option("--no-ui", help="Disable the GUI", is_flag=True)
 def core_cmd(log_level, log_file, pdb, **kwargs):
     if log_file:
         log_handler = logbook.FileHandler(log_file, level=log_level.upper())
@@ -103,26 +107,31 @@ def core_cmd(log_level, log_file, pdb, **kwargs):
         return _core(**kwargs)
 
 
-def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
-    async def _login_and_run(user=None):
+def _core(socket, backend_addr, backend_watchdog, debug, i_am_john, no_ui):
+    async def _login_and_run(portal_queue, user=None):
+        portal = trio.BlockingTrioPortal()
+        portal_queue.put(portal)
         async with trio.open_nursery() as nursery:
             await core.init(nursery)
             try:
-
                 if user:
                     await core.login(user)
                     print("Logged as %s" % user.id)
 
-                if socket.startswith("unix://"):
-                    await trio.serve_unix(core.handle_client, socket[len("unix://") :])
-                elif socket.startswith("tcp://"):
-                    parsed = urlparse(socket)
-                    await trio.serve_tcp(core.handle_client, parsed.port, host=parsed.hostname)
-                else:
-                    raise SystemExit(f"Error: Invalid --socket value `{socket}`")
-
+                with trio.open_cancel_scope() as cancel_scope:
+                    portal_queue.put(cancel_scope)
+                    if socket.startswith("unix://"):
+                        await trio.serve_unix(core.handle_client, socket[len("unix://") :])
+                    elif socket.startswith("tcp://"):
+                        parsed = urlparse(socket)
+                        await trio.serve_tcp(core.handle_client, parsed.port, host=parsed.hostname)
+                    else:
+                        raise SystemExit(f"Error: Invalid --socket value `{socket}`")
             finally:
                 await core.teardown()
+
+    def _trio_run(funct, portal_queue, user=None):
+        trio.run(funct, portal_queue, user)
 
     config = CoreConfig(
         debug=debug,
@@ -141,6 +150,8 @@ def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
     print(f"Starting Parsec Core on {socket} (with backend on {config.backend_addr})")
 
     try:
+        portal_queue = queue.Queue(1)
+        args = (_login_and_run, portal_queue)
         if i_am_john:
             try:
                 core.local_devices_manager.register_new_device(
@@ -154,10 +165,17 @@ def _core(socket, backend_addr, backend_watchdog, debug, i_am_john):
             device = core.local_devices_manager.load_device(JOHN_DOE_DEVICE_ID)
 
             print(f"Hello Mr. Doe, your conf dir is `{device.local_db.path}`")
-            trio.run(_login_and_run, device)
+            args = args + (device,)
+        if no_ui:
+            print("UI is disabled")
+            _trio_run(*args)
         else:
-            trio.run(_login_and_run)
-
+            trio_thread = threading.Thread(target=_trio_run, args=args)
+            trio_thread.start()
+            portal = portal_queue.get()
+            cancel_scope = portal_queue.get()
+            run_gui(core, portal, cancel_scope)
+            trio_thread.join()
     except KeyboardInterrupt:
         print("bye ;-)")
 
