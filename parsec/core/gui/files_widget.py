@@ -2,8 +2,7 @@ import os
 
 from PyQt5.QtCore import Qt, QSize, QCoreApplication
 from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import (QWidget, QListWidgetItem, QMenu,
-                             QMessageBox, QInputDialog)
+from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QMessageBox, QInputDialog
 
 from parsec.core.gui import desktop
 from parsec.core.gui.core_call import core_call
@@ -25,40 +24,45 @@ class FileItemWidget(QWidget, Ui_FileItemWidget):
 
         self.label_file_name.setText(
             '<html><head/><body><p><span style="font-size:14pt;">{}'
-            '</span></p></body></html>'.format(file_name))
-        if self.file_infos['type'] == 'file':
-            self.label_file_type.setPixmap(QPixmap(':/icons/images/icons/file.png'))
+            "</span></p></body></html>".format(file_name)
+        )
+        if self.file_infos["type"] == "file":
+            self.label_file_type.setPixmap(QPixmap(":/icons/images/icons/file.png"))
             self.label_file_size.setText(
                 '<html><head/><body><p><span style="font-style:italic;">{}'
-                '</span></p></body></html>'.format(get_filesize(self.file_infos['size']))
+                "</span></p></body></html>".format(get_filesize(self.file_infos["size"]))
             )
-        elif self.file_infos['type'] == 'folder':
-            if file_infos.get('children', []):
-                self.label_file_type.setPixmap(
-                    QPixmap(':/icons/images/icons/folder_full.png'))
+        elif self.file_infos["type"] == "folder":
+            if file_infos.get("children", []):
+                self.label_file_type.setPixmap(QPixmap(":/icons/images/icons/folder_full.png"))
             else:
-                self.label_file_type.setPixmap(
-                    QPixmap(':/icons/images/icons/folder_empty.png'))
+                self.label_file_type.setPixmap(QPixmap(":/icons/images/icons/folder_empty.png"))
         self.label_file_type.setScaledContents(True)
         self.label_created.setText(
-            QCoreApplication.translate(self.__class__.__name__,
-            '<html><head/><body><p><span style="font-style:italic;">'
-            'Created on {}</span></p></body></html>'.format(self.file_infos['created'])))
+            QCoreApplication.translate(
+                self.__class__.__name__,
+                '<html><head/><body><p><span style="font-style:italic;">'
+                "Created on {}</span></p></body></html>".format(self.file_infos["created"]),
+            )
+        )
         self.label_modified.setText(
-            QCoreApplication.translate(self.__class__.__name__,
-            '<html><head/><body><p><span style="font-style:italic;">'
-            'Updated on {}</span></p></body></html>'.format(self.file_infos['updated'])))
+            QCoreApplication.translate(
+                self.__class__.__name__,
+                '<html><head/><body><p><span style="font-style:italic;">'
+                "Updated on {}</span></p></body></html>".format(self.file_infos["updated"]),
+            )
+        )
 
     @property
     def file_type(self):
-        return self.file_infos['type']
+        return self.file_infos["type"]
 
 
 class WorkspaceWidget(ToolButton):
     def __init__(self, workspace_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.setIcon(QIcon(':/icons/images/icons/workspace.png'))
+        self.setIcon(QIcon(":/icons/images/icons/workspace.png"))
         self.setText(workspace_name)
         self.setIconSize(QSize(64, 64))
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
@@ -70,8 +74,7 @@ class ParentFolderWidget(QWidget, Ui_ParentFolderWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.label_icon.setPixmap(
-            QPixmap(':/icons/images/icons/folder_parent.png'))
+        self.label_icon.setPixmap(QPixmap(":/icons/images/icons/folder_parent.png"))
 
 
 class FilesWidget(QWidget, Ui_FilesWidget):
@@ -99,15 +102,16 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 item.setHidden(False)
 
     def create_folder_clicked(self):
-        dir_name, ok = QInputDialog.getText(self, 'New folder', 'Enter new folder name')
+        dir_name, ok = QInputDialog.getText(self, "New folder", "Enter new folder name")
         if not ok or not dir_name:
             return
         try:
             core_call().create_folder(
-                os.path.join(self.current_workspace, self.current_directory, dir_name))
+                os.path.join(self.current_workspace, self.current_directory, dir_name)
+            )
             self.load_directory(self.current_workspace, self.current_directory)
         except FileExistsError:
-            QMessageBox.warning(self, 'Error', 'A folder with the same name already exists.')
+            QMessageBox.warning(self, "Error", "A folder with the same name already exists.")
 
     def set_mountpoint(self, mountpoint):
         self.label_mountpoint.setText(mountpoint)
@@ -121,31 +125,28 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         widget = self.list_files.itemWidget(item)
         if isinstance(widget, ParentFolderWidget):
             return
-        if widget.file_type == 'file':
-            action = menu.addAction(QCoreApplication.translate(self.__class__.__name__,
-                                                               'Open'))
-        elif widget.file_type == 'folder':
-            action = menu.addAction(QCoreApplication.translate(self.__class__.__name__,
-                                                               'Open in file explorer'))
+        if widget.file_type == "file":
+            action = menu.addAction(QCoreApplication.translate(self.__class__.__name__, "Open"))
+        elif widget.file_type == "folder":
+            action = menu.addAction(
+                QCoreApplication.translate(self.__class__.__name__, "Open in file explorer")
+            )
         action.triggered.connect(self.action_open_file_clicked)
-        action = menu.addAction(QCoreApplication.translate(self.__class__.__name__,
-                                                           'Delete'))
+        action = menu.addAction(QCoreApplication.translate(self.__class__.__name__, "Delete"))
         action.triggered.connect(self.action_delete_file_clicked)
         menu.exec(global_pos)
 
     def item_double_clicked(self, item):
         widget = self.list_files.itemWidget(item)
         if isinstance(widget, ParentFolderWidget):
-            self.load_directory(
-                self.current_workspace,
-                os.path.dirname(self.current_directory))
+            self.load_directory(self.current_workspace, os.path.dirname(self.current_directory))
         else:
-            if widget.file_type == 'file':
+            if widget.file_type == "file":
                 self.open_file(item)
             else:
                 self.load_directory(
-                    self.current_workspace,
-                    os.path.join(self.current_directory, widget.file_name))
+                    self.current_workspace, os.path.join(self.current_directory, widget.file_name)
+                )
 
     def action_open_file_clicked(self):
         item = self.list_files.currentItem()
@@ -154,58 +155,68 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def action_delete_file_clicked(self):
         item = self.list_files.currentItem()
         widget = self.list_files.itemWidget(item)
-        file_path = os.path.join(self.current_workspace,
-                                 self.current_directory,
-                                 widget.file_name)
-        if widget.file_type == 'folder':
+        file_path = os.path.join(self.current_workspace, self.current_directory, widget.file_name)
+        if widget.file_type == "folder":
             result = QMessageBox.question(
-                self, 'Confirmation',
-                'Are you sure you want to delete folder "{}"'.format(widget.file_name))
+                self,
+                "Confirmation",
+                'Are you sure you want to delete folder "{}"'.format(widget.file_name),
+            )
             if result == QMessageBox.Yes:
                 core_call().delete_folder(file_path)
                 self.list_files.takeItem(self.list_files.row(item))
-        elif widget.file_type == 'file':
+        elif widget.file_type == "file":
             result = QMessageBox.question(
-                self, 'Confirmation',
-                'Are you sure you want to delete file "{}"'.format(widget.file_name))
+                self,
+                "Confirmation",
+                'Are you sure you want to delete file "{}"'.format(widget.file_name),
+            )
             if result == QMessageBox.Yes:
                 core_call().delete_file(file_path)
                 self.list_files.takeItem(self.list_files.row(item))
         self.label_cd_elems.setText(
-            QCoreApplication.translate(self.__class__.__name__,
-                                       '{} element(s)'.format(self.list_files.count())))
+            QCoreApplication.translate(
+                self.__class__.__name__, "{} element(s)".format(self.list_files.count())
+            )
+        )
 
     def open_file(self, item):
         widget = self.list_files.itemWidget(item)
         file_name = widget.file_name
-        desktop.open_file(os.path.join(
-            self.label_mountpoint.text(), self.current_workspace,
-            self.current_directory, file_name))
+        desktop.open_file(
+            os.path.join(
+                self.label_mountpoint.text(),
+                self.current_workspace,
+                self.current_directory,
+                file_name,
+            )
+        )
 
     def show(self, *args, **kwargs):
         super().show(*args, **kwargs)
         self.reset()
-        result = core_call().stat('/')
-        for workspace in result.get('children', []):
+        result = core_call().stat("/")
+        for workspace in result.get("children", []):
             self._add_workspace(workspace)
 
     def _add_workspace(self, workspace_name):
         button = WorkspaceWidget(workspace_name)
         button.clicked_name.connect(self.load_workspace)
         self.layout_workspaces.addWidget(
-            button, int(self.workspaces_number / 4), int(self.workspaces_number % 4))
+            button, int(self.workspaces_number / 4), int(self.workspaces_number % 4)
+        )
         self.workspaces_number += 1
         self.workspaces.append(button)
 
     def create_workspace_clicked(self):
-        workspace_name, ok = QInputDialog.getText(self, 'New workspace', 'Enter new workspace name')
+        workspace_name, ok = QInputDialog.getText(self, "New workspace", "Enter new workspace name")
         if not ok or not workspace_name:
             return
         try:
             core_call().create_workspace(workspace_name)
             self._add_workspace(workspace_name)
         except FileExistsError:
-            QMessageBox.warning(self, 'Error', 'A workspace with the same name already exists.')
+            QMessageBox.warning(self, "Error", "A workspace with the same name already exists.")
             return
 
     def load_directory(self, workspace, directory):
@@ -220,7 +231,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.list_files.addItem(item)
             self.list_files.setItemWidget(item, widget)
 
-        for file_name in result.get('children', []):
+        for file_name in result.get("children", []):
             file_infos = core_call().stat(os.path.join(workspace, directory, file_name))
             item = QListWidgetItem()
             widget = FileItemWidget(self, item, file_name, file_infos)
@@ -230,14 +241,17 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         self.label_current_directory.setText(
             '<html><head/><body><p><span style="font-size:16pt;">/{}'
-            '</span></p></body></html>'.format(workspace))
+            "</span></p></body></html>".format(workspace)
+        )
         self.label_cd_elems.setText(
-            QCoreApplication.translate(self.__class__.__name__,
-                                       '{} element(s)'.format(len(result.get('children', [])))))
+            QCoreApplication.translate(
+                self.__class__.__name__, "{} element(s)".format(len(result.get("children", [])))
+            )
+        )
 
     def load_workspace(self, workspace):
         self.current_workspace = workspace
-        self.load_directory(workspace, '')
+        self.load_directory(workspace, "")
         self.widget_workspaces.hide()
         self.widget_files.show()
 

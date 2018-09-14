@@ -8,6 +8,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+
 class Ui_UsersWidget(object):
     def setupUi(self, UsersWidget):
         UsersWidget.setObjectName("UsersWidget")
@@ -25,7 +26,9 @@ class Ui_UsersWidget(object):
         self.button_register = QtWidgets.QPushButton(self.groupBox)
         self.button_register.setObjectName("button_register")
         self.horizontalLayout_3.addWidget(self.button_register)
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         self.horizontalLayout_3.addItem(spacerItem)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
         self.label_help = QtWidgets.QLabel(self.groupBox)
@@ -35,12 +38,20 @@ class Ui_UsersWidget(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.label_new_user_login = QtWidgets.QLabel(self.groupBox)
         self.label_new_user_login.setText("")
-        self.label_new_user_login.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse|QtCore.Qt.TextSelectableByKeyboard|QtCore.Qt.TextSelectableByMouse)
+        self.label_new_user_login.setTextInteractionFlags(
+            QtCore.Qt.LinksAccessibleByMouse
+            | QtCore.Qt.TextSelectableByKeyboard
+            | QtCore.Qt.TextSelectableByMouse
+        )
         self.label_new_user_login.setObjectName("label_new_user_login")
         self.horizontalLayout.addWidget(self.label_new_user_login)
         self.label_new_user_token = QtWidgets.QLabel(self.groupBox)
         self.label_new_user_token.setText("")
-        self.label_new_user_token.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse|QtCore.Qt.TextSelectableByKeyboard|QtCore.Qt.TextSelectableByMouse)
+        self.label_new_user_token.setTextInteractionFlags(
+            QtCore.Qt.LinksAccessibleByMouse
+            | QtCore.Qt.TextSelectableByKeyboard
+            | QtCore.Qt.TextSelectableByMouse
+        )
         self.label_new_user_token.setObjectName("label_new_user_token")
         self.horizontalLayout.addWidget(self.label_new_user_token)
         self.verticalLayout_2.addLayout(self.horizontalLayout)
@@ -49,7 +60,9 @@ class Ui_UsersWidget(object):
         self.label_register_error.setObjectName("label_register_error")
         self.verticalLayout_2.addWidget(self.label_register_error)
         self.verticalLayout.addWidget(self.groupBox)
-        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem1 = QtWidgets.QSpacerItem(
+            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
+        )
         self.verticalLayout.addItem(spacerItem1)
 
         self.retranslateUi(UsersWidget)
@@ -60,5 +73,9 @@ class Ui_UsersWidget(object):
         UsersWidget.setWindowTitle(_translate("UsersWidget", "Form"))
         self.groupBox.setTitle(_translate("UsersWidget", "Add a user"))
         self.button_register.setText(_translate("UsersWidget", "Register a new user"))
-        self.label_help.setText(_translate("UsersWidget", "Transmit these information to the new user so they can set up their account. "))
-
+        self.label_help.setText(
+            _translate(
+                "UsersWidget",
+                "Transmit these information to the new user so they can set up their account. ",
+            )
+        )

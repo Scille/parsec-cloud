@@ -8,11 +8,14 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+
 class Ui_LoginWidget(object):
     def setupUi(self, LoginWidget):
         LoginWidget.setObjectName("LoginWidget")
         LoginWidget.resize(613, 544)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(LoginWidget.sizePolicy().hasHeightForWidth())
@@ -37,7 +40,9 @@ class Ui_LoginWidget(object):
         self.verticalLayout_2.addWidget(self.line_edit_password)
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         self.horizontalLayout_3.addItem(spacerItem)
         self.button_login = QtWidgets.QPushButton(self.group_login)
         self.button_login.setEnabled(True)
@@ -85,7 +90,9 @@ class Ui_LoginWidget(object):
         self.verticalLayout_3.addWidget(self.line_edit_claim_token)
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem1 = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         self.horizontalLayout_4.addItem(spacerItem1)
         self.button_claim = QtWidgets.QPushButton(self.group_claim)
         self.button_claim.setEnabled(False)
@@ -103,7 +110,9 @@ class Ui_LoginWidget(object):
         self.label_claim_error.setObjectName("label_claim_error")
         self.verticalLayout_3.addWidget(self.label_claim_error)
         self.verticalLayout.addWidget(self.group_claim)
-        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem2 = QtWidgets.QSpacerItem(
+            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
+        )
         self.verticalLayout.addItem(spacerItem2)
 
         self.retranslateUi(LoginWidget)
@@ -117,16 +126,24 @@ class Ui_LoginWidget(object):
         _translate = QtCore.QCoreApplication.translate
         LoginWidget.setWindowTitle(_translate("LoginWidget", "Form"))
         self.group_login.setTitle(_translate("LoginWidget", "Log In"))
-        self.button_claim_instead.setText(_translate("LoginWidget", "Register a new account instead"))
+        self.button_claim_instead.setText(
+            _translate("LoginWidget", "Register a new account instead")
+        )
         self.line_edit_password.setPlaceholderText(_translate("LoginWidget", "Password"))
         self.button_login.setText(_translate("LoginWidget", "Log In"))
         self.group_claim.setTitle(_translate("LoginWidget", "Register a new account"))
-        self.label.setText(_translate("LoginWidget", "To register, you need another user to create an account and get a token."))
+        self.label.setText(
+            _translate(
+                "LoginWidget",
+                "To register, you need another user to create an account and get a token.",
+            )
+        )
         self.button_login_instead.setText(_translate("LoginWidget", "Log In instead"))
         self.line_edit_claim_login.setPlaceholderText(_translate("LoginWidget", "Login"))
         self.line_edit_claim_password.setPlaceholderText(_translate("LoginWidget", "Password"))
-        self.line_edit_claim_password_check.setPlaceholderText(_translate("LoginWidget", "Password check"))
+        self.line_edit_claim_password_check.setPlaceholderText(
+            _translate("LoginWidget", "Password check")
+        )
         self.line_edit_claim_device.setPlaceholderText(_translate("LoginWidget", "Device"))
         self.line_edit_claim_token.setPlaceholderText(_translate("LoginWidget", "Token"))
         self.button_claim.setText(_translate("LoginWidget", "Register"))
-

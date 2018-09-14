@@ -49,12 +49,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
         self.tray = QSystemTrayIcon(self)
         menu = QMenu()
-        action = menu.addAction('Exit')
+        action = menu.addAction("Exit")
         action.triggered.connect(self.close)
         self.tray.setContextMenu(menu)
-        self.tray.setIcon(QIcon(':/icons/images/icons/parsec.png'))
+        self.tray.setIcon(QIcon(":/icons/images/icons/parsec.png"))
         self.tray.show()
-        self.tray.showMessage('Test', 'This is just a test')
+        self.tray.showMessage("Test", "This is just a test")
 
     def connect_all(self):
         self.action_about_parsec.triggered.connect(self.show_about_dialog)
@@ -69,7 +69,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.action_login.triggered.connect(self.show_login_widget)
 
     def logout(self):
-        self.files_widget.set_mountpoint('')
+        self.files_widget.set_mountpoint("")
         if core_call().is_mounted():
             core_call().unmount()
         core_call().logout()
@@ -83,12 +83,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.action_disconnect.setDisabled(True)
         self.action_remount.setDisabled(True)
         self.action_login.setDisabled(False)
-        device = core_call().load_device('johndoe@test')
+        device = core_call().load_device("johndoe@test")
         core_call().login(device)
         self.current_device = device
 
     def mount(self):
-        base_mountpoint = settings.get_value('mountpoint')
+        base_mountpoint = settings.get_value("mountpoint")
         if not base_mountpoint:
             return None
         mountpoint = os.path.join(base_mountpoint, self.current_device.id)
@@ -107,9 +107,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         mountpoint = self.mount()
         if mountpoint is None:
             QMessageBox.warning(
-                self, 'Error', 'Can not mount in "{}" (permissions problems ?). Go '
-                'to Settings/Global to a set mountpoint, then File/Remount to '
-                'mount it.'.format(settings.get_value('mountpoint')))
+                self,
+                "Error",
+                'Can not mount in "{}" (permissions problems ?). Go '
+                "to Settings/Global to a set mountpoint, then File/Remount to "
+                "mount it.".format(settings.get_value("mountpoint")),
+            )
             self.show_settings_widget()
             return
 
@@ -131,15 +134,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             mountpoint = self.mount()
             if mountpoint is None:
                 QMessageBox.warning(
-                    self, 'Error', 'Can not mount in "{}" (permissions problems ?). Go '
-                    'to Settings/Global to a set mountpoint, then File/Remount to '
-                    'mount it.'.format(settings.get_value('mountpoint')))
+                    self,
+                    "Error",
+                    'Can not mount in "{}" (permissions problems ?). Go '
+                    "to Settings/Global to a set mountpoint, then File/Remount to "
+                    "mount it.".format(settings.get_value("mountpoint")),
+                )
                 self.show_settings_widget()
                 return
             self.button_files.setDisabled(False)
             self.show_files_widget()
         except DeviceLoadingError:
-            return QCoreApplication.translate(self.__class__.__name__, 'Invalid password')
+            return QCoreApplication.translate(self.__class__.__name__, "Invalid password")
 
     def login(self, device_id, password):
         err = self.perform_login(device_id, password)
@@ -151,16 +157,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             token = core_call().invite_user(login)
             self.users_widget.set_claim_infos(login, token)
         except DeviceConfigureBackendError:
-            self.users_widget.set_error('Can not register the new user.')
+            self.users_widget.set_error("Can not register the new user.")
 
     def claim(self, login, password, device, token):
         try:
             privkey, signkey, manifest = core_call().claim_user(login, device, token)
             privkey = privkey.encode()
             signkey = signkey.encode()
-            full_device_name = '{}@{}'.format(login, device)
-            core_call().register_new_device(full_device_name,
-                                            privkey, signkey, manifest, password)
+            full_device_name = "{}@{}".format(login, device)
+            core_call().register_new_device(full_device_name, privkey, signkey, manifest, password)
             self.login_widget.add_device(full_device_name)
             err = self.perform_login(full_device_name, password)
             if err:
@@ -169,9 +174,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             pass
 
     def closeEvent(self, event):
-        result = QMessageBox.question(
-            self, 'Confirmation',
-            'Are you sure you want to quit ?')
+        result = QMessageBox.question(self, "Confirmation", "Are you sure you want to quit ?")
         if result != QMessageBox.Yes:
             event.ignore()
             return

@@ -29,23 +29,25 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.combo_devices.addItem(device_name)
 
     def check_claim_infos(self, _):
-        if (len(self.line_edit_claim_login.text()) and
-             len(self.line_edit_claim_token.text()) and
-             len(self.line_edit_claim_device.text())):
+        if (
+            len(self.line_edit_claim_login.text())
+            and len(self.line_edit_claim_token.text())
+            and len(self.line_edit_claim_device.text())
+        ):
             self.button_claim.setDisabled(False)
         else:
             self.button_claim.setDisabled(True)
-        self.label_claim_error.setText('')
+        self.label_claim_error.setText("")
 
     def reset(self):
-        self.line_edit_claim_login.setText('')
-        self.line_edit_claim_password.setText('')
-        self.line_edit_claim_password_check.setText('')
-        self.line_edit_claim_device.setText('')
-        self.line_edit_password.setText('')
+        self.line_edit_claim_login.setText("")
+        self.line_edit_claim_password.setText("")
+        self.line_edit_claim_password_check.setText("")
+        self.line_edit_claim_device.setText("")
+        self.line_edit_password.setText("")
         self.button_claim.setDisabled(True)
-        self.label_error.setText('')
-        self.label_claim_error.setText('')
+        self.label_error.setText("")
+        self.label_claim_error.setText("")
         self.group_login.show()
         self.group_claim.hide()
         self.label_error.hide()
@@ -55,19 +57,22 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.loginClicked.emit(self.combo_devices.currentText(), self.line_edit_password.text())
 
     def emit_claim(self):
-        if (len(self.line_edit_claim_password.text()) > 0 or
-             len(self.line_edit_claim_password_check.text()) > 0):
-            if (self.line_edit_claim_password.text() !=
-                 self.line_edit_claim_password_check.text()):
+        if (
+            len(self.line_edit_claim_password.text()) > 0
+            or len(self.line_edit_claim_password_check.text()) > 0
+        ):
+            if self.line_edit_claim_password.text() != self.line_edit_claim_password_check.text():
                 self.set_claim_error(
-                    QCoreApplication.translate(self.__class__.__name__,
-                                               "Passwords don't match."))
+                    QCoreApplication.translate(self.__class__.__name__, "Passwords don't match.")
+                )
                 self.label_claim_error.show()
                 return
-        self.claimClicked.emit(self.line_edit_claim_login.text(),
-                               self.line_edit_claim_password.text(),
-                               self.line_edit_claim_device.text(),
-                               self.line_edit_claim_token.text())
+        self.claimClicked.emit(
+            self.line_edit_claim_login.text(),
+            self.line_edit_claim_password.text(),
+            self.line_edit_claim_device.text(),
+            self.line_edit_claim_token.text(),
+        )
 
     def set_login_error(self, error):
         self.label_error.setText(error)

@@ -23,14 +23,10 @@ class _CoreCall:
         return self._trio_portal.run(self._parsec_core.fs.delete, *args, **kargs)
 
     def mount(self, *args, **kwargs):
-        self._trio_portal.run(
-            self._parsec_core.fuse_manager.start_mountpoint,
-            *args, **kwargs)
+        self._trio_portal.run(self._parsec_core.fuse_manager.start_mountpoint, *args, **kwargs)
 
     def unmount(self, *args, **kwargs):
-        self._trio_portal.run(
-            self._parsec_core.fuse_manager.stop_mountpoint,
-            *args, **kwargs)
+        self._trio_portal.run(self._parsec_core.fuse_manager.stop_mountpoint, *args, **kwargs)
 
     def is_mounted(self, *args, **kwargs):
         if self._parsec_core.fuse_manager:
@@ -47,19 +43,16 @@ class _CoreCall:
         return self._parsec_core.local_devices_manager.list_available_devices()
 
     def register_new_device(self, *args):
-        return self._parsec_core.local_devices_manager.register_new_device(
-            *args)
+        return self._parsec_core.local_devices_manager.register_new_device(*args)
 
     def load_device(self, *args):
         return self._parsec_core.local_devices_manager.load_device(*args)
 
     def invite_user(self, *args):
-        return self._trio_portal.run(invite_user, self._parsec_core.backend_cmds_sender,
-                                     *args)
+        return self._trio_portal.run(invite_user, self._parsec_core.backend_cmds_sender, *args)
 
     def claim_user(self, *args):
-        return self._trio_portal.run(claim_user, self._parsec_core.backend_addr,
-                                     *args)
+        return self._trio_portal.run(claim_user, self._parsec_core.backend_addr, *args)
 
     def create_workspace(self, *args):
         return self._trio_portal.run(self._parsec_core.fs.workspace_create, *args)

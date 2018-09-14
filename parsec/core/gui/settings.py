@@ -1,9 +1,7 @@
 from PyQt5.QtCore import QSettings
 
 
-KEYS = [
-    'mountpoint'
-]
+KEYS = ["mountpoint"]
 
 
 def get_value(key, default=None):
