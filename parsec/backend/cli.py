@@ -2,6 +2,7 @@ import sys
 import trio
 import trio_asyncio
 import click
+from uuid import UUID
 import logbook
 from raven.handlers.logbook import SentryHandler
 
@@ -19,7 +20,7 @@ JOHN_DOE_DEVICE_VERIFY_KEY = (
     b"\xd5\xef\x8f\xbdPJ\xea\x9c<]qy\x06!M\xad5" b"\x99m\xa0}EDqN\x06\x06c\x9e:\xe6\x80"
 )
 JOHN_DOE_USER_VLOB = {
-    "id": "230165e6acd441f4a0b4f2c8c0dc91f0",
+    "id": UUID("230165e6acd441f4a0b4f2c8c0dc91f0"),
     "rts": "c7121459551b40e78e35f49115097594",
     "wts": "3c7d3cb553854ffea524092487674a0b",
     "blob": (

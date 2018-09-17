@@ -1,10 +1,9 @@
-import time
 import queue
-import traceback
 import threading
 import trio
 import click
 import logbook
+from uuid import UUID
 from raven.handlers.logbook import SentryHandler
 from urllib.parse import urlparse
 
@@ -26,7 +25,7 @@ JOHN_DOE_DEVICE_SIGNING_KEY = (
     b"\xccH\xfa\xaeY\x00:\xdeP\x84\t@\xfe\xf8\x8a\xa5"
 )
 JOHN_DOE_USER_MANIFEST_ACCESS = {
-    "id": "230165e6acd441f4a0b4f2c8c0dc91f0",
+    "id": UUID("230165e6acd441f4a0b4f2c8c0dc91f0"),
     "rts": "c7121459551b40e78e35f49115097594",
     "wts": "3c7d3cb553854ffea524092487674a0b",
     "key": (
