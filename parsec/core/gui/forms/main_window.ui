@@ -213,26 +213,14 @@
     <string>Log In</string>
    </property>
   </action>
+  <action name="action_in_tray">
+   <property name="text">
+    <string>Reduce in tray</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>action_quit</sender>
-   <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>close()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>399</x>
-     <y>299</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

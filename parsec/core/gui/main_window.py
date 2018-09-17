@@ -21,6 +21,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.close_requested = False
         self.setupUi(self)
         self.about_dialog = None
         self.files_widget = None
@@ -46,15 +47,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def add_tray_icon(self):
         if not QSystemTrayIcon.isSystemTrayAvailable():
+            self.action_put_in_tray.setDisabled(True)
             return
         self.tray = QSystemTrayIcon(self)
         menu = QMenu()
+        action = menu.addAction("Show window")
+        action.triggered.connect(self.show)
         action = menu.addAction("Exit")
-        action.triggered.connect(self.close)
+        action.triggered.connect(self.close_app)
         self.tray.setContextMenu(menu)
         self.tray.setIcon(QIcon(":/icons/images/icons/parsec.png"))
         self.tray.show()
-        self.tray.showMessage("Test", "This is just a test")
 
     def connect_all(self):
         self.action_about_parsec.triggered.connect(self.show_about_dialog)
@@ -67,6 +70,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.users_widget.registerClicked.connect(self.register)
         self.action_remount.triggered.connect(self.remount)
         self.action_login.triggered.connect(self.show_login_widget)
+        self.action_quit.triggered.connect(self.close)
 
     def logout(self):
         self.files_widget.set_mountpoint("")
@@ -173,16 +177,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         except DeviceLoadingError:
             pass
 
+    def close_app(self):
+        self.close_requested = True
+        self.close()
+
     def closeEvent(self, event):
-        result = QMessageBox.question(self, "Confirmation", "Are you sure you want to quit ?")
-        if result != QMessageBox.Yes:
+        if not QSystemTrayIcon.isSystemTrayAvailable() or self.close_requested:
+            result = QMessageBox.question(self, "Confirmation", "Are you sure you want to quit ?")
+            if result != QMessageBox.Yes:
+                event.ignore()
+                return
+            event.accept()
+            if core_call().is_mounted():
+                core_call().unmount()
+                core_call().logout()
+                core_call().stop()
+        else:
+            if self.tray:
+                self.tray.showMessage("Parsec", "Parsec is still running.")
             event.ignore()
-            return
-        if core_call().is_mounted():
-            core_call().unmount()
-        core_call().logout()
-        core_call().stop()
-        event.accept()
+            self.hide()
 
     def show_about_dialog(self):
         self.about_dialog = AboutDialog(parent=self)

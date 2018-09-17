@@ -1,3 +1,5 @@
+import trio
+
 from parsec.core.devices_manager import invite_user, claim_user
 
 
@@ -8,7 +10,10 @@ class _CoreCall:
         self._cancel_scope = cancel_scope
 
     def stop(self):
-        self._trio_portal.run_sync(self._cancel_scope.cancel)
+        try:
+            self._trio_portal.run_sync(self._cancel_scope.cancel)
+        except trio.RunFinishedError:
+            pass
 
     def stat(self, *args, **kwargs):
         return self._trio_portal.run(self._parsec_core.fs.stat, *args, **kwargs)
@@ -37,7 +42,10 @@ class _CoreCall:
         self._trio_portal.run(self._parsec_core.login, *args, **kwargs)
 
     def logout(self, *args, **kwargs):
-        self._trio_portal.run(self._parsec_core.logout, *args, **kwargs)
+        try:
+            self._trio_portal.run(self._parsec_core.logout, *args, **kwargs)
+        except trio.RunFinishedError:
+            pass
 
     def get_devices(self, *args, **kwargs):
         return self._parsec_core.local_devices_manager.list_available_devices()

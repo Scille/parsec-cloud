@@ -209,6 +209,11 @@
         <source>Ctrl+Q</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../forms/main_window.ui" line="218"/>
+        <source>Reduce in tray</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ParentFolderWidget</name>

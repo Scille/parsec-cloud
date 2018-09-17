@@ -102,6 +102,8 @@ class Ui_MainWindow(object):
         self.action_remount.setObjectName("action_remount")
         self.action_login = QtWidgets.QAction(MainWindow)
         self.action_login.setObjectName("action_login")
+        self.action_in_tray = QtWidgets.QAction(MainWindow)
+        self.action_in_tray.setObjectName("action_in_tray")
         self.menu_file.addAction(self.action_login)
         self.menu_file.addAction(self.action_remount)
         self.menu_file.addAction(self.action_disconnect)
@@ -111,7 +113,6 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menu_help.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.action_quit.triggered.connect(MainWindow.close)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -133,6 +134,7 @@ class Ui_MainWindow(object):
         self.action_disconnect.setText(_translate("MainWindow", "Disconnect"))
         self.action_remount.setText(_translate("MainWindow", "Remount"))
         self.action_login.setText(_translate("MainWindow", "Log In"))
+        self.action_in_tray.setText(_translate("MainWindow", "Reduce in tray"))
 
 
 from parsec.core.gui import resources_rc
