@@ -32,6 +32,34 @@
     </message>
 </context>
 <context>
+    <name>FileSize</name>
+    <message>
+        <location filename="../file_size.py" line="8"/>
+        <source> TB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../file_size.py" line="9"/>
+        <source> GB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../file_size.py" line="10"/>
+        <source> MB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../file_size.py" line="11"/>
+        <source> KB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../file_size.py" line="12"/>
+        <source> B</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>FilesWidget</name>
     <message>
         <location filename="../forms/files_widget.ui" line="20"/>
@@ -61,6 +89,51 @@
     <message>
         <location filename="../forms/files_widget.ui" line="49"/>
         <source>Mounted on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="105"/>
+        <source>New folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="105"/>
+        <source>Enter new folder name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="232"/>
+        <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="117"/>
+        <source>A folder with the same name already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="136"/>
+        <source>Open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="138"/>
+        <source>Open in file explorer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="142"/>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="177"/>
+        <source>Confirmation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="232"/>
+        <source>A workspace with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -124,6 +197,11 @@
     <message>
         <location filename="../forms/login_widget.ui" line="120"/>
         <source>To register, you need another user to create an account and get a token.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../login_widget.py" line="65"/>
+        <source>Passwords don&apos;t match.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -209,6 +287,16 @@
         <source>Reduce in tray</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../main_window.py" line="170"/>
+        <source>Can not register the new user.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="195"/>
+        <source>Are you sure you want to quit ?</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ParentFolderWidget</name>
@@ -248,6 +336,16 @@
     <message>
         <location filename="../forms/settings_widget.ui" line="76"/>
         <source>Choose mount folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../settings_widget.py" line="33"/>
+        <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../settings_widget.py" line="33"/>
+        <source>The choosen folder is not writable.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

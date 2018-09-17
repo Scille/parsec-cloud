@@ -9,6 +9,9 @@ class _CoreCall:
         self._trio_portal = trio_portal
         self._cancel_scope = cancel_scope
 
+    def is_debug(self):
+        return self._parsec_core.config.debug
+
     def stop(self):
         try:
             self._trio_portal.run_sync(self._cancel_scope.cancel)

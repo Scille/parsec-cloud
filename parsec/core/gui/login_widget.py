@@ -63,7 +63,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         ):
             if self.line_edit_claim_password.text() != self.line_edit_claim_password_check.text():
                 self.set_claim_error(
-                    QCoreApplication.translate(self.__class__.__name__, "Passwords don't match.")
+                    QCoreApplication.translate("LoginWidget", "Passwords don't match.")
                 )
                 self.label_claim_error.show()
                 return

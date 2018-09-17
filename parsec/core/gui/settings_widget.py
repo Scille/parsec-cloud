@@ -1,7 +1,7 @@
 import os
 import pathlib
 
-from PyQt5.QtCore import QFileInfo
+from PyQt5.QtCore import QFileInfo, QCoreApplication
 from PyQt5.QtWidgets import QWidget, QFileDialog, QMessageBox
 
 from parsec.core.gui import settings
@@ -29,7 +29,13 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
                 return None
             path_info = QFileInfo(path)
             if not path_info.isDir() or not path_info.isWritable():
-                QMessageBox.warning(self, "Error", "The choosen folder is not writable.")
+                QMessageBox.warning(
+                    self,
+                    QCoreApplication.translate("SettingsWidget", "Error"),
+                    QCoreApplication.translate(
+                        "SettingsWidget", "The choosen folder is not writable."
+                    ),
+                )
             else:
                 self.line_edit_mountpoint.setText(path_info.absoluteFilePath())
                 settings.set_value("mountpoint", path_info.absoluteFilePath())

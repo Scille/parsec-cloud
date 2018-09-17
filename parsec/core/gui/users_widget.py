@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, QCoreApplication
 from PyQt5.QtWidgets import QWidget, QInputDialog
 
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
@@ -18,7 +18,11 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.button_register.clicked.connect(self.emit_register)
 
     def emit_register(self):
-        user_name, ok = QInputDialog.getText(self, "New user", "Enter new user name")
+        user_name, ok = QInputDialog.getText(
+            self,
+            QCoreApplication("UsersWidget", "New user"),
+            QCoreApplication("UsersWidget", "Enter new user name"),
+        )
         if not ok or not user_name:
             return
         self.registerClicked.emit(user_name)

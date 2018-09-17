@@ -5,7 +5,8 @@ SOURCES += app.py \
            files_widget.py \
            login_widget.py \
            settings_widget.py \
-           users_widget.py
+           users_widget.py \
+           file_size.py
 
 
 TRANSLATIONS += tr/parsec_fr.ts \

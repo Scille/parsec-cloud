@@ -40,14 +40,14 @@ class FileItemWidget(QWidget, Ui_FileItemWidget):
         self.label_file_type.setScaledContents(True)
         self.label_created.setText(
             QCoreApplication.translate(
-                self.__class__.__name__,
+                "FilesWidget",
                 '<html><head/><body><p><span style="font-style:italic;">'
                 "Created on {}</span></p></body></html>".format(self.file_infos["created"]),
             )
         )
         self.label_modified.setText(
             QCoreApplication.translate(
-                self.__class__.__name__,
+                "FilesWidget",
                 '<html><head/><body><p><span style="font-style:italic;">'
                 "Updated on {}</span></p></body></html>".format(self.file_infos["updated"]),
             )
@@ -102,7 +102,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 item.setHidden(False)
 
     def create_folder_clicked(self):
-        dir_name, ok = QInputDialog.getText(self, "New folder", "Enter new folder name")
+        dir_name, ok = QInputDialog.getText(
+            self,
+            QCoreApplication.translate("FilesWidget", "New folder"),
+            QCoreApplication.translate("FilesWidget", "Enter new folder name"),
+        )
         if not ok or not dir_name:
             return
         try:
@@ -111,7 +115,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             )
             self.load_directory(self.current_workspace, self.current_directory)
         except FileExistsError:
-            QMessageBox.warning(self, "Error", "A folder with the same name already exists.")
+            QMessageBox.warning(
+                self,
+                QCoreApplication.translate("FilesWidget", "Error"),
+                QCoreApplication.translate(
+                    "FilesWidget", "A folder with the same name already exists."
+                ),
+            )
 
     def set_mountpoint(self, mountpoint):
         self.label_mountpoint.setText(mountpoint)
@@ -126,13 +136,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if isinstance(widget, ParentFolderWidget):
             return
         if widget.file_type == "file":
-            action = menu.addAction(QCoreApplication.translate(self.__class__.__name__, "Open"))
+            action = menu.addAction(QCoreApplication.translate("FilesWidget", "Open"))
         elif widget.file_type == "folder":
             action = menu.addAction(
-                QCoreApplication.translate(self.__class__.__name__, "Open in file explorer")
+                QCoreApplication.translate("FilesWidget", "Open in file explorer")
             )
         action.triggered.connect(self.action_open_file_clicked)
-        action = menu.addAction(QCoreApplication.translate(self.__class__.__name__, "Delete"))
+        action = menu.addAction(QCoreApplication.translate("FilesWidget", "Delete"))
         action.triggered.connect(self.action_delete_file_clicked)
         menu.exec(global_pos)
 
@@ -168,15 +178,18 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         elif widget.file_type == "file":
             result = QMessageBox.question(
                 self,
-                "Confirmation",
-                'Are you sure you want to delete file "{}"'.format(widget.file_name),
+                QCoreApplication.translate("FilesWidget", "Confirmation"),
+                QCoreApplication.translate(
+                    "FilesWidget",
+                    'Are you sure you want to delete file "{}"'.format(widget.file_name),
+                ),
             )
             if result == QMessageBox.Yes:
                 core_call().delete_file(file_path)
                 self.list_files.takeItem(self.list_files.row(item))
         self.label_cd_elems.setText(
             QCoreApplication.translate(
-                self.__class__.__name__, "{} element(s)".format(self.list_files.count())
+                "FilesWidget", "{} element(s)".format(self.list_files.count())
             )
         )
 
@@ -209,14 +222,24 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.workspaces.append(button)
 
     def create_workspace_clicked(self):
-        workspace_name, ok = QInputDialog.getText(self, "New workspace", "Enter new workspace name")
+        workspace_name, ok = QInputDialog.getText(
+            self,
+            QCoreApplication("FilesWidget", "New workspace"),
+            QCoreApplication("FilesWidget", "Enter new workspace name"),
+        )
         if not ok or not workspace_name:
             return
         try:
             core_call().create_workspace(workspace_name)
             self._add_workspace(workspace_name)
         except FileExistsError:
-            QMessageBox.warning(self, "Error", "A workspace with the same name already exists.")
+            QMessageBox.warning(
+                self,
+                QCoreApplication.translate("FilesWidget", "Error"),
+                QCoreApplication.translate(
+                    "FilesWidget", "A workspace with the same name already exists."
+                ),
+            )
             return
 
     def load_directory(self, workspace, directory):
@@ -245,7 +268,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         )
         self.label_cd_elems.setText(
             QCoreApplication.translate(
-                self.__class__.__name__, "{} element(s)".format(len(result.get("children", [])))
+                "FilesWidget", "{} element(s)".format(len(result.get("children", [])))
             )
         )
 

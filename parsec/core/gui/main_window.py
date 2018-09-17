@@ -51,9 +51,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
         self.tray = QSystemTrayIcon(self)
         menu = QMenu()
-        action = menu.addAction("Show window")
+        action = menu.addAction(QCoreApplication.translate(self.__class__.__name__, "Show window"))
         action.triggered.connect(self.show)
-        action = menu.addAction("Exit")
+        action = menu.addAction(QCoreApplication.translate(self.__class__.__name__, "Exit"))
         action.triggered.connect(self.close_app)
         self.tray.setContextMenu(menu)
         self.tray.setIcon(QIcon(":/icons/images/icons/parsec.png"))
@@ -112,10 +112,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if mountpoint is None:
             QMessageBox.warning(
                 self,
-                "Error",
-                'Can not mount in "{}" (permissions problems ?). Go '
-                "to Settings/Global to a set mountpoint, then File/Remount to "
-                "mount it.".format(settings.get_value("mountpoint")),
+                QCoreApplication.translate(self.__class__.__name__, "Error"),
+                QCoreApplication.translate(
+                    self.__class__.__name__,
+                    'Can not mount in "{}" (permissions problems ?). Go '
+                    "to Settings/Global to a set mountpoint, then File/Remount to "
+                    "mount it.".format(settings.get_value("mountpoint")),
+                ),
             )
             self.show_settings_widget()
             return
@@ -139,10 +142,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if mountpoint is None:
                 QMessageBox.warning(
                     self,
-                    "Error",
-                    'Can not mount in "{}" (permissions problems ?). Go '
-                    "to Settings/Global to a set mountpoint, then File/Remount to "
-                    "mount it.".format(settings.get_value("mountpoint")),
+                    QCoreApplication(self.__class__.__name__, "Error"),
+                    QCoreApplication(
+                        self.__class__.__name__,
+                        'Can not mount in "{}" (permissions problems ?). Go '
+                        "to Settings/Global to a set mountpoint, then File/Remount to "
+                        "mount it.".format(settings.get_value("mountpoint")),
+                    ),
                 )
                 self.show_settings_widget()
                 return
@@ -161,7 +167,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             token = core_call().invite_user(login)
             self.users_widget.set_claim_infos(login, token)
         except DeviceConfigureBackendError:
-            self.users_widget.set_error("Can not register the new user.")
+            self.users_widget.set_error(
+                QCoreApplication.translate("MainWindow", "Can not register the new user.")
+            )
 
     def claim(self, login, password, device, token):
         try:
@@ -182,8 +190,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.close()
 
     def closeEvent(self, event):
-        if not QSystemTrayIcon.isSystemTrayAvailable() or self.close_requested:
-            result = QMessageBox.question(self, "Confirmation", "Are you sure you want to quit ?")
+        if (
+            not QSystemTrayIcon.isSystemTrayAvailable()
+            or self.close_requested
+            or core_call().is_debug()
+        ):
+            result = QMessageBox.question(
+                self,
+                QCoreApplication.translate(self.__class__.__name__, "Confirmation"),
+                QCoreApplication.translate("MainWindow", "Are you sure you want to quit ?"),
+            )
             if result != QMessageBox.Yes:
                 event.ignore()
                 return
@@ -194,7 +210,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 core_call().stop()
         else:
             if self.tray:
-                self.tray.showMessage("Parsec", "Parsec is still running.")
+                self.tray.showMessage(
+                    "Parsec",
+                    QCoreApplication.translate(self.__class__.__name__, "Parsec is still running."),
+                )
             event.ignore()
             self.hide()
 

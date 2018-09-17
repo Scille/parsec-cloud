@@ -17,8 +17,14 @@ def switch_to_locale():
     global _current_translator
 
     translator = QTranslator()
-    locale = QLocale.system().name()[:2]
-    if not translator.load(":/translations/parsec_{}".format(locale)):
+    locale = QLocale.system().name()[:2].lower()
+    tr_file = ":/translations/parsec_{}".format(locale)
+    print(
+        "Trying to load translation file '{}' for locale {}".format(
+            tr_file, QLocale.system().name()
+        )
+    )
+    if not translator.load(tr_file):
         return False
     if QCoreApplication.installTranslator(translator):
         QCoreApplication.removeTranslator(_current_translator)
