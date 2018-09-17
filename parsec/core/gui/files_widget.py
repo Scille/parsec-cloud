@@ -169,8 +169,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if widget.file_type == "folder":
             result = QMessageBox.question(
                 self,
-                "Confirmation",
-                'Are you sure you want to delete folder "{}"'.format(widget.file_name),
+                QCoreApplication.translate("FilesWidget", "Confirmation"),
+                QCoreApplication.translate(
+                    "FilesWidget", 'Are you sure you want to delete folder "{}" ?'
+                ).format(widget.file_name),
             )
             if result == QMessageBox.Yes:
                 core_call().delete_folder(file_path)
@@ -180,16 +182,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self,
                 QCoreApplication.translate("FilesWidget", "Confirmation"),
                 QCoreApplication.translate(
-                    "FilesWidget",
-                    'Are you sure you want to delete file "{}"'.format(widget.file_name),
-                ),
+                    "FilesWidget", 'Are you sure you want to delete file "{}" ?'
+                ).format(widget.file_name),
             )
             if result == QMessageBox.Yes:
                 core_call().delete_file(file_path)
                 self.list_files.takeItem(self.list_files.row(item))
         self.label_cd_elems.setText(
-            QCoreApplication.translate(
-                "FilesWidget", "{} element(s)".format(self.list_files.count())
+            QCoreApplication.translate("FilesWidget", "{} element(s)").format(
+                self.list_files.count()
             )
         )
 
@@ -267,8 +268,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             "</span></p></body></html>".format(workspace)
         )
         self.label_cd_elems.setText(
-            QCoreApplication.translate(
-                "FilesWidget", "{} element(s)".format(len(result.get("children", [])))
+            QCoreApplication.translate("FilesWidget", "{} element(s)").format(
+                len(result.get("children", []))
             )
         )
 

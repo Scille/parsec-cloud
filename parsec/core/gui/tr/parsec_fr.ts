@@ -107,39 +107,54 @@
         <translation>Entrez le nom du nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="232"/>
+        <location filename="../files_widget.py" line="237"/>
         <source>Error</source>
         <translation>Erreur</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="117"/>
+        <location filename="../files_widget.py" line="118"/>
         <source>A folder with the same name already exists.</source>
         <translation>Un répertoire du même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="136"/>
+        <location filename="../files_widget.py" line="139"/>
         <source>Open</source>
         <translation>Ouvrir</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="138"/>
+        <location filename="../files_widget.py" line="141"/>
         <source>Open in file explorer</source>
         <translation>Ouvrir dans l&apos;explorateur de fichier</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="142"/>
+        <location filename="../files_widget.py" line="145"/>
         <source>Delete</source>
         <translation>Supprimer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="177"/>
+        <location filename="../files_widget.py" line="181"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="232"/>
+        <location filename="../files_widget.py" line="237"/>
         <source>A workspace with the same name already exists.</source>
         <translation>Un espace de travail du même nom existe déjà.</translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="270"/>
+        <source>{} element(s)</source>
+        <translation>{} élément(s)</translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="170"/>
+        <source>Are you sure you want to delete folder &quot;{}&quot; ?</source>
+        <translation>Êtes-vous sûr de vouloir supprimer le répertoire &quot;{}&quot; ?</translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="181"/>
+        <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
+        <translation>Êtes-vous sûr de vouloir supprimer le fichier &quot;{}&quot; ?</translation>
     </message>
 </context>
 <context>
@@ -205,7 +220,7 @@
         <translation>Pour s&apos;enregistrer, un utilisateur doit créer votre compte et vous fournir le token.</translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="65"/>
+        <location filename="../login_widget.py" line="66"/>
         <source>Passwords don&apos;t match.</source>
         <translation>Les mots de passe ne correspondent pas.</translation>
     </message>
@@ -298,7 +313,7 @@
         <translation>Impossible d&apos;enregistrer un nouvel utilisateur.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="195"/>
+        <location filename="../main_window.py" line="198"/>
         <source>Are you sure you want to quit ?</source>
         <translation>Êtes-vous sûr de vouloir quitter l&apos;application ?</translation>
     </message>
@@ -349,12 +364,12 @@
         <translation>Choisir un point de montage</translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="33"/>
+        <location filename="../settings_widget.py" line="32"/>
         <source>Error</source>
         <translation>Erreur</translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="33"/>
+        <location filename="../settings_widget.py" line="32"/>
         <source>The choosen folder is not writable.</source>
         <translation>The répertoire choisi n&apos;est pas accessible en écriture.</translation>
     </message>

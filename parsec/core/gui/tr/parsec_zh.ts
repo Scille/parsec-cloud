@@ -102,38 +102,53 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="232"/>
+        <location filename="../files_widget.py" line="237"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="117"/>
+        <location filename="../files_widget.py" line="118"/>
         <source>A folder with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="136"/>
+        <location filename="../files_widget.py" line="139"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="138"/>
+        <location filename="../files_widget.py" line="141"/>
         <source>Open in file explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="142"/>
+        <location filename="../files_widget.py" line="145"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="177"/>
+        <location filename="../files_widget.py" line="181"/>
         <source>Confirmation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="232"/>
+        <location filename="../files_widget.py" line="237"/>
         <source>A workspace with the same name already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="270"/>
+        <source>{} element(s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="170"/>
+        <source>Are you sure you want to delete folder &quot;{}&quot; ?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="181"/>
+        <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -200,7 +215,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="65"/>
+        <location filename="../login_widget.py" line="66"/>
         <source>Passwords don&apos;t match.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -293,7 +308,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="195"/>
+        <location filename="../main_window.py" line="198"/>
         <source>Are you sure you want to quit ?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -339,12 +354,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="33"/>
+        <location filename="../settings_widget.py" line="32"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="33"/>
+        <location filename="../settings_widget.py" line="32"/>
         <source>The choosen folder is not writable.</source>
         <translation type="unfinished"></translation>
     </message>
