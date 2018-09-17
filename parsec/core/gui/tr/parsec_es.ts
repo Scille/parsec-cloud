@@ -67,12 +67,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="152"/>
+        <location filename="../forms/files_widget.ui" line="163"/>
         <source>Search files or folders</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="170"/>
+        <location filename="../forms/files_widget.ui" line="181"/>
         <source>Add a workspace</source>
         <translation type="unfinished"></translation>
     </message>
@@ -92,63 +92,78 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="105"/>
+        <location filename="../files_widget.py" line="126"/>
         <source>New folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="105"/>
+        <location filename="../files_widget.py" line="126"/>
         <source>Enter new folder name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="237"/>
+        <location filename="../files_widget.py" line="258"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="118"/>
+        <location filename="../files_widget.py" line="139"/>
         <source>A folder with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="139"/>
+        <location filename="../files_widget.py" line="160"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="141"/>
+        <location filename="../files_widget.py" line="162"/>
         <source>Open in file explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="145"/>
+        <location filename="../files_widget.py" line="166"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="181"/>
+        <location filename="../files_widget.py" line="202"/>
         <source>Confirmation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="237"/>
+        <location filename="../files_widget.py" line="258"/>
         <source>A workspace with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="270"/>
+        <location filename="../files_widget.py" line="291"/>
         <source>{} element(s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="170"/>
+        <location filename="../files_widget.py" line="191"/>
         <source>Are you sure you want to delete folder &quot;{}&quot; ?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="181"/>
+        <location filename="../files_widget.py" line="202"/>
         <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/files_widget.ui" line="137"/>
+        <source>Import files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="247"/>
+        <source>New workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="247"/>
+        <source>Enter new workspace name</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

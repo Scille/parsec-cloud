@@ -1,8 +1,9 @@
 import os
+import pathlib
 
 from PyQt5.QtCore import Qt, QSize, QCoreApplication
 from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QMessageBox, QInputDialog
+from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QMessageBox, QInputDialog, QFileDialog
 
 from parsec.core.gui import desktop
 from parsec.core.gui.core_call import core_call
@@ -38,26 +39,31 @@ class FileItemWidget(QWidget, Ui_FileItemWidget):
             else:
                 self.label_file_type.setPixmap(QPixmap(":/icons/images/icons/folder_empty.png"))
         self.label_file_type.setScaledContents(True)
+        creation_date = None
+        update_date = None
+        try:
+            creation_date = self.file_infos["created"].format(
+                "%a %d %b %Y, %H:%M:%S", locale=desktop.get_locale_language()
+            )
+            update_date = self.file_infos["updated"].format(
+                "%a %d %b %Y, %H:%M:%S", locale=desktop.get_locale_language()
+            )
+        except ValueError:
+            creation_date = self.file_infos["created"].format("%a %d %b %Y, %H:%M:%S")
+            update_date = self.file_infos["updated"].format("%a %d %b %Y, %H:%M:%S")
+
         self.label_created.setText(
             QCoreApplication.translate(
                 "FilesWidget",
                 '<html><head/><body><p><span style="font-style:italic;">'
-                "Created on {}</span></p></body></html>".format(
-                    self.file_infos["created"].format(
-                        "%a %d %b %Y, %H:%M:%S", locale=desktop.get_locale_language()
-                    )
-                ),
+                "Created on {}</span></p></body></html>".format(creation_date),
             )
         )
         self.label_modified.setText(
             QCoreApplication.translate(
                 "FilesWidget",
                 '<html><head/><body><p><span style="font-style:italic;">'
-                "Updated on {}</span></p></body></html>".format(
-                    self.file_infos["updated"].format(
-                        "%a %d %b %Y, %H:%M:%S", locale=desktop.get_locale_language()
-                    )
-                ),
+                "Updated on {}</span></p></body></html>".format(update_date),
             )
         )
 
@@ -96,9 +102,67 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.list_files.itemDoubleClicked.connect(self.item_double_clicked)
         self.button_create_folder.clicked.connect(self.create_folder_clicked)
         self.line_edit_search.textChanged.connect(self.filter_files)
+        self.button_import_files.clicked.connect(self.import_files_clicked)
         self.workspaces = []
         self.current_workspace = None
         self.current_directory = None
+
+    def _import_file(self, source, dest):
+        try:
+            core_call().file_create(out_path)
+            fd_out = core_call().file_open(out_path)
+            with open(path, "rb") as fd_in:
+                core_call().file_write(fd_out, fd_in.read(4096))
+                core_call().file_close(fd_out)
+            return True
+        except OSError:
+            return False
+
+    def _current_file_names(self):
+        current_files = []
+        for i in range(self.list_files.count()):
+            item = self.list_files.item(i)
+            widget = self.list_files.itemWidget(item)
+            current_files.append(widget.file_name)
+        return current_files
+
+    def import_files_clicked(self):
+        paths, _ = QFileDialog.getOpenFileNames(
+            self, "Select files to import", str(pathlib.Path.home())
+        )
+        if not paths:
+            return None
+        errors = []
+        current_files = self._current_file_names()
+
+        for path in paths:
+            filename = os.path.basename(path)
+            out_path = os.path.join(self.current_workspace, self.current_directory, filename)
+            if filename in current_files:
+                result = QMessageBox.question(
+                    self,
+                    QCoreApplication.translate("FilesWidget", "{} already exists").format(filename),
+                    QCoreApplication.translate(
+                        "FilesWidget",
+                        "A file with the same name already exists. " "Do you wish to replace it ?",
+                    ),
+                )
+                if result == QMessageBox.Yes:
+                    core_call().delete_file(out_path)
+                else:
+                    continue
+            result = self._import_file(path, out_path)
+            if not result:
+                errors.append(filename)
+        if errors:
+            QMessageBox.warning(
+                self,
+                QCoreApplication.translate("FilesWidget", "Error"),
+                QCoreApplication.translate("FilesWidget", "Can not import {}.").format(
+                    ", ".join(errors)
+                ),
+            )
+        self.load_directory(self.current_workspace, self.current_directory)
 
     def filter_files(self, pattern):
         for i in range(self.list_files.count()):

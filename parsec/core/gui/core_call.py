@@ -18,6 +18,18 @@ class _CoreCall:
     def stat(self, *args, **kwargs):
         return self._trio_portal.run(self._parsec_core.fs.stat, *args, **kwargs)
 
+    def file_create(self, *args, **kwargs):
+        return self._trio_portal.run(self._parsec_core.fs.file_create, *args, **kwargs)
+
+    def file_open(self, *args, **kwargs):
+        return self._trio_portal.run(self._parsec_core.fs.file_fd_open, *args, **kwargs)
+
+    def file_close(self, *args, **kwargs):
+        return self._trio_portal.run(self._parsec_core.fs.file_fd_close, *args, **kwargs)
+
+    def file_write(self, *args, **kwargs):
+        return self._trio_portal.run(self._parsec_core.fs.file_fd_write, *args, **kwargs)
+
     def create_folder(self, *args, **kwargs):
         return self._trio_portal.run(self._parsec_core.fs.folder_create, *args, **kwargs)
 

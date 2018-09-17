@@ -132,6 +132,17 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="button_import_files">
+          <property name="text">
+           <string>Import files</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../rc/resources.qrc">
+            <normaloff>:/icons/images/icons/file_add.png</normaloff>:/icons/images/icons/file_add.png</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="horizontalSpacer_2">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
