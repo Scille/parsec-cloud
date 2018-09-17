@@ -42,14 +42,22 @@ class FileItemWidget(QWidget, Ui_FileItemWidget):
             QCoreApplication.translate(
                 "FilesWidget",
                 '<html><head/><body><p><span style="font-style:italic;">'
-                "Created on {}</span></p></body></html>".format(self.file_infos["created"]),
+                "Created on {}</span></p></body></html>".format(
+                    self.file_infos["created"].format(
+                        "%a %d %b %Y, %H:%M:%S", locale=desktop.get_locale_language()
+                    )
+                ),
             )
         )
         self.label_modified.setText(
             QCoreApplication.translate(
                 "FilesWidget",
                 '<html><head/><body><p><span style="font-style:italic;">'
-                "Updated on {}</span></p></body></html>".format(self.file_infos["updated"]),
+                "Updated on {}</span></p></body></html>".format(
+                    self.file_infos["updated"].format(
+                        "%a %d %b %Y, %H:%M:%S", locale=desktop.get_locale_language()
+                    )
+                ),
             )
         )
 

@@ -13,10 +13,7 @@ class _CoreCall:
         return self._parsec_core.config.debug
 
     def stop(self):
-        try:
-            self._trio_portal.run_sync(self._cancel_scope.cancel)
-        except trio.RunFinishedError:
-            pass
+        self._trio_portal.run_sync(self._cancel_scope.cancel)
 
     def stat(self, *args, **kwargs):
         return self._trio_portal.run(self._parsec_core.fs.stat, *args, **kwargs)
@@ -45,10 +42,7 @@ class _CoreCall:
         self._trio_portal.run(self._parsec_core.login, *args, **kwargs)
 
     def logout(self, *args, **kwargs):
-        try:
-            self._trio_portal.run(self._parsec_core.logout, *args, **kwargs)
-        except trio.RunFinishedError:
-            pass
+        self._trio_portal.run(self._parsec_core.logout, *args, **kwargs)
 
     def get_devices(self, *args, **kwargs):
         return self._parsec_core.local_devices_manager.list_available_devices()

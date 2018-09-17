@@ -1,4 +1,6 @@
-from PyQt5.QtCore import QTranslator, QLocale, QCoreApplication
+from PyQt5.QtCore import QTranslator, QCoreApplication
+
+from parsec.core.gui.desktop import get_locale_language
 
 
 _LANGUAGES = {"English": "en", "Français": "fr", "Deutsch": "de", "Español": "es", "中文": "zh"}
@@ -17,7 +19,7 @@ def switch_to_locale():
     global _current_translator
 
     translator = QTranslator()
-    locale = QLocale.system().name()[:2].lower()
+    locale = get_locale_language()
     tr_file = ":/translations/parsec_{}".format(locale)
     if not translator.load(tr_file):
         return False
