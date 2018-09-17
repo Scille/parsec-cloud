@@ -233,8 +233,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def create_workspace_clicked(self):
         workspace_name, ok = QInputDialog.getText(
             self,
-            QCoreApplication("FilesWidget", "New workspace"),
-            QCoreApplication("FilesWidget", "Enter new workspace name"),
+            QCoreApplication.translate("FilesWidget", "New workspace"),
+            QCoreApplication.translate("FilesWidget", "Enter new workspace name"),
         )
         if not ok or not workspace_name:
             return
