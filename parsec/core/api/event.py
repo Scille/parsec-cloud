@@ -48,6 +48,9 @@ cmd_EVENT_LIST_SUBSCRIBED = BaseCmdSchema()
 
 
 async def event_subscribe(req: dict, client_ctx: ClientContext, core: Core) -> dict:
+    import pdb
+
+    pdb.set_trace()
     if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 

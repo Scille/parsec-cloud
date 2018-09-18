@@ -2,11 +2,14 @@ import os
 import trio
 import attr
 import logbook
+from async_generator import asynccontextmanager
 
-from parsec.signals import Namespace as SignalNamespace
+from parsec.event_bus import EventBus
 from parsec.networking import serve_client
-from parsec.core.base import BaseAsyncComponent, NotInitializedError
-from parsec.core.fs import FSManager
+from parsec.core.base import BaseAsyncComponent, NotInitializedError, taskify
+from parsec.core.fs import FS
+from parsec.core.sync_monitor import SyncMonitor
+from parsec.core.beacons_monitor import monitor_beacons
 from parsec.core.devices_manager import LocalDevicesManager
 from parsec.core.fuse_manager import FuseManager
 from parsec.core.encryption_manager import EncryptionManager
@@ -26,48 +29,32 @@ class NotLoggedError(Exception):
 
 
 class Core(BaseAsyncComponent):
-    def __init__(self, config, signal_ns=None):
+    def __init__(self, config, event_bus=None):
         super().__init__()
-        self.nursery = None
-        self.signal_ns = signal_ns or SignalNamespace()
         self.config = config
+        self.event_bus = event_bus or EventBus()
         self.backend_addr = config.backend_addr
         self.local_devices_manager = LocalDevicesManager(
             os.path.join(config.base_settings_path, "devices")
         )
+        self._nursery = None
+        self._logged_client_manager = None
+        self._auth_lock = trio.Lock()
 
-        # Components dependencies tree:
-        # app
-        # ├─ backend_events_manager
-        # ├─ backend_cmds_sender
-        # ├─ encryption_manager
-        # │  └─ backend_cmds_sender
-        # ├─ fs
-        # │  ├─ encryption_manager
-        # │  └─ backend_cmds_sender
-        # └─ fuse_manager
+    @property
+    def fs(self):
+        if not self._logged_client_manager:
+            raise NotLoggedError("No user logged")
+        return self._logged_client_manager.fs
 
-        self.components_dep_order = (
-            "backend_cmds_sender",
-            "encryption_manager",
-            "fs",
-            "fuse_manager",
-            # Keep event manager last, so it will know what events the other
-            # modules need before connecting to the backend
-            "backend_events_manager",
-        )
-        for cname in self.components_dep_order:
-            setattr(self, cname, None)
-
-        # TODO: create a context object to store/manipulate auth_* data
-        self.auth_lock = trio.Lock()
-        self.auth_device = None
-        self.auth_privkey = None
-        self.auth_subscribed_events = None
-        self.auth_events = None
+    @property
+    def auth_device(self):
+        if not self._logged_client_manager:
+            return None
+        return self._logged_client_manager.device
 
     async def _init(self, nursery):
-        self.nursery = nursery
+        self._nursery = nursery
 
     async def _teardown(self):
         try:
@@ -76,75 +63,87 @@ class Core(BaseAsyncComponent):
             pass
 
     async def login(self, device):
-        # TODO: would be good to raise an exception when backend is online
-        # but we get a HandshakeError from it...
-        async with self.auth_lock:
-            if self.auth_device:
-                raise AlreadyLoggedError("Already logged as `%s`" % self.auth_device)
-
-            # First create components
-            self.backend_events_manager = BackendEventsManager(
-                device, self.config.backend_addr, self.signal_ns
+        async with self._auth_lock:
+            if self._logged_client_manager:
+                raise AlreadyLoggedError(f"Already logged as `{self.auth_device.id}`")
+            logged_client_manager = LoggedClientManager(
+                device, self.config, self.event_bus, self._nursery
             )
-            self.backend_cmds_sender = BackendCmdsSender(device, self.config.backend_addr)
-            self.encryption_manager = EncryptionManager(device, self.backend_cmds_sender)
-            self.fs = FSManager(
-                device,
-                self.backend_cmds_sender,
-                self.encryption_manager,
-                self.signal_ns,
-                auto_sync=self.config.auto_sync,
-            )
-            self.fuse_manager = FuseManager(self.config.addr, self.signal_ns)
 
-            # Then initialize them, order must respect dependencies here !
-            try:
-                for cname in self.components_dep_order:
-                    component = getattr(self, cname)
-                    await component.init(self.nursery)
+            await logged_client_manager.start()
+            self._logged_client_manager = logged_client_manager
 
-                # Keep this last to guarantee login was ok if it is set
-                self.auth_subscribed_events = {}
-                self.auth_events = trio.Queue(100)
-                self.auth_device = device
-
-            except Exception:
-                # Make sure to teardown all the already initialized components
-                # if something goes wrong
-                for cname_ in reversed(self.components_dep_order):
-                    component_ = getattr(self, cname_)
-                    try:
-                        await component_.teardown()
-                    except NotInitializedError:
-                        pass
-                # Don't unset components and auth_* stuff after teardown to
-                # easier post-mortem debugging
-                raise
+            self.event_bus.send("user_login", device=device)
 
     async def logout(self):
-        async with self.auth_lock:
-            await self._logout_no_lock()
+        async with self._auth_lock:
+            if not self._logged_client_manager:
+                raise NotLoggedError("No user logged")
+            await self._logged_client_manager.stop()
+            self._logged_client_manager = None
 
-    async def _logout_no_lock(self):
-        if not self.auth_device:
-            raise NotLoggedError("No user logged")
-
-        # Teardown in init reverse order
-        for cname in reversed(self.components_dep_order):
-            component = getattr(self, cname)
-            await component.teardown()
-            setattr(self, cname, None)
-
-        # Keep this last to guarantee logout was ok if it is unset
-        self.auth_subscribed_events = None
-        self.auth_events = None
-        self.auth_device = None
+            self.event_bus.send("user_logout")
 
     async def handle_client(self, sockstream):
         from parsec.core.api import dispatch_request
 
-        ctx = ClientContext(self.signal_ns)
+        ctx = ClientContext(self.event_bus)
         await serve_client(lambda req: dispatch_request(req, ctx, self), sockstream)
+
+
+class LoggedClientManager:
+    def __init__(self, device, config, event_bus, nursery):
+        self.device = device
+        self.config = config
+        self.event_bus = event_bus
+        self.nursery = nursery
+
+        # Components dependencies tree:
+        # logged client
+        # ├─ backend_events_manager
+        # ├─ backend_cmds_sender
+        # ├─ encryption_manager
+        # │  └─ backend_cmds_sender
+        # ├─ fs <-- Note fs doesn't need to be initialized
+        # │  ├─ backend_cmds_sender
+        # │  └─ encryption_manager
+        # └─ fuse_manager
+
+        self.backend_events_manager = BackendEventsManager(
+            device, self.config.backend_addr, self.event_bus
+        )
+        self.backend_cmds_sender = BackendCmdsSender(device, self.config.backend_addr)
+        self.encryption_manager = EncryptionManager(device, self.backend_cmds_sender)
+        self.fuse_manager = FuseManager(self.config.addr, self.event_bus)
+
+        self.fs = FS(device, self.backend_cmds_sender, self.encryption_manager, self.event_bus)
+        self.sync_monitor = SyncMonitor(self.fs, self.event_bus)
+
+    async def start(self):
+        # Components initialization must respect dependencies
+        await self.backend_cmds_sender.init(self._nursery)
+        await self.encryption_manager.init(self._nursery)
+        await self.fuse_manager.init(self._nursery)
+        # Keep event manager last, so it will know what events the other
+        # modules need before connecting to the backend
+        await self.backend_events_manager.init(self._nursery)
+
+        # Finally start monitoring coroutines
+        self._stop_monitor_beacons = await self._nursery.start(taskify(monitor_beacons))
+        self._stop_monitor_messages = await self._nursery.start(taskify(monitor_messages))
+        self._stop_monitor_sync = await self._nursery.start(taskify(self.sync_monitor.run))
+
+    async def stop(self):
+        # First stop monitoring coroutine
+        await self._stop_monitor_beacons()
+        await self._stop_monitor_messages()
+        await self._stop_monitor_sync()
+
+        # Then teardown components, again while respecting dependencies
+        await self.fuse_manager.teardown()
+        await self.encryption_manager.teardown()
+        await self.backend_cmds_sender.teardown()
+        await self.backend_events_manager.teardown()
 
 
 @attr.s
@@ -153,7 +152,7 @@ class ClientContext:
     def ctxid(self):
         return id(self)
 
-    signal_ns = attr.ib()
+    event_bus = attr.ib()
     registered_signals = attr.ib(default=attr.Factory(dict))
     received_signals = attr.ib(default=attr.Factory(lambda: trio.Queue(100)))
 
@@ -208,7 +207,7 @@ class ClientContext:
                 logger.warning(f"Event queue is full for {self.id}")
 
         self.registered_signals[key] = _handle_event
-        self.signal_ns.signal(event_name).connect(_handle_event, weak=True)
+        self.event_bus.signal(event_name).connect(_handle_event, weak=True)
 
     def unsubscribe_signal(self, signal_name, arg=None):
         if signal_name in ("device_try_claim_submitted", "backend.device.try_claim_submitted"):

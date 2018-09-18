@@ -2,15 +2,17 @@ import pytest
 import trio
 from async_generator import asynccontextmanager
 
-from parsec.signals import Namespace as SignalNamespace
+from parsec.event_bus import SpiedEventBus
+
+# from parsec.signals import Namespace as SignalNamespace
 from parsec.core.backend_cmds_sender import BackendCmdsSender
 from parsec.core.encryption_manager import EncryptionManager
-from parsec.core.fs import FSManager
+from parsec.core.fs import FS
 
 
 @pytest.fixture
 def signal_ns_factory():
-    return SignalNamespace
+    return SpiedEventBus
 
 
 @pytest.fixture
@@ -55,7 +57,7 @@ def backend_cmds_sender_factory(running_backend):
 @pytest.fixture
 def fs_factory(backend_cmds_sender_factory, encryption_manager_factory, signal_ns_factory):
     @asynccontextmanager
-    async def _fs_factory(device, backend_addr=None, signal_ns=None, auto_sync=True):
+    async def _fs_factory(device, backend_addr=None, signal_ns=None):
         if not signal_ns:
             signal_ns = signal_ns_factory()
 
@@ -64,15 +66,8 @@ def fs_factory(backend_cmds_sender_factory, encryption_manager_factory, signal_n
         ) as encryption_manager, backend_cmds_sender_factory(
             device, backend_addr=backend_addr
         ) as backend_cmds_sender:
-            fs = FSManager(
-                device, backend_cmds_sender, encryption_manager, signal_ns, auto_sync=auto_sync
-            )
-            async with trio.open_nursery() as nursery:
-                await fs.init(nursery)
-                try:
-                    yield fs
-                finally:
-                    await fs.teardown()
+            fs = FS(device, backend_cmds_sender, encryption_manager, signal_ns)
+            yield fs
 
     return _fs_factory
 
@@ -85,6 +80,12 @@ async def backend_cmds_sender(alice):
 @pytest.fixture
 async def alice_fs(fs_factory, alice):
     async with fs_factory(alice) as fs:
+        yield fs
+
+
+@pytest.fixture
+async def alice2_fs(fs_factory, alice2):
+    async with fs_factory(alice2) as fs:
         yield fs
 
 

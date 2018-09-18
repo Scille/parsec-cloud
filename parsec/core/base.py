@@ -40,3 +40,23 @@ class BaseAsyncComponent:
 
     async def _teardown(self):
         raise NotImplementedError()
+
+
+def taskify(func, *args, **kwargs):
+    async def _task(*, task_status=trio.TASK_STATUS_IGNORED):
+        stopped = trio.Event()
+        try:
+            with trio.open_cancel_scope() as cancel_scope:
+
+                async def stop():
+                    cancel_scope.cancel()
+                    await stopped.wait()
+
+                task_status.started(stop)
+
+                await func(*args, **kwargs)
+
+        finally:
+            stopped.set()
+
+    return _task

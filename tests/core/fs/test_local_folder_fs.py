@@ -149,6 +149,13 @@ class PathElement:
 
 
 @pytest.mark.slow
+# TODO: this cause crash:
+# state = FileOperationsStateMachine()
+# v1 = state.init_root()
+# v2 = state.touch(name='a', parent=v1)
+# v3 = state.mkdir(name='a', parent=v1)
+# v4 = state.move_folder(dst_name='a', dst_parent=v3, src=v1)
+# >>> AssertionError: RAISED PermissionError(13, 'Permission denied') BUT EXPECTED NotADirectoryError(20, 'Not a directory')
 def test_folder_operations(
     tmpdir, hypothesis_settings, signal_ns, device_factory, local_folder_fs_factory
 ):

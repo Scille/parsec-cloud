@@ -101,6 +101,15 @@ class LocalFolderFS:
         self._manifests_cache[access["id"]] = manifest
         return manifest
 
+    def get_user_manifest(self):
+        """
+        Same as `get_manifest`, unlike this cannot fail given user manifest is
+        always available.
+        """
+        manifest = self._manifests_cache.get(self.root_access["id"])
+        assert manifest is not None
+        return copy_manifest(manifest)
+
     def get_manifest(self, access):
         try:
             return copy_manifest(self._manifests_cache[access["id"]])

@@ -27,6 +27,9 @@ from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 from tests.common import freeze_time, FreezeTestOnBrokenStreamCookedSocket, InMemoryLocalDB
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 
+# TODO: hack...
+pytest.register_assert_rewrite("parsec.event_bus")
+
 
 def pytest_addoption(parser):
     parser.addoption("--hypothesis-max-examples", default=100, type=int)
@@ -348,6 +351,8 @@ def backend_factory(asyncio_loop, signal_ns_factory, blockstore, backend_store, 
             if not signal_ns:
                 signal_ns = signal_ns_factory()
             backend = BackendApp(config, signal_ns=signal_ns)
+            # TODO: backend connection to postgresql will timeout if we use a trio
+            # mock clock with autothreshold. We should detect this and do something here...
             await backend.init(nursery)
 
             # Need to initialize backend with users/devices, and for each user

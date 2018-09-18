@@ -2,26 +2,26 @@ import math
 import inspect
 
 from parsec.core.base import BaseAsyncComponent
-from parsec.core.fs.beacon_monitor import BeaconMonitor
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, LocalFolderFS
 from parsec.core.fs.local_file_fs import LocalFileFS, FSBlocksLocalMiss
 from parsec.core.fs.syncer import Syncer
-from parsec.core.fs.sync_monitor import SyncMonitor
-from parsec.core.fs.sharing import Sharing, SharingMonitor
+from parsec.core.fs.sharing import Sharing
 from parsec.core.fs.remote_loader import RemoteLoader
 
 
-# TODO: useful to make the distinction between FS and FSManager ?
-
-
 class FS:
-    def __init__(self, device, backend_cmds_sender, encryption_manager, signal_ns):
+    # TODO: Legacy API
+    @property
+    def signal_ns(self):
+        return self.event_bus
+
+    def __init__(self, device, backend_cmds_sender, encryption_manager, event_bus):
         super().__init__()
-        self.signal_ns = signal_ns
+        self.event_bus = event_bus
         self.device = device
 
-        self._local_folder_fs = LocalFolderFS(device, signal_ns)
-        self._local_file_fs = LocalFileFS(device, self._local_folder_fs, signal_ns)
+        self._local_folder_fs = LocalFolderFS(device, event_bus)
+        self._local_file_fs = LocalFileFS(device, self._local_folder_fs, event_bus)
         self._remote_loader = RemoteLoader(backend_cmds_sender, encryption_manager, device.local_db)
         self._syncer = Syncer(
             device,
@@ -29,7 +29,7 @@ class FS:
             encryption_manager,
             self._local_folder_fs,
             self._local_file_fs,
-            signal_ns,
+            event_bus,
         )
         self._sharing = Sharing(
             device,
@@ -37,7 +37,7 @@ class FS:
             encryption_manager,
             self._local_folder_fs,
             self._syncer,
-            signal_ns,
+            event_bus,
         )
 
     async def _load_and_retry(self, fn, *args, **kwargs):
@@ -123,39 +123,13 @@ class FS:
     async def sync(self, path, recursive=True):
         await self._load_and_retry(self._syncer.sync, path, recursive=recursive)
 
+    # TODO: do we really need this ? or should we provide id manipulation at this level ?
+    async def sync_by_id(self, entry_id):
+        await self._load_and_retry(self._syncer.sync_by_id, entry_id)
+
+    # TODO: do we really need this ? or should we optimize `sync(path='/')` ?
+    async def full_sync(self):
+        await self._load_and_retry(self._syncer.full_sync)
+
     async def share(self, path, recipient):
         await self._load_and_retry(self._sharing.share, path, recipient)
-
-
-class FSManager(FS, BaseAsyncComponent):
-    def __init__(self, device, backend_cmds_sender, encryption_manager, signal_ns, auto_sync=True):
-        super().__init__(device, backend_cmds_sender, encryption_manager, signal_ns)
-        self._beacon_monitor = BeaconMonitor(device, self._local_folder_fs, signal_ns)
-        self._sync_monitor = SyncMonitor(self._syncer, signal_ns)
-        self._sharing_monitor = SharingMonitor(
-            device,
-            backend_cmds_sender,
-            encryption_manager,
-            self._remote_loader,
-            self._local_folder_fs,
-            signal_ns,
-        )
-        self.auto_sync = auto_sync
-
-    async def _init(self, nursery):
-        await self._beacon_monitor.init(nursery)
-        if self.auto_sync:
-            await self._sync_monitor.init(nursery)
-            await self._sharing_monitor.init(nursery)
-
-    async def _teardown(self):
-        if self.auto_sync:
-            await self._sharing_monitor.teardown()
-            await self._sync_monitor.teardown()
-        await self._beacon_monitor.teardown()
-
-    async def is_syncing(self):
-        return await self._sync_monitor.is_syncing()
-
-    async def wait_not_syncing(self):
-        await self._sync_monitor.wait_not_syncing()

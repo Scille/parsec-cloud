@@ -1,14 +1,8 @@
-import trio
 import logbook
-import traceback
-from itertools import count
 
 from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.core.schemas import ManifestAccessSchema
-from parsec.core.base import BaseAsyncComponent
-from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
 from parsec.core.fs.utils import is_placeholder_manifest, is_workspace_manifest
-from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.encryption_manager import EncryptionManagerError
 from parsec.utils import to_jsonb64
 
@@ -105,14 +99,14 @@ generic_message_content_schema = _GenericMessageContentSchema()
 
 class Sharing:
     def __init__(
-        self, device, backend_cmds_sender, encryption_manager, local_folder_fs, syncer, signal_ns
+        self, device, backend_cmds_sender, encryption_manager, local_folder_fs, syncer, event_bus
     ):
         self.device = device
         self.backend_cmds_sender = backend_cmds_sender
         self.encryption_manager = encryption_manager
         self.local_folder_fs = local_folder_fs
         self.syncer = syncer
-        self.signal_ns = signal_ns
+        self.event_bus = event_bus
 
     async def share(self, path, recipient):
         """
@@ -166,74 +160,8 @@ class Sharing:
                 "Error while trying to send sharing message to backend: %r" % rep
             )
 
-
-class SharingMonitor(BaseAsyncComponent):
-    def __init__(
-        self,
-        device,
-        backend_cmds_sender,
-        encryption_manager,
-        remote_loader,
-        local_folder_fs,
-        signal_ns,
-    ):
-        super().__init__()
-        self.device = device
-        self.backend_cmds_sender = backend_cmds_sender
-        self.encryption_manager = encryption_manager
-        self.remote_loader = remote_loader
-        self.local_folder_fs = local_folder_fs
-        self.signal_ns = signal_ns
-        self._msg_arrived = trio.Event()
-        self._task_info = None
-
-        self.signal_ns.signal("backend.message.received").connect(self._on_msg_arrived, weak=True)
-        self.signal_ns.signal("backend.message.polling_needed").connect(
-            self._on_msg_arrived, weak=True
-        )
-
-    def _on_msg_arrived(self, sender, index=None):
-        self._msg_arrived.set()
-
-    async def _init(self, nursery):
-        for beacon_id in self.local_folder_fs.get_local_beacons():
-            self.signal_ns.signal("backend.beacon.listen").send(None, beacon_id=beacon_id)
-
-        self._task_info = await nursery.start(self._task)
-
-    async def _teardown(self):
-        cancel_scope, closed_event = self._task_info
-        cancel_scope.cancel()
-        await closed_event.wait()
-        self._task_info = None
-
-    async def get_user_manifest(self):
-        user_manifest_access = self.device.user_manifest_access
-        while True:
-            try:
-                user_manifest = self.local_folder_fs.get_manifest(user_manifest_access)
-                return user_manifest_access, user_manifest
-            except FSManifestLocalMiss:
-                await self.remote_loader.load_manifest(user_manifest_access)
-
-    async def _task(self, *, task_status=trio.TASK_STATUS_IGNORED):
-        closed_event = trio.Event()
-        try:
-            with trio.open_cancel_scope() as cancel_scope:
-                task_status.started((cancel_scope, closed_event))
-                while True:
-                    try:
-                        await self._msg_arrived.wait()
-                        self._msg_arrived.clear()
-                        # TODO: what to do if we get a FSManifestLocalMiss raised ?
-                        await self.process_last_messages()
-                    except BackendNotAvailable:
-                        pass
-                    except SharingError:
-                        # TODO: Does `logger.exception` already do `traceback.format_exc` for us ?
-                        logger.exception("Error with backend: " % traceback.format_exc())
-        finally:
-            closed_event.set()
+    # TODO: message handling should be in it own module, but given it is
+    # only used for sharing so far...
 
     async def process_last_messages(self):
         """
@@ -241,10 +169,9 @@ class SharingMonitor(BaseAsyncComponent):
             SharingError
             BackendNotAvailable
             SharingBackendMessageError
-            FSManifestLocalMiss: If user manifest is available in local
         """
 
-        _, user_manifest = await self.get_user_manifest()
+        _, user_manifest = self.local_folder_fs.get_user_manifest()
         initial_last_processed_message = user_manifest["last_processed_message"]
         rep = await self.backend_cmds_sender.send(
             {"cmd": "message_get", "offset": initial_last_processed_message}
@@ -263,7 +190,7 @@ class SharingMonitor(BaseAsyncComponent):
             except SharingError as exc:
                 logger.warning(exc.args[0])
 
-        user_manifest_access, user_manifest = await self.get_user_manifest()
+        user_manifest_access, user_manifest = self.local_folder_fs.get_user_manifest()
         if user_manifest["last_processed_message"] < new_last_processed_message:
             user_manifest["last_processed_message"] = new_last_processed_message
             self.local_folder_fs.update_manifest(user_manifest_access, user_manifest)
@@ -273,7 +200,6 @@ class SharingMonitor(BaseAsyncComponent):
         Raises:
             SharingRecipientError
             SharingInvalidMessageError
-            FSManifestLocalMiss: If user manifest is available in local
         """
         expected_user_id, expected_device_name = sender_id.split("@")
         try:
@@ -293,7 +219,7 @@ class SharingMonitor(BaseAsyncComponent):
             raise SharingInvalidMessageError("Not a valid message: %r" % errors)
 
         if msg["type"] == "share":
-            user_manifest_access, user_manifest = await self.get_user_manifest()
+            user_manifest_access, user_manifest = self.local_folder_fs.get_user_manifest()
 
             for child_access in user_manifest["children"].values():
                 if child_access == msg["access"]:
@@ -308,9 +234,7 @@ class SharingMonitor(BaseAsyncComponent):
                     break
             user_manifest["children"][sharing_name] = msg["access"]
             self.local_folder_fs.update_manifest(user_manifest_access, user_manifest)
-            self.signal_ns.signal("sharing.new").send(
-                None, path=f"/{sharing_name}", access=msg["access"]
-            )
+            self.event_bus.send("sharing.new", path=f"/{sharing_name}", access=msg["access"])
 
         elif msg["type"] == "ping":
-            self.signal_ns.signal("pinged").send(None)
+            self.event_bus.send("pinged")
