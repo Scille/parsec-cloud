@@ -67,7 +67,7 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="163"/>
+        <location filename="../forms/files_widget.ui" line="174"/>
         <source>Search files or folders</source>
         <translation>Rechercher un fichier ou un dossier</translation>
     </message>
@@ -77,7 +77,7 @@
         <translation type="obsolete">Nouvel espace de travail</translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="181"/>
+        <location filename="../forms/files_widget.ui" line="192"/>
         <source>Add a workspace</source>
         <translation>Ajouter un espace de travail</translation>
     </message>
@@ -97,78 +97,93 @@
         <translation>Monté sur</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="126"/>
+        <location filename="../files_widget.py" line="177"/>
         <source>New folder</source>
         <translation>Nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="126"/>
+        <location filename="../files_widget.py" line="177"/>
         <source>Enter new folder name</source>
         <translation>Entrez le nom du nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="258"/>
+        <location filename="../files_widget.py" line="309"/>
         <source>Error</source>
         <translation>Erreur</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="139"/>
+        <location filename="../files_widget.py" line="190"/>
         <source>A folder with the same name already exists.</source>
         <translation>Un répertoire du même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="160"/>
+        <location filename="../files_widget.py" line="211"/>
         <source>Open</source>
         <translation>Ouvrir</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="162"/>
+        <location filename="../files_widget.py" line="213"/>
         <source>Open in file explorer</source>
         <translation>Ouvrir dans l&apos;explorateur de fichier</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="166"/>
+        <location filename="../files_widget.py" line="217"/>
         <source>Delete</source>
         <translation>Supprimer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="202"/>
+        <location filename="../files_widget.py" line="253"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="258"/>
+        <location filename="../files_widget.py" line="309"/>
         <source>A workspace with the same name already exists.</source>
         <translation>Un espace de travail du même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="291"/>
+        <location filename="../files_widget.py" line="342"/>
         <source>{} element(s)</source>
         <translation>{} élément(s)</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="191"/>
+        <location filename="../files_widget.py" line="242"/>
         <source>Are you sure you want to delete folder &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer le répertoire &quot;{}&quot; ?</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="202"/>
+        <location filename="../files_widget.py" line="253"/>
         <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer le fichier &quot;{}&quot; ?</translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="137"/>
+        <location filename="../forms/files_widget.ui" line="148"/>
         <source>Import files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="247"/>
+        <location filename="../files_widget.py" line="298"/>
         <source>New workspace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="247"/>
+        <location filename="../files_widget.py" line="298"/>
         <source>Enter new workspace name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/files_widget.ui" line="137"/>
+        <source>Import a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="142"/>
+        <source>{} already exists</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="158"/>
+        <source>Can not import {}.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

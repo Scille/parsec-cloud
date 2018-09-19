@@ -1,7 +1,7 @@
 import os
 import pathlib
 
-from PyQt5.QtCore import Qt, QSize, QCoreApplication
+from PyQt5.QtCore import Qt, QSize, QCoreApplication, QDir
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QMessageBox, QInputDialog, QFileDialog
 
@@ -103,20 +103,91 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.button_create_folder.clicked.connect(self.create_folder_clicked)
         self.line_edit_search.textChanged.connect(self.filter_files)
         self.button_import_files.clicked.connect(self.import_files_clicked)
+        self.button_import_folder.clicked.connect(self.import_folder_clicked)
         self.workspaces = []
         self.current_workspace = None
         self.current_directory = None
 
+    def delete_all_subs(self, dir_path):
+        result = core_call().stat(dir_path)
+        for child in result.get("children", []):
+            file_infos = core_call().stat(os.path.join(dir_path, child))
+            if file_infos["type"] == "folder":
+                self.delete_all_subs(os.path.join(dir_path, child))
+            else:
+                core_call().delete_file(os.path.join(dir_path, child))
+        core_call().delete_folder(dir_path)
+
+    def import_folder_clicked(self):
+        path = QFileDialog.getExistingDirectory(
+            self, "Select a directory to import", str(pathlib.Path.home())
+        )
+        if not path:
+            return None
+
+        files = self._current_file_names()
+        filename = os.path.basename(path)
+
+        if filename in files:
+            QMessageBox.error(
+                self,
+                QCoreApplication.translate("FilesWidget", "{} already exists").format(filename),
+                QCoreApplication.translate(
+                    "FilesWidget",
+                    "A folder with the same name already exists. "
+                    "Please delete the existing directory before importing the new one.",
+                ),
+            )
+            return
+        QMessageBox.warning(
+            self,
+            QCoreApplication.translate("FilesWidget", "Importing the folder"),
+            QCoreApplication.translate(
+                "FilesWidget", "Sub-folders will not be imported to prevent big data imports."
+            ),
+        )
+        core_call().create_folder(
+            os.path.join(self.current_workspace, self.current_directory, filename)
+        )
+        finfo = QDir(path)
+        files = finfo.entryInfoList(filters=QDir.Files)
+        errors = []
+        for f in files:
+            ret = self._import_file(
+                f.absoluteFilePath(),
+                os.path.join(
+                    self.current_workspace, self.current_directory, filename, f.fileName()
+                ),
+            )
+            if not ret:
+                errors.append(f.absoluteFilePath())
+        if errors:
+            QMessageBox.warning(
+                self,
+                QCoreApplication.translate("FilesWidget", "Error"),
+                QCoreApplication.translate("FilesWidget", "Can not import\n{}.").format(
+                    "\n".join(errors)
+                ),
+            )
+        self.load_directory(self.current_workspace, self.current_directory)
+
     def _import_file(self, source, dest):
+        fd_out = None
         try:
-            core_call().file_create(out_path)
-            fd_out = core_call().file_open(out_path)
-            with open(path, "rb") as fd_in:
-                core_call().file_write(fd_out, fd_in.read(4096))
-                core_call().file_close(fd_out)
+            core_call().file_create(dest)
+            fd_out = core_call().file_open(dest)
+            with open(source, "rb") as fd_in:
+                while True:
+                    chunk = fd_in.read(8192)
+                    if not chunk:
+                        break
+                    core_call().file_write(fd_out, chunk)
             return True
-        except OSError:
+        except OSError as exc:
             return False
+        finally:
+            if fd_out:
+                core_call().file_close(fd_out)
 
     def _current_file_names(self):
         current_files = []
@@ -158,8 +229,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             QMessageBox.warning(
                 self,
                 QCoreApplication.translate("FilesWidget", "Error"),
-                QCoreApplication.translate("FilesWidget", "Can not import {}.").format(
-                    ", ".join(errors)
+                QCoreApplication.translate("FilesWidget", "Can not import\n{}.").format(
+                    "\n".join(errors)
                 ),
             )
         self.load_directory(self.current_workspace, self.current_directory)
@@ -247,7 +318,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 ).format(widget.file_name),
             )
             if result == QMessageBox.Yes:
-                core_call().delete_folder(file_path)
+                self.delete_all_subs(file_path)
                 self.list_files.takeItem(self.list_files.row(item))
         elif widget.file_type == "file":
             result = QMessageBox.question(

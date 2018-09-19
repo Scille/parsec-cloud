@@ -96,12 +96,24 @@ class Ui_FilesWidget(object):
         self.button_create_folder.setIcon(icon)
         self.button_create_folder.setObjectName("button_create_folder")
         self.horizontalLayout_3.addWidget(self.button_create_folder)
-        self.button_import_files = QtWidgets.QPushButton(self.widget_files)
+        self.button_import_folder = QtWidgets.QPushButton(self.widget_files)
         icon1 = QtGui.QIcon()
         icon1.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/file_add.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+            QtGui.QPixmap(":/icons/images/icons/folder_download.png"),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off,
         )
-        self.button_import_files.setIcon(icon1)
+        self.button_import_folder.setIcon(icon1)
+        self.button_import_folder.setObjectName("button_import_folder")
+        self.horizontalLayout_3.addWidget(self.button_import_folder)
+        self.button_import_files = QtWidgets.QPushButton(self.widget_files)
+        icon2 = QtGui.QIcon()
+        icon2.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/file_download.png"),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off,
+        )
+        self.button_import_files.setIcon(icon2)
         self.button_import_files.setObjectName("button_import_files")
         self.horizontalLayout_3.addWidget(self.button_import_files)
         spacerItem1 = QtWidgets.QSpacerItem(
@@ -123,11 +135,11 @@ class Ui_FilesWidget(object):
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.button_add_workspace = QtWidgets.QPushButton(self.widget_workspaces)
-        icon2 = QtGui.QIcon()
-        icon2.addPixmap(
+        icon3 = QtGui.QIcon()
+        icon3.addPixmap(
             QtGui.QPixmap(":/icons/images/icons/add.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
         )
-        self.button_add_workspace.setIcon(icon2)
+        self.button_add_workspace.setIcon(icon3)
         self.button_add_workspace.setObjectName("button_add_workspace")
         self.horizontalLayout.addWidget(self.button_add_workspace)
         spacerItem2 = QtWidgets.QSpacerItem(
@@ -156,6 +168,7 @@ class Ui_FilesWidget(object):
         self.label.setText(_translate("FilesWidget", "Mounted on"))
         self.button_to_workspaces.setText(_translate("FilesWidget", "Return to workspaces list"))
         self.button_create_folder.setText(_translate("FilesWidget", "Create new folder"))
+        self.button_import_folder.setText(_translate("FilesWidget", "Import a folder"))
         self.button_import_files.setText(_translate("FilesWidget", "Import files"))
         self.line_edit_search.setPlaceholderText(
             _translate("FilesWidget", "Search files or folders")
