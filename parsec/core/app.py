@@ -10,6 +10,7 @@ from parsec.core.base import BaseAsyncComponent, NotInitializedError, taskify
 from parsec.core.fs import FS
 from parsec.core.sync_monitor import SyncMonitor
 from parsec.core.beacons_monitor import monitor_beacons
+from parsec.core.messages_monitor import monitor_messages
 from parsec.core.devices_manager import LocalDevicesManager
 from parsec.core.fuse_manager import FuseManager
 from parsec.core.encryption_manager import EncryptionManager
@@ -84,6 +85,12 @@ class Core(BaseAsyncComponent):
 
             self.event_bus.send("user_logout")
 
+    async def ping_backend(self):
+        if self._logged_client_manager:
+            return await self._logged_client_manager.backend_cmds_sender.ping()
+        else:
+            return False
+
     async def handle_client(self, sockstream):
         from parsec.core.api import dispatch_request
 
@@ -96,7 +103,7 @@ class LoggedClientManager:
         self.device = device
         self.config = config
         self.event_bus = event_bus
-        self.nursery = nursery
+        self._nursery = nursery
 
         # Components dependencies tree:
         # logged client
@@ -129,8 +136,12 @@ class LoggedClientManager:
         await self.backend_events_manager.init(self._nursery)
 
         # Finally start monitoring coroutines
-        self._stop_monitor_beacons = await self._nursery.start(taskify(monitor_beacons))
-        self._stop_monitor_messages = await self._nursery.start(taskify(monitor_messages))
+        self._stop_monitor_beacons = await self._nursery.start(
+            taskify(monitor_beacons, self.device, self.fs, self.event_bus)
+        )
+        self._stop_monitor_messages = await self._nursery.start(
+            taskify(monitor_messages, self.fs, self.event_bus)
+        )
         self._stop_monitor_sync = await self._nursery.start(taskify(self.sync_monitor.run))
 
     async def stop(self):

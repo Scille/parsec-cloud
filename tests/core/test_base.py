@@ -132,7 +132,7 @@ async def test_need_login_cmds(core, core_sock_factory):
 
 
 @pytest.mark.trio
-async def test_bad_cmd(alice_core_sock, monitor):
+async def test_bad_cmd(alice_core_sock):
     await alice_core_sock.send({"cmd": "dummy"})
     rep = await alice_core_sock.recv()
     assert rep == {"status": "unknown_command", "reason": "Unknown command `dummy`"}

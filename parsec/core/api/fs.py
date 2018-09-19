@@ -102,7 +102,7 @@ def _normalize_path(path):
 
 
 async def file_create(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    if not core.fs:
+    if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
     req = PathOnlySchema.load(req)
@@ -114,7 +114,7 @@ async def file_create(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
 
 async def file_read(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    if not core.fs:
+    if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
     req = cmd_FILE_READ_Schema.load(req)
@@ -126,7 +126,7 @@ async def file_read(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
 
 async def file_write(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    if not core.fs:
+    if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
     req = cmd_FILE_WRITE_Schema.load(req)
@@ -138,7 +138,7 @@ async def file_write(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
 
 async def file_truncate(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    if not core.fs:
+    if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
     req = cmd_FILE_TRUNCATE_Schema.load(req)
@@ -150,7 +150,7 @@ async def file_truncate(req: dict, client_ctx: ClientContext, core: Core) -> dic
 
 
 async def stat(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    if not core.fs:
+    if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
     req = PathOnlySchema.load(req)
@@ -167,7 +167,7 @@ async def stat(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
 
 async def folder_create(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    if not core.fs:
+    if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
     req = PathOnlySchema.load(req)
@@ -183,7 +183,7 @@ async def folder_create(req: dict, client_ctx: ClientContext, core: Core) -> dic
 
 
 async def workspace_create(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    if not core.fs:
+    if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
     req = PathOnlySchema.load(req)
@@ -196,7 +196,7 @@ async def workspace_create(req: dict, client_ctx: ClientContext, core: Core) -> 
 
 
 async def move(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    if not core.fs:
+    if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
     req = cmd_MOVE_Schema.load(req)
@@ -208,7 +208,7 @@ async def move(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
 
 async def delete(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    if not core.fs:
+    if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
     if req["path"] == "/":
@@ -223,7 +223,7 @@ async def delete(req: dict, client_ctx: ClientContext, core: Core) -> dict:
 
 
 async def synchronize(req: dict, client_ctx: ClientContext, core: Core) -> dict:
-    if not core.fs:
+    if not core.auth_device:
         return {"status": "login_required", "reason": "Login required"}
 
     req = PathOnlySchema.load(req)

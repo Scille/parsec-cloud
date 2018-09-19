@@ -78,7 +78,7 @@ async def get_core_state(req: dict, client_ctx: ClientContext, core: Core) -> di
     if core.auth_device:
         status["login"] = core.auth_device.id
         try:
-            await core.backend_cmds_sender.ping()
+            await core.ping_backend()
             status["backend_online"] = True
         except BackendNotAvailable:
             status["backend_online"] = False
