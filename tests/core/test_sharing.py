@@ -1,16 +1,14 @@
 import pytest
 import trio
 
-from tests.common import connect_signal_as_event
-
 
 @pytest.mark.trio
 @pytest.mark.parametrize("already_synced", [True, False])
 async def test_share_workspace(
     already_synced, core, core2, alice_core_sock, bob_core2_sock, running_backend
 ):
-    # Bob stays idle waiting for a sharing from alice
-    core2_received_sharing = connect_signal_as_event(core2.signal_ns, "sharing.new")
+    await core.event_bus.spy.wait_for_backend_online()
+    await core2.event_bus.spy.wait_for_backend_online()
 
     # First, create a folder and sync it on backend
     await core.fs.workspace_create("/foo")
@@ -28,8 +26,7 @@ async def test_share_workspace(
 
     # Bob should get a notification
     with trio.fail_after(seconds=1):
-        await core2_received_sharing.wait()
-        assert len(core2_received_sharing.cb.call_args_list) == 1
+        await core2.event_bus.spy.wait("sharing.new")
 
     # Now Bob can access the file just like Alice would do
     bob_foo_name = "foo (shared by alice)"

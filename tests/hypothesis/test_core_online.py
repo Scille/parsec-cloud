@@ -12,10 +12,8 @@ def test_online(tcp_stream_spy, BaseCoreWithBackendStateMachine, hypothesis_sett
 
         @rule()
         async def get_core_state(self):
-            print("get state...")
             rep = await self.core_cmd({"cmd": "get_core_state"})
             note(rep)
-            print(rep)
             assert rep == {
                 "status": "ok",
                 "login": self.device.id,

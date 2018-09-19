@@ -87,7 +87,7 @@ from copy import deepcopy
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
-from tests.hypothesis.test_core_online_rw_and_sync import FileOracle, BLOCK_SIZE
+from tests.hypothesis.test_core_online_tree_and_sync import FileOracle, BLOCK_SIZE
 
 @pytest.mark.trio
 async def test_reproduce(running_backend, alice, core_factory, core_sock_factory):

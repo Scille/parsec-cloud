@@ -115,21 +115,13 @@ class SyncMonitor(BaseAsyncComponent):
 
         for id, (first_updated, last_updated) in updated_entries.items():
             if now - first_updated > MAX_WAIT:
-                self._not_syncing_event.clear()
-                try:
-                    await self.fs.sync_by_id(id)
-                finally:
-                    self._not_syncing_event.set()
+                await self.fs.sync_by_id(id)
                 break
 
         else:
             for id, (_, last_updated) in updated_entries.items():
                 if now - last_updated > MIN_WAIT:
-                    self._not_syncing_event.clear()
-                    try:
-                        await self.fs.sync_by_id(id)
-                    finally:
-                        self._not_syncing_event.set()
+                    await self.fs.sync_by_id(id)
                     break
 
             else:

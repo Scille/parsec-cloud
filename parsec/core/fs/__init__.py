@@ -134,3 +134,6 @@ class FS:
 
     async def share(self, path, recipient):
         await self._load_and_retry(self._sharing.share, path, recipient)
+
+    async def process_last_messages(self):
+        await self._sharing.process_last_messages()

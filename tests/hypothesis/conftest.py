@@ -256,6 +256,27 @@ class StartedBackend:
 
 
 @pytest.fixture
+def start_core(core_factory, core_sock_factory, backend_addr):
+    async def _start_core(
+        device, backend_addr=backend_addr, *, task_status=trio.TASK_STATUS_IGNORED
+    ):
+        stopped = trio.Event()
+        need_stop = trio.Event()
+        try:
+            async with core_factory(
+                devices=[device], config={"auto_sync": False, "backend_addr": backend_addr}
+            ) as core:
+                await core.login(device)
+                async with core_sock_factory(core) as sock:
+                    task_status.started(StartedCore(core, sock, need_stop, stopped))
+                    await need_stop.wait()
+        finally:
+            stopped.set()
+
+    return _start_core
+
+
+@pytest.fixture
 def BaseParsecStateMachine(
     server_factory, backend_addr, backend_factory, core_factory, core_sock_factory, device_factory
 ):
@@ -264,16 +285,16 @@ def BaseParsecStateMachine(
             async def _start(*, task_status=trio.TASK_STATUS_IGNORED):
                 stopped = trio.Event()
                 need_stop = trio.Event()
-                async with core_factory(
-                    devices=[device], config={"auto_sync": False, "backend_addr": backend_addr}
-                ) as core:
-                    try:
+                try:
+                    async with core_factory(
+                        devices=[device], config={"auto_sync": False, "backend_addr": backend_addr}
+                    ) as core:
                         await core.login(device)
                         async with core_sock_factory(core) as sock:
                             task_status.started(StartedCore(core, sock, need_stop, stopped))
                             await need_stop.wait()
-                    finally:
-                        stopped.set()
+                finally:
+                    stopped.set()
 
             return await self.get_root_nursery().start(_start)
 
@@ -281,14 +302,14 @@ def BaseParsecStateMachine(
             async def _start(*, task_status=trio.TASK_STATUS_IGNORED):
                 stopped = trio.Event()
                 need_stop = trio.Event()
-                async with backend_factory(devices=devices) as backend:
-                    try:
+                try:
+                    async with backend_factory(devices=devices) as backend:
                         async with server_factory(backend.handle_client) as server:
                             task_status.started(StartedBackend(backend, server, need_stop, stopped))
                             await need_stop.wait()
                             await backend.teardown()
-                    finally:
-                        stopped.set()
+                finally:
+                    stopped.set()
 
             return await self.get_root_nursery().start(_start)
 

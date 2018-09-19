@@ -1,9 +1,5 @@
 import pytest
-import trio
-import attr
 from pendulum import Pendulum
-from copy import deepcopy
-from async_generator import asynccontextmanager
 
 from tests.common import freeze_time
 
@@ -35,23 +31,23 @@ async def test_simple_sync(alice_fs, alice2_fs):
     with freeze_time("2000-01-03"):
         await alice_fs.file_write("/foo.txt", b"hello world !")
 
-    with alice_fs.signal_ns.listen() as events:
+    with alice_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-04"):
             await alice_fs.sync("/")
-    events.assert_occured(
+    spy.assert_events_occured(
         [
-            ("fs.entry.synced", {"path": "/foo.txt", "id": events.ANY}, Pendulum(2000, 1, 4)),
-            ("fs.entry.synced", {"path": "/", "id": events.ANY}, Pendulum(2000, 1, 4)),
+            ("fs.entry.synced", {"path": "/foo.txt", "id": spy.ANY}, Pendulum(2000, 1, 4)),
+            ("fs.entry.synced", {"path": "/", "id": spy.ANY}, Pendulum(2000, 1, 4)),
         ]
     )
 
     # 2) Fetch back file from another fs
 
-    with alice2_fs.signal_ns.listen() as events:
+    with alice2_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-05"):
             await alice2_fs.sync("/")
-    events.assert_occured(
-        [("fs.entry.synced", {"path": "/", "id": events.ANY}, Pendulum(2000, 1, 5))]
+    spy.assert_events_occured(
+        [("fs.entry.synced", {"path": "/", "id": spy.ANY}, Pendulum(2000, 1, 5))]
     )
 
     # 3) Finally make sure both fs have the same data
@@ -73,23 +69,23 @@ async def test_fs_entry_synced_event_when_all_synced(alice_fs):
 
     # 2) Sync it
 
-    with alice_fs.signal_ns.listen() as events:
+    with alice_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-03"):
             await alice_fs.sync("/")
-    events.assert_occured(
+    spy.assert_events_occured(
         [
-            ("fs.entry.synced", {"path": "/foo.txt", "id": events.ANY}, Pendulum(2000, 1, 3)),
-            ("fs.entry.synced", {"path": "/bar", "id": events.ANY}, Pendulum(2000, 1, 3)),
-            ("fs.entry.synced", {"path": "/", "id": events.ANY}, Pendulum(2000, 1, 3)),
+            ("fs.entry.synced", {"path": "/foo.txt", "id": spy.ANY}, Pendulum(2000, 1, 3)),
+            ("fs.entry.synced", {"path": "/bar", "id": spy.ANY}, Pendulum(2000, 1, 3)),
+            ("fs.entry.synced", {"path": "/", "id": spy.ANY}, Pendulum(2000, 1, 3)),
         ]
     )
 
     # 2) Now additional sync should not trigger any event
 
-    with alice_fs.signal_ns.listen() as events:
+    with alice_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-04"):
             await alice_fs.sync("/")
-    events.assert_occured([])
+    spy.assert_events_occured([])
 
 
 @pytest.mark.trio
@@ -105,35 +101,35 @@ async def test_cross_sync(alice_fs, alice2_fs):
 
     # 2) Do the cross sync
 
-    with alice_fs.signal_ns.listen() as events:
+    with alice_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-04"):
             await alice_fs.sync("/")
 
-    events.assert_occured(
+    spy.assert_events_occured(
         [
-            ("fs.entry.synced", {"path": "/foo.txt", "id": events.ANY}, Pendulum(2000, 1, 4)),
-            ("fs.entry.synced", {"path": "/", "id": events.ANY}, Pendulum(2000, 1, 4)),
+            ("fs.entry.synced", {"path": "/foo.txt", "id": spy.ANY}, Pendulum(2000, 1, 4)),
+            ("fs.entry.synced", {"path": "/", "id": spy.ANY}, Pendulum(2000, 1, 4)),
         ]
     )
 
-    with alice2_fs.signal_ns.listen() as events:
+    with alice2_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-05"):
             await alice2_fs.sync("/")
 
-    events.assert_occured(
+    spy.assert_events_occured(
         [
-            ("fs.entry.synced", {"path": "/bar/spam", "id": events.ANY}, Pendulum(2000, 1, 5)),
-            ("fs.entry.synced", {"path": "/bar", "id": events.ANY}, Pendulum(2000, 1, 5)),
-            ("fs.entry.synced", {"path": "/", "id": events.ANY}, Pendulum(2000, 1, 5)),
+            ("fs.entry.synced", {"path": "/bar/spam", "id": spy.ANY}, Pendulum(2000, 1, 5)),
+            ("fs.entry.synced", {"path": "/bar", "id": spy.ANY}, Pendulum(2000, 1, 5)),
+            ("fs.entry.synced", {"path": "/", "id": spy.ANY}, Pendulum(2000, 1, 5)),
         ]
     )
 
-    with alice_fs.signal_ns.listen() as events:
+    with alice_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-06"):
             await alice_fs.sync("/")
 
-    events.assert_occured(
-        [("fs.entry.synced", {"path": "/", "id": events.ANY}, Pendulum(2000, 1, 6))]
+    spy.assert_events_occured(
+        [("fs.entry.synced", {"path": "/", "id": spy.ANY}, Pendulum(2000, 1, 6))]
     )
 
     # 3) Finally make sure both fs have the same data

@@ -134,7 +134,7 @@ class EventBusSpy:
             if cooked_occured == cooked_expected:
                 break
         else:
-            raise AssertionError(f"Event {cooked_event} didn't occured")
+            raise AssertionError(f"Event {cooked_expected} didn't occured")
 
     def assert_events_occured(self, events):
         expected_events = self._cook_events_params(events)
@@ -152,30 +152,6 @@ class EventBusSpy:
         events = self._cook_events_params(events)
         cooked_expected, cooked_observed = convert_event_lists_with_any(events, self.events)
         assert cooked_observed == cooked_expected
-
-    # TODO: remove me
-    def assert_occured(self, events, exact=True):
-        if exact:
-            self._assert_exactly_occured(events)
-        else:
-            self._assert_roughly_occured(events)
-
-    def _assert_exactly_occured(self, events):
-        events = self._cook_events_params(events)
-        cooked_expected, cooked_observed = convert_event_lists_with_any(events, self.events)
-        assert cooked_observed == cooked_expected
-
-    def _assert_roughly_occured(self, events):
-        events = self._cook_events_params(events)
-        occured_events = iter(self.events)
-        try:
-            for i, expected in enumerate(events):
-                while True:
-                    occured = next(occured_events)
-                    if compare_events_with_any(occured, expected):
-                        break
-        except StopIteration:
-            raise ValueError(f"Missing events {events[i:]}")
 
 
 class SpiedEventBus(EventBus):

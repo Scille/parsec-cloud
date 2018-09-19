@@ -6,13 +6,11 @@ import trio
 
 from parsec.core.fuse_manager import FuseManager, FuseNotAvailable, FUSE_AVAILABLE
 
-from tests.common import connect_signal_as_event
-
 
 @pytest.mark.trio
-async def test_fuse_not_available(signal_ns):
+async def test_fuse_not_available(event_bus):
     with patch("parsec.core.fuse_manager.FUSE_AVAILABLE", new=False):
-        fm = FuseManager("tcp://dummy.com:9999", signal_ns)
+        fm = FuseManager("tcp://dummy.com:9999", event_bus)
 
         with pytest.raises(FuseNotAvailable):
             await fm.start_mountpoint("/foo/bar")
@@ -44,9 +42,9 @@ async def test_mount_fuse(core, alice, tmpdir, fuse_stop_mode):
         await core.fs.file_write("/bar.txt", b"Hello world !")
 
         # Now we can start fuse
-        started = connect_signal_as_event(core.signal_ns, "fuse.mountpoint.started")
-        await core.fuse_manager.start_mountpoint(mountpoint)
-        started.wait()
+        with core.event_bus.listen() as spy:
+            await core.fuse_manager.start_mountpoint(mountpoint)
+        spy.assert_event_occured(event="fuse.mountpoint.started")
 
         # Finally explore the mountpoint
 

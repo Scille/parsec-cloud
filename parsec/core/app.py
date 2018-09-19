@@ -49,6 +49,19 @@ class Core(BaseAsyncComponent):
         return self._logged_client_manager.fs
 
     @property
+    def fuse_manager(self):
+        if not self._logged_client_manager:
+            raise NotLoggedError("No user logged")
+        return self._logged_client_manager.fuse_manager
+
+    @property
+    def backend_cmds_sender(self):
+        # TODO: should be exposing higher level methods instead of this one
+        if not self._logged_client_manager:
+            raise NotLoggedError("No user logged")
+        return self._logged_client_manager.backend_cmds_sender
+
+    @property
     def auth_device(self):
         if not self._logged_client_manager:
             return None

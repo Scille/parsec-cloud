@@ -1,4 +1,5 @@
 import logbook
+from itertools import count
 
 from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.core.schemas import ManifestAccessSchema

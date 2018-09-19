@@ -50,18 +50,18 @@ def backend_cmds_sender_factory(running_backend):
 
 
 @pytest.fixture
-def fs_factory(backend_cmds_sender_factory, encryption_manager_factory, signal_ns_factory):
+def fs_factory(backend_cmds_sender_factory, encryption_manager_factory, event_bus_factory):
     @asynccontextmanager
-    async def _fs_factory(device, backend_addr=None, signal_ns=None):
-        if not signal_ns:
-            signal_ns = signal_ns_factory()
+    async def _fs_factory(device, backend_addr=None, event_bus=None):
+        if not event_bus:
+            event_bus = event_bus_factory()
 
         async with encryption_manager_factory(
             device, backend_addr=backend_addr
         ) as encryption_manager, backend_cmds_sender_factory(
             device, backend_addr=backend_addr
         ) as backend_cmds_sender:
-            fs = FS(device, backend_cmds_sender, encryption_manager, signal_ns)
+            fs = FS(device, backend_cmds_sender, encryption_manager, event_bus)
             yield fs
 
     return _fs_factory
