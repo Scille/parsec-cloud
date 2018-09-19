@@ -2,17 +2,12 @@ import pytest
 import trio
 from async_generator import asynccontextmanager
 
-from parsec.event_bus import SpiedEventBus
+from tests.event_bus_spy import SpiedEventBus
 
 # from parsec.signals import Namespace as SignalNamespace
 from parsec.core.backend_cmds_sender import BackendCmdsSender
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.fs import FS
-
-
-@pytest.fixture
-def signal_ns_factory():
-    return SpiedEventBus
 
 
 @pytest.fixture

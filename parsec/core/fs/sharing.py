@@ -2,6 +2,7 @@ import logbook
 
 from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.core.schemas import ManifestAccessSchema
+from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
 from parsec.core.fs.utils import is_placeholder_manifest, is_workspace_manifest
 from parsec.core.encryption_manager import EncryptionManagerError
 from parsec.utils import to_jsonb64
@@ -99,13 +100,21 @@ generic_message_content_schema = _GenericMessageContentSchema()
 
 class Sharing:
     def __init__(
-        self, device, backend_cmds_sender, encryption_manager, local_folder_fs, syncer, event_bus
+        self,
+        device,
+        backend_cmds_sender,
+        encryption_manager,
+        local_folder_fs,
+        syncer,
+        remote_loader,
+        event_bus,
     ):
         self.device = device
         self.backend_cmds_sender = backend_cmds_sender
         self.encryption_manager = encryption_manager
         self.local_folder_fs = local_folder_fs
         self.syncer = syncer
+        self.remote_loader = remote_loader
         self.event_bus = event_bus
 
     async def share(self, path, recipient):
@@ -163,6 +172,15 @@ class Sharing:
     # TODO: message handling should be in it own module, but given it is
     # only used for sharing so far...
 
+    async def _get_user_manifest(self):
+        user_manifest_access = self.device.user_manifest_access
+        while True:
+            try:
+                user_manifest = self.local_folder_fs.get_manifest(user_manifest_access)
+                return user_manifest_access, user_manifest
+            except FSManifestLocalMiss:
+                await self.remote_loader.load_manifest(user_manifest_access)
+
     async def process_last_messages(self):
         """
         Raises:
@@ -171,7 +189,7 @@ class Sharing:
             SharingBackendMessageError
         """
 
-        _, user_manifest = self.local_folder_fs.get_user_manifest()
+        _, user_manifest = await self._get_user_manifest()
         initial_last_processed_message = user_manifest["last_processed_message"]
         rep = await self.backend_cmds_sender.send(
             {"cmd": "message_get", "offset": initial_last_processed_message}
@@ -190,7 +208,7 @@ class Sharing:
             except SharingError as exc:
                 logger.warning(exc.args[0])
 
-        user_manifest_access, user_manifest = self.local_folder_fs.get_user_manifest()
+        user_manifest_access, user_manifest = await self._get_user_manifest()
         if user_manifest["last_processed_message"] < new_last_processed_message:
             user_manifest["last_processed_message"] = new_last_processed_message
             self.local_folder_fs.update_manifest(user_manifest_access, user_manifest)
@@ -219,7 +237,7 @@ class Sharing:
             raise SharingInvalidMessageError("Not a valid message: %r" % errors)
 
         if msg["type"] == "share":
-            user_manifest_access, user_manifest = self.local_folder_fs.get_user_manifest()
+            user_manifest_access, user_manifest = await self._get_user_manifest()
 
             for child_access in user_manifest["children"].values():
                 if child_access == msg["access"]:

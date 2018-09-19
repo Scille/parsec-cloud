@@ -41,6 +41,7 @@ class PGBeaconComponent(BaseBeaconComponent):
         # Maybe we should replace it by a timestamp ?
         index = 42
         for id in ids:
+            # TODO: do we really need to provide the author in this signal ?
             await send_signal(
                 conn,
                 "beacon.updated",

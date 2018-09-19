@@ -70,17 +70,18 @@ class ListenBackendEventError(Exception):
 
 
 class BackendEventsManager(BaseAsyncComponent):
+    # TODO: modify this definition now we have an "event bus"
     """
     Difference between signal and event:
     - signals are in-process notifications
     - events are message sent downstream from the backend to the client core
     """
 
-    def __init__(self, device: Device, backend_addr: str, signal_ns):
+    def __init__(self, device: Device, backend_addr: str, event_bus):
         super().__init__()
         self.device = device
         self.backend_addr = backend_addr
-        self.signal_ns = signal_ns
+        self.event_bus = event_bus
         self._nursery = None
         self._backend_online_event = trio.Event()
         self._subscribed_events = {
@@ -90,10 +91,8 @@ class BackendEventsManager(BaseAsyncComponent):
         }
         self._subscribed_events_changed = trio.Event()
         self._task_info = None
-        self.signal_ns.signal("backend.beacon.listen").connect(self._on_beacon_listen, weak=True)
-        self.signal_ns.signal("backend.beacon.unlisten").connect(
-            self._on_beacon_unlisten, weak=True
-        )
+        self.event_bus.connect("backend.beacon.listen", self._on_beacon_listen, weak=True)
+        self.event_bus.connect("backend.beacon.unlisten", self._on_beacon_unlisten, weak=True)
 
     def _on_beacon_listen(self, sender, beacon_id):
         key = ("beacon.updated", beacon_id)
@@ -125,15 +124,13 @@ class BackendEventsManager(BaseAsyncComponent):
 
     def _event_pump_lost(self):
         self._backend_online_event.clear()
-        self.signal_ns.signal("backend.offline").send(None)
+        self.event_bus.send("backend.offline")
 
     def _event_pump_ready(self):
         if not self._backend_online_event.is_set():
             self._backend_online_event.set()
-            self.signal_ns.signal("backend.online").send(None)
-        self.signal_ns.signal("backend.listener.restarted").send(
-            None, events=self._subscribed_events
-        )
+            self.event_bus.send("backend.online")
+        self.event_bus.send("backend.listener.restarted", events=self._subscribed_events.copy())
 
     async def _task(self, *, task_status=trio.TASK_STATUS_IGNORED):
         closed_event = trio.Event()
@@ -142,17 +139,11 @@ class BackendEventsManager(BaseAsyncComponent):
                 # If backend is online, we want to wait before calling
                 # `task_status.started` until we are connected to the backend
                 # with events listener ready.
+                waiter = self.event_bus.waiter_on_first("backend.online", "backend.offline")
+
                 async def _wait_first_backend_connection_outcome():
-                    cb_called = trio.Event()
-
-                    def _cb(sender):
-                        cb_called.set()
-
-                    with self.signal_ns.signal("backend.offline").connected_to(
-                        _cb
-                    ), self.signal_ns.signal("backend.online").connected_to(_cb):
-                        await cb_called.wait()
-                        task_status.started((nursery.cancel_scope, closed_event))
+                    event, _ = await waiter.wait()
+                    task_status.started((nursery.cancel_scope, closed_event))
 
                 nursery.start_soon(_wait_first_backend_connection_outcome)
                 await self._event_listener_manager()
@@ -207,7 +198,7 @@ class BackendEventsManager(BaseAsyncComponent):
                 # TODO: think about this kind of signal format
                 self._event_pump_lost()
                 logger.exception("Handshake error with backend, retrying in 1s...")
-                self.signal_ns.signal("panic").send(None, exc=exc)
+                self.event_bus.send("panic", exc=exc)
                 await trio.sleep(1)
 
             except Exception as exc:
@@ -238,7 +229,7 @@ class BackendEventsManager(BaseAsyncComponent):
 
             # Given the backend won't notify us for messages that arrived while
             # we were offline, we must actively check this ourself.
-            self.signal_ns.signal("backend.message.polling_needed").send(None)
+            self.event_bus.send("backend.message.polling_needed")
 
             task_status.started(cancel_scope)
             while True:
@@ -251,20 +242,22 @@ class BackendEventsManager(BaseAsyncComponent):
                     )
 
                 if rep["event"] == "message.received":
-                    self.signal_ns.signal("backend.message.received").send(None, index=rep["index"])
+                    self.event_bus.send("backend.message.received", index=rep["index"])
                 elif rep["event"] == "pinged":
-                    self.signal_ns.signal("backend.pinged").send(None)
+                    self.event_bus.send("backend.pinged")
                 elif rep["event"] == "beacon.updated":
-                    self.signal_ns.signal("backend.beacon.updated").send(
-                        None,
+                    self.event_bus.send(
+                        "backend.beacon.updated",
                         beacon_id=rep["beacon_id"],
                         index=rep["index"],
                         src_id=rep["src_id"],
                         src_version=rep["src_version"],
                     )
                 elif rep["event"] == "device.try_claim_submitted":
-                    self.signal_ns.signal("backend.device.try_claim_submitted").send(
-                        None, device_name=rep["device_name"], config_try_id=rep["config_try_id"]
+                    self.event_bus.send(
+                        "backend.device.try_claim_submitted",
+                        device_name=rep["device_name"],
+                        config_try_id=rep["config_try_id"],
                     )
                 else:
                     logger.warning(f"Backend sent unknown event {rep}")

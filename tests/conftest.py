@@ -8,6 +8,7 @@ from uuid import UUID
 from unittest.mock import patch
 import trio
 import trio_asyncio
+
 from async_generator import asynccontextmanager
 import hypothesis
 from nacl.public import PrivateKey
@@ -24,11 +25,12 @@ from parsec.backend import BackendApp, BackendConfig
 from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 
+# TODO: needed ?
+pytest.register_assert_rewrite("tests.event_bus_spy")
+
 from tests.common import freeze_time, FreezeTestOnBrokenStreamCookedSocket, InMemoryLocalDB
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
-
-# TODO: hack...
-pytest.register_assert_rewrite("parsec.event_bus")
+from tests.event_bus_spy import SpiedEventBus
 
 
 def pytest_addoption(parser):
@@ -144,12 +146,24 @@ def unused_tcp_addr(unused_tcp_port):
 
 
 @pytest.fixture
+def event_bus_factory():
+    return SpiedEventBus
+
+
+@pytest.fixture
+def event_bus(event_bus_factory):
+    return event_bus_factory()
+
+
+@pytest.fixture
 def signal_ns_factory():
+    # TODO: deprecated fixture
     return SignalNamespace
 
 
 @pytest.fixture
 def signal_ns(signal_ns_factory):
+    # TODO: deprecated fixture
     return signal_ns_factory()
 
 
@@ -456,11 +470,11 @@ async def bob_backend_sock(backend_sock_factory, backend, bob):
 
 
 @pytest.fixture
-def core_factory(tmpdir, signal_ns_factory, backend_addr, default_devices):
+def core_factory(tmpdir, event_bus_factory, backend_addr, default_devices):
     count = 0
 
     @asynccontextmanager
-    async def _core_factory(devices=default_devices, config={}, signal_ns=None):
+    async def _core_factory(devices=default_devices, config={}, event_bus=None):
         nonlocal count
         count += 1
 
@@ -473,9 +487,9 @@ def core_factory(tmpdir, signal_ns_factory, backend_addr, default_devices):
                 **config,
             }
         )
-        if not signal_ns:
-            signal_ns = signal_ns_factory()
-        core = Core(config, signal_ns=signal_ns)
+        if not event_bus:
+            event_bus = event_bus_factory()
+        core = Core(config, event_bus=event_bus)
         async with trio.open_nursery() as nursery:
             await core.init(nursery)
 

@@ -37,6 +37,7 @@ class FS:
             encryption_manager,
             self._local_folder_fs,
             self._syncer,
+            self._remote_loader,
             event_bus,
         )
 
