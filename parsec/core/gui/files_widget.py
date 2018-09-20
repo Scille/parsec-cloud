@@ -1,7 +1,7 @@
 import os
 import pathlib
 
-from PyQt5.QtCore import Qt, QSize, QCoreApplication, QDir
+from PyQt5.QtCore import Qt, QSize, QCoreApplication, QDir, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QMessageBox, QInputDialog, QFileDialog
 
@@ -12,6 +12,7 @@ from parsec.core.gui.custom_widgets import ToolButton
 from parsec.core.gui.ui.parent_folder_widget import Ui_ParentFolderWidget
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.gui.ui.file_item_widget import Ui_FileItemWidget
+from parsec.core.fs import FSManifestLocalMiss
 
 
 class FileItemWidget(QWidget, Ui_FileItemWidget):
@@ -92,6 +93,8 @@ class ParentFolderWidget(QWidget, Ui_ParentFolderWidget):
 
 
 class FilesWidget(QWidget, Ui_FilesWidget):
+    current_directory_changed = pyqtSignal()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
@@ -107,6 +110,24 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.workspaces = []
         self.current_workspace = None
         self.current_directory = None
+        core_call().connect_signal('fs.entry.updated', self._on_fs_entry_updated)
+        self.current_directory_changed.connect(self.reload_current_directory)
+
+    def reload_current_directory(self):
+        self.load_directory(self.current_workspace, self.current_directory)
+
+    def _on_fs_entry_updated(self, event, id):
+        try:
+            path = core_call().get_entry_path(id)
+        except FSManifestLocalMiss:
+            return
+        # TODO: too cumbersome...
+        modified_hops = [x for x in path.split('/') if x]
+        current_dir_hops = [self.current_workspace] + [x for x in self.current_directory.split('/') if x]
+        # Only direct children to current directory require reloading
+        if modified_hops[:-1] == current_dir_hops:
+            self.current_directory_changed.emit()
+
 
     def delete_all_subs(self, dir_path):
         result = core_call().stat(dir_path)

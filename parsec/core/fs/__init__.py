@@ -126,6 +126,9 @@ class FS:
     async def share(self, path, recipient):
         await self._load_and_retry(self._sharing.share, path, recipient)
 
+    def get_entry_path(self, id):
+        return self._local_folder_fs.get_entry_path(id)[0]
+
 
 class FSManager(FS, BaseAsyncComponent):
     def __init__(self, device, backend_cmds_sender, encryption_manager, signal_ns, auto_sync=True):

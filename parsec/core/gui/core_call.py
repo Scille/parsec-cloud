@@ -1,5 +1,3 @@
-import trio
-
 from parsec.core.devices_manager import invite_user, claim_user
 
 
@@ -11,6 +9,12 @@ class _CoreCall:
 
     def is_debug(self):
         return self._parsec_core.config.debug
+
+    def get_entry_path(self, id):
+        return self._parsec_core.fs.get_entry_path(id)
+
+    def connect_signal(self, signal, cb):
+        self._parsec_core.signal_ns.signal(signal).connect(cb, weak=True)
 
     def stop(self):
         self._trio_portal.run_sync(self._cancel_scope.cancel)
