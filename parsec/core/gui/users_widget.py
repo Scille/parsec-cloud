@@ -20,8 +20,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     def emit_register(self):
         user_name, ok = QInputDialog.getText(
             self,
-            QCoreApplication("UsersWidget", "New user"),
-            QCoreApplication("UsersWidget", "Enter new user name"),
+            QCoreApplication.translate("UsersWidget", "New user"),
+            QCoreApplication.translate("UsersWidget", "Enter new user name"),
         )
         if not ok or not user_name:
             return

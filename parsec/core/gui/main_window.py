@@ -142,8 +142,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if mountpoint is None:
                 QMessageBox.warning(
                     self,
-                    QCoreApplication(self.__class__.__name__, "Error"),
-                    QCoreApplication(
+                    QCoreApplication.translate(self.__class__.__name__, "Error"),
+                    QCoreApplication.translate(
                         self.__class__.__name__,
                         'Can not mount in "{}" (permissions problems ?). Go '
                         "to Settings/Global to a set mountpoint, then File/Remount to "

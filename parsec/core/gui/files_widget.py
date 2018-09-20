@@ -194,7 +194,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         for i in range(self.list_files.count()):
             item = self.list_files.item(i)
             widget = self.list_files.itemWidget(item)
-            current_files.append(widget.file_name)
+            if not isinstance(widget, ParentFolderWidget):
+                current_files.append(widget.file_name)
         return current_files
 
     def import_files_clicked(self):
