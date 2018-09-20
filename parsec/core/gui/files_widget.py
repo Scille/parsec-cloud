@@ -110,7 +110,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.workspaces = []
         self.current_workspace = None
         self.current_directory = None
-        core_call().connect_signal('fs.entry.updated', self._on_fs_entry_updated)
+        core_call().connect_signal("fs.entry.updated", self._on_fs_entry_updated)
         self.current_directory_changed.connect(self.reload_current_directory)
 
     def reload_current_directory(self):
@@ -122,12 +122,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         except FSManifestLocalMiss:
             return
         # TODO: too cumbersome...
-        modified_hops = [x for x in path.split('/') if x]
-        current_dir_hops = [self.current_workspace] + [x for x in self.current_directory.split('/') if x]
+        modified_hops = [x for x in path.split("/") if x]
+        current_dir_hops = [self.current_workspace] + [
+            x for x in self.current_directory.split("/") if x
+        ]
         # Only direct children to current directory require reloading
         if modified_hops[:-1] == current_dir_hops:
             self.current_directory_changed.emit()
-
 
     def delete_all_subs(self, dir_path):
         result = core_call().stat(dir_path)
