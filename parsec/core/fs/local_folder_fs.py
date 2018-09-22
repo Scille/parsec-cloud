@@ -99,6 +99,12 @@ class LocalFolderFS:
             raise FSManifestLocalMiss(access) from exc
         manifest = loads_manifest(raw)
         self._manifests_cache[access["id"]] = manifest
+        # TODO: shouldn't be processed in multiple places like this...
+        if manifest["type"] == "local_workspace_manifest":
+            path = self.get_entry_path(access["id"])
+            self.signal_ns.signal("fs.workspace.loaded").send(
+                None, path=path, id=access["id"], beacon_id=manifest["beacon_id"]
+            )
         return manifest
 
     def get_manifest(self, access):
@@ -112,6 +118,12 @@ class LocalFolderFS:
             raise FSManifestLocalMiss(access) from exc
         manifest = loads_manifest(raw)
         self._manifests_cache[access["id"]] = copy_manifest(manifest)
+        # TODO: shouldn't be processed in multiple places like this...
+        if manifest["type"] == "local_workspace_manifest":
+            path = self.get_entry_path(access["id"])
+            self.signal_ns.signal("fs.workspace.loaded").send(
+                None, path=path, id=access["id"], beacon_id=manifest["beacon_id"]
+            )
         return manifest
 
     def set_manifest(self, access, manifest):
@@ -149,7 +161,10 @@ class LocalFolderFS:
 
         # Brute force style
         def _recursive_search(access, path):
-            manifest = self._get_manifest_read_only(access)
+            try:
+                manifest = self._get_manifest_read_only(access)
+            except FSManifestLocalMiss:
+                return
             if access["id"] == entry_id:
                 return path, access, copy_manifest(manifest)
 
@@ -296,6 +311,10 @@ class LocalFolderFS:
         self.set_manifest(child_access, child_manifest)
         self.signal_ns.signal("fs.entry.updated").send("local", id=access["id"])
         self.signal_ns.signal("fs.entry.updated").send("local", id=child_access["id"])
+        if workspace:
+            self.signal_ns.signal("fs.workspace.loaded").send(
+                None, path=path, id=child_access["id"], beacon_id=child_manifest["beacon_id"]
+            )
 
     def _delete(self, path, expect=None):
         path = normalize_path(path)

@@ -308,9 +308,10 @@ class SharingMonitor(BaseAsyncComponent):
                     break
             user_manifest["children"][sharing_name] = msg["access"]
             self.local_folder_fs.update_manifest(user_manifest_access, user_manifest)
-            self.signal_ns.signal("sharing.new").send(
-                None, path=f"/{sharing_name}", access=msg["access"]
-            )
+            path = f"/{sharing_name}"
+            self.signal_ns.signal("sharing.new").send(None, path=path, access=msg["access"])
+            self.signal_ns.signal("fs.entry.updated").send(None, id=user_manifest_access["id"])
+            self.signal_ns.signal("fs.entry.synced").send(None, id=msg["access"]["id"], path=path)
 
         elif msg["type"] == "ping":
             self.signal_ns.signal("pinged").send(None)
