@@ -99,8 +99,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if core_call().is_mounted():
             core_call().unmount()
         try:
-            if os.path.exists(mountpoint):
-                shutil.rmtree(mountpoint)
+            # if os.path.exists(mountpoint):
+            #     shutil.rmtree(mountpoint)
             core_call().mount(mountpoint)
             self.files_widget.set_mountpoint(mountpoint)
             return mountpoint
@@ -206,8 +206,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             event.accept()
             if core_call().is_mounted():
                 core_call().unmount()
-                core_call().logout()
-                core_call().stop()
+            core_call().logout()
+            core_call().stop()
         else:
             if self.tray:
                 self.tray.showMessage(

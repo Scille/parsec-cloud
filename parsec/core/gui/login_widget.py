@@ -13,6 +13,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         super().__init__(*args, **kwargs)
 
         self.setupUi(self)
+        self.button_login_instead.hide()
         self.group_claim.hide()
         self.connect_all()
         self.label_error.hide()
@@ -44,7 +45,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.line_edit_claim_login.setText("")
         self.line_edit_claim_password.setText("")
         self.line_edit_claim_password_check.setText("")
-        self.line_edit_claim_device.setText("")
+        self.line_edit_claim_device.setText(get_default_device())
+        self.line_edit_claim_token.setText("")
         self.line_edit_password.setText("")
         self.button_claim.setDisabled(True)
         self.label_error.setText("")
@@ -53,6 +55,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.group_claim.hide()
         self.label_error.hide()
         self.label_claim_error.hide()
+        self.button_login_instead.hide()
 
     def emit_login(self):
         self.loginClicked.emit(self.combo_devices.currentText(), self.line_edit_password.text())

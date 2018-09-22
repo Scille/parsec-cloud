@@ -28,9 +28,6 @@ class Ui_LoginWidget(object):
         self.group_login.setObjectName("group_login")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.group_login)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.button_claim_instead = QtWidgets.QCommandLinkButton(self.group_login)
-        self.button_claim_instead.setObjectName("button_claim_instead")
-        self.verticalLayout_2.addWidget(self.button_claim_instead)
         self.combo_devices = QtWidgets.QComboBox(self.group_login)
         self.combo_devices.setObjectName("combo_devices")
         self.verticalLayout_2.addWidget(self.combo_devices)
@@ -67,9 +64,6 @@ class Ui_LoginWidget(object):
         self.label = QtWidgets.QLabel(self.group_claim)
         self.label.setObjectName("label")
         self.verticalLayout_3.addWidget(self.label)
-        self.button_login_instead = QtWidgets.QCommandLinkButton(self.group_claim)
-        self.button_login_instead.setObjectName("button_login_instead")
-        self.verticalLayout_3.addWidget(self.button_login_instead)
         self.line_edit_claim_login = QtWidgets.QLineEdit(self.group_claim)
         self.line_edit_claim_login.setText("")
         self.line_edit_claim_login.setObjectName("line_edit_claim_login")
@@ -110,6 +104,12 @@ class Ui_LoginWidget(object):
         self.label_claim_error.setObjectName("label_claim_error")
         self.verticalLayout_3.addWidget(self.label_claim_error)
         self.verticalLayout.addWidget(self.group_claim)
+        self.button_login_instead = QtWidgets.QCommandLinkButton(LoginWidget)
+        self.button_login_instead.setObjectName("button_login_instead")
+        self.verticalLayout.addWidget(self.button_login_instead)
+        self.button_claim_instead = QtWidgets.QCommandLinkButton(LoginWidget)
+        self.button_claim_instead.setObjectName("button_claim_instead")
+        self.verticalLayout.addWidget(self.button_claim_instead)
         spacerItem2 = QtWidgets.QSpacerItem(
             20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
         )
@@ -120,15 +120,16 @@ class Ui_LoginWidget(object):
         self.button_login_instead.clicked.connect(self.group_claim.hide)
         self.button_claim_instead.clicked.connect(self.group_claim.show)
         self.button_claim_instead.clicked.connect(self.group_login.hide)
+        self.button_login_instead.clicked.connect(self.button_claim_instead.show)
+        self.button_claim_instead.clicked.connect(self.button_login_instead.show)
+        self.button_claim_instead.clicked.connect(self.button_claim_instead.hide)
+        self.button_login_instead.clicked.connect(self.button_login_instead.hide)
         QtCore.QMetaObject.connectSlotsByName(LoginWidget)
 
     def retranslateUi(self, LoginWidget):
         _translate = QtCore.QCoreApplication.translate
         LoginWidget.setWindowTitle(_translate("LoginWidget", "Form"))
         self.group_login.setTitle(_translate("LoginWidget", "Log In"))
-        self.button_claim_instead.setText(
-            _translate("LoginWidget", "Register a new account instead")
-        )
         self.line_edit_password.setPlaceholderText(_translate("LoginWidget", "Password"))
         self.button_login.setText(_translate("LoginWidget", "Log In"))
         self.group_claim.setTitle(_translate("LoginWidget", "Register a new account"))
@@ -138,7 +139,6 @@ class Ui_LoginWidget(object):
                 "To register, you need another user to create an account and get a token.",
             )
         )
-        self.button_login_instead.setText(_translate("LoginWidget", "Log In instead"))
         self.line_edit_claim_login.setPlaceholderText(_translate("LoginWidget", "Login"))
         self.line_edit_claim_password.setPlaceholderText(_translate("LoginWidget", "Password"))
         self.line_edit_claim_password_check.setPlaceholderText(
@@ -147,3 +147,7 @@ class Ui_LoginWidget(object):
         self.line_edit_claim_device.setPlaceholderText(_translate("LoginWidget", "Device"))
         self.line_edit_claim_token.setPlaceholderText(_translate("LoginWidget", "Token"))
         self.button_claim.setText(_translate("LoginWidget", "Register"))
+        self.button_login_instead.setText(_translate("LoginWidget", "Log In instead"))
+        self.button_claim_instead.setText(
+            _translate("LoginWidget", "Register a new account instead")
+        )

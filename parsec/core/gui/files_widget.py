@@ -1,7 +1,7 @@
 import os
 import pathlib
 
-from PyQt5.QtCore import Qt, QSize, QCoreApplication, QDir, pyqtSignal
+from PyQt5.QtCore import Qt, QSize, QCoreApplication, QDir, pyqtSignal, QPoint
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QMessageBox, QInputDialog, QFileDialog
 
@@ -13,6 +13,7 @@ from parsec.core.gui.ui.parent_folder_widget import Ui_ParentFolderWidget
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.gui.ui.file_item_widget import Ui_FileItemWidget
 from parsec.core.fs import FSManifestLocalMiss
+from parsec.core.fs.sharing import SharingRecipientError
 
 
 class FileItemWidget(QWidget, Ui_FileItemWidget):
@@ -74,6 +75,8 @@ class FileItemWidget(QWidget, Ui_FileItemWidget):
 
 
 class WorkspaceWidget(ToolButton):
+    context_menu_requested = pyqtSignal(ToolButton, QPoint)
+
     def __init__(self, workspace_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -82,7 +85,12 @@ class WorkspaceWidget(ToolButton):
         self.setIconSize(QSize(64, 64))
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.setAutoRaise(True)
-        self.setFixedSize(96, 96)
+        self.setMinimumSize(96, 96)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.emit_context_menu_requested)
+
+    def emit_context_menu_requested(self, pos):
+        self.context_menu_requested.emit(self, pos)
 
 
 class ParentFolderWidget(QWidget, Ui_ParentFolderWidget):
@@ -389,6 +397,49 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         )
         self.workspaces_number += 1
         self.workspaces.append(button)
+        button.context_menu_requested.connect(self.workspace_context_menu_clicked)
+
+    def workspace_context_menu_clicked(self, workspace_button, pos):
+        global_pos = workspace_button.mapToGlobal(pos)
+        menu = QMenu(workspace_button)
+        action = menu.addAction(QCoreApplication.translate("FilesWidget", "Share"))
+        action.triggered.connect(self.share_workspace(workspace_button.text()))
+        menu.exec(global_pos)
+
+    def share_workspace(self, workspace_name):
+        def _inner_share_workspace():
+            user, ok = QInputDialog.getText(
+                self,
+                QCoreApplication.translate("FilesWidget", "Share a workspace"),
+                QCoreApplication.translate(
+                    "FilesWidget",
+                    "Give a user name to share the workspace {} with.".format(workspace_name),
+                ),
+            )
+            if not ok or not user:
+                return
+            try:
+                core_call().share_workspace("/" + workspace_name, user)
+            except SharingRecipientError:
+                QMessageBox.warning(
+                    self,
+                    QCoreApplication.translate("FilesWidget", "Error"),
+                    QCoreApplication.translate(
+                        "FilesWidget",
+                        'Can not share the workspace "{}" with yourself.'.format(workspace_name),
+                    ),
+                )
+            except:
+                QMessageBox.warning(
+                    self,
+                    QCoreApplication.translate("FilesWidget", "Error"),
+                    QCoreApplication.translate(
+                        "FilesWidget",
+                        'Can not share the workspace "{}" with "{}".'.format(workspace_name, user),
+                    ),
+                )
+
+        return _inner_share_workspace
 
     def create_workspace_clicked(self):
         workspace_name, ok = QInputDialog.getText(
@@ -415,6 +466,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_directory = directory
         self.list_files.clear()
         result = core_call().stat(os.path.join(workspace, directory))
+
+        if not directory:
+            print(result)
 
         if len(self.current_directory):
             item = QListWidgetItem()

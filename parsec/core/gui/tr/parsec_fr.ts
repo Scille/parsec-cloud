@@ -97,62 +97,62 @@
         <translation>Monté sur</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="177"/>
+        <location filename="../files_widget.py" line="271"/>
         <source>New folder</source>
         <translation>Nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="177"/>
+        <location filename="../files_widget.py" line="271"/>
         <source>Enter new folder name</source>
         <translation>Entrez le nom du nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="309"/>
+        <location filename="../files_widget.py" line="403"/>
         <source>Error</source>
         <translation>Erreur</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="190"/>
+        <location filename="../files_widget.py" line="284"/>
         <source>A folder with the same name already exists.</source>
         <translation>Un répertoire du même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="211"/>
+        <location filename="../files_widget.py" line="305"/>
         <source>Open</source>
         <translation>Ouvrir</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="213"/>
+        <location filename="../files_widget.py" line="307"/>
         <source>Open in file explorer</source>
         <translation>Ouvrir dans l&apos;explorateur de fichier</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="217"/>
+        <location filename="../files_widget.py" line="311"/>
         <source>Delete</source>
         <translation>Supprimer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="253"/>
+        <location filename="../files_widget.py" line="347"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="309"/>
+        <location filename="../files_widget.py" line="403"/>
         <source>A workspace with the same name already exists.</source>
         <translation>Un espace de travail du même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="342"/>
+        <location filename="../files_widget.py" line="436"/>
         <source>{} element(s)</source>
         <translation>{} élément(s)</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="242"/>
+        <location filename="../files_widget.py" line="336"/>
         <source>Are you sure you want to delete folder &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer le répertoire &quot;{}&quot; ?</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="253"/>
+        <location filename="../files_widget.py" line="347"/>
         <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer le fichier &quot;{}&quot; ?</translation>
     </message>
@@ -162,12 +162,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="298"/>
+        <location filename="../files_widget.py" line="392"/>
         <source>New workspace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="298"/>
+        <location filename="../files_widget.py" line="392"/>
         <source>Enter new workspace name</source>
         <translation type="unfinished"></translation>
     </message>
@@ -177,13 +177,24 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="142"/>
+        <location filename="../files_widget.py" line="236"/>
         <source>{} already exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="158"/>
-        <source>Can not import {}.</source>
+        <location filename="../files_widget.py" line="164"/>
+        <source>Importing the folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="164"/>
+        <source>Sub-folders will not be imported to prevent big data imports.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="252"/>
+        <source>Can not import
+{}.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -195,62 +206,62 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="137"/>
+        <location filename="../forms/login_widget.ui" line="123"/>
         <source>Login</source>
         <translation>Nom d&apos;utilisateur</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="147"/>
+        <location filename="../forms/login_widget.ui" line="133"/>
         <source>Password</source>
         <translation>Mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="85"/>
+        <location filename="../forms/login_widget.ui" line="78"/>
         <source>Log In</source>
         <translation>Se connecter</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="157"/>
+        <location filename="../forms/login_widget.ui" line="143"/>
         <source>Password check</source>
         <translation>Vérification du mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="164"/>
+        <location filename="../forms/login_widget.ui" line="150"/>
         <source>Device</source>
         <translation>Appareil</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="196"/>
+        <location filename="../forms/login_widget.ui" line="182"/>
         <source>Register</source>
         <translation>S&apos;enregistrer</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="47"/>
+        <location filename="../forms/login_widget.ui" line="218"/>
         <source>Register a new account instead</source>
         <translation>Enregistrer un nouveau compte</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="114"/>
+        <location filename="../forms/login_widget.ui" line="107"/>
         <source>Register a new account</source>
         <translation>Enregistrer un nouveau compte</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="127"/>
+        <location filename="../forms/login_widget.ui" line="211"/>
         <source>Log In instead</source>
         <translation>Se connecter</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="171"/>
+        <location filename="../forms/login_widget.ui" line="157"/>
         <source>Token</source>
         <translation>Jeton</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="120"/>
+        <location filename="../forms/login_widget.ui" line="113"/>
         <source>To register, you need another user to create an account and get a token.</source>
         <translation>Pour s&apos;enregistrer, un utilisateur doit créer votre compte et vous fournir le token.</translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="66"/>
+        <location filename="../login_widget.py" line="67"/>
         <source>Passwords don&apos;t match.</source>
         <translation>Les mots de passe ne correspondent pas.</translation>
     </message>
@@ -430,6 +441,16 @@
         <location filename="../forms/users_widget.ui" line="65"/>
         <source>Transmit these information to the new user so they can set up their account. </source>
         <translation>Transmettez ces informations au nouvel utilisateur pour qu&apos;il puisse créer son compte. </translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="21"/>
+        <source>New user</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="21"/>
+        <source>Enter new user name</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

@@ -42,13 +42,6 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QCommandLinkButton" name="button_claim_instead">
-        <property name="text">
-         <string>Register a new account instead</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QComboBox" name="combo_devices"/>
       </item>
       <item>
@@ -118,13 +111,6 @@
        <widget class="QLabel" name="label">
         <property name="text">
          <string>To register, you need another user to create an account and get a token.</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCommandLinkButton" name="button_login_instead">
-        <property name="text">
-         <string>Log In instead</string>
         </property>
        </widget>
       </item>
@@ -220,6 +206,20 @@
     </widget>
    </item>
    <item>
+    <widget class="QCommandLinkButton" name="button_login_instead">
+     <property name="text">
+      <string>Log In instead</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCommandLinkButton" name="button_claim_instead">
+     <property name="text">
+      <string>Register a new account instead</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -297,6 +297,70 @@
     <hint type="destinationlabel">
      <x>306</x>
      <y>108</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_login_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>button_claim_instead</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>226</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>185</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_claim_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>button_login_instead</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>185</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>226</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_claim_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>button_claim_instead</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>185</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>185</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_login_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>button_login_instead</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>226</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>226</y>
     </hint>
    </hints>
   </connection>
