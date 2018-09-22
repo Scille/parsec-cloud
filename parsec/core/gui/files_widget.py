@@ -117,6 +117,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.load_directory(self.current_workspace, self.current_directory)
 
     def _on_fs_entry_updated(self, event, id):
+        if self.current_directory is None:
+            return
         try:
             path = core_call().get_entry_path(id)
         except FSManifestLocalMiss:
