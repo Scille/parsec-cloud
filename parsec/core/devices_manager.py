@@ -364,7 +364,7 @@ async def get_device_configuration_try(backend_cmds_sender, config_try_id):
         configuration_status=rep["configuration_status"],
         device_verify_key=from_jsonb64(rep["device_verify_key"]),
         exchange_cipherkey=from_jsonb64(rep["exchange_cipherkey"]),
-        salt=rep["salt"],
+        salt=from_jsonb64(rep["salt"]),
     )
 
 
@@ -481,3 +481,16 @@ async def claim_user(backend_addr, user_id, device_name, invitation_token):
     assert rep["status"] == "ok"
 
     return user_privkey, device_signkey, user_manifest_access
+
+
+async def declare_device(backend_cmds_sender, device_name):
+    """
+    Raises:
+        BackendNotAvailable
+        DeviceConfigureBackendError
+    """
+    rep = await backend_cmds_sender.send({"cmd": "device_declare", "device_name": device_name})
+    # TODO: deserialization
+    if rep["status"] != "ok":
+        raise DeviceConfigureBackendError()
+    return rep["configure_device_token"]

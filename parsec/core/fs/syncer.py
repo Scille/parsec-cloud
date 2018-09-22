@@ -93,7 +93,7 @@ class Syncer(FolderSyncerMixin, FileSyncerMixin):
             try:
                 sync_path, sync_recursive = self.local_folder_fs.get_sync_strategy(path, recursive)
                 sync_access = self.local_folder_fs.get_access(sync_path)
-            except LocalDBMissingEntry:
+            except FSManifestLocalMiss:
                 # Nothing to do if entry is no present locally
                 return
             notify_beacons = self.local_folder_fs.get_beacons(sync_path)
@@ -102,7 +102,7 @@ class Syncer(FolderSyncerMixin, FileSyncerMixin):
     async def _sync_nolock(self, path, access, recursive, notify_beacons):
         try:
             manifest = self.local_folder_fs.get_manifest(access)
-        except LocalDBMissingEntry:
+        except FSManifestLocalMiss:
             # Nothing to do if entry is no present locally
             return
         if is_folder_manifest(manifest):

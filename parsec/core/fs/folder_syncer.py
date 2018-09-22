@@ -109,10 +109,11 @@ class FolderSyncerMixin:
             try:
                 child_manifest = self.local_folder_fs.get_manifest(child_access)
             except FSManifestLocalMiss:
-                # Child not in local, no need to sync it then !
-                continue
-            if not is_placeholder_manifest(child_manifest):
+                # Child not in local, cannot be a placeholder then !
                 synced_children[child_name] = child_access
+            else:
+                if not is_placeholder_manifest(child_manifest):
+                    synced_children[child_name] = child_access
         base_manifest["children"] = synced_children
 
         # Now we can synchronize the folder if needed

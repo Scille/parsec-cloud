@@ -116,7 +116,7 @@ class FileSyncerMixin:
 
         current_manifest = self.local_folder_fs.get_manifest(access)
         if target_remote_manifest["version"] == current_manifest["base_version"]:
-            return
+            return False
 
         # Remote version has changed...
         if current_manifest["need_sync"]:
@@ -128,6 +128,7 @@ class FileSyncerMixin:
             target_local_manifest = remote_to_local_manifest(target_remote_manifest)
             # Otherwise just fast-forward the local data
             self.local_folder_fs.set_manifest(access, target_local_manifest)
+        return True
 
     async def _sync_file_actual_sync(self, path, access, manifest, notify_beacons):
         assert is_file_manifest(manifest)
@@ -199,7 +200,9 @@ class FileSyncerMixin:
 
         # Now we can synchronize the folder if needed
         if not manifest["need_sync"]:
-            await self._sync_file_look_for_remote_changes(path, access, manifest)
+            need_signal = await self._sync_file_look_for_remote_changes(path, access, manifest)
         else:
             await self._sync_file_actual_sync(path, access, manifest, notify_beacons)
-        self.signal_ns.signal("fs.entry.synced").send(None, path=path, id=access["id"])
+            need_signal = True
+        if need_signal:
+            self.signal_ns.signal("fs.entry.synced").send(None, path=path, id=access["id"])

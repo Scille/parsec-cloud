@@ -127,7 +127,8 @@ class FS:
         await self._load_and_retry(self._sharing.share, path, recipient)
 
     def get_entry_path(self, id):
-        return self._local_folder_fs.get_entry_path(id)[0]
+        path, _, _ = self._local_folder_fs.get_entry_path(id)
+        return path
 
 
 class FSManager(FS, BaseAsyncComponent):
