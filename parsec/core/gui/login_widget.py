@@ -75,9 +75,13 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.label_claim_error.setText("")
         self.group_login.show()
         self.group_claim.hide()
+        self.group_config_device.hide()
         self.label_error.hide()
         self.label_claim_error.hide()
+
         self.button_login_instead.hide()
+        self.button_config_device_instead.show()
+        self.button_claim_instead.show()
 
         self.device_progress_bar.hide()
         self.device_line_edit_login.setEnabled(True)
@@ -90,6 +94,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.device_line_edit_token.setText("")
         self.device_label_error.hide()
         self.device_button_config.show()
+        self.device_button_config.setDisabled(True)
 
     def emit_login(self):
         self.loginClicked.emit(self.combo_devices.currentText(), self.line_edit_password.text())
