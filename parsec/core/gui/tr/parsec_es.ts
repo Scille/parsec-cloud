@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="2.0" language="es_ES" sourcelanguage="">
+<!DOCTYPE TS><TS version="2.0">
 <context>
     <name>AboutDialog</name>
     <message>
@@ -87,7 +87,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-<<<<<<< HEAD
         <location filename="../forms/files_widget.ui" line="148"/>
         <source>Import files</source>
         <translation type="unfinished"></translation>
@@ -118,7 +117,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="472"/>
+        <location filename="../files_widget.py" line="469"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
@@ -146,65 +145,6 @@
     <message>
         <location filename="../files_widget.py" line="331"/>
         <source>Open</source>
-=======
-        <location filename="../files_widget.py" line="281"/>
-        <source>New folder</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="281"/>
-        <source>Enter new folder name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="453"/>
-        <source>Error</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="294"/>
-        <source>A folder with the same name already exists.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="315"/>
-        <source>Open</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="317"/>
-        <source>Open in file explorer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="321"/>
-        <source>Delete</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="357"/>
-        <source>Confirmation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="453"/>
-        <source>A workspace with the same name already exists.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="489"/>
-        <source>{} element(s)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="346"/>
-        <source>Are you sure you want to delete folder &quot;{}&quot; ?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="357"/>
-        <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
->>>>>>> [GUI] Added french translations
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -213,7 +153,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-<<<<<<< HEAD
         <location filename="../files_widget.py" line="337"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
@@ -221,46 +160,6 @@
     <message>
         <location filename="../files_widget.py" line="373"/>
         <source>Confirmation</source>
-=======
-        <location filename="../files_widget.py" line="442"/>
-        <source>New workspace</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="442"/>
-        <source>Enter new workspace name</source>
->>>>>>> [GUI] Added french translations
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="508"/>
-        <source>{} element(s)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-<<<<<<< HEAD
-        <location filename="../files_widget.py" line="421"/>
-        <source>Share</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="427"/>
-        <source>Share a workspace</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="461"/>
-        <source>New workspace</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="461"/>
-        <source>Enter new workspace name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="472"/>
-        <source>A workspace with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -271,51 +170,51 @@
     <message>
         <location filename="../files_widget.py" line="373"/>
         <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
-=======
-        <location filename="../files_widget.py" line="246"/>
-        <source>{} already exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="174"/>
-        <source>Importing the folder</source>
+        <location filename="../files_widget.py" line="505"/>
+        <source>{} element(s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="174"/>
-        <source>Sub-folders will not be imported to prevent big data imports.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="262"/>
-        <source>Can not import
-{}.</source>
->>>>>>> [GUI] Added french translations
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="405"/>
+        <location filename="../files_widget.py" line="421"/>
         <source>Share</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="411"/>
+        <location filename="../files_widget.py" line="427"/>
         <source>Share a workspace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="411"/>
+        <location filename="../files_widget.py" line="427"/>
         <source>Give a user name to share the workspace {} with.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="423"/>
+        <location filename="../files_widget.py" line="439"/>
         <source>Can not share the workspace &quot;{}&quot; with yourself.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="431"/>
+        <location filename="../files_widget.py" line="447"/>
         <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="458"/>
+        <source>New workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="458"/>
+        <source>Enter new workspace name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="469"/>
+        <source>A workspace with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -372,16 +271,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="322"/>
-        <source>Register a new account instead</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="329"/>
-        <source>Register a new device instead</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../forms/login_widget.ui" line="211"/>
         <source>Register a new account</source>
         <translation type="unfinished"></translation>
@@ -397,11 +286,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-<<<<<<< HEAD
+        <location filename="../forms/login_widget.ui" line="322"/>
+        <source>Register a new account instead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="329"/>
+        <source>Register a new device instead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../login_widget.py" line="121"/>
-=======
-        <location filename="../login_widget.py" line="69"/>
->>>>>>> [GUI] Added french translations
         <source>Passwords don&apos;t match.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -489,31 +384,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-<<<<<<< HEAD
-        <location filename="../main_window.py" line="171"/>
-=======
-        <location filename="../main_window.py" line="166"/>
->>>>>>> [GUI] Added french translations
-        <source>Can not register the new user.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-<<<<<<< HEAD
-        <location filename="../main_window.py" line="215"/>
-=======
-        <location filename="../main_window.py" line="194"/>
->>>>>>> [GUI] Added french translations
-        <source>Are you sure you want to quit ?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../main_window.py" line="140"/>
+        <location filename="../main_window.py" line="142"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="140"/>
-        <source>Can not mount in &quot;{}&quot; (permissions problems ?). Go to Settings/Global to a set mountpoint, then File/Remount to mount it.</source>
+        <location filename="../main_window.py" line="169"/>
+        <source>Can not register the new user.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="213"/>
+        <source>Are you sure you want to quit ?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
