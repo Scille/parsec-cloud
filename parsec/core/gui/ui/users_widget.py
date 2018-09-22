@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_UsersWidget(object):
     def setupUi(self, UsersWidget):
         UsersWidget.setObjectName("UsersWidget")
-        UsersWidget.resize(548, 300)
+        UsersWidget.resize(557, 300)
         self.verticalLayout = QtWidgets.QVBoxLayout(UsersWidget)
         self.verticalLayout.setContentsMargins(5, 5, 5, 5)
         self.verticalLayout.setSpacing(5)
@@ -21,15 +21,25 @@ class Ui_UsersWidget(object):
         self.groupBox.setObjectName("groupBox")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.groupBox)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.button_register = QtWidgets.QPushButton(self.groupBox)
-        self.button_register.setObjectName("button_register")
-        self.horizontalLayout_3.addWidget(self.button_register)
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.button_register_device = QtWidgets.QPushButton(self.groupBox)
+        self.button_register_device.setObjectName("button_register_device")
+        self.horizontalLayout_2.addWidget(self.button_register_device)
         spacerItem = QtWidgets.QSpacerItem(
             40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
         )
-        self.horizontalLayout_3.addItem(spacerItem)
+        self.horizontalLayout_2.addItem(spacerItem)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_2)
+        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+        self.button_register_user = QtWidgets.QPushButton(self.groupBox)
+        self.button_register_user.setObjectName("button_register_user")
+        self.horizontalLayout_3.addWidget(self.button_register_user)
+        spacerItem1 = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
+        self.horizontalLayout_3.addItem(spacerItem1)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
         self.label_help = QtWidgets.QLabel(self.groupBox)
         self.label_help.setObjectName("label_help")
@@ -60,10 +70,10 @@ class Ui_UsersWidget(object):
         self.label_register_error.setObjectName("label_register_error")
         self.verticalLayout_2.addWidget(self.label_register_error)
         self.verticalLayout.addWidget(self.groupBox)
-        spacerItem1 = QtWidgets.QSpacerItem(
+        spacerItem2 = QtWidgets.QSpacerItem(
             20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
         )
-        self.verticalLayout.addItem(spacerItem1)
+        self.verticalLayout.addItem(spacerItem2)
 
         self.retranslateUi(UsersWidget)
         QtCore.QMetaObject.connectSlotsByName(UsersWidget)
@@ -72,7 +82,8 @@ class Ui_UsersWidget(object):
         _translate = QtCore.QCoreApplication.translate
         UsersWidget.setWindowTitle(_translate("UsersWidget", "Form"))
         self.groupBox.setTitle(_translate("UsersWidget", "Add a user"))
-        self.button_register.setText(_translate("UsersWidget", "Register a new user"))
+        self.button_register_device.setText(_translate("UsersWidget", "Register a new device"))
+        self.button_register_user.setText(_translate("UsersWidget", "Register a new user"))
         self.label_help.setText(
             _translate(
                 "UsersWidget",

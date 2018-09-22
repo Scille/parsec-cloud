@@ -101,7 +101,8 @@ class ParentFolderWidget(QWidget, Ui_ParentFolderWidget):
 
 
 class FilesWidget(QWidget, Ui_FilesWidget):
-    current_directory_changed = pyqtSignal()
+
+    current_directory_changed_qt = pyqtSignal(str, str, str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -118,27 +119,42 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.workspaces = []
         self.current_workspace = None
         self.current_directory = None
-        core_call().connect_signal("fs.entry.updated", self._on_fs_entry_updated)
-        self.current_directory_changed.connect(self.reload_current_directory)
+        core_call().connect_signal("fs.entry.updated", self._on_fs_entry_updated_trio)
+        core_call().connect_signal("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.current_directory_changed_qt.connect(self._on_current_directory_changed_qt)
 
     def reload_current_directory(self):
-        self.load_directory(self.current_workspace, self.current_directory)
+        if not self.current_workspace:
+            self.show()
+        else:
+            self.load_directory(self.current_workspace, self.current_directory)
 
-    def _on_fs_entry_updated(self, event, id):
-        if self.current_directory is None:
-            return
-        try:
-            path = core_call().get_entry_path(id)
-        except FSManifestLocalMiss:
-            return
+    def _on_fs_entry_synced_trio(self, event, path, id):
+        self.current_directory_changed_qt.emit(event, id, path)
+
+    def _on_fs_entry_updated_trio(self, event, id):
+        self.current_directory_changed_qt.emit(event, id, None)
+
+    def _on_current_directory_changed_qt(self, event, id, path):
+        if not path:
+            try:
+                # TODO: A new entry will raise a `FSManifestLocalMiss` that we can't
+                # fix because we only have the entry's id (i.e. we lack other access
+                # attributes).
+                path = core_call().get_entry_path(id)
+            except FSManifestLocalMiss:
+                return
         # TODO: too cumbersome...
         modified_hops = [x for x in path.split("/") if x]
-        current_dir_hops = [self.current_workspace] + [
-            x for x in self.current_directory.split("/") if x
-        ]
+        if self.current_workspace is not None or self.current_directory is not None:
+            current_dir_hops = [self.current_workspace] + [
+                x for x in self.current_directory.split("/") if x
+            ]
+        else:
+            current_dir_hops = []
         # Only direct children to current directory require reloading
-        if modified_hops[:-1] == current_dir_hops:
-            self.current_directory_changed.emit()
+        if modified_hops == current_dir_hops or modified_hops[:-1] == current_dir_hops:
+            self.reload_current_directory()
 
     def delete_all_subs(self, dir_path):
         result = core_call().stat(dir_path)

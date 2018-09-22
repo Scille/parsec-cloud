@@ -65,9 +65,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_users.clicked.connect(self.show_users_widget)
         self.button_settings.clicked.connect(self.show_settings_widget)
         self.login_widget.loginClicked.connect(self.login)
-        self.login_widget.claimClicked.connect(self.claim)
+        self.login_widget.claimClicked.connect(self.claim_user)
+        self.login_widget.configureDeviceClicked.connect(self.configure_device)
         self.action_disconnect.triggered.connect(self.logout)
-        self.users_widget.registerClicked.connect(self.register)
+        self.users_widget.registerUserClicked.connect(self.register_user)
         self.action_remount.triggered.connect(self.remount)
         self.action_login.triggered.connect(self.show_login_widget)
         self.action_quit.triggered.connect(self.close)
@@ -162,7 +163,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if err:
             self.login_widget.set_login_error(err)
 
-    def register(self, login):
+    def register_user(self, login):
         try:
             token = core_call().invite_user(login)
             self.users_widget.set_claim_infos(login, token)
@@ -171,17 +172,33 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 QCoreApplication.translate("MainWindow", "Can not register the new user.")
             )
 
-    def claim(self, login, password, device, token):
+    def claim_user(self, user_id, password, device_name, token):
         try:
-            privkey, signkey, manifest = core_call().claim_user(login, device, token)
+            privkey, signkey, manifest = core_call().claim_user(user_id, device_name, token)
             privkey = privkey.encode()
             signkey = signkey.encode()
-            full_device_name = "{}@{}".format(login, device)
-            core_call().register_new_device(full_device_name, privkey, signkey, manifest, password)
-            self.login_widget.add_device(full_device_name)
-            err = self.perform_login(full_device_name, password)
+            device_id = f"{user_id}@{device_name}"
+            core_call().register_new_device(device_id, privkey, signkey, manifest, password)
+            self.login_widget.add_device(device_id)
+            err = self.perform_login(device_id, password)
             if err:
-                self.login_widget.set_register_error(err)
+                self.login_widget.set_claim_error(err)
+        except Exception as exc:
+            # TODO: better error handling
+            self.login_widget.set_claim_error(str(exc))
+
+    def configure_device(self, user_id, password, device_name, token):
+        try:
+            device_id = f"{user_id}@{device_name}"
+            try:
+                core_call().configure_device(device_id, password, token)
+            except Exception as exc:
+                # TODO: better error handling
+                self.login_widget.set_device_config_error(str(exc))
+            self.login_widget.add_device(device_id)
+            err = self.perform_login(device_id, password)
+            if err:
+                self.login_widget.set_device_config_error(err)
         except DeviceLoadingError:
             pass
 
