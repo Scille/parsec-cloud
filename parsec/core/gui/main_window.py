@@ -100,8 +100,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if core_call().is_mounted():
             core_call().unmount()
         try:
-            # if os.path.exists(mountpoint):
-            #     shutil.rmtree(mountpoint)
             core_call().mount(mountpoint)
             self.files_widget.set_mountpoint(mountpoint)
             return mountpoint
@@ -113,13 +111,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if mountpoint is None:
             QMessageBox.warning(
                 self,
-                QCoreApplication.translate(self.__class__.__name__, "Error"),
+                QCoreApplication.translate("MainWindow", "Error"),
                 QCoreApplication.translate(
-                    self.__class__.__name__,
+                    "MainWindow",
                     'Can not mount in "{}" (permissions problems ?). Go '
                     "to Settings/Global to a set mountpoint, then File/Remount to "
-                    "mount it.".format(settings.get_value("mountpoint")),
-                ),
+                    "mount it.",
+                ).format(settings.get_value("mountpoint")),
             )
             self.show_settings_widget()
             return
@@ -143,13 +141,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if mountpoint is None:
                 QMessageBox.warning(
                     self,
-                    QCoreApplication.translate(self.__class__.__name__, "Error"),
+                    QCoreApplication.translate("MainWindow", "Error"),
                     QCoreApplication.translate(
-                        self.__class__.__name__,
+                        "MainWindow",
                         'Can not mount in "{}" (permissions problems ?). Go '
                         "to Settings/Global to a set mountpoint, then File/Remount to "
-                        "mount it.".format(settings.get_value("mountpoint")),
-                    ),
+                        "mount it.",
+                    ).format(settings.get_value("mountpoint")),
                 )
                 self.show_settings_widget()
                 return

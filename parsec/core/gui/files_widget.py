@@ -428,9 +428,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self,
                 QCoreApplication.translate("FilesWidget", "Share a workspace"),
                 QCoreApplication.translate(
-                    "FilesWidget",
-                    "Give a user name to share the workspace {} with.".format(workspace_name),
-                ),
+                    "FilesWidget", "Give a user name to share the workspace {} with."
+                ).format(workspace_name),
             )
             if not ok or not user:
                 return
@@ -441,18 +440,16 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     self,
                     QCoreApplication.translate("FilesWidget", "Error"),
                     QCoreApplication.translate(
-                        "FilesWidget",
-                        'Can not share the workspace "{}" with yourself.'.format(workspace_name),
-                    ),
+                        "FilesWidget", 'Can not share the workspace "{}" with yourself.'
+                    ).format(workspace_name),
                 )
             except:
                 QMessageBox.warning(
                     self,
                     QCoreApplication.translate("FilesWidget", "Error"),
                     QCoreApplication.translate(
-                        "FilesWidget",
-                        'Can not share the workspace "{}" with "{}".'.format(workspace_name, user),
-                    ),
+                        "FilesWidget", 'Can not share the workspace "{}" with "{}".'
+                    ).format(workspace_name, user),
                 )
 
         return _inner_share_workspace

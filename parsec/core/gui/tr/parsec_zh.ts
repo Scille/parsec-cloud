@@ -87,6 +87,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+<<<<<<< HEAD
         <location filename="../forms/files_widget.ui" line="148"/>
         <source>Import files</source>
         <translation type="unfinished"></translation>
@@ -145,6 +146,65 @@
     <message>
         <location filename="../files_widget.py" line="331"/>
         <source>Open</source>
+=======
+        <location filename="../files_widget.py" line="281"/>
+        <source>New folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="281"/>
+        <source>Enter new folder name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="453"/>
+        <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="294"/>
+        <source>A folder with the same name already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="315"/>
+        <source>Open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="317"/>
+        <source>Open in file explorer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="321"/>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="357"/>
+        <source>Confirmation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="453"/>
+        <source>A workspace with the same name already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="489"/>
+        <source>{} element(s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="346"/>
+        <source>Are you sure you want to delete folder &quot;{}&quot; ?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="357"/>
+        <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
+>>>>>>> [GUI] Added french translations
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -153,6 +213,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+<<<<<<< HEAD
         <location filename="../files_widget.py" line="337"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
@@ -160,6 +221,15 @@
     <message>
         <location filename="../files_widget.py" line="373"/>
         <source>Confirmation</source>
+=======
+        <location filename="../files_widget.py" line="442"/>
+        <source>New workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="442"/>
+        <source>Enter new workspace name</source>
+>>>>>>> [GUI] Added french translations
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -168,6 +238,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+<<<<<<< HEAD
         <location filename="../files_widget.py" line="421"/>
         <source>Share</source>
         <translation type="unfinished"></translation>
@@ -200,6 +271,51 @@
     <message>
         <location filename="../files_widget.py" line="373"/>
         <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
+=======
+        <location filename="../files_widget.py" line="246"/>
+        <source>{} already exists</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="174"/>
+        <source>Importing the folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="174"/>
+        <source>Sub-folders will not be imported to prevent big data imports.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="262"/>
+        <source>Can not import
+{}.</source>
+>>>>>>> [GUI] Added french translations
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="405"/>
+        <source>Share</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="411"/>
+        <source>Share a workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="411"/>
+        <source>Give a user name to share the workspace {} with.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="423"/>
+        <source>Can not share the workspace &quot;{}&quot; with yourself.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="431"/>
+        <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -281,7 +397,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+<<<<<<< HEAD
         <location filename="../login_widget.py" line="121"/>
+=======
+        <location filename="../login_widget.py" line="69"/>
+>>>>>>> [GUI] Added french translations
         <source>Passwords don&apos;t match.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -369,13 +489,31 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+<<<<<<< HEAD
         <location filename="../main_window.py" line="171"/>
+=======
+        <location filename="../main_window.py" line="166"/>
+>>>>>>> [GUI] Added french translations
         <source>Can not register the new user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+<<<<<<< HEAD
         <location filename="../main_window.py" line="215"/>
+=======
+        <location filename="../main_window.py" line="194"/>
+>>>>>>> [GUI] Added french translations
         <source>Are you sure you want to quit ?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="140"/>
+        <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="140"/>
+        <source>Can not mount in &quot;{}&quot; (permissions problems ?). Go to Settings/Global to a set mountpoint, then File/Remount to mount it.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
