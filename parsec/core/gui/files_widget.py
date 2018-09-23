@@ -137,13 +137,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _on_current_directory_changed_qt(self, event, id, path):
         if not path:
-            try:
-                # TODO: A new entry will raise a `FSManifestLocalMiss` that we can't
-                # fix because we only have the entry's id (i.e. we lack other access
-                # attributes).
-                path = core_call().get_entry_path(id)
-            except FSManifestLocalMiss:
-                return
+            path = core_call().get_entry_path(id)
         # TODO: too cumbersome...
         modified_hops = [x for x in path.split("/") if x]
         if self.current_workspace is not None or self.current_directory is not None:

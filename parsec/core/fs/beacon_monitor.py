@@ -19,11 +19,12 @@ class BeaconMonitor(BaseAsyncComponent):
         self.local_folder_fs = local_folder_fs
         self.signal_ns = signal_ns
         self._task_info = None
-        self._workspaces = {}
+        self._monitored_beacons = set()
 
     async def _init(self, nursery):
         for beacon_id in self.local_folder_fs.get_local_beacons():
             self.signal_ns.signal("backend.beacon.listen").send(None, beacon_id=beacon_id)
+            self._monitored_beacons.add(beacon_id)
 
         self._task_info = await nursery.start(self._task)
 
@@ -47,12 +48,12 @@ class BeaconMonitor(BaseAsyncComponent):
 
     async def _task(self, *, task_status=trio.TASK_STATUS_IGNORED):
         def _on_workspace_loaded(sender, path, id, beacon_id):
-            self._workspaces[beacon_id] = path
             self.signal_ns.signal("backend.beacon.listen").send(None, beacon_id=beacon_id)
+            self._monitored_beacons.add(beacon_id)
 
         def _on_workspace_unloaded(sender, path, id, beacon_id):
-            del self._workspaces[beacon_id]
             self.signal_ns.signal("backend.beacon.unlisten").send(None, beacon_id=beacon_id)
+            self._monitored_beacons.remove(beacon_id)
 
         entry_updated_signal = self.signal_ns.signal("fs.entry.updated")
 

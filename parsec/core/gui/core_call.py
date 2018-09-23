@@ -18,7 +18,7 @@ class _CoreCall:
         return self._parsec_core.config.debug
 
     def get_entry_path(self, id):
-        return self._parsec_core.fs.get_entry_path(id)
+        return self._trio_portal.run(self._parsec_core.fs.get_entry_path, id)
 
     def connect_signal(self, signal, cb):
         self._parsec_core.signal_ns.signal(signal).connect(cb, weak=True)
