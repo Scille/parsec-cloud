@@ -60,10 +60,8 @@ requirements = [
     "trio==0.7.0",
     "python-interface==1.4.0",
     "async_generator>=1.9",
-    "raven==6.8.0",
     'contextvars==2.1;python_version<"3.7"',
-    "PyQt5==5.11.2",
-    "hurry.filesize==0.9",
+    "raven==6.8.0",  # Sentry support
 ]
 dependency_links = [
     # need to use --process-dependency-links option for this
@@ -86,12 +84,19 @@ test_requirements = [
 ]
 
 extra_requirements = {
-    "drive": ["pydrive==1.3.1"],
-    "dropbox": ["dropbox==7.2.1"],
-    "fuse": ["fusepy==3.0.0"],
-    "postgresql": ["triopg==0.2.0", "trio-asyncio==0.9.1"],
-    "s3": ["boto3==1.4.4", "botocore==1.5.46"],
-    "openstack": ["python-swiftclient==3.5.0", "pbr==4.0.2", "futures==3.1.1"],
+    "core": ["PyQt5==5.11.2", "hurry.filesize==0.9", "fusepy==3.0.0"],
+    "backend": [
+        # PostgreSQL
+        "triopg==0.2.0",
+        "trio-asyncio==0.9.1",
+        # S3
+        "boto3==1.4.4",
+        "botocore==1.5.46",
+        # Swift
+        "python-swiftclient==3.5.0",
+        "pbr==4.0.2",
+        "futures==3.1.1",
+    ],
     "dev": test_requirements,
 }
 extra_requirements["all"] = sum(extra_requirements.values(), [])

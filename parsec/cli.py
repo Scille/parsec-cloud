@@ -1,15 +1,35 @@
 import click
 
-from parsec.core.cli import core_cmd
-from parsec.backend.cli import backend_cmd, init_cmd
 from parsec.ui import shell
 
 try:
-    from parsec.ui.fuse import cli as fuse_cli
+    from parsec.core.cli import core_cmd
 except ImportError:
 
     @click.command()
-    def fuse_cli():
+    def core_cmd():
+        raise SystemExit("No available.")
+
+
+try:
+    from parsec.backend.cli import backend_cmd, init_cmd
+except ImportError:
+
+    @click.command()
+    def backend_cmd():
+        raise SystemExit("No available.")
+
+    @click.command()
+    def init_cmd():
+        raise SystemExit("No available.")
+
+
+try:
+    from parsec.ui.fuse import cli as fuse_cmd
+except ImportError:
+
+    @click.command()
+    def fuse_cmd():
         raise RuntimeError("No available, is fusepy installed ?")
 
 
@@ -26,7 +46,7 @@ cli.add_command(core_cmd, "core")
 cli.add_command(backend_cmd, "backend")
 cli.add_command(init_cmd, "init")
 try:
-    cli.add_command(fuse_cli, "fuse")
+    cli.add_command(fuse_cmd, "fuse")
 except NameError:
     pass
 cli.add_command(shell.cli, "shell")

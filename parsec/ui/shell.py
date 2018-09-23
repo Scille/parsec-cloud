@@ -3,8 +3,10 @@ import click
 import json
 from urllib.parse import urlparse
 
-from parsec.core.cli import DEFAULT_CORE_SOCKET
 from parsec.networking import CookedSocket
+
+
+DEFAULT_CORE_SOCKET = "tcp://127.0.0.1:6776"
 
 
 class ReloadShell(Exception):
