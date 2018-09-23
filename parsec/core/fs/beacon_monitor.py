@@ -42,7 +42,8 @@ class BeaconMonitor(BaseAsyncComponent):
             child_manifest = self.local_folder_fs.get_manifest(child_access)
             if child_manifest.get("beacon_id") == beacon_id:
                 return f"/{child_name}"
-        raise FSManifestLocalMiss()
+        # TODO: dirty fix, beacon_id is the wrong type of thing to pass...
+        raise FSManifestLocalMiss(beacon_id)
 
     async def _task(self, *, task_status=trio.TASK_STATUS_IGNORED):
         def _on_workspace_loaded(sender, path, id, beacon_id):
