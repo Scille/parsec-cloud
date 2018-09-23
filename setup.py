@@ -69,7 +69,9 @@ dependency_links = [
 ]
 
 test_requirements = [
-    "pytest>=3.6",
+    # https://github.com/python-trio/pytest-trio/issues/64
+    # "pytest>=3.6",
+    "pytest==3.8.0",
     "pytest-cov",
     "pytest-trio",
     "pytest-logbook",
