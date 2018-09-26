@@ -1,6 +1,5 @@
 import trio
 from trio.hazmat import current_clock
-from functools import partial
 import logbook
 
 from parsec.core.base import BaseAsyncComponent

@@ -1,4 +1,5 @@
 import trio
+import attr
 import pendulum
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
@@ -109,3 +110,28 @@ def contextify(factory, teardown=lambda x: None):
             nursery.cancel_scope.cancel()
 
     return _contextified
+
+
+@attr.s
+class CallController:
+    need_stop = attr.ib(factory=trio.Event)
+    stopped = attr.ib(factory=trio.Event)
+
+    async def stop(self):
+        self.need_stop.set()
+        await self.stopped.wait()
+
+
+async def call_with_control(controlled_fn, *, task_status=trio.TASK_STATUS_IGNORED):
+    controller = CallController()
+
+    async def _started_cb(**kwargs):
+        controller.__dict__.update(kwargs)
+        task_status.started(controller)
+        await controller.need_stop.wait()
+
+    try:
+        await controlled_fn(_started_cb)
+
+    finally:
+        controller.stopped.set()

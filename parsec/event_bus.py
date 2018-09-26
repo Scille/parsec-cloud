@@ -29,12 +29,10 @@ class EventBus:
         self._event_handlers = defaultdict(set)
 
     def send(self, event, **kwargs):
-        print("=========>", event, kwargs)
         for cb in self._event_handlers[event]:
             if isinstance(cb, ReferenceType):
                 cb = cb()
                 assert cb is not None
-            print("===>", cb)
             cb(event, **kwargs)
 
     def waiter_on(self, event):

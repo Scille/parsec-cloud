@@ -32,6 +32,8 @@ from tests.common import freeze_time, FreezeTestOnBrokenStreamCookedSocket, InMe
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 from tests.event_bus_spy import SpiedEventBus
 
+from tests.oracles import oracle_fs_factory, oracle_fs_with_sync_factory  # noqa: Republishing
+
 
 def pytest_addoption(parser):
     parser.addoption("--hypothesis-max-examples", default=100, type=int)
@@ -200,18 +202,22 @@ def server_factory(tcp_stream_spy):
         if not url:
             url = f"tcp://server-{count}.localhost:9999"
 
-        async with trio.open_nursery() as nursery:
+        try:
+            async with trio.open_nursery() as nursery:
 
-            def connection_factory(*args, **kwargs):
-                right, left = trio.testing.memory_stream_pair()
-                nursery.start_soon(entry_point, left)
-                return right
+                def connection_factory(*args, **kwargs):
+                    right, left = trio.testing.memory_stream_pair()
+                    nursery.start_soon(entry_point, left)
+                    return right
 
-            tcp_stream_spy.push_hook(url, connection_factory)
+                tcp_stream_spy.push_hook(url, connection_factory)
 
-            yield AppServer(entry_point, url, connection_factory)
+                yield AppServer(entry_point, url, connection_factory)
 
-            nursery.cancel_scope.cancel()
+                nursery.cancel_scope.cancel()
+
+        finally:
+            tcp_stream_spy.pop_hook(url)
 
     return _server_factory
 

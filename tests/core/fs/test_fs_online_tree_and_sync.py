@@ -1,0 +1,193 @@
+import os
+import pytest
+from string import ascii_lowercase
+from hypothesis import strategies as st
+from hypothesis_trio.stateful import (
+    Bundle,
+    initialize,
+    rule,
+    run_state_machine_as_test,
+    TrioRuleBasedStateMachine,
+)
+
+from tests.common import call_with_control
+
+
+# The point is not to find breaking filenames here, so keep it simple
+st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
+
+
+@pytest.mark.slow
+def test_fs_online_tree_and_sync(
+    hypothesis_settings,
+    oracle_fs_with_sync_factory,
+    unused_tcp_addr,
+    device_factory,
+    backend_factory,
+    server_factory,
+    fs_factory,
+    backend_addr,
+):
+    class FSOnlineTreeAndSync(TrioRuleBasedStateMachine):
+        Files = Bundle("file")
+        Folders = Bundle("folder")
+
+        async def restart_fs(self, device):
+            try:
+                await self.fs_controller.stop()
+            except AttributeError:
+                pass
+
+            async def _fs_controlled_cb(started_cb):
+                async with fs_factory(device=device, backend_addr=backend_addr) as fs:
+                    await started_cb(fs=fs)
+
+            self.fs_controller = await self.get_root_nursery().start(
+                call_with_control, _fs_controlled_cb
+            )
+
+        async def start_backend(self):
+            async def _backend_controlled_cb(started_cb):
+                async with backend_factory(devices=[self.device]) as backend:
+                    async with server_factory(backend.handle_client, backend_addr) as server:
+                        await started_cb(backend=backend, server=server)
+
+            self.backend_controller = await self.get_root_nursery().start(
+                call_with_control, _backend_controlled_cb
+            )
+
+        @property
+        def fs(self):
+            return self.fs_controller.fs
+
+        @property
+        def backend(self):
+            return self.backend_controller.backend
+
+        @initialize(target=Folders)
+        async def init(self):
+            self.oracle_fs = oracle_fs_with_sync_factory()
+            self.device = device_factory()
+
+            await self.start_backend()
+            await self.restart_fs(self.device)
+            await self.fs.sync("/")
+
+            return "/"
+
+        @rule()
+        async def restart(self):
+            await self.restart_fs(self.device)
+
+        @rule()
+        async def reset(self):
+            self.device = device_factory(user_id=self.device.user_id)
+            await self.backend.user.create_device(
+                user_id=self.device.user_id,
+                device_name=self.device.device_name,
+                verify_key=self.device.device_verifykey.encode(),
+            )
+            await self.restart_fs(self.device)
+            await self.fs.sync("/")
+            self.oracle_fs.reset()
+
+        @rule()
+        async def sync_root(self):
+            await self.fs.sync("/")
+            self.oracle_fs.sync("/")
+
+        # TODO: really complex to implement...
+        #         @rule(path=st.one_of(Folders, Files))
+        #         def sync(self, path):
+        #             rep = await self.core_cmd({"cmd": "synchronize", "path": path})
+        #             note(rep)
+        #             expected_status = self.oracle_fs.sync(path)
+        #             assert rep["status"] == expected_status
+
+        @rule(target=Files, parent=Folders, name=st_entry_name)
+        async def create_file(self, parent, name):
+            path = os.path.join(parent, name)
+            expected_status = self.oracle_fs.create_file(path)
+            if expected_status == "ok":
+                await self.fs.file_create(path=path)
+            else:
+                with pytest.raises(OSError):
+                    await self.fs.file_create(path=path)
+            return path
+
+        @rule(target=Folders, parent=Folders, name=st_entry_name)
+        async def create_folder(self, parent, name):
+            path = os.path.join(parent, name)
+            expected_status = self.oracle_fs.create_folder(path)
+            if expected_status == "ok":
+                await self.fs.folder_create(path=path)
+            else:
+                with pytest.raises(OSError):
+                    await self.fs.folder_create(path=path)
+            return path
+
+        @rule(path=Files)
+        async def delete_file(self, path):
+            # TODO: separate delete file from delete folder
+            expected_status = self.oracle_fs.delete(path)
+            if expected_status == "ok":
+                await self.fs.delete(path=path)
+            else:
+                with pytest.raises(OSError):
+                    await self.fs.delete(path=path)
+            return path
+
+        @rule(path=Folders)
+        async def delete_folder(self, path):
+            # TODO: separate delete file from delete folder
+            expected_status = self.oracle_fs.delete(path)
+            if expected_status == "ok":
+                await self.fs.delete(path=path)
+            else:
+                with pytest.raises(OSError):
+                    await self.fs.delete(path=path)
+            return path
+
+        @rule(target=Files, src=Files, dst_parent=Folders, dst_name=st_entry_name)
+        async def move_file(self, src, dst_parent, dst_name):
+            dst = os.path.join(dst_parent, dst_name)
+            expected_status = self.oracle_fs.move(src, dst)
+            if expected_status == "ok":
+                await self.fs.move(src, dst)
+            else:
+                with pytest.raises(OSError):
+                    await self.fs.move(src, dst)
+            return dst
+
+        @rule(target=Folders, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
+        async def move_folder(self, src, dst_parent, dst_name):
+            dst = os.path.join(dst_parent, dst_name)
+            expected_status = self.oracle_fs.move(src, dst)
+            if expected_status == "ok":
+                await self.fs.move(src, dst)
+            else:
+                with pytest.raises(OSError):
+                    await self.fs.move(src, dst)
+            return dst
+
+        async def _stat(self, path):
+            expected = self.oracle_fs.stat(path)
+            if expected["status"] != "ok":
+                with pytest.raises(OSError):
+                    await self.fs.stat(path)
+            else:
+                stat = await self.fs.stat(path)
+                assert stat["type"] == expected["type"]
+                assert stat["base_version"] == expected["base_version"]
+                assert stat["is_placeholder"] == expected["is_placeholder"]
+                assert stat["need_sync"] == expected["need_sync"]
+
+        @rule(path=Files)
+        async def stat_file(self, path):
+            await self._stat(path)
+
+        @rule(path=Folders)
+        async def stat_folder(self, path):
+            await self._stat(path)
+
+    run_state_machine_as_test(FSOnlineTreeAndSync, settings=hypothesis_settings)
