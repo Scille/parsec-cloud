@@ -12,18 +12,18 @@ logger = logbook.Logger("parsec.core.beacon_monitor")
 
 
 async def monitor_beacons(device, fs, event_bus):
-    workspaces = {}
+    workspaces = set()
 
     # TODO: stop using private attribute `fs._local_folder_fs`
     for beacon_id in fs._local_folder_fs.get_local_beacons():
         event_bus.send("backend.beacon.listen", beacon_id=beacon_id)
 
     def _on_workspace_loaded(sender, path, id, beacon_id):
-        workspaces[beacon_id] = path
+        workspaces.add(beacon_id)
         event_bus.send("backend.beacon.listen", beacon_id=beacon_id)
 
     def _on_workspace_unloaded(sender, path, id, beacon_id):
-        del workspaces[beacon_id]
+        workspaces.remove(beacon_id)
         event_bus.send("backend.beacon.unlisten", beacon_id=beacon_id)
 
     def _on_beacon_updated(sender, beacon_id, index, src_id, src_version):

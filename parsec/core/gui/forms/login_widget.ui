@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>613</width>
-    <height>544</height>
+    <height>957</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -36,18 +36,112 @@
     <number>5</number>
    </property>
    <item>
+    <widget class="QGroupBox" name="group_config_device">
+     <property name="title">
+      <string>Register a new device</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QLabel" name="device_label">
+        <property name="text">
+         <string>To register, you need an existing device to declare a new device and get the resulting token.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="device_line_edit_login">
+        <property name="placeholderText">
+         <string>Login</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="device_line_edit_password">
+        <property name="echoMode">
+         <enum>QLineEdit::Password</enum>
+        </property>
+        <property name="placeholderText">
+         <string>Password</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="device_line_edit_password_check">
+        <property name="echoMode">
+         <enum>QLineEdit::Password</enum>
+        </property>
+        <property name="placeholderText">
+         <string>Password check</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="device_line_edit_device">
+        <property name="placeholderText">
+         <string>Device</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="device_line_edit_token">
+        <property name="placeholderText">
+         <string>Token</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="device_button_config">
+          <property name="text">
+           <string>Register</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QProgressBar" name="device_progress_bar">
+        <property name="maximum">
+         <number>0</number>
+        </property>
+        <property name="value">
+         <number>-1</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="device_label_error">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QGroupBox" name="group_login">
      <property name="title">
       <string>Log In</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
-      <item>
-       <widget class="QCommandLinkButton" name="button_claim_instead">
-        <property name="text">
-         <string>Register a new account instead</string>
-        </property>
-       </widget>
-      </item>
       <item>
        <widget class="QComboBox" name="combo_devices"/>
       </item>
@@ -110,6 +204,9 @@
    </item>
    <item>
     <widget class="QGroupBox" name="group_claim">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
      <property name="title">
       <string>Register a new account</string>
      </property>
@@ -118,13 +215,6 @@
        <widget class="QLabel" name="label">
         <property name="text">
          <string>To register, you need another user to create an account and get a token.</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCommandLinkButton" name="button_login_instead">
-        <property name="text">
-         <string>Log In instead</string>
         </property>
        </widget>
       </item>
@@ -220,6 +310,27 @@
     </widget>
    </item>
    <item>
+    <widget class="QCommandLinkButton" name="button_login_instead">
+     <property name="text">
+      <string>Log In instead</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCommandLinkButton" name="button_claim_instead">
+     <property name="text">
+      <string>Register a new account instead</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCommandLinkButton" name="button_config_device_instead">
+     <property name="text">
+      <string>Register a new device instead</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -243,12 +354,12 @@
    <slot>show()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>306</x>
-     <y>264</y>
+     <x>328</x>
+     <y>411</y>
     </hint>
     <hint type="destinationlabel">
-     <x>306</x>
-     <y>108</y>
+     <x>311</x>
+     <y>291</y>
     </hint>
    </hints>
   </connection>
@@ -259,8 +370,8 @@
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>306</x>
-     <y>264</y>
+     <x>328</x>
+     <y>411</y>
     </hint>
     <hint type="destinationlabel">
      <x>306</x>
@@ -275,8 +386,8 @@
    <slot>show()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>306</x>
-     <y>58</y>
+     <x>328</x>
+     <y>225</y>
     </hint>
     <hint type="destinationlabel">
      <x>306</x>
@@ -291,12 +402,236 @@
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>306</x>
-     <y>58</y>
+     <x>328</x>
+     <y>225</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>311</x>
+     <y>291</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_config_device_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>group_config_device</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>310</x>
+     <y>240</y>
     </hint>
     <hint type="destinationlabel">
      <x>306</x>
-     <y>108</y>
+     <y>91</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_config_device_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>group_login</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>310</x>
+     <y>240</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>269</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_login_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>button_claim_instead</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>226</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>185</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_claim_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>button_login_instead</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>185</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>226</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_claim_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>button_claim_instead</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>185</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>185</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_login_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>button_login_instead</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>226</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>226</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_login_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>button_config_device_instead</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>793</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>875</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_login_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>group_config_device</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>793</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>166</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_claim_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>button_config_device_instead</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>834</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>875</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_claim_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>group_config_device</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>834</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>166</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_config_device_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>group_claim</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>875</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>632</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_config_device_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>button_claim_instead</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>875</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>834</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_config_device_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>button_login_instead</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>875</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>793</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_config_device_instead</sender>
+   <signal>clicked()</signal>
+   <receiver>button_config_device_instead</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>306</x>
+     <y>875</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>875</y>
     </hint>
    </hints>
   </connection>

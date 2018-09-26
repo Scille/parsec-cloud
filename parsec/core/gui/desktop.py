@@ -3,7 +3,7 @@ from PyQt5.QtGui import QDesktopServices
 
 
 def open_file(path):
-    QDesktopServices.openUrl(QUrl(QFileInfo(path).absoluteFilePath()))
+    QDesktopServices.openUrl(QUrl.fromLocalFile(QFileInfo(path).absoluteFilePath()))
 
 
 def get_default_device():

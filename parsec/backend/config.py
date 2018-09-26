@@ -28,7 +28,7 @@ class BackendConfig:
             return val
         elif val.startswith("s3:") and len(val.split(":")) == 5:
             return val
-        elif val.startswith("openstack:") and len(val.split(":")) == 5:
+        elif val.startswith("openstack:") and len(val.split(":")) == 6:
             return val
         raise ValueError(
             "BLOCKSTORE_URL must be `MOCKED`, `POSTGRESQL`, `s3:<region>:<bucket>:<key>:<secret>`,"

@@ -102,9 +102,11 @@ class FileSyncerMixin:
         target_manifest = remote_to_local_manifest(target_remote_manifest)
         self.local_folder_fs.set_manifest(access, target_manifest)
 
+        # TODO: useful signal ?
         self.signal_ns.signal("fs.entry.moved").send(
             None, original_id=access["id"], moved_id=moved_access["id"]
         )
+        self.signal_ns.signal("fs.entry.updated").send(None, id=moved_access["id"])
 
     async def _sync_file_look_for_remote_changes(self, path, access, manifest):
         # Placeholder means we need synchro !

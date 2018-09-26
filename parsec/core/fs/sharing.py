@@ -253,7 +253,11 @@ class Sharing:
                     break
             user_manifest["children"][sharing_name] = msg["access"]
             self.local_folder_fs.update_manifest(user_manifest_access, user_manifest)
-            self.event_bus.send("sharing.new", path=f"/{sharing_name}", access=msg["access"])
+
+            path = f"/{sharing_name}"
+            self.event_bus.send("sharing.new", path=path, access=msg["access"])
+            self.event_bus.send("fs.entry.updated", id=user_manifest_access["id"])
+            self.event_bus.send("fs.entry.synced", id=msg["access"]["id"], path=path)
 
         elif msg["type"] == "ping":
             self.event_bus.send("pinged")

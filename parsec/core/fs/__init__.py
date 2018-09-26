@@ -132,6 +132,10 @@ class FS:
     async def full_sync(self):
         await self._load_and_retry(self._syncer.full_sync)
 
+    async def get_entry_path(self, id):
+        path, _, _ = await self._load_and_retry(self._local_folder_fs.get_entry_path, id)
+        return path
+
     async def share(self, path, recipient):
         await self._load_and_retry(self._sharing.share, path, recipient)
 
