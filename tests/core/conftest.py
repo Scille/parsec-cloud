@@ -2,20 +2,17 @@ import pytest
 import trio
 from async_generator import asynccontextmanager
 
-from tests.event_bus_spy import SpiedEventBus
-
-# from parsec.signals import Namespace as SignalNamespace
 from parsec.core.backend_cmds_sender import BackendCmdsSender
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.fs import FS
 
 
 @pytest.fixture
-def encryption_manager_factory(alice, backend_cmds_sender_factory):
+def encryption_manager_factory(backend_cmds_sender_factory):
     @asynccontextmanager
     async def _encryption_manager_factory(device, backend_addr=None):
-        async with backend_cmds_sender_factory(alice, backend_addr=backend_addr) as bcs:
-            em = EncryptionManager(alice, bcs)
+        async with backend_cmds_sender_factory(device, backend_addr=backend_addr) as bcs:
+            em = EncryptionManager(device, bcs)
             async with trio.open_nursery() as nursery:
                 await em.init(nursery)
                 try:
