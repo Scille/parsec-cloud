@@ -15,6 +15,7 @@ json_nested_strategy = st.recursive(
     | st.floats(allow_nan=False, allow_infinity=False)
     | st.text(printable),
     lambda children: st.lists(children) | st.dictionaries(st.text(printable), children),
+    max_leaves=30,
 )
 json_dict_strategy = st.dictionaries(st.text(printable), json_nested_strategy)
 
