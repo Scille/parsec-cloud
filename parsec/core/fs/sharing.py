@@ -127,7 +127,10 @@ class Sharing:
             SharingNotAWorkspace
             FileNotFoundError
             FSManifestLocalMiss: If path is not available in local
+            ValueError: If path is not a valid absolute path
         """
+        if not path.startswith("/"):
+            raise ValueError("Path must be absolute")
         if self.device.user_id == recipient:
             raise SharingRecipientError("Cannot share to oneself.")
 

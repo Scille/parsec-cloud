@@ -101,7 +101,7 @@ class LocalFolderFS:
         self._manifests_cache[access["id"]] = manifest
         # TODO: shouldn't be processed in multiple places like this...
         if manifest["type"] in ("local_workspace_manifest", "local_user_manifest"):
-            path = self.get_entry_path(access["id"])
+            path, *_ = self.get_entry_path(access["id"])
             self.signal_ns.signal("fs.workspace.loaded").send(
                 None, path=path, id=access["id"], beacon_id=manifest["beacon_id"]
             )
@@ -129,7 +129,7 @@ class LocalFolderFS:
         self._manifests_cache[access["id"]] = copy_manifest(manifest)
         # TODO: shouldn't be processed in multiple places like this...
         if manifest["type"] in ("local_workspace_manifest", "local_user_manifest"):
-            path = self.get_entry_path(access["id"])
+            path, *_ = self.get_entry_path(access["id"])
             self.signal_ns.signal("fs.workspace.loaded").send(
                 None, path=path, id=access["id"], beacon_id=manifest["beacon_id"]
             )

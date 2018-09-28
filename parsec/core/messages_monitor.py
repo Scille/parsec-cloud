@@ -34,6 +34,11 @@ async def monitor_messages(fs, event_bus):
         try:
 
             with trio.open_cancel_scope() as process_message_cancel_scope:
+                event_bus.send("message_monitor.reconnection_message_processing.started")
+                try:
+                    await fs.process_last_messages()
+                finally:
+                    event_bus.send("message_monitor.reconnection_message_processing.done")
                 while True:
                     try:
                         await fs.process_last_messages()

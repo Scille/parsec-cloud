@@ -10,6 +10,8 @@ from parsec.core.backend_connection import (
 from parsec.handshake import ServerHandshake
 from parsec.networking import CookedSocket
 
+from tests.open_tcp_stream_mock_wrapper import offline
+
 
 @pytest.mark.trio
 async def test_base(running_backend, alice):
@@ -20,9 +22,11 @@ async def test_base(running_backend, alice):
 
 
 @pytest.mark.trio
-async def test_backend_offline(backend_addr, alice):
-    with pytest.raises(BackendNotAvailable):
-        await backend_connection_factory(backend_addr, alice.id, alice.device_signkey)
+async def test_backend_offline(tcp_stream_spy, backend_addr, alice):
+    # Using tcp_stream_spy make us avoid long wait for time
+    with offline(backend_addr):
+        with pytest.raises(BackendNotAvailable):
+            await backend_connection_factory(backend_addr, alice.id, alice.device_signkey)
 
 
 @pytest.mark.trio

@@ -8,9 +8,9 @@ from parsec.core.fs import FS
 
 
 @pytest.fixture
-def encryption_manager_factory(backend_cmds_sender_factory):
+def encryption_manager_factory(backend_cmds_sender_factory, backend_addr):
     @asynccontextmanager
-    async def _encryption_manager_factory(device, backend_addr=None):
+    async def _encryption_manager_factory(device, backend_addr=backend_addr):
         async with backend_cmds_sender_factory(device, backend_addr=backend_addr) as bcs:
             em = EncryptionManager(device, bcs)
             async with trio.open_nursery() as nursery:
@@ -30,11 +30,9 @@ async def encryption_manager(encryption_manager_factory, alice):
 
 
 @pytest.fixture
-def backend_cmds_sender_factory(running_backend):
+def backend_cmds_sender_factory(backend_addr):
     @asynccontextmanager
-    async def _backend_cmds_sender_factory(device, backend_addr=None):
-        if not backend_addr:
-            backend_addr = running_backend.addr
+    async def _backend_cmds_sender_factory(device, backend_addr=backend_addr):
         bcs = BackendCmdsSender(device, backend_addr)
         async with trio.open_nursery() as nursery:
             await bcs.init(nursery)
@@ -47,9 +45,11 @@ def backend_cmds_sender_factory(running_backend):
 
 
 @pytest.fixture
-def fs_factory(backend_cmds_sender_factory, encryption_manager_factory, event_bus_factory):
+def fs_factory(
+    backend_cmds_sender_factory, encryption_manager_factory, event_bus_factory, backend_addr
+):
     @asynccontextmanager
-    async def _fs_factory(device, backend_addr=None, event_bus=None):
+    async def _fs_factory(device, backend_addr=backend_addr, event_bus=None):
         if not event_bus:
             event_bus = event_bus_factory()
 
@@ -78,6 +78,12 @@ async def alice_fs(fs_factory, alice):
 @pytest.fixture
 async def alice2_fs(fs_factory, alice2):
     async with fs_factory(alice2) as fs:
+        yield fs
+
+
+@pytest.fixture
+async def bob_fs(fs_factory, bob):
+    async with fs_factory(bob) as fs:
         yield fs
 
 

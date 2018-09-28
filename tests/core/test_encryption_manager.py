@@ -68,7 +68,7 @@ def test_encrypt_with_secret_key(alice):
 
 @pytest.mark.trio
 async def test_encryption_manager_fetch_remote_device_local_cache(
-    backend_addr, encryption_manager, bob
+    tcp_stream_spy, running_backend, backend_addr, encryption_manager, bob
 ):
     with pytest.raises(BackendNotAvailable):
         with offline(backend_addr):
@@ -86,7 +86,7 @@ async def test_encryption_manager_fetch_remote_device_local_cache(
 
 @pytest.mark.trio
 async def test_encryption_manager_fetch_remote_user_local_cache(
-    backend_addr, encryption_manager, bob
+    tcp_stream_spy, running_backend, backend_addr, encryption_manager, bob
 ):
     with pytest.raises(BackendNotAvailable):
         with offline(backend_addr):
@@ -101,20 +101,12 @@ async def test_encryption_manager_fetch_remote_user_local_cache(
 
 
 @pytest.mark.trio
-async def test_encryption_manager_fetch_self_device_offline(
-    backend_addr, encryption_manager, alice
-):
-    with offline(backend_addr):
-        remote_device = await encryption_manager.fetch_remote_device(
-            alice.user_id, alice.device_name
-        )
-
+async def test_encryption_manager_fetch_self_device_offline(encryption_manager, alice):
+    remote_device = await encryption_manager.fetch_remote_device(alice.user_id, alice.device_name)
     assert remote_device.device_verifykey == alice.device_verifykey
 
 
 @pytest.mark.trio
-async def test_encryption_manager_fetch_self_offline(backend_addr, encryption_manager, alice):
-    with offline(backend_addr):
-        remote_user = await encryption_manager.fetch_remote_user(alice.user_id)
-
+async def test_encryption_manager_fetch_self_offline(encryption_manager, alice):
+    remote_user = await encryption_manager.fetch_remote_user(alice.user_id)
     assert remote_user.user_pubkey == alice.user_pubkey
