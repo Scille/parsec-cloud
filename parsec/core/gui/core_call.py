@@ -21,7 +21,7 @@ class _CoreCall:
         return self._trio_portal.run(self._parsec_core.fs.get_entry_path, id)
 
     def connect_signal(self, signal, cb):
-        self._parsec_core.signal_ns.signal(signal).connect(cb, weak=True)
+        self._parsec_core.event_bus.connect(signal, cb, weak=True)
 
     def stop(self):
         self._trio_portal.run_sync(self._cancel_scope.cancel)
