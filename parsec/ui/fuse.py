@@ -241,8 +241,8 @@ class FuseOperations(LoggingMixIn, Operations):
     def __init__(self, socket_address, mountpoint):
         super().__init__()
         self.fds = {}
+        self.block_size = 0
         try:
-            self.block_size = 0
             self.block_size = int(os.statvfs(mountpoint).f_bsize / 512)
         except AttributeError:
             pass
