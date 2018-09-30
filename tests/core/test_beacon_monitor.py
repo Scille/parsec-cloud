@@ -51,7 +51,8 @@ async def test_beacon_notif_on_new_nested_entry_sync(type, running_backend, alic
     with alice_core.event_bus.listen() as spy:
         await alice2_fs.sync("/")
         # Restart due to new workspace's beacon listening
-        await spy.wait("backend.listener.restarted")
+        with trio.fail_after(1):
+            await spy.wait("backend.listener.restarted")
 
     # Create the new item
     if type == "folder":

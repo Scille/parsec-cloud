@@ -144,6 +144,7 @@ async def init_db(url, force=False):
             CREATE TABLE beacons (
                 _id SERIAL PRIMARY KEY,
                 beacon_id UUID NOT NULL,
+                beacon_index INTEGER NOT NULL,
                 src_id UUID NOT NULL,
                 -- src_id UUID REFERENCES vlobs (vlob_id) NOT NULL,
                 src_version INTEGER NOT NULL
