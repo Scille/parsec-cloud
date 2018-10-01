@@ -16,7 +16,7 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
         self.reset()
 
         self.button_register_device.clicked.connect(self.emit_register_device)
-        core_call().connect_signal(
+        core_call().connect_event(
             "backend.device.try_claim_submitted", self.on_device_try_claim_submitted_trio
         )
         self.device_try_claim_submitted_qt.connect(self.on_device_try_claim_submitted_qt)

@@ -119,8 +119,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.workspaces = []
         self.current_workspace = None
         self.current_directory = None
-        core_call().connect_signal("fs.entry.updated", self._on_fs_entry_updated_trio)
-        core_call().connect_signal("fs.entry.synced", self._on_fs_entry_synced_trio)
+        core_call().connect_event("fs.entry.updated", self._on_fs_entry_updated_trio)
+        core_call().connect_event("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.current_directory_changed_qt.connect(self._on_current_directory_changed_qt)
 
     def reload_current_directory(self):
