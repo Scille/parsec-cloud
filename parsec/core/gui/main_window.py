@@ -1,5 +1,6 @@
 import os
 import shutil
+import signal
 
 from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QSystemTrayIcon, QMenu
@@ -21,6 +22,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
         self.close_requested = False
         self.setupUi(self)
         self.about_dialog = None
