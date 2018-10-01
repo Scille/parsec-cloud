@@ -10,18 +10,6 @@ except ImportError:
     Executable = lambda x, **kw: x
 
 
-def _extract_libs_cffi_backend():
-    try:
-        import nacl
-    except ImportError:
-        return []
-
-    import pathlib
-
-    cffi_backend_dir = pathlib.Path(nacl.__file__).parent / "../.libs_cffi_backend"
-    return [(lib.as_posix(), lib.name) for lib in cffi_backend_dir.glob("*")]
-
-
 build_exe_options = {
     "packages": [
         "idna",
@@ -34,7 +22,7 @@ build_exe_options = {
         "unittest.mock",
     ],
     # nacl store it cffi shared lib in a very strange place...
-    "include_files": _extract_libs_cffi_backend(),
+    "include_files": [],
 }
 
 
