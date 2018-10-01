@@ -319,7 +319,6 @@ def backend_store(request):
             )
             return "MOCKED"
 
-    if pytest.config.getoption("--runslow"):
         # TODO: would be better to create a new postgresql cluster for each test
         url = get_postgresql_url()
         try:
