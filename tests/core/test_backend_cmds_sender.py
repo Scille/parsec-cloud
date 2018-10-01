@@ -1,13 +1,13 @@
 import pytest
 import trio
 
-from parsec.core.backend_cmds_sender import BackendCmdsSender, BackendNotAvailable
+from parsec.core.backend_cmds_sender import BackendNotAvailable
 
 from tests.open_tcp_stream_mock_wrapper import offline
 
 
 @pytest.fixture
-async def backend_cmds_sender(backend_cmds_sender_factory, alice):
+async def backend_cmds_sender(running_backend, backend_cmds_sender_factory, alice):
     async with backend_cmds_sender_factory(alice) as backend_cmds_sender:
         yield backend_cmds_sender
 
@@ -44,18 +44,15 @@ async def test_concurrency_sends(backend_cmds_sender):
 
 
 @pytest.mark.trio
-async def test_backend_offline(unused_tcp_addr, alice):
-    async with trio.open_nursery() as nursery:
-        backend_cmds_sender = BackendCmdsSender(alice, unused_tcp_addr)
-        await backend_cmds_sender.init(nursery)
+async def test_backend_offline(tcp_stream_spy, backend_addr, backend_cmds_sender_factory, alice):
+    # Using tcp_stream_spy make us avoid long wait for time
+    with offline(backend_addr):
+        async with backend_cmds_sender_factory(alice) as backend_cmds_sender:
 
-        with pytest.raises(BackendNotAvailable):
-            await backend_cmds_sender.send({"cmd": "ping", "ping": "hello"})
-        with pytest.raises(BackendNotAvailable):
-            await backend_cmds_sender.send({"cmd": "ping", "ping": "hello"})
-
-        await backend_cmds_sender.teardown()
-        nursery.cancel_scope.cancel()
+            with pytest.raises(BackendNotAvailable):
+                await backend_cmds_sender.send({"cmd": "ping", "ping": "hello"})
+            with pytest.raises(BackendNotAvailable):
+                await backend_cmds_sender.send({"cmd": "ping", "ping": "hello"})
 
 
 @pytest.mark.trio

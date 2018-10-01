@@ -6,7 +6,6 @@ from parsec.core.fs.sync_base import SyncConcurrencyError
 from parsec.core.fs.folder_syncer import FolderSyncerMixin
 from parsec.core.fs.file_syncer import FileSyncerMixin
 from parsec.core.encryption_manager import decrypt_with_symkey, encrypt_with_symkey
-from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.schemas import dumps_manifest, loads_manifest
 from parsec.utils import to_jsonb64, from_jsonb64
 

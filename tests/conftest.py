@@ -311,6 +311,14 @@ def bootstrap_postgresql(url):
 @pytest.fixture()
 def backend_store(request):
     if pytest.config.getoption("--postgresql"):
+        if request.node.get_closest_marker("slow"):
+            import warnings
+
+            warnings.warn(
+                "TODO: trio-asyncio loop currently incompatible with hypothesis tests :'("
+            )
+            return "MOCKED"
+
         # TODO: would be better to create a new postgresql cluster for each test
         url = get_postgresql_url()
         try:
@@ -321,8 +329,10 @@ def backend_store(request):
                 "Running `psql -c 'CREATE DATABASE parsec_test;'` may fix this"
             ) from exc
         return url
+
     elif request.node.get_closest_marker("postgresql"):
         pytest.skip("`Test is postgresql-only")
+
     else:
         return "MOCKED"
 
@@ -407,6 +417,7 @@ def backend_factory(asyncio_loop, signal_ns_factory, blockstore, backend_store, 
                         )
             try:
                 yield backend
+
             finally:
                 await backend.teardown()
                 # Don't do `nursery.cancel_scope.cancel()` given `backend.teardown()`

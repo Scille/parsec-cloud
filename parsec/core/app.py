@@ -2,11 +2,10 @@ import os
 import trio
 import attr
 import logbook
-from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
 from parsec.networking import serve_client
-from parsec.core.base import BaseAsyncComponent, NotInitializedError, taskify
+from parsec.core.base import BaseAsyncComponent, taskify
 from parsec.core.fs import FS
 from parsec.core.sync_monitor import SyncMonitor
 from parsec.core.beacons_monitor import monitor_beacons
@@ -16,7 +15,7 @@ from parsec.core.fuse_manager import FuseManager
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.backend_cmds_sender import BackendCmdsSender
 from parsec.core.backend_events_manager import BackendEventsManager
-
+from parsec.core.connection_monitor import monitor_connection
 
 logger = logbook.Logger("parsec.core.app")
 
@@ -140,6 +139,12 @@ class LoggedClientManager:
         self.sync_monitor = SyncMonitor(self.fs, self.event_bus)
 
     async def start(self):
+        # Monitor connection must be first given it will watch on
+        # other monitors' events
+        self._stop_monitor_connection = await self._nursery.start(
+            taskify(monitor_connection, self.event_bus)
+        )
+
         # Components initialization must respect dependencies
         await self.backend_cmds_sender.init(self._nursery)
         await self.encryption_manager.init(self._nursery)
@@ -172,6 +177,8 @@ class LoggedClientManager:
         await self.encryption_manager.teardown()
         await self.backend_cmds_sender.teardown()
         await self.backend_events_manager.teardown()
+
+        await self._stop_monitor_connection()
 
 
 @attr.s

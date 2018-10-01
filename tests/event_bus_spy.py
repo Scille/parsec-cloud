@@ -57,7 +57,7 @@ def convert_event_lists_with_any(a, b):
 @attr.s(frozen=True, slots=True)
 class SpiedEvent:
     event = attr.ib()
-    kwargs = attr.ib()
+    kwargs = attr.ib(factory=dict)
     dt = attr.ib(factory=pendulum.now)
 
 
@@ -79,15 +79,14 @@ class EventBusSpy:
     def clear(self):
         self.events.clear()
 
-    async def wait_for_backend_online(self):
+    async def wait_for_backend_connection_ready(self):
         for occured_event in reversed(self.events):
-            if occured_event.event == "backend.online":
+            if occured_event.event == "backend.connection.ready":
                 return occured_event
-            elif occured_event.event == "backend.offline":
+            elif occured_event.event == "backend.connection.lost":
                 break
 
-        # Backend never been online, or has been disconnected in the meantime
-        return await self._wait(SpiedEvent("backend.online"))
+        return await self._wait(SpiedEvent("backend.connection.ready", dt=ANY))
 
     async def wait(self, event, dt=ANY, kwargs=ANY):
         expected = SpiedEvent(event, kwargs, dt)
@@ -100,13 +99,34 @@ class EventBusSpy:
     async def _wait(self, cooked_expected_event):
         catcher = trio.Queue(1)
 
-        def waiter(cooked_event):
+        def _waiter(cooked_event):
             if compare_events_with_any(cooked_expected_event, cooked_event):
                 catcher.put_nowait(cooked_event)
-                self._waiters.remove(waiter)
+                self._waiters.remove(_waiter)
 
-        self._waiters.add(waiter)
+        self._waiters.add(_waiter)
         return await catcher.get()
+
+    async def wait_multiple(self, events):
+        expected_events = self._cook_events_params(events)
+        try:
+            self.assert_events_occured(expected_events)
+            return
+        except AssertionError:
+            pass
+
+        done = trio.Event()
+
+        def _waiter(cooked_event):
+            try:
+                self.assert_events_occured(expected_events)
+                self._waiters.remove(_waiter)
+                done.set()
+            except AssertionError:
+                pass
+
+        self._waiters.add(_waiter)
+        await done.wait()
 
     def _cook_events_params(self, events):
         cooked_events = [self._cook_event_params(event) for event in events]
@@ -163,6 +183,7 @@ class SpiedEventBus(EventBus):
         self.spy = self.create_spy()
 
     def send(self, event, **kwargs):
+        print(f"[{str(id(self))[-2:]}]", event, kwargs)
         for spy in self._spies:
             spy(event, **kwargs)
         super().send(event, **kwargs)
