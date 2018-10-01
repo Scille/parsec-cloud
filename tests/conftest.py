@@ -111,6 +111,16 @@ def postgresql_url(request):
 
 
 @pytest.fixture
+async def asyncio_loop():
+    # When a ^C happens, trio send a Cancelled exception to each running
+    # coroutine. We must protect this one to avoid deadlock if it is cancelled
+    # before another coroutine that uses trio-asyncio.
+    with trio.open_cancel_scope(shield=True):
+        async with trio_asyncio.open_loop() as loop:
+            yield loop
+
+
+@pytest.fixture
 def always_logs():
     """
     By default, pytest-logbook only print last test's logs in case of error.
@@ -356,7 +366,7 @@ async def nursery():
 
 
 @pytest.fixture
-def backend_factory(signal_ns_factory, blockstore, backend_store, default_devices):
+def backend_factory(asyncio_loop, signal_ns_factory, blockstore, backend_store, default_devices):
     # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
     # the backend should inherit from the one with the asyncio loop context manager.
     # This mean the nursery fixture cannot use the backend object otherwise we
@@ -415,18 +425,7 @@ def backend_factory(signal_ns_factory, blockstore, backend_store, default_device
                 # should have stopped all our coroutines (i.e. if the nursery is
                 # hanging, something on top of us should be fixed...)
 
-    if backend_store.startswith("postgresql://"):
-
-        @asynccontextmanager
-        async def _backend_factory_with_asyncio_loop(*args, **kwargs):
-            async with trio_asyncio.open_loop():
-                async with _backend_factory(*args, **kwargs) as backend:
-                    yield backend
-
-        return _backend_factory_with_asyncio_loop
-
-    else:
-        return _backend_factory
+    return _backend_factory
 
 
 @pytest.fixture
