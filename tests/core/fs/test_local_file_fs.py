@@ -154,9 +154,7 @@ def test_block_not_loaded_entry(local_folder_fs, local_file_fs, foo_txt):
 
 
 @pytest.mark.slow
-def test_file_operations(
-    tmpdir, hypothesis_settings, signal_ns, device_factory, local_file_fs_factory
-):
+def test_file_operations(tmpdir, hypothesis_settings, device_factory, local_file_fs_factory):
     tentative = 0
 
     class FileOperationsStateMachine(RuleBasedStateMachine):

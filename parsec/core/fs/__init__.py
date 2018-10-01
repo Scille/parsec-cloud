@@ -1,7 +1,6 @@
 import math
 import inspect
 
-from parsec.core.base import BaseAsyncComponent
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, LocalFolderFS
 from parsec.core.fs.local_file_fs import LocalFileFS, FSBlocksLocalMiss
 from parsec.core.fs.syncer import Syncer
@@ -10,11 +9,6 @@ from parsec.core.fs.remote_loader import RemoteLoader
 
 
 class FS:
-    # TODO: Legacy API
-    @property
-    def signal_ns(self):
-        return self.event_bus
-
     def __init__(self, device, backend_cmds_sender, encryption_manager, event_bus):
         super().__init__()
         self.event_bus = event_bus

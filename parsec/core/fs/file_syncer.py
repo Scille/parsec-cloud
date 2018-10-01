@@ -102,11 +102,9 @@ class FileSyncerMixin:
         target_manifest = remote_to_local_manifest(target_remote_manifest)
         self.local_folder_fs.set_manifest(access, target_manifest)
 
-        # TODO: useful signal ?
-        self.signal_ns.signal("fs.entry.moved").send(
-            None, original_id=access["id"], moved_id=moved_access["id"]
-        )
-        self.signal_ns.signal("fs.entry.updated").send(None, id=moved_access["id"])
+        # TODO: useful event ?
+        self.event_bus.send("fs.entry.moved", original_id=access["id"], moved_id=moved_access["id"])
+        self.event_bus.send("fs.entry.updated", id=moved_access["id"])
 
     async def _sync_file_look_for_remote_changes(self, path, access, manifest):
         # Placeholder means we need synchro !
@@ -202,9 +200,9 @@ class FileSyncerMixin:
 
         # Now we can synchronize the folder if needed
         if not manifest["need_sync"]:
-            need_signal = await self._sync_file_look_for_remote_changes(path, access, manifest)
+            need_event = await self._sync_file_look_for_remote_changes(path, access, manifest)
         else:
             await self._sync_file_actual_sync(path, access, manifest, notify_beacons)
-            need_signal = True
-        if need_signal:
-            self.signal_ns.signal("fs.entry.synced").send(None, path=path, id=access["id"])
+            need_event = True
+        if need_event:
+            self.event_bus.send("fs.entry.synced", path=path, id=access["id"])

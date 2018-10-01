@@ -46,7 +46,6 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "attrs==18.1.0",
-    "blinker==1.4.0",
     "click==6.7",
     "huepy==0.9.6",
     "Logbook==1.2.1",

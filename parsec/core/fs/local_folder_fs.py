@@ -47,11 +47,11 @@ class FSManifestLocalMiss(Exception):
 
 
 class LocalFolderFS:
-    def __init__(self, device, signal_ns):
+    def __init__(self, device, event_bus):
         self.local_author = device.id
         self.root_access = device.user_manifest_access
         self._local_db = device.local_db
-        self.signal_ns = signal_ns
+        self.event_bus = event_bus
         self._manifests_cache = {}
 
     def get_local_beacons(self):
@@ -102,8 +102,8 @@ class LocalFolderFS:
         # TODO: shouldn't be processed in multiple places like this...
         if manifest["type"] in ("local_workspace_manifest", "local_user_manifest"):
             path, *_ = self.get_entry_path(access["id"])
-            self.signal_ns.signal("fs.workspace.loaded").send(
-                None, path=path, id=access["id"], beacon_id=manifest["beacon_id"]
+            self.event_bus.send(
+                "fs.workspace.loaded", path=path, id=access["id"], beacon_id=manifest["beacon_id"]
             )
         return manifest
 
@@ -130,8 +130,8 @@ class LocalFolderFS:
         # TODO: shouldn't be processed in multiple places like this...
         if manifest["type"] in ("local_workspace_manifest", "local_user_manifest"):
             path, *_ = self.get_entry_path(access["id"])
-            self.signal_ns.signal("fs.workspace.loaded").send(
-                None, path=path, id=access["id"], beacon_id=manifest["beacon_id"]
+            self.event_bus.send(
+                "fs.workspace.loaded", path=path, id=access["id"], beacon_id=manifest["beacon_id"]
             )
         return manifest
 
@@ -290,8 +290,8 @@ class LocalFolderFS:
         mark_manifest_modified(manifest)
         self.set_manifest(access, manifest)
         self.set_manifest(child_access, child_manifest)
-        self.signal_ns.signal("fs.entry.updated").send("local", id=access["id"])
-        self.signal_ns.signal("fs.entry.updated").send("local", id=child_access["id"])
+        self.event_bus.send("fs.entry.updated", id=access["id"])
+        self.event_bus.send("fs.entry.updated", id=child_access["id"])
 
     def mkdir(self, path, workspace=False):
         path = normalize_path(path)
@@ -318,11 +318,14 @@ class LocalFolderFS:
         mark_manifest_modified(manifest)
         self.set_manifest(access, manifest)
         self.set_manifest(child_access, child_manifest)
-        self.signal_ns.signal("fs.entry.updated").send("local", id=access["id"])
-        self.signal_ns.signal("fs.entry.updated").send("local", id=child_access["id"])
+        self.event_bus.send("fs.entry.updated", id=access["id"])
+        self.event_bus.send("fs.entry.updated", id=child_access["id"])
         if workspace:
-            self.signal_ns.signal("fs.workspace.loaded").send(
-                None, path=path, id=child_access["id"], beacon_id=child_manifest["beacon_id"]
+            self.event_bus.send(
+                "fs.workspace.loaded",
+                path=path,
+                id=child_access["id"],
+                beacon_id=child_manifest["beacon_id"],
             )
 
     def _delete(self, path, expect=None):
@@ -350,7 +353,7 @@ class LocalFolderFS:
 
         mark_manifest_modified(parent_manifest)
         self.set_manifest(parent_access, parent_manifest)
-        self.signal_ns.signal("fs.entry.updated").send("local", id=parent_access["id"])
+        self.event_bus.send("fs.entry.updated", id=parent_access["id"])
 
     def delete(self, path):
         self._delete(path)
@@ -420,7 +423,7 @@ class LocalFolderFS:
             mark_manifest_modified(parent_manifest)
 
             self.set_manifest(parent_access, parent_manifest)
-            self.signal_ns.signal("fs.entry.updated").send("local", id=parent_access["id"])
+            self.event_bus.send("fs.entry.updated", id=parent_access["id"])
 
         else:
             parent_src_access, parent_src_manifest = self._retrieve_entry(parent_src)
@@ -465,5 +468,5 @@ class LocalFolderFS:
             self.set_manifest(parent_src_access, parent_src_manifest)
             self.set_manifest(parent_dst_access, parent_dst_manifest)
 
-            self.signal_ns.signal("fs.entry.updated").send("local", id=parent_src_access["id"])
-            self.signal_ns.signal("fs.entry.updated").send("local", id=parent_dst_access["id"])
+            self.event_bus.send("fs.entry.updated", id=parent_src_access["id"])
+            self.event_bus.send("fs.entry.updated", id=parent_dst_access["id"])

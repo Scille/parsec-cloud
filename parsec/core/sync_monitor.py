@@ -90,11 +90,11 @@ class SyncMonitor(BaseAsyncComponent):
             updated_entries[id] = (first_updated, last_updated)
             new_event.set()
 
-        self.event_bus.signal("fs.entry.updated").connect(_on_entry_updated, weak=True)
+        self.event_bus.connect("fs.entry.updated", _on_entry_updated, weak=True)
 
         async with trio.open_nursery() as nursery:
             while True:
-                self.event_bus.signal("sync_monitor.ready")
+                self.event_bus.send("sync_monitor.ready")
 
                 await new_event.wait()
                 new_event.clear()

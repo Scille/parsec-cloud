@@ -17,6 +17,7 @@ from parsec.core.backend_cmds_sender import BackendCmdsSender
 from parsec.core.backend_events_manager import BackendEventsManager
 from parsec.core.connection_monitor import monitor_connection
 
+
 logger = logbook.Logger("parsec.core.app")
 
 
@@ -242,7 +243,7 @@ class ClientContext:
                 logger.warning(f"Event queue is full for {self.id}")
 
         self.registered_signals[key] = _handle_event
-        self.event_bus.signal(event_name).connect(_handle_event, weak=True)
+        self.event_bus.connect(event_name, _handle_event, weak=True)
 
     def unsubscribe_signal(self, signal_name, arg=None):
         if signal_name in ("device_try_claim_submitted", "backend.device.try_claim_submitted"):

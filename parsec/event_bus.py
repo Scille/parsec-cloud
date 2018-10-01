@@ -1,4 +1,3 @@
-import attr
 import trio
 from weakref import ref, WeakMethod, ReferenceType
 from collections import defaultdict
@@ -63,18 +62,3 @@ class EventBus:
 
     def disconnect(self, event, cb):
         self._event_handlers[event].remove(cb)
-
-    # TODO: Legacy API
-    def signal(self, name):
-        @attr.s
-        class Signal:
-            event_bus = attr.ib()
-
-            def send(self, *args, **kwargs):
-                assert len(args) <= 1
-                self.event_bus.send(name, **kwargs)
-
-            def connect(self, cb, weak=False):
-                self.event_bus.connect(name, cb, weak=weak)
-
-        return Signal(self)

@@ -15,10 +15,10 @@ class MemoryVlob:
 
 
 class MemoryVlobComponent(BaseVlobComponent):
-    def __init__(self, signal_ns, beacon_component):
+    def __init__(self, event_bus, beacon_component):
+        self.event_bus = event_bus
         self.beacon_component = beacon_component
         self.vlobs = {}
-        self._signal_vlob_updated = signal_ns.signal("vlob_updated")
 
     async def group_check(self, to_check):
         changed = []
@@ -38,7 +38,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         vlob = MemoryVlob(id, rts, wts, blob)
         self.vlobs[vlob.id] = vlob
 
-        self._signal_vlob_updated.send(author, subject=id)
+        self.event_bus.send("vlob_updated", subject=id)
         await self._notify_beacons(notify_beacons, id, 1, author)
 
         return VlobAtom(
@@ -84,7 +84,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         else:
             raise VersionError("Wrong blob version.")
 
-        self._signal_vlob_updated.send(author, subject=id)
+        self.event_bus.send("vlob_updated", subject=id)
         await self._notify_beacons(notify_beacons, id, version, author)
 
     async def _notify_beacons(self, ids: List[UUID], src_id, src_version, author):

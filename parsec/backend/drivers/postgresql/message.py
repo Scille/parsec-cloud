@@ -4,8 +4,7 @@ from parsec.backend.drivers.postgresql.handler import send_signal
 
 
 class PGMessageComponent(BaseMessageComponent):
-    def __init__(self, dbh, signal_ns):
-        self._signal_message_received = signal_ns.signal("message.received")
+    def __init__(self, dbh, event_bus):
         self.dbh = dbh
 
     async def perform_message_new(self, sender_device_id, recipient_user_id, body):

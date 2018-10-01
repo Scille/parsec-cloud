@@ -162,9 +162,9 @@ async def init_db(url, force=False):
 
 
 class PGHandler:
-    def __init__(self, url, signal_ns):
+    def __init__(self, url, event_bus):
         self.url = url
-        self.signal_ns = signal_ns
+        self.event_bus = event_bus
         self.pool = None
 
     async def init(self, nursery):
@@ -181,7 +181,7 @@ class PGHandler:
         data = ejson_loads(payload)
         signal = data.pop("__signal__")
         logger.debug("notif received {}, {}, {}", pid, channel, payload)
-        self.signal_ns.signal(signal).send(None, **data)
+        self.event_bus.send(signal, **data)
 
     async def teardown(self):
         await self.notification_conn.close()

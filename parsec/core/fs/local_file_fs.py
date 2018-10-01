@@ -71,8 +71,8 @@ class FSInvalidFileDescriptor(Exception):
 
 
 class LocalFileFS:
-    def __init__(self, device, local_folder_fs, signal_ns):
-        self.signal_ns = signal_ns
+    def __init__(self, device, local_folder_fs, event_bus):
+        self.event_bus = event_bus
         self.local_folder_fs = local_folder_fs
         self._local_db = device.local_db
         self._opened_cursors = {}
@@ -262,4 +262,4 @@ class LocalFileFS:
         self.local_folder_fs.set_manifest(cursor.access, manifest)
 
         hf.pending_writes.clear()
-        self.signal_ns.signal("fs.entry.updated").send("local", id=cursor.access["id"])
+        self.event_bus.send("fs.entry.updated", id=cursor.access["id"])

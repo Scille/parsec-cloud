@@ -78,8 +78,8 @@ async def test_listen_beacon_from_backend(event_bus, running_backend, alice, bac
             kwargs={"events": default_events_plus(("beacon.updated", "123"))},
         )
 
-    running_backend.backend.signal_ns.signal("beacon.updated").send(
-        None, author="bob@test", beacon_id="123", index=1, src_id="abc", src_version=42
+    running_backend.backend.event_bus.send(
+        "beacon.updated", author="bob@test", beacon_id="123", index=1, src_id="abc", src_version=42
     )
 
     with trio.fail_after(1.0):
@@ -110,8 +110,13 @@ async def test_unlisten_beacon(event_bus, running_backend, alice, backend_event_
     # Finally make sure this event is no longer present
 
     with event_bus.listen() as spy:
-        running_backend.backend.signal_ns.signal("beacon.updated").send(
-            None, author="bob@test", beacon_id="123", index=1, src_id="abc", src_version=42
+        running_backend.backend.event_bus.send(
+            "beacon.updated",
+            author="bob@test",
+            beacon_id="123",
+            index=1,
+            src_id="abc",
+            src_version=42,
         )
         await wait_all_tasks_blocked(cushion=0.01)
 
@@ -175,8 +180,13 @@ async def test_backend_switch_offline(
     # Make sure event system still works as expected
 
     with event_bus.listen() as spy:
-        running_backend.backend.signal_ns.signal("beacon.updated").send(
-            None, author="bob@test", beacon_id="123", index=1, src_id="abc", src_version=42
+        running_backend.backend.event_bus.send(
+            "beacon.updated",
+            author="bob@test",
+            beacon_id="123",
+            index=1,
+            src_id="abc",
+            src_version=42,
         )
 
         with trio.fail_after(1.0):

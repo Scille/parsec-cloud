@@ -3,7 +3,6 @@ import attr
 import pendulum
 from unittest.mock import Mock
 from inspect import iscoroutinefunction
-from async_generator import asynccontextmanager
 
 from parsec.core.local_db import LocalDB, LocalDBMissingEntry
 from parsec.networking import CookedSocket
@@ -80,36 +79,6 @@ class FreezeTestOnBrokenStreamCookedSocket(CookedSocket):
         except trio.BrokenStreamError as exc:
             # Wait here until this coroutine is cancelled
             await trio.sleep_forever()
-
-
-def connect_signal_as_event(signal_ns, signal_name):
-    event = trio.Event()
-    callback = Mock(spec_set=())
-    callback.side_effect = lambda *args, **kwargs: event.set()
-
-    event.cb = callback  # Prevent weakref destruction
-    signal_ns.signal(signal_name).connect(callback, weak=True)
-    return event
-
-
-def contextify(factory, teardown=lambda x: None):
-    @asynccontextmanager
-    async def _contextified(*args, **kwargs):
-        async with trio.open_nursery() as nursery:
-            if iscoroutinefunction(factory):
-                res = await factory(*args, **kwargs, nursery=nursery)
-            else:
-                res = factory(*args, **kwargs, nursery=nursery)
-            try:
-                yield res
-            finally:
-                if iscoroutinefunction(teardown):
-                    await teardown(res)
-                else:
-                    teardown(res)
-            nursery.cancel_scope.cancel()
-
-    return _contextified
 
 
 @attr.s

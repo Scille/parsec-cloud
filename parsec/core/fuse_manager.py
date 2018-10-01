@@ -43,12 +43,10 @@ class FuseStoppingError(FuseManagerError):
 
 
 class FuseManager(BaseAsyncComponent):
-    def __init__(self, core_addr: str, signal_ns, debug: bool = False, nothreads: bool = False):
+    def __init__(self, core_addr: str, event_bus, debug: bool = False, nothreads: bool = False):
         super().__init__()
+        self.event_bus = event_bus
         # TODO: make fuse process send events to synchronise with the manager
-        self._fuse_mountpoint_started = signal_ns.signal("fuse.mountpoint.started")
-        self._fuse_mountpoint_need_stop = signal_ns.signal("fuse.mountpoint.need_stop")
-        self._fuse_mountpoint_stopped = signal_ns.signal("fuse.mountpoint.stopped")
         self._start_fuse_config = {
             "socket_address": core_addr,
             "debug": debug,
@@ -110,7 +108,7 @@ class FuseManager(BaseAsyncComponent):
 
             self.mountpoint = mountpoint
             self.fuse_process = fuse_process
-            self._fuse_mountpoint_started.send(None, mountpoint=mountpoint)
+            self.event_bus.send("fuse.mountpoint.started", mountpoint=mountpoint)
 
     async def stop_mountpoint(self):
         _die_if_fuse_not_available()
@@ -122,7 +120,7 @@ class FuseManager(BaseAsyncComponent):
             raise FuseNotStarted("Fuse is not started")
 
         # Fuse process should be listening to this event
-        self._fuse_mountpoint_need_stop.send(None, mountpoint=self.mountpoint)
+        self.event_bus.send("fuse.mountpoint.need_stop", mountpoint=self.mountpoint)
 
         def close_fuse_process():
             # Once the need stop event received, fuse should close itself,
@@ -142,7 +140,7 @@ class FuseManager(BaseAsyncComponent):
         old_mountpoint = self.mountpoint
         self.mountpoint = self.fuse_process = None
 
-        self._fuse_mountpoint_stopped.send(None, mountpoint=old_mountpoint)
+        self.event_bus.send("fuse.mountpoint.stopped", mountpoint=old_mountpoint)
 
     def open_file(self, path: str):
         _die_if_fuse_not_available()

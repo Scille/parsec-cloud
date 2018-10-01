@@ -6,7 +6,7 @@ from nacl.public import PublicKey
 from nacl.signing import VerifyKey
 from json import JSONDecodeError
 
-from parsec.signals import Namespace as SignalNamespace
+from parsec.event_bus import EventBus
 from parsec.utils import ParsecError
 from parsec.networking import CookedSocket
 from parsec.handshake import HandshakeFormatError, ServerHandshake
@@ -155,25 +155,25 @@ class ClientContext:
 
 
 class BackendApp:
-    def __init__(self, config, signal_ns=None):
-        self.signal_ns = signal_ns or SignalNamespace()
+    def __init__(self, config, event_bus=None):
+        self.event_bus = event_bus or EventBus()
         self.config = config
         self.nursery = None
         self.dbh = None
 
         if self.config.db_url == "MOCKED":
-            self.user = MemoryUserComponent(self.signal_ns)
-            self.message = MemoryMessageComponent(self.signal_ns)
-            self.beacon = MemoryBeaconComponent(self.signal_ns)
-            self.vlob = MemoryVlobComponent(self.signal_ns, self.beacon)
+            self.user = MemoryUserComponent(self.event_bus)
+            self.message = MemoryMessageComponent(self.event_bus)
+            self.beacon = MemoryBeaconComponent(self.event_bus)
+            self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
 
             self.blockstore = blockstore_factory(self.config.blockstore_url)
         else:
-            self.dbh = PGHandler(self.config.db_url, self.signal_ns)
-            self.user = PGUserComponent(self.dbh, self.signal_ns)
-            self.message = PGMessageComponent(self.dbh, self.signal_ns)
-            self.beacon = PGBeaconComponent(self.dbh, self.signal_ns)
-            self.vlob = PGVlobComponent(self.dbh, self.signal_ns, self.beacon)
+            self.dbh = PGHandler(self.config.db_url, self.event_bus)
+            self.user = PGUserComponent(self.dbh, self.event_bus)
+            self.message = PGMessageComponent(self.dbh, self.event_bus)
+            self.beacon = PGBeaconComponent(self.dbh, self.event_bus)
+            self.vlob = PGVlobComponent(self.dbh, self.event_bus, self.beacon)
 
             self.blockstore = blockstore_factory(
                 self.config.blockstore_url, postgresql_dbh=self.dbh
@@ -222,7 +222,7 @@ class BackendApp:
         if self.dbh:
             await self.dbh.ping(author=client_ctx.id, ping=msg["ping"])
         else:
-            self.signal_ns.signal("pinged").send(None, author=client_ctx.id, ping=msg["ping"])
+            self.event_bus.send("pinged", author=client_ctx.id, ping=msg["ping"])
         return {"status": "ok", "pong": msg["ping"]}
 
     async def _api_blockstore_post(self, client_ctx, msg):
@@ -292,7 +292,7 @@ class BackendApp:
                 logger.warning("event queue is full for %s" % client_ctx.id)
 
         client_ctx.subscribed_events[key] = _handle_event
-        self.signal_ns.signal(event).connect(_handle_event, weak=True)
+        self.event_bus.connect(event, _handle_event, weak=True)
         return {"status": "ok"}
 
     async def _api_event_unsubscribe(self, client_ctx, msg):

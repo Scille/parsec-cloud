@@ -156,9 +156,7 @@ class PathElement:
 # v3 = state.mkdir(name='a', parent=v1)
 # v4 = state.move_folder(dst_name='a', dst_parent=v3, src=v1)
 # >>> AssertionError: RAISED PermissionError(13, 'Permission denied') BUT EXPECTED NotADirectoryError(20, 'Not a directory')
-def test_folder_operations(
-    tmpdir, hypothesis_settings, signal_ns, device_factory, local_folder_fs_factory
-):
+def test_folder_operations(tmpdir, hypothesis_settings, device_factory, local_folder_fs_factory):
     tentative = 0
 
     # The point is not to find breaking filenames here, so keep it simple

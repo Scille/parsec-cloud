@@ -5,9 +5,9 @@ from parsec.core.fs.local_file_fs import LocalFileFS
 
 
 @pytest.fixture
-def local_folder_fs_factory(alice, signal_ns):
+def local_folder_fs_factory(alice, event_bus):
     def _local_folder_fs_factory(device=alice):
-        return LocalFolderFS(device, signal_ns)
+        return LocalFolderFS(device, event_bus)
 
     return _local_folder_fs_factory
 
@@ -18,9 +18,9 @@ def local_folder_fs(local_folder_fs_factory):
 
 
 @pytest.fixture
-def local_file_fs_factory(alice, local_folder_fs, signal_ns):
+def local_file_fs_factory(alice, local_folder_fs, event_bus):
     def _local_file_fs_factory(device=alice, local_folder_fs=local_folder_fs):
-        return LocalFileFS(device, local_folder_fs, signal_ns)
+        return LocalFileFS(device, local_folder_fs, event_bus)
 
     return _local_file_fs_factory
 

@@ -15,7 +15,6 @@ from nacl.public import PrivateKey
 from nacl.signing import SigningKey
 import nacl
 
-from parsec.signals import Namespace as SignalNamespace
 from parsec.core import Core, CoreConfig
 from parsec.core.schemas import loads_manifest, dumps_manifest
 from parsec.core.fs.utils import new_access, new_local_user_manifest, local_to_remote_manifest
@@ -155,18 +154,6 @@ def event_bus_factory():
 @pytest.fixture
 def event_bus(event_bus_factory):
     return event_bus_factory()
-
-
-@pytest.fixture
-def signal_ns_factory():
-    # TODO: deprecated fixture
-    return SignalNamespace
-
-
-@pytest.fixture
-def signal_ns(signal_ns_factory):
-    # TODO: deprecated fixture
-    return signal_ns_factory()
 
 
 @pytest.fixture
@@ -365,7 +352,7 @@ async def nursery():
 
 
 @pytest.fixture
-def backend_factory(asyncio_loop, signal_ns_factory, blockstore, backend_store, default_devices):
+def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, default_devices):
     # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
     # the backend should inherit from the one with the asyncio loop context manager.
     # This mean the nursery fixture cannot use the backend object otherwise we
@@ -373,14 +360,14 @@ def backend_factory(asyncio_loop, signal_ns_factory, blockstore, backend_store, 
     # nursery fixture is done with calling the backend's postgresql stuff.
 
     @asynccontextmanager
-    async def _backend_factory(devices=default_devices, config={}, signal_ns=None):
+    async def _backend_factory(devices=default_devices, config={}, event_bus=None):
         async with trio.open_nursery() as nursery:
             config = BackendConfig(
                 **{"blockstore_url": blockstore, "db_url": backend_store, **config}
             )
-            if not signal_ns:
-                signal_ns = signal_ns_factory()
-            backend = BackendApp(config, signal_ns=signal_ns)
+            if not event_bus:
+                event_bus = event_bus_factory()
+            backend = BackendApp(config, event_bus=event_bus)
             # TODO: backend connection to postgresql will timeout if we use a trio
             # mock clock with autothreshold. We should detect this and do something here...
             await backend.init(nursery)

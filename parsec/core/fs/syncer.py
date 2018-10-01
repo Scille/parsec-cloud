@@ -21,7 +21,7 @@ class Syncer(FolderSyncerMixin, FileSyncerMixin):
         encryption_manager,
         local_folder_fs,
         local_file_fs,
-        signal_ns,
+        event_bus,
         block_size=DEFAULT_BLOCK_SIZE,
     ):
         self._lock = trio.Lock()
@@ -30,7 +30,7 @@ class Syncer(FolderSyncerMixin, FileSyncerMixin):
         self.local_file_fs = local_file_fs
         self.backend_cmds_sender = backend_cmds_sender
         self.encryption_manager = encryption_manager
-        self.signal_ns = signal_ns
+        self.event_bus = event_bus
         self.block_size = block_size
 
     def _get_group_check_local_entries(self):
@@ -62,8 +62,8 @@ class Syncer(FolderSyncerMixin, FileSyncerMixin):
 
         if not local_entries:
             # Nothing in local, so everything is synced ! ;-)
-            self.signal_ns.signal("fs.entry.synced").send(
-                None, path="/", id=self.device.user_manifest_access["id"]
+            self.event_bus.send(
+                "fs.entry.synced", path="/", id=self.device.user_manifest_access["id"]
             )
             return
 

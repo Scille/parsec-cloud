@@ -27,20 +27,9 @@ async def wait_for_entries_synced(core, entries_pathes):
         if synced == to_sync:
             event.set()
 
-    vanilla = core.signal_ns.signal("fs.entry.synced").send
-
-    def foo(*args, **kwargs):
-        print("[CORE] fs.entry.synced signal send", id(core), args, kwargs)
-        # if kwargs.get('path') == '/foo.txt':
-        #     import pdb; pdb.set_trace()
-        return vanilla(*args, **kwargs)
-
-    if vanilla.__name__ != "foo":
-        core.signal_ns.signal("fs.entry.synced").send = foo
-
-    with core.signal_ns.signal("fs.entry.synced").temporarily_connected_to(_on_entry_synced):
-        yield event
-        await event.wait()
+    core.signal_ns.connect("fs.entry.synced", _on_entry_synced, weak=True)
+    yield event
+    await event.wait()
 
 
 @pytest.mark.trio

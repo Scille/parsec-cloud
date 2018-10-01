@@ -13,8 +13,8 @@ from parsec.backend.exceptions import (
 
 
 class PGUserComponent(BaseUserComponent):
-    def __init__(self, dbh, signal_ns):
-        super().__init__(signal_ns)
+    def __init__(self, dbh, event_bus):
+        super().__init__(event_bus)
         self.dbh = dbh
 
     async def create_invitation(self, invitation_token, user_id):

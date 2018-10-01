@@ -140,4 +140,4 @@ class FolderSyncerMixin:
             base_manifest, current_manifest, target_manifest
         )
         self.local_folder_fs.set_manifest(access, final_manifest)
-        self.signal_ns.signal("fs.entry.synced").send(None, path=path, id=access["id"])
+        self.event_bus.send("fs.entry.synced", path=path, id=access["id"])

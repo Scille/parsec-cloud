@@ -3,7 +3,7 @@ from parsec.backend.drivers.postgresql.handler import send_signal
 
 
 class PGBeaconComponent(BaseBeaconComponent):
-    def __init__(self, dbh, signal_ns):
+    def __init__(self, dbh, event_bus):
         self.dbh = dbh
 
     async def read(self, id, offset):
