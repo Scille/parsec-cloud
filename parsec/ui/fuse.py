@@ -238,9 +238,14 @@ class File:
 
 
 class FuseOperations(LoggingMixIn, Operations):
-    def __init__(self, socket_address):
+    def __init__(self, socket_address, mountpoint):
         super().__init__()
         self.fds = {}
+        self.block_size = 0
+        try:
+            self.block_size = int(os.statvfs(mountpoint).f_bsize / 512)
+        except AttributeError:
+            pass
         self._fs_id_generator = count(1)
         self._socket_address = socket_address
         # TODO: create a per-thread socket instead of using a lock
@@ -291,6 +296,7 @@ class FuseOperations(LoggingMixIn, Operations):
         fuse_stat = {}
         # Set it to 777 access
         fuse_stat["st_mode"] = 0
+        fuse_stat["st_blocks"] = self.block_size
         if stat["type"] == "folder":
             fuse_stat["st_mode"] |= S_IFDIR
             fuse_stat["st_nlink"] = 2
@@ -407,7 +413,7 @@ class FuseOperations(LoggingMixIn, Operations):
 
 
 def start_fuse(socket_address: str, mountpoint: str, debug: bool = False, nothreads: bool = False):
-    operations = FuseOperations(socket_address)
+    operations = FuseOperations(socket_address, mountpoint)
     start_shutdown_watcher(operations, socket_address, mountpoint)
     FUSE(operations, mountpoint, foreground=True, nothreads=nothreads, debug=debug)
 
