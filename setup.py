@@ -22,7 +22,7 @@ build_exe_options = {
         "unittest.mock",
     ],
     # nacl store it cffi shared lib in a very strange place...
-    "include_files": [],
+    "include_files": ["C:\\Python36-x64\\Lib\\site-packages\\hurry"],
 }
 
 
