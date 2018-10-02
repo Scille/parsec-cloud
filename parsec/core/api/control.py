@@ -3,7 +3,7 @@ import os
 
 from parsec.schema import BaseCmdSchema, fields
 from parsec.core.app import Core, ClientContext
-from parsec.core.fuse_manager import FuseNotAvailable, FuseAlreadyStarted, FuseNotStarted
+from parsec.core.fuse import FuseNotAvailable, FuseAlreadyStarted, FuseNotStarted
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.devices_manager import DeviceLoadingError
 

@@ -41,6 +41,9 @@ class _CoreCall:
     def file_write(self, *args, **kwargs):
         return self._trio_portal.run(self._parsec_core.fs.file_fd_write, *args, **kwargs)
 
+    def file_read(self, *args, **kwargs):
+        return self._trio_portal.run(self._parsec_core.fs.file_fd_read, *args, **kwargs)
+
     def create_folder(self, *args, **kwargs):
         return self._trio_portal.run(self._parsec_core.fs.folder_create, *args, **kwargs)
 
@@ -50,11 +53,11 @@ class _CoreCall:
     def delete_file(self, *args, **kargs):
         return self._trio_portal.run(self._parsec_core.fs.delete, *args, **kargs)
 
-    def mount(self, *args, **kwargs):
-        self._trio_portal.run(self._parsec_core.fuse_manager.start_mountpoint, *args, **kwargs)
+    def mount(self, mountpoint):
+        self._trio_portal.run(self._parsec_core.fuse_manager.start, mountpoint)
 
     def unmount(self, *args, **kwargs):
-        self._trio_portal.run(self._parsec_core.fuse_manager.stop_mountpoint, *args, **kwargs)
+        self._trio_portal.run(self._parsec_core.fuse_manager.stop)
 
     def is_mounted(self, *args, **kwargs):
         if self._parsec_core.fuse_manager:

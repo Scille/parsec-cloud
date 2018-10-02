@@ -11,11 +11,11 @@ from parsec.core.sync_monitor import SyncMonitor
 from parsec.core.beacons_monitor import monitor_beacons
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.devices_manager import LocalDevicesManager
-from parsec.core.fuse_manager import FuseManager
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.backend_cmds_sender import BackendCmdsSender
 from parsec.core.backend_events_manager import BackendEventsManager
 from parsec.core.connection_monitor import monitor_connection
+from parsec.core.fuse import FuseManager
 
 
 logger = logbook.Logger("parsec.core.app")
@@ -134,9 +134,10 @@ class LoggedClientManager:
         )
         self.backend_cmds_sender = BackendCmdsSender(device, self.config.backend_addr)
         self.encryption_manager = EncryptionManager(device, self.backend_cmds_sender)
-        self.fuse_manager = FuseManager(self.config.addr, self.event_bus)
 
         self.fs = FS(device, self.backend_cmds_sender, self.encryption_manager, self.event_bus)
+
+        self.fuse_manager = FuseManager(self.fs, self.event_bus)
         self.sync_monitor = SyncMonitor(self.fs, self.event_bus)
 
     async def start(self):
@@ -149,7 +150,6 @@ class LoggedClientManager:
         # Components initialization must respect dependencies
         await self.backend_cmds_sender.init(self._nursery)
         await self.encryption_manager.init(self._nursery)
-        await self.fuse_manager.init(self._nursery)
         # Keep event manager last, so it will know what events the other
         # modules need before connecting to the backend
         await self.backend_events_manager.init(self._nursery)
@@ -166,7 +166,10 @@ class LoggedClientManager:
             self._stop_monitor_sync = await self._nursery.start(taskify(self.sync_monitor.run))
 
     async def stop(self):
-        # First stop monitoring coroutine
+        # First make sure fuse is not started
+        await self.fuse_manager.teardown()
+
+        # Then stop monitoring coroutine
         # TODO: Only needed by old core-based hypothesis tests
         if self.config.auto_sync:
             await self._stop_monitor_beacons()
@@ -174,7 +177,6 @@ class LoggedClientManager:
             await self._stop_monitor_sync()
 
         # Then teardown components, again while respecting dependencies
-        await self.fuse_manager.teardown()
         await self.encryption_manager.teardown()
         await self.backend_cmds_sender.teardown()
         await self.backend_events_manager.teardown()
