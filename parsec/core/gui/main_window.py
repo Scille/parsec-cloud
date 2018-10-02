@@ -57,6 +57,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         action.triggered.connect(self.close_app)
         self.tray.setContextMenu(menu)
         self.tray.setIcon(QIcon(":/icons/images/icons/parsec.png"))
+        self.tray.activated.connect(self.tray_activated)
         self.tray.show()
 
     def connect_all(self):
@@ -72,6 +73,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.action_remount.triggered.connect(self.remount)
         self.action_login.triggered.connect(self.show_login_widget)
         self.action_quit.triggered.connect(self.close)
+
+    def tray_activated(self, reason):
+        if reason == QSystemTrayIcon.DoubleClick:
+            self.show()
+            self.raise_()
 
     def logout(self):
         self.files_widget.set_mountpoint("")
@@ -223,6 +229,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 core_call().unmount()
             core_call().logout()
             core_call().stop()
+            if self.tray:
+                self.tray.hide()
         else:
             if self.tray:
                 self.tray.showMessage(
