@@ -49,10 +49,16 @@ async def test_mount_fuse(core, alice, tmpdir, fuse_stop_mode):
         # Finally explore the mountpoint
 
         def inspect_mountpoint():
+            statvfs = os.statvfs(mountpoint)
+            assert statvfs.f_bsize != 0
+
             children = set(os.listdir(mountpoint))
             assert children == {"foo", "bar.txt"}
 
-            with open("%s/bar.txt" % mountpoint, "rb") as fd:
+            bar_stat = os.stat(f'{mountpoint}/bar.txt')
+            assert bar_stat.st_size == len(b"Hello world !")
+
+            with open(f"{mountpoint}/bar.txt", "rb") as fd:
                 bar_txt = fd.read()
             assert bar_txt == b"Hello world !"
 
