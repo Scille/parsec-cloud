@@ -150,11 +150,11 @@ class LocalFileFS:
         else:
             cursor.offset = offset
 
-    def write(self, fd: FileDescriptor, content: bytes):
+    def write(self, fd: FileDescriptor, content: bytes) -> int:
         cursor = self._get_cursor_from_fd(fd)
 
         if not content:
-            return
+            return 0
 
         hf = self._get_hot_file(cursor.access)
         empty_gap = cursor.offset - hf.size
@@ -170,6 +170,7 @@ class LocalFileFS:
         cursor.offset += len(content)
         if hf.size < cursor.offset:
             hf.size = cursor.offset
+        return len(content)
 
     def truncate(self, fd: FileDescriptor, length: int):
         cursor = self._get_cursor_from_fd(fd)

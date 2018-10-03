@@ -109,7 +109,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             core_call().mount(mountpoint)
             self.files_widget.set_mountpoint(mountpoint)
             return mountpoint
-        except (RuntimeError, PermissionError):
+        except (RuntimeError, PermissionError) as exc:
+            import traceback
+
+            traceback.print_exc(exc)
             return None
 
     def remount(self):

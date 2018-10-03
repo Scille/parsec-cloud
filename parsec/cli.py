@@ -8,7 +8,7 @@ except ImportError:
 
     @click.command()
     def core_cmd():
-        raise SystemExit("No available.")
+        raise SystemExit("Not available.")
 
 
 try:
@@ -17,11 +17,11 @@ except ImportError:
 
     @click.command()
     def backend_cmd():
-        raise SystemExit("No available.")
+        raise SystemExit("Not available.")
 
     @click.command()
     def init_cmd():
-        raise SystemExit("No available.")
+        raise SystemExit("Not available.")
 
 
 try:
@@ -30,7 +30,7 @@ except ImportError:
 
     @click.command()
     def fuse_cmd():
-        raise RuntimeError("No available, is fusepy installed ?")
+        raise RuntimeError("Not available, is fusepy installed ?")
 
 
 except NameError:
