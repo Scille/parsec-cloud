@@ -44,6 +44,9 @@ async def test_mount_fuse(alice_fs, event_bus, tmpdir):
             children = set(os.listdir(mountpoint))
             assert children == {"foo", "bar.txt"}
 
+            bar_stat = os.stat(f"{mountpoint}/bar.txt")
+            assert bar_stat.st_size == len(b"Hello world !")
+
             with open("%s/bar.txt" % mountpoint, "rb") as fd:
                 bar_txt = fd.read()
             assert bar_txt == b"Hello world !"
