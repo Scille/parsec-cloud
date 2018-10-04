@@ -155,7 +155,7 @@ def _backend(host, port, pubkeys, store, blockstore, debug):
                 await backend.vlob.create(**JOHN_DOE_USER_VLOB, author="<backend-mock>")
 
             try:
-                await trio.serve_tcp(backend.handle_client, port)
+                await trio.serve_tcp(backend.handle_client, port, host=host)
             finally:
                 await backend.teardown()
 
