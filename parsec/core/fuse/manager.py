@@ -1,15 +1,16 @@
 import os
-import click
 import trio
 import time
 import threading
+import logging
 from async_generator import asynccontextmanager
 
-from parsec.core.base import BaseAsyncComponent
 from parsec.core.fuse.operations import FuseOperations
 
 try:
     from fuse import FUSE
+
+    logging.getLogger("fuse").setLevel(logging.WARNING)
 
     FUSE_AVAILABLE = True
 except ImportError:
@@ -37,7 +38,7 @@ class FuseStoppingError(FuseManagerError):
 
 
 class FuseManager:
-    def __init__(self, fs, event_bus, debug: bool = True, nothreads: bool = False):
+    def __init__(self, fs, event_bus, debug: bool = False, nothreads: bool = False):
         if not FUSE_AVAILABLE:
             raise FuseNotAvailable("Fuse is not available")
 

@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import patch
 import os
-import attr
 import trio
 
 from parsec.core.fuse import FuseManager, FuseNotAvailable, FUSE_AVAILABLE
