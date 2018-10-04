@@ -3,6 +3,7 @@ import click
 import trio
 import time
 import threading
+from async_generator import asynccontextmanager
 
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.fuse.operations import FuseOperations
@@ -54,21 +55,34 @@ class FuseManager:
         if self.is_started():
             raise FuseAlreadyStarted(f"Fuse already started on mountpoint `{mountpoint}`")
 
+        self.mountpoint = mountpoint
         self.event_bus.send("fuse.mountpoint.starting", mountpoint=mountpoint)
 
-        self.mountpoint = mountpoint
         if os.name == "posix":
-            os.makedirs(mountpoint, exist_ok=True)
+            wait_for_fuse_ready = self._wait_for_fuse_ready_posix
+        else:
+            wait_for_fuse_ready = self._wait_for_fuse_ready_windows
+        async with wait_for_fuse_ready(mountpoint):
 
-        portal = trio.BlockingTrioPortal()
-        self._fuse_operations = FuseOperations(self._fs, portal, mountpoint)
+            portal = trio.BlockingTrioPortal()
+            self._fuse_operations = FuseOperations(self._fs, portal, mountpoint)
 
-        def _run_fuse():
-            FUSE(self._fuse_operations, mountpoint, foreground=True, **self._fuse_config)
+            def _run_fuse():
+                FUSE(self._fuse_operations, mountpoint, foreground=True, **self._fuse_config)
 
-        self._fuse_thread = threading.Thread(target=_run_fuse)
+            self._fuse_thread = threading.Thread(target=_run_fuse)
+
+            self._fuse_thread.start()
+
+        self.event_bus.send("fuse.mountpoint.started", mountpoint=mountpoint)
+
+    @asynccontextmanager
+    async def _wait_for_fuse_ready_posix(self, mountpoint):
+        # On POSIX systems, mounting target must exists
+        os.makedirs(mountpoint, exist_ok=True)
         initial_st_dev = os.stat(mountpoint).st_dev
-        self._fuse_thread.start()
+
+        yield
 
         # Polling until fuse is ready
         # Note given python fs api is blocking, we must run it inside a thread
@@ -82,7 +96,26 @@ class FuseManager:
 
         await trio.run_sync_in_worker_thread(_wait_for_fuse_ready)
 
-        self.event_bus.send("fuse.mountpoint.started", mountpoint=mountpoint)
+    @asynccontextmanager
+    async def _wait_for_fuse_ready_windows(self, mountpoint):
+        # On Windows, mounting target should not exists
+
+        yield
+
+        # Polling until fuse is ready
+        # Note given python fs api is blocking, we must run it inside a thread
+        # to avoid blocking the trio loop and ending up in a deadlock
+
+        def _wait_for_fuse_ready():
+            while True:
+                time.sleep(0.1)
+                try:
+                    os.stat(mountpoint)
+                    break
+                except FileNotFoundError:
+                    pass
+
+        await trio.run_sync_in_worker_thread(_wait_for_fuse_ready)
 
     async def stop(self):
         if not self.is_started():
