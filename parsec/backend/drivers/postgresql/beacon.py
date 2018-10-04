@@ -39,7 +39,7 @@ class PGBeaconComponent(BaseBeaconComponent):
                     (
                         -- Retrieve last index of this beacon, or default to 1
                         SELECT COALESCE(
-                            (SELECT  beacon_id + 1 FROM beacons WHERE beacon_id=$1 ORDER BY _id DESC LIMIT 1),
+                            (SELECT  beacon_index + 1 FROM beacons WHERE beacon_id=$1 ORDER BY _id DESC LIMIT 1),
                             1
                         )
                     ),
