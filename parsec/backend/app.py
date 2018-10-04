@@ -1,3 +1,4 @@
+from os import environ
 import attr
 import trio
 import logbook
@@ -34,34 +35,43 @@ from parsec.backend.exceptions import NotFoundError
 logger = logbook.Logger("parsec.backend.app")
 
 
-def blockstore_factory(db_url, postgresql_dbh=None):
-    if db_url == "MOCKED":
+def blockstore_factory(blockstore_type, postgresql_dbh=None):
+    if blockstore_type == "MOCKED":
         return MemoryBlockStoreComponent()
 
-    elif db_url == "POSTGRESQL":
+    elif blockstore_type == "POSTGRESQL":
         if not postgresql_dbh:
             raise ValueError("PostgreSQL blockstore is not available")
         return PGBlockStoreComponent(postgresql_dbh)
 
-    config = db_url.split(":")
-    if config[0] == "s3":
+    elif blockstore_type == "AMAZON_S3":
         try:
             from parsec.backend.s3_blockstore import S3BlockStoreComponent
 
-            return S3BlockStoreComponent(*config[1:])
+            return S3BlockStoreComponent(
+                *[
+                    environ.get(blockstore_type + "_" + item)
+                    for item in ["REGION", "BUCKET", "KEY", "SECRET"]
+                ]
+            )
         except ImportError:
             raise ValueError("S3 blockstore is not available")
 
-    elif config[0] == "openstack":
+    elif blockstore_type == "OPENSTACK_SWIFT":
         try:
             from parsec.backend.openstack_blockstore import OpenStackBlockStoreComponent
 
-            return OpenStackBlockStoreComponent(*config[1:])
+            return OpenStackBlockStoreComponent(
+                *[
+                    environ.get(blockstore_type + "_" + item)
+                    for item in ["AUTHURL", "TENANT", "CONTAINER", "USER", "PASSWORD"]
+                ]
+            )
         except ImportError:
             raise ValueError("OpenStack blockstore is not available")
 
     else:
-        raise ValueError(f"Unknown blockstore type `{db_url}`")
+        raise ValueError(f"Unknown blockstore type `{blockstore_type}`")
 
 
 class _cmd_PING_Schema(BaseCmdSchema):
@@ -167,7 +177,7 @@ class BackendApp:
             self.beacon = MemoryBeaconComponent(self.event_bus)
             self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
 
-            self.blockstore = blockstore_factory(self.config.blockstore_url)
+            self.blockstore = blockstore_factory(self.config.blockstore_type)
         else:
             self.dbh = PGHandler(self.config.db_url, self.event_bus)
             self.user = PGUserComponent(self.dbh, self.event_bus)
@@ -176,7 +186,7 @@ class BackendApp:
             self.vlob = PGVlobComponent(self.dbh, self.event_bus, self.beacon)
 
             self.blockstore = blockstore_factory(
-                self.config.blockstore_url, postgresql_dbh=self.dbh
+                self.config.blockstore_type, postgresql_dbh=self.dbh
             )
 
         self.anonymous_cmds = {

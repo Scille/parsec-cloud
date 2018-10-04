@@ -5,7 +5,7 @@ import attr
 def config_factory(raw_conf):
     raw_conf = {k.upper(): v for k, v in raw_conf.items() if v not in (None, "")}
 
-    for mandatory in ("BLOCKSTORE_URL", "DB_URL"):
+    for mandatory in ("BLOCKSTORE_TYPE", "DB_URL"):
         if not raw_conf.get(mandatory):
             raise ValueError(f"Missing mandatory config {mandatory}")
 
@@ -18,21 +18,24 @@ def config_factory(raw_conf):
 @attr.s(slots=True, frozen=True)
 class BackendConfig:
 
-    blockstore_url = attr.ib()
+    blockstore_type = attr.ib()
 
-    @blockstore_url.validator
-    def _validate_blockstore_url(self, field, val):
+    @blockstore_type.validator
+    def _validate_blockstore_type(self, field, val):
         if val == "MOCKED":
             return val
         elif val == "POSTGRESQL":
             return val
-        elif val.startswith("s3:") and len(val.split(":")) == 5:
+        elif val == "AMAZON_S3" and set(
+            [val + "_" + item for item in ["REGION", "BUCKET", "KEY", "SECRET"]]
+        ).issubset(environ):
             return val
-        elif val.startswith("openstack:") and len(val.split(":")) == 6:
+        elif val == "OPENSTACK_SWIFT" and set(
+            [val + "_" + item for item in ["AUTH_URL", "TENANT", "CONTAINER", "USER", "PASSWORD"]]
+        ).issubset(environ):
             return val
         raise ValueError(
-            "BLOCKSTORE_URL must be `MOCKED`, `POSTGRESQL`, `s3:<region>:<bucket>:<key>:<secret>`,"
-            " or `openstack:<auth_url>:<tenant>:<container>:<user>:<password>`"
+            "BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `AMAZON_S3`, or `OPENSTACK_SWIFT` and environment variables must be set accordingly"
         )
 
     db_url = attr.ib()
