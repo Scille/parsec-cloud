@@ -141,12 +141,7 @@ class FuseOperations(LoggingMixIn, Operations):
         # Unix allows to overwrite the destination, so make sure to have
         # space before calling the move
         with translate_error():
-
-            async def _do(src, dst):
-                await self.fs.delete(src)
-                await self.fs.move(src, dst)
-
-            self._portal.run(_do, src, dst)
+            self._portal.run(self.fs.move, src, dst)
 
         return 0
 
