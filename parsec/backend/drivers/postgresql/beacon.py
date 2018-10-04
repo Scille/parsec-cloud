@@ -36,7 +36,13 @@ class PGBeaconComponent(BaseBeaconComponent):
                     src_version
                 ) VALUES (
                     $1,
-                    (SELECT COUNT(beacon_id) + 1 FROM beacons WHERE beacon_id=$1),
+                    (
+                        -- Retrieve last index of this beacon, or default to 1
+                        SELECT COALESCE(
+                            (SELECT  beacon_id + 1 FROM beacons WHERE beacon_id=$1 ORDER BY _id DESC LIMIT 1),
+                            1
+                        )
+                    ),
                     $2,
                     $3
                 ) RETURNING beacon_index
