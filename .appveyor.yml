@@ -7,24 +7,27 @@ services:
 
 environment:
   global:
-    PGINSTALLATION: "C:\\Program Files\\PostgreSQL\\9.6\\bin"
+    PGINSTALLATION: C:\Program Files\PostgreSQL\9.6\bin
   matrix:
-    - PYTHON: "C:\\Python36"
-    - PYTHON: "C:\\Python36-x64"
+    - PYTHON: C:\Python36
+    - PYTHON: C:\Python36-x64
 
 build_script:
-  - "choco install winfsp -y --version=1.3.18160"
-  - "PATH=C:\\Program Files\\PostgreSQL\\9.6\\bin\\;%PATH%"
-  - "which pg_config"
-  - "pg_config --version"
-  - "git --no-pager log -n2"
-  - "echo %APPVEYOR_REPO_COMMIT%"
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;;%PATH%"
-  - "python --version"
-  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
-  - "pip install -U coveralls"
-  - "pip install .[all] --process-dependency-links"
+  - SET PGUSER=postgres
+  - SET PGPASSWORD=Password12!
+  - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
+  - createdb parsec_test
+  - which pg_config
+  - pg_config --version
+  - choco install winfsp -y --version=1.3.18160
+  - git --no-pager log -n2
+  - echo %APPVEYOR_REPO_COMMIT%
+  - SET PATH=%PYTHON%;%PYTHON%\Scripts;;%PATH%
+  - python --version
+  - python -c "import struct; print(struct.calcsize('P') * 8)"
+  - pip install -U coveralls
+  - pip install .[all] --process-dependency-links
 
 test_script:
-  - "py.test tests --cov=parsec --cov-config=setup.cfg --runslow -vvv --postgresql -s -x"
-  - "codecov"
+  - py.test tests --cov=parsec --cov-config=setup.cfg --runslow -vvv --postgresql -s -x
+  - codecov
