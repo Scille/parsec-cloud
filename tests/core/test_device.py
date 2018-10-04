@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 import trio
 
 
@@ -23,7 +24,7 @@ async def test_device_cmd_backend_offline(core, alice_core_sock, cmd):
 
 
 @pytest.mark.trio
-async def test_device_declare_then_accepted(
+async def test_device_declare_then_accepted_using_password(
     running_backend, core_factory, core_sock_factory, alice
 ):
     # -1) Given the core is initialized while the backend is online, we are
@@ -118,6 +119,132 @@ async def test_device_declare_then_accepted(
             rep = await restarted_new_device_core_sock.send({"cmd": "info"})
             rep = await restarted_new_device_core_sock.recv()
             assert rep == {"status": "ok", "loaded": True, "id": "alice@device2"}
+
+
+@pytest.mark.trio
+async def test_device_declare_then_accepted_using_nitrokey(
+    running_backend, core_factory, core_sock_factory, alice
+):
+    def encrypt_data_mock(istream, ostream, keyid, token):
+        if token != 1 or keyid != 2:
+            raise IndexError
+        return ostream.write(b"ENC:" + istream.getvalue())
+
+    def decrypt_data_mock(token, pin, istream, ostream, keyid):
+        if token != 1 or keyid != 2:
+            raise IndexError
+        if pin != "123456":
+            raise RuntimeError
+        return ostream.write(istream.getvalue()[4:])
+
+    with patch("parsec.nitrokey_encryption_tool.encrypt_data") as encrypt_data, patch(
+        "parsec.nitrokey_encryption_tool.decrypt_data"
+    ) as decrypt_data:
+        encrypt_data.side_effect = encrypt_data_mock
+        decrypt_data.side_effect = decrypt_data_mock
+
+        # -1) Given the core is initialized while the backend is online, we are
+        # guaranteed the two are connected
+        async with core_factory() as core, core_sock_factory(core) as alice_core_sock:
+            await core.login(alice)
+
+            # 0) Initial device declare the new device
+
+            await alice_core_sock.send({"cmd": "device_declare", "device_name": "device2"})
+            rep = await alice_core_sock.recv()
+            assert rep["status"] == "ok"
+            configure_device_token = rep["configure_device_token"]
+
+            # 1) Existing device start listening for device configuration
+
+            await alice_core_sock.send(
+                {"cmd": "event_subscribe", "event": "device_try_claim_submitted"}
+            )
+            rep = await alice_core_sock.recv()
+            assert rep == {"status": "ok"}
+
+            # 2) Wannabe device spawn core and start configuration
+
+            async with core_factory(devices=[]) as new_device_core, core_sock_factory(
+                new_device_core
+            ) as new_device_core_sock:
+
+                await new_device_core_sock.send(
+                    {
+                        "cmd": "device_configure",
+                        "device_id": "alice@device2",
+                        "configure_device_token": configure_device_token,
+                        "use_nitrokey": True,
+                        "nitrokey_token_id": 1,
+                        "nitrokey_key_id": 2,
+                    }
+                )
+
+                # Here new_device_core should be on hold, waiting for existing device to
+                # accept/refuse his configuration try
+
+                # 3) Existing device receive configuration event
+
+                await alice_core_sock.send({"cmd": "event_listen"})
+                with trio.fail_after(1):
+                    rep = await alice_core_sock.recv()
+                assert rep["status"] == "ok"
+                assert rep["event"] == "device_try_claim_submitted"
+                assert rep["device_name"] == "device2"
+                assert rep["config_try_id"]
+
+                config_try_id = rep["config_try_id"]
+
+                # 4) Existing device accept configuration
+
+                await alice_core_sock.send(
+                    {
+                        "cmd": "device_accept_configuration_try",
+                        "config_try_id": config_try_id,
+                        "nitrokey_pin": "123456",
+                        "nitrokey_token_id": 1,
+                        "nitrokey_key_id": 2,
+                    }
+                )
+                rep = await alice_core_sock.recv()
+                assert rep == {"status": "ok"}
+
+                # 5) Wannabe device get it answer: device has been accepted !
+
+                with trio.fail_after(1):
+                    rep = await new_device_core_sock.recv()
+                assert rep["status"] == "ok"
+
+            # Device config should have been stored on local storage so restarting
+            # core is not a trouble
+
+            async with core_factory(
+                devices=[], config={"base_settings_path": new_device_core.config.base_settings_path}
+            ) as restarted_new_device_core, core_sock_factory(
+                restarted_new_device_core
+            ) as restarted_new_device_core_sock:
+
+                # 6) Now wannabe device can login as alice
+
+                rep = await restarted_new_device_core_sock.send({"cmd": "list_available_logins"})
+                rep = await restarted_new_device_core_sock.recv()
+                assert rep == {"status": "ok", "devices": ["alice@device2"]}
+
+                rep = await restarted_new_device_core_sock.send(
+                    {
+                        "cmd": "login",
+                        "id": "alice@device2",
+                        "nitrokey_pin": "123456",
+                        "nitrokey_token_id": 1,
+                        "nitrokey_key_id": 2,
+                    }
+                )
+                rep = await restarted_new_device_core_sock.recv()
+                assert rep == {"status": "ok"}
+
+                rep = await restarted_new_device_core_sock.send({"cmd": "info"})
+                rep = await restarted_new_device_core_sock.recv()
+                assert rep == {"status": "ok", "loaded": True, "id": "alice@device2"}
 
 
 @pytest.mark.trio
