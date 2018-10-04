@@ -378,12 +378,18 @@ class LocalFolderFS:
 
         if src == "/":
             # Raise FileNotFoundError if parent_dst doesn't exists
-            self._retrieve_entry(parent_dst)
-            raise PermissionError(13, "Permission denied", src, dst)
+            _, parent_manifest = self._retrieve_entry(parent_dst)
+            if not is_folder_manifest(parent_manifest):
+                raise NotADirectoryError(20, "Not a directory", parent_src)
+            else:
+                raise PermissionError(13, "Permission denied", src, dst)
         elif dst == "/":
             # Raise FileNotFoundError if parent_src doesn't exists
-            self._retrieve_entry(parent_src)
-            raise PermissionError(13, "Permission denied", src, dst)
+            _, parent_manifest = self._retrieve_entry(parent_src)
+            if not is_folder_manifest(parent_manifest):
+                raise NotADirectoryError(20, "Not a directory", parent_src)
+            else:
+                raise PermissionError(13, "Permission denied", src, dst)
 
         if parent_src == parent_dst:
             parent_access, parent_manifest = self._retrieve_entry(parent_src)
