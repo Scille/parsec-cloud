@@ -57,6 +57,14 @@ class DeviceConfigureOutOfDate(DeviceConfigureError):
     pass
 
 
+class DeviceConfigureNoInvitation(DeviceConfigureError):
+    pass
+
+
+class DeviceConfigureAlreadyExists(DeviceConfigureError):
+    pass
+
+
 USER_ID_PATTERN = r"^[0-9a-zA-Z\-_.]+$"
 DEVICE_NAME_PATTERN = r"^[0-9a-zA-Z\-_.]+$"
 DEVICE_ID_PATTERN = r"^[0-9a-zA-Z\-_.]+@[0-9a-zA-Z\-_.]+$"
@@ -579,6 +587,10 @@ async def claim_user(backend_addr, user_id, device_name, invitation_token):
     if rep["status"] != "ok":
         if rep.get("status") == "out_of_date_error":
             raise DeviceConfigureOutOfDate("Claim code is too old.")
+        elif rep.get("status") == "not_found_error":
+            raise DeviceConfigureNoInvitation("No invitation for this user.")
+        elif rep.get("status") == "already_exists_error":
+            raise DeviceConfigureAlreadyExists("User already exists.")
         raise DeviceConfigureBackendError()
 
     # Upload the very first version of user manifest

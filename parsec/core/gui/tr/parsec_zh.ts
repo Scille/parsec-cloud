@@ -102,119 +102,283 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="262"/>
+        <location filename="../files_widget.py" line="256"/>
         <source>{} already exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="190"/>
+        <location filename="../files_widget.py" line="184"/>
         <source>Importing the folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="190"/>
+        <location filename="../files_widget.py" line="184"/>
         <source>Sub-folders will not be imported to prevent big data imports.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="469"/>
+        <location filename="../files_widget.py" line="463"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="278"/>
+        <location filename="../files_widget.py" line="272"/>
         <source>Can not import
 {}.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="297"/>
+        <location filename="../files_widget.py" line="291"/>
         <source>New folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="297"/>
+        <location filename="../files_widget.py" line="291"/>
         <source>Enter new folder name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="310"/>
+        <location filename="../files_widget.py" line="304"/>
         <source>A folder with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="331"/>
+        <location filename="../files_widget.py" line="325"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="333"/>
+        <location filename="../files_widget.py" line="327"/>
         <source>Open in file explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="337"/>
+        <location filename="../files_widget.py" line="331"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="373"/>
+        <location filename="../files_widget.py" line="367"/>
         <source>Confirmation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="362"/>
+        <location filename="../files_widget.py" line="356"/>
         <source>Are you sure you want to delete folder &quot;{}&quot; ?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="373"/>
+        <location filename="../files_widget.py" line="367"/>
         <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="505"/>
+        <location filename="../files_widget.py" line="499"/>
         <source>{} element(s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="421"/>
+        <location filename="../files_widget.py" line="415"/>
         <source>Share</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="427"/>
+        <location filename="../files_widget.py" line="421"/>
         <source>Share a workspace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="427"/>
+        <location filename="../files_widget.py" line="421"/>
         <source>Give a user name to share the workspace {} with.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="439"/>
+        <location filename="../files_widget.py" line="433"/>
         <source>Can not share the workspace &quot;{}&quot; with yourself.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="447"/>
+        <location filename="../files_widget.py" line="441"/>
         <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="458"/>
+        <location filename="../files_widget.py" line="452"/>
         <source>New workspace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="458"/>
+        <location filename="../files_widget.py" line="452"/>
         <source>Enter new workspace name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="469"/>
+        <location filename="../files_widget.py" line="463"/>
         <source>A workspace with the same name already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>LoginLoginWidget</name>
+    <message>
+        <location filename="../forms/login_login_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_login_widget.ui" line="108"/>
+        <source>Log In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_login_widget.ui" line="32"/>
+        <source>Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_login_widget.ui" line="39"/>
+        <source>Use NitroKey authentication instead of password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_login_widget.ui" line="51"/>
+        <source>Token ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_login_widget.ui" line="58"/>
+        <source>Key ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_login_widget.ui" line="71"/>
+        <source>NitroKey PIN</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>LoginRegisterDeviceWidget</name>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="20"/>
+        <source>Register a new device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="26"/>
+        <source>To register, you need an existing device to declare a new device and get the resulting token.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="36"/>
+        <source>Login</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="46"/>
+        <source>Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="56"/>
+        <source>Password check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="63"/>
+        <source>Device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="70"/>
+        <source>Token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="95"/>
+        <source>Register</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../login_widget.py" line="172"/>
+        <source>Passwords don&apos;t match.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../login_widget.py" line="177"/>
+        <source>Waiting for existing device to register us...</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>LoginRegisterUserWidget</name>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="23"/>
+        <source>Register a new account</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="29"/>
+        <source>To register, you need another user to create an account and get a token.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="39"/>
+        <source>Login</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="49"/>
+        <source>Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="59"/>
+        <source>Password check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="66"/>
+        <source>Use NitroKey authentication instead of password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="99"/>
+        <source>Device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="106"/>
+        <source>Token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="131"/>
+        <source>Register</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="76"/>
+        <source>Token ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="86"/>
+        <source>Key ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../login_widget.py" line="110"/>
+        <source>Passwords don&apos;t match.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -227,77 +391,17 @@
     </message>
     <message>
         <location filename="../forms/login_widget.ui" line="41"/>
-        <source>Register a new device</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="47"/>
-        <source>To register, you need an existing device to declare a new device and get the resulting token.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="227"/>
-        <source>Login</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="237"/>
-        <source>Password</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="247"/>
-        <source>Password check</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="254"/>
-        <source>Device</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="261"/>
-        <source>Token</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="286"/>
-        <source>Register</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="179"/>
-        <source>Log In</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="211"/>
-        <source>Register a new account</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="217"/>
-        <source>To register, you need another user to create an account and get a token.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="315"/>
         <source>Log In instead</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="322"/>
+        <location filename="../forms/login_widget.ui" line="48"/>
         <source>Register a new account instead</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="329"/>
+        <location filename="../forms/login_widget.ui" line="55"/>
         <source>Register a new device instead</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../login_widget.py" line="121"/>
-        <source>Passwords don&apos;t match.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -384,17 +488,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="142"/>
+        <location filename="../main_window.py" line="155"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="169"/>
+        <location filename="../main_window.py" line="188"/>
         <source>Can not register the new user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="213"/>
+        <location filename="../main_window.py" line="232"/>
         <source>Are you sure you want to quit ?</source>
         <translation type="unfinished"></translation>
     </message>

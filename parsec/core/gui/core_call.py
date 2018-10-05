@@ -76,17 +76,17 @@ class _CoreCall:
     def get_devices(self, *args, **kwargs):
         return self._parsec_core.local_devices_manager.list_available_devices()
 
-    def register_new_device(self, *args):
+    def register_new_device(self, *args, **kwargs):
         """
         Locally register the new device.
         """
-        return self._parsec_core.local_devices_manager.register_new_device(*args)
+        return self._parsec_core.local_devices_manager.register_new_device(*args, **kwargs)
 
-    def load_device(self, *args):
+    def load_device(self, *args, **kwargs):
         """
         Load device from local.
         """
-        return self._parsec_core.local_devices_manager.load_device(*args)
+        return self._parsec_core.local_devices_manager.load_device(*args, **kwargs)
 
     def invite_user(self, *args):
         return self._trio_portal.run(invite_user, self._parsec_core.backend_cmds_sender, *args)
@@ -122,8 +122,8 @@ class _CoreCall:
             password,
         )
 
-    def claim_user(self, *args):
-        return self._trio_portal.run(claim_user, self._parsec_core.backend_addr, *args)
+    def claim_user(self, *args, **kwargs):
+        return self._trio_portal.run(claim_user, self._parsec_core.backend_addr, *args, **kwargs)
 
     def create_workspace(self, *args):
         return self._trio_portal.run(self._parsec_core.fs.workspace_create, *args)
