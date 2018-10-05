@@ -237,7 +237,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     manifest,
                     use_nitrokey=True,
                     nitrokey_token_id=nitrokey_token,
-                    nitrokey_key_id=nitrokey_id,
+                    nitrokey_key_id=nitrokey_key,
                 )
             self.login_widget.add_device(device_id)
             QMessageBox.information(
