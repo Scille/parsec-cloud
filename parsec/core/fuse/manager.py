@@ -50,7 +50,7 @@ class FuseManager:
         self._fuse_config = {"debug": debug, "nothreads": nothreads}
         self._fuse_operations = None
         self._fuse_thread_started = threading.Event()
-        self._fuse_thread_stopped = trio.Event()
+        self._fuse_thread_stopped = threading.Event()
 
     async def init(self, nursery):
         self._portal = trio.BlockingTrioPortal()
