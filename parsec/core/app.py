@@ -150,6 +150,7 @@ class LoggedClientManager:
         # Components initialization must respect dependencies
         await self.backend_cmds_sender.init(self._nursery)
         await self.encryption_manager.init(self._nursery)
+        await self.fuse_manager.init(self._nursery)
         # Keep event manager last, so it will know what events the other
         # modules need before connecting to the backend
         await self.backend_events_manager.init(self._nursery)

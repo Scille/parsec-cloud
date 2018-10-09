@@ -23,39 +23,41 @@ async def test_mount_fuse(alice_fs, event_bus, tmpdir):
     await alice_fs.file_create("/bar.txt")
     await alice_fs.file_write("/bar.txt", b"Hello world !")
 
-    try:
-        # Now we can start fuse
+    # Now we can start fuse
 
-        mountpoint = "%s/fuse_mountpoint" % tmpdir
-        manager = FuseManager(alice_fs, event_bus)
-        with event_bus.listen() as spy:
-            await manager.start(mountpoint)
-        spy.assert_events_occured(
-            [
-                ("fuse.mountpoint.starting", {"mountpoint": mountpoint}),
-                ("fuse.mountpoint.started", {"mountpoint": mountpoint}),
-            ]
-        )
+    mountpoint = "%s/fuse_mountpoint" % tmpdir
+    manager = FuseManager(alice_fs, event_bus)
+    async with trio.open_nursery() as nursery:
+        try:
+            await manager.init(nursery)
+            with event_bus.listen() as spy:
+                await manager.start(mountpoint)
+            spy.assert_events_occured(
+                [
+                    ("fuse.mountpoint.starting", {"mountpoint": mountpoint}),
+                    ("fuse.mountpoint.started", {"mountpoint": mountpoint}),
+                ]
+            )
 
-        # Finally explore the mountpoint
+            # Finally explore the mountpoint
 
-        def inspect_mountpoint():
-            children = set(os.listdir(mountpoint))
-            assert children == {"foo", "bar.txt"}
+            def inspect_mountpoint():
+                children = set(os.listdir(mountpoint))
+                assert children == {"foo", "bar.txt"}
 
-            bar_stat = os.stat(f"{mountpoint}/bar.txt")
-            assert bar_stat.st_size == len(b"Hello world !")
+                bar_stat = os.stat(f"{mountpoint}/bar.txt")
+                assert bar_stat.st_size == len(b"Hello world !")
 
-            with open("%s/bar.txt" % mountpoint, "rb") as fd:
-                bar_txt = fd.read()
-            assert bar_txt == b"Hello world !"
+                with open("%s/bar.txt" % mountpoint, "rb") as fd:
+                    bar_txt = fd.read()
+                assert bar_txt == b"Hello world !"
 
-        # Note given python fs api is blocking, we must run it inside a thread
-        # to avoid blocking the trio loop and ending up in a deadlock
-        await trio.run_sync_in_worker_thread(inspect_mountpoint)
+            # Note given python fs api is blocking, we must run it inside a thread
+            # to avoid blocking the trio loop and ending up in a deadlock
+            await trio.run_sync_in_worker_thread(inspect_mountpoint)
 
-    finally:
-        await manager.stop()
+        finally:
+            await manager.stop()
 
 
 @pytest.mark.trio
@@ -72,3 +74,21 @@ async def test_umount_fuse(alice_core, tmpdir, fuse_stop_mode):
         assert not alice_core.fuse_manager.is_started()
     else:
         await alice_core.logout()
+
+
+@pytest.mark.trio
+@pytest.mark.skipif(not FUSE_AVAILABLE, reason="libfuse/fusepy not installed")
+async def test_hard_crash_in_fuse_thread(alice_core, tmpdir):
+
+    # Given FUSE is set in it own process,
+
+    class ToughLuckError(Exception):
+        pass
+
+    def _crash_fuse(*args, **kwargs):
+        raise ToughLuckError()
+
+    mountpoint = "%s/fuse_mountpoint" % tmpdir
+    with patch("parsec.core.fuse.manager.FUSE", new=_crash_fuse):
+        with pytest.raises(ToughLuckError):
+            await alice_core.fuse_manager.start(mountpoint)

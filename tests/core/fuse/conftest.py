@@ -65,11 +65,13 @@ def fuse_service_factory(tmpdir, unused_tcp_addr, device_factory, event_bus_fact
                 event_bus = event_bus_factory()
                 async with fs_factory(device, unused_tcp_addr) as fs:
                     fuse = FuseManager(fs, event_bus)
-                    await fuse.start(str(self.mountpoint))
-                    try:
-                        await started_cb(fs=fs, fuse=fuse)
-                    finally:
-                        await fuse.stop()
+                    async with trio.open_nursery() as nursery:
+                        await fuse.init(nursery)
+                        await fuse.start(str(self.mountpoint))
+                        try:
+                            await started_cb(fs=fs, fuse=fuse)
+                        finally:
+                            await fuse.teardown()
 
             async with trio.open_nursery() as self._nursery:
                 self._ready.set()
