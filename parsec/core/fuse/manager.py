@@ -3,6 +3,7 @@ import trio
 import time
 import threading
 import logging
+from pathlib import Path
 
 from parsec.core.fuse.operations import FuseOperations
 
@@ -77,6 +78,8 @@ class FuseManager:
             os.makedirs(self.mountpoint, exist_ok=True)
             initial_st_dev = os.stat(self.mountpoint).st_dev
         else:
+            # On Windows, only parent's mounting target must exists
+            os.makedirs(str(Path(self.mountpoint).parent), exists_ok=True)
             initial_st_dev = None
 
         try:

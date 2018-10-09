@@ -25,7 +25,7 @@ async def test_mount_fuse(alice_fs, event_bus, tmpdir):
 
     # Now we can start fuse
 
-    mountpoint = "%s/fuse_mountpoint" % tmpdir
+    mountpoint = f"{tmpdir}/fuse_mountpoint"
     manager = FuseManager(alice_fs, event_bus)
     async with trio.open_nursery() as nursery:
         try:
@@ -64,7 +64,7 @@ async def test_mount_fuse(alice_fs, event_bus, tmpdir):
 @pytest.mark.skipif(not FUSE_AVAILABLE, reason="libfuse/fusepy not installed")
 @pytest.mark.parametrize("fuse_stop_mode", ["manual", "logout"])
 async def test_umount_fuse(alice_core, tmpdir, fuse_stop_mode):
-    mountpoint = "%s/fuse_mountpoint" % tmpdir
+    mountpoint = f"{tmpdir}/fuse_mountpoint"
 
     await alice_core.fuse_manager.start(mountpoint)
     assert alice_core.fuse_manager.is_started()
@@ -79,16 +79,21 @@ async def test_umount_fuse(alice_core, tmpdir, fuse_stop_mode):
 @pytest.mark.trio
 @pytest.mark.skipif(not FUSE_AVAILABLE, reason="libfuse/fusepy not installed")
 async def test_hard_crash_in_fuse_thread(alice_core, tmpdir):
-
-    # Given FUSE is set in it own process,
-
     class ToughLuckError(Exception):
         pass
 
     def _crash_fuse(*args, **kwargs):
         raise ToughLuckError()
 
-    mountpoint = "%s/fuse_mountpoint" % tmpdir
+    mountpoint = f"{tmpdir}/fuse_mountpoint"
     with patch("parsec.core.fuse.manager.FUSE", new=_crash_fuse):
         with pytest.raises(ToughLuckError):
             await alice_core.fuse_manager.start(mountpoint)
+
+
+@pytest.mark.trio
+@pytest.mark.skipif(not FUSE_AVAILABLE, reason="libfuse/fusepy not installed")
+async def test_mount_missing_path(alice_core, tmpdir):
+    # Path should be created if it doesn' exist
+    mountpoint = f"{tmpdir}/dummy/dummy/dummy"
+    await alice_core.fuse_manager.start(mountpoint)
