@@ -30,12 +30,14 @@ from parsec.backend.drivers.postgresql import (
 )
 
 from parsec.backend.exceptions import NotFoundError
+from parsec.backend.config import blockstore_params
 
 
 logger = logbook.Logger("parsec.backend.app")
 
 
-def blockstore_factory(blockstore_type, postgresql_dbh=None):
+def blockstore_factory(config, postgresql_dbh=None):
+    blockstore_type = config.blockstore_type
     if blockstore_type == "MOCKED":
         return MemoryBlockStoreComponent()
 
@@ -50,8 +52,8 @@ def blockstore_factory(blockstore_type, postgresql_dbh=None):
 
             return S3BlockStoreComponent(
                 *[
-                    environ.get(blockstore_type + "_" + item)
-                    for item in ["REGION", "BUCKET", "KEY", "SECRET"]
+                    getattr(config, (blockstore_type + "_" + param).lower())
+                    for param in blockstore_params["S3"]
                 ]
             )
         except ImportError:
@@ -63,8 +65,8 @@ def blockstore_factory(blockstore_type, postgresql_dbh=None):
 
             return OpenStackBlockStoreComponent(
                 *[
-                    environ.get(blockstore_type + "_" + item)
-                    for item in ["AUTHURL", "TENANT", "CONTAINER", "USER", "PASSWORD"]
+                    getattr(config, (blockstore_type + "_" + param).lower())
+                    for param in blockstore_params["SWIFT"]
                 ]
             )
         except ImportError:
@@ -177,7 +179,7 @@ class BackendApp:
             self.beacon = MemoryBeaconComponent(self.event_bus)
             self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
 
-            self.blockstore = blockstore_factory(self.config.blockstore_type)
+            self.blockstore = blockstore_factory(self.config)
         else:
             self.dbh = PGHandler(self.config.db_url, self.event_bus)
             self.user = PGUserComponent(self.dbh, self.event_bus)
@@ -185,9 +187,7 @@ class BackendApp:
             self.beacon = PGBeaconComponent(self.dbh, self.event_bus)
             self.vlob = PGVlobComponent(self.dbh, self.event_bus, self.beacon)
 
-            self.blockstore = blockstore_factory(
-                self.config.blockstore_type, postgresql_dbh=self.dbh
-            )
+            self.blockstore = blockstore_factory(self.config, postgresql_dbh=self.dbh)
 
         self.anonymous_cmds = {
             "user_claim": self.user.api_user_claim,

@@ -2,6 +2,12 @@ from os import environ
 import attr
 
 
+blockstore_params = {
+    "S3": ["REGION", "BUCKET", "KEY", "SECRET"],
+    "SWIFT": ["AUTHURL", "TENANT", "CONTAINER", "USER", "PASSWORD"],
+}
+
+
 def config_factory(raw_conf):
     raw_conf = {k.upper(): v for k, v in raw_conf.items() if v not in (None, "")}
 
@@ -11,6 +17,11 @@ def config_factory(raw_conf):
 
     if "SENTRY_URL" not in raw_conf:
         raw_conf["SENTRY_URL"] = environ.get("SENTRY_URL") or None
+
+    for blockstore_type, params in blockstore_params.items():
+        for param in params:
+            key = blockstore_type + "_" + param
+            raw_conf[key] = environ.get(key) or None
 
     return BackendConfig(**{k.lower(): v for k, v in raw_conf.items()})
 
@@ -26,17 +37,28 @@ class BackendConfig:
             return val
         elif val == "POSTGRESQL":
             return val
-        elif val == "S3" and set(
-            [val + "_" + item for item in ["REGION", "BUCKET", "KEY", "SECRET"]]
-        ).issubset(environ):
-            return val
-        elif val == "SWIFT" and set(
-            [val + "_" + item for item in ["AUTH_URL", "TENANT", "CONTAINER", "USER", "PASSWORD"]]
-        ).issubset(environ):
-            return val
-        raise ValueError(
-            "BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, or `SWIFT` and environment variables must be set accordingly"
-        )
+        elif val in ["S3", "SWIFT"]:
+            if all(
+                [
+                    getattr(self, val.lower() + "_" + param.lower())
+                    for param in blockstore_params[val]
+                ]
+            ):
+                return val
+            else:
+                missings = [
+                    param
+                    for param in blockstore_params[val]
+                    if not getattr(self, val.lower() + "_" + param.lower())
+                ]
+                plural = "s" if len(missings) > 1 else ""
+                raise ValueError(
+                    ", ".join(missings)
+                    + " environment variable"
+                    + plural
+                    + " must be set accordingly"
+                )
+        raise ValueError("BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, or `SWIFT`")
 
     db_url = attr.ib()
 
@@ -52,3 +74,14 @@ class BackendConfig:
 
     debug = attr.ib(default=False)
     handshake_challenge_size = attr.ib(default=48)
+
+    s3_region = attr.ib(default=None)
+    s3_bucket = attr.ib(default=None)
+    s3_key = attr.ib(default=None)
+    s3_secret = attr.ib(default=None)
+
+    swift_authurl = attr.ib(default=None)
+    swift_tenant = attr.ib(default=None)
+    swift_container = attr.ib(default=None)
+    swift_user = attr.ib(default=None)
+    swift_password = attr.ib(default=None)
