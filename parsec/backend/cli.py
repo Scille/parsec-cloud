@@ -104,7 +104,7 @@ def init_cmd(store, force):
     "--blockstore",
     "-b",
     default="MOCKED",
-    type=click.Choice(("MOCKED", "POSTGRESQL", "AMAZON_S3", "OPENSTACK_SWIFT")),
+    type=click.Choice(("MOCKED", "POSTGRESQL", "S3", "SWIFT")),
     help="Block store the clients should write into (default: mocked in memory). Set environment variables accordingly.",
 )
 @click.option(

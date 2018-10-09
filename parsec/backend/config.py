@@ -26,16 +26,16 @@ class BackendConfig:
             return val
         elif val == "POSTGRESQL":
             return val
-        elif val == "AMAZON_S3" and set(
+        elif val == "S3" and set(
             [val + "_" + item for item in ["REGION", "BUCKET", "KEY", "SECRET"]]
         ).issubset(environ):
             return val
-        elif val == "OPENSTACK_SWIFT" and set(
+        elif val == "SWIFT" and set(
             [val + "_" + item for item in ["AUTH_URL", "TENANT", "CONTAINER", "USER", "PASSWORD"]]
         ).issubset(environ):
             return val
         raise ValueError(
-            "BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `AMAZON_S3`, or `OPENSTACK_SWIFT` and environment variables must be set accordingly"
+            "BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, or `SWIFT` and environment variables must be set accordingly"
         )
 
     db_url = attr.ib()

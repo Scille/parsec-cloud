@@ -44,7 +44,7 @@ def blockstore_factory(blockstore_type, postgresql_dbh=None):
             raise ValueError("PostgreSQL blockstore is not available")
         return PGBlockStoreComponent(postgresql_dbh)
 
-    elif blockstore_type == "AMAZON_S3":
+    elif blockstore_type == "S3":
         try:
             from parsec.backend.s3_blockstore import S3BlockStoreComponent
 
@@ -57,7 +57,7 @@ def blockstore_factory(blockstore_type, postgresql_dbh=None):
         except ImportError:
             raise ValueError("S3 blockstore is not available")
 
-    elif blockstore_type == "OPENSTACK_SWIFT":
+    elif blockstore_type == "SWIFT":
         try:
             from parsec.backend.openstack_blockstore import OpenStackBlockStoreComponent
 
