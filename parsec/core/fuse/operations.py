@@ -1,6 +1,5 @@
-import os
 from contextlib import contextmanager
-from errno import ENETDOWN, EBADF
+from errno import ENETDOWN, EBADF, ENOTDIR
 from stat import S_IRWXU, S_IRWXG, S_IRWXO, S_IFDIR, S_IFREG
 from fuse import FuseOSError, Operations, LoggingMixIn, fuse_get_context, fuse_exit
 
@@ -80,9 +79,12 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def create(self, path, mode):
         with translate_error():
-            stat = self._portal.run(self.fs.file_create, path)
 
-        return self.open(path)
+            async def _do(path):
+                await self.fs.file_create(path)
+                return await self.fs.file_fd_open(path)
+
+            return self._portal.run(_do, path)
 
     def open(self, path, flags=0):
         with translate_error():

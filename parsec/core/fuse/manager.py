@@ -72,6 +72,7 @@ class FuseManager:
                 FUSE(self._fuse_operations, mountpoint, foreground=True, **self._fuse_config)
 
             self._fuse_thread = threading.Thread(target=_run_fuse)
+            self._fuse_thread.setName(f"FUSE({mountpoint})")
 
             self._fuse_thread.start()
 
