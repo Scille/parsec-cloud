@@ -2,9 +2,9 @@ from os import environ
 import attr
 
 
-blockstore_params = {
-    "S3": ["REGION", "BUCKET", "KEY", "SECRET"],
-    "SWIFT": ["AUTHURL", "TENANT", "CONTAINER", "USER", "PASSWORD"],
+blockstore_environ_vars = {
+    "S3": ["S3_REGION", "S3_BUCKET", "S3_KEY", "S3_SECRET"],
+    "SWIFT": ["SWIFT_AUTHURL", "SWIFT_TENANT", "SWIFT_CONTAINER", "SWIFT_USER", "SWIFT_PASSWORD"],
 }
 
 
@@ -18,10 +18,9 @@ def config_factory(raw_conf):
     if "SENTRY_URL" not in raw_conf:
         raw_conf["SENTRY_URL"] = environ.get("SENTRY_URL") or None
 
-    for blockstore_type, params in blockstore_params.items():
-        for param in params:
-            key = f"{blockstore_type}_{param}"
-            raw_conf[key] = environ.get(key)
+    for blockstore_type, environ_vars in blockstore_environ_vars.items():
+        for environ_var in environ_vars:
+            raw_conf[environ_var] = environ.get(environ_var)
 
     return BackendConfig(**{k.lower(): v for k, v in raw_conf.items()})
 
@@ -38,24 +37,13 @@ class BackendConfig:
         elif val == "POSTGRESQL":
             return val
         elif val in ["S3", "SWIFT"]:
-            if all(
-                [
-                    getattr(self, f"{val.lower()}_{param.lower()}")
-                    for param in blockstore_params[val]
-                ]
-            ):
-                return val
+            for environ_var in blockstore_environ_vars[val]:
+                if not getattr(self, environ_var.lower()):
+                    raise ValueError(
+                        f"Blockstore {val} requires environment variables: {', '.join(blockstore_environ_vars[val])}"
+                    )
             else:
-                missings = [
-                    param
-                    for param in blockstore_params[val]
-                    if not getattr(self, f"{val.lower()}_{param.lower()}")
-                ]
-                plural = "s" if len(missings) > 1 else ""
-                raise ValueError(
-                    ", ".join(missings) + f" environment variable{plural} must be set accordingly"
-                )
-        raise ValueError("BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, or `SWIFT`")
+                return val
 
     db_url = attr.ib()
 

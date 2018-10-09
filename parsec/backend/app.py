@@ -30,7 +30,6 @@ from parsec.backend.drivers.postgresql import (
 )
 
 from parsec.backend.exceptions import NotFoundError
-from parsec.backend.config import blockstore_params
 
 
 logger = logbook.Logger("parsec.backend.app")
@@ -51,10 +50,7 @@ def blockstore_factory(config, postgresql_dbh=None):
             from parsec.backend.s3_blockstore import S3BlockStoreComponent
 
             return S3BlockStoreComponent(
-                *[
-                    getattr(config, f"{blockstore_type}_{param}".lower())
-                    for param in blockstore_params["S3"]
-                ]
+                config.s3_region, config.s3_bucket, config.s3_key, config.s3_secret
             )
         except ImportError:
             raise ValueError("S3 blockstore is not available")
@@ -64,10 +60,11 @@ def blockstore_factory(config, postgresql_dbh=None):
             from parsec.backend.openstack_blockstore import OpenStackBlockStoreComponent
 
             return OpenStackBlockStoreComponent(
-                *[
-                    getattr(config, f"{blockstore_type}_{param}".lower())
-                    for param in blockstore_params["SWIFT"]
-                ]
+                config.swift_authurl,
+                config.swift_tenant,
+                config.swift_container,
+                config.swift_user,
+                config.swift_password,
             )
         except ImportError:
             raise ValueError("OpenStack blockstore is not available")
