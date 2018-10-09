@@ -5,7 +5,7 @@ from parsec.core.fuse.manager import (
     FuseAlreadyStarted,
     FuseNotStarted,
     FuseNotAvailable,
-    FuseStoppingError,
+    FuseConfigurationError,
 )
 
 
@@ -16,5 +16,5 @@ __all__ = (
     "FuseAlreadyStarted",
     "FuseNotStarted",
     "FuseNotAvailable",
-    "FuseStoppingError",
+    "FuseConfigurationError",
 )

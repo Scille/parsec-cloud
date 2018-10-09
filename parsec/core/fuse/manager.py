@@ -33,7 +33,7 @@ class FuseNotAvailable(FuseManagerError):
     pass
 
 
-class FuseStoppingError(FuseManagerError):
+class FuseConfigurationError(FuseManagerError):
     pass
 
 
@@ -53,6 +53,9 @@ class FuseManager:
         self._fuse_thread_started = threading.Event()
         self._fuse_thread_stopped = threading.Event()
 
+    def get_abs_mountpoint(self):
+        return str(self.mountpoint.absolute())
+
     async def init(self, nursery):
         self._portal = trio.BlockingTrioPortal()
         self._nursery = nursery
@@ -64,22 +67,27 @@ class FuseManager:
         if self.is_started():
             raise FuseAlreadyStarted(f"Fuse already started on mountpoint `{mountpoint}`")
 
-        self.mountpoint = mountpoint
-        self.event_bus.send("fuse.mountpoint.starting", mountpoint=mountpoint)
-        self._fuse_operations = FuseOperations(self._fs, self._portal, mountpoint)
+        self.mountpoint = Path(mountpoint)
+        abs_mountpoint = self.get_abs_mountpoint()
+        self.event_bus.send("fuse.mountpoint.starting", mountpoint=abs_mountpoint)
+        self._fuse_operations = FuseOperations(self._fs, self._portal, abs_mountpoint)
 
         await self._nursery.start(self._run_fuse)
         self._started = True
-        self.event_bus.send("fuse.mountpoint.started", mountpoint=self.mountpoint)
+        self.event_bus.send("fuse.mountpoint.started", mountpoint=abs_mountpoint)
 
     async def _run_fuse(self, *, task_status=trio.TASK_STATUS_IGNORED):
         if os.name == "posix":
             # On POSIX systems, mounting target must exists
-            os.makedirs(self.mountpoint, exist_ok=True)
-            initial_st_dev = os.stat(self.mountpoint).st_dev
+            self.mountpoint.mkdir(exist_ok=True, parents=True)
+            initial_st_dev = self.mountpoint.stat().st_dev
         else:
             # On Windows, only parent's mounting target must exists
-            os.makedirs(str(Path(self.mountpoint).parent), exists_ok=True)
+            self.mountpoint.parent.mkdir(exist_ok=True, parents=True)
+            if self.mountpoint.exists():
+                raise FuseConfigurationError(
+                    f"Mountpoint `{self.get_abs_mountpoint()}` must not exists on windows"
+                )
             initial_st_dev = None
 
         try:
@@ -91,7 +99,7 @@ class FuseManager:
                         self._fuse_thread_started.set()
                         FUSE(
                             self._fuse_operations,
-                            self.mountpoint,
+                            self.get_abs_mountpoint(),
                             foreground=True,
                             **self._fuse_config,
                         )
@@ -115,8 +123,11 @@ class FuseManager:
             self._fuse_thread_started.wait()
             while not need_stop:
                 time.sleep(0.1)
-                if os.stat(self.mountpoint).st_dev != initial_st_dev:
-                    break
+                try:
+                    if self.mountpoint.stat().st_dev != initial_st_dev:
+                        break
+                except FileNotFoundError:
+                    pass
 
         try:
             await trio.run_sync_in_worker_thread(_wait_for_fuse_ready_thread, cancellable=True)
@@ -131,7 +142,7 @@ class FuseManager:
         await self._stop_fuse_thread()
 
         self._started = False
-        self.event_bus.send("fuse.mountpoint.stopped", mountpoint=self.mountpoint)
+        self.event_bus.send("fuse.mountpoint.stopped", mountpoint=self.get_abs_mountpoint())
 
     async def _stop_fuse_thread(self):
         self._fuse_operations.schedule_exit()
@@ -143,7 +154,7 @@ class FuseManager:
 
         def _stop_fuse():
             try:
-                os.path.exists(f"{self.mountpoint}/__shutdown_fuse__")
+                (self.mountpoint / "__shutdown_fuse__").exists()
             except OSError:
                 pass
             self._fuse_thread_stopped.wait()
@@ -152,7 +163,7 @@ class FuseManager:
 
         if os.name == "posix":
             try:
-                os.rmdir(self.mountpoint)
+                self.mountpoint.rmdir()
             except OSError:
                 pass
 
