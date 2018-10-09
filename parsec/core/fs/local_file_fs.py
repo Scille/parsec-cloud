@@ -159,15 +159,17 @@ class LocalFileFS:
         hf = self._get_hot_file(cursor.access)
         empty_gap = cursor.offset - hf.size
         if empty_gap > 0:
-            content = b"\x00" * empty_gap + content
+            # TODO: not really optimized to create a string to fill the gap
+            padded_content = b"\x00" * empty_gap + content
             start = hf.size
             cursor.offset -= empty_gap
         else:
             start = cursor.offset
-        end = start + len(content)
-        hf.pending_writes.append(RamBuffer(start, end, content))
+            padded_content = content
+        end = start + len(padded_content)
+        hf.pending_writes.append(RamBuffer(start, end, padded_content))
 
-        cursor.offset += len(content)
+        cursor.offset += len(padded_content)
         if hf.size < cursor.offset:
             hf.size = cursor.offset
         return len(content)
