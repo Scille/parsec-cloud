@@ -363,7 +363,7 @@ def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, 
     async def _backend_factory(devices=default_devices, config={}, event_bus=None):
         async with trio.open_nursery() as nursery:
             config = BackendConfig(
-                **{"blockstore_url": blockstore, "db_url": backend_store, **config}
+                **{"blockstore_type": blockstore, "db_url": backend_store, **config}
             )
             if not event_bus:
                 event_bus = event_bus_factory()
