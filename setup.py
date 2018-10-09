@@ -116,18 +116,8 @@ test_requirements = [
 
 PYQT_DEP = "PyQt5==5.11.2"
 extra_requirements = {
+    "pkcs11": ["python-pkcs11==0.5.0", "pycrypto==2.6.1"],
     "core": [PYQT_DEP, "hurry.filesize==0.9", "fusepy==3.0.1"],
-    "nitrokey": [
-        # Nitrokey POC stuff
-        "python-pkcs11==0.5.0",
-        "argparse==1.4.0",
-        "ecdsa==0.13",
-        "progress==1.4",
-        "pyasn1==0.4.4",
-        "pyasn1-modules==0.2.2",
-        "pycrypto==2.6.1",
-        "tqdm==4.26.0",
-    ],
     "backend": [
         # PostgreSQL
         "triopg==0.3.0",
