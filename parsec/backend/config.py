@@ -20,8 +20,8 @@ def config_factory(raw_conf):
 
     for blockstore_type, params in blockstore_params.items():
         for param in params:
-            key = blockstore_type + "_" + param
-            raw_conf[key] = environ.get(key) or None
+            key = f"{blockstore_type}_{param}"
+            raw_conf[key] = environ.get(key)
 
     return BackendConfig(**{k.lower(): v for k, v in raw_conf.items()})
 
@@ -40,7 +40,7 @@ class BackendConfig:
         elif val in ["S3", "SWIFT"]:
             if all(
                 [
-                    getattr(self, val.lower() + "_" + param.lower())
+                    getattr(self, f"{val.lower()}_{param.lower()}")
                     for param in blockstore_params[val]
                 ]
             ):
@@ -49,14 +49,11 @@ class BackendConfig:
                 missings = [
                     param
                     for param in blockstore_params[val]
-                    if not getattr(self, val.lower() + "_" + param.lower())
+                    if not getattr(self, f"{val.lower()}_{param.lower()}")
                 ]
                 plural = "s" if len(missings) > 1 else ""
                 raise ValueError(
-                    ", ".join(missings)
-                    + " environment variable"
-                    + plural
-                    + " must be set accordingly"
+                    ", ".join(missings) + f" environment variable{plural} must be set accordingly"
                 )
         raise ValueError("BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, or `SWIFT`")
 

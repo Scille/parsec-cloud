@@ -52,7 +52,7 @@ def blockstore_factory(config, postgresql_dbh=None):
 
             return S3BlockStoreComponent(
                 *[
-                    getattr(config, (blockstore_type + "_" + param).lower())
+                    getattr(config, f"{blockstore_type}_{param}".lower())
                     for param in blockstore_params["S3"]
                 ]
             )
@@ -65,7 +65,7 @@ def blockstore_factory(config, postgresql_dbh=None):
 
             return OpenStackBlockStoreComponent(
                 *[
-                    getattr(config, (blockstore_type + "_" + param).lower())
+                    getattr(config, f"{blockstore_type}_{param}".lower())
                     for param in blockstore_params["SWIFT"]
                 ]
             )
