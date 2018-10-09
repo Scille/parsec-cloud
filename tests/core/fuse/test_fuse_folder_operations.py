@@ -61,11 +61,11 @@ class PathElement:
 
 
 @pytest.mark.slow
-def test_fuse_file_operations(tmpdir, hypothesis_settings, fuse_service):
+def test_fuse_folder_operations(tmpdir, hypothesis_settings, fuse_service):
 
     tentative = 0
 
-    class FuseFileOperationsStateMachine(RuleBasedStateMachine):
+    class FuseFolderOperationsStateMachine(RuleBasedStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")
 
@@ -175,4 +175,4 @@ def test_fuse_file_operations(tmpdir, hypothesis_settings, fuse_service):
 
                 assert children == expected_children
 
-    run_state_machine_as_test(FuseFileOperationsStateMachine, settings=hypothesis_settings)
+    run_state_machine_as_test(FuseFolderOperationsStateMachine, settings=hypothesis_settings)
