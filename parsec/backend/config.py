@@ -26,14 +26,23 @@ class BackendConfig:
             return val
         elif val == "POSTGRESQL":
             return val
-        elif val == "S3" and set(
-            [val + "_" + item for item in ["REGION", "BUCKET", "KEY", "SECRET"]]
-        ).issubset(environ):
+        elif val == "S3":
+            expected_envs = ("S3_REGION", "S3_BUCKET", "S3_KEY", "S3_SECRET")
+            if any(env for env in expected_envs if env not in environ):
+                raise ValueError(
+                    f"S3 blockstore requires environment variables: {', '.join(expected_envs)}"
+                )
             return val
-        elif val == "SWIFT" and set(
-            [val + "_" + item for item in ["AUTH_URL", "TENANT", "CONTAINER", "USER", "PASSWORD"]]
-        ).issubset(environ):
+        elif val == "SWIFT":
+            expected_envs = (
+                "SWIFT_AUTH_URL" "SWIFT_TENANT" "SWIFT_CONTAINER" "SWIFT_USER" "SWIFT_PASSWORD"
+            )
+            if any(env for env in expected_envs if env not in environ):
+                raise ValueError(
+                    f"SWIFT blockstore requires environment variables: {', '.join(expected_envs)}"
+                )
             return val
+
         raise ValueError(
             "BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, or `SWIFT` and environment variables must be set accordingly"
         )
