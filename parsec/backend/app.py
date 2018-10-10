@@ -57,9 +57,9 @@ def blockstore_factory(config, postgresql_dbh=None):
 
     elif blockstore_type == "SWIFT":
         try:
-            from parsec.backend.openstack_blockstore import OpenStackBlockStoreComponent
+            from parsec.backend.swift_blockstore import SwiftBlockStoreComponent
 
-            return OpenStackBlockStoreComponent(
+            return SwiftBlockStoreComponent(
                 config.swift_authurl,
                 config.swift_tenant,
                 config.swift_container,
@@ -67,7 +67,7 @@ def blockstore_factory(config, postgresql_dbh=None):
                 config.swift_password,
             )
         except ImportError:
-            raise ValueError("OpenStack blockstore is not available")
+            raise ValueError("Swift blockstore is not available")
 
     else:
         raise ValueError(f"Unknown blockstore type `{blockstore_type}`")

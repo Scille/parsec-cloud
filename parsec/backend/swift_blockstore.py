@@ -21,7 +21,7 @@ import swiftclient  # noqa
 from swiftclient.exceptions import ClientException  # noqa
 
 
-class OpenStackBlockStoreComponent(BaseBlockStoreComponent):
+class SwiftBlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self, auth_url, tenant, container, user, password):
         self.swift_client = swiftclient.Connection(
             authurl=auth_url, user=":".join([user, tenant]), key=password
