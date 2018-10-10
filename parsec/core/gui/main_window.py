@@ -1,6 +1,5 @@
 import os
 import shutil
-import signal
 
 from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QSystemTrayIcon, QMenu
@@ -22,7 +21,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        self.force_close = False
         self.close_requested = False
         self.setupUi(self)
         self.about_dialog = None
@@ -211,16 +210,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             not QSystemTrayIcon.isSystemTrayAvailable()
             or self.close_requested
             or core_call().is_debug()
+            or self.force_close
         ):
-            result = QMessageBox.question(
-                self,
-                QCoreApplication.translate(self.__class__.__name__, "Confirmation"),
-                QCoreApplication.translate("MainWindow", "Are you sure you want to quit ?"),
-            )
-            if result != QMessageBox.Yes:
-                event.ignore()
-                return
-            event.accept()
+            if not self.force_close:
+                result = QMessageBox.question(
+                    self,
+                    QCoreApplication.translate(self.__class__.__name__, "Confirmation"),
+                    QCoreApplication.translate("MainWindow", "Are you sure you want to quit ?"),
+                )
+                if result != QMessageBox.Yes:
+                    event.ignore()
+                    return
+                event.accept()
+            else:
+                event.accept()
             if core_call().is_mounted():
                 core_call().unmount()
             core_call().logout()
