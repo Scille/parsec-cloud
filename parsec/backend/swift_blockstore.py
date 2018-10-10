@@ -44,10 +44,10 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
     async def post(self, id, block):
         # TODO find a more efficient way to check if block already exists
         try:
-            _, obj = self.swift_client.get_object(self._container, id)
+            _, obj = self.swift_client.get_object(self._container, str(id))
         except ClientException as exc:
             if exc.http_status == 404:
-                self.swift_client.put_object(self._container, id, block)
+                self.swift_client.put_object(self._container, str(id), block)
             else:
                 raise exc
 
