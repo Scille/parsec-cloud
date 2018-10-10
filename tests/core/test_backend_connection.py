@@ -7,7 +7,8 @@ from parsec.core.backend_connection import (
     BackendNotAvailable,
     HandshakeError,
 )
-from parsec.handshake import ServerHandshake
+from parsec.backend.exceptions import AlreadyRevokedError, NotFoundError
+from parsec.handshake import ServerHandshake, HandshakeRevokedDevice
 from parsec.networking import CookedSocket
 
 from tests.open_tcp_stream_mock_wrapper import offline
@@ -57,6 +58,32 @@ async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backen
                 await backend_connection_factory(backend_addr, alice.id, alice.device_signkey)
 
         nursery.cancel_scope.cancel()
+
+
+@pytest.mark.trio
+@pytest.mark.postgresql
+async def test_revoked_device_handshake(
+    postgresql_url, alice, backend_factory, backend_sock_factory
+):
+
+    async with backend_factory(
+        config={"blockstore_url": "POSTGRESQL", "db_url": postgresql_url}
+    ) as backend:
+
+        async with backend_sock_factory(backend, alice):
+            pass
+
+        await backend.user.revoke_device(alice.id)
+
+        with pytest.raises(AlreadyRevokedError):
+            await backend.user.revoke_device(alice.id)
+
+        with pytest.raises(NotFoundError):
+            await backend.user.revoke_device("foo")
+
+        with pytest.raises(HandshakeRevokedDevice):
+            async with backend_sock_factory(backend, alice):
+                pass
 
 
 @pytest.mark.trio

@@ -12,6 +12,7 @@ from parsec.networking import CookedSocket
 from parsec.handshake import HandshakeFormatError, ServerHandshake
 from parsec.schema import BaseCmdSchema, fields, OneOfSchema
 
+from parsec.backend.exceptions import BackendAuthError
 from parsec.backend.drivers.memory import (
     MemoryUserComponent,
     MemoryVlobComponent,
@@ -351,11 +352,15 @@ class BackendApp:
                 except (NotFoundError, KeyError):
                     result_req = hs.build_bad_identity_result_req()
                 else:
+                    if "revocated_on" in device and device["revocated_on"]:
+                        raise BackendAuthError("Backend has revoked this device")
                     broadcast_key = PublicKey(user["broadcast_key"])
                     verify_key = VerifyKey(device["verify_key"])
                     context = ClientContext(hs.identity, broadcast_key, verify_key)
                     result_req = hs.build_result_req(verify_key)
 
+        except BackendAuthError:
+            result_req = hs.build_revoked_device_result_req()
         except HandshakeFormatError:
             result_req = hs.build_bad_format_result_req()
         await sock.send(result_req)
@@ -378,6 +383,11 @@ class BackendApp:
         except trio.BrokenStreamError:
             # Client has closed connection
             pass
+        except ParsecError as exc:
+            logger.debug("BAD HANDSHAKE")
+            rep = exc.to_dict()
+            await sock.send(rep)
+            await sock.aclose()
         except Exception as exc:
             # If we are here, something unexpected happened...
             logger.error(traceback.format_exc())
