@@ -474,9 +474,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.list_files.clear()
         result = core_call().stat(os.path.join(workspace, directory))
 
-        if not directory:
-            print(result)
-
         if len(self.current_directory):
             item = QListWidgetItem()
             widget = ParentFolderWidget()

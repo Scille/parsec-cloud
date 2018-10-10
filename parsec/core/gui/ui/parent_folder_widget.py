@@ -8,14 +8,11 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Ui_ParentFolderWidget(object):
     def setupUi(self, ParentFolderWidget):
         ParentFolderWidget.setObjectName("ParentFolderWidget")
         ParentFolderWidget.resize(385, 57)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(ParentFolderWidget.sizePolicy().hasHeightForWidth())
@@ -25,9 +22,7 @@ class Ui_ParentFolderWidget(object):
         self.horizontalLayout = QtWidgets.QHBoxLayout(ParentFolderWidget)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.label_icon = QtWidgets.QLabel(ParentFolderWidget)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(48)
         sizePolicy.setVerticalStretch(48)
         sizePolicy.setHeightForWidth(self.label_icon.sizePolicy().hasHeightForWidth())
@@ -48,9 +43,5 @@ class Ui_ParentFolderWidget(object):
     def retranslateUi(self, ParentFolderWidget):
         _translate = QtCore.QCoreApplication.translate
         ParentFolderWidget.setWindowTitle(_translate("ParentFolderWidget", "Form"))
-        self.label.setText(
-            _translate(
-                "ParentFolderWidget",
-                '<html><head/><body><p><span style=" font-size:14pt;">Parent folder</span></p></body></html>',
-            )
-        )
+        self.label.setText(_translate("ParentFolderWidget", "<html><head/><body><p><span style=\" font-size:14pt;\">Parent folder</span></p></body></html>"))
+

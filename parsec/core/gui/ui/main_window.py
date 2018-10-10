@@ -8,15 +8,12 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
         icon = QtGui.QIcon()
-        icon.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/parsec.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
-        )
+        icon.addPixmap(QtGui.QPixmap(":/icons/images/icons/parsec.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -30,9 +27,7 @@ class Ui_MainWindow(object):
         self.button_files.setAccessibleName("")
         self.button_files.setAccessibleDescription("")
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/files.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
-        )
+        icon1.addPixmap(QtGui.QPixmap(":/icons/images/icons/files.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.button_files.setIcon(icon1)
         self.button_files.setIconSize(QtCore.QSize(64, 64))
         self.button_files.setCheckable(True)
@@ -42,11 +37,7 @@ class Ui_MainWindow(object):
         self.button_users = QtWidgets.QToolButton(self.centralwidget)
         self.button_users.setEnabled(False)
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/users_manage.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon2.addPixmap(QtGui.QPixmap(":/icons/images/icons/users_manage.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.button_users.setIcon(icon2)
         self.button_users.setIconSize(QtCore.QSize(64, 64))
         self.button_users.setCheckable(True)
@@ -56,18 +47,14 @@ class Ui_MainWindow(object):
         self.button_settings = QtWidgets.QToolButton(self.centralwidget)
         self.button_settings.setEnabled(True)
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/settings.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
-        )
+        icon3.addPixmap(QtGui.QPixmap(":/icons/images/icons/settings.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.button_settings.setIcon(icon3)
         self.button_settings.setIconSize(QtCore.QSize(64, 64))
         self.button_settings.setCheckable(True)
         self.button_settings.setAutoRaise(True)
         self.button_settings.setObjectName("button_settings")
         self.verticalLayout.addWidget(self.button_settings)
-        spacerItem = QtWidgets.QSpacerItem(
-            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
-        )
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem)
         self.gridLayout.addLayout(self.verticalLayout, 0, 0, 1, 1)
         self.main_widget_layout = QtWidgets.QVBoxLayout()
@@ -85,9 +72,7 @@ class Ui_MainWindow(object):
         MainWindow.setMenuBar(self.menubar)
         self.action_quit = QtWidgets.QAction(MainWindow)
         icon4 = QtGui.QIcon()
-        icon4.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/exit.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
-        )
+        icon4.addPixmap(QtGui.QPixmap(":/icons/images/icons/exit.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.action_quit.setIcon(icon4)
         self.action_quit.setShortcutContext(QtCore.Qt.ApplicationShortcut)
         self.action_quit.setObjectName("action_quit")
@@ -118,9 +103,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Parsec"))
-        self.button_files.setToolTip(
-            _translate("MainWindow", "Display and manage your files and folders.")
-        )
+        self.button_files.setToolTip(_translate("MainWindow", "Display and manage your files and folders."))
         self.button_files.setText(_translate("MainWindow", "Files"))
         self.button_users.setToolTip(_translate("MainWindow", "Display and manage your users."))
         self.button_users.setText(_translate("MainWindow", "Users"))
@@ -135,6 +118,5 @@ class Ui_MainWindow(object):
         self.action_remount.setText(_translate("MainWindow", "Remount"))
         self.action_login.setText(_translate("MainWindow", "Log In"))
         self.action_in_tray.setText(_translate("MainWindow", "Reduce in tray"))
-
 
 from parsec.core.gui import resources_rc

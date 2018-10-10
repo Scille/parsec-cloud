@@ -289,28 +289,43 @@
         <translation type="unfinished">Vérification du mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="63"/>
+        <location filename="../forms/login_register_device_widget.ui" line="96"/>
         <source>Device</source>
         <translation type="unfinished">Appareil</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="70"/>
+        <location filename="../forms/login_register_device_widget.ui" line="103"/>
         <source>Token</source>
         <translation type="unfinished">Jeton</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="95"/>
+        <location filename="../forms/login_register_device_widget.ui" line="128"/>
         <source>Register</source>
         <translation type="unfinished">S&apos;enregistrer</translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="172"/>
+        <location filename="../login_widget.py" line="193"/>
         <source>Passwords don&apos;t match.</source>
         <translation type="unfinished">Les mots de passe ne correspondent pas.</translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="177"/>
+        <location filename="../login_widget.py" line="214"/>
         <source>Waiting for existing device to register us...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="63"/>
+        <source>Use NitroKey authentication instead of password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="73"/>
+        <source>Token ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="80"/>
+        <source>Key ID</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -377,7 +392,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="110"/>
+        <location filename="../login_widget.py" line="112"/>
         <source>Passwords don&apos;t match.</source>
         <translation type="unfinished">Les mots de passe ne correspondent pas.</translation>
     </message>
@@ -548,19 +563,49 @@
         <translation>Réduire dans la barre d&apos;icônes</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="155"/>
+        <location filename="../main_window.py" line="173"/>
         <source>Error</source>
         <translation>Erreur</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="188"/>
+        <location filename="../main_window.py" line="210"/>
         <source>Can not register the new user.</source>
         <translation>Impossible d&apos;enregistrer le nouvel utilisateur</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="232"/>
+        <location filename="../main_window.py" line="333"/>
         <source>Are you sure you want to quit ?</source>
         <translation>Êtes-vous sûr de vouloir fermer l&apos;application ?</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="303"/>
+        <source>Registration successful</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="244"/>
+        <source>User has been successfully registered. You can now login.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="253"/>
+        <source>The token has expired.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="257"/>
+        <source>No invitation found for this user.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="261"/>
+        <source>User has already been registered.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="303"/>
+        <source>Device has been successfully registered. You can now login.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -579,44 +624,59 @@
 <context>
     <name>RegisterDevice</name>
     <message>
-        <location filename="../forms/register_device.ui" line="14"/>
+        <location filename="../forms/register_device.ui" line="17"/>
         <source>Register new device</source>
         <translation>Enregistrer un nouvel appareil</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="31"/>
+        <location filename="../forms/register_device.ui" line="30"/>
         <source>Device name</source>
         <translation>Nom de l&apos;appareil</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="45"/>
+        <location filename="../forms/register_device.ui" line="44"/>
         <source>Password</source>
         <translation>Mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="70"/>
-        <source>TextLabel</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../forms/register_device.ui" line="88"/>
+        <location filename="../forms/register_device.ui" line="117"/>
         <source>Device&apos;s token</source>
         <translation>Jeton de l&apos;appareil</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="95"/>
+        <location filename="../forms/register_device.ui" line="127"/>
         <source>Token</source>
         <translation>Jeton</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="104"/>
+        <location filename="../forms/register_device.ui" line="136"/>
         <source>Waiting for the new device...</source>
         <translation>En attente du nouvel appareil</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="151"/>
+        <location filename="../forms/register_device.ui" line="191"/>
         <source>OK</source>
-        <translation>Ok</translation>
+        <translation type="unfinished">Ok</translation>
+    </message>
+    <message>
+        <location filename="../forms/register_device.ui" line="53"/>
+        <source>Use NitroKey authentication instead of password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/register_device.ui" line="63"/>
+        <source>NitroKey PIN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/register_device.ui" line="70"/>
+        <source>Token ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/register_device.ui" line="77"/>
+        <source>Key ID</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

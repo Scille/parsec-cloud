@@ -8,14 +8,11 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Ui_FilesWidget(object):
     def setupUi(self, FilesWidget):
         FilesWidget.setObjectName("FilesWidget")
         FilesWidget.resize(588, 493)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(FilesWidget.sizePolicy().hasHeightForWidth())
@@ -27,9 +24,7 @@ class Ui_FilesWidget(object):
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
         self.label = QtWidgets.QLabel(FilesWidget)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
@@ -37,9 +32,7 @@ class Ui_FilesWidget(object):
         self.label.setObjectName("label")
         self.horizontalLayout_4.addWidget(self.label)
         self.label_mountpoint = QtWidgets.QLabel(FilesWidget)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_mountpoint.sizePolicy().hasHeightForWidth())
@@ -49,9 +42,7 @@ class Ui_FilesWidget(object):
         self.horizontalLayout_4.addWidget(self.label_mountpoint)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
         self.widget_files = QtWidgets.QWidget(FilesWidget)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.widget_files.sizePolicy().hasHeightForWidth())
@@ -64,9 +55,7 @@ class Ui_FilesWidget(object):
         self.button_to_workspaces = QtWidgets.QCommandLinkButton(self.widget_files)
         self.button_to_workspaces.setObjectName("button_to_workspaces")
         self.horizontalLayout_2.addWidget(self.button_to_workspaces)
-        spacerItem = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem)
         self.verticalLayout_2.addLayout(self.horizontalLayout_2)
         self.label_current_directory = QtWidgets.QLabel(self.widget_files)
@@ -74,9 +63,7 @@ class Ui_FilesWidget(object):
         self.label_current_directory.setObjectName("label_current_directory")
         self.verticalLayout_2.addWidget(self.label_current_directory)
         self.label_cd_elems = QtWidgets.QLabel(self.widget_files)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_cd_elems.sizePolicy().hasHeightForWidth())
@@ -88,37 +75,23 @@ class Ui_FilesWidget(object):
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
         self.button_create_folder = QtWidgets.QPushButton(self.widget_files)
         icon = QtGui.QIcon()
-        icon.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/folder_add.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon.addPixmap(QtGui.QPixmap(":/icons/images/icons/folder_add.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.button_create_folder.setIcon(icon)
         self.button_create_folder.setObjectName("button_create_folder")
         self.horizontalLayout_3.addWidget(self.button_create_folder)
         self.button_import_folder = QtWidgets.QPushButton(self.widget_files)
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/folder_download.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon1.addPixmap(QtGui.QPixmap(":/icons/images/icons/folder_download.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.button_import_folder.setIcon(icon1)
         self.button_import_folder.setObjectName("button_import_folder")
         self.horizontalLayout_3.addWidget(self.button_import_folder)
         self.button_import_files = QtWidgets.QPushButton(self.widget_files)
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/file_download.png"),
-            QtGui.QIcon.Normal,
-            QtGui.QIcon.Off,
-        )
+        icon2.addPixmap(QtGui.QPixmap(":/icons/images/icons/file_download.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.button_import_files.setIcon(icon2)
         self.button_import_files.setObjectName("button_import_files")
         self.horizontalLayout_3.addWidget(self.button_import_files)
-        spacerItem1 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem1)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
         self.line_edit_search = QtWidgets.QLineEdit(self.widget_files)
@@ -136,24 +109,18 @@ class Ui_FilesWidget(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.button_add_workspace = QtWidgets.QPushButton(self.widget_workspaces)
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/add.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
-        )
+        icon3.addPixmap(QtGui.QPixmap(":/icons/images/icons/add.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.button_add_workspace.setIcon(icon3)
         self.button_add_workspace.setObjectName("button_add_workspace")
         self.horizontalLayout.addWidget(self.button_add_workspace)
-        spacerItem2 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem2)
         self.verticalLayout_3.addLayout(self.horizontalLayout)
         self.layout_workspaces = QtWidgets.QGridLayout()
         self.layout_workspaces.setSizeConstraint(QtWidgets.QLayout.SetMaximumSize)
         self.layout_workspaces.setObjectName("layout_workspaces")
         self.verticalLayout_3.addLayout(self.layout_workspaces)
-        spacerItem3 = QtWidgets.QSpacerItem(
-            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
-        )
+        spacerItem3 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_3.addItem(spacerItem3)
         self.verticalLayout.addWidget(self.widget_workspaces)
 
@@ -170,10 +137,7 @@ class Ui_FilesWidget(object):
         self.button_create_folder.setText(_translate("FilesWidget", "Create new folder"))
         self.button_import_folder.setText(_translate("FilesWidget", "Import a folder"))
         self.button_import_files.setText(_translate("FilesWidget", "Import files"))
-        self.line_edit_search.setPlaceholderText(
-            _translate("FilesWidget", "Search files or folders")
-        )
+        self.line_edit_search.setPlaceholderText(_translate("FilesWidget", "Search files or folders"))
         self.button_add_workspace.setText(_translate("FilesWidget", "Add a workspace"))
-
 
 from parsec.core.gui import resources_rc

@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QDialog
 
 from parsec.core.gui.ui.register_device import Ui_RegisterDevice
@@ -13,6 +13,7 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.setWindowFlags(Qt.SplashScreen)
         self.reset()
 
         self.button_register_device.clicked.connect(self.emit_register_device)
@@ -28,13 +29,21 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
         password = self.password.text()
         # TODO: better errors handling
         try:
-            core_call().accept_device_configuration_try(config_try_id, password)
+            if self.check_box_use_nitrokey.checkState() == Qt.Unchecked:
+                core_call().accept_device_configuration_try(config_try_id, password)
+            else:
+                core_call().accept_device_configuration_try(
+                    config_try_id, nitrokey_pin=self.line_edit_nitrokey_pin.text(),
+                    nitrokey_token_id=int(self.combo_nitrokey_token.currentText()),
+                    nitrokey_key_id=int(self.combo_nitrokey_key.currentText())
+                )
         except BackendNotAvailable as exc:
             self.device_config_done("Error: cannot declare device while offline")
         except Exception as exc:
             self.device_config_done(f"An error occured: {str(exc)}")
             raise
         self.device_config_done("Device successfully added, you can close this window")
+        self.button_box.setEnabled(True)
 
     def reset(self):
         self.device_name.setText("")
@@ -43,6 +52,16 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
         self.config_waiter_panel.hide()
         self.button_register_device.show()
         self.outcome_panel.hide()
+        self.outcome_status.setText("")
+        self.check_box_use_nitrokey.setCheckState(Qt.Unchecked)
+        self.widget_nitrokey.hide()
+        self.password.setDisabled(False)
+        self.line_edit_nitrokey_pin.setText("")
+        self.combo_nitrokey_key.clear()
+        self.combo_nitrokey_key.addItem("0")
+        self.combo_nitrokey_token.clear()
+        self.combo_nitrokey_token.addItem("0")
+        self.button_box.setEnabled(True)
 
     def device_config_done(self, status):
         self.config_waiter_panel.hide()
@@ -50,6 +69,7 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
         self.outcome_panel.show()
 
     def emit_register_device(self):
+        self.button_box.setEnabled(False)
         self.button_register_device.hide()
         self.config_waiter_panel.show()
 

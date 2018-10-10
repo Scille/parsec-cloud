@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>630</width>
-    <height>319</height>
+    <width>508</width>
+    <height>487</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -55,6 +55,39 @@
         <property name="placeholderText">
          <string>Password check</string>
         </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="check_box_use_nitrokey">
+        <property name="text">
+         <string>Use NitroKey authentication instead of password</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_nitrokey" native="true">
+        <layout class="QFormLayout" name="formLayout">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Token ID</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Key ID</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="combo_nitrokey_token"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="combo_nitrokey_key"/>
+         </item>
+        </layout>
        </widget>
       </item>
       <item>
@@ -121,5 +154,54 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>check_box_use_nitrokey</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>widget_nitrokey</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>253</x>
+     <y>190</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>253</x>
+     <y>244</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>check_box_use_nitrokey</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>line_edit_password</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>253</x>
+     <y>190</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>253</x>
+     <y>129</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>check_box_use_nitrokey</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>line_edit_password_check</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>253</x>
+     <y>190</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>253</x>
+     <y>160</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
