@@ -1,5 +1,17 @@
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QToolButton
+from PyQt5.QtCore import pyqtSignal, QCoreApplication
+from PyQt5.QtWidgets import QToolButton, QMessageBox
+
+
+def show_info(parent, text):
+    QMessageBox.info(parent, QCoreApplication.translate("messages", "Info"), text)
+
+
+def show_warning(parent, text):
+    QMessageBox.warning(parent, QCoreApplication.translate("messages", "Warning"), text)
+
+
+def show_error(parent, text):
+    QMessageBox.error(parent, QCoreApplication.translate("messages", "Error"), text)
 
 
 class ToolButton(QToolButton):

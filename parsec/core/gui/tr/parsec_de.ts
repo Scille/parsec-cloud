@@ -173,7 +173,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="499"/>
+        <location filename="../files_widget.py" line="496"/>
         <source>{} element(s)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -304,12 +304,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="193"/>
+        <location filename="../login_widget.py" line="170"/>
         <source>Passwords don&apos;t match.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="214"/>
+        <location filename="../login_widget.py" line="190"/>
         <source>Waiting for existing device to register us...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -392,8 +392,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="112"/>
-        <source>Passwords don&apos;t match.</source>
+        <location filename="../login_widget.py" line="94"/>
+        <source>Passwords don&apos;t match</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -503,12 +503,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="173"/>
-        <source>Error</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../main_window.py" line="210"/>
+        <location filename="../main_window.py" line="209"/>
         <source>Can not register the new user.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -518,22 +513,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="303"/>
-        <source>Registration successful</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../main_window.py" line="244"/>
+        <location filename="../main_window.py" line="243"/>
         <source>User has been successfully registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="253"/>
+        <location filename="../main_window.py" line="251"/>
         <source>The token has expired.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="257"/>
+        <location filename="../main_window.py" line="256"/>
         <source>No invitation found for this user.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -543,7 +533,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="303"/>
+        <location filename="../main_window.py" line="304"/>
         <source>Device has been successfully registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -614,7 +604,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="191"/>
+        <location filename="../forms/register_device.ui" line="166"/>
         <source>OK</source>
         <translation type="unfinished"></translation>
     </message>

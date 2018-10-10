@@ -8,10 +8,11 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+
 class Ui_LoginRegisterUserWidget(object):
     def setupUi(self, LoginRegisterUserWidget):
         LoginRegisterUserWidget.setObjectName("LoginRegisterUserWidget")
-        LoginRegisterUserWidget.resize(519, 401)
+        LoginRegisterUserWidget.resize(519, 376)
         self.verticalLayout = QtWidgets.QVBoxLayout(LoginRegisterUserWidget)
         self.verticalLayout.setObjectName("verticalLayout")
         self.group_claim = QtWidgets.QGroupBox(LoginRegisterUserWidget)
@@ -62,43 +63,47 @@ class Ui_LoginRegisterUserWidget(object):
         self.verticalLayout_3.addWidget(self.line_edit_token)
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         self.horizontalLayout_4.addItem(spacerItem)
         self.button_register = QtWidgets.QPushButton(self.group_claim)
         self.button_register.setEnabled(False)
         self.button_register.setObjectName("button_register")
         self.horizontalLayout_4.addWidget(self.button_register)
         self.verticalLayout_3.addLayout(self.horizontalLayout_4)
-        self.label_error = QtWidgets.QLabel(self.group_claim)
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        font.setBold(True)
-        font.setWeight(75)
-        self.label_error.setFont(font)
-        self.label_error.setText("")
-        self.label_error.setAlignment(QtCore.Qt.AlignCenter)
-        self.label_error.setObjectName("label_error")
-        self.verticalLayout_3.addWidget(self.label_error)
         self.verticalLayout.addWidget(self.group_claim)
 
         self.retranslateUi(LoginRegisterUserWidget)
-        self.check_box_use_nitrokey.toggled['bool'].connect(self.line_edit_password.setDisabled)
-        self.check_box_use_nitrokey.toggled['bool'].connect(self.line_edit_password_check.setDisabled)
-        self.check_box_use_nitrokey.toggled['bool'].connect(self.widget_nitrokey.setVisible)
+        self.check_box_use_nitrokey.toggled["bool"].connect(self.line_edit_password.setDisabled)
+        self.check_box_use_nitrokey.toggled["bool"].connect(
+            self.line_edit_password_check.setDisabled
+        )
+        self.check_box_use_nitrokey.toggled["bool"].connect(self.widget_nitrokey.setVisible)
         QtCore.QMetaObject.connectSlotsByName(LoginRegisterUserWidget)
 
     def retranslateUi(self, LoginRegisterUserWidget):
         _translate = QtCore.QCoreApplication.translate
         LoginRegisterUserWidget.setWindowTitle(_translate("LoginRegisterUserWidget", "Form"))
         self.group_claim.setTitle(_translate("LoginRegisterUserWidget", "Register a new account"))
-        self.label.setText(_translate("LoginRegisterUserWidget", "To register, you need another user to create an account and get a token."))
+        self.label.setText(
+            _translate(
+                "LoginRegisterUserWidget",
+                "To register, you need another user to create an account and get a token.",
+            )
+        )
         self.line_edit_login.setPlaceholderText(_translate("LoginRegisterUserWidget", "Login"))
-        self.line_edit_password.setPlaceholderText(_translate("LoginRegisterUserWidget", "Password"))
-        self.line_edit_password_check.setPlaceholderText(_translate("LoginRegisterUserWidget", "Password check"))
-        self.check_box_use_nitrokey.setText(_translate("LoginRegisterUserWidget", "Use NitroKey authentication instead of password"))
+        self.line_edit_password.setPlaceholderText(
+            _translate("LoginRegisterUserWidget", "Password")
+        )
+        self.line_edit_password_check.setPlaceholderText(
+            _translate("LoginRegisterUserWidget", "Password check")
+        )
+        self.check_box_use_nitrokey.setText(
+            _translate("LoginRegisterUserWidget", "Use NitroKey authentication instead of password")
+        )
         self.label_2.setText(_translate("LoginRegisterUserWidget", "Token ID"))
         self.label_3.setText(_translate("LoginRegisterUserWidget", "Key ID"))
         self.line_edit_device.setPlaceholderText(_translate("LoginRegisterUserWidget", "Device"))
         self.line_edit_token.setPlaceholderText(_translate("LoginRegisterUserWidget", "Token"))
         self.button_register.setText(_translate("LoginRegisterUserWidget", "Register"))
-

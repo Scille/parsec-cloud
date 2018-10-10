@@ -8,10 +8,11 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+
 class Ui_LoginLoginWidget(object):
     def setupUi(self, LoginLoginWidget):
         LoginLoginWidget.setObjectName("LoginLoginWidget")
-        LoginLoginWidget.resize(400, 318)
+        LoginLoginWidget.resize(400, 293)
         self.verticalLayout = QtWidgets.QVBoxLayout(LoginLoginWidget)
         self.verticalLayout.setObjectName("verticalLayout")
         self.group_login = QtWidgets.QGroupBox(LoginLoginWidget)
@@ -57,28 +58,20 @@ class Ui_LoginLoginWidget(object):
         self.verticalLayout_2.addWidget(self.widget_nitrokey)
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         self.horizontalLayout_3.addItem(spacerItem)
         self.button_login = QtWidgets.QPushButton(self.group_login)
         self.button_login.setEnabled(True)
         self.button_login.setObjectName("button_login")
         self.horizontalLayout_3.addWidget(self.button_login)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
-        self.label_error = QtWidgets.QLabel(self.group_login)
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        font.setBold(True)
-        font.setWeight(75)
-        self.label_error.setFont(font)
-        self.label_error.setText("")
-        self.label_error.setAlignment(QtCore.Qt.AlignCenter)
-        self.label_error.setObjectName("label_error")
-        self.verticalLayout_2.addWidget(self.label_error)
         self.verticalLayout.addWidget(self.group_login)
 
         self.retranslateUi(LoginLoginWidget)
-        self.check_box_use_nitrokey.toggled['bool'].connect(self.line_edit_password.setDisabled)
-        self.check_box_use_nitrokey.toggled['bool'].connect(self.widget_nitrokey.setVisible)
+        self.check_box_use_nitrokey.toggled["bool"].connect(self.line_edit_password.setDisabled)
+        self.check_box_use_nitrokey.toggled["bool"].connect(self.widget_nitrokey.setVisible)
         QtCore.QMetaObject.connectSlotsByName(LoginLoginWidget)
 
     def retranslateUi(self, LoginLoginWidget):
@@ -86,9 +79,10 @@ class Ui_LoginLoginWidget(object):
         LoginLoginWidget.setWindowTitle(_translate("LoginLoginWidget", "Form"))
         self.group_login.setTitle(_translate("LoginLoginWidget", "Log In"))
         self.line_edit_password.setPlaceholderText(_translate("LoginLoginWidget", "Password"))
-        self.check_box_use_nitrokey.setText(_translate("LoginLoginWidget", "Use NitroKey authentication instead of password"))
+        self.check_box_use_nitrokey.setText(
+            _translate("LoginLoginWidget", "Use NitroKey authentication instead of password")
+        )
         self.label_2.setText(_translate("LoginLoginWidget", "Token ID"))
         self.label_3.setText(_translate("LoginLoginWidget", "Key ID"))
         self.label_4.setText(_translate("LoginLoginWidget", "NitroKey PIN"))
         self.button_login.setText(_translate("LoginLoginWidget", "Log In"))
-

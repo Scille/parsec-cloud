@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>508</width>
-    <height>487</height>
+    <height>397</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -130,16 +130,6 @@
          </widget>
         </item>
        </layout>
-      </item>
-      <item>
-       <widget class="QProgressBar" name="progress_bar">
-        <property name="maximum">
-         <number>0</number>
-        </property>
-        <property name="value">
-         <number>-1</number>
-        </property>
-       </widget>
       </item>
       <item>
        <widget class="QLabel" name="label_error">

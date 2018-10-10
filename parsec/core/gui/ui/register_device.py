@@ -8,11 +8,12 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+
 class Ui_RegisterDevice(object):
     def setupUi(self, RegisterDevice):
         RegisterDevice.setObjectName("RegisterDevice")
         RegisterDevice.setWindowModality(QtCore.Qt.ApplicationModal)
-        RegisterDevice.resize(463, 436)
+        RegisterDevice.resize(463, 403)
         RegisterDevice.setModal(True)
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(RegisterDevice)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
@@ -85,21 +86,13 @@ class Ui_RegisterDevice(object):
         self.config_waiter_label.setWordWrap(True)
         self.config_waiter_label.setObjectName("config_waiter_label")
         self.config_waiter_panel_layout.addWidget(self.config_waiter_label)
-        self.config_waiter_progress = QtWidgets.QProgressBar(self.config_waiter_panel)
-        self.config_waiter_progress.setEnabled(True)
-        self.config_waiter_progress.setLayoutDirection(QtCore.Qt.LeftToRight)
-        self.config_waiter_progress.setMaximum(0)
-        self.config_waiter_progress.setProperty("value", 0)
-        self.config_waiter_progress.setTextVisible(False)
-        self.config_waiter_progress.setOrientation(QtCore.Qt.Horizontal)
-        self.config_waiter_progress.setInvertedAppearance(False)
-        self.config_waiter_progress.setObjectName("config_waiter_progress")
-        self.config_waiter_panel_layout.addWidget(self.config_waiter_progress)
         self.verticalLayout.addWidget(self.config_waiter_panel)
         self.verticalLayout_2.addLayout(self.verticalLayout)
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         self.horizontalLayout_3.addItem(spacerItem)
         self.button_register_device = QtWidgets.QPushButton(RegisterDevice)
         self.button_register_device.setObjectName("button_register_device")
@@ -110,12 +103,14 @@ class Ui_RegisterDevice(object):
         self.button_box.setCenterButtons(True)
         self.button_box.setObjectName("button_box")
         self.verticalLayout_2.addWidget(self.button_box)
-        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem1 = QtWidgets.QSpacerItem(
+            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
+        )
         self.verticalLayout_2.addItem(spacerItem1)
 
         self.retranslateUi(RegisterDevice)
-        self.check_box_use_nitrokey.toggled['bool'].connect(self.widget_nitrokey.setVisible)
-        self.check_box_use_nitrokey.toggled['bool'].connect(self.password.setDisabled)
+        self.check_box_use_nitrokey.toggled["bool"].connect(self.widget_nitrokey.setVisible)
+        self.check_box_use_nitrokey.toggled["bool"].connect(self.password.setDisabled)
         self.button_box.accepted.connect(RegisterDevice.accept)
         self.button_box.rejected.connect(RegisterDevice.reject)
         QtCore.QMetaObject.connectSlotsByName(RegisterDevice)
@@ -125,12 +120,15 @@ class Ui_RegisterDevice(object):
         RegisterDevice.setWindowTitle(_translate("RegisterDevice", "Register new device"))
         self.device_name.setPlaceholderText(_translate("RegisterDevice", "Device name"))
         self.password.setPlaceholderText(_translate("RegisterDevice", "Password"))
-        self.check_box_use_nitrokey.setText(_translate("RegisterDevice", "Use NitroKey authentication instead of password"))
+        self.check_box_use_nitrokey.setText(
+            _translate("RegisterDevice", "Use NitroKey authentication instead of password")
+        )
         self.label_2.setText(_translate("RegisterDevice", "NitroKey PIN"))
         self.label_3.setText(_translate("RegisterDevice", "Token ID"))
         self.label_4.setText(_translate("RegisterDevice", "Key ID"))
-        self.label.setText(_translate("RegisterDevice", "Device\'s token"))
+        self.label.setText(_translate("RegisterDevice", "Device's token"))
         self.device_token.setPlaceholderText(_translate("RegisterDevice", "Token"))
-        self.config_waiter_label.setText(_translate("RegisterDevice", "Waiting for the new device..."))
+        self.config_waiter_label.setText(
+            _translate("RegisterDevice", "Waiting for the new device...")
+        )
         self.button_register_device.setText(_translate("RegisterDevice", "OK"))
-

@@ -33,9 +33,10 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
                 core_call().accept_device_configuration_try(config_try_id, password)
             else:
                 core_call().accept_device_configuration_try(
-                    config_try_id, nitrokey_pin=self.line_edit_nitrokey_pin.text(),
+                    config_try_id,
+                    nitrokey_pin=self.line_edit_nitrokey_pin.text(),
                     nitrokey_token_id=int(self.combo_nitrokey_token.currentText()),
-                    nitrokey_key_id=int(self.combo_nitrokey_key.currentText())
+                    nitrokey_key_id=int(self.combo_nitrokey_key.currentText()),
                 )
         except BackendNotAvailable as exc:
             self.device_config_done("Error: cannot declare device while offline")

@@ -1,7 +1,7 @@
 import os
 
 from PyQt5.QtCore import QCoreApplication
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QSystemTrayIcon, QMenu
+from PyQt5.QtWidgets import QMainWindow, QSystemTrayIcon, QMenu, QMessageBox
 from PyQt5.QtGui import QIcon
 
 from parsec.core.devices_manager import (
@@ -14,6 +14,7 @@ from parsec.core.devices_manager import (
 
 from parsec.core.gui import settings
 from parsec.core.gui.core_call import core_call
+from parsec.core.gui.custom_widgets import show_error, show_info
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.files_widget import FilesWidget
 from parsec.core.gui.users_widget import UsersWidget
@@ -79,9 +80,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.register_user_with_nitrokey
         )
         self.login_widget.register_device_with_password_clicked.connect(
-            self.register_device_with_password)
+            self.register_device_with_password
+        )
         self.login_widget.register_device_with_nitrokey_clicked.connect(
-            self.register_device_with_nitrokey)
+            self.register_device_with_nitrokey
+        )
         self.action_disconnect.triggered.connect(self.logout)
         self.users_widget.registerUserClicked.connect(self.register_user)
         self.action_remount.triggered.connect(self.remount)
@@ -132,9 +135,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def remount(self):
         mountpoint = self.mount()
         if mountpoint is None:
-            QMessageBox.warning(
+            show_error(
                 self,
-                QCoreApplication.translate("MainWindow", "Error"),
                 QCoreApplication.translate(
                     "MainWindow",
                     'Can not mount in "{}" (permissions problems ?). Go '
@@ -170,9 +172,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.action_login.setDisabled(True)
             mountpoint = self.mount()
             if mountpoint is None:
-                QMessageBox.warning(
+                show_error(
                     self,
-                    QCoreApplication.translate("MainWindow", "Error"),
                     QCoreApplication.translate(
                         "MainWindow",
                         'Can not mount in "{}" (permissions problems ?). Go '
@@ -190,7 +191,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def login_with_password(self, device_id, password):
         err = self.perform_login(device_id, password=password)
         if err:
-            self.login_widget.set_login_error(err)
+            show_error(self.login_widget, err)
 
     def login_with_nitrokey(self, device_id, nitrokey_pin, nitrokey_key, nitrokey_token):
         err = self.perform_login(
@@ -200,7 +201,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             nitrokey_token=nitrokey_token,
         )
         if err:
-            self.login_widget.set_login_error(err)
+            show_error(self.login_widget, err)
 
     def register_user(self, login):
         try:
@@ -241,25 +242,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     nitrokey_key_id=nitrokey_key,
                 )
             self.login_widget.add_device(device_id)
-            QMessageBox.information(
+            show_info(
                 self,
-                QCoreApplication.translate("MainWindow", "Registration successful"),
                 QCoreApplication.translate(
                     "MainWindow", "User has been successfully registered. You can now login."
                 ),
             )
             self.login_widget.reset()
         except DeviceConfigureOutOfDate:
-            self.login_widget.set_register_user_error(
-                QCoreApplication.translate("MainWindow", "The token has expired.")
+            show_error(
+                self.login_widget,
+                QCoreApplication.translate("MainWindow", "The token has expired."),
             )
         except DeviceConfigureNoInvitation:
-            self.login_widget.set_register_user_error(
-                QCoreApplication.translate("MainWindow", "No invitation found for this user.")
+            show_error(
+                self.login_widget,
+                QCoreApplication.translate("MainWindow", "No invitation found for this user."),
             )
         except DeviceConfigureAlreadyExists:
-            self.login_widget.set_register_user_error(
-                QCoreApplication.translate("MainWindow", "User has already been registered.")
+            show_error(
+                self.login_widget,
+                QCoreApplication.translate("MainWindow", "User has already been registered."),
             )
 
     def register_user_with_password(self, user_id, password, device_name, token):
@@ -279,30 +282,47 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             nitrokey_token=nitrokey_token,
         )
 
-    def handle_register_device(self, user_id, device_name, token, use_nitrokey=False, password=None,
-                               nitrokey_key=None, nitrokey_token=None):
+    def handle_register_device(
+        self,
+        user_id,
+        device_name,
+        token,
+        use_nitrokey=False,
+        password=None,
+        nitrokey_key=None,
+        nitrokey_token=None,
+    ):
         try:
             device_id = f"{user_id}@{device_name}"
             if not use_nitrokey:
                 privkey, signkey, manifest = core_call().configure_new_device(
-                    device_id=device_id, configure_device_token=token, password=password,
-                    use_nitrokey=False)
+                    device_id=device_id,
+                    configure_device_token=token,
+                    password=password,
+                    use_nitrokey=False,
+                )
                 privkey = privkey.encode()
                 signkey = signkey.encode()
-                core_call().register_new_device(device_id, privkey, signkey, manifest,
-                                                password, False)
+                core_call().register_new_device(
+                    device_id, privkey, signkey, manifest, password, False
+                )
             else:
                 privkey, signkey, manifest = core_call().configure_new_device(
-                    device_id, token, password=None, use_nitrokey=True,
-                    nitrokey_token_id=nitrokey_token, nitrokey_key_id=nitrokey_key)
+                    device_id,
+                    token,
+                    password=None,
+                    use_nitrokey=True,
+                    nitrokey_token_id=nitrokey_token,
+                    nitrokey_key_id=nitrokey_key,
+                )
                 privkey = privkey.encode()
                 signkey = signkey.encode()
-                core_call().register_new_device(device_id, privkey, signkey, manifest,
-                                                None, True, nitrokey_token, nitrokey_key)
+                core_call().register_new_device(
+                    device_id, privkey, signkey, manifest, None, True, nitrokey_token, nitrokey_key
+                )
             self.login_widget.add_device(device_id)
-            QMessageBox.information(
+            show_info(
                 self,
-                QCoreApplication.translate("MainWindow", "Registration successful"),
                 QCoreApplication.translate(
                     "MainWindow", "Device has been successfully registered. You can now login."
                 ),
@@ -310,15 +330,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.login_widget.reset()
         except Exception as exc:
             # TODO: better error handling
-            self.login_widget.set_register_device_error(str(exc))
+            show_error(self.login_widget, str(exc))
 
     def register_device_with_password(self, user_id, password, device_name, token):
-        self.handle_register_device(user_id, device_name, token, use_nitrokey=False,
-                                    password=password)
+        self.handle_register_device(
+            user_id, device_name, token, use_nitrokey=False, password=password
+        )
 
     def register_device_with_nitrokey(self, user_id, device_name, nitrokey_key, nitrokey_token):
-        self.handle_register_device(user_id, device_name, use_nitrokey=True,
-                                    nitrokey_key=nitrokey_key, nitrokey_token=nitrokey_token)
+        self.handle_register_device(
+            user_id,
+            device_name,
+            use_nitrokey=True,
+            nitrokey_key=nitrokey_key,
+            nitrokey_token=nitrokey_token,
+        )
 
     def close_app(self):
         self.close_requested = True
