@@ -3,7 +3,7 @@ import os
 
 from parsec.schema import BaseCmdSchema, fields
 from parsec.core.app import Core, ClientContext
-from parsec.core.fuse import FuseNotAvailable, FuseAlreadyStarted, FuseNotStarted
+from parsec.core.mountpoint import MountpointAlreadyStarted, MountpointNotStarted
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.devices_manager import DeviceLoadingError
 
@@ -95,11 +95,9 @@ async def fuse_start(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     msg = cmd_FUSE_START_Schema.load(req)
 
     try:
-        await core.fuse_manager.start_mountpoint(msg["mountpoint"])
-    except FuseNotAvailable as exc:
-        return {"status": "fuse_not_available", "reason": str(exc)}
+        await core.mountpoint_manager.start_mountpoint(msg["mountpoint"])
 
-    except FuseAlreadyStarted as exc:
+    except MountpointAlreadyStarted as exc:
         return {"status": "fuse_already_started", "reason": str(exc)}
 
     return {"status": "ok"}
@@ -112,11 +110,9 @@ async def fuse_stop(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     cmd_FUSE_STOP_Schema.load(req)  # empty msg expected
 
     try:
-        await core.fuse_manager.stop_mountpoint()
-    except FuseNotAvailable as exc:
-        return {"status": "fuse_not_available", "reason": str(exc)}
+        await core.mountpoint_manager.stop_mountpoint()
 
-    except FuseNotStarted as exc:
+    except MountpointNotStarted as exc:
         return {"status": "fuse_not_started", "reason": str(exc)}
 
     return {"status": "ok"}
@@ -129,11 +125,9 @@ async def fuse_open(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     msg = PathOnlySchema.load(req)
 
     try:
-        core.fuse_manager.open_file(msg["path"])
-    except FuseNotAvailable as exc:
-        return {"status": "fuse_not_available", "reason": str(exc)}
+        core.mountpoint_manager.open_file(msg["path"])
 
-    except FuseNotStarted as exc:
+    except MountpointNotStarted as exc:
         return {"status": "fuse_not_started", "reason": str(exc)}
 
     return {"status": "ok"}
