@@ -1,16 +1,26 @@
+import os
 import pytest
 import threading
 import trio
 import pathlib
 from contextlib import contextmanager
 
-from parsec.core.fuse import FuseManager
+from parsec.core.mountpoint import MountpointManager
 
 from tests.common import call_with_control
 
 
+@pytest.fixture(params=("thread", "process"))
+def fuse_mode(request):
+    if request.param == "thread" and os.name == "nt":
+        pytest.skip("Windows doesn't support threaded fuse")
+    return request.param
+
+
 @pytest.fixture
-def fuse_service_factory(tmpdir, unused_tcp_addr, device_factory, event_bus_factory, fs_factory):
+def fuse_service_factory(
+    tmpdir, unused_tcp_addr, device_factory, event_bus_factory, fs_factory, fuse_mode
+):
     """
     Run a trio loop with fs and fuse in a separate thread to allow
     blocking operations on the mountpoint in the test
@@ -64,11 +74,11 @@ def fuse_service_factory(tmpdir, unused_tcp_addr, device_factory, event_bus_fact
                 device = device_factory()
                 event_bus = event_bus_factory()
                 async with fs_factory(device, unused_tcp_addr) as fs:
-                    fuse = FuseManager(fs, event_bus)
+                    fuse = MountpointManager(fs, event_bus, mode=fuse_mode)
                     async with trio.open_nursery() as nursery:
                         await fuse.init(nursery)
-                        await fuse.start(str(self.mountpoint))
                         try:
+                            await fuse.start(str(self.mountpoint))
                             await started_cb(fs=fs, fuse=fuse)
                         finally:
                             await fuse.teardown()
