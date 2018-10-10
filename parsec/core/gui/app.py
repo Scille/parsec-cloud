@@ -16,6 +16,7 @@ def kill_window(window):
         window.force_close = True
         window.close_app()
         QApplication.quit()
+
     return _inner_kill_window
 
 
