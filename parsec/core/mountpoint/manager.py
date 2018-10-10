@@ -20,7 +20,7 @@ else:
 
 
 class MountpointManager:
-    def __init__(self, fs, event_bus, mode="thread", debug: bool = True, nothreads: bool = False):
+    def __init__(self, fs, event_bus, mode="thread", debug: bool = False, nothreads: bool = False):
         if not FUSE_AVAILABLE:
             raise RuntimeError("Fuse is not available, is fusepy installed ?")
 
