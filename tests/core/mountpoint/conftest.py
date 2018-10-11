@@ -14,6 +14,8 @@ from tests.common import call_with_control
 def fuse_mode(request):
     if request.param == "thread" and os.name == "nt":
         pytest.skip("Windows doesn't support threaded fuse")
+    if request.param == "process" and os.name == "posix":
+        pytest.skip("Nobody ain't no time for this !!!")
     return request.param
 
 

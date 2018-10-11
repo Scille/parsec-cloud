@@ -1,18 +1,27 @@
-import os
+from typing import Union, List, Optional, cast
+from uuid import UUID
 
+from parsec.core.fs.types import Access, Path, LocalFolderManifest, RemoteFolderManifest
 from parsec.core.fs.utils import (
     is_folder_manifest,
     is_placeholder_manifest,
     local_to_remote_manifest,
     remote_to_local_manifest,
 )
-from parsec.core.fs.sync_base import SyncConcurrencyError
+from parsec.core.fs.sync_base import SyncConcurrencyError, BaseSyncer
 from parsec.core.fs.merge_folders import merge_local_folder_manifests, merge_remote_folder_manifests
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
 
 
-class FolderSyncerMixin:
-    async def _sync_folder_sync_children(self, path, access, manifest, recursive, notify_beacons):
+class FolderSyncerMixin(BaseSyncer):
+    async def _sync_folder_sync_children(
+        self,
+        path: Path,
+        access: Access,
+        manifest: LocalFolderManifest,
+        recursive: Union[bool, dict, list],
+        notify_beacons: List[UUID],
+    ) -> None:
         # Build a list of the children to synchronize. This children created
         # during the synchronization are ignored.
         if isinstance(recursive, (set, tuple, list)):
@@ -20,7 +29,7 @@ class FolderSyncerMixin:
             determine_child_recursiveness = lambda x: True
         elif isinstance(recursive, dict):
             # Such overkill recursive system is needed when asking to
-            determine_child_recursiveness = lambda x: recursive[x]
+            determine_child_recursiveness = lambda x: cast(dict, recursive)[x]
             to_sync = {k: v for k, v in manifest["children"].items() if k in recursive.keys()}
         else:
             to_sync = manifest["children"]
@@ -28,11 +37,13 @@ class FolderSyncerMixin:
 
         # Synchronize the children.
         for child_name, child_access in to_sync.items():
-            child_path = os.path.join(path, child_name)
+            child_path = path / child_name
             child_recursive = determine_child_recursiveness(child_name)
             await self._sync_nolock(child_path, child_access, child_recursive, notify_beacons)
 
-    async def _sync_folder_look_for_remote_changes(self, access, manifest):
+    async def _sync_folder_look_for_remote_changes(
+        self, access: Access, manifest: LocalFolderManifest
+    ) -> Optional[RemoteFolderManifest]:
         # Placeholder means we need synchro !
         assert not is_placeholder_manifest(manifest)
         # This folder hasn't been modified locally, just download
@@ -45,7 +56,9 @@ class FolderSyncerMixin:
             return None
         return target_remote_manifest
 
-    async def _sync_folder_actual_sync(self, access, manifest, notify_beacons):
+    async def _sync_folder_actual_sync(
+        self, access: Access, manifest: LocalFolderManifest, notify_beacons: List[UUID]
+    ) -> RemoteFolderManifest:
         to_sync_manifest = local_to_remote_manifest(manifest)
         to_sync_manifest["version"] += 1
 
@@ -80,7 +93,14 @@ class FolderSyncerMixin:
 
         return to_sync_manifest
 
-    async def _sync_folder_nolock(self, path, access, manifest, recursive, notify_beacons):
+    async def _sync_folder_nolock(
+        self,
+        path: Path,
+        access: Access,
+        manifest: LocalFolderManifest,
+        recursive: Union[bool, dict, list],
+        notify_beacons: List[UUID],
+    ) -> None:
         """
         Args:
             recursive: whether the folder's children must be synced before itself.
@@ -140,4 +160,4 @@ class FolderSyncerMixin:
             base_manifest, current_manifest, target_manifest
         )
         self.local_folder_fs.set_manifest(access, final_manifest)
-        self.event_bus.send("fs.entry.synced", path=path, id=access["id"])
+        self.event_bus.send("fs.entry.synced", path=str(path), id=access["id"])

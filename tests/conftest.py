@@ -4,7 +4,6 @@ import os
 import socket
 import asyncpg
 import contextlib
-from uuid import UUID
 from unittest.mock import patch
 import trio
 import trio_asyncio
@@ -393,7 +392,7 @@ def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, 
                             dumps_manifest(remote_user_manifest),
                         )
                         await backend.vlob.create(
-                            UUID(access["id"]), access["rts"], access["wts"], ciphered
+                            access["id"], access["rts"], access["wts"], ciphered
                         )
 
                     except UserAlreadyExistsError:

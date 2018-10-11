@@ -40,15 +40,6 @@ class SyncMonitor(BaseAsyncComponent):
         if self._monitoring_cancel_scope:
             self._monitoring_cancel_scope.cancel()
 
-    def _on_entry_updated(self, sender, id):
-        try:
-            first_updated, _ = self._updated_entries[id]
-            last_updated = timestamp()
-        except KeyError:
-            first_updated = last_updated = timestamp()
-        self._updated_entries[id] = (first_updated, last_updated)
-        self._new_event.set()
-
     @property
     def running(self):
         return self._running

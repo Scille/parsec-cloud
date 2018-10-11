@@ -1,11 +1,13 @@
 import math
 import inspect
+from uuid import UUID
 
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, LocalFolderFS
 from parsec.core.fs.local_file_fs import LocalFileFS, FSBlocksLocalMiss
 from parsec.core.fs.syncer import Syncer
 from parsec.core.fs.sharing import Sharing
 from parsec.core.fs.remote_loader import RemoteLoader
+from parsec.core.fs.types import Path
 
 
 class FS:
@@ -50,10 +52,11 @@ class FS:
                 for access in exc.accesses:
                     await self._remote_loader.load_block(access)
 
-    async def stat(self, path):
-        return await self._load_and_retry(self._local_folder_fs.stat, path)
+    async def stat(self, path: str):
+        cooked_path = Path(path)
+        return await self._load_and_retry(self._local_folder_fs.stat, cooked_path)
 
-    async def file_write(self, path, content, offset=0):
+    async def file_write(self, path: str, content: bytes, offset: int = 0):
         fd = await self.file_fd_open(path)
         try:
             if offset:
@@ -62,14 +65,14 @@ class FS:
         finally:
             await self.file_fd_close(fd)
 
-    async def file_truncate(self, path, length):
+    async def file_truncate(self, path: str, length: int):
         fd = await self.file_fd_open(path)
         try:
             await self.file_fd_truncate(fd, length)
         finally:
             await self.file_fd_close(fd)
 
-    async def file_read(self, path, size=math.inf, offset=0):
+    async def file_read(self, path: str, size: int = math.inf, offset: int = 0):
         fd = await self.file_fd_open(path)
         try:
             if offset:
@@ -78,60 +81,71 @@ class FS:
         finally:
             await self.file_fd_close(fd)
 
-    async def file_fd_open(self, path):
-        access = await self._load_and_retry(self._local_folder_fs.get_access, path)
+    async def file_fd_open(self, path: str):
+        cooked_path = Path(path)
+        access = await self._load_and_retry(self._local_folder_fs.get_access, cooked_path)
         return self._local_file_fs.open(access)
 
-    async def file_fd_close(self, fd):
+    async def file_fd_close(self, fd: int):
         self._local_file_fs.close(fd)
 
-    async def file_fd_seek(self, fd, offset):
+    async def file_fd_seek(self, fd: int, offset: int):
         self._local_file_fs.seek(fd, offset)
 
-    async def file_fd_truncate(self, fd, length):
+    async def file_fd_truncate(self, fd: int, length: int):
         self._local_file_fs.truncate(fd, length)
 
-    async def file_fd_write(self, fd, content):
+    async def file_fd_write(self, fd: int, content: bytes):
         return self._local_file_fs.write(fd, content)
 
-    async def file_fd_flush(self, fd):
+    async def file_fd_flush(self, fd: int):
         self._local_file_fs.flush(fd)
 
-    async def file_fd_read(self, fd, size=-1):
+    async def file_fd_read(self, fd: int, size: int = -1):
         return await self._load_and_retry(self._local_file_fs.read, fd, size)
 
-    async def file_create(self, path):
-        await self._load_and_retry(self._local_folder_fs.touch, path)
+    async def file_create(self, path: str):
+        cooked_path = Path(path)
+        await self._load_and_retry(self._local_folder_fs.touch, cooked_path)
 
-    async def folder_create(self, path):
-        await self._load_and_retry(self._local_folder_fs.mkdir, path)
+    async def folder_create(self, path: str):
+        cooked_path = Path(path)
+        await self._load_and_retry(self._local_folder_fs.mkdir, cooked_path)
 
-    async def workspace_create(self, path):
-        await self._load_and_retry(self._local_folder_fs.mkdir, path, workspace=True)
+    async def workspace_create(self, path: str):
+        cooked_path = Path(path)
+        await self._load_and_retry(self._local_folder_fs.mkdir, cooked_path, workspace=True)
 
-    async def move(self, src, dst):
-        await self._load_and_retry(self._local_folder_fs.move, src, dst)
+    async def move(self, src: str, dst: str):
+        cooked_src = Path(src)
+        cooked_dst = Path(dst)
+        await self._load_and_retry(self._local_folder_fs.move, cooked_src, cooked_dst)
 
-    async def delete(self, path):
-        await self._load_and_retry(self._local_folder_fs.delete, path)
+    async def delete(self, path: str):
+        cooked_path = Path(path)
+        await self._load_and_retry(self._local_folder_fs.delete, cooked_path)
 
-    async def sync(self, path, recursive=True):
-        await self._load_and_retry(self._syncer.sync, path, recursive=recursive)
+    async def sync(self, path: str, recursive=True):
+        cooked_path = Path(path)
+        await self._load_and_retry(self._syncer.sync, cooked_path, recursive=recursive)
 
     # TODO: do we really need this ? or should we provide id manipulation at this level ?
-    async def sync_by_id(self, entry_id):
+    async def sync_by_id(self, entry_id: UUID):
+        assert isinstance(entry_id, UUID)
         await self._load_and_retry(self._syncer.sync_by_id, entry_id)
 
     # TODO: do we really need this ? or should we optimize `sync(path='/')` ?
     async def full_sync(self):
         await self._load_and_retry(self._syncer.full_sync)
 
-    async def get_entry_path(self, id):
+    async def get_entry_path(self, id: UUID):
+        assert isinstance(id, UUID)
         path, _, _ = await self._load_and_retry(self._local_folder_fs.get_entry_path, id)
         return path
 
-    async def share(self, path, recipient):
-        await self._load_and_retry(self._sharing.share, path, recipient)
+    async def share(self, path: str, recipient: str):
+        cooked_path = Path(path)
+        await self._load_and_retry(self._sharing.share, cooked_path, recipient)
 
     async def process_last_messages(self):
         await self._sharing.process_last_messages()

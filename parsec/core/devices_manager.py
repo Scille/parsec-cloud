@@ -82,7 +82,7 @@ class DeviceConfSchema(UnknownCheckedSchema):
 
 
 class UserManifestAccessSchema(UnknownCheckedSchema):
-    id = fields.String(required=True)
+    id = fields.UUID(required=True)
     rts = fields.String(required=True)
     wts = fields.String(required=True)
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=32, max=32))
@@ -226,7 +226,7 @@ class LocalDevicesManager:
 
         device_key_path.write_text(data)
 
-    def load_device(self, device_id, password=None):
+    def load_device(self, device_id: str, password=None):
         device_conf_path = self.devices_conf_path / device_id
 
         device_conf, errors = self._load_device_conf(device_id)

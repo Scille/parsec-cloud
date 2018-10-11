@@ -48,7 +48,7 @@ class _cmd_CREATE_Schema(BaseCmdSchema):
     rts = fields.String(required=True)
     wts = fields.String(required=True)
     blob = fields.Base64Bytes(required=True)
-    notify_beacons = fields.List(fields.String())
+    notify_beacons = fields.List(fields.UUID())
 
 
 cmd_CREATE_Schema = _cmd_CREATE_Schema()
@@ -68,7 +68,7 @@ class _cmd_UPDATE_Schema(BaseCmdSchema):
     version = fields.Integer(validate=lambda n: n > 1)
     wts = fields.String(required=True)
     blob = fields.Base64Bytes(required=True)
-    notify_beacons = fields.List(fields.String())
+    notify_beacons = fields.List(fields.UUID())
 
 
 cmd_UPDATE_Schema = _cmd_UPDATE_Schema()

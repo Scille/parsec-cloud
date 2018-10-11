@@ -1,8 +1,6 @@
 import trio
 import logbook
 
-from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
-
 
 logger = logbook.Logger("parsec.core.beacon_monitor")
 
@@ -27,9 +25,8 @@ async def monitor_beacons(device, fs, event_bus):
         event_bus.send("backend.beacon.unlisten", beacon_id=beacon_id)
 
     def _on_beacon_updated(sender, beacon_id, index, src_id, src_version):
-        try:
-            workspace_path = _retreive_workspace_from_beacon(device, fs, beacon_id)
-        except FSManifestLocalMiss:
+        workspace_path = _retreive_workspace_from_beacon(device, fs, beacon_id)
+        if not workspace_path:
             # This workspace is not present in our local cache, nothing
             # to keep updated then.
             return
@@ -61,4 +58,4 @@ def _retreive_workspace_from_beacon(device, fs, beacon_id):
         if child_manifest.get("beacon_id") == beacon_id:
             return f"/{child_name}"
 
-    raise FSManifestLocalMiss()
+    return None

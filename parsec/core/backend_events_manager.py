@@ -32,9 +32,9 @@ class BackendEventDeviceTryClaimSubmittedRepSchema(UnknownCheckedSchema):
 class BackendEventBeaconUpdatedRepSchema(UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
     event = fields.CheckedConstant("beacon.updated", required=True)
-    beacon_id = fields.String(required=True)
+    beacon_id = fields.UUID(required=True)
     index = fields.Integer(required=True)
-    src_id = fields.String(required=True)
+    src_id = fields.UUID(required=True)
     src_version = fields.Integer(required=True)
 
 
@@ -235,7 +235,7 @@ class BackendEventsManager(BaseAsyncComponent):
             while True:
                 await sock.send({"cmd": "event_listen"})
                 rep = await sock.recv()
-                _, errors = backend_event_listen_rep_schema.load(rep)
+                rep, errors = backend_event_listen_rep_schema.load(rep)
                 if errors:
                     raise ListenBackendEventError(
                         "Bad reponse %r while listening for event: %r" % (rep, errors)

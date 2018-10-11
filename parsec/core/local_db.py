@@ -1,5 +1,8 @@
 from pathlib import Path
 
+# TODO: shouldn't use core.fs.types.Acces here
+from parsec.core.fs.types import Access
+
 
 class LocalDBError(Exception):
     pass
@@ -25,22 +28,22 @@ class LocalDB:
     def path(self):
         return str(self._path)
 
-    def get(self, access):
-        file = self._path / access["id"]
+    def get(self, access: Access) -> None:
+        file = self._path / str(access["id"])
         try:
             ciphered = file.read_bytes()
         except FileNotFoundError:
             raise LocalDBMissingEntry(access)
         return self._decrypt_with_symkey(access["key"], ciphered)
 
-    def set(self, access, raw: bytes):
+    def set(self, access: Access, raw: bytes) -> None:
         assert isinstance(raw, (bytes, bytearray))
         ciphered = self._encrypt_with_symkey(access["key"], raw)
-        file = self._path / access["id"]
+        file = self._path / str(access["id"])
         file.write_bytes(ciphered)
 
-    def clear(self, access):
-        file = self._path / access["id"]
+    def clear(self, access: Access) -> None:
+        file = self._path / str(access["id"])
         try:
             file.unlink()
         except FileNotFoundError:
