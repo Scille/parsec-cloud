@@ -41,6 +41,10 @@ class DeviceConfigureError(Exception):
     pass
 
 
+class DeviceSavingAlreadyExists(DeviceConfigureError):
+    pass
+
+
 class DeviceConfigureBackendError(DeviceConfigureError):
     pass
 
@@ -61,7 +65,7 @@ class DeviceConfigureNoInvitation(DeviceConfigureError):
     pass
 
 
-class DeviceConfigureAlreadyExists(DeviceConfigureError):
+class DeviceNitrokeyError(DeviceConfigureError):
     pass
 
 
@@ -216,7 +220,9 @@ class LocalDevicesManager:
         try:
             device_conf_path.mkdir(parents=True)
         except FileExistsError as exc:
-            raise DeviceSavingError(f"Device config `{device_conf_path}` already exists") from exc
+            raise DeviceSavingAlreadyExists(
+                f"Device config `{device_conf_path}` already exists"
+            ) from exc
 
         if password and use_nitrokey:
             DeviceSavingError(
@@ -253,7 +259,7 @@ class LocalDevicesManager:
                         input_data, output_data, nitrokey_key_id, nitrokey_token_id
                     )
                 except IndexError:
-                    raise DeviceSavingError("Invalid Nitrokey token id or key id")
+                    raise DeviceNitrokeyError("Invalid Nitrokey token id or key id")
                 input_data.close()
                 device_conf[key] = output_data.getvalue()
                 output_data.close()
@@ -388,7 +394,7 @@ async def configure_new_device(
                 input_data, output_data, nitrokey_key_id, nitrokey_token_id
             )
         except IndexError:
-            raise DeviceConfigureError("Invalid Nitrokey token id or key id")
+            raise DeviceNitrokeyError("Invalid Nitrokey token id or key id")
         input_data.close()
         exchange_cipherkey_encrypted = output_data.getvalue()
         output_data.close()
@@ -509,7 +515,7 @@ async def accept_device_configuration_try(
                 nitrokey_token_id, nitrokey_pin, input_data, output_data, nitrokey_key_id
             )
         except IndexError:
-            raise DeviceConfigurationPasswordError("Invalid Nitrokey token id or key id")
+            raise DeviceNitrokeyError("Invalid Nitrokey token id or key id")
         except RuntimeError:
             raise DeviceConfigurationPasswordError("Invalid Nitrokey PIN")
         input_data.close()
@@ -590,7 +596,7 @@ async def claim_user(backend_addr, user_id, device_name, invitation_token):
         elif rep.get("status") == "not_found_error":
             raise DeviceConfigureNoInvitation("No invitation for this user.")
         elif rep.get("status") == "already_exists_error":
-            raise DeviceConfigureAlreadyExists("User already exists.")
+            raise DeviceSavingAlreadyExists("User already exists.")
         raise DeviceConfigureBackendError()
 
     # Upload the very first version of user manifest

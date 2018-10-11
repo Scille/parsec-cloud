@@ -98,15 +98,15 @@ class Ui_RegisterDevice(object):
         self.button_register_device.setObjectName("button_register_device")
         self.horizontalLayout_3.addWidget(self.button_register_device)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
+        spacerItem1 = QtWidgets.QSpacerItem(
+            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
+        )
+        self.verticalLayout_2.addItem(spacerItem1)
         self.button_box = QtWidgets.QDialogButtonBox(RegisterDevice)
         self.button_box.setStandardButtons(QtWidgets.QDialogButtonBox.Close)
         self.button_box.setCenterButtons(True)
         self.button_box.setObjectName("button_box")
         self.verticalLayout_2.addWidget(self.button_box)
-        spacerItem1 = QtWidgets.QSpacerItem(
-            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
-        )
-        self.verticalLayout_2.addItem(spacerItem1)
 
         self.retranslateUi(RegisterDevice)
         self.check_box_use_nitrokey.toggled["bool"].connect(self.widget_nitrokey.setVisible)

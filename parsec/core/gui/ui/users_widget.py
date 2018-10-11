@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_UsersWidget(object):
     def setupUi(self, UsersWidget):
         UsersWidget.setObjectName("UsersWidget")
-        UsersWidget.resize(557, 300)
+        UsersWidget.resize(602, 224)
         self.verticalLayout = QtWidgets.QVBoxLayout(UsersWidget)
         self.verticalLayout.setContentsMargins(5, 5, 5, 5)
         self.verticalLayout.setSpacing(5)
@@ -41,34 +41,31 @@ class Ui_UsersWidget(object):
         )
         self.horizontalLayout_3.addItem(spacerItem1)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
-        self.label_help = QtWidgets.QLabel(self.groupBox)
-        self.label_help.setObjectName("label_help")
-        self.verticalLayout_2.addWidget(self.label_help)
-        self.horizontalLayout = QtWidgets.QHBoxLayout()
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        self.label_new_user_login = QtWidgets.QLabel(self.groupBox)
-        self.label_new_user_login.setText("")
-        self.label_new_user_login.setTextInteractionFlags(
-            QtCore.Qt.LinksAccessibleByMouse
-            | QtCore.Qt.TextSelectableByKeyboard
-            | QtCore.Qt.TextSelectableByMouse
-        )
-        self.label_new_user_login.setObjectName("label_new_user_login")
-        self.horizontalLayout.addWidget(self.label_new_user_login)
-        self.label_new_user_token = QtWidgets.QLabel(self.groupBox)
-        self.label_new_user_token.setText("")
-        self.label_new_user_token.setTextInteractionFlags(
-            QtCore.Qt.LinksAccessibleByMouse
-            | QtCore.Qt.TextSelectableByKeyboard
-            | QtCore.Qt.TextSelectableByMouse
-        )
-        self.label_new_user_token.setObjectName("label_new_user_token")
-        self.horizontalLayout.addWidget(self.label_new_user_token)
-        self.verticalLayout_2.addLayout(self.horizontalLayout)
-        self.label_register_error = QtWidgets.QLabel(self.groupBox)
-        self.label_register_error.setText("")
-        self.label_register_error.setObjectName("label_register_error")
-        self.verticalLayout_2.addWidget(self.label_register_error)
+        self.widget_info = QtWidgets.QWidget(self.groupBox)
+        self.widget_info.setObjectName("widget_info")
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.widget_info)
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.label_3 = QtWidgets.QLabel(self.widget_info)
+        self.label_3.setObjectName("label_3")
+        self.verticalLayout_3.addWidget(self.label_3)
+        self.formLayout_2 = QtWidgets.QFormLayout()
+        self.formLayout_2.setObjectName("formLayout_2")
+        self.label = QtWidgets.QLabel(self.widget_info)
+        self.label.setObjectName("label")
+        self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label)
+        self.label_2 = QtWidgets.QLabel(self.widget_info)
+        self.label_2.setObjectName("label_2")
+        self.formLayout_2.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.label_2)
+        self.line_edit_user_id = QtWidgets.QLineEdit(self.widget_info)
+        self.line_edit_user_id.setReadOnly(True)
+        self.line_edit_user_id.setObjectName("line_edit_user_id")
+        self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.line_edit_user_id)
+        self.line_edit_token = QtWidgets.QLineEdit(self.widget_info)
+        self.line_edit_token.setReadOnly(True)
+        self.line_edit_token.setObjectName("line_edit_token")
+        self.formLayout_2.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.line_edit_token)
+        self.verticalLayout_3.addLayout(self.formLayout_2)
+        self.verticalLayout_2.addWidget(self.widget_info)
         self.verticalLayout.addWidget(self.groupBox)
         spacerItem2 = QtWidgets.QSpacerItem(
             20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
@@ -84,9 +81,11 @@ class Ui_UsersWidget(object):
         self.groupBox.setTitle(_translate("UsersWidget", "Add a user"))
         self.button_register_device.setText(_translate("UsersWidget", "Register a new device"))
         self.button_register_user.setText(_translate("UsersWidget", "Register a new user"))
-        self.label_help.setText(
+        self.label_3.setText(
             _translate(
                 "UsersWidget",
-                "Transmit these information to the new user so they can set up their account. ",
+                "Transmit the following information to the new user so they can set up their account.",
             )
         )
+        self.label.setText(_translate("UsersWidget", "User ID"))
+        self.label_2.setText(_translate("UsersWidget", "Token"))

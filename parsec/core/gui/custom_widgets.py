@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QToolButton, QMessageBox
 
 
 def show_info(parent, text):
-    QMessageBox.info(parent, QCoreApplication.translate("messages", "Info"), text)
+    QMessageBox.information(parent, QCoreApplication.translate("messages", "Information"), text)
 
 
 def show_warning(parent, text):
@@ -11,7 +11,7 @@ def show_warning(parent, text):
 
 
 def show_error(parent, text):
-    QMessageBox.error(parent, QCoreApplication.translate("messages", "Error"), text)
+    QMessageBox.critical(parent, QCoreApplication.translate("messages", "Error"), text)
 
 
 class ToolButton(QToolButton):

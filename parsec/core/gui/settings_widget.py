@@ -5,7 +5,7 @@ from PyQt5.QtCore import QFileInfo, QCoreApplication
 from PyQt5.QtWidgets import QWidget, QFileDialog
 
 from parsec.core.gui import settings
-from parsec.core.custom_widgets import show_error
+from parsec.core.gui.custom_widgets import show_error
 from parsec.core.gui.ui.settings_widget import Ui_SettingsWidget
 
 

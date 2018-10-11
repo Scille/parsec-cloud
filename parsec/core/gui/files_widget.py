@@ -428,7 +428,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 show_warning(
                     self,
                     QCoreApplication.translate(
-                        "FilesWidget", 'Can not share the workspace "{}" with yourself.'
+                        "FilesWidget", 'Can not share the workspace "{}" with this user.'
                     ).format(workspace_name),
                 )
             except:

@@ -102,120 +102,125 @@
         <translation>Ajouter un espace de travail</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="256"/>
+        <location filename="../files_widget.py" line="253"/>
         <source>{} already exists</source>
         <translation>{} existe déjà</translation>
     </message>
     <message>
         <location filename="../files_widget.py" line="184"/>
         <source>Importing the folder</source>
-        <translation>Importer le répertoire</translation>
+        <translation type="obsolete">Importer le répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="184"/>
+        <location filename="../files_widget.py" line="183"/>
         <source>Sub-folders will not be imported to prevent big data imports.</source>
         <translation>Les sous-répertoires ne seront pas importés.</translation>
     </message>
     <message>
         <location filename="../files_widget.py" line="463"/>
         <source>Error</source>
-        <translation>Erreur</translation>
+        <translation type="obsolete">Erreur</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="272"/>
+        <location filename="../files_widget.py" line="269"/>
         <source>Can not import
 {}.</source>
         <translation>Impossible d&apos;importer {}.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="291"/>
+        <location filename="../files_widget.py" line="287"/>
         <source>New folder</source>
         <translation>Nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="291"/>
+        <location filename="../files_widget.py" line="287"/>
         <source>Enter new folder name</source>
         <translation>Entrez le nom du nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="304"/>
+        <location filename="../files_widget.py" line="300"/>
         <source>A folder with the same name already exists.</source>
         <translation>Un répertoire du même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="325"/>
+        <location filename="../files_widget.py" line="320"/>
         <source>Open</source>
         <translation>Ouvrir</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="327"/>
+        <location filename="../files_widget.py" line="322"/>
         <source>Open in file explorer</source>
         <translation>Ouvrir dans l&apos;explorateur de fichiers</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="331"/>
+        <location filename="../files_widget.py" line="326"/>
         <source>Delete</source>
         <translation>Supprimer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="367"/>
+        <location filename="../files_widget.py" line="362"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="356"/>
+        <location filename="../files_widget.py" line="351"/>
         <source>Are you sure you want to delete folder &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer le répertoire &quot;{}&quot; ?</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="367"/>
+        <location filename="../files_widget.py" line="362"/>
         <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer le fichier &quot;{}&quot; ?</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="496"/>
+        <location filename="../files_widget.py" line="488"/>
         <source>{} element(s)</source>
         <translation>{} élément(s)</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="415"/>
+        <location filename="../files_widget.py" line="410"/>
         <source>Share</source>
         <translation>Partager</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="421"/>
+        <location filename="../files_widget.py" line="416"/>
         <source>Share a workspace</source>
         <translation>Partager un espace de travail</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="421"/>
+        <location filename="../files_widget.py" line="416"/>
         <source>Give a user name to share the workspace {} with.</source>
         <translation>Fournissez un nom d&apos;utilisateur avec qui partager l&apos;espace de travail {}.</translation>
     </message>
     <message>
         <location filename="../files_widget.py" line="433"/>
         <source>Can not share the workspace &quot;{}&quot; with yourself.</source>
-        <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec vous-même.</translation>
+        <translation type="obsolete">Impossible de partager l&apos;espace de travail &quot;{}&quot; avec vous-même.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="441"/>
+        <location filename="../files_widget.py" line="435"/>
         <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
         <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec &quot;{}&quot;.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="452"/>
+        <location filename="../files_widget.py" line="445"/>
         <source>New workspace</source>
         <translation>Nouvel espace de travail</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="452"/>
+        <location filename="../files_widget.py" line="445"/>
         <source>Enter new workspace name</source>
         <translation>Entrez le nom du nouvel espace de travail</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="463"/>
+        <location filename="../files_widget.py" line="456"/>
         <source>A workspace with the same name already exists.</source>
         <translation>Un espace de travail du même nom existe déjà.</translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="428"/>
+        <source>Can not share the workspace &quot;{}&quot; with this user.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -304,12 +309,12 @@
         <translation type="unfinished">S&apos;enregistrer</translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="170"/>
+        <location filename="../login_widget.py" line="175"/>
         <source>Passwords don&apos;t match.</source>
         <translation type="unfinished">Les mots de passe ne correspondent pas.</translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="190"/>
+        <location filename="../login_widget.py" line="197"/>
         <source>Waiting for existing device to register us...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -573,38 +578,63 @@
         <translation type="obsolete">Erreur</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="209"/>
+        <location filename="../main_window.py" line="210"/>
         <source>Can not register the new user.</source>
-        <translation>Impossible d&apos;enregistrer le nouvel utilisateur</translation>
+        <translation type="obsolete">Impossible d&apos;enregistrer le nouvel utilisateur</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="333"/>
+        <location filename="../main_window.py" line="371"/>
         <source>Are you sure you want to quit ?</source>
         <translation>Êtes-vous sûr de vouloir fermer l&apos;application ?</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="243"/>
+        <location filename="../main_window.py" line="245"/>
         <source>User has been successfully registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="251"/>
+        <location filename="../main_window.py" line="253"/>
         <source>The token has expired.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="256"/>
+        <location filename="../main_window.py" line="258"/>
         <source>No invitation found for this user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="261"/>
+        <location filename="../main_window.py" line="263"/>
         <source>User has already been registered.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="304"/>
+        <location filename="../main_window.py" line="324"/>
         <source>Device has been successfully registered. You can now login.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="192"/>
+        <source>Authentication failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="332"/>
+        <source>The device already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="337"/>
+        <source>Invalid NitroKey information.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="342"/>
+        <source>Can not create the new device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="210"/>
+        <source>Can not register the user.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -709,10 +739,10 @@
     <message>
         <location filename="../settings_widget.py" line="32"/>
         <source>Error</source>
-        <translation>Erreur</translation>
+        <translation type="obsolete">Erreur</translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="32"/>
+        <location filename="../settings_widget.py" line="33"/>
         <source>The choosen folder is not writable.</source>
         <translation>Le répertoire choisi n&apos;est pas disponible en écriture.</translation>
     </message>
@@ -742,17 +772,32 @@
     <message>
         <location filename="../forms/users_widget.ui" line="89"/>
         <source>Transmit these information to the new user so they can set up their account. </source>
-        <translation>Transmettre ces informations au nouvel utilisateur pour qu&apos;il puisse créer son compte.</translation>
+        <translation type="obsolete">Transmettre ces informations au nouvel utilisateur pour qu&apos;il puisse créer son compte.</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="24"/>
+        <location filename="../users_widget.py" line="20"/>
         <source>New user</source>
         <translation>Nouvel utilisateur</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="24"/>
+        <location filename="../users_widget.py" line="20"/>
         <source>Enter new user name</source>
         <translation>Entrez le nom du nouvel utilisateur</translation>
+    </message>
+    <message>
+        <location filename="../forms/users_widget.ui" line="92"/>
+        <source>Transmit the following information to the new user so they can set up their account.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/users_widget.ui" line="101"/>
+        <source>User ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/users_widget.ui" line="108"/>
+        <source>Token</source>
+        <translation type="unfinished">Jeton</translation>
     </message>
 </context>
 </TS>

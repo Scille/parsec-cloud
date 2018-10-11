@@ -9,7 +9,10 @@ from parsec.core.devices_manager import (
     DeviceConfigureBackendError,
     DeviceConfigureOutOfDate,
     DeviceConfigureNoInvitation,
-    DeviceConfigureAlreadyExists,
+    DeviceSavingAlreadyExists,
+    DeviceNitrokeyError,
+    DeviceConfigureError,
+    DeviceSavingError,
 )
 
 from parsec.core.gui import settings
@@ -86,7 +89,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.register_device_with_nitrokey
         )
         self.action_disconnect.triggered.connect(self.logout)
-        self.users_widget.registerUserClicked.connect(self.register_user)
+        self.users_widget.register_user_clicked.connect(self.register_user)
         self.action_remount.triggered.connect(self.remount)
         self.action_login.triggered.connect(self.show_login_widget)
         self.action_quit.triggered.connect(self.close)
@@ -186,30 +189,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.button_files.setDisabled(False)
             self.show_files_widget()
         except DeviceLoadingError:
-            return QCoreApplication.translate(self.__class__.__name__, "Invalid password")
+            show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
 
     def login_with_password(self, device_id, password):
-        err = self.perform_login(device_id, password=password)
-        if err:
-            show_error(self.login_widget, err)
+        self.perform_login(device_id, password=password)
 
     def login_with_nitrokey(self, device_id, nitrokey_pin, nitrokey_key, nitrokey_token):
-        err = self.perform_login(
+        self.perform_login(
             device_id,
             nitrokey_pin=nitrokey_pin,
             nitrokey_key=nitrokey_key,
             nitrokey_token=nitrokey_token,
         )
-        if err:
-            show_error(self.login_widget, err)
 
     def register_user(self, login):
         try:
             token = core_call().invite_user(login)
             self.users_widget.set_claim_infos(login, token)
         except DeviceConfigureBackendError:
-            self.users_widget.set_error(
-                QCoreApplication.translate("MainWindow", "Can not register the new user.")
+            show_error(
+                self.users_widget,
+                QCoreApplication.translate("MainWindow", "Can not register the user."),
             )
 
     def handle_register_user(
@@ -259,7 +259,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.login_widget,
                 QCoreApplication.translate("MainWindow", "No invitation found for this user."),
             )
-        except DeviceConfigureAlreadyExists:
+        except DeviceSavingAlreadyExists:
             show_error(
                 self.login_widget,
                 QCoreApplication.translate("MainWindow", "User has already been registered."),
@@ -328,9 +328,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 ),
             )
             self.login_widget.reset()
-        except Exception as exc:
-            # TODO: better error handling
-            show_error(self.login_widget, str(exc))
+        except DeviceSavingAlreadyExists:
+            show_error(
+                self.login_widget,
+                QCoreApplication.translate("MainWindow", "The device already exists."),
+            )
+        except DeviceNitrokeyError:
+            show_error(
+                self.login_widget,
+                QCoreApplication.translate("MainWindow", "Invalid NitroKey information."),
+            )
+        except (DeviceSavingError, DeviceConfigureError):
+            show_error(
+                self.login_widget,
+                QCoreApplication.translate("MainWindow", "Can not create the new device."),
+            )
 
     def register_device_with_password(self, user_id, password, device_name, token):
         self.handle_register_device(

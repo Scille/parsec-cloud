@@ -8,7 +8,7 @@ from raven.handlers.logbook import SentryHandler
 from urllib.parse import urlparse
 
 from parsec.core import Core, CoreConfig
-from parsec.core.devices_manager import DeviceSavingError
+from parsec.core.devices_manager import DeviceSavingAlreadyExists
 from parsec.core.gui import run_gui
 
 
@@ -159,7 +159,7 @@ def _core(socket, backend_addr, backend_watchdog, debug, i_am_john, no_ui):
                     JOHN_DOE_DEVICE_SIGNING_KEY,
                     JOHN_DOE_USER_MANIFEST_ACCESS,
                 )
-            except DeviceSavingError:
+            except DeviceSavingAlreadyExists:
                 pass
             device = core.local_devices_manager.load_device(JOHN_DOE_DEVICE_ID)
 
