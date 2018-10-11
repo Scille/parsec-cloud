@@ -29,5 +29,5 @@ build_script:
   - pip install .[all] --process-dependency-links
 
 test_script:
-  - py.test tests --cov=parsec --cov-config=setup.cfg --runslow -vvv --postgresql -s -x
+  - py.test tests --cov=parsec --cov-config=setup.cfg --runslow -vvv -s -x
   - codecov
