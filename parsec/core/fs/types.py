@@ -14,6 +14,11 @@ class Path(PureWindowsPath if os.name == "nt" else PurePosixPath):
         if not self.is_absolute():
             raise ValueError("Path must be absolute")
 
+    def is_absolute(self):
+        # On Windows, original `is_absolute` wants a drive letter which
+        # is not how parsec works
+        return bool(self.root)
+
     def is_root(self):
         return self.parent == self
 
