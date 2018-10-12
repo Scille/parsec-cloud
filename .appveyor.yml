@@ -29,5 +29,5 @@ build_script:
   - pip install .[all] --process-dependency-links
 
 test_script:
-  - py.test tests --cov=parsec --cov-config=setup.cfg --runslow -vvv -n auto -x
+  - py.test tests/core/test_sync_monitor.py::test_autosync_on_modification  --cov=parsec --cov-config=setup.cfg --runslow -vvv -x
   - codecov
