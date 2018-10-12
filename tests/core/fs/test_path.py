@@ -38,6 +38,11 @@ def test_mix_windows_and_posix_slashes(path, wpath):
 
 @pytest.mark.parametrize("path", ["/", "///", "/foo", "/foo/bar"])
 def test_stringify(path):
+    # Don't test '//' because according to POSIX path resolution:
+    # http://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap04.html#tag_04_11
+    # "A pathname that begins with two successive slashes may be
+    # interpreted in an implementation-defined manner, although more
+    # than two leading slashes shall be treated as a single slash".
     obj = Path(path)
     assert str(obj) == path.replace("///", "/")
     if os.name == "nt":
