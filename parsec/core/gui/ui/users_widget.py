@@ -8,11 +8,10 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Ui_UsersWidget(object):
     def setupUi(self, UsersWidget):
         UsersWidget.setObjectName("UsersWidget")
-        UsersWidget.resize(516, 193)
+        UsersWidget.resize(602, 224)
         self.verticalLayout = QtWidgets.QVBoxLayout(UsersWidget)
         self.verticalLayout.setContentsMargins(5, 5, 5, 5)
         self.verticalLayout.setSpacing(5)
@@ -22,9 +21,7 @@ class Ui_UsersWidget(object):
         self.button_add_user = QtWidgets.QPushButton(UsersWidget)
         self.button_add_user.setObjectName("button_add_user")
         self.horizontalLayout_2.addWidget(self.button_add_user)
-        spacerItem = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
         self.label_help = QtWidgets.QLabel(UsersWidget)
@@ -34,31 +31,64 @@ class Ui_UsersWidget(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.label_new_user_login = QtWidgets.QLabel(UsersWidget)
         self.label_new_user_login.setText("")
-        self.label_new_user_login.setTextInteractionFlags(
-            QtCore.Qt.LinksAccessibleByMouse
-            | QtCore.Qt.TextSelectableByKeyboard
-            | QtCore.Qt.TextSelectableByMouse
-        )
+        self.label_new_user_login.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse|QtCore.Qt.TextSelectableByKeyboard|QtCore.Qt.TextSelectableByMouse)
         self.label_new_user_login.setObjectName("label_new_user_login")
         self.horizontalLayout.addWidget(self.label_new_user_login)
         self.label_new_user_token = QtWidgets.QLabel(UsersWidget)
         self.label_new_user_token.setText("")
-        self.label_new_user_token.setTextInteractionFlags(
-            QtCore.Qt.LinksAccessibleByMouse
-            | QtCore.Qt.TextSelectableByKeyboard
-            | QtCore.Qt.TextSelectableByMouse
-        )
+        self.label_new_user_token.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse|QtCore.Qt.TextSelectableByKeyboard|QtCore.Qt.TextSelectableByMouse)
         self.label_new_user_token.setObjectName("label_new_user_token")
         self.horizontalLayout.addWidget(self.label_new_user_token)
         self.verticalLayout.addLayout(self.horizontalLayout)
         self.label_register_error = QtWidgets.QLabel(UsersWidget)
         self.label_register_error.setText("")
         self.label_register_error.setObjectName("label_register_error")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.label_register_error)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.horizontalLayout_21 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_21.setObjectName("horizontalLayout_21")
+        self.button_register_device = QtWidgets.QPushButton(self.label_register_error)
+        self.button_register_device.setObjectName("button_register_device")
+        self.horizontalLayout_21.addWidget(self.button_register_device)
+        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_21.addItem(spacerItem1)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_21)
+        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+        self.button_register_user = QtWidgets.QPushButton(self.label_register_error)
+        self.button_register_user.setObjectName("button_register_user")
+        self.horizontalLayout_3.addWidget(self.button_register_user)
+        spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_3.addItem(spacerItem2)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_3)
+        self.widget_info = QtWidgets.QWidget(self.label_register_error)
+        self.widget_info.setObjectName("widget_info")
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.widget_info)
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.label_3 = QtWidgets.QLabel(self.widget_info)
+        self.label_3.setObjectName("label_3")
+        self.verticalLayout_3.addWidget(self.label_3)
+        self.formLayout_2 = QtWidgets.QFormLayout()
+        self.formLayout_2.setObjectName("formLayout_2")
+        self.label = QtWidgets.QLabel(self.widget_info)
+        self.label.setObjectName("label")
+        self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label)
+        self.label_2 = QtWidgets.QLabel(self.widget_info)
+        self.label_2.setObjectName("label_2")
+        self.formLayout_2.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.label_2)
+        self.line_edit_user_id = QtWidgets.QLineEdit(self.widget_info)
+        self.line_edit_user_id.setReadOnly(True)
+        self.line_edit_user_id.setObjectName("line_edit_user_id")
+        self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.line_edit_user_id)
+        self.line_edit_token = QtWidgets.QLineEdit(self.widget_info)
+        self.line_edit_token.setReadOnly(True)
+        self.line_edit_token.setObjectName("line_edit_token")
+        self.formLayout_2.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.line_edit_token)
+        self.verticalLayout_3.addLayout(self.formLayout_2)
+        self.verticalLayout_2.addWidget(self.widget_info)
         self.verticalLayout.addWidget(self.label_register_error)
-        spacerItem1 = QtWidgets.QSpacerItem(
-            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
-        )
-        self.verticalLayout.addItem(spacerItem1)
+        spacerItem3 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem3)
 
         self.retranslateUi(UsersWidget)
         QtCore.QMetaObject.connectSlotsByName(UsersWidget)
@@ -67,9 +97,10 @@ class Ui_UsersWidget(object):
         _translate = QtCore.QCoreApplication.translate
         UsersWidget.setWindowTitle(_translate("UsersWidget", "Form"))
         self.button_add_user.setText(_translate("UsersWidget", "Add a new user"))
-        self.label_help.setText(
-            _translate(
-                "UsersWidget",
-                "Transmit these information to the new user so they can set up their account. ",
-            )
-        )
+        self.label_help.setText(_translate("UsersWidget", "Transmit these information to the new user so they can set up their account. "))
+        self.button_register_device.setText(_translate("UsersWidget", "Register a new device"))
+        self.button_register_user.setText(_translate("UsersWidget", "Register a new user"))
+        self.label_3.setText(_translate("UsersWidget", "Transmit the following information to the new user so they can set up their account."))
+        self.label.setText(_translate("UsersWidget", "User ID"))
+        self.label_2.setText(_translate("UsersWidget", "Token"))
+

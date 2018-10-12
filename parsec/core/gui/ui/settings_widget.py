@@ -8,14 +8,11 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Ui_SettingsWidget(object):
     def setupUi(self, SettingsWidget):
         SettingsWidget.setObjectName("SettingsWidget")
         SettingsWidget.resize(508, 356)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(SettingsWidget.sizePolicy().hasHeightForWidth())
@@ -31,9 +28,7 @@ class Ui_SettingsWidget(object):
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.tab_app)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.groupBox = QtWidgets.QGroupBox(self.tab_app)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum
-        )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.groupBox.sizePolicy().hasHeightForWidth())
@@ -52,21 +47,15 @@ class Ui_SettingsWidget(object):
         self.horizontalLayout.addWidget(self.button_choose_mountpoint)
         self.verticalLayout_3.addLayout(self.horizontalLayout)
         self.verticalLayout_2.addWidget(self.groupBox)
-        spacerItem = QtWidgets.QSpacerItem(
-            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
-        )
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_2.addItem(spacerItem)
         icon = QtGui.QIcon()
-        icon.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/settings.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
-        )
+        icon.addPixmap(QtGui.QPixmap(":/icons/images/icons/settings.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tab_settings.addTab(self.tab_app, icon, "")
         self.tab_network = QtWidgets.QWidget()
         self.tab_network.setObjectName("tab_network")
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/cloud.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
-        )
+        icon1.addPixmap(QtGui.QPixmap(":/icons/images/icons/cloud.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tab_settings.addTab(self.tab_network, icon1, "")
         self.verticalLayout.addWidget(self.tab_settings)
 
@@ -79,12 +68,7 @@ class Ui_SettingsWidget(object):
         SettingsWidget.setWindowTitle(_translate("SettingsWidget", "Form"))
         self.groupBox.setTitle(_translate("SettingsWidget", "Mount options"))
         self.button_choose_mountpoint.setText(_translate("SettingsWidget", "Choose mount folder"))
-        self.tab_settings.setTabText(
-            self.tab_settings.indexOf(self.tab_app), _translate("SettingsWidget", "Global")
-        )
-        self.tab_settings.setTabText(
-            self.tab_settings.indexOf(self.tab_network), _translate("SettingsWidget", "Network")
-        )
-
+        self.tab_settings.setTabText(self.tab_settings.indexOf(self.tab_app), _translate("SettingsWidget", "Global"))
+        self.tab_settings.setTabText(self.tab_settings.indexOf(self.tab_network), _translate("SettingsWidget", "Network"))
 
 from parsec.core.gui import resources_rc
