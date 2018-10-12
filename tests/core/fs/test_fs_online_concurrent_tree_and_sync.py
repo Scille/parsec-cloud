@@ -40,6 +40,7 @@ def compare_fs_dumps(entry_1, entry_2):
 
 
 @pytest.mark.slow
+@pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
 def test_fs_online_concurrent_tree_and_sync(
     hypothesis_settings,
     oracle_fs_with_sync_factory,
