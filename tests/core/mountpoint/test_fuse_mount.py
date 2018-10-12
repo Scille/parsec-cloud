@@ -3,14 +3,47 @@ from unittest.mock import patch
 import os
 import trio
 
-from parsec.core.mountpoint import MountpointManager, FUSE_AVAILABLE
+from parsec.core.mountpoint import (
+    mountpoint_manager_factory,
+    NotAvailableMountpointManager,
+    FuseMountpointManager,
+    MountpointManagerNotAvailable,
+)
 
 
 @pytest.mark.trio
 async def test_fuse_not_available(alice_fs, event_bus):
     with patch("parsec.core.mountpoint.manager.FUSE_AVAILABLE", new=False):
         with pytest.raises(RuntimeError):
-            MountpointManager(alice_fs, event_bus)
+            FuseMountpointManager(alice_fs, event_bus)
+
+    with patch("parsec.core.mountpoint.FUSE_AVAILABLE", new=False):
+        mm = mountpoint_manager_factory(alice_fs, event_bus)
+        assert isinstance(mm, NotAvailableMountpointManager)
+
+        async with trio.open_nursery() as nursery:
+            await mm.init(nursery)
+
+            with pytest.raises(MountpointManagerNotAvailable):
+                await mm.start("/foo")
+
+            with pytest.raises(MountpointManagerNotAvailable):
+                await mm.stop()
+
+            with pytest.raises(MountpointManagerNotAvailable):
+                mm.is_started()
+
+            with pytest.raises(MountpointManagerNotAvailable):
+                mm.get_abs_mountpoint()
+
+            await mm.teardown()
+
+
+@pytest.mark.trio
+@pytest.mark.fuse
+async def test_fuse_available(alice_fs, event_bus):
+    mm = mountpoint_manager_factory(alice_fs, event_bus)
+    assert isinstance(mm, FuseMountpointManager)
 
 
 @pytest.mark.trio
@@ -25,7 +58,7 @@ async def test_mount_fuse(alice_fs, event_bus, tmpdir, monitor, fuse_mode):
     # Now we can start fuse
 
     mountpoint = f"{tmpdir}/fuse_mountpoint"
-    manager = MountpointManager(alice_fs, event_bus, mode=fuse_mode)
+    manager = FuseMountpointManager(alice_fs, event_bus, mode=fuse_mode)
     async with trio.open_nursery() as nursery:
         try:
             await manager.init(nursery)
