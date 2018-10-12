@@ -9,15 +9,24 @@ BeaconId = NewType("BeaconId", UUID)
 FileDescriptor = NewType("FileDescriptor", int)
 
 
-class Path(PureWindowsPath if os.name == "nt" else PurePosixPath):
+class Path(PurePosixPath):
     def __init__(self, raw):
         if not self.is_absolute():
             raise ValueError("Path must be absolute")
 
-    def is_absolute(self):
-        # On Windows, original `is_absolute` wants a drive letter which
-        # is not how parsec works
-        return bool(self.root)
+    @classmethod
+    def _from_parts(cls, args, init=True):
+        self = object.__new__(cls)
+        if os.name == "nt":
+            drv, root, parts = PureWindowsPath._parse_args(args)
+        else:
+            drv, root, parts = PurePosixPath._parse_args(args)
+        self._drv = drv
+        self._root = root
+        self._parts = parts
+        if init:
+            self._init()
+        return self
 
     def is_root(self):
         return self.parent == self
