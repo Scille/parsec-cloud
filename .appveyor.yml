@@ -20,8 +20,6 @@ environment:
     - PYTHON: C:\Python36-x64
 
 build_script:
-  - echo %PGUSER%
-  - echo %PGPASSWORD%
   - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
   - createdb parsec_test
   - which pg_config
@@ -36,6 +34,7 @@ build_script:
   - pip install .[all] --process-dependency-links
 
 test_script:
+  # Uncomment this for RDP debug
   # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - py.test tests/  --cov=parsec --cov-config=setup.cfg --runslow -vvv -x --postgresql
 
