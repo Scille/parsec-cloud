@@ -18,6 +18,7 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 
 @pytest.mark.slow
+@pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
 def test_fs_online_tree_and_sync(
     hypothesis_settings,
     oracle_fs_with_sync_factory,

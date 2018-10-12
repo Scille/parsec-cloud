@@ -137,9 +137,7 @@ class LoggedClientManager:
 
         self.fs = FS(device, self.backend_cmds_sender, self.encryption_manager, self.event_bus)
 
-        self.mountpoint_manager = MountpointManager(
-            self.fs, self.event_bus, mode="process" if os.name == "nt" else "thread"
-        )
+        self.mountpoint_manager = MountpointManager(self.fs, self.event_bus)
         self.sync_monitor = SyncMonitor(self.fs, self.event_bus)
 
     async def start(self):

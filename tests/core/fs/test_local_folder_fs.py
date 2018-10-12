@@ -149,6 +149,7 @@ class PathElement:
 
 
 @pytest.mark.slow
+@pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
 def test_folder_operations(tmpdir, hypothesis_settings, device_factory, local_folder_fs_factory):
     tentative = 0
 

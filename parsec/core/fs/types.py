@@ -15,8 +15,6 @@ class Path(PurePosixPath):
         self = object.__new__(cls)
         if os.name == "nt":
             drv, root, parts = PureWindowsPath._parse_args(args)
-            if drv:
-                raise ValueError("Path must but Posix style")
             if not root:
                 raise ValueError("Path must be absolute")
             root = parts[0] = "/"  # Replace `\` root format

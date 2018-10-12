@@ -3,6 +3,7 @@ import pytest
 
 
 @pytest.mark.xfail(reason="FUSE's lower layers seems to hate this...")
+@pytest.mark.fuse
 def test_fuse_grow_by_truncate(tmpdir, fuse_service):
     fuse_service.start()
     try:
@@ -23,6 +24,7 @@ def test_fuse_grow_by_truncate(tmpdir, fuse_service):
 
 
 @pytest.mark.xfail(reason="FUSE's lower layers seems to hate this...")
+@pytest.mark.fuse
 def test_fuse_empty_read_then_reopen(tmpdir, fuse_service):
     fuse_service.start()
     try:

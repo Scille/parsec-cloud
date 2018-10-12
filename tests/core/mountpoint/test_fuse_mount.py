@@ -14,7 +14,7 @@ async def test_fuse_not_available(alice_fs, event_bus):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(not FUSE_AVAILABLE, reason="libfuse/fusepy not installed")
+@pytest.mark.fuse
 async def test_mount_fuse(alice_fs, event_bus, tmpdir, monitor, fuse_mode):
     # Populate a bit the fs first...
 
@@ -60,7 +60,7 @@ async def test_mount_fuse(alice_fs, event_bus, tmpdir, monitor, fuse_mode):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(not FUSE_AVAILABLE, reason="libfuse/fusepy not installed")
+@pytest.mark.fuse
 @pytest.mark.parametrize("fuse_stop_mode", ["manual", "logout"])
 async def test_umount_fuse(alice_core, tmpdir, fuse_stop_mode, fuse_mode):
     alice_core.mountpoint_manager.mode = fuse_mode
@@ -78,7 +78,7 @@ async def test_umount_fuse(alice_core, tmpdir, fuse_stop_mode, fuse_mode):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(not FUSE_AVAILABLE, reason="libfuse/fusepy not installed")
+@pytest.mark.fuse
 @pytest.mark.skipif(os.name == "nt", reason="Windows doesn't support threaded fuse")
 async def test_hard_crash_in_fuse_thread(alice_core, tmpdir):
     alice_core.mountpoint_manager.mode = "thread"
@@ -96,7 +96,7 @@ async def test_hard_crash_in_fuse_thread(alice_core, tmpdir):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(not FUSE_AVAILABLE, reason="libfuse/fusepy not installed")
+@pytest.mark.fuse
 async def test_hard_crash_in_fuse_process(alice_core, tmpdir):
     alice_core.mountpoint_manager.mode = "process"
 
@@ -113,7 +113,7 @@ async def test_hard_crash_in_fuse_process(alice_core, tmpdir):
 
 
 @pytest.mark.trio
-@pytest.mark.skipif(not FUSE_AVAILABLE, reason="libfuse/fusepy not installed")
+@pytest.mark.fuse
 async def test_mount_missing_path(alice_core, tmpdir, fuse_mode):
     alice_core.mountpoint_manager.mode = fuse_mode
     # Path should be created if it doesn' exist
