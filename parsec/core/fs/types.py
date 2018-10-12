@@ -19,7 +19,7 @@ class Path(PurePosixPath):
                 raise ValueError("Path must be absolute")
             root = parts[0] = "/"  # Replace `\` root format
         else:
-            _, root, parts = PurePosixPath._parse_args(args)
+            drv, root, parts = PurePosixPath._parse_args(args)
             if not root:
                 raise ValueError("Path must be absolute")
         self._drv = drv
