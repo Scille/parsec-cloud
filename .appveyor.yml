@@ -10,6 +10,8 @@ services:
 
 environment:
   global:
+    COVERALLS_REPO_TOKEN:
+      secure: W4++xmF7Q6ientAUP2crOR/1HDfmqanOk2NycHPjNVnCE7oS33FL4TwPJZEZw8Lc
     PGINSTALLATION: C:\Program Files\PostgreSQL\9.6\bin
   matrix:
     - PYTHON: C:\Python36
