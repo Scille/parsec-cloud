@@ -1,9 +1,8 @@
 import os
-import shutil
 
-from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtCore import QCoreApplication, Qt
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QSystemTrayIcon, QMenu
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QFontDatabase
 
 from parsec.core.devices_manager import DeviceLoadingError, DeviceConfigureBackendError
 
@@ -13,34 +12,34 @@ from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.files_widget import FilesWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.settings_widget import SettingsWidget
-from parsec.core.gui.about_dialog import AboutDialog
+from parsec.core.gui.devices_widget import DevicesWidget
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.close_requested = False
         self.setupUi(self)
-        self.about_dialog = None
+        self.close_requested = False
+        QFontDatabase.addApplicationFont(":/fonts/fonts/ProximaNova.otf")
         self.files_widget = None
         self.settings_widget = None
         self.users_widget = None
         self.tray = None
-        self.login_widget = LoginWidget(parent=self)
+        self.widget_menu.hide()
+        self.login_widget = LoginWidget(parent=self.widget_main)
         for device_name in core_call().get_devices():
             self.login_widget.add_device(device_name)
         self.main_widget_layout.insertWidget(1, self.login_widget)
-        self.users_widget = UsersWidget(parent=self)
+        self.users_widget = UsersWidget(parent=self.widget_main)
         self.main_widget_layout.insertWidget(1, self.users_widget)
-        self.users_widget.hide()
-        self.settings_widget = SettingsWidget(parent=self)
-        self.settings_widget.hide()
+        self.devices_widget = DevicesWidget(parent=self.widget_main)
+        self.main_widget_layout.insertWidget(1, self.devices_widget)
+        self.settings_widget = SettingsWidget(parent=self.widget_main)
         self.main_widget_layout.insertWidget(1, self.settings_widget)
-        self.files_widget = FilesWidget(parent=self)
+        self.files_widget = FilesWidget(parent=self.widget_main)
         self.main_widget_layout.insertWidget(1, self.files_widget)
-        self.files_widget.hide()
+        self.show_login_widget()
         self.current_device = None
         self.add_tray_icon()
         self.connect_all()
@@ -61,18 +60,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tray.show()
 
     def connect_all(self):
-        self.action_about_parsec.triggered.connect(self.show_about_dialog)
         self.button_files.clicked.connect(self.show_files_widget)
         self.button_users.clicked.connect(self.show_users_widget)
         self.button_settings.clicked.connect(self.show_settings_widget)
+        self.button_devices.clicked.connect(self.show_devices_widget)
         self.login_widget.loginClicked.connect(self.login)
         self.login_widget.claimClicked.connect(self.claim_user)
         self.login_widget.configureDeviceClicked.connect(self.configure_device)
-        self.action_disconnect.triggered.connect(self.logout)
+        self.button_logout.clicked.connect(self.logout)
         self.users_widget.registerUserClicked.connect(self.register_user)
-        self.action_remount.triggered.connect(self.remount)
-        self.action_login.triggered.connect(self.show_login_widget)
-        self.action_quit.triggered.connect(self.close)
 
     def tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
@@ -88,15 +84,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.users_widget.reset()
         self.files_widget.reset()
         self.show_login_widget()
-        self.action_disconnect.setDisabled(True)
-        self.button_files.setDisabled(True)
-        self.button_users.setDisabled(True)
-        self.action_disconnect.setDisabled(True)
-        self.action_remount.setDisabled(True)
-        self.action_login.setDisabled(False)
         device = core_call().load_device("johndoe@test")
         core_call().login(device)
         self.current_device = device
+        self.widget_menu.hide()
 
     def mount(self):
         base_mountpoint = settings.get_value("mountpoint")
@@ -133,7 +124,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.files_widget.reset()
         self.files_widget.set_mountpoint(mountpoint)
-        self.button_files.setDisabled(False)
         self.show_files_widget()
 
     def perform_login(self, device_id, password):
@@ -142,10 +132,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.current_device = device
             core_call().logout()
             core_call().login(device)
-            self.button_users.setDisabled(False)
-            self.action_remount.setDisabled(False)
-            self.action_disconnect.setDisabled(False)
-            self.action_login.setDisabled(True)
             mountpoint = self.mount()
             if mountpoint is None:
                 QMessageBox.warning(
@@ -160,7 +146,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 )
                 self.show_settings_widget()
                 return
-            self.button_files.setDisabled(False)
+            self.widget_menu.show()
             self.show_files_widget()
         except DeviceLoadingError:
             return QCoreApplication.translate(self.__class__.__name__, "Invalid password")
@@ -243,10 +229,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             event.ignore()
             self.hide()
 
-    def show_about_dialog(self):
-        self.about_dialog = AboutDialog(parent=self)
-        self.about_dialog.show()
-
     def show_files_widget(self):
         self._hide_all_central_widgets()
         self.button_files.setChecked(True)
@@ -256,6 +238,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._hide_all_central_widgets()
         self.button_users.setChecked(True)
         self.users_widget.show()
+
+    def show_devices_widget(self):
+        self._hide_all_central_widgets()
+        self.button_devices.setChecked(True)
+        self.devices_widget.show()
 
     def show_settings_widget(self):
         self._hide_all_central_widgets()
@@ -271,6 +258,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.users_widget.hide()
         self.settings_widget.hide()
         self.login_widget.hide()
+        self.devices_widget.hide()
         self.button_files.setChecked(False)
         self.button_users.setChecked(False)
         self.button_settings.setChecked(False)
+        self.button_devices.setChecked(False)

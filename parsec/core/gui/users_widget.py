@@ -2,12 +2,10 @@ from PyQt5.QtCore import pyqtSignal, QCoreApplication
 from PyQt5.QtWidgets import QWidget, QInputDialog
 
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
-from parsec.core.gui.register_device import RegisterDevice
 
 
 class UsersWidget(QWidget, Ui_UsersWidget):
     registerUserClicked = pyqtSignal(str)
-    registerDeviceClicked = pyqtSignal(str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -17,8 +15,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.label_register_error.hide()
         self.label_new_user_login.hide()
         self.label_new_user_token.hide()
-        self.button_register_user.clicked.connect(self.emit_register_user)
-        self.button_register_device.clicked.connect(self.emit_register_device)
+        self.button_add_user.clicked.connect(self.emit_register_user)
 
     def emit_register_user(self):
         user_name, ok = QInputDialog.getText(
@@ -29,10 +26,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         if not ok or not user_name:
             return
         self.registerUserClicked.emit(user_name)
-
-    def emit_register_device(self):
-        self.register_device_dialog = RegisterDevice(parent=self)
-        self.register_device_dialog.show()
 
     def set_claim_infos(self, login, token):
         self.label_help.show()

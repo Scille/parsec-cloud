@@ -29,7 +29,7 @@ def run_gui(parsec_core, trio_portal, cancel_scope):
     lang.switch_to_locale()
 
     win = MainWindow()
-    win.show()
+    win.showMaximized()
     # splash.finish(win)
 
     return app.exec_()
