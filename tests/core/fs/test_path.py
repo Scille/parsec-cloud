@@ -36,14 +36,14 @@ def test_mix_windows_and_posix_slashes(path, wpath):
     assert str(obj) == str(wobj)
 
 
-@pytest.mark.parametrize("path", ["/", "//", "/foo", "/foo/bar"])
+@pytest.mark.parametrize("path", ["/", "///", "/foo", "/foo/bar"])
 def test_stringify(path):
     obj = Path(path)
-    assert str(obj) == path.replace("//", "/")
+    assert str(obj) == path.replace("///", "/")
     if os.name == "nt":
         wpath = path.replace("/", "\\")
         obj = Path(wpath)
-        assert str(obj) == path.replace("//", "/")
+        assert str(obj) == path.replace("///", "/")
 
 
 @pytest.mark.parametrize("path", ["", "foo", "foo/bar"])
