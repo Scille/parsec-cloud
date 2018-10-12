@@ -10,17 +10,20 @@ FileDescriptor = NewType("FileDescriptor", int)
 
 
 class Path(PurePosixPath):
-    def __init__(self, raw):
-        if not self.is_absolute():
-            raise ValueError("Path must be absolute")
-
     @classmethod
     def _from_parts(cls, args, init=True):
         self = object.__new__(cls)
         if os.name == "nt":
             drv, root, parts = PureWindowsPath._parse_args(args)
+            if drv:
+                raise ValueError("Path must but Posix style")
+            if not root:
+                raise ValueError("Path must be absolute")
+            root = parts[0] = "/"  # Replace `\` root format
         else:
-            drv, root, parts = PurePosixPath._parse_args(args)
+            _, root, parts = PurePosixPath._parse_args(args)
+            if not root:
+                raise ValueError("Path must be absolute")
         self._drv = drv
         self._root = root
         self._parts = parts

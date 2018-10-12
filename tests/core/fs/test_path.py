@@ -11,7 +11,7 @@ def test_root(path, is_root):
     obj = Path(path)
     assert obj.is_root() is is_root
     if os.name == "nt":
-        wpath = path.replate("/", "\\")
+        wpath = path.replace("/", "\\")
         obj = Path(wpath)
         assert obj.is_root() is is_root
 
@@ -39,11 +39,11 @@ def test_mix_windows_and_posix_slashes(path, wpath):
 @pytest.mark.parametrize("path", ["/", "//", "/foo", "/foo/bar"])
 def test_stringify(path):
     obj = Path(path)
-    assert str(obj) == path
+    assert str(obj) == path.replace("//", "/")
     if os.name == "nt":
-        wpath = path.replate("/", "\\")
+        wpath = path.replace("/", "\\")
         obj = Path(wpath)
-        assert str(obj) == path
+        assert str(obj) == path.replace("//", "/")
 
 
 @pytest.mark.parametrize("path", ["", "foo", "foo/bar"])
@@ -52,6 +52,6 @@ def test_absolute(path):
         Path(path)
 
     if os.name == "nt":
-        wpath = path.replate("/", "\\")
+        wpath = path.replace("/", "\\")
         with pytest.raises(ValueError):
             Path(wpath)
