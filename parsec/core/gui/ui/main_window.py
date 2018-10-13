@@ -8,12 +8,15 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(923, 607)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/icons/images/icons/parsec.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/parsec.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+        )
         MainWindow.setWindowIcon(icon)
         MainWindow.setAutoFillBackground(True)
         MainWindow.setStyleSheet("")
@@ -27,7 +30,9 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.widget_2 = QtWidgets.QWidget(self.centralwidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.widget_2.sizePolicy().hasHeightForWidth())
@@ -40,8 +45,7 @@ class Ui_MainWindow(object):
         self.widget_menu = QtWidgets.QWidget(self.widget_2)
         self.widget_menu.setMinimumSize(QtCore.QSize(200, 0))
         self.widget_menu.setAutoFillBackground(False)
-        self.widget_menu.setStyleSheet("background-color: rgb(12, 65, 156);\n"
-"")
+        self.widget_menu.setStyleSheet("background-color: rgb(12, 65, 156);\n" "")
         self.widget_menu.setObjectName("widget_menu")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.widget_menu)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -83,20 +87,26 @@ class Ui_MainWindow(object):
         self.button_files.setFont(font)
         self.button_files.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.button_files.setAutoFillBackground(False)
-        self.button_files.setStyleSheet("QPushButton\n"
-"{\n"
-"color: rgb(255, 255, 255);\n"
-"text-align: left;\n"
-"padding-left: 10px;\n"
-"}\n"
-"\n"
-"QPushButton:checked\n"
-"{\n"
-"background-color: rgb(46, 145, 208);\n"
-"border: 0;\n"
-"}")
+        self.button_files.setStyleSheet(
+            "QPushButton\n"
+            "{\n"
+            "color: rgb(255, 255, 255);\n"
+            "text-align: left;\n"
+            "padding-left: 10px;\n"
+            "}\n"
+            "\n"
+            "QPushButton:checked\n"
+            "{\n"
+            "background-color: rgb(46, 145, 208);\n"
+            "border: 0;\n"
+            "}"
+        )
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(":/icons/images/icons/menu_folder.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon1.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/menu_folder.png"),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off,
+        )
         self.button_files.setIcon(icon1)
         self.button_files.setIconSize(QtCore.QSize(32, 32))
         self.button_files.setCheckable(True)
@@ -115,20 +125,26 @@ class Ui_MainWindow(object):
         font.setItalic(False)
         font.setWeight(50)
         self.button_users.setFont(font)
-        self.button_users.setStyleSheet("QPushButton\n"
-"{\n"
-"color: rgb(255, 255, 255);\n"
-"text-align: left;\n"
-"padding-left: 10px;\n"
-"}\n"
-"\n"
-"QPushButton:checked\n"
-"{\n"
-"background-color: rgb(46, 145, 208);\n"
-"border: 0;\n"
-"}")
+        self.button_users.setStyleSheet(
+            "QPushButton\n"
+            "{\n"
+            "color: rgb(255, 255, 255);\n"
+            "text-align: left;\n"
+            "padding-left: 10px;\n"
+            "}\n"
+            "\n"
+            "QPushButton:checked\n"
+            "{\n"
+            "background-color: rgb(46, 145, 208);\n"
+            "border: 0;\n"
+            "}"
+        )
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap(":/icons/images/icons/menu_group.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon2.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/menu_group.png"),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off,
+        )
         self.button_users.setIcon(icon2)
         self.button_users.setIconSize(QtCore.QSize(32, 32))
         self.button_users.setCheckable(True)
@@ -147,20 +163,26 @@ class Ui_MainWindow(object):
         font.setItalic(False)
         font.setWeight(50)
         self.button_devices.setFont(font)
-        self.button_devices.setStyleSheet("QPushButton\n"
-"{\n"
-"color: rgb(255, 255, 255);\n"
-"text-align: left;\n"
-"padding-left: 10px;\n"
-"}\n"
-"\n"
-"QPushButton:checked\n"
-"{\n"
-"background-color: rgb(46, 145, 208);\n"
-"border: 0;\n"
-"}")
+        self.button_devices.setStyleSheet(
+            "QPushButton\n"
+            "{\n"
+            "color: rgb(255, 255, 255);\n"
+            "text-align: left;\n"
+            "padding-left: 10px;\n"
+            "}\n"
+            "\n"
+            "QPushButton:checked\n"
+            "{\n"
+            "background-color: rgb(46, 145, 208);\n"
+            "border: 0;\n"
+            "}"
+        )
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(":/icons/images/icons/menu_devices.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon3.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/menu_devices.png"),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off,
+        )
         self.button_devices.setIcon(icon3)
         self.button_devices.setIconSize(QtCore.QSize(32, 32))
         self.button_devices.setCheckable(True)
@@ -180,27 +202,35 @@ class Ui_MainWindow(object):
         font.setItalic(False)
         font.setWeight(50)
         self.button_settings.setFont(font)
-        self.button_settings.setStyleSheet("QPushButton\n"
-"{\n"
-"color: rgb(255, 255, 255);\n"
-"text-align: left;\n"
-"padding-left: 10px;\n"
-"}\n"
-"\n"
-"QPushButton:checked\n"
-"{\n"
-"background-color: rgb(46, 145, 208);\n"
-"border: 0;\n"
-"}")
+        self.button_settings.setStyleSheet(
+            "QPushButton\n"
+            "{\n"
+            "color: rgb(255, 255, 255);\n"
+            "text-align: left;\n"
+            "padding-left: 10px;\n"
+            "}\n"
+            "\n"
+            "QPushButton:checked\n"
+            "{\n"
+            "background-color: rgb(46, 145, 208);\n"
+            "border: 0;\n"
+            "}"
+        )
         icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap(":/icons/images/icons/menu_settings.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon4.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/menu_settings.png"),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off,
+        )
         self.button_settings.setIcon(icon4)
         self.button_settings.setIconSize(QtCore.QSize(32, 32))
         self.button_settings.setCheckable(True)
         self.button_settings.setFlat(True)
         self.button_settings.setObjectName("button_settings")
         self.verticalLayout.addWidget(self.button_settings)
-        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem = QtWidgets.QSpacerItem(
+            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
+        )
         self.verticalLayout.addItem(spacerItem)
         self.button_logout = QtWidgets.QPushButton(self.widget_menu)
         self.button_logout.setEnabled(True)
@@ -214,12 +244,15 @@ class Ui_MainWindow(object):
         font.setItalic(False)
         font.setWeight(50)
         self.button_logout.setFont(font)
-        self.button_logout.setStyleSheet("color: rgb(255, 255, 255);\n"
-"text-align: left;\n"
-"padding-left: 10px;\n"
-"")
+        self.button_logout.setStyleSheet(
+            "color: rgb(255, 255, 255);\n" "text-align: left;\n" "padding-left: 10px;\n" ""
+        )
         icon5 = QtGui.QIcon()
-        icon5.addPixmap(QtGui.QPixmap(":/icons/images/icons/menu_logout.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon5.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/menu_logout.png"),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off,
+        )
         self.button_logout.setIcon(icon5)
         self.button_logout.setIconSize(QtCore.QSize(32, 32))
         self.button_logout.setCheckable(False)
@@ -228,15 +261,16 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.button_logout)
         self.horizontalLayout_2.addWidget(self.widget_menu)
         self.widget_main = QtWidgets.QWidget(self.widget_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.widget_main.sizePolicy().hasHeightForWidth())
         self.widget_main.setSizePolicy(sizePolicy)
-        self.widget_main.setStyleSheet("QWidget#widget_main\n"
-"{\n"
-"    background-color: rgb(255, 255, 255);\n"
-"}")
+        self.widget_main.setStyleSheet(
+            "QWidget#widget_main\n" "{\n" "    background-color: rgb(255, 255, 255);\n" "}"
+        )
         self.widget_main.setObjectName("widget_main")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.widget_main)
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -260,5 +294,6 @@ class Ui_MainWindow(object):
         self.button_devices.setText(_translate("MainWindow", "   Devices"))
         self.button_settings.setText(_translate("MainWindow", "   Settings"))
         self.button_logout.setText(_translate("MainWindow", "   Log Out"))
+
 
 from parsec.core.gui import resources_rc

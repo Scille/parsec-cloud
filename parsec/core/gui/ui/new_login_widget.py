@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'forms/login_widget.ui'
+# Form implementation generated from reading ui file 'forms/new_login_widget.ui'
 #
 # Created by: PyQt5 UI code generator 5.11.2
 #
@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_LoginWidget(object):
     def setupUi(self, LoginWidget):
         LoginWidget.setObjectName("LoginWidget")
-        LoginWidget.resize(800, 376)
+        LoginWidget.resize(673, 300)
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred
         )
@@ -20,7 +20,7 @@ class Ui_LoginWidget(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(LoginWidget.sizePolicy().hasHeightForWidth())
         LoginWidget.setSizePolicy(sizePolicy)
-        LoginWidget.setMinimumSize(QtCore.QSize(0, 0))
+        LoginWidget.setMinimumSize(QtCore.QSize(650, 0))
         LoginWidget.setAutoFillBackground(False)
         LoginWidget.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.horizontalLayout = QtWidgets.QHBoxLayout(LoginWidget)
@@ -39,7 +39,6 @@ class Ui_LoginWidget(object):
         )
         self.verticalLayout.addItem(spacerItem1)
         self.widget = QtWidgets.QWidget(LoginWidget)
-        self.widget.setMinimumSize(QtCore.QSize(600, 0))
         self.widget.setStyleSheet(
             "background-color: rgb(12, 65, 156);\n"
             "\n"

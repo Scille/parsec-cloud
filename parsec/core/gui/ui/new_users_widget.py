@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'forms/users_widget.ui'
+# Form implementation generated from reading ui file 'forms/new_users_widget.ui'
 #
 # Created by: PyQt5 UI code generator 5.11.2
 #
@@ -12,31 +12,25 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_UsersWidget(object):
     def setupUi(self, UsersWidget):
         UsersWidget.setObjectName("UsersWidget")
-        UsersWidget.resize(602, 427)
+        UsersWidget.resize(501, 376)
         self.verticalLayout = QtWidgets.QVBoxLayout(UsersWidget)
-        self.verticalLayout.setContentsMargins(5, 5, 5, 5)
-        self.verticalLayout.setSpacing(5)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
         self.button_add_user = QtWidgets.QPushButton(UsersWidget)
         self.button_add_user.setObjectName("button_add_user")
-        self.horizontalLayout_2.addWidget(self.button_add_user)
+        self.horizontalLayout.addWidget(self.button_add_user)
         spacerItem = QtWidgets.QSpacerItem(
             40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
         )
-        self.horizontalLayout_2.addItem(spacerItem)
-        self.verticalLayout.addLayout(self.horizontalLayout_2)
-        self.label_register_error = QtWidgets.QLabel(UsersWidget)
-        self.label_register_error.setText("")
-        self.label_register_error.setObjectName("label_register_error")
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.label_register_error)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.widget_info = QtWidgets.QWidget(self.label_register_error)
+        self.horizontalLayout.addItem(spacerItem)
+        self.verticalLayout.addLayout(self.horizontalLayout)
+        self.widget_info = QtWidgets.QWidget(UsersWidget)
         self.widget_info.setObjectName("widget_info")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.widget_info)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.label_3 = QtWidgets.QLabel(self.widget_info)
+        self.label_3.setWordWrap(True)
         self.label_3.setObjectName("label_3")
         self.verticalLayout_3.addWidget(self.label_3)
         self.formLayout_2 = QtWidgets.QFormLayout()
@@ -56,8 +50,7 @@ class Ui_UsersWidget(object):
         self.line_edit_token.setObjectName("line_edit_token")
         self.formLayout_2.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.line_edit_token)
         self.verticalLayout_3.addLayout(self.formLayout_2)
-        self.verticalLayout_2.addWidget(self.widget_info)
-        self.verticalLayout.addWidget(self.label_register_error)
+        self.verticalLayout.addWidget(self.widget_info)
         spacerItem1 = QtWidgets.QSpacerItem(
             20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
         )

@@ -8,6 +8,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+
 class Ui_AboutDialog(object):
     def setupUi(self, AboutDialog):
         AboutDialog.setObjectName("AboutDialog")
@@ -54,7 +55,18 @@ class Ui_AboutDialog(object):
     def retranslateUi(self, AboutDialog):
         _translate = QtCore.QCoreApplication.translate
         AboutDialog.setWindowTitle(_translate("AboutDialog", "About Parsec"))
-        self.label_3.setText(_translate("AboutDialog", "<html><head/><body><p><span style=\" font-size:12pt;\">Visit </span><a href=\"http://www.parsec.cloud\"><span style=\" font-size:12pt; text-decoration: underline; color:#3b4ba1;\">parsec.cloud</span></a><span style=\" font-size:12pt;\"> for more information.</span></p><p><span style=\" font-size:12pt;\">Want to help ? Find us on </span><a href=\"https://github.com/Scille/parsec-cloud\"><span style=\" font-size:12pt; text-decoration: underline; color:#3b4ba1;\">GitHub</span></a><span style=\" font-size:12pt;\">.</span></p></body></html>"))
-        self.label_4.setText(_translate("AboutDialog", "<html><head/><body><p><span style=\" font-size:12pt;\">Parsec is created and maintained by </span><a href=\"http://scille.eu\"><span style=\" font-size:12pt; text-decoration: underline; color:#3b4ba1;\">Scille</span></a><span style=\" font-size:12pt;\">.</span></p></body></html>"))
+        self.label_3.setText(
+            _translate(
+                "AboutDialog",
+                '<html><head/><body><p><span style=" font-size:12pt;">Visit </span><a href="http://www.parsec.cloud"><span style=" font-size:12pt; text-decoration: underline; color:#3b4ba1;">parsec.cloud</span></a><span style=" font-size:12pt;"> for more information.</span></p><p><span style=" font-size:12pt;">Want to help ? Find us on </span><a href="https://github.com/Scille/parsec-cloud"><span style=" font-size:12pt; text-decoration: underline; color:#3b4ba1;">GitHub</span></a><span style=" font-size:12pt;">.</span></p></body></html>',
+            )
+        )
+        self.label_4.setText(
+            _translate(
+                "AboutDialog",
+                '<html><head/><body><p><span style=" font-size:12pt;">Parsec is created and maintained by </span><a href="http://scille.eu"><span style=" font-size:12pt; text-decoration: underline; color:#3b4ba1;">Scille</span></a><span style=" font-size:12pt;">.</span></p></body></html>',
+            )
+        )
+
 
 from parsec.core.gui import resources_rc

@@ -8,6 +8,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+
 class Ui_DevicesWidget(object):
     def setupUi(self, DevicesWidget):
         DevicesWidget.setObjectName("DevicesWidget")
@@ -19,10 +20,14 @@ class Ui_DevicesWidget(object):
         self.button_add_device = QtWidgets.QPushButton(DevicesWidget)
         self.button_add_device.setObjectName("button_add_device")
         self.horizontalLayout.addWidget(self.button_add_device)
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         self.horizontalLayout.addItem(spacerItem)
         self.verticalLayout.addLayout(self.horizontalLayout)
-        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem1 = QtWidgets.QSpacerItem(
+            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
+        )
         self.verticalLayout.addItem(spacerItem1)
 
         self.retranslateUi(DevicesWidget)
@@ -32,4 +37,3 @@ class Ui_DevicesWidget(object):
         _translate = QtCore.QCoreApplication.translate
         DevicesWidget.setWindowTitle(_translate("DevicesWidget", "Form"))
         self.button_add_device.setText(_translate("DevicesWidget", "Add a new device"))
-
