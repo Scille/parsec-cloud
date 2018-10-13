@@ -17,7 +17,6 @@ TRANSLATIONS += tr/parsec_fr.ts \
 
 
 FORMS += forms/main_window.ui \
-         forms/about_dialog.ui \
          forms/files_widget.ui \
          forms/users_widget.ui \
          forms/settings_widget.ui \
@@ -28,7 +27,6 @@ FORMS += forms/main_window.ui \
          forms/devices_widget.ui \
          forms/login_login_widget.ui \
          forms/login_register_device_widget.ui \
-         forms/login_register_user_widget.ui \
-    forms/new_users_widget.ui
+         forms/login_register_user_widget.ui
 
 RESOURCES += rc/resources.qrc

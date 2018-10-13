@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>631</width>
+    <width>632</width>
     <height>651</height>
    </rect>
   </property>
@@ -26,7 +26,8 @@
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">color: rgb(255, 255, 255);</string>
+      <string notr="true">color: rgb(255, 255, 255);
+padding-bottom: 20px;</string>
      </property>
      <property name="text">
       <string>To register a new user, you need another user to create an account and get a token.</string>

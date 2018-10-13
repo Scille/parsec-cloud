@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_LoginWidget(object):
     def setupUi(self, LoginWidget):
         LoginWidget.setObjectName("LoginWidget")
-        LoginWidget.resize(800, 376)
+        LoginWidget.resize(602, 275)
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred
         )
@@ -28,7 +28,7 @@ class Ui_LoginWidget(object):
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName("horizontalLayout")
         spacerItem = QtWidgets.QSpacerItem(
-            0, 0, QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum
+            0, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
         )
         self.horizontalLayout.addItem(spacerItem)
         self.verticalLayout = QtWidgets.QVBoxLayout()
@@ -114,11 +114,11 @@ class Ui_LoginWidget(object):
         self.widget_2.setStyleSheet("")
         self.widget_2.setObjectName("widget_2")
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.widget_2)
-        self.verticalLayout_4.setContentsMargins(20, 0, 20, 20)
+        self.verticalLayout_4.setContentsMargins(20, 20, 20, 20)
         self.verticalLayout_4.setSpacing(10)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.layout = QtWidgets.QVBoxLayout()
-        self.layout.setContentsMargins(10, 20, 10, 10)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         self.layout.setObjectName("layout")
         self.verticalLayout_4.addLayout(self.layout)
@@ -169,7 +169,7 @@ class Ui_LoginWidget(object):
         self.verticalLayout.addItem(spacerItem2)
         self.horizontalLayout.addLayout(self.verticalLayout)
         spacerItem3 = QtWidgets.QSpacerItem(
-            0, 0, QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum
+            0, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
         )
         self.horizontalLayout.addItem(spacerItem3)
 

@@ -1,7 +1,7 @@
 from PyQt5.QtCore import pyqtSignal, QCoreApplication
 from PyQt5.QtWidgets import QWidget, QInputDialog
 
-from parsec.core.gui.ui.new_users_widget import Ui_UsersWidget
+from parsec.core.gui.ui.users_widget import Ui_UsersWidget
 
 
 class UsersWidget(QWidget, Ui_UsersWidget):

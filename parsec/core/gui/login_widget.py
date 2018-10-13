@@ -179,7 +179,6 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
                         ),
                     )
                     return
-            self.button_register.hide()
             self.register_with_password_clicked.emit(
                 self.line_edit_login.text(),
                 self.line_edit_password.text(),
@@ -222,10 +221,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.layout.insertWidget(0, self.login_widget)
         self.register_user_widget = LoginRegisterUserWidget()
         self.layout.insertWidget(0, self.register_user_widget)
-        self.register_user_widget.hide()
         self.register_device_widget = LoginRegisterDeviceWidget()
         self.layout.insertWidget(0, self.register_device_widget)
-        self.register_device_widget.hide()
         self.button_login_instead.clicked.connect(self.show_login_widget)
         self.button_register_user_instead.clicked.connect(self.show_register_user_widget)
         self.button_register_device_instead.clicked.connect(self.show_register_device_widget)
@@ -243,6 +240,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.register_device_widget.register_with_nitrokey_clicked.connect(
             self.emit_register_device_with_nitrokey
         )
+        self.show_login_widget()
         self.reset()
 
     def emit_register_user_with_password(self, login, password, device, token):
@@ -270,14 +268,14 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_with_nitrokey_clicked.emit(login, nitrokey_pin, nitrokey_key, nitrokey_token)
 
     def show_login_widget(self):
-        self.login_widget.show()
         self.register_user_widget.hide()
         self.register_device_widget.hide()
+        self.login_widget.show()
 
     def show_register_user_widget(self):
         self.login_widget.hide()
-        self.register_user_widget.show()
         self.register_device_widget.hide()
+        self.register_user_widget.show()
 
     def show_register_device_widget(self):
         self.login_widget.hide()
@@ -288,12 +286,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_widget.add_device(device_name)
 
     def reset(self):
-        self.login_widget.show()
-        self.register_device_widget.hide()
-        self.register_user_widget.hide()
+        self.login_widget.reset()
         self.button_login_instead.hide()
         self.button_register_device_instead.show()
         self.button_register_user_instead.show()
-        self.login_widget.reset()
         self.register_user_widget.reset()
         self.register_device_widget.reset()
+        self.show_login_widget()

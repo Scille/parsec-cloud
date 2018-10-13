@@ -1,24 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS><TS version="2.0">
 <context>
-    <name>AboutDialog</name>
-    <message>
-        <location filename="../forms/about_dialog.ui" line="14"/>
-        <source>About Parsec</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/about_dialog.ui" line="43"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Visit &lt;/span&gt;&lt;a href=&quot;http://www.parsec.cloud&quot;&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#3b4ba1;&quot;&gt;parsec.cloud&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt; for more information.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Want to help ? Find us on &lt;/span&gt;&lt;a href=&quot;https://github.com/Scille/parsec-cloud&quot;&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#3b4ba1;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/about_dialog.ui" line="69"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Parsec is created and maintained by &lt;/span&gt;&lt;a href=&quot;http://scille.eu&quot;&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#3b4ba1;&quot;&gt;Scille&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>DevicesWidget</name>
     <message>
         <location filename="../forms/devices_widget.ui" line="14"/>
@@ -229,8 +211,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="473"/>
-        <source>Log In</source>
+        <location filename="../forms/login_login_widget.ui" line="157"/>
+        <source>Identifier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -241,11 +223,6 @@
     <message>
         <location filename="../forms/login_login_widget.ui" line="296"/>
         <source>NitroKey PIN</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_login_widget.ui" line="157"/>
-        <source>Identifier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -263,9 +240,74 @@
         <source>Authenticate using NitroKey</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../forms/login_login_widget.ui" line="473"/>
+        <source>Log In</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>LoginRegisterDeviceWidget</name>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="33"/>
+        <source>To register a new device, you need an existing device to declare a new device and get the resulting token.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="128"/>
+        <source>Identifier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="168"/>
+        <source>Device name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="208"/>
+        <source>Token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="266"/>
+        <source>Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="315"/>
+        <source>Password check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="387"/>
+        <source>NitroKey PIN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="436"/>
+        <source>NitroKey Token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="479"/>
+        <source>NitroKey Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="520"/>
+        <source>Authenticate using NitroKey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="585"/>
+        <source>Register</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <location filename="../login_widget.py" line="175"/>
         <source>Passwords don&apos;t match.</source>
@@ -276,132 +318,72 @@
         <source>Waiting for existing device to register us...</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <location filename="../forms/login_register_device_widget.ui" line="14"/>
-        <source>Form</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_device_widget.ui" line="265"/>
-        <source>Password</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_device_widget.ui" line="314"/>
-        <source>Password check</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_device_widget.ui" line="207"/>
-        <source>Token</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_device_widget.ui" line="584"/>
-        <source>Register</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_device_widget.ui" line="127"/>
-        <source>Identifier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_device_widget.ui" line="167"/>
-        <source>Device name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_device_widget.ui" line="386"/>
-        <source>NitroKey PIN</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_device_widget.ui" line="435"/>
-        <source>NitroKey Token</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_device_widget.ui" line="478"/>
-        <source>NitroKey Key</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_device_widget.ui" line="519"/>
-        <source>Authenticate using NitroKey</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_device_widget.ui" line="32"/>
-        <source>To register a new device, you need an existing device to declare a new device and get the resulting token.</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>LoginRegisterUserWidget</name>
-    <message>
-        <location filename="../login_widget.py" line="94"/>
-        <source>Passwords don&apos;t match</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <location filename="../forms/login_register_user_widget.ui" line="14"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="325"/>
-        <source>Password</source>
+        <location filename="../forms/login_register_user_widget.ui" line="33"/>
+        <source>To register a new user, you need another user to create an account and get a token.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="374"/>
-        <source>Password check</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_user_widget.ui" line="267"/>
-        <source>Token</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_user_widget.ui" line="623"/>
-        <source>Register</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_user_widget.ui" line="187"/>
+        <location filename="../forms/login_register_user_widget.ui" line="188"/>
         <source>Identifier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="227"/>
+        <location filename="../forms/login_register_user_widget.ui" line="228"/>
         <source>Device name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="446"/>
+        <location filename="../forms/login_register_user_widget.ui" line="268"/>
+        <source>Token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="326"/>
+        <source>Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="375"/>
+        <source>Password check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="447"/>
         <source>NitroKey PIN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="495"/>
+        <location filename="../forms/login_register_user_widget.ui" line="496"/>
         <source>NitroKey Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="538"/>
+        <location filename="../forms/login_register_user_widget.ui" line="539"/>
         <source>NitroKey Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="579"/>
+        <location filename="../forms/login_register_user_widget.ui" line="580"/>
         <source>Authenticate using NitroKey</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="32"/>
-        <source>To register a new user, you need another user to create an account and get a token.</source>
+        <location filename="../forms/login_register_user_widget.ui" line="624"/>
+        <source>Register</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../login_widget.py" line="94"/>
+        <source>Passwords don&apos;t match</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -623,27 +605,27 @@
 <context>
     <name>UsersWidget</name>
     <message>
-        <location filename="../forms/new_users_widget.ui" line="14"/>
+        <location filename="../forms/users_widget.ui" line="14"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/new_users_widget.ui" line="22"/>
+        <location filename="../forms/users_widget.ui" line="22"/>
         <source>Add a new user</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/new_users_widget.ui" line="47"/>
+        <location filename="../forms/users_widget.ui" line="47"/>
         <source>Transmit the following information to the new user so they can set up their account.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/new_users_widget.ui" line="59"/>
+        <location filename="../forms/users_widget.ui" line="59"/>
         <source>User ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/new_users_widget.ui" line="66"/>
+        <location filename="../forms/users_widget.ui" line="66"/>
         <source>Token</source>
         <translation type="unfinished"></translation>
     </message>

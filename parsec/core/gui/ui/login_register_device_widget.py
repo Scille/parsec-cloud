@@ -20,7 +20,7 @@ class Ui_LoginRegisterDeviceWidget(object):
         font = QtGui.QFont()
         font.setPointSize(12)
         self.label_9.setFont(font)
-        self.label_9.setStyleSheet("color: rgb(255, 255, 255);")
+        self.label_9.setStyleSheet("color: rgb(255, 255, 255);\n" "padding-bottom: 20px;")
         self.label_9.setScaledContents(False)
         self.label_9.setAlignment(QtCore.Qt.AlignJustify | QtCore.Qt.AlignVCenter)
         self.label_9.setWordWrap(True)

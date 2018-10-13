@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_LoginRegisterUserWidget(object):
     def setupUi(self, LoginRegisterUserWidget):
         LoginRegisterUserWidget.setObjectName("LoginRegisterUserWidget")
-        LoginRegisterUserWidget.resize(631, 651)
+        LoginRegisterUserWidget.resize(632, 651)
         LoginRegisterUserWidget.setStyleSheet("background-color: rgb(12, 65, 156);\n" "")
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(LoginRegisterUserWidget)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
@@ -20,7 +20,7 @@ class Ui_LoginRegisterUserWidget(object):
         font = QtGui.QFont()
         font.setPointSize(12)
         self.label_9.setFont(font)
-        self.label_9.setStyleSheet("color: rgb(255, 255, 255);")
+        self.label_9.setStyleSheet("color: rgb(255, 255, 255);\n" "padding-bottom: 20px;")
         self.label_9.setAlignment(QtCore.Qt.AlignJustify | QtCore.Qt.AlignVCenter)
         self.label_9.setWordWrap(True)
         self.label_9.setObjectName("label_9")

@@ -26,7 +26,8 @@
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">color: rgb(255, 255, 255);</string>
+      <string notr="true">color: rgb(255, 255, 255);
+padding-bottom: 20px;</string>
      </property>
      <property name="text">
       <string>To register a new device, you need an existing device to declare a new device and get the resulting token.</string>
