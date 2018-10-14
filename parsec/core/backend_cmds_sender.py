@@ -77,12 +77,24 @@ class BackendCmdsSender(BaseAsyncComponent):
             The backend reponse deserialized as a dict.
         """
 
+        def _filter_big_fields(data):
+            # As hacky as arbitrary... but works well so far !
+            return {
+                **data,
+                "block": f"{data['block'][:100]}[...]{data['block'][-100:]}"
+                if "block" in data
+                else data["block"],
+                "blob": f"{data['blob'][:100]}[...]{data['blob'][-100:]}"
+                if "blob" in data
+                else data["blob"],
+            }
+
         async with self._lock:
             # Try to use the already connected socket
             try:
-                logger.debug("send {}", req)
+                logger.debug("send {}", _filter_big_fields(req))
                 rep = await self._naive_send(req)
-                logger.debug("recv {}", rep)
+                logger.debug("recv {}", _filter_big_fields(rep))
                 return rep
 
             except BackendNotAvailable as exc:
@@ -90,9 +102,9 @@ class BackendCmdsSender(BaseAsyncComponent):
                 try:
                     # If it failed, reopen the socket and retry the request
                     await self._init_send_connection()
-                    logger.debug("send {}", req)
+                    logger.debug("send {}", filter_big_fields_for_log(req))
                     rep = await self._naive_send(req)
-                    logger.debug("recv {}", rep)
+                    logger.debug("recv {}", filter_big_fields_for_log(rep))
                     return rep
 
                 except BackendNotAvailable as e:
