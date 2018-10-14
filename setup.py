@@ -88,7 +88,7 @@ extra_requirements = {
     "core": [
         "PyQt5==5.11.2",
         "hurry.filesize==0.9",
-        "fusepy==3.0.0"
+        "fusepy==3.0.0",
         # Nitrokey POC stuff
         "argparse-1.4.0",
         "ecdsa-0.13",
