@@ -511,4 +511,3 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.workspaces = []
         self.current_directory = None
         self.current_workspace = None
-        self.label_mountpoint.setText("")
