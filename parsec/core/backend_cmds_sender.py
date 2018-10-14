@@ -56,6 +56,8 @@ class BackendCmdsSender(BaseAsyncComponent):
                 return await self._sock.recv()
 
         except (trio.TooSlowError, trio.BrokenStreamError, trio.ClosedStreamError) as exc:
+            await self._sock.aclose()
+            self._sock = None
             raise BackendNotAvailable() from exc
 
     async def send(self, req: dict) -> dict:

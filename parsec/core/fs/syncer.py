@@ -117,7 +117,7 @@ class Syncer(FolderSyncerMixin, FileSyncerMixin):
         # the backend but we lost the connection before receiving the response
         # Note we neglect the possibility of another id collision with another
         # unrelated block because we trust probability and uuid4, who doesn't ?
-        if ret['status'] != 'already_exists_error':
+        if ret["status"] != "already_exists_error":
             assert ret["status"] == "ok"
 
     async def _backend_block_get(self, access):
