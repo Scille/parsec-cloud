@@ -90,6 +90,7 @@ extra_requirements = {
         "hurry.filesize==0.9",
         "fusepy==3.0.0",
         # Nitrokey POC stuff
+        "python-pkcs11==0.5.0",
         "argparse==1.4.0",
         "ecdsa==0.13",
         "progress==1.4",

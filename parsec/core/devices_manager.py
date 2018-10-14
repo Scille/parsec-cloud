@@ -1,4 +1,3 @@
-import pkcs11
 import re
 import attr
 import logging
