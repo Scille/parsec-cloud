@@ -7,7 +7,7 @@ from parsec.core.devices_manager import Device
 from parsec.handshake import HandshakeBadIdentity
 
 
-PER_CMD_TIMEOUT = 1
+PER_CMD_TIMEOUT = 30
 logger = logbook.Logger("parsec.core.backend_cmds_sender")
 
 
