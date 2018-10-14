@@ -97,18 +97,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.raise_()
 
     def logout(self):
-        self.files_widget.set_mountpoint("")
         if core_call().is_mounted():
             core_call().unmount()
         core_call().logout()
-        self.login_widget.reset()
-        self.users_widget.reset()
-        self.files_widget.reset()
-        self.show_login_widget()
+        self.files_widget.block_show = True
         device = core_call().load_device("johndoe@test")
         core_call().login(device)
         self.current_device = device
         self.widget_menu.hide()
+        self.login_widget.reset()
+        self.users_widget.reset()
+        self.devices_widget.reset()
+        self.files_widget.reset()
+        self.show_login_widget()
 
     def mount(self):
         base_mountpoint = settings.get_value("mountpoint")
@@ -175,6 +176,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.show_settings_widget()
                 return
             self.widget_menu.show()
+            self.files_widget.block_show = False
             self.show_files_widget()
         except DeviceLoadingError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))

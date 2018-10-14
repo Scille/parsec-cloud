@@ -97,108 +97,108 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="183"/>
+        <location filename="../files_widget.py" line="185"/>
         <source>Sub-folders will not be imported to prevent big data imports.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="269"/>
+        <location filename="../files_widget.py" line="271"/>
         <source>Can not import
 {}.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="253"/>
+        <location filename="../files_widget.py" line="255"/>
         <source>{} already exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="287"/>
+        <location filename="../files_widget.py" line="289"/>
         <source>New folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="287"/>
+        <location filename="../files_widget.py" line="289"/>
         <source>Enter new folder name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="300"/>
+        <location filename="../files_widget.py" line="302"/>
         <source>A folder with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="320"/>
+        <location filename="../files_widget.py" line="322"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="322"/>
+        <location filename="../files_widget.py" line="324"/>
         <source>Open in file explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="326"/>
+        <location filename="../files_widget.py" line="328"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="362"/>
+        <location filename="../files_widget.py" line="364"/>
         <source>Confirmation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="351"/>
+        <location filename="../files_widget.py" line="353"/>
         <source>Are you sure you want to delete folder &quot;{}&quot; ?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="362"/>
+        <location filename="../files_widget.py" line="364"/>
         <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="488"/>
+        <location filename="../files_widget.py" line="491"/>
         <source>{} element(s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="410"/>
+        <location filename="../files_widget.py" line="413"/>
         <source>Share</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="416"/>
+        <location filename="../files_widget.py" line="419"/>
         <source>Share a workspace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="416"/>
+        <location filename="../files_widget.py" line="419"/>
         <source>Give a user name to share the workspace {} with.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="428"/>
+        <location filename="../files_widget.py" line="431"/>
         <source>Can not share the workspace &quot;{}&quot; with this user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="435"/>
+        <location filename="../files_widget.py" line="438"/>
         <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="445"/>
+        <location filename="../files_widget.py" line="448"/>
         <source>New workspace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="445"/>
+        <location filename="../files_widget.py" line="448"/>
         <source>Enter new workspace name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="456"/>
+        <location filename="../files_widget.py" line="459"/>
         <source>A workspace with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -259,11 +259,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="128"/>
-        <source>Identifier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../forms/login_register_device_widget.ui" line="168"/>
         <source>Device name</source>
         <translation type="unfinished"></translation>
@@ -314,8 +309,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="197"/>
+        <location filename="../login_widget.py" line="196"/>
         <source>Waiting for existing device to register us...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="128"/>
+        <source>User name</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -329,11 +329,6 @@
     <message>
         <location filename="../forms/login_register_user_widget.ui" line="33"/>
         <source>To register a new user, you need another user to create an account and get a token.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/login_register_user_widget.ui" line="188"/>
-        <source>Identifier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -384,6 +379,11 @@
     <message>
         <location filename="../login_widget.py" line="94"/>
         <source>Passwords don&apos;t match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="188"/>
+        <source>User name</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -443,57 +443,57 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="179"/>
+        <location filename="../main_window.py" line="182"/>
         <source>Authentication failed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="197"/>
+        <location filename="../main_window.py" line="200"/>
         <source>Can not register the user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="232"/>
+        <location filename="../main_window.py" line="235"/>
         <source>User has been successfully registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="240"/>
+        <location filename="../main_window.py" line="243"/>
         <source>The token has expired.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="245"/>
+        <location filename="../main_window.py" line="248"/>
         <source>No invitation found for this user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="250"/>
+        <location filename="../main_window.py" line="253"/>
         <source>User has already been registered.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="311"/>
+        <location filename="../main_window.py" line="314"/>
         <source>Device has been successfully registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="319"/>
+        <location filename="../main_window.py" line="322"/>
         <source>The device already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="324"/>
+        <location filename="../main_window.py" line="327"/>
         <source>Invalid NitroKey information.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="329"/>
+        <location filename="../main_window.py" line="332"/>
         <source>Can not create the new device.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="358"/>
+        <location filename="../main_window.py" line="361"/>
         <source>Are you sure you want to quit ?</source>
         <translation type="unfinished"></translation>
     </message>

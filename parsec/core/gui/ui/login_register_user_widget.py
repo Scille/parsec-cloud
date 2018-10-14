@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_LoginRegisterUserWidget(object):
     def setupUi(self, LoginRegisterUserWidget):
         LoginRegisterUserWidget.setObjectName("LoginRegisterUserWidget")
-        LoginRegisterUserWidget.resize(632, 651)
+        LoginRegisterUserWidget.resize(632, 671)
         LoginRegisterUserWidget.setStyleSheet("background-color: rgb(12, 65, 156);\n" "")
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(LoginRegisterUserWidget)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
@@ -348,7 +348,7 @@ class Ui_LoginRegisterUserWidget(object):
                 "To register a new user, you need another user to create an account and get a token.",
             )
         )
-        self.label.setText(_translate("LoginRegisterUserWidget", "Identifier"))
+        self.label.setText(_translate("LoginRegisterUserWidget", "User name"))
         self.label_7.setText(_translate("LoginRegisterUserWidget", "Device name"))
         self.label_8.setText(_translate("LoginRegisterUserWidget", "Token"))
         self.label_2.setText(_translate("LoginRegisterUserWidget", "Password"))

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>632</width>
-    <height>651</height>
+    <height>671</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -185,7 +185,7 @@ image: url(:/icons/images/icons/checked.png)
               <string notr="true">color: rgb(255, 255, 255);</string>
              </property>
              <property name="text">
-              <string>Identifier</string>
+              <string>User name</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>

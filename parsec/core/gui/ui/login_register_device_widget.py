@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_LoginRegisterDeviceWidget(object):
     def setupUi(self, LoginRegisterDeviceWidget):
         LoginRegisterDeviceWidget.setObjectName("LoginRegisterDeviceWidget")
-        LoginRegisterDeviceWidget.resize(607, 700)
+        LoginRegisterDeviceWidget.resize(607, 720)
         LoginRegisterDeviceWidget.setStyleSheet("background-color: rgb(12, 65, 156);\n" "")
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(LoginRegisterDeviceWidget)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
@@ -311,7 +311,7 @@ class Ui_LoginRegisterDeviceWidget(object):
                 "To register a new device, you need an existing device to declare a new device and get the resulting token.",
             )
         )
-        self.label.setText(_translate("LoginRegisterDeviceWidget", "Identifier"))
+        self.label.setText(_translate("LoginRegisterDeviceWidget", "User name"))
         self.label_7.setText(_translate("LoginRegisterDeviceWidget", "Device name"))
         self.label_8.setText(_translate("LoginRegisterDeviceWidget", "Token"))
         self.label_2.setText(_translate("LoginRegisterDeviceWidget", "Password"))

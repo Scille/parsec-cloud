@@ -117,6 +117,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.button_import_files.clicked.connect(self.import_files_clicked)
         self.button_import_folder.clicked.connect(self.import_folder_clicked)
         self.workspaces = []
+        self.block_show = False
         self.current_workspace = None
         self.current_directory = None
         core_call().connect_event("fs.entry.updated", self._on_fs_entry_updated_trio)
@@ -125,7 +126,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def reload_current_directory(self):
         if not self.current_workspace:
-            self.show()
+            if not self.block_show:
+                self.show()
         else:
             self.load_directory(self.current_workspace, self.current_directory)
 
@@ -390,6 +392,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def show(self, *args, **kwargs):
         super().show(*args, **kwargs)
         self.reset()
+        self.widget_workspaces.show()
         result = core_call().stat("/")
         for workspace in result.get("children", []):
             self._add_workspace(workspace)
@@ -499,7 +502,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def reset(self):
         self.widget_files.hide()
-        self.widget_workspaces.show()
+        self.widget_workspaces.hide()
         self.workspaces_number = 0
         layout = self.widget_workspaces.layout().itemAt(1).layout()
         for ws in self.workspaces:
@@ -508,3 +511,4 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.workspaces = []
         self.current_directory = None
         self.current_workspace = None
+        self.label_mountpoint.setText("")

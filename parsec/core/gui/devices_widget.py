@@ -14,3 +14,6 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
     def emit_register_device(self):
         self.register_device_dialog = RegisterDevice(parent=self)
         self.register_device_dialog.show()
+
+    def reset(self):
+        pass

@@ -16,7 +16,6 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.setWindowFlags(Qt.SplashScreen)
         self.reset()
 
         self.button_register_device.clicked.connect(self.emit_register_device)
