@@ -7,6 +7,7 @@ from parsec.core.devices_manager import Device
 from parsec.handshake import HandshakeBadIdentity
 
 
+PER_CMD_TIMEOUT = 1
 logger = logbook.Logger("parsec.core.backend_cmds_sender")
 
 
@@ -43,10 +44,18 @@ class BackendCmdsSender(BaseAsyncComponent):
             raise BackendNotAvailable()
 
         try:
-            await self._sock.send(req)
-            return await self._sock.recv()
+            # This timeout is a bit tricky: on one hand choosing a small value
+            # makes poor connection unusable, but on the other hand a tcp socket
+            # can hang for a long, long time (for instance when the network is
+            # shutdown after a connection has been setup).
+            # This is especially a trouble with requests going through FUSE
+            # given they must be all finished before the unmount, with the GUI
+            # doing a frozen wait for all this time...
+            with trio.fail_after(PER_CMD_TIMEOUT):
+                await self._sock.send(req)
+                return await self._sock.recv()
 
-        except (trio.BrokenStreamError, trio.ClosedStreamError) as exc:
+        except (trio.TooSlowError, trio.BrokenStreamError, trio.ClosedStreamError) as exc:
             raise BackendNotAvailable() from exc
 
     async def send(self, req: dict) -> dict:
