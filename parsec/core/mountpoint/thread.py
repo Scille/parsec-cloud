@@ -10,18 +10,27 @@ from parsec.core.mountpoint.exceptions import MountpointConfigurationError
 
 
 def _bootstrap_mountpoint(mountpoint):
-    if os.name == "posix":
-        # On POSIX systems, mounting target must exists
-        mountpoint.mkdir(exist_ok=True, parents=True)
-        initial_st_dev = mountpoint.stat().st_dev
-    else:
-        # On Windows, only parent's mounting target must exists
-        mountpoint.parent.mkdir(exist_ok=True, parents=True)
-        if mountpoint.exists():
-            raise MountpointConfigurationError(
-                f"Mountpoint `{mountpoint.absolute()}` must not exists on windows"
-            )
-        initial_st_dev = None
+    try:
+        if os.name == "posix":
+            # On POSIX systems, mounting target must exists
+            mountpoint.mkdir(exist_ok=True, parents=True)
+            initial_st_dev = mountpoint.stat().st_dev
+        else:
+            # On Windows, only parent's mounting target must exists
+            mountpoint.parent.mkdir(exist_ok=True, parents=True)
+            if mountpoint.exists():
+                raise MountpointConfigurationError(
+                    f"Mountpoint `{mountpoint.absolute()}` must not exists on windows"
+                )
+            initial_st_dev = None
+
+    except OSError as exc:
+        # In case of hard crash, it's possible the FUSE mountpoint is still
+        # mounted (but point to nothing). In such case access to the mountpoint
+        # end up with an error :(
+        raise MountpointConfigurationError(
+            "Mountpoint is busy, has parsec prevously cleanly exited ?"
+        ) from exc
 
     return initial_st_dev
 
