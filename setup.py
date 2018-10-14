@@ -90,13 +90,13 @@ extra_requirements = {
         "hurry.filesize==0.9",
         "fusepy==3.0.0",
         # Nitrokey POC stuff
-        "argparse-1.4.0",
-        "ecdsa-0.13",
-        "progress-1.4",
-        "pyasn1-0.4.4",
-        "pyasn1-modules-0.2.2",
-        "pycrypto-2.6.1",
-        "tqdm-4.26.0",
+        "argparse==1.4.0",
+        "ecdsa==0.13",
+        "progress==1.4",
+        "pyasn1==0.4.4",
+        "pyasn1-modules==0.2.2",
+        "pycrypto==2.6.1",
+        "tqdm==4.26.0",
     ],
     "backend": [
         # PostgreSQL
