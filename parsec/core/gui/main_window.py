@@ -119,13 +119,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             core_call().unmount()
         try:
             core_call().mount(mountpoint)
-            self.files_widget.set_mountpoint(mountpoint)
-            return mountpoint
-        except (RuntimeError, PermissionError) as exc:
-            import traceback
-
-            traceback.print_exc(exc)
+        except Exception as exc:
+            # TODO: Trio multierror makes print_exc to crash...
+            # import traceback; traceback.print_exc(exc)
+            print(exc)
             return None
+
+        self.files_widget.set_mountpoint(mountpoint)
+        return mountpoint
 
     def remount(self):
         mountpoint = self.mount()
