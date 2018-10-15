@@ -88,7 +88,7 @@ extra_requirements = {
     "core": ["PyQt5==5.11.2", "hurry.filesize==0.9", "fusepy==3.0.0"],
     "backend": [
         # PostgreSQL
-        "triopg==0.2.0",
+        "triopg==0.3.0",
         "trio-asyncio==0.9.1",
         # S3
         "boto3==1.4.4",
