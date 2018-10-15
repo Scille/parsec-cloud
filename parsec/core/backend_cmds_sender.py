@@ -79,15 +79,12 @@ class BackendCmdsSender(BaseAsyncComponent):
 
         def _filter_big_fields(data):
             # As hacky as arbitrary... but works well so far !
-            return {
-                **data,
-                "block": f"{data['block'][:100]}[...]{data['block'][-100:]}"
-                if "block" in data
-                else data["block"],
-                "blob": f"{data['blob'][:100]}[...]{data['blob'][-100:]}"
-                if "blob" in data
-                else data["blob"],
-            }
+            filtered_data = data.copy()
+            if "block" in filtered_data:
+                filtered_data["block"] = f"{data['block'][:100]}[...]{data['block'][-100:]}"
+            if "blob" in filtered_data:
+                filtered_data["blob"] = f"{data['blob'][:100]}[...]{data['blob'][-100:]}"
+            return filtered_data
 
         async with self._lock:
             # Try to use the already connected socket
@@ -102,9 +99,9 @@ class BackendCmdsSender(BaseAsyncComponent):
                 try:
                     # If it failed, reopen the socket and retry the request
                     await self._init_send_connection()
-                    logger.debug("send {}", filter_big_fields_for_log(req))
+                    logger.debug("send {}", _filter_big_fields(req))
                     rep = await self._naive_send(req)
-                    logger.debug("recv {}", filter_big_fields_for_log(rep))
+                    logger.debug("recv {}", _filter_big_fields(rep))
                     return rep
 
                 except BackendNotAvailable as e:

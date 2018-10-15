@@ -76,7 +76,7 @@ async def test_too_slow_request(
 
             # First we send a request that won't get any answer
             with pytest.raises(BackendNotAvailable):
-                await backend_cmds_sender.send("req1")
+                await backend_cmds_sender.send({"cmd": "req1"})
 
             # Now the first opened socket should have been closed and should
             # never be reused.
@@ -91,11 +91,11 @@ async def test_too_slow_request(
             # Finally we retry the request, this time with a socket that will answer
             good_sock = AsyncMock(spec=CookedSocket)
             good_sock.send.side_effect = [None]
-            good_sock.recv.side_effect = ["rep-2"]
+            good_sock.recv.side_effect = [{"cmd": "rep-2"}]
             mocked_bcf.side_effect = [good_sock]
 
-            rep = await backend_cmds_sender.send("req-2")
-            assert rep == "rep-2"
+            rep = await backend_cmds_sender.send({"cmd": "req-2"})
+            assert rep == {"cmd": "rep-2"}
 
 
 @pytest.mark.trio

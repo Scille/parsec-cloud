@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch
 
-from parsec.core.devices_manager import LocalDevicesManager, DeviceSavingError, DeviceLoadingError
+from parsec.core.devices_manager import LocalDevicesManager, DeviceSavingAlreadyExists, DeviceLoadingError
 from parsec.core.fs.utils import new_access
 from parsec.utils import to_jsonb64
 from parsec import nitrokey_encryption_tool
@@ -94,7 +94,7 @@ def test_register_already_exists_device(tmpdir, alice_cleartext_device, alice):
     user_manifest_access = new_access()
 
     dm = LocalDevicesManager(tmpdir.strpath)
-    with pytest.raises(DeviceSavingError):
+    with pytest.raises(DeviceSavingAlreadyExists):
         dm.register_new_device(
             alice_cleartext_device,
             user_privkey.encode(),
