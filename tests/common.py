@@ -31,10 +31,21 @@ def freeze_time(timestr):
 
 
 class AsyncMock(Mock):
+    @property
+    def is_async(self):
+        return self.__dict__.get("is_async", False)
+
+    @is_async.setter
+    def is_async(self, val):
+        self.__dict__["is_async"] = val
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        spec = kwargs.get("spec")
+        self.__dict__["is_async"] = False
+        spec = kwargs.get("spec") or kwargs.get("spec_set")
         if spec:
+            if callable(spec):
+                self.is_async = True
             for field in dir(spec):
                 if iscoroutinefunction(getattr(spec, field)):
                     getattr(self, field).is_async = True
