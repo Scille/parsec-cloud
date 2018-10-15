@@ -18,15 +18,12 @@ logger = logbook.Logger("parsec.networking")
 async def serve_client(dispatch_request, sockstream) -> None:
     def _filter_big_fields(data):
         # As hacky as arbitrary... but works well so far !
-        return {
-            **data,
-            "block": f"{data['block'][:100]}[...]{data['block'][-100:]}"
-            if "block" in data
-            else data["block"],
-            "blob": f"{data['blob'][:100]}[...]{data['blob'][-100:]}"
-            if "blob" in data
-            else data["blob"],
-        }
+        filtered_data = data.copy()
+        if "block" in filtered_data:
+            filtered_data["block"] = f"{data['block'][:100]}[...]{data['block'][-100:]}"
+        if "blob" in filtered_data:
+            filtered_data["blob"] = f"{data['blob'][:100]}[...]{data['blob'][-100:]}"
+        return filtered_data
 
     try:
         sock = CookedSocket(sockstream)
