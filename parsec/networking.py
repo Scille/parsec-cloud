@@ -16,6 +16,15 @@ logger = logbook.Logger("parsec.networking")
 
 
 async def serve_client(dispatch_request, sockstream) -> None:
+    def _filter_big_fields(data):
+        # As hacky as arbitrary... but works well so far !
+        filtered_data = data.copy()
+        if "block" in filtered_data:
+            filtered_data["block"] = f"{data['block'][:100]}[...]{data['block'][-100:]}"
+        if "blob" in filtered_data:
+            filtered_data["blob"] = f"{data['blob'][:100]}[...]{data['blob'][-100:]}"
+        return filtered_data
+
     try:
         sock = CookedSocket(sockstream)
         while True:
@@ -30,9 +39,12 @@ async def serve_client(dispatch_request, sockstream) -> None:
                 logger.debug("CLIENT DISCONNECTED")
                 return
 
-            logger.debug("REQ {}", req)
+            logger.debug("REQ {}", _filter_big_fields(req))
+
             rep = await dispatch_request(req)
-            logger.debug("REP {}", rep)
+
+            logger.debug("REP {}", _filter_big_fields(rep))
+
             await sock.send(rep)
     except trio.BrokenStreamError:
         # Client has closed connection

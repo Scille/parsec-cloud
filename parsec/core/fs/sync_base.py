@@ -138,7 +138,12 @@ class BaseSyncer:
         ciphered = encrypt_with_symkey(access["key"], bytes(blob))
         payload = {"cmd": "blockstore_post", "id": access["id"], "block": to_jsonb64(ciphered)}
         ret = await self.backend_cmds_sender.send(payload)
-        assert ret["status"] == "ok"
+        # If a previous attempt of uploading this block has been processed by
+        # the backend but we lost the connection before receiving the response
+        # Note we neglect the possibility of another id collision with another
+        # unrelated block because we trust probability and uuid4, who doesn't ?
+        if ret["status"] != "already_exists_error":
+            assert ret["status"] == "ok"
 
     async def _backend_block_get(self, access):
         payload = {"cmd": "blockstore_get", "id": access["id"]}

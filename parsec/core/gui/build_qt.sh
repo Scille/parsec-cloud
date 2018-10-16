@@ -7,6 +7,7 @@ pylupdate5 parsec-gui.pro
 
 for f in `ls forms`;
 do
+    echo "Processing form ${f}"
     pyuic5 -o "ui/${f%.*}.py" "forms/${f}" --import-from=parsec.core.gui
 done
 

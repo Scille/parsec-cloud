@@ -1,21 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS><TS version="2.0" language="fr" sourcelanguage="">
 <context>
-    <name>AboutDialog</name>
+    <name>DevicesWidget</name>
     <message>
-        <location filename="../forms/about_dialog.ui" line="14"/>
-        <source>About Parsec</source>
-        <translation>À propos de Parsec</translation>
+        <location filename="../forms/devices_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/about_dialog.ui" line="43"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Visit &lt;/span&gt;&lt;a href=&quot;http://www.parsec.cloud&quot;&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#3b4ba1;&quot;&gt;parsec.cloud&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt; for more information.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Want to help ? Find us on &lt;/span&gt;&lt;a href=&quot;https://github.com/Scille/parsec-cloud&quot;&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#3b4ba1;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Visitez &lt;/span&gt;&lt;a href=&quot;http://www.parsec.cloud&quot;&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#3b4ba1;&quot;&gt;parsec.cloud&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt; pour plus d&apos;informations.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Envie d&apos;aider ? Retrouvez-nous sur &lt;/span&gt;&lt;a href=&quot;https://github.com/Scille/parsec-cloud&quot;&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#3b4ba1;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-        <location filename="../forms/about_dialog.ui" line="69"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Parsec is created and maintained by &lt;/span&gt;&lt;a href=&quot;http://scille.eu&quot;&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#3b4ba1;&quot;&gt;Scille&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Parsec est créé et maintenu par &lt;/span&gt;&lt;a href=&quot;http://scille.eu&quot;&gt;&lt;span style=&quot; font-size:12pt; text-decoration: underline; color:#3b4ba1;&quot;&gt;Scille&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <location filename="../forms/devices_widget.ui" line="22"/>
+        <source>Add a new device</source>
+        <translation>Ajouter un nouvel appareil</translation>
     </message>
 </context>
 <context>
@@ -23,12 +18,12 @@
     <message>
         <location filename="../forms/file_item_widget.ui" line="38"/>
         <source>Form</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../forms/file_item_widget.ui" line="141"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -94,7 +89,7 @@
     <message>
         <location filename="../forms/files_widget.ui" line="174"/>
         <source>Search files or folders</source>
-        <translation>Rechercher des fichiers ou des répertoires</translation>
+        <translation>Rechercher des fichiers ou répertoire</translation>
     </message>
     <message>
         <location filename="../forms/files_widget.ui" line="192"/>
@@ -102,203 +97,327 @@
         <translation>Ajouter un espace de travail</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="262"/>
-        <source>{} already exists</source>
-        <translation>{} existe déjà</translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="190"/>
-        <source>Importing the folder</source>
-        <translation>Importer le répertoire</translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="190"/>
+        <location filename="../files_widget.py" line="185"/>
         <source>Sub-folders will not be imported to prevent big data imports.</source>
         <translation>Les sous-répertoires ne seront pas importés.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="469"/>
-        <source>Error</source>
-        <translation>Erreur</translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="278"/>
+        <location filename="../files_widget.py" line="271"/>
         <source>Can not import
 {}.</source>
         <translation>Impossible d&apos;importer {}.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="297"/>
+        <location filename="../files_widget.py" line="255"/>
+        <source>{} already exists</source>
+        <translation>{} existe déjà</translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="289"/>
         <source>New folder</source>
         <translation>Nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="297"/>
+        <location filename="../files_widget.py" line="289"/>
         <source>Enter new folder name</source>
-        <translation>Entrez le nom du nouveau répertoire</translation>
+        <translation>Entrez le nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="310"/>
+        <location filename="../files_widget.py" line="302"/>
         <source>A folder with the same name already exists.</source>
-        <translation>Un répertoire du même nom existe déjà.</translation>
+        <translation>Un répertoire avec le même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="331"/>
+        <location filename="../files_widget.py" line="322"/>
         <source>Open</source>
         <translation>Ouvrir</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="333"/>
+        <location filename="../files_widget.py" line="324"/>
         <source>Open in file explorer</source>
         <translation>Ouvrir dans l&apos;explorateur de fichiers</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="337"/>
+        <location filename="../files_widget.py" line="328"/>
         <source>Delete</source>
         <translation>Supprimer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="373"/>
+        <location filename="../files_widget.py" line="364"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="362"/>
+        <location filename="../files_widget.py" line="353"/>
         <source>Are you sure you want to delete folder &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer le répertoire &quot;{}&quot; ?</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="373"/>
+        <location filename="../files_widget.py" line="364"/>
         <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer le fichier &quot;{}&quot; ?</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="505"/>
+        <location filename="../files_widget.py" line="491"/>
         <source>{} element(s)</source>
         <translation>{} élément(s)</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="421"/>
+        <location filename="../files_widget.py" line="413"/>
         <source>Share</source>
         <translation>Partager</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="427"/>
+        <location filename="../files_widget.py" line="419"/>
         <source>Share a workspace</source>
         <translation>Partager un espace de travail</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="427"/>
+        <location filename="../files_widget.py" line="419"/>
         <source>Give a user name to share the workspace {} with.</source>
-        <translation>Fournissez un nom d&apos;utilisateur avec qui partager l&apos;espace de travail {}.</translation>
+        <translation>Entrez le nom de l&apos;utilisateur avec lequel partager l&apos;espace de travail &quot;{}&quot;.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="439"/>
-        <source>Can not share the workspace &quot;{}&quot; with yourself.</source>
-        <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec vous-même.</translation>
+        <location filename="../files_widget.py" line="431"/>
+        <source>Can not share the workspace &quot;{}&quot; with this user.</source>
+        <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec cet utilisateur.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="447"/>
+        <location filename="../files_widget.py" line="438"/>
         <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
         <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec &quot;{}&quot;.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="458"/>
+        <location filename="../files_widget.py" line="448"/>
         <source>New workspace</source>
         <translation>Nouvel espace de travail</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="458"/>
+        <location filename="../files_widget.py" line="448"/>
         <source>Enter new workspace name</source>
         <translation>Entrez le nom du nouvel espace de travail</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="469"/>
+        <location filename="../files_widget.py" line="459"/>
         <source>A workspace with the same name already exists.</source>
         <translation>Un espace de travail du même nom existe déjà.</translation>
     </message>
 </context>
 <context>
-    <name>LoginWidget</name>
+    <name>LoginLoginWidget</name>
     <message>
-        <location filename="../forms/login_widget.ui" line="20"/>
+        <location filename="../forms/login_login_widget.ui" line="26"/>
         <source>Form</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="41"/>
-        <source>Register a new device</source>
-        <translation>Enregistrer un nouvel appareil</translation>
+        <location filename="../forms/login_login_widget.ui" line="157"/>
+        <source>Identifier</source>
+        <translation>Identifiant</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="47"/>
-        <source>To register, you need an existing device to declare a new device and get the resulting token.</source>
-        <translation>Pour vous enregistrer, vous avez besoin d&apos;un appareil existant pour déclarer un nouvel appareil et obtenir un jeton.</translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="227"/>
-        <source>Login</source>
-        <translation>Se connecter</translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="237"/>
+        <location filename="../forms/login_login_widget.ui" line="218"/>
         <source>Password</source>
         <translation>Mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="247"/>
-        <source>Password check</source>
-        <translation>Vérification du mot de passe</translation>
+        <location filename="../forms/login_login_widget.ui" line="296"/>
+        <source>NitroKey PIN</source>
+        <translation>PIN de la NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="254"/>
-        <source>Device</source>
-        <translation>Appareil</translation>
+        <location filename="../forms/login_login_widget.ui" line="345"/>
+        <source>NitroKey Token</source>
+        <translation>Jeton de la NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="261"/>
+        <location filename="../forms/login_login_widget.ui" line="388"/>
+        <source>NitroKey Key</source>
+        <translation>Clef de la NitroKey</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_login_widget.ui" line="429"/>
+        <source>Authenticate using NitroKey</source>
+        <translation>S&apos;authentifier en utilisant une NitroKey</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_login_widget.ui" line="473"/>
+        <source>Log In</source>
+        <translation>Se connecter</translation>
+    </message>
+</context>
+<context>
+    <name>LoginRegisterDeviceWidget</name>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="33"/>
+        <source>To register a new device, you need an existing device to declare a new device and get the resulting token.</source>
+        <translation>Pour enregistrer un nouvel appareil, vous avez besoin d&apos;un appareil existant afin de déclarer le nouveau et obtenir un jeton.</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="128"/>
+        <source>Identifier</source>
+        <translation type="obsolete">Identifiant</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="168"/>
+        <source>Device name</source>
+        <translation>Nom de l&apos;appareil</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="208"/>
         <source>Token</source>
         <translation>Jeton</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="286"/>
+        <location filename="../forms/login_register_device_widget.ui" line="266"/>
+        <source>Password</source>
+        <translation>Mot de passe</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="315"/>
+        <source>Password check</source>
+        <translation>Vérification du mot de passe</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="387"/>
+        <source>NitroKey PIN</source>
+        <translation>PIN de la NitroKey</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="436"/>
+        <source>NitroKey Token</source>
+        <translation>Jeton de la NitroKey</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="479"/>
+        <source>NitroKey Key</source>
+        <translation>Clef de la NitroKey</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="520"/>
+        <source>Authenticate using NitroKey</source>
+        <translation>S&apos;authentifier en utilisant une NitroKey</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="585"/>
         <source>Register</source>
-        <translation>S&apos;enregistrer</translation>
+        <translation>Enregistrer l&apos;appareil</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="179"/>
-        <source>Log In</source>
-        <translation>Se connecter</translation>
+        <location filename="../login_widget.py" line="175"/>
+        <source>Passwords don&apos;t match.</source>
+        <translation>Les mots de passe ne correspondent pas.</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="211"/>
+        <location filename="../login_widget.py" line="196"/>
+        <source>Waiting for existing device to register us...</source>
+        <translation>En attente que l&apos;appareil existant nous enregistre...</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_device_widget.ui" line="128"/>
+        <source>User name</source>
+        <translation>Nom d&apos;utilisateur</translation>
+    </message>
+</context>
+<context>
+    <name>LoginRegisterUserWidget</name>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="33"/>
+        <source>To register a new user, you need another user to create an account and get a token.</source>
+        <translation>Pour enregistrer un nouvel utilisateur, vous avez besoin qu&apos;un utilisateur existant créer le compte et vous fournisse le jeton.</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="188"/>
+        <source>Identifier</source>
+        <translation type="obsolete">Identifiant</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="228"/>
+        <source>Device name</source>
+        <translation>Nom de l&apos;appareil</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="268"/>
+        <source>Token</source>
+        <translation>Jeton</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="326"/>
+        <source>Password</source>
+        <translation>Mot de passe</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="375"/>
+        <source>Password check</source>
+        <translation>Vérification du mot de passe</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="447"/>
+        <source>NitroKey PIN</source>
+        <translation>PIN de la NitroKey</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="496"/>
+        <source>NitroKey Token</source>
+        <translation>Jeton de la NitroKey</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="539"/>
+        <source>NitroKey Key</source>
+        <translation>Clef de la NitroKey</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="580"/>
+        <source>Authenticate using NitroKey</source>
+        <translation>S&apos;authentifier en utilisant une NitroKey</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="624"/>
+        <source>Register</source>
+        <translation>Enregistrer le nouvel utilisateur</translation>
+    </message>
+    <message>
+        <location filename="../login_widget.py" line="94"/>
+        <source>Passwords don&apos;t match</source>
+        <translation>Les mots de passe ne correspondent pas</translation>
+    </message>
+    <message>
+        <location filename="../forms/login_register_user_widget.ui" line="188"/>
+        <source>User name</source>
+        <translation>Nom d&apos;utilisateur</translation>
+    </message>
+</context>
+<context>
+    <name>LoginWidget</name>
+    <message>
+        <location filename="../forms/login_widget.ui" line="26"/>
+        <source>Form</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../forms/login_widget.ui" line="277"/>
         <source>Register a new account</source>
         <translation>Enregistrer un nouveau compte</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="217"/>
-        <source>To register, you need another user to create an account and get a token.</source>
-        <translation>Pour vous enregistrer, un autre utilisateur doit créer votre compte et vous fournir un jeton.</translation>
+        <location filename="../forms/login_widget.ui" line="302"/>
+        <source>Register a new device</source>
+        <translation>Enregistrer un nouvel appareil</translation>
     </message>
     <message>
-        <location filename="../forms/login_widget.ui" line="315"/>
-        <source>Log In instead</source>
-        <translation>Se connecter à la place</translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="322"/>
-        <source>Register a new account instead</source>
-        <translation>Enregistrer un nouveau compte à la place</translation>
-    </message>
-    <message>
-        <location filename="../forms/login_widget.ui" line="329"/>
-        <source>Register a new device instead</source>
-        <translation>Enregistrer un nouvel appareil à la place</translation>
-    </message>
-    <message>
-        <location filename="../login_widget.py" line="121"/>
-        <source>Passwords don&apos;t match.</source>
-        <translation>Les mots de passe ne correspondent pas.</translation>
+        <location filename="../forms/login_widget.ui" line="327"/>
+        <source>Log In</source>
+        <translation>Se connecter</translation>
     </message>
 </context>
 <context>
@@ -306,97 +425,87 @@
     <message>
         <location filename="../forms/main_window.ui" line="14"/>
         <source>Parsec</source>
-        <translation></translation>
+        <translation>Parsec</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="33"/>
-        <source>Display and manage your files and folders.</source>
-        <translation>Afficher et gérer vos fichiers et répertoires.</translation>
+        <location filename="../forms/main_window.ui" line="219"/>
+        <source>   Documents</source>
+        <translation>   Documents</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="42"/>
-        <source>Files</source>
-        <translation>Fichiers</translation>
+        <location filename="../forms/main_window.ui" line="286"/>
+        <source>   Users</source>
+        <translation>   Utilisateurs</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="68"/>
-        <source>Display and manage your users.</source>
-        <translation>Afficher et gérer vos utilisateurs.</translation>
+        <location filename="../forms/main_window.ui" line="353"/>
+        <source>   Devices</source>
+        <translation>   Appareils</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="71"/>
-        <source>Users</source>
-        <translation>Utilisateurs</translation>
+        <location filename="../forms/main_window.ui" line="423"/>
+        <source>   Settings</source>
+        <translation>   Configuration</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="97"/>
-        <source>Configure the application.</source>
-        <translation>Configurer l&apos;application.</translation>
+        <location filename="../forms/main_window.ui" line="495"/>
+        <source>   Log Out</source>
+        <translation>   Se déconnecter</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="100"/>
-        <source>Settings</source>
-        <translation>Configuration</translation>
+        <location filename="../main_window.py" line="182"/>
+        <source>Authentication failed.</source>
+        <translation>Impossible de se connecter.</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="155"/>
-        <source>File</source>
-        <translation>Fichier</translation>
+        <location filename="../main_window.py" line="200"/>
+        <source>Can not register the user.</source>
+        <translation>Impossible d&apos;enregistrer le nouvel utilisateur.</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="164"/>
-        <source>Help</source>
-        <translation>Aide</translation>
+        <location filename="../main_window.py" line="235"/>
+        <source>User has been successfully registered. You can now login.</source>
+        <translation>L&apos;utilisateur a été enregistré avec succès. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="177"/>
-        <source>Quit</source>
-        <translation>Quitter</translation>
+        <location filename="../main_window.py" line="243"/>
+        <source>The token has expired.</source>
+        <translation>Le jeton a expiré.</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="180"/>
-        <source>Ctrl+Q</source>
-        <translation>Ctrl+Q</translation>
+        <location filename="../main_window.py" line="248"/>
+        <source>No invitation found for this user.</source>
+        <translation>Aucune invitation trouvée pour cet utilisateur.</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="192"/>
-        <source>About Parsec</source>
-        <translation>À propos de Parsec</translation>
+        <location filename="../main_window.py" line="253"/>
+        <source>User has already been registered.</source>
+        <translation>L&apos;utilisateur a déjà été enregistré.</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="200"/>
-        <source>Disconnect</source>
-        <translation>Se déconnecter</translation>
+        <location filename="../main_window.py" line="314"/>
+        <source>Device has been successfully registered. You can now login.</source>
+        <translation>L&apos;appareil a été enregistré avec succès. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="208"/>
-        <source>Remount</source>
-        <translation>Re-monter</translation>
+        <location filename="../main_window.py" line="322"/>
+        <source>The device already exists.</source>
+        <translation>L&apos;appareil existe déjà.</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="213"/>
-        <source>Log In</source>
-        <translation>Se connecter</translation>
+        <location filename="../main_window.py" line="327"/>
+        <source>Invalid NitroKey information.</source>
+        <translation>Les informations de la NitroKey ne sont pas valides.</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="218"/>
-        <source>Reduce in tray</source>
-        <translation>Réduire dans la barre d&apos;icônes</translation>
+        <location filename="../main_window.py" line="332"/>
+        <source>Can not create the new device.</source>
+        <translation>Impossible de créer le nouvel appareil.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="142"/>
-        <source>Error</source>
-        <translation>Erreur</translation>
-    </message>
-    <message>
-        <location filename="../main_window.py" line="169"/>
-        <source>Can not register the new user.</source>
-        <translation>Impossible d&apos;enregistrer le nouvel utilisateur</translation>
-    </message>
-    <message>
-        <location filename="../main_window.py" line="213"/>
+        <location filename="../main_window.py" line="361"/>
         <source>Are you sure you want to quit ?</source>
-        <translation>Êtes-vous sûr de vouloir fermer l&apos;application ?</translation>
+        <translation>Êtes-vous sûr de vouloir quitter ?</translation>
     </message>
 </context>
 <context>
@@ -404,53 +513,68 @@
     <message>
         <location filename="../forms/parent_folder_widget.ui" line="32"/>
         <source>Form</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../forms/parent_folder_widget.ui" line="66"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Parent folder&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Répertoire parent&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Dossier parent&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
 </context>
 <context>
     <name>RegisterDevice</name>
     <message>
-        <location filename="../forms/register_device.ui" line="14"/>
+        <location filename="../forms/register_device.ui" line="17"/>
         <source>Register new device</source>
         <translation>Enregistrer un nouvel appareil</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="31"/>
+        <location filename="../forms/register_device.ui" line="30"/>
         <source>Device name</source>
         <translation>Nom de l&apos;appareil</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="45"/>
+        <location filename="../forms/register_device.ui" line="44"/>
         <source>Password</source>
         <translation>Mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="70"/>
-        <source>TextLabel</source>
-        <translation></translation>
+        <location filename="../forms/register_device.ui" line="53"/>
+        <source>Use NitroKey authentication instead of password</source>
+        <translation>S&apos;authentifier en utilisant une NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="88"/>
+        <location filename="../forms/register_device.ui" line="63"/>
+        <source>NitroKey PIN</source>
+        <translation>PIN de la NitroKey</translation>
+    </message>
+    <message>
+        <location filename="../forms/register_device.ui" line="70"/>
+        <source>Token ID</source>
+        <translation>Jeton de la NitroKey</translation>
+    </message>
+    <message>
+        <location filename="../forms/register_device.ui" line="77"/>
+        <source>Key ID</source>
+        <translation>Clef de la NitroKey</translation>
+    </message>
+    <message>
+        <location filename="../forms/register_device.ui" line="117"/>
         <source>Device&apos;s token</source>
         <translation>Jeton de l&apos;appareil</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="95"/>
+        <location filename="../forms/register_device.ui" line="127"/>
         <source>Token</source>
         <translation>Jeton</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="104"/>
+        <location filename="../forms/register_device.ui" line="136"/>
         <source>Waiting for the new device...</source>
-        <translation>En attente du nouvel appareil</translation>
+        <translation>En attente du nouvel appareil...</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="151"/>
+        <location filename="../forms/register_device.ui" line="166"/>
         <source>OK</source>
         <translation>Ok</translation>
     </message>
@@ -475,7 +599,7 @@
     <message>
         <location filename="../forms/settings_widget.ui" line="76"/>
         <source>Choose mount folder</source>
-        <translation>Choisir un répertoire de montage</translation>
+        <translation>Choisir un point de montage</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="106"/>
@@ -483,14 +607,9 @@
         <translation>Réseau</translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="32"/>
-        <source>Error</source>
-        <translation>Erreur</translation>
-    </message>
-    <message>
-        <location filename="../settings_widget.py" line="32"/>
+        <location filename="../settings_widget.py" line="33"/>
         <source>The choosen folder is not writable.</source>
-        <translation>Le répertoire choisi n&apos;est pas disponible en écriture.</translation>
+        <translation>Le répertoire choisi n&apos;est pas accessible en écriture.</translation>
     </message>
 </context>
 <context>
@@ -501,32 +620,32 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="35"/>
-        <source>Add a user</source>
-        <translation>Ajouter un utilisateur</translation>
+        <location filename="../forms/users_widget.ui" line="22"/>
+        <source>Add a new user</source>
+        <translation>Ajouter un nouvel utilisateur</translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="43"/>
-        <source>Register a new device</source>
-        <translation>Enregistrer un nouvel appareil</translation>
+        <location filename="../forms/users_widget.ui" line="47"/>
+        <source>Transmit the following information to the new user so they can set up their account.</source>
+        <translation>Transmettez les informations suivantes au nouvel utilisateur pour qu&apos;il puisse créer son compte.</translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="67"/>
-        <source>Register a new user</source>
-        <translation>Enregistrer un nouvel utilisateur</translation>
+        <location filename="../forms/users_widget.ui" line="59"/>
+        <source>User ID</source>
+        <translation>Identifiant</translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="89"/>
-        <source>Transmit these information to the new user so they can set up their account. </source>
-        <translation>Transmettre ces informations au nouvel utilisateur pour qu&apos;il puisse créer son compte.</translation>
+        <location filename="../forms/users_widget.ui" line="66"/>
+        <source>Token</source>
+        <translation>Jeton</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="24"/>
+        <location filename="../users_widget.py" line="18"/>
         <source>New user</source>
         <translation>Nouvel utilisateur</translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="24"/>
+        <location filename="../users_widget.py" line="18"/>
         <source>Enter new user name</source>
         <translation>Entrez le nom du nouvel utilisateur</translation>
     </message>

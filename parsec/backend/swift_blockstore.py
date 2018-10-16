@@ -31,7 +31,7 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
 
     async def get(self, id):
         try:
-            _, obj = self.swift_client.get_object(self._container, id)
+            _, obj = self.swift_client.get_object(self._container, str(id))
         except ClientException as exc:
             if exc.http_status == 404:
                 raise NotFoundError("Unknown block id.")

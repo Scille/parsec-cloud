@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QMessageBox, QInput
 from parsec.core.gui import desktop
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.file_size import get_filesize
-from parsec.core.gui.custom_widgets import ToolButton
+from parsec.core.gui.custom_widgets import ToolButton, show_error, show_warning
 from parsec.core.gui.ui.parent_folder_widget import Ui_ParentFolderWidget
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.gui.ui.file_item_widget import Ui_FileItemWidget
@@ -117,6 +117,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.button_import_files.clicked.connect(self.import_files_clicked)
         self.button_import_folder.clicked.connect(self.import_folder_clicked)
         self.workspaces = []
+        self.block_show = False
         self.current_workspace = None
         self.current_directory = None
         core_call().connect_event("fs.entry.updated", self._on_fs_entry_updated_trio)
@@ -125,7 +126,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def reload_current_directory(self):
         if not self.current_workspace:
-            self.show()
+            if not self.block_show:
+                self.show()
         else:
             self.load_directory(self.current_workspace, self.current_directory)
 
@@ -171,9 +173,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         filename = os.path.basename(path)
 
         if filename in files:
-            QMessageBox.error(
+            show_error(
                 self,
-                QCoreApplication.translate("FilesWidget", "{} already exists").format(filename),
                 QCoreApplication.translate(
                     "FilesWidget",
                     "A folder with the same name already exists. "
@@ -181,9 +182,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 ),
             )
             return
-        QMessageBox.warning(
+        show_warning(
             self,
-            QCoreApplication.translate("FilesWidget", "Importing the folder"),
             QCoreApplication.translate(
                 "FilesWidget", "Sub-folders will not be imported to prevent big data imports."
             ),
@@ -204,9 +204,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if not ret:
                 errors.append(f.absoluteFilePath())
         if errors:
-            QMessageBox.warning(
+            show_warning(
                 self,
-                QCoreApplication.translate("FilesWidget", "Error"),
                 QCoreApplication.translate("FilesWidget", "Can not import\n{}.").format(
                     "\n".join(errors)
                 ),
@@ -269,9 +268,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if not result:
                 errors.append(filename)
         if errors:
-            QMessageBox.warning(
+            show_warning(
                 self,
-                QCoreApplication.translate("FilesWidget", "Error"),
                 QCoreApplication.translate("FilesWidget", "Can not import\n{}.").format(
                     "\n".join(errors)
                 ),
@@ -301,9 +299,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             )
             self.load_directory(self.current_workspace, self.current_directory)
         except FileExistsError:
-            QMessageBox.warning(
+            show_warning(
                 self,
-                QCoreApplication.translate("FilesWidget", "Error"),
                 QCoreApplication.translate(
                     "FilesWidget", "A folder with the same name already exists."
                 ),
@@ -395,6 +392,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def show(self, *args, **kwargs):
         super().show(*args, **kwargs)
         self.reset()
+        self.widget_workspaces.show()
         result = core_call().stat("/")
         for workspace in result.get("children", []):
             self._add_workspace(workspace)
@@ -430,17 +428,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             try:
                 core_call().share_workspace("/" + workspace_name, user)
             except SharingRecipientError:
-                QMessageBox.warning(
+                show_warning(
                     self,
-                    QCoreApplication.translate("FilesWidget", "Error"),
                     QCoreApplication.translate(
-                        "FilesWidget", 'Can not share the workspace "{}" with yourself.'
+                        "FilesWidget", 'Can not share the workspace "{}" with this user.'
                     ).format(workspace_name),
                 )
             except:
-                QMessageBox.warning(
+                show_error(
                     self,
-                    QCoreApplication.translate("FilesWidget", "Error"),
                     QCoreApplication.translate(
                         "FilesWidget", 'Can not share the workspace "{}" with "{}".'
                     ).format(workspace_name, user),
@@ -460,9 +456,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             core_call().create_workspace(workspace_name)
             self._add_workspace(workspace_name)
         except FileExistsError:
-            QMessageBox.warning(
+            show_warning(
                 self,
-                QCoreApplication.translate("FilesWidget", "Error"),
                 QCoreApplication.translate(
                     "FilesWidget", "A workspace with the same name already exists."
                 ),
@@ -473,9 +468,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_directory = directory
         self.list_files.clear()
         result = core_call().stat(os.path.join(workspace, directory))
-
-        if not directory:
-            print(result)
 
         if len(self.current_directory):
             item = QListWidgetItem()
@@ -510,7 +502,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def reset(self):
         self.widget_files.hide()
-        self.widget_workspaces.show()
+        self.widget_workspaces.hide()
         self.workspaces_number = 0
         layout = self.widget_workspaces.layout().itemAt(1).layout()
         for ws in self.workspaces:
