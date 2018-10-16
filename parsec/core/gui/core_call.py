@@ -54,14 +54,14 @@ class _CoreCall:
         return self._trio_portal.run(self._parsec_core.fs.delete, *args, **kargs)
 
     def mount(self, mountpoint):
-        self._trio_portal.run(self._parsec_core.fuse_manager.start, mountpoint)
+        self._trio_portal.run(self._parsec_core.mountpoint_manager.start, mountpoint)
 
     def unmount(self, *args, **kwargs):
-        self._trio_portal.run(self._parsec_core.fuse_manager.stop)
+        self._trio_portal.run(self._parsec_core.mountpoint_manager.stop)
 
     def is_mounted(self, *args, **kwargs):
         try:
-            return self._parsec_core.fuse_manager.is_started(*args, **kwargs)
+            return self._parsec_core.mountpoint_manager.is_started(*args, **kwargs)
         except NotLoggedError:
             return False
 

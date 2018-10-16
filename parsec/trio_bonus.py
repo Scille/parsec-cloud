@@ -59,4 +59,3 @@ def monkey_patch():
     trio.serve_unix = serve_unix
     trio.open_unix_listeners = open_unix_listeners
     trio.open_unix_stream = open_unix_stream
-    trio.__all__ += ["serve_unix", "open_unix_listeners", "open_unix_stream"]

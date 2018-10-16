@@ -23,11 +23,10 @@ def translate_error():
 
 
 class FuseOperations(LoggingMixIn, Operations):
-    def __init__(self, fs, portal, mountpoint):
+    def __init__(self, fs_access, mountpoint):
         super().__init__()
-        self.fs = fs
+        self.fs_access = fs_access
         self.fds = {}
-        self._portal = portal
         self._need_exit = False
 
     def schedule_exit(self):
@@ -43,7 +42,7 @@ class FuseOperations(LoggingMixIn, Operations):
             fuse_exit()
 
         with translate_error():
-            stat = self._portal.run(self.fs.stat, path)
+            stat = self.fs_access.stat(path)
 
         fuse_stat = {}
         # Set it to 777 access
@@ -70,7 +69,7 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def readdir(self, path, fh):
         with translate_error():
-            stat = self._portal.run(self.fs.stat, path)
+            stat = self.fs_access.stat(path)
 
         if stat["type"] != "folder":
             raise FuseOSError(ENOTDIR)
@@ -79,55 +78,40 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def create(self, path, mode):
         with translate_error():
-
-            async def _do(path):
-                await self.fs.file_create(path)
-                return await self.fs.file_fd_open(path)
-
-            return self._portal.run(_do, path)
+            return self.fs_access.file_create(path)
 
     def open(self, path, flags=0):
         with translate_error():
-            return self._portal.run(self.fs.file_fd_open, path)
+            return self.fs_access.file_fd_open(path)
 
     def release(self, path, fh):
         with translate_error():
-            self._portal.run(self.fs.file_fd_close, fh)
+            self.fs_access.file_fd_close(fh)
 
     def read(self, path, size, offset, fh):
         with translate_error():
-
-            async def _do(fh, size, offset):
-                await self.fs.file_fd_seek(fh, offset)
-                return await self.fs.file_fd_read(fh, size)
-
-            ret = self._portal.run(_do, fh, size, offset)
+            ret = self.fs_access.file_fd_seek_and_read(fh, size, offset)
             # Fuse wants bytes but file_fd_read returns a bytearray
             return bytes(ret)
 
     def write(self, path, data, offset, fh):
         with translate_error():
-
-            async def _do(fh, data, offset):
-                await self.fs.file_fd_seek(fh, offset)
-                return await self.fs.file_fd_write(fh, data)
-
-            return self._portal.run(_do, fh, data, offset)
+            return self.fs_access.file_fd_seek_and_write(fh, data, offset)
 
     def truncate(self, path, length, fh=None):
         with translate_error():
             if fh:
-                self._portal.run(self.fs.file_fd_truncate, fh, length)
+                self.fs_access.file_fd_truncate(fh, length)
             else:
-                self._portal.run(self.fs.file_truncate, path, length)
+                self.fs_access.file_truncate(path, length)
 
     def unlink(self, path):
         with translate_error():
-            self._portal.run(self.fs.delete, path)
+            self.fs_access.delete(path)
 
     def mkdir(self, path, mode):
         with translate_error():
-            self._portal.run(self.fs.folder_create, path)
+            self.fs_access.folder_create(path)
 
         return 0
 
@@ -135,7 +119,7 @@ class FuseOperations(LoggingMixIn, Operations):
         # TODO: check directory is empty
         # TODO: check path is a directory
         with translate_error():
-            self._portal.run(self.fs.delete, path)
+            self.fs_access.delete(path)
 
         return 0
 
@@ -143,19 +127,19 @@ class FuseOperations(LoggingMixIn, Operations):
         # Unix allows to overwrite the destination, so make sure to have
         # space before calling the move
         with translate_error():
-            self._portal.run(self.fs.move, src, dst)
+            self.fs_access.move(src, dst)
 
         return 0
 
     def flush(self, path, fh):
         with translate_error():
-            self._portal.run(self.fs.file_fd_flush, fh)
+            self.fs_access.file_fd_flush(fh)
 
         return 0
 
     def fsync(self, path, datasync, fh):
         with translate_error():
-            self._portal.run(self.fs.file_fd_flush, fh)
+            self.fs_access.file_fd_flush(fh)
 
         return 0
 

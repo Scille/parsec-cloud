@@ -1,16 +1,14 @@
 import triopg
 import logbook
 
-from parsec.utils import ejson_dumps, ejson_loads
+from parsec.utils import call_with_control, ejson_dumps, ejson_loads
 
 
 logger = logbook.Logger("parsec.backend.driver")
 
 
 async def init_db(url, force=False):
-    conn = await triopg.connect(url)
-    async with conn.transaction():
-
+    async with triopg.connect(url) as conn, conn.transaction():
         if force:
             # TODO: Ideally we would totally drop the db here instead of just
             # the databases we know...
@@ -166,16 +164,23 @@ class PGHandler:
         self.url = url
         self.event_bus = event_bus
         self.pool = None
+        self.notification_conn = None
+        self._run_connections_control = None
 
     async def init(self, nursery):
         await init_db(self.url)
+        self._run_connections_control = await nursery.start(
+            call_with_control, self._run_connections
+        )
 
-        self.pool = await triopg.create_pool(self.url)
-        # This connection is dedicated to the notifications listening, so it
-        # would only complicate stuff to include it into the connection pool
-        self.notification_conn = await triopg.connect(self.url)
+    async def _run_connections(self, started_cb):
+        async with triopg.create_pool(self.url) as self.pool:
+            # This connection is dedicated to the notifications listening, so it
+            # would only complicate stuff to include it into the connection pool
+            async with triopg.connect(self.url) as self.notification_conn:
+                await self.notification_conn.add_listener("app_notification", self._on_notification)
 
-        await self.notification_conn.add_listener("app_notification", self._on_notification)
+                await started_cb()
 
     def _on_notification(self, connection, pid, channel, payload):
         data = ejson_loads(payload)
@@ -184,8 +189,8 @@ class PGHandler:
         self.event_bus.send(signal, **data)
 
     async def teardown(self):
-        await self.notification_conn.close()
-        await self.pool.close()
+        if self._run_connections_control:
+            await self._run_connections_control.stop()
 
     async def ping(self, author, ping):
         async with self.pool.acquire() as conn:

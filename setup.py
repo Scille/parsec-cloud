@@ -56,7 +56,7 @@ requirements = [
     "PyNaCl==1.2.0",
     "simplejson==3.10.0",
     "python-decouple==3.1",
-    "trio==0.7.0",
+    "trio==0.8.0",
     "python-interface==1.4.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
@@ -88,7 +88,7 @@ extra_requirements = {
     "core": ["PyQt5==5.11.2", "hurry.filesize==0.9", "fusepy==3.0.0"],
     "backend": [
         # PostgreSQL
-        "triopg==0.2.0",
+        "triopg==0.3.0",
         "trio-asyncio==0.9.1",
         # S3
         "boto3==1.4.4",
