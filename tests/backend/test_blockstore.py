@@ -1,5 +1,7 @@
 import pytest
+from uuid import UUID
 
+from parsec.backend.drivers.memory.blockstore import MemoryBlockStoreComponent
 from parsec.utils import to_jsonb64
 
 
@@ -16,6 +18,65 @@ async def test_blockstore_post_and_get(alice_backend_sock, bob_backend_sock):
     await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block})
     rep = await alice_backend_sock.recv()
     assert rep["status"] == "ok"
+
+    await bob_backend_sock.send({"cmd": "blockstore_get", "id": block_id})
+    rep = await bob_backend_sock.recv()
+    assert rep == {"status": "ok", "block": block}
+
+
+@pytest.mark.trio
+@pytest.mark.postgresql
+async def test_multi_blockstore_post_and_get(alice_backend_sock, bob_backend_sock):
+    block_id = "b00008dba3834f08abc6eb3aec280c6a"
+
+    block = to_jsonb64(b"Hodi ho !")
+    await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block})
+    rep = await alice_backend_sock.recv()
+    assert rep["status"] == "ok"
+
+    await bob_backend_sock.send({"cmd": "blockstore_get", "id": block_id})
+    rep = await bob_backend_sock.recv()
+    assert rep == {"status": "ok", "block": block}
+
+
+@pytest.mark.trio
+@pytest.mark.postgresql
+async def test_multi_blockstore_post_partial_failure(alice_backend_sock, bob_backend_sock, backend):
+    block_id = "b00008dba3834f08abc6eb3aec280c6a"
+
+    memory_blockstore = [
+        blockstore
+        for blockstore in backend.blockstores
+        if isinstance(blockstore, MemoryBlockStoreComponent)
+    ][0]
+
+    # Create already existant block in memory block in order to trigger an exception in post
+    memory_blockstore.blocks[UUID(block_id)] = "already_existant"
+
+    block = to_jsonb64(b"Hodi ho !")
+    await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block})
+    rep = await alice_backend_sock.recv()
+    assert rep["status"] == "already_exists_error"  # But still stored in postgresql
+
+
+@pytest.mark.trio
+@pytest.mark.postgresql
+async def test_multi_blockstore_get_partial_failure(alice_backend_sock, bob_backend_sock, backend):
+    block_id = "b00008dba3834f08abc6eb3aec280c6a"
+
+    memory_blockstore = [
+        blockstore
+        for blockstore in backend.blockstores
+        if isinstance(blockstore, MemoryBlockStoreComponent)
+    ][0]
+
+    block = to_jsonb64(b"Hodi ho !")
+    await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block})
+    rep = await alice_backend_sock.recv()
+    assert rep["status"] == "ok"
+
+    # Delete block in memory block in order to trigger an exception in get (that will be ignored)
+    del memory_blockstore.blocks[UUID(block_id)]
 
     await bob_backend_sock.send({"cmd": "blockstore_get", "id": block_id})
     rep = await bob_backend_sock.recv()
