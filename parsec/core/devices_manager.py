@@ -273,7 +273,12 @@ class LocalDevicesManager:
         device_key_path.write_text(data)
 
     def load_device(
-        self, device_id: str, password=None, nitrokey_pin=None, nitrokey_token_id=0, nitrokey_key_id=0
+        self,
+        device_id: str,
+        password=None,
+        nitrokey_pin=None,
+        nitrokey_token_id=0,
+        nitrokey_key_id=0,
     ):
         device_conf_path = self.devices_conf_path / device_id
 
