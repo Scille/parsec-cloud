@@ -1,7 +1,17 @@
 import pendulum
 from collections import Mapping
 from marshmallow import ValidationError
-from marshmallow.fields import *  # noqa: republishing
+from marshmallow.fields import (
+    # Republishing
+    Int,
+    String,
+    List,
+    Nested,
+    Integer,
+    UUID,
+    Boolean,
+    Field,
+)
 
 from parsec.utils import to_jsonb64, from_jsonb64
 
@@ -23,6 +33,14 @@ class Path(Field):
                 if item in (".", "..", ""):
                     raise ValidationError("Invalid path")
         return value
+
+
+class UUID(UUID):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return value.hex
 
 
 class Base64Bytes(Field):
@@ -110,3 +128,20 @@ class Map(Field):
             v = self.nested_field._serialize(val, key, value)
             ret[k] = v
         return ret
+
+
+__all__ = (
+    "Int",
+    "String",
+    "List",
+    "Nested",
+    "Integer",
+    "UUID",
+    "Boolean",
+    "Field",
+    "Path",
+    "Base64Bytes",
+    "DateTime",
+    "CheckedConstant",
+    "Map",
+)

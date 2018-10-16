@@ -1,4 +1,3 @@
-from os import environ
 import attr
 import trio
 import logbook
@@ -82,7 +81,7 @@ cmd_PING_Schema = _cmd_PING_Schema()
 
 class _cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema(BaseCmdSchema):
     event = fields.CheckedConstant("beacon.updated")
-    beacon_id = fields.String(missing=None)
+    beacon_id = fields.UUID(missing=None)
 
 
 cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema = _cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema()

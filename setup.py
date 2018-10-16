@@ -85,10 +85,8 @@ test_requirements = [
 ]
 
 extra_requirements = {
-    "core": [
-        "PyQt5==5.11.2",
-        "hurry.filesize==0.9",
-        "fusepy==3.0.0",
+    "core": ["PyQt5==5.11.2", "hurry.filesize==0.9", "fusepy==3.0.0"],
+    "nitrokey": [
         # Nitrokey POC stuff
         "python-pkcs11==0.5.0",
         "argparse==1.4.0",

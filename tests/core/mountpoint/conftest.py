@@ -5,7 +5,7 @@ import trio
 import pathlib
 from contextlib import contextmanager
 
-from parsec.core.mountpoint import MountpointManager
+from parsec.core.mountpoint import FuseMountpointManager
 
 from tests.common import call_with_control
 
@@ -16,10 +16,13 @@ def fuse_mode(request):
         pytest.skip("Quick fix for CI...")
     if request.param == "thread" and os.name == "nt":
         pytest.skip("Windows doesn't support threaded fuse")
+    if request.param == "process" and os.name == "posix":
+        pytest.skip("Nobody ain't not time for this on POSIX !!!")
     return request.param
 
 
 @pytest.fixture
+@pytest.mark.fuse
 def fuse_service_factory(
     tmpdir, unused_tcp_addr, device_factory, event_bus_factory, fs_factory, fuse_mode
 ):
@@ -76,7 +79,7 @@ def fuse_service_factory(
                 device = device_factory()
                 event_bus = event_bus_factory()
                 async with fs_factory(device, unused_tcp_addr) as fs:
-                    fuse = MountpointManager(fs, event_bus, mode=fuse_mode)
+                    fuse = FuseMountpointManager(fs, event_bus, mode=fuse_mode)
                     async with trio.open_nursery() as nursery:
                         await fuse.init(nursery)
                         try:
@@ -91,6 +94,7 @@ def fuse_service_factory(
                     await self._need_start.wait()
                     self._need_stop.clear()
                     self._stopped.clear()
+
                     fuse_controller = await self._nursery.start(
                         call_with_control, _fuse_controlled_cb
                     )

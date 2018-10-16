@@ -98,7 +98,7 @@ class DeviceConfSchema(UnknownCheckedSchema):
 
 
 class UserManifestAccessSchema(UnknownCheckedSchema):
-    id = fields.String(required=True)
+    id = fields.UUID(required=True)
     rts = fields.String(required=True)
     wts = fields.String(required=True)
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=32, max=32))
@@ -273,7 +273,12 @@ class LocalDevicesManager:
         device_key_path.write_text(data)
 
     def load_device(
-        self, device_id, password=None, nitrokey_pin=None, nitrokey_token_id=0, nitrokey_key_id=0
+        self,
+        device_id: str,
+        password=None,
+        nitrokey_pin=None,
+        nitrokey_token_id=0,
+        nitrokey_key_id=0,
     ):
         device_conf_path = self.devices_conf_path / device_id
 

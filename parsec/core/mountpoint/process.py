@@ -2,6 +2,7 @@ import os
 import trio
 import time
 import multiprocessing
+from queue import Empty
 from uuid import uuid4
 from pathlib import Path
 from fuse import FUSE
@@ -30,6 +31,18 @@ def _bootstrap_mountpoint(mountpoint):
     return initial_st_dev
 
 
+def _run_fuse_process(fs_access_client, abs_mountpoint, fuse_config):
+    try:
+        fuse_operations = FuseOperations(fs_access_client, abs_mountpoint)
+        FUSE(fuse_operations, abs_mountpoint, foreground=True, **fuse_config)
+    except BaseException as exc:
+        # Cannot just send the exception object given it could be
+        # non-pickle
+        # TODO: traceback.format_exc(exc) crash on trio.MultiError
+        fs_access_client.client_crash(str(exc))
+        raise
+
+
 async def run_fuse_in_process(
     fs, mountpoint: Path, fuse_config: dict, *, task_status=trio.TASK_STATUS_IGNORED
 ):
@@ -38,18 +51,9 @@ async def run_fuse_in_process(
 
     initial_st_dev = _bootstrap_mountpoint(mountpoint)
 
-    def _run_fuse_process():
-        try:
-            fuse_operations = FuseOperations(fs_access, abs_mountpoint)
-            FUSE(fuse_operations, abs_mountpoint, foreground=True, **fuse_config)
-        except BaseException as exc:
-            # Cannot just send the exception object given it could be
-            # non-pickle
-            # TODO: traceback.format_exc(exc) crash on trio.MultiError
-            fs_access.client_crash(str(exc))
-            raise
-
-    fuse_process = multiprocessing.Process(target=_run_fuse_process)
+    fuse_process = multiprocessing.Process(
+        target=_run_fuse_process, args=(fs_access.get_client(), abs_mountpoint, fuse_config)
+    )
 
     fuse_runner_stopped = trio.Event()
     try:
@@ -136,10 +140,12 @@ async def _stop_fuse_process(mountpoint, fuse_process):
 class ProcessFSAccess:
     def __init__(self, fs):
         self.fs = fs
-        self._client_crash_exc = None
         self._stopping = multiprocessing.Event()
         self._req_queue = multiprocessing.JoinableQueue()
         self._rep_queue = multiprocessing.Queue()
+
+    def get_client(self):
+        return ProcessFSAccessClient(self._stopping, self._req_queue, self._rep_queue)
 
     async def run_server(self):
         async with trio.open_nursery() as nursery:
@@ -152,7 +158,7 @@ class ProcessFSAccess:
                             try:
                                 req = self._req_queue.get(timeout=1)
                                 break
-                            except TimeoutError:
+                            except Empty:
                                 if self._stopping.is_set():
                                     return
                                 continue
@@ -167,7 +173,7 @@ class ProcessFSAccess:
                         _get_req, cancellable=True
                     )
                     print("[server] recv", req_id, req_cmd, req_args)
-                    nursery.start_soon(self._server_process_req, req_id, req_cmd, req_args)
+                    nursery.start_soon(self._process_req, req_id, req_cmd, req_args)
 
             except BaseException:
                 self._stopping.set()
@@ -176,7 +182,7 @@ class ProcessFSAccess:
                 await trio.run_sync_in_worker_thread(self._req_queue.join)
                 raise
 
-    async def _server_process_req(self, req_id, req_cmd, req_args):
+    async def _process_req(self, req_id, req_cmd, req_args):
         try:
             print("process", req_id, req_cmd, req_args)
             if req_cmd == "file_create":
@@ -220,14 +226,21 @@ class ProcessFSAccess:
             self._req_queue.task_done()
             raise
 
-    def _client_send_req(self, req_cmd, *req_args):
+
+class ProcessFSAccessClient:
+    def __init__(self, stopping, req_queue, rep_queue):
+        self._stopping = stopping
+        self._req_queue = req_queue
+        self._rep_queue = rep_queue
+
+    def _send_req(self, req_cmd, *req_args):
         if self._stopping.is_set():
             raise RuntimeError("Server is stopping")
         req_id = uuid4()
         print("[client] send", req_id, req_cmd, req_args)
         self._req_queue.put((req_id, req_cmd, req_args))
         while True:
-            rep_req_id, rep_val = self._rep_queue.get(timeout=0.1)
+            rep_req_id, rep_val = self._rep_queue.get()
             print("[client] recv", rep_req_id, rep_val)
             if rep_req_id != req_id:
                 # Given multiple client threads share the same rep_queue, it's
@@ -244,46 +257,46 @@ class ProcessFSAccess:
         self._req_queue.put((0, "crash", (exc,)))
 
     def stat(self, path):
-        return self._client_send_req("stat", path)
+        return self._send_req("stat", path)
 
     def delete(self, path):
-        return self._client_send_req("delete", path)
+        return self._send_req("delete", path)
 
     def move(self, src, dst):
-        return self._client_send_req("move", src, dst)
+        return self._send_req("move", src, dst)
 
     def file_create(self, path):
-        return self._client_send_req("file_create", path)
+        return self._send_req("file_create", path)
 
     def folder_create(self, path):
-        return self._client_send_req("folder_create", path)
+        return self._send_req("folder_create", path)
 
     def file_truncate(self, path, length):
-        return self._client_send_req("file_truncate", path, length)
+        return self._send_req("file_truncate", path, length)
 
     def file_fd_open(self, path):
-        return self._client_send_req("file_fd_open", path)
+        return self._send_req("file_fd_open", path)
 
     def file_fd_close(self, fh):
-        return self._client_send_req("file_fd_close", fh)
+        return self._send_req("file_fd_close", fh)
 
     def file_fd_seek(self, fh, offset):
-        return self._client_send_req("file_fd_seek", fh, offset)
+        return self._send_req("file_fd_seek", fh, offset)
 
     def file_fd_read(self, fh, size):
-        return self._client_send_req("file_fd_read", fh, size)
+        return self._send_req("file_fd_read", fh, size)
 
     def file_fd_seek_and_read(self, fh, size, offset):
-        return self._client_send_req("file_fd_seek_and_read", fh, size, offset)
+        return self._send_req("file_fd_seek_and_read", fh, size, offset)
 
     def file_fd_seek_and_write(self, fh, data, offset):
-        return self._client_send_req("file_fd_seek_and_write", fh, data, offset)
+        return self._send_req("file_fd_seek_and_write", fh, data, offset)
 
     def file_fd_write(self, fh, data):
-        return self._client_send_req("file_fd_write", fh, data)
+        return self._send_req("file_fd_write", fh, data)
 
     def file_fd_truncate(self, fh, length):
-        return self._client_send_req("file_fd_truncate", fh, length)
+        return self._send_req("file_fd_truncate", fh, length)
 
     def file_fd_flush(self, fh):
-        return self._client_send_req("file_fd_flush", fh)
+        return self._send_req("file_fd_flush", fh)

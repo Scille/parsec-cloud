@@ -61,6 +61,7 @@ class PathElement:
 
 
 @pytest.mark.slow
+@pytest.mark.fuse
 def test_fuse_folder_operations(tmpdir, hypothesis_settings, fuse_service):
 
     tentative = 0

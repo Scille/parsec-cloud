@@ -2,6 +2,10 @@ class MountpointManagerError(Exception):
     pass
 
 
+class MountpointManagerNotAvailable(MountpointManagerError):
+    pass
+
+
 class MountpointAlreadyStarted(MountpointManagerError):
     pass
 

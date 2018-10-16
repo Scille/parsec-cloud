@@ -4,7 +4,6 @@ import os
 import socket
 import asyncpg
 import contextlib
-from uuid import UUID
 from unittest.mock import patch
 import trio
 import trio_asyncio
@@ -20,6 +19,7 @@ from parsec.core.schemas import loads_manifest, dumps_manifest
 from parsec.core.fs.utils import new_access, new_local_user_manifest, local_to_remote_manifest
 from parsec.core.encryption_manager import encrypt_with_secret_key
 from parsec.core.devices_manager import Device
+from parsec.core.mountpoint import FUSE_AVAILABLE
 from parsec.backend import BackendApp, BackendConfig
 from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake
@@ -43,6 +43,7 @@ def pytest_addoption(parser):
         help="Use PostgreSQL backend instead of default memory mock",
     )
     parser.addoption("--runslow", action="store_true", help="Don't skip slow tests")
+    parser.addoption("--runfuse", action="store_true", help="Don't skip fuse tests")
     parser.addoption(
         "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
@@ -61,6 +62,11 @@ def pytest_runtest_setup(item):
     os.environ.setdefault("TZ", "UTC")
     if item.get_closest_marker("slow") and not item.config.getoption("--runslow"):
         pytest.skip("need --runslow option to run")
+    if item.get_closest_marker("fuse"):
+        if not item.config.getoption("--runfuse"):
+            pytest.skip("need --runfuse option to run")
+        elif not FUSE_AVAILABLE:
+            pytest.skip("fuse is not available")
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -393,7 +399,7 @@ def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, 
                             dumps_manifest(remote_user_manifest),
                         )
                         await backend.vlob.create(
-                            UUID(access["id"]), access["rts"], access["wts"], ciphered
+                            access["id"], access["rts"], access["wts"], ciphered
                         )
 
                     except UserAlreadyExistsError:

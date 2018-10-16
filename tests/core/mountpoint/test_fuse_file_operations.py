@@ -5,6 +5,7 @@ from hypothesis import strategies as st
 
 
 @pytest.mark.slow
+@pytest.mark.fuse
 @pytest.mark.xfail(reason="FUSE's lower layers seems to hate this...")
 def test_fuse_file_operations(tmpdir, hypothesis_settings, fuse_service):
     tentative = 0

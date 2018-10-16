@@ -2,7 +2,7 @@ import os
 import attr
 import pytest
 from pendulum import Pendulum
-from pathlib import Path
+import pathlib
 from string import ascii_lowercase
 from hypothesis.stateful import (
     RuleBasedStateMachine,
@@ -13,14 +13,14 @@ from hypothesis.stateful import (
 )
 from hypothesis import strategies as st
 
-from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
+from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, Path
 from parsec.core.fs.utils import new_access, new_local_file_manifest
 
 from tests.common import freeze_time
 
 
 def test_stat_root(local_folder_fs):
-    stat = local_folder_fs.stat("/")
+    stat = local_folder_fs.stat(Path("/"))
     assert stat == {
         "type": "folder",
         "base_version": 1,
@@ -34,9 +34,9 @@ def test_stat_root(local_folder_fs):
 
 def test_file_create(local_folder_fs):
     with freeze_time("2000-01-02"):
-        local_folder_fs.touch("/foo.txt")
+        local_folder_fs.touch(Path("/foo.txt"))
 
-    root_stat = local_folder_fs.stat("/")
+    root_stat = local_folder_fs.stat(Path("/"))
     assert root_stat == {
         "type": "folder",
         "base_version": 1,
@@ -47,7 +47,7 @@ def test_file_create(local_folder_fs):
         "children": ["foo.txt"],
     }
 
-    foo_stat = local_folder_fs.stat("/foo.txt")
+    foo_stat = local_folder_fs.stat(Path("/foo.txt"))
     assert foo_stat == {
         "type": "file",
         "base_version": 0,
@@ -60,23 +60,23 @@ def test_file_create(local_folder_fs):
 
 
 def test_not_root_child_bad_workspace_create(local_folder_fs):
-    local_folder_fs.mkdir("/foo")
+    local_folder_fs.mkdir(Path("/foo"))
     with pytest.raises(PermissionError):
-        local_folder_fs.mkdir("/foo/bar", workspace=True)
-    local_folder_fs.mkdir("/spam", workspace=True)
+        local_folder_fs.mkdir(Path("/foo/bar"), workspace=True)
+    local_folder_fs.mkdir(Path("/spam"), workspace=True)
 
 
 def test_cannot_replace_root(local_folder_fs):
     with pytest.raises(FileExistsError):
-        local_folder_fs.touch("/")
+        local_folder_fs.touch(Path("/"))
     with pytest.raises(FileExistsError):
-        local_folder_fs.mkdir("/")
+        local_folder_fs.mkdir(Path("/"))
 
-    local_folder_fs.mkdir("/foo")
+    local_folder_fs.mkdir(Path("/foo"))
     with pytest.raises(PermissionError):
-        local_folder_fs.move("/", "/foo")
+        local_folder_fs.move(Path("/"), Path("/foo"))
     with pytest.raises(PermissionError):
-        local_folder_fs.move("/foo", "/")
+        local_folder_fs.move(Path("/foo"), Path("/"))
 
 
 def test_access_not_loaded_entry(alice, local_folder_fs):
@@ -88,10 +88,10 @@ def test_access_not_loaded_entry(alice, local_folder_fs):
         local_folder_fs.set_manifest(alice.user_manifest_access, user_manifest)
 
     with pytest.raises(FSManifestLocalMiss):
-        local_folder_fs.stat("/foo.txt")
+        local_folder_fs.stat(Path("/foo.txt"))
 
     local_folder_fs.set_manifest(foo_access, foo_manifest)
-    stat = local_folder_fs.stat("/foo.txt")
+    stat = local_folder_fs.stat(Path("/foo.txt"))
     assert stat == {
         "type": "file",
         "created": Pendulum(2000, 1, 2),
@@ -105,7 +105,7 @@ def test_access_not_loaded_entry(alice, local_folder_fs):
 
 def test_access_unknown_entry(local_folder_fs):
     with pytest.raises(FileNotFoundError):
-        local_folder_fs.stat("/dummy")
+        local_folder_fs.stat(Path("/dummy"))
 
 
 class expect_raises:
@@ -142,13 +142,14 @@ class PathElement:
         return self.oracle_root / self.absolute_path[1:]
 
     def to_parsec(self):
-        return self.absolute_path
+        return Path(self.absolute_path)
 
     def __truediv__(self, path):
         return PathElement(os.path.join(self.absolute_path, path), self.oracle_root)
 
 
 @pytest.mark.slow
+@pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
 def test_folder_operations(tmpdir, hypothesis_settings, device_factory, local_folder_fs_factory):
     tentative = 0
 
@@ -166,7 +167,7 @@ def test_folder_operations(tmpdir, hypothesis_settings, device_factory, local_fo
 
             self.device = device_factory()
             self.local_folder_fs = local_folder_fs_factory(self.device)
-            self.folder_oracle = Path(tmpdir / f"oracle-test-{tentative}")
+            self.folder_oracle = pathlib.Path(tmpdir / f"oracle-test-{tentative}")
             self.folder_oracle.mkdir()
             oracle_root = self.folder_oracle / "root"
             oracle_root.mkdir()

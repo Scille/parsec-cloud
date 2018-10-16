@@ -1,5 +1,6 @@
 import triopg
 import logbook
+from uuid import UUID
 
 from parsec.utils import call_with_control, ejson_dumps, ejson_loads
 
@@ -185,6 +186,9 @@ class PGHandler:
     def _on_notification(self, connection, pid, channel, payload):
         data = ejson_loads(payload)
         signal = data.pop("__signal__")
+        if signal == "beacon.updated":
+            data["beacon_id"] = UUID(data["beacon_id"])
+            data["src_id"] = UUID(data["src_id"])
         logger.debug("notif received {}, {}, {}", pid, channel, payload)
         self.event_bus.send(signal, **data)
 

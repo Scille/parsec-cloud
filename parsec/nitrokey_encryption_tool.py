@@ -1,15 +1,22 @@
+import sys
 import getpass
 import logging
 
-import pkcs11
-import sys
+try:
+    import pkcs11
 
-from Crypto import Random
-from pkcs11 import KeyType, ObjectClass, Mechanism
-from pkcs11.util.rsa import encode_rsa_public_key
+    from Crypto import Random
+    from pkcs11 import KeyType, ObjectClass, Mechanism
+    from pkcs11.util.rsa import encode_rsa_public_key
 
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_v1_5, AES
+    from Crypto.PublicKey import RSA
+    from Crypto.Cipher import PKCS1_v1_5, AES
+
+    NITROKEY_AVAILABLE = True
+
+except ImportError:
+    NITROKEY_AVAILABLE = False
+
 
 VERBOSE = False
 
@@ -41,9 +48,6 @@ PLAINTEXT_READ_BYTES_COUNT = {2048: 240, 4096: 240 * 2}
 
 user_pin = None
 log = get_logger("encryption")
-
-
-from pkcs11 import KeyType, Attribute
 
 
 def test_all_private_keys_to_decrypt(crypttext, priv_keys):
@@ -245,6 +249,9 @@ def get_token_from_names(LIB):
 
 
 def decrypt_data(tokenID, pin, istream, ostream, keyid):
+    if not NITROKEY_AVAILABLE:
+        raise RuntimeError("Nitrokey not available !")
+
     log.info("Establishing device session")
     with get_session(tokenID=tokenID, pin=pin) as session:
         log.info("Getting keys")
@@ -297,6 +304,9 @@ class NoKeysFound(Exception):
 
 
 def encrypt_data(istream, ostream, keyid: int, token: int):
+    if not NITROKEY_AVAILABLE:
+        raise RuntimeError("Nitrokey not available !")
+
     log.info("Establishing device session")
     with get_session(tokenID=token, skipPin=True) as session:
         log.info("Getting keys")

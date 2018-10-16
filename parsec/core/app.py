@@ -15,7 +15,7 @@ from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.backend_cmds_sender import BackendCmdsSender
 from parsec.core.backend_events_manager import BackendEventsManager
 from parsec.core.connection_monitor import monitor_connection
-from parsec.core.mountpoint import MountpointManager
+from parsec.core.mountpoint import mountpoint_manager_factory
 
 
 logger = logbook.Logger("parsec.core.app")
@@ -137,9 +137,7 @@ class LoggedClientManager:
 
         self.fs = FS(device, self.backend_cmds_sender, self.encryption_manager, self.event_bus)
 
-        self.mountpoint_manager = MountpointManager(
-            self.fs, self.event_bus, mode="process" if os.name == "nt" else "thread"
-        )
+        self.mountpoint_manager = mountpoint_manager_factory(self.fs, self.event_bus)
         self.sync_monitor = SyncMonitor(self.fs, self.event_bus)
 
     async def start(self):

@@ -1,7 +1,11 @@
 import pytest
 from unittest.mock import patch
 
-from parsec.core.devices_manager import LocalDevicesManager, DeviceSavingAlreadyExists, DeviceLoadingError
+from parsec.core.devices_manager import (
+    LocalDevicesManager,
+    DeviceSavingAlreadyExists,
+    DeviceLoadingError,
+)
 from parsec.core.fs.utils import new_access
 from parsec.utils import to_jsonb64
 from parsec import nitrokey_encryption_tool

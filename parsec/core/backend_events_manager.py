@@ -32,9 +32,9 @@ class BackendEventDeviceTryClaimSubmittedRepSchema(UnknownCheckedSchema):
 class BackendEventBeaconUpdatedRepSchema(UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
     event = fields.CheckedConstant("beacon.updated", required=True)
-    beacon_id = fields.String(required=True)
+    beacon_id = fields.UUID(required=True)
     index = fields.Integer(required=True)
-    src_id = fields.String(required=True)
+    src_id = fields.UUID(required=True)
     src_version = fields.Integer(required=True)
 
 
@@ -158,8 +158,6 @@ class BackendEventsManager(BaseAsyncComponent):
 
                 async with trio.open_nursery() as nursery:
                     self._subscribed_events_changed.clear()
-                    # TODO: seems like a trio bug: sometime this line throw a HandshakeBadIdentity (
-                    # which is fine) that won't be caught by the surrounding try/except...
                     event_pump_cancel_scope = await nursery.start(self._event_pump)
                     backend_connection_failures = 0
                     self._event_pump_ready()
@@ -235,7 +233,7 @@ class BackendEventsManager(BaseAsyncComponent):
             while True:
                 await sock.send({"cmd": "event_listen"})
                 rep = await sock.recv()
-                _, errors = backend_event_listen_rep_schema.load(rep)
+                rep, errors = backend_event_listen_rep_schema.load(rep)
                 if errors:
                     raise ListenBackendEventError(
                         "Bad reponse %r while listening for event: %r" % (rep, errors)

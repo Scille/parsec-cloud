@@ -17,7 +17,7 @@ SharingSchema = _SharingSchema()
 
 
 class _BlockAccessSchema(UnknownCheckedSchema):
-    id = fields.String(required=True, validate=validate.Length(min=1, max=32))
+    id = fields.UUID(required=True)
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
     size = fields.Integer(required=True, validate=validate.Range(min=0))
@@ -29,7 +29,7 @@ BlockAccessSchema = _BlockAccessSchema()
 
 
 class _ManifestAccessSchema(UnknownCheckedSchema):
-    id = fields.String(required=True, validate=validate.Length(min=1, max=32))
+    id = fields.UUID(required=True)
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
     rts = fields.String(required=True, validate=validate.Length(min=1, max=32))
     wts = fields.String(required=True, validate=validate.Length(min=1, max=32))
@@ -73,7 +73,7 @@ FolderManifestSchema = _FolderManifestSchema()
 
 class _WorkspaceManifestSchema(_FolderManifestSchema):
     type = fields.CheckedConstant("workspace_manifest", required=True)
-    beacon_id = fields.String(required=True)
+    beacon_id = fields.UUID(required=True)
 
 
 WorkspaceManifestSchema = _WorkspaceManifestSchema()
@@ -91,7 +91,7 @@ UserManifestSchema = _UserManifestSchema()
 
 
 class _DirtyBlockAccessSchema(UnknownCheckedSchema):
-    id = fields.String(required=True, validate=validate.Length(min=1, max=32))
+    id = fields.UUID(required=True)
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
     size = fields.Integer(required=True, validate=validate.Range(min=0))
@@ -140,7 +140,7 @@ LocalFolderManifestSchema = _LocalFolderManifestSchema()
 
 class _LocalWorkspaceManifest(_LocalFolderManifestSchema):
     type = fields.CheckedConstant("local_workspace_manifest", required=True)
-    beacon_id = fields.String(required=True)
+    beacon_id = fields.UUID(required=True)
 
 
 LocalWorkspaceManifest = _LocalWorkspaceManifest()
