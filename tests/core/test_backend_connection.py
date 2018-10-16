@@ -67,7 +67,7 @@ async def test_revoked_device_handshake(
 ):
 
     async with backend_factory(
-        config={"blockstore_url": "POSTGRESQL", "db_url": postgresql_url}
+        config={"blockstore_type": "POSTGRESQL", "db_url": postgresql_url}
     ) as backend:
 
         async with backend_sock_factory(backend, alice):
