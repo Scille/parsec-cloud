@@ -1,5 +1,6 @@
 from os import environ
 import attr
+from collections import defaultdict
 
 
 blockstore_environ_vars = {
@@ -11,7 +12,7 @@ blockstore_environ_vars = {
 def config_factory(raw_conf):
     raw_conf = {k.upper(): v for k, v in raw_conf.items() if v not in (None, "")}
 
-    for mandatory in ("BLOCKSTORE_TYPE", "DB_URL"):
+    for mandatory in ("BLOCKSTORE_TYPES", "DB_URL"):
         if not raw_conf.get(mandatory):
             raise ValueError(f"Missing mandatory config {mandatory}")
 
@@ -28,22 +29,33 @@ def config_factory(raw_conf):
 @attr.s(slots=True, frozen=True)
 class BackendConfig:
 
-    blockstore_type = attr.ib()
+    blockstore_types = attr.ib()
 
-    @blockstore_type.validator
+    @blockstore_types.validator
     def _validate_blockstore_type(self, field, val):
-        if val == "MOCKED":
-            return val
-        elif val == "POSTGRESQL":
-            return val
-        elif val in ["S3", "SWIFT"]:
-            for environ_var in blockstore_environ_vars[val]:
-                if not getattr(self, environ_var.lower()):
-                    raise ValueError(
-                        f"Blockstore {val} requires environment variables: {', '.join(blockstore_environ_vars[val])}"
-                    )
-            else:
-                return val
+        validated = []
+        invalidated = defaultdict(list)
+        for v in val:
+            if v == "MOCKED":
+                validated.append(v)
+            elif v == "POSTGRESQL":
+                validated.append(v)
+            elif v in ["S3", "SWIFT"]:
+                for environ_var in blockstore_environ_vars[v]:
+                    if not getattr(self, environ_var.lower()):
+                        invalidated[v].append(environ_var)
+                validated.append(v)
+        if invalidated:
+            raise ValueError(
+                "\n"
+                + "\n".join(
+                    [
+                        f"Blockstore {i} requires environment variables: {', '.join(invalidated[i])}"
+                        for i in invalidated
+                    ]
+                )
+            )
+        return validated
 
     db_url = attr.ib()
 

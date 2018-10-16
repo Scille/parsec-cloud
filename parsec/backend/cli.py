@@ -103,7 +103,8 @@ def init_cmd(store, force):
 @click.option(
     "--blockstore",
     "-b",
-    default="MOCKED",
+    multiple=True,
+    default=["MOCKED"],
     type=click.Choice(("MOCKED", "POSTGRESQL", "S3", "SWIFT")),
     help="Block store the clients should write into (default: mocked in memory). Set environment variables accordingly.",
 )
@@ -131,7 +132,7 @@ def backend_cmd(log_level, log_file, pdb, **kwargs):
 
 def _backend(host, port, pubkeys, store, blockstore, debug):
     try:
-        config = config_factory({"debug": debug, "blockstore_type": blockstore, "db_url": store})
+        config = config_factory({"debug": debug, "blockstore_types": blockstore, "db_url": store})
     except ValueError as exc:
         raise SystemExit(f"Invalid configuration: {exc}")
 

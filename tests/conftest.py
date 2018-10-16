@@ -325,12 +325,12 @@ def backend_store(request):
 
 
 @pytest.fixture
-def blockstore(backend_store):
+def blockstores(backend_store):
     # TODO: allow to test against swift ?
+    blockstores = ["MOCKED"]
     if backend_store.startswith("postgresql://"):
-        return "POSTGRESQL"
-    else:
-        return "MOCKED"
+        blockstores.append("POSTGRESQL")
+    return blockstores
 
 
 @pytest.fixture
@@ -352,7 +352,7 @@ async def nursery():
 
 
 @pytest.fixture
-def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, default_devices):
+def backend_factory(asyncio_loop, event_bus_factory, blockstores, backend_store, default_devices):
     # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
     # the backend should inherit from the one with the asyncio loop context manager.
     # This mean the nursery fixture cannot use the backend object otherwise we
@@ -363,7 +363,7 @@ def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, 
     async def _backend_factory(devices=default_devices, config={}, event_bus=None):
         async with trio.open_nursery() as nursery:
             config = BackendConfig(
-                **{"blockstore_type": blockstore, "db_url": backend_store, **config}
+                **{"blockstore_types": blockstores, "db_url": backend_store, **config}
             )
             if not event_bus:
                 event_bus = event_bus_factory()
