@@ -8,6 +8,7 @@ from raven.handlers.logbook import SentryHandler
 
 from parsec.backend import BackendApp, config_factory
 from parsec.backend.user import NotFoundError
+from parsec.backend.exceptions import AlreadyRevokedError
 
 
 JOHN_DOE_USER_ID = "johndoe"
@@ -91,6 +92,37 @@ def init_cmd(store, force):
     import trio_asyncio
 
     trio_asyncio.run(lambda: init_db(store, force=force))
+
+
+@click.command()
+@click.argument("user_id", nargs=1)
+@click.option("--device-name", default=None, help="Device name")
+@click.option(
+    "--store", "-s", default="postgresql://127.0.0.1/parsec", help="Postgresql url of store"
+)
+def revoke_cmd(user_id, device_name, store):
+    async def _revoke_user(user_id):
+        async with trio.open_nursery() as nursery:
+            await backend.init(nursery)
+            try:
+                if device_name:
+                    await backend.user.revoke_device(f"{user_id}@{device_name}")
+                else:
+                    await backend.user.revoke_user(user_id)
+            except AlreadyRevokedError as exc:
+                print(str(exc))
+            except NotFoundError as exc:
+                print(str(exc))
+            finally:
+                await backend.teardown()
+
+    try:
+        config = config_factory({"db_url": store, "blockstore_url": "MOCKED"})
+    except ValueError as exc:
+        raise SystemExit(f"Invalid configuration: {exc}")
+
+    backend = BackendApp(config)
+    trio_asyncio.run(_revoke_user, user_id)
 
 
 @click.command()

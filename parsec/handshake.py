@@ -18,6 +18,10 @@ class HandshakeBadIdentity(HandshakeError):
     pass
 
 
+class HandshakeRevokedDevice(HandshakeError):
+    pass
+
+
 class _HandshakeChallengeSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Base64Bytes(required=True)
@@ -85,6 +89,12 @@ class ServerHandshake:
         data, _ = HandshakeResultSchema.dump({"handshake": "result", "result": "bad_identity"})
         return data
 
+    def build_revoked_device_result_req(self):
+        assert self.state == "answer"
+        self.state = "result"
+        data, _ = HandshakeResultSchema.dump({"handshake": "result", "result": "revoked_device"})
+        return data
+
     def build_result_req(self, verify_key=None):
         assert self.state == "answer"
 
@@ -126,6 +136,8 @@ class ClientHandshake:
         if data["result"] != "ok":
             if data["result"] == "bad_identity":
                 raise HandshakeBadIdentity("Backend didn't recognized our identity")
+            if data["result"] == "revoked_device":
+                raise HandshakeRevokedDevice("Backend rejected revoked device")
 
             else:
                 raise HandshakeFormatError("Bad result for result handshake: %s" % data["result"])

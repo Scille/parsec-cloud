@@ -6,6 +6,7 @@ from parsec.utils import ParsecError
 from parsec.backend.user import BaseUserComponent
 from parsec.backend.exceptions import (
     AlreadyExistsError,
+    AlreadyRevokedError,
     NotFoundError,
     UserClaimError,
     OutOfDateError,
@@ -120,7 +121,7 @@ class PGUserComponent(BaseUserComponent):
             async with conn.transaction():
                 row = await conn.fetchrow(
                     """
-                    SELECT 
+                    SELECT
                         created_on
                     FROM unconfigured_devices
                     WHERE user_id = $1 AND device_name = $2
@@ -438,3 +439,41 @@ class PGUserComponent(BaseUserComponent):
                     }
 
         return user
+
+    async def revoke_user(self, user_id):
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                results = await conn.fetchrow(
+                    "SELECT user_id FROM users WHERE user_id = $1", user_id
+                )
+                if not results:
+                    raise NotFoundError("User `%s` doesn't exists" % user_id)
+                result = await conn.execute(
+                    """
+                    UPDATE devices SET revocated_on = $1
+                    WHERE user_id = $2 AND revocated_on IS NULL
+                    """,
+                    pendulum.now(),
+                    user_id,
+                )
+                if result == "UPDATE 0":
+                    raise AlreadyRevokedError("User `%s` already revoked" % user_id)
+
+    async def revoke_device(self, device_id):
+        async with self.dbh.pool.acquire() as conn:
+            async with conn.transaction():
+                results = await conn.fetchrow(
+                    "SELECT device_id FROM devices WHERE device_id = $1", device_id
+                )
+                if not results:
+                    raise NotFoundError("Device `%s` doesn't exists" % device_id)
+                result = await conn.execute(
+                    """
+                    UPDATE devices SET revocated_on = $1
+                    WHERE device_id = $2 AND revocated_on IS NULL
+                    """,
+                    pendulum.now(),
+                    device_id,
+                )
+                if result == "UPDATE 0":
+                    raise AlreadyRevokedError("Device `%s` already revoked" % device_id)
