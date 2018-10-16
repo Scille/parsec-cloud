@@ -38,5 +38,6 @@ test_script:
   # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - py.test tests/  --cov=parsec --cov-config=setup.cfg --runslow -vvv -x --postgresql
 
-on_success:
-  - coveralls
+# TODO: re-enable me !
+# on_success:
+#   - coveralls
