@@ -31,7 +31,7 @@ build_script:
   - python --version
   - python -c "import struct; print(struct.calcsize('P') * 8)"
   - pip install -U coveralls
-  - pip install .[all] --process-dependency-links
+  - pip install .[core,backend,dev] --process-dependency-links
 
 test_script:
   # Uncomment this for RDP debug
