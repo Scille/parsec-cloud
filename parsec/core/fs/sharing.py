@@ -1,4 +1,4 @@
-import logbook
+from structlog import get_logger
 from itertools import count
 
 from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
@@ -10,7 +10,7 @@ from parsec.core.encryption_manager import EncryptionManagerError
 from parsec.utils import to_jsonb64
 
 
-logger = logbook.Logger("parsec.core.sharing")
+logger = get_logger()
 
 
 class SharingError(Exception):
@@ -155,7 +155,10 @@ class Sharing:
         msg = {"type": "share", "author": self.device.id, "access": access, "name": path.name}
         raw, errors = sharing_message_content_schema.dumps(msg)
         if errors:
-            logger.error(f"Cannot dump sharing message {msg!r}: {errors!r}")
+            # TODO: Do we really want to log the message content ? Wouldn't
+            # it be better just to raise a RuntimeError given we should never
+            # be in this case ?
+            logger.error("Cannot dump sharing message", msg=msg, errors=errors)
             raise SharingError("Internal error")
         try:
             ciphered = await self.encryption_manager.encrypt_for(recipient, raw.encode("utf-8"))
@@ -208,7 +211,7 @@ class Sharing:
                 await self._process_message(msg["sender_id"], msg["body"])
                 new_last_processed_message = msg["count"]
             except SharingError as exc:
-                logger.warning(exc.args[0])
+                logger.warning("Invalid sharing message", reason=exc)
 
         user_manifest_access, user_manifest = await self._get_user_manifest()
         if user_manifest["last_processed_message"] < new_last_processed_message:

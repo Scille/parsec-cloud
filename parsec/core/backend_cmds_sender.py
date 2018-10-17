@@ -1,5 +1,6 @@
 import trio
-import logbook
+from uuid import uuid4
+from structlog import get_logger
 
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.backend_connection import BackendNotAvailable, backend_connection_factory
@@ -8,7 +9,7 @@ from parsec.handshake import HandshakeBadIdentity
 
 
 PER_CMD_TIMEOUT = 30
-logger = logbook.Logger("parsec.core.backend_cmds_sender")
+logger = get_logger()
 
 
 class BackendCmdsSender(BaseAsyncComponent):
@@ -77,35 +78,43 @@ class BackendCmdsSender(BaseAsyncComponent):
             The backend reponse deserialized as a dict.
         """
 
+        # TODO: Should find a way to avoid using this filder if we're not in log debug...
         def _filter_big_fields(data):
             # As hacky as arbitrary... but works well so far !
             filtered_data = data.copy()
-            if "block" in filtered_data:
-                filtered_data["block"] = f"{data['block'][:100]}[...]{data['block'][-100:]}"
-            if "blob" in filtered_data:
-                filtered_data["blob"] = f"{data['blob'][:100]}[...]{data['blob'][-100:]}"
+            try:
+                if len(data["block"]) > 200:
+                    filtered_data["block"] = f"{data['block'][:100]}[...]{data['block'][-100:]}"
+            except (KeyError, ValueError, TypeError):
+                pass
+            try:
+                if len(data["blob"]) > 200:
+                    filtered_data["blob"] = f"{data['blob'][:100]}[...]{data['blob'][-100:]}"
+            except (KeyError, ValueError, TypeError):
+                pass
             return filtered_data
 
         async with self._lock:
+            log = logger.bind(req_id=uuid4().hex)
             # Try to use the already connected socket
             try:
-                logger.debug("send {}", _filter_big_fields(req))
+                log.debug("Sending request", req=_filter_big_fields(req))
                 rep = await self._naive_send(req)
-                logger.debug("recv {}", _filter_big_fields(rep))
+                log.debug("Receiving response", rep=_filter_big_fields(rep))
                 return rep
 
             except BackendNotAvailable as exc:
-                logger.debug("retrying, cannot reach backend: {!r}", exc)
+                log.debug("Cannot reach backend, retrying", reason=exc)
                 try:
                     # If it failed, reopen the socket and retry the request
                     await self._init_send_connection()
-                    logger.debug("send {}", _filter_big_fields(req))
+                    log.debug("Sending request", req=_filter_big_fields(req))
                     rep = await self._naive_send(req)
-                    logger.debug("recv {}", _filter_big_fields(rep))
+                    log.debug("Receiving response", rep=_filter_big_fields(rep))
                     return rep
 
                 except BackendNotAvailable as e:
-                    logger.debug("aborting, cannot reach backend: {!r}", e)
+                    log.debug("Cannot reach backend, aborting", reason=exc)
                     # Failed again, it seems we are offline
                     raise
 

@@ -183,7 +183,6 @@ class SpiedEventBus(EventBus):
         self.spy = self.create_spy()
 
     def send(self, event, **kwargs):
-        print(f"[{str(id(self))[-2:]}]", event, kwargs)
         for spy in self._spies:
             spy(event, **kwargs)
         super().send(event, **kwargs)

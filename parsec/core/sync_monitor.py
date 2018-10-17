@@ -1,12 +1,8 @@
 import trio
 from trio.hazmat import current_clock
-import logbook
 
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.backend_connection import BackendNotAvailable
-
-
-logger = logbook.Logger("parsec.core.sync_monitor")
 
 
 MIN_WAIT = 1

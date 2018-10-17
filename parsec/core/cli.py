@@ -2,17 +2,13 @@ import queue
 import threading
 import trio
 import click
-import logbook
 from uuid import UUID
-from raven.handlers.logbook import SentryHandler
 from urllib.parse import urlparse
 
+from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.core import Core, CoreConfig
 from parsec.core.devices_manager import DeviceSavingAlreadyExists
 from parsec.core.gui import run_gui
-
-
-logger = logbook.Logger("parsec.core.app")
 
 
 JOHN_DOE_DEVICE_ID = "johndoe@test"
@@ -85,20 +81,14 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option(
     "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
 )
+@click.option("--log-format", "-f", default="CONSOLE", type=click.Choice(("CONSOLE", "JSON")))
 @click.option("--log-file", "-o")
+@click.option("--log-filter", default=None)
 @click.option("--pdb", is_flag=True)
-# @click.option('--identity', '-i', default=None)
-# @click.option('--identity-key', '-I', type=click.File('rb'), default=None)
 @click.option("--I-am-John", is_flag=True, help="Log as dummy John Doe user")
-# @click.option('--cache-size', help='Max number of elements in cache', default=1000)
 @click.option("--no-ui", help="Disable the GUI", is_flag=True)
-def core_cmd(log_level, log_file, pdb, **kwargs):
-    if log_file:
-        log_handler = logbook.FileHandler(log_file, level=log_level.upper())
-    else:
-        log_handler = logbook.StderrHandler(level=log_level.upper())
-    # Push globally the log handler make it work across threads
-    log_handler.push_application()
+def core_cmd(log_level, log_format, log_file, log_filter, pdb, **kwargs):
+    configure_logging(log_level, log_format, log_file, log_filter)
 
     if pdb:
         return run_with_pdb(_core, **kwargs)
@@ -141,8 +131,7 @@ def _core(socket, backend_addr, backend_watchdog, debug, i_am_john, no_ui):
     )
 
     if config.sentry_url:
-        sentry_handler = SentryHandler(config.sentry_url, level="WARNING")
-        sentry_handler.push_application()
+        configure_sentry_logging(config.sentry_url)
 
     core = Core(config)
 

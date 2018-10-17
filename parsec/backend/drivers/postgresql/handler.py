@@ -1,11 +1,11 @@
 import triopg
-import logbook
+from structlog import get_logger
 from uuid import UUID
 
 from parsec.utils import call_with_control, ejson_dumps, ejson_loads
 
 
-logger = logbook.Logger("parsec.backend.driver")
+logger = get_logger()
 
 
 async def init_db(url, force=False):
@@ -189,7 +189,7 @@ class PGHandler:
         if signal == "beacon.updated":
             data["beacon_id"] = UUID(data["beacon_id"])
             data["src_id"] = UUID(data["src_id"])
-        logger.debug("notif received {}, {}, {}", pid, channel, payload)
+        logger.debug("notif received", pid=pid, channel=channel, payload=payload)
         self.event_bus.send(signal, **data)
 
     async def teardown(self):
@@ -204,4 +204,4 @@ class PGHandler:
 async def send_signal(conn, signal, **kwargs):
     raw_data = ejson_dumps({"__signal__": signal, **kwargs})
     await conn.execute("SELECT pg_notify($1, $2)", "app_notification", raw_data)
-    logger.debug("notif sent {}", raw_data)
+    logger.debug("notif sent", signal=signal, kwargs=kwargs)

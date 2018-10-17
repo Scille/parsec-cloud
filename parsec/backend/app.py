@@ -1,7 +1,7 @@
 import attr
 import trio
-import logbook
-import traceback
+from uuid import uuid4
+from structlog import get_logger
 from nacl.public import PublicKey
 from nacl.signing import VerifyKey
 from json import JSONDecodeError
@@ -32,7 +32,7 @@ from parsec.backend.drivers.postgresql import (
 from parsec.backend.exceptions import NotFoundError
 
 
-logger = logbook.Logger("parsec.backend.app")
+logger = get_logger()
 
 
 def blockstore_factory(config, postgresql_dbh=None):
@@ -143,6 +143,7 @@ cmd_EVENT_LIST_SUBSCRIBED = BaseCmdSchema()
 class AnonymousClientContext:
     id = "anonymous"
     anonymous = True
+    logger = logger
 
 
 @attr.s
@@ -151,8 +152,12 @@ class ClientContext:
     id = attr.ib()
     broadcast_key = attr.ib()
     verify_key = attr.ib()
+    conn_id = attr.ib(factory=lambda: uuid4().hex)
     subscribed_events = attr.ib(default=attr.Factory(dict), init=False)
     events = attr.ib(default=attr.Factory(lambda: trio.Queue(100)), init=False)
+
+    def __attrs_post_init__(self):
+        self.logger = logger.bind(client_id=self.id, conn_id=self.conn_id)
 
     @property
     def user_id(self):
@@ -296,7 +301,7 @@ class BackendApp:
                 if msg:
                     client_ctx.events.put_nowait(msg)
             except trio.WouldBlock:
-                logger.warning("event queue is full for %s" % client_ctx.id)
+                client_ctx.logger.warning("event queue is full")
 
         client_ctx.subscribed_events[key] = _handle_event
         self.event_bus.connect(event, _handle_event, weak=True)
@@ -375,14 +380,14 @@ class BackendApp:
     async def handle_client(self, sockstream):
         sock = CookedSocket(sockstream)
         try:
-            logger.debug("START HANDSHAKE")
+            logger.debug("start handshake")
             client_ctx = await self._do_handshake(sock)
             if not client_ctx:
                 # Invalid handshake
-                logger.debug("BAD HANDSHAKE")
+                logger.debug("bad handshake")
                 return
 
-            logger.debug("HANDSHAKE DONE, CLIENT IS `%s`" % client_ctx.id)
+            client_ctx.logger.debug("handshake done")
 
             await self._handle_client_loop(sock, client_ctx)
 
@@ -396,11 +401,28 @@ class BackendApp:
             await sock.aclose()
         except Exception as exc:
             # If we are here, something unexpected happened...
-            logger.error(traceback.format_exc())
+            client_ctx.logger.error("Unexpected crash", exc_info=exc)
             await sock.aclose()
             raise
 
     async def _handle_client_loop(self, sock, client_ctx):
+
+        # TODO: Should find a way to avoid using this filder if we're not in log debug...
+        def _filter_big_fields(data):
+            # As hacky as arbitrary... but works well so far !
+            filtered_data = data.copy()
+            try:
+                if len(data["block"]) > 200:
+                    filtered_data["block"] = f"{data['block'][:100]}[...]{data['block'][-100:]}"
+            except (KeyError, ValueError, TypeError):
+                pass
+            try:
+                if len(data["blob"]) > 200:
+                    filtered_data["blob"] = f"{data['blob'][:100]}[...]{data['blob'][-100:]}"
+            except (KeyError, ValueError, TypeError):
+                pass
+            return filtered_data
+
         while True:
             try:
                 req = await sock.recv()
@@ -410,10 +432,10 @@ class BackendApp:
                 continue
 
             if not req:  # Client disconnected
-                logger.debug("CLIENT DISCONNECTED")
+                client_ctx.logger.debug("CLIENT DISCONNECTED")
                 break
 
-            logger.debug("REQ %s" % req)
+            client_ctx.logger.debug("req", req=_filter_big_fields(req))
             # TODO: handle bad msg
             try:
                 cmd = req.get("cmd", "<missing>")
@@ -428,5 +450,5 @@ class BackendApp:
                     rep = await cmd_func(client_ctx, req)
                 except ParsecError as err:
                     rep = err.to_dict()
-            logger.debug("REP %s" % rep)
+            client_ctx.logger.debug("rep", rep=_filter_big_fields(rep))
             await sock.send(rep)

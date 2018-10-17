@@ -5,24 +5,29 @@ Defines client/server communication protocol on top of trio's Stream.
 import attr
 import trio
 import json
-import logbook
-import traceback
+from structlog import get_logger
 from collections import deque
 
 from parsec.utils import ejson_dumps
 
 
-logger = logbook.Logger("parsec.networking")
+logger = get_logger()
 
 
 async def serve_client(dispatch_request, sockstream) -> None:
     def _filter_big_fields(data):
         # As hacky as arbitrary... but works well so far !
         filtered_data = data.copy()
-        if "block" in filtered_data:
-            filtered_data["block"] = f"{data['block'][:100]}[...]{data['block'][-100:]}"
-        if "blob" in filtered_data:
-            filtered_data["blob"] = f"{data['blob'][:100]}[...]{data['blob'][-100:]}"
+        try:
+            if len(data["block"]) > 200:
+                filtered_data["block"] = f"{data['block'][:100]}[...]{data['block'][-100:]}"
+        except (KeyError, ValueError, TypeError):
+            pass
+        try:
+            if len(data["blob"]) > 200:
+                filtered_data["blob"] = f"{data['blob'][:100]}[...]{data['blob'][-100:]}"
+        except (KeyError, ValueError, TypeError):
+            pass
         return filtered_data
 
     try:
@@ -36,24 +41,22 @@ async def serve_client(dispatch_request, sockstream) -> None:
                 continue
 
             if not req:  # Client disconnected
-                logger.debug("CLIENT DISCONNECTED")
+                logger.debug("client disconnected")
                 return
 
-            logger.debug("REQ {}", _filter_big_fields(req))
+            logger.debug("req", req=_filter_big_fields(req))
 
             rep = await dispatch_request(req)
 
-            logger.debug("REP {}", _filter_big_fields(rep))
+            logger.debug("rep", rep=_filter_big_fields(rep))
 
             await sock.send(rep)
     except trio.BrokenStreamError:
         # Client has closed connection
         pass
     except Exception as exc:
-        print(exc)
         # If we are here, something unexpected happened...
-        tb = traceback.format_exc()
-        logger.error(tb)
+        logger.error("unexpected error", exc_info=exc)
         # TODO: do we need to close the socket (i.e. sockstream) here ?
         # or should we let the caller (most certainly the server) handle this ?
         await sock.aclose()

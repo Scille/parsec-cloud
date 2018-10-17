@@ -1,8 +1,8 @@
 import trio
-import logbook
+from structlog import get_logger
 
 
-logger = logbook.Logger("parsec.core.beacon_monitor")
+logger = get_logger()
 
 
 # We could also mark the local db entries outdated we update occurs to
@@ -32,11 +32,11 @@ async def monitor_beacons(device, fs, event_bus):
             return
 
         logger.debug(
-            "Beacon {} ({}) notifies update of entry {} to version {}",
-            beacon_id,
-            workspace_path,
-            src_id,
-            src_version,
+            "Beacon notifies entry update",
+            beacon_id=beacon_id,
+            workspace_path=workspace_path,
+            src_id=src_id,
+            src_version=src_version,
         )
         event_bus.send("fs.entry.updated", id=src_id)
 

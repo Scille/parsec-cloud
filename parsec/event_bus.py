@@ -1,6 +1,10 @@
 import trio
+from structlog import get_logger
 from weakref import ref, WeakMethod, ReferenceType
 from collections import defaultdict
+
+
+logger = get_logger()
 
 
 class EventWaiter:
@@ -28,6 +32,7 @@ class EventBus:
         self._event_handlers = defaultdict(set)
 
     def send(self, event, **kwargs):
+        logger.debug("send event", event_name=event, kwargs=kwargs)
         # Given event handlers are stored as weakrefs, any one of them
         # can become unavailable at any time.
         # In such case we perform a cleanup operation.
@@ -59,7 +64,7 @@ class EventBus:
         return ew
 
     def connect(self, event, cb, weak=False):
-        print(f"connect {event} {cb} {weak}")
+        logger.debug("connect event", event_name=event)
         if weak:
             try:
                 weak = WeakMethod(cb)
@@ -71,4 +76,5 @@ class EventBus:
             self._event_handlers[event].add(cb)
 
     def disconnect(self, event, cb):
+        logger.debug("disconnect event", event_name=event, cb=cb)
         self._event_handlers[event].discard(cb)

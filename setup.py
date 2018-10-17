@@ -48,7 +48,6 @@ requirements = [
     "attrs==18.1.0",
     "click==6.7",
     "huepy==0.9.6",
-    "Logbook==1.2.1",
     # Can use marshmallow or the toasted flavour as you like ;-)
     # "marshmallow==2.14.0",
     "toastedmarshmallow==0.2.6",
@@ -61,6 +60,8 @@ requirements = [
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
     "raven==6.8.0",  # Sentry support
+    "structlog==18.2.0",
+    "colorama==0.4.0",  # structlog colored output
 ]
 dependency_links = [
     # need to use --process-dependency-links option for this
@@ -73,7 +74,6 @@ test_requirements = [
     "pytest==3.8.0",
     "pytest-cov",
     "pytest-trio",
-    "pytest-logbook",
     "tox",
     "wheel",
     "Sphinx",
