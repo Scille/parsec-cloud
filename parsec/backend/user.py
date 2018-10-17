@@ -128,7 +128,7 @@ class BaseUserComponent:
         try:
             await self.claim_invitation(**msg)
         except UserClaimError as exc:
-            return {"status": "claim_error", "reason": str(exc)}
+            return {"status": "claim_error", "reason": exc}
 
         return {"status": "ok"}
 

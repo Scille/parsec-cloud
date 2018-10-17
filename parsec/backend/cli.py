@@ -3,9 +3,8 @@ import trio
 import trio_asyncio
 import click
 from uuid import UUID
-import logbook
-from raven.handlers.logbook import SentryHandler
 
+from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import BackendApp, config_factory
 from parsec.backend.user import NotFoundError
 
@@ -110,17 +109,13 @@ def init_cmd(store, force):
 @click.option(
     "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
 )
+@click.option("--log-format", "-f", default="CONSOLE", type=click.Choice(("CONSOLE", "JSON")))
 @click.option("--log-file", "-o")
+@click.option("--log-filter", default=None)
 @click.option("--debug", "-d", is_flag=True)
 @click.option("--pdb", is_flag=True)
-def backend_cmd(log_level, log_file, pdb, **kwargs):
-    if log_file:
-        log_handler = logbook.FileHandler(log_file, level=log_level.upper())
-    else:
-        log_handler = logbook.StderrHandler(level=log_level.upper())
-
-    # Push globally the log handler make it work across threads
-    log_handler.push_application()
+def backend_cmd(log_level, log_format, log_file, log_filter, pdb, **kwargs):
+    configure_logging(log_level, log_format, log_file, log_filter)
 
     if pdb:
         return run_with_pdb(_backend, **kwargs)
@@ -136,8 +131,7 @@ def _backend(host, port, pubkeys, store, blockstore, debug):
         raise SystemExit(f"Invalid configuration: {exc}")
 
     if config.sentry_url:
-        sentry_handler = SentryHandler(config.sentry_url, level="WARNING")
-        sentry_handler.push_application()
+        configure_sentry_logging(config.sentry_url)
 
     backend = BackendApp(config)
 

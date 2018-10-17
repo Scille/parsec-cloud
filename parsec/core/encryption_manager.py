@@ -1,6 +1,4 @@
 import attr
-import logbook
-import json
 import pickle
 import hashlib
 from nacl.public import SealedBox, PublicKey, PrivateKey
@@ -12,10 +10,7 @@ from parsec.schema import UnknownCheckedSchema, fields
 from parsec.utils import from_jsonb64, to_jsonb64
 from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.base import BaseAsyncComponent
-from parsec.core.devices_manager import Device, is_valid_user_id, is_valid_device_name
-
-
-logger = logbook.Logger("parsec.core.encryption_manager")
+from parsec.core.devices_manager import is_valid_user_id, is_valid_device_name
 
 
 class EncryptionManagerError(Exception):

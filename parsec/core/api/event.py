@@ -1,12 +1,9 @@
 import trio
-import logbook
 
 from parsec.core.app import Core, ClientContext
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields, validate
 
-
-logger = logbook.Logger("parsec.api.event")
 
 ALLOWED_SIGNALS = {"ping", "fuse_mountpoint_need_stop", "new_sharing"}
 ALLOWED_BACKEND_EVENTS = {"device_try_claim_submitted"}

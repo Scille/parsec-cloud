@@ -1,6 +1,5 @@
 import base64
 import json
-import os
 import attr
 import trio
 import inspect
@@ -9,7 +8,6 @@ from uuid import UUID
 from pendulum import Pendulum
 from nacl.secret import SecretBox
 import nacl.utils
-from raven.handlers.logbook import SentryHandler
 
 
 def generate_sym_key():
@@ -68,12 +66,6 @@ def abort(status="bad_message", **kwargs):
     error = ParsecError(**kwargs)
     error.status = status
     raise error
-
-
-def get_sentry_handler():
-    sentry_url = os.getenv("SENTRY_URL")
-    if sentry_url:
-        return SentryHandler(sentry_url, level="WARNING")
 
 
 def _sync_wrap_method(method):

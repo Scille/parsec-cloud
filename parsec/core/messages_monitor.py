@@ -1,11 +1,11 @@
 import trio
-import logbook
+from structlog import get_logger
 
 from parsec.core.fs.sharing import SharingError
 from parsec.core.backend_connection import BackendNotAvailable
 
 
-logger = logbook.Logger("parsec.core.messages_monitor")
+logger = get_logger()
 
 
 async def monitor_messages(fs, event_bus):

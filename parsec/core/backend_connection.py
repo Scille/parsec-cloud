@@ -1,12 +1,12 @@
 import trio
-import logbook
+from structlog import get_logger
 from urllib.parse import urlparse
 
 from parsec.networking import CookedSocket
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake, HandshakeError
 
 
-logger = logbook.Logger("parsec.core.backend_connection")
+logger = get_logger()
 
 
 class BackendError(Exception):
@@ -37,19 +37,14 @@ async def backend_connection_factory(addr: str, auth_id=None, auth_signkey=None)
     if auth_id and not auth_signkey:
         raise ValueError("Signing key is mandatory for non anonymous authentication")
 
-    parsed_addr = urlparse(addr)
-    logger.debug(
-        "Connecting to backend {}:{} as {}",
-        parsed_addr.hostname,
-        parsed_addr.port,
-        auth_id or "<anonymous>",
-    )
+    log = logger.bind(addr=addr, auth=auth_id or "<anonymous>")
 
+    parsed_addr = urlparse(addr)
     try:
         sockstream = await trio.open_tcp_stream(parsed_addr.hostname, parsed_addr.port)
 
     except OSError as exc:
-        logger.debug("Impossible to connect to backend: {!r}", exc)
+        log.debug("Impossible to connect to backend", reason=exc)
         raise BackendNotAvailable() from exc
 
     try:
@@ -63,14 +58,15 @@ async def backend_connection_factory(addr: str, auth_id=None, auth_signkey=None)
         await sock.send(answer_req)
         result_req = await sock.recv()
         ch.process_result_req(result_req)
+        log.debug("Connected")
 
     except trio.BrokenStreamError as exc:
-        logger.debug("Connection with backend lost during handshake: {!r}", exc)
+        log.debug("Connection lost during handshake", reason=exc)
         await sockstream.aclose()
         raise BackendNotAvailable() from exc
 
     except HandshakeError as exc:
-        logger.warning("Handshake failed: {!r}", exc)
+        log.warning("Handshake failed", reason=exc)
         await sockstream.aclose()
         raise
 

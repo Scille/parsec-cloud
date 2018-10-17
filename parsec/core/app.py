@@ -1,7 +1,7 @@
 import os
 import trio
 import attr
-import logbook
+from structlog import get_logger
 
 from parsec.event_bus import EventBus
 from parsec.networking import serve_client
@@ -18,7 +18,7 @@ from parsec.core.connection_monitor import monitor_connection
 from parsec.core.mountpoint import mountpoint_manager_factory
 
 
-logger = logbook.Logger("parsec.core.app")
+logger = get_logger()
 
 
 class AlreadyLoggedError(Exception):
@@ -243,7 +243,7 @@ class ClientContext:
                 if msg:
                     self.received_signals.put_nowait(msg)
             except trio.WouldBlock:
-                logger.warning(f"Event queue is full for {self.id}")
+                logger.warning("Event queue is full", client=self.id)
 
         self.registered_signals[key] = _handle_event
         self.event_bus.connect(event_name, _handle_event, weak=True)

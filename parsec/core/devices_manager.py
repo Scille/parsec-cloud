@@ -1,7 +1,7 @@
 import re
 import attr
-import logging
 from pathlib import Path
+from structlog import get_logger
 import io
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
@@ -18,7 +18,7 @@ from parsec.utils import to_jsonb64, from_jsonb64
 from parsec import nitrokey_encryption_tool
 
 
-logger = logging.getLogger("parsec")
+logger = get_logger()
 
 
 # TODO: SENSITIVE is really slow which is not good for unittests...
@@ -181,7 +181,7 @@ class LocalDevicesManager:
         for device_path in candidate_pathes:
             _, errors = self._load_device_conf(device_path.name)
             if errors:
-                logger.warning(f"Invalid `{device_path}` device config: {errors}")
+                logger.warning("Invalid device config", device_path=device_path, errors=errors)
             else:
                 devices.append(device_path.name)
         return devices

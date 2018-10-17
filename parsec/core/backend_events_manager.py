@@ -1,5 +1,5 @@
 import trio
-import logbook
+from structlog import get_logger
 import json
 
 from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
@@ -13,7 +13,7 @@ from parsec.core.backend_connection import (
 
 
 MAX_COOLDOWN = 30
-logger = logbook.Logger("parsec.core.backend_events_manager")
+logger = get_logger()
 
 
 class BackendEventPingRepSchema(UnknownCheckedSchema):
@@ -177,9 +177,9 @@ class BackendEventsManager(BaseAsyncComponent):
                 if cooldown_time > MAX_COOLDOWN:
                     cooldown_time = MAX_COOLDOWN
                 logger.debug(
-                    "Connection lost with backend ({!r}), restarting connection in {}s...",
-                    exc,
-                    cooldown_time,
+                    "Connection lost with backend, retrying after cooldown",
+                    reason=exc,
+                    cooldown_time=cooldown_time,
                 )
                 await trio.sleep(cooldown_time)
 
@@ -258,4 +258,4 @@ class BackendEventsManager(BaseAsyncComponent):
                         config_try_id=rep["config_try_id"],
                     )
                 else:
-                    logger.warning(f"Backend sent unknown event {rep}")
+                    logger.warning("Backend sent unknown event", event_msg=rep)
