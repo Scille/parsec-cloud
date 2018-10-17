@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_LoginLoginWidget(object):
     def setupUi(self, LoginLoginWidget):
         LoginLoginWidget.setObjectName("LoginLoginWidget")
-        LoginLoginWidget.resize(695, 371)
+        LoginLoginWidget.resize(695, 391)
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred
         )
@@ -58,9 +58,17 @@ class Ui_LoginLoginWidget(object):
             "color: black;\n"
             "}\n"
             "\n"
+            "QComboBox::drop-down\n"
+            "{\n"
+            "border: 0px;\n"
+            "}\n"
+            "\n"
             "QComboBox::down-arrow\n"
             "{\n"
             "image: url(:/icons/images/icons/down-arrow.png);\n"
+            "width: 16px;\n"
+            "height: 16px;\n"
+            "padding-right: 5px;\n"
             "}\n"
             "\n"
             "QCheckBox\n"
@@ -104,6 +112,7 @@ class Ui_LoginLoginWidget(object):
         font.setPointSize(12)
         self.combo_devices.setFont(font)
         self.combo_devices.setStyleSheet("")
+        self.combo_devices.setCurrentText("")
         self.combo_devices.setObjectName("combo_devices")
         self.verticalLayout_4.addWidget(self.combo_devices)
         self.verticalLayout.addLayout(self.verticalLayout_4)

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>695</width>
-    <height>371</height>
+    <height>391</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -98,9 +98,17 @@ background-color: white;
 color: black;
 }
 
+QComboBox::drop-down
+{
+border: 0px;
+}
+
 QComboBox::down-arrow
 {
 image: url(:/icons/images/icons/down-arrow.png);
+width: 16px;
+height: 16px;
+padding-right: 5px;
 }
 
 QCheckBox
@@ -176,6 +184,9 @@ image: url(:/icons/images/icons/checked.png)
              </property>
              <property name="styleSheet">
               <string notr="true"/>
+             </property>
+             <property name="currentText">
+              <string/>
              </property>
             </widget>
            </item>

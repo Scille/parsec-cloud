@@ -211,37 +211,37 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="157"/>
+        <location filename="../forms/login_login_widget.ui" line="165"/>
         <source>Identifier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="218"/>
+        <location filename="../forms/login_login_widget.ui" line="229"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="296"/>
+        <location filename="../forms/login_login_widget.ui" line="307"/>
         <source>NitroKey PIN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="345"/>
+        <location filename="../forms/login_login_widget.ui" line="356"/>
         <source>NitroKey Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="388"/>
+        <location filename="../forms/login_login_widget.ui" line="399"/>
         <source>NitroKey Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="429"/>
+        <location filename="../forms/login_login_widget.ui" line="440"/>
         <source>Authenticate using NitroKey</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="473"/>
+        <location filename="../forms/login_login_widget.ui" line="484"/>
         <source>Log In</source>
         <translation type="unfinished"></translation>
     </message>
@@ -259,47 +259,47 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="168"/>
+        <location filename="../forms/login_register_device_widget.ui" line="176"/>
         <source>Device name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="208"/>
+        <location filename="../forms/login_register_device_widget.ui" line="216"/>
         <source>Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="266"/>
+        <location filename="../forms/login_register_device_widget.ui" line="274"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="315"/>
+        <location filename="../forms/login_register_device_widget.ui" line="323"/>
         <source>Password check</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="387"/>
+        <location filename="../forms/login_register_device_widget.ui" line="395"/>
         <source>NitroKey PIN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="436"/>
+        <location filename="../forms/login_register_device_widget.ui" line="444"/>
         <source>NitroKey Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="479"/>
+        <location filename="../forms/login_register_device_widget.ui" line="487"/>
         <source>NitroKey Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="520"/>
+        <location filename="../forms/login_register_device_widget.ui" line="528"/>
         <source>Authenticate using NitroKey</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="585"/>
+        <location filename="../forms/login_register_device_widget.ui" line="593"/>
         <source>Register</source>
         <translation type="unfinished"></translation>
     </message>
@@ -314,7 +314,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="128"/>
+        <location filename="../forms/login_register_device_widget.ui" line="136"/>
         <source>User name</source>
         <translation type="unfinished"></translation>
     </message>
@@ -332,47 +332,47 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="228"/>
+        <location filename="../forms/login_register_user_widget.ui" line="236"/>
         <source>Device name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="268"/>
+        <location filename="../forms/login_register_user_widget.ui" line="276"/>
         <source>Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="326"/>
+        <location filename="../forms/login_register_user_widget.ui" line="334"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="375"/>
+        <location filename="../forms/login_register_user_widget.ui" line="383"/>
         <source>Password check</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="447"/>
+        <location filename="../forms/login_register_user_widget.ui" line="455"/>
         <source>NitroKey PIN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="496"/>
+        <location filename="../forms/login_register_user_widget.ui" line="504"/>
         <source>NitroKey Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="539"/>
+        <location filename="../forms/login_register_user_widget.ui" line="547"/>
         <source>NitroKey Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="580"/>
+        <location filename="../forms/login_register_user_widget.ui" line="588"/>
         <source>Authenticate using NitroKey</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="624"/>
+        <location filename="../forms/login_register_user_widget.ui" line="632"/>
         <source>Register</source>
         <translation type="unfinished"></translation>
     </message>
@@ -382,7 +382,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="188"/>
+        <location filename="../forms/login_register_user_widget.ui" line="196"/>
         <source>User name</source>
         <translation type="unfinished"></translation>
     </message>
