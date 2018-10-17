@@ -1,7 +1,9 @@
 import pytest
+from unittest.mock import patch
 from uuid import UUID
 
 from parsec.backend.drivers.memory.blockstore import MemoryBlockStoreComponent
+from parsec.backend.exceptions import TimeoutError
 from parsec.utils import to_jsonb64
 
 
@@ -11,21 +13,6 @@ def _get_existing_block(backend):
 
 
 @pytest.mark.trio
-async def test_blockstore_post_and_get(alice_backend_sock, bob_backend_sock):
-    block_id = "b00008dba3834f08abc6eb3aec280c6a"
-
-    block = to_jsonb64(b"Hodi ho !")
-    await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block})
-    rep = await alice_backend_sock.recv()
-    assert rep["status"] == "ok"
-
-    await bob_backend_sock.send({"cmd": "blockstore_get", "id": block_id})
-    rep = await bob_backend_sock.recv()
-    assert rep == {"status": "ok", "block": block}
-
-
-@pytest.mark.trio
-@pytest.mark.postgresql
 async def test_multi_blockstore_post_and_get(alice_backend_sock, bob_backend_sock):
     block_id = "b00008dba3834f08abc6eb3aec280c6a"
 
@@ -40,23 +27,17 @@ async def test_multi_blockstore_post_and_get(alice_backend_sock, bob_backend_soc
 
 
 @pytest.mark.trio
-@pytest.mark.postgresql
 async def test_multi_blockstore_post_partial_failure(alice_backend_sock, bob_backend_sock, backend):
     block_id = "b00008dba3834f08abc6eb3aec280c6a"
 
-    memory_blockstore = [
-        blockstore
-        for blockstore in backend.blockstores
-        if isinstance(blockstore, MemoryBlockStoreComponent)
-    ][0]
+    def mock_post(self, id, block):
+        raise TimeoutError()
 
-    # Create already existant block in memory block in order to trigger an exception in post
-    memory_blockstore.blocks[UUID(block_id)] = "already_existant"
-
-    block = to_jsonb64(b"Hodi ho !")
-    await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block})
-    rep = await alice_backend_sock.recv()
-    assert rep["status"] == "already_exists_error"  # But still stored in postgresql
+    with patch("parsec.backend.drivers.memory.MemoryBlockStoreComponent.post", new=mock_post):
+        block = to_jsonb64(b"Hodi ho !")
+        await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block})
+        rep = await alice_backend_sock.recv()
+        assert rep["status"] == "timeout"
 
 
 @pytest.mark.trio
@@ -143,7 +124,7 @@ async def test_blockstore_conflicting_id(alice_backend_sock):
     block_v2 = to_jsonb64(b"v2")
     await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block_v2})
     rep = await alice_backend_sock.recv()
-    assert rep["status"] == "already_exists_error"
+    assert rep["status"] == "ok"
 
     await alice_backend_sock.send({"cmd": "blockstore_get", "id": block_id})
     rep = await alice_backend_sock.recv()

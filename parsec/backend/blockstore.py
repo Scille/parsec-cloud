@@ -1,3 +1,4 @@
+from parsec.backend.exceptions import AlreadyExistsError
 from parsec.utils import to_jsonb64
 from parsec.schema import BaseCmdSchema, fields
 
@@ -25,7 +26,10 @@ class BaseBlockStoreComponent:
 
     async def api_blockstore_post(self, client_ctx, msg):
         msg = cmd_POST_Schema.load_or_abort(msg)
-        await self.post(**msg)
+        try:
+            await self.post(**msg)
+        except AlreadyExistsError:
+            pass
         return {"status": "ok"}
 
     async def get(self, id):
