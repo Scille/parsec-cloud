@@ -41,6 +41,8 @@ def run_gui(parsec_core, trio_portal, cancel_scope):
 
     win = MainWindow()
 
+    # QTimer wakes up the event loop periodically which allows us to close
+    # the window even when it is in background.
     signal.signal(signal.SIGINT, kill_window(win))
     timer = QTimer()
     timer.start(400)
