@@ -1,6 +1,10 @@
 import base64
 import json
 import os
+import attr
+import trio
+import inspect
+from functools import wraps
 from uuid import UUID
 from pendulum import Pendulum
 from nacl.secret import SecretBox
@@ -70,3 +74,51 @@ def get_sentry_handler():
     sentry_url = os.getenv("SENTRY_URL")
     if sentry_url:
         return SentryHandler(sentry_url, level="WARNING")
+
+
+def _sync_wrap_method(method):
+    if inspect.iscoroutinefunction(method):
+
+        @wraps(method)
+        async def wrapper(self, *args, **kwargs):
+            return await self._trio_portal.run(method, self, *args, **kwargs)
+
+    else:
+        return method
+
+
+class BaseSync:
+    def __init__(self, portal, internal):
+        self._trio_portal = portal
+        self._internal = internal
+
+
+def sync_wrap(cls, methods):
+    nmspc = {mname: _sync_wrap_method(getattr(cls, mname)) for mname in methods}
+    sync_cls = type(f"Sync{cls.__name__}", (BaseSync,), nmspc)
+    return sync_cls
+
+
+@attr.s
+class CallController:
+    need_stop = attr.ib(factory=trio.Event)
+    stopped = attr.ib(factory=trio.Event)
+
+    async def stop(self):
+        self.need_stop.set()
+        await self.stopped.wait()
+
+
+async def call_with_control(controlled_fn, *, task_status=trio.TASK_STATUS_IGNORED):
+    controller = CallController()
+
+    async def _started_cb(**kwargs):
+        controller.__dict__.update(kwargs)
+        task_status.started(controller)
+        await controller.need_stop.wait()
+
+    try:
+        await controlled_fn(_started_cb)
+
+    finally:
+        controller.stopped.set()

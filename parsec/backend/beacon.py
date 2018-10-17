@@ -2,7 +2,7 @@ from parsec.schema import BaseCmdSchema, fields
 
 
 class _cmd_READ_Schema(BaseCmdSchema):
-    id = fields.String(required=True)
+    id = fields.UUID(required=True)
     offset = fields.Integer(required=True)
 
 

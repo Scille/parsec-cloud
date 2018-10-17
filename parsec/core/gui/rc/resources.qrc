@@ -71,14 +71,29 @@
         <file>images/icons/up_arrow.png</file>
         <file>images/icons/folder_parent.png</file>
         <file>images/icons/workspace.png</file>
+        <file>images/icons/menu_devices.png</file>
+        <file>images/icons/menu_folder.png</file>
+        <file>images/icons/menu_group.png</file>
+        <file>images/icons/menu_logout.png</file>
+        <file>images/icons/menu_settings.png</file>
+        <file>images/icons/menu_cancel.png</file>
+        <file>images/icons/right-chevron.png</file>
+        <file>images/icons/login.png</file>
+        <file>images/icons/checked.png</file>
+        <file>images/icons/down-arrow.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>
         <file>images/logos/scille.png</file>
+        <file>images/logos/parsec_white_small.png</file>
+        <file>images/logos/parsec_white_medium.png</file>
     </qresource>
     <qresource prefix="/translations">
         <file alias="parsec_de">translations/parsec_de.qm</file>
         <file alias="parsec_es">translations/parsec_es.qm</file>
         <file alias="parsec_fr">translations/parsec_fr.qm</file>
+    </qresource>
+    <qresource prefix="/fonts">
+        <file>fonts/ProximaNova.otf</file>
     </qresource>
 </RCC>

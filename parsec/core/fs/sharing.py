@@ -5,6 +5,7 @@ from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.core.schemas import ManifestAccessSchema
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
 from parsec.core.fs.utils import is_placeholder_manifest, is_workspace_manifest
+from parsec.core.fs.types import Path
 from parsec.core.encryption_manager import EncryptionManagerError
 from parsec.utils import to_jsonb64
 
@@ -118,7 +119,7 @@ class Sharing:
         self.remote_loader = remote_loader
         self.event_bus = event_bus
 
-    async def share(self, path, recipient):
+    async def share(self, path: Path, recipient: str):
         """
         Raises:
             SharingError
@@ -127,6 +128,7 @@ class Sharing:
             SharingNotAWorkspace
             FileNotFoundError
             FSManifestLocalMiss: If path is not available in local
+            ValueError: If path is not a valid absolute path
         """
         if self.device.user_id == recipient:
             raise SharingRecipientError("Cannot share to oneself.")
@@ -150,8 +152,7 @@ class Sharing:
             raise SharingNotAWorkspace(f"`{path}` is not a workspace, hence cannot be shared")
 
         # Build sharing message
-        _, entry_name = path.rsplit("/", 1)
-        msg = {"type": "share", "author": self.device.id, "access": access, "name": entry_name}
+        msg = {"type": "share", "author": self.device.id, "access": access, "name": path.name}
         raw, errors = sharing_message_content_schema.dumps(msg)
         if errors:
             logger.error(f"Cannot dump sharing message {msg!r}: {errors!r}")

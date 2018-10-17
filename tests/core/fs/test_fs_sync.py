@@ -22,7 +22,7 @@ async def assert_same_fs(fs1, fs2):
 
 
 @pytest.mark.trio
-async def test_simple_sync(alice_fs, alice2_fs):
+async def test_simple_sync(running_backend, alice_fs, alice2_fs):
     # 1) Create&sync file
 
     with freeze_time("2000-01-02"):
@@ -60,7 +60,7 @@ async def test_simple_sync(alice_fs, alice2_fs):
 
 
 @pytest.mark.trio
-async def test_fs_entry_synced_event_when_all_synced(alice_fs):
+async def test_fs_entry_synced_event_when_all_synced(running_backend, alice_fs):
     # 1) Create data
 
     with freeze_time("2000-01-02"):
@@ -89,7 +89,7 @@ async def test_fs_entry_synced_event_when_all_synced(alice_fs):
 
 
 @pytest.mark.trio
-async def test_cross_sync(alice_fs, alice2_fs):
+async def test_cross_sync(running_backend, alice_fs, alice2_fs):
     # 1) Both fs have things to sync
 
     with freeze_time("2000-01-02"):
@@ -148,7 +148,7 @@ async def test_cross_sync(alice_fs, alice2_fs):
 
 
 @pytest.mark.trio
-async def test_sync_growth_by_truncate_file(alice_fs, alice2_fs):
+async def test_sync_growth_by_truncate_file(running_backend, alice_fs, alice2_fs):
     # Growth by truncate is special because no blocks are created to hold
     # the newly created null bytes
 
@@ -169,7 +169,7 @@ async def test_sync_growth_by_truncate_file(alice_fs, alice2_fs):
 
 @pytest.mark.trio
 @pytest.mark.xfail(reason="Conflict sync must be rewritten")
-async def test_concurrent_update(alice_fs, alice2_fs):
+async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     # 1) Creat an existing item in both fs
 
     with freeze_time("2000-01-02"):

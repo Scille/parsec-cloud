@@ -10,8 +10,8 @@ from parsec.backend.exceptions import (
 
 
 class MemoryUserComponent(BaseUserComponent):
-    def __init__(self, signal_ns):
-        super().__init__(signal_ns)
+    def __init__(self, event_bus):
+        super().__init__(event_bus)
         self._users = {}
         self._invitations = {}
         self._device_configuration_tries = {}

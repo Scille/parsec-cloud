@@ -48,7 +48,7 @@ def run_gui(parsec_core, trio_portal, cancel_scope):
     timer.start(400)
     timer.timeout.connect(lambda: None)
 
-    win.show()
+    win.showMaximized()
     # splash.finish(win)
 
     return app.exec_()

@@ -1,4 +1,5 @@
 import pytest
+from uuid import UUID
 from pendulum import datetime
 
 from parsec.core.schemas import *
@@ -20,7 +21,7 @@ class TestBlockAccessSchema:
         loaded, errors = BlockAccessSchema.load(self.ORIGINAL)
         assert not errors
         assert loaded == {
-            "id": "4f55b4d5b08544e2a784daf73754c7e2",
+            "id": UUID("4f55b4d5b08544e2a784daf73754c7e2"),
             "key": b"<my key>",
             "offset": 0,
             "size": 4096,
@@ -191,13 +192,13 @@ class TestFolderManifestSchema:
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "children": {
                 "foo": {
-                    "id": "8aadbc777ece4a4fb5fa0564ecfbb54f",
+                    "id": UUID("8aadbc777ece4a4fb5fa0564ecfbb54f"),
                     "rts": "9809c436b3af4fba9dd6955ad03e0310",
                     "wts": "004714d9997147efa52a696127694fdc",
                     "key": b"<foo key>",
                 },
                 "bar.txt": {
-                    "id": "51c865a60b194d9bb087df000056c299",
+                    "id": UUID("51c865a60b194d9bb087df000056c299"),
                     "rts": "5a48035bdd7c4082b1101b28b6656d0c",
                     "wts": "9b2ab384ed6b426daa1214f49587458a",
                     "key": b"<bar.txt key>",
@@ -416,13 +417,13 @@ class TestLocalFolderManifestSchema:
             "updated": datetime(2017, 12, 31, 23, 59, 59),
             "children": {
                 "foo": {
-                    "id": "8aadbc777ece4a4fb5fa0564ecfbb54f",
+                    "id": UUID("8aadbc777ece4a4fb5fa0564ecfbb54f"),
                     "rts": "9809c436b3af4fba9dd6955ad03e0310",
                     "wts": "004714d9997147efa52a696127694fdc",
                     "key": b"<foo key>",
                 },
                 "bar.txt": {
-                    "id": "51c865a60b194d9bb087df000056c299",
+                    "id": UUID("51c865a60b194d9bb087df000056c299"),
                     "rts": "d756228815074b1f9ea6e5d383bcb995",
                     "wts": "ba4fddebe99d4f3e9f17ccb84a524e19",
                     "key": b"<bar.txt key>",

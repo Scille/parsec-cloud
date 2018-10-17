@@ -6,12 +6,13 @@ from nacl.public import PublicKey
 from nacl.signing import VerifyKey
 from json import JSONDecodeError
 
-from parsec.signals import Namespace as SignalNamespace
+from parsec.event_bus import EventBus
 from parsec.utils import ParsecError
 from parsec.networking import CookedSocket
 from parsec.handshake import HandshakeFormatError, ServerHandshake
 from parsec.schema import BaseCmdSchema, fields, OneOfSchema
 
+from parsec.backend.exceptions import BackendAuthError
 from parsec.backend.drivers.memory import (
     MemoryUserComponent,
     MemoryVlobComponent,
@@ -34,34 +35,42 @@ from parsec.backend.exceptions import NotFoundError
 logger = logbook.Logger("parsec.backend.app")
 
 
-def blockstore_factory(db_url, postgresql_dbh=None):
-    if db_url == "MOCKED":
+def blockstore_factory(config, postgresql_dbh=None):
+    blockstore_type = config.blockstore_type
+    if blockstore_type == "MOCKED":
         return MemoryBlockStoreComponent()
 
-    elif db_url == "POSTGRESQL":
+    elif blockstore_type == "POSTGRESQL":
         if not postgresql_dbh:
             raise ValueError("PostgreSQL blockstore is not available")
         return PGBlockStoreComponent(postgresql_dbh)
 
-    config = db_url.split(":")
-    if config[0] == "s3":
+    elif blockstore_type == "S3":
         try:
             from parsec.backend.s3_blockstore import S3BlockStoreComponent
 
-            return S3BlockStoreComponent(*config[1:])
+            return S3BlockStoreComponent(
+                config.s3_region, config.s3_bucket, config.s3_key, config.s3_secret
+            )
         except ImportError:
             raise ValueError("S3 blockstore is not available")
 
-    elif config[0] == "openstack":
+    elif blockstore_type == "SWIFT":
         try:
-            from parsec.backend.openstack_blockstore import OpenStackBlockStoreComponent
+            from parsec.backend.swift_blockstore import SwiftBlockStoreComponent
 
-            return OpenStackBlockStoreComponent(*config[1:])
+            return SwiftBlockStoreComponent(
+                config.swift_authurl,
+                config.swift_tenant,
+                config.swift_container,
+                config.swift_user,
+                config.swift_password,
+            )
         except ImportError:
-            raise ValueError("OpenStack blockstore is not available")
+            raise ValueError("Swift blockstore is not available")
 
     else:
-        raise ValueError(f"Unknown blockstore type `{db_url}`")
+        raise ValueError(f"Unknown blockstore type `{blockstore_type}`")
 
 
 class _cmd_PING_Schema(BaseCmdSchema):
@@ -73,7 +82,7 @@ cmd_PING_Schema = _cmd_PING_Schema()
 
 class _cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema(BaseCmdSchema):
     event = fields.CheckedConstant("beacon.updated")
-    beacon_id = fields.String(missing=None)
+    beacon_id = fields.UUID(missing=None)
 
 
 cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema = _cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema()
@@ -155,29 +164,27 @@ class ClientContext:
 
 
 class BackendApp:
-    def __init__(self, config, signal_ns=None):
-        self.signal_ns = signal_ns or SignalNamespace()
+    def __init__(self, config, event_bus=None):
+        self.event_bus = event_bus or EventBus()
         self.config = config
         self.nursery = None
         self.dbh = None
 
         if self.config.db_url == "MOCKED":
-            self.user = MemoryUserComponent(self.signal_ns)
-            self.message = MemoryMessageComponent(self.signal_ns)
-            self.beacon = MemoryBeaconComponent(self.signal_ns)
-            self.vlob = MemoryVlobComponent(self.signal_ns, self.beacon)
+            self.user = MemoryUserComponent(self.event_bus)
+            self.message = MemoryMessageComponent(self.event_bus)
+            self.beacon = MemoryBeaconComponent(self.event_bus)
+            self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
 
-            self.blockstore = blockstore_factory(self.config.blockstore_url)
+            self.blockstore = blockstore_factory(self.config)
         else:
-            self.dbh = PGHandler(self.config.db_url, self.signal_ns)
-            self.user = PGUserComponent(self.dbh, self.signal_ns)
-            self.message = PGMessageComponent(self.dbh, self.signal_ns)
-            self.beacon = PGBeaconComponent(self.dbh, self.signal_ns)
-            self.vlob = PGVlobComponent(self.dbh, self.signal_ns, self.beacon)
+            self.dbh = PGHandler(self.config.db_url, self.event_bus)
+            self.user = PGUserComponent(self.dbh, self.event_bus)
+            self.message = PGMessageComponent(self.dbh, self.event_bus)
+            self.beacon = PGBeaconComponent(self.dbh, self.event_bus)
+            self.vlob = PGVlobComponent(self.dbh, self.event_bus, self.beacon)
 
-            self.blockstore = blockstore_factory(
-                self.config.blockstore_url, postgresql_dbh=self.dbh
-            )
+            self.blockstore = blockstore_factory(self.config, postgresql_dbh=self.dbh)
 
         self.anonymous_cmds = {
             "user_claim": self.user.api_user_claim,
@@ -222,7 +229,7 @@ class BackendApp:
         if self.dbh:
             await self.dbh.ping(author=client_ctx.id, ping=msg["ping"])
         else:
-            self.signal_ns.signal("pinged").send(None, author=client_ctx.id, ping=msg["ping"])
+            self.event_bus.send("pinged", author=client_ctx.id, ping=msg["ping"])
         return {"status": "ok", "pong": msg["ping"]}
 
     async def _api_blockstore_post(self, client_ctx, msg):
@@ -292,7 +299,7 @@ class BackendApp:
                 logger.warning("event queue is full for %s" % client_ctx.id)
 
         client_ctx.subscribed_events[key] = _handle_event
-        self.signal_ns.signal(event).connect(_handle_event, weak=True)
+        self.event_bus.connect(event, _handle_event, weak=True)
         return {"status": "ok"}
 
     async def _api_event_unsubscribe(self, client_ctx, msg):
@@ -351,11 +358,15 @@ class BackendApp:
                 except (NotFoundError, KeyError):
                     result_req = hs.build_bad_identity_result_req()
                 else:
+                    if "revocated_on" in device and device["revocated_on"]:
+                        raise BackendAuthError("Backend has revoked this device")
                     broadcast_key = PublicKey(user["broadcast_key"])
                     verify_key = VerifyKey(device["verify_key"])
                     context = ClientContext(hs.identity, broadcast_key, verify_key)
                     result_req = hs.build_result_req(verify_key)
 
+        except BackendAuthError:
+            result_req = hs.build_revoked_device_result_req()
         except HandshakeFormatError:
             result_req = hs.build_bad_format_result_req()
         await sock.send(result_req)
@@ -378,6 +389,11 @@ class BackendApp:
         except trio.BrokenStreamError:
             # Client has closed connection
             pass
+        except ParsecError as exc:
+            logger.debug("BAD HANDSHAKE")
+            rep = exc.to_dict()
+            await sock.send(rep)
+            await sock.aclose()
         except Exception as exc:
             # If we are here, something unexpected happened...
             logger.error(traceback.format_exc())

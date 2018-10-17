@@ -46,7 +46,6 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "attrs==18.1.0",
-    "blinker==1.4.0",
     "click==6.7",
     "huepy==0.9.6",
     "Logbook==1.2.1",
@@ -57,7 +56,7 @@ requirements = [
     "PyNaCl==1.2.0",
     "simplejson==3.10.0",
     "python-decouple==3.1",
-    "trio==0.7.0",
+    "trio==0.8.0",
     "python-interface==1.4.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
@@ -87,9 +86,20 @@ test_requirements = [
 
 extra_requirements = {
     "core": ["PyQt5==5.11.2", "hurry.filesize==0.9", "fusepy==3.0.0"],
+    "nitrokey": [
+        # Nitrokey POC stuff
+        "python-pkcs11==0.5.0",
+        "argparse==1.4.0",
+        "ecdsa==0.13",
+        "progress==1.4",
+        "pyasn1==0.4.4",
+        "pyasn1-modules==0.2.2",
+        "pycrypto==2.6.1",
+        "tqdm==4.26.0",
+    ],
     "backend": [
         # PostgreSQL
-        "triopg==0.2.0",
+        "triopg==0.3.0",
         "trio-asyncio==0.9.1",
         # S3
         "boto3==1.4.4",

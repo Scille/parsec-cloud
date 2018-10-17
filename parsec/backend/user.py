@@ -94,9 +94,8 @@ def _generate_token():
 
 
 class BaseUserComponent:
-    def __init__(self, signal_ns):
-        self._signal_device_try_claim_submitted = signal_ns.signal("device.try_claim_submitted")
-        self._signal_device_try_claim_answered = signal_ns.signal("device.try_claim_answered")
+    def __init__(self, event_bus):
+        self.event_bus = event_bus
 
     async def api_user_get(self, client_ctx, msg):
         msg = UserIDSchema.load_or_abort(msg)
@@ -175,28 +174,28 @@ class BaseUserComponent:
 
         claim_answered = trio.Event()
 
-        def _on_claim_answered(sender, **kwargs):
-            if kwargs["subject"] == user_id and kwargs["config_try_id"] == config_try_id:
+        def _on_claim_answered(event, subject, config_try_id):
+            if subject == user_id and config_try_id == config_try_id:
                 claim_answered.set()
 
-        with self._signal_device_try_claim_answered.connected_to(_on_claim_answered):
-            self._signal_device_try_claim_submitted.send(
-                None,
-                author=client_ctx.id,
-                user_id=user_id,
-                device_name=device_name,
-                config_try_id=config_try_id,
-            )
-            with trio.move_on_after(5 * 60) as cancel_scope:
-                await claim_answered.wait()
-            if cancel_scope.cancelled_caught:
-                return {
-                    "status": "timeout",
-                    "reason": (
-                        "Timeout while waiting for existing device "
-                        "to validate our configuration."
-                    ),
-                }
+        self.event_bus.connect("device.try_claim_answered", _on_claim_answered, weak=True)
+
+        self.event_bus.send(
+            "device.try_claim_submitted",
+            author=client_ctx.id,
+            user_id=user_id,
+            device_name=device_name,
+            config_try_id=config_try_id,
+        )
+        with trio.move_on_after(5 * 60) as cancel_scope:
+            await claim_answered.wait()
+        if cancel_scope.cancelled_caught:
+            return {
+                "status": "timeout",
+                "reason": (
+                    "Timeout while waiting for existing device " "to validate our configuration."
+                ),
+            }
 
         # Should not raise NotFoundError given we created this just above
         config_try = await self.retrieve_device_configuration_try(config_try_id, user_id)
@@ -247,8 +246,10 @@ class BaseUserComponent:
         except AlreadyExistsError:
             return {"status": "already_done", "reason": "Device configuration try already done."}
 
-        self._signal_device_try_claim_answered.send(
-            client_ctx.id, subject=client_ctx.user_id, config_try_id=msg["config_try_id"]
+        self.event_bus.send(
+            "device.try_claim_answered",
+            subject=client_ctx.user_id,
+            config_try_id=msg["config_try_id"],
         )
         return {"status": "ok"}
 
@@ -264,8 +265,10 @@ class BaseUserComponent:
         except AlreadyExistsError:
             return {"status": "already_done", "reason": "Device configuration try already done."}
 
-        self._signal_device_try_claim_answered.send(
-            client_ctx.id, subject=client_ctx.user_id, config_try_id=msg["config_try_id"]
+        self.event_bus.send(
+            "device.try_claim_answered",
+            subject=client_ctx.user_id,
+            config_try_id=msg["config_try_id"],
         )
         return {"status": "ok"}
 

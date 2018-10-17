@@ -1,6 +1,10 @@
 from parsec.utils import ParsecError
 
 
+class BackendAuthError(ParsecError):
+    status = "auth_error"
+
+
 class VersionError(ParsecError):
     status = "version_error"
     reason = "Wrong blob version."
@@ -19,6 +23,11 @@ class TrustSeedError(ParsecError):
 class AlreadyExistsError(ParsecError):
     status = "already_exists_error"
     reason = "Element already exists."
+
+
+class AlreadyRevokedError(ParsecError):
+    status = "already_revoked_error"
+    reason = "Element already revoked."
 
 
 class UserClaimError(ParsecError):

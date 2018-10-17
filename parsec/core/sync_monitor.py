@@ -40,15 +40,6 @@ class SyncMonitor(BaseAsyncComponent):
         if self._monitoring_cancel_scope:
             self._monitoring_cancel_scope.cancel()
 
-    def _on_entry_updated(self, sender, id):
-        try:
-            first_updated, _ = self._updated_entries[id]
-            last_updated = timestamp()
-        except KeyError:
-            first_updated = last_updated = timestamp()
-        self._updated_entries[id] = (first_updated, last_updated)
-        self._new_event.set()
-
     @property
     def running(self):
         return self._running
@@ -90,11 +81,11 @@ class SyncMonitor(BaseAsyncComponent):
             updated_entries[id] = (first_updated, last_updated)
             new_event.set()
 
-        self.event_bus.signal("fs.entry.updated").connect(_on_entry_updated, weak=True)
+        self.event_bus.connect("fs.entry.updated", _on_entry_updated, weak=True)
 
         async with trio.open_nursery() as nursery:
             while True:
-                self.event_bus.signal("sync_monitor.ready")
+                self.event_bus.send("sync_monitor.ready")
 
                 await new_event.wait()
                 new_event.clear()

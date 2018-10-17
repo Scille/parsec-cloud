@@ -1,3 +1,4 @@
+import os
 import pytest
 import shutil
 from pathlib import Path
@@ -11,7 +12,10 @@ def oracle_fs_factory(tmpdir):
             self.base.mkdir(parents=True)
             self.root = self.base / "root"
             self.root.mkdir()
-            self.base.chmod(0o500)  # Root oracle can no longer be removed this way
+            # Root oracle can no longer be removed this way
+            self.base.chmod(0o500)
+            if os.name == "nt":
+                self.root.chmod(0o500)
             self.entries_stats = {}
             self._register_stat(self.root, "folder")
 

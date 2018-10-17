@@ -1,3 +1,5 @@
+from uuid import UUID
+from typing import List, Tuple, Optional
 import pendulum
 
 from parsec.core.local_db import LocalDBMissingEntry
@@ -10,9 +12,10 @@ from parsec.core.fs.utils import (
     new_local_folder_manifest,
     new_local_file_manifest,
 )
+from parsec.core.fs.types import Path, Access, LocalManifest, LocalUserManifest
 
 
-def copy_manifest(manifest):
+def copy_manifest(manifest: LocalManifest):
     """
     Basically an optimized version of deepcopy
     """
@@ -30,14 +33,9 @@ def copy_manifest(manifest):
     return _recursive_copy(manifest)
 
 
-def mark_manifest_modified(manifest):
+def mark_manifest_modified(manifest: LocalManifest):
     manifest["updated"] = pendulum.now()
     manifest["need_sync"] = True
-
-
-def normalize_path(path):
-    normalized = "/" + "/".join([x for x in path.split("/") if x])
-    return normalized
 
 
 class FSManifestLocalMiss(Exception):
@@ -47,14 +45,14 @@ class FSManifestLocalMiss(Exception):
 
 
 class LocalFolderFS:
-    def __init__(self, device, signal_ns):
+    def __init__(self, device, event_bus):
         self.local_author = device.id
         self.root_access = device.user_manifest_access
         self._local_db = device.local_db
-        self.signal_ns = signal_ns
+        self.event_bus = event_bus
         self._manifests_cache = {}
 
-    def get_local_beacons(self):
+    def get_local_beacons(self) -> List[UUID]:
         # Only user manifest and workspace manifests have a beacon id
         beacons = []
         try:
@@ -72,8 +70,8 @@ class LocalFolderFS:
             pass
         return beacons
 
-    def dump(self):
-        def _recursive_dump(access):
+    def dump(self) -> dict:
+        def _recursive_dump(access: Access):
             dump_data = {"access": access}
             try:
                 manifest = self.get_manifest(access)
@@ -88,7 +86,7 @@ class LocalFolderFS:
 
         return _recursive_dump(self.root_access)
 
-    def _get_manifest_read_only(self, access):
+    def _get_manifest_read_only(self, access: Access) -> LocalManifest:
         try:
             return self._manifests_cache[access["id"]]
         except KeyError:
@@ -101,13 +99,13 @@ class LocalFolderFS:
         self._manifests_cache[access["id"]] = manifest
         # TODO: shouldn't be processed in multiple places like this...
         if manifest["type"] in ("local_workspace_manifest", "local_user_manifest"):
-            path = self.get_entry_path(access["id"])
-            self.signal_ns.signal("fs.workspace.loaded").send(
-                None, path=path, id=access["id"], beacon_id=manifest["beacon_id"]
+            path, *_ = self.get_entry_path(access["id"])
+            self.event_bus.send(
+                "fs.workspace.loaded", path=path, id=access["id"], beacon_id=manifest["beacon_id"]
             )
         return manifest
 
-    def get_user_manifest(self):
+    def get_user_manifest(self) -> LocalUserManifest:
         """
         Same as `get_manifest`, unlike this cannot fail given user manifest is
         always available.
@@ -116,7 +114,7 @@ class LocalFolderFS:
         assert manifest is not None
         return copy_manifest(manifest)
 
-    def get_manifest(self, access):
+    def get_manifest(self, access: Access) -> LocalManifest:
         try:
             return copy_manifest(self._manifests_cache[access["id"]])
         except KeyError:
@@ -129,31 +127,33 @@ class LocalFolderFS:
         self._manifests_cache[access["id"]] = copy_manifest(manifest)
         # TODO: shouldn't be processed in multiple places like this...
         if manifest["type"] in ("local_workspace_manifest", "local_user_manifest"):
-            path = self.get_entry_path(access["id"])
-            self.signal_ns.signal("fs.workspace.loaded").send(
-                None, path=path, id=access["id"], beacon_id=manifest["beacon_id"]
+            path, *_ = self.get_entry_path(access["id"])
+            self.event_bus.send(
+                "fs.workspace.loaded",
+                path=str(path),
+                id=access["id"],
+                beacon_id=manifest["beacon_id"],
             )
         return manifest
 
-    def set_manifest(self, access, manifest):
+    def set_manifest(self, access: Access, manifest: LocalManifest):
         raw = dumps_manifest(manifest)
         self._local_db.set(access, raw)
         self._manifests_cache[access["id"]] = copy_manifest(manifest)
 
-    def update_manifest(self, access, manifest):
+    def update_manifest(self, access: Access, manifest: LocalManifest):
         mark_manifest_modified(manifest)
         self.set_manifest(access, manifest)
         self._manifests_cache[access["id"]] = copy_manifest(manifest)
 
-    def mark_outdated_manifest(self, access):
+    def mark_outdated_manifest(self, access: Access):
         self._local_db.clear(access)
         self._manifests_cache.pop(access["id"], None)
 
-    def get_beacons(self, path):
-        path = normalize_path(path)
+    def get_beacons(self, path: Path) -> List[UUID]:
         beacons = []
 
-        def _beacons_collector(access, manifest):
+        def _beacons_collector(access: Access, manifest: LocalManifest):
             beacon_id = manifest.get("beacon_id")
             if beacon_id:
                 beacons.append(beacon_id)
@@ -161,12 +161,12 @@ class LocalFolderFS:
         self._retrieve_entry(path, collector=_beacons_collector)
         return beacons
 
-    def get_entry(self, path):
+    def get_entry(self, path: Path) -> Tuple[Access, LocalManifest]:
         return self._retrieve_entry(path)
 
-    def get_entry_path(self, entry_id):
+    def get_entry_path(self, entry_id: UUID) -> Tuple[Path, Access, LocalManifest]:
         if entry_id == self.root_access["id"]:
-            return "/", self.root_access, self.get_manifest(self.root_access)
+            return Path("/"), self.root_access, self.get_manifest(self.root_access)
 
         # Brute force style
         def _recursive_search(access, path):
@@ -179,77 +179,78 @@ class LocalFolderFS:
 
             if is_folder_manifest(manifest):
                 for child_name, child_access in manifest["children"].items():
-                    found = _recursive_search(child_access, "%s/%s" % (path, child_name))
+                    found = _recursive_search(child_access, path / child_name)
                     if found:
                         return found
 
-        found = _recursive_search(self.root_access, "")
+        found = _recursive_search(self.root_access, Path("/"))
         if not found:
             raise FSManifestLocalMiss(entry_id)
         return found
 
-    def _retrieve_entry(self, path, collector=None):
+    def _retrieve_entry(self, path: Path, collector=None) -> Tuple[Access, LocalManifest]:
         access, read_only_manifest = self._retrieve_entry_read_only(path, collector)
         return access, copy_manifest(read_only_manifest)
 
-    def _retrieve_entry_read_only(self, path, collector=None):
-        assert "//" not in path, path
-        assert path.startswith("/"), path
+    def _retrieve_entry_read_only(self, path: Path, collector=None) -> Tuple[Access, LocalManifest]:
+        curr_access = self.root_access
+        curr_manifest = self._get_manifest_read_only(curr_access)
+        if collector:
+            collector(curr_access, curr_manifest)
 
-        def _retrieve_entry_recursive(curr_access, curr_path, hops):
+        try:
+            _, *hops, dest = list(path.walk_to_path())
+        except ValueError:
+            return curr_access, curr_manifest
+
+        for hop in hops:
+            try:
+                curr_access = curr_manifest["children"][hop.name]
+            except KeyError:
+                raise FileNotFoundError(2, "No such file or directory", str(hop))
+
             curr_manifest = self._get_manifest_read_only(curr_access)
 
-            if not hops:
-                if collector:
-                    collector(curr_access, curr_manifest)
-                return curr_access, curr_manifest
-
             if not is_folder_manifest(curr_manifest):
-                raise NotADirectoryError(20, "Not a directory", curr_path)
-
+                raise NotADirectoryError(20, "Not a directory", str(hop))
             if collector:
                 collector(curr_access, curr_manifest)
 
-            hop, *hops = hops
-            try:
-                curr_path = f"{curr_path}/{hop}"
-                return _retrieve_entry_recursive(curr_manifest["children"][hop], curr_path, hops)
+        try:
+            curr_access = curr_manifest["children"][dest.name]
+        except KeyError:
+            raise FileNotFoundError(2, "No such file or directory", str(dest))
 
-            except KeyError:
-                raise FileNotFoundError(2, "No such file or directory", curr_path)
+        curr_manifest = self._get_manifest_read_only(curr_access)
 
-        hops = [hop for hop in path.split("/") if hop]
-        return _retrieve_entry_recursive(self.root_access, "", hops)
+        if collector:
+            collector(curr_access, curr_manifest)
 
-    def get_sync_strategy(self, path, recursive):
-        path = normalize_path(path)
+        return curr_access, curr_manifest
+
+    def get_sync_strategy(self, path: Path, recursive: dict) -> Tuple[Path, dict]:
         # Consider root is never a placeholder
-        curr_path = "/"
-        curr_parent_path = ""
-        for hop in path.split("/")[1:]:
-            curr_parent_path = curr_path
-            curr_path += hop if curr_path.endswith("/") else ("/" + hop)
+        for curr_path in path.walk_to_path():
             _, curr_manifest = self._retrieve_entry_read_only(curr_path)
             if curr_manifest["is_placeholder"]:
-                sync_path = curr_parent_path
+                sync_path = curr_path.parent
                 break
-
         else:
             return path, recursive
 
         sync_recursive = recursive
-        for hop in reversed(path[len(curr_parent_path) :].split("/")):
-            sync_recursive = {hop: sync_recursive}
+        for curr_path in path.walk_from_path():
+            if curr_path == sync_path:
+                break
+            sync_recursive = {curr_path.name: sync_recursive}
 
         return sync_path, sync_recursive
 
-    def get_access(self, path):
-        path = normalize_path(path)
+    def get_access(self, path: Path) -> Access:
         access, _ = self._retrieve_entry_read_only(path)
         return access
 
-    def stat(self, path):
-        path = normalize_path(path)
+    def stat(self, path: Path) -> dict:
         access, manifest = self._retrieve_entry_read_only(path)
         if is_file_manifest(manifest):
             return {
@@ -273,146 +274,152 @@ class LocalFolderFS:
                 "children": list(sorted(manifest["children"].keys())),
             }
 
-    def touch(self, path):
-        path = normalize_path(path)
-        if path == "/":
-            raise FileExistsError(17, "File exists", path)
-        parent_path, child_name = path.rsplit("/", 1)
-        access, manifest = self._retrieve_entry(parent_path or "/")
+    def touch(self, path: Path) -> None:
+        if path.is_root():
+            raise FileExistsError(17, "File exists", str(path))
+        access, manifest = self._retrieve_entry(path.parent)
         if not is_folder_manifest(manifest):
-            raise NotADirectoryError(20, "Not a directory", parent_path)
-        if child_name in manifest["children"]:
-            raise FileExistsError(17, "File exists", path)
+            raise NotADirectoryError(20, "Not a directory", str(path.parent))
+        if path.name in manifest["children"]:
+            raise FileExistsError(17, "File exists", str(path))
 
         child_access = new_access()
         child_manifest = new_local_file_manifest(self.local_author)
-        manifest["children"][child_name] = child_access
+        manifest["children"][path.name] = child_access
         mark_manifest_modified(manifest)
         self.set_manifest(access, manifest)
         self.set_manifest(child_access, child_manifest)
-        self.signal_ns.signal("fs.entry.updated").send("local", id=access["id"])
-        self.signal_ns.signal("fs.entry.updated").send("local", id=child_access["id"])
+        self.event_bus.send("fs.entry.updated", id=access["id"])
+        self.event_bus.send("fs.entry.updated", id=child_access["id"])
 
-    def mkdir(self, path, workspace=False):
-        path = normalize_path(path)
-        if path == "/":
-            raise FileExistsError(17, "File exists", path)
-        parent_path, child_name = path.rsplit("/", 1)
-        parent_path = parent_path or "/"
-        access, manifest = self._retrieve_entry(parent_path)
+    def mkdir(self, path: Path, workspace=False) -> None:
+        if path.is_root():
+            raise FileExistsError(17, "File exists", str(path))
+        access, manifest = self._retrieve_entry(path.parent)
         if not is_folder_manifest(manifest):
-            raise NotADirectoryError(20, "Not a directory", parent_path)
-        if child_name in manifest["children"]:
-            raise FileExistsError(17, "File exists", path)
+            raise NotADirectoryError(20, "Not a directory", str(path.parent))
+        if path.name in manifest["children"]:
+            raise FileExistsError(17, "File exists", str(path))
 
         child_access = new_access()
+        child_manifest: LocalManifest
         if workspace:
-            if parent_path != "/":
+            if not path.parent.is_root():
                 raise PermissionError(
-                    13, "Permission denied (workspace only allowed at root level)", path
+                    13, "Permission denied (workspace only allowed at root level)", str(path)
                 )
             child_manifest = new_local_workspace_manifest(self.local_author)
         else:
             child_manifest = new_local_folder_manifest(self.local_author)
-        manifest["children"][child_name] = child_access
+        manifest["children"][path.name] = child_access
         mark_manifest_modified(manifest)
         self.set_manifest(access, manifest)
         self.set_manifest(child_access, child_manifest)
-        self.signal_ns.signal("fs.entry.updated").send("local", id=access["id"])
-        self.signal_ns.signal("fs.entry.updated").send("local", id=child_access["id"])
+        self.event_bus.send("fs.entry.updated", id=access["id"])
+        self.event_bus.send("fs.entry.updated", id=child_access["id"])
         if workspace:
-            self.signal_ns.signal("fs.workspace.loaded").send(
-                None, path=path, id=child_access["id"], beacon_id=child_manifest["beacon_id"]
+            self.event_bus.send(
+                "fs.workspace.loaded",
+                path=path,
+                id=child_access["id"],
+                beacon_id=child_manifest["beacon_id"],
             )
 
-    def _delete(self, path, expect=None):
-        path = normalize_path(path)
-        if path == "/":
-            raise PermissionError(13, "Permission denied", path)
-        parent_path, child_name = path.rsplit("/", 1)
-        parent_access, parent_manifest = self._retrieve_entry(parent_path or "/")
+    def _delete(self, path: Path, expect=None) -> None:
+        if path.is_root():
+            raise PermissionError(13, "Permission denied", str(path))
+        parent_access, parent_manifest = self._retrieve_entry(path.parent)
         if not is_folder_manifest(parent_manifest):
-            raise NotADirectoryError(20, "Not a directory", parent_path)
+            raise NotADirectoryError(20, "Not a directory", str(path.parent))
 
         try:
-            item_access = parent_manifest["children"].pop(child_name)
+            item_access = parent_manifest["children"].pop(path.name)
         except KeyError:
-            raise FileNotFoundError(2, "No such file or directory", path)
+            raise FileNotFoundError(2, "No such file or directory", str(path))
 
         item_manifest = self.get_manifest(item_access)
         if is_folder_manifest(item_manifest):
             if expect == "file":
-                raise IsADirectoryError(21, "Is a directory", path)
+                raise IsADirectoryError(21, "Is a directory", str(path))
             if item_manifest["children"]:
-                raise OSError(39, "Directory not empty", path)
+                raise OSError(39, "Directory not empty", str(path))
         elif expect == "folder":
-            raise NotADirectoryError(20, "Not a directory", path)
+            raise NotADirectoryError(20, "Not a directory", str(path))
 
         mark_manifest_modified(parent_manifest)
         self.set_manifest(parent_access, parent_manifest)
-        self.signal_ns.signal("fs.entry.updated").send("local", id=parent_access["id"])
+        self.event_bus.send("fs.entry.updated", id=parent_access["id"])
 
-    def delete(self, path):
+    def delete(self, path: Path) -> None:
         self._delete(path)
 
-    def unlink(self, path):
+    def unlink(self, path: Path) -> None:
         self._delete(path, expect="file")
 
-    def rmdir(self, path):
+    def rmdir(self, path: Path) -> None:
         self._delete(path, expect="folder")
 
-    def move(self, src, dst):
+    def move(self, src: Path, dst: Path) -> None:
         # TODO: To symplify synchro we currently move the entry into a brand
         # new access. However this is not recursive (i.e. the entry's
         # children will keep there original access)...
-        src = normalize_path(src)
-        dst = normalize_path(dst)
 
-        parent_src, child_src = src.rsplit("/", 1)
-        parent_dst, child_dst = dst.rsplit("/", 1)
-        parent_src = parent_src or "/"
-        parent_dst = parent_dst or "/"
+        parent_src = src.parent
+        parent_dst = dst.parent
 
-        if src == "/":
+        # No matter what, cannot move or overwrite root
+        if src.is_root():
             # Raise FileNotFoundError if parent_dst doesn't exists
-            self._retrieve_entry(parent_dst)
-            raise PermissionError(13, "Permission denied", src, dst)
-        elif dst == "/":
+            _, parent_dst_manifest = self._retrieve_entry(parent_dst)
+            if not is_folder_manifest(parent_dst_manifest):
+                raise NotADirectoryError(20, "Not a directory", str(parent_dst))
+            else:
+                raise PermissionError(13, "Permission denied", str(src), str(dst))
+        elif dst.is_root():
             # Raise FileNotFoundError if parent_src doesn't exists
-            self._retrieve_entry(parent_src)
-            raise PermissionError(13, "Permission denied", src, dst)
+            _, parent_src_manifest = self._retrieve_entry(src.parent)
+            if not is_folder_manifest(parent_src_manifest):
+                raise NotADirectoryError(20, "Not a directory", str(src.parent))
+            else:
+                raise PermissionError(13, "Permission denied", str(src), str(dst))
+
+        if src == dst:
+            # Raise FileNotFoundError if doesn't exists
+            self._retrieve_entry(src)
+            return
 
         if parent_src == parent_dst:
             parent_access, parent_manifest = self._retrieve_entry(parent_src)
             if not is_folder_manifest(parent_manifest):
-                raise NotADirectoryError(20, "Not a directory", parent_src)
-
-            if dst.startswith(src + "/"):
-                raise OSError(22, "Invalid argument", src, None, dst)
+                raise NotADirectoryError(20, "Not a directory", str(parent_src))
 
             try:
-                entry = parent_manifest["children"].pop(child_src)
+                dst.relative_to(src)
+            except ValueError:
+                pass
+            else:
+                raise OSError(22, "Invalid argument", str(src), None, str(dst))
+
+            try:
+                entry = parent_manifest["children"].pop(src.name)
             except KeyError:
-                raise FileNotFoundError(2, "No such file or directory", src)
+                raise FileNotFoundError(2, "No such file or directory", str(src))
 
-            if src == dst:
-                return
-
-            existing_entry_access = parent_manifest["children"].get(child_dst)
+            existing_entry_access = parent_manifest["children"].get(dst.name)
             src_entry_manifest = self.get_manifest(entry)
             if existing_entry_access:
                 existing_entry_manifest = self.get_manifest(existing_entry_access)
                 if is_folder_manifest(src_entry_manifest):
                     if is_file_manifest(existing_entry_manifest):
-                        raise NotADirectoryError(20, "Not a directory")
+                        raise NotADirectoryError(20, "Not a directory", str(dst))
                     elif existing_entry_manifest["children"]:
-                        raise OSError(39, "Directory not empty")
+                        raise OSError(39, "Directory not empty", str(dst))
                 else:
                     if is_folder_manifest(existing_entry_manifest):
-                        raise IsADirectoryError(21, "Is a directory")
+                        raise IsADirectoryError(21, "Is a directory", str(dst))
 
             moved_access = new_access()
-            parent_manifest["children"][child_dst] = moved_access
+            parent_manifest["children"][dst.name] = moved_access
             src_entry_manifest["base_version"] = 0
             src_entry_manifest["is_placeholder"] = True
             src_entry_manifest["need_sync"] = True
@@ -420,40 +427,44 @@ class LocalFolderFS:
             mark_manifest_modified(parent_manifest)
 
             self.set_manifest(parent_access, parent_manifest)
-            self.signal_ns.signal("fs.entry.updated").send("local", id=parent_access["id"])
+            self.event_bus.send("fs.entry.updated", id=parent_access["id"])
 
         else:
             parent_src_access, parent_src_manifest = self._retrieve_entry(parent_src)
             if not is_folder_manifest(parent_src_manifest):
-                raise NotADirectoryError(20, "Not a directory", parent_src)
+                raise NotADirectoryError(20, "Not a directory", str(parent_src))
 
             parent_dst_access, parent_dst_manifest = self._retrieve_entry(parent_dst)
             if not is_folder_manifest(parent_dst_manifest):
-                raise NotADirectoryError(20, "Not a directory", parent_dst)
-
-            if dst.startswith(src + "/"):
-                raise OSError(22, "Invalid argument", src, None, dst)
+                raise NotADirectoryError(20, "Not a directory", str(parent_dst))
 
             try:
-                entry = parent_src_manifest["children"].pop(child_src)
-            except KeyError:
-                raise FileNotFoundError(2, "No such file or directory", src)
+                dst.relative_to(src)
+            except ValueError:
+                pass
+            else:
+                raise OSError(22, "Invalid argument", str(src), None, str(dst))
 
-            existing_entry_access = parent_dst_manifest["children"].get(child_dst)
+            try:
+                entry = parent_src_manifest["children"].pop(src.name)
+            except KeyError:
+                raise FileNotFoundError(2, "No such file or directory", str(src))
+
+            existing_entry_access = parent_dst_manifest["children"].get(dst.name)
             src_entry_manifest = self.get_manifest(entry)
             if existing_entry_access:
                 existing_entry_manifest = self.get_manifest(existing_entry_access)
                 if is_folder_manifest(src_entry_manifest):
                     if is_file_manifest(existing_entry_manifest):
-                        raise NotADirectoryError(20, "Not a directory")
+                        raise NotADirectoryError(20, "Not a directory", str(dst))
                     elif existing_entry_manifest["children"]:
-                        raise OSError(39, "Directory not empty")
+                        raise OSError(39, "Directory not empty", str(dst))
                 else:
                     if is_folder_manifest(existing_entry_manifest):
-                        raise IsADirectoryError(21, "Is a directory")
+                        raise IsADirectoryError(21, "Is a directory", str(dst))
 
             moved_access = new_access()
-            parent_dst_manifest["children"][child_dst] = moved_access
+            parent_dst_manifest["children"][dst.name] = moved_access
             src_entry_manifest["base_version"] = 0
             src_entry_manifest["is_placeholder"] = True
             src_entry_manifest["need_sync"] = True
@@ -465,5 +476,5 @@ class LocalFolderFS:
             self.set_manifest(parent_src_access, parent_src_manifest)
             self.set_manifest(parent_dst_access, parent_dst_manifest)
 
-            self.signal_ns.signal("fs.entry.updated").send("local", id=parent_src_access["id"])
-            self.signal_ns.signal("fs.entry.updated").send("local", id=parent_dst_access["id"])
+            self.event_bus.send("fs.entry.updated", id=parent_src_access["id"])
+            self.event_bus.send("fs.entry.updated", id=parent_dst_access["id"])

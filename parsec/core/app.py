@@ -2,20 +2,20 @@ import os
 import trio
 import attr
 import logbook
-from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
 from parsec.networking import serve_client
-from parsec.core.base import BaseAsyncComponent, NotInitializedError, taskify
+from parsec.core.base import BaseAsyncComponent, taskify
 from parsec.core.fs import FS
 from parsec.core.sync_monitor import SyncMonitor
 from parsec.core.beacons_monitor import monitor_beacons
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.devices_manager import LocalDevicesManager
-from parsec.core.fuse_manager import FuseManager
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.backend_cmds_sender import BackendCmdsSender
 from parsec.core.backend_events_manager import BackendEventsManager
+from parsec.core.connection_monitor import monitor_connection
+from parsec.core.mountpoint import mountpoint_manager_factory
 
 
 logger = logbook.Logger("parsec.core.app")
@@ -49,10 +49,10 @@ class Core(BaseAsyncComponent):
         return self._logged_client_manager.fs
 
     @property
-    def fuse_manager(self):
+    def mountpoint_manager(self):
         if not self._logged_client_manager:
             raise NotLoggedError("No user logged")
-        return self._logged_client_manager.fuse_manager
+        return self._logged_client_manager.mountpoint_manager
 
     @property
     def backend_cmds_sender(self):
@@ -127,23 +127,30 @@ class LoggedClientManager:
         # ├─ fs <-- Note fs doesn't need to be initialized
         # │  ├─ backend_cmds_sender
         # │  └─ encryption_manager
-        # └─ fuse_manager
+        # └─ mountpoint_manager
 
         self.backend_events_manager = BackendEventsManager(
             device, self.config.backend_addr, self.event_bus
         )
         self.backend_cmds_sender = BackendCmdsSender(device, self.config.backend_addr)
         self.encryption_manager = EncryptionManager(device, self.backend_cmds_sender)
-        self.fuse_manager = FuseManager(self.config.addr, self.event_bus)
 
         self.fs = FS(device, self.backend_cmds_sender, self.encryption_manager, self.event_bus)
+
+        self.mountpoint_manager = mountpoint_manager_factory(self.fs, self.event_bus)
         self.sync_monitor = SyncMonitor(self.fs, self.event_bus)
 
     async def start(self):
+        # Monitor connection must be first given it will watch on
+        # other monitors' events
+        self._stop_monitor_connection = await self._nursery.start(
+            taskify(monitor_connection, self.event_bus)
+        )
+
         # Components initialization must respect dependencies
         await self.backend_cmds_sender.init(self._nursery)
         await self.encryption_manager.init(self._nursery)
-        await self.fuse_manager.init(self._nursery)
+        await self.mountpoint_manager.init(self._nursery)
         # Keep event manager last, so it will know what events the other
         # modules need before connecting to the backend
         await self.backend_events_manager.init(self._nursery)
@@ -160,7 +167,10 @@ class LoggedClientManager:
             self._stop_monitor_sync = await self._nursery.start(taskify(self.sync_monitor.run))
 
     async def stop(self):
-        # First stop monitoring coroutine
+        # First make sure fuse is not started
+        await self.mountpoint_manager.teardown()
+
+        # Then stop monitoring coroutine
         # TODO: Only needed by old core-based hypothesis tests
         if self.config.auto_sync:
             await self._stop_monitor_beacons()
@@ -168,10 +178,11 @@ class LoggedClientManager:
             await self._stop_monitor_sync()
 
         # Then teardown components, again while respecting dependencies
-        await self.fuse_manager.teardown()
         await self.encryption_manager.teardown()
         await self.backend_cmds_sender.teardown()
         await self.backend_events_manager.teardown()
+
+        await self._stop_monitor_connection()
 
 
 @attr.s
@@ -235,7 +246,7 @@ class ClientContext:
                 logger.warning(f"Event queue is full for {self.id}")
 
         self.registered_signals[key] = _handle_event
-        self.event_bus.signal(event_name).connect(_handle_event, weak=True)
+        self.event_bus.connect(event_name, _handle_event, weak=True)
 
     def unsubscribe_signal(self, signal_name, arg=None):
         if signal_name in ("device_try_claim_submitted", "backend.device.try_claim_submitted"):

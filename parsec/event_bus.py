@@ -1,4 +1,3 @@
-import attr
 import trio
 from weakref import ref, WeakMethod, ReferenceType
 from collections import defaultdict
@@ -29,11 +28,24 @@ class EventBus:
         self._event_handlers = defaultdict(set)
 
     def send(self, event, **kwargs):
+        # Given event handlers are stored as weakrefs, any one of them
+        # can become unavailable at any time.
+        # In such case we perform a cleanup operation.
+        # Note we don't want to use weakref's callback feature to do that
+        # given it would mean event_handlers list could change size randomly
+        # during iteration...
+        need_clean = False
+
         for cb in self._event_handlers[event]:
             if isinstance(cb, ReferenceType):
                 cb = cb()
-                assert cb is not None
-            cb(event, **kwargs)
+                if not cb:
+                    need_clean = True
+                else:
+                    cb(event, **kwargs)
+
+        if need_clean:
+            self._event_handlers[event] = {cb for cb in self._event_handlers[event] if cb()}
 
     def waiter_on(self, event):
         ew = EventWaiter()
@@ -47,34 +59,16 @@ class EventBus:
         return ew
 
     def connect(self, event, cb, weak=False):
+        print(f"connect {event} {cb} {weak}")
         if weak:
-
-            def _disconnect(ref):
-                self.disconnect(event, ref)
-
             try:
-                weak = WeakMethod(cb, _disconnect)
+                weak = WeakMethod(cb)
             except TypeError:
-                weak = ref(cb, _disconnect)
+                weak = ref(cb)
 
             self._event_handlers[event].add(weak)
         else:
             self._event_handlers[event].add(cb)
 
     def disconnect(self, event, cb):
-        self._event_handlers[event].remove(cb)
-
-    # TODO: Legacy API
-    def signal(self, name):
-        @attr.s
-        class Signal:
-            event_bus = attr.ib()
-
-            def send(self, *args, **kwargs):
-                assert len(args) <= 1
-                self.event_bus.send(name, **kwargs)
-
-            def connect(self, cb, weak=False):
-                self.event_bus.connect(name, cb, weak=weak)
-
-        return Signal(self)
+        self._event_handlers[event].discard(cb)

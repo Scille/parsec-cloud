@@ -8,6 +8,7 @@ from raven.handlers.logbook import SentryHandler
 
 from parsec.backend import BackendApp, config_factory
 from parsec.backend.user import NotFoundError
+from parsec.backend.exceptions import AlreadyRevokedError
 
 
 JOHN_DOE_USER_ID = "johndoe"
@@ -94,6 +95,37 @@ def init_cmd(store, force):
 
 
 @click.command()
+@click.argument("user_id", nargs=1)
+@click.option("--device-name", default=None, help="Device name")
+@click.option(
+    "--store", "-s", default="postgresql://127.0.0.1/parsec", help="Postgresql url of store"
+)
+def revoke_cmd(user_id, device_name, store):
+    async def _revoke_user(user_id):
+        async with trio.open_nursery() as nursery:
+            await backend.init(nursery)
+            try:
+                if device_name:
+                    await backend.user.revoke_device(f"{user_id}@{device_name}")
+                else:
+                    await backend.user.revoke_user(user_id)
+            except AlreadyRevokedError as exc:
+                print(str(exc))
+            except NotFoundError as exc:
+                print(str(exc))
+            finally:
+                await backend.teardown()
+
+    try:
+        config = config_factory({"db_url": store, "blockstore_url": "MOCKED"})
+    except ValueError as exc:
+        raise SystemExit(f"Invalid configuration: {exc}")
+
+    backend = BackendApp(config)
+    trio_asyncio.run(_revoke_user, user_id)
+
+
+@click.command()
 @click.option("--pubkeys", default=None)
 @click.option("--host", "-H", default="127.0.0.1", help="Host to listen on (default: 127.0.0.1)")
 @click.option("--port", "-P", default=6777, type=int, help=("Port to listen on (default: 6777)"))
@@ -104,7 +136,8 @@ def init_cmd(store, force):
     "--blockstore",
     "-b",
     default="MOCKED",
-    help="URL of the block store the clients should write into (default: mocked in memory)",
+    type=click.Choice(("MOCKED", "POSTGRESQL", "S3", "SWIFT")),
+    help="Block store the clients should write into (default: mocked in memory). Set environment variables accordingly.",
 )
 @click.option(
     "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
@@ -130,7 +163,7 @@ def backend_cmd(log_level, log_file, pdb, **kwargs):
 
 def _backend(host, port, pubkeys, store, blockstore, debug):
     try:
-        config = config_factory({"debug": debug, "blockstore_url": blockstore, "db_url": store})
+        config = config_factory({"debug": debug, "blockstore_type": blockstore, "db_url": store})
     except ValueError as exc:
         raise SystemExit(f"Invalid configuration: {exc}")
 
@@ -155,7 +188,7 @@ def _backend(host, port, pubkeys, store, blockstore, debug):
                 await backend.vlob.create(**JOHN_DOE_USER_VLOB, author="<backend-mock>")
 
             try:
-                await trio.serve_tcp(backend.handle_client, port)
+                await trio.serve_tcp(backend.handle_client, port, host=host)
             finally:
                 await backend.teardown()
 

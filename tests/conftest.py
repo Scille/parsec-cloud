@@ -4,7 +4,6 @@ import os
 import socket
 import asyncpg
 import contextlib
-from uuid import UUID
 from unittest.mock import patch
 import trio
 import trio_asyncio
@@ -15,12 +14,12 @@ from nacl.public import PrivateKey
 from nacl.signing import SigningKey
 import nacl
 
-from parsec.signals import Namespace as SignalNamespace
 from parsec.core import Core, CoreConfig
 from parsec.core.schemas import loads_manifest, dumps_manifest
 from parsec.core.fs.utils import new_access, new_local_user_manifest, local_to_remote_manifest
 from parsec.core.encryption_manager import encrypt_with_secret_key
 from parsec.core.devices_manager import Device
+from parsec.core.mountpoint import FUSE_AVAILABLE
 from parsec.backend import BackendApp, BackendConfig
 from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake
@@ -44,6 +43,7 @@ def pytest_addoption(parser):
         help="Use PostgreSQL backend instead of default memory mock",
     )
     parser.addoption("--runslow", action="store_true", help="Don't skip slow tests")
+    parser.addoption("--runfuse", action="store_true", help="Don't skip fuse tests")
     parser.addoption(
         "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
@@ -62,6 +62,11 @@ def pytest_runtest_setup(item):
     os.environ.setdefault("TZ", "UTC")
     if item.get_closest_marker("slow") and not item.config.getoption("--runslow"):
         pytest.skip("need --runslow option to run")
+    if item.get_closest_marker("fuse"):
+        if not item.config.getoption("--runfuse"):
+            pytest.skip("need --runfuse option to run")
+        elif not FUSE_AVAILABLE:
+            pytest.skip("fuse is not available")
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -155,18 +160,6 @@ def event_bus_factory():
 @pytest.fixture
 def event_bus(event_bus_factory):
     return event_bus_factory()
-
-
-@pytest.fixture
-def signal_ns_factory():
-    # TODO: deprecated fixture
-    return SignalNamespace
-
-
-@pytest.fixture
-def signal_ns(signal_ns_factory):
-    # TODO: deprecated fixture
-    return signal_ns_factory()
 
 
 @pytest.fixture
@@ -311,6 +304,14 @@ def bootstrap_postgresql(url):
 @pytest.fixture()
 def backend_store(request):
     if pytest.config.getoption("--postgresql"):
+        if request.node.get_closest_marker("slow"):
+            import warnings
+
+            warnings.warn(
+                "TODO: trio-asyncio loop currently incompatible with hypothesis tests :'("
+            )
+            return "MOCKED"
+
         # TODO: would be better to create a new postgresql cluster for each test
         url = get_postgresql_url()
         try:
@@ -321,8 +322,10 @@ def backend_store(request):
                 "Running `psql -c 'CREATE DATABASE parsec_test;'` may fix this"
             ) from exc
         return url
+
     elif request.node.get_closest_marker("postgresql"):
         pytest.skip("`Test is postgresql-only")
+
     else:
         return "MOCKED"
 
@@ -355,7 +358,7 @@ async def nursery():
 
 
 @pytest.fixture
-def backend_factory(asyncio_loop, signal_ns_factory, blockstore, backend_store, default_devices):
+def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, default_devices):
     # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
     # the backend should inherit from the one with the asyncio loop context manager.
     # This mean the nursery fixture cannot use the backend object otherwise we
@@ -363,14 +366,14 @@ def backend_factory(asyncio_loop, signal_ns_factory, blockstore, backend_store, 
     # nursery fixture is done with calling the backend's postgresql stuff.
 
     @asynccontextmanager
-    async def _backend_factory(devices=default_devices, config={}, signal_ns=None):
+    async def _backend_factory(devices=default_devices, config={}, event_bus=None):
         async with trio.open_nursery() as nursery:
             config = BackendConfig(
-                **{"blockstore_url": blockstore, "db_url": backend_store, **config}
+                **{"blockstore_type": blockstore, "db_url": backend_store, **config}
             )
-            if not signal_ns:
-                signal_ns = signal_ns_factory()
-            backend = BackendApp(config, signal_ns=signal_ns)
+            if not event_bus:
+                event_bus = event_bus_factory()
+            backend = BackendApp(config, event_bus=event_bus)
             # TODO: backend connection to postgresql will timeout if we use a trio
             # mock clock with autothreshold. We should detect this and do something here...
             await backend.init(nursery)
@@ -396,7 +399,7 @@ def backend_factory(asyncio_loop, signal_ns_factory, blockstore, backend_store, 
                             dumps_manifest(remote_user_manifest),
                         )
                         await backend.vlob.create(
-                            UUID(access["id"]), access["rts"], access["wts"], ciphered
+                            access["id"], access["rts"], access["wts"], ciphered
                         )
 
                     except UserAlreadyExistsError:
@@ -407,6 +410,7 @@ def backend_factory(asyncio_loop, signal_ns_factory, blockstore, backend_store, 
                         )
             try:
                 yield backend
+
             finally:
                 await backend.teardown()
                 # Don't do `nursery.cancel_scope.cancel()` given `backend.teardown()`

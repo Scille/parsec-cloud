@@ -1,6 +1,6 @@
 import attr
-from typing import NewType
 from math import inf
+from typing import List, Union, Optional
 
 from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.fs.utils import is_file_manifest, new_block_access
@@ -11,12 +11,10 @@ from parsec.core.fs.buffer_ordering import (
     merge_buffers_with_limits,
 )
 from parsec.core.fs.local_folder_fs import mark_manifest_modified
+from parsec.core.fs.types import FileDescriptor, Access, BlockAccess, LocalFileManifest
 
 
-FileDescriptor = NewType("FileDescriptor", int)
-
-
-def _shorten_data_repr(data):
+def _shorten_data_repr(data: bytes) -> bytes:
     if len(data) > 100:
         return data[:40] + b"..." + data[-40:]
     else:
@@ -36,14 +34,14 @@ class RamBuffer(Buffer):
 
 @attr.s(slots=True)
 class DirtyBlockBuffer(Buffer):
-    access = attr.ib()
-    data = attr.ib(default=None)
+    access = attr.ib(type=BlockAccess)
+    data = attr.ib(default=None, type=Optional[bytes])
 
 
 @attr.s(slots=True)
 class BlockBuffer(Buffer):
-    access = attr.ib()
-    data = attr.ib(default=None)
+    access = attr.ib(type=BlockAccess)
+    data = attr.ib(default=None, type=Optional[bytes])
 
 
 class FSBlocksLocalMiss(Exception):
@@ -54,16 +52,16 @@ class FSBlocksLocalMiss(Exception):
 
 @attr.s(slots=True)
 class FileCursor:
-    access = attr.ib()
-    offset = attr.ib(default=0)
+    access = attr.ib(type=Access)
+    offset = attr.ib(default=0, type=int)
 
 
 @attr.s(slots=True)
 class HotFile:
-    size = attr.ib()
-    base_version = attr.ib()
-    pending_writes = attr.ib(factory=list)
-    cursors = attr.ib(factory=set)
+    size = attr.ib(type=int)
+    base_version = attr.ib(type=int)
+    pending_writes = attr.ib(factory=list, type=list)
+    cursors = attr.ib(factory=set, type=set)
 
 
 class FSInvalidFileDescriptor(Exception):
@@ -71,8 +69,8 @@ class FSInvalidFileDescriptor(Exception):
 
 
 class LocalFileFS:
-    def __init__(self, device, local_folder_fs, signal_ns):
-        self.signal_ns = signal_ns
+    def __init__(self, device, local_folder_fs, event_bus):
+        self.event_bus = event_bus
         self.local_folder_fs = local_folder_fs
         self._local_db = device.local_db
         self._opened_cursors = {}
@@ -80,30 +78,32 @@ class LocalFileFS:
         self._next_fd = 1
         # TODO: handle fs.entry.moved events coming from sync
 
-    def get_block(self, access):
+    def get_block(self, access: BlockAccess) -> bytes:
         return self._local_db.get(access)
 
-    def set_block(self, access, block):
-        return self._local_db.set(access, block)
+    def set_block(self, access: BlockAccess, block: bytes) -> None:
+        self._local_db.set(access, block)
 
-    def _get_cursor_from_fd(self, fd):
+    def _get_cursor_from_fd(self, fd: FileDescriptor) -> FileCursor:
         try:
             return self._opened_cursors[fd]
         except KeyError:
             raise FSInvalidFileDescriptor(fd)
 
-    def _get_quickly_filtered_blocks(self, manifest, start, end):
-        dirty_blocks = [
+    def _get_quickly_filtered_blocks(
+        self, manifest: LocalFileManifest, start: int, end: int
+    ) -> List[Buffer]:
+        dirty_blocks: List[Buffer] = [
             DirtyBlockBuffer(*x)
             for x in quick_filter_block_accesses(manifest["dirty_blocks"], start, end)
         ]
-        blocks = [
+        blocks: List[Buffer] = [
             BlockBuffer(*x) for x in quick_filter_block_accesses(manifest["blocks"], start, end)
         ]
 
         return blocks + dirty_blocks
 
-    def open(self, access) -> FileDescriptor:
+    def open(self, access: Access) -> FileDescriptor:
         cursor = FileCursor(access)
         # Sanity check
         manifest = self.local_folder_fs.get_manifest(access)
@@ -117,7 +117,7 @@ class LocalFileFS:
         self._next_fd += 1
         return fd
 
-    def _ensure_hot_file(self, access, manifest):
+    def _ensure_hot_file(self, access: Access, manifest: LocalFileManifest) -> HotFile:
         hf = self._hot_files.get(access["id"])
         if not hf:
             hf = HotFile(manifest["size"], manifest["base_version"])
@@ -127,13 +127,13 @@ class LocalFileFS:
 
         return hf
 
-    def _get_hot_file(self, access):
+    def _get_hot_file(self, access: Access) -> HotFile:
         return self._hot_files[access["id"]]
 
-    def _delete_hot_file(self, access):
+    def _delete_hot_file(self, access: Access) -> None:
         del self._hot_files[access["id"]]
 
-    def close(self, fd: FileDescriptor):
+    def close(self, fd: FileDescriptor) -> None:
         self.flush(fd)
         cursor = self._opened_cursors.pop(fd)
         hf = self._get_hot_file(cursor.access)
@@ -141,7 +141,7 @@ class LocalFileFS:
         if not hf.cursors:
             self._delete_hot_file(cursor.access)
 
-    def seek(self, fd: FileDescriptor, offset: int):
+    def seek(self, fd: FileDescriptor, offset: int) -> None:
         cursor = self._get_cursor_from_fd(fd)
 
         if offset < 0:
@@ -150,28 +150,31 @@ class LocalFileFS:
         else:
             cursor.offset = offset
 
-    def write(self, fd: FileDescriptor, content: bytes):
+    def write(self, fd: FileDescriptor, content: bytes) -> int:
         cursor = self._get_cursor_from_fd(fd)
 
         if not content:
-            return
+            return 0
 
         hf = self._get_hot_file(cursor.access)
         empty_gap = cursor.offset - hf.size
         if empty_gap > 0:
-            content = b"\x00" * empty_gap + content
+            # TODO: not really optimized to create a string to fill the gap
+            padded_content = b"\x00" * empty_gap + content
             start = hf.size
             cursor.offset -= empty_gap
         else:
             start = cursor.offset
-        end = start + len(content)
-        hf.pending_writes.append(RamBuffer(start, end, content))
+            padded_content = content
+        end = start + len(padded_content)
+        hf.pending_writes.append(RamBuffer(start, end, padded_content))
 
-        cursor.offset += len(content)
+        cursor.offset += len(padded_content)
         if hf.size < cursor.offset:
             hf.size = cursor.offset
+        return len(content)
 
-    def truncate(self, fd: FileDescriptor, length: int):
+    def truncate(self, fd: FileDescriptor, length: int) -> None:
         cursor = self._get_cursor_from_fd(fd)
 
         hf = self._get_hot_file(cursor.access)
@@ -180,7 +183,7 @@ class LocalFileFS:
         hf.size = length
         hf.pending_writes = [pw for pw in hf.pending_writes if pw.start < length]
 
-    def read(self, fd: FileDescriptor, size: int = inf):
+    def read(self, fd: FileDescriptor, size: int = inf) -> bytes:
         cursor = self._get_cursor_from_fd(fd)
 
         hf = self._get_hot_file(cursor.access)
@@ -238,7 +241,7 @@ class LocalFileFS:
         cursor.offset += len(data)
         return data
 
-    def flush(self, fd):
+    def flush(self, fd: FileDescriptor) -> None:
         cursor = self._get_cursor_from_fd(fd)
 
         manifest = self.local_folder_fs.get_manifest(cursor.access)
@@ -262,4 +265,4 @@ class LocalFileFS:
         self.local_folder_fs.set_manifest(cursor.access, manifest)
 
         hf.pending_writes.clear()
-        self.signal_ns.signal("fs.entry.updated").send("local", id=cursor.access["id"])
+        self.event_bus.send("fs.entry.updated", id=cursor.access["id"])

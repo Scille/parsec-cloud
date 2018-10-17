@@ -6,10 +6,9 @@ from parsec.backend.exceptions import TrustSeedError, VersionError, NotFoundErro
 
 
 class PGVlobComponent(BaseVlobComponent):
-    def __init__(self, dbh, signal_ns, beacon_component):
+    def __init__(self, dbh, event_bus, beacon_component):
         self.dbh = dbh
         self.beacon_component = beacon_component
-        self._signal_vlob_updated = signal_ns.signal("vlob_updated")
 
     async def group_check(self, to_check):
         changed = []

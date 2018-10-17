@@ -2,6 +2,7 @@ import re
 import attr
 import logging
 from pathlib import Path
+import io
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 from nacl.pwhash import argon2i
@@ -14,6 +15,7 @@ from parsec.core.backend_connection import backend_send_anonymous_cmd, backend_c
 from parsec.core.schemas import dumps_manifest
 from parsec.core.local_db import LocalDB
 from parsec.utils import to_jsonb64, from_jsonb64
+from parsec import nitrokey_encryption_tool
 
 
 logger = logging.getLogger("parsec")
@@ -38,6 +40,10 @@ class DeviceConfigureError(Exception):
     pass
 
 
+class DeviceSavingAlreadyExists(DeviceConfigureError):
+    pass
+
+
 class DeviceConfigureBackendError(DeviceConfigureError):
     pass
 
@@ -51,6 +57,14 @@ class DeviceConfigurationPasswordError(DeviceConfigureError):
 
 
 class DeviceConfigureOutOfDate(DeviceConfigureError):
+    pass
+
+
+class DeviceConfigureNoInvitation(DeviceConfigureError):
+    pass
+
+
+class DeviceNitrokeyError(DeviceConfigureError):
     pass
 
 
@@ -77,12 +91,14 @@ class DeviceConfSchema(UnknownCheckedSchema):
     device_signkey = fields.Base64Bytes(required=True)
     user_manifest_access = fields.Base64Bytes(required=True)
     local_symkey = fields.Base64Bytes(required=True)
-    encryption = fields.String(validate=validate.OneOf({"quedalle", "password"}), required=True)
+    encryption = fields.String(
+        validate=validate.OneOf({"quedalle", "password", "nitrokey"}), required=True
+    )
     salt = fields.Base64Bytes()
 
 
 class UserManifestAccessSchema(UnknownCheckedSchema):
-    id = fields.String(required=True)
+    id = fields.UUID(required=True)
     rts = fields.String(required=True)
     wts = fields.String(required=True)
     key = fields.Base64Bytes(required=True, validate=validate.Length(min=32, max=32))
@@ -189,13 +205,28 @@ class LocalDevicesManager:
         return device_conf, errors
 
     def register_new_device(
-        self, device_id, user_privkey, device_signkey, user_manifest_access, password=None
+        self,
+        device_id,
+        user_privkey,
+        device_signkey,
+        user_manifest_access,
+        password=None,
+        use_nitrokey=False,
+        nitrokey_token_id=0,
+        nitrokey_key_id=0,
     ):
         device_conf_path = self.devices_conf_path / device_id
         try:
             device_conf_path.mkdir(parents=True)
         except FileExistsError as exc:
-            raise DeviceSavingError(f"Device config `{device_conf_path}` already exists") from exc
+            raise DeviceSavingAlreadyExists(
+                f"Device config `{device_conf_path}` already exists"
+            ) from exc
+
+        if password and use_nitrokey:
+            DeviceSavingError(
+                "Password or Nitrokey required, and password must by empty when using Nitrokey"
+            )
 
         user_manifest_access_raw, _ = user_manifest_access_schema.dumps(user_manifest_access)
         device_conf = {"device_id": device_id}
@@ -217,6 +248,21 @@ class LocalDevicesManager:
             device_conf["local_symkey"] = local_symkey
             device_conf["user_manifest_access"] = user_manifest_access_raw.encode()
 
+        if use_nitrokey:
+            device_conf["encryption"] = "nitrokey"
+            for key in ["device_signkey", "user_privkey", "local_symkey", "user_manifest_access"]:
+                input_data = io.BytesIO(device_conf[key])
+                output_data = io.BytesIO()
+                try:
+                    nitrokey_encryption_tool.encrypt_data(
+                        input_data, output_data, nitrokey_key_id, nitrokey_token_id
+                    )
+                except IndexError:
+                    raise DeviceNitrokeyError("Invalid Nitrokey token id or key id")
+                input_data.close()
+                device_conf[key] = output_data.getvalue()
+                output_data.close()
+
         device_key_path = device_conf_path / "key.json"
         data, errors = device_conf_schema.dumps(device_conf)
         if errors:
@@ -226,8 +272,18 @@ class LocalDevicesManager:
 
         device_key_path.write_text(data)
 
-    def load_device(self, device_id, password=None):
+    def load_device(
+        self,
+        device_id: str,
+        password=None,
+        nitrokey_pin=None,
+        nitrokey_token_id=0,
+        nitrokey_key_id=0,
+    ):
         device_conf_path = self.devices_conf_path / device_id
+
+        if password and nitrokey_pin:
+            DeviceLoadingError("Password must by empty when using Nitrokey")
 
         device_conf, errors = self._load_device_conf(device_id)
         if errors:
@@ -257,11 +313,36 @@ class LocalDevicesManager:
                 ) from exc
 
         else:
-            if device_conf["encryption"] != "quedalle":
+            if device_conf["encryption"] not in ["quedalle", "nitrokey"]:
                 raise DeviceLoadingError(
                     f"Invalid `{device_conf_path}` device config: no password "
                     f"provided but encryption is `{device_conf['encryption']}`"
                 )
+
+            if device_conf["encryption"] == "nitrokey":
+                for key in [
+                    "user_privkey",
+                    "device_signkey",
+                    "local_symkey",
+                    "user_manifest_access",
+                ]:
+                    input_data = io.BytesIO(device_conf[key])
+                    output_data = io.BytesIO()
+                    try:
+                        nitrokey_encryption_tool.decrypt_data(
+                            nitrokey_token_id,
+                            nitrokey_pin,
+                            input_data,
+                            output_data,
+                            nitrokey_key_id,
+                        )
+                    except IndexError:
+                        raise DeviceLoadingError("Invalid Nitrokey token id or key id")
+                    except RuntimeError:
+                        raise DeviceLoadingError("Invalid Nitrokey PIN")
+                    input_data.close()
+                    device_conf[key] = output_data.getvalue()
+                    output_data.close()
 
             user_privkey = device_conf["user_privkey"]
             device_signkey = device_conf["device_signkey"]
@@ -281,17 +362,48 @@ class LocalDevicesManager:
         )
 
 
-async def configure_new_device(backend_addr, device_id, configure_device_token, password):
+async def configure_new_device(
+    backend_addr,
+    device_id,
+    configure_device_token,
+    password=None,
+    use_nitrokey=False,
+    nitrokey_token_id=0,
+    nitrokey_key_id=0,
+):
     """
     Raises:
         BackendNotAvailable
         DeviceConfigureError
     """
+    if (password and use_nitrokey) or (not password and not use_nitrokey):
+        raise DeviceConfigureError(
+            "Password or Nitrokey required, and password must by empty when using Nitrokey"
+        )
+
     salt = _generate_salt()
-    box = _secret_box_factory(password.encode("utf-8"), salt)
+    if password:
+        box = _secret_box_factory(password.encode("utf-8"), salt)
+    else:
+        box = None
     user_id, device_name = device_id.split("@")
     exchange_cipherkey_privkey = PrivateKey.generate()
     device_signkey = SigningKey.generate()
+
+    if use_nitrokey:
+        input_data = io.BytesIO(exchange_cipherkey_privkey.public_key.encode())
+        output_data = io.BytesIO()
+        try:
+            nitrokey_encryption_tool.encrypt_data(
+                input_data, output_data, nitrokey_key_id, nitrokey_token_id
+            )
+        except IndexError:
+            raise DeviceNitrokeyError("Invalid Nitrokey token id or key id")
+        input_data.close()
+        exchange_cipherkey_encrypted = output_data.getvalue()
+        output_data.close()
+    else:
+        exchange_cipherkey_encrypted = box.encrypt(exchange_cipherkey_privkey.public_key.encode())
 
     rep = await backend_send_anonymous_cmd(
         backend_addr,
@@ -301,9 +413,7 @@ async def configure_new_device(backend_addr, device_id, configure_device_token, 
             "device_name": device_name,
             "configure_device_token": configure_device_token,
             "device_verify_key": to_jsonb64(device_signkey.verify_key.encode()),
-            "exchange_cipherkey": to_jsonb64(
-                box.encrypt(exchange_cipherkey_privkey.public_key.encode())
-            ),
+            "exchange_cipherkey": to_jsonb64(exchange_cipherkey_encrypted),
             "salt": to_jsonb64(salt),
         },
     )
@@ -368,26 +478,63 @@ async def get_device_configuration_try(backend_cmds_sender, config_try_id):
     )
 
 
-async def accept_device_configuration_try(backend_cmds_sender, device, config_try_id, password):
+async def accept_device_configuration_try(
+    backend_cmds_sender,
+    device,
+    config_try_id,
+    password=None,
+    nitrokey_pin=None,
+    nitrokey_token_id=0,
+    nitrokey_key_id=0,
+):
     """
     Raises:
         BackendNotAvailable
         DeviceConfigurationPasswordError
     """
+    if (password and nitrokey_pin) or (not password and not nitrokey_pin):
+        raise DeviceConfigurationPasswordError("Password must by empty when using Nitrokey")
+
     config_try = await get_device_configuration_try(backend_cmds_sender, config_try_id)
 
-    try:
-        box = _secret_box_factory(password.encode("utf-8"), config_try.salt)
-        exchange_cipherkey_raw = box.decrypt(config_try.exchange_cipherkey)
-        box = SealedBox(PublicKey(exchange_cipherkey_raw))
-        ciphered_user_privkey = box.encrypt(device.user_privkey.encode())
-        user_manifest_access_raw, errors = user_manifest_access_schema.dumps(
-            device.user_manifest_access
-        )
-        assert not errors, errors
-        ciphered_user_manifest_access = box.encrypt(user_manifest_access_raw.encode())
-    except nacl.exceptions.CryptoError as exc:
-        raise DeviceConfigurationPasswordError(str(exc)) from exc
+    if password:
+        try:
+            box = _secret_box_factory(password.encode("utf-8"), config_try.salt)
+            exchange_cipherkey_raw = box.decrypt(config_try.exchange_cipherkey)
+            box = SealedBox(PublicKey(exchange_cipherkey_raw))
+            ciphered_user_privkey = box.encrypt(device.user_privkey.encode())
+            user_manifest_access_raw, errors = user_manifest_access_schema.dumps(
+                device.user_manifest_access
+            )
+            assert not errors, errors
+            ciphered_user_manifest_access = box.encrypt(user_manifest_access_raw.encode())
+        except nacl.exceptions.CryptoError as exc:
+            raise DeviceConfigurationPasswordError(str(exc)) from exc
+
+    if nitrokey_pin:
+        input_data = io.BytesIO(config_try.exchange_cipherkey)
+        output_data = io.BytesIO()
+        try:
+            nitrokey_encryption_tool.decrypt_data(
+                nitrokey_token_id, nitrokey_pin, input_data, output_data, nitrokey_key_id
+            )
+        except IndexError:
+            raise DeviceNitrokeyError("Invalid Nitrokey token id or key id")
+        except RuntimeError:
+            raise DeviceConfigurationPasswordError("Invalid Nitrokey PIN")
+        input_data.close()
+        exchange_cipherkey_raw = output_data.getvalue()
+        output_data.close()
+        try:
+            box = SealedBox(PublicKey(exchange_cipherkey_raw))
+            ciphered_user_privkey = box.encrypt(device.user_privkey.encode())
+            user_manifest_access_raw, errors = user_manifest_access_schema.dumps(
+                device.user_manifest_access
+            )
+            assert not errors, errors
+            ciphered_user_manifest_access = box.encrypt(user_manifest_access_raw.encode())
+        except nacl.exceptions.CryptoError as exc:
+            raise DeviceConfigurationPasswordError(str(exc)) from exc
 
     rep = await backend_cmds_sender.send(
         {
@@ -450,6 +597,10 @@ async def claim_user(backend_addr, user_id, device_name, invitation_token):
     if rep["status"] != "ok":
         if rep.get("status") == "out_of_date_error":
             raise DeviceConfigureOutOfDate("Claim code is too old.")
+        elif rep.get("status") == "not_found_error":
+            raise DeviceConfigureNoInvitation("No invitation for this user.")
+        elif rep.get("status") == "already_exists_error":
+            raise DeviceSavingAlreadyExists("User already exists.")
         raise DeviceConfigureBackendError()
 
     # Upload the very first version of user manifest

@@ -87,6 +87,8 @@ def wrap_open_tcp_stream():
 
 @contextmanager
 def offline(addr):
+    if not isinstance(trio.open_tcp_stream, OpenTCPStreamMockWrapper):
+        raise RuntimeError("`tcp_stream_spy` fixture is missing")
     trio.open_tcp_stream.switch_offline(addr)
     try:
         yield

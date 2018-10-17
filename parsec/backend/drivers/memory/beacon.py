@@ -4,8 +4,8 @@ from parsec.backend.beacon import BaseBeaconComponent
 
 
 class MemoryBeaconComponent(BaseBeaconComponent):
-    def __init__(self, signal_ns):
-        self._signal_beacon_updated = signal_ns.signal("beacon.updated")
+    def __init__(self, event_bus):
+        self.event_bus = event_bus
         self.beacons = defaultdict(list)
 
     async def read(self, id, offset):
@@ -14,6 +14,11 @@ class MemoryBeaconComponent(BaseBeaconComponent):
     async def update(self, id, src_id, src_version, author="anonymous"):
         self.beacons[id].append({"src_id": src_id, "src_version": src_version})
         index = len(self.beacons[id])
-        self._signal_beacon_updated.send(
-            None, author=author, beacon_id=id, index=index, src_id=src_id, src_version=src_version
+        self.event_bus.send(
+            "beacon.updated",
+            author=author,
+            beacon_id=id,
+            index=index,
+            src_id=src_id,
+            src_version=src_version,
         )

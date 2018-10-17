@@ -3,7 +3,7 @@ from parsec.backend.drivers.postgresql.handler import send_signal
 
 
 class PGBeaconComponent(BaseBeaconComponent):
-    def __init__(self, dbh, signal_ns):
+    def __init__(self, dbh, event_bus):
         self.dbh = dbh
 
     async def read(self, id, offset):
@@ -22,32 +22,43 @@ class PGBeaconComponent(BaseBeaconComponent):
             async with conn.transaction():
                 await self.ll_update_multiple(conn, (id,), src_id, src_version, author)
 
-    async def ll_update_multiple(self, conn, ids, src_id, src_version, author):
-        if not ids:
+    async def ll_update_multiple(self, conn, beacon_ids, src_id, src_version, author):
+        if not beacon_ids:
             return
 
-        # TODO: executemany discard return value so there is no way to know if
-        # somehting went wrong here, not sure if it's a good idea...
-        await conn.executemany(
-            """
-            INSERT INTO beacons (beacon_id, src_id, src_version) VALUES ($1, $2, $3)
-            -- INSERT INTO beacons (id, src_id, src_version) VALUES ($1, $2, $3)
-            -- ON CONFLICT (id) DO UPDATE SET src_id = $2, src_version = $3 WHERE beacons.id = $1
-            """,
-            [(id, src_id, src_version) for id in ids],
-        )
+        for beacon_id in beacon_ids:
+            beacon_index = await conn.fetchval(
+                """
+                INSERT INTO beacons (
+                    beacon_id,
+                    beacon_index,
+                    src_id,
+                    src_version
+                ) VALUES (
+                    $1,
+                    (
+                        -- Retrieve last index of this beacon, or default to 1
+                        SELECT COALESCE(
+                            (SELECT  beacon_index + 1 FROM beacons WHERE beacon_id=$1 ORDER BY _id DESC LIMIT 1),
+                            1
+                        )
+                    ),
+                    $2,
+                    $3
+                ) RETURNING beacon_index
+                """,
+                beacon_id,
+                src_id,
+                src_version,
+            )
 
-        # TODO: index doesn't seem to be used in the core, and is complicated to get here...
-        # Maybe we should replace it by a timestamp ?
-        index = 42
-        for id in ids:
             # TODO: do we really need to provide the author in this signal ?
             await send_signal(
                 conn,
                 "beacon.updated",
                 author=author,
-                beacon_id=id,
-                index=index,
+                beacon_id=beacon_id,
+                index=beacon_index,
                 src_id=src_id,
                 src_version=src_version,
             )

@@ -20,8 +20,8 @@ class _CoreCall:
     def get_entry_path(self, id):
         return self._trio_portal.run(self._parsec_core.fs.get_entry_path, id)
 
-    def connect_signal(self, signal, cb):
-        self._parsec_core.event_bus.connect(signal, cb, weak=True)
+    def connect_event(self, event, cb):
+        self._parsec_core.event_bus.connect(event, cb, weak=True)
 
     def stop(self):
         self._trio_portal.run_sync(self._cancel_scope.cancel)
@@ -41,6 +41,9 @@ class _CoreCall:
     def file_write(self, *args, **kwargs):
         return self._trio_portal.run(self._parsec_core.fs.file_fd_write, *args, **kwargs)
 
+    def file_read(self, *args, **kwargs):
+        return self._trio_portal.run(self._parsec_core.fs.file_fd_read, *args, **kwargs)
+
     def create_folder(self, *args, **kwargs):
         return self._trio_portal.run(self._parsec_core.fs.folder_create, *args, **kwargs)
 
@@ -50,16 +53,17 @@ class _CoreCall:
     def delete_file(self, *args, **kargs):
         return self._trio_portal.run(self._parsec_core.fs.delete, *args, **kargs)
 
-    def mount(self, *args, **kwargs):
-        self._trio_portal.run(self._parsec_core.fuse_manager.start_mountpoint, *args, **kwargs)
+    def mount(self, mountpoint):
+        self._trio_portal.run(self._parsec_core.mountpoint_manager.start, mountpoint)
 
     def unmount(self, *args, **kwargs):
-        self._trio_portal.run(self._parsec_core.fuse_manager.stop_mountpoint, *args, **kwargs)
+        self._trio_portal.run(self._parsec_core.mountpoint_manager.stop)
 
     def is_mounted(self, *args, **kwargs):
-        if self._parsec_core.fuse_manager:
-            return self._parsec_core.fuse_manager.is_started(*args, **kwargs)
-        return False
+        try:
+            return self._parsec_core.mountpoint_manager.is_started(*args, **kwargs)
+        except NotLoggedError:
+            return False
 
     def login(self, *args, **kwargs):
         self._trio_portal.run(self._parsec_core.login, *args, **kwargs)
@@ -73,17 +77,17 @@ class _CoreCall:
     def get_devices(self, *args, **kwargs):
         return self._parsec_core.local_devices_manager.list_available_devices()
 
-    def register_new_device(self, *args):
+    def register_new_device(self, *args, **kwargs):
         """
         Locally register the new device.
         """
-        return self._parsec_core.local_devices_manager.register_new_device(*args)
+        return self._parsec_core.local_devices_manager.register_new_device(*args, **kwargs)
 
-    def load_device(self, *args):
+    def load_device(self, *args, **kwargs):
         """
         Load device from local.
         """
-        return self._parsec_core.local_devices_manager.load_device(*args)
+        return self._parsec_core.local_devices_manager.load_device(*args, **kwargs)
 
     def invite_user(self, *args):
         return self._trio_portal.run(invite_user, self._parsec_core.backend_cmds_sender, *args)
@@ -93,34 +97,47 @@ class _CoreCall:
             declare_device, self._parsec_core.backend_cmds_sender, device_name
         )
 
-    def accept_device_configuration_try(self, config_try_id, password):
+    def accept_device_configuration_try(
+        self,
+        config_try_id,
+        password=None,
+        nitrokey_pin=None,
+        nitrokey_token_id=0,
+        nitrokey_key_id=0,
+    ):
         return self._trio_portal.run(
             accept_device_configuration_try,
             self._parsec_core.backend_cmds_sender,
             self._parsec_core.auth_device,
             config_try_id,
             password,
+            nitrokey_pin,
+            nitrokey_token_id,
+            nitrokey_key_id,
         )
 
-    def configure_device(self, device_id, password, configure_device_token):
-        user_privkey, device_signkey, user_manifest_access = self._trio_portal.run(
+    def configure_new_device(
+        self,
+        device_id,
+        configure_device_token,
+        use_nitrokey=False,
+        password=None,
+        nitrokey_token_id=None,
+        nitrokey_key_id=None,
+    ):
+        return self._trio_portal.run(
             configure_new_device,
             self._parsec_core.backend_addr,
             device_id,
             configure_device_token,
             password,
+            use_nitrokey,
+            nitrokey_token_id,
+            nitrokey_key_id,
         )
 
-        self._parsec_core.local_devices_manager.register_new_device(
-            device_id,
-            user_privkey.encode(),
-            device_signkey.encode(),
-            user_manifest_access,
-            password,
-        )
-
-    def claim_user(self, *args):
-        return self._trio_portal.run(claim_user, self._parsec_core.backend_addr, *args)
+    def claim_user(self, *args, **kwargs):
+        return self._trio_portal.run(claim_user, self._parsec_core.backend_addr, *args, **kwargs)
 
     def create_workspace(self, *args):
         return self._trio_portal.run(self._parsec_core.fs.workspace_create, *args)

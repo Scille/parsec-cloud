@@ -27,26 +27,15 @@ async def wait_for_entries_synced(core, entries_pathes):
         if synced == to_sync:
             event.set()
 
-    vanilla = core.signal_ns.signal("fs.entry.synced").send
-
-    def foo(*args, **kwargs):
-        print("[CORE] fs.entry.synced signal send", id(core), args, kwargs)
-        # if kwargs.get('path') == '/foo.txt':
-        #     import pdb; pdb.set_trace()
-        return vanilla(*args, **kwargs)
-
-    if vanilla.__name__ != "foo":
-        core.signal_ns.signal("fs.entry.synced").send = foo
-
-    with core.signal_ns.signal("fs.entry.synced").temporarily_connected_to(_on_entry_synced):
-        yield event
-        await event.wait()
+    core.signal_ns.connect("fs.entry.synced", _on_entry_synced, weak=True)
+    yield event
+    await event.wait()
 
 
 @pytest.mark.trio
 async def test_online_sync(mock_clock, running_backend, alice_core, alice2_core2):
-    await alice_core.event_bus.spy.wait_for_backend_online()
-    await alice2_core2.event_bus.spy.wait_for_backend_online()
+    await alice_core.event_bus.spy.wait_for_backend_connection_ready()
+    await alice2_core2.event_bus.spy.wait_for_backend_connection_ready()
 
     with alice_core.event_bus.listen() as events, alice2_core2.event_bus.listen() as events2:
         await events.wait("fs.sync_monitor.idle")
