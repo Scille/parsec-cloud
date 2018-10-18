@@ -123,11 +123,7 @@ def _core(socket, backend_addr, backend_watchdog, debug, i_am_john, no_ui):
         trio.run(funct, portal_queue, user)
 
     config = CoreConfig(
-        debug=debug,
-        addr=socket,
-        backend_addr=backend_addr,
-        backend_watchdog=backend_watchdog,
-        auto_sync=True,
+        debug=debug, addr=socket, backend_addr=backend_addr, backend_watchdog=backend_watchdog
     )
 
     if config.sentry_url:

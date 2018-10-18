@@ -264,7 +264,7 @@ def start_core(core_factory, core_sock_factory, backend_addr):
         need_stop = trio.Event()
         try:
             async with core_factory(
-                devices=[device], config={"auto_sync": False, "backend_addr": backend_addr}
+                devices=[device], config={"backend_addr": backend_addr}
             ) as core:
                 await core.login(device)
                 async with core_sock_factory(core) as sock:
@@ -287,7 +287,7 @@ def BaseParsecStateMachine(
                 need_stop = trio.Event()
                 try:
                     async with core_factory(
-                        devices=[device], config={"auto_sync": False, "backend_addr": backend_addr}
+                        devices=[device], config={"backend_addr": backend_addr}
                     ) as core:
                         await core.login(device)
                         async with core_sock_factory(core) as sock:

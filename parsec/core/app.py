@@ -156,26 +156,22 @@ class LoggedClientManager:
         await self.backend_events_manager.init(self._nursery)
 
         # Finally start monitoring coroutines
-        # TODO: Only needed by old core-based hypothesis tests
-        if self.config.auto_sync:
-            self._stop_monitor_beacons = await self._nursery.start(
-                taskify(monitor_beacons, self.device, self.fs, self.event_bus)
-            )
-            self._stop_monitor_messages = await self._nursery.start(
-                taskify(monitor_messages, self.fs, self.event_bus)
-            )
-            self._stop_monitor_sync = await self._nursery.start(taskify(self.sync_monitor.run))
+        self._stop_monitor_beacons = await self._nursery.start(
+            taskify(monitor_beacons, self.device, self.fs, self.event_bus)
+        )
+        self._stop_monitor_messages = await self._nursery.start(
+            taskify(monitor_messages, self.fs, self.event_bus)
+        )
+        self._stop_monitor_sync = await self._nursery.start(taskify(self.sync_monitor.run))
 
     async def stop(self):
         # First make sure fuse is not started
         await self.mountpoint_manager.teardown()
 
         # Then stop monitoring coroutine
-        # TODO: Only needed by old core-based hypothesis tests
-        if self.config.auto_sync:
-            await self._stop_monitor_beacons()
-            await self._stop_monitor_messages()
-            await self._stop_monitor_sync()
+        await self._stop_monitor_beacons()
+        await self._stop_monitor_messages()
+        await self._stop_monitor_sync()
 
         # Then teardown components, again while respecting dependencies
         await self.encryption_manager.teardown()
