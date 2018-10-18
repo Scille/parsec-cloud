@@ -361,6 +361,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if not new_name:
             show_warning(this, "This name is not valid.")
             return
+        if new_name in self._current_file_names():
+            show_error(
+                self,
+                QCoreApplication.translate(
+                    "FilesWidget", "A file of the same name already exists."
+                ),
+            )
+            return
         if widget.file_type == "folder":
             core_call().move_folder(
                 current_file_path,
