@@ -53,6 +53,15 @@ class _CoreCall:
     def delete_file(self, *args, **kargs):
         return self._trio_portal.run(self._parsec_core.fs.delete, *args, **kargs)
 
+    def move_folder(self, *args):
+        return self._trio_portal.run(self._parsec_core.fs.move, *args)
+
+    def move_file(self, *args):
+        return self._trio_portal.run(self._parsec_core.fs.move, *args)
+
+    def move_workspace(self, *args):
+        return self._trio_portal.run(self._parsec_core.fs.move, *args)
+
     def mount(self, mountpoint):
         self._trio_portal.run(self._parsec_core.mountpoint_manager.start, mountpoint)
 

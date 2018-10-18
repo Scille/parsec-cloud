@@ -1,5 +1,7 @@
 import os
 import pathlib
+from uuid import UUID
+from pathlib import PurePosixPath
 
 from PyQt5.QtCore import Qt, QSize, QCoreApplication, QDir, pyqtSignal, QPoint
 from PyQt5.QtGui import QIcon, QPixmap
@@ -102,7 +104,7 @@ class ParentFolderWidget(QWidget, Ui_ParentFolderWidget):
 
 class FilesWidget(QWidget, Ui_FilesWidget):
 
-    current_directory_changed_qt = pyqtSignal(str, str, str)
+    current_directory_changed_qt = pyqtSignal(str, UUID, str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -141,9 +143,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if not path:
             path = core_call().get_entry_path(id)
         # TODO: too cumbersome...
-        modified_hops = [x for x in path.split("/") if x]
+        if isinstance(path, PurePosixPath):
+            modified_hops = list(path.parts)
+        else:
+            modified_hops = [x for x in path.split("/") if x]
+
         if self.current_workspace is not None or self.current_directory is not None:
-            current_dir_hops = [self.current_workspace] + [
+            current_dir_hops = ["/", self.current_workspace] + [
                 x for x in self.current_directory.split("/") if x
             ]
         else:
@@ -189,7 +195,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             ),
         )
         core_call().create_folder(
-            os.path.join(self.current_workspace, self.current_directory, filename)
+            os.path.join("/", self.current_workspace, self.current_directory, filename)
         )
         finfo = QDir(path)
         files = finfo.entryInfoList(filters=QDir.Files)
@@ -198,7 +204,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             ret = self._import_file(
                 f.absoluteFilePath(),
                 os.path.join(
-                    self.current_workspace, self.current_directory, filename, f.fileName()
+                    "/", self.current_workspace, self.current_directory, filename, f.fileName()
                 ),
             )
             if not ret:
@@ -229,6 +235,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         finally:
             if fd_out:
                 core_call().file_close(fd_out)
+
+    def _workspace_names(self):
+        workspaces = []
+        for i in range(self.layout_workspaces.count()):
+            item = self.layout_workspaces.itemAt(i)
+            w = item.widget()
+            workspaces.append(w.text())
+        return workspaces
 
     def _current_file_names(self):
         current_files = []
@@ -295,7 +309,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
         try:
             core_call().create_folder(
-                os.path.join(self.current_workspace, self.current_directory, dir_name)
+                os.path.join("/", self.current_workspace, self.current_directory, dir_name)
             )
             self.load_directory(self.current_workspace, self.current_directory)
         except FileExistsError:
@@ -327,7 +341,37 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         action.triggered.connect(self.action_open_file_clicked)
         action = menu.addAction(QCoreApplication.translate("FilesWidget", "Delete"))
         action.triggered.connect(self.action_delete_file_clicked)
+        action = menu.addAction(QCoreApplication.translate("FilesWidget", "Rename"))
+        action.triggered.connect(self.action_move_clicked)
         menu.exec(global_pos)
+
+    def action_move_clicked(self):
+        item = self.list_files.currentItem()
+        widget = self.list_files.itemWidget(item)
+        current_file_path = os.path.join(
+            "/", self.current_workspace, self.current_directory, widget.file_name
+        )
+        new_name, ok = QInputDialog.getText(
+            self,
+            QCoreApplication.translate("FilesWidget", "New name"),
+            QCoreApplication.translate("FilesWidget", "Enter file new name"),
+        )
+        if not ok:
+            return
+        if not new_name:
+            show_warning(this, "This name is not valid.")
+            return
+        if widget.file_type == "folder":
+            core_call().move_folder(
+                current_file_path,
+                os.path.join("/", self.current_workspace, self.current_directory, new_name),
+            )
+        elif widget.file_type == "file":
+            core_call().move_folder(
+                current_file_path,
+                os.path.join("/", self.current_workspace, self.current_directory, new_name),
+            )
+        self.load_directory(self.current_workspace, self.current_directory)
 
     def item_double_clicked(self, item):
         widget = self.list_files.itemWidget(item)
@@ -348,7 +392,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def action_delete_file_clicked(self):
         item = self.list_files.currentItem()
         widget = self.list_files.itemWidget(item)
-        file_path = os.path.join(self.current_workspace, self.current_directory, widget.file_name)
+        file_path = os.path.join(
+            "/", self.current_workspace, self.current_directory, widget.file_name
+        )
         if widget.file_type == "folder":
             result = QMessageBox.question(
                 self,
@@ -412,7 +458,36 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         menu = QMenu(workspace_button)
         action = menu.addAction(QCoreApplication.translate("FilesWidget", "Share"))
         action.triggered.connect(self.share_workspace(workspace_button.text()))
+        action = menu.addAction(QCoreApplication.translate("FilesWidget", "Rename"))
+        action.triggered.connect(self.action_move_workspace(workspace_button.text()))
         menu.exec(global_pos)
+
+    def action_move_workspace(self, workspace_name):
+        def _inner_move_workspace():
+            current_file_path = os.path.join("/", workspace_name)
+            new_name, ok = QInputDialog.getText(
+                self,
+                QCoreApplication.translate("FilesWidget", "New name"),
+                QCoreApplication.translate("FilesWidget", "Enter workspace new name"),
+            )
+            if not ok:
+                return
+            if not new_name:
+                show_warning(
+                    self, QCoreApplication.translate("FilesWidget", "This name is not valid.")
+                )
+                return
+            if new_name in self._workspace_names():
+                show_error(
+                    self,
+                    QCoreApplication.translate(
+                        "FilesWidget", "A workspace of the same name already exists."
+                    ),
+                )
+                return
+            core_call().move_workspace(current_file_path, os.path.join("/", new_name))
+
+        return _inner_move_workspace
 
     def share_workspace(self, workspace_name):
         def _inner_share_workspace():
@@ -453,7 +528,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if not ok or not workspace_name:
             return
         try:
-            core_call().create_workspace(workspace_name)
+            core_call().create_workspace(os.path.join("/", workspace_name))
             self._add_workspace(workspace_name)
         except FileExistsError:
             show_warning(
@@ -465,6 +540,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
 
     def load_directory(self, workspace, directory):
+        workspace = os.path.join("/", workspace)
         self.current_directory = directory
         self.list_files.clear()
         result = core_call().stat(os.path.join(workspace, directory))
@@ -485,7 +561,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.list_files.setItemWidget(item, widget)
 
         self.label_current_directory.setText(
-            '<html><head/><body><p><span style="font-size:16pt;">/{}'
+            '<html><head/><body><p><span style="font-size:16pt;">{}'
             "</span></p></body></html>".format(workspace)
         )
         self.label_cd_elems.setText(
