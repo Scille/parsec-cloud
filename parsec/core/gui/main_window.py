@@ -4,6 +4,8 @@ from PyQt5.QtCore import QCoreApplication, Qt
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QSystemTrayIcon, QMenu
 from PyQt5.QtGui import QIcon, QFontDatabase
 
+from parsec import __version__ as PARSEC_VERSION
+
 from parsec.core.devices_manager import (
     DeviceLoadingError,
     DeviceConfigureBackendError,
@@ -53,6 +55,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.current_device = None
         self.add_tray_icon()
         self.connect_all()
+        self.setWindowTitle("Parsec - Community Edition - v{}".format(PARSEC_VERSION))
 
     def add_tray_icon(self):
         if not QSystemTrayIcon.isSystemTrayAvailable():
