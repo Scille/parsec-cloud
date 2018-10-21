@@ -1,8 +1,10 @@
+from functools import partial
 import pytest
 import trio
 from async_generator import asynccontextmanager
 
 from parsec.core.backend_cmds_sender import BackendCmdsSender
+from parsec.core.backend_connection import ConnectionPool, backend_connection_factory
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.fs import FS
 
@@ -101,3 +103,11 @@ def backend_addr_factory(running_backend, tcp_stream_spy):
         return addr
 
     return _backend_addr_factory
+
+
+@pytest.fixture
+def connection_pool(running_backend, alice):
+    connection_factory = partial(
+        backend_connection_factory, running_backend.addr, alice.id, alice.device_signkey
+    )
+    return ConnectionPool(connection_factory)

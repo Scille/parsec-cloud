@@ -1,3 +1,5 @@
+from async_generator import asynccontextmanager
+from queue import LifoQueue, Empty, Full
 import trio
 from structlog import get_logger
 from urllib.parse import urlparse
@@ -101,3 +103,75 @@ async def backend_send_anonymous_cmd(addr: str, req: dict) -> dict:
 
     finally:
         await sock.aclose()
+
+
+class ConnectionPool:
+    def __init__(self, connection_factory, min_connections=0, max_connections=1000, timeout=None):
+        self.connection_factory = connection_factory
+        self.min_connections = min_connections
+        self.max_connections = max_connections
+        self.timeout = timeout
+        self.pool = None
+        self.created_connections = 0
+
+    async def init(self):
+        await self.reset()
+
+    def size(self):
+        return self.created_connections
+
+    async def reset(self):
+        self.created_connections = 0
+        self.pool = LifoQueue(self.max_connections)
+        for _ in range(self.max_connections - self.min_connections):
+            try:
+                self.pool.put_nowait(None)
+            except Full:
+                break
+        for _ in range(self.min_connections):
+            connection = await self.make_connection()
+            self.pool.put_nowait(connection)
+
+    async def make_connection(self):
+        connection = await self.connection_factory()
+        self.created_connections += 1
+        return connection
+
+    def release(self, connection):
+        if self.pool:
+            try:
+                self.pool.put_nowait(connection)
+            except Full:
+                pass
+
+    async def disconnect(self):
+        if self.pool:
+            for connection in iter(self.pool.get, None):
+                await connection.aclose()
+        self.created_connections = 0
+        self.pool = None
+
+    @asynccontextmanager
+    async def connection(self):
+        if not self.pool:
+            await self.init()
+
+        connection = None
+        try:
+            connection = self.pool.get(block=True, timeout=self.timeout)
+        except Empty:
+            raise ConnectionError("No connection available.")
+
+        if connection is None:
+            if self.created_connections >= self.max_connections:
+                raise ConnectionError("Too many connections")
+            connection = await self.make_connection()
+
+        try:
+            yield connection
+        except (trio.TooSlowError, trio.BrokenStreamError, trio.ClosedStreamError) as exc:
+            await connection.aclose()
+            connection = await self.make_connection()
+            raise BackendNotAvailable() from exc
+        finally:
+            self.release(connection)

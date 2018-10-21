@@ -73,7 +73,6 @@ async def test_too_slow_request(
         async with backend_cmds_sender_factory(
             alice, backend_addr=unused_tcp_addr
         ) as backend_cmds_sender:
-
             # First we send a request that won't get any answer
             with pytest.raises(BackendNotAvailable):
                 await backend_cmds_sender.send({"cmd": "req1"})
@@ -83,7 +82,7 @@ async def test_too_slow_request(
             def _crash_on_reuse_socket(*args, **kwargs):
                 raise AssertionError("Shouldn't reuse the socket")
 
-            assert len(sockets) == 1
+            assert len(sockets) == 3
             sockets[0].aclose.assert_called_once()
             sockets[0].send.side_effect = _crash_on_reuse_socket
             sockets[0].recv.side_effect = _crash_on_reuse_socket

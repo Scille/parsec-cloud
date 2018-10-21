@@ -1,9 +1,14 @@
+from functools import partial
 import trio
 from uuid import uuid4
 from structlog import get_logger
 
 from parsec.core.base import BaseAsyncComponent
-from parsec.core.backend_connection import BackendNotAvailable, backend_connection_factory
+from parsec.core.backend_connection import (
+    BackendNotAvailable,
+    ConnectionPool,
+    backend_connection_factory,
+)
 from parsec.core.devices_manager import Device
 from parsec.handshake import HandshakeBadIdentity
 
@@ -17,49 +22,30 @@ class BackendCmdsSender(BaseAsyncComponent):
         super().__init__()
         self.device = device
         self.backend_addr = backend_addr
-        self._sock = None
 
     async def _init(self, nursery):
-        # TODO: Try to open connection with the backend on a dedicated
-        # coroutine to save time for first request ?
-        # TODO: setup a connection pool for concurrent requests ?
-        pass
+        connection_factory = partial(
+            backend_connection_factory,
+            self.backend_addr,
+            self.device.id,
+            self.device.device_signkey,
+        )
+        self.connection_pool = ConnectionPool(connection_factory)
 
     async def _teardown(self):
-        if self._sock:
-            await self._sock.aclose()
+        await self.connection_pool.disconnect()
 
-    async def _init_send_connection(self):
-        if self._sock:
-            await self._sock.aclose()
-        try:
-            self._sock = await backend_connection_factory(
-                self.backend_addr, self.device.id, self.device.device_signkey
-            )
-        except HandshakeBadIdentity as exc:
-            # TODO: think about the handling of this kind of exception...
-            raise BackendNotAvailable() from exc
-
-    async def _naive_send(self, req):
-        if not self._sock:
-            raise BackendNotAvailable("Connection not initialized")
-
-        try:
-            # This timeout is a bit tricky: on one hand choosing a small value
-            # makes poor connection unusable, but on the other hand a tcp socket
-            # can hang for a long, long time (for instance when the network is
-            # shutdown after a connection has been setup).
-            # This is especially a trouble with requests going through FUSE
-            # given they must be all finished before the unmount, with the GUI
-            # doing a frozen wait for all this time...
-            with trio.fail_after(PER_CMD_TIMEOUT):
-                await self._sock.send(req)
-                return await self._sock.recv()
-
-        except (trio.TooSlowError, trio.BrokenStreamError, trio.ClosedStreamError) as exc:
-            await self._sock.aclose()
-            self._sock = None
-            raise BackendNotAvailable(str(exc)) from exc
+    async def _naive_send(self, connection, req):
+        # This timeout is a bit tricky: on one hand choosing a small value
+        # makes poor connection unusable, but on the other hand a tcp socket
+        # can hang for a long, long time (for instance when the network is
+        # shutdown after a connection has been setup).
+        # This is especially a trouble with requests going through FUSE
+        # given they must be all finished before the unmount, with the GUI
+        # doing a frozen wait for all this time...
+        with trio.fail_after(PER_CMD_TIMEOUT):
+            await connection.send(req)
+            return await connection.recv()
 
     async def send(self, req: dict) -> dict:
         """
@@ -94,29 +80,29 @@ class BackendCmdsSender(BaseAsyncComponent):
                 pass
             return filtered_data
 
-        async with self._lock:
-            log = logger.bind(req_id=uuid4().hex)
-            # Try to use the already connected socket
-            try:
+        log = logger.bind(req_id=uuid4().hex)
+        try:
+            async with self.connection_pool.connection() as connection:
+                # Try to use the already connected socket
                 log.debug("Sending request", req=_filter_big_fields(req))
-                rep = await self._naive_send(req)
+                rep = await self._naive_send(connection, req)
                 log.debug("Receiving response", rep=_filter_big_fields(rep))
                 return rep
 
-            except BackendNotAvailable as exc:
-                log.debug("Cannot reach backend, retrying", reason=exc)
-                try:
+        except BackendNotAvailable as exc:
+            log.debug("Cannot reach backend, retrying", reason=exc)
+            try:
+                async with self.connection_pool.connection() as connection:
                     # If it failed, reopen the socket and retry the request
-                    await self._init_send_connection()
                     log.debug("Sending request", req=_filter_big_fields(req))
-                    rep = await self._naive_send(req)
+                    rep = await self._naive_send(connection, req)
                     log.debug("Receiving response", rep=_filter_big_fields(rep))
                     return rep
 
-                except BackendNotAvailable as e:
-                    log.debug("Cannot reach backend, aborting", reason=exc)
-                    # Failed again, it seems we are offline
-                    raise
+            except BackendNotAvailable as e:
+                log.debug("Cannot reach backend, aborting", reason=exc)
+                # Failed again, it seems we are offline
+                raise
 
     async def ping(self):
         await self.send({"cmd": "ping", "ping": ""})
