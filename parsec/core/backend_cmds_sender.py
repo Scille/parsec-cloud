@@ -1,14 +1,9 @@
-from functools import partial
 import trio
 from uuid import uuid4
 from structlog import get_logger
 
 from parsec.core.base import BaseAsyncComponent
-from parsec.core.backend_connection import (
-    BackendNotAvailable,
-    ConnectionPool,
-    backend_connection_factory,
-)
+from parsec.core.backend_connection import BackendNotAvailable, BackendConnectionPool
 from parsec.core.devices_manager import Device
 from parsec.handshake import HandshakeBadIdentity
 
@@ -24,13 +19,9 @@ class BackendCmdsSender(BaseAsyncComponent):
         self.backend_addr = backend_addr
 
     async def _init(self, nursery):
-        connection_factory = partial(
-            backend_connection_factory,
-            self.backend_addr,
-            self.device.id,
-            self.device.device_signkey,
+        self.connection_pool = BackendConnectionPool(
+            self.backend_addr, self.device.id, self.device.device_signkey
         )
-        self.connection_pool = ConnectionPool(connection_factory)
 
     async def _teardown(self):
         await self.connection_pool.disconnect()
@@ -92,7 +83,7 @@ class BackendCmdsSender(BaseAsyncComponent):
         except BackendNotAvailable as exc:
             log.debug("Cannot reach backend, retrying", reason=exc)
             try:
-                async with self.connection_pool.connection() as connection:
+                async with self.connection_pool.connection(fresh=True) as connection:
                     # If it failed, reopen the socket and retry the request
                     log.debug("Sending request", req=_filter_big_fields(req))
                     rep = await self._naive_send(connection, req)

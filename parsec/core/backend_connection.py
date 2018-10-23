@@ -1,11 +1,16 @@
 from async_generator import asynccontextmanager
-from queue import LifoQueue, Empty, Full
+from queue import Queue, Empty, Full
 import trio
 from structlog import get_logger
 from urllib.parse import urlparse
 
 from parsec.networking import CookedSocket
-from parsec.handshake import ClientHandshake, AnonymousClientHandshake, HandshakeError
+from parsec.handshake import (
+    AnonymousClientHandshake,
+    ClientHandshake,
+    HandshakeBadIdentity,
+    HandshakeError,
+)
 
 
 logger = get_logger()
@@ -105,73 +110,66 @@ async def backend_send_anonymous_cmd(addr: str, req: dict) -> dict:
         await sock.aclose()
 
 
-class ConnectionPool:
-    def __init__(self, connection_factory, min_connections=0, max_connections=1000, timeout=None):
-        self.connection_factory = connection_factory
-        self.min_connections = min_connections
+class BackendConnectionPool:
+    def __init__(self, addr, auth_id, auth_signkey, max_connections=100):
+        self.addr = addr
+        self.auth_id = auth_id
+        self.auth_signkey = auth_signkey
         self.max_connections = max_connections
-        self.timeout = timeout
-        self.pool = None
         self.created_connections = 0
-
-    async def init(self):
-        await self.reset()
+        self.pool = Queue(self.max_connections)
 
     def size(self):
         return self.created_connections
 
     async def reset(self):
         self.created_connections = 0
-        self.pool = LifoQueue(self.max_connections)
-        for _ in range(self.max_connections - self.min_connections):
-            try:
-                self.pool.put_nowait(None)
-            except Full:
-                break
-        for _ in range(self.min_connections):
-            connection = await self.make_connection()
-            self.pool.put_nowait(connection)
+        self.pool = Queue(self.max_connections)
 
     async def make_connection(self):
-        connection = await self.connection_factory()
+        connection = await backend_connection_factory(self.addr, self.auth_id, self.auth_signkey)
         self.created_connections += 1
         return connection
 
     def release(self, connection):
-        if self.pool:
-            try:
-                self.pool.put_nowait(connection)
-            except Full:
-                pass
+        try:
+            self.pool.put_nowait(connection)
+        except Full:
+            pass
 
     async def disconnect(self):
-        if self.pool:
-            for connection in iter(self.pool.get, None):
-                await connection.aclose()
+        try:
+            for connection in iter(self.pool.get_nowait, None):
+                try:
+                    await connection.aclose()
+                except Exception:  # TODO which exceptions?
+                    pass
+        except Empty:
+            pass
         self.created_connections = 0
-        self.pool = None
 
     @asynccontextmanager
-    async def connection(self):
-        if not self.pool:
-            await self.init()
-
+    async def connection(self, fresh=False):
         connection = None
-        try:
-            connection = self.pool.get(block=True, timeout=self.timeout)
-        except Empty:
-            raise ConnectionError("No connection available.")
-
-        if connection is None:
-            if self.created_connections >= self.max_connections:
-                raise ConnectionError("Too many connections")
-            connection = await self.make_connection()
-
+        if not fresh:
+            try:
+                connection = self.pool.get_nowait()
+            except Empty:
+                pass
+        if not connection or fresh:
+            while self.created_connections >= self.max_connections:
+                await trio.sleep(0.1)
+            try:
+                connection = await self.make_connection()
+            except HandshakeBadIdentity as exc:
+                # TODO: think about the handling of this kind of exception...
+                self.created_connections -= 1
+                raise BackendNotAvailable() from exc
         try:
             yield connection
         except (trio.TooSlowError, trio.BrokenStreamError, trio.ClosedStreamError) as exc:
             await connection.aclose()
-            connection = await self.make_connection()
+            self.created_connections -= 1
             raise BackendNotAvailable() from exc
-        finally:
+        else:
             self.release(connection)

@@ -1,12 +1,11 @@
-from functools import partial
 import pytest
 import trio
 
 from parsec.core.backend_connection import (
-    backend_connection_factory,
     backend_send_anonymous_cmd,
     BackendNotAvailable,
-    ConnectionPool,
+    BackendConnectionPool,
+    HandshakeBadIdentity,
     HandshakeError,
 )
 from parsec.backend.exceptions import AlreadyRevokedError, NotFoundError
@@ -35,12 +34,12 @@ async def test_backend_offline(tcp_stream_spy, backend_addr, connection_pool):
 
 @pytest.mark.trio
 async def test_backend_bad_handshake(running_backend, mallory):
-    connection_factory = partial(
-        backend_connection_factory, running_backend.addr, mallory.id, mallory.device_signkey
+    connection_pool = BackendConnectionPool(
+        running_backend.addr, mallory.id, mallory.device_signkey
     )
-    connection_pool = ConnectionPool(connection_factory, 1)
-    with pytest.raises(HandshakeError):
-        await connection_pool.init()
+    with pytest.raises(BackendNotAvailable):
+        async with connection_pool.connection():
+            pass
 
 
 @pytest.mark.trio
@@ -62,12 +61,12 @@ async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backen
 
         with tcp_stream_spy.install_hook(backend_addr, connection_factory):
             with pytest.raises(BackendNotAvailable):
-                connection_factory = partial(
-                    backend_connection_factory, backend_addr, alice.id, alice.device_signkey
+                connection_pool = BackendConnectionPool(
+                    backend_addr, alice.id, alice.device_signkey
                 )
-                connection_pool = ConnectionPool(connection_factory, 1)
                 with pytest.raises(HandshakeError):
-                    await connection_pool.init()
+                    async with connection_pool.connection():
+                        pass
 
         nursery.cancel_scope.cancel()
 
@@ -97,58 +96,42 @@ async def test_backend_send_anonymous_cmd(running_backend):
 
 
 @pytest.mark.trio
-async def test_connection_pool_min_max_connection(running_backend, alice):
-    connection_factory = partial(
-        backend_connection_factory, running_backend.addr, alice.id, alice.device_signkey
+async def test_connection_pool_max_connection(running_backend, alice):
+    max_connections = 2
+    connection_pool = BackendConnectionPool(
+        running_backend.addr, alice.id, alice.device_signkey, max_connections
     )
-    min_connections = 2
-    max_connections = 4
-    connection_pool = ConnectionPool(connection_factory, min_connections, max_connections, 0.1)
-    assert connection_pool.size() == 0
-    await connection_pool.init()
-    assert connection_pool.size() == 2
-
-    async with connection_pool.connection():
-        assert connection_pool.size() == 2
-        async with connection_pool.connection():
-            assert connection_pool.size() == 2
-            async with connection_pool.connection():
-                assert connection_pool.size() == 3
-                async with connection_pool.connection():
-                    with pytest.raises(ConnectionError):
-                        async with connection_pool.connection():
-                            assert connection_pool.size() == 4
-
-
-@pytest.mark.trio
-async def test_connection_pool_reuse_released_connection(running_backend, alice):
-    connection_factory = partial(
-        backend_connection_factory, running_backend.addr, alice.id, alice.device_signkey
-    )
-    connection_pool = ConnectionPool(connection_factory)
     assert connection_pool.size() == 0
 
     async with connection_pool.connection():
         assert connection_pool.size() == 1
         async with connection_pool.connection():
             assert connection_pool.size() == 2
+            with trio.move_on_after(0.2) as cancel_scope:
+                async with connection_pool.connection():
+                    pass
+            assert cancel_scope.cancelled_caught
+
+
+@pytest.mark.trio
+async def test_connection_pool_reuse_released_connection(running_backend, alice):
+    connection_pool = BackendConnectionPool(running_backend.addr, alice.id, alice.device_signkey)
+    assert connection_pool.size() == 0
+    async with connection_pool.connection():
+        assert connection_pool.size() == 1
+        async with connection_pool.connection():
+            assert connection_pool.size() == 2
+    assert connection_pool.size() == 2
     async with connection_pool.connection():
         assert connection_pool.size() == 2
 
 
 @pytest.mark.trio
 async def test_connection_pool_disconnect(running_backend, alice):
-    connection_factory = partial(
-        backend_connection_factory, running_backend.addr, alice.id, alice.device_signkey
-    )
-    min_connections = 2
-    connection_pool = ConnectionPool(connection_factory, min_connections)
+    connection_pool = BackendConnectionPool(running_backend.addr, alice.id, alice.device_signkey)
 
     async with connection_pool.connection():
-        assert connection_pool.size() == min_connections
+        assert connection_pool.size() == 1
         await connection_pool.disconnect()
         assert connection_pool.size() == 0
     assert connection_pool.size() == 0
-
-    async with connection_pool.connection():
-        assert connection_pool.size() == min_connections

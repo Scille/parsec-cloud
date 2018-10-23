@@ -68,7 +68,7 @@ async def test_too_slow_request(
     mocked_bcf.is_async = True
     mocked_bcf.side_effect = _bcf_hook
 
-    with patch("parsec.core.backend_cmds_sender.backend_connection_factory", new=mocked_bcf):
+    with patch("parsec.core.backend_connection.backend_connection_factory", new=mocked_bcf):
 
         async with backend_cmds_sender_factory(
             alice, backend_addr=unused_tcp_addr
@@ -82,7 +82,7 @@ async def test_too_slow_request(
             def _crash_on_reuse_socket(*args, **kwargs):
                 raise AssertionError("Shouldn't reuse the socket")
 
-            assert len(sockets) == 3
+            assert len(sockets) == 2
             sockets[0].aclose.assert_called_once()
             sockets[0].send.side_effect = _crash_on_reuse_socket
             sockets[0].recv.side_effect = _crash_on_reuse_socket
@@ -123,7 +123,6 @@ async def test_backend_switch_offline(backend_cmds_sender, tcp_stream_spy):
 
     rep = await backend_cmds_sender.send({"cmd": "ping", "ping": "hello"})
     assert rep == {"status": "ok", "pong": "hello"}
-
     # Now sockets will never be able to reach the backend no matter what
 
     with offline(backend_cmds_sender.backend_addr):
