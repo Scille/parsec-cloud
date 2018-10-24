@@ -122,10 +122,6 @@ class BackendConnectionPool:
     def size(self):
         return self.created_connections
 
-    async def reset(self):
-        self.created_connections = 0
-        self.pool = Queue(self.max_connections)
-
     async def make_connection(self):
         connection = await backend_connection_factory(self.addr, self.auth_id, self.auth_signkey)
         self.created_connections += 1
@@ -142,7 +138,7 @@ class BackendConnectionPool:
             for connection in iter(self.pool.get_nowait, None):
                 try:
                     await connection.aclose()
-                except Exception:  # TODO which exceptions?
+                except Exception:
                     pass
         except Empty:
             pass
@@ -156,7 +152,7 @@ class BackendConnectionPool:
                 connection = self.pool.get_nowait()
             except Empty:
                 pass
-        if not connection or fresh:
+        if not connection:
             while self.created_connections >= self.max_connections:
                 await trio.sleep(0.1)
             try:

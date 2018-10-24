@@ -5,12 +5,12 @@ from parsec.core.backend_connection import (
     backend_send_anonymous_cmd,
     BackendNotAvailable,
     BackendConnectionPool,
-    HandshakeBadIdentity,
     HandshakeError,
 )
 from parsec.backend.exceptions import AlreadyRevokedError, NotFoundError
 from parsec.handshake import ServerHandshake, HandshakeRevokedDevice
 from parsec.networking import CookedSocket
+from tests.common import AsyncMock
 
 from tests.open_tcp_stream_mock_wrapper import offline
 
@@ -97,6 +97,12 @@ async def test_backend_send_anonymous_cmd(running_backend):
 
 @pytest.mark.trio
 async def test_connection_pool_max_connection(running_backend, alice):
+    async def temp_connection(send_channel, timeout, cancel_scope):
+        async with connection_pool.connection():
+            await send_channel.send(True)
+            await trio.sleep(timeout)
+            cancel_scope.cancel()
+
     max_connections = 2
     connection_pool = BackendConnectionPool(
         running_backend.addr, alice.id, alice.device_signkey, max_connections
@@ -107,10 +113,28 @@ async def test_connection_pool_max_connection(running_backend, alice):
         assert connection_pool.size() == 1
         async with connection_pool.connection():
             assert connection_pool.size() == 2
+
+        # Blocking full pool as any connection is released
+        async with trio.open_nursery() as nursery:
+            send_channel, receive_channel = trio.open_memory_channel(0)
+            async with send_channel:
+                nursery.start_soon(temp_connection, send_channel.clone(), 0.3, nursery.cancel_scope)
+                await receive_channel.receive()
             with trio.move_on_after(0.2) as cancel_scope:
                 async with connection_pool.connection():
                     pass
             assert cancel_scope.cancelled_caught
+
+        # Temporary blocking full pool until a connection is released
+        async with trio.open_nursery() as nursery:
+            send_channel, receive_channel = trio.open_memory_channel(0)
+            async with send_channel:
+                nursery.start_soon(temp_connection, send_channel.clone(), 0.1, nursery.cancel_scope)
+                await receive_channel.receive()
+            with trio.move_on_after(0.2) as cancel_scope:
+                async with connection_pool.connection():
+                    pass
+            assert not cancel_scope.cancelled_caught
 
 
 @pytest.mark.trio
@@ -127,11 +151,42 @@ async def test_connection_pool_reuse_released_connection(running_backend, alice)
 
 
 @pytest.mark.trio
+async def test_connection_pool_fresh_connection(running_backend, alice):
+    connection_pool = BackendConnectionPool(running_backend.addr, alice.id, alice.device_signkey)
+    assert connection_pool.size() == 0
+    async with connection_pool.connection():
+        assert connection_pool.size() == 1
+    async with connection_pool.connection(fresh=True):
+        assert connection_pool.size() == 2
+
+
+@pytest.mark.trio
 async def test_connection_pool_disconnect(running_backend, alice):
     connection_pool = BackendConnectionPool(running_backend.addr, alice.id, alice.device_signkey)
-
     async with connection_pool.connection():
         assert connection_pool.size() == 1
         await connection_pool.disconnect()
         assert connection_pool.size() == 0
     assert connection_pool.size() == 0
+
+
+@pytest.mark.trio
+async def test_connection_release_full_pool(running_backend, alice):
+    connection_pool = BackendConnectionPool(running_backend.addr, alice.id, alice.device_signkey, 1)
+    async with connection_pool.connection() as conn:
+        connection_pool.release(conn)
+        connection_pool.release(conn)
+
+
+@pytest.mark.trio
+async def test_connection_disconnect_exception(running_backend, alice):
+    def raise_exception():
+        raise Exception()
+
+    connection_pool = BackendConnectionPool(running_backend.addr, alice.id, alice.device_signkey)
+    async with connection_pool.connection():
+        async with connection_pool.connection() as conn:
+            conn.aclose = AsyncMock(side_effect=Exception())
+            async with connection_pool.connection():
+                pass
+    await connection_pool.disconnect()
