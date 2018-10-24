@@ -247,41 +247,40 @@ class BackendApp:
     async def _api_blockstore_post(self, client_ctx, msg):
         async def blockstore_post(send_channel, func, *args, **kwargs):
             async with send_channel:
-                try:
-                    result = await func(*args, **kwargs)
-                except ParsecError as exc:
-                    result = exc
+                result = await func(*args, **kwargs)
                 await send_channel.send(result)
 
         if not self.blockstores:
             return {"status": "not_available", "reason": "Blockstore not available"}
 
-        async with trio.open_nursery() as nursery:
-            send_channel, receive_channel = trio.open_memory_channel(0)
-            async with send_channel:
-                for blockstore in self.blockstores:
-                    nursery.start_soon(
-                        blockstore_post,
-                        send_channel.clone(),
-                        blockstore.api_blockstore_post,
-                        client_ctx,
-                        msg,
-                    )
+        try:
+            async with trio.open_nursery() as nursery:
+                send_channel, receive_channel = trio.open_memory_channel(0)
+                async with send_channel:
+                    for blockstore in self.blockstores:
+                        nursery.start_soon(
+                            blockstore_post,
+                            send_channel.clone(),
+                            blockstore.api_blockstore_post,
+                            client_ctx,
+                            msg,
+                        )
 
-            values = [value async for value in receive_channel]
-        values = sorted(values, key=lambda x: not isinstance(x, ParsecError))
-        if isinstance(values[0], ParsecError):
-            raise values[0]
-        return values[0]  # Assume that all responses are the same
+                values = [value async for value in receive_channel]
+        except trio.MultiError as exc:
+            raise exc.exceptions[0]
+        return values[0]
 
     async def _api_blockstore_get(self, client_ctx, msg):
-        async def blockstore_get(send_channel, func, *args, **kwargs):
+        async def blockstore_get(send_channel, cancel_scope, func, *args, **kwargs):
             async with send_channel:
                 try:
                     result = await func(*args, **kwargs)
                 except ParsecError as exc:
-                    result = exc
-                await send_channel.send(result)
+                    await send_channel.send(exc)
+                else:
+                    await send_channel.send(result)
+                    nursery.cancel_scope.cancel()
 
         if not self.blockstores:
             return {"status": "not_available", "reason": "Blockstore not available"}
@@ -293,6 +292,7 @@ class BackendApp:
                     nursery.start_soon(
                         blockstore_get,
                         send_channel.clone(),
+                        nursery.cancel_scope,
                         blockstore.api_blockstore_get,
                         client_ctx,
                         msg,
@@ -301,12 +301,11 @@ class BackendApp:
             values = []
             async for value in receive_channel:
                 values.append(value)
-                if not isinstance(value, ParsecError):
-                    nursery.cancel_scope.cancel()
-        values = sorted(values, key=lambda x: isinstance(x, ParsecError))
-        if isinstance(values[0], ParsecError):
-            raise values[0]
-        return values[0]  # Assume that all responses are the same
+        result = next((x for x in values if not isinstance(x, ParsecError)), False)
+        if result:
+            return result
+        else:
+            raise next((x for x in values if isinstance(x, ParsecError)))
 
     async def _api_event_subscribe(self, client_ctx, msg):
         msg = cmd_EVENT_SUBSCRIBE_Schema.load_or_abort(msg)
