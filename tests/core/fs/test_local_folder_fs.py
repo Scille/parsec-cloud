@@ -22,7 +22,8 @@ from tests.common import freeze_time
 def test_stat_root(local_folder_fs):
     stat = local_folder_fs.stat(Path("/"))
     assert stat == {
-        "type": "folder",
+        "type": "root",
+        "is_folder": True,
         "base_version": 1,
         "is_placeholder": False,
         "need_sync": False,
@@ -32,13 +33,45 @@ def test_stat_root(local_folder_fs):
     }
 
 
+def test_workspace_create(local_folder_fs):
+    with freeze_time("2000-01-02"):
+        local_folder_fs.mkdir(Path("/foo"), workspace=True)
+
+    root_stat = local_folder_fs.stat(Path("/"))
+    assert root_stat == {
+        "type": "root",
+        "is_folder": True,
+        "base_version": 1,
+        "is_placeholder": False,
+        "need_sync": True,
+        "created": Pendulum(2000, 1, 1),
+        "updated": Pendulum(2000, 1, 2),
+        "children": ["foo"],
+    }
+
+    stat = local_folder_fs.stat(Path("/foo"))
+    assert stat == {
+        "type": "workspace",
+        "is_folder": True,
+        "base_version": 0,
+        "is_placeholder": True,
+        "need_sync": True,
+        "created": Pendulum(2000, 1, 2),
+        "updated": Pendulum(2000, 1, 2),
+        "children": [],
+        "creator": "alice",
+        "participants": ["alice"],
+    }
+
+
 def test_file_create(local_folder_fs):
     with freeze_time("2000-01-02"):
         local_folder_fs.touch(Path("/foo.txt"))
 
     root_stat = local_folder_fs.stat(Path("/"))
     assert root_stat == {
-        "type": "folder",
+        "type": "root",
+        "is_folder": True,
         "base_version": 1,
         "is_placeholder": False,
         "need_sync": True,
@@ -50,6 +83,7 @@ def test_file_create(local_folder_fs):
     foo_stat = local_folder_fs.stat(Path("/foo.txt"))
     assert foo_stat == {
         "type": "file",
+        "is_folder": False,
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
@@ -94,6 +128,7 @@ def test_access_not_loaded_entry(alice, local_folder_fs):
     stat = local_folder_fs.stat(Path("/foo.txt"))
     assert stat == {
         "type": "file",
+        "is_folder": False,
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
         "base_version": 0,

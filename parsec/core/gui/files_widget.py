@@ -31,17 +31,17 @@ class FileItemWidget(QWidget, Ui_FileItemWidget):
             '<html><head/><body><p><span style="font-size:14pt;">{}'
             "</span></p></body></html>".format(file_name)
         )
-        if self.file_infos["type"] == "file":
+        if self.file_infos["is_folder"]:
+            if file_infos.get("children", []):
+                self.label_file_type.setPixmap(QPixmap(":/icons/images/icons/folder_full.png"))
+            else:
+                self.label_file_type.setPixmap(QPixmap(":/icons/images/icons/folder_empty.png"))
+        else:
             self.label_file_type.setPixmap(QPixmap(":/icons/images/icons/file.png"))
             self.label_file_size.setText(
                 '<html><head/><body><p><span style="font-style:italic;">{}'
                 "</span></p></body></html>".format(get_filesize(self.file_infos["size"]))
             )
-        elif self.file_infos["type"] == "folder":
-            if file_infos.get("children", []):
-                self.label_file_type.setPixmap(QPixmap(":/icons/images/icons/folder_full.png"))
-            else:
-                self.label_file_type.setPixmap(QPixmap(":/icons/images/icons/folder_empty.png"))
         self.label_file_type.setScaledContents(True)
         creation_date = None
         update_date = None
@@ -73,7 +73,7 @@ class FileItemWidget(QWidget, Ui_FileItemWidget):
 
     @property
     def file_type(self):
-        return self.file_infos["type"]
+        return "folder" if self.file_infos["is_folder"] else "file"
 
 
 class WorkspaceWidget(ToolButton):
@@ -162,7 +162,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         result = core_call().stat(dir_path)
         for child in result.get("children", []):
             file_infos = core_call().stat(os.path.join(dir_path, child))
-            if file_infos["type"] == "folder":
+            if file_infos["is_folder"]:
                 self.delete_all_subs(os.path.join(dir_path, child))
             else:
                 core_call().delete_file(os.path.join(dir_path, child))

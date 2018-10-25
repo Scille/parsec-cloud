@@ -7,6 +7,7 @@ from parsec.core.schemas import dumps_manifest, loads_manifest
 from parsec.core.fs.utils import (
     is_file_manifest,
     is_folder_manifest,
+    is_workspace_manifest,
     new_access,
     new_local_workspace_manifest,
     new_local_folder_manifest,
@@ -21,14 +22,18 @@ def copy_manifest(manifest: LocalManifest):
     """
 
     def _recursive_copy(old):
-        return {
-            k: [_recursive_copy(e) for e in v]
-            if isinstance(v, (tuple, list))
-            else _recursive_copy(v)
-            if isinstance(v, dict)
-            else v
-            for k, v in old.items()
-        }
+        try:
+            return {
+                k: [_recursive_copy(e) for e in v]
+                if isinstance(v, (tuple, list))
+                else _recursive_copy(v)
+                if isinstance(v, dict)
+                else v
+                for k, v in old.items()
+            }
+        except AttributeError:
+            # Occurs when dealing with list of strings
+            return old
 
     return _recursive_copy(manifest)
 
@@ -255,6 +260,7 @@ class LocalFolderFS:
         if is_file_manifest(manifest):
             return {
                 "type": "file",
+                "is_folder": False,
                 "created": manifest["created"],
                 "updated": manifest["updated"],
                 "base_version": manifest["base_version"],
@@ -263,9 +269,23 @@ class LocalFolderFS:
                 "size": manifest["size"],
             }
 
+        elif is_workspace_manifest(manifest):
+            return {
+                "type": "workspace",
+                "is_folder": True,
+                "created": manifest["created"],
+                "updated": manifest["updated"],
+                "base_version": manifest["base_version"],
+                "is_placeholder": manifest["is_placeholder"],
+                "need_sync": manifest["need_sync"],
+                "children": list(sorted(manifest["children"].keys())),
+                "creator": manifest["creator"],
+                "participants": list(manifest["participants"]),
+            }
         else:
             return {
-                "type": "folder",
+                "type": "root" if path.is_root() else "folder",
+                "is_folder": True,
                 "created": manifest["created"],
                 "updated": manifest["updated"],
                 "base_version": manifest["base_version"],

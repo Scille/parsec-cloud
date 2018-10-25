@@ -11,7 +11,7 @@ async def assert_same_fs(fs1, fs2):
         assert stat1 == stat2
 
         cooked_children = {}
-        if stat1["type"] == "folder":
+        if stat1["type"] in ("root", "workspace", "folder"):
             for child in stat1["children"]:
                 cooked_children[child] = await _recursive_assert(fs1, fs2, f"{path}/{child}")
 
