@@ -2,7 +2,7 @@ from triopg import UniqueViolationError
 
 from parsec.utils import ParsecError
 from parsec.backend.vlob import VlobAtom, BaseVlobComponent
-from parsec.backend.exceptions import TrustSeedError, VersionError, NotFoundError
+from parsec.backend.exceptions import TrustSeedError, VersionError, NotFoundError, AlreadyExistsError
 
 
 class PGVlobComponent(BaseVlobComponent):
@@ -41,13 +41,17 @@ class PGVlobComponent(BaseVlobComponent):
     async def create(self, id, rts, wts, blob, notify_beacons=(), author="anonymous"):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                result = await conn.execute(
-                    "INSERT INTO vlobs (vlob_id, rts, wts, version, blob) VALUES ($1, $2, $3, 1, $4)",
-                    id,
-                    rts,
-                    wts,
-                    blob,
-                )
+                try:
+                    result = await conn.execute(
+                        "INSERT INTO vlobs (vlob_id, rts, wts, version, blob) VALUES ($1, $2, $3, 1, $4)",
+                        id,
+                        rts,
+                        wts,
+                        blob,
+                    )
+                except UniqueViolationError:
+                    raise AlreadyExistsError('Vlob already exists.')
+
                 if result != "INSERT 0 1":
                     raise ParsecError("Insertion error.")
 

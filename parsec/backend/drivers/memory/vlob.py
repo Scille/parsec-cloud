@@ -2,7 +2,7 @@ from uuid import UUID
 from typing import List
 
 from parsec.backend.vlob import VlobAtom, BaseVlobComponent
-from parsec.backend.exceptions import TrustSeedError, VersionError, NotFoundError
+from parsec.backend.exceptions import TrustSeedError, VersionError, NotFoundError, AlreadyExistsError
 
 
 class MemoryVlob:
@@ -36,6 +36,8 @@ class MemoryVlobComponent(BaseVlobComponent):
 
     async def create(self, id: UUID, rts, wts, blob, notify_beacons=(), author="anonymous"):
         vlob = MemoryVlob(id, rts, wts, blob)
+        if vlob.id in self.vlobs:
+            raise AlreadyExistsError('Vlob already exists.')
         self.vlobs[vlob.id] = vlob
 
         self.event_bus.send("vlob_updated", subject=id)
