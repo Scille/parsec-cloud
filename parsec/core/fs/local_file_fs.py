@@ -81,7 +81,7 @@ class LocalFileFS:
     def get_block(self, access: BlockAccess) -> bytes:
         return self._local_db.get(access)
 
-    def set_block(self, access: BlockAccess, block: bytes, deletable: bool) -> None:
+    def set_block(self, access: BlockAccess, block: bytes, deletable=False) -> None:
         return self._local_db.set(access, block, deletable)
 
     def _get_cursor_from_fd(self, fd: FileDescriptor) -> FileCursor:
