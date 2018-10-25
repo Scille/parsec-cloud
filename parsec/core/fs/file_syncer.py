@@ -1,3 +1,4 @@
+import trio
 import pendulum
 from itertools import count
 from typing import Union, List, Optional
@@ -168,16 +169,17 @@ class FileSyncerMixin(BaseSyncer):
         sync_map = get_sync_map(manifest, self.block_size)
 
         # Upload the new blocks
-        for cs in sync_map.spaces:
-            data = await self._build_data_from_contiguous_space(cs)
-            if not data:
-                # Already existing blocks taken verbatim
-                blocks += [bs.buffer.data for bs in cs.buffers]
-            else:
-                # Create a new block from existing data
-                block_access = new_block_access(data, cs.start)
-                await self._backend_block_post(block_access, data)
-                blocks.append(block_access)
+        async with trio.open_nursery() as nursery:
+            for cs in sync_map.spaces:
+                data = await self._build_data_from_contiguous_space(cs)
+                if not data:
+                    # Already existing blocks taken verbatim
+                    blocks += [bs.buffer.data for bs in cs.buffers]
+                else:
+                    # Create a new block from existing data
+                    block_access = new_block_access(data, cs.start)
+                    nursery.start_soon(self._backend_block_post, block_access, data)
+                    blocks.append(block_access)
 
         to_sync_manifest["blocks"] = blocks
         to_sync_manifest["size"] = sync_map.size  # TODO: useful ?
