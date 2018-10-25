@@ -2,7 +2,12 @@ from triopg import UniqueViolationError
 
 from parsec.utils import ParsecError
 from parsec.backend.vlob import VlobAtom, BaseVlobComponent
-from parsec.backend.exceptions import TrustSeedError, VersionError, NotFoundError, AlreadyExistsError
+from parsec.backend.exceptions import (
+    TrustSeedError,
+    VersionError,
+    NotFoundError,
+    AlreadyExistsError,
+)
 
 
 class PGVlobComponent(BaseVlobComponent):
@@ -50,7 +55,7 @@ class PGVlobComponent(BaseVlobComponent):
                         blob,
                     )
                 except UniqueViolationError:
-                    raise AlreadyExistsError('Vlob already exists.')
+                    raise AlreadyExistsError("Vlob already exists.")
 
                 if result != "INSERT 0 1":
                     raise ParsecError("Insertion error.")
