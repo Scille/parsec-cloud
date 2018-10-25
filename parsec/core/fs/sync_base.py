@@ -180,7 +180,11 @@ class BaseSyncer:
             "notify_beacons": notify_beacons,
         }
         ret = await self.backend_cmds_sender.send(payload)
-        assert ret["status"] == "ok"
+        # Just like for the block upload, we trust uuid4 colision resistance
+        # and consider getting an `already_exists_error` status means a
+        # previous attempt of ours succeed but we didn't get this information
+        if ret["status"] != "already_exists_error":
+            assert ret["status"] == "ok"
 
     async def _backend_vlob_update(self, access, manifest, notify_beacons):
         ciphered = self.encryption_manager.encrypt_with_secret_key(
