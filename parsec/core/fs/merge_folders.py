@@ -92,6 +92,10 @@ def merge_remote_folder_manifests(base, diverged, target):
             diverged["last_processed_message"], target["last_processed_message"]
         )
 
+    # Only workspace manifest has this field
+    if "participants" in target:
+        merged["participants"] = list(set(target["participants"] + diverged["participants"]))
+
     return merged, need_sync
 
 
@@ -123,6 +127,12 @@ def merge_local_folder_manifests(base, diverged, target):
     if "last_processed_message" in target:
         merged["last_processed_message"] = max(
             diverged["last_processed_message"], target["last_processed_message"]
+        )
+
+    # Only workspace manifest has this field
+    if "participants" in target:
+        merged["participants"] = list(
+            sorted(set(target["participants"] + diverged["participants"]))
         )
 
     return merged
