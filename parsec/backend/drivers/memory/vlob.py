@@ -34,7 +34,10 @@ class MemoryVlobComponent(BaseVlobComponent):
             if version == 0:
                 changed.append({"id": id, "version": version})
             else:
-                vlob = await self.read(id, rts)
+                try:
+                    vlob = await self.read(id, rts)
+                except NotFoundError:
+                    continue
                 if vlob.version != version:
                     changed.append({"id": id, "version": vlob.version})
         return changed

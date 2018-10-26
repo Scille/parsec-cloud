@@ -1,10 +1,7 @@
 import os
-from uuid import UUID
 from pathlib import PurePosixPath, PureWindowsPath
 from typing import NewType, Union
 
-
-BeaconId = NewType("BeaconId", UUID)
 
 FileDescriptor = NewType("FileDescriptor", int)
 

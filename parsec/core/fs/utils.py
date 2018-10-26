@@ -53,7 +53,6 @@ def new_local_user_manifest(author: str) -> LocalUserManifest:
             "need_sync": True,
             "is_placeholder": True,
             "author": author,
-            "beacon_id": uuid4(),
             "created": now,
             "updated": now,
             "base_version": 0,
@@ -75,7 +74,6 @@ def new_local_workspace_manifest(author: str) -> LocalWorkspaceManifest:
             "need_sync": True,
             "is_placeholder": True,
             "author": author,
-            "beacon_id": uuid4(),
             "created": now,
             "updated": now,
             "base_version": 0,
@@ -143,6 +141,10 @@ def is_folder_manifest(manifest: Manifest) -> bool:
 
 def is_workspace_manifest(manifest: Manifest) -> bool:
     return manifest["type"].endswith("workspace_manifest")
+
+
+def is_user_manifest(manifest: Manifest) -> bool:
+    return manifest["type"].endswith("user_manifest")
 
 
 def remote_to_local_manifest(manifest: RemoteManifest) -> LocalManifest:

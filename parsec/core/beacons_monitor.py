@@ -16,13 +16,13 @@ async def monitor_beacons(device, fs, event_bus):
     for beacon_id in fs._local_folder_fs.get_local_beacons():
         event_bus.send("backend.beacon.listen", beacon_id=beacon_id)
 
-    def _on_workspace_loaded(sender, path, id, beacon_id):
-        workspaces.add(beacon_id)
-        event_bus.send("backend.beacon.listen", beacon_id=beacon_id)
+    def _on_workspace_loaded(sender, path, id):
+        workspaces.add(id)
+        event_bus.send("backend.beacon.listen", beacon_id=id)
 
-    def _on_workspace_unloaded(sender, path, id, beacon_id):
-        workspaces.remove(beacon_id)
-        event_bus.send("backend.beacon.unlisten", beacon_id=beacon_id)
+    def _on_workspace_unloaded(sender, path, id):
+        workspaces.remove(id)
+        event_bus.send("backend.beacon.unlisten", beacon_id=id)
 
     def _on_beacon_updated(sender, beacon_id, index, src_id, src_version):
         workspace_path = _retreive_workspace_from_beacon(device, fs, beacon_id)
@@ -48,14 +48,14 @@ async def monitor_beacons(device, fs, event_bus):
 
 
 def _retreive_workspace_from_beacon(device, fs, beacon_id):
-    root_manifest = fs._local_folder_fs.get_manifest(device.user_manifest_access)
-    if root_manifest["beacon_id"] == beacon_id:
+    # beacon_id is either the id of the user manifest or of a workpace manifest
+    if device.user_manifest_access["id"] == beacon_id:
         return "/"
 
+    root_manifest = fs._local_folder_fs.get_manifest(device.user_manifest_access)
     # No need to go recursive given workspaces must be direct root children
     for child_name, child_access in root_manifest["children"].items():
-        child_manifest = fs._local_folder_fs.get_manifest(child_access)
-        if child_manifest.get("beacon_id") == beacon_id:
+        if child_access["id"] == beacon_id:
             return f"/{child_name}"
 
     return None
