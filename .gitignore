@@ -61,3 +61,6 @@ target/
 
 # gnupg stuff
 random_seed
+
+# PyQt's big ass resource bundle, automatically generated
+parsec/core/gui/_resources_rc.py
