@@ -62,7 +62,6 @@ FolderManifestSchema = _FolderManifestSchema()
 
 class _WorkspaceManifestSchema(_FolderManifestSchema):
     type = fields.CheckedConstant("workspace_manifest", required=True)
-    beacon_id = fields.UUID(required=True)
     creator = fields.String(required=True)  # user_id
     participants = fields.List(fields.String(), required=True)  # list of user_ids
 
@@ -72,7 +71,6 @@ WorkspaceManifestSchema = _WorkspaceManifestSchema()
 
 class _UserManifestSchema(_FolderManifestSchema):
     type = fields.CheckedConstant("user_manifest", required=True)
-    beacon_id = fields.UUID(required=True)
     last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
 
 
@@ -130,7 +128,6 @@ LocalFolderManifestSchema = _LocalFolderManifestSchema()
 
 class _LocalWorkspaceManifest(_LocalFolderManifestSchema):
     type = fields.CheckedConstant("local_workspace_manifest", required=True)
-    beacon_id = fields.UUID(required=True)
     creator = fields.String(required=True)  # user_id
     participants = fields.List(fields.String(), required=True)  # list of user_ids
 
@@ -140,7 +137,6 @@ LocalWorkspaceManifest = _LocalWorkspaceManifest()
 
 class _LocalUserManifestSchema(_LocalFolderManifestSchema):
     type = fields.CheckedConstant("local_user_manifest", required=True)
-    beacon_id = fields.UUID(required=True)
     last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
 
 

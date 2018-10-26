@@ -46,8 +46,8 @@ class BaseSyncer:
                 manifest = self.local_folder_fs.get_manifest(access)
             except FSManifestLocalMiss:
                 # TODO: make the assert true...
-                # # Root should always be loaded
-                # assert access is not self.device.user_manifest_access
+                # Root should always be loaded
+                assert access is not self.device.user_manifest_access
                 return
 
             if is_folder_manifest(manifest):
@@ -168,6 +168,7 @@ class BaseSyncer:
         return loads_manifest(raw)
 
     async def _backend_vlob_create(self, access, manifest, notify_beacons):
+        assert manifest["version"] == 1
         ciphered = self.encryption_manager.encrypt_with_secret_key(
             access["key"], dumps_manifest(manifest)
         )
@@ -180,13 +181,12 @@ class BaseSyncer:
             "notify_beacons": notify_beacons,
         }
         ret = await self.backend_cmds_sender.send(payload)
-        # Just like for the block upload, we trust uuid4 colision resistance
-        # and consider getting an `already_exists_error` status means a
-        # previous attempt of ours succeed but we didn't get this information
-        if ret["status"] != "already_exists_error":
-            assert ret["status"] == "ok"
+        if ret["status"] == "already_exists_error":
+            raise SyncConcurrencyError(access)
+        assert ret["status"] == "ok"
 
     async def _backend_vlob_update(self, access, manifest, notify_beacons):
+        assert manifest["version"] > 1
         ciphered = self.encryption_manager.encrypt_with_secret_key(
             access["key"], dumps_manifest(manifest)
         )

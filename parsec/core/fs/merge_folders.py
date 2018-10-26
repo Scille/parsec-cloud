@@ -72,7 +72,8 @@ def merge_remote_folder_manifests(base, diverged, target):
         base_children = base["children"]
     assert base_version + 1 == diverged["version"]
     assert target["version"] >= diverged["version"]
-    assert diverged["created"] == target["created"]
+    # Not true when merging user manifest v1 given v0 is lazily generated
+    # assert diverged["created"] == target["created"]
 
     children, need_sync = merge_children(base_children, diverged["children"], target["children"])
 
@@ -108,7 +109,8 @@ def merge_local_folder_manifests(base, diverged, target):
         base_children = base["children"]
     assert base_version == diverged["base_version"]
     assert target["base_version"] > diverged["base_version"]
-    assert diverged["created"] == target["created"]
+    # Not true when merging user manifest v1 given v0 is lazily generated
+    # assert diverged["created"] == target["created"]
 
     children, need_sync = merge_children(base_children, diverged["children"], target["children"])
 
