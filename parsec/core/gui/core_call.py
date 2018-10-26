@@ -26,26 +26,26 @@ class _CoreCall:
     def stop(self):
         self._trio_portal.run_sync(self._cancel_scope.cancel)
 
-    def stat(self, *args, **kwargs):
-        return self._trio_portal.run(self._parsec_core.fs.stat, *args, **kwargs)
+    def stat(self, *args):
+        return self._trio_portal.run(self._parsec_core.fs.stat, *args)
 
-    def file_create(self, *args, **kwargs):
-        return self._trio_portal.run(self._parsec_core.fs.file_create, *args, **kwargs)
+    def file_create(self, *args):
+        return self._trio_portal.run(self._parsec_core.fs.file_create, *args)
 
-    def file_open(self, *args, **kwargs):
-        return self._trio_portal.run(self._parsec_core.fs.file_fd_open, *args, **kwargs)
+    def file_open(self, *args):
+        return self._trio_portal.run(self._parsec_core.fs.file_fd_open, *args)
 
-    def file_close(self, *args, **kwargs):
-        return self._trio_portal.run(self._parsec_core.fs.file_fd_close, *args, **kwargs)
+    def file_close(self, *args):
+        return self._trio_portal.run(self._parsec_core.fs.file_fd_close, *args)
 
-    def file_write(self, *args, **kwargs):
-        return self._trio_portal.run(self._parsec_core.fs.file_fd_write, *args, **kwargs)
+    def file_write(self, *args):
+        return self._trio_portal.run(self._parsec_core.fs.file_fd_write, *args)
 
-    def file_read(self, *args, **kwargs):
-        return self._trio_portal.run(self._parsec_core.fs.file_fd_read, *args, **kwargs)
+    def file_read(self, *args):
+        return self._trio_portal.run(self._parsec_core.fs.file_fd_read, *args)
 
-    def create_folder(self, *args, **kwargs):
-        return self._trio_portal.run(self._parsec_core.fs.folder_create, *args, **kwargs)
+    def create_folder(self, *args):
+        return self._trio_portal.run(self._parsec_core.fs.folder_create, *args)
 
     def delete_folder(self, *args, **kargs):
         return self._trio_portal.run(self._parsec_core.fs.delete, *args, **kargs)
@@ -65,32 +65,32 @@ class _CoreCall:
     def mount(self, mountpoint):
         self._trio_portal.run(self._parsec_core.mountpoint_manager.start, mountpoint)
 
-    def unmount(self, *args, **kwargs):
+    def unmount(self, *args):
         self._trio_portal.run(self._parsec_core.mountpoint_manager.stop)
 
-    def is_mounted(self, *args, **kwargs):
+    def is_mounted(self, *args):
         try:
-            return self._parsec_core.mountpoint_manager.is_started(*args, **kwargs)
+            return self._parsec_core.mountpoint_manager.is_started(*args)
         except NotLoggedError:
             return False
 
-    def login(self, *args, **kwargs):
-        self._trio_portal.run(self._parsec_core.login, *args, **kwargs)
+    def login(self, *args):
+        self._trio_portal.run(self._parsec_core.login, *args)
 
-    def logout(self, *args, **kwargs):
+    def logout(self, *args):
         try:
-            self._trio_portal.run(self._parsec_core.logout, *args, **kwargs)
+            self._trio_portal.run(self._parsec_core.logout, *args)
         except NotLoggedError:
             pass
 
-    def get_devices(self, *args, **kwargs):
+    def get_devices(self, *args):
         return self._parsec_core.local_devices_manager.list_available_devices()
 
-    def register_new_device(self, *args, **kwargs):
+    def register_new_device(self, *args):
         """
         Locally register the new device.
         """
-        return self._parsec_core.local_devices_manager.register_new_device(*args, **kwargs)
+        return self._parsec_core.local_devices_manager.register_new_device(*args)
 
     def load_device(self, *args, **kwargs):
         """
@@ -145,14 +145,14 @@ class _CoreCall:
             nitrokey_key_id,
         )
 
-    def claim_user(self, *args, **kwargs):
-        return self._trio_portal.run(claim_user, self._parsec_core.backend_addr, *args, **kwargs)
+    def claim_user(self, *args):
+        return self._trio_portal.run(claim_user, self._parsec_core.backend_addr, *args)
 
     def create_workspace(self, *args):
         return self._trio_portal.run(self._parsec_core.fs.workspace_create, *args)
 
-    def share_workspace(self, *args, **kwargs):
-        return self._trio_portal.run(self._parsec_core.fs.share, *args, **kwargs)
+    def share_workspace(self, *args):
+        return self._trio_portal.run(self._parsec_core.fs.share, *args)
 
 
 _CORE_CALL = None

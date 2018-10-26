@@ -1,75 +1,7 @@
 <RCC>
     <qresource prefix="/icons">
-        <file>images/icons/add.png</file>
-        <file>images/icons/archive.png</file>
-        <file>images/icons/cloud.png</file>
-        <file>images/icons/cloud_add.png</file>
-        <file>images/icons/cloud_download.png</file>
-        <file>images/icons/cloud_info.png</file>
-        <file>images/icons/cloud_minus.png</file>
-        <file>images/icons/cloud_ok.png</file>
-        <file>images/icons/cloud_refresh.png</file>
-        <file>images/icons/cloud_remove.png</file>
-        <file>images/icons/cloud_search.png</file>
-        <file>images/icons/cloud_settings.png</file>
-        <file>images/icons/cloud_upload.png</file>
-        <file>images/icons/cloud_wait.png</file>
-        <file>images/icons/cloud_warning.png</file>
         <file>images/icons/edit.png</file>
-        <file>images/icons/error.png</file>
-        <file>images/icons/exit.png</file>
         <file>images/icons/file.png</file>
-        <file>images/icons/file_add.png</file>
-        <file>images/icons/file_cloud.png</file>
-        <file>images/icons/file_download.png</file>
-        <file>images/icons/file_edit.png</file>
-        <file>images/icons/file_locked.png</file>
-        <file>images/icons/file_minus.png</file>
-        <file>images/icons/file_ok.png</file>
-        <file>images/icons/file_refresh.png</file>
-        <file>images/icons/file_remove.png</file>
-        <file>images/icons/files.png</file>
-        <file>images/icons/file_wait.png</file>
-        <file>images/icons/file_warning.png</file>
-        <file>images/icons/folder_add.png</file>
-        <file>images/icons/folder_cloud.png</file>
-        <file>images/icons/folder_download.png</file>
-        <file>images/icons/folder_edit.png</file>
-        <file>images/icons/folder_empty.png</file>
-        <file>images/icons/folder_full.png</file>
-        <file>images/icons/folder_locked.png</file>
-        <file>images/icons/folder_minus.png</file>
-        <file>images/icons/folder_ok.png</file>
-        <file>images/icons/folder_refresh.png</file>
-        <file>images/icons/folder_remove.png</file>
-        <file>images/icons/folder_upload.png</file>
-        <file>images/icons/folder_wait.png</file>
-        <file>images/icons/folder_warning.png</file>
-        <file>images/icons/heart.png</file>
-        <file>images/icons/home.png</file>
-        <file>images/icons/info.png</file>
-        <file>images/icons/list.png</file>
-        <file>images/icons/locked.png</file>
-        <file>images/icons/minus.png</file>
-        <file>images/icons/placeholder.png</file>
-        <file>images/icons/power.png</file>
-        <file>images/icons/refresh.png</file>
-        <file>images/icons/search.png</file>
-        <file>images/icons/settings.png</file>
-        <file>images/icons/trash.png</file>
-        <file>images/icons/unlocked.png</file>
-        <file>images/icons/user.png</file>
-        <file>images/icons/user_add.png</file>
-        <file>images/icons/user_edit.png</file>
-        <file>images/icons/user_remove.png</file>
-        <file>images/icons/users.png</file>
-        <file>images/icons/users_manage.png</file>
-        <file>images/icons/user_warning.png</file>
-        <file>images/icons/warning.png</file>
-        <file>images/icons/scille.png</file>
-        <file>images/icons/parsec.png</file>
-        <file>images/icons/up_arrow.png</file>
-        <file>images/icons/folder_parent.png</file>
         <file>images/icons/workspace.png</file>
         <file>images/icons/menu_devices.png</file>
         <file>images/icons/menu_folder.png</file>
@@ -81,6 +13,21 @@
         <file>images/icons/login.png</file>
         <file>images/icons/checked.png</file>
         <file>images/icons/down-arrow.png</file>
+        <file>images/icons/hard-drive.png</file>
+        <file>images/icons/new_workspace.png</file>
+        <file>images/icons/share.png</file>
+        <file>images/icons/wifi.png</file>
+        <file>images/icons/desk.png</file>
+        <file>images/icons/file_selected.png</file>
+        <file>images/icons/folder.png</file>
+        <file>images/icons/folder_selected.png</file>
+        <file>images/icons/garbage.png</file>
+        <file>images/icons/garbage_selected.png</file>
+        <file>images/icons/go-back.png</file>
+        <file>images/icons/icons.zip</file>
+        <file>images/icons/import.png</file>
+        <file>images/icons/new_document.png</file>
+        <file>images/icons/search.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>

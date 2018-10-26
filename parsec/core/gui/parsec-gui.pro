@@ -6,7 +6,7 @@ SOURCES += app.py \
            login_widget.py \
            settings_widget.py \
            users_widget.py \
-           file_size.py
+           file_size.py \
 
 
 TRANSLATIONS += tr/parsec_fr.ts \
@@ -27,6 +27,9 @@ FORMS += forms/main_window.ui \
          forms/devices_widget.ui \
          forms/login_login_widget.ui \
          forms/login_register_device_widget.ui \
-         forms/login_register_user_widget.ui
+         forms/login_register_user_widget.ui \
+         forms/mount_widget.ui \
+         forms/workspaces_widget.ui \
+         forms/workspace_button.ui
 
 RESOURCES += rc/resources.qrc

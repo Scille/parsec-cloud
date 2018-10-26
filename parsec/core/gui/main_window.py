@@ -21,7 +21,7 @@ from parsec.core.gui import settings
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.custom_widgets import show_error, show_info
 from parsec.core.gui.login_widget import LoginWidget
-from parsec.core.gui.files_widget import FilesWidget
+from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.settings_widget import SettingsWidget
 from parsec.core.gui.devices_widget import DevicesWidget
@@ -51,8 +51,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.main_widget_layout.insertWidget(1, self.devices_widget)
         self.settings_widget = SettingsWidget(parent=self.widget_main)
         self.main_widget_layout.insertWidget(1, self.settings_widget)
-        self.files_widget = FilesWidget(parent=self.widget_main)
-        self.main_widget_layout.insertWidget(1, self.files_widget)
+        self.mount_widget = MountWidget(parent=self.widget_main)
+        self.main_widget_layout.insertWidget(1, self.mount_widget)
         self.show_login_widget()
         self.current_device = None
         self.add_tray_icon()
@@ -75,7 +75,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tray.show()
 
     def connect_all(self):
-        self.button_files.clicked.connect(self.show_files_widget)
+        self.button_files.clicked.connect(self.show_mount_widget)
         self.button_users.clicked.connect(self.show_users_widget)
         self.button_settings.clicked.connect(self.show_settings_widget)
         self.button_devices.clicked.connect(self.show_devices_widget)
@@ -105,7 +105,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if core_call().is_mounted():
             core_call().unmount()
         core_call().logout()
-        self.files_widget.block_show = True
         device = core_call().load_device("johndoe@test")
         core_call().login(device)
         self.current_device = device
@@ -113,7 +112,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.login_widget.reset()
         self.users_widget.reset()
         self.devices_widget.reset()
-        self.files_widget.reset()
+        self.mount_widget.reset()
         self.show_login_widget()
 
     def mount(self):
@@ -131,7 +130,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             print(exc)
             return None
 
-        self.files_widget.set_mountpoint(mountpoint)
+        self.mount_widget.set_mountpoint(mountpoint)
         return mountpoint
 
     def remount(self):
@@ -149,9 +148,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_settings_widget()
             return
 
-        self.files_widget.reset()
-        self.files_widget.set_mountpoint(mountpoint)
-        self.show_files_widget()
+        self.mount_widget.reset()
+        self.mount_widget.set_mountpoint(mountpoint)
+        self.show_mount_widget()
 
     def perform_login(
         self, device_id, password=None, nitrokey_pin=None, nitrokey_key=None, nitrokey_token=None
@@ -181,8 +180,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.show_settings_widget()
                 return
             self.widget_menu.show()
-            self.files_widget.block_show = False
-            self.show_files_widget()
+            self.show_mount_widget()
         except DeviceLoadingError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
 
@@ -391,10 +389,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             event.ignore()
             self.hide()
 
-    def show_files_widget(self):
+    def show_mount_widget(self):
         self._hide_all_central_widgets()
         self.button_files.setChecked(True)
-        self.files_widget.show()
+        self.mount_widget.show()
 
     def show_users_widget(self):
         self._hide_all_central_widgets()
@@ -416,7 +414,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.login_widget.show()
 
     def _hide_all_central_widgets(self):
-        self.files_widget.hide()
+        self.mount_widget.hide()
         self.users_widget.hide()
         self.settings_widget.hide()
         self.login_widget.hide()
