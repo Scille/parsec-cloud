@@ -16,13 +16,8 @@
 <context>
     <name>FileItemWidget</name>
     <message>
-        <location filename="../forms/file_item_widget.ui" line="38"/>
+        <location filename="../forms/file_item_widget.ui" line="45"/>
         <source>Form</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/file_item_widget.ui" line="141"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -87,7 +82,7 @@
         <translation type="obsolete">Importer des fichiers</translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="330"/>
+        <location filename="../forms/files_widget.ui" line="338"/>
         <source>Search files or folders</source>
         <translation>Rechercher des fichiers ou répertoire</translation>
     </message>
@@ -113,19 +108,19 @@
         <translation type="obsolete">{} existe déjà</translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="226"/>
+        <location filename="../forms/files_widget.ui" line="228"/>
         <source>New folder</source>
         <translation>Nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="102"/>
+        <location filename="../files_widget.py" line="163"/>
         <source>Enter new folder name</source>
         <translation>Entrez le nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="291"/>
+        <location filename="../files_widget.py" line="135"/>
         <source>A folder with the same name already exists.</source>
-        <translation type="obsolete">Un répertoire avec le même nom existe déjà.</translation>
+        <translation type="unfinished">Un répertoire avec le même nom existe déjà.</translation>
     </message>
     <message>
         <location filename="../files_widget.py" line="311"/>
@@ -203,43 +198,46 @@
         <translation type="obsolete">Un espace de travail du même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="177"/>
+        <location filename="../forms/files_widget.ui" line="178"/>
         <source>Back</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="275"/>
+        <location filename="../forms/files_widget.ui" line="278"/>
         <source>Import</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="399"/>
+        <location filename="../forms/files_widget.ui" line="407"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="438"/>
+        <location filename="../forms/files_widget.ui" line="446"/>
         <source>Created on</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="471"/>
+        <location filename="../forms/files_widget.ui" line="479"/>
         <source>Updated on</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="498"/>
+        <location filename="../forms/files_widget.ui" line="512"/>
         <source>Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="102"/>
+        <location filename="../files_widget.py" line="163"/>
         <source>Folder name</source>
         <translation type="unfinished"></translation>
     </message>
+</context>
+<context>
+    <name>FolderItemWidget</name>
     <message>
-        <location filename="../files_widget.py" line="110"/>
-        <source>Can not create the new folder.</source>
+        <location filename="../forms/folder_item_widget.ui" line="26"/>
+        <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -559,14 +557,27 @@
 <context>
     <name>ParentFolderWidget</name>
     <message>
-        <location filename="../forms/parent_folder_widget.ui" line="32"/>
+        <location filename="../forms/parent_item_widget.ui" line="66"/>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Parent folder&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="obsolete">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Dossier parent&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+</context>
+<context>
+    <name>ParentItemWidget</name>
+    <message>
+        <location filename="../forms/parent_item_widget.ui" line="32"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/parent_folder_widget.ui" line="66"/>
+        <location filename="../forms/parent_item_widget.ui" line="66"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Parent folder&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Dossier parent&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation type="obsolete">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Dossier parent&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+        <location filename="../forms/parent_item_widget.ui" line="83"/>
+        <source>Parent folder</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -25,22 +25,22 @@
 background-color: rgb(255, 255, 255);
 }
 
-QTableWidget
+QListWidget
 {
-font-size: 12px;
-font-weight: bold;
+border: 1px solid rgb(28, 78, 163);
 }
 
-QHeaderView::section
+QListWidget:item
 {
-height: 32px;
-background-color: rgb(12, 65, 157);
-color: rgb(255, 255, 255);
-font-size: 16px;
-font-weight: bold;
-border: 0;
+background-color: rgb(255, 255, 255);
+color: rgb(0, 0, 0);
 }
-</string>
+
+QListWidget:item:selected
+{
+background-color: rgb(0, 0, 255);
+color: rgb(0, 0, 0);
+}</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -158,6 +158,7 @@ border: 0;
           </property>
           <property name="font">
            <font>
+            <pointsize>12</pointsize>
             <weight>75</weight>
             <bold>true</bold>
            </font>
@@ -207,6 +208,7 @@ font-weight: bold;</string>
           </property>
           <property name="font">
            <font>
+            <pointsize>12</pointsize>
             <weight>75</weight>
             <bold>true</bold>
            </font>
@@ -256,6 +258,7 @@ font-weight: bold;</string>
           </property>
           <property name="font">
            <font>
+            <pointsize>12</pointsize>
             <weight>75</weight>
             <bold>true</bold>
            </font>
@@ -318,6 +321,11 @@ font-weight: bold;</string>
           <height>32</height>
          </size>
         </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
         <property name="styleSheet">
          <string notr="true">background-image: url(:/icons/images/icons/search.png);
 background-repeat: no-repeat;
@@ -345,13 +353,13 @@ color: rgb(28, 78, 163);</string>
            <widget class="QLabel" name="label_2">
             <property name="minimumSize">
              <size>
-              <width>32</width>
+              <width>38</width>
               <height>32</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>32</width>
+              <width>38</width>
               <height>32</height>
              </size>
             </property>
@@ -410,13 +418,13 @@ border: 0;</string>
            <widget class="QPushButton" name="pushButton_2">
             <property name="minimumSize">
              <size>
-              <width>0</width>
+              <width>186</width>
               <height>32</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>16777215</width>
+              <width>176</width>
               <height>32</height>
              </size>
             </property>
@@ -443,13 +451,13 @@ padding-right: 10px;</string>
            <widget class="QPushButton" name="pushButton_3">
             <property name="minimumSize">
              <size>
-              <width>0</width>
+              <width>186</width>
               <height>32</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>16777215</width>
+              <width>176</width>
               <height>32</height>
              </size>
             </property>
@@ -476,8 +484,14 @@ padding-right: 10px;</string>
            <widget class="QPushButton" name="pushButton_4">
             <property name="minimumSize">
              <size>
-              <width>32</width>
+              <width>86</width>
               <height>32</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>86</width>
+              <height>16777215</height>
              </size>
             </property>
             <property name="font">
@@ -503,13 +517,13 @@ padding-right: 10px;</string>
            <widget class="QLabel" name="label_3">
             <property name="minimumSize">
              <size>
-              <width>32</width>
+              <width>38</width>
               <height>32</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>32</width>
+              <width>38</width>
               <height>32</height>
              </size>
             </property>
@@ -526,7 +540,7 @@ padding-right: 10px;</string>
         <item>
          <widget class="QListWidget" name="list_files">
           <property name="styleSheet">
-           <string notr="true">border: 2px solid rgb(12, 65, 157);</string>
+           <string notr="true"/>
           </property>
          </widget>
         </item>

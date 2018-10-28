@@ -20,6 +20,7 @@ class MountWidget(QWidget, Ui_MountWidget):
 
     def set_mountpoint(self, mountpoint):
         self.label_mountpoint.setText(mountpoint)
+        self.files_widget.mountpoint = mountpoint
 
     def load_workspace(self, workspace_name):
         self.workspaces_widget.hide()

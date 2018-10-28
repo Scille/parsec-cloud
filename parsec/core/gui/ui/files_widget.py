@@ -26,22 +26,22 @@ class Ui_FilesWidget(object):
             "background-color: rgb(255, 255, 255);\n"
             "}\n"
             "\n"
-            "QTableWidget\n"
+            "QListWidget\n"
             "{\n"
-            "font-size: 12px;\n"
-            "font-weight: bold;\n"
+            "border: 1px solid rgb(28, 78, 163);\n"
             "}\n"
             "\n"
-            "QHeaderView::section\n"
+            "QListWidget:item\n"
             "{\n"
-            "height: 32px;\n"
-            "background-color: rgb(12, 65, 157);\n"
-            "color: rgb(255, 255, 255);\n"
-            "font-size: 16px;\n"
-            "font-weight: bold;\n"
-            "border: 0;\n"
+            "background-color: rgb(255, 255, 255);\n"
+            "color: rgb(0, 0, 0);\n"
             "}\n"
-            ""
+            "\n"
+            "QListWidget:item:selected\n"
+            "{\n"
+            "background-color: rgb(0, 0, 255);\n"
+            "color: rgb(0, 0, 0);\n"
+            "}"
         )
         self.verticalLayout = QtWidgets.QVBoxLayout(FilesWidget)
         self.verticalLayout.setContentsMargins(0, 15, 0, 15)
@@ -102,6 +102,7 @@ class Ui_FilesWidget(object):
         self.button_back = QtWidgets.QPushButton(self.widget_files)
         self.button_back.setMinimumSize(QtCore.QSize(0, 32))
         font = QtGui.QFont()
+        font.setPointSize(12)
         font.setBold(True)
         font.setWeight(75)
         self.button_back.setFont(font)
@@ -128,6 +129,7 @@ class Ui_FilesWidget(object):
         self.button_create_folder = QtWidgets.QPushButton(self.widget_files)
         self.button_create_folder.setMinimumSize(QtCore.QSize(0, 32))
         font = QtGui.QFont()
+        font.setPointSize(12)
         font.setBold(True)
         font.setWeight(75)
         self.button_create_folder.setFont(font)
@@ -156,6 +158,7 @@ class Ui_FilesWidget(object):
         self.button_import = QtWidgets.QPushButton(self.widget_files)
         self.button_import.setMinimumSize(QtCore.QSize(0, 32))
         font = QtGui.QFont()
+        font.setPointSize(12)
         font.setBold(True)
         font.setWeight(75)
         self.button_import.setFont(font)
@@ -186,6 +189,9 @@ class Ui_FilesWidget(object):
         self.verticalLayout_2.addLayout(self.horizontalLayout_2)
         self.line_edit_search = QtWidgets.QLineEdit(self.widget_files)
         self.line_edit_search.setMinimumSize(QtCore.QSize(0, 32))
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.line_edit_search.setFont(font)
         self.line_edit_search.setStyleSheet(
             "background-image: url(:/icons/images/icons/search.png);\n"
             "background-repeat: no-repeat;\n"
@@ -203,8 +209,8 @@ class Ui_FilesWidget(object):
         self.horizontalLayout_4.setSpacing(0)
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
         self.label_2 = QtWidgets.QLabel(self.widget_files)
-        self.label_2.setMinimumSize(QtCore.QSize(32, 32))
-        self.label_2.setMaximumSize(QtCore.QSize(32, 32))
+        self.label_2.setMinimumSize(QtCore.QSize(38, 32))
+        self.label_2.setMaximumSize(QtCore.QSize(38, 32))
         self.label_2.setStyleSheet("background-color: rgb(12, 65, 157);")
         self.label_2.setText("")
         self.label_2.setObjectName("label_2")
@@ -232,8 +238,8 @@ class Ui_FilesWidget(object):
         self.pushButton.setObjectName("pushButton")
         self.horizontalLayout_4.addWidget(self.pushButton)
         self.pushButton_2 = QtWidgets.QPushButton(self.widget_files)
-        self.pushButton_2.setMinimumSize(QtCore.QSize(0, 32))
-        self.pushButton_2.setMaximumSize(QtCore.QSize(16777215, 32))
+        self.pushButton_2.setMinimumSize(QtCore.QSize(186, 32))
+        self.pushButton_2.setMaximumSize(QtCore.QSize(176, 32))
         font = QtGui.QFont()
         font.setPointSize(12)
         font.setBold(True)
@@ -249,8 +255,8 @@ class Ui_FilesWidget(object):
         self.pushButton_2.setObjectName("pushButton_2")
         self.horizontalLayout_4.addWidget(self.pushButton_2)
         self.pushButton_3 = QtWidgets.QPushButton(self.widget_files)
-        self.pushButton_3.setMinimumSize(QtCore.QSize(0, 32))
-        self.pushButton_3.setMaximumSize(QtCore.QSize(16777215, 32))
+        self.pushButton_3.setMinimumSize(QtCore.QSize(186, 32))
+        self.pushButton_3.setMaximumSize(QtCore.QSize(176, 32))
         font = QtGui.QFont()
         font.setPointSize(12)
         font.setBold(True)
@@ -266,7 +272,8 @@ class Ui_FilesWidget(object):
         self.pushButton_3.setObjectName("pushButton_3")
         self.horizontalLayout_4.addWidget(self.pushButton_3)
         self.pushButton_4 = QtWidgets.QPushButton(self.widget_files)
-        self.pushButton_4.setMinimumSize(QtCore.QSize(32, 32))
+        self.pushButton_4.setMinimumSize(QtCore.QSize(86, 32))
+        self.pushButton_4.setMaximumSize(QtCore.QSize(86, 16777215))
         font = QtGui.QFont()
         font.setPointSize(12)
         font.setBold(True)
@@ -282,15 +289,15 @@ class Ui_FilesWidget(object):
         self.pushButton_4.setObjectName("pushButton_4")
         self.horizontalLayout_4.addWidget(self.pushButton_4)
         self.label_3 = QtWidgets.QLabel(self.widget_files)
-        self.label_3.setMinimumSize(QtCore.QSize(32, 32))
-        self.label_3.setMaximumSize(QtCore.QSize(32, 32))
+        self.label_3.setMinimumSize(QtCore.QSize(38, 32))
+        self.label_3.setMaximumSize(QtCore.QSize(38, 32))
         self.label_3.setStyleSheet("background-color: rgb(12, 65, 157);")
         self.label_3.setText("")
         self.label_3.setObjectName("label_3")
         self.horizontalLayout_4.addWidget(self.label_3)
         self.verticalLayout_3.addLayout(self.horizontalLayout_4)
         self.list_files = QtWidgets.QListWidget(self.widget_files)
-        self.list_files.setStyleSheet("border: 2px solid rgb(12, 65, 157);")
+        self.list_files.setStyleSheet("")
         self.list_files.setObjectName("list_files")
         self.verticalLayout_3.addWidget(self.list_files)
         self.verticalLayout_2.addLayout(self.verticalLayout_3)
