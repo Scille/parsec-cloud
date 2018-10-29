@@ -81,7 +81,7 @@ async def test_multi_blockstore_get_partial_failure(alice_backend_sock, bob_back
 async def test_blockstore_post_bad_msg(alice_backend_sock, bad_msg):
     await alice_backend_sock.send({"cmd": "blockstore_post", **bad_msg})
     rep = await alice_backend_sock.recv()
-    assert rep["status"] == "bad_message"
+    assert rep["status"] == "blockstore_error"
 
 
 @pytest.mark.trio

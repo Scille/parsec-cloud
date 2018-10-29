@@ -42,3 +42,7 @@ class OutOfDateError(ParsecError):
 
 class TimeoutError(ParsecError):
     status = "timeout"
+
+
+class BlockstoreError(ParsecError):
+    status = "blockstore_error"

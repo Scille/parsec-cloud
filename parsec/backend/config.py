@@ -50,7 +50,7 @@ class BackendConfig:
                 "\n"
                 + "\n".join(
                     [
-                        f"Blockstore {i} requires environment variables: {', '.join(invalidated[i])}"
+                        f"Blockstore {i} requires environment variables: {', '.join(set(invalidated[i]))}"
                         for i in invalidated
                     ]
                 )
