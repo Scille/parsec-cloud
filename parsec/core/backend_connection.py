@@ -118,6 +118,7 @@ class BackendConnectionPool:
         self.max_connections = max_connections
         self.created_connections = 0
         self.pool = Queue(self.max_connections)
+        self.semaphore = trio.Semaphore(self.max_connections)
 
     def size(self):
         return self.created_connections
@@ -143,29 +144,32 @@ class BackendConnectionPool:
         except Empty:
             pass
         self.created_connections = 0
+        self.semaphore = trio.Semaphore(self.max_connections)
 
     @asynccontextmanager
     async def connection(self, fresh=False):
         connection = None
+        await self.semaphore.acquire()
         if not fresh:
             try:
                 connection = self.pool.get_nowait()
             except Empty:
                 pass
         if not connection:
-            while self.created_connections >= self.max_connections:
-                await trio.sleep(0.1)
             try:
                 connection = await self.make_connection()
             except HandshakeBadIdentity as exc:
                 # TODO: think about the handling of this kind of exception...
                 self.created_connections -= 1
+                self.semaphore.release()
                 raise BackendNotAvailable() from exc
         try:
             yield connection
         except (trio.TooSlowError, trio.BrokenStreamError, trio.ClosedStreamError) as exc:
             await connection.aclose()
             self.created_connections -= 1
+            self.semaphore.release()
             raise BackendNotAvailable() from exc
         else:
+            self.semaphore.release()
             self.release(connection)

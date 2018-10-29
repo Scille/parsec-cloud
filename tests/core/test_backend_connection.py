@@ -97,11 +97,11 @@ async def test_backend_send_anonymous_cmd(running_backend):
 
 @pytest.mark.trio
 async def test_connection_pool_max_connection(running_backend, alice):
-    async def temp_connection(send_channel, timeout, cancel_scope):
+    async def temp_connection(send_channel, timeout):
         async with connection_pool.connection():
-            await send_channel.send(True)
-            await trio.sleep(timeout)
-            cancel_scope.cancel()
+            async with send_channel:
+                await send_channel.send(True)
+                await trio.sleep(timeout)
 
     max_connections = 2
     connection_pool = BackendConnectionPool(
@@ -114,13 +114,12 @@ async def test_connection_pool_max_connection(running_backend, alice):
         async with connection_pool.connection():
             assert connection_pool.size() == 2
 
-        # Blocking full pool as any connection is released
+        # Blocking full pool if no connection is released
         async with trio.open_nursery() as nursery:
             send_channel, receive_channel = trio.open_memory_channel(0)
-            async with send_channel:
-                nursery.start_soon(temp_connection, send_channel.clone(), 0.3, nursery.cancel_scope)
-                await receive_channel.receive()
-            with trio.move_on_after(0.2) as cancel_scope:
+            nursery.start_soon(temp_connection, send_channel.clone(), 0.1)
+            await receive_channel.receive()
+            with trio.move_on_after(0.05) as cancel_scope:
                 async with connection_pool.connection():
                     pass
             assert cancel_scope.cancelled_caught
@@ -128,10 +127,9 @@ async def test_connection_pool_max_connection(running_backend, alice):
         # Temporary blocking full pool until a connection is released
         async with trio.open_nursery() as nursery:
             send_channel, receive_channel = trio.open_memory_channel(0)
-            async with send_channel:
-                nursery.start_soon(temp_connection, send_channel.clone(), 0.1, nursery.cancel_scope)
-                await receive_channel.receive()
-            with trio.move_on_after(0.2) as cancel_scope:
+            nursery.start_soon(temp_connection, send_channel.clone(), 0.05)
+            await receive_channel.receive()
+            with trio.move_on_after(0.1) as cancel_scope:
                 async with connection_pool.connection():
                     pass
             assert not cancel_scope.cancelled_caught
