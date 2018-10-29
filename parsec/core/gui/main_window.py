@@ -222,17 +222,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             device_id = f"{user_id}@{device_name}"
             if not use_nitrokey:
                 core_call().register_new_device(
-                    device_id, privkey, signkey, manifest, use_nitrokey=False, password=password
+                    device_id, privkey, signkey, manifest, password, False
                 )
             else:
                 core_call().register_new_device(
-                    device_id,
-                    privkey,
-                    signkey,
-                    manifest,
-                    use_nitrokey=True,
-                    nitrokey_token_id=nitrokey_token,
-                    nitrokey_key_id=nitrokey_key,
+                    device_id, privkey, signkey, manifest, None, True, nitrokey_token, nitrokey_key
                 )
             self.login_widget.add_device(device_id)
             show_info(
@@ -390,6 +384,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.hide()
 
     def show_mount_widget(self):
+        self.mount_widget.reset()
         self._hide_all_central_widgets()
         self.button_files.setChecked(True)
         self.mount_widget.show()

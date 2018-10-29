@@ -7,19 +7,19 @@
     <x>0</x>
     <y>0</y>
     <width>210</width>
-    <height>205</height>
+    <height>210</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>210</width>
-    <height>173</height>
+    <height>210</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>210</width>
-    <height>205</height>
+    <height>300</height>
    </size>
   </property>
   <property name="font">
@@ -29,6 +29,19 @@
   </property>
   <property name="windowTitle">
    <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMenu::item
+{
+background-color: rgb(255, 255, 255);
+color: rgb(0, 0, 0);
+}
+
+QMenu::item:selected
+{
+background-color: rgb(45, 144, 209);
+color: rgb(255, 255, 255);
+}</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -114,6 +127,9 @@ padding: 20px;</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
      </property>
     </widget>
    </item>

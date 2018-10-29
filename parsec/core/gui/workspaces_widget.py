@@ -2,15 +2,18 @@ import os
 
 from PyQt5.QtCore import pyqtSignal, QCoreApplication, QPoint, QSize, Qt
 from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import QWidget, QInputDialog
+from PyQt5.QtWidgets import QWidget, QInputDialog, QMenu
 
+from parsec.core.gui.custom_widgets import show_error, show_warning, show_info
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 
+from parsec.core.fs.sharing import SharingRecipientError
+
 
 class WorkspaceButton(QWidget, Ui_WorkspaceButton):
-    context_menu_requested = pyqtSignal(str, QPoint)
+    context_menu_requested = pyqtSignal(QWidget, QPoint)
     clicked = pyqtSignal(str)
 
     def __init__(self, workspace_name, *args, **kwargs):
@@ -21,12 +24,20 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.emit_context_menu_requested)
 
+    @property
+    def name(self):
+        return self.label_workspace.text()
+
+    @name.setter
+    def name(self, value):
+        self.label_workspace.setText(value)
+
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:
             self.clicked.emit(self.workspace_name)
 
     def emit_context_menu_requested(self, pos):
-        self.context_menu_requested.emit(self.workspace_name, pos)
+        self.context_menu_requested.emit(self, pos)
 
 
 class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
@@ -54,14 +65,14 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         global_pos = workspace_button.mapToGlobal(pos)
         menu = QMenu(workspace_button)
         action = menu.addAction(QCoreApplication.translate("WorkspacesWidget", "Share"))
-        action.triggered.connect(self.share_workspace(workspace_button.text()))
+        action.triggered.connect(self.share_workspace(workspace_button))
         action = menu.addAction(QCoreApplication.translate("WorkspacesWidget", "Rename"))
-        action.triggered.connect(self.action_move_workspace(workspace_button.text()))
+        action.triggered.connect(self.action_move_workspace(workspace_button))
         menu.exec_(global_pos)
 
-    def action_move_workspace(self, workspace_name):
+    def action_move_workspace(self, workspace_button):
         def _inner_move_workspace():
-            current_file_path = os.path.join("/", workspace_name)
+            current_file_path = os.path.join("/", workspace_button.name)
             new_name, ok = QInputDialog.getText(
                 self,
                 QCoreApplication.translate("WorkspacesWidget", "New name"),
@@ -74,44 +85,56 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                     self, QCoreApplication.translate("WorkspacesWidget", "This name is not valid.")
                 )
                 return
-            if new_name in self._workspace_names():
-                show_error(
+            try:
+                core_call().move_workspace(current_file_path, os.path.join("/", new_name))
+                workspace_button.name = new_name
+            except FileExistsError:
+                show_warning(
                     self,
                     QCoreApplication.translate(
-                        "WorkspacesWidget", "A workspace of the same name already exists."
+                        "WorkspacesWidget", "A workspace with the same name already exists."
                     ),
                 )
-                return
-            core_call().move_workspace(current_file_path, os.path.join("/", new_name))
+            except:
+                show_error(
+                    self,
+                    QCoreApplication.translate("WorkspacesWidget", "Can not rename the workspace."),
+                )
 
         return _inner_move_workspace
 
-    def share_workspace(self, workspace_name):
+    def share_workspace(self, workspace_button):
         def _inner_share_workspace():
             user, ok = QInputDialog.getText(
                 self,
                 QCoreApplication.translate("WorkspacesWidget", "Share a workspace"),
                 QCoreApplication.translate(
                     "WorkspacesWidget", "Give a user name to share the workspace {} with."
-                ).format(workspace_name),
+                ).format(workspace_button.name),
             )
             if not ok or not user:
                 return
             try:
-                core_call().share_workspace("/" + workspace_name, user)
+                core_call().share_workspace("/" + workspace_button.name, user)
+                show_info(
+                    self,
+                    QCoreApplication.translate(
+                        "WorkspacesWidget", "The workspaces has been shared."
+                    ),
+                )
             except SharingRecipientError:
                 show_warning(
                     self,
                     QCoreApplication.translate(
                         "WorkspacesWidget", 'Can not share the workspace "{}" with this user.'
-                    ).format(workspace_name),
+                    ).format(workspace_button.name),
                 )
             except:
                 show_error(
                     self,
                     QCoreApplication.translate(
                         "WorkspacesWidget", 'Can not share the workspace "{}" with "{}".'
-                    ).format(workspace_name, user),
+                    ).format(workspace_button.name, user),
                 )
 
         return _inner_share_workspace
@@ -128,7 +151,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             core_call().create_workspace(os.path.join("/", workspace_name))
             self.add_workspace(workspace_name)
         except FileExistsError:
-            show_warning(
+            show_error(
                 self,
                 QCoreApplication.translate(
                     "WorkspacesWidget", "A workspace with the same name already exists."

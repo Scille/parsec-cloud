@@ -14,7 +14,19 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(255, 255, 255);</string>
+   <string notr="true">background-color: rgb(255, 255, 255);
+
+QMenu::item
+{
+background-color: rgb(255, 255, 255);
+color: rgb(0, 0, 0);
+}
+
+QMenu::item:selected
+{
+background-color: rgb(45, 144, 209);
+color: rgb(255, 255, 255);
+}</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">

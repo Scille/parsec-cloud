@@ -18,7 +18,6 @@ from PyQt5.QtWidgets import (
 
 from parsec.core.gui import desktop
 from parsec.core.gui.core_call import core_call
-from parsec.core.gui.file_size import get_filesize
 from parsec.core.gui.custom_widgets import show_error, show_warning, get_open_files
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.gui.item_widget import FileItemWidget, FolderItemWidget, ParentItemWidget
@@ -38,10 +37,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.button_import.clicked.connect(self.import_clicked)
         self.list_files.setContextMenuPolicy(Qt.CustomContextMenu)
         self.list_files.customContextMenuRequested.connect(self.show_context_menu)
-        self.list_files.itemSelectionChanged.connect(self.set_item_selected)
+        self.list_files.currentItemChanged.connect(self.set_item_selected)
         self.list_files.itemDoubleClicked.connect(self.item_double_clicked)
         self.line_edit_search.textChanged.connect(self.filter_files)
-        self.previously_selected = None
         self.current_directory = ""
         self.mountpoint = ""
         self.workspace = None
@@ -49,18 +47,17 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         # core_call().connect_event("fs.entry.synced", self._on_fs_entry_synced_trio)
         # self.current_directory_changed_qt.connect(self._on_current_directory_changed_qt)
 
-    def set_item_selected(self):
-        if self.previously_selected:
-            self.list_files.itemWidget(self.previously_selected).set_selected(False)
-        self.previously_selected = self.list_files.currentItem()
-        self.list_files.itemWidget(self.previously_selected).set_selected(True)
+    def set_item_selected(self, current, previous):
+        if previous:
+            self.list_files.itemWidget(previous).set_selected(False)
+        if current:
+            self.list_files.itemWidget(current).set_selected(True)
 
     def set_workspace(self, workspace):
         self.workspace = workspace
         self.load("")
 
     def load(self, directory):
-        self.previously_selected = None
         self.list_files.clear()
         self.current_directory = directory
         if self.current_directory:
@@ -75,8 +72,18 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             elif attrs["type"] == "file":
                 self._add_file(child, attrs["size"], attrs["created"], attrs["updated"])
 
-    def _import_folder(self, path):
-        pass
+    def _import_folder(self, src, dst):
+        errs = []
+        for f in src.iterdir():
+            try:
+                core_call().create_folder(dst)
+                if f.is_dir():
+                    errs.extend(self._import_folder(f, os.path.join(dst, f.name)))
+                elif f.is_file():
+                    errs.extend(self._import_file(f, os.path.join(dst, f.name)))
+            except:
+                errs.append(f)
+        return errs
 
     def _import_file(self, src, dst):
         fd_out = None
@@ -89,9 +96,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     if not chunk:
                         break
                     core_call().file_write(fd_out, chunk)
-            return True
-        except OSError as exc:
-            return False
+            return []
+        except:
+            return [src]
         finally:
             if fd_out:
                 core_call().file_close(fd_out)
@@ -104,14 +111,26 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         for f in files:
             p = pathlib.Path(f)
             if p.is_dir():
-                self._import_folder(p)
+                errs.extend(
+                    self._import_folder(
+                        p, os.path.join("/", self.workspace, self.current_directory, p.name)
+                    )
+                )
             elif p.is_file():
-                if not self._import_file(
-                    str(p), os.path.join("/", self.workspace, self.current_directory, p.name)
-                ):
-                    errs.append(str(p))
+                errs.extend(
+                    self._import_file(
+                        str(p), os.path.join("/", self.workspace, self.current_directory, p.name)
+                    )
+                )
             else:
                 print("Neither file nor dir, ignoring", f)
+        if errs:
+            show_error(
+                self,
+                QCoreApplication.translate(
+                    "FilesWidget", "Some files or folders could not be imported:\n{}"
+                ).format("\n".join([str(e) for e in errs])),
+            )
         self.load(self.current_directory)
 
     def filter_files(self, pattern):

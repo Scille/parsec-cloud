@@ -67,7 +67,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="163"/>
+        <location filename="../files_widget.py" line="181"/>
         <source>Enter new folder name</source>
         <translation type="unfinished"></translation>
     </message>
@@ -102,13 +102,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="163"/>
+        <location filename="../files_widget.py" line="181"/>
         <source>Folder name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="135"/>
+        <location filename="../files_widget.py" line="149"/>
         <source>A folder with the same name already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="125"/>
+        <source>Some files or folders could not be imported:
+{}</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -370,47 +376,47 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="238"/>
+        <location filename="../main_window.py" line="239"/>
         <source>User has been successfully registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="246"/>
+        <location filename="../main_window.py" line="247"/>
         <source>The token has expired.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="251"/>
+        <location filename="../main_window.py" line="252"/>
         <source>No invitation found for this user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="256"/>
+        <location filename="../main_window.py" line="257"/>
         <source>User has already been registered.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="317"/>
+        <location filename="../main_window.py" line="318"/>
         <source>Device has been successfully registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="325"/>
+        <location filename="../main_window.py" line="326"/>
         <source>The device already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="330"/>
+        <location filename="../main_window.py" line="331"/>
         <source>Invalid NitroKey information.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="335"/>
+        <location filename="../main_window.py" line="336"/>
         <source>Can not create the new device.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="366"/>
+        <location filename="../main_window.py" line="367"/>
         <source>Are you sure you want to quit ?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -581,7 +587,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspaces_widget.ui" line="68"/>
+        <location filename="../forms/workspaces_widget.ui" line="80"/>
         <source>New workspace  </source>
         <translation type="unfinished"></translation>
     </message>

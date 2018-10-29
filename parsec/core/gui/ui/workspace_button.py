@@ -12,12 +12,25 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_WorkspaceButton(object):
     def setupUi(self, WorkspaceButton):
         WorkspaceButton.setObjectName("WorkspaceButton")
-        WorkspaceButton.resize(210, 205)
-        WorkspaceButton.setMinimumSize(QtCore.QSize(210, 173))
-        WorkspaceButton.setMaximumSize(QtCore.QSize(210, 205))
+        WorkspaceButton.resize(210, 210)
+        WorkspaceButton.setMinimumSize(QtCore.QSize(210, 210))
+        WorkspaceButton.setMaximumSize(QtCore.QSize(210, 300))
         font = QtGui.QFont()
         font.setPointSize(12)
         WorkspaceButton.setFont(font)
+        WorkspaceButton.setStyleSheet(
+            "QMenu::item\n"
+            "{\n"
+            "background-color: rgb(255, 255, 255);\n"
+            "color: rgb(0, 0, 0);\n"
+            "}\n"
+            "\n"
+            "QMenu::item:selected\n"
+            "{\n"
+            "background-color: rgb(45, 144, 209);\n"
+            "color: rgb(255, 255, 255);\n"
+            "}"
+        )
         self.verticalLayout = QtWidgets.QVBoxLayout(WorkspaceButton)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setSpacing(6)
@@ -54,6 +67,7 @@ class Ui_WorkspaceButton(object):
         self.label_workspace.setStyleSheet("color: rgb(12, 65, 157);")
         self.label_workspace.setText("")
         self.label_workspace.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_workspace.setWordWrap(True)
         self.label_workspace.setObjectName("label_workspace")
         self.verticalLayout.addWidget(self.label_workspace)
 
