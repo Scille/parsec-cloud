@@ -1,3 +1,4 @@
+import itertools
 import trio
 import pendulum
 from itertools import count
@@ -159,6 +160,18 @@ class FileSyncerMixin(BaseSyncer):
     async def _sync_file_actual_sync(
         self, path: Path, access: Access, manifest: LocalFileManifest, notify_beacons: List[UUID]
     ) -> None:
+        async def block_upload(index, send_channel, cs):
+            async with send_channel:
+                data = await self._build_data_from_contiguous_space(cs)
+                if not data:
+                    # Already existing blocks taken verbatim
+                    await send_channel.send((index, [bs.buffer.data for bs in cs.buffers]))
+                else:
+                    # Create a new block from existing data
+                    block_access = new_block_access(data, cs.start)
+                    await self._backend_block_post(block_access, data)
+                    await send_channel.send((index, [block_access]))
+
         assert is_file_manifest(manifest)
 
         to_sync_manifest = local_to_remote_manifest(manifest)
@@ -170,16 +183,12 @@ class FileSyncerMixin(BaseSyncer):
 
         # Upload the new blocks
         async with trio.open_nursery() as nursery:
-            for cs in sync_map.spaces:
-                data = await self._build_data_from_contiguous_space(cs)
-                if not data:
-                    # Already existing blocks taken verbatim
-                    blocks += [bs.buffer.data for bs in cs.buffers]
-                else:
-                    # Create a new block from existing data
-                    block_access = new_block_access(data, cs.start)
-                    nursery.start_soon(self._backend_block_post, block_access, data)
-                    blocks.append(block_access)
+            send_channel, receive_channel = trio.open_memory_channel(0)
+            async with send_channel:
+                for index, cs in enumerate(sync_map.spaces):
+                    nursery.start_soon(block_upload, index, send_channel.clone(), cs)
+            received_blocks = [response async for response in receive_channel]
+            blocks += itertools.chain(*[response for _, response in sorted(received_blocks)])
 
         to_sync_manifest["blocks"] = blocks
         to_sync_manifest["size"] = sync_map.size  # TODO: useful ?

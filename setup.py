@@ -55,7 +55,7 @@ requirements = [
     "PyNaCl==1.2.0",
     "simplejson==3.10.0",
     "python-decouple==3.1",
-    "trio==0.8.0",
+    "trio==0.9.0",
     "python-interface==1.4.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
