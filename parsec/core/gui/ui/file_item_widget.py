@@ -32,7 +32,7 @@ class Ui_FileItemWidget(object):
         self.horizontalLayout = QtWidgets.QHBoxLayout(FileItemWidget)
         self.horizontalLayout.setSizeConstraint(QtWidgets.QLayout.SetMaximumSize)
         self.horizontalLayout.setContentsMargins(10, 6, 10, 6)
-        self.horizontalLayout.setSpacing(6)
+        self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.label_type = QtWidgets.QLabel(FileItemWidget)
         sizePolicy = QtWidgets.QSizePolicy(

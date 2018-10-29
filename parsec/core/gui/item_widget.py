@@ -25,9 +25,13 @@ class FolderItemWidget(QWidget, Ui_FolderItemWidget):
 
     def set_selected(self, selected):
         if selected:
+            self.setStyleSheet("background-color: rgb(45, 144, 209); color: rgb(255, 255, 255);")
             self.label_type.setPixmap(QPixmap(":/icons/images/icons/folder_selected.png"))
+            self.button_delete.setIcon(QIcon(":/icons/images/icons/garbage_selected.png"))
         else:
+            self.setStyleSheet("background-color: rgb(255, 255, 255); color: rgb(0, 0, 0);")
             self.label_type.setPixmap(QPixmap(":/icons/images/icons/folder.png"))
+            self.button_delete.setIcon(QIcon(":/icons/images/icons/garbage.png"))
 
     @property
     def name(self):
@@ -57,7 +61,7 @@ class FileItemWidget(QWidget, Ui_FileItemWidget):
 
     def set_selected(self, selected):
         if selected:
-            self.setStyleSheet("background-color: rgb(0, 0, 255); color: rgb(255, 255, 255);")
+            self.setStyleSheet("background-color: rgb(45, 144, 209); color: rgb(255, 255, 255);")
             self.label_type.setPixmap(QPixmap(":/icons/images/icons/file_selected.png"))
             self.button_delete.setIcon(QIcon(":/icons/images/icons/garbage_selected.png"))
         else:

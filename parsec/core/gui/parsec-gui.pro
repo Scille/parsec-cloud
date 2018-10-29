@@ -32,6 +32,7 @@ FORMS += forms/main_window.ui \
          forms/mount_widget.ui \
          forms/workspaces_widget.ui \
          forms/workspace_button.ui \
-         forms/folder_item_widget.ui
+         forms/folder_item_widget.ui \
+         forms/message_dialog.ui
 
 RESOURCES += rc/resources.qrc

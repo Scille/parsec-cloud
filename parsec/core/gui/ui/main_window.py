@@ -232,6 +232,26 @@ class Ui_MainWindow(object):
             20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
         )
         self.verticalLayout.addItem(spacerItem)
+        self.button_user = QtWidgets.QPushButton(self.widget_menu)
+        self.button_user.setMinimumSize(QtCore.QSize(0, 64))
+        self.button_user.setMaximumSize(QtCore.QSize(16777215, 64))
+        font = QtGui.QFont()
+        font.setPointSize(13)
+        self.button_user.setFont(font)
+        self.button_user.setStyleSheet(
+            "border-top: 2px solid rgb(46, 146, 208);\n"
+            "border-bottom: 2px solid rgb(46, 146, 208);\n"
+            "color: rgb(255, 255, 255);\n"
+            "text-align: left;\n"
+            "padding-left: 10px;\n"
+            "background-color: rgb(22, 84, 169);\n"
+            ""
+        )
+        self.button_user.setText("")
+        self.button_user.setIconSize(QtCore.QSize(32, 32))
+        self.button_user.setFlat(True)
+        self.button_user.setObjectName("button_user")
+        self.verticalLayout.addWidget(self.button_user)
         self.button_logout = QtWidgets.QPushButton(self.widget_menu)
         self.button_logout.setEnabled(True)
         self.button_logout.setMinimumSize(QtCore.QSize(0, 64))

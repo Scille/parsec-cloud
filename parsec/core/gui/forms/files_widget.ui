@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>588</width>
+    <width>590</width>
     <height>493</height>
    </rect>
   </property>
@@ -30,16 +30,16 @@ QListWidget
 border: 1px solid rgb(28, 78, 163);
 }
 
-QListWidget:item
+QListView::item
 {
 background-color: rgb(255, 255, 255);
 color: rgb(0, 0, 0);
 }
 
-QListWidget:item:selected
+QListView::item:selected
 {
-background-color: rgb(0, 0, 255);
-color: rgb(0, 0, 0);
+background-color: rgb(45, 144, 209);
+color: rgb(255, 255, 255);
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -539,8 +539,39 @@ padding-right: 10px;</string>
         </item>
         <item>
          <widget class="QListWidget" name="list_files">
+          <property name="contextMenuPolicy">
+           <enum>Qt::CustomContextMenu</enum>
+          </property>
+          <property name="autoFillBackground">
+           <bool>true</bool>
+          </property>
           <property name="styleSheet">
-           <string notr="true"/>
+           <string notr="true">QMenu::item
+{
+background-color: rgb(255, 255, 255);
+color: rgb(0, 0, 0);
+}
+
+QMenu::item:selected
+{
+background-color: rgb(45, 144, 209);
+color: rgb(255, 255, 255);
+}</string>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Plain</enum>
+          </property>
+          <property name="lineWidth">
+           <number>0</number>
+          </property>
+          <property name="horizontalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
+          </property>
+          <property name="editTriggers">
+           <set>QAbstractItemView::NoEditTriggers</set>
+          </property>
+          <property name="selectionRectVisible">
+           <bool>false</bool>
           </property>
          </widget>
         </item>

@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_FilesWidget(object):
     def setupUi(self, FilesWidget):
         FilesWidget.setObjectName("FilesWidget")
-        FilesWidget.resize(588, 493)
+        FilesWidget.resize(590, 493)
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
         )
@@ -31,16 +31,16 @@ class Ui_FilesWidget(object):
             "border: 1px solid rgb(28, 78, 163);\n"
             "}\n"
             "\n"
-            "QListWidget:item\n"
+            "QListView::item\n"
             "{\n"
             "background-color: rgb(255, 255, 255);\n"
             "color: rgb(0, 0, 0);\n"
             "}\n"
             "\n"
-            "QListWidget:item:selected\n"
+            "QListView::item:selected\n"
             "{\n"
-            "background-color: rgb(0, 0, 255);\n"
-            "color: rgb(0, 0, 0);\n"
+            "background-color: rgb(45, 144, 209);\n"
+            "color: rgb(255, 255, 255);\n"
             "}"
         )
         self.verticalLayout = QtWidgets.QVBoxLayout(FilesWidget)
@@ -297,7 +297,26 @@ class Ui_FilesWidget(object):
         self.horizontalLayout_4.addWidget(self.label_3)
         self.verticalLayout_3.addLayout(self.horizontalLayout_4)
         self.list_files = QtWidgets.QListWidget(self.widget_files)
-        self.list_files.setStyleSheet("")
+        self.list_files.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.list_files.setAutoFillBackground(True)
+        self.list_files.setStyleSheet(
+            "QMenu::item\n"
+            "{\n"
+            "background-color: rgb(255, 255, 255);\n"
+            "color: rgb(0, 0, 0);\n"
+            "}\n"
+            "\n"
+            "QMenu::item:selected\n"
+            "{\n"
+            "background-color: rgb(45, 144, 209);\n"
+            "color: rgb(255, 255, 255);\n"
+            "}"
+        )
+        self.list_files.setFrameShadow(QtWidgets.QFrame.Plain)
+        self.list_files.setLineWidth(0)
+        self.list_files.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.list_files.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.list_files.setSelectionRectVisible(False)
         self.list_files.setObjectName("list_files")
         self.verticalLayout_3.addWidget(self.list_files)
         self.verticalLayout_2.addLayout(self.verticalLayout_3)

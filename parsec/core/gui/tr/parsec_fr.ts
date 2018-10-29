@@ -113,19 +113,19 @@
         <translation>Nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="181"/>
+        <location filename="../files_widget.py" line="186"/>
         <source>Enter new folder name</source>
         <translation>Entrez le nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="149"/>
+        <location filename="../files_widget.py" line="154"/>
         <source>A folder with the same name already exists.</source>
         <translation type="unfinished">Un répertoire avec le même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="311"/>
+        <location filename="../files_widget.py" line="204"/>
         <source>Open</source>
-        <translation type="obsolete">Ouvrir</translation>
+        <translation type="unfinished">Ouvrir</translation>
     </message>
     <message>
         <location filename="../files_widget.py" line="313"/>
@@ -228,14 +228,39 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="181"/>
+        <location filename="../files_widget.py" line="186"/>
         <source>Folder name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="125"/>
+        <location filename="../files_widget.py" line="130"/>
         <source>Some files or folders could not be imported:
 {}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="201"/>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="208"/>
+        <source>Open in explorer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="216"/>
+        <source>New name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="216"/>
+        <source>Enter file new name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="236"/>
+        <source>Can not rename.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -492,64 +517,72 @@
         <translation>   Configuration</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="495"/>
+        <location filename="../forms/main_window.ui" line="537"/>
         <source>   Log Out</source>
         <translation>   Se déconnecter</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="185"/>
+        <location filename="../main_window.py" line="186"/>
         <source>Authentication failed.</source>
         <translation>Impossible de se connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="203"/>
+        <location filename="../main_window.py" line="204"/>
         <source>Can not register the user.</source>
         <translation>Impossible d&apos;enregistrer le nouvel utilisateur.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="239"/>
+        <location filename="../main_window.py" line="233"/>
         <source>User has been successfully registered. You can now login.</source>
         <translation>L&apos;utilisateur a été enregistré avec succès. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="247"/>
+        <location filename="../main_window.py" line="241"/>
         <source>The token has expired.</source>
         <translation>Le jeton a expiré.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="252"/>
+        <location filename="../main_window.py" line="246"/>
         <source>No invitation found for this user.</source>
         <translation>Aucune invitation trouvée pour cet utilisateur.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="257"/>
+        <location filename="../main_window.py" line="251"/>
         <source>User has already been registered.</source>
         <translation>L&apos;utilisateur a déjà été enregistré.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="318"/>
+        <location filename="../main_window.py" line="312"/>
         <source>Device has been successfully registered. You can now login.</source>
         <translation>L&apos;appareil a été enregistré avec succès. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="326"/>
+        <location filename="../main_window.py" line="320"/>
         <source>The device already exists.</source>
         <translation>L&apos;appareil existe déjà.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="331"/>
+        <location filename="../main_window.py" line="325"/>
         <source>Invalid NitroKey information.</source>
         <translation>Les informations de la NitroKey ne sont pas valides.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="336"/>
+        <location filename="../main_window.py" line="330"/>
         <source>Can not create the new device.</source>
         <translation>Impossible de créer le nouvel appareil.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="367"/>
+        <location filename="../main_window.py" line="361"/>
         <source>Are you sure you want to quit ?</source>
         <translation>Êtes-vous sûr de vouloir quitter ?</translation>
+    </message>
+</context>
+<context>
+    <name>MessageDialog</name>
+    <message>
+        <location filename="../forms/message_dialog.ui" line="20"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -736,7 +769,7 @@
         <translation type="obsolete">Nouvel espace de travail</translation>
     </message>
     <message>
-        <location filename="../forms/workspaces_widget.ui" line="80"/>
+        <location filename="../forms/workspaces_widget.ui" line="69"/>
         <source>New workspace  </source>
         <translation type="unfinished"></translation>
     </message>

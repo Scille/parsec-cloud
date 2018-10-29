@@ -13,21 +13,7 @@ class Ui_WorkspacesWidget(object):
     def setupUi(self, WorkspacesWidget):
         WorkspacesWidget.setObjectName("WorkspacesWidget")
         WorkspacesWidget.resize(679, 539)
-        WorkspacesWidget.setStyleSheet(
-            "background-color: rgb(255, 255, 255);\n"
-            "\n"
-            "QMenu::item\n"
-            "{\n"
-            "background-color: rgb(255, 255, 255);\n"
-            "color: rgb(0, 0, 0);\n"
-            "}\n"
-            "\n"
-            "QMenu::item:selected\n"
-            "{\n"
-            "background-color: rgb(45, 144, 209);\n"
-            "color: rgb(255, 255, 255);\n"
-            "}"
-        )
+        WorkspacesWidget.setStyleSheet("background-color: rgb(255, 255, 255);\n" "")
         self.verticalLayout = QtWidgets.QVBoxLayout(WorkspacesWidget)
         self.verticalLayout.setContentsMargins(0, 15, 0, 15)
         self.verticalLayout.setSpacing(10)

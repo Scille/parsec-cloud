@@ -148,7 +148,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 os.path.join("/", self.workspace, self.current_directory, folder_name)
             )
             return True
-        except FileExistError:
+        except FileExistsError:
             show_warning(
                 self,
                 QCoreApplication.translate(
@@ -191,7 +191,55 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self._create_folder(folder_name)
 
     def show_context_menu(self, pos):
-        pass
+        global_pos = self.list_files.mapToGlobal(pos)
+        current_widget = self.list_files.itemWidget(self.list_files.currentItem())
+        if isinstance(current_widget, ParentItemWidget):
+            return
+        menu = QMenu(self.list_files)
+        action = menu.addAction(QCoreApplication.translate("FilesWidget", "Rename"))
+        action.triggered.connect(self.rename(current_widget))
+        if isinstance(current_widget, FileItemWidget):
+            action = menu.addAction(QCoreApplication.translate("FilesWidget", "Open"))
+        else:
+            action = menu.addAction(QCoreApplication.translate("FilesWidget", "Open in explorer"))
+        action.triggered.connect(self.open_file(current_widget))
+        menu.exec_(global_pos)
+
+    def rename(self, widget):
+        def _inner_rename():
+            new_name, ok = QInputDialog.getText(
+                self,
+                QCoreApplication.translate("FilesWidget", "New name"),
+                QCoreApplication.translate("FilesWidget", "Enter file new name"),
+            )
+            if not ok:
+                return
+            if not new_name:
+                show_warning(self, "This name is not valid.")
+            try:
+                if isinstance(widget, FolderItemWidget):
+                    core_call().move_folder(
+                        os.path.join("/", self.workspace, self.current_directory, widget.name),
+                        os.path.join("/", self.workspace, self.current_directory, new_name),
+                    )
+                else:
+                    core_call().move_file(
+                        os.path.join("/", self.workspace, self.current_directory, widget.name),
+                        os.path.join("/", self.workspace, self.current_directory, new_name),
+                    )
+                self.load(self.current_directory)
+            except:
+                show_error(self, QCoreApplication.translate("FilesWidget", "Can not rename."))
+
+        return _inner_rename
+
+    def open_file(self, widget):
+        def _inner_open_file():
+            desktop.open_file(
+                os.path.join(self.mountpoint, self.workspace, self.current_directory, widget.name)
+            )
+
+        return _inner_open_file
 
     def item_double_clicked(self, item):
         widget = self.list_files.itemWidget(item)

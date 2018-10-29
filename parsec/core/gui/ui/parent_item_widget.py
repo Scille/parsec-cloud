@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_ParentItemWidget(object):
     def setupUi(self, ParentItemWidget):
         ParentItemWidget.setObjectName("ParentItemWidget")
-        ParentItemWidget.resize(376, 40)
+        ParentItemWidget.resize(436, 48)
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed
         )
@@ -20,10 +20,10 @@ class Ui_ParentItemWidget(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(ParentItemWidget.sizePolicy().hasHeightForWidth())
         ParentItemWidget.setSizePolicy(sizePolicy)
-        ParentItemWidget.setMinimumSize(QtCore.QSize(0, 40))
-        ParentItemWidget.setMaximumSize(QtCore.QSize(16777215, 40))
+        ParentItemWidget.setMinimumSize(QtCore.QSize(0, 32))
+        ParentItemWidget.setMaximumSize(QtCore.QSize(16777215, 2000))
         self.horizontalLayout = QtWidgets.QHBoxLayout(ParentItemWidget)
-        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout.setContentsMargins(10, 6, 10, 6)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.label_icon = QtWidgets.QLabel(ParentItemWidget)
         sizePolicy = QtWidgets.QSizePolicy(

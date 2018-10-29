@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_FolderItemWidget(object):
     def setupUi(self, FolderItemWidget):
         FolderItemWidget.setObjectName("FolderItemWidget")
-        FolderItemWidget.resize(520, 51)
+        FolderItemWidget.resize(520, 56)
         FolderItemWidget.setMinimumSize(QtCore.QSize(0, 32))
         FolderItemWidget.setMaximumSize(QtCore.QSize(16777215, 16777215))
         FolderItemWidget.setStyleSheet("background-color: rgb(255, 255, 255);")

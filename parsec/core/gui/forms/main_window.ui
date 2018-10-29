@@ -14,7 +14,7 @@
    <string>Parsec</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../rc/resources.qrc">
+   <iconset>
     <normaloff>:/icons/images/icons/parsec.png</normaloff>:/icons/images/icons/parsec.png</iconset>
   </property>
   <property name="autoFillBackground">
@@ -452,6 +452,48 @@ border: 0;
              </size>
             </property>
            </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="button_user">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>64</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>64</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>13</pointsize>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">border-top: 2px solid rgb(46, 146, 208);
+border-bottom: 2px solid rgb(46, 146, 208);
+color: rgb(255, 255, 255);
+text-align: left;
+padding-left: 10px;
+background-color: rgb(22, 84, 169);
+</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>32</width>
+              <height>32</height>
+             </size>
+            </property>
+            <property name="flat">
+             <bool>true</bool>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QPushButton" name="button_logout">
