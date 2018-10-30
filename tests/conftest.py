@@ -222,7 +222,7 @@ def device_factory():
     devices = {}
     count = 0
 
-    def _device_factory(user_id=None, device_name=None, user_manifest_in_v0=False):
+    def _device_factory(user_id=None, device_name=None, user_manifest_in_v0=False, local_db=None):
         nonlocal count
         count += 1
 
@@ -258,13 +258,15 @@ def device_factory():
 
         device_signkey = SigningKey.generate().encode()
         local_symkey = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
+        if not local_db:
+            local_db = InMemoryLocalDB()
         device = Device(
             f"{user_id}@{device_name}",
             user_privkey,
             device_signkey,
             local_symkey,
             user_manifest_access,
-            InMemoryLocalDB(),
+            local_db,
         )
         if not user_manifest_in_v0:
             device.local_db.set(user_manifest_access, dumps_manifest(user_manifest_v1))

@@ -1,4 +1,6 @@
 import pytest
+from parsec.core.local_db import LocalDB
+from shutil import rmtree
 from hypothesis import strategies as st
 from hypothesis_trio.stateful import (
     initialize,
@@ -24,6 +26,7 @@ def test_fs_online_rwfile_and_sync(
     server_factory,
     fs_factory,
     backend_addr,
+    tmpdir,
 ):
     class FSOnlineRwFileAndSync(TrioRuleBasedStateMachine):
         async def restart_fs(self, device):
@@ -60,8 +63,7 @@ def test_fs_online_rwfile_and_sync(
 
         @initialize()
         async def init(self):
-            self.device = device_factory()
-
+            self.device = device_factory(local_db=LocalDB(tmpdir))
             await self.start_backend()
             await self.restart_fs(self.device)
             await self.fs.file_create("/foo.txt")
@@ -74,7 +76,8 @@ def test_fs_online_rwfile_and_sync(
 
         @rule()
         async def reset(self):
-            self.device = device_factory(user_id=self.device.user_id)
+            rmtree(tmpdir)
+            self.device = device_factory(user_id=self.device.user_id, local_db=LocalDB(tmpdir))
             await self.backend.user.create_device(
                 user_id=self.device.user_id,
                 device_name=self.device.device_name,
@@ -83,6 +86,10 @@ def test_fs_online_rwfile_and_sync(
             await self.restart_fs(self.device)
             await self.fs.sync("/")
             self.file_oracle.reset()
+
+        @rule()
+        async def run_garbage_collector(self):
+            self.device.local_db.run_garbage_collector()
 
         @rule()
         async def sync(self):

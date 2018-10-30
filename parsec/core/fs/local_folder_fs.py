@@ -133,7 +133,7 @@ class LocalFolderFS:
 
     def set_manifest(self, access: Access, manifest: LocalManifest):
         raw = dumps_manifest(manifest)
-        self._local_db.set(access, raw)
+        self._local_db.set(access, raw, False)
         self._manifests_cache[access["id"]] = copy_manifest(manifest)
 
     def update_manifest(self, access: Access, manifest: LocalManifest):

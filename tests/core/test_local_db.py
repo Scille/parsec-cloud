@@ -38,7 +38,7 @@ async def test_local_db_set_get_clear(alice, tmpdir):
 async def test_local_db_find(alice, tmpdir):
     local_db = LocalDB(tmpdir)
     local_db.set(alice.user_manifest_access, b"data")
-    assert local_db._find(alice.user_manifest_access) == Path(
+    assert Path(local_db._find(alice.user_manifest_access)) == Path(
         str(tmpdir) + "/cache/" + str(alice.user_manifest_access["id"])
     )
     assert local_db._find({"id": "123"}) is None

@@ -254,7 +254,7 @@ class LocalFileFS:
         new_dirty_blocks = []
         for pw in hf.pending_writes:
             block_access = new_block_access(pw.data, pw.start)
-            self.set_block(block_access, pw.data, True)
+            self.set_block(block_access, pw.data, False)
             new_dirty_blocks.append(block_access)
 
         # TODO: clean overwritten dirty blocks
