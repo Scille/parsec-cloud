@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QWidget, QListWidgetItem
 from PyQt5.QtGui import QPixmap, QIcon
 
 from parsec.core.gui.ui.file_item_widget import Ui_FileItemWidget
@@ -18,10 +19,17 @@ class ParentItemWidget(QWidget, Ui_ParentItemWidget):
 
 
 class FolderItemWidget(QWidget, Ui_FolderItemWidget):
-    def __init__(self, name, *args, **kwargs):
+    delete_clicked = pyqtSignal(QListWidgetItem)
+
+    def __init__(self, item, name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.item = item
         self.label_name.setText(name)
+        self.button_delete.clicked.connect(self.emit_delete)
+
+    def emit_delete(self, item):
+        self.delete_clicked.emit(self.item)
 
     def set_selected(self, selected):
         if selected:
@@ -43,11 +51,15 @@ class FolderItemWidget(QWidget, Ui_FolderItemWidget):
 
 
 class FileItemWidget(QWidget, Ui_FileItemWidget):
-    def __init__(self, name, size, created, updated, *args, **kwargs):
+    delete_clicked = pyqtSignal(QListWidgetItem)
+
+    def __init__(self, item, name, size, created, updated, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.item = item
         self.label_name.setText(name)
         self.label_size.setText(get_filesize(size))
+        self.button_delete.clicked.connect(self.emit_delete)
         creation_date = ""
         update_date = ""
         try:
@@ -58,6 +70,9 @@ class FileItemWidget(QWidget, Ui_FileItemWidget):
             update_date = updated.format("%d %b %Y, %H:%M:%S")
         self.label_created.setText(creation_date)
         self.label_updated.setText(update_date)
+
+    def emit_delete(self):
+        self.delete_clicked.emit(self.item)
 
     def set_selected(self, selected):
         if selected:

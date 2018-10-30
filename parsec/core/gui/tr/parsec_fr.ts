@@ -113,7 +113,7 @@
         <translation>Nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="186"/>
+        <location filename="../files_widget.py" line="220"/>
         <source>Enter new folder name</source>
         <translation>Entrez le nom du répertoire</translation>
     </message>
@@ -123,7 +123,7 @@
         <translation type="unfinished">Un répertoire avec le même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="204"/>
+        <location filename="../files_widget.py" line="238"/>
         <source>Open</source>
         <translation type="unfinished">Ouvrir</translation>
     </message>
@@ -138,9 +138,9 @@
         <translation type="obsolete">Supprimer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="393"/>
+        <location filename="../files_widget.py" line="189"/>
         <source>Confirmation</source>
-        <translation type="obsolete">Confirmation</translation>
+        <translation type="unfinished">Confirmation</translation>
     </message>
     <message>
         <location filename="../files_widget.py" line="382"/>
@@ -228,7 +228,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="186"/>
+        <location filename="../files_widget.py" line="220"/>
         <source>Folder name</source>
         <translation type="unfinished"></translation>
     </message>
@@ -239,28 +239,33 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="201"/>
+        <location filename="../files_widget.py" line="235"/>
         <source>Rename</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="208"/>
+        <location filename="../files_widget.py" line="240"/>
         <source>Open in explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="216"/>
+        <location filename="../files_widget.py" line="246"/>
         <source>New name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="216"/>
+        <location filename="../files_widget.py" line="246"/>
         <source>Enter file new name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="236"/>
+        <location filename="../files_widget.py" line="268"/>
         <source>Can not rename.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="189"/>
+        <source>Are you sure you want to delete &quot;{}&quot; ?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

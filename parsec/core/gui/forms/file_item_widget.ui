@@ -49,7 +49,7 @@
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="spacing">
-    <number>0</number>
+    <number>6</number>
    </property>
    <property name="sizeConstraint">
     <enum>QLayout::SetMaximumSize</enum>

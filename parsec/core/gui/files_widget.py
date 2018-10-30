@@ -166,19 +166,53 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _add_folder(self, folder_name):
         item = QListWidgetItem()
-        widget = FolderItemWidget(folder_name, parent=self.list_files)
+        widget = FolderItemWidget(item, folder_name, parent=self.list_files)
         item.setSizeHint(widget.sizeHint())
         self.list_files.addItem(item)
         self.list_files.setItemWidget(item, widget)
+        widget.delete_clicked.connect(self.delete)
 
     def _add_file(self, file_name, file_size, created_on, updated_on):
         item = QListWidgetItem()
         widget = FileItemWidget(
-            file_name, file_size, created_on, updated_on, parent=self.list_files
+            item, file_name, file_size, created_on, updated_on, parent=self.list_files
         )
         item.setSizeHint(widget.sizeHint())
         self.list_files.addItem(item)
         self.list_files.setItemWidget(item, widget)
+        widget.delete_clicked.connect(self.delete)
+
+    def delete(self, item):
+        widget = self.list_files.itemWidget(item)
+        result = QMessageBox.question(
+            self,
+            QCoreApplication.translate("FilesWidget", "Confirmation"),
+            QCoreApplication.translate(
+                "FilesWidget", 'Are you sure you want to delete "{}" ?'
+            ).format(widget.name),
+        )
+        if result != QMessageBox.Yes:
+            return
+        path = os.path.join("/", self.workspace, self.current_directory, widget.name)
+        try:
+            if isinstance(widget, FolderItemWidget):
+                self._delete_folder(path)
+            else:
+                core_call().delete_file(path)
+            self.list_files.takeItem(self.list_files.row(item))
+        except:
+            show_error(self, QCoreApplication.translate('Can not delete "{}"').format(widget.name))
+
+    def _delete_folder(self, path):
+        result = core_call().stat(path)
+        for child in result.get("children", []):
+            child_path = os.path.join(path, child)
+            file_infos = core_call().stat(os.path.join(path, child))
+            if file_infos["type"] == "folder":
+                self._delete_folder(child_path)
+            else:
+                core_call().delete_file(child_path)
+        core_call().delete_folder(path)
 
     def create_folder_clicked(self):
         folder_name, ok = QInputDialog.getText(
