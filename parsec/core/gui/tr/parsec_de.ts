@@ -556,28 +556,28 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="49"/>
+        <location filename="../forms/settings_widget.ui" line="87"/>
         <source>Global</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="61"/>
-        <source>Mount options</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/settings_widget.ui" line="76"/>
-        <source>Choose mount folder</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/settings_widget.ui" line="106"/>
+        <location filename="../forms/settings_widget.ui" line="209"/>
         <source>Network</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../settings_widget.py" line="33"/>
         <source>The choosen folder is not writable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="121"/>
+        <source>Mountpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="182"/>
+        <source>Choose mountpoint</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

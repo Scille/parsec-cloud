@@ -44,7 +44,7 @@ class Ui_FilesWidget(object):
             "}"
         )
         self.verticalLayout = QtWidgets.QVBoxLayout(FilesWidget)
-        self.verticalLayout.setContentsMargins(0, 15, 0, 15)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName("verticalLayout")
         self.widget_files = QtWidgets.QWidget(FilesWidget)

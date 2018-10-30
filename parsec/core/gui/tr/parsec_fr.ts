@@ -690,22 +690,22 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="49"/>
+        <location filename="../forms/settings_widget.ui" line="87"/>
         <source>Global</source>
         <translation>Globale</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="61"/>
         <source>Mount options</source>
-        <translation>Options de montage</translation>
+        <translation type="obsolete">Options de montage</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="76"/>
         <source>Choose mount folder</source>
-        <translation>Choisir un point de montage</translation>
+        <translation type="obsolete">Choisir un point de montage</translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="106"/>
+        <location filename="../forms/settings_widget.ui" line="209"/>
         <source>Network</source>
         <translation>Réseau</translation>
     </message>
@@ -713,6 +713,16 @@
         <location filename="../settings_widget.py" line="33"/>
         <source>The choosen folder is not writable.</source>
         <translation>Le répertoire choisi n&apos;est pas accessible en écriture.</translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="121"/>
+        <source>Mountpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="182"/>
+        <source>Choose mountpoint</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
