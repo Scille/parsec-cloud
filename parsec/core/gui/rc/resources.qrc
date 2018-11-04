@@ -16,7 +16,6 @@
         <file>images/icons/hard-drive.png</file>
         <file>images/icons/new_workspace.png</file>
         <file>images/icons/share.png</file>
-        <file>images/icons/wifi.png</file>
         <file>images/icons/desk.png</file>
         <file>images/icons/file_selected.png</file>
         <file>images/icons/folder.png</file>
@@ -24,10 +23,26 @@
         <file>images/icons/garbage.png</file>
         <file>images/icons/garbage_selected.png</file>
         <file>images/icons/go-back.png</file>
-        <file>images/icons/icons.zip</file>
         <file>images/icons/import.png</file>
         <file>images/icons/new_document.png</file>
         <file>images/icons/search.png</file>
+        <file>images/icons/add_user.png</file>
+        <file>images/icons/error.png</file>
+        <file>images/icons/user_menu.png</file>
+        <file>images/icons/edit_white.png</file>
+        <file>images/icons/settings_off.png</file>
+        <file>images/icons/settings_on.png</file>
+        <file>images/icons/wifi_off.png</file>
+        <file>images/icons/wifi_on.png</file>
+        <file>images/icons/right-chevron_black.png</file>
+        <file>images/icons/user.png</file>
+        <file>images/icons/info.png</file>
+        <file>images/icons/question.png</file>
+        <file>images/icons/warning.png</file>
+        <file>images/icons/cancel_white.png</file>
+        <file>images/icons/checked_white.png</file>
+        <file>images/icons/folder-up.png</file>
+        <file>images/icons/folder-up_selected.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>

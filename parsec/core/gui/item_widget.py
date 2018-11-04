@@ -15,7 +15,12 @@ class ParentItemWidget(QWidget, Ui_ParentItemWidget):
         self.setupUi(self)
 
     def set_selected(self, selected):
-        pass
+        if selected:
+            self.setStyleSheet("background-color: rgb(45, 144, 209); color: rgb(255, 255, 255);")
+            self.label_icon.setPixmap(QPixmap(":/icons/images/icons/folder-up_selected.png"))
+        else:
+            self.setStyleSheet("background-color: rgb(255, 255, 255); color: rgb(0, 0, 0);")
+            self.label_icon.setPixmap(QPixmap(":/icons/images/icons/folder-up.png"))
 
 
 class FolderItemWidget(QWidget, Ui_FolderItemWidget):

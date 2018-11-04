@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>WorkspaceButton</class>
- <widget class="QWidget" name="WorkspaceButton">
+ <class>UserButton</class>
+ <widget class="QWidget" name="UserButton">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -74,13 +74,13 @@ color: rgb(255, 255, 255);
        </property>
        <property name="minimumSize">
         <size>
-         <width>200</width>
+         <width>178</width>
          <height>178</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>200</width>
+         <width>178</width>
          <height>178</height>
         </size>
        </property>
@@ -92,7 +92,7 @@ padding: 20px;</string>
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="../rc/resources.qrc">:/icons/images/icons/desk.png</pixmap>
+        <pixmap resource="../rc/resources.qrc">:/icons/images/icons/user.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -108,7 +108,7 @@ padding: 20px;</string>
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="label_workspace">
+    <widget class="QLabel" name="label_user">
      <property name="font">
       <font>
        <pointsize>12</pointsize>

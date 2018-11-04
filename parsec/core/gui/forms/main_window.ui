@@ -484,6 +484,10 @@ background-color: rgb(22, 84, 169);
             <property name="text">
              <string/>
             </property>
+            <property name="icon">
+             <iconset resource="../rc/resources.qrc">
+              <normaloff>:/icons/images/icons/user_menu.png</normaloff>:/icons/images/icons/user_menu.png</iconset>
+            </property>
             <property name="iconSize">
              <size>
               <width>32</width>

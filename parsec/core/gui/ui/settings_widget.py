@@ -40,6 +40,8 @@ class Ui_SettingsWidget(object):
             "border-top: 1px solid rgb(30, 78, 162);\n"
             "border-left: 1px solid rgb(30, 78, 162);\n"
             "border-right: 1px solid rgb(30, 78, 162);\n"
+            "padding-left: 30px;\n"
+            "padding-right: 30px;\n"
             "}\n"
             "\n"
             "QTabBar::tab:selected\n"
@@ -58,7 +60,8 @@ class Ui_SettingsWidget(object):
         self.verticalLayout.setObjectName("verticalLayout")
         self.tab_settings = QtWidgets.QTabWidget(SettingsWidget)
         self.tab_settings.setStyleSheet("")
-        self.tab_settings.setTabShape(QtWidgets.QTabWidget.Triangular)
+        self.tab_settings.setTabShape(QtWidgets.QTabWidget.Rounded)
+        self.tab_settings.setIconSize(QtCore.QSize(24, 24))
         self.tab_settings.setObjectName("tab_settings")
         self.tab_app = QtWidgets.QWidget()
         self.tab_app.setObjectName("tab_app")
@@ -68,7 +71,11 @@ class Ui_SettingsWidget(object):
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.label_2 = QtWidgets.QLabel(self.tab_app)
+        self.label_2.setMinimumSize(QtCore.QSize(16, 16))
+        self.label_2.setMaximumSize(QtCore.QSize(16, 16))
         self.label_2.setText("")
+        self.label_2.setPixmap(QtGui.QPixmap(":/icons/images/icons/right-chevron_black.png"))
+        self.label_2.setScaledContents(True)
         self.label_2.setObjectName("label_2")
         self.horizontalLayout_2.addWidget(self.label_2)
         self.label = QtWidgets.QLabel(self.tab_app)
@@ -111,6 +118,7 @@ class Ui_SettingsWidget(object):
         font.setBold(True)
         font.setWeight(75)
         self.button_choose_mountpoint.setFont(font)
+        self.button_choose_mountpoint.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.button_choose_mountpoint.setStyleSheet(
             "background-color: rgb(45, 144, 209);\n"
             "border: 1px solid rgb(11, 56, 166);\n"
@@ -118,6 +126,14 @@ class Ui_SettingsWidget(object):
             "padding-left: 10px;\n"
             "padding-right: 10px;"
         )
+        icon = QtGui.QIcon()
+        icon.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/edit_white.png"),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off,
+        )
+        self.button_choose_mountpoint.setIcon(icon)
+        self.button_choose_mountpoint.setIconSize(QtCore.QSize(24, 24))
         self.button_choose_mountpoint.setObjectName("button_choose_mountpoint")
         self.horizontalLayout.addWidget(self.button_choose_mountpoint)
         self.verticalLayout_2.addLayout(self.horizontalLayout)
@@ -125,18 +141,30 @@ class Ui_SettingsWidget(object):
             20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
         )
         self.verticalLayout_2.addItem(spacerItem)
-        icon = QtGui.QIcon()
-        icon.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/settings.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
-        )
-        self.tab_settings.addTab(self.tab_app, icon, "")
-        self.tab_network = QtWidgets.QWidget()
-        self.tab_network.setObjectName("tab_network")
         icon1 = QtGui.QIcon()
         icon1.addPixmap(
-            QtGui.QPixmap(":/icons/images/icons/cloud.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+            QtGui.QPixmap(":/icons/images/icons/settings_off.png"),
+            QtGui.QIcon.Selected,
+            QtGui.QIcon.Off,
         )
-        self.tab_settings.addTab(self.tab_network, icon1, "")
+        icon1.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/settings_on.png"),
+            QtGui.QIcon.Selected,
+            QtGui.QIcon.On,
+        )
+        self.tab_settings.addTab(self.tab_app, icon1, "")
+        self.tab_network = QtWidgets.QWidget()
+        self.tab_network.setObjectName("tab_network")
+        icon2 = QtGui.QIcon()
+        icon2.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/wifi_off.png"),
+            QtGui.QIcon.Selected,
+            QtGui.QIcon.Off,
+        )
+        icon2.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/wifi_on.png"), QtGui.QIcon.Selected, QtGui.QIcon.On
+        )
+        self.tab_settings.addTab(self.tab_network, icon2, "")
         self.verticalLayout.addWidget(self.tab_settings)
 
         self.retranslateUi(SettingsWidget)
@@ -154,3 +182,6 @@ class Ui_SettingsWidget(object):
         self.tab_settings.setTabText(
             self.tab_settings.indexOf(self.tab_network), _translate("SettingsWidget", "Network")
         )
+
+
+from parsec.core.gui import resources_rc

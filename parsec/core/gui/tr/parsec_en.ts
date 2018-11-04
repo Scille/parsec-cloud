@@ -67,7 +67,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="220"/>
+        <location filename="../files_widget.py" line="212"/>
         <source>Enter new folder name</source>
         <translation type="unfinished"></translation>
     </message>
@@ -102,59 +102,58 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="220"/>
+        <location filename="../files_widget.py" line="212"/>
         <source>Folder name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="154"/>
+        <location filename="../files_widget.py" line="146"/>
         <source>A folder with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="130"/>
-        <source>Some files or folders could not be imported:
-{}</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="235"/>
+        <location filename="../files_widget.py" line="228"/>
         <source>Rename</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="238"/>
+        <location filename="../files_widget.py" line="231"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="240"/>
+        <location filename="../files_widget.py" line="233"/>
         <source>Open in explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="246"/>
+        <location filename="../files_widget.py" line="239"/>
         <source>New name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="246"/>
+        <location filename="../files_widget.py" line="239"/>
         <source>Enter file new name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="268"/>
+        <location filename="../files_widget.py" line="261"/>
         <source>Can not rename.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="189"/>
+        <location filename="../files_widget.py" line="181"/>
         <source>Confirmation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="189"/>
+        <location filename="../files_widget.py" line="181"/>
         <source>Are you sure you want to delete &quot;{}&quot; ?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="123"/>
+        <source>Some files or folders could not be imported.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -163,6 +162,19 @@
     <message>
         <location filename="../forms/folder_item_widget.ui" line="26"/>
         <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>InputDialog</name>
+    <message>
+        <location filename="../forms/input_dialog.ui" line="20"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/input_dialog.ui" line="252"/>
+        <source>Ok</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -401,7 +413,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="537"/>
+        <location filename="../forms/main_window.ui" line="541"/>
         <source>   Log Out</source>
         <translation type="unfinished"></translation>
     </message>
@@ -462,6 +474,24 @@
     </message>
 </context>
 <context>
+    <name>Message</name>
+    <message>
+        <location filename="../custom_widgets.py" line="70"/>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../custom_widgets.py" line="80"/>
+        <source>Warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../custom_widgets.py" line="90"/>
+        <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MessageDialog</name>
     <message>
         <location filename="../forms/message_dialog.ui" line="20"/>
@@ -485,8 +515,26 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/parent_item_widget.ui" line="83"/>
+        <location filename="../forms/parent_item_widget.ui" line="86"/>
         <source>Parent folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QuestionDialog</name>
+    <message>
+        <location filename="../forms/question_dialog.ui" line="14"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/question_dialog.ui" line="250"/>
+        <source>No</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/question_dialog.ui" line="290"/>
+        <source>Yes</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -556,12 +604,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="87"/>
+        <location filename="../forms/settings_widget.ui" line="97"/>
         <source>Global</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="209"/>
+        <location filename="../forms/settings_widget.ui" line="252"/>
         <source>Network</source>
         <translation type="unfinished"></translation>
     </message>
@@ -571,13 +619,21 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="121"/>
+        <location filename="../forms/settings_widget.ui" line="149"/>
         <source>Mountpoint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="182"/>
+        <location filename="../forms/settings_widget.ui" line="213"/>
         <source>Choose mountpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UserButton</name>
+    <message>
+        <location filename="../forms/user_button.ui" line="31"/>
+        <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -589,33 +645,43 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="22"/>
+        <location filename="../forms/users_widget.ui" line="69"/>
         <source>Add a new user</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="47"/>
+        <location filename="../forms/users_widget.ui" line="113"/>
         <source>Transmit the following information to the new user so they can set up their account.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="59"/>
+        <location filename="../forms/users_widget.ui" line="134"/>
         <source>User ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="66"/>
+        <location filename="../forms/users_widget.ui" line="150"/>
         <source>Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="18"/>
+        <location filename="../users_widget.py" line="47"/>
         <source>New user</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="18"/>
+        <location filename="../users_widget.py" line="47"/>
         <source>Enter new user name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/users_widget.ui" line="230"/>
+        <source>Search users</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="47"/>
+        <source>User name</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -637,6 +703,76 @@
     <message>
         <location filename="../forms/workspaces_widget.ui" line="69"/>
         <source>New workspace  </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="67"/>
+        <source>Share</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="69"/>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="76"/>
+        <source>New name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="76"/>
+        <source>Enter workspace new name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="84"/>
+        <source>This name is not valid.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="154"/>
+        <source>A workspace with the same name already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="99"/>
+        <source>Can not rename the workspace.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="108"/>
+        <source>Share a workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="108"/>
+        <source>Give a user name to share the workspace {} with.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="119"/>
+        <source>The workspaces has been shared.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="126"/>
+        <source>Can not share the workspace &quot;{}&quot; with this user.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="133"/>
+        <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="143"/>
+        <source>New workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="143"/>
+        <source>Enter new workspace name</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

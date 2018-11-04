@@ -39,6 +39,8 @@ font-weight: bold;
 border-top: 1px solid rgb(30, 78, 162);
 border-left: 1px solid rgb(30, 78, 162);
 border-right: 1px solid rgb(30, 78, 162);
+padding-left: 30px;
+padding-right: 30px;
 }
 
 QTabBar::tab:selected
@@ -73,15 +75,23 @@ color: rgb(123, 132, 163);
       <string notr="true"/>
      </property>
      <property name="tabShape">
-      <enum>QTabWidget::Triangular</enum>
+      <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
+     <property name="iconSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
      <widget class="QWidget" name="tab_app">
       <attribute name="icon">
        <iconset>
-        <normaloff>:/icons/images/icons/settings.png</normaloff>:/icons/images/icons/settings.png</iconset>
+        <selectedoff>:/icons/images/icons/settings_off.png</selectedoff>
+        <selectedon>:/icons/images/icons/settings_on.png</selectedon>
+       </iconset>
       </attribute>
       <attribute name="title">
        <string>Global</string>
@@ -97,8 +107,26 @@ color: rgb(123, 132, 163);
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
           <widget class="QLabel" name="label_2">
+           <property name="minimumSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
            <property name="text">
             <string/>
+           </property>
+           <property name="pixmap">
+            <pixmap resource="../rc/resources.qrc">:/icons/images/icons/right-chevron_black.png</pixmap>
+           </property>
+           <property name="scaledContents">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -171,6 +199,9 @@ padding-left: 10px;</string>
              <bold>true</bold>
             </font>
            </property>
+           <property name="layoutDirection">
+            <enum>Qt::RightToLeft</enum>
+           </property>
            <property name="styleSheet">
             <string notr="true">background-color: rgb(45, 144, 209);
 border: 1px solid rgb(11, 56, 166);
@@ -180,6 +211,16 @@ padding-right: 10px;</string>
            </property>
            <property name="text">
             <string>Choose mountpoint</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../rc/resources.qrc">
+             <normaloff>:/icons/images/icons/edit_white.png</normaloff>:/icons/images/icons/edit_white.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
            </property>
           </widget>
          </item>
@@ -203,7 +244,9 @@ padding-right: 10px;</string>
      <widget class="QWidget" name="tab_network">
       <attribute name="icon">
        <iconset>
-        <normaloff>:/icons/images/icons/cloud.png</normaloff>:/icons/images/icons/cloud.png</iconset>
+        <selectedoff>:/icons/images/icons/wifi_off.png</selectedoff>
+        <selectedon>:/icons/images/icons/wifi_on.png</selectedon>
+       </iconset>
       </attribute>
       <attribute name="title">
        <string>Network</string>
@@ -213,6 +256,8 @@ padding-right: 10px;</string>
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../rc/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -1,24 +1,19 @@
 import os
 import pathlib
 from uuid import UUID
-from pathlib import PurePosixPath
 
-from PyQt5.QtCore import Qt, QSize, QCoreApplication, QDir, pyqtSignal, QPoint
-from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import (
-    QWidget,
-    QListWidgetItem,
-    QMenu,
-    QMessageBox,
-    QInputDialog,
-    QFileDialog,
-    QHeaderView,
-    QTableWidgetItem,
-)
+from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal
+from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu
 
 from parsec.core.gui import desktop
 from parsec.core.gui.core_call import core_call
-from parsec.core.gui.custom_widgets import show_error, show_warning, get_open_files
+from parsec.core.gui.custom_widgets import (
+    show_error,
+    show_warning,
+    get_open_files,
+    ask_question,
+    get_text,
+)
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.gui.item_widget import FileItemWidget, FolderItemWidget, ParentItemWidget
 from parsec.core.fs import FSManifestLocalMiss
@@ -43,9 +38,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_directory = ""
         self.mountpoint = ""
         self.workspace = None
-        # core_call().connect_event("fs.entry.updated", self._on_fs_entry_updated_trio)
-        # core_call().connect_event("fs.entry.synced", self._on_fs_entry_synced_trio)
-        # self.current_directory_changed_qt.connect(self._on_current_directory_changed_qt)
+        core_call().connect_event("fs.entry.updated", self._on_fs_entry_updated_trio)
+        core_call().connect_event("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.current_directory_changed_qt.connect(self._on_current_directory_changed_qt)
 
     def set_item_selected(self, current, previous):
         if previous:
@@ -73,17 +68,20 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self._add_file(child, attrs["size"], attrs["created"], attrs["updated"])
 
     def _import_folder(self, src, dst):
-        errs = []
-        for f in src.iterdir():
-            try:
-                core_call().create_folder(dst)
-                if f.is_dir():
-                    errs.extend(self._import_folder(f, os.path.join(dst, f.name)))
-                elif f.is_file():
-                    errs.extend(self._import_file(f, os.path.join(dst, f.name)))
-            except:
-                errs.append(f)
-        return errs
+        err = False
+        try:
+            core_call().create_folder(dst)
+            for f in src.iterdir():
+                try:
+                    if f.is_dir():
+                        err |= self._import_folder(f, os.path.join(dst, f.name))
+                    elif f.is_file():
+                        err |= self._import_file(f, os.path.join(dst, f.name))
+                except:
+                    err = True
+        except:
+            err = True
+        return err
 
     def _import_file(self, src, dst):
         fd_out = None
@@ -96,9 +94,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     if not chunk:
                         break
                     core_call().file_write(fd_out, chunk)
-            return []
+            return False
         except:
-            return [src]
+            return True
         finally:
             if fd_out:
                 core_call().file_close(fd_out)
@@ -107,29 +105,25 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         result, files = get_open_files(self)
         if not result:
             return
-        errs = []
+        err = False
         for f in files:
             p = pathlib.Path(f)
             if p.is_dir():
-                errs.extend(
-                    self._import_folder(
-                        p, os.path.join("/", self.workspace, self.current_directory, p.name)
-                    )
+                err |= self._import_folder(
+                    p, os.path.join("/", self.workspace, self.current_directory, p.name)
                 )
             elif p.is_file():
-                errs.extend(
-                    self._import_file(
-                        str(p), os.path.join("/", self.workspace, self.current_directory, p.name)
-                    )
+                err |= self._import_file(
+                    str(p), os.path.join("/", self.workspace, self.current_directory, p.name)
                 )
             else:
                 print("Neither file nor dir, ignoring", f)
-        if errs:
+        if err:
             show_error(
                 self,
                 QCoreApplication.translate(
-                    "FilesWidget", "Some files or folders could not be imported:\n{}"
-                ).format("\n".join([str(e) for e in errs])),
+                    "FilesWidget", "Some files or folders could not be imported."
+                ),
             )
         self.load(self.current_directory)
 
@@ -149,7 +143,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             )
             return True
         except FileExistsError:
-            show_warning(
+            show_error(
                 self,
                 QCoreApplication.translate(
                     "FilesWidget", "A folder with the same name already exists."
@@ -184,14 +178,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def delete(self, item):
         widget = self.list_files.itemWidget(item)
-        result = QMessageBox.question(
+        result = ask_question(
             self,
             QCoreApplication.translate("FilesWidget", "Confirmation"),
             QCoreApplication.translate(
                 "FilesWidget", 'Are you sure you want to delete "{}" ?'
             ).format(widget.name),
         )
-        if result != QMessageBox.Yes:
+        if not result:
             return
         path = os.path.join("/", self.workspace, self.current_directory, widget.name)
         try:
@@ -215,12 +209,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         core_call().delete_folder(path)
 
     def create_folder_clicked(self):
-        folder_name, ok = QInputDialog.getText(
+        folder_name = get_text(
             self,
             QCoreApplication.translate("FilesWidget", "Folder name"),
             QCoreApplication.translate("FilesWidget", "Enter new folder name"),
+            placeholder="Name",
         )
-        if not ok:
+        if not folder_name:
             return
         self._create_folder(folder_name)
 
@@ -241,15 +236,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def rename(self, widget):
         def _inner_rename():
-            new_name, ok = QInputDialog.getText(
+            new_name = get_text(
                 self,
                 QCoreApplication.translate("FilesWidget", "New name"),
                 QCoreApplication.translate("FilesWidget", "Enter file new name"),
+                placeholder="File name",
+                default_text=widget.name,
             )
-            if not ok:
-                return
             if not new_name:
-                show_warning(self, "This name is not valid.")
+                return
             try:
                 if isinstance(widget, FolderItemWidget):
                     core_call().move_folder(
@@ -291,37 +286,27 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_directory = ""
         self.list_files.clear()
 
-    # def _on_fs_entry_synced_trio(self, event, path, id):
-    #     self.current_directory_changed_qt.emit(event, id, path)
+    def _on_fs_entry_synced_trio(self, event, path, id):
+        self.current_directory_changed_qt.emit(event, id, path)
 
-    # def _on_fs_entry_updated_trio(self, event, id):
-    #     self.current_directory_changed_qt.emit(event, id, None)
+    def _on_fs_entry_updated_trio(self, event, id):
+        self.current_directory_changed_qt.emit(event, id, None)
 
-    # def _on_current_directory_changed_qt(self, event, id, path):
-    #     if not path:
-    #         path = core_call().get_entry_path(id)
-    #     # TODO: too cumbersome...
-    #     if isinstance(path, PurePosixPath):
-    #         modified_hops = list(path.parts)
-    #     else:
-    #         modified_hops = [x for x in path.split("/") if x]
+    def _on_current_directory_changed_qt(self, event, id, path):
+        if not path:
+            path = core_call().get_entry_path(id)
+        # TODO: too cumbersome...
+        if isinstance(path, pathlib.PurePosixPath):
+            modified_hops = list(path.parts)
+        else:
+            modified_hops = [x for x in path.split("/") if x]
 
-    #     if self.current_workspace is not None or self.current_directory is not None:
-    #         current_dir_hops = ["/", self.current_workspace] + [
-    #             x for x in self.current_directory.split("/") if x
-    #         ]
-    #     else:
-    #         current_dir_hops = []
-    #     # Only direct children to current directory require reloading
-    #     if modified_hops == current_dir_hops or modified_hops[:-1] == current_dir_hops:
-    #         self.reload_current_directory()
-
-    # def delete_all_subs(self, dir_path):
-    #     result = core_call().stat(dir_path)
-    #     for child in result.get("children", []):
-    #         file_infos = core_call().stat(os.path.join(dir_path, child))
-    #         if file_infos["type"] == "folder":
-    #             self.delete_all_subs(os.path.join(dir_path, child))
-    #         else:
-    #             core_call().delete_file(os.path.join(dir_path, child))
-    #     core_call().delete_folder(dir_path)
+        if self.workspace is not None or self.current_directory is not None:
+            current_dir_hops = ["/", self.workspace] + [
+                x for x in self.current_directory.split("/") if x
+            ]
+        else:
+            current_dir_hops = []
+        # Only direct children to current directory require reloading
+        if modified_hops == current_dir_hops or modified_hops[:-1] == current_dir_hops:
+            self.load(self.current_directory)

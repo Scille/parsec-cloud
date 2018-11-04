@@ -19,7 +19,7 @@ from parsec.core.devices_manager import (
 
 from parsec.core.gui import settings
 from parsec.core.gui.core_call import core_call
-from parsec.core.gui.custom_widgets import show_error, show_info
+from parsec.core.gui.custom_widgets import show_error, show_info, ask_question
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
@@ -180,7 +180,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.show_settings_widget()
                 return
             self.widget_menu.show()
-            self.button_user.setText(device_id.split("@")[0])
+            self.button_user.setText("    " + device_id.split("@")[0])
             self.show_mount_widget()
         except DeviceLoadingError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
@@ -358,12 +358,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             or self.force_close
         ):
             if not self.force_close:
-                result = QMessageBox.question(
+                result = ask_question(
                     self,
                     QCoreApplication.translate(self.__class__.__name__, "Confirmation"),
                     QCoreApplication.translate("MainWindow", "Are you sure you want to quit ?"),
                 )
-                if result != QMessageBox.Yes:
+                if not result:
                     event.ignore()
                     return
                 event.accept()

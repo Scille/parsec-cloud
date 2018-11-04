@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'forms/message_dialog.ui'
+# Form implementation generated from reading ui file 'forms/question_dialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.11.2
 #
@@ -9,18 +9,15 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_MessageDialog(object):
-    def setupUi(self, MessageDialog):
-        MessageDialog.setObjectName("MessageDialog")
-        MessageDialog.resize(300, 140)
-        MessageDialog.setMinimumSize(QtCore.QSize(300, 140))
-        MessageDialog.setStyleSheet("")
-        MessageDialog.setModal(True)
-        self.verticalLayout = QtWidgets.QVBoxLayout(MessageDialog)
+class Ui_QuestionDialog(object):
+    def setupUi(self, QuestionDialog):
+        QuestionDialog.setObjectName("QuestionDialog")
+        QuestionDialog.resize(437, 139)
+        self.verticalLayout = QtWidgets.QVBoxLayout(QuestionDialog)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.widget = QtWidgets.QWidget(MessageDialog)
+        self.widget = QtWidgets.QWidget(QuestionDialog)
         self.widget.setStyleSheet(
             "QWidget#widget\n"
             "{\n"
@@ -65,6 +62,7 @@ class Ui_MessageDialog(object):
         self.label_icon.setMinimumSize(QtCore.QSize(64, 64))
         self.label_icon.setMaximumSize(QtCore.QSize(64, 64))
         self.label_icon.setText("")
+        self.label_icon.setPixmap(QtGui.QPixmap(":/icons/images/icons/question.png"))
         self.label_icon.setScaledContents(True)
         self.label_icon.setObjectName("label_icon")
         self.horizontalLayout_2.addWidget(self.label_icon)
@@ -99,17 +97,79 @@ class Ui_MessageDialog(object):
         self.label_message.setWordWrap(True)
         self.label_message.setObjectName("label_message")
         self.verticalLayout_2.addWidget(self.label_message)
+        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_3.setSpacing(8)
+        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+        spacerItem1 = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
+        self.horizontalLayout_3.addItem(spacerItem1)
+        self.button_no = QtWidgets.QPushButton(self.widget)
+        self.button_no.setMinimumSize(QtCore.QSize(0, 32))
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        font.setBold(True)
+        font.setWeight(75)
+        self.button_no.setFont(font)
+        self.button_no.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.button_no.setStyleSheet(
+            "background-color: rgb(45, 144, 209);\n"
+            "border: 1px solid rgb(11, 56, 166);\n"
+            "color: rgb(255, 255, 255);\n"
+            "padding-left: 10px;\n"
+            "padding-right: 10px;"
+        )
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/cancel_white.png"),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off,
+        )
+        self.button_no.setIcon(icon1)
+        self.button_no.setIconSize(QtCore.QSize(24, 24))
+        self.button_no.setObjectName("button_no")
+        self.horizontalLayout_3.addWidget(self.button_no)
+        self.button_yes = QtWidgets.QPushButton(self.widget)
+        self.button_yes.setMinimumSize(QtCore.QSize(0, 32))
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        font.setBold(True)
+        font.setWeight(75)
+        self.button_yes.setFont(font)
+        self.button_yes.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.button_yes.setStyleSheet(
+            "background-color: rgb(45, 144, 209);\n"
+            "border: 1px solid rgb(11, 56, 166);\n"
+            "color: rgb(255, 255, 255);\n"
+            "padding-left: 10px;\n"
+            "padding-right: 10px;"
+        )
+        icon2 = QtGui.QIcon()
+        icon2.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/checked_white.png"),
+            QtGui.QIcon.Normal,
+            QtGui.QIcon.Off,
+        )
+        self.button_yes.setIcon(icon2)
+        self.button_yes.setIconSize(QtCore.QSize(24, 24))
+        self.button_yes.setObjectName("button_yes")
+        self.horizontalLayout_3.addWidget(self.button_yes)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_3)
         self.horizontalLayout_2.addLayout(self.verticalLayout_2)
         self.verticalLayout_3.addLayout(self.horizontalLayout_2)
         self.verticalLayout.addWidget(self.widget)
 
-        self.retranslateUi(MessageDialog)
-        self.button_close.clicked.connect(MessageDialog.close)
-        QtCore.QMetaObject.connectSlotsByName(MessageDialog)
+        self.retranslateUi(QuestionDialog)
+        self.button_yes.clicked.connect(QuestionDialog.accept)
+        self.button_no.clicked.connect(QuestionDialog.reject)
+        self.button_close.clicked.connect(QuestionDialog.close)
+        QtCore.QMetaObject.connectSlotsByName(QuestionDialog)
 
-    def retranslateUi(self, MessageDialog):
+    def retranslateUi(self, QuestionDialog):
         _translate = QtCore.QCoreApplication.translate
-        MessageDialog.setWindowTitle(_translate("MessageDialog", "Dialog"))
+        QuestionDialog.setWindowTitle(_translate("QuestionDialog", "Dialog"))
+        self.button_no.setText(_translate("QuestionDialog", "No"))
+        self.button_yes.setText(_translate("QuestionDialog", "Yes"))
 
 
 from parsec.core.gui import resources_rc

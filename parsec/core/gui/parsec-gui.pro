@@ -7,7 +7,10 @@ SOURCES += app.py \
            settings_widget.py \
            users_widget.py \
            file_size.py \
-           item_widget.py
+           item_widget.py \
+           custom_widgets.py \
+           devices_widget.py \
+           workspaces_widget.py \
 
 
 TRANSLATIONS += tr/parsec_fr.ts \
@@ -33,6 +36,13 @@ FORMS += forms/main_window.ui \
          forms/workspaces_widget.ui \
          forms/workspace_button.ui \
          forms/folder_item_widget.ui \
-         forms/message_dialog.ui
+         forms/message_dialog.ui \
+         forms/user_button.ui \
+         forms/input_dialog.ui \
+         forms/question_dialog.ui
 
 RESOURCES += rc/resources.qrc
+
+HEADERS += \
+    forms/inputdialog.h \
+    forms/questiondialog.h

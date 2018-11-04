@@ -36,6 +36,7 @@ class Ui_ParentItemWidget(object):
         self.label_icon.setMinimumSize(QtCore.QSize(32, 32))
         self.label_icon.setMaximumSize(QtCore.QSize(32, 32))
         self.label_icon.setText("")
+        self.label_icon.setPixmap(QtGui.QPixmap(":/icons/images/icons/folder-up.png"))
         self.label_icon.setScaledContents(True)
         self.label_icon.setObjectName("label_icon")
         self.horizontalLayout.addWidget(self.label_icon)
@@ -53,3 +54,6 @@ class Ui_ParentItemWidget(object):
         _translate = QtCore.QCoreApplication.translate
         ParentItemWidget.setWindowTitle(_translate("ParentItemWidget", "Form"))
         self.label.setText(_translate("ParentItemWidget", "Parent folder"))
+
+
+from parsec.core.gui import resources_rc

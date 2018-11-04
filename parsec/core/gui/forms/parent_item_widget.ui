@@ -67,6 +67,9 @@
      <property name="text">
       <string/>
      </property>
+     <property name="pixmap">
+      <pixmap resource="../rc/resources.qrc">:/icons/images/icons/folder-up.png</pixmap>
+     </property>
      <property name="scaledContents">
       <bool>true</bool>
      </property>
@@ -86,6 +89,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../rc/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>
