@@ -42,7 +42,7 @@ class BackendCmdsSender(BaseAsyncComponent):
 
     async def _naive_send(self, req):
         if not self._sock:
-            raise BackendNotAvailable()
+            raise BackendNotAvailable("Connection not initialized")
 
         try:
             # This timeout is a bit tricky: on one hand choosing a small value
@@ -59,7 +59,7 @@ class BackendCmdsSender(BaseAsyncComponent):
         except (trio.TooSlowError, trio.BrokenStreamError, trio.ClosedStreamError) as exc:
             await self._sock.aclose()
             self._sock = None
-            raise BackendNotAvailable() from exc
+            raise BackendNotAvailable(str(exc)) from exc
 
     async def send(self, req: dict) -> dict:
         """
