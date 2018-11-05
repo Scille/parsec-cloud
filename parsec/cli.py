@@ -1,8 +1,6 @@
 import click
 import traceback
 
-from parsec.ui import shell
-
 
 def _generate_bad_cmd(exc, hint=None):
     error_msg = "".join(
@@ -61,7 +59,6 @@ try:
     cli.add_command(fuse_cmd, "fuse")
 except NameError:
     pass
-cli.add_command(shell.cli, "shell")
 
 
 if __name__ == "__main__":
