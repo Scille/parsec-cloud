@@ -377,7 +377,7 @@ class BackendApp:
         await sock.send(result_req)
         return context
 
-    async def handle_client(self, sockstream):
+    async def handle_client(self, sockstream, swallow_crash=False):
         sock = CookedSocket(sockstream)
         try:
             logger.debug("start handshake")
@@ -394,16 +394,19 @@ class BackendApp:
         except trio.BrokenStreamError:
             # Client has closed connection
             pass
+
         except ParsecError as exc:
             logger.debug("BAD HANDSHAKE")
             rep = exc.to_dict()
             await sock.send(rep)
             await sock.aclose()
+
         except Exception as exc:
             # If we are here, something unexpected happened...
             client_ctx.logger.error("Unexpected crash", exc_info=exc)
             await sock.aclose()
-            raise
+            if not swallow_crash:
+                raise
 
     async def _handle_client_loop(self, sock, client_ctx):
 
