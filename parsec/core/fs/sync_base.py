@@ -4,7 +4,7 @@ from typing import List, Union
 
 from parsec.core.fs.utils import is_folder_manifest
 from parsec.core.fs.types import Path, Access, LocalFolderManifest, LocalFileManifest
-from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
+from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSEntryNotFound
 from parsec.core.encryption_manager import decrypt_with_symkey, encrypt_with_symkey
 from parsec.core.schemas import dumps_manifest, loads_manifest
 from parsec.utils import to_jsonb64, from_jsonb64
@@ -72,14 +72,14 @@ class BaseSyncer:
             return
 
         need_sync_entries = await self._backend_vlob_group_check(local_entries)
-        for changed_item in need_sync_entries["changed"]:
-            await self.sync_by_id(changed_item["id"])
+        for need_sync_entry_id in need_sync_entries:
+            await self.sync_by_id(need_sync_entry_id)
 
     async def sync_by_id(self, entry_id: UUID) -> None:
         async with self._lock:
             try:
                 path, access, _ = self.local_folder_fs.get_entry_path(entry_id)
-            except FSManifestLocalMiss:
+            except FSEntryNotFound:
                 # Entry not locally present, nothing to do
                 return
             notify_beacons = self.local_folder_fs.get_beacons(path)
@@ -157,7 +157,7 @@ class BaseSyncer:
         payload = {"cmd": "vlob_group_check", "to_check": to_check}
         ret = await self.backend_cmds_sender.send(payload)
         assert ret["status"] == "ok"
-        return ret
+        return [UUID(entry["id"]) for entry in ret["changed"]]
 
     async def _backend_vlob_read(self, access, version=None):
         payload = {"cmd": "vlob_read", "id": access["id"], "rts": access["rts"], "version": version}

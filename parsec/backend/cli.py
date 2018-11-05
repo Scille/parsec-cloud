@@ -2,6 +2,7 @@ import sys
 import trio
 import trio_asyncio
 import click
+from functools import partial
 
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import BackendApp, config_factory
@@ -157,7 +158,9 @@ def _backend(host, port, pubkeys, store, blockstore, debug):
                 )
 
             try:
-                await trio.serve_tcp(backend.handle_client, port, host=host)
+                await trio.serve_tcp(
+                    partial(backend.handle_client, swallow_crash=True), port, host=host
+                )
             finally:
                 await backend.teardown()
 

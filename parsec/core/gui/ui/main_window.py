@@ -19,7 +19,24 @@ class Ui_MainWindow(object):
         )
         MainWindow.setWindowIcon(icon)
         MainWindow.setAutoFillBackground(True)
-        MainWindow.setStyleSheet("")
+        MainWindow.setStyleSheet(
+            "QMenu\n"
+            "{\n"
+            "border: 1px solid rgb(11, 56, 166);\n"
+            "}\n"
+            "\n"
+            "QMenu::item\n"
+            "{\n"
+            "background-color: rgb(255, 255, 255);\n"
+            "color: rgb(0, 0, 0);\n"
+            "}\n"
+            "\n"
+            "QMenu::item:selected\n"
+            "{\n"
+            "background-color: rgb(45, 144, 209);\n"
+            "color: rgb(255, 255, 255);\n"
+            "}"
+        )
         MainWindow.setDocumentMode(False)
         MainWindow.setTabShape(QtWidgets.QTabWidget.Rounded)
         MainWindow.setUnifiedTitleAndToolBarOnMac(True)
@@ -232,6 +249,31 @@ class Ui_MainWindow(object):
             20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
         )
         self.verticalLayout.addItem(spacerItem)
+        self.button_user = QtWidgets.QPushButton(self.widget_menu)
+        self.button_user.setMinimumSize(QtCore.QSize(0, 64))
+        self.button_user.setMaximumSize(QtCore.QSize(16777215, 64))
+        font = QtGui.QFont()
+        font.setPointSize(13)
+        self.button_user.setFont(font)
+        self.button_user.setStyleSheet(
+            "border-top: 2px solid rgb(46, 146, 208);\n"
+            "border-bottom: 2px solid rgb(46, 146, 208);\n"
+            "color: rgb(255, 255, 255);\n"
+            "text-align: left;\n"
+            "padding-left: 10px;\n"
+            "background-color: rgb(22, 84, 169);\n"
+            ""
+        )
+        self.button_user.setText("")
+        icon5 = QtGui.QIcon()
+        icon5.addPixmap(
+            QtGui.QPixmap(":/icons/images/icons/user_menu.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+        )
+        self.button_user.setIcon(icon5)
+        self.button_user.setIconSize(QtCore.QSize(32, 32))
+        self.button_user.setFlat(True)
+        self.button_user.setObjectName("button_user")
+        self.verticalLayout.addWidget(self.button_user)
         self.button_logout = QtWidgets.QPushButton(self.widget_menu)
         self.button_logout.setEnabled(True)
         self.button_logout.setMinimumSize(QtCore.QSize(0, 64))
@@ -247,13 +289,13 @@ class Ui_MainWindow(object):
         self.button_logout.setStyleSheet(
             "color: rgb(255, 255, 255);\n" "text-align: left;\n" "padding-left: 10px;\n" ""
         )
-        icon5 = QtGui.QIcon()
-        icon5.addPixmap(
+        icon6 = QtGui.QIcon()
+        icon6.addPixmap(
             QtGui.QPixmap(":/icons/images/icons/menu_logout.png"),
             QtGui.QIcon.Normal,
             QtGui.QIcon.Off,
         )
-        self.button_logout.setIcon(icon5)
+        self.button_logout.setIcon(icon6)
         self.button_logout.setIconSize(QtCore.QSize(32, 32))
         self.button_logout.setCheckable(False)
         self.button_logout.setFlat(True)
@@ -274,9 +316,12 @@ class Ui_MainWindow(object):
         self.widget_main.setObjectName("widget_main")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.widget_main)
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_2.setSpacing(0)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.main_widget_layout = QtWidgets.QVBoxLayout()
         self.main_widget_layout.setSizeConstraint(QtWidgets.QLayout.SetMaximumSize)
+        self.main_widget_layout.setContentsMargins(10, 10, 10, 10)
+        self.main_widget_layout.setSpacing(0)
         self.main_widget_layout.setObjectName("main_widget_layout")
         self.verticalLayout_2.addLayout(self.main_widget_layout)
         self.horizontalLayout_2.addWidget(self.widget_main)

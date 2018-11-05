@@ -13,11 +13,37 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#DevicesWidget
+{
+background-color: rgb(255, 255, 255);
+}</string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QPushButton" name="button_add_device">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>32</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(45, 144, 209);
+border: 1px solid rgb(11, 56, 166);
+color: rgb(255, 255, 255);
+padding-left: 10px;
+padding-right: 10px;</string>
+       </property>
        <property name="text">
         <string>Add a new device</string>
        </property>

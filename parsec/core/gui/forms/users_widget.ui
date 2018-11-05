@@ -13,13 +13,70 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#UsersWidget
+{
+background-color: rgb(255, 255, 255);
+}
+
+QWidget#widget_users
+{
+border: 1px solid rgb(28, 78, 163);
+}</string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>10</number>
+   </property>
+   <property name="topMargin">
+    <number>10</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QPushButton" name="button_add_user">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>32</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::RightToLeft</enum>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(45, 144, 209);
+border: 1px solid rgb(11, 56, 166);
+color: rgb(255, 255, 255);
+padding-left: 10px;
+padding-right: 10px;
+font-weight: bold;</string>
+       </property>
        <property name="text">
         <string>Add a new user</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../rc/resources.qrc">
+         <normaloff>:/icons/images/icons/add_user.png</normaloff>:/icons/images/icons/add_user.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
        </property>
       </widget>
      </item>
@@ -43,6 +100,15 @@
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
        <widget class="QLabel" name="label_3">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(28, 78, 163);</string>
+        </property>
         <property name="text">
          <string>Transmit the following information to the new user so they can set up their account.</string>
         </property>
@@ -55,6 +121,15 @@
        <layout class="QFormLayout" name="formLayout_2">
         <item row="0" column="0">
          <widget class="QLabel" name="label">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(28, 78, 163);</string>
+          </property>
           <property name="text">
            <string>User ID</string>
           </property>
@@ -62,6 +137,15 @@
         </item>
         <item row="1" column="0">
          <widget class="QLabel" name="label_2">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(28, 78, 163);</string>
+          </property>
           <property name="text">
            <string>Token</string>
           </property>
@@ -69,6 +153,22 @@
         </item>
         <item row="0" column="1">
          <widget class="QLineEdit" name="line_edit_user_id">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">border: 1px solid rgb(28, 78, 163);
+padding-left: 10px;
+color: rgb(28, 78, 163);</string>
+          </property>
           <property name="readOnly">
            <bool>true</bool>
           </property>
@@ -76,6 +176,22 @@
         </item>
         <item row="1" column="1">
          <widget class="QLineEdit" name="line_edit_token">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">border: 1px solid rgb(28, 78, 163);
+padding-left: 10px;
+color: rgb(28, 78, 163);</string>
+          </property>
           <property name="readOnly">
            <bool>true</bool>
           </property>
@@ -85,6 +201,92 @@
       </item>
      </layout>
     </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="line_edit_search">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>32</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-image: url(:/icons/images/icons/search.png);
+background-repeat: no-repeat;
+background-position: right;
+border: 1px solid rgb(28, 78, 163);
+padding-left: 10px;
+color: rgb(28, 78, 163);</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="placeholderText">
+      <string>Search users</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QPushButton" name="pushButton_4">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>32</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(12, 65, 157);
+border: 0;</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QWidget" name="widget_users" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>100</height>
+        </size>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <layout class="QGridLayout" name="layout_users"/>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <spacer name="verticalSpacer">
@@ -101,6 +303,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../rc/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

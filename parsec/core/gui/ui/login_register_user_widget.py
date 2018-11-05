@@ -13,7 +13,9 @@ class Ui_LoginRegisterUserWidget(object):
     def setupUi(self, LoginRegisterUserWidget):
         LoginRegisterUserWidget.setObjectName("LoginRegisterUserWidget")
         LoginRegisterUserWidget.resize(632, 671)
-        LoginRegisterUserWidget.setStyleSheet("background-color: rgb(12, 65, 156);\n" "")
+        LoginRegisterUserWidget.setStyleSheet(
+            "QWidget#LoginRegisterUserWidget\n" "{\n" "background-color: rgb(12, 65, 156);\n" "}"
+        )
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(LoginRegisterUserWidget)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.label_9 = QtWidgets.QLabel(LoginRegisterUserWidget)

@@ -29,8 +29,10 @@
    <bool>false</bool>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(12, 65, 156);
-</string>
+   <string notr="true">QWidget#LoginLoginWidget
+{
+background-color: rgb(12, 65, 156);
+}</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="spacing">
@@ -492,6 +494,12 @@ padding: 7px;</string>
                <width>28</width>
                <height>28</height>
               </size>
+             </property>
+             <property name="autoDefault">
+              <bool>true</bool>
+             </property>
+             <property name="default">
+              <bool>true</bool>
              </property>
              <property name="flat">
               <bool>true</bool>

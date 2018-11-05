@@ -8,7 +8,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/devices_widget.ui" line="22"/>
+        <location filename="../forms/devices_widget.ui" line="48"/>
         <source>Add a new device</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16,13 +16,8 @@
 <context>
     <name>FileItemWidget</name>
     <message>
-        <location filename="../forms/file_item_widget.ui" line="38"/>
+        <location filename="../forms/file_item_widget.ui" line="45"/>
         <source>Form</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/file_item_widget.ui" line="141"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -62,144 +57,124 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="49"/>
-        <source>Mounted on</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/files_widget.ui" line="82"/>
-        <source>Return to workspaces list</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/files_widget.ui" line="126"/>
-        <source>Create new folder</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/files_widget.ui" line="137"/>
-        <source>Import a folder</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/files_widget.ui" line="148"/>
-        <source>Import files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/files_widget.ui" line="174"/>
+        <location filename="../forms/files_widget.ui" line="338"/>
         <source>Search files or folders</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="192"/>
-        <source>Add a workspace</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="185"/>
-        <source>Sub-folders will not be imported to prevent big data imports.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="271"/>
-        <source>Can not import
-{}.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="255"/>
-        <source>{} already exists</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="289"/>
+        <location filename="../forms/files_widget.ui" line="228"/>
         <source>New folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="289"/>
+        <location filename="../files_widget.py" line="214"/>
         <source>Enter new folder name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="302"/>
+        <location filename="../forms/files_widget.ui" line="178"/>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/files_widget.ui" line="278"/>
+        <source>Import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/files_widget.ui" line="407"/>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/files_widget.ui" line="446"/>
+        <source>Created on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/files_widget.ui" line="479"/>
+        <source>Updated on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/files_widget.ui" line="512"/>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="214"/>
+        <source>Folder name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="148"/>
         <source>A folder with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="322"/>
+        <location filename="../files_widget.py" line="230"/>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="233"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="324"/>
-        <source>Open in file explorer</source>
+        <location filename="../files_widget.py" line="235"/>
+        <source>Open in explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="328"/>
-        <source>Delete</source>
+        <location filename="../files_widget.py" line="241"/>
+        <source>New name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="364"/>
+        <location filename="../files_widget.py" line="241"/>
+        <source>Enter file new name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="263"/>
+        <source>Can not rename.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../files_widget.py" line="183"/>
         <source>Confirmation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="353"/>
-        <source>Are you sure you want to delete folder &quot;{}&quot; ?</source>
+        <location filename="../files_widget.py" line="183"/>
+        <source>Are you sure you want to delete &quot;{}&quot; ?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="364"/>
-        <source>Are you sure you want to delete file &quot;{}&quot; ?</source>
+        <location filename="../files_widget.py" line="124"/>
+        <source>Some files or folders could not be imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FolderItemWidget</name>
+    <message>
+        <location filename="../forms/folder_item_widget.ui" line="26"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>InputDialog</name>
+    <message>
+        <location filename="../forms/input_dialog.ui" line="20"/>
+        <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="491"/>
-        <source>{} element(s)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="413"/>
-        <source>Share</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="419"/>
-        <source>Share a workspace</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="419"/>
-        <source>Give a user name to share the workspace {} with.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="431"/>
-        <source>Can not share the workspace &quot;{}&quot; with this user.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="438"/>
-        <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="448"/>
-        <source>New workspace</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="448"/>
-        <source>Enter new workspace name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="459"/>
-        <source>A workspace with the same name already exists.</source>
+        <location filename="../forms/input_dialog.ui" line="252"/>
+        <source>Ok</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -211,37 +186,37 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="165"/>
+        <location filename="../forms/login_login_widget.ui" line="167"/>
         <source>Identifier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="229"/>
+        <location filename="../forms/login_login_widget.ui" line="231"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="307"/>
+        <location filename="../forms/login_login_widget.ui" line="309"/>
         <source>NitroKey PIN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="356"/>
+        <location filename="../forms/login_login_widget.ui" line="358"/>
         <source>NitroKey Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="399"/>
+        <location filename="../forms/login_login_widget.ui" line="401"/>
         <source>NitroKey Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="440"/>
+        <location filename="../forms/login_login_widget.ui" line="442"/>
         <source>Authenticate using NitroKey</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="484"/>
+        <location filename="../forms/login_login_widget.ui" line="486"/>
         <source>Log In</source>
         <translation type="unfinished"></translation>
     </message>
@@ -254,52 +229,52 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="33"/>
+        <location filename="../forms/login_register_device_widget.ui" line="35"/>
         <source>To register a new device, you need an existing device to declare a new device and get the resulting token.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="176"/>
+        <location filename="../forms/login_register_device_widget.ui" line="178"/>
         <source>Device name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="216"/>
+        <location filename="../forms/login_register_device_widget.ui" line="218"/>
         <source>Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="274"/>
+        <location filename="../forms/login_register_device_widget.ui" line="276"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="323"/>
+        <location filename="../forms/login_register_device_widget.ui" line="325"/>
         <source>Password check</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="395"/>
+        <location filename="../forms/login_register_device_widget.ui" line="397"/>
         <source>NitroKey PIN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="444"/>
+        <location filename="../forms/login_register_device_widget.ui" line="446"/>
         <source>NitroKey Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="487"/>
+        <location filename="../forms/login_register_device_widget.ui" line="489"/>
         <source>NitroKey Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="528"/>
+        <location filename="../forms/login_register_device_widget.ui" line="530"/>
         <source>Authenticate using NitroKey</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="593"/>
+        <location filename="../forms/login_register_device_widget.ui" line="595"/>
         <source>Register</source>
         <translation type="unfinished"></translation>
     </message>
@@ -314,7 +289,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="136"/>
+        <location filename="../forms/login_register_device_widget.ui" line="138"/>
         <source>User name</source>
         <translation type="unfinished"></translation>
     </message>
@@ -327,52 +302,52 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="33"/>
+        <location filename="../forms/login_register_user_widget.ui" line="35"/>
         <source>To register a new user, you need another user to create an account and get a token.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="236"/>
+        <location filename="../forms/login_register_user_widget.ui" line="238"/>
         <source>Device name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="276"/>
+        <location filename="../forms/login_register_user_widget.ui" line="278"/>
         <source>Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="334"/>
+        <location filename="../forms/login_register_user_widget.ui" line="336"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="383"/>
+        <location filename="../forms/login_register_user_widget.ui" line="385"/>
         <source>Password check</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="455"/>
+        <location filename="../forms/login_register_user_widget.ui" line="457"/>
         <source>NitroKey PIN</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="504"/>
+        <location filename="../forms/login_register_user_widget.ui" line="506"/>
         <source>NitroKey Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="547"/>
+        <location filename="../forms/login_register_user_widget.ui" line="549"/>
         <source>NitroKey Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="588"/>
+        <location filename="../forms/login_register_user_widget.ui" line="590"/>
         <source>Authenticate using NitroKey</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="632"/>
+        <location filename="../forms/login_register_user_widget.ui" line="634"/>
         <source>Register</source>
         <translation type="unfinished"></translation>
     </message>
@@ -382,7 +357,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="196"/>
+        <location filename="../forms/login_register_user_widget.ui" line="198"/>
         <source>User name</source>
         <translation type="unfinished"></translation>
     </message>
@@ -418,96 +393,153 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="219"/>
+        <location filename="../forms/main_window.ui" line="234"/>
         <source>   Documents</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="286"/>
+        <location filename="../forms/main_window.ui" line="301"/>
         <source>   Users</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="353"/>
+        <location filename="../forms/main_window.ui" line="368"/>
         <source>   Devices</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="423"/>
+        <location filename="../forms/main_window.ui" line="438"/>
         <source>   Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="495"/>
+        <location filename="../forms/main_window.ui" line="556"/>
         <source>   Log Out</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="182"/>
+        <location filename="../main_window.py" line="186"/>
         <source>Authentication failed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="200"/>
+        <location filename="../main_window.py" line="204"/>
         <source>Can not register the user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="235"/>
+        <location filename="../main_window.py" line="233"/>
         <source>User has been successfully registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="243"/>
+        <location filename="../main_window.py" line="241"/>
         <source>The token has expired.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="248"/>
+        <location filename="../main_window.py" line="246"/>
         <source>No invitation found for this user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="253"/>
+        <location filename="../main_window.py" line="251"/>
         <source>User has already been registered.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="314"/>
+        <location filename="../main_window.py" line="317"/>
         <source>Device has been successfully registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="322"/>
+        <location filename="../main_window.py" line="325"/>
         <source>The device already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="327"/>
+        <location filename="../main_window.py" line="330"/>
         <source>Invalid NitroKey information.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="332"/>
+        <location filename="../main_window.py" line="335"/>
         <source>Can not create the new device.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="361"/>
+        <location filename="../main_window.py" line="366"/>
         <source>Are you sure you want to quit ?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="256"/>
+        <source>Can not register this user.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>ParentFolderWidget</name>
+    <name>Message</name>
     <message>
-        <location filename="../forms/parent_folder_widget.ui" line="32"/>
+        <location filename="../custom_widgets.py" line="75"/>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../custom_widgets.py" line="85"/>
+        <source>Warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../custom_widgets.py" line="95"/>
+        <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MessageDialog</name>
+    <message>
+        <location filename="../forms/message_dialog.ui" line="26"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MountWidget</name>
+    <message>
+        <location filename="../forms/mount_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ParentItemWidget</name>
+    <message>
+        <location filename="../forms/parent_item_widget.ui" line="32"/>
         <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/parent_folder_widget.ui" line="66"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Parent folder&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <location filename="../forms/parent_item_widget.ui" line="86"/>
+        <source>Parent folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QuestionDialog</name>
+    <message>
+        <location filename="../forms/question_dialog.ui" line="14"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/question_dialog.ui" line="250"/>
+        <source>No</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/question_dialog.ui" line="290"/>
+        <source>Yes</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -577,28 +609,36 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="49"/>
+        <location filename="../forms/settings_widget.ui" line="97"/>
         <source>Global</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="61"/>
-        <source>Mount options</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/settings_widget.ui" line="76"/>
-        <source>Choose mount folder</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/settings_widget.ui" line="106"/>
+        <location filename="../forms/settings_widget.ui" line="252"/>
         <source>Network</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../settings_widget.py" line="33"/>
         <source>The choosen folder is not writable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="149"/>
+        <source>Mountpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="213"/>
+        <source>Choose mountpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UserButton</name>
+    <message>
+        <location filename="../forms/user_button.ui" line="31"/>
+        <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -610,33 +650,139 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="22"/>
+        <location filename="../forms/users_widget.ui" line="69"/>
         <source>Add a new user</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="47"/>
+        <location filename="../forms/users_widget.ui" line="113"/>
         <source>Transmit the following information to the new user so they can set up their account.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="59"/>
+        <location filename="../forms/users_widget.ui" line="134"/>
         <source>User ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/users_widget.ui" line="66"/>
+        <location filename="../forms/users_widget.ui" line="150"/>
         <source>Token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="18"/>
+        <location filename="../users_widget.py" line="47"/>
         <source>New user</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../users_widget.py" line="18"/>
+        <location filename="../users_widget.py" line="47"/>
         <source>Enter new user name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/users_widget.ui" line="230"/>
+        <source>Search users</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="47"/>
+        <source>User name</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>WorkspaceButton</name>
+    <message>
+        <location filename="../forms/workspace_button.ui" line="31"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>WorkspacesWidget</name>
+    <message>
+        <location filename="../forms/workspaces_widget.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspaces_widget.ui" line="69"/>
+        <source>New workspace  </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="67"/>
+        <source>Share</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="69"/>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="76"/>
+        <source>New name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="76"/>
+        <source>Enter workspace new name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="152"/>
+        <source>A workspace with the same name already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="95"/>
+        <source>Can not rename the workspace.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="104"/>
+        <source>Share a workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="104"/>
+        <source>Give a user name to share the workspace {} with.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="116"/>
+        <source>The workspaces has been shared.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="123"/>
+        <source>Can not share the workspace &quot;{}&quot; with this user.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="130"/>
+        <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="140"/>
+        <source>New workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="140"/>
+        <source>Enter new workspace name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="140"/>
+        <source>Workspace name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="104"/>
+        <source>User name</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

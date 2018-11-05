@@ -102,11 +102,11 @@ class BaseUserComponent:
         try:
             user = await self.get(msg["user_id"])
         except NotFoundError:
-            return {"status": "not_found", "reason": "No user with id `%s`." % msg["user_id"]}
+            return {"status": "not_found", "reason": f"No user with id `{msg['user_id']}`."}
 
         data, errors = UserSchema.dump(user)
         if errors:
-            raise RuntimeError("Dump error with %r: %s" % (user, errors))
+            raise RuntimeError(f"Dump error with {user!r}: {errors}")
 
         return {"status": "ok", **data}
 
@@ -118,7 +118,7 @@ class BaseUserComponent:
         except AlreadyExistsError:
             return {
                 "status": "already_exists",
-                "reason": "User `%s` already exists." % msg["user_id"],
+                "reason": f"User `{msg['user_id']}` already exists.",
             }
 
         return {"status": "ok", "user_id": msg["user_id"], "invitation_token": token}
@@ -128,7 +128,7 @@ class BaseUserComponent:
         try:
             await self.claim_invitation(**msg)
         except UserClaimError as exc:
-            return {"status": "claim_error", "reason": exc}
+            return {"status": "claim_error", "reason": str(exc)}
 
         return {"status": "ok"}
 
@@ -142,7 +142,7 @@ class BaseUserComponent:
         except AlreadyExistsError:
             return {
                 "status": "already_exists",
-                "reason": "Device `%s` already exists." % msg["device_name"],
+                "reason": f"Device `{msg['device_name']}` already exists.",
             }
 
         return {"status": "ok", "configure_device_token": configure_device_token}

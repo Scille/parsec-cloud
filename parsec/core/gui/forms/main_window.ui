@@ -21,7 +21,22 @@
    <bool>true</bool>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">QMenu
+{
+border: 1px solid rgb(11, 56, 166);
+}
+
+QMenu::item
+{
+background-color: rgb(255, 255, 255);
+color: rgb(0, 0, 0);
+}
+
+QMenu::item:selected
+{
+background-color: rgb(45, 144, 209);
+color: rgb(255, 255, 255);
+}</string>
   </property>
   <property name="documentMode">
    <bool>false</bool>
@@ -454,6 +469,52 @@ border: 0;
            </spacer>
           </item>
           <item>
+           <widget class="QPushButton" name="button_user">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>64</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>64</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>13</pointsize>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">border-top: 2px solid rgb(46, 146, 208);
+border-bottom: 2px solid rgb(46, 146, 208);
+color: rgb(255, 255, 255);
+text-align: left;
+padding-left: 10px;
+background-color: rgb(22, 84, 169);
+</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../rc/resources.qrc">
+              <normaloff>:/icons/images/icons/user_menu.png</normaloff>:/icons/images/icons/user_menu.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>32</width>
+              <height>32</height>
+             </size>
+            </property>
+            <property name="flat">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="button_logout">
             <property name="enabled">
              <bool>true</bool>
@@ -530,6 +591,9 @@ padding-left: 10px;
 }</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2">
+          <property name="spacing">
+           <number>0</number>
+          </property>
           <property name="leftMargin">
            <number>0</number>
           </property>
@@ -544,8 +608,23 @@ padding-left: 10px;
           </property>
           <item>
            <layout class="QVBoxLayout" name="main_widget_layout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
             <property name="sizeConstraint">
              <enum>QLayout::SetMaximumSize</enum>
+            </property>
+            <property name="leftMargin">
+             <number>10</number>
+            </property>
+            <property name="topMargin">
+             <number>10</number>
+            </property>
+            <property name="rightMargin">
+             <number>10</number>
+            </property>
+            <property name="bottomMargin">
+             <number>10</number>
             </property>
            </layout>
           </item>
