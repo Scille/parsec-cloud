@@ -43,6 +43,7 @@
         <file>images/icons/checked_white.png</file>
         <file>images/icons/folder-up.png</file>
         <file>images/icons/folder-up_selected.png</file>
+        <file>images/icons/parsec.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>

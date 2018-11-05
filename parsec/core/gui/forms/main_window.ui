@@ -14,14 +14,29 @@
    <string>Parsec</string>
   </property>
   <property name="windowIcon">
-   <iconset>
+   <iconset resource="../rc/resources.qrc">
     <normaloff>:/icons/images/icons/parsec.png</normaloff>:/icons/images/icons/parsec.png</iconset>
   </property>
   <property name="autoFillBackground">
    <bool>true</bool>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">QMenu
+{
+border: 1px solid rgb(11, 56, 166);
+}
+
+QMenu::item
+{
+background-color: rgb(255, 255, 255);
+color: rgb(0, 0, 0);
+}
+
+QMenu::item:selected
+{
+background-color: rgb(45, 144, 209);
+color: rgb(255, 255, 255);
+}</string>
   </property>
   <property name="documentMode">
    <bool>false</bool>

@@ -248,6 +248,8 @@ class Ui_LoginLoginWidget(object):
         )
         self.button_login.setIcon(icon)
         self.button_login.setIconSize(QtCore.QSize(28, 28))
+        self.button_login.setAutoDefault(True)
+        self.button_login.setDefault(True)
         self.button_login.setFlat(True)
         self.button_login.setObjectName("button_login")
         self.horizontalLayout_3.addWidget(self.button_login)

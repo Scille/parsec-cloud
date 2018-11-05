@@ -8,7 +8,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/devices_widget.ui" line="22"/>
+        <location filename="../forms/devices_widget.ui" line="48"/>
         <source>Add a new device</source>
         <translation type="unfinished"></translation>
     </message>
@@ -393,27 +393,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="219"/>
+        <location filename="../forms/main_window.ui" line="234"/>
         <source>   Documents</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="286"/>
+        <location filename="../forms/main_window.ui" line="301"/>
         <source>   Users</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="353"/>
+        <location filename="../forms/main_window.ui" line="368"/>
         <source>   Devices</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="423"/>
+        <location filename="../forms/main_window.ui" line="438"/>
         <source>   Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="541"/>
+        <location filename="../forms/main_window.ui" line="556"/>
         <source>   Log Out</source>
         <translation type="unfinished"></translation>
     </message>
@@ -494,7 +494,7 @@
 <context>
     <name>MessageDialog</name>
     <message>
-        <location filename="../forms/message_dialog.ui" line="20"/>
+        <location filename="../forms/message_dialog.ui" line="26"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>

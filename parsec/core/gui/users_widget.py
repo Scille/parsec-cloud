@@ -38,7 +38,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
             item = self.layout_users.takeAt(i)
             if item:
                 w = item.widget()
-                if pattern not in w.name:
+                if pattern not in w.name or not pattern:
                     w.hide()
                 else:
                     w.show()

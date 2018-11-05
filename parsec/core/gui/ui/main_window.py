@@ -19,7 +19,24 @@ class Ui_MainWindow(object):
         )
         MainWindow.setWindowIcon(icon)
         MainWindow.setAutoFillBackground(True)
-        MainWindow.setStyleSheet("")
+        MainWindow.setStyleSheet(
+            "QMenu\n"
+            "{\n"
+            "border: 1px solid rgb(11, 56, 166);\n"
+            "}\n"
+            "\n"
+            "QMenu::item\n"
+            "{\n"
+            "background-color: rgb(255, 255, 255);\n"
+            "color: rgb(0, 0, 0);\n"
+            "}\n"
+            "\n"
+            "QMenu::item:selected\n"
+            "{\n"
+            "background-color: rgb(45, 144, 209);\n"
+            "color: rgb(255, 255, 255);\n"
+            "}"
+        )
         MainWindow.setDocumentMode(False)
         MainWindow.setTabShape(QtWidgets.QTabWidget.Rounded)
         MainWindow.setUnifiedTitleAndToolBarOnMac(True)

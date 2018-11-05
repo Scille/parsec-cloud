@@ -10,7 +10,7 @@ SOURCES += app.py \
            item_widget.py \
            custom_widgets.py \
            devices_widget.py \
-           workspaces_widget.py \
+           workspaces_widget.py
 
 
 TRANSLATIONS += tr/parsec_fr.ts \
@@ -42,7 +42,3 @@ FORMS += forms/main_window.ui \
          forms/question_dialog.ui
 
 RESOURCES += rc/resources.qrc
-
-HEADERS += \
-    forms/inputdialog.h \
-    forms/questiondialog.h

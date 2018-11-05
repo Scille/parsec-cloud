@@ -13,11 +13,27 @@ class Ui_DevicesWidget(object):
     def setupUi(self, DevicesWidget):
         DevicesWidget.setObjectName("DevicesWidget")
         DevicesWidget.resize(400, 300)
+        DevicesWidget.setStyleSheet(
+            "QWidget#DevicesWidget\n" "{\n" "background-color: rgb(255, 255, 255);\n" "}"
+        )
         self.verticalLayout = QtWidgets.QVBoxLayout(DevicesWidget)
         self.verticalLayout.setObjectName("verticalLayout")
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.button_add_device = QtWidgets.QPushButton(DevicesWidget)
+        self.button_add_device.setMinimumSize(QtCore.QSize(0, 32))
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        font.setBold(True)
+        font.setWeight(75)
+        self.button_add_device.setFont(font)
+        self.button_add_device.setStyleSheet(
+            "background-color: rgb(45, 144, 209);\n"
+            "border: 1px solid rgb(11, 56, 166);\n"
+            "color: rgb(255, 255, 255);\n"
+            "padding-left: 10px;\n"
+            "padding-right: 10px;"
+        )
         self.button_add_device.setObjectName("button_add_device")
         self.horizontalLayout.addWidget(self.button_add_device)
         spacerItem = QtWidgets.QSpacerItem(

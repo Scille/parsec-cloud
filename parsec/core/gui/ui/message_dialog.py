@@ -12,7 +12,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MessageDialog(object):
     def setupUi(self, MessageDialog):
         MessageDialog.setObjectName("MessageDialog")
-        MessageDialog.resize(300, 140)
+        MessageDialog.resize(379, 161)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding
+        )
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(MessageDialog.sizePolicy().hasHeightForWidth())
+        MessageDialog.setSizePolicy(sizePolicy)
         MessageDialog.setMinimumSize(QtCore.QSize(300, 140))
         MessageDialog.setStyleSheet("")
         MessageDialog.setModal(True)
@@ -21,6 +28,13 @@ class Ui_MessageDialog(object):
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName("verticalLayout")
         self.widget = QtWidgets.QWidget(MessageDialog)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding
+        )
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
+        self.widget.setSizePolicy(sizePolicy)
         self.widget.setStyleSheet(
             "QWidget#widget\n"
             "{\n"
