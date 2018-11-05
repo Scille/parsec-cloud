@@ -16,12 +16,11 @@ from parsec.core.gui.custom_widgets import (
 )
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.gui.item_widget import FileItemWidget, FolderItemWidget, ParentItemWidget
-from parsec.core.fs import FSManifestLocalMiss
-from parsec.core.fs.sharing import SharingRecipientError
+from parsec.core.fs import FSEntryNotFound
 
 
 class FilesWidget(QWidget, Ui_FilesWidget):
-    current_directory_changed_qt = pyqtSignal(str, UUID, str)
+    fs_changed_qt = pyqtSignal(str, UUID, str)
     back_clicked = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
@@ -40,7 +39,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.workspace = None
         core_call().connect_event("fs.entry.updated", self._on_fs_entry_updated_trio)
         core_call().connect_event("fs.entry.synced", self._on_fs_entry_synced_trio)
-        self.current_directory_changed_qt.connect(self._on_current_directory_changed_qt)
+        self.fs_changed_qt.connect(self._on_fs_changed_qt)
 
     def set_item_selected(self, current, previous):
         if previous:
@@ -59,13 +58,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self._add_parent_folder()
         dir_path = os.path.join("/", self.workspace, self.current_directory)
         self.label_current_directory.setText(dir_path)
-        result = core_call().stat(dir_path)
-        for child in result["children"]:
-            attrs = core_call().stat(os.path.join(dir_path, child))
-            if attrs["type"] == "folder":
+        dir_stat = core_call().stat(dir_path)
+        for child in dir_stat["children"]:
+            child_stat = core_call().stat(os.path.join(dir_path, child))
+            if child_stat["is_folder"]:
                 self._add_folder(child)
-            elif attrs["type"] == "file":
-                self._add_file(child, attrs["size"], attrs["created"], attrs["updated"])
+            else:
+                self._add_file(
+                    child, child_stat["size"], child_stat["created"], child_stat["updated"]
+                )
 
     def _import_folder(self, src, dst):
         err = False
@@ -202,7 +203,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         for child in result.get("children", []):
             child_path = os.path.join(path, child)
             file_infos = core_call().stat(os.path.join(path, child))
-            if file_infos["type"] == "folder":
+            if file_infos["is_folder"]:
                 self._delete_folder(child_path)
             else:
                 core_call().delete_file(child_path)
@@ -287,22 +288,31 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.list_files.clear()
 
     def _on_fs_entry_synced_trio(self, event, path, id):
-        self.current_directory_changed_qt.emit(event, id, path)
+        self.fs_changed_qt.emit(event, id, path)
 
     def _on_fs_entry_updated_trio(self, event, id):
-        self.current_directory_changed_qt.emit(event, id, None)
+        self.fs_changed_qt.emit(event, id, None)
 
-    def _on_current_directory_changed_qt(self, event, id, path):
+    def _on_fs_changed_qt(self, event, id, path):
         if not path:
-            path = core_call().get_entry_path(id)
+            try:
+                path = core_call().get_entry_path(id)
+            except FSEntryNotFound:
+                # Entry not locally present, nothing to do
+                return
+
+        # Modifications on root is handled by workspace_widget
+        if path == "/":
+            return
+
         # TODO: too cumbersome...
         if isinstance(path, pathlib.PurePosixPath):
-            modified_hops = list(path.parts)
+            modified_hops = [x for x in path.parts if x != "/"]
         else:
-            modified_hops = [x for x in path.split("/") if x]
+            modified_hops = [x for x in path.split("/") if x and x != "/"]
 
-        if self.workspace is not None or self.current_directory is not None:
-            current_dir_hops = ["/", self.workspace] + [
+        if self.workspace and self.current_directory:
+            current_dir_hops = [self.workspace] + [
                 x for x in self.current_directory.split("/") if x
             ]
         else:

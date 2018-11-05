@@ -4,7 +4,7 @@ from typing import List, Union
 
 from parsec.core.fs.utils import is_folder_manifest
 from parsec.core.fs.types import Path, Access, LocalFolderManifest, LocalFileManifest
-from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
+from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSEntryNotFound
 from parsec.core.encryption_manager import decrypt_with_symkey, encrypt_with_symkey
 from parsec.core.schemas import dumps_manifest, loads_manifest
 from parsec.utils import to_jsonb64, from_jsonb64
@@ -79,7 +79,7 @@ class BaseSyncer:
         async with self._lock:
             try:
                 path, access, _ = self.local_folder_fs.get_entry_path(entry_id)
-            except FSManifestLocalMiss:
+            except FSEntryNotFound:
                 # Entry not locally present, nothing to do
                 return
             notify_beacons = self.local_folder_fs.get_beacons(path)

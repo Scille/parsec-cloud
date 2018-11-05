@@ -50,6 +50,10 @@ class FSManifestLocalMiss(Exception):
         self.access = access
 
 
+class FSEntryNotFound(Exception):
+    pass
+
+
 class LocalFolderFS:
     def __init__(self, device, event_bus):
         self.local_author = device.id
@@ -158,6 +162,10 @@ class LocalFolderFS:
         return self._retrieve_entry(path)
 
     def get_entry_path(self, entry_id: UUID) -> Tuple[Path, Access, LocalManifest]:
+        """
+        Raises:
+            FSEntryNotFound: If the entry is not present in local
+        """
         if entry_id == self.root_access["id"]:
             return Path("/"), self.root_access, self.get_manifest(self.root_access)
 
@@ -178,7 +186,7 @@ class LocalFolderFS:
 
         found = _recursive_search(self.root_access, Path("/"))
         if not found:
-            raise FSManifestLocalMiss(entry_id)
+            raise FSEntryNotFound(entry_id)
         return found
 
     def _retrieve_entry(self, path: Path, collector=None) -> Tuple[Access, LocalManifest]:

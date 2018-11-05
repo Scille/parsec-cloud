@@ -1,4 +1,5 @@
 import os
+from uuid import UUID
 
 from PyQt5.QtCore import pyqtSignal, QCoreApplication, QPoint, QSize, Qt
 from PyQt5.QtGui import QIcon, QPixmap
@@ -9,6 +10,7 @@ from parsec.core.gui.core_call import core_call
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 
+from parsec.core.fs import FSEntryNotFound
 from parsec.core.fs.sharing import SharingRecipientError
 
 
@@ -41,11 +43,15 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
 
 class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
+    fs_changed_qt = pyqtSignal(str, UUID, str)
     load_workspace_clicked = pyqtSignal(str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        core_call().connect_event("fs.entry.updated", self._on_fs_entry_updated_trio)
+        core_call().connect_event("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.fs_changed_qt.connect(self._on_fs_changed_qt)
         self.reset()
         self.button_add_workspace.clicked.connect(self.create_workspace_clicked)
 
@@ -168,3 +174,22 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         result = core_call().stat("/")
         for workspace in result.get("children", []):
             self.add_workspace(workspace)
+
+    def _on_fs_entry_synced_trio(self, event, path, id):
+        self.fs_changed_qt.emit(event, id, path)
+
+    def _on_fs_entry_updated_trio(self, event, id):
+        self.fs_changed_qt.emit(event, id, None)
+
+    def _on_fs_changed_qt(self, event, id, path):
+        if not path:
+            try:
+                path = core_call().get_entry_path(id)
+            except FSEntryNotFound:
+                # Entry not locally present, nothing to do
+                return
+
+        # We are only interested into modification of root manifest given we
+        # don't care about the date of modification of the workspaces)
+        if path == "/":
+            self.reset()
