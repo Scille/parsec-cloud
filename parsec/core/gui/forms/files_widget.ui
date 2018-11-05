@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>590</width>
+    <width>598</width>
     <height>493</height>
    </rect>
   </property>
@@ -546,7 +546,12 @@ padding-right: 10px;</string>
            <bool>true</bool>
           </property>
           <property name="styleSheet">
-           <string notr="true">QMenu::item
+           <string notr="true">QMenu
+{
+border: 1px solid rgb(11, 56, 166);
+}
+
+QMenu::item
 {
 background-color: rgb(255, 255, 255);
 color: rgb(0, 0, 0);

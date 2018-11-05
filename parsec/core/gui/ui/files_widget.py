@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_FilesWidget(object):
     def setupUi(self, FilesWidget):
         FilesWidget.setObjectName("FilesWidget")
-        FilesWidget.resize(590, 493)
+        FilesWidget.resize(598, 493)
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
         )
@@ -300,6 +300,11 @@ class Ui_FilesWidget(object):
         self.list_files.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.list_files.setAutoFillBackground(True)
         self.list_files.setStyleSheet(
+            "QMenu\n"
+            "{\n"
+            "border: 1px solid rgb(11, 56, 166);\n"
+            "}\n"
+            "\n"
             "QMenu::item\n"
             "{\n"
             "background-color: rgb(255, 255, 255);\n"

@@ -2,9 +2,9 @@ import os
 
 from PyQt5.QtCore import pyqtSignal, QCoreApplication, QPoint, QSize, Qt
 from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import QWidget, QInputDialog, QMenu
+from PyQt5.QtWidgets import QWidget, QMenu
 
-from parsec.core.gui.custom_widgets import show_error, show_warning, show_info
+from parsec.core.gui.custom_widgets import show_error, show_warning, show_info, get_text
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
@@ -73,17 +73,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def action_move_workspace(self, workspace_button):
         def _inner_move_workspace():
             current_file_path = os.path.join("/", workspace_button.name)
-            new_name, ok = QInputDialog.getText(
+            new_name = get_text(
                 self,
                 QCoreApplication.translate("WorkspacesWidget", "New name"),
                 QCoreApplication.translate("WorkspacesWidget", "Enter workspace new name"),
+                placeholder=QCoreApplication.translate("WorkspacesWidget", "Workspace name"),
             )
-            if not ok:
-                return
             if not new_name:
-                show_warning(
-                    self, QCoreApplication.translate("WorkspacesWidget", "This name is not valid.")
-                )
                 return
             try:
                 core_call().move_workspace(current_file_path, os.path.join("/", new_name))
@@ -105,14 +101,15 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def share_workspace(self, workspace_button):
         def _inner_share_workspace():
-            user, ok = QInputDialog.getText(
+            user = get_text(
                 self,
                 QCoreApplication.translate("WorkspacesWidget", "Share a workspace"),
                 QCoreApplication.translate(
                     "WorkspacesWidget", "Give a user name to share the workspace {} with."
                 ).format(workspace_button.name),
+                placeholder=QCoreApplication.translate("WorkspacesWidget", "User name"),
             )
-            if not ok or not user:
+            if not user:
                 return
             try:
                 core_call().share_workspace("/" + workspace_button.name, user)
@@ -140,12 +137,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         return _inner_share_workspace
 
     def create_workspace_clicked(self):
-        workspace_name, ok = QInputDialog.getText(
+        workspace_name = get_text(
             self,
             QCoreApplication.translate("WorkspacesWidget", "New workspace"),
             QCoreApplication.translate("WorkspacesWidget", "Enter new workspace name"),
+            QCoreApplication.translate("WorkspacesWidget", "Workspace name"),
         )
-        if not ok or not workspace_name:
+        if not workspace_name:
             return
         try:
             core_call().create_workspace(os.path.join("/", workspace_name))
@@ -161,8 +159,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def reset(self):
         self.workspaces_count = 0
-        for i in range(self.layout_workspaces.count()):
-            item = self.layout_workspaces.takeAt(i)
+        while self.layout_workspaces.count() != 0:
+            item = self.layout_workspaces.takeAt(0)
             if item:
                 w = item.widget()
                 self.layout_workspaces.removeWidget(w)

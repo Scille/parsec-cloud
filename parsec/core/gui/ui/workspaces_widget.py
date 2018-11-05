@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_WorkspacesWidget(object):
     def setupUi(self, WorkspacesWidget):
         WorkspacesWidget.setObjectName("WorkspacesWidget")
-        WorkspacesWidget.resize(679, 539)
+        WorkspacesWidget.resize(679, 256)
         WorkspacesWidget.setStyleSheet("background-color: rgb(255, 255, 255);\n" "")
         self.verticalLayout = QtWidgets.QVBoxLayout(WorkspacesWidget)
         self.verticalLayout.setContentsMargins(0, 15, 0, 15)
@@ -55,7 +55,7 @@ class Ui_WorkspacesWidget(object):
         self.verticalLayout.addLayout(self.horizontalLayout)
         self.layout_workspaces = QtWidgets.QGridLayout()
         self.layout_workspaces.setSizeConstraint(QtWidgets.QLayout.SetMaximumSize)
-        self.layout_workspaces.setContentsMargins(40, 40, 40, 40)
+        self.layout_workspaces.setContentsMargins(20, 20, 20, 20)
         self.layout_workspaces.setSpacing(40)
         self.layout_workspaces.setObjectName("layout_workspaces")
         self.verticalLayout.addLayout(self.layout_workspaces)

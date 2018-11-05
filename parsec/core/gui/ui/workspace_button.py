@@ -12,13 +12,18 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_WorkspaceButton(object):
     def setupUi(self, WorkspaceButton):
         WorkspaceButton.setObjectName("WorkspaceButton")
-        WorkspaceButton.resize(210, 210)
+        WorkspaceButton.resize(210, 230)
         WorkspaceButton.setMinimumSize(QtCore.QSize(210, 210))
-        WorkspaceButton.setMaximumSize(QtCore.QSize(210, 210))
+        WorkspaceButton.setMaximumSize(QtCore.QSize(210, 500))
         font = QtGui.QFont()
         font.setPointSize(12)
         WorkspaceButton.setFont(font)
         WorkspaceButton.setStyleSheet(
+            "QMenu\n"
+            "{\n"
+            "border: 1px solid rgb(11, 56, 166);\n"
+            "}\n"
+            "\n"
             "QMenu::item\n"
             "{\n"
             "background-color: rgb(255, 255, 255);\n"
@@ -70,6 +75,10 @@ class Ui_WorkspaceButton(object):
         self.label_workspace.setWordWrap(True)
         self.label_workspace.setObjectName("label_workspace")
         self.verticalLayout.addWidget(self.label_workspace)
+        spacerItem = QtWidgets.QSpacerItem(
+            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
+        )
+        self.verticalLayout.addItem(spacerItem)
 
         self.retranslateUi(WorkspaceButton)
         QtCore.QMetaObject.connectSlotsByName(WorkspaceButton)
