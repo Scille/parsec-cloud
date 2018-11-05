@@ -15,7 +15,6 @@ async def test_beacon_notif_on_new_entry_sync(type, running_backend, alice_core,
         await alice2_fs.file_create("/foo")
 
     dump_fs = alice2_fs._local_folder_fs.dump()
-    beacon_id = dump_fs["beacon_id"]
     root_id = dump_fs["access"]["id"]
     entry_id = dump_fs["children"]["foo"]["access"]["id"]
 
@@ -27,12 +26,12 @@ async def test_beacon_notif_on_new_entry_sync(type, running_backend, alice_core,
                 [
                     (
                         "backend.beacon.updated",
-                        {"beacon_id": beacon_id, "index": 1, "src_id": entry_id, "src_version": 1},
+                        {"beacon_id": root_id, "index": 1, "src_id": entry_id, "src_version": 1},
                     ),
                     ("fs.entry.updated", {"id": entry_id}),
                     (
                         "backend.beacon.updated",
-                        {"beacon_id": beacon_id, "index": 2, "src_id": root_id, "src_version": 2},
+                        {"beacon_id": root_id, "index": 2, "src_id": root_id, "src_version": 2},
                     ),
                     ("fs.entry.updated", {"id": root_id}),
                 ]

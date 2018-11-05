@@ -7,7 +7,9 @@ from parsec.core.schemas import dumps_manifest, loads_manifest
 from parsec.core.fs.utils import (
     is_file_manifest,
     is_folder_manifest,
+    is_workspace_manifest,
     new_access,
+    new_local_user_manifest,
     new_local_workspace_manifest,
     new_local_folder_manifest,
     new_local_file_manifest,
@@ -21,14 +23,18 @@ def copy_manifest(manifest: LocalManifest):
     """
 
     def _recursive_copy(old):
-        return {
-            k: [_recursive_copy(e) for e in v]
-            if isinstance(v, (tuple, list))
-            else _recursive_copy(v)
-            if isinstance(v, dict)
-            else v
-            for k, v in old.items()
-        }
+        try:
+            return {
+                k: [_recursive_copy(e) for e in v]
+                if isinstance(v, (tuple, list))
+                else _recursive_copy(v)
+                if isinstance(v, dict)
+                else v
+                for k, v in old.items()
+            }
+        except AttributeError:
+            # Occurs when dealing with list of strings
+            return old
 
     return _recursive_copy(manifest)
 
@@ -53,21 +59,20 @@ class LocalFolderFS:
         self._manifests_cache = {}
 
     def get_local_beacons(self) -> List[UUID]:
-        # Only user manifest and workspace manifests have a beacon id
-        beacons = []
+        # beacon_id is either the id of the user manifest or of a workpace manifest
+        beacons = [self.root_access["id"]]
         try:
             root_manifest = self._get_manifest_read_only(self.root_access)
-            beacons.append(root_manifest["beacon_id"])
             # Currently workspace can only direct children of the user manifest
             for child_access in root_manifest["children"].values():
                 try:
                     child_manifest = self._get_manifest_read_only(child_access)
                 except FSManifestLocalMiss as exc:
                     continue
-                if "beacon_id" in child_manifest:
-                    beacons.append(child_manifest["beacon_id"])
+                if is_workspace_manifest(child_manifest):
+                    beacons.append(child_access["id"])
         except FSManifestLocalMiss as exc:
-            pass
+            raise AssertionError("root manifest should always be available in local !")
         return beacons
 
     def dump(self) -> dict:
@@ -94,15 +99,19 @@ class LocalFolderFS:
         try:
             raw = self._local_db.get(access)
         except LocalDBMissingEntry as exc:
-            raise FSManifestLocalMiss(access) from exc
-        manifest = loads_manifest(raw)
+            # Last chance: if we are looking for the user manifest, we can
+            # fake to know it version 0, which is useful during boostrap step
+            if access == self.root_access:
+                manifest = new_local_user_manifest(self.local_author)
+            else:
+                raise FSManifestLocalMiss(access) from exc
+        else:
+            manifest = loads_manifest(raw)
         self._manifests_cache[access["id"]] = manifest
         # TODO: shouldn't be processed in multiple places like this...
-        if manifest["type"] in ("local_workspace_manifest", "local_user_manifest"):
+        if is_workspace_manifest(manifest):
             path, *_ = self.get_entry_path(access["id"])
-            self.event_bus.send(
-                "fs.workspace.loaded", path=path, id=access["id"], beacon_id=manifest["beacon_id"]
-            )
+            self.event_bus.send("fs.workspace.loaded", path=str(path), id=access["id"])
         return manifest
 
     def get_user_manifest(self) -> LocalUserManifest:
@@ -110,31 +119,13 @@ class LocalFolderFS:
         Same as `get_manifest`, unlike this cannot fail given user manifest is
         always available.
         """
-        manifest = self._manifests_cache.get(self.root_access["id"])
-        assert manifest is not None
-        return copy_manifest(manifest)
+        try:
+            return copy_manifest(self._get_manifest_read_only(self.root_access))
+        except FSManifestLocalMiss as exc:
+            raise ValueError("Should never occurs !!!") from exc
 
     def get_manifest(self, access: Access) -> LocalManifest:
-        try:
-            return copy_manifest(self._manifests_cache[access["id"]])
-        except KeyError:
-            pass
-        try:
-            raw = self._local_db.get(access)
-        except LocalDBMissingEntry as exc:
-            raise FSManifestLocalMiss(access) from exc
-        manifest = loads_manifest(raw)
-        self._manifests_cache[access["id"]] = copy_manifest(manifest)
-        # TODO: shouldn't be processed in multiple places like this...
-        if manifest["type"] in ("local_workspace_manifest", "local_user_manifest"):
-            path, *_ = self.get_entry_path(access["id"])
-            self.event_bus.send(
-                "fs.workspace.loaded",
-                path=str(path),
-                id=access["id"],
-                beacon_id=manifest["beacon_id"],
-            )
-        return manifest
+        return copy_manifest(self._get_manifest_read_only(access))
 
     def set_manifest(self, access: Access, manifest: LocalManifest):
         raw = dumps_manifest(manifest)
@@ -151,14 +142,16 @@ class LocalFolderFS:
         self._manifests_cache.pop(access["id"], None)
 
     def get_beacons(self, path: Path) -> List[UUID]:
-        beacons = []
+        beacons = [self.root_access["id"]]
+        try:
+            *_, possible_workspace_path, _ = path.parents
+        except ValueError:
+            return beacons
 
-        def _beacons_collector(access: Access, manifest: LocalManifest):
-            beacon_id = manifest.get("beacon_id")
-            if beacon_id:
-                beacons.append(beacon_id)
+        access, manifest = self._retrieve_entry_read_only(possible_workspace_path)
+        if is_workspace_manifest(manifest):
+            beacons.append(access["id"])
 
-        self._retrieve_entry(path, collector=_beacons_collector)
         return beacons
 
     def get_entry(self, path: Path) -> Tuple[Access, LocalManifest]:
@@ -255,6 +248,7 @@ class LocalFolderFS:
         if is_file_manifest(manifest):
             return {
                 "type": "file",
+                "is_folder": False,
                 "created": manifest["created"],
                 "updated": manifest["updated"],
                 "base_version": manifest["base_version"],
@@ -263,9 +257,23 @@ class LocalFolderFS:
                 "size": manifest["size"],
             }
 
+        elif is_workspace_manifest(manifest):
+            return {
+                "type": "workspace",
+                "is_folder": True,
+                "created": manifest["created"],
+                "updated": manifest["updated"],
+                "base_version": manifest["base_version"],
+                "is_placeholder": manifest["is_placeholder"],
+                "need_sync": manifest["need_sync"],
+                "children": list(sorted(manifest["children"].keys())),
+                "creator": manifest["creator"],
+                "participants": list(manifest["participants"]),
+            }
         else:
             return {
-                "type": "folder",
+                "type": "root" if path.is_root() else "folder",
+                "is_folder": True,
                 "created": manifest["created"],
                 "updated": manifest["updated"],
                 "base_version": manifest["base_version"],
@@ -318,12 +326,7 @@ class LocalFolderFS:
         self.event_bus.send("fs.entry.updated", id=access["id"])
         self.event_bus.send("fs.entry.updated", id=child_access["id"])
         if workspace:
-            self.event_bus.send(
-                "fs.workspace.loaded",
-                path=path,
-                id=child_access["id"],
-                beacon_id=child_manifest["beacon_id"],
-            )
+            self.event_bus.send("fs.workspace.loaded", path=path, id=child_access["id"])
 
     def _delete(self, path: Path, expect=None) -> None:
         if path.is_root():

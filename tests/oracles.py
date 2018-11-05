@@ -17,7 +17,7 @@ def oracle_fs_factory(tmpdir):
             if os.name == "nt":
                 self.root.chmod(0o500)
             self.entries_stats = {}
-            self._register_stat(self.root, "folder")
+            self._register_stat(self.root, "root")
 
         def _cook_path(self, path):
             assert path[0] == "/"

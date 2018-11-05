@@ -3,6 +3,7 @@ from uuid import UUID
 
 from parsec.core.fs.types import Access, Path, LocalFolderManifest, RemoteFolderManifest
 from parsec.core.fs.utils import (
+    is_user_manifest,
     is_folder_manifest,
     is_placeholder_manifest,
     local_to_remote_manifest,
@@ -63,21 +64,32 @@ class FolderSyncerMixin(BaseSyncer):
         to_sync_manifest["version"] += 1
 
         # Upload the folder manifest as new vlob version
+        force_update = False
         while True:
             try:
-                if is_placeholder_manifest(manifest):
+                if is_placeholder_manifest(manifest) and not force_update:
                     await self._backend_vlob_create(access, to_sync_manifest, notify_beacons)
                 else:
                     await self._backend_vlob_update(access, to_sync_manifest, notify_beacons)
                 break
 
             except SyncConcurrencyError:
-                # Placeholder don't have remote version, so no concurrency is possible
-                assert not is_placeholder_manifest(manifest)
+                if is_placeholder_manifest(manifest):
+                    # By definition, placeholder shouldn't have remote version.
+                    # However user manifest is a special case here given it
+                    # access is shared between devices even if it is not yet
+                    # synced.
+                    # If such case occured, we just have to pretend we were
+                    # trying to do an update and rely on the generic merge.
+                    assert is_user_manifest(manifest)
+                    base = None
+                    force_update = True
+                else:
+                    base = await self._backend_vlob_read(access, to_sync_manifest["version"] - 1)
+
                 # Do a 3-ways merge to fix the concurrency error, first we must
                 # fetch the base version and the new one present in the backend
                 # TODO: base should be available locally
-                base = await self._backend_vlob_read(access, to_sync_manifest["version"] - 1)
                 target = await self._backend_vlob_read(access)
 
                 # 3-ways merge between base, modified and target versions

@@ -78,6 +78,25 @@ async def test_vlob_create_bad_msg(alice_backend_sock, bad_msg):
 
 
 @pytest.mark.trio
+async def test_vlob_create_but_already_exists(alice_backend_sock):
+    blob = to_jsonb64(b"Initial commit.")
+
+    payload = {
+        "id": "0000000000000000000000000000000f",
+        "rts": "<123 rts>",
+        "wts": "<123 wts>",
+        "blob": blob,
+    }
+    await alice_backend_sock.send({"cmd": "vlob_create", **payload})
+    rep = await alice_backend_sock.recv()
+    assert rep["status"] == "ok"
+
+    await alice_backend_sock.send({"cmd": "vlob_create", **payload})
+    rep = await alice_backend_sock.recv()
+    assert rep["status"] == "already_exists_error"
+
+
+@pytest.mark.trio
 async def test_vlob_read_not_found(alice_backend_sock):
     await alice_backend_sock.send(
         {"cmd": "vlob_read", "id": "0000000000000000000000000000000f", "rts": "TS4242"}

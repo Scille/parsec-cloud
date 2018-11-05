@@ -133,25 +133,25 @@ class Sharing:
         if self.device.user_id == recipient:
             raise SharingRecipientError("Cannot share to oneself.")
 
-        # First make sure there is no placeholder in the path and the entry
-        # is up to date
-        await self.syncer.sync(path)
-
-        # Now retrieve the access/manifest to share. Note a concurrency
-        # modification on local fs can make this call raise a FileNotFoundError
+        # First retreive the manifest and make sure it is a workspace
         access, manifest = self.local_folder_fs.get_entry(path)
-
-        # Concurrency could also have changed what's pointed by path (e.g. the
-        # entry we just synced has been removed and replaced by a placeholder)
-        if is_placeholder_manifest(manifest):
-            # Given the timing should be pretty close, we can just pretend
-            # we arrived between the deletion and the placeholder creation
-            raise FileNotFoundError(2, "No such file or directory", path)
-
         if not is_workspace_manifest(manifest):
             raise SharingNotAWorkspace(f"`{path}` is not a workspace, hence cannot be shared")
 
-        # Build sharing message
+        # We should keep up to date the participants list in the manifest.
+        # Note this is not done in a strictly atomic way so this information
+        # can be erronous (consider it more of a UX helper than something to
+        # rely on)
+        if recipient not in manifest["participants"]:
+            manifest["participants"].append(recipient)
+            manifest["participants"].sort()
+            self.local_folder_fs.update_manifest(access, manifest)
+
+        # Make sure there is no placeholder in the path and the entry
+        # is up to date
+        await self.syncer.sync(path, recursive=False)
+
+        # Now we can build the sharing message...
         msg = {"type": "share", "author": self.device.id, "access": access, "name": path.name}
         raw, errors = sharing_message_content_schema.dumps(msg)
         if errors:
@@ -165,7 +165,7 @@ class Sharing:
         except EncryptionManagerError as exc:
             raise SharingRecipientError(f"Cannot create message for `{recipient}`") from exc
 
-        # Send sharing message
+        # ...And finally send the message
         rep = await self.backend_cmds_sender.send(
             {"cmd": "message_new", "recipient": recipient, "body": to_jsonb64(ciphered)}
         )

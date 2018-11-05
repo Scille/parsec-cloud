@@ -15,6 +15,7 @@ from nacl.signing import SigningKey
 import nacl
 
 from parsec.core import Core, CoreConfig
+from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.schemas import loads_manifest, dumps_manifest
 from parsec.core.fs.utils import new_access, new_local_user_manifest, local_to_remote_manifest
 from parsec.core.encryption_manager import encrypt_with_secret_key
@@ -221,7 +222,7 @@ def device_factory():
     devices = {}
     count = 0
 
-    def _device_factory(user_id=None, device_name=None):
+    def _device_factory(user_id=None, device_name=None, user_manifest_in_v0=False):
         nonlocal count
         count += 1
 
@@ -237,13 +238,23 @@ def device_factory():
             user_privkey, user_manifest_access, user_manifest_v1 = users[user_id]
         except KeyError:
             user_privkey = PrivateKey.generate().encode()
+            user_manifest_access = new_access()
+            user_manifest_v1 = None
+
+        if not user_manifest_v1 and not user_manifest_in_v0:
             with freeze_time("2000-01-01"):
                 user_manifest_v1 = new_local_user_manifest(device_id)
             user_manifest_v1["base_version"] = 1
             user_manifest_v1["is_placeholder"] = False
             user_manifest_v1["need_sync"] = False
-            user_manifest_access = new_access()
-            users[user_id] = (user_privkey, user_manifest_access, user_manifest_v1)
+
+        users[user_id] = (user_privkey, user_manifest_access, user_manifest_v1)
+        # try:
+        #     user_privkey, user_manifest_access = users[user_id]
+        # except KeyError:
+        #     user_privkey = PrivateKey.generate().encode()
+        #     user_manifest_access = new_access()
+        #     users[user_id] = (user_privkey, user_manifest_access)
 
         device_signkey = SigningKey.generate().encode()
         local_symkey = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
@@ -255,7 +266,8 @@ def device_factory():
             user_manifest_access,
             InMemoryLocalDB(),
         )
-        device.local_db.set(user_manifest_access, dumps_manifest(user_manifest_v1))
+        if not user_manifest_in_v0:
+            device.local_db.set(user_manifest_access, dumps_manifest(user_manifest_v1))
 
         devices[device_id] = device
         return device
@@ -378,8 +390,7 @@ def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, 
             # mock clock with autothreshold. We should detect this and do something here...
             await backend.init(nursery)
 
-            # Need to initialize backend with users/devices, and for each user
-            # store it user manifest
+            # Need to initialize backend with users/devices
             with freeze_time("2000-01-01"):
                 for device in devices:
                     try:
@@ -390,7 +401,14 @@ def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, 
                         )
 
                         access = device.user_manifest_access
-                        local_user_manifest = loads_manifest(device.local_db.get(access))
+                        try:
+                            local_user_manifest = loads_manifest(device.local_db.get(access))
+                        except LocalDBMissingEntry:
+                            continue
+                        else:
+                            if local_user_manifest["base_version"] == 0:
+                                continue
+
                         remote_user_manifest = local_to_remote_manifest(local_user_manifest)
                         ciphered = encrypt_with_secret_key(
                             device.id,

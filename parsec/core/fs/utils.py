@@ -43,14 +43,28 @@ def new_block_access(block: bytes, offset: int) -> BlockAccess:
 
 
 def new_local_user_manifest(author: str) -> LocalUserManifest:
-    manifest = new_local_workspace_manifest(author)
-    manifest["last_processed_message"] = 0
-    manifest["type"] = "local_user_manifest"
-    return LocalUserManifest(manifest)
+    assert "@" in author
+    now = pendulum.now()
+
+    return LocalUserManifest(
+        {
+            "format": 1,
+            "type": "local_user_manifest",
+            "need_sync": True,
+            "is_placeholder": True,
+            "author": author,
+            "created": now,
+            "updated": now,
+            "base_version": 0,
+            "children": {},
+            "last_processed_message": 0,
+        }
+    )
 
 
 def new_local_workspace_manifest(author: str) -> LocalWorkspaceManifest:
     assert "@" in author
+    author_user_id = author.split("@")[0]
     now = pendulum.now()
 
     return LocalWorkspaceManifest(
@@ -60,11 +74,12 @@ def new_local_workspace_manifest(author: str) -> LocalWorkspaceManifest:
             "need_sync": True,
             "is_placeholder": True,
             "author": author,
-            "beacon_id": uuid4(),
             "created": now,
             "updated": now,
             "base_version": 0,
             "children": {},
+            "creator": author_user_id,
+            "participants": [author_user_id],
         }
     )
 
@@ -126,6 +141,10 @@ def is_folder_manifest(manifest: Manifest) -> bool:
 
 def is_workspace_manifest(manifest: Manifest) -> bool:
     return manifest["type"].endswith("workspace_manifest")
+
+
+def is_user_manifest(manifest: Manifest) -> bool:
+    return manifest["type"].endswith("user_manifest")
 
 
 def remote_to_local_manifest(manifest: RemoteManifest) -> LocalManifest:
