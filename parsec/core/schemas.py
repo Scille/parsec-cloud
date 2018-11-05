@@ -164,13 +164,19 @@ class TypedManifestSchema(OneOfSchema):
 typed_manifest_schema = TypedManifestSchema()
 
 
+class SchemaSerializationError(Exception):
+    pass
+
+
 def dumps_manifest(manifest: dict):
     raw, errors = typed_manifest_schema.dumps(manifest)
-    assert not errors, errors
+    if errors:
+        raise SchemaSerializationError(errors)
     return raw.encode("utf-8")
 
 
 def loads_manifest(raw: bytes):
     manifest, errors = typed_manifest_schema.loads(raw.decode("utf-8"))
-    assert not errors, errors
+    if errors:
+        raise SchemaSerializationError(errors)
     return manifest
