@@ -22,7 +22,9 @@ class Ui_LoginLoginWidget(object):
         LoginLoginWidget.setSizePolicy(sizePolicy)
         LoginLoginWidget.setMinimumSize(QtCore.QSize(550, 0))
         LoginLoginWidget.setAutoFillBackground(False)
-        LoginLoginWidget.setStyleSheet("background-color: rgb(12, 65, 156);\n" "")
+        LoginLoginWidget.setStyleSheet(
+            "QWidget#LoginLoginWidget\n" "{\n" "background-color: rgb(12, 65, 156);\n" "}"
+        )
         self.horizontalLayout = QtWidgets.QHBoxLayout(LoginLoginWidget)
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout.setSpacing(0)

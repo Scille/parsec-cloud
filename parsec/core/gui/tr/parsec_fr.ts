@@ -297,37 +297,37 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="165"/>
+        <location filename="../forms/login_login_widget.ui" line="167"/>
         <source>Identifier</source>
         <translation>Identifiant</translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="229"/>
+        <location filename="../forms/login_login_widget.ui" line="231"/>
         <source>Password</source>
         <translation>Mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="307"/>
+        <location filename="../forms/login_login_widget.ui" line="309"/>
         <source>NitroKey PIN</source>
         <translation>PIN de la NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="356"/>
+        <location filename="../forms/login_login_widget.ui" line="358"/>
         <source>NitroKey Token</source>
         <translation>Jeton de la NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="399"/>
+        <location filename="../forms/login_login_widget.ui" line="401"/>
         <source>NitroKey Key</source>
         <translation>Clef de la NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="440"/>
+        <location filename="../forms/login_login_widget.ui" line="442"/>
         <source>Authenticate using NitroKey</source>
         <translation>S&apos;authentifier en utilisant une NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="484"/>
+        <location filename="../forms/login_login_widget.ui" line="486"/>
         <source>Log In</source>
         <translation>Se connecter</translation>
     </message>
@@ -340,7 +340,7 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="33"/>
+        <location filename="../forms/login_register_device_widget.ui" line="35"/>
         <source>To register a new device, you need an existing device to declare a new device and get the resulting token.</source>
         <translation>Pour enregistrer un nouvel appareil, vous avez besoin d&apos;un appareil existant afin de déclarer le nouveau et obtenir un jeton.</translation>
     </message>
@@ -350,47 +350,47 @@
         <translation type="obsolete">Identifiant</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="176"/>
+        <location filename="../forms/login_register_device_widget.ui" line="178"/>
         <source>Device name</source>
         <translation>Nom de l&apos;appareil</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="216"/>
+        <location filename="../forms/login_register_device_widget.ui" line="218"/>
         <source>Token</source>
         <translation>Jeton</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="274"/>
+        <location filename="../forms/login_register_device_widget.ui" line="276"/>
         <source>Password</source>
         <translation>Mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="323"/>
+        <location filename="../forms/login_register_device_widget.ui" line="325"/>
         <source>Password check</source>
         <translation>Vérification du mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="395"/>
+        <location filename="../forms/login_register_device_widget.ui" line="397"/>
         <source>NitroKey PIN</source>
         <translation>PIN de la NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="444"/>
+        <location filename="../forms/login_register_device_widget.ui" line="446"/>
         <source>NitroKey Token</source>
         <translation>Jeton de la NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="487"/>
+        <location filename="../forms/login_register_device_widget.ui" line="489"/>
         <source>NitroKey Key</source>
         <translation>Clef de la NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="528"/>
+        <location filename="../forms/login_register_device_widget.ui" line="530"/>
         <source>Authenticate using NitroKey</source>
         <translation>S&apos;authentifier en utilisant une NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="593"/>
+        <location filename="../forms/login_register_device_widget.ui" line="595"/>
         <source>Register</source>
         <translation>Enregistrer l&apos;appareil</translation>
     </message>
@@ -405,7 +405,7 @@
         <translation>En attente que l&apos;appareil existant nous enregistre...</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_device_widget.ui" line="136"/>
+        <location filename="../forms/login_register_device_widget.ui" line="138"/>
         <source>User name</source>
         <translation>Nom d&apos;utilisateur</translation>
     </message>
@@ -418,7 +418,7 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="33"/>
+        <location filename="../forms/login_register_user_widget.ui" line="35"/>
         <source>To register a new user, you need another user to create an account and get a token.</source>
         <translation>Pour enregistrer un nouvel utilisateur, vous avez besoin qu&apos;un utilisateur existant créer le compte et vous fournisse le jeton.</translation>
     </message>
@@ -428,47 +428,47 @@
         <translation type="obsolete">Identifiant</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="236"/>
+        <location filename="../forms/login_register_user_widget.ui" line="238"/>
         <source>Device name</source>
         <translation>Nom de l&apos;appareil</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="276"/>
+        <location filename="../forms/login_register_user_widget.ui" line="278"/>
         <source>Token</source>
         <translation>Jeton</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="334"/>
+        <location filename="../forms/login_register_user_widget.ui" line="336"/>
         <source>Password</source>
         <translation>Mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="383"/>
+        <location filename="../forms/login_register_user_widget.ui" line="385"/>
         <source>Password check</source>
         <translation>Vérification du mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="455"/>
+        <location filename="../forms/login_register_user_widget.ui" line="457"/>
         <source>NitroKey PIN</source>
         <translation>PIN de la NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="504"/>
+        <location filename="../forms/login_register_user_widget.ui" line="506"/>
         <source>NitroKey Token</source>
         <translation>Jeton de la NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="547"/>
+        <location filename="../forms/login_register_user_widget.ui" line="549"/>
         <source>NitroKey Key</source>
         <translation>Clef de la NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="588"/>
+        <location filename="../forms/login_register_user_widget.ui" line="590"/>
         <source>Authenticate using NitroKey</source>
         <translation>S&apos;authentifier en utilisant une NitroKey</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="632"/>
+        <location filename="../forms/login_register_user_widget.ui" line="634"/>
         <source>Register</source>
         <translation>Enregistrer le nouvel utilisateur</translation>
     </message>
@@ -478,7 +478,7 @@
         <translation>Les mots de passe ne correspondent pas</translation>
     </message>
     <message>
-        <location filename="../forms/login_register_user_widget.ui" line="196"/>
+        <location filename="../forms/login_register_user_widget.ui" line="198"/>
         <source>User name</source>
         <translation>Nom d&apos;utilisateur</translation>
     </message>

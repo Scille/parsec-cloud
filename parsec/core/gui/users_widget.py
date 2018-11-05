@@ -35,10 +35,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
     def filter_users(self, pattern):
         for i in range(self.layout_users.count()):
-            item = self.layout_users.takeAt(i)
+            item = self.layout_users.itemAt(i)
             if item:
                 w = item.widget()
-                if pattern not in w.name or not pattern:
+                if pattern and pattern not in w.name:
                     w.hide()
                 else:
                     w.show()
@@ -73,8 +73,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.widget_info.hide()
         self.users_count = 0
         self.users = []
-        for i in range(self.layout_users.count()):
-            item = self.layout_users.takeAt(i)
+        while self.layout_users.count() != 0:
+            item = self.layout_users.takeAt(0)
             if item:
                 w = item.widget()
                 self.layout_users.removeWidget(w)

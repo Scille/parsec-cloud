@@ -391,6 +391,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.mount_widget.show()
 
     def show_users_widget(self):
+        self.users_widget.reset()
         self._hide_all_central_widgets()
         self.button_users.setChecked(True)
         self.users_widget.show()

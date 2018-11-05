@@ -14,8 +14,10 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(12, 65, 156);
-</string>
+   <string notr="true">QWidget#LoginRegisterUserWidget
+{
+background-color: rgb(12, 65, 156);
+}</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
