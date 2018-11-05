@@ -72,8 +72,8 @@ class BaseSyncer:
             return
 
         need_sync_entries = await self._backend_vlob_group_check(local_entries)
-        for changed_item in need_sync_entries["changed"]:
-            await self.sync_by_id(changed_item["id"])
+        for need_sync_entry_id in need_sync_entries:
+            await self.sync_by_id(need_sync_entry_id)
 
     async def sync_by_id(self, entry_id: UUID) -> None:
         async with self._lock:
@@ -157,7 +157,7 @@ class BaseSyncer:
         payload = {"cmd": "vlob_group_check", "to_check": to_check}
         ret = await self.backend_cmds_sender.send(payload)
         assert ret["status"] == "ok"
-        return ret
+        return [UUID(entry["id"]) for entry in ret["changed"]]
 
     async def _backend_vlob_read(self, access, version=None):
         payload = {"cmd": "vlob_read", "id": access["id"], "rts": access["rts"], "version": version}
