@@ -10,6 +10,10 @@ except ImportError:
     Executable = lambda x, **kw: x
 
 
+# Awesome hack to Load `__version__`
+exec(open("parsec/_version.py", encoding="utf-8").read())
+
+
 def _extract_libs_cffi_backend():
     try:
         import nacl
@@ -80,7 +84,6 @@ test_requirements = [
     "flake8",
     "hypothesis",
     "hypothesis-trio>=0.2.1",
-    "bumpversion",
     "black==18.6b1",  # Pin black to avoid flaky style check
 ]
 
@@ -116,7 +119,7 @@ extra_requirements["oeuf-jambon-fromage"] = extra_requirements["all"]
 
 setup(
     name="parsec-cloud",
-    version="0.7.0",
+    version=__version__,
     description="Secure cloud framework",
     long_description=readme + "\n\n" + history,
     author="Scille SAS",

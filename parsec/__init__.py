@@ -1,7 +1,8 @@
-from .trio_bonus import monkey_patch
+from parsec.trio_bonus import monkey_patch
+from parsec._version import __version__
 
 
 monkey_patch()
 
 
-__version__ = "0.6.0"
+__all__ = ("__version__",)
