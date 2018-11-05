@@ -448,28 +448,33 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="312"/>
+        <location filename="../main_window.py" line="317"/>
         <source>Device has been successfully registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="320"/>
+        <location filename="../main_window.py" line="325"/>
         <source>The device already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="325"/>
+        <location filename="../main_window.py" line="330"/>
         <source>Invalid NitroKey information.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="330"/>
+        <location filename="../main_window.py" line="335"/>
         <source>Can not create the new device.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="361"/>
+        <location filename="../main_window.py" line="366"/>
         <source>Are you sure you want to quit ?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="256"/>
+        <source>Can not register this user.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

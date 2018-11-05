@@ -252,6 +252,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.login_widget,
                 QCoreApplication.translate("MainWindow", "User has already been registered."),
             )
+        except:
+            show_error(
+                self.login_widget,
+                QCoreApplication.translate("MainWindow", "Can not register this user."),
+            )
 
     def register_user_with_password(self, user_id, password, device_name, token):
         self.handle_register_user(
