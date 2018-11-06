@@ -18,9 +18,9 @@ PathOnlySchema = _PathOnlySchema()
 class _cmd_LOGIN_Schema(BaseCmdSchema):
     id = fields.String(required=True)
     password = fields.String(missing=None)
-    nitrokey_pin = fields.String(missing="")
-    nitrokey_token_id = fields.Integer(missing=0)
-    nitrokey_key_id = fields.Integer(missing=0)
+    pkcs11_pin = fields.String(missing="")
+    pkcs11_token_id = fields.Integer(missing=0)
+    pkcs11_key_id = fields.Integer(missing=0)
 
 
 cmd_LOGIN_Schema = _cmd_LOGIN_Schema()
@@ -48,9 +48,9 @@ async def login(req: dict, client_ctx: ClientContext, core: Core) -> dict:
         device = core.local_devices_manager.load_device(
             msg["id"],
             msg["password"],
-            msg["nitrokey_pin"],
-            msg["nitrokey_token_id"],
-            msg["nitrokey_key_id"],
+            msg["pkcs11_pin"],
+            msg["pkcs11_token_id"],
+            msg["pkcs11_key_id"],
         )
     except DeviceLoadingError:
         return {"status": "unknown_user", "reason": "Unknown user"}

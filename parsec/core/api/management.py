@@ -28,9 +28,9 @@ class _cmd_USER_CLAIM_Schema(BaseCmdSchema):
     id = fields.String(validate=validate.Regexp(devices_manager.DEVICE_ID_PATTERN), required=True)
     invitation_token = fields.String(required=True)
     password = fields.String(missing=None)
-    use_nitrokey = fields.Boolean(missing=False)
-    nitrokey_token_id = fields.Integer(missing=0)
-    nitrokey_key_id = fields.Integer(missing=0)
+    use_pkcs11 = fields.Boolean(missing=False)
+    pkcs11_token_id = fields.Integer(missing=0)
+    pkcs11_key_id = fields.Integer(missing=0)
 
 
 cmd_USER_CLAIM_Schema = _cmd_USER_CLAIM_Schema()
@@ -47,9 +47,9 @@ class _cmd_DEVICE_CONFIGURE_Schema(BaseCmdSchema):
     # TODO: add regex validation
     device_id = fields.String(required=True)
     password = fields.String(missing=None)
-    use_nitrokey = fields.Boolean(missing=False)
-    nitrokey_token_id = fields.Integer(missing=0)
-    nitrokey_key_id = fields.Integer(missing=0)
+    use_pkcs11 = fields.Boolean(missing=False)
+    pkcs11_token_id = fields.Integer(missing=0)
+    pkcs11_key_id = fields.Integer(missing=0)
     configure_device_token = fields.String(required=True)
 
 
@@ -59,9 +59,9 @@ cmd_DEVICE_CONFIGURE_Schema = _cmd_DEVICE_CONFIGURE_Schema()
 class _cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema(BaseCmdSchema):
     config_try_id = fields.String(required=True)
     password = fields.String(missing=None)
-    nitrokey_pin = fields.String(missing="")
-    nitrokey_token_id = fields.Integer(missing=0)
-    nitrokey_key_id = fields.Integer(missing=0)
+    pkcs11_pin = fields.String(missing="")
+    pkcs11_token_id = fields.Integer(missing=0)
+    pkcs11_key_id = fields.Integer(missing=0)
 
 
 cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema = _cmd_DEVICE_ACCEPT_CONFIGURATION_TRY_Schema()
@@ -106,9 +106,9 @@ async def user_claim(req: dict, client_ctx: ClientContext, core: Core) -> dict:
             device_signkey.encode(),
             user_manifest_access,
             msg["password"],
-            msg["use_nitrokey"],
-            msg["nitrokey_token_id"],
-            msg["nitrokey_key_id"],
+            msg["use_pkcs11"],
+            msg["pkcs11_token_id"],
+            msg["pkcs11_key_id"],
         )
     except DeviceSavingError:
         return {"status": "already_exists", "reason": "User config already exists"}
@@ -136,9 +136,9 @@ async def device_configure(req: dict, client_ctx: ClientContext, core: Core) -> 
             msg["device_id"],
             msg["configure_device_token"],
             msg["password"],
-            msg["use_nitrokey"],
-            msg["nitrokey_token_id"],
-            msg["nitrokey_key_id"],
+            msg["use_pkcs11"],
+            msg["pkcs11_token_id"],
+            msg["pkcs11_key_id"],
         )
     except BackendNotAvailable as exc:
         return {"status": "backend_not_available", "reason": "Backend not available"}
@@ -152,9 +152,9 @@ async def device_configure(req: dict, client_ctx: ClientContext, core: Core) -> 
             device_signkey.encode(),
             user_manifest_access,
             msg["password"],
-            msg["use_nitrokey"],
-            msg["nitrokey_token_id"],
-            msg["nitrokey_key_id"],
+            msg["use_pkcs11"],
+            msg["pkcs11_token_id"],
+            msg["pkcs11_key_id"],
         )
     except DeviceSavingError:
         return {"status": "already_exists", "reason": "User config already exists"}
@@ -185,9 +185,9 @@ async def device_accept_configuration_try(req: dict, client_ctx: ClientContext, 
             core.auth_device,
             msg["config_try_id"],
             msg["password"],
-            msg["nitrokey_pin"],
-            msg["nitrokey_token_id"],
-            msg["nitrokey_key_id"],
+            msg["pkcs11_pin"],
+            msg["pkcs11_token_id"],
+            msg["pkcs11_key_id"],
         )
     except BackendNotAvailable:
         return {"status": "backend_not_available", "reason": "Backend not available"}
