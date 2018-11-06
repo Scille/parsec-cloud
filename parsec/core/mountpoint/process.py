@@ -46,6 +46,10 @@ def _run_fuse_process(fs_access_client, abs_mountpoint, fuse_config):
 async def run_fuse_in_process(
     fs, mountpoint: Path, fuse_config: dict, *, task_status=trio.TASK_STATUS_IGNORED
 ):
+    """
+    Raises:
+        MountpointConfigurationError
+    """
     abs_mountpoint = str(mountpoint.absolute())
     fs_access = ProcessFSAccess(fs)
 

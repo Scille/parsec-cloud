@@ -38,6 +38,10 @@ def _bootstrap_mountpoint(mountpoint):
 async def run_fuse_in_thread(
     fs, mountpoint: Path, fuse_config: dict, *, task_status=trio.TASK_STATUS_IGNORED
 ):
+    """
+    Raises:
+        MountpointConfigurationError
+    """
     fuse_thread_started = threading.Event()
     fuse_thread_stopped = threading.Event()
     portal = trio.BlockingTrioPortal()

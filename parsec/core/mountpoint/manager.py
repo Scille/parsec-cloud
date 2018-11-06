@@ -47,6 +47,11 @@ class FuseMountpointManager:
         return self._stop_fuse_runner is not None
 
     async def start(self, mountpoint):
+        """
+        Raises:
+            MountpointAlreadyStarted
+            MountpointConfigurationError
+        """
         async with self._lock:
             if self.is_started():
                 raise MountpointAlreadyStarted(f"Fuse already started on mountpoint `{mountpoint}`")
@@ -66,6 +71,10 @@ class FuseMountpointManager:
             self.event_bus.send("mountpoint.started", mountpoint=abs_mountpoint)
 
     async def stop(self):
+        """
+        Raises:
+            MountpointNotStarted
+        """
         async with self._lock:
             if not self.is_started():
                 raise MountpointNotStarted()
