@@ -21,7 +21,22 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
         self.line_edit_mountpoint.setText(mountpoint)
         self.button_choose_mountpoint.clicked.connect(self.choose_mountpoint)
 
+        mountpoint_enabled = settings.get_value("mountpoint_enabled", None)
+        if mountpoint_enabled is None:
+            settings.set_value("mountpoint_enabled", True)
+        self.checkbox_enable_mountpoint.setChecked(mountpoint_enabled)
+        self.checkbox_enable_mountpoint.stateChanged.connect(self.enable_mountpoint)
+
+        self.notice_mountpoint.setEnabled(True)
+        self.notice_mountpoint.hide()
+
+    def enable_mountpoint(self, state):
+        state = bool(state)
+        settings.set_value("mountpoint_enabled", state)
+        self.notice_mountpoint.show()
+
     def choose_mountpoint(self):
+        self.notice_mountpoint.show()
         while True:
             path = QFileDialog.getExistingDirectory(
                 self, "Choose a mountpoint", str(pathlib.Path.home())

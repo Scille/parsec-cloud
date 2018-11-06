@@ -166,19 +166,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.current_device = device
             core_call().logout()
             core_call().login(device)
-            mountpoint = self.mount()
-            if mountpoint is None:
-                show_error(
-                    self,
-                    QCoreApplication.translate(
-                        "MainWindow",
-                        'Can not mount in "{}" (permissions problems ?). Go '
-                        "to Settings/Global to a set mountpoint, then File/Remount to "
-                        "mount it.",
-                    ).format(settings.get_value("mountpoint")),
-                )
-                self.show_settings_widget()
-                return
+            if settings.get_value("mountpoint_enabled"):
+                mountpoint = self.mount()
+                if mountpoint is None:
+                    show_error(
+                        self,
+                        QCoreApplication.translate(
+                            "MainWindow",
+                            'Can not mount in "{}" (permissions problems ?). Go '
+                            "to Settings/Global to a set mountpoint, then File/Remount to "
+                            "mount it.",
+                        ).format(settings.get_value("mountpoint")),
+                    )
+                    self.show_settings_widget()
+                    return
             self.widget_menu.show()
             self.button_user.setText("    " + device_id.split("@")[0])
             self.show_mount_widget()
