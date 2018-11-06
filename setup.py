@@ -67,10 +67,6 @@ requirements = [
     "structlog==18.2.0",
     "colorama==0.4.0",  # structlog colored output
 ]
-dependency_links = [
-    # need to use --process-dependency-links option for this
-    "git+https://github.com/fusepy/fusepy.git#egg=fusepy-3.0.0"
-]
 
 test_requirements = [
     # https://github.com/python-trio/pytest-trio/issues/64
@@ -88,7 +84,7 @@ test_requirements = [
 ]
 
 extra_requirements = {
-    "core": ["PyQt5==5.11.2", "hurry.filesize==0.9", "fusepy==3.0.0"],
+    "core": ["PyQt5==5.11.2", "hurry.filesize==0.9", "fusepy==3.0.1"],
     "nitrokey": [
         # Nitrokey POC stuff
         "python-pkcs11==0.5.0",
@@ -130,7 +126,6 @@ setup(
     package_dir={"parsec": "parsec"},
     include_package_data=True,
     install_requires=requirements,
-    dependency_links=dependency_links,
     extras_require=extra_requirements,
     entry_points={"console_scripts": ["parsec = parsec.cli:cli"]},
     options={"build_exe": build_exe_options},
