@@ -22,7 +22,7 @@ from parsec.core.fs import FSEntryNotFound
 
 class Delegate(QStyledItemDelegate):
     def paint(self, painter, option, index):
-        if (option.state & QStyle.State_Selected) or (option.state & QStyle.State_MouseOver):
+        if option.state & QStyle.State_Selected:
             painter.fillRect(option.rect, QColor(45, 144, 209))
         else:
             super().paint(painter, option, index)
