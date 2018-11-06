@@ -14,6 +14,9 @@ class _CoreCall:
         self._trio_portal = trio_portal
         self._cancel_scope = cancel_scope
 
+    def get_config(self):
+        return self._parsec_core.config
+
     def is_debug(self):
         return self._parsec_core.config.debug
 

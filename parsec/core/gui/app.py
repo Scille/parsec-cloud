@@ -23,6 +23,8 @@ def kill_window(window):
 def run_gui(parsec_core, trio_portal, cancel_scope):
     print("Starting UI")
 
+    init_core_call(parsec_core=parsec_core, trio_portal=trio_portal, cancel_scope=cancel_scope)
+
     app = QApplication([])
     app.setOrganizationName("Scille")
     app.setOrganizationDomain("parsec.cloud")
@@ -34,8 +36,6 @@ def run_gui(parsec_core, trio_portal, cancel_scope):
     # splash = QSplashScreen(QPixmap(':/logos/images/logos/parsec.png'))
     # splash.show()
     # app.processEvents()
-
-    init_core_call(parsec_core=parsec_core, trio_portal=trio_portal, cancel_scope=cancel_scope)
 
     lang.switch_to_locale()
 
