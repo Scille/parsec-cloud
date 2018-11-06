@@ -108,11 +108,12 @@ class CookedSocket:
             trio.ClosedStreamError: if you already closed this stream object.
         """
         while True:
-            self._recv_buff += await self.sockstream.receive_some(self.BUFFSIZE)
-            if not self._recv_buff:
+            new_buff = await self.sockstream.receive_some(self.BUFFSIZE)
+            if not new_buff:
                 # Empty body should normally never occurs, though it is sent
                 # when peer closes connection
                 raise trio.BrokenStreamError("Peer has closed connection")
+            self._recv_buff += new_buff
 
             *reps, unfinished_msg = self._recv_buff.split(b"\n")
             self._reps_ready += reps
