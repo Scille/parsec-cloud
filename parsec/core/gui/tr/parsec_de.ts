@@ -67,7 +67,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="214"/>
+        <location filename="../files_widget.py" line="225"/>
         <source>Enter new folder name</source>
         <translation type="unfinished"></translation>
     </message>
@@ -102,57 +102,57 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="214"/>
+        <location filename="../files_widget.py" line="225"/>
         <source>Folder name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="148"/>
+        <location filename="../files_widget.py" line="159"/>
         <source>A folder with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="230"/>
+        <location filename="../files_widget.py" line="241"/>
         <source>Rename</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="233"/>
+        <location filename="../files_widget.py" line="244"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="235"/>
+        <location filename="../files_widget.py" line="246"/>
         <source>Open in explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="241"/>
+        <location filename="../files_widget.py" line="252"/>
         <source>New name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="241"/>
+        <location filename="../files_widget.py" line="252"/>
         <source>Enter file new name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="263"/>
+        <location filename="../files_widget.py" line="274"/>
         <source>Can not rename.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="183"/>
+        <location filename="../files_widget.py" line="194"/>
         <source>Confirmation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="183"/>
+        <location filename="../files_widget.py" line="194"/>
         <source>Are you sure you want to delete &quot;{}&quot; ?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="124"/>
+        <location filename="../files_widget.py" line="135"/>
         <source>Some files or folders could not be imported.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -711,77 +711,77 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="67"/>
+        <location filename="../workspaces_widget.py" line="73"/>
         <source>Share</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="69"/>
+        <location filename="../workspaces_widget.py" line="75"/>
         <source>Rename</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="76"/>
+        <location filename="../workspaces_widget.py" line="82"/>
         <source>New name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="76"/>
+        <location filename="../workspaces_widget.py" line="82"/>
         <source>Enter workspace new name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="152"/>
+        <location filename="../workspaces_widget.py" line="158"/>
         <source>A workspace with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="95"/>
+        <location filename="../workspaces_widget.py" line="101"/>
         <source>Can not rename the workspace.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="104"/>
+        <location filename="../workspaces_widget.py" line="110"/>
         <source>Share a workspace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="104"/>
+        <location filename="../workspaces_widget.py" line="110"/>
         <source>Give a user name to share the workspace {} with.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="116"/>
+        <location filename="../workspaces_widget.py" line="122"/>
         <source>The workspaces has been shared.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="123"/>
+        <location filename="../workspaces_widget.py" line="129"/>
         <source>Can not share the workspace &quot;{}&quot; with this user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="130"/>
+        <location filename="../workspaces_widget.py" line="136"/>
         <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="140"/>
+        <location filename="../workspaces_widget.py" line="146"/>
         <source>New workspace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="140"/>
+        <location filename="../workspaces_widget.py" line="146"/>
         <source>Enter new workspace name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="140"/>
+        <location filename="../workspaces_widget.py" line="146"/>
         <source>Workspace name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="104"/>
+        <location filename="../workspaces_widget.py" line="110"/>
         <source>User name</source>
         <translation type="unfinished"></translation>
     </message>

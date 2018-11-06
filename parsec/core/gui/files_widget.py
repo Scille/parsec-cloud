@@ -3,7 +3,8 @@ import pathlib
 from uuid import UUID
 
 from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal
-from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu
+from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QStyledItemDelegate, QStyle
+from PyQt5.QtGui import QColor
 
 from parsec.core.gui import desktop
 from parsec.core.gui.core_call import core_call
@@ -19,6 +20,14 @@ from parsec.core.gui.item_widget import FileItemWidget, FolderItemWidget, Parent
 from parsec.core.fs import FSEntryNotFound
 
 
+class Delegate(QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        if (option.state & QStyle.State_Selected) or (option.state & QStyle.State_MouseOver):
+            painter.fillRect(option.rect, QColor(45, 144, 209))
+        else:
+            super().paint(painter, option, index)
+
+
 class FilesWidget(QWidget, Ui_FilesWidget):
     fs_changed_qt = pyqtSignal(str, UUID, str)
     back_clicked = pyqtSignal()
@@ -26,6 +35,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.list_files.setItemDelegate(Delegate())
         self.button_back.clicked.connect(self.back_clicked)
         self.button_create_folder.clicked.connect(self.create_folder_clicked)
         self.button_import.clicked.connect(self.import_clicked)

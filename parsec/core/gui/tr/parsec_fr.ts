@@ -113,17 +113,17 @@
         <translation>Nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="214"/>
+        <location filename="../files_widget.py" line="225"/>
         <source>Enter new folder name</source>
         <translation>Entrez le nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="148"/>
+        <location filename="../files_widget.py" line="159"/>
         <source>A folder with the same name already exists.</source>
         <translation>Un répertoire avec le même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="233"/>
+        <location filename="../files_widget.py" line="244"/>
         <source>Open</source>
         <translation>Ouvrir</translation>
     </message>
@@ -138,7 +138,7 @@
         <translation type="obsolete">Supprimer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="183"/>
+        <location filename="../files_widget.py" line="194"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
@@ -228,42 +228,42 @@
         <translation>Taille</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="214"/>
+        <location filename="../files_widget.py" line="225"/>
         <source>Folder name</source>
         <translation>Nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="230"/>
+        <location filename="../files_widget.py" line="241"/>
         <source>Rename</source>
         <translation>Renommer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="235"/>
+        <location filename="../files_widget.py" line="246"/>
         <source>Open in explorer</source>
         <translation>Ouvrir dans l&apos;explorateur</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="241"/>
+        <location filename="../files_widget.py" line="252"/>
         <source>New name</source>
         <translation>Nouveau nom</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="241"/>
+        <location filename="../files_widget.py" line="252"/>
         <source>Enter file new name</source>
         <translation>Entrez le nouveau nom du fichier</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="263"/>
+        <location filename="../files_widget.py" line="274"/>
         <source>Can not rename.</source>
         <translation>Impossible de renommer.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="183"/>
+        <location filename="../files_widget.py" line="194"/>
         <source>Are you sure you want to delete &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer &quot;{}&quot; ?</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="124"/>
+        <location filename="../files_widget.py" line="135"/>
         <source>Some files or folders could not be imported.</source>
         <translation>Certains fichiers ou répertoires n&apos;ont pas pu être importés.</translation>
     </message>
@@ -850,7 +850,7 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="140"/>
+        <location filename="../workspaces_widget.py" line="146"/>
         <source>New workspace</source>
         <translation>Nouvel espace de travail</translation>
     </message>
@@ -860,72 +860,72 @@
         <translation>Nouvel espace de travail  </translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="67"/>
+        <location filename="../workspaces_widget.py" line="73"/>
         <source>Share</source>
         <translation>Partager</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="69"/>
+        <location filename="../workspaces_widget.py" line="75"/>
         <source>Rename</source>
         <translation>Renommer</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="76"/>
+        <location filename="../workspaces_widget.py" line="82"/>
         <source>New name</source>
         <translation>Nouveau nom</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="76"/>
+        <location filename="../workspaces_widget.py" line="82"/>
         <source>Enter workspace new name</source>
         <translation>Entrez le nouveau nom de l&apos;espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="152"/>
+        <location filename="../workspaces_widget.py" line="158"/>
         <source>A workspace with the same name already exists.</source>
         <translation>Un espace de travail du même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="95"/>
+        <location filename="../workspaces_widget.py" line="101"/>
         <source>Can not rename the workspace.</source>
         <translation>Impossible de renommer l&apos;espace de travail.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="104"/>
+        <location filename="../workspaces_widget.py" line="110"/>
         <source>Share a workspace</source>
         <translation>Partager un espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="104"/>
+        <location filename="../workspaces_widget.py" line="110"/>
         <source>Give a user name to share the workspace {} with.</source>
         <translation>Entrez le nom de l&apos;utilisateur avec lequel partager l&apos;espace de travail &quot;{}&quot;.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="116"/>
+        <location filename="../workspaces_widget.py" line="122"/>
         <source>The workspaces has been shared.</source>
         <translation>L&apos;espace de travail a été partagé.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="123"/>
+        <location filename="../workspaces_widget.py" line="129"/>
         <source>Can not share the workspace &quot;{}&quot; with this user.</source>
         <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec cet utilisateur.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="130"/>
+        <location filename="../workspaces_widget.py" line="136"/>
         <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
         <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec &quot;{}&quot;.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="140"/>
+        <location filename="../workspaces_widget.py" line="146"/>
         <source>Enter new workspace name</source>
         <translation>Entrez le nom du nouvel espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="140"/>
+        <location filename="../workspaces_widget.py" line="146"/>
         <source>Workspace name</source>
         <translation>Nom de l&apos;espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="104"/>
+        <location filename="../workspaces_widget.py" line="110"/>
         <source>User name</source>
         <translation>Nom d&apos;utilisateur</translation>
     </message>
