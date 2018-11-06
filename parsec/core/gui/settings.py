@@ -24,7 +24,9 @@ def get_value(key, default=None):
         os.path.join(core_call().get_config().base_settings_path, "parsec_gui.cfg"),
         QSettings.NativeFormat,
     ).value(key, default)
-    return decoder(value)
+    if value is not None:
+        value = decoder(value)
+    return value
 
 
 def set_value(key, value):

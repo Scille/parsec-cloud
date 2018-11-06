@@ -24,6 +24,7 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
         mountpoint_enabled = settings.get_value("mountpoint_enabled", None)
         if mountpoint_enabled is None:
             settings.set_value("mountpoint_enabled", True)
+            mountpoint_enabled = True
         self.checkbox_enable_mountpoint.setChecked(mountpoint_enabled)
         self.checkbox_enable_mountpoint.stateChanged.connect(self.enable_mountpoint)
 
