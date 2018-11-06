@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, distutils, Command
+from setuptools.command.build_py import build_py
 
 try:
     from cx_Freeze import setup, Executable
@@ -12,6 +12,35 @@ except ImportError:
 
 # Awesome hack to Load `__version__`
 exec(open("parsec/_version.py", encoding="utf-8").read())
+
+
+class GeneratePyQtResourcesBundle(Command):
+    description = "Generates `parsec.core.gui._resource_rc` bundle module"
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        try:
+            from PyQt5.pyrcc_main import processResourceFile
+
+            self.announce("Generating `parsec.core.gui._resources_rc`", level=distutils.log.INFO)
+            processResourceFile(
+                [f"parsec/core/gui/rc/resources.qrc"], f"parsec/core/gui/_resources_rc.py", False
+            )
+        except ImportError:
+            print("PyQt5 not installed, skipping `parsec.core.gui._resources_rc` generation.")
+
+
+class build_py_with_pyqt_resource_bundle_generation(build_py):
+    def run(self):
+        self.run_command("generate_pyqt_resources_bundle")
+        return super().run()
 
 
 def _extract_libs_cffi_backend():
@@ -68,6 +97,7 @@ requirements = [
     "colorama==0.4.0",  # structlog colored output
 ]
 
+
 test_requirements = [
     # https://github.com/python-trio/pytest-trio/issues/64
     # "pytest>=3.6",
@@ -83,8 +113,10 @@ test_requirements = [
     "black==18.6b1",  # Pin black to avoid flaky style check
 ]
 
+
+PYQT_DEP = "PyQt5==5.11.2"
 extra_requirements = {
-    "core": ["PyQt5==5.11.2", "hurry.filesize==0.9", "fusepy==3.0.1"],
+    "core": [PYQT_DEP, "hurry.filesize==0.9", "fusepy==3.0.1"],
     "nitrokey": [
         # Nitrokey POC stuff
         "python-pkcs11==0.5.0",
@@ -122,11 +154,14 @@ setup(
     author_email="contact@scille.fr",
     url="https://github.com/Scille/parsec-cloud",
     packages=find_packages(),
-    package_data={"parsec": ["resources"]},
     package_dir={"parsec": "parsec"},
-    include_package_data=True,
+    setup_requires=[PYQT_DEP],  # To generate resources bundle
     install_requires=requirements,
     extras_require=extra_requirements,
+    cmdclass={
+        "generate_pyqt_resources_bundle": GeneratePyQtResourcesBundle,
+        "build_py": build_py_with_pyqt_resource_bundle_generation,
+    },
     entry_points={"console_scripts": ["parsec = parsec.cli:cli"]},
     options={"build_exe": build_exe_options},
     executables=[Executable("parsec/cli.py", targetName="parsec")],
