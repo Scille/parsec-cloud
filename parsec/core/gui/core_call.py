@@ -62,7 +62,7 @@ class _CoreCall:
     def move_file(self, *args):
         return self._trio_portal.run(self._parsec_core.fs.move, *args)
 
-    def move_workspace(self, *args):
+    def rename_workspace(self, *args):
         return self._trio_portal.run(self._parsec_core.fs.workspace_rename, *args)
 
     def mount(self, mountpoint):

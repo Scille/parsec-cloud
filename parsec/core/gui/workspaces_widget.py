@@ -21,22 +21,20 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     def __init__(self, workspace_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.workspace_name = workspace_name
-        self.label_workspace.setText(self.workspace_name)
+        self.rename(workspace_name)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.emit_context_menu_requested)
+
+    def rename(self, new_name):
+        self.label_workspace.setText(new_name)
 
     @property
     def name(self):
         return self.label_workspace.text()
 
-    @name.setter
-    def name(self, value):
-        self.label_workspace.setText(value)
-
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:
-            self.clicked.emit(self.workspace_name)
+            self.clicked.emit(self.name)
 
     def emit_context_menu_requested(self, pos):
         self.context_menu_requested.emit(self, pos)
@@ -73,11 +71,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         action = menu.addAction(QCoreApplication.translate("WorkspacesWidget", "Share"))
         action.triggered.connect(self.share_workspace(workspace_button))
         action = menu.addAction(QCoreApplication.translate("WorkspacesWidget", "Rename"))
-        action.triggered.connect(self.action_move_workspace(workspace_button))
+        action.triggered.connect(self.action_rename_workspace(workspace_button))
         menu.exec_(global_pos)
 
-    def action_move_workspace(self, workspace_button):
-        def _inner_move_workspace():
+    def action_rename_workspace(self, workspace_button):
+        def _inner_rename_workspace():
             current_file_path = os.path.join("/", workspace_button.name)
             new_name = get_text(
                 self,
@@ -88,8 +86,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             if not new_name:
                 return
             try:
-                core_call().move_workspace(current_file_path, os.path.join("/", new_name))
-                workspace_button.name = new_name
+                core_call().rename_workspace(current_file_path, os.path.join("/", new_name))
+                workspace_button.rename(new_name)
             except FileExistsError:
                 show_warning(
                     self,
@@ -103,7 +101,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                     QCoreApplication.translate("WorkspacesWidget", "Can not rename the workspace."),
                 )
 
-        return _inner_move_workspace
+        return _inner_rename_workspace
 
     def share_workspace(self, workspace_button):
         def _inner_share_workspace():
