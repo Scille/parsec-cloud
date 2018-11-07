@@ -308,23 +308,23 @@
     </message>
     <message>
         <location filename="../forms/login_login_widget.ui" line="309"/>
-        <source>NitroKey PIN</source>
-        <translation>PIN de la NitroKey</translation>
+        <source>PKCS #11 PIN</source>
+        <translation>PIN de la PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/login_login_widget.ui" line="358"/>
-        <source>NitroKey Token</source>
-        <translation>Jeton de la NitroKey</translation>
+        <source>PKCS #11 Token</source>
+        <translation>Jeton de la PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/login_login_widget.ui" line="401"/>
-        <source>NitroKey Key</source>
-        <translation>Clef de la NitroKey</translation>
+        <source>PKCS #11 Key</source>
+        <translation>Clef de la PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/login_login_widget.ui" line="442"/>
-        <source>Authenticate using NitroKey</source>
-        <translation>S&apos;authentifier en utilisant une NitroKey</translation>
+        <source>Authenticate using PKCS #11</source>
+        <translation>S&apos;authentifier en utilisant une PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/login_login_widget.ui" line="486"/>
@@ -371,23 +371,23 @@
     </message>
     <message>
         <location filename="../forms/login_register_device_widget.ui" line="397"/>
-        <source>NitroKey PIN</source>
-        <translation>PIN de la NitroKey</translation>
+        <source>PKCS #11 PIN</source>
+        <translation>PIN de la PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/login_register_device_widget.ui" line="446"/>
-        <source>NitroKey Token</source>
-        <translation>Jeton de la NitroKey</translation>
+        <source>PKCS #11 Token</source>
+        <translation>Jeton de la PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/login_register_device_widget.ui" line="489"/>
-        <source>NitroKey Key</source>
-        <translation>Clef de la NitroKey</translation>
+        <source>PKCS #11 Key</source>
+        <translation>Clef de la PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/login_register_device_widget.ui" line="530"/>
-        <source>Authenticate using NitroKey</source>
-        <translation>S&apos;authentifier en utilisant une NitroKey</translation>
+        <source>Authenticate using PKCS #11</source>
+        <translation>S&apos;authentifier en utilisant une PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/login_register_device_widget.ui" line="595"/>
@@ -449,23 +449,23 @@
     </message>
     <message>
         <location filename="../forms/login_register_user_widget.ui" line="457"/>
-        <source>NitroKey PIN</source>
-        <translation>PIN de la NitroKey</translation>
+        <source>PKCS #11 PIN</source>
+        <translation>PIN de la PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/login_register_user_widget.ui" line="506"/>
-        <source>NitroKey Token</source>
-        <translation>Jeton de la NitroKey</translation>
+        <source>PKCS #11 Token</source>
+        <translation>Jeton de la PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/login_register_user_widget.ui" line="549"/>
-        <source>NitroKey Key</source>
-        <translation>Clef de la NitroKey</translation>
+        <source>PKCS #11 Key</source>
+        <translation>Clef de la PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/login_register_user_widget.ui" line="590"/>
-        <source>Authenticate using NitroKey</source>
-        <translation>S&apos;authentifier en utilisant une NitroKey</translation>
+        <source>Authenticate using PKCS #11</source>
+        <translation>S&apos;authentifier en utilisant une PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/login_register_user_widget.ui" line="634"/>
@@ -580,8 +580,8 @@
     </message>
     <message>
         <location filename="../main_window.py" line="330"/>
-        <source>Invalid NitroKey information.</source>
-        <translation>Les informations de la NitroKey ne sont pas valides.</translation>
+        <source>Invalid PKCS #11 information.</source>
+        <translation>Les informations de la PKCS #11 ne sont pas valides.</translation>
     </message>
     <message>
         <location filename="../main_window.py" line="335"/>
@@ -696,23 +696,23 @@
     </message>
     <message>
         <location filename="../forms/register_device.ui" line="53"/>
-        <source>Use NitroKey authentication instead of password</source>
-        <translation>S&apos;authentifier en utilisant une NitroKey</translation>
+        <source>Use PKCS #11 authentication instead of password</source>
+        <translation>S&apos;authentifier en utilisant une PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/register_device.ui" line="63"/>
-        <source>NitroKey PIN</source>
-        <translation>PIN de la NitroKey</translation>
+        <source>PKCS #11 PIN</source>
+        <translation>PIN de la PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/register_device.ui" line="70"/>
         <source>Token ID</source>
-        <translation>Jeton de la NitroKey</translation>
+        <translation>Jeton de la PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/register_device.ui" line="77"/>
         <source>Key ID</source>
-        <translation>Clef de la NitroKey</translation>
+        <translation>Clef de la PKCS #11</translation>
     </message>
     <message>
         <location filename="../forms/register_device.ui" line="117"/>

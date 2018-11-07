@@ -110,12 +110,7 @@ class _CoreCall:
         )
 
     def accept_device_configuration_try(
-        self,
-        config_try_id,
-        password=None,
-        nitrokey_pin=None,
-        nitrokey_token_id=0,
-        nitrokey_key_id=0,
+        self, config_try_id, password=None, pkcs11_pin=None, pkcs11_token_id=0, pkcs11_key_id=0
     ):
         return self._trio_portal.run(
             accept_device_configuration_try,
@@ -123,19 +118,19 @@ class _CoreCall:
             self._parsec_core.auth_device,
             config_try_id,
             password,
-            nitrokey_pin,
-            nitrokey_token_id,
-            nitrokey_key_id,
+            pkcs11_pin,
+            pkcs11_token_id,
+            pkcs11_key_id,
         )
 
     def configure_new_device(
         self,
         device_id,
         configure_device_token,
-        use_nitrokey=False,
+        use_pkcs11=False,
         password=None,
-        nitrokey_token_id=None,
-        nitrokey_key_id=None,
+        pkcs11_token_id=None,
+        pkcs11_key_id=None,
     ):
         return self._trio_portal.run(
             configure_new_device,
@@ -143,9 +138,9 @@ class _CoreCall:
             device_id,
             configure_device_token,
             password,
-            use_nitrokey,
-            nitrokey_token_id,
-            nitrokey_key_id,
+            use_pkcs11,
+            pkcs11_token_id,
+            pkcs11_key_id,
         )
 
     def claim_user(self, *args):

@@ -7,8 +7,7 @@ from parsec.core.devices_manager import (
     DeviceLoadingError,
 )
 from parsec.core.fs.utils import new_access
-from parsec.utils import to_jsonb64
-from parsec import nitrokey_encryption_tool
+from parsec.pkcs11_encryption_tool import DevicePKCS11Error, NoKeysFound
 
 
 @pytest.fixture
@@ -138,20 +137,20 @@ def test_register_new_encrypted_device(tmpdir, fast_crypto, alice):
         dm3.load_device(device_id, password="bad pwd")
 
 
-@patch("parsec.nitrokey_encryption_tool.encrypt_data")
-@patch("parsec.nitrokey_encryption_tool.decrypt_data")
-def test_register_new_nitrokey_device(decrypt_data, encrypt_data, tmpdir, fast_crypto, alice):
-    def encrypt_data_mock(istream, ostream, keyid, token):
+@patch("parsec.pkcs11_encryption_tool.encrypt_data")
+@patch("parsec.pkcs11_encryption_tool.decrypt_data")
+def test_register_new_pkcs11_device(decrypt_data, encrypt_data, tmpdir, fast_crypto, alice):
+    def encrypt_data_mock(input_data, keyid, token):
         if token != 1 or keyid != 2:
-            raise IndexError
-        return ostream.write(b"ENC:" + istream.getvalue())
+            raise NoKeysFound()
+        return b"ENC:" + input_data
 
-    def decrypt_data_mock(token, pin, istream, ostream, keyid):
+    def decrypt_data_mock(token, pin, input_data, keyid):
         if token != 1 or keyid != 2:
-            raise IndexError
+            raise NoKeysFound()
         if pin != "123456":
-            raise RuntimeError
-        return ostream.write(istream.getvalue()[4:])
+            raise DevicePKCS11Error()
+        return input_data[4:]
 
     encrypt_data.side_effect = encrypt_data_mock
     decrypt_data.side_effect = decrypt_data_mock
@@ -167,15 +166,13 @@ def test_register_new_nitrokey_device(decrypt_data, encrypt_data, tmpdir, fast_c
         user_privkey.encode(),
         device_signkey.encode(),
         user_manifest_access,
-        use_nitrokey=True,
-        nitrokey_token_id=1,
-        nitrokey_key_id=2,
+        use_pkcs11=True,
+        pkcs11_token_id=1,
+        pkcs11_key_id=2,
     )
 
     dm2 = LocalDevicesManager(tmpdir.strpath)
-    device = dm2.load_device(
-        device_id, nitrokey_pin="123456", nitrokey_token_id=1, nitrokey_key_id=2
-    )
+    device = dm2.load_device(device_id, pkcs11_pin="123456", pkcs11_token_id=1, pkcs11_key_id=2)
 
     assert device.id == device_id
     assert device.user_privkey == user_privkey
@@ -184,13 +181,13 @@ def test_register_new_nitrokey_device(decrypt_data, encrypt_data, tmpdir, fast_c
     assert device.local_db.path == tmpdir.join(alice.id, "local_storage").strpath
 
     dm3 = LocalDevicesManager(tmpdir.strpath)
-    with pytest.raises(DeviceLoadingError):
-        dm3.load_device(device_id, nitrokey_pin="bad pin", nitrokey_token_id=1, nitrokey_key_id=2)
+    with pytest.raises(DevicePKCS11Error):
+        dm3.load_device(device_id, pkcs11_pin="bad pin", pkcs11_token_id=1, pkcs11_key_id=2)
 
     dm3 = LocalDevicesManager(tmpdir.strpath)
-    with pytest.raises(DeviceLoadingError):
-        dm3.load_device(device_id, nitrokey_pin="123456", nitrokey_token_id=9, nitrokey_key_id=2)
+    with pytest.raises(DevicePKCS11Error):
+        dm3.load_device(device_id, pkcs11_pin="123456", pkcs11_token_id=9, pkcs11_key_id=2)
 
     dm3 = LocalDevicesManager(tmpdir.strpath)
-    with pytest.raises(DeviceLoadingError):
-        dm3.load_device(device_id, nitrokey_pin="123456", nitrokey_token_id=1, nitrokey_key_id=9)
+    with pytest.raises(DevicePKCS11Error):
+        dm3.load_device(device_id, pkcs11_pin="123456", pkcs11_token_id=1, pkcs11_key_id=9)

@@ -48,19 +48,19 @@
       </layout>
      </item>
      <item>
-      <widget class="QCheckBox" name="check_box_use_nitrokey">
+      <widget class="QCheckBox" name="check_box_use_pkcs11">
        <property name="text">
-        <string>Use NitroKey authentication instead of password</string>
+        <string>Use PKCS #11 authentication instead of password</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QWidget" name="widget_nitrokey" native="true">
+      <widget class="QWidget" name="widget_pkcs11" native="true">
        <layout class="QFormLayout" name="formLayout">
         <item row="0" column="0">
          <widget class="QLabel" name="label_2">
           <property name="text">
-           <string>NitroKey PIN</string>
+           <string>PKCS #11 PIN</string>
           </property>
          </widget>
         </item>
@@ -79,13 +79,13 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QComboBox" name="combo_nitrokey_token"/>
+         <widget class="QComboBox" name="combo_pkcs11_token"/>
         </item>
         <item row="2" column="1">
-         <widget class="QComboBox" name="combo_nitrokey_key"/>
+         <widget class="QComboBox" name="combo_pkcs11_key"/>
         </item>
         <item row="0" column="1">
-         <widget class="QLineEdit" name="line_edit_nitrokey_pin"/>
+         <widget class="QLineEdit" name="line_edit_pkcs11_pin"/>
         </item>
        </layout>
       </widget>
@@ -197,9 +197,9 @@
  <resources/>
  <connections>
   <connection>
-   <sender>check_box_use_nitrokey</sender>
+   <sender>check_box_use_pkcs11</sender>
    <signal>toggled(bool)</signal>
-   <receiver>widget_nitrokey</receiver>
+   <receiver>widget_pkcs11</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -213,7 +213,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>check_box_use_nitrokey</sender>
+   <sender>check_box_use_pkcs11</sender>
    <signal>toggled(bool)</signal>
    <receiver>password</receiver>
    <slot>setDisabled(bool)</slot>

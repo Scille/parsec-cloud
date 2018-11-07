@@ -353,7 +353,7 @@ image: url(:/icons/images/icons/checked.png)
        </widget>
       </item>
       <item>
-       <widget class="QWidget" name="widget_nitrokey" native="true">
+       <widget class="QWidget" name="widget_pkcs11" native="true">
         <property name="font">
          <font>
           <pointsize>12</pointsize>
@@ -394,7 +394,7 @@ image: url(:/icons/images/icons/checked.png)
               <string notr="true">color: rgb(255, 255, 255);</string>
              </property>
              <property name="text">
-              <string>NitroKey PIN</string>
+              <string>PKCS #11 PIN</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -402,7 +402,7 @@ image: url(:/icons/images/icons/checked.png)
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="line_edit_nitrokey_pin">
+            <widget class="QLineEdit" name="line_edit_pkcs11_pin">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -443,7 +443,7 @@ image: url(:/icons/images/icons/checked.png)
               <string notr="true">color: rgb(255, 255, 255);</string>
              </property>
              <property name="text">
-              <string>NitroKey Token</string>
+              <string>PKCS #11 Token</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -451,7 +451,7 @@ image: url(:/icons/images/icons/checked.png)
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="combo_nitrokey_token">
+            <widget class="QComboBox" name="combo_pkcs11_token">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -486,7 +486,7 @@ image: url(:/icons/images/icons/checked.png)
               <string notr="true">color: rgb(255, 255, 255);</string>
              </property>
              <property name="text">
-              <string>NitroKey Key</string>
+              <string>PKCS #11 Key</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -494,7 +494,7 @@ image: url(:/icons/images/icons/checked.png)
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="combo_nitrokey_key">
+            <widget class="QComboBox" name="combo_pkcs11_key">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -517,7 +517,7 @@ image: url(:/icons/images/icons/checked.png)
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="check_box_use_nitrokey">
+       <widget class="QCheckBox" name="check_box_use_pkcs11">
         <property name="font">
          <font>
           <pointsize>12</pointsize>
@@ -527,7 +527,7 @@ image: url(:/icons/images/icons/checked.png)
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>Authenticate using NitroKey</string>
+         <string>Authenticate using PKCS #11</string>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -615,9 +615,9 @@ padding: 7px;</string>
  <resources/>
  <connections>
   <connection>
-   <sender>check_box_use_nitrokey</sender>
+   <sender>check_box_use_pkcs11</sender>
    <signal>toggled(bool)</signal>
-   <receiver>widget_nitrokey</receiver>
+   <receiver>widget_pkcs11</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -631,7 +631,7 @@ padding: 7px;</string>
    </hints>
   </connection>
   <connection>
-   <sender>check_box_use_nitrokey</sender>
+   <sender>check_box_use_pkcs11</sender>
    <signal>toggled(bool)</signal>
    <receiver>widget_password</receiver>
    <slot>setHidden(bool)</slot>

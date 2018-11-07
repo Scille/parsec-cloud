@@ -6,13 +6,13 @@ from PyQt5.QtGui import QIcon, QFontDatabase
 
 from parsec import __version__ as PARSEC_VERSION
 
+from parsec.pkcs11_encryption_tool import DevicePKCS11Error
 from parsec.core.devices_manager import (
     DeviceLoadingError,
     DeviceConfigureBackendError,
     DeviceConfigureOutOfDate,
     DeviceConfigureNoInvitation,
     DeviceSavingAlreadyExists,
-    DeviceNitrokeyError,
     DeviceConfigureError,
     DeviceSavingError,
 )
@@ -81,18 +81,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_devices.clicked.connect(self.show_devices_widget)
         self.button_logout.clicked.connect(self.logout)
         self.login_widget.login_with_password_clicked.connect(self.login_with_password)
-        self.login_widget.login_with_nitrokey_clicked.connect(self.login_with_nitrokey)
+        self.login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
         self.login_widget.register_user_with_password_clicked.connect(
             self.register_user_with_password
         )
-        self.login_widget.register_user_with_nitrokey_clicked.connect(
-            self.register_user_with_nitrokey
-        )
+        self.login_widget.register_user_with_pkcs11_clicked.connect(self.register_user_with_pkcs11)
         self.login_widget.register_device_with_password_clicked.connect(
             self.register_device_with_password
         )
-        self.login_widget.register_device_with_nitrokey_clicked.connect(
-            self.register_device_with_nitrokey
+        self.login_widget.register_device_with_pkcs11_clicked.connect(
+            self.register_device_with_pkcs11
         )
         self.users_widget.register_user_clicked.connect(self.register_user)
 
@@ -153,15 +151,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.show_mount_widget()
 
     def perform_login(
-        self, device_id, password=None, nitrokey_pin=None, nitrokey_key=None, nitrokey_token=None
+        self, device_id, password=None, pkcs11_pin=None, pkcs11_key=None, pkcs11_token=None
     ):
         try:
             device = core_call().load_device(
                 device_id,
                 password=password,
-                nitrokey_pin=nitrokey_pin,
-                nitrokey_token_id=nitrokey_token,
-                nitrokey_key_id=nitrokey_key,
+                pkcs11_pin=pkcs11_pin,
+                pkcs11_token_id=pkcs11_token,
+                pkcs11_key_id=pkcs11_key,
             )
             self.current_device = device
             core_call().logout()
@@ -182,18 +180,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.widget_menu.show()
             self.button_user.setText("    " + device_id.split("@")[0])
             self.show_mount_widget()
-        except DeviceLoadingError:
+        except (DeviceLoadingError, DevicePKCS11Error):
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
 
     def login_with_password(self, device_id, password):
         self.perform_login(device_id, password=password)
 
-    def login_with_nitrokey(self, device_id, nitrokey_pin, nitrokey_key, nitrokey_token):
+    def login_with_pkcs11(self, device_id, pkcs11_pin, pkcs11_key, pkcs11_token):
         self.perform_login(
-            device_id,
-            nitrokey_pin=nitrokey_pin,
-            nitrokey_key=nitrokey_key,
-            nitrokey_token=nitrokey_token,
+            device_id, pkcs11_pin=pkcs11_pin, pkcs11_key=pkcs11_key, pkcs11_token=pkcs11_token
         )
 
     def register_user(self, login):
@@ -211,23 +206,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         user_id,
         device_name,
         token,
-        use_nitrokey=False,
+        use_pkcs11=False,
         password=None,
-        nitrokey_key=None,
-        nitrokey_token=None,
+        pkcs11_key=None,
+        pkcs11_token=None,
     ):
         try:
             privkey, signkey, manifest = core_call().claim_user(user_id, device_name, token)
             privkey = privkey.encode()
             signkey = signkey.encode()
             device_id = f"{user_id}@{device_name}"
-            if not use_nitrokey:
+            if not use_pkcs11:
                 core_call().register_new_device(
                     device_id, privkey, signkey, manifest, password, False
                 )
             else:
                 core_call().register_new_device(
-                    device_id, privkey, signkey, manifest, None, True, nitrokey_token, nitrokey_key
+                    device_id, privkey, signkey, manifest, None, True, pkcs11_token, pkcs11_key
                 )
             self.login_widget.add_device(device_id)
             show_info(
@@ -259,20 +254,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
 
     def register_user_with_password(self, user_id, password, device_name, token):
-        self.handle_register_user(
-            user_id, device_name, token, password=password, use_nitrokey=False
-        )
+        self.handle_register_user(user_id, device_name, token, password=password, use_pkcs11=False)
 
-    def register_user_with_nitrokey(
-        self, user_id, device_name, token, nitrokey_key, nitrokey_token
-    ):
+    def register_user_with_pkcs11(self, user_id, device_name, token, pkcs11_key, pkcs11_token):
         self.handle_register_user(
             user_id,
             device_name,
             token,
-            use_nitrokey=True,
-            nitrokey_key=nitrokey_key,
-            nitrokey_token=nitrokey_token,
+            use_pkcs11=True,
+            pkcs11_key=pkcs11_key,
+            pkcs11_token=pkcs11_token,
         )
 
     def handle_register_device(
@@ -280,19 +271,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         user_id,
         device_name,
         token,
-        use_nitrokey=False,
+        use_pkcs11=False,
         password=None,
-        nitrokey_key=None,
-        nitrokey_token=None,
+        pkcs11_key=None,
+        pkcs11_token=None,
     ):
         try:
             device_id = f"{user_id}@{device_name}"
-            if not use_nitrokey:
+            if not use_pkcs11:
                 privkey, signkey, manifest = core_call().configure_new_device(
                     device_id=device_id,
                     configure_device_token=token,
                     password=password,
-                    use_nitrokey=False,
+                    use_pkcs11=False,
                 )
                 privkey = privkey.encode()
                 signkey = signkey.encode()
@@ -304,14 +295,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     device_id,
                     token,
                     password=None,
-                    use_nitrokey=True,
-                    nitrokey_token_id=nitrokey_token,
-                    nitrokey_key_id=nitrokey_key,
+                    use_pkcs11=True,
+                    pkcs11_token_id=pkcs11_token,
+                    pkcs11_key_id=pkcs11_key,
                 )
                 privkey = privkey.encode()
                 signkey = signkey.encode()
                 core_call().register_new_device(
-                    device_id, privkey, signkey, manifest, None, True, nitrokey_token, nitrokey_key
+                    device_id, privkey, signkey, manifest, None, True, pkcs11_token, pkcs11_key
                 )
             self.login_widget.add_device(device_id)
             show_info(
@@ -326,10 +317,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.login_widget,
                 QCoreApplication.translate("MainWindow", "The device already exists."),
             )
-        except DeviceNitrokeyError:
+        except DevicePKCS11Error:
             show_error(
                 self.login_widget,
-                QCoreApplication.translate("MainWindow", "Invalid NitroKey information."),
+                QCoreApplication.translate("MainWindow", "Invalid PKCS #11 information."),
             )
         except (DeviceSavingError, DeviceConfigureError):
             show_error(
@@ -339,16 +330,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def register_device_with_password(self, user_id, password, device_name, token):
         self.handle_register_device(
-            user_id, device_name, token, use_nitrokey=False, password=password
+            user_id, device_name, token, use_pkcs11=False, password=password
         )
 
-    def register_device_with_nitrokey(self, user_id, device_name, nitrokey_key, nitrokey_token):
+    def register_device_with_pkcs11(self, user_id, device_name, pkcs11_key, pkcs11_token):
         self.handle_register_device(
-            user_id,
-            device_name,
-            use_nitrokey=True,
-            nitrokey_key=nitrokey_key,
-            nitrokey_token=nitrokey_token,
+            user_id, device_name, use_pkcs11=True, pkcs11_key=pkcs11_key, pkcs11_token=pkcs11_token
         )
 
     def close_app(self):

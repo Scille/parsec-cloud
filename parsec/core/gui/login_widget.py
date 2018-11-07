@@ -11,7 +11,7 @@ from parsec.core.gui.ui.login_register_device_widget import Ui_LoginRegisterDevi
 
 class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
     login_with_password_clicked = pyqtSignal(str, str)
-    login_with_nitrokey_clicked = pyqtSignal(str, str, int, int)
+    login_with_pkcs11_clicked = pyqtSignal(str, str, int, int)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -20,28 +20,28 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         self.reset()
 
     def emit_login(self):
-        if self.check_box_use_nitrokey.checkState() == Qt.Unchecked:
+        if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
             self.login_with_password_clicked.emit(
                 self.combo_devices.currentText(), self.line_edit_password.text()
             )
         else:
-            self.login_with_nitrokey_clicked.emit(
+            self.login_with_pkcs11_clicked.emit(
                 self.combo_devices.currentText(),
-                self.line_edit_nitrokey_pin.text(),
-                int(self.combo_nitrokey_key.currentText()),
-                int(self.combo_nitrokey_token.currentText()),
+                self.line_edit_pkcs11_pin.text(),
+                int(self.combo_pkcs11_key.currentText()),
+                int(self.combo_pkcs11_token.currentText()),
             )
 
     def reset(self):
         self.line_edit_password.setText("")
-        self.check_box_use_nitrokey.setCheckState(Qt.Unchecked)
+        self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
         self.line_edit_password.setDisabled(False)
-        self.line_edit_nitrokey_pin.setText("")
-        self.combo_nitrokey_key.clear()
-        self.combo_nitrokey_key.addItem("0")
-        self.combo_nitrokey_token.clear()
-        self.combo_nitrokey_token.addItem("0")
-        self.widget_nitrokey.hide()
+        self.line_edit_pkcs11_pin.setText("")
+        self.combo_pkcs11_key.clear()
+        self.combo_pkcs11_key.addItem("0")
+        self.combo_pkcs11_token.clear()
+        self.combo_pkcs11_token.addItem("0")
+        self.widget_pkcs11.hide()
 
     def add_device(self, device_name):
         self.combo_devices.addItem(device_name)
@@ -49,7 +49,7 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
 
 class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
     register_with_password_clicked = pyqtSignal(str, str, str, str)
-    register_with_nitrokey_clicked = pyqtSignal(str, str, str, int, int)
+    register_with_pkcs11_clicked = pyqtSignal(str, str, str, int, int)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -75,17 +75,17 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
         self.line_edit_password_check.setText("")
         self.line_edit_device.setText(get_default_device())
         self.line_edit_token.setText("")
-        self.check_box_use_nitrokey.setCheckState(Qt.Unchecked)
+        self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
         self.line_edit_password.setDisabled(False)
         self.line_edit_password_check.setDisabled(False)
-        self.combo_nitrokey_key.clear()
-        self.combo_nitrokey_key.addItem("0")
-        self.combo_nitrokey_token.clear()
-        self.combo_nitrokey_token.addItem("0")
-        self.widget_nitrokey.hide()
+        self.combo_pkcs11_key.clear()
+        self.combo_pkcs11_key.addItem("0")
+        self.combo_pkcs11_token.clear()
+        self.combo_pkcs11_token.addItem("0")
+        self.widget_pkcs11.hide()
 
     def emit_register(self):
-        if self.check_box_use_nitrokey.checkState() == Qt.Unchecked:
+        if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
             if (
                 len(self.line_edit_password.text()) > 0
                 or len(self.line_edit_password_check.text()) > 0
@@ -105,18 +105,18 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
                 self.line_edit_token.text(),
             )
         else:
-            self.register_with_nitrokey_clicked.emit(
+            self.register_with_pkcs11_clicked.emit(
                 self.line_edit_login.text(),
                 self.line_edit_device.text(),
                 self.line_edit_token.text(),
-                int(self.combo_nitrokey_key.currentText()),
-                int(self.combo_nitrokey_token.currentText()),
+                int(self.combo_pkcs11_key.currentText()),
+                int(self.combo_pkcs11_token.currentText()),
             )
 
 
 class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
     register_with_password_clicked = pyqtSignal(str, str, str, str)
-    register_with_nitrokey_clicked = pyqtSignal(str, str, str, str)
+    register_with_pkcs11_clicked = pyqtSignal(str, str, str, str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -137,15 +137,15 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
         self.line_edit_password_check.setEnabled(True)
         self.line_edit_device.setEnabled(True)
         self.line_edit_token.setEnabled(True)
-        self.check_box_use_nitrokey.setCheckState(Qt.Unchecked)
+        self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
         self.line_edit_password.setDisabled(False)
         self.line_edit_password_check.setDisabled(False)
         self.set_error(None)
-        self.combo_nitrokey_key.clear()
-        self.combo_nitrokey_key.addItem("0")
-        self.combo_nitrokey_token.clear()
-        self.combo_nitrokey_token.addItem("0")
-        self.widget_nitrokey.hide()
+        self.combo_pkcs11_key.clear()
+        self.combo_pkcs11_key.addItem("0")
+        self.combo_pkcs11_token.clear()
+        self.combo_pkcs11_token.addItem("0")
+        self.widget_pkcs11.hide()
 
     def check_infos(self, _):
         if (
@@ -166,7 +166,7 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
             self.label_error.show()
 
     def emit_register(self):
-        if self.check_box_use_nitrokey.checkState() == Qt.Unchecked:
+        if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
             if (
                 len(self.line_edit_password.text()) > 0
                 or len(self.line_edit_password_check.text()) > 0
@@ -186,12 +186,12 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
                 self.line_edit_token.text(),
             )
         else:
-            self.register_with_nitrokey_clicked.emit(
+            self.register_with_pkcs11_clicked.emit(
                 self.line_edit_login.text(),
                 self.line_edit_device.text(),
                 self.line_edit_token.text(),
-                int(self.combo_nitrokey_key.currentText()),
-                int(self.combo_nitrokey_token.currentText()),
+                int(self.combo_pkcs11_key.currentText()),
+                int(self.combo_pkcs11_token.currentText()),
             )
         self.set_error(
             QCoreApplication.translate(
@@ -207,11 +207,11 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
 
 class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_password_clicked = pyqtSignal(str, str)
-    login_with_nitrokey_clicked = pyqtSignal(str, str, int, int)
+    login_with_pkcs11_clicked = pyqtSignal(str, str, int, int)
     register_user_with_password_clicked = pyqtSignal(str, str, str, str)
-    register_user_with_nitrokey_clicked = pyqtSignal(str, str, str, int, int)
+    register_user_with_pkcs11_clicked = pyqtSignal(str, str, str, int, int)
     register_device_with_password_clicked = pyqtSignal(str, str, str, str)
-    register_device_with_nitrokey_clicked = pyqtSignal(str, str, str, int, int)
+    register_device_with_pkcs11_clicked = pyqtSignal(str, str, str, int, int)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -227,18 +227,18 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_user_instead.clicked.connect(self.show_register_user_widget)
         self.button_register_device_instead.clicked.connect(self.show_register_device_widget)
         self.login_widget.login_with_password_clicked.connect(self.emit_login_with_password)
-        self.login_widget.login_with_nitrokey_clicked.connect(self.emit_login_with_nitrokey)
+        self.login_widget.login_with_pkcs11_clicked.connect(self.emit_login_with_pkcs11)
         self.register_user_widget.register_with_password_clicked.connect(
             self.emit_register_user_with_password
         )
-        self.register_user_widget.register_with_nitrokey_clicked.connect(
-            self.emit_register_user_with_nitrokey
+        self.register_user_widget.register_with_pkcs11_clicked.connect(
+            self.emit_register_user_with_pkcs11
         )
         self.register_device_widget.register_with_password_clicked.connect(
             self.emit_register_device_with_password
         )
-        self.register_device_widget.register_with_nitrokey_clicked.connect(
-            self.emit_register_device_with_nitrokey
+        self.register_device_widget.register_with_pkcs11_clicked.connect(
+            self.emit_register_device_with_pkcs11
         )
         self.show_login_widget()
         self.reset()
@@ -246,26 +246,22 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     def emit_register_user_with_password(self, login, password, device, token):
         self.register_user_with_password_clicked.emit(login, password, device, token)
 
-    def emit_register_user_with_nitrokey(self, login, device, token, nitrokey_key, nitrokey_token):
-        self.register_user_with_nitrokey_clicked.emit(
-            login, device, token, nitrokey_key, nitrokey_token
-        )
+    def emit_register_user_with_pkcs11(self, login, device, token, pkcs11_key, pkcs11_token):
+        self.register_user_with_pkcs11_clicked.emit(login, device, token, pkcs11_key, pkcs11_token)
 
     def emit_register_device_with_password(self, login, password, device, token):
         self.register_device_with_password_clicked.emit(login, password, device, token)
 
-    def emit_register_device_with_nitrokey(
-        self, login, device, token, nitrokey_key, nitrokey_token
-    ):
-        self.register_device_with_nitrokey_clicked.emit(
-            login, device, token, nitrokey_key, nitrokey_token
+    def emit_register_device_with_pkcs11(self, login, device, token, pkcs11_key, pkcs11_token):
+        self.register_device_with_pkcs11_clicked.emit(
+            login, device, token, pkcs11_key, pkcs11_token
         )
 
     def emit_login_with_password(self, login, password):
         self.login_with_password_clicked.emit(login, password)
 
-    def emit_login_with_nitrokey(self, login, nitrokey_pin, nitrokey_key, nitrokey_token):
-        self.login_with_nitrokey_clicked.emit(login, nitrokey_pin, nitrokey_key, nitrokey_token)
+    def emit_login_with_pkcs11(self, login, pkcs11_pin, pkcs11_key, pkcs11_token):
+        self.login_with_pkcs11_clicked.emit(login, pkcs11_pin, pkcs11_key, pkcs11_token)
 
     def show_login_widget(self):
         self.register_user_widget.hide()

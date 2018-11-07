@@ -1,12 +1,12 @@
 from PyQt5.QtCore import pyqtSignal, Qt, QCoreApplication
 from PyQt5.QtWidgets import QDialog
 
-from parsec.core.devices_manager import DeviceNitrokeyError, DeviceConfigurationPasswordError
-
 from parsec.core.gui.ui.register_device import Ui_RegisterDevice
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.custom_widgets import show_error
 from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.devices_manager import DeviceConfigurationPasswordError
+from parsec.pkcs11_encryption_tool import DevicePKCS11Error
 
 
 # TODO: rename to DeclareDevice
@@ -30,14 +30,14 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
     def on_device_try_claim_submitted_qt(self, sender, device_name, config_try_id):
         password = self.password.text()
         try:
-            if self.check_box_use_nitrokey.checkState() == Qt.Unchecked:
+            if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
                 core_call().accept_device_configuration_try(config_try_id, password)
             else:
                 core_call().accept_device_configuration_try(
                     config_try_id,
-                    nitrokey_pin=self.line_edit_nitrokey_pin.text(),
-                    nitrokey_token_id=int(self.combo_nitrokey_token.currentText()),
-                    nitrokey_key_id=int(self.combo_nitrokey_key.currentText()),
+                    pkcs11_pin=self.line_edit_pkcs11_pin.text(),
+                    pkcs11_token_id=int(self.combo_pkcs11_token.currentText()),
+                    pkcs11_key_id=int(self.combo_pkcs11_key.currentText()),
                 )
             self.device_config_done(
                 QCoreApplication.translate(
@@ -48,14 +48,14 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
             show_error(
                 self, QCoreApplication.translate("RegisterDevice", "Can not reach the server.")
             )
-        except DeviceNitrokeyError:
+        except DevicePKCS11Error:
             show_error(
-                self, QCoreApplication.translate("RegisterDevice", "Invalid NitroKey information.")
+                self, QCoreApplication.translate("RegisterDevice", "Invalid PKCS #11 information.")
             )
         except DeviceConfigurationPasswordError:
             show_error(
                 self,
-                QCoreApplication.translate("RegisterDevice", "Invalid password or NitroKey PIN."),
+                QCoreApplication.translate("RegisterDevice", "Invalid password or PKCS #11 PIN."),
             )
         except:
             show_error(
@@ -75,14 +75,14 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
         self.button_register_device.show()
         self.outcome_panel.hide()
         self.outcome_status.setText("")
-        self.check_box_use_nitrokey.setCheckState(Qt.Unchecked)
-        self.widget_nitrokey.hide()
+        self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
+        self.widget_pkcs11.hide()
         self.password.setDisabled(False)
-        self.line_edit_nitrokey_pin.setText("")
-        self.combo_nitrokey_key.clear()
-        self.combo_nitrokey_key.addItem("0")
-        self.combo_nitrokey_token.clear()
-        self.combo_nitrokey_token.addItem("0")
+        self.line_edit_pkcs11_pin.setText("")
+        self.combo_pkcs11_key.clear()
+        self.combo_pkcs11_key.addItem("0")
+        self.combo_pkcs11_token.clear()
+        self.combo_pkcs11_token.addItem("0")
         self.button_box.setEnabled(True)
 
     def device_config_done(self, status):

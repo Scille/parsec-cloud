@@ -1,3 +1,4 @@
+from parsec.pkcs11_encryption_tool import DevicePKCS11Error, NoKeysFound
 import pytest
 from unittest.mock import patch
 import trio
@@ -122,23 +123,23 @@ async def test_device_declare_then_accepted_using_password(
 
 
 @pytest.mark.trio
-async def test_device_declare_then_accepted_using_nitrokey(
+async def test_device_declare_then_accepted_using_pkcs11(
     running_backend, core_factory, core_sock_factory, alice
 ):
-    def encrypt_data_mock(istream, ostream, keyid, token):
+    def encrypt_data_mock(input_data, keyid, token):
         if token != 1 or keyid != 2:
-            raise IndexError
-        return ostream.write(b"ENC:" + istream.getvalue())
+            raise NoKeysFound()
+        return b"ENC:" + input_data
 
-    def decrypt_data_mock(token, pin, istream, ostream, keyid):
+    def decrypt_data_mock(token, pin, input_data, keyid):
         if token != 1 or keyid != 2:
-            raise IndexError
+            raise NoKeysFound()
         if pin != "123456":
-            raise RuntimeError
-        return ostream.write(istream.getvalue()[4:])
+            raise DevicePKCS11Error()
+        return input_data[4:]
 
-    with patch("parsec.nitrokey_encryption_tool.encrypt_data") as encrypt_data, patch(
-        "parsec.nitrokey_encryption_tool.decrypt_data"
+    with patch("parsec.pkcs11_encryption_tool.encrypt_data") as encrypt_data, patch(
+        "parsec.pkcs11_encryption_tool.decrypt_data"
     ) as decrypt_data:
         encrypt_data.side_effect = encrypt_data_mock
         decrypt_data.side_effect = decrypt_data_mock
@@ -174,9 +175,9 @@ async def test_device_declare_then_accepted_using_nitrokey(
                         "cmd": "device_configure",
                         "device_id": "alice@device2",
                         "configure_device_token": configure_device_token,
-                        "use_nitrokey": True,
-                        "nitrokey_token_id": 1,
-                        "nitrokey_key_id": 2,
+                        "use_pkcs11": True,
+                        "pkcs11_token_id": 1,
+                        "pkcs11_key_id": 2,
                     }
                 )
 
@@ -201,9 +202,9 @@ async def test_device_declare_then_accepted_using_nitrokey(
                     {
                         "cmd": "device_accept_configuration_try",
                         "config_try_id": config_try_id,
-                        "nitrokey_pin": "123456",
-                        "nitrokey_token_id": 1,
-                        "nitrokey_key_id": 2,
+                        "pkcs11_pin": "123456",
+                        "pkcs11_token_id": 1,
+                        "pkcs11_key_id": 2,
                     }
                 )
                 rep = await alice_core_sock.recv()
@@ -234,9 +235,9 @@ async def test_device_declare_then_accepted_using_nitrokey(
                     {
                         "cmd": "login",
                         "id": "alice@device2",
-                        "nitrokey_pin": "123456",
-                        "nitrokey_token_id": 1,
-                        "nitrokey_key_id": 2,
+                        "pkcs11_pin": "123456",
+                        "pkcs11_token_id": 1,
+                        "pkcs11_key_id": 2,
                     }
                 )
                 rep = await restarted_new_device_core_sock.recv()

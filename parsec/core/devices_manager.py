@@ -2,7 +2,6 @@ import re
 import attr
 from pathlib import Path
 from structlog import get_logger
-import io
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey
 from nacl.pwhash import argon2i
@@ -14,7 +13,7 @@ from parsec.core.fs.utils import new_access
 from parsec.core.backend_connection import backend_send_anonymous_cmd
 from parsec.core.local_db import LocalDB
 from parsec.utils import to_jsonb64, from_jsonb64
-from parsec import nitrokey_encryption_tool
+from parsec import pkcs11_encryption_tool
 
 
 logger = get_logger()
@@ -63,10 +62,6 @@ class DeviceConfigureNoInvitation(DeviceConfigureError):
     pass
 
 
-class DeviceNitrokeyError(DeviceConfigureError):
-    pass
-
-
 USER_ID_PATTERN = r"^[0-9a-zA-Z\-_.]+$"
 DEVICE_NAME_PATTERN = r"^[0-9a-zA-Z\-_.]+$"
 DEVICE_ID_PATTERN = r"^[0-9a-zA-Z\-_.]+@[0-9a-zA-Z\-_.]+$"
@@ -91,7 +86,7 @@ class DeviceConfSchema(UnknownCheckedSchema):
     user_manifest_access = fields.Base64Bytes(required=True)
     local_symkey = fields.Base64Bytes(required=True)
     encryption = fields.String(
-        validate=validate.OneOf({"quedalle", "password", "nitrokey"}), required=True
+        validate=validate.OneOf({"quedalle", "password", "pkcs11"}), required=True
     )
     salt = fields.Base64Bytes()
 
@@ -210,9 +205,9 @@ class LocalDevicesManager:
         device_signkey,
         user_manifest_access,
         password=None,
-        use_nitrokey=False,
-        nitrokey_token_id=0,
-        nitrokey_key_id=0,
+        use_pkcs11=False,
+        pkcs11_token_id=0,
+        pkcs11_key_id=0,
     ):
         device_conf_path = self.devices_conf_path / device_id
         try:
@@ -222,9 +217,9 @@ class LocalDevicesManager:
                 f"Device config `{device_conf_path}` already exists"
             ) from exc
 
-        if password and use_nitrokey:
+        if password and use_pkcs11:
             DeviceSavingError(
-                "Password or Nitrokey required, and password must by empty when using Nitrokey"
+                "Password or PKCS #11 required, and password must by empty when using PKCS #11"
             )
 
         user_manifest_access_raw, _ = user_manifest_access_schema.dumps(user_manifest_access)
@@ -247,20 +242,17 @@ class LocalDevicesManager:
             device_conf["local_symkey"] = local_symkey
             device_conf["user_manifest_access"] = user_manifest_access_raw.encode()
 
-        if use_nitrokey:
-            device_conf["encryption"] = "nitrokey"
+        if use_pkcs11:
+            device_conf["encryption"] = "pkcs11"
             for key in ["device_signkey", "user_privkey", "local_symkey", "user_manifest_access"]:
-                input_data = io.BytesIO(device_conf[key])
-                output_data = io.BytesIO()
                 try:
-                    nitrokey_encryption_tool.encrypt_data(
-                        input_data, output_data, nitrokey_key_id, nitrokey_token_id
+                    device_conf[key] = pkcs11_encryption_tool.encrypt_data(
+                        device_conf[key], pkcs11_key_id, pkcs11_token_id
                     )
-                except IndexError:
-                    raise DeviceNitrokeyError("Invalid Nitrokey token id or key id")
-                input_data.close()
-                device_conf[key] = output_data.getvalue()
-                output_data.close()
+                except pkcs11_encryption_tool.NoKeysFound:
+                    raise pkcs11_encryption_tool.DevicePKCS11Error(
+                        "Invalid PKCS #11 token id or key id"
+                    )
 
         device_key_path = device_conf_path / "key.json"
         data, errors = device_conf_schema.dumps(device_conf)
@@ -272,17 +264,12 @@ class LocalDevicesManager:
         device_key_path.write_text(data)
 
     def load_device(
-        self,
-        device_id: str,
-        password=None,
-        nitrokey_pin=None,
-        nitrokey_token_id=0,
-        nitrokey_key_id=0,
+        self, device_id: str, password=None, pkcs11_pin=None, pkcs11_token_id=0, pkcs11_key_id=0
     ):
         device_conf_path = self.devices_conf_path / device_id
 
-        if password and nitrokey_pin:
-            DeviceLoadingError("Password must by empty when using Nitrokey")
+        if password and pkcs11_pin:
+            DeviceLoadingError("Password must by empty when using PKCS #11")
 
         device_conf, errors = self._load_device_conf(device_id)
         if errors:
@@ -312,36 +299,27 @@ class LocalDevicesManager:
                 ) from exc
 
         else:
-            if device_conf["encryption"] not in ["quedalle", "nitrokey"]:
+            if device_conf["encryption"] not in ["quedalle", "pkcs11"]:
                 raise DeviceLoadingError(
                     f"Invalid `{device_conf_path}` device config: no password "
                     f"provided but encryption is `{device_conf['encryption']}`"
                 )
 
-            if device_conf["encryption"] == "nitrokey":
+            if device_conf["encryption"] == "pkcs11":
                 for key in [
                     "user_privkey",
                     "device_signkey",
                     "local_symkey",
                     "user_manifest_access",
                 ]:
-                    input_data = io.BytesIO(device_conf[key])
-                    output_data = io.BytesIO()
                     try:
-                        nitrokey_encryption_tool.decrypt_data(
-                            nitrokey_token_id,
-                            nitrokey_pin,
-                            input_data,
-                            output_data,
-                            nitrokey_key_id,
+                        device_conf[key] = pkcs11_encryption_tool.decrypt_data(
+                            pkcs11_token_id, pkcs11_pin, device_conf[key], pkcs11_key_id
                         )
-                    except IndexError:
-                        raise DeviceLoadingError("Invalid Nitrokey token id or key id")
-                    except RuntimeError:
-                        raise DeviceLoadingError("Invalid Nitrokey PIN")
-                    input_data.close()
-                    device_conf[key] = output_data.getvalue()
-                    output_data.close()
+                    except pkcs11_encryption_tool.NoKeysFound:
+                        raise pkcs11_encryption_tool.DevicePKCS11Error(
+                            "Invalid PKCS #11 token id or key id"
+                        )
 
             user_privkey = device_conf["user_privkey"]
             device_signkey = device_conf["device_signkey"]
@@ -366,18 +344,18 @@ async def configure_new_device(
     device_id,
     configure_device_token,
     password=None,
-    use_nitrokey=False,
-    nitrokey_token_id=0,
-    nitrokey_key_id=0,
+    use_pkcs11=False,
+    pkcs11_token_id=0,
+    pkcs11_key_id=0,
 ):
     """
     Raises:
         BackendNotAvailable
         DeviceConfigureError
     """
-    if (password and use_nitrokey) or (not password and not use_nitrokey):
+    if (password and use_pkcs11) or (not password and not use_pkcs11):
         raise DeviceConfigureError(
-            "Password or Nitrokey required, and password must by empty when using Nitrokey"
+            "Password or PKCS #11 required, and password must by empty when using PKCS #11"
         )
 
     salt = _generate_salt()
@@ -389,18 +367,13 @@ async def configure_new_device(
     exchange_cipherkey_privkey = PrivateKey.generate()
     device_signkey = SigningKey.generate()
 
-    if use_nitrokey:
-        input_data = io.BytesIO(exchange_cipherkey_privkey.public_key.encode())
-        output_data = io.BytesIO()
+    if use_pkcs11:
         try:
-            nitrokey_encryption_tool.encrypt_data(
-                input_data, output_data, nitrokey_key_id, nitrokey_token_id
+            exchange_cipherkey_encrypted = pkcs11_encryption_tool.encrypt_data(
+                exchange_cipherkey_privkey.public_key.encode(), pkcs11_key_id, pkcs11_token_id
             )
-        except IndexError:
-            raise DeviceNitrokeyError("Invalid Nitrokey token id or key id")
-        input_data.close()
-        exchange_cipherkey_encrypted = output_data.getvalue()
-        output_data.close()
+        except pkcs11_encryption_tool.NoKeysFound:
+            raise DeviceConfigureError("Invalid PKCS #11 token id or key id")
     else:
         exchange_cipherkey_encrypted = box.encrypt(exchange_cipherkey_privkey.public_key.encode())
 
@@ -482,17 +455,17 @@ async def accept_device_configuration_try(
     device,
     config_try_id,
     password=None,
-    nitrokey_pin=None,
-    nitrokey_token_id=0,
-    nitrokey_key_id=0,
+    pkcs11_pin=None,
+    pkcs11_token_id=0,
+    pkcs11_key_id=0,
 ):
     """
     Raises:
         BackendNotAvailable
         DeviceConfigurationPasswordError
     """
-    if (password and nitrokey_pin) or (not password and not nitrokey_pin):
-        raise DeviceConfigurationPasswordError("Password must by empty when using Nitrokey")
+    if (password and pkcs11_pin) or (not password and not pkcs11_pin):
+        raise DeviceConfigurationPasswordError("Password must by empty when using PKCS #11")
 
     config_try = await get_device_configuration_try(backend_cmds_sender, config_try_id)
 
@@ -510,20 +483,15 @@ async def accept_device_configuration_try(
         except nacl.exceptions.CryptoError as exc:
             raise DeviceConfigurationPasswordError(str(exc)) from exc
 
-    if nitrokey_pin:
-        input_data = io.BytesIO(config_try.exchange_cipherkey)
-        output_data = io.BytesIO()
+    if pkcs11_pin:
         try:
-            nitrokey_encryption_tool.decrypt_data(
-                nitrokey_token_id, nitrokey_pin, input_data, output_data, nitrokey_key_id
+            exchange_cipherkey_raw = pkcs11_encryption_tool.decrypt_data(
+                pkcs11_token_id, pkcs11_pin, config_try.exchange_cipherkey, pkcs11_key_id
             )
-        except IndexError:
-            raise DeviceNitrokeyError("Invalid Nitrokey token id or key id")
+        except Pkcs11EncryptionError:
+            raise DeviceConfigurationPasswordError("Invalid PKCS #11 token id or key id")
         except RuntimeError:
-            raise DeviceConfigurationPasswordError("Invalid Nitrokey PIN")
-        input_data.close()
-        exchange_cipherkey_raw = output_data.getvalue()
-        output_data.close()
+            raise DeviceConfigurationPasswordError("Invalid PKCS #11 PIN")
         try:
             box = SealedBox(PublicKey(exchange_cipherkey_raw))
             ciphered_user_privkey = box.encrypt(device.user_privkey.encode())
