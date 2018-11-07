@@ -1,3 +1,4 @@
+import os
 import sys
 import trio
 import trio_asyncio
@@ -116,7 +117,7 @@ def revoke_cmd(user_id, device_name, store):
                 await backend.teardown()
 
     try:
-        config = config_factory({"db_url": store, "blockstore_types": ["MOCKED"]})
+        config = config_factory(db_url=store, blockstore_types="MOCKED")
     except ValueError as exc:
         raise SystemExit(f"Invalid configuration: {exc}")
 
@@ -134,9 +135,8 @@ def revoke_cmd(user_id, device_name, store):
 @click.option(
     "--blockstore",
     "-b",
-    multiple=True,
-    default=["MOCKED"],
-    type=click.Choice(("MOCKED", "POSTGRESQL", "S3", "SWIFT")),
+    default="MOCKED",
+    type=click.Choice(("MOCKED", "POSTGRESQL", "S3", "SWIFT", "RAID1")),
     help="Block store the clients should write into (default: mocked in memory). Set environment variables accordingly.",
 )
 @click.option(
@@ -159,7 +159,9 @@ def backend_cmd(log_level, log_format, log_file, log_filter, pdb, **kwargs):
 
 def _backend(host, port, pubkeys, store, blockstore, debug):
     try:
-        config = config_factory({"debug": debug, "blockstore_types": blockstore, "db_url": store})
+        config = config_factory(
+            debug=debug, blockstore_type=blockstore, db_url=store, environ=os.environ
+        )
     except ValueError as exc:
         raise SystemExit(f"Invalid configuration: {exc}")
 
@@ -187,7 +189,9 @@ def _backend(host, port, pubkeys, store, blockstore, debug):
             finally:
                 await backend.teardown()
 
-    print("Starting Parsec Backend on %s:%s" % (host, port))
+    print(
+        f"Starting Parsec Backend on {host}:{port} (db={config.db_type}, blockstore={config.blockstore_config.type})"
+    )
     try:
         trio_asyncio.run(_run_and_register_johndoe)
     except KeyboardInterrupt:

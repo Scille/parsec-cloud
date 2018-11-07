@@ -12,12 +12,12 @@ from parsec.networking import CookedSocket
 from parsec.handshake import HandshakeFormatError, ServerHandshake
 from parsec.schema import BaseCmdSchema, fields, OneOfSchema
 
-from parsec.backend.exceptions import BackendAuthError, BlockstoreError
+from parsec.backend.exceptions import BackendAuthError
+from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.drivers.memory import (
     MemoryUserComponent,
     MemoryVlobComponent,
     MemoryMessageComponent,
-    MemoryBlockStoreComponent,
     MemoryBeaconComponent,
 )
 from parsec.backend.drivers.postgresql import (
@@ -25,7 +25,6 @@ from parsec.backend.drivers.postgresql import (
     PGUserComponent,
     PGVlobComponent,
     PGMessageComponent,
-    PGBlockStoreComponent,
     PGBeaconComponent,
 )
 
@@ -33,51 +32,6 @@ from parsec.backend.exceptions import NotFoundError
 
 
 logger = get_logger()
-
-
-def blockstores_factory(config, postgresql_dbh=None):
-    blockstores = []
-    for blockstore_type in set(config.blockstore_types):
-        if blockstore_type == "MOCKED":
-            blockstores.append(MemoryBlockStoreComponent())
-
-        elif blockstore_type == "POSTGRESQL":
-            if not postgresql_dbh:
-                raise ValueError("PostgreSQL blockstore is not available")
-            blockstores.append(PGBlockStoreComponent(postgresql_dbh))
-
-        elif blockstore_type == "S3":
-            try:
-                from parsec.backend.s3_blockstore import S3BlockStoreComponent
-
-                blockstores.append(
-                    S3BlockStoreComponent(
-                        config.s3_region, config.s3_bucket, config.s3_key, config.s3_secret
-                    )
-                )
-            except ImportError:
-                raise ValueError("S3 blockstore is not available")
-
-        elif blockstore_type == "SWIFT":
-            try:
-                from parsec.backend.swift_blockstore import SwiftBlockStoreComponent
-
-                blockstores.append(
-                    SwiftBlockStoreComponent(
-                        config.swift_authurl,
-                        config.swift_tenant,
-                        config.swift_container,
-                        config.swift_user,
-                        config.swift_password,
-                    )
-                )
-            except ImportError:
-                raise ValueError("Swift blockstore is not available")
-
-        else:
-            raise ValueError(f"Unknown blockstore type `{blockstore_type}`")
-
-    return blockstores
 
 
 class _cmd_PING_Schema(BaseCmdSchema):
@@ -188,7 +142,7 @@ class BackendApp:
             self.beacon = MemoryBeaconComponent(self.event_bus)
             self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
 
-            self.blockstores = blockstores_factory(self.config)
+            self.blockstore = blockstore_factory(self.config)
         else:
             self.dbh = PGHandler(self.config.db_url, self.event_bus)
             self.user = PGUserComponent(self.dbh, self.event_bus)
@@ -196,7 +150,7 @@ class BackendApp:
             self.beacon = PGBeaconComponent(self.dbh, self.event_bus)
             self.vlob = PGVlobComponent(self.dbh, self.event_bus, self.beacon)
 
-            self.blockstores = blockstores_factory(self.config, postgresql_dbh=self.dbh)
+            self.blockstore = blockstore_factory(self.config, postgresql_dbh=self.dbh)
 
         self.anonymous_cmds = {
             "user_claim": self.user.api_user_claim,
@@ -245,68 +199,16 @@ class BackendApp:
         return {"status": "ok", "pong": msg["ping"]}
 
     async def _api_blockstore_post(self, client_ctx, msg):
-        async def blockstore_post(send_channel, func, *args, **kwargs):
-            async with send_channel:
-                result = await func(*args, **kwargs)
-                await send_channel.send(result)
-
-        if not self.blockstores:
+        if not self.blockstore:
             return {"status": "not_available", "reason": "Blockstore not available"}
 
-        values = []
-        try:
-            async with trio.open_nursery() as nursery:
-                send_channel, receive_channel = trio.open_memory_channel(0)
-                async with send_channel:
-                    for blockstore in self.blockstores:
-                        nursery.start_soon(
-                            blockstore_post,
-                            send_channel.clone(),
-                            blockstore.api_blockstore_post,
-                            client_ctx,
-                            msg,
-                        )
-                values = [value async for value in receive_channel]
-        except trio.MultiError as exc:
-            raise BlockstoreError("At least one error occured when posting block") from exc
-        return values[0]
+        return await self.blockstore.api_blockstore_post(client_ctx, msg)
 
     async def _api_blockstore_get(self, client_ctx, msg):
-        async def blockstore_get(send_channel, func, *args, **kwargs):
-            async with send_channel:
-                try:
-                    result = await func(*args, **kwargs)
-                except ParsecError as exc:
-                    await send_channel.send(exc)
-                else:
-                    await send_channel.send(result)
-
-        if not self.blockstores:
+        if not self.blockstore:
             return {"status": "not_available", "reason": "Blockstore not available"}
 
-        values = []
-        async with trio.open_nursery() as nursery:
-            send_channel, receive_channel = trio.open_memory_channel(0)
-            async with send_channel:
-                for blockstore in self.blockstores:
-                    nursery.start_soon(
-                        blockstore_get,
-                        send_channel.clone(),
-                        blockstore.api_blockstore_get,
-                        client_ctx,
-                        msg,
-                    )
-            values = []
-            async for value in receive_channel:
-                values.append(value)
-                if not isinstance(value, ParsecError):
-                    nursery.cancel_scope.cancel()
-
-        result = next((x for x in values if not isinstance(x, ParsecError)), False)
-        if result:
-            return result
-        else:
-            raise next((x for x in values if isinstance(x, ParsecError)))
+        return await self.blockstore.api_blockstore_get(client_ctx, msg)
 
     async def _api_event_subscribe(self, client_ctx, msg):
         msg = cmd_EVENT_SUBSCRIBE_Schema.load_or_abort(msg)

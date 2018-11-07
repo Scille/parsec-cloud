@@ -20,7 +20,7 @@ from parsec.core.fs.utils import new_access, new_local_user_manifest, local_to_r
 from parsec.core.encryption_manager import encrypt_with_secret_key
 from parsec.core.devices_manager import Device
 from parsec.core.mountpoint import FUSE_AVAILABLE
-from parsec.backend import BackendApp, BackendConfig
+from parsec.backend import BackendApp, config_factory as backend_config_factory
 from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 
@@ -331,12 +331,22 @@ def backend_store(request):
 
 
 @pytest.fixture
-def blockstores(backend_store):
+def blockstore(request, backend_store):
+    blockstore_config = {}
     # TODO: allow to test against swift ?
-    blockstores = ["MOCKED"]
     if backend_store.startswith("postgresql://"):
-        blockstores.append("POSTGRESQL")
-    return blockstores
+        blockstore_type = "POSTGRESQL"
+    else:
+        blockstore_type = "MOCKED"
+
+    # More or less a hack to be able to to configure this fixture from
+    # the test function by adding tags to it
+    if request.node.get_closest_marker("raid1_blockstore"):
+        blockstore_config["RAID1_0_TYPE"] = blockstore_type
+        blockstore_config["RAID1_1_TYPE"] = "MOCKED"
+        blockstore_type = "RAID1"
+
+    return blockstore_type, blockstore_config
 
 
 @pytest.fixture
@@ -358,18 +368,22 @@ async def nursery():
 
 
 @pytest.fixture
-def backend_factory(asyncio_loop, event_bus_factory, blockstores, backend_store, default_devices):
+def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, default_devices):
     # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
     # the backend should inherit from the one with the asyncio loop context manager.
     # This mean the nursery fixture cannot use the backend object otherwise we
     # can end up in a dead lock if the asyncio loop is torndown before the
     # nursery fixture is done with calling the backend's postgresql stuff.
 
+    blockstore_type, blockstore_config = blockstore
+
     @asynccontextmanager
     async def _backend_factory(devices=default_devices, config={}, event_bus=None):
         async with trio.open_nursery() as nursery:
-            config = BackendConfig(
-                **{"blockstore_types": blockstores, "db_url": backend_store, **config}
+            config = backend_config_factory(
+                db_url=backend_store,
+                blockstore_type=blockstore_type,
+                environ={**blockstore_config, **config},
             )
             if not event_bus:
                 event_bus = event_bus_factory()
