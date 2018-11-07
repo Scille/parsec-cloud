@@ -113,17 +113,17 @@
         <translation>Nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="215"/>
+        <location filename="../files_widget.py" line="225"/>
         <source>Enter new folder name</source>
         <translation>Entrez le nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="149"/>
+        <location filename="../files_widget.py" line="159"/>
         <source>A folder with the same name already exists.</source>
         <translation>Un répertoire avec le même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="234"/>
+        <location filename="../files_widget.py" line="244"/>
         <source>Open</source>
         <translation>Ouvrir</translation>
     </message>
@@ -138,7 +138,7 @@
         <translation type="obsolete">Supprimer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="184"/>
+        <location filename="../files_widget.py" line="194"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
@@ -228,42 +228,42 @@
         <translation>Taille</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="215"/>
+        <location filename="../files_widget.py" line="225"/>
         <source>Folder name</source>
         <translation>Nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="231"/>
+        <location filename="../files_widget.py" line="241"/>
         <source>Rename</source>
         <translation>Renommer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="236"/>
+        <location filename="../files_widget.py" line="246"/>
         <source>Open in explorer</source>
         <translation>Ouvrir dans l&apos;explorateur</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="242"/>
+        <location filename="../files_widget.py" line="252"/>
         <source>New name</source>
         <translation>Nouveau nom</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="242"/>
+        <location filename="../files_widget.py" line="252"/>
         <source>Enter file new name</source>
         <translation>Entrez le nouveau nom du fichier</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="264"/>
+        <location filename="../files_widget.py" line="274"/>
         <source>Can not rename.</source>
         <translation>Impossible de renommer.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="184"/>
+        <location filename="../files_widget.py" line="194"/>
         <source>Are you sure you want to delete &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer &quot;{}&quot; ?</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="125"/>
+        <location filename="../files_widget.py" line="135"/>
         <source>Some files or folders could not be imported.</source>
         <translation>Certains fichiers ou répertoires n&apos;ont pas pu être importés.</translation>
     </message>
@@ -539,62 +539,62 @@
         <translation>   Se déconnecter</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="186"/>
+        <location filename="../main_window.py" line="187"/>
         <source>Authentication failed.</source>
         <translation>Impossible de se connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="204"/>
+        <location filename="../main_window.py" line="205"/>
         <source>Can not register the user.</source>
         <translation>Impossible d&apos;enregistrer le nouvel utilisateur.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="233"/>
+        <location filename="../main_window.py" line="234"/>
         <source>User has been successfully registered. You can now login.</source>
         <translation>L&apos;utilisateur a été enregistré avec succès. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="241"/>
+        <location filename="../main_window.py" line="242"/>
         <source>The token has expired.</source>
         <translation>Le jeton a expiré.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="246"/>
+        <location filename="../main_window.py" line="247"/>
         <source>No invitation found for this user.</source>
         <translation>Aucune invitation trouvée pour cet utilisateur.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="251"/>
+        <location filename="../main_window.py" line="252"/>
         <source>User has already been registered.</source>
         <translation>L&apos;utilisateur a déjà été enregistré.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="317"/>
+        <location filename="../main_window.py" line="318"/>
         <source>Device has been successfully registered. You can now login.</source>
         <translation>L&apos;appareil a été enregistré avec succès. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="325"/>
+        <location filename="../main_window.py" line="326"/>
         <source>The device already exists.</source>
         <translation>L&apos;appareil existe déjà.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="330"/>
+        <location filename="../main_window.py" line="331"/>
         <source>Invalid NitroKey information.</source>
         <translation>Les informations de la NitroKey ne sont pas valides.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="335"/>
+        <location filename="../main_window.py" line="336"/>
         <source>Can not create the new device.</source>
         <translation>Impossible de créer le nouvel appareil.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="366"/>
+        <location filename="../main_window.py" line="367"/>
         <source>Are you sure you want to quit ?</source>
         <translation>Êtes-vous sûr de vouloir quitter ?</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="256"/>
+        <location filename="../main_window.py" line="257"/>
         <source>Can not register this user.</source>
         <translation>Impossible d&apos;enregistrer l&apos;utilisateur.</translation>
     </message>
@@ -758,12 +758,12 @@
         <translation type="obsolete">Choisir un point de montage</translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="262"/>
+        <location filename="../forms/settings_widget.ui" line="266"/>
         <source>Network</source>
         <translation>Réseau</translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="38"/>
+        <location filename="../settings_widget.py" line="49"/>
         <source>The choosen folder is not writable.</source>
         <translation>Le répertoire choisi n&apos;est pas accessible en écriture.</translation>
     </message>
@@ -773,13 +773,23 @@
         <translation>Point de montage</translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="213"/>
+        <location filename="../forms/settings_widget.ui" line="215"/>
         <source>Choose mountpoint</source>
         <translation>Choisir un point de montage</translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="232"/>
+        <location filename="../forms/settings_widget.ui" line="234"/>
         <source>Enable mountpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../settings_widget.py" line="37"/>
+        <source>You must log off and on again for the changes to take effect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../settings_widget.py" line="42"/>
+        <source>Choose a mountpoint</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

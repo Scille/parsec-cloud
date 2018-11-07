@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'parsec/core/gui/forms/settings_widget.ui'
+# Form implementation generated from reading ui file 'forms/settings_widget.ui'
 #
 # Created by: PyQt5 UI code generator 5.11.2
 #
@@ -143,9 +143,6 @@ class Ui_SettingsWidget(object):
         self.checkbox_enable_mountpoint.setTristate(False)
         self.checkbox_enable_mountpoint.setObjectName("checkbox_enable_mountpoint")
         self.verticalLayout_3.addWidget(self.checkbox_enable_mountpoint)
-        self.notice_mountpoint = QtWidgets.QLabel(self.tab_app)
-        self.notice_mountpoint.setObjectName("notice_mountpoint")
-        self.verticalLayout_3.addWidget(self.notice_mountpoint)
         self.verticalLayout_2.addLayout(self.verticalLayout_3)
         spacerItem = QtWidgets.QSpacerItem(
             20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
@@ -187,9 +184,6 @@ class Ui_SettingsWidget(object):
         self.label.setText(_translate("SettingsWidget", "Mountpoint"))
         self.button_choose_mountpoint.setText(_translate("SettingsWidget", "Choose mountpoint"))
         self.checkbox_enable_mountpoint.setText(_translate("SettingsWidget", "Enable mountpoint"))
-        self.notice_mountpoint.setText(
-            _translate("SettingsWidget", "You must relogin for the mountpoint to be changed")
-        )
         self.tab_settings.setTabText(
             self.tab_settings.indexOf(self.tab_app), _translate("SettingsWidget", "Global")
         )

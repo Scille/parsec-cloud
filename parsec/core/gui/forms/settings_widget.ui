@@ -238,13 +238,6 @@ padding-right: 10px;</string>
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QLabel" name="notice_mountpoint">
-           <property name="text">
-            <string>You must relogin for the mountpoint to be changed</string>
-           </property>
-          </widget>
-         </item>
         </layout>
        </item>
        <item>
