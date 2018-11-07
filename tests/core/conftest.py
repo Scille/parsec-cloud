@@ -49,7 +49,9 @@ def fs_factory(
     backend_cmds_sender_factory, encryption_manager_factory, event_bus_factory, backend_addr
 ):
     @asynccontextmanager
-    async def _fs_factory(device, backend_addr=backend_addr, event_bus=None):
+    async def _fs_factory(
+        device, backend_addr=backend_addr, event_bus=None, allow_non_workpace_in_root=True
+    ):
         if not event_bus:
             event_bus = event_bus_factory()
 
@@ -58,7 +60,13 @@ def fs_factory(
         ) as encryption_manager, backend_cmds_sender_factory(
             device, backend_addr=backend_addr
         ) as backend_cmds_sender:
-            fs = FS(device, backend_cmds_sender, encryption_manager, event_bus)
+            fs = FS(
+                device,
+                backend_cmds_sender,
+                encryption_manager,
+                event_bus,
+                allow_non_workpace_in_root=allow_non_workpace_in_root,
+            )
             yield fs
 
     return _fs_factory
@@ -70,20 +78,38 @@ async def backend_cmds_sender(alice):
 
 
 @pytest.fixture
-async def alice_fs(fs_factory, alice):
-    async with fs_factory(alice) as fs:
+async def alice_fs(request, fs_factory, alice):
+    # Big hack to simplify tests. Otherwise we must create (and
+    # potentially synchronize) a workspace everytime we want to
+    # test folder/file.
+    if request.node.get_closest_marker("only_workpace_in_root"):
+        allow_non_workpace_in_root = False
+    else:
+        allow_non_workpace_in_root = True
+
+    async with fs_factory(alice, allow_non_workpace_in_root=allow_non_workpace_in_root) as fs:
         yield fs
 
 
 @pytest.fixture
-async def alice2_fs(fs_factory, alice2):
-    async with fs_factory(alice2) as fs:
+async def alice2_fs(request, fs_factory, alice2):
+    if request.node.get_closest_marker("only_workpace_in_root"):
+        allow_non_workpace_in_root = False
+    else:
+        allow_non_workpace_in_root = True
+
+    async with fs_factory(alice2, allow_non_workpace_in_root=allow_non_workpace_in_root) as fs:
         yield fs
 
 
 @pytest.fixture
-async def bob_fs(fs_factory, bob):
-    async with fs_factory(bob) as fs:
+async def bob_fs(request, fs_factory, bob):
+    if request.node.get_closest_marker("only_workpace_in_root"):
+        allow_non_workpace_in_root = False
+    else:
+        allow_non_workpace_in_root = True
+
+    async with fs_factory(bob, allow_non_workpace_in_root=allow_non_workpace_in_root) as fs:
         yield fs
 
 

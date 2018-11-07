@@ -32,33 +32,33 @@ async def wait_for_entries_synced(core, entries_pathes):
     await event.wait()
 
 
-@pytest.mark.trio
-async def test_online_sync(mock_clock, running_backend, alice_core, alice2_core2):
-    await alice_core.event_bus.spy.wait_for_backend_connection_ready()
-    await alice2_core2.event_bus.spy.wait_for_backend_connection_ready()
+# @pytest.mark.trio
+# async def test_online_sync(mock_clock, running_backend, alice_core, alice2_core2):
+#     await alice_core.event_bus.spy.wait_for_backend_connection_ready()
+#     await alice2_core2.event_bus.spy.wait_for_backend_connection_ready()
 
-    with alice_core.event_bus.listen() as events, alice2_core2.event_bus.listen() as events2:
-        await events.wait("fs.sync_monitor.idle")
-        await events2.wait("fs.sync_monitor.idle")
+#     with alice_core.event_bus.listen() as events, alice2_core2.event_bus.listen() as events2:
+#         await events.wait("fs.sync_monitor.idle")
+#         await events2.wait("fs.sync_monitor.idle")
 
-        with freeze_time("2000-01-02"):
-            await alice_core.fs.file_create("/foo.txt")
+#         with freeze_time("2000-01-02"):
+#             await alice_core.fs.file_create("/foo.txt")
 
-        with freeze_time("2000-01-03"):
-            await alice_core.fs.file_write("/foo.txt", b"hello world !")
+#         with freeze_time("2000-01-03"):
+#             await alice_core.fs.file_write("/foo.txt", b"hello world !")
 
-        mock_clock.autojump_threshold = 0.1
-        await events.wait("fs.sync_monitor.tick_finished")
-        await events2.wait("fs.sync_monitor.tick_finished")
+#         mock_clock.autojump_threshold = 0.1
+#         await events.wait("fs.sync_monitor.tick_finished")
+#         await events2.wait("fs.sync_monitor.tick_finished")
 
-    stat = await alice_core.fs.stat("/foo.txt")
-    stat2 = await alice2_core2.fs.stat("/foo.txt")
-    assert stat2 == stat
+#     stat = await alice_core.fs.stat("/foo.txt")
+#     stat2 = await alice2_core2.fs.stat("/foo.txt")
+#     assert stat2 == stat
 
 
 @pytest.mark.trio
 @pytest.mark.skip(reason="Recursive sync strategy need to be reworked")
-async def test_online_sync(mock_clock, running_backend, core_factory, alice, alice2):
+async def test_online_sync2(mock_clock, running_backend, core_factory, alice, alice2):
     mock_clock.autojump_threshold = 0.1
 
     # Given the cores are initialized while the backend is online, we are
@@ -185,7 +185,6 @@ async def test_fast_forward_on_offline_during_sync(
             async with wait_for_entries_synced(alice2_core2, ["/"]), wait_for_entries_synced(
                 alice_core, ("/", "/foo.txt")
             ):
-                print("///////////////////////////////")
                 with freeze_time("2000-01-02"):
                     await alice_core.fs.file_create("/foo.txt")
 
@@ -199,7 +198,6 @@ async def test_fast_forward_on_offline_during_sync(
             # TODO: shouldn't need this...
             await trio.testing.wait_all_tasks_blocked(cushion=0.1)
 
-            print("----------------------------------------------")
             # core goes offline, other core2 is still connected to backend
             async with wait_for_entries_synced(alice_core, ("/", "/foo.txt")):
                 stat2 = await alice2_core2.fs.stat("/foo.txt")
@@ -209,13 +207,9 @@ async def test_fast_forward_on_offline_during_sync(
                         await alice2_core2.fs.file_write("/foo.txt", b"v2")
                         await alice2_core2.fs.folder_create("/bar")
 
-                    print("----------------------------------------------")
                     async with wait_for_entries_synced(alice2_core2, ("/", "/bar", "/foo.txt")):
                         pass
                         await alice2_core2.fs.sync("/")
-                    print("----------------------------------------------")
-                print("----------------------------------------------")
-            print("============================================")
 
             for path in ("/", "/bar", "/foo.txt"):
                 stat = await alice_core.fs.stat(path)

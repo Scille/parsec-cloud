@@ -57,9 +57,9 @@ async def test_concurrent_devices_agreed_on_root_manifest(
     async with fs_factory(zack1) as fs1, fs_factory(zack2) as fs2:
 
         with freeze_time("2000-01-03"):
-            await fs1.folder_create("/from_1")
+            await fs1.workspace_create("/from_1")
         with freeze_time("2000-01-04"):
-            await fs2.folder_create("/from_2")
+            await fs2.workspace_create("/from_2")
 
         async with backend_factory(devices=[zack1, zack2]) as backend:
             async with server_factory(backend.handle_client, backend_addr):
