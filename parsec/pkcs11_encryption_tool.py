@@ -68,15 +68,15 @@ def get_LIB():
     return LIB
 
 
-def get_session(pin=None, tokenID=0):
+def get_session(pin=None, token_id=0):
     token_open = None
-    token = get_token(tokenID)
+    token = get_token(token_id)
 
     error_message = (
         "Cannot open token with ID {token}. Invalid PIN entered or some communication problem "
         "occured with the device. "
         "See if it is inserted or check if the Token ID is correct. "
-        "Make sure pcscd (sudo pcscd) is running. Kill and run it again.".format(token=tokenID)
+        "Make sure pcscd (sudo pcscd) is running. Kill and run it again.".format(token=token_id)
     )
     if not token:
         raise DevicePKCS11Error(error_message)
@@ -140,7 +140,7 @@ def decrypt_data(pin, token_id, key_id, input_data):
         raise DevicePKCS11Error("PKCS #11 not available !")
 
     logger.info("Establishing device session")
-    with get_session(tokenID=token_id, pin=pin) as session:
+    with get_session(token_id=token_id, pin=pin) as session:
         logger.info("Getting keys")
         privs = get_private_keys(session)
         if not privs:
@@ -202,7 +202,7 @@ def encrypt_data(token_id, key_id, input_data):
         raise DevicePKCS11Error("PKCS #11 not available !")
 
     logger.info("Establishing device session")
-    with get_session(tokenID=token_id, skipPin=True) as session:
+    with get_session(token_id=token_id) as session:
         logger.info("Getting keys")
         pubs = get_public_keys(session)
         if not pubs:
