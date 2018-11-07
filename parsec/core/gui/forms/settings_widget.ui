@@ -153,74 +153,95 @@ color: rgb(123, 132, 163);
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout">
+        <layout class="QVBoxLayout" name="verticalLayout_3">
          <property name="leftMargin">
           <number>20</number>
          </property>
          <item>
-          <widget class="QLineEdit" name="line_edit_mountpoint">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>32</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">border: 1px solid rgb(30, 78, 162);
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <widget class="QLineEdit" name="line_edit_mountpoint">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">border: 1px solid rgb(30, 78, 162);
 padding-left: 10px;</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="readOnly">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="button_choose_mountpoint">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>32</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="layoutDirection">
-            <enum>Qt::RightToLeft</enum>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: rgb(45, 144, 209);
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="button_choose_mountpoint">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(45, 144, 209);
 border: 1px solid rgb(11, 56, 166);
 color: rgb(255, 255, 255);
 padding-left: 10px;
 padding-right: 10px;</string>
-           </property>
+             </property>
+             <property name="text">
+              <string>Choose mountpoint</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../rc/resources.qrc">
+               <normaloff>:/icons/images/icons/edit_white.png</normaloff>:/icons/images/icons/edit_white.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkbox_enable_mountpoint">
            <property name="text">
-            <string>Choose mountpoint</string>
+            <string>Enable mountpoint</string>
            </property>
-           <property name="icon">
-            <iconset resource="../rc/resources.qrc">
-             <normaloff>:/icons/images/icons/edit_white.png</normaloff>:/icons/images/icons/edit_white.png</iconset>
+           <property name="tristate">
+            <bool>false</bool>
            </property>
-           <property name="iconSize">
-            <size>
-             <width>24</width>
-             <height>24</height>
-            </size>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="notice_mountpoint">
+           <property name="text">
+            <string>You must relogin for the mountpoint to be changed</string>
            </property>
           </widget>
          </item>

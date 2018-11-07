@@ -113,17 +113,17 @@
         <translation>Nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="225"/>
+        <location filename="../files_widget.py" line="215"/>
         <source>Enter new folder name</source>
         <translation>Entrez le nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="159"/>
+        <location filename="../files_widget.py" line="149"/>
         <source>A folder with the same name already exists.</source>
         <translation>Un répertoire avec le même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="244"/>
+        <location filename="../files_widget.py" line="234"/>
         <source>Open</source>
         <translation>Ouvrir</translation>
     </message>
@@ -138,7 +138,7 @@
         <translation type="obsolete">Supprimer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="194"/>
+        <location filename="../files_widget.py" line="184"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
@@ -228,42 +228,42 @@
         <translation>Taille</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="225"/>
+        <location filename="../files_widget.py" line="215"/>
         <source>Folder name</source>
         <translation>Nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="241"/>
+        <location filename="../files_widget.py" line="231"/>
         <source>Rename</source>
         <translation>Renommer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="246"/>
+        <location filename="../files_widget.py" line="236"/>
         <source>Open in explorer</source>
         <translation>Ouvrir dans l&apos;explorateur</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="252"/>
+        <location filename="../files_widget.py" line="242"/>
         <source>New name</source>
         <translation>Nouveau nom</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="252"/>
+        <location filename="../files_widget.py" line="242"/>
         <source>Enter file new name</source>
         <translation>Entrez le nouveau nom du fichier</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="274"/>
+        <location filename="../files_widget.py" line="264"/>
         <source>Can not rename.</source>
         <translation>Impossible de renommer.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="194"/>
+        <location filename="../files_widget.py" line="184"/>
         <source>Are you sure you want to delete &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer &quot;{}&quot; ?</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="135"/>
+        <location filename="../files_widget.py" line="125"/>
         <source>Some files or folders could not be imported.</source>
         <translation>Certains fichiers ou répertoires n&apos;ont pas pu être importés.</translation>
     </message>
@@ -758,12 +758,12 @@
         <translation type="obsolete">Choisir un point de montage</translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="252"/>
+        <location filename="../forms/settings_widget.ui" line="262"/>
         <source>Network</source>
         <translation>Réseau</translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="33"/>
+        <location filename="../settings_widget.py" line="38"/>
         <source>The choosen folder is not writable.</source>
         <translation>Le répertoire choisi n&apos;est pas accessible en écriture.</translation>
     </message>
@@ -776,6 +776,11 @@
         <location filename="../forms/settings_widget.ui" line="213"/>
         <source>Choose mountpoint</source>
         <translation>Choisir un point de montage</translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="232"/>
+        <source>Enable mountpoint</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
