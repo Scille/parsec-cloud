@@ -94,8 +94,10 @@ class Ui_SettingsWidget(object):
         self.label.setObjectName("label")
         self.horizontalLayout_2.addWidget(self.label)
         self.verticalLayout_2.addLayout(self.horizontalLayout_2)
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_3.setContentsMargins(20, -1, -1, -1)
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.horizontalLayout = QtWidgets.QHBoxLayout()
-        self.horizontalLayout.setContentsMargins(20, -1, -1, -1)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.line_edit_mountpoint = QtWidgets.QLineEdit(self.tab_app)
         self.line_edit_mountpoint.setMinimumSize(QtCore.QSize(0, 32))
@@ -136,7 +138,12 @@ class Ui_SettingsWidget(object):
         self.button_choose_mountpoint.setIconSize(QtCore.QSize(24, 24))
         self.button_choose_mountpoint.setObjectName("button_choose_mountpoint")
         self.horizontalLayout.addWidget(self.button_choose_mountpoint)
-        self.verticalLayout_2.addLayout(self.horizontalLayout)
+        self.verticalLayout_3.addLayout(self.horizontalLayout)
+        self.checkbox_enable_mountpoint = QtWidgets.QCheckBox(self.tab_app)
+        self.checkbox_enable_mountpoint.setTristate(False)
+        self.checkbox_enable_mountpoint.setObjectName("checkbox_enable_mountpoint")
+        self.verticalLayout_3.addWidget(self.checkbox_enable_mountpoint)
+        self.verticalLayout_2.addLayout(self.verticalLayout_3)
         spacerItem = QtWidgets.QSpacerItem(
             20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
         )
@@ -176,6 +183,7 @@ class Ui_SettingsWidget(object):
         SettingsWidget.setWindowTitle(_translate("SettingsWidget", "Form"))
         self.label.setText(_translate("SettingsWidget", "Mountpoint"))
         self.button_choose_mountpoint.setText(_translate("SettingsWidget", "Choose mountpoint"))
+        self.checkbox_enable_mountpoint.setText(_translate("SettingsWidget", "Enable mountpoint"))
         self.tab_settings.setTabText(
             self.tab_settings.indexOf(self.tab_app), _translate("SettingsWidget", "Global")
         )

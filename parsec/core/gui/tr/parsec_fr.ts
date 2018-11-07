@@ -539,42 +539,42 @@
         <translation>   Se déconnecter</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="186"/>
+        <location filename="../main_window.py" line="187"/>
         <source>Authentication failed.</source>
         <translation>Impossible de se connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="204"/>
+        <location filename="../main_window.py" line="205"/>
         <source>Can not register the user.</source>
         <translation>Impossible d&apos;enregistrer le nouvel utilisateur.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="233"/>
+        <location filename="../main_window.py" line="234"/>
         <source>User has been successfully registered. You can now login.</source>
         <translation>L&apos;utilisateur a été enregistré avec succès. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="241"/>
+        <location filename="../main_window.py" line="242"/>
         <source>The token has expired.</source>
         <translation>Le jeton a expiré.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="246"/>
+        <location filename="../main_window.py" line="247"/>
         <source>No invitation found for this user.</source>
         <translation>Aucune invitation trouvée pour cet utilisateur.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="251"/>
+        <location filename="../main_window.py" line="252"/>
         <source>User has already been registered.</source>
         <translation>L&apos;utilisateur a déjà été enregistré.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="317"/>
+        <location filename="../main_window.py" line="318"/>
         <source>Device has been successfully registered. You can now login.</source>
         <translation>L&apos;appareil a été enregistré avec succès. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="325"/>
+        <location filename="../main_window.py" line="326"/>
         <source>The device already exists.</source>
         <translation>L&apos;appareil existe déjà.</translation>
     </message>
@@ -584,17 +584,17 @@
         <translation>Les informations de la PKCS #11 ne sont pas valides.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="335"/>
+        <location filename="../main_window.py" line="336"/>
         <source>Can not create the new device.</source>
         <translation>Impossible de créer le nouvel appareil.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="366"/>
+        <location filename="../main_window.py" line="367"/>
         <source>Are you sure you want to quit ?</source>
         <translation>Êtes-vous sûr de vouloir quitter ?</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="256"/>
+        <location filename="../main_window.py" line="257"/>
         <source>Can not register this user.</source>
         <translation>Impossible d&apos;enregistrer l&apos;utilisateur.</translation>
     </message>
@@ -758,12 +758,12 @@
         <translation type="obsolete">Choisir un point de montage</translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="252"/>
+        <location filename="../forms/settings_widget.ui" line="266"/>
         <source>Network</source>
         <translation>Réseau</translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="33"/>
+        <location filename="../settings_widget.py" line="49"/>
         <source>The choosen folder is not writable.</source>
         <translation>Le répertoire choisi n&apos;est pas accessible en écriture.</translation>
     </message>
@@ -773,9 +773,24 @@
         <translation>Point de montage</translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="213"/>
+        <location filename="../forms/settings_widget.ui" line="215"/>
         <source>Choose mountpoint</source>
         <translation>Choisir un point de montage</translation>
+    </message>
+    <message>
+        <location filename="../forms/settings_widget.ui" line="234"/>
+        <source>Enable mountpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../settings_widget.py" line="37"/>
+        <source>You must log off and on again for the changes to take effect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../settings_widget.py" line="42"/>
+        <source>Choose a mountpoint</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
