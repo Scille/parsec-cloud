@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_FilesWidget(object):
     def setupUi(self, FilesWidget):
         FilesWidget.setObjectName("FilesWidget")
-        FilesWidget.resize(598, 493)
+        FilesWidget.resize(690, 493)
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
         )
@@ -40,7 +40,22 @@ class Ui_FilesWidget(object):
             "QListView::item:selected\n"
             "{\n"
             "background-color: rgb(45, 144, 209);\n"
-            "color: rgb(255, 255, 255);\n"
+            "}\n"
+            "\n"
+            "QScrollBar:vertical\n"
+            "{\n"
+            "background: rgb(255, 255, 255);\n"
+            "}\n"
+            "\n"
+            "QScrollBar::handle:vertical\n"
+            "{\n"
+            "background: rgb(12, 65, 157);\n"
+            "}\n"
+            "\n"
+            "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical\n"
+            "{\n"
+            "border: none;\n"
+            "background: none;\n"
             "}"
         )
         self.verticalLayout = QtWidgets.QVBoxLayout(FilesWidget)
@@ -155,15 +170,15 @@ class Ui_FilesWidget(object):
         self.button_create_folder.setFlat(True)
         self.button_create_folder.setObjectName("button_create_folder")
         self.horizontalLayout_2.addWidget(self.button_create_folder)
-        self.button_import = QtWidgets.QPushButton(self.widget_files)
-        self.button_import.setMinimumSize(QtCore.QSize(0, 32))
+        self.button_import_files = QtWidgets.QPushButton(self.widget_files)
+        self.button_import_files.setMinimumSize(QtCore.QSize(0, 32))
         font = QtGui.QFont()
         font.setPointSize(12)
         font.setBold(True)
         font.setWeight(75)
-        self.button_import.setFont(font)
-        self.button_import.setLayoutDirection(QtCore.Qt.RightToLeft)
-        self.button_import.setStyleSheet(
+        self.button_import_files.setFont(font)
+        self.button_import_files.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.button_import_files.setStyleSheet(
             "background-color: rgb(45, 144, 209);\n"
             "border: 1px solid rgb(11, 56, 166);\n"
             "color: rgb(255, 255, 255);\n"
@@ -175,13 +190,33 @@ class Ui_FilesWidget(object):
         icon2.addPixmap(
             QtGui.QPixmap(":/icons/images/icons/import.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off
         )
-        self.button_import.setIcon(icon2)
-        self.button_import.setIconSize(QtCore.QSize(24, 24))
-        self.button_import.setAutoDefault(False)
-        self.button_import.setDefault(False)
-        self.button_import.setFlat(True)
-        self.button_import.setObjectName("button_import")
-        self.horizontalLayout_2.addWidget(self.button_import)
+        self.button_import_files.setIcon(icon2)
+        self.button_import_files.setIconSize(QtCore.QSize(24, 24))
+        self.button_import_files.setAutoDefault(False)
+        self.button_import_files.setDefault(False)
+        self.button_import_files.setFlat(True)
+        self.button_import_files.setObjectName("button_import_files")
+        self.horizontalLayout_2.addWidget(self.button_import_files)
+        self.button_import_folder = QtWidgets.QPushButton(self.widget_files)
+        self.button_import_folder.setMinimumSize(QtCore.QSize(0, 32))
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        font.setBold(True)
+        font.setWeight(75)
+        self.button_import_folder.setFont(font)
+        self.button_import_folder.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.button_import_folder.setStyleSheet(
+            "background-color: rgb(45, 144, 209);\n"
+            "border: 1px solid rgb(11, 56, 166);\n"
+            "color: rgb(255, 255, 255);\n"
+            "padding-left: 10px;\n"
+            "padding-right: 10px;\n"
+            "font-weight: bold;"
+        )
+        self.button_import_folder.setIcon(icon2)
+        self.button_import_folder.setIconSize(QtCore.QSize(24, 24))
+        self.button_import_folder.setObjectName("button_import_folder")
+        self.horizontalLayout_2.addWidget(self.button_import_folder)
         spacerItem = QtWidgets.QSpacerItem(
             40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
         )
@@ -289,8 +324,8 @@ class Ui_FilesWidget(object):
         self.pushButton_4.setObjectName("pushButton_4")
         self.horizontalLayout_4.addWidget(self.pushButton_4)
         self.label_3 = QtWidgets.QLabel(self.widget_files)
-        self.label_3.setMinimumSize(QtCore.QSize(46, 32))
-        self.label_3.setMaximumSize(QtCore.QSize(46, 32))
+        self.label_3.setMinimumSize(QtCore.QSize(64, 32))
+        self.label_3.setMaximumSize(QtCore.QSize(64, 32))
         self.label_3.setStyleSheet("background-color: rgb(12, 65, 157);")
         self.label_3.setText("")
         self.label_3.setObjectName("label_3")
@@ -319,6 +354,7 @@ class Ui_FilesWidget(object):
         )
         self.list_files.setFrameShadow(QtWidgets.QFrame.Plain)
         self.list_files.setLineWidth(0)
+        self.list_files.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.list_files.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.list_files.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.list_files.setSelectionRectVisible(False)
@@ -335,7 +371,8 @@ class Ui_FilesWidget(object):
         FilesWidget.setWindowTitle(_translate("FilesWidget", "Form"))
         self.button_back.setText(_translate("FilesWidget", "Back"))
         self.button_create_folder.setText(_translate("FilesWidget", "New folder"))
-        self.button_import.setText(_translate("FilesWidget", "Import"))
+        self.button_import_files.setText(_translate("FilesWidget", "Import files"))
+        self.button_import_folder.setText(_translate("FilesWidget", "Import folder"))
         self.line_edit_search.setPlaceholderText(
             _translate("FilesWidget", "Search files or folders")
         )

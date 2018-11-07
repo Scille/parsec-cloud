@@ -3,18 +3,19 @@ import pathlib
 from uuid import UUID
 
 from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal
-from PyQt5.QtWidgets import QWidget, QListWidgetItem, QMenu, QStyledItemDelegate, QStyle
+from PyQt5.QtWidgets import (
+    QWidget,
+    QListWidgetItem,
+    QMenu,
+    QStyledItemDelegate,
+    QStyle,
+    QFileDialog,
+)
 from PyQt5.QtGui import QColor
 
 from parsec.core.gui import desktop
 from parsec.core.gui.core_call import core_call
-from parsec.core.gui.custom_widgets import (
-    show_error,
-    show_warning,
-    get_open_files,
-    ask_question,
-    get_text,
-)
+from parsec.core.gui.custom_widgets import show_error, show_warning, ask_question, get_text
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.gui.item_widget import FileItemWidget, FolderItemWidget, ParentItemWidget
 from parsec.core.fs import FSEntryNotFound
@@ -38,7 +39,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.list_files.setItemDelegate(Delegate())
         self.button_back.clicked.connect(self.back_clicked)
         self.button_create_folder.clicked.connect(self.create_folder_clicked)
-        self.button_import.clicked.connect(self.import_clicked)
+        self.button_import_files.clicked.connect(self.import_files_clicked)
+        self.button_import_folder.clicked.connect(self.import_folder_clicked)
         self.list_files.setContextMenuPolicy(Qt.CustomContextMenu)
         self.list_files.customContextMenuRequested.connect(self.show_context_menu)
         self.list_files.currentItemChanged.connect(self.set_item_selected)
@@ -112,29 +114,40 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if fd_out:
                 core_call().file_close(fd_out)
 
-    def import_clicked(self):
-        result, files = get_open_files(self)
-        if not result:
+    def import_files_clicked(self):
+        paths, _ = QFileDialog.getOpenFileNames(
+            self,
+            QCoreApplication.translate("FilesWidget", "Select files to import"),
+            str(pathlib.Path.home()),
+        )
+        if not paths:
             return
-        err = False
-        for f in files:
-            p = pathlib.Path(f)
-            if p.is_dir():
-                err |= self._import_folder(
-                    p, os.path.join("/", self.workspace, self.current_directory, p.name)
-                )
-            elif p.is_file():
-                err |= self._import_file(
-                    str(p), os.path.join("/", self.workspace, self.current_directory, p.name)
-                )
-            else:
-                print("Neither file nor dir, ignoring", f)
+        for path in paths:
+            p = pathlib.Path(path)
+            err = self._import_file(
+                str(p), os.path.join("/", self.workspace, self.current_directory, p.name)
+            )
         if err:
             show_error(
-                self,
-                QCoreApplication.translate(
-                    "FilesWidget", "Some files or folders could not be imported."
-                ),
+                self, QCoreApplication.translate("FilesWidget", "Some files could not be imported.")
+            )
+        self.load(self.current_directory)
+
+    def import_folder_clicked(self):
+        path = QFileDialog.getExistingDirectory(
+            self,
+            QCoreApplication.translate("FilesWidget", "Select a directory to import"),
+            str(pathlib.Path.home()),
+        )
+        if not path:
+            return
+        p = pathlib.Path(path)
+        err = self._import_folder(
+            p, os.path.join("/", self.workspace, self.current_directory, p.name)
+        )
+        if err:
+            show_error(
+                self, QCoreApplication.translate("FilesWidget", "The folder could not be imported.")
             )
         self.load(self.current_directory)
 
