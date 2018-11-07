@@ -38,9 +38,9 @@ async def test_message_from_bob_to_alice_multi_backends(
     postgresql_url, alice, bob, backend_factory, backend_sock_factory
 ):
     async with backend_factory(
-        config={"blockstore_type": "POSTGRESQL", "db_url": postgresql_url}
+        config={"blockstore_types": ["POSTGRESQL"], "db_url": postgresql_url}
     ) as backend_1, backend_factory(
-        devices=(), config={"blockstore_type": "POSTGRESQL", "db_url": postgresql_url}
+        devices=(), config={"blockstore_types": ["POSTGRESQL"], "db_url": postgresql_url}
     ) as backend_2:
 
         async with backend_sock_factory(

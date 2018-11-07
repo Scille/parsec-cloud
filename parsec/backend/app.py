@@ -13,11 +13,11 @@ from parsec.handshake import HandshakeFormatError, ServerHandshake
 from parsec.schema import BaseCmdSchema, fields, OneOfSchema
 
 from parsec.backend.exceptions import BackendAuthError
+from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.drivers.memory import (
     MemoryUserComponent,
     MemoryVlobComponent,
     MemoryMessageComponent,
-    MemoryBlockStoreComponent,
     MemoryBeaconComponent,
 )
 from parsec.backend.drivers.postgresql import (
@@ -25,7 +25,6 @@ from parsec.backend.drivers.postgresql import (
     PGUserComponent,
     PGVlobComponent,
     PGMessageComponent,
-    PGBlockStoreComponent,
     PGBeaconComponent,
 )
 
@@ -33,44 +32,6 @@ from parsec.backend.exceptions import NotFoundError
 
 
 logger = get_logger()
-
-
-def blockstore_factory(config, postgresql_dbh=None):
-    blockstore_type = config.blockstore_type
-    if blockstore_type == "MOCKED":
-        return MemoryBlockStoreComponent()
-
-    elif blockstore_type == "POSTGRESQL":
-        if not postgresql_dbh:
-            raise ValueError("PostgreSQL blockstore is not available")
-        return PGBlockStoreComponent(postgresql_dbh)
-
-    elif blockstore_type == "S3":
-        try:
-            from parsec.backend.s3_blockstore import S3BlockStoreComponent
-
-            return S3BlockStoreComponent(
-                config.s3_region, config.s3_bucket, config.s3_key, config.s3_secret
-            )
-        except ImportError:
-            raise ValueError("S3 blockstore is not available")
-
-    elif blockstore_type == "SWIFT":
-        try:
-            from parsec.backend.swift_blockstore import SwiftBlockStoreComponent
-
-            return SwiftBlockStoreComponent(
-                config.swift_authurl,
-                config.swift_tenant,
-                config.swift_container,
-                config.swift_user,
-                config.swift_password,
-            )
-        except ImportError:
-            raise ValueError("Swift blockstore is not available")
-
-    else:
-        raise ValueError(f"Unknown blockstore type `{blockstore_type}`")
 
 
 class _cmd_PING_Schema(BaseCmdSchema):
