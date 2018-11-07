@@ -44,6 +44,9 @@ class BaseAsyncComponent:
 
 def taskify(func, *args, **kwargs):
     async def _task(*, task_status=trio.TASK_STATUS_IGNORED):
+        task = trio.hazmat.current_task()
+        task.name = f"{func.__module__}.{func.__qualname__}"
+
         stopped = trio.Event()
         try:
             with trio.open_cancel_scope() as cancel_scope:
