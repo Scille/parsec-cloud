@@ -247,7 +247,7 @@ class LocalDevicesManager:
             for key in ["device_signkey", "user_privkey", "local_symkey", "user_manifest_access"]:
                 try:
                     device_conf[key] = pkcs11_encryption_tool.encrypt_data(
-                        device_conf[key], pkcs11_key_id, pkcs11_token_id
+                        pkcs11_token_id, pkcs11_key_id, device_conf[key]
                     )
                 except pkcs11_encryption_tool.NoKeysFound:
                     raise pkcs11_encryption_tool.DevicePKCS11Error(
@@ -314,7 +314,7 @@ class LocalDevicesManager:
                 ]:
                     try:
                         device_conf[key] = pkcs11_encryption_tool.decrypt_data(
-                            pkcs11_token_id, pkcs11_pin, device_conf[key], pkcs11_key_id
+                            pkcs11_pin, pkcs11_token_id, pkcs11_key_id, device_conf[key]
                         )
                     except pkcs11_encryption_tool.NoKeysFound:
                         raise pkcs11_encryption_tool.DevicePKCS11Error(
@@ -370,7 +370,7 @@ async def configure_new_device(
     if use_pkcs11:
         try:
             exchange_cipherkey_encrypted = pkcs11_encryption_tool.encrypt_data(
-                exchange_cipherkey_privkey.public_key.encode(), pkcs11_key_id, pkcs11_token_id
+                pkcs11_token_id, pkcs11_key_id, exchange_cipherkey_privkey.public_key.encode()
             )
         except pkcs11_encryption_tool.NoKeysFound:
             raise DeviceConfigureError("Invalid PKCS #11 token id or key id")
@@ -486,7 +486,7 @@ async def accept_device_configuration_try(
     if pkcs11_pin:
         try:
             exchange_cipherkey_raw = pkcs11_encryption_tool.decrypt_data(
-                pkcs11_token_id, pkcs11_pin, config_try.exchange_cipherkey, pkcs11_key_id
+                pkcs11_pin, pkcs11_token_id, pkcs11_key_id, config_try.exchange_cipherkey
             )
         except Pkcs11EncryptionError:
             raise DeviceConfigurationPasswordError("Invalid PKCS #11 token id or key id")

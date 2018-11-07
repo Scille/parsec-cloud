@@ -140,13 +140,13 @@ def test_register_new_encrypted_device(tmpdir, fast_crypto, alice):
 @patch("parsec.pkcs11_encryption_tool.encrypt_data")
 @patch("parsec.pkcs11_encryption_tool.decrypt_data")
 def test_register_new_pkcs11_device(decrypt_data, encrypt_data, tmpdir, fast_crypto, alice):
-    def encrypt_data_mock(input_data, keyid, token):
-        if token != 1 or keyid != 2:
+    def encrypt_data_mock(token_id, key_id, input_data):
+        if token_id != 1 or key_id != 2:
             raise NoKeysFound()
         return b"ENC:" + input_data
 
-    def decrypt_data_mock(token, pin, input_data, keyid):
-        if token != 1 or keyid != 2:
+    def decrypt_data_mock(pin, token_id, key_id, input_data):
+        if token_id != 1 or key_id != 2:
             raise NoKeysFound()
         if pin != "123456":
             raise DevicePKCS11Error()

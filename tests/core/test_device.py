@@ -126,13 +126,13 @@ async def test_device_declare_then_accepted_using_password(
 async def test_device_declare_then_accepted_using_pkcs11(
     running_backend, core_factory, core_sock_factory, alice
 ):
-    def encrypt_data_mock(input_data, keyid, token):
-        if token != 1 or keyid != 2:
+    def encrypt_data_mock(token_id, key_id, input_data):
+        if token_id != 1 or key_id != 2:
             raise NoKeysFound()
         return b"ENC:" + input_data
 
-    def decrypt_data_mock(token, pin, input_data, keyid):
-        if token != 1 or keyid != 2:
+    def decrypt_data_mock(pin, token_id, key_id, input_data):
+        if token_id != 1 or key_id != 2:
             raise NoKeysFound()
         if pin != "123456":
             raise DevicePKCS11Error()

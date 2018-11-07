@@ -69,10 +69,8 @@ def get_LIB():
 
 
 def get_session(pin=None, tokenID=0):
-    LIB = get_LIB()
-
     token_open = None
-    token = get_token(LIB, tokenID)
+    token = get_token(tokenID)
 
     error_message = (
         "Cannot open token with ID {token}. Invalid PIN entered or some communication problem "
@@ -122,7 +120,9 @@ def get_private_keys(session):
     return priv_keys
 
 
-def get_token(LIB, id=0):
+def get_token(id=0):
+    LIB = get_LIB()
+
     tokens = list(LIB.get_tokens())
     if len(tokens) > 0:
         return tokens[id]
@@ -130,8 +130,8 @@ def get_token(LIB, id=0):
         return None
 
 
-def decrypt_data(tokenID, pin, input_data, keyid):
-    def _decrypt_data_on_device(encrypted_data, private_key) -> bytes:
+def decrypt_data(pin, token_id, key_id, input_data):
+    def _decrypt_data_on_device(encrypted_data, private_key):
         return private_key.decrypt(encrypted_data, mechanism=Mechanism.RSA_PKCS)
 
     istream = io.BytesIO(input_data)
@@ -140,7 +140,7 @@ def decrypt_data(tokenID, pin, input_data, keyid):
         raise DevicePKCS11Error("PKCS #11 not available !")
 
     logger.info("Establishing device session")
-    with get_session(tokenID=tokenID, pin=pin) as session:
+    with get_session(tokenID=token_id, pin=pin) as session:
         logger.info("Getting keys")
         privs = get_private_keys(session)
         if not privs:
@@ -148,7 +148,7 @@ def decrypt_data(tokenID, pin, input_data, keyid):
             raise NoKeysFound("No private keys found")
 
         try:
-            key_rsa = privs[keyid]
+            key_rsa = privs[key_id]
         except IndexError:
             raise NoKeysFound("Key not found")
         rsa_key_length = key_rsa.key_length
@@ -190,8 +190,8 @@ def decrypt_data(tokenID, pin, input_data, keyid):
         return output_data
 
 
-def encrypt_data(input_data, keyid: int, token: int):
-    def _encrypt_data(data_to_encrypt_, public_key) -> bytes:
+def encrypt_data(token_id, key_id, input_data):
+    def _encrypt_data(data_to_encrypt_, public_key):
         cipher = PKCS1_v1_5.new(public_key)
         crypttext = cipher.encrypt(data_to_encrypt_)
         return crypttext
@@ -202,14 +202,14 @@ def encrypt_data(input_data, keyid: int, token: int):
         raise DevicePKCS11Error("PKCS #11 not available !")
 
     logger.info("Establishing device session")
-    with get_session(tokenID=token, skipPin=True) as session:
+    with get_session(tokenID=token_id, skipPin=True) as session:
         logger.info("Getting keys")
         pubs = get_public_keys(session)
         if not pubs:
             logger.error("No public keys found")
             raise NoKeysFound("No public keys found")
         try:
-            key_rsa = pubs[keyid]
+            key_rsa = pubs[key_id]
         except IndexError:
             raise NoKeysFound("Key not found")
         logger.info(
