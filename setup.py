@@ -37,6 +37,69 @@ class GeneratePyQtResourcesBundle(Command):
             print("PyQt5 not installed, skipping `parsec.core.gui._resources_rc` generation.")
 
 
+class GeneratePyQtForms(Command):
+    description = "Generates `parsec.core.ui.*` forms module"
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        try:
+            import os
+            import pathlib
+            from collections import namedtuple
+            from PyQt5.uic.driver import Driver
+
+            self.announce("Generating `parsec.core.gui.ui`", level=distutils.log.INFO)
+            Options = namedtuple(
+                "Options",
+                [
+                    "output",
+                    "import_from",
+                    "debug",
+                    "preview",
+                    "execute",
+                    "indent",
+                    "resource_suffix",
+                ],
+            )
+            ui_dir = pathlib.Path("parsec/core/gui/forms")
+            ui_path = "parsec/core/gui/ui"
+            os.makedirs(ui_path, exist_ok=True)
+            for f in ui_dir.iterdir():
+                o = Options(
+                    output=os.path.join(ui_path, "{}.py".format(f.stem)),
+                    import_from="parsec.core.gui",
+                    debug=False,
+                    preview=False,
+                    execute=False,
+                    indent=4,
+                    resource_suffix="_rc",
+                )
+                d = Driver(o, str(f))
+                d.invoke()
+        except ImportError:
+            print("PyQt5 not installed, skipping `parsec.core.gui.ui` generation.")
+
+
+class build_py_with_pyqt(build_py):
+    def run(self):
+        self.run_command("generate_pyqt_forms")
+        self.run_command("generate_pyqt_resources_bundle")
+        return super().run()
+
+
+class build_py_with_pyqt_forms_generation(build_py):
+    def run(self):
+        self.run_command("generate_pyqt_forms")
+        return super().run()
+
+
 class build_py_with_pyqt_resource_bundle_generation(build_py):
     def run(self):
         self.run_command("generate_pyqt_resources_bundle")
@@ -150,7 +213,9 @@ setup(
     extras_require=extra_requirements,
     cmdclass={
         "generate_pyqt_resources_bundle": GeneratePyQtResourcesBundle,
-        "build_py": build_py_with_pyqt_resource_bundle_generation,
+        "generate_pyqt_forms": GeneratePyQtForms,
+        "generate_pyqt": build_py_with_pyqt,
+        "build_py": build_py_with_pyqt,
     },
     entry_points={"console_scripts": ["parsec = parsec.cli:cli"]},
     options={"build_exe": build_exe_options},
