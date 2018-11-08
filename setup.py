@@ -87,10 +87,58 @@ class GeneratePyQtForms(Command):
             print("PyQt5 not installed, skipping `parsec.core.gui.ui` generation.")
 
 
+class GeneratePyQtTranslations(Command):
+    description = "Generates ui translation files"
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        try:
+            import os
+            import pathlib
+            import subprocess
+            from unittest.mock import patch
+            from PyQt5.pylupdate_main import main as pylupdate_main
+
+            self.announce("Generating ui translation files", level=distutils.log.INFO)
+            rc_dir = "parsec/core/gui/rc/translations"
+            os.makedirs(rc_dir, exist_ok=True)
+            new_args = ["pylupdate", "parsec/core/gui/parsec-gui.pro"]
+            with patch("sys.argv", new_args):
+                pylupdate_main()
+            tr_dir = pathlib.Path("parsec/core/gui/tr")
+            for f in tr_dir.iterdir():
+                subprocess.call(
+                    [
+                        "lrelease",
+                        "-compress",
+                        str(f),
+                        "-qm",
+                        os.path.join(rc_dir, "{}.qm".format(f.stem)),
+                    ],
+                    stdout=subprocess.DEVNULL,
+                )
+        except ImportError:
+            print("PyQt5 not installed, skipping `parsec.core.gui.ui` generation.")
+
+
 class build_py_with_pyqt(build_py):
     def run(self):
         self.run_command("generate_pyqt_forms")
+        self.run_command("generate_pyqt_translations")
         self.run_command("generate_pyqt_resources_bundle")
+        return super().run()
+
+
+class build_py_with_pyqt_translations(build_py):
+    def run(self):
+        self.run_command("generate_pyqt_translations")
         return super().run()
 
 
@@ -214,6 +262,7 @@ setup(
     cmdclass={
         "generate_pyqt_resources_bundle": GeneratePyQtResourcesBundle,
         "generate_pyqt_forms": GeneratePyQtForms,
+        "generate_pyqt_translations": GeneratePyQtTranslations,
         "generate_pyqt": build_py_with_pyqt,
         "build_py": build_py_with_pyqt,
     },
