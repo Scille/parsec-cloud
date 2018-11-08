@@ -42,8 +42,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tray = None
         self.widget_menu.hide()
         self.login_widget = LoginWidget(parent=self.widget_main)
-        for device_name in core_call().get_devices():
-            self.login_widget.add_device(device_name)
+        self.login_widget.add_devices(core_call().get_devices())
         self.main_widget_layout.insertWidget(1, self.login_widget)
         self.users_widget = UsersWidget(parent=self.widget_main)
         self.main_widget_layout.insertWidget(1, self.users_widget)
@@ -225,7 +224,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 core_call().register_new_device(
                     device_id, privkey, signkey, manifest, None, True, pkcs11_token, pkcs11_key
                 )
-            self.login_widget.add_device(device_id)
+            self.login_widget.add_devices([device_id])
             show_info(
                 self,
                 QCoreApplication.translate(
@@ -305,7 +304,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 core_call().register_new_device(
                     device_id, privkey, signkey, manifest, None, True, pkcs11_token, pkcs11_key
                 )
-            self.login_widget.add_device(device_id)
+            self.login_widget.add_devices([device_id])
             show_info(
                 self,
                 QCoreApplication.translate(

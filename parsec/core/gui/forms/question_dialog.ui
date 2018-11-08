@@ -182,7 +182,7 @@ background-color: rgb(255, 255, 255);
           <item>
            <widget class="QLabel" name="label_message">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>

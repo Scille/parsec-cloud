@@ -1,5 +1,5 @@
 from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QCompleter
 
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_widgets import show_error
@@ -17,22 +17,24 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.button_login.clicked.connect(self.emit_login)
+        self.devices = []
         self.reset()
 
     def emit_login(self):
         if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
             self.login_with_password_clicked.emit(
-                self.combo_devices.currentText(), self.line_edit_password.text()
+                self.line_edit_device.text(), self.line_edit_password.text()
             )
         else:
             self.login_with_pkcs11_clicked.emit(
-                self.combo_devices.currentText(),
+                self.line_edit_device.text(),
                 self.line_edit_pkcs11_pin.text(),
                 int(self.combo_pkcs11_key.currentText()),
                 int(self.combo_pkcs11_token.currentText()),
             )
 
     def reset(self):
+        self.line_edit_device.setText("")
         self.line_edit_password.setText("")
         self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
         self.line_edit_password.setDisabled(False)
@@ -43,8 +45,13 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         self.combo_pkcs11_token.addItem("0")
         self.widget_pkcs11.hide()
 
-    def add_device(self, device_name):
-        self.combo_devices.addItem(device_name)
+    def add_devices(self, device_names):
+        self.devices = list(set(self.devices + device_names))
+        self.completer = QCompleter(self.devices)
+        self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer.popup().setStyleSheet("border: 2px solid rgb(46, 145, 208); border-top: 0;")
+        print(type(self.completer.popup()))
+        self.line_edit_device.setCompleter(self.completer)
 
 
 class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
@@ -278,8 +285,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.register_user_widget.hide()
         self.register_device_widget.show()
 
-    def add_device(self, device_name):
-        self.login_widget.add_device(device_name)
+    def add_devices(self, device_names):
+        self.login_widget.add_devices(device_names)
 
     def reset(self):
         self.login_widget.reset()
