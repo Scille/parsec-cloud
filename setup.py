@@ -99,11 +99,9 @@ requirements = [
 
 
 test_requirements = [
-    # https://github.com/python-trio/pytest-trio/issues/64
-    # "pytest>=3.6",
-    "pytest==3.8.0",
+    "pytest>=3.8.1",
     "pytest-cov",
-    "pytest-trio",
+    "pytest-trio>=0.5.1",
     "tox",
     "wheel",
     "Sphinx",
