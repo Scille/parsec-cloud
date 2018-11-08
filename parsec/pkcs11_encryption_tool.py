@@ -253,3 +253,27 @@ def encrypt_data(token_id, key_id, input_data):
         output_data = ostream.getvalue()
         ostream.close()
         return output_data
+
+
+def get_tokens():
+    lib = get_LIB()
+    tokens = {}
+    for index, token in enumerate(lib.get_tokens()):
+        tokens[token.label] = index
+
+
+def get_keys():
+    session = get_session()
+    keys = {}
+    for key in get_public_keys(session):
+        keys[key.label] = int(key.id)
+
+
+def is_available():
+    if not PKCS11_AVAILABLE:
+        return False
+    try:
+        get_session()
+        return True
+    except:
+        return False

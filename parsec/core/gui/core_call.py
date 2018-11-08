@@ -6,6 +6,7 @@ from parsec.core.devices_manager import (
     accept_device_configuration_try,
     configure_new_device,
 )
+from parsec import pkcs11_encryption_tool
 
 
 class _CoreCall:
@@ -151,6 +152,15 @@ class _CoreCall:
 
     def share_workspace(self, *args):
         return self._trio_portal.run(self._parsec_core.fs.share, *args)
+
+    def pkcs11_is_available(self):
+        return pkcs11_encryption_tool.is_available()
+
+    def pkcs11_get_keys(self):
+        return pkcs11_encryption_tool.get_keys()
+
+    def pkcs11_get_tokens(self):
+        return pkcs11_encryption_tool.get_tokens()
 
 
 _CORE_CALL = None

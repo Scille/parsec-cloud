@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_widgets import show_error
+from parsec.core.gui.core_call import core_call
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 from parsec.core.gui.ui.login_register_user_widget import Ui_LoginRegisterUserWidget
@@ -17,6 +18,8 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.button_login.clicked.connect(self.emit_login)
+        self.pkcs11_keys = {}
+        self.pkcs11_tokens = {}
         self.reset()
 
     def emit_login(self):
@@ -28,8 +31,8 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
             self.login_with_pkcs11_clicked.emit(
                 self.combo_devices.currentText(),
                 self.line_edit_pkcs11_pin.text(),
-                int(self.combo_pkcs11_key.currentText()),
-                int(self.combo_pkcs11_token.currentText()),
+                self.pkcs11_keys[self.combo_pkcs11_key.currentText()],
+                self.pkcs11_tokens[self.combo_pkcs11_token.currentText()],
             )
 
     def reset(self):
@@ -37,10 +40,18 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
         self.line_edit_password.setDisabled(False)
         self.line_edit_pkcs11_pin.setText("")
-        self.combo_pkcs11_key.clear()
-        self.combo_pkcs11_key.addItem("0")
-        self.combo_pkcs11_token.clear()
-        self.combo_pkcs11_token.addItem("0")
+        if core_call().pkcs11_is_available():
+            self.pkcs11_keys = core_call().pkcs11_get_keys()
+            self.pkcs11_tokens = core_call().pkcs11_get_tokens()
+            self.check_box_use_pkcs11.show()
+            self.combo_pkcs11_key.clear()
+            for label, index in self.pkcs11_keys.items():
+                self.combo_pkcs11_key.addItem(label)
+            self.combo_pkcs11_token.clear()
+            for label, index in self.pkcs11_tokens.items():
+                self.combo_pkcs11_token.addItem(label)
+        else:
+            self.check_box_use_pkcs11.hide()
         self.widget_pkcs11.hide()
 
     def add_device(self, device_name):
@@ -58,6 +69,9 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_token.textChanged.connect(self.check_infos)
+        self.pkcs11_tokens = {}
+        self.pkcs11_keys = {}
+        self.reset()
 
     def check_infos(self, _):
         if (
@@ -78,10 +92,18 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
         self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
         self.line_edit_password.setDisabled(False)
         self.line_edit_password_check.setDisabled(False)
-        self.combo_pkcs11_key.clear()
-        self.combo_pkcs11_key.addItem("0")
-        self.combo_pkcs11_token.clear()
-        self.combo_pkcs11_token.addItem("0")
+        if core_call().pkcs11_is_available():
+            self.pkcs11_keys = core_call().pkcs11_get_keys()
+            self.pkcs11_tokens = core_call().pkcs11_get_tokens()
+            self.check_box_use_pkcs11.show()
+            self.combo_pkcs11_key.clear()
+            for label, index in self.pkcs11_keys.items():
+                self.combo_pkcs11_key.addItem(label)
+            self.combo_pkcs11_token.clear()
+            for label, index in self.pkcs11_tokens.items():
+                self.combo_pkcs11_token.addItem(label)
+        else:
+            self.check_box_use_pkcs11.hide()
         self.widget_pkcs11.hide()
 
     def emit_register(self):
@@ -109,8 +131,8 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
                 self.line_edit_login.text(),
                 self.line_edit_device.text(),
                 self.line_edit_token.text(),
-                int(self.combo_pkcs11_key.currentText()),
-                int(self.combo_pkcs11_token.currentText()),
+                self.pkcs11_keys[self.combo_pkcs11_key.currentText()],
+                self.pkcs11_tokens[self.combo_pkcs11_token.currentText()],
             )
 
 
@@ -125,6 +147,9 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_token.textChanged.connect(self.check_infos)
+        self.pkcs11_tokens = {}
+        self.pkcs11_keys = {}
+        self.reset()
 
     def reset(self):
         self.line_edit_login.setText("")
@@ -141,10 +166,18 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
         self.line_edit_password.setDisabled(False)
         self.line_edit_password_check.setDisabled(False)
         self.set_error(None)
-        self.combo_pkcs11_key.clear()
-        self.combo_pkcs11_key.addItem("0")
-        self.combo_pkcs11_token.clear()
-        self.combo_pkcs11_token.addItem("0")
+        if core_call().pkcs11_is_available():
+            self.pkcs11_keys = core_call().pkcs11_get_keys()
+            self.pkcs11_tokens = core_call().pkcs11_get_tokens()
+            self.check_box_use_pkcs11.show()
+            self.combo_pkcs11_key.clear()
+            for label, index in self.pkcs11_keys.items():
+                self.combo_pkcs11_key.addItem(label)
+            self.combo_pkcs11_token.clear()
+            for label, index in self.pkcs11_tokens.items():
+                self.combo_pkcs11_token.addItem(label)
+        else:
+            self.check_box_use_pkcs11.hide()
         self.widget_pkcs11.hide()
 
     def check_infos(self, _):
@@ -190,8 +223,8 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
                 self.line_edit_login.text(),
                 self.line_edit_device.text(),
                 self.line_edit_token.text(),
-                int(self.combo_pkcs11_key.currentText()),
-                int(self.combo_pkcs11_token.currentText()),
+                self.pkcs11_keys[self.combo_pkcs11_key.currentText()],
+                self.pkcs11_tokens[self.combo_pkcs11_token.currentText()],
             )
         self.set_error(
             QCoreApplication.translate(
