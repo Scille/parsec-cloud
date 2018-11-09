@@ -49,42 +49,43 @@ class GeneratePyQtForms(Command):
         pass
 
     def run(self):
+        import os
+        import pathlib
+        from collections import namedtuple
         try:
-            import os
-            import pathlib
-            from collections import namedtuple
             from PyQt5.uic.driver import Driver
-
-            self.announce("Generating `parsec.core.gui.ui`", level=distutils.log.INFO)
-            Options = namedtuple(
-                "Options",
-                [
-                    "output",
-                    "import_from",
-                    "debug",
-                    "preview",
-                    "execute",
-                    "indent",
-                    "resource_suffix",
-                ],
-            )
-            ui_dir = pathlib.Path("parsec/core/gui/forms")
-            ui_path = "parsec/core/gui/ui"
-            os.makedirs(ui_path, exist_ok=True)
-            for f in ui_dir.iterdir():
-                o = Options(
-                    output=os.path.join(ui_path, "{}.py".format(f.stem)),
-                    import_from="parsec.core.gui",
-                    debug=False,
-                    preview=False,
-                    execute=False,
-                    indent=4,
-                    resource_suffix="_rc",
-                )
-                d = Driver(o, str(f))
-                d.invoke()
         except ImportError:
             print("PyQt5 not installed, skipping `parsec.core.gui.ui` generation.")
+            return
+
+        self.announce("Generating `parsec.core.gui.ui`", level=distutils.log.INFO)
+        Options = namedtuple(
+            "Options",
+            [
+                "output",
+                "import_from",
+                "debug",
+                "preview",
+                "execute",
+                "indent",
+                "resource_suffix",
+            ],
+        )
+        ui_dir = pathlib.Path("parsec/core/gui/forms")
+        ui_path = "parsec/core/gui/ui"
+        os.makedirs(ui_path, exist_ok=True)
+        for f in ui_dir.iterdir():
+            o = Options(
+                output=os.path.join(ui_path, "{}.py".format(f.stem)),
+                import_from="parsec.core.gui",
+                debug=False,
+                preview=False,
+                execute=False,
+                indent=4,
+                resource_suffix="_rc",
+            )
+            d = Driver(o, str(f))
+            d.invoke()
 
 
 class GeneratePyQtTranslations(Command):
@@ -99,33 +100,35 @@ class GeneratePyQtTranslations(Command):
         pass
 
     def run(self):
-        try:
-            import os
-            import pathlib
-            import subprocess
-            from unittest.mock import patch
-            from PyQt5.pylupdate_main import main as pylupdate_main
+        import os
+        import pathlib
+        import subprocess
+        from unittest.mock import patch
 
-            self.announce("Generating ui translation files", level=distutils.log.INFO)
-            rc_dir = "parsec/core/gui/rc/translations"
-            os.makedirs(rc_dir, exist_ok=True)
-            new_args = ["pylupdate", "parsec/core/gui/parsec-gui.pro"]
-            with patch("sys.argv", new_args):
-                pylupdate_main()
-            tr_dir = pathlib.Path("parsec/core/gui/tr")
-            for f in tr_dir.iterdir():
-                subprocess.call(
-                    [
-                        "lrelease",
-                        "-compress",
-                        str(f),
-                        "-qm",
-                        os.path.join(rc_dir, "{}.qm".format(f.stem)),
-                    ],
-                    stdout=subprocess.DEVNULL,
-                )
+        try:
+            from PyQt5.pylupdate_main import main as pylupdate_main
         except ImportError:
             print("PyQt5 not installed, skipping `parsec.core.gui.ui` generation.")
+            return
+
+        self.announce("Generating ui translation files", level=distutils.log.INFO)
+        rc_dir = "parsec/core/gui/rc/translations"
+        os.makedirs(rc_dir, exist_ok=True)
+        new_args = ["pylupdate", "parsec/core/gui/parsec-gui.pro"]
+        with patch("sys.argv", new_args):
+            pylupdate_main()
+        tr_dir = pathlib.Path("parsec/core/gui/tr")
+        for f in tr_dir.iterdir():
+            subprocess.call(
+                [
+                    "lrelease",
+                    "-compress",
+                    str(f),
+                    "-qm",
+                    os.path.join(rc_dir, "{}.qm".format(f.stem)),
+                ],
+                stdout=subprocess.DEVNULL,
+            )
 
 
 class build_py_with_pyqt(build_py):
@@ -133,18 +136,6 @@ class build_py_with_pyqt(build_py):
         self.run_command("generate_pyqt_forms")
         self.run_command("generate_pyqt_translations")
         self.run_command("generate_pyqt_resources_bundle")
-        return super().run()
-
-
-class build_py_with_pyqt_translations(build_py):
-    def run(self):
-        self.run_command("generate_pyqt_translations")
-        return super().run()
-
-
-class build_py_with_pyqt_forms_generation(build_py):
-    def run(self):
-        self.run_command("generate_pyqt_forms")
         return super().run()
 
 
