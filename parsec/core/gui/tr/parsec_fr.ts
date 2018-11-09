@@ -113,17 +113,17 @@
         <translation>Nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="236"/>
+        <location filename="../files_widget.py" line="238"/>
         <source>Enter new folder name</source>
         <translation>Entrez le nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="170"/>
+        <location filename="../files_widget.py" line="172"/>
         <source>A folder with the same name already exists.</source>
         <translation>Un répertoire avec le même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="255"/>
+        <location filename="../files_widget.py" line="257"/>
         <source>Open</source>
         <translation>Ouvrir</translation>
     </message>
@@ -138,7 +138,7 @@
         <translation type="obsolete">Supprimer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="205"/>
+        <location filename="../files_widget.py" line="207"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
@@ -228,37 +228,37 @@
         <translation>Taille</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="236"/>
+        <location filename="../files_widget.py" line="238"/>
         <source>Folder name</source>
         <translation>Nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="252"/>
+        <location filename="../files_widget.py" line="254"/>
         <source>Rename</source>
         <translation>Renommer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="257"/>
+        <location filename="../files_widget.py" line="259"/>
         <source>Open in explorer</source>
         <translation>Ouvrir dans l&apos;explorateur</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="263"/>
+        <location filename="../files_widget.py" line="265"/>
         <source>New name</source>
         <translation>Nouveau nom</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="263"/>
+        <location filename="../files_widget.py" line="265"/>
         <source>Enter file new name</source>
         <translation>Entrez le nouveau nom du fichier</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="285"/>
+        <location filename="../files_widget.py" line="287"/>
         <source>Can not rename.</source>
         <translation>Impossible de renommer.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="205"/>
+        <location filename="../files_widget.py" line="207"/>
         <source>Are you sure you want to delete &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer &quot;{}&quot; ?</translation>
     </message>
@@ -273,12 +273,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="131"/>
+        <location filename="../files_widget.py" line="133"/>
         <source>Some files could not be imported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="149"/>
+        <location filename="../files_widget.py" line="151"/>
         <source>The folder could not be imported.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -288,7 +288,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="137"/>
+        <location filename="../files_widget.py" line="139"/>
         <source>Select a directory to import</source>
         <translation type="unfinished"></translation>
     </message>

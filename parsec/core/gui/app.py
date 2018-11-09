@@ -5,10 +5,17 @@ import signal
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication
 
-from parsec.core.gui import lang
-from parsec.core.gui import settings
-from parsec.core.gui.core_call import init_core_call
-from parsec.core.gui.main_window import MainWindow
+try:
+    from parsec.core.gui import lang
+    from parsec.core.gui import settings
+    from parsec.core.gui.core_call import init_core_call
+    from parsec.core.gui.main_window import MainWindow
+except ImportError as exc:
+    raise ModuleNotFoundError(
+        """PyQt forms haven't been generated.
+You must install the parsec package or run `python setup.py generate_pyqt_forms`
+"""
+    ) from exc
 
 
 def kill_window(window):
