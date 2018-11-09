@@ -52,6 +52,7 @@ class GeneratePyQtForms(Command):
         import os
         import pathlib
         from collections import namedtuple
+
         try:
             from PyQt5.uic.driver import Driver
         except ImportError:
@@ -61,15 +62,7 @@ class GeneratePyQtForms(Command):
         self.announce("Generating `parsec.core.gui.ui`", level=distutils.log.INFO)
         Options = namedtuple(
             "Options",
-            [
-                "output",
-                "import_from",
-                "debug",
-                "preview",
-                "execute",
-                "indent",
-                "resource_suffix",
-            ],
+            ["output", "import_from", "debug", "preview", "execute", "indent", "resource_suffix"],
         )
         ui_dir = pathlib.Path("parsec/core/gui/forms")
         ui_path = "parsec/core/gui/ui"

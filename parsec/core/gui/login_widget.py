@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QWidget, QCompleter
 
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_widgets import show_error
+from parsec.core.gui import settings
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 from parsec.core.gui.ui.login_register_user_widget import Ui_LoginRegisterUserWidget
@@ -34,7 +35,14 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
             )
 
     def reset(self):
-        self.line_edit_device.setText("")
+        if len(self.devices) == 1:
+            self.line_edit_device.setText(self.devices[0])
+        elif len(self.devices) > 1:
+            last_device = settings.get_value("last_device")
+            if last_device and last_device in self.devices:
+                self.line_edit_device.setText(last_device)
+        else:
+            self.line_edit_device.setText("")
         self.line_edit_password.setText("")
         self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
         self.line_edit_password.setDisabled(False)
@@ -47,10 +55,17 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
 
     def add_devices(self, device_names):
         self.devices = list(set(self.devices + device_names))
+        if len(self.devices) == 1:
+            self.line_edit_device.setText(self.devices[0])
+        elif len(self.devices) > 1:
+            last_device = settings.get_value("last_device")
+            if last_device and last_device in self.devices:
+                self.line_edit_device.setText(last_device)
+        else:
+            self.line_edit_device.setText("")
         self.completer = QCompleter(self.devices)
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.popup().setStyleSheet("border: 2px solid rgb(46, 145, 208); border-top: 0;")
-        print(type(self.completer.popup()))
         self.line_edit_device.setCompleter(self.completer)
 
 

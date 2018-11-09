@@ -10,6 +10,7 @@ def identity(raw):
 
 
 ENTRIES = {
+    "last_device": {"encode": identity, "decode": identity},
     "mountpoint": {"encode": identity, "decode": identity},
     "mountpoint_enabled": {
         "encode": lambda raw: "true" if raw else "false",

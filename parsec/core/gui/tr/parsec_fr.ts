@@ -322,37 +322,37 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="167"/>
+        <location filename="../forms/login_login_widget.ui" line="168"/>
         <source>Identifier</source>
         <translation>Identifiant</translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="231"/>
+        <location filename="../forms/login_login_widget.ui" line="226"/>
         <source>Password</source>
         <translation>Mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="309"/>
+        <location filename="../forms/login_login_widget.ui" line="304"/>
         <source>PKCS #11 PIN</source>
         <translation>PIN de la PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="358"/>
+        <location filename="../forms/login_login_widget.ui" line="353"/>
         <source>PKCS #11 Token</source>
         <translation>Jeton de la PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="401"/>
+        <location filename="../forms/login_login_widget.ui" line="396"/>
         <source>PKCS #11 Key</source>
         <translation>Clef de la PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="442"/>
+        <location filename="../forms/login_login_widget.ui" line="437"/>
         <source>Authenticate using PKCS #11</source>
         <translation>S&apos;authentifier en utilisant une PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/login_login_widget.ui" line="486"/>
+        <location filename="../forms/login_login_widget.ui" line="481"/>
         <source>Log In</source>
         <translation>Se connecter</translation>
     </message>
@@ -420,12 +420,12 @@
         <translation>Enregistrer l&apos;appareil</translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="175"/>
+        <location filename="../login_widget.py" line="182"/>
         <source>Passwords don&apos;t match.</source>
         <translation>Les mots de passe ne correspondent pas.</translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="196"/>
+        <location filename="../login_widget.py" line="203"/>
         <source>Waiting for existing device to register us...</source>
         <translation>En attente que l&apos;appareil existant nous enregistre...</translation>
     </message>
@@ -498,7 +498,7 @@
         <translation>Enregistrer le nouvel utilisateur</translation>
     </message>
     <message>
-        <location filename="../login_widget.py" line="94"/>
+        <location filename="../login_widget.py" line="101"/>
         <source>Passwords don&apos;t match</source>
         <translation>Les mots de passe ne correspondent pas</translation>
     </message>
@@ -564,62 +564,62 @@
         <translation>   Se déconnecter</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="185"/>
+        <location filename="../main_window.py" line="184"/>
         <source>Authentication failed.</source>
         <translation>Impossible de se connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="200"/>
+        <location filename="../main_window.py" line="199"/>
         <source>Can not register the user.</source>
         <translation>Impossible d&apos;enregistrer le nouvel utilisateur.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="229"/>
+        <location filename="../main_window.py" line="228"/>
         <source>User has been successfully registered. You can now login.</source>
         <translation>L&apos;utilisateur a été enregistré avec succès. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="237"/>
+        <location filename="../main_window.py" line="236"/>
         <source>The token has expired.</source>
         <translation>Le jeton a expiré.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="242"/>
+        <location filename="../main_window.py" line="241"/>
         <source>No invitation found for this user.</source>
         <translation>Aucune invitation trouvée pour cet utilisateur.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="247"/>
+        <location filename="../main_window.py" line="246"/>
         <source>User has already been registered.</source>
         <translation>L&apos;utilisateur a déjà été enregistré.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="309"/>
+        <location filename="../main_window.py" line="308"/>
         <source>Device has been successfully registered. You can now login.</source>
         <translation>L&apos;appareil a été enregistré avec succès. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="317"/>
+        <location filename="../main_window.py" line="316"/>
         <source>The device already exists.</source>
         <translation>L&apos;appareil existe déjà.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="322"/>
+        <location filename="../main_window.py" line="321"/>
         <source>Invalid PKCS #11 information.</source>
         <translation>Les informations de la PKCS #11 ne sont pas valides.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="327"/>
+        <location filename="../main_window.py" line="326"/>
         <source>Can not create the new device.</source>
         <translation>Impossible de créer le nouvel appareil.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="354"/>
+        <location filename="../main_window.py" line="353"/>
         <source>Are you sure you want to quit ?</source>
         <translation>Êtes-vous sûr de vouloir quitter ?</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="252"/>
+        <location filename="../main_window.py" line="251"/>
         <source>Can not register this user.</source>
         <translation>Impossible d&apos;enregistrer l&apos;utilisateur.</translation>
     </message>

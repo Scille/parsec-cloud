@@ -163,6 +163,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.current_device = device
             core_call().logout()
             core_call().login(device)
+            settings.set_value("last_device", device_id)
             if settings.get_value("mountpoint_enabled"):
                 mountpoint = self.mount()
                 if mountpoint is None:
