@@ -48,6 +48,8 @@ class EventBus:
                     need_clean = True
                 else:
                     cb(event, **kwargs)
+            else:
+                cb(event, **kwargs)
 
         if need_clean:
             self._event_handlers[event] = {cb for cb in self._event_handlers[event] if cb()}
