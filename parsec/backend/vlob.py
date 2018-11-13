@@ -48,7 +48,7 @@ class _cmd_CREATE_Schema(BaseCmdSchema):
     rts = fields.String(required=True)
     wts = fields.String(required=True)
     blob = fields.Base64Bytes(required=True)
-    notify_beacons = fields.List(fields.UUID())
+    notify_beacon = fields.UUID()
 
 
 cmd_CREATE_Schema = _cmd_CREATE_Schema()
@@ -68,7 +68,7 @@ class _cmd_UPDATE_Schema(BaseCmdSchema):
     version = fields.Integer(validate=lambda n: n > 1)
     wts = fields.String(required=True)
     blob = fields.Base64Bytes(required=True)
-    notify_beacons = fields.List(fields.UUID())
+    notify_beacon = fields.UUID()
 
 
 cmd_UPDATE_Schema = _cmd_UPDATE_Schema()
@@ -103,11 +103,11 @@ class BaseVlobComponent:
     async def group_check(self, to_check):
         raise NotImplementedError()
 
-    async def create(self, id, rts, wts, blob, notify_beacons=(), author="anonymous"):
+    async def create(self, id, rts, wts, blob, notify_beacon=None, author="anonymous"):
         raise NotImplementedError()
 
     async def read(self, id, rts, version=None):
         raise NotImplementedError()
 
-    async def update(self, id, wts, version, blob, notify_beacons=(), author="anonymous"):
+    async def update(self, id, wts, version, blob, notify_beacon=None, author="anonymous"):
         raise NotImplementedError()

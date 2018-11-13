@@ -14,7 +14,7 @@ class SyncConcurrencyError(Exception):
     pass
 
 
-DEFAULT_BLOCK_SIZE = 2 ** 16  # 65Kio
+DEFAULT_BLOCK_SIZE = 2 ** 16  # 64Kio
 
 
 class BaseSyncer:
@@ -82,11 +82,11 @@ class BaseSyncer:
             except FSEntryNotFound:
                 # Entry not locally present, nothing to do
                 return
-            notify_beacons = self.local_folder_fs.get_beacons(path)
+            notify_beacon = self.local_folder_fs.get_beacon(path)
             # TODO: Instead of going recursive here, we should have do a minimal
             # children sync (i.e. sync empty file and folder with the backend)
             # to save time.
-            await self._sync_nolock(path, access, recursive=True, notify_beacons=notify_beacons)
+            await self._sync_nolock(path, access, recursive=True, notify_beacon=notify_beacon)
 
     async def sync(self, path: Path, recursive: bool = True) -> None:
         # Only allow a single synchronizing operation at a time to simplify
@@ -99,15 +99,11 @@ class BaseSyncer:
             except FSManifestLocalMiss:
                 # Nothing to do if entry is no present locally
                 return
-            notify_beacons = self.local_folder_fs.get_beacons(sync_path)
-            await self._sync_nolock(sync_path, sync_access, sync_recursive, notify_beacons)
+            notify_beacon = self.local_folder_fs.get_beacon(sync_path)
+            await self._sync_nolock(sync_path, sync_access, sync_recursive, notify_beacon)
 
     async def _sync_nolock(
-        self,
-        path: Path,
-        access: Access,
-        recursive: Union[bool, dict, list],
-        notify_beacons: List[UUID],
+        self, path: Path, access: Access, recursive: Union[bool, dict, list], notify_beacon: UUID
     ) -> None:
         try:
             manifest = self.local_folder_fs.get_manifest(access)
@@ -115,12 +111,12 @@ class BaseSyncer:
             # Nothing to do if entry is no present locally
             return
         if is_folder_manifest(manifest):
-            await self._sync_folder_nolock(path, access, manifest, recursive, notify_beacons)
+            await self._sync_folder_nolock(path, access, manifest, recursive, notify_beacon)
         else:
-            await self._sync_file_nolock(path, access, manifest, notify_beacons)
+            await self._sync_file_nolock(path, access, manifest, notify_beacon)
 
     async def _sync_file_nolock(
-        self, path: Path, access: Access, manifest: LocalFileManifest, notify_beacons: List[UUID]
+        self, path: Path, access: Access, manifest: LocalFileManifest, notify_beacon: UUID
     ) -> None:
         raise NotImplementedError()
 
@@ -130,7 +126,7 @@ class BaseSyncer:
         access: Access,
         manifest: LocalFolderManifest,
         recursive: Union[bool, dict, list],
-        notify_beacons: List[UUID],
+        notify_beacon: UUID,
     ) -> None:
         raise NotImplementedError()
 
@@ -167,7 +163,7 @@ class BaseSyncer:
         raw = await self.encryption_manager.decrypt_with_secret_key(access["key"], ciphered)
         return loads_manifest(raw)
 
-    async def _backend_vlob_create(self, access, manifest, notify_beacons):
+    async def _backend_vlob_create(self, access, manifest, notify_beacon):
         assert manifest["version"] == 1
         ciphered = self.encryption_manager.encrypt_with_secret_key(
             access["key"], dumps_manifest(manifest)
@@ -178,14 +174,14 @@ class BaseSyncer:
             "wts": access["wts"],
             "rts": access["rts"],
             "blob": to_jsonb64(ciphered),
-            "notify_beacons": notify_beacons,
+            "notify_beacon": notify_beacon,
         }
         ret = await self.backend_cmds_sender.send(payload)
         if ret["status"] == "already_exists_error":
             raise SyncConcurrencyError(access)
         assert ret["status"] == "ok"
 
-    async def _backend_vlob_update(self, access, manifest, notify_beacons):
+    async def _backend_vlob_update(self, access, manifest, notify_beacon):
         assert manifest["version"] > 1
         ciphered = self.encryption_manager.encrypt_with_secret_key(
             access["key"], dumps_manifest(manifest)
@@ -196,7 +192,7 @@ class BaseSyncer:
             "wts": access["wts"],
             "version": manifest["version"],
             "blob": to_jsonb64(ciphered),
-            "notify_beacons": notify_beacons,
+            "notify_beacon": notify_beacon,
         }
         ret = await self.backend_cmds_sender.send(payload)
         if ret["status"] == "version_error":

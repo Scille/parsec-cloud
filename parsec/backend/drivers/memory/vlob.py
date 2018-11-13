@@ -42,14 +42,14 @@ class MemoryVlobComponent(BaseVlobComponent):
                     changed.append({"id": id, "version": vlob.version})
         return changed
 
-    async def create(self, id: UUID, rts, wts, blob, notify_beacons=(), author="anonymous"):
+    async def create(self, id: UUID, rts, wts, blob, notify_beacon=None, author="anonymous"):
         vlob = MemoryVlob(id, rts, wts, blob)
         if vlob.id in self.vlobs:
             raise AlreadyExistsError("Vlob already exists.")
         self.vlobs[vlob.id] = vlob
 
         self.event_bus.send("vlob_updated", subject=id)
-        await self._notify_beacons(notify_beacons, id, 1, author)
+        await self.beacon_component.update(notify_beacon, id, 1, author)
 
         return VlobAtom(
             id=vlob.id,
@@ -80,7 +80,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         except IndexError:
             raise VersionError("Wrong blob version.")
 
-    async def update(self, id: UUID, wts, version, blob, notify_beacons=(), author="anonymous"):
+    async def update(self, id: UUID, wts, version, blob, notify_beacon=None, author="anonymous"):
         try:
             vlob = self.vlobs[id]
             if vlob.write_trust_seed != wts:
@@ -95,8 +95,4 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VersionError("Wrong blob version.")
 
         self.event_bus.send("vlob_updated", subject=id)
-        await self._notify_beacons(notify_beacons, id, version, author)
-
-    async def _notify_beacons(self, ids: List[UUID], src_id, src_version, author):
-        for id in ids:
-            await self.beacon_component.update(id, src_id, src_version, author=author)
+        await self.beacon_component.update(notify_beacon, id, version, author)

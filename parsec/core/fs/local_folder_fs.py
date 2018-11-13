@@ -133,18 +133,19 @@ class LocalFolderFS:
         self._local_db.clear(access)
         self._manifests_cache.pop(access["id"], None)
 
-    def get_beacons(self, path: Path) -> List[UUID]:
-        beacons = [self.root_access["id"]]
+    def get_beacon(self, path: Path) -> UUID:
+        # The beacon is used to notify other clients that we modified an entry.
+        # We try to use the id of workspace containing the modification as
+        # beacon. This is not possible when directly modifying the user
+        # manifest in which case we use the user manifest id as beacon.
         try:
-            *_, possible_workspace_path, _ = path.parents
+            *_, workspace_path, _ = path.parents
         except ValueError:
-            return beacons
+            return self.root_access["id"]
 
-        access, manifest = self._retrieve_entry_read_only(possible_workspace_path)
-        if is_workspace_manifest(manifest):
-            beacons.append(access["id"])
-
-        return beacons
+        access, manifest = self._retrieve_entry_read_only(workspace_path)
+        assert is_workspace_manifest(manifest)
+        return access["id"]
 
     def get_entry(self, path: Path) -> Tuple[Access, LocalManifest]:
         return self._retrieve_entry(path)
