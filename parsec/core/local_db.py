@@ -67,10 +67,14 @@ class LocalDB:
         return self._decrypt_with_symkey(access["key"], ciphered)
 
     def set(self, access: Access, raw: bytes, deletable: bool = True):
-        if self.get_cache_size() + len(raw) > self.max_cache_size:
-            self.run_garbage_collector()
         assert isinstance(raw, (bytes, bytearray))
+
         ciphered = self._encrypt_with_symkey(access["key"], raw)
+
+        if deletable:
+            if self.get_cache_size() + len(ciphered) > self.max_cache_size:
+                self.run_garbage_collector()
+
         try:
             self.clear(access)
         except LocalDBMissingEntry:
