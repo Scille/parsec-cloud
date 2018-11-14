@@ -127,7 +127,6 @@ class GeneratePyQtTranslations(Command):
 class build_py_with_pyqt(build_py):
     def run(self):
         self.run_command("generate_pyqt_forms")
-        self.run_command("generate_pyqt_translations")
         self.run_command("generate_pyqt_resources_bundle")
         return super().run()
 

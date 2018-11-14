@@ -768,7 +768,7 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="109"/>
+        <location filename="../forms/settings_widget.ui" line="108"/>
         <source>Global</source>
         <translation>Globale</translation>
     </message>
@@ -783,7 +783,7 @@
         <translation type="obsolete">Choisir un point de montage</translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="277"/>
+        <location filename="../forms/settings_widget.ui" line="276"/>
         <source>Network</source>
         <translation>Réseau</translation>
     </message>
@@ -793,17 +793,17 @@
         <translation>Le répertoire choisi n&apos;est pas accessible en écriture.</translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="161"/>
+        <location filename="../forms/settings_widget.ui" line="160"/>
         <source>Mountpoint</source>
         <translation>Point de montage</translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="226"/>
+        <location filename="../forms/settings_widget.ui" line="225"/>
         <source>Choose mountpoint</source>
         <translation>Choisir un point de montage</translation>
     </message>
     <message>
-        <location filename="../forms/settings_widget.ui" line="245"/>
+        <location filename="../forms/settings_widget.ui" line="244"/>
         <source>Enable mountpoint</source>
         <translation type="unfinished"></translation>
     </message>
