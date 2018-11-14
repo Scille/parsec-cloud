@@ -207,7 +207,7 @@ class MemoryUserComponent(BaseUserComponent):
             device["revocated_on"] = revocated_on
 
     async def revoke_device(self, user_id: str, device_name: str):
-        user = self.get(user_id)
+        user = await self.get(user_id)
         try:
             device = user["devices"][device_name]
         except KeyError:
@@ -215,6 +215,8 @@ class MemoryUserComponent(BaseUserComponent):
 
         if device["revocated_on"]:
             raise AlreadyRevokedError(f"Device `{user_id}@{device_name}` doesn'already revoked")
+
+        device["revocated_on"] = pendulum.now()
 
     async def find(self, query: str = None, page: int = 0, per_page: int = 100):
         if query:
