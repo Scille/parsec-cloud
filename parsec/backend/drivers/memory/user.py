@@ -215,3 +215,12 @@ class MemoryUserComponent(BaseUserComponent):
 
         if device["revocated_on"]:
             raise AlreadyRevokedError(f"Device `{user_id}@{device_name}` doesn'already revoked")
+
+    async def find(self, query: str = None, page: int = 0, per_page: int = 100):
+        if query:
+            results = [user_id for user_id in self._users.keys() if user_id.startswith(query)]
+        else:
+            results = list(self._users.keys())
+        # PostgreSQL does case insensitive sort
+        sorted_results = sorted(results, key=lambda s: s.lower())
+        return sorted_results[(page - 1) * per_page : page * per_page], len(results)

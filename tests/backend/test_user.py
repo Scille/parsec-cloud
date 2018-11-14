@@ -31,6 +31,59 @@ async def test_user_get_ok(backend, alice_backend_sock, bob):
     }
 
 
+@pytest.mark.trio
+async def test_user_find(backend, alice_backend_sock):
+    # Populate with cool guys
+    dk = b"<dummy key>"
+    await backend.user.create("Philippe", devices=[("p1", dk), ("p2", dk)], broadcast_key=dk)
+    await backend.user.create("Mike", devices=[("m1", dk)], broadcast_key=dk)
+    await backend.user.create("Blacky", devices=[], broadcast_key=dk)
+    await backend.user.create("Philippe2", devices=[("pe1", dk)], broadcast_key=dk)
+
+    # Test exact match
+    await alice_backend_sock.send({"cmd": "user_find", "query": "Mike"})
+    rep = await alice_backend_sock.recv()
+    assert rep == {"status": "ok", "results": ["Mike"], "per_page": 100, "page": 1, "total": 1}
+
+    # Test partial search
+    await alice_backend_sock.send({"cmd": "user_find", "query": "Phil"})
+    rep = await alice_backend_sock.recv()
+    assert rep == {
+        "status": "ok",
+        "results": ["Philippe", "Philippe2"],
+        "per_page": 100,
+        "page": 1,
+        "total": 2,
+    }
+
+    # Test pagination
+    await alice_backend_sock.send({"cmd": "user_find", "page": 1, "per_page": 1, "query": "Phil"})
+    rep = await alice_backend_sock.recv()
+    assert rep == {"status": "ok", "results": ["Philippe"], "per_page": 1, "page": 1, "total": 2}
+
+    # Test out of pagination
+    await alice_backend_sock.send({"cmd": "user_find", "page": 2, "per_page": 5, "query": "Phil"})
+    rep = await alice_backend_sock.recv()
+    assert rep == {"status": "ok", "results": [], "per_page": 5, "page": 2, "total": 2}
+
+    # Test no params
+    await alice_backend_sock.send({"cmd": "user_find"})
+    rep = await alice_backend_sock.recv()
+    assert rep == {
+        "status": "ok",
+        "results": ["alice", "Blacky", "bob", "Mike", "Philippe", "Philippe2"],
+        "per_page": 100,
+        "page": 1,
+        "total": 6,
+    }
+
+    # Test bad params
+    for bad in [{"dummy": 42}, {"query": 42}, {"page": 0}, {"per_page": 0}, {"per_page": 101}]:
+        await alice_backend_sock.send({"cmd": "user_find", **bad})
+        rep = await alice_backend_sock.recv()
+        assert rep["status"] == "bad_message"
+
+
 @pytest.mark.parametrize(
     "bad_msg", [{"user_id": 42}, {"user_id": None}, {"user_id": "alice", "unknown": "field"}, {}]
 )

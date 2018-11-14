@@ -165,6 +165,7 @@ class BackendApp:
             "event_list_subscribed": self._api_event_list_subscribed,
             "user_get": self.user.api_user_get,
             "user_invite": self.user.api_user_invite,
+            "user_find": self.user.api_user_find,
             "device_declare": self.user.api_device_declare,
             "device_get_configuration_try": self.user.api_device_get_configuration_try,
             "device_accept_configuration_try": self.user.api_device_accept_configuration_try,

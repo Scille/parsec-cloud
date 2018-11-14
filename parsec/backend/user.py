@@ -90,6 +90,15 @@ class _UserClaimSchema(BaseCmdSchema):
 UserClaimSchema = _UserClaimSchema()
 
 
+class _FindUserSchema(BaseCmdSchema):
+    query = fields.String(missing=None, allow_none=True)
+    page = fields.Int(missing=1, validate=lambda n: n > 0)
+    per_page = fields.Integer(validate=lambda n: 0 < n <= 100, missing=100)
+
+
+FindUserSchema = _FindUserSchema()
+
+
 def _generate_token():
     return "".join([random.choice(string.digits) for _ in range(6)])
 
@@ -273,6 +282,17 @@ class BaseUserComponent:
         )
         return {"status": "ok"}
 
+    async def api_user_find(self, client_ctx, msg):
+        msg = FindUserSchema.load_or_abort(msg)
+        results, total = await self.find(**msg)
+        return {
+            "status": "ok",
+            "results": results,
+            "page": msg["page"],
+            "per_page": msg["per_page"],
+            "total": total,
+        }
+
     async def create_invitation(self, invitation_token: str, author: str, user_id: str):
         raise NotImplementedError()
 
@@ -333,4 +353,7 @@ class BaseUserComponent:
         raise NotImplementedError()
 
     async def revoke_device(self, user_id: str, device_name: str):
+        raise NotImplementedError()
+
+    async def find(self, query: str = None, page: int = 1, per_page: int = 100):
         raise NotImplementedError()
