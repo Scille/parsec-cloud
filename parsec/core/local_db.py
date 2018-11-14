@@ -6,6 +6,10 @@ from shutil import rmtree
 from parsec.core.fs.types import Access
 
 
+# TODO: should be in config.py
+DEFAULT_MAX_CACHE_SIZE = 128 * 1024 * 1024
+
+
 class LocalDBError(Exception):
     pass
 
@@ -16,8 +20,9 @@ class LocalDBMissingEntry(LocalDBError):
 
 
 class LocalDB:
-    def __init__(self, path):
+    def __init__(self, path: Path, max_cache_size: int = DEFAULT_MAX_CACHE_SIZE):
         self._path = Path(path)
+        self.max_cache_size = max_cache_size
         self._path.mkdir(parents=True, exist_ok=True)
         self._cache = self._path / "cache"
         self._cache.mkdir(parents=True, exist_ok=True)
@@ -55,15 +60,15 @@ class LocalDB:
         except StopIteration:
             pass
 
-    def get(self, access):
+    def get(self, access: Access):
         file = self._find(access)
         if not file:
             raise LocalDBMissingEntry(access)
         ciphered = file.read_bytes()
         return self._decrypt_with_symkey(access["key"], ciphered)
 
-    def set(self, access, raw: bytes, deletable=True):
-        if self.cache_size > 2097152:
+    def set(self, access: Access, raw: bytes, deletable: bool = True):
+        if self.cache_size > self.max_cache_size:
             self.run_garbage_collector()
         assert isinstance(raw, (bytes, bytearray))
         ciphered = self._encrypt_with_symkey(access["key"], raw)
@@ -76,12 +81,13 @@ class LocalDB:
         )
         file.write_bytes(ciphered)
 
-    def clear(self, access):
+    def clear(self, access: Access):
         file = self._find(access)
         if not file:
             raise LocalDBMissingEntry(access)
         file.unlink()
 
     def run_garbage_collector(self):
+        # TODO: really quick'n dirty GC...
         rmtree(str(self._cache))
         self._cache.mkdir(parents=True, exist_ok=True)
