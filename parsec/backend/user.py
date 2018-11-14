@@ -1,6 +1,7 @@
 import trio
 import random
 import string
+from typing import List
 
 from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields
 from parsec.utils import to_jsonb64
@@ -272,41 +273,64 @@ class BaseUserComponent:
         )
         return {"status": "ok"}
 
-    async def create_invitation(self, invitation_token, author, user_id):
+    async def create_invitation(self, invitation_token: str, author: str, user_id: str):
         raise NotImplementedError()
 
     async def claim_invitation(
-        self, invitation_token, user_id, broadcast_key, device_name, device_verify_key
+        self,
+        invitation_token: str,
+        user_id: str,
+        broadcast_key: bytes,
+        device_name: str,
+        device_verify_key: bytes,
     ):
         raise NotImplementedError()
 
-    async def declare_unconfigured_device(self, token, author, user_id, device_name):
+    async def declare_unconfigured_device(
+        self, token: str, author: str, user_id: str, device_name: str
+    ):
         raise NotImplementedError()
 
-    async def get_unconfigured_device(self, user_id, device_name):
+    async def get_unconfigured_device(self, user_id: str, device_name: str):
         raise NotImplementedError()
 
     async def register_device_configuration_try(
-        self, config_try_id, id, device_name, device_verify_key, exchange_cipherkey
+        self,
+        config_try_id: str,
+        user_id: str,
+        device_name: str,
+        device_verify_key: bytes,
+        exchange_cipherkey: bytes,
+        salt: bytes,
     ):
         raise NotImplementedError()
 
-    async def retrieve_device_configuration_try(self, config_try_id, user_id):
+    async def retrieve_device_configuration_try(self, config_try_id: str, user_id: str):
         raise NotImplementedError()
 
     async def accept_device_configuration_try(
-        self, config_try_id, user_id, ciphered_user_privkey, ciphered_user_manifest_access
+        self,
+        config_try_id: str,
+        user_id: str,
+        ciphered_user_privkey: bytes,
+        ciphered_user_manifest_access: bytes,
     ):
         raise NotImplementedError()
 
-    async def refuse_device_configuration_try(self, config_try_id, user_id, reason):
+    async def refuse_device_configuration_try(self, config_try_id: str, user_id: str, reason: str):
         raise NotImplementedError()
 
-    async def create(self, user_id, broadcast_key, devices):
+    async def create(self, user_id: str, broadcast_key: bytes, devices: List[str]):
         raise NotImplementedError()
 
-    async def create_device(self, user_id, device_name, verify_key):
+    async def create_device(self, user_id: str, device_name: str, verify_key: bytes):
         raise NotImplementedError()
 
-    async def get(self, id):
+    async def get(self, user_id: str):
+        raise NotImplementedError()
+
+    async def revoke_user(self, user_id: str):
+        raise NotImplementedError()
+
+    async def revoke_device(self, user_id: str, device_name: str):
         raise NotImplementedError()
