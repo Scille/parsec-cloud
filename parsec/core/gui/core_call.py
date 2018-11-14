@@ -77,6 +77,9 @@ class _CoreCall:
         except NotLoggedError:
             return False
 
+    def logged_device(self):
+        return self._parsec_core.auth_device
+
     def login(self, *args):
         self._trio_portal.run(self._parsec_core.login, *args)
 

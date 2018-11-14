@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QWidget, QCompleter
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_widgets import show_error
 from parsec.core.gui import settings
+from parsec.core.gui.core_call import core_call
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 from parsec.core.gui.ui.login_register_user_widget import Ui_LoginRegisterUserWidget
@@ -52,9 +53,7 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         self.combo_pkcs11_token.clear()
         self.combo_pkcs11_token.addItem("0")
         self.widget_pkcs11.hide()
-
-    def add_devices(self, device_names):
-        self.devices = list(set(self.devices + device_names))
+        self.devices = core_call().get_devices()
         if len(self.devices) == 1:
             self.line_edit_device.setText(self.devices[0])
         elif len(self.devices) > 1:
@@ -63,10 +62,10 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
                 self.line_edit_device.setText(last_device)
         else:
             self.line_edit_device.setText("")
-        self.completer = QCompleter(self.devices)
-        self.completer.setCaseSensitivity(Qt.CaseInsensitive)
-        self.completer.popup().setStyleSheet("border: 2px solid rgb(46, 145, 208); border-top: 0;")
-        self.line_edit_device.setCompleter(self.completer)
+        completer = QCompleter(self.devices)
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        completer.popup().setStyleSheet("border: 2px solid rgb(46, 145, 208); border-top: 0;")
+        self.line_edit_device.setCompleter(completer)
 
 
 class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
@@ -300,14 +299,5 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.register_user_widget.hide()
         self.register_device_widget.show()
 
-    def add_devices(self, device_names):
-        self.login_widget.add_devices(device_names)
-
     def reset(self):
-        self.login_widget.reset()
-        self.button_login_instead.hide()
-        self.button_register_device_instead.show()
-        self.button_register_user_instead.show()
-        self.register_user_widget.reset()
-        self.register_device_widget.reset()
         self.show_login_widget()

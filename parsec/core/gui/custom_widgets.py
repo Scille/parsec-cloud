@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
     QListView,
     QTreeView,
     QDialog,
+    QCompleter,
 )
 
 from parsec.core.gui.ui.message_dialog import Ui_MessageDialog
@@ -16,9 +17,11 @@ from parsec.core.gui.ui.input_dialog import Ui_InputDialog
 from parsec.core.gui.ui.question_dialog import Ui_QuestionDialog
 
 
-def get_text(parent, title, message, placeholder="", default_text=""):
+def get_text(parent, title, message, placeholder="", default_text="", completion=None):
     class InputDialog(QDialog, Ui_InputDialog):
-        def __init__(self, title, message, placeholder="", default_text="", *args, **kwargs):
+        def __init__(
+            self, title, message, placeholder="", default_text="", completion=None, *args, **kwargs
+        ):
             super().__init__(*args, **kwargs)
             self.setupUi(self)
             self.label_title.setText(title)
@@ -27,6 +30,11 @@ def get_text(parent, title, message, placeholder="", default_text=""):
             self.setWindowFlags(Qt.SplashScreen)
             self.line_edit_text.setFocus()
             self.line_edit_text.setText(default_text)
+            if completion:
+                completer = QCompleter(completion)
+                completer.setCaseSensitivity(Qt.CaseInsensitive)
+                completer.popup().setStyleSheet("border: 1px solid rgb(30, 78, 162);")
+                self.line_edit_text.setCompleter(completer)
 
         @property
         def text(self):
@@ -38,6 +46,7 @@ def get_text(parent, title, message, placeholder="", default_text=""):
         placeholder=placeholder,
         parent=parent,
         default_text=default_text,
+        completion=completion,
     )
     status = m.exec_()
     if status == QDialog.Accepted:

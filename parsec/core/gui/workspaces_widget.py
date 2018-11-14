@@ -107,6 +107,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     def share_workspace(self, workspace_button):
         def _inner_share_workspace():
+            current_device = core_call().logged_device()
+            current_user = current_device.id.split("@")[0]
             user = get_text(
                 self,
                 QCoreApplication.translate("WorkspacesWidget", "Share a workspace"),
@@ -114,6 +116,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                     "WorkspacesWidget", "Give a user name to share the workspace {} with."
                 ).format(workspace_button.name),
                 placeholder=QCoreApplication.translate("WorkspacesWidget", "User name"),
+                completion=[
+                    d.split("@")[0]
+                    for d in core_call().get_devices()
+                    if d.split("@")[0] != current_user
+                ],
             )
             if not user:
                 return
