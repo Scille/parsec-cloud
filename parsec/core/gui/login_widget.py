@@ -261,7 +261,6 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.register_device_widget.register_with_pkcs11_clicked.connect(
             self.emit_register_device_with_pkcs11
         )
-        self.show_login_widget()
         self.reset()
 
     def emit_register_user_with_password(self, login, password, device, token):
@@ -301,3 +300,6 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
     def reset(self):
         self.show_login_widget()
+        self.register_user_widget.reset()
+        self.register_device_widget.reset()
+        self.login_widget.reset()
