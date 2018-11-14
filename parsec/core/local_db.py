@@ -39,8 +39,7 @@ class LocalDB:
     def path(self):
         return str(self._path)
 
-    @property
-    def cache_size(self):
+    def get_cache_size(self):
         cache = str(self._cache)
         return sum(
             os.path.getsize(os.path.join(cache, f))
@@ -68,7 +67,7 @@ class LocalDB:
         return self._decrypt_with_symkey(access["key"], ciphered)
 
     def set(self, access: Access, raw: bytes, deletable: bool = True):
-        if self.cache_size > self.max_cache_size:
+        if self.get_cache_size() + len(raw) > self.max_cache_size:
             self.run_garbage_collector()
         assert isinstance(raw, (bytes, bytearray))
         ciphered = self._encrypt_with_symkey(access["key"], raw)
