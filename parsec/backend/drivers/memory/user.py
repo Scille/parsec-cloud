@@ -214,7 +214,7 @@ class MemoryUserComponent(BaseUserComponent):
             raise NotFoundError(f"Device `{user_id}@{device_name}` doesn't exists")
 
         if device["revocated_on"]:
-            raise AlreadyRevokedError(f"Device `{user_id}@{device_name}` doesn'already revoked")
+            raise AlreadyRevokedError(f"Device `{user_id}@{device_name}` already revoked")
 
         device["revocated_on"] = pendulum.now()
 
