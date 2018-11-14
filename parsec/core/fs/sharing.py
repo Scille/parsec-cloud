@@ -250,7 +250,7 @@ class Sharing:
                     return
 
             for i in count(1):
-                sharing_name = f"{msg['name']} (shared by {sender_user_id})"
+                sharing_name = f"{msg['name']}"
                 if i > 1:
                     sharing_name += f" {i}"
                 if sharing_name not in user_manifest["children"]:

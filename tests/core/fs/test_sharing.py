@@ -18,7 +18,7 @@ async def test_share_workspace(running_backend, alice_fs, bob_fs):
     await alice_fs.share("/foo", recipient="bob")
 
     # Bob should get a notification
-    bob_foo_name = "foo (shared by alice)"
+    bob_foo_name = "foo"
     with bob_fs.event_bus.listen() as spy:
         await bob_fs.process_last_messages()
     spy.assert_event_occured("sharing.new", kwargs={"path": f"/{bob_foo_name}", "access": spy.ANY})
@@ -54,7 +54,7 @@ async def test_share_workspace_placeholder(already_synced, running_backend, alic
     spy.assert_event_occured("fs.entry.synced", kwargs={"path": f"/foo", "id": spy.ANY})
 
     # Bob should get a notification
-    bob_foo_name = "foo (shared by alice)"
+    bob_foo_name = "foo"
     with bob_fs.event_bus.listen() as spy:
         await bob_fs.process_last_messages()
     spy.assert_event_occured("sharing.new", kwargs={"path": f"/{bob_foo_name}", "access": spy.ANY})
