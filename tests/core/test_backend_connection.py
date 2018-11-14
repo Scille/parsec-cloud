@@ -61,7 +61,6 @@ async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backen
 
 
 @pytest.mark.trio
-# @pytest.mark.postgresql
 async def test_revoked_device_handshake(alice, backend, backend_sock_factory):
     async with backend_sock_factory(backend, alice):
         pass
