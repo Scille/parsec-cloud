@@ -601,7 +601,7 @@ class LocalFolderFS:
 
         copy_map = _recursive_create_copy_map(access, manifest)
 
-        # Now we can walk the copy map and copy each manifest and create new
+        # Now we can walk the copy map, copy each manifest and create new
         # corresponding accesses
 
         def _recursive_process_copy_map(copy_map):

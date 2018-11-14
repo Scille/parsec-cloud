@@ -60,6 +60,35 @@ async def test_simple_sync(running_backend, alice_fs, alice2_fs):
 
 
 @pytest.mark.trio
+async def test_nested_placeholder_all_synced_when_signal_is_triggered(
+    running_backend, alice_fs, alice2_fs
+):
+    # 1) Create&sync file
+
+    await alice_fs.workspace_create("/foo")
+    await alice_fs.folder_create("/foo/bar")
+    await alice_fs.file_create("/foo/bar/spam.txt")
+
+    expected_entry_synced_on = set(("/", "/foo", "/foo/bar", "/foo/bar/spam.txt"))
+
+    def _on_synced(event, path, id):
+        assert path in expected_entry_synced_on
+        expected_entry_synced_on.remove(path)
+        local_folder_fs_dump = alice_fs._local_folder_fs.dump()
+        curr_node = local_folder_fs_dump
+        hops = [x for x in path.split("/") if x]
+        for hop in hops:
+            curr_node = curr_node["children"][hop]
+            assert not curr_node["is_placeholder"]
+
+    alice_fs.event_bus.connect("fs.entry.synced", _on_synced)
+
+    await alice_fs.sync("/")
+
+    assert not expected_entry_synced_on
+
+
+@pytest.mark.trio
 async def test_fs_entry_synced_event_when_all_synced(running_backend, alice_fs):
     # 1) Create data
 

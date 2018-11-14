@@ -57,35 +57,42 @@ class FolderSyncerMixin(BaseSyncer):
             return None
         return target_remote_manifest
 
-    async def _sync_folder_actual_sync(
+    async def _sync_folder_minimal_placeholder_sync(
         self, access: Access, manifest: LocalFolderManifest, notify_beacons: List[UUID]
     ) -> RemoteFolderManifest:
         to_sync_manifest = local_to_remote_manifest(manifest)
         to_sync_manifest["version"] += 1
 
         # Upload the folder manifest as new vlob version
-        force_update = False
+        try:
+            await self._backend_vlob_create(access, to_sync_manifest, notify_beacons)
+        except SyncConcurrencyError:
+            # By definition, placeholder shouldn't have remote version.
+            # However user manifest is a special case here given it
+            # access is shared between devices even if it is not yet
+            # synced.
+            # If such case occured, well we no longer have a placeholder
+            # so we done here anyway !
+            assert is_user_manifest(manifest)
+
+        return to_sync_manifest
+
+    async def _sync_folder_actual_sync(
+        self, access: Access, manifest: LocalFolderManifest, notify_beacons: List[UUID]
+    ) -> RemoteFolderManifest:
+        assert not is_placeholder_manifest(manifest)
+
+        to_sync_manifest = local_to_remote_manifest(manifest)
+        to_sync_manifest["version"] += 1
+
+        # Upload the folder manifest as new vlob version
         while True:
             try:
-                if is_placeholder_manifest(manifest) and not force_update:
-                    await self._backend_vlob_create(access, to_sync_manifest, notify_beacons)
-                else:
-                    await self._backend_vlob_update(access, to_sync_manifest, notify_beacons)
+                await self._backend_vlob_update(access, to_sync_manifest, notify_beacons)
                 break
 
             except SyncConcurrencyError:
-                if is_placeholder_manifest(manifest):
-                    # By definition, placeholder shouldn't have remote version.
-                    # However user manifest is a special case here given it
-                    # access is shared between devices even if it is not yet
-                    # synced.
-                    # If such case occured, we just have to pretend we were
-                    # trying to do an update and rely on the generic merge.
-                    assert is_user_manifest(manifest)
-                    base = None
-                    force_update = True
-                else:
-                    base = await self._backend_vlob_read(access, to_sync_manifest["version"] - 1)
+                base = await self._backend_vlob_read(access, to_sync_manifest["version"] - 1)
 
                 # Do a 3-ways merge to fix the concurrency error, first we must
                 # fetch the base version and the new one present in the backend
@@ -121,14 +128,22 @@ class FolderSyncerMixin(BaseSyncer):
         """
         assert is_folder_manifest(manifest)
 
-        # Synchronizing a folder is divided into three steps:
-        # - first synchronizing it children
+        # Synchronizing a folder is divided into four steps:
+        # - first if it is a placeholder, upload an empty version of the folder
+        # - then synchronizing it children
         # - then sychronize itself
         # - finally merge the synchronized version with the current one (that
         #   may have been updated in the meantime)
 
         # Synchronizing children
         if recursive:
+            if is_placeholder_manifest(manifest):
+                await self._sync_folder_minimal_placeholder_sync(access, manifest, notify_beacons)
+                manifest = self.local_folder_fs.get_manifest(access)
+                if is_placeholder_manifest(manifest):
+                    manifest["is_placeholder"] = False
+                    manifest["base_version"] += 1
+                    self.local_folder_fs.set_manifest(access, manifest)
             await self._sync_folder_sync_children(path, access, manifest, recursive, notify_beacons)
 
         # The trick here is to retreive the current version of the manifest

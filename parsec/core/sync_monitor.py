@@ -57,6 +57,9 @@ class SyncMonitor(BaseAsyncComponent):
     async def _monitoring(self):
         with trio.open_cancel_scope() as self._monitoring_cancel_scope:
             self.event_bus.send("sync_monitor.reconnection_sync.started")
+            # TODO: Pretty expensive to do a full sync here (especially
+            # if the disconnection is due to poor connection in the first
+            # place). Compare beacon index instead.
             try:
                 await self.fs.full_sync()
             finally:
@@ -68,7 +71,8 @@ class SyncMonitor(BaseAsyncComponent):
         updated_entries = {}
         new_event = trio.Event()
 
-        def _on_entry_updated(sender, id):
+        def _on_entry_updated(event, id):
+            print("===>entry updated", event, id)
             try:
                 first_updated, _ = updated_entries[id]
                 last_updated = timestamp()
@@ -89,24 +93,31 @@ class SyncMonitor(BaseAsyncComponent):
                 await self._monitoring_tick(updated_entries)
 
                 if updated_entries:
+                    print("waiting for", MIN_WAIT)
 
+                    # TODO: in case multiple entries are ready to be synced
+                    # we still wait MIN_WAIT between each sync...
                     async def _wait():
                         await trio.sleep(MIN_WAIT)
+                        print("WAKEUP")
                         new_event.set()
 
                     nursery.start_soon(_wait)
 
     async def _monitoring_tick(self, updated_entries):
+        print("TICK !!!!")
         now = timestamp()
 
         for id, (first_updated, last_updated) in updated_entries.items():
             if now - first_updated > MAX_WAIT:
+                print("******** SYNC", id)
                 await self.fs.sync_by_id(id)
                 break
 
         else:
             for id, (_, last_updated) in updated_entries.items():
                 if now - last_updated > MIN_WAIT:
+                    print("******** SYNC", id)
                     await self.fs.sync_by_id(id)
                     break
 

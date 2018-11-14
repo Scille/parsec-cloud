@@ -1,6 +1,6 @@
 import trio
 from uuid import UUID
-from typing import List, Union
+from typing import Union
 
 from parsec.core.fs.utils import is_folder_manifest
 from parsec.core.fs.types import Path, Access, LocalFolderManifest, LocalFileManifest
@@ -94,6 +94,10 @@ class BaseSyncer:
         # slower which would make them less reliable with poor backend connection.
         async with self._lock:
             try:
+                # In case the path we want to sync contains placeholders, we have
+                # to sync the parents first. To avoid potentially having to sync
+                # plenty of children for each parent, we determine a sync strategy
+                # (i.e. which single child should be sync for each parent)
                 sync_path, sync_recursive = self.local_folder_fs.get_sync_strategy(path, recursive)
                 sync_access = self.local_folder_fs.get_access(sync_path)
             except FSManifestLocalMiss:
