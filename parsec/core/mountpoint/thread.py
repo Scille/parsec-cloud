@@ -163,25 +163,11 @@ class ThreadFSAccess:
     def file_fd_seek(self, fh, offset):
         return self._portal.run(self.fs.file_fd_seek, fh, offset)
 
-    def file_fd_read(self, fh, size):
-        return self._portal.run(self.fs.file_fd_read, fh, size)
+    def file_fd_read(self, fh, size, offset):
+        return self._portal.run(self.fs.file_fd_read, fh, size, offset)
 
-    def file_fd_seek_and_read(self, fh, size, offset):
-        async def _do(fh, size, offset):
-            await self.fs.file_fd_seek(fh, offset)
-            return await self.fs.file_fd_read(fh, size)
-
-        return self._portal.run(_do, fh, size, offset)
-
-    def file_fd_seek_and_write(self, fh, data, offset):
-        async def _do(fh, data, offset):
-            await self.fs.file_fd_seek(fh, offset)
-            return await self.fs.file_fd_write(fh, data)
-
-        return self._portal.run(_do, fh, data, offset)
-
-    def file_fd_write(self, fh, data):
-        return self._portal.run(self.fs.file_fd_write, fh, data)
+    def file_fd_write(self, fh, data, offset):
+        return self._portal.run(self.fs.file_fd_write, fh, data, offset)
 
     def file_fd_truncate(self, fh, length):
         return self._portal.run(self.fs.file_fd_truncate, fh, length)
