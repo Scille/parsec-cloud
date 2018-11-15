@@ -202,7 +202,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             return
         try:
             core_call().create_workspace(os.path.join("/", workspace_name))
-            self.add_workspace(workspace_name)
         except FileExistsError:
             show_error(
                 self,
