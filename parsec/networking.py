@@ -92,7 +92,7 @@ class CookedSocket:
         if not isinstance(req, dict):
             raise TypeError("req must be a dict")
 
-        payload = ejson_dumps(req).encode() + b"\n"
+        payload = ejson_dumps(req).encode("utf8") + b"\n"
         await self.sockstream.send_all(payload)
 
     async def recv(self) -> dict:
@@ -124,4 +124,4 @@ class CookedSocket:
 
             else:
                 next_rep = self._reps_ready.popleft()
-                return json.loads(next_rep.decode())
+                return json.loads(next_rep.decode("utf8"))

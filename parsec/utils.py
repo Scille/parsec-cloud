@@ -15,11 +15,11 @@ def generate_sym_key():
 
 
 def to_jsonb64(raw: bytes):
-    return base64.encodebytes(raw).decode().replace("\\n", "")
+    return base64.encodebytes(raw).decode("utf8").replace("\\n", "")
 
 
 def from_jsonb64(msg: str):
-    return base64.decodebytes(msg.encode())
+    return base64.decodebytes(msg.encode("utf8"))
 
 
 def _json_serial(obj):
