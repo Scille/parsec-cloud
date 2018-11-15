@@ -24,27 +24,27 @@
 <context>
     <name>FileSize</name>
     <message>
-        <location filename="../file_size.py" line="8"/>
+        <location filename="../file_size.py" line="115"/>
         <source> TB</source>
         <translation> To</translation>
     </message>
     <message>
-        <location filename="../file_size.py" line="9"/>
+        <location filename="../file_size.py" line="116"/>
         <source> GB</source>
         <translation> Go</translation>
     </message>
     <message>
-        <location filename="../file_size.py" line="10"/>
+        <location filename="../file_size.py" line="117"/>
         <source> MB</source>
         <translation> Mo</translation>
     </message>
     <message>
-        <location filename="../file_size.py" line="11"/>
+        <location filename="../file_size.py" line="118"/>
         <source> KB</source>
         <translation> Ko</translation>
     </message>
     <message>
-        <location filename="../file_size.py" line="12"/>
+        <location filename="../file_size.py" line="119"/>
         <source> B</source>
         <translation> o</translation>
     </message>
@@ -79,7 +79,7 @@
     <message>
         <location filename="../forms/files_widget.ui" line="293"/>
         <source>Import files</source>
-        <translation type="unfinished">Importer des fichiers</translation>
+        <translation>Importer des fichiers</translation>
     </message>
     <message>
         <location filename="../forms/files_widget.ui" line="394"/>
@@ -270,27 +270,27 @@
     <message>
         <location filename="../forms/files_widget.ui" line="343"/>
         <source>Import folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Importer un dossier</translation>
     </message>
     <message>
         <location filename="../files_widget.py" line="133"/>
         <source>Some files could not be imported.</source>
-        <translation type="unfinished"></translation>
+        <translation>Des fichiers n&apos;ont pas pu être importés.</translation>
     </message>
     <message>
         <location filename="../files_widget.py" line="151"/>
         <source>The folder could not be imported.</source>
-        <translation type="unfinished"></translation>
+        <translation>Le dossier n&apos;a pas pu être importé.</translation>
     </message>
     <message>
         <location filename="../files_widget.py" line="120"/>
         <source>Select files to import</source>
-        <translation type="unfinished"></translation>
+        <translation>Choisir les fichiers à importer</translation>
     </message>
     <message>
         <location filename="../files_widget.py" line="139"/>
         <source>Select a directory to import</source>
-        <translation type="unfinished"></translation>
+        <translation>Choisir le répertoire à importer</translation>
     </message>
 </context>
 <context>
@@ -564,62 +564,62 @@
         <translation>   Se déconnecter</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="184"/>
+        <location filename="../main_window.py" line="179"/>
         <source>Authentication failed.</source>
         <translation>Impossible de se connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="199"/>
+        <location filename="../main_window.py" line="194"/>
         <source>Can not register the user.</source>
         <translation>Impossible d&apos;enregistrer le nouvel utilisateur.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="227"/>
+        <location filename="../main_window.py" line="222"/>
         <source>User has been successfully registered. You can now login.</source>
         <translation>L&apos;utilisateur a été enregistré avec succès. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="235"/>
+        <location filename="../main_window.py" line="230"/>
         <source>The token has expired.</source>
         <translation>Le jeton a expiré.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="240"/>
+        <location filename="../main_window.py" line="235"/>
         <source>No invitation found for this user.</source>
         <translation>Aucune invitation trouvée pour cet utilisateur.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="245"/>
+        <location filename="../main_window.py" line="240"/>
         <source>User has already been registered.</source>
         <translation>L&apos;utilisateur a déjà été enregistré.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="306"/>
+        <location filename="../main_window.py" line="301"/>
         <source>Device has been successfully registered. You can now login.</source>
         <translation>L&apos;appareil a été enregistré avec succès. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="314"/>
+        <location filename="../main_window.py" line="309"/>
         <source>The device already exists.</source>
         <translation>L&apos;appareil existe déjà.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="319"/>
+        <location filename="../main_window.py" line="314"/>
         <source>Invalid PKCS #11 information.</source>
         <translation>Les informations de la PKCS #11 ne sont pas valides.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="324"/>
+        <location filename="../main_window.py" line="319"/>
         <source>Can not create the new device.</source>
         <translation>Impossible de créer le nouvel appareil.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="351"/>
+        <location filename="../main_window.py" line="346"/>
         <source>Are you sure you want to quit ?</source>
         <translation>Êtes-vous sûr de vouloir quitter ?</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="250"/>
+        <location filename="../main_window.py" line="245"/>
         <source>Can not register this user.</source>
         <translation>Impossible d&apos;enregistrer l&apos;utilisateur.</translation>
     </message>
@@ -805,17 +805,25 @@
     <message>
         <location filename="../forms/settings_widget.ui" line="244"/>
         <source>Enable mountpoint</source>
-        <translation type="unfinished"></translation>
+        <translation>Activer le point de montage</translation>
     </message>
     <message>
         <location filename="../settings_widget.py" line="34"/>
         <source>You must log off and on again for the changes to take effect.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vous devez vous déconnecter et vous reconnecter pour activer les changements.</translation>
     </message>
     <message>
         <location filename="../settings_widget.py" line="43"/>
         <source>Choose a mountpoint</source>
-        <translation type="unfinished"></translation>
+        <translation>Choisir un point de montage</translation>
+    </message>
+</context>
+<context>
+    <name>SharedDialog</name>
+    <message>
+        <location filename="../forms/shared_dialog.ui" line="17"/>
+        <source>Dialog</source>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -890,7 +898,7 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="153"/>
+        <location filename="../workspaces_widget.py" line="195"/>
         <source>New workspace</source>
         <translation>Nouvel espace de travail</translation>
     </message>
@@ -900,74 +908,89 @@
         <translation>Nouvel espace de travail  </translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="73"/>
+        <location filename="../workspaces_widget.py" line="103"/>
         <source>Share</source>
         <translation>Partager</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="75"/>
+        <location filename="../workspaces_widget.py" line="105"/>
         <source>Rename</source>
         <translation>Renommer</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="82"/>
+        <location filename="../workspaces_widget.py" line="124"/>
         <source>New name</source>
         <translation>Nouveau nom</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="82"/>
+        <location filename="../workspaces_widget.py" line="124"/>
         <source>Enter workspace new name</source>
         <translation>Entrez le nouveau nom de l&apos;espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="165"/>
+        <location filename="../workspaces_widget.py" line="207"/>
         <source>A workspace with the same name already exists.</source>
         <translation>Un espace de travail du même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="101"/>
+        <location filename="../workspaces_widget.py" line="143"/>
         <source>Can not rename the workspace.</source>
         <translation>Impossible de renommer l&apos;espace de travail.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="112"/>
+        <location filename="../workspaces_widget.py" line="154"/>
         <source>Share a workspace</source>
         <translation>Partager un espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="112"/>
+        <location filename="../workspaces_widget.py" line="154"/>
         <source>Give a user name to share the workspace {} with.</source>
         <translation>Entrez le nom de l&apos;utilisateur avec lequel partager l&apos;espace de travail &quot;{}&quot;.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="129"/>
+        <location filename="../workspaces_widget.py" line="171"/>
         <source>The workspaces has been shared.</source>
         <translation>L&apos;espace de travail a été partagé.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="136"/>
+        <location filename="../workspaces_widget.py" line="178"/>
         <source>Can not share the workspace &quot;{}&quot; with this user.</source>
         <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec cet utilisateur.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="143"/>
+        <location filename="../workspaces_widget.py" line="185"/>
         <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
         <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec &quot;{}&quot;.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="153"/>
+        <location filename="../workspaces_widget.py" line="195"/>
         <source>Enter new workspace name</source>
         <translation>Entrez le nom du nouvel espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="153"/>
+        <location filename="../workspaces_widget.py" line="195"/>
         <source>Workspace name</source>
         <translation>Nom de l&apos;espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="112"/>
+        <location filename="../workspaces_widget.py" line="154"/>
         <source>User name</source>
         <translation>Nom d&apos;utilisateur</translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="23"/>
+        <source>Shared with</source>
+        <translation>Partagé avec</translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="25"/>
+        <source>Shared by</source>
+        <translation>Partagé par</translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="108"/>
+        <source>See sharing infos</source>
+        <translation>Voir les informations de partage</translation>
     </message>
 </context>
 </TS>
