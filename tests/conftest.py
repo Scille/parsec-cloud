@@ -96,17 +96,23 @@ def realcrypto():
         yield
 
 
+def _patch_url_if_xdist(url):
+    xdist_worker = os.environ.get("PYTEST_XDIST_WORKER")
+    if xdist_worker:
+        return f"{url}_{xdist_worker}"
+    else:
+        return url
+
+
 # Use current unix user's credential, don't forget to do
 # `psql -c 'CREATE DATABASE parsec_test;'` prior to run tests
 DEFAULT_POSTGRESQL_TEST_URL = "postgresql:///parsec_test"
 
-# Use current unix user's credential, don't forget to do
-# `psql -c 'CREATE DATABASE triopg_test;'` prior to run tests
-TRIOPG_POSTGRESQL_TEST_URL = "postgresql:///triopg_test"
-
 
 def get_postgresql_url():
-    return os.environ.get("PARSEC_POSTGRESQL_TEST_URL", DEFAULT_POSTGRESQL_TEST_URL)
+    return _patch_url_if_xdist(
+        os.environ.get("PARSEC_POSTGRESQL_TEST_URL", DEFAULT_POSTGRESQL_TEST_URL)
+    )
 
 
 @pytest.fixture
