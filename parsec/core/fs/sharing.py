@@ -251,7 +251,7 @@ class Sharing:
 
             for i in count(1):
                 if i == 1:
-                    sharing_name = msg['name']
+                    sharing_name = msg["name"]
                 else:
                     sharing_name = f"{msg['name']} {i}"
                 if sharing_name not in user_manifest["children"]:
