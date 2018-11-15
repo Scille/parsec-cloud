@@ -172,11 +172,11 @@ def dumps_manifest(manifest: dict):
     raw, errors = typed_manifest_schema.dumps(manifest)
     if errors:
         raise SchemaSerializationError(errors)
-    return raw.encode("utf-8")
+    return raw.encode("utf8")
 
 
 def loads_manifest(raw: bytes):
-    manifest, errors = typed_manifest_schema.loads(raw.decode("utf-8"))
+    manifest, errors = typed_manifest_schema.loads(raw.decode("utf8"))
     if errors:
         raise SchemaSerializationError(errors)
     return manifest
