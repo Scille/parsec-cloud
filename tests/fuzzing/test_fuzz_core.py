@@ -10,7 +10,7 @@ from parsec.core.fs.sharing import SharingError
 
 
 FUZZ_PARALLELISM = 10
-FUZZ_TIME = 10.
+FUZZ_TIME = 10.0
 
 
 def generate_name():
