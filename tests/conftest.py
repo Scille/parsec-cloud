@@ -99,7 +99,7 @@ def realcrypto():
 def _patch_url_if_xdist(url):
     xdist_worker = os.environ.get("PYTEST_XDIST_WORKER")
     if xdist_worker:
-        return f"{url}-{xdist_worker}"
+        return f"{url}_{xdist_worker}"
     else:
         return url
 

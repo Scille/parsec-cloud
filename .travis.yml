@@ -14,8 +14,8 @@ install:
 - pip install .[all]
 before_script:
   - sudo modprobe fuse
-  - psql -c 'create database parsec_test-gw0;' -U postgres
-  - psql -c 'create database parsec_test-gw1;' -U postgres
+  - psql -c 'create database parsec_test_gw0;' -U postgres
+  - psql -c 'create database parsec_test_gw1;' -U postgres
 script:
 # Only print output if check failed
 - OUT=$(2>&1 ./misc/autoformat.sh --check) || (echo $OUT; $(exit 1))
