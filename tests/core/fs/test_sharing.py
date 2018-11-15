@@ -43,6 +43,59 @@ async def test_share_workspace(running_backend, alice_fs, bob_fs):
 
 
 @pytest.mark.trio
+async def test_share_workspace_multiple_times(running_backend, alice_fs, bob_fs):
+    # Create a workspace with Alice
+    await alice_fs.workspace_create("/foo")
+    await alice_fs.folder_create("/foo/spam")
+    await alice_fs.file_create("/foo/spam/bar.txt")
+    await alice_fs.file_write("/foo/spam/bar.txt", b"Alice workspace")
+    await alice_fs.sync("/foo")
+
+    # Create a workspace with Bob
+    await bob_fs.workspace_create("/foo")
+    await bob_fs.folder_create("/foo/spam")
+    await bob_fs.file_create("/foo/spam/bar.txt")
+    await bob_fs.file_write("/foo/spam/bar.txt", b"Bob workspace")
+    await bob_fs.sync("/foo")
+
+    # Now we can share this workspace with Bob
+    await alice_fs.share("/foo", recipient="bob")
+
+    # Bob should get a notification
+    bob_foo_name = "foo 2"
+    with bob_fs.event_bus.listen() as spy:
+        await bob_fs.process_last_messages()
+    spy.assert_event_occured("sharing.new", kwargs={"path": f"/{bob_foo_name}", "access": spy.ANY})
+
+    # Bob shares his workspace with Alice
+    await bob_fs.share("/foo", recipient="alice")
+
+    # Bob should get a notification
+    alice_foo_name = "foo 2"
+    with alice_fs.event_bus.listen() as spy:
+        await alice_fs.process_last_messages()
+    spy.assert_event_occured(
+        "sharing.new", kwargs={"path": f"/{alice_foo_name}", "access": spy.ANY}
+    )
+
+    # Read the data in Bob workspace with Bob
+    bob_file_data = await bob_fs.file_read(f"/foo/spam/bar.txt")
+    assert bob_file_data == b"Bob workspace"
+
+    # Read the data in Alice workspace with Bob
+    alice_file_data = await bob_fs.file_read(f"/foo 2/spam/bar.txt")
+    assert alice_file_data == b"Alice workspace"
+
+    # Read the data in Alice workspace with Alice
+    alice_file_data = await alice_fs.file_read(f"/foo/spam/bar.txt")
+    assert alice_file_data == b"Alice workspace"
+
+    # Read the data in Bob workspace with Alice
+    bob_file_data = await alice_fs.file_read(f"/foo 2/spam/bar.txt")
+    assert bob_file_data == b"Bob workspace"
+
+
+@pytest.mark.trio
 @pytest.mark.parametrize("already_synced", [True, False])
 async def test_share_workspace_placeholder(already_synced, running_backend, alice_fs, bob_fs):
     # First, create the workspace
