@@ -359,6 +359,10 @@ def blockstore(request, backend_store):
         blockstore_config["RAID1_0_TYPE"] = blockstore_type
         blockstore_config["RAID1_1_TYPE"] = "MOCKED"
         blockstore_type = "RAID1"
+    if request.node.get_closest_marker("raid0_blockstore"):
+        blockstore_config["RAID0_0_TYPE"] = blockstore_type
+        blockstore_config["RAID0_1_TYPE"] = "MOCKED"
+        blockstore_type = "RAID0"
 
     return blockstore_type, blockstore_config
 
