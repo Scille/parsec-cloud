@@ -95,14 +95,14 @@ class FS:
     async def file_fd_truncate(self, fd: int, length: int):
         self._local_file_fs.truncate(fd, length)
 
-    async def file_fd_write(self, fd: int, content: bytes):
-        return self._local_file_fs.write(fd, content)
+    async def file_fd_write(self, fd: int, content: bytes, offset: int = None):
+        return self._local_file_fs.write(fd, content, offset)
 
     async def file_fd_flush(self, fd: int):
         self._local_file_fs.flush(fd)
 
-    async def file_fd_read(self, fd: int, size: int = -1):
-        return await self._load_and_retry(self._local_file_fs.read, fd, size)
+    async def file_fd_read(self, fd: int, size: int = -1, offset: int = None):
+        return await self._load_and_retry(self._local_file_fs.read, fd, size, offset)
 
     async def file_create(self, path: str):
         cooked_path = Path(path)

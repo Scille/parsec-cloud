@@ -90,13 +90,13 @@ class FuseOperations(LoggingMixIn, Operations):
 
     def read(self, path, size, offset, fh):
         with translate_error():
-            ret = self.fs_access.file_fd_seek_and_read(fh, size, offset)
+            ret = self.fs_access.file_fd_read(fh, size, offset)
             # Fuse wants bytes but file_fd_read returns a bytearray
             return bytes(ret)
 
     def write(self, path, data, offset, fh):
         with translate_error():
-            return self.fs_access.file_fd_seek_and_write(fh, data, offset)
+            return self.fs_access.file_fd_write(fh, data, offset)
 
     def truncate(self, path, length, fh=None):
         with translate_error():

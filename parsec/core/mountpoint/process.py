@@ -197,22 +197,6 @@ class ProcessFSAccess:
 
                 rep = await _do(*req_args)
 
-            elif req_cmd == "file_fd_seek_and_read":
-
-                async def _do(fh, size, offset):
-                    await self.fs.file_fd_seek(fh, offset)
-                    return await self.fs.file_fd_read(fh, size)
-
-                rep = await _do(*req_args)
-
-            elif req_cmd == "file_fd_seek_and_write":
-
-                async def _do(fh, data, offset):
-                    await self.fs.file_fd_seek(fh, offset)
-                    return await self.fs.file_fd_write(fh, data)
-
-                rep = await _do(*req_args)
-
             else:
                 rep = await getattr(self.fs, req_cmd)(*req_args)
 
@@ -287,17 +271,11 @@ class ProcessFSAccessClient:
     def file_fd_seek(self, fh, offset):
         return self._send_req("file_fd_seek", fh, offset)
 
-    def file_fd_read(self, fh, size):
-        return self._send_req("file_fd_read", fh, size)
+    def file_fd_read(self, fh, size, offset):
+        return self._send_req("file_fd_read", fh, size, offset)
 
-    def file_fd_seek_and_read(self, fh, size, offset):
-        return self._send_req("file_fd_seek_and_read", fh, size, offset)
-
-    def file_fd_seek_and_write(self, fh, data, offset):
-        return self._send_req("file_fd_seek_and_write", fh, data, offset)
-
-    def file_fd_write(self, fh, data):
-        return self._send_req("file_fd_write", fh, data)
+    def file_fd_write(self, fh, data, offset):
+        return self._send_req("file_fd_write", fh, data, offset)
 
     def file_fd_truncate(self, fh, length):
         return self._send_req("file_fd_truncate", fh, length)
