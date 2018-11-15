@@ -341,6 +341,7 @@ class BackendApp:
 
     async def handle_client(self, sockstream, swallow_crash=False):
         sock = CookedSocket(sockstream)
+        client_ctx = None
         try:
             logger.debug("start handshake")
             client_ctx = await self._do_handshake(sock)
@@ -365,7 +366,10 @@ class BackendApp:
 
         except Exception as exc:
             # If we are here, something unexpected happened...
-            client_ctx.logger.error("Unexpected crash", exc_info=exc)
+            if client_ctx:
+                client_ctx.logger.error("Unexpected crash", exc_info=exc)
+            else:
+                logger.error("Unexpected crash", exc_info=exc)
             await sock.aclose()
             if not swallow_crash:
                 raise
