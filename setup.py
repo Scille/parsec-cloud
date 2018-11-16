@@ -14,6 +14,42 @@ except ImportError:
 exec(open("parsec/_version.py", encoding="utf-8").read())
 
 
+def fix_pyqt_import():
+    # PyQt5-sip is a distinct pip package that provides PyQt5.sip
+    # However it setuptools handles `setup_requires` by downloading the
+    # dependencies in the `./.eggs` directory wihtout really installing
+    # them. This causes `import PyQt5.sip` to fail given the `PyQt5` folder
+    # doesn't contains `sip.so`...
+    import sys
+    import glob
+    import importlib
+
+    for module_name, path_glob in (
+        ("PyQt5", ".eggs/*PyQt5*/PyQt5/__init__.py"),
+        ("PyQt5.sip", ".eggs/*PyQt5_sip*/PyQt5/sip.so"),
+    ):
+        # If the module has already been installed in the environment
+        # setuptools won't populate the `.eggs` directory and we have
+        # nothing to do
+        try:
+            importlib.import_module(module_name)
+        except ImportError:
+            pass
+        else:
+            continue
+
+        try:
+            path = glob.glob(path_glob)[0]
+        except IndexError:
+            raise RuntimeError("Cannot found module `%s` in .eggs" % module_name)
+
+        spec = importlib.util.spec_from_file_location(module_name, path)
+        if not spec:
+            raise RuntimeError("Cannot load module `%s` from path `%s`" % (module_name, path))
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+
+
 class GeneratePyQtResourcesBundle(Command):
     description = "Generates `parsec.core.gui._resource_rc` bundle module"
 
@@ -26,6 +62,7 @@ class GeneratePyQtResourcesBundle(Command):
         pass
 
     def run(self):
+        fix_pyqt_import()
         try:
             from PyQt5.pyrcc_main import processResourceFile
 
@@ -53,44 +90,7 @@ class GeneratePyQtForms(Command):
         import pathlib
         from collections import namedtuple
 
-        # PyQt5-sip is a distinct pip package that provides PyQt5.sip
-        # However it setuptools handles `setup_requires` by downloading the
-        # dependencies in the `./.eggs` directory wihtout really installing
-        # them. This causes `import PyQt5.sip` to fail given the `PyQt5` folder
-        # doesn't contains `sip.so`...
-        def _fix_pyqt_import():
-            import sys
-            import glob
-            import importlib
-
-            for module_name, path_glob in (
-                ("PyQt5", ".eggs/*PyQt5*/PyQt5/__init__.py"),
-                ("PyQt5.sip", ".eggs/*PyQt5_sip*/PyQt5/sip.so"),
-            ):
-                # If the module has already been installed in the environment
-                # setuptools won't populate the `.eggs` directory and we have
-                # nothing to do
-                try:
-                    importlib.import_module(module_name)
-                except ImportError:
-                    pass
-                else:
-                    continue
-
-                try:
-                    path = glob.glob(path_glob)[0]
-                except IndexError:
-                    raise RuntimeError("Cannot found module `%s` in .eggs" % module_name)
-
-                spec = importlib.util.spec_from_file_location(module_name, path)
-                if not spec:
-                    raise RuntimeError(
-                        "Cannot load module `%s` from path `%s`" % (module_name, path)
-                    )
-                module = importlib.util.module_from_spec(spec)
-                sys.modules[module_name] = module
-
-        _fix_pyqt_import()
+        fix_pyqt_import()
         try:
             from PyQt5.uic.driver import Driver
         except ImportError:
@@ -136,6 +136,7 @@ class GeneratePyQtTranslations(Command):
         import subprocess
         from unittest.mock import patch
 
+        fix_pyqt_import()
         try:
             from PyQt5.pylupdate_main import main as pylupdate_main
         except ImportError:
