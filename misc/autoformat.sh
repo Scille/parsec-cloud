@@ -8,5 +8,4 @@ black --line-length=100 \
   parsec \
   tests \
   setup.py \
-  examples \
   $@
