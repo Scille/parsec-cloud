@@ -1,6 +1,8 @@
 import pytest
 from pendulum import Pendulum
 
+from parsec.core.backend_connection import BackendNotAvailable
+
 from tests.common import freeze_time, create_shared_workspace
 
 
@@ -249,3 +251,137 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     data = await alice_fs.file_read("/w/foo (conflict 2000-01-06 00:00:00).txt")
     data2 = await alice2_fs.file_read("/w/foo (conflict 2000-01-06 00:00:00).txt")
     assert data == data2 == b"alice2's v2"
+
+
+@pytest.mark.trio
+async def test_create_already_existing_folder_vlob(running_backend, alice_fs, alice2_fs):
+    # First create data locally
+    with freeze_time("2000-01-02"):
+        # File and folder are handled basically the same
+        await alice_fs.workspace_create("/w")
+
+    vanilla_backend_vlob_create = alice_fs._syncer._backend_vlob_create
+
+    async def mocked_backend_vlob_create(*args, **kwargs):
+        await vanilla_backend_vlob_create(*args, **kwargs)
+        raise BackendNotAvailable()
+
+    alice_fs._syncer._backend_vlob_create = mocked_backend_vlob_create
+
+    with pytest.raises(BackendNotAvailable):
+        await alice_fs.sync("/w")
+
+    alice_fs._syncer._backend_vlob_create = vanilla_backend_vlob_create
+    await alice_fs.sync("/w")
+
+    stat = await alice_fs.stat("/w")
+    assert stat == {
+        "type": "workspace",
+        "base_version": 1,
+        "is_folder": True,
+        "is_placeholder": False,
+        "need_sync": False,
+        "created": Pendulum(2000, 1, 2),
+        "updated": Pendulum(2000, 1, 2),
+        "creator": "alice",
+        "participants": ["alice"],
+        "children": [],
+    }
+
+    await alice2_fs.sync("/")
+    stat2 = await alice2_fs.stat("/w")
+    assert stat == stat2
+
+
+@pytest.mark.trio
+async def test_create_already_existing_file_vlob(running_backend, alice_fs, alice2_fs):
+    await create_shared_workspace("/w", alice_fs, alice2_fs)
+
+    # First create data locally
+    with freeze_time("2000-01-02"):
+        await alice_fs.file_create("/w/foo.txt")
+
+    vanilla_backend_vlob_create = alice_fs._syncer._backend_vlob_create
+
+    async def mocked_backend_vlob_create(*args, **kwargs):
+        await vanilla_backend_vlob_create(*args, **kwargs)
+        raise BackendNotAvailable()
+
+    alice_fs._syncer._backend_vlob_create = mocked_backend_vlob_create
+
+    with pytest.raises(BackendNotAvailable):
+        await alice_fs.sync("/w/foo.txt")
+
+    alice_fs._syncer._backend_vlob_create = vanilla_backend_vlob_create
+    await alice_fs.sync("/w/foo.txt")
+
+    stat = await alice_fs.stat("/w/foo.txt")
+    assert stat == {
+        "type": "file",
+        "is_folder": False,
+        "is_placeholder": False,
+        "need_sync": False,
+        "created": Pendulum(2000, 1, 2),
+        "updated": Pendulum(2000, 1, 2),
+        "base_version": 1,
+        "size": 0,
+    }
+
+    await alice2_fs.sync("/w")
+    stat2 = await alice2_fs.stat("/w/foo.txt")
+    assert stat == stat2
+
+
+@pytest.mark.trio
+async def test_create_already_existing_block(running_backend, alice_fs, alice2_fs):
+    # First create&sync an empty file
+
+    with freeze_time("2000-01-02"):
+        await alice_fs.workspace_create("/w")
+        await alice_fs.file_create("/w/foo.txt")
+        await alice_fs.sync("/w/foo.txt")
+
+    # Now hack a bit the fs to simulate poor connection with backend
+
+    vanilla_backend_block_post = alice_fs._syncer._backend_block_post
+
+    async def mocked_backend_block_post(*args, **kwargs):
+        await vanilla_backend_block_post(*args, **kwargs)
+        raise BackendNotAvailable()
+
+    alice_fs._syncer._backend_block_post = mocked_backend_block_post
+
+    # Write into the file locally and try to sync this.
+    # We should end up with a block synced in the backend but still considered
+    # as a dirty block in the fs.
+
+    with freeze_time("2000-01-03"):
+        await alice_fs.file_write("/w/foo.txt", b"data")
+    with pytest.raises(BackendNotAvailable):
+        await alice_fs.sync("/w/foo.txt")
+
+    # Now retry the sync with a good connection, we should be able to reach
+    # eventual consistency.
+
+    alice_fs._syncer._backend_block_post = vanilla_backend_block_post
+    await alice_fs.sync("/w/foo.txt")
+
+    # Finally test this so-called consistency ;-)
+
+    data = await alice_fs.file_read("/w/foo.txt")
+    assert data == b"data"
+    stat = await alice_fs.stat("/w/foo.txt")
+    assert stat == {
+        "type": "file",
+        "is_folder": False,
+        "is_placeholder": False,
+        "need_sync": False,
+        "created": Pendulum(2000, 1, 2),
+        "updated": Pendulum(2000, 1, 3),
+        "base_version": 2,
+        "size": 4,
+    }
+
+    await alice2_fs.sync("/")
+    data2 = await alice2_fs.file_read("/w/foo.txt")
+    assert data2 == b"data"

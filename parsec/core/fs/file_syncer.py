@@ -2,6 +2,7 @@ import pendulum
 from itertools import count
 from typing import Union, List, Optional
 from uuid import UUID
+from structlog import get_logger
 
 from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignment
 from parsec.core.fs.local_folder_fs import mark_manifest_modified
@@ -23,6 +24,9 @@ from parsec.core.fs.utils import (
     local_to_remote_manifest,
     remote_to_local_manifest,
 )
+
+
+logger = get_logger()
 
 
 def fast_forward_file(
@@ -191,8 +195,14 @@ class FileSyncerMixin(BaseSyncer):
                 await self._backend_vlob_update(access, to_sync_manifest, notify_beacons)
 
         except SyncConcurrencyError:
-            # Placeholder don't have remote version, so no concurrency is possible
-            assert not is_placeholder_manifest(manifest)
+            # Placeholder don't have remote version, so concurrency shouldn't
+            # be possible. However it's possible a previous attempt of
+            # uploading this manifest succeeded but we didn't receive the
+            # backend's answer, hence wrongly believing this is still a
+            # placeholder.
+            if is_placeholder_manifest(manifest):
+                logger.warning("Concurrency error while creating vlob", access_id=access["id"])
+
             target_remote_manifest = await self._backend_vlob_read(access)
 
             current_manifest = self.local_folder_fs.get_manifest(access)

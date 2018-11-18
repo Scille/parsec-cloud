@@ -1,4 +1,5 @@
 from typing import Union, Optional, cast
+from structlog import get_logger
 
 from parsec.core.fs.types import Access, Path, LocalFolderManifest, RemoteFolderManifest
 from parsec.core.fs.utils import (
@@ -11,6 +12,9 @@ from parsec.core.fs.utils import (
 from parsec.core.fs.sync_base import SyncConcurrencyError, BaseSyncer
 from parsec.core.fs.merge_folders import merge_local_folder_manifests, merge_remote_folder_manifests
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
+
+
+logger = get_logger()
 
 
 class FolderSyncerMixin(BaseSyncer):
@@ -74,13 +78,25 @@ class FolderSyncerMixin(BaseSyncer):
 
             except SyncConcurrencyError:
                 if is_placeholder_manifest(manifest):
-                    # By definition, placeholder shouldn't have remote version.
-                    # However user manifest is a special case here given it
-                    # access is shared between devices even if it is not yet
-                    # synced.
-                    # If such case occured, we just have to pretend we were
+                    # Placeholder don't have remote version, so concurrency shouldn't
+                    # be possible. However special cases exist:
+                    # - user manifest has it access is shared between devices
+                    #   even if it is not yet synced.
+                    # - it's possible a previous attempt of uploading this
+                    #   manifest succeeded but we didn't receive the backend's
+                    #   answer, hence wrongly believing this is still a placeholder.
+                    # If such cases occured, we just have to pretend we were
                     # trying to do an update and rely on the generic merge.
-                    assert is_user_manifest(manifest)
+
+                    if is_user_manifest(manifest):
+                        logger.warning(
+                            "Concurrency error while creating user vlob", access_id=access["id"]
+                        )
+                    else:
+                        logger.warning(
+                            "Concurrency error while creating vlob", access_id=access["id"]
+                        )
+
                     base = None
                     force_update = True
                 else:
