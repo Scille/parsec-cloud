@@ -1,5 +1,4 @@
-from typing import Union, List, Optional, cast
-from uuid import UUID
+from typing import Union, Optional, cast
 
 from parsec.core.fs.types import Access, Path, LocalFolderManifest, RemoteFolderManifest
 from parsec.core.fs.utils import (
@@ -21,7 +20,6 @@ class FolderSyncerMixin(BaseSyncer):
         access: Access,
         manifest: LocalFolderManifest,
         recursive: Union[bool, dict, list],
-        notify_beacons: List[UUID],
     ) -> None:
         # Build a list of the children to synchronize. This children created
         # during the synchronization are ignored.
@@ -40,7 +38,7 @@ class FolderSyncerMixin(BaseSyncer):
         for child_name, child_access in to_sync.items():
             child_path = path / child_name
             child_recursive = determine_child_recursiveness(child_name)
-            await self._sync_nolock(child_path, child_access, child_recursive, notify_beacons)
+            await self._sync_nolock(child_path, child_access, child_recursive)
 
     async def _sync_folder_look_for_remote_changes(
         self, access: Access, manifest: LocalFolderManifest
@@ -58,12 +56,13 @@ class FolderSyncerMixin(BaseSyncer):
         return target_remote_manifest
 
     async def _sync_folder_actual_sync(
-        self, access: Access, manifest: LocalFolderManifest, notify_beacons: List[UUID]
+        self, path: Path, access: Access, manifest: LocalFolderManifest
     ) -> RemoteFolderManifest:
         to_sync_manifest = local_to_remote_manifest(manifest)
         to_sync_manifest["version"] += 1
 
         # Upload the folder manifest as new vlob version
+        notify_beacons = self.local_folder_fs.get_beacon(path)
         force_update = False
         while True:
             try:
@@ -111,7 +110,6 @@ class FolderSyncerMixin(BaseSyncer):
         access: Access,
         manifest: LocalFolderManifest,
         recursive: Union[bool, dict, list],
-        notify_beacons: List[UUID],
     ) -> None:
         """
         Args:
@@ -129,7 +127,7 @@ class FolderSyncerMixin(BaseSyncer):
 
         # Synchronizing children
         if recursive:
-            await self._sync_folder_sync_children(path, access, manifest, recursive, notify_beacons)
+            await self._sync_folder_sync_children(path, access, manifest, recursive)
 
         # The trick here is to retreive the current version of the manifest
         # and remove it placeholders (those are the children created since
@@ -158,7 +156,7 @@ class FolderSyncerMixin(BaseSyncer):
                 return
         else:
             target_remote_manifest = await self._sync_folder_actual_sync(
-                access, base_manifest, notify_beacons
+                path, access, base_manifest
             )
         assert is_folder_manifest(target_remote_manifest)
 

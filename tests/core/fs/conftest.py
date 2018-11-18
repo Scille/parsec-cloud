@@ -6,25 +6,15 @@ from parsec.core.fs.local_file_fs import LocalFileFS
 
 @pytest.fixture
 def local_folder_fs_factory(alice, event_bus):
-    def _local_folder_fs_factory(device=alice, allow_non_workpace_in_root=True):
-        return LocalFolderFS(
-            device, event_bus, allow_non_workpace_in_root=allow_non_workpace_in_root
-        )
+    def _local_folder_fs_factory(device=alice):
+        return LocalFolderFS(device, event_bus)
 
     return _local_folder_fs_factory
 
 
 @pytest.fixture
 def local_folder_fs(request, local_folder_fs_factory):
-    # Big hack to simplify tests. Otherwise we must create (and
-    # potentially synchronize) a workspace everytime we want to
-    # test folder/file.
-    if request.node.get_closest_marker("only_workpace_in_root"):
-        allow_non_workpace_in_root = False
-    else:
-        allow_non_workpace_in_root = True
-
-    return local_folder_fs_factory(allow_non_workpace_in_root=allow_non_workpace_in_root)
+    return local_folder_fs_factory()
 
 
 @pytest.fixture

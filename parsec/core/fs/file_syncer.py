@@ -156,7 +156,7 @@ class FileSyncerMixin(BaseSyncer):
         return True
 
     async def _sync_file_actual_sync(
-        self, path: Path, access: Access, manifest: LocalFileManifest, notify_beacons: List[UUID]
+        self, path: Path, access: Access, manifest: LocalFileManifest
     ) -> None:
         assert is_file_manifest(manifest)
 
@@ -183,6 +183,7 @@ class FileSyncerMixin(BaseSyncer):
         to_sync_manifest["size"] = sync_map.size  # TODO: useful ?
 
         # Upload the file manifest as new vlob version
+        notify_beacons = self.local_folder_fs.get_beacon(path)
         try:
             if is_placeholder_manifest(manifest):
                 await self._backend_vlob_create(access, to_sync_manifest, notify_beacons)
@@ -218,7 +219,7 @@ class FileSyncerMixin(BaseSyncer):
             self.local_folder_fs.set_manifest(access, final_manifest)
 
     async def _sync_file_nolock(
-        self, path: Path, access: Access, manifest: LocalFileManifest, notify_beacons: List[UUID]
+        self, path: Path, access: Access, manifest: LocalFileManifest
     ) -> None:
         """
         Raises:
@@ -231,7 +232,7 @@ class FileSyncerMixin(BaseSyncer):
         if not manifest["need_sync"]:
             need_event = await self._sync_file_look_for_remote_changes(path, access, manifest)
         else:
-            await self._sync_file_actual_sync(path, access, manifest, notify_beacons)
+            await self._sync_file_actual_sync(path, access, manifest)
             need_event = True
         if need_event:
             self.event_bus.send("fs.entry.synced", path=str(path), id=access["id"])

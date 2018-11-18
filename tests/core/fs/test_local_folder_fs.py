@@ -66,30 +66,36 @@ def test_workspace_create(local_folder_fs):
 
 
 def test_file_create(local_folder_fs):
-    with freeze_time("2000-01-02"):
-        local_folder_fs.touch(Path("/foo.txt"))
 
-    root_stat = local_folder_fs.stat(Path("/"))
+    with freeze_time("2000-01-02"):
+        local_folder_fs.workspace_create(Path("/w"))
+
+    with freeze_time("2000-01-03"):
+        local_folder_fs.touch(Path("/w/foo.txt"))
+
+    root_stat = local_folder_fs.stat(Path("/w"))
     assert root_stat == {
-        "type": "root",
+        "type": "workspace",
         "is_folder": True,
-        "base_version": 1,
-        "is_placeholder": False,
+        "base_version": 0,
+        "is_placeholder": True,
         "need_sync": True,
-        "created": Pendulum(2000, 1, 1),
-        "updated": Pendulum(2000, 1, 2),
+        "created": Pendulum(2000, 1, 2),
+        "updated": Pendulum(2000, 1, 3),
+        "creator": "alice",
+        "participants": ["alice"],
         "children": ["foo.txt"],
     }
 
-    foo_stat = local_folder_fs.stat(Path("/foo.txt"))
+    foo_stat = local_folder_fs.stat(Path("/w/foo.txt"))
     assert foo_stat == {
         "type": "file",
         "is_folder": False,
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
-        "created": Pendulum(2000, 1, 2),
-        "updated": Pendulum(2000, 1, 2),
+        "created": Pendulum(2000, 1, 3),
+        "updated": Pendulum(2000, 1, 3),
         "size": 0,
     }
 
@@ -97,29 +103,30 @@ def test_file_create(local_folder_fs):
 @pytest.mark.parametrize("type", ["copy", "move"])
 def test_copy_folders_create_new_accesses(local_folder_fs, type):
     with freeze_time("2000-01-02"):
-        local_folder_fs.mkdir(Path("/foo"))
-        local_folder_fs.mkdir(Path("/foo/bar"))
-        local_folder_fs.mkdir(Path("/foo/bar/zob"))
-        local_folder_fs.mkdir(Path("/foo/bar/zob/fizz.txt"))
-        local_folder_fs.touch(Path("/foo/spam.txt"))
+        local_folder_fs.workspace_create(Path("/w"))
+        local_folder_fs.mkdir(Path("/w/foo"))
+        local_folder_fs.mkdir(Path("/w/foo/bar"))
+        local_folder_fs.mkdir(Path("/w/foo/bar/zob"))
+        local_folder_fs.mkdir(Path("/w/foo/bar/zob/fizz.txt"))
+        local_folder_fs.touch(Path("/w/foo/spam.txt"))
 
         existing_ids = set()
         pathes = ("", "bar", "bar/zob", "bar/zob/fizz.txt", "spam.txt")
         for path in pathes:
-            access, _ = local_folder_fs.get_entry(Path("/foo/" + path))
+            access, _ = local_folder_fs.get_entry(Path("/w/foo/" + path))
             existing_ids.add(access["id"])
 
     if type == "copy":
-        local_folder_fs.copy(Path("/foo"), Path("/foo2"))
-        stat = local_folder_fs.stat(Path("/"))
+        local_folder_fs.copy(Path("/w/foo"), Path("/w/foo2"))
+        stat = local_folder_fs.stat(Path("/w"))
         assert stat["children"] == ["foo", "foo2"]
     else:
-        local_folder_fs.move(Path("/foo"), Path("/foo2"))
-        stat = local_folder_fs.stat(Path("/"))
+        local_folder_fs.move(Path("/w/foo"), Path("/w/foo2"))
+        stat = local_folder_fs.stat(Path("/w"))
         assert stat["children"] == ["foo2"]
 
         for path in pathes:
-            access, _ = local_folder_fs.get_entry(Path("/foo2/" + path))
+            access, _ = local_folder_fs.get_entry(Path("/w/foo2/" + path))
             assert access["id"] not in existing_ids
 
 
@@ -148,12 +155,7 @@ def test_rename_but_cannot_move_workspace(local_folder_fs):
     assert old_name_stat == new_name_stat
 
 
-def test_folder_file_outside_workpace_not_ok(local_folder_fs_factory, alice):
-    # Well folder/file created inside directly as root children are everywhere
-    # in the tests (because it's very convenient...), but in real life we
-    # don't want this.
-    local_folder_fs = local_folder_fs_factory(alice, allow_non_workpace_in_root=False)
-
+def test_folder_file_outside_workpace_not_ok(local_folder_fs):
     with pytest.raises(PermissionError):
         local_folder_fs.touch(Path("/foo"))
     with pytest.raises(PermissionError):
@@ -166,10 +168,9 @@ def test_folder_file_outside_workpace_not_ok(local_folder_fs_factory, alice):
 
 
 def test_not_root_child_bad_workspace_create(local_folder_fs):
-    local_folder_fs.mkdir(Path("/foo"))
+    local_folder_fs.workspace_create(Path("/w"))
     with pytest.raises(PermissionError):
-        local_folder_fs.workspace_create(Path("/foo/bar"))
-    local_folder_fs.workspace_create(Path("/spam"))
+        local_folder_fs.workspace_create(Path("/w/foo"))
 
 
 def test_cannot_replace_root(local_folder_fs):
@@ -178,9 +179,10 @@ def test_cannot_replace_root(local_folder_fs):
     with pytest.raises(FileExistsError):
         local_folder_fs.mkdir(Path("/"))
 
-    local_folder_fs.mkdir(Path("/foo"))
     with pytest.raises(PermissionError):
         local_folder_fs.move(Path("/"), Path("/foo"))
+
+    local_folder_fs.workspace_create(Path("/foo"))
     with pytest.raises(PermissionError):
         local_folder_fs.move(Path("/foo"), Path("/"))
 
@@ -275,13 +277,17 @@ def test_folder_operations(tmpdir, hypothesis_settings, device_factory, local_fo
             self.last_step_id_to_path = set()
             self.device = device_factory()
             self.local_folder_fs = local_folder_fs_factory(self.device)
+
             self.folder_oracle = pathlib.Path(tmpdir / f"oracle-test-{tentative}")
             self.folder_oracle.mkdir()
             oracle_root = self.folder_oracle / "root"
             oracle_root.mkdir()
             self.folder_oracle.chmod(0o500)  # Root oracle can no longer be removed this way
 
-            return PathElement("/", oracle_root)
+            self.local_folder_fs.workspace_create(Path("/w"))
+            (oracle_root / "w").mkdir()
+
+            return PathElement("/w", oracle_root)
 
         @rule(target=Files, parent=Folders, name=st_entry_name)
         def touch(self, parent, name):
@@ -324,7 +330,7 @@ def test_folder_operations(tmpdir, hypothesis_settings, device_factory, local_fo
             with expect_raises(expected_exc):
                 self.local_folder_fs.unlink(path.to_parsec())
 
-        @rule(path=Folders)
+        @rule(path=Folders.filter(lambda x: x.absolute_path != "/w"))
         def rmdir(self, path):
             expected_exc = None
             try:

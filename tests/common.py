@@ -2,8 +2,11 @@ import trio
 import attr
 import pendulum
 from unittest.mock import Mock
+from contextlib import ExitStack
 from inspect import iscoroutinefunction
 
+from parsec.core import Core
+from parsec.core.fs import FS
 from parsec.core.local_db import LocalDB, LocalDBMissingEntry
 from parsec.networking import CookedSocket
 
@@ -115,3 +118,41 @@ async def call_with_control(controlled_fn, *, task_status=trio.TASK_STATUS_IGNOR
 
     finally:
         controller.stopped.set()
+
+
+async def create_shared_workspace(name, creator, *shared_with):
+    """
+    Create a workspace and share it with the given Cores/FSs.
+    This is more tricky than it seems given all Cores/FSs must agree on the
+    workspace version and (only for the Cores) be ready to listen to the
+    workpace's beacon events.
+    """
+    spies = []
+    fss = []
+
+    with ExitStack() as stack:
+        for x in (creator, *shared_with):
+            if isinstance(x, Core):
+                # In case core has been passed
+                spies.append(stack.enter_context(x.event_bus.listen()))
+                fss.append(x.fs)
+            elif isinstance(x, FS):
+                fss.append(x)
+            else:
+                raise ValueError(f"{x!r} is not a {FS!r} or a {Core!r}")
+
+        creator_fs, *shared_with_fss = fss
+        path = f"/{name}"
+        await creator_fs.workspace_create(path)
+        await creator_fs.sync(path)
+        for recipient_fs in shared_with_fss:
+            if recipient_fs.device.user_id == creator_fs.device.user_id:
+                await recipient_fs.sync("/")
+            else:
+                await creator_fs.share(path, recipient_fs.device.user_id)
+                await recipient_fs.process_last_messages()
+                await recipient_fs.sync("/")
+
+        with trio.fail_after(1):
+            for spy in spies:
+                await spy.wait("backend.listener.restarted")

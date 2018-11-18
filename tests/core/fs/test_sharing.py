@@ -7,63 +7,63 @@ from parsec.core.fs.sharing import SharingRecipientError, SharingNotAWorkspace
 @pytest.mark.trio
 async def test_share_workspace(running_backend, alice_fs, bob_fs):
     # First, create a populated workspace and sync it on backend
-    await alice_fs.workspace_create("/foo")
-    await alice_fs.folder_create("/foo/spam")
-    await alice_fs.folder_create("/foo/spam/zob")
-    await alice_fs.file_create("/foo/spam/bar.txt")
-    await alice_fs.file_write("/foo/spam/bar.txt", b"Hello from Alice !")
-    await alice_fs.sync("/foo")
+    await alice_fs.workspace_create("/w")
+    await alice_fs.folder_create("/w/spam")
+    await alice_fs.folder_create("/w/spam/zob")
+    await alice_fs.file_create("/w/spam/bar.txt")
+    await alice_fs.file_write("/w/spam/bar.txt", b"Hello from Alice !")
+    await alice_fs.sync("/w")
 
     # Now we can share this workspace with Bob
-    await alice_fs.share("/foo", recipient="bob")
+    await alice_fs.share("/w", recipient="bob")
 
     # Bob should get a notification
-    bob_foo_name = "foo (shared by alice)"
+    bob_w_name = "w (shared by alice)"
     with bob_fs.event_bus.listen() as spy:
         await bob_fs.process_last_messages()
-    spy.assert_event_occured("sharing.new", kwargs={"path": f"/{bob_foo_name}", "access": spy.ANY})
+    spy.assert_event_occured("sharing.new", kwargs={"path": f"/{bob_w_name}", "access": spy.ANY})
 
     # Now Bob can access the file just like Alice would do
     bob_root_stat = await bob_fs.stat("/")
-    assert bob_root_stat["children"] == [bob_foo_name]
+    assert bob_root_stat["children"] == [bob_w_name]
 
     for path in ("", "/spam", "/spam/zob", "/spam/bar.txt"):
-        alice_path = f"/foo{path}"
-        bob_path = f"/{bob_foo_name}{path}"
+        alice_path = f"/w{path}"
+        bob_path = f"/{bob_w_name}{path}"
         alice_file_stat = await alice_fs.stat(alice_path)
         bob_file_stat = await bob_fs.stat(bob_path)
         assert bob_file_stat == alice_file_stat
 
-        if alice_path == "/foo":
+        if alice_path == "/w":
             # Also make sure Bob is marked among the workspace's participants
             assert alice_file_stat["participants"] == ["alice", "bob"]
 
-    bob_file_data = await bob_fs.file_read(f"/{bob_foo_name}/spam/bar.txt")
+    bob_file_data = await bob_fs.file_read(f"/{bob_w_name}/spam/bar.txt")
     assert bob_file_data == b"Hello from Alice !"
 
 
 @pytest.mark.trio
 async def test_share_workspace_placeholder(running_backend, alice_fs, bob_fs):
     # First, create the workspace
-    await alice_fs.workspace_create("/foo")
+    await alice_fs.workspace_create("/w")
 
     # Now we can share this workspace with Bob, this should trigger sync
     with alice_fs.event_bus.listen() as spy:
-        await alice_fs.share("/foo", recipient="bob")
-    spy.assert_event_occured("fs.entry.synced", kwargs={"path": f"/foo", "id": spy.ANY})
+        await alice_fs.share("/w", recipient="bob")
+    spy.assert_event_occured("fs.entry.synced", kwargs={"path": f"/w", "id": spy.ANY})
 
     # Bob should get a notification
-    bob_foo_name = "foo (shared by alice)"
+    bob_w_name = "w (shared by alice)"
     with bob_fs.event_bus.listen() as spy:
         await bob_fs.process_last_messages()
-    spy.assert_event_occured("sharing.new", kwargs={"path": f"/{bob_foo_name}", "access": spy.ANY})
+    spy.assert_event_occured("sharing.new", kwargs={"path": f"/{bob_w_name}", "access": spy.ANY})
 
     # Now Bob can access the file just like Alice would do
     bob_root_stat = await bob_fs.stat("/")
-    assert bob_root_stat["children"] == [bob_foo_name]
+    assert bob_root_stat["children"] == [bob_w_name]
 
-    alice_file_stat = await alice_fs.stat("/foo")
-    bob_file_stat = await bob_fs.stat(f"/{bob_foo_name}")
+    alice_file_stat = await alice_fs.stat("/w")
+    bob_file_stat = await bob_fs.stat(f"/{bob_w_name}")
     assert bob_file_stat == alice_file_stat
     # Also make sure Bob is marked among the workspace's participants
     assert alice_file_stat["participants"] == ["alice", "bob"]
@@ -72,23 +72,23 @@ async def test_share_workspace_placeholder(running_backend, alice_fs, bob_fs):
 @pytest.mark.trio
 async def test_share_workspace_then_rename_it(running_backend, alice_fs, bob_fs):
     # First, create the workspace
-    await alice_fs.workspace_create("/foo")
+    await alice_fs.workspace_create("/w")
 
     # Now we can share this workspace with Bob, this should trigger sync
     with alice_fs.event_bus.listen() as spy:
-        await alice_fs.share("/foo", recipient="bob")
-    spy.assert_event_occured("fs.entry.synced", kwargs={"path": f"/foo", "id": spy.ANY})
+        await alice_fs.share("/w", recipient="bob")
+    spy.assert_event_occured("fs.entry.synced", kwargs={"path": f"/w", "id": spy.ANY})
 
     # Bob should get a notification
     with bob_fs.event_bus.listen() as spy:
         await bob_fs.process_last_messages()
     spy.assert_event_occured(
-        "sharing.new", kwargs={"path": f"/foo (shared by alice)", "access": spy.ANY}
+        "sharing.new", kwargs={"path": f"/w (shared by alice)", "access": spy.ANY}
     )
 
     # Now Bob and alice both rename the workpsace for there own taste
-    await bob_fs.workspace_rename(f"/foo (shared by alice)", "/from_alice")
-    await alice_fs.workspace_rename(f"/foo", "/to_bob")
+    await bob_fs.workspace_rename(f"/w (shared by alice)", "/from_alice")
+    await alice_fs.workspace_rename(f"/w", "/to_bob")
 
     await bob_fs.sync("/")
     await alice_fs.sync("/")
@@ -108,10 +108,10 @@ async def test_share_workspace_then_rename_it(running_backend, alice_fs, bob_fs)
 
 @pytest.mark.trio
 async def test_share_backend_offline(alice_fs, bob):
-    await alice_fs.workspace_create("/foo")
+    await alice_fs.workspace_create("/w")
 
     with pytest.raises(BackendNotAvailable):
-        await alice_fs.share("/foo", recipient=bob.user_id)
+        await alice_fs.share("/w", recipient=bob.user_id)
 
 
 @pytest.mark.trio
@@ -130,19 +130,22 @@ async def test_share_not_a_valid_path(running_backend, alice_fs, bob):
 
 @pytest.mark.trio
 async def test_share_bad_recipient(running_backend, alice_fs):
-    await alice_fs.workspace_create("/foo")
+    await alice_fs.workspace_create("/w")
 
     with pytest.raises(SharingRecipientError) as exc:
-        await alice_fs.share("/foo", recipient="dummy")
+        await alice_fs.share("/w", recipient="dummy")
     assert exc.value.args == ("Cannot create message for `dummy`",)
 
 
 @pytest.mark.trio
-async def test_share_not_a_workspace(running_backend, alice_fs, bob):
-    await alice_fs.file_create("/foo.txt")
-    await alice_fs.folder_create("/spam")
+async def test_share_not_a_workspace(running_backend, alice_fs):
+    # First, create the workspace
+    await alice_fs.workspace_create("/w")
 
-    for path in ["/foo.txt", "/spam"]:
+    await alice_fs.file_create("/w/foo.txt")
+    await alice_fs.folder_create("/w/spam")
+
+    for path in ["/w/foo.txt", "/w/spam"]:
         with pytest.raises(SharingNotAWorkspace) as exc:
             await alice_fs.share(path, recipient="dummy")
         assert exc.value.args == (f"`{path}` is not a workspace, hence cannot be shared",)
@@ -150,10 +153,10 @@ async def test_share_not_a_workspace(running_backend, alice_fs, bob):
 
 @pytest.mark.trio
 async def test_share_invalid_recipient(running_backend, alice_fs, alice):
-    await alice_fs.workspace_create("/foo")
+    await alice_fs.workspace_create("/w")
 
     with pytest.raises(SharingRecipientError) as exc:
-        await alice_fs.share("/foo", recipient=alice.user_id)
+        await alice_fs.share("/w", recipient=alice.user_id)
     assert exc.value.args == ("Cannot share to oneself.",)
 
 

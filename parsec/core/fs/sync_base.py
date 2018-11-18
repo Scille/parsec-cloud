@@ -82,11 +82,10 @@ class BaseSyncer:
             except FSEntryNotFound:
                 # Entry not locally present, nothing to do
                 return
-            notify_beacon = self.local_folder_fs.get_beacon(path)
             # TODO: Instead of going recursive here, we should have do a minimal
             # children sync (i.e. sync empty file and folder with the backend)
             # to save time.
-            await self._sync_nolock(path, access, recursive=True, notify_beacon=notify_beacon)
+            await self._sync_nolock(path, access, recursive=True)
 
     async def sync(self, path: Path, recursive: bool = True) -> None:
         # Only allow a single synchronizing operation at a time to simplify
@@ -99,11 +98,10 @@ class BaseSyncer:
             except FSManifestLocalMiss:
                 # Nothing to do if entry is no present locally
                 return
-            notify_beacon = self.local_folder_fs.get_beacon(sync_path)
-            await self._sync_nolock(sync_path, sync_access, sync_recursive, notify_beacon)
+            await self._sync_nolock(sync_path, sync_access, sync_recursive)
 
     async def _sync_nolock(
-        self, path: Path, access: Access, recursive: Union[bool, dict, list], notify_beacon: UUID
+        self, path: Path, access: Access, recursive: Union[bool, dict, list]
     ) -> None:
         try:
             manifest = self.local_folder_fs.get_manifest(access)
@@ -111,12 +109,12 @@ class BaseSyncer:
             # Nothing to do if entry is no present locally
             return
         if is_folder_manifest(manifest):
-            await self._sync_folder_nolock(path, access, manifest, recursive, notify_beacon)
+            await self._sync_folder_nolock(path, access, manifest, recursive)
         else:
-            await self._sync_file_nolock(path, access, manifest, notify_beacon)
+            await self._sync_file_nolock(path, access, manifest)
 
     async def _sync_file_nolock(
-        self, path: Path, access: Access, manifest: LocalFileManifest, notify_beacon: UUID
+        self, path: Path, access: Access, manifest: LocalFileManifest
     ) -> None:
         raise NotImplementedError()
 
@@ -126,7 +124,6 @@ class BaseSyncer:
         access: Access,
         manifest: LocalFolderManifest,
         recursive: Union[bool, dict, list],
-        notify_beacon: UUID,
     ) -> None:
         raise NotImplementedError()
 

@@ -48,10 +48,11 @@ def test_fs_offline_restart_and_tree(
         async def init(self):
             self.device = device_factory()
             await self.restart_fs()
-            await self.fs.file_create("/foo.txt")
+            await self.fs.workspace_create("/w")
 
             self.oracle_fs = oracle_fs_factory()
-            return "/"
+            self.oracle_fs.create_workspace("/w")
+            return "/w"
 
         @rule()
         async def restart(self):
@@ -77,6 +78,17 @@ def test_fs_offline_restart_and_tree(
             else:
                 with pytest.raises(OSError):
                     await self.fs.folder_create(path=path)
+            return path
+
+        @rule(target=Folders, name=st_entry_name)
+        async def create_workspace(self, name):
+            path = os.path.join("/", name)
+            expected_status = self.oracle_fs.create_workspace(path)
+            if expected_status == "ok":
+                await self.fs.workspace_create(path)
+            else:
+                with pytest.raises(OSError):
+                    await self.fs.workspace_create(path)
             return path
 
         @rule(path=Files)
@@ -122,5 +134,7 @@ def test_fs_offline_restart_and_tree(
                 with pytest.raises(OSError):
                     await self.fs.move(src, dst)
             return dst
+
+        # TODO: test workspace_rename as well ?
 
     run_state_machine_as_test(FSOfflineRestartAndTree, settings=hypothesis_settings)

@@ -15,19 +15,12 @@ from parsec.core.fs.types import Path
 
 
 class FS:
-    def __init__(
-        self,
-        device,
-        backend_cmds_sender,
-        encryption_manager,
-        event_bus,
-        allow_non_workpace_in_root=False,
-    ):
+    def __init__(self, device, backend_cmds_sender, encryption_manager, event_bus):
         super().__init__()
         self.event_bus = event_bus
         self.device = device
 
-        self._local_folder_fs = LocalFolderFS(device, event_bus, allow_non_workpace_in_root)
+        self._local_folder_fs = LocalFolderFS(device, event_bus)
         self._local_file_fs = LocalFileFS(device, self._local_folder_fs, event_bus)
         self._remote_loader = RemoteLoader(backend_cmds_sender, encryption_manager, device.local_db)
         self._syncer = Syncer(

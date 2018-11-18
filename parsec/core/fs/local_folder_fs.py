@@ -40,14 +40,11 @@ class FSMultiManifestLocalMiss(Exception):
 
 
 class LocalFolderFS:
-    # TODO: `allow_non_workpace_in_root` is a big hack to simplify tests,
-    # there must be a better way...
-    def __init__(self, device, event_bus, allow_non_workpace_in_root=False):
+    def __init__(self, device, event_bus):
         self.local_author = device.id
         self.root_access = device.user_manifest_access
         self._local_db = device.local_db
         self.event_bus = event_bus
-        self.allow_non_workpace_in_root = allow_non_workpace_in_root
         self._manifests_cache = {}
 
     def get_local_beacons(self) -> List[UUID]:
@@ -139,11 +136,11 @@ class LocalFolderFS:
         # beacon. This is not possible when directly modifying the user
         # manifest in which case we use the user manifest id as beacon.
         try:
-            *_, workspace_path, _ = path.parents
+            _, workspace_name, *_ = path.parts
         except ValueError:
             return self.root_access["id"]
 
-        access, manifest = self._retrieve_entry_read_only(workspace_path)
+        access, manifest = self._retrieve_entry_read_only(Path(f"/{workspace_name}"))
         assert is_workspace_manifest(manifest)
         return access["id"]
 
@@ -283,7 +280,7 @@ class LocalFolderFS:
         if path.is_root():
             raise FileExistsError(17, "File exists", str(path))
 
-        if path.parent.is_root() and not self.allow_non_workpace_in_root:
+        if path.parent.is_root():
             raise PermissionError(
                 13, "Permission denied (only workpace allowed at root level)", str(path)
             )
@@ -307,7 +304,7 @@ class LocalFolderFS:
         if path.is_root():
             raise FileExistsError(17, "File exists", str(path))
 
-        if path.parent.is_root() and not self.allow_non_workpace_in_root:
+        if path.parent.is_root():
             raise PermissionError(
                 13, "Permission denied (only workpace allowed at root level)", str(path)
             )

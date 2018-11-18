@@ -45,7 +45,8 @@ def test_fs_offline_restart_and_rwfile(
         async def init(self):
             self.device = device_factory()
             await self.restart_fs()
-            await self.fs.file_create("/foo.txt")
+            await self.fs.workspace_create("/w")
+            await self.fs.file_create("/w/foo.txt")
             self.file_oracle = FileOracle()
 
         @rule()
@@ -57,7 +58,7 @@ def test_fs_offline_restart_and_rwfile(
             offset=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
         )
         async def atomic_read(self, size, offset):
-            content = await self.fs.file_read("/foo.txt", size=size, offset=offset)
+            content = await self.fs.file_read("/w/foo.txt", size=size, offset=offset)
             expected_content = self.file_oracle.read(size, offset)
             assert content == expected_content
 
@@ -66,12 +67,12 @@ def test_fs_offline_restart_and_rwfile(
             content=st.binary(max_size=PLAYGROUND_SIZE),
         )
         async def atomic_write(self, offset, content):
-            await self.fs.file_write("/foo.txt", content=content, offset=offset)
+            await self.fs.file_write("/w/foo.txt", content=content, offset=offset)
             self.file_oracle.write(offset, content)
 
         @rule(length=st.integers(min_value=0, max_value=PLAYGROUND_SIZE))
         async def atomic_truncate(self, length):
-            await self.fs.file_truncate("/foo.txt", length=length)
+            await self.fs.file_truncate("/w/foo.txt", length=length)
             self.file_oracle.truncate(length)
 
     run_state_machine_as_test(FSOfflineRestartAndRWFile, settings=hypothesis_settings)
