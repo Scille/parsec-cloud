@@ -60,6 +60,17 @@
 {
 border: 2px solid rgb(12, 65, 157);
 background-color: rgb(255, 255, 255);
+}
+
+QPushButton
+{
+background-color: rgb(255, 255, 255);
+border: 0;
+}
+
+QLabel
+{
+background-color: rgb(255, 255, 255);
 }</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">

@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>SettingsWidget</class>
  <widget class="QWidget" name="SettingsWidget">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -62,6 +65,36 @@ padding-left: 10px;
 QLineEdit[readOnly=&quot;true&quot;]
 {
 background-color: rgb(230, 230, 230);
+}
+
+QPushButton
+{
+background-color: rgb(45, 144, 209);
+border: 1px solid rgb(11, 56, 166);
+color: rgb(255, 255, 255);
+padding-left: 10px;
+padding-right: 10px;
+}
+
+QPushButton:disabled
+{
+border: 1px solid rgb(65, 75, 106);
+background-color: rgb(112, 122, 153);
+color: rgb(255, 255, 255);
+}
+
+QCheckBox::indicator
+{
+width: 15px;
+height: 15px;
+background-color: rgb(255, 255, 255);
+border: 2px solid rgb(30, 78, 162);
+color: black;
+}
+
+QCheckBox::indicator:checked
+{
+image: url(:/icons/images/icons/checked.png)
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -198,6 +231,9 @@ background-color: rgb(230, 230, 230);
            </item>
            <item>
             <widget class="QPushButton" name="button_choose_mountpoint">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -215,11 +251,7 @@ background-color: rgb(230, 230, 230);
               <enum>Qt::RightToLeft</enum>
              </property>
              <property name="styleSheet">
-              <string notr="true">background-color: rgb(45, 144, 209);
-border: 1px solid rgb(11, 56, 166);
-color: rgb(255, 255, 255);
-padding-left: 10px;
-padding-right: 10px;</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>Choose mountpoint</string>
