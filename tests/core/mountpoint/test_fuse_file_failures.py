@@ -8,7 +8,7 @@ def test_fuse_grow_by_truncate(tmpdir, fuse_service):
     fuse_service.start()
     try:
         oracle_fd = os.open(tmpdir / f"oracle-test", os.O_RDWR | os.O_CREAT)
-        fd = os.open(fuse_service.mountpoint / "bar.txt", os.O_RDWR | os.O_CREAT)
+        fd = os.open(fuse_service.default_workspace / "bar.txt", os.O_RDWR | os.O_CREAT)
 
         length = 1
         os.ftruncate(fd, length)
@@ -29,7 +29,7 @@ def test_fuse_empty_read_then_reopen(tmpdir, fuse_service):
     fuse_service.start()
     try:
         oracle_fd = os.open(tmpdir / f"oracle-test", os.O_RDWR | os.O_CREAT)
-        fd = os.open(fuse_service.mountpoint / "bar.txt", os.O_RDWR | os.O_CREAT)
+        fd = os.open(fuse_service.default_workspace / "bar.txt", os.O_RDWR | os.O_CREAT)
 
         content = b"\x00"
         expected_ret = os.write(oracle_fd, content)
@@ -49,7 +49,7 @@ def test_fuse_empty_read_then_reopen(tmpdir, fuse_service):
         os.close(oracle_fd)
         os.close(fd)
         oracle_fd = os.open(tmpdir / f"oracle-test", os.O_RDWR)
-        fd = os.open(fuse_service.mountpoint / "bar.txt", os.O_RDWR)
+        fd = os.open(fuse_service.default_workspace / "bar.txt", os.O_RDWR)
 
         size = 1
         expected_data = os.read(oracle_fd, size)

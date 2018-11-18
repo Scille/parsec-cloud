@@ -82,8 +82,13 @@ def test_fuse_folder_operations(tmpdir, hypothesis_settings, fuse_service):
             oracle_root = self.folder_oracle / "root"
             oracle_root.mkdir()
             self.folder_oracle.chmod(0o500)  # Root oracle can no longer be removed this way
+            (oracle_root / fuse_service.default_workspace_name).mkdir()
 
-            return PathElement("/", Path(str(fuse_service.mountpoint)), oracle_root)
+            return PathElement(
+                f"/{fuse_service.default_workspace_name}",
+                Path(str(fuse_service.mountpoint)),
+                oracle_root,
+            )
 
         def teardown(self):
             fuse_service.stop()
@@ -174,6 +179,7 @@ def test_fuse_folder_operations(tmpdir, hypothesis_settings, fuse_service):
             with expect_raises(expected_exc):
                 children = {x.name for x in path.to_parsec().iterdir()}
 
+            if not expected_exc:
                 assert children == expected_children
 
     run_state_machine_as_test(FuseFolderOperationsStateMachine, settings=hypothesis_settings)
