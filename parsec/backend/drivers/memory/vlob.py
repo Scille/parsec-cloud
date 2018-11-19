@@ -48,7 +48,6 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise AlreadyExistsError("Vlob already exists.")
         self.vlobs[vlob.id] = vlob
 
-        self.event_bus.send("vlob_updated", subject=id)
         await self.beacon_component.update(notify_beacon, id, 1, author)
 
         return VlobAtom(
@@ -94,5 +93,4 @@ class MemoryVlobComponent(BaseVlobComponent):
         else:
             raise VersionError("Wrong blob version.")
 
-        self.event_bus.send("vlob_updated", subject=id)
         await self.beacon_component.update(notify_beacon, id, version, author)
