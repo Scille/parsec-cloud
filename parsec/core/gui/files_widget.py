@@ -249,13 +249,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if isinstance(current_widget, ParentItemWidget):
             return
         menu = QMenu(self.list_files)
-        action = menu.addAction(QCoreApplication.translate("FilesWidget", "Rename"))
-        action.triggered.connect(self.rename(current_widget))
         if isinstance(current_widget, FileItemWidget):
             action = menu.addAction(QCoreApplication.translate("FilesWidget", "Open"))
         else:
             action = menu.addAction(QCoreApplication.translate("FilesWidget", "Open in explorer"))
         action.triggered.connect(self.open_file(current_widget))
+        action = menu.addAction(QCoreApplication.translate("FilesWidget", "Rename"))
+        action.triggered.connect(self.rename(current_widget))
         menu.exec_(global_pos)
 
     def rename(self, widget):

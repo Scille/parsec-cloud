@@ -14,6 +14,42 @@ except ImportError:
 exec(open("parsec/_version.py", encoding="utf-8").read())
 
 
+def fix_pyqt_import():
+    # PyQt5-sip is a distinct pip package that provides PyQt5.sip
+    # However it setuptools handles `setup_requires` by downloading the
+    # dependencies in the `./.eggs` directory wihtout really installing
+    # them. This causes `import PyQt5.sip` to fail given the `PyQt5` folder
+    # doesn't contains `sip.so`...
+    import sys
+    import glob
+    import importlib
+
+    for module_name, path_glob in (
+        ("PyQt5", ".eggs/*PyQt5*/PyQt5/__init__.py"),
+        ("PyQt5.sip", ".eggs/*PyQt5_sip*/PyQt5/sip.so"),
+    ):
+        # If the module has already been installed in the environment
+        # setuptools won't populate the `.eggs` directory and we have
+        # nothing to do
+        try:
+            importlib.import_module(module_name)
+        except ImportError:
+            pass
+        else:
+            continue
+
+        try:
+            path = glob.glob(path_glob)[0]
+        except IndexError:
+            raise RuntimeError("Cannot found module `%s` in .eggs" % module_name)
+
+        spec = importlib.util.spec_from_file_location(module_name, path)
+        if not spec:
+            raise RuntimeError("Cannot load module `%s` from path `%s`" % (module_name, path))
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+
+
 class GeneratePyQtResourcesBundle(Command):
     description = "Generates `parsec.core.gui._resource_rc` bundle module"
 
@@ -26,6 +62,7 @@ class GeneratePyQtResourcesBundle(Command):
         pass
 
     def run(self):
+        fix_pyqt_import()
         try:
             from PyQt5.pyrcc_main import processResourceFile
 
@@ -35,6 +72,102 @@ class GeneratePyQtResourcesBundle(Command):
             )
         except ImportError:
             print("PyQt5 not installed, skipping `parsec.core.gui._resources_rc` generation.")
+
+
+class GeneratePyQtForms(Command):
+    description = "Generates `parsec.core.ui.*` forms module"
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        import os
+        import pathlib
+        from collections import namedtuple
+
+        fix_pyqt_import()
+        try:
+            from PyQt5.uic.driver import Driver
+        except ImportError:
+            print("PyQt5 not installed, skipping `parsec.core.gui.ui` generation.")
+            return
+
+        self.announce("Generating `parsec.core.gui.ui`", level=distutils.log.INFO)
+        Options = namedtuple(
+            "Options",
+            ["output", "import_from", "debug", "preview", "execute", "indent", "resource_suffix"],
+        )
+        ui_dir = pathlib.Path("parsec/core/gui/forms")
+        ui_path = "parsec/core/gui/ui"
+        os.makedirs(ui_path, exist_ok=True)
+        for f in ui_dir.iterdir():
+            o = Options(
+                output=os.path.join(ui_path, "{}.py".format(f.stem)),
+                import_from="parsec.core.gui",
+                debug=False,
+                preview=False,
+                execute=False,
+                indent=4,
+                resource_suffix="_rc",
+            )
+            d = Driver(o, str(f))
+            d.invoke()
+
+
+class GeneratePyQtTranslations(Command):
+    description = "Generates ui translation files"
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        import os
+        import pathlib
+        import subprocess
+        from unittest.mock import patch
+
+        fix_pyqt_import()
+        try:
+            from PyQt5.pylupdate_main import main as pylupdate_main
+        except ImportError:
+            print("PyQt5 not installed, skipping `parsec.core.gui.ui` generation.")
+            return
+
+        self.announce("Generating ui translation files", level=distutils.log.INFO)
+        rc_dir = "parsec/core/gui/rc/translations"
+        os.makedirs(rc_dir, exist_ok=True)
+        new_args = ["pylupdate", "parsec/core/gui/parsec-gui.pro"]
+        with patch("sys.argv", new_args):
+            pylupdate_main()
+        tr_dir = pathlib.Path("parsec/core/gui/tr")
+        for f in tr_dir.iterdir():
+            subprocess.call(
+                [
+                    "lrelease",
+                    "-compress",
+                    str(f),
+                    "-qm",
+                    os.path.join(rc_dir, "{}.qm".format(f.stem)),
+                ],
+                stdout=subprocess.DEVNULL,
+            )
+
+
+class build_py_with_pyqt(build_py):
+    def run(self):
+        self.run_command("generate_pyqt_forms")
+        self.run_command("generate_pyqt_resources_bundle")
+        return super().run()
 
 
 class build_py_with_pyqt_resource_bundle_generation(build_py):
@@ -57,6 +190,7 @@ def _extract_libs_cffi_backend():
 
 build_exe_options = {
     "packages": [
+        "parsec.core.gui.ui",
         "idna",
         "trio._core",
         "nacl._sodium",
@@ -99,25 +233,24 @@ requirements = [
 
 
 test_requirements = [
-    # https://github.com/python-trio/pytest-trio/issues/64
-    # "pytest>=3.6",
-    "pytest==3.8.0",
+    "pytest>=3.8.1",
     "pytest-cov",
-    "pytest-trio",
+    "pytest-xdist",
+    "pytest-trio>=0.5.1",
     "tox",
     "wheel",
     "Sphinx",
     "flake8",
     "hypothesis",
     "hypothesis-trio>=0.2.1",
-    "black==18.6b1",  # Pin black to avoid flaky style check
+    "black==18.9b0",  # Pin black to avoid flaky style check
 ]
 
 
 PYQT_DEP = "PyQt5==5.11.2"
 extra_requirements = {
     "pkcs11": ["python-pkcs11==0.5.0", "pycrypto==2.6.1"],
-    "core": [PYQT_DEP, "hurry.filesize==0.9", "fusepy==3.0.1"],
+    "core": [PYQT_DEP, "fusepy==3.0.1"],
     "backend": [
         # PostgreSQL
         "triopg==0.3.0",
@@ -150,7 +283,10 @@ setup(
     extras_require=extra_requirements,
     cmdclass={
         "generate_pyqt_resources_bundle": GeneratePyQtResourcesBundle,
-        "build_py": build_py_with_pyqt_resource_bundle_generation,
+        "generate_pyqt_forms": GeneratePyQtForms,
+        "generate_pyqt_translations": GeneratePyQtTranslations,
+        "generate_pyqt": build_py_with_pyqt,
+        "build_py": build_py_with_pyqt,
     },
     entry_points={"console_scripts": ["parsec = parsec.cli:cli"]},
     options={"build_exe": build_exe_options},

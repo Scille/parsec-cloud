@@ -61,7 +61,6 @@ def test_fs_online_rwfile_and_sync(
         @initialize()
         async def init(self):
             self.device = device_factory()
-
             await self.start_backend()
             await self.restart_fs(self.device)
             await self.fs.workspace_create("/w")

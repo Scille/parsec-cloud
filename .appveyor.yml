@@ -21,7 +21,8 @@ environment:
 
 build_script:
   - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
-  - createdb parsec_test
+  - createdb parsec_test_gw0
+  - createdb parsec_test_gw1
   - which pg_config
   - pg_config --version
   - choco install winfsp -y --version=1.3.18160
@@ -36,7 +37,7 @@ build_script:
 test_script:
   # Uncomment this for RDP debug
   # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-  - py.test tests/  --cov=parsec --cov-config=setup.cfg --runslow -vvv -x --postgresql
+  - py.test tests/ -n 2 --cov=parsec --cov-config=setup.cfg --runslow -x --postgresql
 
 # TODO: re-enable me !
 # on_success:

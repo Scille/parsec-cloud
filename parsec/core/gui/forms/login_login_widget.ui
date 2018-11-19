@@ -32,7 +32,8 @@
    <string notr="true">QWidget#LoginLoginWidget
 {
 background-color: rgb(12, 65, 156);
-}</string>
+}
+</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="spacing">
@@ -172,7 +173,7 @@ image: url(:/icons/images/icons/checked.png)
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="combo_devices">
+            <widget class="QLineEdit" name="line_edit_device">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -183,12 +184,6 @@ image: url(:/icons/images/icons/checked.png)
               <font>
                <pointsize>12</pointsize>
               </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
-             <property name="currentText">
-              <string/>
              </property>
             </widget>
            </item>

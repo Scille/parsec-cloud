@@ -42,8 +42,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tray = None
         self.widget_menu.hide()
         self.login_widget = LoginWidget(parent=self.widget_main)
-        for device_name in core_call().get_devices():
-            self.login_widget.add_device(device_name)
         self.main_widget_layout.insertWidget(1, self.login_widget)
         self.users_widget = UsersWidget(parent=self.widget_main)
         self.main_widget_layout.insertWidget(1, self.users_widget)
@@ -106,11 +104,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         device = core_call().load_device("johndoe@test")
         core_call().login(device)
         self.current_device = device
-        self.widget_menu.hide()
-        self.login_widget.reset()
-        self.users_widget.reset()
-        self.devices_widget.reset()
-        self.mount_widget.reset()
         self.show_login_widget()
 
     def mount(self):
@@ -164,6 +157,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.current_device = device
             core_call().logout()
             core_call().login(device)
+            settings.set_value("last_device", device_id)
             if settings.get_value("mountpoint_enabled"):
                 mountpoint = self.mount()
                 if mountpoint is None:
@@ -225,7 +219,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 core_call().register_new_device(
                     device_id, privkey, signkey, manifest, None, True, pkcs11_token, pkcs11_key
                 )
-            self.login_widget.add_device(device_id)
             show_info(
                 self,
                 QCoreApplication.translate(
@@ -305,7 +298,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 core_call().register_new_device(
                     device_id, privkey, signkey, manifest, None, True, pkcs11_token, pkcs11_key
                 )
-            self.login_widget.add_device(device_id)
             show_info(
                 self,
                 QCoreApplication.translate(
@@ -378,32 +370,40 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.hide()
 
     def show_mount_widget(self):
-        self.mount_widget.reset()
         self._hide_all_central_widgets()
+        self.widget_menu.show()
         self.button_files.setChecked(True)
+        self.mount_widget.reset()
         self.mount_widget.show()
 
     def show_users_widget(self):
-        self.users_widget.reset()
         self._hide_all_central_widgets()
+        self.widget_menu.show()
         self.button_users.setChecked(True)
+        self.users_widget.reset()
         self.users_widget.show()
 
     def show_devices_widget(self):
         self._hide_all_central_widgets()
+        self.widget_menu.show()
         self.button_devices.setChecked(True)
+        self.devices_widget.reset()
         self.devices_widget.show()
 
     def show_settings_widget(self):
         self._hide_all_central_widgets()
+        self.widget_menu.show()
         self.button_settings.setChecked(True)
+        self.settings_widget.reset()
         self.settings_widget.show()
 
     def show_login_widget(self):
         self._hide_all_central_widgets()
+        self.login_widget.reset()
         self.login_widget.show()
 
     def _hide_all_central_widgets(self):
+        self.widget_menu.hide()
         self.mount_widget.hide()
         self.users_widget.hide()
         self.settings_widget.hide()

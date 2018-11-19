@@ -182,7 +182,7 @@ background-color: rgb(255, 255, 255);
           <item>
            <widget class="QLabel" name="label_message">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -251,7 +251,7 @@ padding-right: 10px;</string>
               </property>
               <property name="icon">
                <iconset resource="../rc/resources.qrc">
-                <normaloff>:/icons/images/icons/cancel_white.png</normaloff>:/icons/images/icons/cancel_white.png</iconset>
+                <normaloff>:/icons/images/icons/white_cross.png</normaloff>:/icons/images/icons/white_cross.png</iconset>
               </property>
               <property name="iconSize">
                <size>

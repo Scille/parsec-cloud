@@ -123,7 +123,7 @@ def sign_and_add_meta(device_id: str, device_signkey: SigningKey, data: bytes) -
     except CryptoError as exc:
         raise MessageSignatureError() from exc
 
-    return device_id.encode("utf-8") + b"@" + signed
+    return device_id.encode("utf8") + b"@" + signed
 
 
 def extract_meta_from_signature(signed_with_meta: bytes) -> tuple:
@@ -133,7 +133,7 @@ def extract_meta_from_signature(signed_with_meta: bytes) -> tuple:
     """
     try:
         user_id, device_name, signed = signed_with_meta.split(b"@", 2)
-        return user_id.decode("utf-8"), device_name.decode("utf-8"), signed
+        return user_id.decode("utf8"), device_name.decode("utf8"), signed
     except (ValueError, UnicodeDecodeError) as exc:
         raise MessageFormatError(
             "Message doesn't contain author metadata along with signed message"
@@ -282,7 +282,7 @@ class EncryptionManager(BaseAsyncComponent):
 
     def _build_remote_user_local_access(self, user_id):
         return {
-            "id": hashlib.sha256(user_id.encode("utf-8")).hexdigest(),
+            "id": hashlib.sha256(user_id.encode("utf8")).hexdigest(),
             "key": self.device.local_symkey,
         }
 

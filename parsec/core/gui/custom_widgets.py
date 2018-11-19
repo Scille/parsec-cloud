@@ -1,6 +1,6 @@
 import pathlib
 
-from PyQt5.QtCore import QCoreApplication, Qt
+from PyQt5.QtCore import QCoreApplication, Qt, QTimer
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (
     QMessageBox,
@@ -9,16 +9,20 @@ from PyQt5.QtWidgets import (
     QListView,
     QTreeView,
     QDialog,
+    QCompleter,
 )
 
+from parsec.core.gui.core_call import core_call
 from parsec.core.gui.ui.message_dialog import Ui_MessageDialog
 from parsec.core.gui.ui.input_dialog import Ui_InputDialog
 from parsec.core.gui.ui.question_dialog import Ui_QuestionDialog
 
 
-def get_text(parent, title, message, placeholder="", default_text=""):
+def get_text(parent, title, message, placeholder="", default_text="", completion=None):
     class InputDialog(QDialog, Ui_InputDialog):
-        def __init__(self, title, message, placeholder="", default_text="", *args, **kwargs):
+        def __init__(
+            self, title, message, placeholder="", default_text="", completion=None, *args, **kwargs
+        ):
             super().__init__(*args, **kwargs)
             self.setupUi(self)
             self.label_title.setText(title)
@@ -27,6 +31,11 @@ def get_text(parent, title, message, placeholder="", default_text=""):
             self.setWindowFlags(Qt.SplashScreen)
             self.line_edit_text.setFocus()
             self.line_edit_text.setText(default_text)
+            if completion:
+                completer = QCompleter(completion)
+                completer.setCaseSensitivity(Qt.CaseInsensitive)
+                completer.popup().setStyleSheet("border: 1px solid rgb(30, 78, 162);")
+                self.line_edit_text.setCompleter(completer)
 
         @property
         def text(self):
@@ -38,7 +47,55 @@ def get_text(parent, title, message, placeholder="", default_text=""):
         placeholder=placeholder,
         parent=parent,
         default_text=default_text,
+        completion=completion,
     )
+    status = m.exec_()
+    if status == QDialog.Accepted:
+        return m.text
+    return None
+
+
+def get_user_name(parent, title, message, exclude=None):
+    class InputDialog(QDialog, Ui_InputDialog):
+        def __init__(self, title, message, exclude=None, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.setupUi(self)
+            self.label_title.setText(title)
+            self.label_message.setText(message)
+            self.line_edit_text.setPlaceholderText(
+                QCoreApplication.translate("GetUserName", "User name")
+            )
+            self.setWindowFlags(Qt.SplashScreen)
+            self.exclude = exclude or []
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.show_auto_complete)
+            self.line_edit_text.setFocus()
+            self.line_edit_text.textChanged.connect(self.text_changed)
+
+        def text_changed(self, text):
+            # In order to avoid a segfault by making to many requests,
+            # we wait a little bit after the user has stopped pressing keys
+            # to make the query.
+            if len(text):
+                self.timer.start(500)
+
+        def show_auto_complete(self):
+            self.timer.stop()
+            if len(self.line_edit_text.text()):
+                users, total = core_call().find_user(self.line_edit_text.text())
+                if self.exclude:
+                    users = [u for u in users if u not in self.exclude]
+                completer = QCompleter(users)
+                completer.setCaseSensitivity(Qt.CaseInsensitive)
+                completer.popup().setStyleSheet("border: 1px solid rgb(30, 78, 162);")
+                self.line_edit_text.setCompleter(completer)
+                self.line_edit_text.completer().complete()
+
+        @property
+        def text(self):
+            return self.line_edit_text.text()
+
+    m = InputDialog(title=title, message=message, exclude=exclude, parent=parent)
     status = m.exec_()
     if status == QDialog.Accepted:
         return m.text

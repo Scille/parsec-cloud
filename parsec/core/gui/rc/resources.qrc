@@ -44,6 +44,7 @@
         <file>images/icons/folder-up.png</file>
         <file>images/icons/folder-up_selected.png</file>
         <file>images/icons/parsec.png</file>
+        <file>images/icons/white_cross.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>
@@ -52,8 +53,6 @@
         <file>images/logos/parsec_white_medium.png</file>
     </qresource>
     <qresource prefix="/translations">
-        <file alias="parsec_de">translations/parsec_de.qm</file>
-        <file alias="parsec_es">translations/parsec_es.qm</file>
         <file alias="parsec_fr">translations/parsec_fr.qm</file>
     </qresource>
     <qresource prefix="/fonts">

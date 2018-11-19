@@ -23,6 +23,13 @@ async def test_blockstore_post_and_get(alice_backend_sock, bob_backend_sock):
     rep = await bob_backend_sock.recv()
     assert rep == {"status": "ok", "block": block}
 
+    # Test not found as well
+
+    dummy_id = "6a8c947e3fac4a24850f857e44c6c50b"
+    await bob_backend_sock.send({"cmd": "blockstore_get", "id": dummy_id})
+    rep = await bob_backend_sock.recv()
+    assert rep == {"status": "not_found_error", "reason": "Unknown block id."}
+
 
 @pytest.mark.trio
 @pytest.mark.raid1_blockstore
@@ -68,6 +75,12 @@ async def test_raid1_blockstore_get_partial_failure(alice_backend_sock, bob_back
     await bob_backend_sock.send({"cmd": "blockstore_get", "id": block_id})
     rep = await bob_backend_sock.recv()
     assert rep == {"status": "not_found_error", "reason": "Unknown block id."}
+
+
+@pytest.mark.trio
+@pytest.mark.raid0_blockstore
+async def test_raid0_blockstore_post_and_get(alice_backend_sock, bob_backend_sock):
+    await test_blockstore_post_and_get(alice_backend_sock, bob_backend_sock)
 
 
 @pytest.mark.parametrize(

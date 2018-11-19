@@ -165,6 +165,7 @@ class BackendApp:
             "event_list_subscribed": self._api_event_list_subscribed,
             "user_get": self.user.api_user_get,
             "user_invite": self.user.api_user_invite,
+            "user_find": self.user.api_user_find,
             "device_declare": self.user.api_device_declare,
             "device_get_configuration_try": self.user.api_device_get_configuration_try,
             "device_accept_configuration_try": self.user.api_device_accept_configuration_try,
@@ -340,6 +341,7 @@ class BackendApp:
 
     async def handle_client(self, sockstream, swallow_crash=False):
         sock = CookedSocket(sockstream)
+        client_ctx = None
         try:
             logger.debug("start handshake")
             client_ctx = await self._do_handshake(sock)
@@ -364,7 +366,10 @@ class BackendApp:
 
         except Exception as exc:
             # If we are here, something unexpected happened...
-            client_ctx.logger.error("Unexpected crash", exc_info=exc)
+            if client_ctx:
+                client_ctx.logger.error("Unexpected crash", exc_info=exc)
+            else:
+                logger.error("Unexpected crash", exc_info=exc)
             await sock.aclose()
             if not swallow_crash:
                 raise

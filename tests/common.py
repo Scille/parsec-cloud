@@ -21,7 +21,7 @@ class InMemoryLocalDB(LocalDB):
         except KeyError:
             raise LocalDBMissingEntry(access)
 
-    def set(self, access, raw: bytes):
+    def set(self, access, raw: bytes, deletable=False):
         assert isinstance(raw, (bytes, bytearray))
         self._data[access["id"]] = raw
 

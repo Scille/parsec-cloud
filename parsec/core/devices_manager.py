@@ -115,11 +115,11 @@ backend_get_configuration_try_rep_schema = BackendGetConfigurationTryRepSchema()
 def dumps_user_manifest_access(access):
     user_manifest_access_raw, errors = user_manifest_access_schema.dumps(access)
     assert not errors
-    return user_manifest_access_raw.encode()
+    return user_manifest_access_raw.encode("utf8")
 
 
 def loads_user_manifest_access(data):
-    user_manifest_access, errors = user_manifest_access_schema.loads(data.decode())
+    user_manifest_access, errors = user_manifest_access_schema.loads(data.decode("utf8"))
     assert not errors
     return user_manifest_access
 
@@ -227,20 +227,22 @@ class LocalDevicesManager:
         local_symkey = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
         if password:
             salt = _generate_salt()
-            box = _secret_box_factory(password.encode("utf-8"), salt)
+            box = _secret_box_factory(password.encode("utf8"), salt)
             device_conf["salt"] = salt
             device_conf["encryption"] = "password"
             device_conf["device_signkey"] = box.encrypt(device_signkey)
             device_conf["user_privkey"] = box.encrypt(user_privkey)
             device_conf["local_symkey"] = box.encrypt(local_symkey)
-            device_conf["user_manifest_access"] = box.encrypt(user_manifest_access_raw.encode())
+            device_conf["user_manifest_access"] = box.encrypt(
+                user_manifest_access_raw.encode("utf8")
+            )
         else:
             device_conf["encryption"] = "quedalle"
             # Feel dirty just writting this...
             device_conf["device_signkey"] = device_signkey
             device_conf["user_privkey"] = user_privkey
             device_conf["local_symkey"] = local_symkey
-            device_conf["user_manifest_access"] = user_manifest_access_raw.encode()
+            device_conf["user_manifest_access"] = user_manifest_access_raw.encode("utf8")
 
         if use_pkcs11:
             device_conf["encryption"] = "pkcs11"
@@ -282,12 +284,14 @@ class LocalDevicesManager:
                     f"provided but encryption is `{device_conf['encryption']}`"
                 )
 
-            box = _secret_box_factory(password.encode("utf-8"), device_conf["salt"])
+            box = _secret_box_factory(password.encode("utf8"), device_conf["salt"])
             try:
                 user_privkey = box.decrypt(device_conf["user_privkey"])
                 device_signkey = box.decrypt(device_conf["device_signkey"])
                 local_symkey = box.decrypt(device_conf["local_symkey"])
-                user_manifest_access_raw = box.decrypt(device_conf["user_manifest_access"]).decode()
+                user_manifest_access_raw = box.decrypt(device_conf["user_manifest_access"]).decode(
+                    "utf8"
+                )
                 user_manifest_access, errors = user_manifest_access_schema.loads(
                     user_manifest_access_raw
                 )
@@ -360,7 +364,7 @@ async def configure_new_device(
 
     salt = _generate_salt()
     if password:
-        box = _secret_box_factory(password.encode("utf-8"), salt)
+        box = _secret_box_factory(password.encode("utf8"), salt)
     else:
         box = None
     user_id, device_name = device_id.split("@")
@@ -471,7 +475,7 @@ async def accept_device_configuration_try(
 
     if password:
         try:
-            box = _secret_box_factory(password.encode("utf-8"), config_try.salt)
+            box = _secret_box_factory(password.encode("utf8"), config_try.salt)
             exchange_cipherkey_raw = box.decrypt(config_try.exchange_cipherkey)
             box = SealedBox(PublicKey(exchange_cipherkey_raw))
             ciphered_user_privkey = box.encrypt(device.user_privkey.encode())
@@ -479,7 +483,7 @@ async def accept_device_configuration_try(
                 device.user_manifest_access
             )
             assert not errors, errors
-            ciphered_user_manifest_access = box.encrypt(user_manifest_access_raw.encode())
+            ciphered_user_manifest_access = box.encrypt(user_manifest_access_raw.encode("utf8"))
         except nacl.exceptions.CryptoError as exc:
             raise DeviceConfigurationPasswordError(str(exc)) from exc
 
@@ -499,7 +503,7 @@ async def accept_device_configuration_try(
                 device.user_manifest_access
             )
             assert not errors, errors
-            ciphered_user_manifest_access = box.encrypt(user_manifest_access_raw.encode())
+            ciphered_user_manifest_access = box.encrypt(user_manifest_access_raw.encode("utf8"))
         except nacl.exceptions.CryptoError as exc:
             raise DeviceConfigurationPasswordError(str(exc)) from exc
 

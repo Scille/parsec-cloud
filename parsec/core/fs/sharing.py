@@ -161,7 +161,7 @@ class Sharing:
             logger.error("Cannot dump sharing message", msg=msg, errors=errors)
             raise SharingError("Internal error")
         try:
-            ciphered = await self.encryption_manager.encrypt_for(recipient, raw.encode("utf-8"))
+            ciphered = await self.encryption_manager.encrypt_for(recipient, raw.encode("utf8"))
         except EncryptionManagerError as exc:
             raise SharingRecipientError(f"Cannot create message for `{recipient}`") from exc
 
@@ -237,7 +237,7 @@ class Sharing:
                 f" but is signed by {sender_user_id@sender_device_name}"
             )
 
-        msg, errors = generic_message_content_schema.loads(raw.decode("utf-8"))
+        msg, errors = generic_message_content_schema.loads(raw.decode("utf8"))
         if errors:
             raise SharingInvalidMessageError("Not a valid message: %r" % errors)
 
@@ -250,9 +250,10 @@ class Sharing:
                     return
 
             for i in count(1):
-                sharing_name = f"{msg['name']} (shared by {sender_user_id})"
-                if i > 1:
-                    sharing_name += f" {i}"
+                if i == 1:
+                    sharing_name = msg["name"]
+                else:
+                    sharing_name = f"{msg['name']} {i}"
                 if sharing_name not in user_manifest["children"]:
                     break
             user_manifest["children"][sharing_name] = msg["access"]

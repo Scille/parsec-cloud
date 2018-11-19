@@ -18,28 +18,79 @@ async def test_share_workspace(running_backend, alice_fs, bob_fs):
     await alice_fs.share("/w", recipient="bob")
 
     # Bob should get a notification
-    bob_w_name = "w (shared by alice)"
     with bob_fs.event_bus.listen() as spy:
         await bob_fs.process_last_messages()
-    spy.assert_event_occured("sharing.new", kwargs={"path": f"/{bob_w_name}", "access": spy.ANY})
+    spy.assert_event_occured("sharing.new", kwargs={"path": "/w", "access": spy.ANY})
 
     # Now Bob can access the file just like Alice would do
     bob_root_stat = await bob_fs.stat("/")
-    assert bob_root_stat["children"] == [bob_w_name]
+    assert bob_root_stat["children"] == ["w"]
 
     for path in ("", "/spam", "/spam/zob", "/spam/bar.txt"):
-        alice_path = f"/w{path}"
-        bob_path = f"/{bob_w_name}{path}"
-        alice_file_stat = await alice_fs.stat(alice_path)
-        bob_file_stat = await bob_fs.stat(bob_path)
+        path = f"/w{path}"
+        alice_file_stat = await alice_fs.stat(path)
+        bob_file_stat = await bob_fs.stat(path)
         assert bob_file_stat == alice_file_stat
 
-        if alice_path == "/w":
+        if path == "/w":
             # Also make sure Bob is marked among the workspace's participants
             assert alice_file_stat["participants"] == ["alice", "bob"]
 
-    bob_file_data = await bob_fs.file_read(f"/{bob_w_name}/spam/bar.txt")
+    bob_file_data = await bob_fs.file_read("/w/spam/bar.txt")
     assert bob_file_data == b"Hello from Alice !"
+
+
+@pytest.mark.trio
+async def test_share_workspace_multiple_times(running_backend, alice_fs, bob_fs):
+    # Create a workspace with Alice
+    await alice_fs.workspace_create("/foo")
+    await alice_fs.folder_create("/foo/spam")
+    await alice_fs.file_create("/foo/spam/bar.txt")
+    await alice_fs.file_write("/foo/spam/bar.txt", b"Alice workspace")
+    await alice_fs.sync("/foo")
+
+    # Create a workspace with Bob
+    await bob_fs.workspace_create("/foo")
+    await bob_fs.folder_create("/foo/spam")
+    await bob_fs.file_create("/foo/spam/bar.txt")
+    await bob_fs.file_write("/foo/spam/bar.txt", b"Bob workspace")
+    await bob_fs.sync("/foo")
+
+    # Now we can share this workspace with Bob
+    await alice_fs.share("/foo", recipient="bob")
+
+    # Bob should get a notification
+    bob_foo_name = "foo 2"
+    with bob_fs.event_bus.listen() as spy:
+        await bob_fs.process_last_messages()
+    spy.assert_event_occured("sharing.new", kwargs={"path": f"/{bob_foo_name}", "access": spy.ANY})
+
+    # Bob shares his workspace with Alice
+    await bob_fs.share("/foo", recipient="alice")
+
+    # Bob should get a notification
+    alice_foo_name = "foo 2"
+    with alice_fs.event_bus.listen() as spy:
+        await alice_fs.process_last_messages()
+    spy.assert_event_occured(
+        "sharing.new", kwargs={"path": f"/{alice_foo_name}", "access": spy.ANY}
+    )
+
+    # Read the data in Bob workspace with Bob
+    bob_file_data = await bob_fs.file_read("/foo/spam/bar.txt")
+    assert bob_file_data == b"Bob workspace"
+
+    # Read the data in Alice workspace with Bob
+    alice_file_data = await bob_fs.file_read("/foo 2/spam/bar.txt")
+    assert alice_file_data == b"Alice workspace"
+
+    # Read the data in Alice workspace with Alice
+    alice_file_data = await alice_fs.file_read("/foo/spam/bar.txt")
+    assert alice_file_data == b"Alice workspace"
+
+    # Read the data in Bob workspace with Alice
+    bob_file_data = await alice_fs.file_read("/foo 2/spam/bar.txt")
+    assert bob_file_data == b"Bob workspace"
 
 
 @pytest.mark.trio
@@ -50,20 +101,19 @@ async def test_share_workspace_placeholder(running_backend, alice_fs, bob_fs):
     # Now we can share this workspace with Bob, this should trigger sync
     with alice_fs.event_bus.listen() as spy:
         await alice_fs.share("/w", recipient="bob")
-    spy.assert_event_occured("fs.entry.synced", kwargs={"path": f"/w", "id": spy.ANY})
+    spy.assert_event_occured("fs.entry.synced", kwargs={"path": "/w", "id": spy.ANY})
 
     # Bob should get a notification
-    bob_w_name = "w (shared by alice)"
     with bob_fs.event_bus.listen() as spy:
         await bob_fs.process_last_messages()
-    spy.assert_event_occured("sharing.new", kwargs={"path": f"/{bob_w_name}", "access": spy.ANY})
+    spy.assert_event_occured("sharing.new", kwargs={"path": "/w", "access": spy.ANY})
 
     # Now Bob can access the file just like Alice would do
     bob_root_stat = await bob_fs.stat("/")
-    assert bob_root_stat["children"] == [bob_w_name]
+    assert bob_root_stat["children"] == ["w"]
 
     alice_file_stat = await alice_fs.stat("/w")
-    bob_file_stat = await bob_fs.stat(f"/{bob_w_name}")
+    bob_file_stat = await bob_fs.stat("/w")
     assert bob_file_stat == alice_file_stat
     # Also make sure Bob is marked among the workspace's participants
     assert alice_file_stat["participants"] == ["alice", "bob"]
@@ -77,18 +127,16 @@ async def test_share_workspace_then_rename_it(running_backend, alice_fs, bob_fs)
     # Now we can share this workspace with Bob, this should trigger sync
     with alice_fs.event_bus.listen() as spy:
         await alice_fs.share("/w", recipient="bob")
-    spy.assert_event_occured("fs.entry.synced", kwargs={"path": f"/w", "id": spy.ANY})
+    spy.assert_event_occured("fs.entry.synced", kwargs={"path": "/w", "id": spy.ANY})
 
     # Bob should get a notification
     with bob_fs.event_bus.listen() as spy:
         await bob_fs.process_last_messages()
-    spy.assert_event_occured(
-        "sharing.new", kwargs={"path": f"/w (shared by alice)", "access": spy.ANY}
-    )
+    spy.assert_event_occured("sharing.new", kwargs={"path": "/w", "access": spy.ANY})
 
     # Now Bob and alice both rename the workpsace for there own taste
-    await bob_fs.workspace_rename(f"/w (shared by alice)", "/from_alice")
-    await alice_fs.workspace_rename(f"/w", "/to_bob")
+    await bob_fs.workspace_rename("/w", "/from_alice")
+    await alice_fs.workspace_rename("/w", "/to_bob")
 
     await bob_fs.sync("/")
     await alice_fs.sync("/")

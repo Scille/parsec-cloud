@@ -1,8 +1,10 @@
 from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QCompleter
 
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_widgets import show_error
+from parsec.core.gui import settings
+from parsec.core.gui.core_call import core_call
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 from parsec.core.gui.ui.login_register_user_widget import Ui_LoginRegisterUserWidget
@@ -17,22 +19,31 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.button_login.clicked.connect(self.emit_login)
+        self.devices = []
         self.reset()
 
     def emit_login(self):
         if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
             self.login_with_password_clicked.emit(
-                self.combo_devices.currentText(), self.line_edit_password.text()
+                self.line_edit_device.text(), self.line_edit_password.text()
             )
         else:
             self.login_with_pkcs11_clicked.emit(
-                self.combo_devices.currentText(),
+                self.line_edit_device.text(),
                 self.line_edit_pkcs11_pin.text(),
                 int(self.combo_pkcs11_key.currentText()),
                 int(self.combo_pkcs11_token.currentText()),
             )
 
     def reset(self):
+        if len(self.devices) == 1:
+            self.line_edit_device.setText(self.devices[0])
+        elif len(self.devices) > 1:
+            last_device = settings.get_value("last_device")
+            if last_device and last_device in self.devices:
+                self.line_edit_device.setText(last_device)
+        else:
+            self.line_edit_device.setText("")
         self.line_edit_password.setText("")
         self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
         self.line_edit_password.setDisabled(False)
@@ -42,9 +53,19 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         self.combo_pkcs11_token.clear()
         self.combo_pkcs11_token.addItem("0")
         self.widget_pkcs11.hide()
-
-    def add_device(self, device_name):
-        self.combo_devices.addItem(device_name)
+        self.devices = core_call().get_devices()
+        if len(self.devices) == 1:
+            self.line_edit_device.setText(self.devices[0])
+        elif len(self.devices) > 1:
+            last_device = settings.get_value("last_device")
+            if last_device and last_device in self.devices:
+                self.line_edit_device.setText(last_device)
+        else:
+            self.line_edit_device.setText("")
+        completer = QCompleter(self.devices)
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        completer.popup().setStyleSheet("border: 2px solid rgb(46, 145, 208); border-top: 0;")
+        self.line_edit_device.setCompleter(completer)
 
 
 class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
@@ -240,7 +261,6 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.register_device_widget.register_with_pkcs11_clicked.connect(
             self.emit_register_device_with_pkcs11
         )
-        self.show_login_widget()
         self.reset()
 
     def emit_register_user_with_password(self, login, password, device, token):
@@ -278,14 +298,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.register_user_widget.hide()
         self.register_device_widget.show()
 
-    def add_device(self, device_name):
-        self.login_widget.add_device(device_name)
-
     def reset(self):
-        self.login_widget.reset()
-        self.button_login_instead.hide()
-        self.button_register_device_instead.show()
-        self.button_register_user_instead.show()
+        self.show_login_widget()
         self.register_user_widget.reset()
         self.register_device_widget.reset()
-        self.show_login_widget()
+        self.login_widget.reset()

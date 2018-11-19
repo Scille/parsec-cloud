@@ -223,7 +223,19 @@ image: url(:/icons/images/icons/checked.png)
         <item>
          <widget class="QWidget" name="widget_2" native="true">
           <property name="styleSheet">
-           <string notr="true"/>
+           <string notr="true">QPushButton
+{
+border: 0;
+color: rgb(255, 255, 255);
+text-align: left;
+}
+
+QPushButton#button_login_instead:hover,
+QPushButton#button_register_device_instead:hover,
+QPushButton#button_register_user_instead:hover
+{
+text-decoration: underline;
+}</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_4">
            <property name="spacing">
@@ -268,10 +280,7 @@ image: url(:/icons/images/icons/checked.png)
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">border: 0;
-color: rgb(255, 255, 255);
-text-align: left;
-</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>Register a new account</string>
@@ -293,10 +302,7 @@ text-align: left;
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">border: 0;
-color: rgb(255, 255, 255);
-text-align: left;
-</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>Register a new device</string>
@@ -318,10 +324,7 @@ text-align: left;
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">border: 0;
-color: rgb(255, 255, 255);
-text-align: left;
-</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>Log In</string>

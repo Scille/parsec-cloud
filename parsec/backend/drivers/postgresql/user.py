@@ -1,6 +1,7 @@
 import itertools
 import pendulum
 from triopg.exceptions import UniqueViolationError
+from typing import List
 
 from parsec.utils import ParsecError
 from parsec.backend.user import BaseUserComponent
@@ -18,7 +19,7 @@ class PGUserComponent(BaseUserComponent):
         super().__init__(event_bus)
         self.dbh = dbh
 
-    async def create_invitation(self, invitation_token, user_id):
+    async def create_invitation(self, invitation_token: str, user_id: str):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 # TODO: combine this in the next SQL request
@@ -51,7 +52,12 @@ class PGUserComponent(BaseUserComponent):
                     raise ParsecError("Insertion error.")
 
     async def claim_invitation(
-        self, user_id, invitation_token, broadcast_key, device_name, device_verify_key
+        self,
+        user_id: str,
+        invitation_token: str,
+        broadcast_key: bytes,
+        device_name: str,
+        device_verify_key: bytes,
     ):
         assert isinstance(broadcast_key, (bytes, bytearray))
         assert isinstance(device_verify_key, (bytes, bytearray))
@@ -116,7 +122,7 @@ class PGUserComponent(BaseUserComponent):
                     conn, now, user_id, broadcast_key, devices=[(device_name, device_verify_key)]
                 )
 
-    async def configure_device(self, user_id, device_name, device_verify_key):
+    async def configure_device(self, user_id: str, device_name: str, device_verify_key: bytes):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 row = await conn.fetchrow(
@@ -145,7 +151,7 @@ class PGUserComponent(BaseUserComponent):
             if result != "DELETE 1":
                 raise ParsecError("Update error.")
 
-    async def declare_unconfigured_device(self, token, user_id, device_name):
+    async def declare_unconfigured_device(self, token: str, user_id: str, device_name: str):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 devices = await conn.fetch(
@@ -183,7 +189,7 @@ class PGUserComponent(BaseUserComponent):
                 if result != "INSERT 0 1":
                     raise ParsecError("Insertion error.")
 
-    async def get_unconfigured_device(self, user_id, device_name):
+    async def get_unconfigured_device(self, user_id: str, device_name: str):
         async with self.dbh.pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
@@ -203,7 +209,13 @@ class PGUserComponent(BaseUserComponent):
             return {"created_on": row[0], "configure_token": row[1]}
 
     async def register_device_configuration_try(
-        self, config_try_id, user_id, device_name, device_verify_key, exchange_cipherkey, salt
+        self,
+        config_try_id: str,
+        user_id: str,
+        device_name: str,
+        device_verify_key: bytes,
+        exchange_cipherkey: bytes,
+        salt: bytes,
     ):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
@@ -242,7 +254,7 @@ class PGUserComponent(BaseUserComponent):
                 if result != "INSERT 0 1":
                     raise ParsecError("Insertion error.")
 
-    async def retrieve_device_configuration_try(self, config_try_id, user_id):
+    async def retrieve_device_configuration_try(self, config_try_id: str, user_id: str):
         async with self.dbh.pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
@@ -277,7 +289,11 @@ class PGUserComponent(BaseUserComponent):
             }
 
     async def accept_device_configuration_try(
-        self, config_try_id, user_id, ciphered_user_privkey, ciphered_user_manifest_access
+        self,
+        config_try_id: str,
+        user_id: str,
+        ciphered_user_privkey: bytes,
+        ciphered_user_manifest_access: bytes,
     ):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
@@ -313,7 +329,7 @@ class PGUserComponent(BaseUserComponent):
                 if result != "UPDATE 1":
                     raise ParsecError("Update error.")
 
-    async def refuse_device_configuration_try(self, config_try_id, user_id, reason):
+    async def refuse_device_configuration_try(self, config_try_id: str, user_id: str, reason: str):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 row = await conn.fetchrow(
@@ -395,17 +411,17 @@ class PGUserComponent(BaseUserComponent):
         if result != "INSERT 0 1":
             raise ParsecError("Insertion error.")
 
-    async def create(self, user_id, broadcast_key, devices):
+    async def create(self, user_id: str, broadcast_key: bytes, devices: List[str]):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 await self._create_user(conn, pendulum.now(), user_id, broadcast_key, devices)
 
-    async def create_device(self, user_id, device_name, verify_key):
+    async def create_device(self, user_id: str, device_name: str, verify_key: bytes):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 await self._create_device(conn, user_id, device_name, pendulum.now(), verify_key)
 
-    async def get(self, user_id):
+    async def get(self, user_id: str):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 results = await conn.fetchrow(
@@ -440,7 +456,7 @@ class PGUserComponent(BaseUserComponent):
 
         return user
 
-    async def revoke_user(self, user_id):
+    async def revoke_user(self, user_id: str):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 results = await conn.fetchrow(
@@ -459,7 +475,8 @@ class PGUserComponent(BaseUserComponent):
                 if result == "UPDATE 0":
                     raise AlreadyRevokedError("User `%s` already revoked" % user_id)
 
-    async def revoke_device(self, device_id):
+    async def revoke_device(self, user_id: str, device_name: str):
+        device_id = f"{user_id}@{device_name}"
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 results = await conn.fetchrow(
@@ -477,3 +494,22 @@ class PGUserComponent(BaseUserComponent):
                 )
                 if result == "UPDATE 0":
                     raise AlreadyRevokedError("Device `%s` already revoked" % device_id)
+
+    async def find(self, query: str = None, page: int = 0, per_page: int = 100):
+        async with self.dbh.pool.acquire() as conn:
+            if query:
+                all_results = await conn.fetch(
+                    """
+                    SELECT user_id FROM users WHERE user_id LIKE $1 ORDER BY user_id
+                    """,
+                    f"{query}%",
+                )
+            else:
+                all_results = await conn.fetch(
+                    """
+                    SELECT user_id FROM users ORDER BY user_id
+                    """
+                )
+            # TODO: should user LIMIT and OFFSET in the SQL query instead
+            results = [x[0] for x in all_results[(page - 1) * per_page : page * per_page]]
+            return results, len(all_results)

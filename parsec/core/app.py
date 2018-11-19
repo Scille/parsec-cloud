@@ -98,6 +98,18 @@ class Core(BaseAsyncComponent):
 
             self.event_bus.send("user_logout")
 
+    async def user_find(self, query: str = None, page: int = 1, per_page: int = 100):
+        """
+        Raises:
+            BackendNotAvailable
+        """
+        rep = await self.backend_cmds_sender.send(
+            {"cmd": "user_find", "query": query, "page": page, "per_page": per_page}
+        )
+        # TODO: better answer deserialization
+        assert rep["status"] == "ok"
+        return rep["results"], rep["total"]
+
     async def ping_backend(self):
         if self._logged_client_manager:
             return await self._logged_client_manager.backend_cmds_sender.ping()

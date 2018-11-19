@@ -96,17 +96,23 @@ def realcrypto():
         yield
 
 
+def _patch_url_if_xdist(url):
+    xdist_worker = os.environ.get("PYTEST_XDIST_WORKER")
+    if xdist_worker:
+        return f"{url}_{xdist_worker}"
+    else:
+        return url
+
+
 # Use current unix user's credential, don't forget to do
 # `psql -c 'CREATE DATABASE parsec_test;'` prior to run tests
 DEFAULT_POSTGRESQL_TEST_URL = "postgresql:///parsec_test"
 
-# Use current unix user's credential, don't forget to do
-# `psql -c 'CREATE DATABASE triopg_test;'` prior to run tests
-TRIOPG_POSTGRESQL_TEST_URL = "postgresql:///triopg_test"
-
 
 def get_postgresql_url():
-    return os.environ.get("PARSEC_POSTGRESQL_TEST_URL", DEFAULT_POSTGRESQL_TEST_URL)
+    return _patch_url_if_xdist(
+        os.environ.get("PARSEC_POSTGRESQL_TEST_URL", DEFAULT_POSTGRESQL_TEST_URL)
+    )
 
 
 @pytest.fixture
@@ -222,7 +228,7 @@ def device_factory():
     devices = {}
     count = 0
 
-    def _device_factory(user_id=None, device_name=None, user_manifest_in_v0=False):
+    def _device_factory(user_id=None, device_name=None, user_manifest_in_v0=False, local_db=None):
         nonlocal count
         count += 1
 
@@ -258,13 +264,15 @@ def device_factory():
 
         device_signkey = SigningKey.generate().encode()
         local_symkey = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
+        if not local_db:
+            local_db = InMemoryLocalDB()
         device = Device(
             f"{user_id}@{device_name}",
             user_privkey,
             device_signkey,
             local_symkey,
             user_manifest_access,
-            InMemoryLocalDB(),
+            local_db,
         )
         if not user_manifest_in_v0:
             device.local_db.set(user_manifest_access, dumps_manifest(user_manifest_v1))
@@ -357,6 +365,10 @@ def blockstore(request, backend_store):
         blockstore_config["RAID1_0_TYPE"] = blockstore_type
         blockstore_config["RAID1_1_TYPE"] = "MOCKED"
         blockstore_type = "RAID1"
+    if request.node.get_closest_marker("raid0_blockstore"):
+        blockstore_config["RAID0_0_TYPE"] = blockstore_type
+        blockstore_config["RAID0_1_TYPE"] = "MOCKED"
+        blockstore_type = "RAID0"
 
     return blockstore_type, blockstore_config
 

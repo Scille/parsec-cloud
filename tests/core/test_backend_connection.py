@@ -61,29 +61,21 @@ async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backen
 
 
 @pytest.mark.trio
-@pytest.mark.postgresql
-async def test_revoked_device_handshake(
-    postgresql_url, alice, backend_factory, backend_sock_factory
-):
+async def test_revoked_device_handshake(alice, backend, backend_sock_factory):
+    async with backend_sock_factory(backend, alice):
+        pass
 
-    async with backend_factory(
-        config={"blockstore_types": ["POSTGRESQL"], "db_url": postgresql_url}
-    ) as backend:
+    await backend.user.revoke_device(alice.user_id, alice.device_name)
 
+    with pytest.raises(AlreadyRevokedError):
+        await backend.user.revoke_device(alice.user_id, alice.device_name)
+
+    with pytest.raises(NotFoundError):
+        await backend.user.revoke_device(alice.user_id, "bar")
+
+    with pytest.raises(HandshakeRevokedDevice):
         async with backend_sock_factory(backend, alice):
             pass
-
-        await backend.user.revoke_device(alice.id)
-
-        with pytest.raises(AlreadyRevokedError):
-            await backend.user.revoke_device(alice.id)
-
-        with pytest.raises(NotFoundError):
-            await backend.user.revoke_device("foo")
-
-        with pytest.raises(HandshakeRevokedDevice):
-            async with backend_sock_factory(backend, alice):
-                pass
 
 
 @pytest.mark.trio

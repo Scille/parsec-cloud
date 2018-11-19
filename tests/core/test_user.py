@@ -85,3 +85,12 @@ async def test_user_invite_then_claim_timeout(
             )
             rep = await new_core_sock.recv()
         assert rep == {"status": "out_of_date_error", "reason": "Claim code is too old."}
+
+
+@pytest.mark.trio
+async def test_user_find(running_backend, alice_core):
+    ret = await alice_core.user_find()
+    assert ret == (["alice", "bob"], 2)
+
+    ret = await alice_core.user_find(query="al")
+    assert ret == (["alice"], 1)

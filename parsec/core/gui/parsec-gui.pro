@@ -35,6 +35,7 @@ FORMS += forms/main_window.ui \
          forms/message_dialog.ui \
          forms/user_button.ui \
          forms/input_dialog.ui \
-         forms/question_dialog.ui
+         forms/question_dialog.ui \
+         forms/shared_dialog.ui
 
 RESOURCES += rc/resources.qrc

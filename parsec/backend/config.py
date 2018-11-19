@@ -36,12 +36,22 @@ def _extract_swift_blockstore_config(environ):
     return config
 
 
+def _extract_raid0_blockstore_config(environ):
+    return _extract_raid_blockstore_config(0, environ)
+
+
 def _extract_raid1_blockstore_config(environ):
+    return _extract_raid_blockstore_config(1, environ)
+
+
+def _extract_raid_blockstore_config(type, environ):
+    assert type in (0, 1)
+
     blockstore_configs = []
     flat_blockstore_environ_vars = ["TYPE"] + [
         var for familly in blockstore_environ_vars.values() for var in familly
     ]
-    raid1_regex = re.compile(f"RAID1_([0-9]+)_({'|'.join(flat_blockstore_environ_vars)})")
+    raid1_regex = re.compile(f"RAID{type}_([0-9]+)_({'|'.join(flat_blockstore_environ_vars)})")
 
     config = defaultdict(dict)
     for key, value in environ.items():
@@ -53,18 +63,18 @@ def _extract_raid1_blockstore_config(environ):
 
     if not config:
         raise ValueError(
-            "Missing `RAID1_{index}_{suffix}` environ vars\n"
+            f"Missing `RAID{type}_{{index}}_{{suffix}}` environ vars\n"
             f"Possible suffixes: {', '.join(flat_blockstore_environ_vars)}"
         )
 
     for i in itertools.count():
         if i not in config:
             break
-    after_hole_values = [f"RAID1_{k}_*" for k in config if k > i]
+    after_hole_values = [f"RAID{type}_{k}_*" for k in config if k > i]
     if after_hole_values:
         raise ValueError(
             f"Invalid environ vars: {', '.join(after_hole_values)}\n"
-            "RAID1 environ vars config index should starts at 0 and not contain holes"
+            f"RAID{type} environ vars config index should starts at 0 and not contain holes"
         )
 
     for sub_index, sub_config in config.items():
@@ -73,7 +83,7 @@ def _extract_raid1_blockstore_config(environ):
         except ValueError as exc:
             raise ValueError(f"Invalid config in `RAID_{sub_index}` config:\n{str(exc)}")
 
-    return RAID1BlockstoreConfig(blockstores=tuple(blockstore_configs))
+    return RAIDBlockstoreConfig(type=f"RAID{type}", blockstores=tuple(blockstore_configs))
 
 
 def _extract_blockstore_config(blockstore_type, environ):
@@ -85,6 +95,8 @@ def _extract_blockstore_config(blockstore_type, environ):
         return _extract_s3_blockstore_config(environ)
     elif blockstore_type == "SWIFT":
         return _extract_swift_blockstore_config(environ)
+    elif blockstore_type == "RAID0":
+        return _extract_raid0_blockstore_config(environ)
     elif blockstore_type == "RAID1":
         return _extract_raid1_blockstore_config(environ)
     else:
@@ -118,8 +130,8 @@ def config_factory(db_url="MOCKED", blockstore_type="MOCKED", debug=False, envir
 
 
 @attr.s(frozen=True)
-class RAID1BlockstoreConfig:
-    type = "RAID1"
+class RAIDBlockstoreConfig:
+    type = attr.ib()
 
     blockstores = attr.ib(default=None)
 

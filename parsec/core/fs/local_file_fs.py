@@ -81,8 +81,8 @@ class LocalFileFS:
     def get_block(self, access: BlockAccess) -> bytes:
         return self._local_db.get(access)
 
-    def set_block(self, access: BlockAccess, block: bytes) -> None:
-        self._local_db.set(access, block)
+    def set_block(self, access: BlockAccess, block: bytes, deletable=False) -> None:
+        return self._local_db.set(access, block, deletable)
 
     def _get_cursor_from_fd(self, fd: FileDescriptor) -> FileCursor:
         try:
@@ -143,15 +143,20 @@ class LocalFileFS:
 
     def seek(self, fd: FileDescriptor, offset: int) -> None:
         cursor = self._get_cursor_from_fd(fd)
+        self._seek(cursor, offset)
 
+    def _seek(self, cursor: FileCursor, offset: int):
         if offset < 0:
             hf = self._get_hot_file(cursor.access)
             cursor.offset = hf.size
         else:
             cursor.offset = offset
 
-    def write(self, fd: FileDescriptor, content: bytes) -> int:
+    def write(self, fd: FileDescriptor, content: bytes, offset: int = None) -> int:
         cursor = self._get_cursor_from_fd(fd)
+
+        if offset is not None:
+            self._seek(cursor, offset)
 
         if not content:
             return 0
@@ -183,8 +188,11 @@ class LocalFileFS:
         hf.size = length
         hf.pending_writes = [pw for pw in hf.pending_writes if pw.start < length]
 
-    def read(self, fd: FileDescriptor, size: int = inf) -> bytes:
+    def read(self, fd: FileDescriptor, size: int = inf, offset: int = None) -> bytes:
         cursor = self._get_cursor_from_fd(fd)
+
+        if offset is not None:
+            self._seek(cursor, offset)
 
         hf = self._get_hot_file(cursor.access)
         if cursor.offset > hf.size:
@@ -254,7 +262,7 @@ class LocalFileFS:
         new_dirty_blocks = []
         for pw in hf.pending_writes:
             block_access = new_block_access(pw.data, pw.start)
-            self.set_block(block_access, pw.data)
+            self.set_block(block_access, pw.data, False)
             new_dirty_blocks.append(block_access)
 
         # TODO: clean overwritten dirty blocks

@@ -25,7 +25,7 @@ class ColoredBuffer(Buffer):
         if not data:
             color_key = (DATA_MAX_SIZE * start + end) % len(self.COLOR_CHOICES)
             color = self.COLOR_CHOICES[color_key]
-            data = (color * (end - start)).encode()
+            data = (color * (end - start)).encode("utf8")
         super().__init__(start, end, data)
 
 

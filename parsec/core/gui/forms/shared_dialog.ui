@@ -1,26 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MessageDialog</class>
- <widget class="QDialog" name="MessageDialog">
+ <class>SharedDialog</class>
+ <widget class="QDialog" name="SharedDialog">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>379</width>
-    <height>161</height>
+    <width>350</width>
+    <height>376</height>
    </rect>
-  </property>
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
-  </property>
-  <property name="minimumSize">
-   <size>
-    <width>300</width>
-    <height>140</height>
-   </size>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
@@ -61,24 +52,14 @@
 border: 2px solid rgb(12, 65, 157);
 background-color: rgb(255, 255, 255);
 }
-
-QPushButton
-{
-background-color: rgb(255, 255, 255);
-border: 0;
-}
-
-QLabel
-{
-background-color: rgb(255, 255, 255);
-}</string>
+</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <property name="spacing">
        <number>0</number>
       </property>
       <property name="leftMargin">
-       <number>10</number>
+       <number>0</number>
       </property>
       <property name="topMargin">
        <number>0</number>
@@ -87,7 +68,7 @@ background-color: rgb(255, 255, 255);
        <number>0</number>
       </property>
       <property name="bottomMargin">
-       <number>10</number>
+       <number>0</number>
       </property>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0">
@@ -96,6 +77,9 @@ background-color: rgb(255, 255, 255);
         </property>
         <property name="sizeConstraint">
          <enum>QLayout::SetMinimumSize</enum>
+        </property>
+        <property name="leftMargin">
+         <number>10</number>
         </property>
         <property name="topMargin">
          <number>5</number>
@@ -107,17 +91,18 @@ background-color: rgb(255, 255, 255);
          <number>0</number>
         </property>
         <item>
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+         <widget class="QLabel" name="label_title">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
+          <property name="text">
+           <string/>
           </property>
-         </spacer>
+         </widget>
         </item>
         <item>
          <widget class="QPushButton" name="button_close">
@@ -158,84 +143,39 @@ background-color: rgb(255, 255, 255);
         <property name="sizeConstraint">
          <enum>QLayout::SetMaximumSize</enum>
         </property>
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
+         <number>2</number>
+        </property>
         <item>
-         <widget class="QLabel" name="label_icon">
-          <property name="minimumSize">
-           <size>
-            <width>64</width>
-            <height>64</height>
-           </size>
+         <widget class="QListWidget" name="list_shared">
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
           </property>
-          <property name="maximumSize">
-           <size>
-            <width>64</width>
-            <height>64</height>
-           </size>
+          <property name="frameShadow">
+           <enum>QFrame::Plain</enum>
           </property>
-          <property name="text">
-           <string/>
+          <property name="lineWidth">
+           <number>0</number>
           </property>
-          <property name="scaledContents">
-           <bool>true</bool>
+          <property name="horizontalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
+          </property>
+          <property name="editTriggers">
+           <set>QAbstractItemView::NoEditTriggers</set>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::NoSelection</enum>
           </property>
          </widget>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <property name="sizeConstraint">
-           <enum>QLayout::SetMaximumSize</enum>
-          </property>
-          <property name="leftMargin">
-           <number>10</number>
-          </property>
-          <property name="rightMargin">
-           <number>10</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="label_title">
-            <property name="font">
-             <font>
-              <pointsize>14</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(12, 65, 157);</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="wordWrap">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_message">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(12, 65, 157);</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="wordWrap">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
         </item>
        </layout>
       </item>
@@ -251,16 +191,16 @@ background-color: rgb(255, 255, 255);
   <connection>
    <sender>button_close</sender>
    <signal>clicked()</signal>
-   <receiver>MessageDialog</receiver>
+   <receiver>SharedDialog</receiver>
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>283</x>
-     <y>15</y>
+     <x>325</x>
+     <y>23</y>
     </hint>
     <hint type="destinationlabel">
-     <x>149</x>
-     <y>69</y>
+     <x>174</x>
+     <y>187</y>
     </hint>
    </hints>
   </connection>
