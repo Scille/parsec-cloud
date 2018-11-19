@@ -64,14 +64,45 @@ async def test_concurrent_devices_agreed_on_root_manifest(
         async with backend_factory(devices=[zack1, zack2]) as backend:
             async with server_factory(backend.handle_client, backend_addr):
 
-                with freeze_time("2000-01-05"):
-                    await fs1.sync("/")
+                with fs1.event_bus.listen() as spy:
+                    with freeze_time("2000-01-05"):
+                        await fs1.sync("/")
+                date_sync = Pendulum(2000, 1, 5)
+                spy.assert_events_exactly_occured(
+                    [
+                        ("fs.entry.minimal_synced", {"path": "/", "id": spy.ANY}, date_sync),
+                        ("fs.entry.minimal_synced", {"path": "/from_1", "id": spy.ANY}, date_sync),
+                        ("fs.entry.synced", {"path": "/", "id": spy.ANY}, date_sync),
+                        ("fs.entry.synced", {"path": "/from_1", "id": spy.ANY}, date_sync),
+                    ]
+                )
 
-                with freeze_time("2000-01-06"):
-                    await fs2.sync("/")
+                with fs2.event_bus.listen() as spy:
+                    with freeze_time("2000-01-06"):
+                        await fs2.sync("/")
+                date_sync = Pendulum(2000, 1, 6)
+                spy.assert_events_exactly_occured(
+                    [
+                        ("fs.entry.minimal_synced", {"path": "/", "id": spy.ANY}, date_sync),
+                        ("fs.entry.minimal_synced", {"path": "/from_2", "id": spy.ANY}, date_sync),
+                        ("fs.entry.synced", {"path": "/", "id": spy.ANY}, date_sync),
+                        ("fs.entry.synced", {"path": "/from_2", "id": spy.ANY}, date_sync),
+                    ]
+                )
 
-                with freeze_time("2000-01-07"):
-                    await fs1.sync("/")
+                with fs1.event_bus.listen() as spy:
+                    with freeze_time("2000-01-07"):
+                        await fs1.sync("/")
+                date_sync = Pendulum(2000, 1, 7)
+                spy.assert_events_exactly_occured(
+                    [
+                        (
+                            "fs.entry.remote_changed",
+                            {"path": "/", "id": spy.ANY},
+                            date_sync,
+                        )  # TODO: really needed ?
+                    ]
+                )
 
         stat1 = await fs1.stat("/")
         stat2 = await fs2.stat("/")
@@ -79,7 +110,7 @@ async def test_concurrent_devices_agreed_on_root_manifest(
             "type": "root",
             "created": Pendulum(2000, 1, 3),
             "updated": Pendulum(2000, 1, 4),
-            "base_version": 2,
+            "base_version": 3,
             "is_folder": True,
             "is_placeholder": False,
             "need_sync": False,
