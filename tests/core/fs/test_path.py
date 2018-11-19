@@ -10,6 +10,7 @@ from parsec.core.fs.types import Path
 def test_root(path, is_root):
     obj = Path(path)
     assert obj.is_root() is is_root
+    assert "//" not in str(obj)
     if os.name == "nt":
         wpath = path.replace("/", "\\")
         obj = Path(wpath)

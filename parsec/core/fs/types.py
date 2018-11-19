@@ -14,11 +14,13 @@ class Path(PurePosixPath):
             drv, root, parts = PureWindowsPath._parse_args(args)
             if not root:
                 raise ValueError("Path must be absolute")
-            root = parts[0] = "/"  # Replace `\` root format
         else:
             drv, root, parts = PurePosixPath._parse_args(args)
             if not root:
                 raise ValueError("Path must be absolute")
+        # On Windows we must replace `\` root format
+        # On Posix, root can be `/` or `//` (yeah, this is silly...)
+        root = parts[0] = "/"
         self._drv = drv
         self._root = root
         self._parts = parts
