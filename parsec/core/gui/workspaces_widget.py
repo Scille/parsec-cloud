@@ -4,7 +4,13 @@ from uuid import UUID
 from PyQt5.QtCore import pyqtSignal, QCoreApplication, QPoint, Qt
 from PyQt5.QtWidgets import QWidget, QMenu, QDialog
 
-from parsec.core.gui.custom_widgets import show_error, show_warning, show_info, get_text
+from parsec.core.gui.custom_widgets import (
+    show_error,
+    show_warning,
+    show_info,
+    get_text,
+    get_user_name,
+)
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
 from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
@@ -151,18 +157,13 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         def _inner_share_workspace():
             current_device = core_call().logged_device()
             current_user = current_device.id.split("@")[0]
-            user = get_text(
+            user = get_user_name(
                 self,
-                QCoreApplication.translate("WorkspacesWidget", "Share a workspace"),
-                QCoreApplication.translate(
+                title=QCoreApplication.translate("WorkspacesWidget", "Share a workspace"),
+                message=QCoreApplication.translate(
                     "WorkspacesWidget", "Give a user name to share the workspace {} with."
                 ).format(workspace_button.name),
-                placeholder=QCoreApplication.translate("WorkspacesWidget", "User name"),
-                completion=[
-                    d.split("@")[0]
-                    for d in core_call().get_devices()
-                    if d.split("@")[0] != current_user
-                ],
+                exclude=[current_user],
             )
             if not user:
                 return

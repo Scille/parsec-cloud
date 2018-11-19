@@ -155,6 +155,9 @@ class _CoreCall:
     def share_workspace(self, *args):
         return self._trio_portal.run(self._parsec_core.fs.share, *args)
 
+    def find_user(self, *args):
+        return self._trio_portal.run(self._parsec_core.user_find, *args)
+
 
 _CORE_CALL = None
 
