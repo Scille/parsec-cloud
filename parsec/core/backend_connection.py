@@ -2,7 +2,8 @@ import trio
 from structlog import get_logger
 from urllib.parse import urlparse
 
-from parsec.networking import CookedSocket
+from parsec.cert import CA
+from parsec.networking import CookedSocket, client_cooked_socket_factory
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake, HandshakeError
 
 
@@ -17,7 +18,15 @@ class BackendNotAvailable(BackendError):
     pass
 
 
-async def backend_connection_factory(addr: str, auth_id=None, auth_signkey=None) -> CookedSocket:
+def upgrade_stream_to_ssl(raw_stream, hostname):
+    ssl_context = trio.ssl.create_default_context()
+    CA.configure_trust(ssl_context)
+    return trio.ssl.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
+
+
+async def backend_connection_factory(
+    addr: str, auth_id=None, auth_signkey=None, ssl=False
+) -> CookedSocket:
     """
     Connect and authenticate to the given backend.
 
@@ -41,14 +50,18 @@ async def backend_connection_factory(addr: str, auth_id=None, auth_signkey=None)
 
     parsed_addr = urlparse(addr)
     try:
-        sockstream = await trio.open_tcp_stream(parsed_addr.hostname, parsed_addr.port)
+        conn = await trio.open_tcp_stream(parsed_addr.hostname, parsed_addr.port)
 
     except OSError as exc:
         log.debug("Impossible to connect to backend", reason=exc)
         raise BackendNotAvailable() from exc
 
+    if parsed_addr.scheme == "wss":
+        conn = upgrade_stream_to_ssl(conn, parsed_addr.hostname)
+
     try:
-        sock = CookedSocket(sockstream)
+        sock = client_cooked_socket_factory(conn, parsed_addr.hostname)
+        await sock.init()
         if not auth_id:
             ch = AnonymousClientHandshake()
         else:
@@ -62,12 +75,11 @@ async def backend_connection_factory(addr: str, auth_id=None, auth_signkey=None)
 
     except trio.BrokenStreamError as exc:
         log.debug("Connection lost during handshake", reason=exc)
-        await sockstream.aclose()
         raise BackendNotAvailable() from exc
 
     except HandshakeError as exc:
         log.warning("Handshake failed", reason=exc)
-        await sockstream.aclose()
+        await sock.aclose()
         raise
 
     return sock

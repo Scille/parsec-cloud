@@ -7,6 +7,7 @@ import contextlib
 from unittest.mock import patch
 import trio
 import trio_asyncio
+from wsproto.connection import WSConnection, ConnectionType
 
 from async_generator import asynccontextmanager
 import hypothesis
@@ -28,7 +29,12 @@ from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
 
-from tests.common import freeze_time, FreezeTestOnBrokenStreamCookedSocket, InMemoryLocalDB
+from tests.common import (
+    freeze_time,
+    FreezeTestOnBrokenStreamCookedSocket,
+    FreezeTestOnBrokenStreamCoreAPICookedSocket,
+    InMemoryLocalDB,
+)
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 from tests.event_bus_spy import SpiedEventBus
 
@@ -156,7 +162,7 @@ def unused_tcp_port():
 
 @pytest.fixture
 def unused_tcp_addr(unused_tcp_port):
-    return "tcp://127.0.0.1:%s" % unused_tcp_port
+    return "ws://127.0.0.1:%s" % unused_tcp_port
 
 
 @pytest.fixture
@@ -200,7 +206,7 @@ def server_factory(tcp_stream_spy):
         count += 1
 
         if not url:
-            url = f"tcp://server-{count}.localhost:9999"
+            url = f"ws://server-{count}.localhost:9999"
 
         try:
             async with trio.open_nursery() as nursery:
@@ -211,7 +217,6 @@ def server_factory(tcp_stream_spy):
                     return right
 
                 tcp_stream_spy.push_hook(url, connection_factory)
-
                 yield AppServer(entry_point, url, connection_factory)
 
                 nursery.cancel_scope.cancel()
@@ -472,7 +477,7 @@ async def backend(backend_factory):
 
 @pytest.fixture
 def backend_addr():
-    return "tcp://parsec-backend.localhost:9999"
+    return "ws://parsec-backend.localhost:9999"
 
 
 @pytest.fixture
@@ -488,7 +493,9 @@ def backend_sock_factory(server_factory):
     async def _backend_sock_factory(backend, auth_as):
         async with server_factory(backend.handle_client) as server:
             sockstream = server.connection_factory()
-            sock = FreezeTestOnBrokenStreamCookedSocket(sockstream)
+            ws = WSConnection(ConnectionType.CLIENT, host="localhost", resource="server")
+            sock = FreezeTestOnBrokenStreamCookedSocket(ws, sockstream)
+            await sock.init()
             if auth_as:
                 # Handshake
                 if auth_as == "anonymous":
@@ -579,7 +586,7 @@ def core_sock_factory(server_factory):
     async def _core_sock_factory(core):
         async with server_factory(core.handle_client) as server:
             sockstream = server.connection_factory()
-            yield FreezeTestOnBrokenStreamCookedSocket(sockstream)
+            yield FreezeTestOnBrokenStreamCoreAPICookedSocket(sockstream)
 
     return _core_sock_factory
 

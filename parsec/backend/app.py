@@ -8,7 +8,7 @@ from json import JSONDecodeError
 
 from parsec.event_bus import EventBus
 from parsec.utils import ParsecError
-from parsec.networking import CookedSocket
+from parsec.networking import CookedSocket, server_cooked_socket_factory
 from parsec.handshake import HandshakeFormatError, ServerHandshake
 from parsec.schema import BaseCmdSchema, fields, OneOfSchema
 
@@ -27,11 +27,13 @@ from parsec.backend.drivers.postgresql import (
     PGMessageComponent,
     PGBeaconComponent,
 )
-
 from parsec.backend.exceptions import NotFoundError
+from parsec.cert import CERT
 
 
 logger = get_logger()
+
+RECEIVE_BYTES = 4096
 
 
 class _cmd_PING_Schema(BaseCmdSchema):
@@ -339,23 +341,34 @@ class BackendApp:
         await sock.send(result_req)
         return context
 
-    async def handle_client(self, sockstream, swallow_crash=False):
-        sock = CookedSocket(sockstream)
+    async def handle_client_with_ssl(self, stream, swallow_crash=False):
+        ssl_context = trio.ssl.create_default_context(trio.ssl.Purpose.CLIENT_AUTH)
+        CERT.configure_cert(ssl_context)
+        ssl_stream = trio.ssl.SSLStream(stream, ssl_context, server_side=True)
+        await self.handle_client(ssl_stream, ssl=True, swallow_crash=swallow_crash)
+
+    async def handle_client(self, conn, ssl=False, swallow_crash=False):
+        sock = server_cooked_socket_factory(conn)
         client_ctx = None
         try:
+            await sock.recv()
             logger.debug("start handshake")
             client_ctx = await self._do_handshake(sock)
             if not client_ctx:
                 # Invalid handshake
                 logger.debug("bad handshake")
+                await sock.aclose()
                 return
 
             client_ctx.logger.debug("handshake done")
 
             await self._handle_client_loop(sock, client_ctx)
 
-        except trio.BrokenStreamError:
-            # Client has closed connection
+        except AttributeError:
+            # SSL client closed with no-SSL backend
+            pass
+        except trio.BrokenResourceError:
+            # Client has closed connection or no-SSL client with SSL backend
             pass
 
         except ParsecError as exc:

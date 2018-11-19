@@ -75,7 +75,7 @@ def run_with_pdb(cmd, *args, **kwargs):
         "exposing the core API (default: %s)." % DEFAULT_CORE_SOCKET
     ),
 )
-@click.option("--backend-addr", "-A", default="tcp://127.0.0.1:6777")
+@click.option("--backend-addr", "-A", default="ws://127.0.0.1:6777")
 @click.option("--backend-watchdog", "-W", type=click.INT, default=None)
 @click.option("--debug", "-d", is_flag=True)
 @click.option(

@@ -2,11 +2,13 @@ import pytest
 import trio
 import trio.testing
 import json
+from wsproto.connection import WSConnection, ConnectionType
+from wsproto.events import ConnectionRequested, ConnectionEstablished
 
 from hypothesis import given, strategies as st
 from string import printable
 
-from parsec.networking import CookedSocket
+from parsec.networking import CookedSocket, net_send
 
 
 json_nested_strategy = st.recursive(
@@ -25,8 +27,17 @@ json_dict_strategy = st.dictionaries(st.text(printable), json_nested_strategy)
 @given(payload=json_dict_strategy)
 async def test_cooked_socket_communication(payload):
     rserver, rclient = trio.testing.memory_stream_pair()
-    cclient = CookedSocket(rclient)
-    cserver = CookedSocket(rserver)
+    ws_client = WSConnection(ConnectionType.CLIENT, host="localhost", resource="server")
+    ws_server = WSConnection(ConnectionType.SERVER)
+    cclient = CookedSocket(ws_client, rclient)
+    cserver = CookedSocket(ws_server, rserver)
+
+    ws_server.receive_bytes(ws_client.bytes_to_send())
+    event = next(ws_server.events())
+    assert isinstance(event, ConnectionRequested)
+    ws_server.accept(event)
+    ws_client.receive_bytes(ws_server.bytes_to_send())
+    assert isinstance(next(ws_client.events()), ConnectionEstablished)
 
     await cclient.send(payload)
     server_payload = await cserver.recv()
@@ -40,8 +51,18 @@ async def test_cooked_socket_communication(payload):
 class TestCookedSocket:
     def setup_method(self):
         self.rserver, self.rclient = trio.testing.memory_stream_pair()
-        self.cclient = CookedSocket(self.rclient)
-        self.cserver = CookedSocket(self.rserver)
+        self.ws_client = WSConnection(ConnectionType.CLIENT, host="localhost", resource="server")
+        self.ws_server = WSConnection(ConnectionType.SERVER)
+
+        self.ws_server.receive_bytes(self.ws_client.bytes_to_send())
+        event = next(self.ws_server.events())
+        assert isinstance(event, ConnectionRequested)
+        self.ws_server.accept(event)
+        self.ws_client.receive_bytes(self.ws_server.bytes_to_send())
+        assert isinstance(next(self.ws_client.events()), ConnectionEstablished)
+
+        self.cclient = CookedSocket(self.ws_client, self.rclient)
+        self.cserver = CookedSocket(self.ws_server, self.rserver)
 
     @pytest.mark.trio
     async def test_peer_diconnected_during_send(self):
@@ -68,7 +89,8 @@ class TestCookedSocket:
 
     @pytest.mark.trio
     async def test_receive_invalid_message(self):
-        await self.rserver.send_all(b"dummy\n")
+        self.cserver.ws.send_data(b"dummy\n")
+        await net_send(self.cserver.ws, self.cserver.conn)
         with pytest.raises(json.JSONDecodeError):
             with trio.move_on_after(1):
                 await self.cclient.recv()

@@ -27,7 +27,7 @@ class OpenTCPStreamMockWrapper:
         self._hooks.pop(addr)
 
     async def __call__(self, host, port, **kwargs):
-        addr = "tcp://%s:%s" % (host, port)
+        addr = "ws://%s:%s" % (host, port)
         hook = self._hooks.get(addr)
         if hook and addr not in self._offlines:
             if inspect.iscoroutinefunction(hook):

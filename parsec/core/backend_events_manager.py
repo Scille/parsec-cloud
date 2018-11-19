@@ -200,9 +200,6 @@ class BackendEventsManager(BaseAsyncComponent):
                 await trio.sleep(1)
 
             except Exception as exc:
-                import pdb
-
-                pdb.set_trace()
                 print(exc)
                 raise exc
 

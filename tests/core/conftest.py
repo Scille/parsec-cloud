@@ -95,7 +95,7 @@ def backend_addr_factory(running_backend, tcp_stream_spy):
 
     def _backend_addr_factory():
         nonlocal counter
-        addr = f"tcp://backend-addr-{counter}.localhost:9999"
+        addr = f"ws://backend-addr-{counter}.localhost:9999"
         tcp_stream_spy.push_hook(addr, running_backend.connection_factory)
         counter += 1
         return addr

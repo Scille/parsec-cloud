@@ -229,6 +229,7 @@ requirements = [
     "raven==6.8.0",  # Sentry support
     "structlog==18.2.0",
     "colorama==0.4.0",  # structlog colored output
+    "wsproto==0.12.0",
 ]
 
 
@@ -244,6 +245,8 @@ test_requirements = [
     "hypothesis",
     "hypothesis-trio>=0.2.1",
     "black==18.9b0",  # Pin black to avoid flaky style check
+    "bumpversion",
+    "trustme==0.4.0",
 ]
 
 
