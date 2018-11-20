@@ -23,7 +23,7 @@ def get_value(key, default=None):
     decoder = ENTRIES[key]["decode"]
     value = QSettings(
         os.path.join(core_call().get_config().base_settings_path, "parsec_gui.cfg"),
-        QSettings.NativeFormat,
+        QSettings.IniFormat,
     ).value(key, default)
     if value is not None:
         value = decoder(value)
@@ -34,7 +34,7 @@ def set_value(key, value):
     encode = ENTRIES[key]["encode"]
     settings = QSettings(
         os.path.join(core_call().get_config().base_settings_path, "parsec_gui.cfg"),
-        QSettings.NativeFormat,
+        QSettings.IniFormat,
     )
     settings.setValue(key, encode(value))
     settings.sync()
