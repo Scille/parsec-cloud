@@ -105,8 +105,15 @@ async def test_event_listen(alice_backend_sock, bob_backend_sock):
 
     await ping(bob_sock, "foo")
 
-    await alice_sock.send({"cmd": "event_listen", "wait": False})
-    rep = await alice_sock.recv()
+    # There is no guarantee an event is ready to be received once
+    # the sender got it answer
+    with trio.fail_after(1):
+        while True:
+            await alice_sock.send({"cmd": "event_listen", "wait": False})
+            rep = await alice_sock.recv()
+            if rep["status"] != "no_events":
+                break
+            await trio.sleep(0.1)
     assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}
 
     await alice_sock.send({"cmd": "event_listen", "wait": False})
@@ -135,8 +142,15 @@ async def test_cross_backend_event(backend_factory, backend_sock_factory, alice,
 
             await ping(bob_sock, "foo")
 
-            await alice_sock.send({"cmd": "event_listen", "wait": False})
-            rep = await alice_sock.recv()
+            # There is no guarantee an event is ready to be received once
+            # the sender got it answer
+            with trio.fail_after(1):
+                while True:
+                    await alice_sock.send({"cmd": "event_listen", "wait": False})
+                    rep = await alice_sock.recv()
+                    if rep["status"] != "no_events":
+                        break
+                    await trio.sleep(0.1)
             assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}
 
             await alice_sock.send({"cmd": "event_listen", "wait": False})
