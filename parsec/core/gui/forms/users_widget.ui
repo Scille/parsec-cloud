@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>501</width>
-    <height>376</height>
+    <height>379</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -200,6 +200,23 @@ color: rgb(28, 78, 163);</string>
        </layout>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_4">
+     <property name="font">
+      <font>
+       <pointsize>13</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">color: rgb(28, 78, 163);</string>
+     </property>
+     <property name="text">
+      <string>Users list</string>
+     </property>
     </widget>
    </item>
    <item>

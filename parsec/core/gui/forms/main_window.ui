@@ -100,8 +100,24 @@ color: rgb(255, 255, 255);
           <bool>false</bool>
          </property>
          <property name="styleSheet">
-          <string notr="true">background-color: rgb(12, 65, 156);
-</string>
+          <string notr="true">QWidget#widget_menu
+{
+background-color: rgb(21, 84, 169);
+}
+
+QPushButton, QPushButton:pressed
+{
+color: rgb(255, 255, 255);
+background-color: rgb(21, 84, 169);
+text-align: left;
+padding-left: 10px;
+}
+
+QPushButton:checked
+{
+background-color: rgb(46, 145, 208);
+border: 0;
+}</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout">
           <property name="spacing">
@@ -217,18 +233,7 @@ color: rgb(255, 255, 255);
              <bool>false</bool>
             </property>
             <property name="styleSheet">
-             <string notr="true">QPushButton
-{
-color: rgb(255, 255, 255);
-text-align: left;
-padding-left: 10px;
-}
-
-QPushButton:checked
-{
-background-color: rgb(46, 145, 208);
-border: 0;
-}</string>
+             <string notr="true"/>
             </property>
             <property name="text">
              <string>   Documents</string>
@@ -284,18 +289,7 @@ border: 0;
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">QPushButton
-{
-color: rgb(255, 255, 255);
-text-align: left;
-padding-left: 10px;
-}
-
-QPushButton:checked
-{
-background-color: rgb(46, 145, 208);
-border: 0;
-}</string>
+             <string notr="true"/>
             </property>
             <property name="text">
              <string>   Users</string>
@@ -351,18 +345,7 @@ border: 0;
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">QPushButton
-{
-color: rgb(255, 255, 255);
-text-align: left;
-padding-left: 10px;
-}
-
-QPushButton:checked
-{
-background-color: rgb(46, 145, 208);
-border: 0;
-}</string>
+             <string notr="true"/>
             </property>
             <property name="text">
              <string>   Devices</string>
@@ -421,18 +404,7 @@ border: 0;
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">QPushButton
-{
-color: rgb(255, 255, 255);
-text-align: left;
-padding-left: 10px;
-}
-
-QPushButton:checked
-{
-background-color: rgb(46, 145, 208);
-border: 0;
-}</string>
+             <string notr="true"/>
             </property>
             <property name="text">
              <string>   Settings</string>
@@ -547,10 +519,7 @@ background-color: rgb(22, 84, 169);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">color: rgb(255, 255, 255);
-text-align: left;
-padding-left: 10px;
-</string>
+             <string notr="true"/>
             </property>
             <property name="text">
              <string>   Log Out</string>

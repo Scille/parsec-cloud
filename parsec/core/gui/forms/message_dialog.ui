@@ -26,7 +26,10 @@
    <string>Dialog</string>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">QPushButton:pressed
+{
+border: 0;
+}</string>
   </property>
   <property name="modal">
    <bool>true</bool>

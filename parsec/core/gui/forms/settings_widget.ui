@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>508</width>
-    <height>356</height>
+    <width>525</width>
+    <height>361</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -39,11 +39,11 @@ height: 32px;
 width: 100px;
 font-size: 14px;
 font-weight: bold;
+padding-left: 30px;
+padding-right: 30px;
 border-top: 1px solid rgb(30, 78, 162);
 border-left: 1px solid rgb(30, 78, 162);
 border-right: 1px solid rgb(30, 78, 162);
-padding-left: 30px;
-padding-right: 30px;
 }
 
 QTabBar::tab:selected
