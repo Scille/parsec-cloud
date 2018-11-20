@@ -19,7 +19,7 @@ before_script:
 script:
 # Only print output if check failed
 - OUT=$(2>&1 ./misc/autoformat.sh --check) || (echo $OUT; $(exit 1))
-- py.test tests -n 2 --cov=parsec --cov-config=setup.cfg --runslow --runfuse --postgresql
+- py.test tests -n 2 --cov=parsec --cov-config=setup.cfg --runslow --runfuse --postgresql -vvv
 after_success:
 - coveralls
 deploy:
