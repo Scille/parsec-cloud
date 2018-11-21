@@ -10,15 +10,17 @@ class Path(PurePosixPath):
     @classmethod
     def _from_parts(cls, args, init=True):
         self = object.__new__(cls)
-        if os.name == "nt":
-            drv, root, parts = PureWindowsPath._parse_args(args)
-            if not root:
-                raise ValueError("Path must be absolute")
-            root = parts[0] = "/"  # Replace `\` root format
-        else:
-            drv, root, parts = PurePosixPath._parse_args(args)
-            if not root:
-                raise ValueError("Path must be absolute")
+        args = [x.replace("\\", "/") for x in args]
+
+        drv, root, parts = PurePosixPath._parse_args(args)
+        if not root:
+            raise ValueError("Path must be absolute")
+
+        if drv:
+            raise ValueError("Path must be Posix style")
+
+        # Posix style root can be `/` or `//` (yeah, this is silly...)
+        root = parts[0] = "/"
         self._drv = drv
         self._root = root
         self._parts = parts

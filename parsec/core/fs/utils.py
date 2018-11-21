@@ -21,6 +21,28 @@ from parsec.core.fs.types import (
 )
 
 
+def copy_manifest(manifest: LocalManifest):
+    """
+    Basically an optimized version of deepcopy
+    """
+
+    def _recursive_copy(old):
+        try:
+            return {
+                k: [_recursive_copy(e) for e in v]
+                if isinstance(v, (tuple, list))
+                else _recursive_copy(v)
+                if isinstance(v, dict)
+                else v
+                for k, v in old.items()
+            }
+        except AttributeError:
+            # Occurs when dealing with list of strings
+            return old
+
+    return _recursive_copy(manifest)
+
+
 def _generate_secret_key():
     return nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
 
@@ -133,6 +155,13 @@ def is_file_manifest(manifest: Manifest) -> bool:
 
 
 def is_folder_manifest(manifest: Manifest) -> bool:
+    for t in ("folder_manifest", "workspace_manifest", "user_manifest"):
+        if manifest["type"].endswith(t):
+            return True
+    return False
+
+
+def is_folderish_manifest(manifest: Manifest) -> bool:
     for t in ("folder_manifest", "workspace_manifest", "user_manifest"):
         if manifest["type"].endswith(t):
             return True

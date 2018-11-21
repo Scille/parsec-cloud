@@ -2,7 +2,11 @@ import math
 import inspect
 from uuid import UUID
 
-from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, LocalFolderFS
+from parsec.core.fs.local_folder_fs import (
+    FSManifestLocalMiss,
+    FSMultiManifestLocalMiss,
+    LocalFolderFS,
+)
 from parsec.core.fs.local_file_fs import LocalFileFS, FSBlocksLocalMiss
 from parsec.core.fs.syncer import Syncer
 from parsec.core.fs.sharing import Sharing
@@ -47,6 +51,10 @@ class FS:
 
             except FSManifestLocalMiss as exc:
                 await self._remote_loader.load_manifest(exc.access)
+
+            except FSMultiManifestLocalMiss as exc:
+                for access in exc.accesses:
+                    await self._remote_loader.load_manifest(access)
 
             except FSBlocksLocalMiss as exc:
                 for access in exc.accesses:
@@ -104,22 +112,38 @@ class FS:
     async def file_fd_read(self, fd: int, size: int = -1, offset: int = None):
         return await self._load_and_retry(self._local_file_fs.read, fd, size, offset)
 
-    async def file_create(self, path: str):
+    async def touch(self, path: str):
         cooked_path = Path(path)
         await self._load_and_retry(self._local_folder_fs.touch, cooked_path)
 
-    async def folder_create(self, path: str):
+    async def file_create(self, path: str):
+        return await self.touch(path)
+
+    async def mkdir(self, path: str):
         cooked_path = Path(path)
         await self._load_and_retry(self._local_folder_fs.mkdir, cooked_path)
 
+    async def folder_create(self, path: str):
+        return await self.mkdir(path)
+
     async def workspace_create(self, path: str):
         cooked_path = Path(path)
-        await self._load_and_retry(self._local_folder_fs.mkdir, cooked_path, workspace=True)
+        await self._load_and_retry(self._local_folder_fs.workspace_create, cooked_path)
+
+    async def workspace_rename(self, src: str, dst: str):
+        cooked_src = Path(src)
+        cooked_dst = Path(dst)
+        await self._load_and_retry(self._local_folder_fs.workspace_rename, cooked_src, cooked_dst)
 
     async def move(self, src: str, dst: str):
         cooked_src = Path(src)
         cooked_dst = Path(dst)
         await self._load_and_retry(self._local_folder_fs.move, cooked_src, cooked_dst)
+
+    async def copy(self, src: str, dst: str):
+        cooked_src = Path(src)
+        cooked_dst = Path(dst)
+        await self._load_and_retry(self._local_folder_fs.copy, cooked_src, cooked_dst)
 
     async def delete(self, path: str):
         cooked_path = Path(path)

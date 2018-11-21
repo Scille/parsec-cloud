@@ -22,10 +22,10 @@ class PGBeaconComponent(BaseBeaconComponent):
             async with conn.transaction():
                 await self.ll_update_multiple(conn, (id,), src_id, src_version, author)
 
-    async def ll_update_multiple(self, conn, beacon_ids, src_id, src_version, author):
-        if not beacon_ids:
-            return
+    async def ll_update(self, conn, beacon_id, src_id, src_version, author="anonymous"):
+        await self.ll_update_multiple(conn, (beacon_id,), src_id, src_version, author)
 
+    async def ll_update_multiple(self, conn, beacon_ids, src_id, src_version, author):
         for beacon_id in beacon_ids:
             beacon_index = await conn.fetchval(
                 """

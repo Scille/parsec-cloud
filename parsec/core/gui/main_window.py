@@ -3,6 +3,7 @@ import os
 from PyQt5.QtCore import QCoreApplication, Qt
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QSystemTrayIcon, QMenu
 from PyQt5.QtGui import QIcon, QFontDatabase
+from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
 
@@ -26,6 +27,9 @@ from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.settings_widget import SettingsWidget
 from parsec.core.gui.devices_widget import DevicesWidget
 from parsec.core.gui.ui.main_window import Ui_MainWindow
+
+
+logger = get_logger()
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -98,30 +102,36 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.raise_()
 
     def logout(self):
-        if core_call().is_mounted():
-            core_call().unmount()
+        self.unmount()
         core_call().logout()
         device = core_call().load_device("johndoe@test")
         core_call().login(device)
         self.current_device = device
         self.show_login_widget()
 
+    def unmount(self):
+        if core_call().is_mounted():
+            try:
+                core_call().unmount()
+            except Exception as exc:
+                logger.warning("Mountpoint stop failed", exc_info=exc)
+            else:
+                logger.info("Mountpoint stopped")
+
     def mount(self):
         base_mountpoint = settings.get_value("mountpoint")
         if not base_mountpoint:
             return None
         mountpoint = os.path.join(base_mountpoint, self.current_device.id)
-        if core_call().is_mounted():
-            core_call().unmount()
+        self.unmount()
         try:
             core_call().mount(mountpoint)
         except Exception as exc:
-            # TODO: Trio multierror makes print_exc to crash...
-            # import traceback; traceback.print_exc(exc)
-            print(exc)
+            logger.warning("Mountpoint start failed", mountpoint=mountpoint, exc_info=exc)
             return None
 
         self.mount_widget.set_mountpoint(mountpoint)
+        logger.info("Mountpoint started", mountpoint=mountpoint)
         return mountpoint
 
     def remount(self):

@@ -70,19 +70,19 @@ async def backend_cmds_sender(alice):
 
 
 @pytest.fixture
-async def alice_fs(fs_factory, alice):
+async def alice_fs(request, fs_factory, alice):
     async with fs_factory(alice) as fs:
         yield fs
 
 
 @pytest.fixture
-async def alice2_fs(fs_factory, alice2):
+async def alice2_fs(request, fs_factory, alice2):
     async with fs_factory(alice2) as fs:
         yield fs
 
 
 @pytest.fixture
-async def bob_fs(fs_factory, bob):
+async def bob_fs(request, fs_factory, bob):
     async with fs_factory(bob) as fs:
         yield fs
 

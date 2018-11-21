@@ -13,35 +13,18 @@ from parsec.core.fs.utils import (
     new_local_workspace_manifest,
     new_local_folder_manifest,
     new_local_file_manifest,
+    copy_manifest,
 )
 from parsec.core.fs.types import Path, Access, LocalManifest, LocalUserManifest
-
-
-def copy_manifest(manifest: LocalManifest):
-    """
-    Basically an optimized version of deepcopy
-    """
-
-    def _recursive_copy(old):
-        try:
-            return {
-                k: [_recursive_copy(e) for e in v]
-                if isinstance(v, (tuple, list))
-                else _recursive_copy(v)
-                if isinstance(v, dict)
-                else v
-                for k, v in old.items()
-            }
-        except AttributeError:
-            # Occurs when dealing with list of strings
-            return old
-
-    return _recursive_copy(manifest)
 
 
 def mark_manifest_modified(manifest: LocalManifest):
     manifest["updated"] = pendulum.now()
     manifest["need_sync"] = True
+
+
+class FSEntryNotFound(Exception):
+    pass
 
 
 class FSManifestLocalMiss(Exception):
@@ -50,8 +33,10 @@ class FSManifestLocalMiss(Exception):
         self.access = access
 
 
-class FSEntryNotFound(Exception):
-    pass
+class FSMultiManifestLocalMiss(Exception):
+    def __init__(self, accesses):
+        super().__init__(accesses)
+        self.accesses = accesses
 
 
 class LocalFolderFS:
@@ -145,18 +130,19 @@ class LocalFolderFS:
         self._local_db.clear(access)
         self._manifests_cache.pop(access["id"], None)
 
-    def get_beacons(self, path: Path) -> List[UUID]:
-        beacons = [self.root_access["id"]]
+    def get_beacon(self, path: Path) -> UUID:
+        # The beacon is used to notify other clients that we modified an entry.
+        # We try to use the id of workspace containing the modification as
+        # beacon. This is not possible when directly modifying the user
+        # manifest in which case we use the user manifest id as beacon.
         try:
-            *_, possible_workspace_path, _ = path.parents
+            _, workspace_name, *_ = path.parts
         except ValueError:
-            return beacons
+            return self.root_access["id"]
 
-        access, manifest = self._retrieve_entry_read_only(possible_workspace_path)
-        if is_workspace_manifest(manifest):
-            beacons.append(access["id"])
-
-        return beacons
+        access, manifest = self._retrieve_entry_read_only(Path(f"/{workspace_name}"))
+        assert is_workspace_manifest(manifest)
+        return access["id"]
 
     def get_entry(self, path: Path) -> Tuple[Access, LocalManifest]:
         return self._retrieve_entry(path)
@@ -293,6 +279,12 @@ class LocalFolderFS:
     def touch(self, path: Path) -> None:
         if path.is_root():
             raise FileExistsError(17, "File exists", str(path))
+
+        if path.parent.is_root():
+            raise PermissionError(
+                13, "Permission denied (only workpace allowed at root level)", str(path)
+            )
+
         access, manifest = self._retrieve_entry(path.parent)
         if not is_folder_manifest(manifest):
             raise NotADirectoryError(20, "Not a directory", str(path.parent))
@@ -308,9 +300,15 @@ class LocalFolderFS:
         self.event_bus.send("fs.entry.updated", id=access["id"])
         self.event_bus.send("fs.entry.updated", id=child_access["id"])
 
-    def mkdir(self, path: Path, workspace=False) -> None:
+    def mkdir(self, path: Path) -> None:
         if path.is_root():
             raise FileExistsError(17, "File exists", str(path))
+
+        if path.parent.is_root():
+            raise PermissionError(
+                13, "Permission denied (only workpace allowed at root level)", str(path)
+            )
+
         access, manifest = self._retrieve_entry(path.parent)
         if not is_folder_manifest(manifest):
             raise NotADirectoryError(20, "Not a directory", str(path.parent))
@@ -318,23 +316,66 @@ class LocalFolderFS:
             raise FileExistsError(17, "File exists", str(path))
 
         child_access = new_access()
-        child_manifest: LocalManifest
-        if workspace:
-            if not path.parent.is_root():
-                raise PermissionError(
-                    13, "Permission denied (workspace only allowed at root level)", str(path)
-                )
-            child_manifest = new_local_workspace_manifest(self.local_author)
-        else:
-            child_manifest = new_local_folder_manifest(self.local_author)
+        child_manifest = new_local_folder_manifest(self.local_author)
+
         manifest["children"][path.name] = child_access
         mark_manifest_modified(manifest)
+
         self.set_manifest(access, manifest)
         self.set_manifest(child_access, child_manifest)
         self.event_bus.send("fs.entry.updated", id=access["id"])
         self.event_bus.send("fs.entry.updated", id=child_access["id"])
-        if workspace:
-            self.event_bus.send("fs.workspace.loaded", path=path, id=child_access["id"])
+
+    def workspace_create(self, path: Path) -> None:
+        if not path.parent.is_root():
+            raise PermissionError(
+                13, "Permission denied (workspace only allowed at root level)", str(path)
+            )
+
+        root_manifest = self.get_user_manifest()
+        if path.name in root_manifest["children"]:
+            raise FileExistsError(17, "File exists", str(path))
+
+        child_access = new_access()
+        child_manifest = new_local_workspace_manifest(self.local_author)
+
+        root_manifest["children"][path.name] = child_access
+        mark_manifest_modified(root_manifest)
+
+        self.set_manifest(self.root_access, root_manifest)
+        self.set_manifest(child_access, child_manifest)
+        self.event_bus.send("fs.entry.updated", id=self.root_access["id"])
+        self.event_bus.send("fs.entry.updated", id=child_access["id"])
+
+        self.event_bus.send("fs.workspace.loaded", path=str(path), id=child_access["id"])
+
+    def workspace_rename(self, src: Path, dst: Path) -> None:
+        """
+        Workspace is the only manifest that is allowed to be moved without
+        changing it access.
+        The reason behind this is changing a workspace's access means creating
+        a completely new workspace... And on the other hand the name of a
+        workspace is not globally unique so a given user should be able to
+        change it.
+        """
+        src_access, src_manifest = self._retrieve_entry_read_only(src)
+        if not is_workspace_manifest(src_manifest):
+            raise PermissionError(13, "Permission denied (not a workspace)", str(src), str(dst))
+        if not dst.parent.is_root():
+            raise PermissionError(
+                13, "Permission denied (workspace must be direct root child)", str(src), str(dst)
+            )
+
+        root_manifest = self.get_user_manifest()
+        if dst.name in root_manifest["children"]:
+            raise FileExistsError(17, "File exists", str(dst))
+
+        # Just move the workspace's access from one place to another
+        root_manifest["children"][dst.name] = root_manifest["children"].pop(src.name)
+        mark_manifest_modified(root_manifest)
+        self.set_manifest(self.root_access, root_manifest)
+
+        self.event_bus.send("fs.entry.updated", id=self.root_access["id"])
 
     def _delete(self, path: Path, expect=None) -> None:
         if path.is_root():
@@ -362,18 +403,28 @@ class LocalFolderFS:
         self.event_bus.send("fs.entry.updated", id=parent_access["id"])
 
     def delete(self, path: Path) -> None:
-        self._delete(path)
+        return self._delete(path)
 
     def unlink(self, path: Path) -> None:
-        self._delete(path, expect="file")
+        return self._delete(path, expect="file")
 
     def rmdir(self, path: Path) -> None:
-        self._delete(path, expect="folder")
+        return self._delete(path, expect="folder")
 
     def move(self, src: Path, dst: Path) -> None:
-        # TODO: To symplify synchro we currently move the entry into a brand
-        # new access. However this is not recursive (i.e. the entry's
-        # children will keep there original access)...
+        return self._copy(src, dst, True)
+
+    def copy(self, src: Path, dst: Path) -> None:
+        return self._copy(src, dst, False)
+
+    def _copy(self, src: Path, dst: Path, delete_src: bool) -> None:
+        # The idea here is to consider a manifest never move around the fs
+        # (i.e. a given access always points to the same path). This simplify
+        # sync notifications handling and avoid ending up with two path
+        # (possibly from different workspaces !) pointing to the same manifest
+        # which would be weird for user experience.
+        # Long story short, when moving/copying manifest, we must recursively
+        # copy the manifests and create new accesses for them.
 
         parent_src = src.parent
         parent_dst = dst.parent
@@ -395,8 +446,15 @@ class LocalFolderFS:
                 raise PermissionError(13, "Permission denied", str(src), str(dst))
 
         if src == dst:
-            # Raise FileNotFoundError if doesn't exists
-            self._retrieve_entry(src)
+            # Raise FileNotFoundError if doesn't exist
+            src_access, src_ro_manifest = self._retrieve_entry_read_only(src)
+            if is_workspace_manifest(src_ro_manifest):
+                raise PermissionError(
+                    13,
+                    "Permission denied (cannot move/copy workpace, must rename it)",
+                    str(src),
+                    str(dst),
+                )
             return
 
         if parent_src == parent_dst:
@@ -412,29 +470,38 @@ class LocalFolderFS:
                 raise OSError(22, "Invalid argument", str(src), None, str(dst))
 
             try:
-                entry = parent_manifest["children"].pop(src.name)
+                src_access = parent_manifest["children"][src.name]
             except KeyError:
                 raise FileNotFoundError(2, "No such file or directory", str(src))
 
-            existing_entry_access = parent_manifest["children"].get(dst.name)
-            src_entry_manifest = self.get_manifest(entry)
-            if existing_entry_access:
-                existing_entry_manifest = self.get_manifest(existing_entry_access)
-                if is_folder_manifest(src_entry_manifest):
-                    if is_file_manifest(existing_entry_manifest):
+            existing_dst_access = parent_manifest["children"].get(dst.name)
+            src_manifest = self.get_manifest(src_access)
+
+            if is_workspace_manifest(src_manifest):
+                raise PermissionError(
+                    13,
+                    "Permission denied (cannot move/copy workpace, must rename it)",
+                    str(src),
+                    str(dst),
+                )
+
+            if existing_dst_access:
+                existing_dst_manifest = self.get_manifest(existing_dst_access)
+                if is_folder_manifest(src_manifest):
+                    if is_file_manifest(existing_dst_manifest):
                         raise NotADirectoryError(20, "Not a directory", str(dst))
-                    elif existing_entry_manifest["children"]:
+                    elif existing_dst_manifest["children"]:
                         raise OSError(39, "Directory not empty", str(dst))
                 else:
-                    if is_folder_manifest(existing_entry_manifest):
+                    if is_folder_manifest(existing_dst_manifest):
                         raise IsADirectoryError(21, "Is a directory", str(dst))
 
-            moved_access = new_access()
+            moved_access = self._recursive_manifest_copy(src_access, src_manifest)
+
             parent_manifest["children"][dst.name] = moved_access
-            src_entry_manifest["base_version"] = 0
-            src_entry_manifest["is_placeholder"] = True
-            src_entry_manifest["need_sync"] = True
-            self.set_manifest(moved_access, src_entry_manifest)
+            if delete_src:
+                del parent_manifest["children"][src.name]
+
             mark_manifest_modified(parent_manifest)
 
             self.set_manifest(parent_access, parent_manifest)
@@ -457,15 +524,24 @@ class LocalFolderFS:
                 raise OSError(22, "Invalid argument", str(src), None, str(dst))
 
             try:
-                entry = parent_src_manifest["children"].pop(src.name)
+                src_access = parent_src_manifest["children"][src.name]
             except KeyError:
                 raise FileNotFoundError(2, "No such file or directory", str(src))
 
-            existing_entry_access = parent_dst_manifest["children"].get(dst.name)
-            src_entry_manifest = self.get_manifest(entry)
-            if existing_entry_access:
-                existing_entry_manifest = self.get_manifest(existing_entry_access)
-                if is_folder_manifest(src_entry_manifest):
+            existing_dst_access = parent_dst_manifest["children"].get(dst.name)
+            src_manifest = self.get_manifest(src_access)
+
+            if is_workspace_manifest(src_manifest):
+                raise PermissionError(
+                    13,
+                    "Permission denied (cannot move/copy workpace, must rename it)",
+                    str(src),
+                    str(dst),
+                )
+
+            if existing_dst_access:
+                existing_entry_manifest = self.get_manifest(existing_dst_access)
+                if is_folder_manifest(src_manifest):
                     if is_file_manifest(existing_entry_manifest):
                         raise NotADirectoryError(20, "Not a directory", str(dst))
                     elif existing_entry_manifest["children"]:
@@ -474,18 +550,79 @@ class LocalFolderFS:
                     if is_folder_manifest(existing_entry_manifest):
                         raise IsADirectoryError(21, "Is a directory", str(dst))
 
-            moved_access = new_access()
-            parent_dst_manifest["children"][dst.name] = moved_access
-            src_entry_manifest["base_version"] = 0
-            src_entry_manifest["is_placeholder"] = True
-            src_entry_manifest["need_sync"] = True
-            self.set_manifest(moved_access, src_entry_manifest)
+            moved_access = self._recursive_manifest_copy(src_access, src_manifest)
 
-            mark_manifest_modified(parent_src_manifest)
+            parent_dst_manifest["children"][dst.name] = moved_access
             mark_manifest_modified(parent_dst_manifest)
 
-            self.set_manifest(parent_src_access, parent_src_manifest)
             self.set_manifest(parent_dst_access, parent_dst_manifest)
-
-            self.event_bus.send("fs.entry.updated", id=parent_src_access["id"])
             self.event_bus.send("fs.entry.updated", id=parent_dst_access["id"])
+
+            if delete_src:
+                del parent_src_manifest["children"][src.name]
+                mark_manifest_modified(parent_src_manifest)
+
+                self.set_manifest(parent_src_access, parent_src_manifest)
+                self.event_bus.send("fs.entry.updated", id=parent_src_access["id"])
+
+    def _recursive_manifest_copy(self, access, manifest):
+
+        # First, make sure all the manifest have to copy are locally present
+        # (otherwise we will have to stop while part of the manifest are
+        # already copied, creating garbage and making us doing more retries
+        # that strictly needed)
+
+        def _recursive_create_copy_map(access, manifest):
+            copy_map = {"access": access, "manifest": manifest}
+            manifests_miss = []
+
+            if is_folder_manifest(manifest) or is_workspace_manifest(manifest):
+                copy_map["children"] = {}
+
+                for child_name, child_access in manifest["children"].items():
+                    try:
+                        child_manifest = self._get_manifest_read_only(child_access)
+                    except FSManifestLocalMiss as exc:
+                        manifests_miss.append(exc.access)
+                    else:
+                        try:
+                            copy_map["children"][child_name] = _recursive_create_copy_map(
+                                child_access, child_manifest
+                            )
+                        except FSMultiManifestLocalMiss as exc:
+                            manifests_miss += exc.accesses
+
+            if manifests_miss:
+                raise FSMultiManifestLocalMiss(manifests_miss)
+            return copy_map
+
+        copy_map = _recursive_create_copy_map(access, manifest)
+
+        # Now we can walk the copy map and copy each manifest and create new
+        # corresponding accesses
+
+        def _recursive_process_copy_map(copy_map):
+            manifest = copy_map["manifest"]
+
+            cpy_access = new_access()
+            if is_file_manifest(manifest):
+                cpy_manifest = new_local_file_manifest(self.local_author)
+                cpy_manifest["size"] = manifest["size"]
+                cpy_manifest["blocks"] = copy_manifest(manifest["blocks"])
+                cpy_manifest["dirty_blocks"] = copy_manifest(manifest["dirty_blocks"])
+
+            elif is_folder_manifest(manifest):
+                cpy_manifest = new_local_folder_manifest(self.local_author)
+                for child_name in manifest["children"].keys():
+                    child_copy_map = copy_map["children"][child_name]
+                    new_child_access = _recursive_process_copy_map(child_copy_map)
+                    cpy_manifest["children"][child_name] = new_child_access
+
+            else:
+                assert is_workspace_manifest(manifest)
+                cpy_manifest = new_local_workspace_manifest(self.local_author)
+
+            self.set_manifest(cpy_access, cpy_manifest)
+            return cpy_access
+
+        return _recursive_process_copy_map(copy_map)

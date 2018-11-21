@@ -13,7 +13,7 @@ def local_folder_fs_factory(alice, event_bus):
 
 
 @pytest.fixture
-def local_folder_fs(local_folder_fs_factory):
+def local_folder_fs(request, local_folder_fs_factory):
     return local_folder_fs_factory()
 
 

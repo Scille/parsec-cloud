@@ -63,7 +63,8 @@ def test_fs_online_rwfile_and_sync(
             self.device = device_factory()
             await self.start_backend()
             await self.restart_fs(self.device)
-            await self.fs.file_create("/foo.txt")
+            await self.fs.workspace_create("/w")
+            await self.fs.file_create("/w/foo.txt")
             await self.fs.sync("/")
             self.file_oracle = FileOracle(base_version=1)
 
@@ -93,7 +94,7 @@ def test_fs_online_rwfile_and_sync(
             offset=st.integers(min_value=0, max_value=PLAYGROUND_SIZE),
         )
         async def atomic_read(self, size, offset):
-            content = await self.fs.file_read("/foo.txt", size=size, offset=offset)
+            content = await self.fs.file_read("/w/foo.txt", size=size, offset=offset)
             expected_content = self.file_oracle.read(size, offset)
             assert content == expected_content
 
@@ -102,17 +103,17 @@ def test_fs_online_rwfile_and_sync(
             content=st.binary(max_size=PLAYGROUND_SIZE),
         )
         async def atomic_write(self, offset, content):
-            await self.fs.file_write("/foo.txt", content=content, offset=offset)
+            await self.fs.file_write("/w/foo.txt", content=content, offset=offset)
             self.file_oracle.write(offset, content)
 
         @rule(length=st.integers(min_value=0, max_value=PLAYGROUND_SIZE))
         async def atomic_truncate(self, length):
-            await self.fs.file_truncate("/foo.txt", length=length)
+            await self.fs.file_truncate("/w/foo.txt", length=length)
             self.file_oracle.truncate(length)
 
         @rule()
         async def stat(self):
-            stat = await self.fs.stat("/foo.txt")
+            stat = await self.fs.stat("/w/foo.txt")
             assert stat["type"] == "file"
             assert stat["base_version"] == self.file_oracle.base_version
             assert not stat["is_placeholder"]

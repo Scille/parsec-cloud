@@ -67,20 +67,27 @@ def test_fs_online_idempotent_sync(
             self.backend_controller = await self.start_backend([self.device])
             self.fs_controller = await self.start_fs(self.device)
 
-            await self.fs.file_create("/good_file.txt")
-            await self.fs.folder_create("/good_folder")
-            await self.fs.file_create("/good_folder/good_sub_file.txt")
+            await self.fs.workspace_create("/w")
+            await self.fs.file_create("/w/good_file.txt")
+            await self.fs.folder_create("/w/good_folder")
+            await self.fs.file_create("/w/good_folder/good_sub_file.txt")
             await self.fs.sync("/")
 
             self.initial_fs_dump = self.fs._local_folder_fs.dump()
             check_fs_dump(self.initial_fs_dump)
 
-            return "/dummy"
+            return "/w/dummy"
 
         @rule(
             target=GoodPath,
             path=st.sampled_from(
-                ["/", "/good_file.txt", "/good_folder/", "/good_folder/good_sub_file.txt"]
+                [
+                    "/",
+                    "/w",
+                    "/w/good_file.txt",
+                    "/w/good_folder/",
+                    "/w/good_folder/good_sub_file.txt",
+                ]
             ),
         )
         async def init_good_path(self, path):

@@ -1,9 +1,9 @@
 import trio
 from uuid import UUID
-from typing import List, Union
+from typing import Union
 
-from parsec.core.fs.utils import is_folder_manifest
-from parsec.core.fs.types import Path, Access, LocalFolderManifest, LocalFileManifest
+from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_placeholder_manifest
+from parsec.core.fs.types import Path, Access, LocalFolderManifest, LocalFileManifest, LocalManifest
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSEntryNotFound
 from parsec.core.encryption_manager import decrypt_with_symkey, encrypt_with_symkey
 from parsec.core.schemas import dumps_manifest, loads_manifest
@@ -14,7 +14,7 @@ class SyncConcurrencyError(Exception):
     pass
 
 
-DEFAULT_BLOCK_SIZE = 2 ** 16  # 65Kio
+DEFAULT_BLOCK_SIZE = 2 ** 16  # 64Kio
 
 
 class BaseSyncer:
@@ -76,61 +76,125 @@ class BaseSyncer:
             await self.sync_by_id(need_sync_entry_id)
 
     async def sync_by_id(self, entry_id: UUID) -> None:
+        # TODO: we won't stricly sync this id, but the corresponding path
+        # (which may end up being a different id in case of concurrent change)
+        # may we should remove the function and only use `sync(path)` ?
         async with self._lock:
             try:
-                path, access, _ = self.local_folder_fs.get_entry_path(entry_id)
+                path, _, _ = self.local_folder_fs.get_entry_path(entry_id)
             except FSEntryNotFound:
                 # Entry not locally present, nothing to do
                 return
-            notify_beacons = self.local_folder_fs.get_beacons(path)
             # TODO: Instead of going recursive here, we should have do a minimal
             # children sync (i.e. sync empty file and folder with the backend)
             # to save time.
-            await self._sync_nolock(path, access, recursive=True, notify_beacons=notify_beacons)
+            await self._sync_nolock(path, recursive=True)
 
     async def sync(self, path: Path, recursive: bool = True) -> None:
         # Only allow a single synchronizing operation at a time to simplify
         # concurrency. Beside concurrent syncs would make each sync operation
         # slower which would make them less reliable with poor backend connection.
         async with self._lock:
-            try:
-                sync_path, sync_recursive = self.local_folder_fs.get_sync_strategy(path, recursive)
-                sync_access = self.local_folder_fs.get_access(sync_path)
-            except FSManifestLocalMiss:
-                # Nothing to do if entry is no present locally
-                return
-            notify_beacons = self.local_folder_fs.get_beacons(sync_path)
-            await self._sync_nolock(sync_path, sync_access, sync_recursive, notify_beacons)
+            await self._sync_nolock(path, recursive)
 
-    async def _sync_nolock(
-        self,
-        path: Path,
-        access: Access,
-        recursive: Union[bool, dict, list],
-        notify_beacons: List[UUID],
-    ) -> None:
+    async def _sync_nolock(self, path: Path, recursive: bool) -> None:
+        # First retrieve a snapshot of the manifest to sync
         try:
-            manifest = self.local_folder_fs.get_manifest(access)
+            access, manifest = self.local_folder_fs.get_entry(path)
         except FSManifestLocalMiss:
             # Nothing to do if entry is no present locally
             return
-        if is_folder_manifest(manifest):
-            await self._sync_folder_nolock(path, access, manifest, recursive, notify_beacons)
-        else:
-            await self._sync_file_nolock(path, access, manifest, notify_beacons)
 
-    async def _sync_file_nolock(
-        self, path: Path, access: Access, manifest: LocalFileManifest, notify_beacons: List[UUID]
+        if not manifest["need_sync"] and not recursive:
+            return
+
+        # In case of placeholder, we must resolve it first (and make sure
+        # none of it parents are placeholders themselves)
+        if manifest["is_placeholder"]:
+            need_more_sync = await self._resolve_placeholders_in_path(path, access, manifest)
+            # If the entry to sync is actually empty the minimal sync was enough
+            if not need_more_sync and not recursive:
+                return
+            # Reload the manifest given the minimal sync has changed it
+            try:
+                manifest = self.local_folder_fs.get_manifest(access)
+            except FSManifestLocalMiss:
+                # Nothing to do if entry is no present locally
+                return
+
+        # Note from now on it's possible the entry has changed due to
+        # concurrent access (or even have been totally removed !).
+        # We will deal with this when merged synced data back into the local fs.
+
+        # Now we can do the sync on the entry
+        if is_file_manifest(manifest):
+            await self._sync_file(path, access, manifest)
+        else:
+            await self._sync_folder(path, access, manifest, recursive)
+
+    async def _resolve_placeholders_in_path(
+        self, path: Path, access: Access, manifest: LocalManifest
+    ) -> bool:
+        """
+        Returns: If an additional sync is needed
+        """
+        # Notes we sync recursively from children to parents, this is more
+        # efficient given otherwise we would have to do:
+        # 1) sync the parent
+        # 2) sync the child
+        # 3) re-sync the parent with the child
+
+        is_placeholder = is_placeholder_manifest(manifest)
+        if not is_placeholder:
+            # Cannot have a non-placeholder with a placeholder parent, hence
+            # we don't have to go any further.
+            return manifest["need_sync"]
+
+        else:
+            if is_file_manifest(manifest):
+                need_more_sync = await self._minimal_sync_file(path, access, manifest)
+            else:
+                need_more_sync = await self._minimal_sync_folder(path, access, manifest)
+
+            # Once the entry is synced, we must sync it parent as well to have
+            # the entry visible for other clients
+
+            if not path.is_root():
+                try:
+                    parent_access, parent_manifest = self.local_folder_fs.get_entry(path.parent)
+                except FSManifestLocalMiss:
+                    # Nothing to do if entry is no present locally
+                    return False
+
+                if is_placeholder_manifest(parent_manifest):
+                    await self._resolve_placeholders_in_path(
+                        path.parent, parent_access, parent_manifest
+                    )
+                else:
+                    await self._sync_folder(
+                        path.parent, parent_access, parent_manifest, recursive=False
+                    )
+
+            if not need_more_sync:
+                self.event_bus.send("fs.entry.synced", path=str(path), id=access["id"])
+
+            return need_more_sync
+
+    async def _minimal_sync_file(
+        self, path: Path, access: Access, manifest: LocalFileManifest
     ) -> None:
         raise NotImplementedError()
 
-    async def _sync_folder_nolock(
-        self,
-        path: Path,
-        access: Access,
-        manifest: LocalFolderManifest,
-        recursive: Union[bool, dict, list],
-        notify_beacons: List[UUID],
+    async def _minimal_sync_folder(
+        self, path: Path, access: Access, manifest: LocalFolderManifest
+    ) -> None:
+        raise NotImplementedError()
+
+    async def _sync_file(self, path: Path, access: Access, manifest: LocalFileManifest) -> None:
+        raise NotImplementedError()
+
+    async def _sync_folder(
+        self, path: Path, access: Access, manifest: LocalFolderManifest, recursive: bool
     ) -> None:
         raise NotImplementedError()
 
@@ -167,7 +231,7 @@ class BaseSyncer:
         raw = await self.encryption_manager.decrypt_with_secret_key(access["key"], ciphered)
         return loads_manifest(raw)
 
-    async def _backend_vlob_create(self, access, manifest, notify_beacons):
+    async def _backend_vlob_create(self, access, manifest, notify_beacon):
         assert manifest["version"] == 1
         ciphered = self.encryption_manager.encrypt_with_secret_key(
             access["key"], dumps_manifest(manifest)
@@ -178,14 +242,14 @@ class BaseSyncer:
             "wts": access["wts"],
             "rts": access["rts"],
             "blob": to_jsonb64(ciphered),
-            "notify_beacons": notify_beacons,
+            "notify_beacon": notify_beacon,
         }
         ret = await self.backend_cmds_sender.send(payload)
         if ret["status"] == "already_exists_error":
             raise SyncConcurrencyError(access)
         assert ret["status"] == "ok"
 
-    async def _backend_vlob_update(self, access, manifest, notify_beacons):
+    async def _backend_vlob_update(self, access, manifest, notify_beacon):
         assert manifest["version"] > 1
         ciphered = self.encryption_manager.encrypt_with_secret_key(
             access["key"], dumps_manifest(manifest)
@@ -196,7 +260,7 @@ class BaseSyncer:
             "wts": access["wts"],
             "version": manifest["version"],
             "blob": to_jsonb64(ciphered),
-            "notify_beacons": notify_beacons,
+            "notify_beacon": notify_beacon,
         }
         ret = await self.backend_cmds_sender.send(payload)
         if ret["status"] == "version_error":

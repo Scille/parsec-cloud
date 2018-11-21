@@ -166,7 +166,7 @@ class EventBusSpy:
                     if compare_events_with_any(occured, expected):
                         break
         except StopIteration:
-            raise AssertionError(f"Missing events {events[i:]}")
+            raise AssertionError("Missing events: " + "\n".join([str(x) for x in events[i:]]))
 
     def assert_events_exactly_occured(self, events):
         events = self._cook_events_params(events)

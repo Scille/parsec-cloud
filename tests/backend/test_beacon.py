@@ -61,39 +61,33 @@ async def test_beacon_multimessages(backend, alice_backend_sock, vlob_ids):
 @pytest.mark.trio
 async def test_beacon_in_vlob_update(backend, alice_backend_sock):
     vlob_id = UUID("fc0dfa885c6c4d3781341e10bf94b080")
-    beacons_ids = (BEACON_ID_1, BEACON_ID_2, BEACON_ID_3)
 
     await backend.vlob.create(vlob_id, "<1 rts>", "<1 wts>", blob=b"foo")
-    await backend.vlob.update(
-        vlob_id, "<1 wts>", version=2, blob=b"bar", notify_beacons=beacons_ids
-    )
+    await backend.vlob.update(vlob_id, "<1 wts>", version=2, blob=b"bar", notify_beacon=BEACON_ID_1)
 
-    for beacon_id in beacons_ids:
-        await alice_backend_sock.send({"cmd": "beacon_read", "id": beacon_id, "offset": 0})
-        rep = await alice_backend_sock.recv()
-        assert rep == {
-            "status": "ok",
-            "id": beacon_id.hex,
-            "offset": 0,
-            "items": [{"src_id": vlob_id.hex, "src_version": 2}],
-            "count": 1,
-        }
+    await alice_backend_sock.send({"cmd": "beacon_read", "id": BEACON_ID_1, "offset": 0})
+    rep = await alice_backend_sock.recv()
+    assert rep == {
+        "status": "ok",
+        "id": BEACON_ID_1.hex,
+        "offset": 0,
+        "items": [{"src_id": vlob_id.hex, "src_version": 2}],
+        "count": 1,
+    }
 
 
 @pytest.mark.trio
 async def test_beacon_in_vlob_create(backend, alice_backend_sock):
     vlob_id = UUID("fc0dfa885c6c4d3781341e10bf94b080")
-    beacons_ids = (BEACON_ID_1, BEACON_ID_2, BEACON_ID_3)
 
-    await backend.vlob.create(vlob_id, "<1 rts>", "<1 wts>", b"foo", notify_beacons=beacons_ids)
+    await backend.vlob.create(vlob_id, "<1 rts>", "<1 wts>", b"foo", notify_beacon=BEACON_ID_1)
 
-    for beacon_id in beacons_ids:
-        await alice_backend_sock.send({"cmd": "beacon_read", "id": beacon_id, "offset": 0})
-        rep = await alice_backend_sock.recv()
-        assert rep == {
-            "status": "ok",
-            "id": beacon_id.hex,
-            "offset": 0,
-            "items": [{"src_id": vlob_id.hex, "src_version": 1}],
-            "count": 1,
-        }
+    await alice_backend_sock.send({"cmd": "beacon_read", "id": BEACON_ID_1, "offset": 0})
+    rep = await alice_backend_sock.recv()
+    assert rep == {
+        "status": "ok",
+        "id": BEACON_ID_1.hex,
+        "offset": 0,
+        "items": [{"src_id": vlob_id.hex, "src_version": 1}],
+        "count": 1,
+    }

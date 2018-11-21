@@ -43,7 +43,7 @@ class PGVlobComponent(BaseVlobComponent):
 
         return changed
 
-    async def create(self, id, rts, wts, blob, notify_beacons=(), author="anonymous"):
+    async def create(self, id, rts, wts, blob, notify_beacon=None, author="anonymous"):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 try:
@@ -60,7 +60,8 @@ class PGVlobComponent(BaseVlobComponent):
                 if result != "INSERT 0 1":
                     raise ParsecError("Insertion error.")
 
-                await self.beacon_component.ll_update_multiple(conn, notify_beacons, id, 1, author)
+                if notify_beacon:
+                    await self.beacon_component.ll_update(conn, notify_beacon, id, 1, author)
 
         return VlobAtom(id=id, read_trust_seed=rts, write_trust_seed=wts, blob=blob)
 
@@ -103,7 +104,7 @@ class PGVlobComponent(BaseVlobComponent):
             version=data["version"],
         )
 
-    async def update(self, id, wts, version, blob, notify_beacons=(), author="anonymous"):
+    async def update(self, id, wts, version, blob, notify_beacon=None, author="anonymous"):
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 previous = await conn.fetchrow(
@@ -132,6 +133,5 @@ class PGVlobComponent(BaseVlobComponent):
 
                 if result != "INSERT 0 1":
                     raise ParsecError("Insertion error.")
-                await self.beacon_component.ll_update_multiple(
-                    conn, notify_beacons, id, version, author
-                )
+                if notify_beacon:
+                    await self.beacon_component.ll_update(conn, notify_beacon, id, version, author)

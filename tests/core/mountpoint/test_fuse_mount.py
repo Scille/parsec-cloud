@@ -51,9 +51,10 @@ async def test_fuse_available(alice_fs, event_bus):
 async def test_mount_fuse(alice_fs, event_bus, tmpdir, monitor, fuse_mode):
     # Populate a bit the fs first...
 
-    await alice_fs.folder_create("/foo")
-    await alice_fs.file_create("/bar.txt")
-    await alice_fs.file_write("/bar.txt", b"Hello world !")
+    await alice_fs.workspace_create("/w")
+    await alice_fs.folder_create("/w/foo")
+    await alice_fs.file_create("/w/bar.txt")
+    await alice_fs.file_write("/w/bar.txt", b"Hello world !")
 
     # Now we can start fuse
 
@@ -74,13 +75,16 @@ async def test_mount_fuse(alice_fs, event_bus, tmpdir, monitor, fuse_mode):
             # Finally explore the mountpoint
 
             def inspect_mountpoint():
-                children = set(os.listdir(mountpoint))
-                assert children == {"foo", "bar.txt"}
+                root_children = set(os.listdir(mountpoint))
+                assert root_children == {"w"}
 
-                bar_stat = os.stat(f"{mountpoint}/bar.txt")
+                wksp_children = set(os.listdir(f"{mountpoint}/w"))
+                assert wksp_children == {"foo", "bar.txt"}
+
+                bar_stat = os.stat(f"{mountpoint}/w/bar.txt")
                 assert bar_stat.st_size == len(b"Hello world !")
 
-                with open("%s/bar.txt" % mountpoint, "rb") as fd:
+                with open(f"{mountpoint}/w/bar.txt", "rb") as fd:
                     bar_txt = fd.read()
                 assert bar_txt == b"Hello world !"
 

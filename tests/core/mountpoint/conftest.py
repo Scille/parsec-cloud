@@ -34,12 +34,18 @@ def fuse_service_factory(
     class FuseService:
         def __init__(self, mountpoint):
             self.mountpoint = pathlib.Path(mountpoint)
+            # Provide a default workspace given we cannot create it through FUSE
+            self.default_workspace_name = "w"
             self._portal = None
             self._need_stop = trio.Event()
             self._stopped = trio.Event()
             self._need_start = trio.Event()
             self._started = trio.Event()
             self._ready = threading.Event()
+
+        @property
+        def default_workpsace(self):
+            return self.mountpoint / self.default_workspace_name
 
         async def _start(self):
             self._need_start.set()
@@ -79,6 +85,9 @@ def fuse_service_factory(
                 device = device_factory()
                 event_bus = event_bus_factory()
                 async with fs_factory(device, unused_tcp_addr) as fs:
+
+                    await fs.workspace_create(f"/{self.default_workspace_name}")
+
                     fuse = FuseMountpointManager(fs, event_bus, mode=fuse_mode)
                     async with trio.open_nursery() as nursery:
                         await fuse.init(nursery)
