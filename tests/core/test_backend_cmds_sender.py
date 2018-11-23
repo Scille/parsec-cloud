@@ -120,7 +120,7 @@ async def test_backend_switch_offline(backend_cmds_sender, tcp_stream_spy):
     # Current socket is down, but opening another socket
     # should solve the trouble
 
-    tcp_stream_spy.socks[backend_cmds_sender.backend_addr][-1].send_stream.close()
+    tcp_stream_spy.get_socks(backend_cmds_sender.backend_addr)[-1].send_stream.close()
 
     rep = await backend_cmds_sender.send({"cmd": "ping", "ping": "hello"})
     assert rep == {"status": "ok", "pong": "hello"}

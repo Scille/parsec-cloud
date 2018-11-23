@@ -229,19 +229,12 @@ def root_signing_key():
 
 
 @pytest.fixture()
-def device_factory(root_signing_key):
+def device_factory():
     users = {}
     devices = {}
     count = 0
-    default_root_verify_key = root_signing_key.verify_key.encode()
 
-    def _device_factory(
-        user_id=None,
-        device_name=None,
-        user_manifest_in_v0=False,
-        local_db=None,
-        root_verify_key=default_root_verify_key,
-    ):
+    def _device_factory(user_id=None, device_name=None, user_manifest_in_v0=False, local_db=None):
         nonlocal count
         count += 1
 
@@ -281,7 +274,6 @@ def device_factory(root_signing_key):
             local_db = InMemoryLocalDB()
         device = Device(
             f"{user_id}@{device_name}",
-            root_verify_key,
             user_privkey,
             device_signkey,
             local_symkey,
@@ -500,9 +492,10 @@ async def backend(backend_factory):
         yield backend
 
 
-@pytest.fixture
-def backend_addr():
-    return "tcp://parsec-backend.localhost:9999"
+@pytest.fixture(scope="session")
+def backend_addr(root_signing_key):
+    default_urlsafe_root_verify_key = encode_urlsafe_root_verify_key(root_signing_key.verify_key)
+    return f"tcp://parsec-backend.localhost:9999?root-verify-key={default_urlsafe_root_verify_key}"
 
 
 @pytest.fixture

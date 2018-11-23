@@ -3,7 +3,7 @@ import attr
 from pathlib import Path
 from structlog import get_logger
 from nacl.public import PrivateKey, PublicKey, SealedBox
-from nacl.signing import SigningKey, VerifyKey
+from nacl.signing import SigningKey
 from nacl.pwhash import argon2i
 from nacl.secret import SecretBox
 import nacl.utils
@@ -82,7 +82,6 @@ def is_valid_device_id(tocheck):
 
 class DeviceConfSchema(UnknownCheckedSchema):
     device_id = fields.String(validate=validate.Regexp(DEVICE_ID_PATTERN), required=True)
-    root_verify_key = fields.Base64Bytes(required=True)
     user_privkey = fields.Base64Bytes(required=True)
     device_signkey = fields.Base64Bytes(required=True)
     user_manifest_access = fields.Base64Bytes(required=True)
@@ -142,19 +141,11 @@ class Device:
         return f"<{type(self).__name__}(id={self.id!r}, local_db={self.local_db!r})>"
 
     def __init__(
-        self,
-        id,
-        root_verify_key,
-        user_privkey,
-        device_signkey,
-        local_symkey,
-        user_manifest_access,
-        local_db,
+        self, id, user_privkey, device_signkey, local_symkey, user_manifest_access, local_db
     ):
         assert is_valid_device_id(id)
         self.id = id
         self.user_id, self.device_name = id.split("@")
-        self.root_verify_key = VerifyKey(root_verify_key)
         self.user_privkey = PrivateKey(user_privkey)
         self.device_signkey = SigningKey(device_signkey)
         self.local_symkey = local_symkey
@@ -211,7 +202,6 @@ class LocalDevicesManager:
     def register_new_device(
         self,
         device_id,
-        root_verify_key,
         user_privkey,
         device_signkey,
         user_manifest_access,
@@ -234,7 +224,7 @@ class LocalDevicesManager:
             )
 
         user_manifest_access_raw, _ = user_manifest_access_schema.dumps(user_manifest_access)
-        device_conf = {"device_id": device_id, "root_verify_key": root_verify_key}
+        device_conf = {"device_id": device_id}
         local_symkey = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
         if password:
             salt = _generate_salt()
@@ -336,7 +326,6 @@ class LocalDevicesManager:
                             "Invalid PKCS #11 token id or key id"
                         )
 
-            root_verify_key = device_conf["root_verify_key"]
             user_privkey = device_conf["user_privkey"]
             device_signkey = device_conf["device_signkey"]
             local_symkey = device_conf["local_symkey"]
@@ -347,7 +336,6 @@ class LocalDevicesManager:
 
         return Device(
             id=device_id,
-            root_verify_key=root_verify_key,
             user_privkey=user_privkey,
             device_signkey=device_signkey,
             local_symkey=local_symkey,
