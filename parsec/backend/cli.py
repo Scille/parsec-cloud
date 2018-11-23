@@ -1,5 +1,4 @@
 import os
-import sys
 import trio
 import trio_asyncio
 import click
@@ -21,38 +20,6 @@ JOHN_DOE_DEVICE_VERIFY_KEY = (
     b"\xd5\xef\x8f\xbdPJ\xea\x9c<]qy\x06!M\xad5" b"\x99m\xa0}EDqN\x06\x06c\x9e:\xe6\x80"
 )
 DEFAULT_CORE_UNIX_SOCKET = "tcp://127.0.0.1:6776"
-
-
-def run_with_pdb(cmd, *args, **kwargs):
-    import pdb
-    import traceback
-
-    # Stolen from pdb.main
-    pdb_context = pdb.Pdb()
-    try:
-        ret = pdb_context.runcall(cmd, **kwargs)
-        print("The program finished")
-        return ret
-
-    except pdb.Restart:
-        print("Restarting %s with arguments: %s, %s" % (cmd.__name__, args, kwargs))
-        # Yes, that's a hack
-        return run_with_pdb(cmd, *args, **kwargs)
-
-    except SystemExit:
-        # In most cases SystemExit does not warrant a post-mortem session.
-        print("The program exited via sys.exit(). Exit status:", end=" ")
-        print(sys.exc_info()[1])
-    except SyntaxError:
-        traceback.print_exc()
-        sys.exit(1)
-    except Exception:
-        traceback.print_exc()
-        print("Uncaught exception. Entering post mortem debugging")
-        print("Running 'cont' or 'step' will restart the program")
-        t = sys.exc_info()[2]
-        pdb_context.interaction(None, t)
-        print("Post mortem debugger finished.")
 
 
 @click.command()
@@ -123,15 +90,9 @@ def revoke_cmd(user_id, device_name, store):
 @click.option("--log-file", "-o")
 @click.option("--log-filter", default=None)
 @click.option("--debug", "-d", is_flag=True)
-@click.option("--pdb", is_flag=True)
-def backend_cmd(log_level, log_format, log_file, log_filter, pdb, **kwargs):
+def backend_cmd(log_level, log_format, log_file, log_filter, **kwargs):
     configure_logging(log_level, log_format, log_file, log_filter)
-
-    if pdb:
-        return run_with_pdb(_backend, **kwargs)
-
-    else:
-        return _backend(**kwargs)
+    return _backend(**kwargs)
 
 
 def _backend(host, port, pubkeys, store, blockstore, debug):

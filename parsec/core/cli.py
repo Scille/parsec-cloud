@@ -32,39 +32,6 @@ JOHN_DOE_USER_MANIFEST_ACCESS = {
 DEFAULT_CORE_SOCKET = "tcp://127.0.0.1:6776"
 
 
-def run_with_pdb(cmd, *args, **kwargs):
-    import pdb
-    import traceback
-    import sys
-
-    # Stolen from pdb.main
-    pdb_context = pdb.Pdb()
-    try:
-        ret = pdb_context.runcall(cmd, **kwargs)
-        print("The program finished")
-        return ret
-
-    except pdb.Restart:
-        print("Restarting %s with arguments: %s, %s" % (cmd.__name__, args, kwargs))
-        # Yes, that's a hack
-        return run_with_pdb(cmd, *args, **kwargs)
-
-    except SystemExit:
-        # In most cases SystemExit does not warrant a post-mortem session.
-        print("The program exited via sys.exit(). Exit status:", end=" ")
-        print(sys.exc_info()[1])
-    except SyntaxError:
-        traceback.print_exc()
-        sys.exit(1)
-    except Exception:
-        traceback.print_exc()
-        print("Uncaught exception. Entering post mortem debugging")
-        print("Running 'cont' or 'step' will restart the program")
-        t = sys.exc_info()[2]
-        pdb_context.interaction(None, t)
-        print("Post mortem debugger finished.")
-
-
 @click.command()
 @click.option(
     "--socket",
@@ -84,16 +51,11 @@ def run_with_pdb(cmd, *args, **kwargs):
 @click.option("--log-format", "-f", default="CONSOLE", type=click.Choice(("CONSOLE", "JSON")))
 @click.option("--log-file", "-o")
 @click.option("--log-filter", default=None)
-@click.option("--pdb", is_flag=True)
 @click.option("--I-am-John", is_flag=True, help="Log as dummy John Doe user")
 @click.option("--no-ui", help="Disable the GUI", is_flag=True)
-def core_cmd(log_level, log_format, log_file, log_filter, pdb, **kwargs):
+def core_cmd(log_level, log_format, log_file, log_filter, **kwargs):
     configure_logging(log_level, log_format, log_file, log_filter)
-
-    if pdb:
-        return run_with_pdb(_core, **kwargs)
-    else:
-        return _core(**kwargs)
+    return _core(**kwargs)
 
 
 def _core(socket, backend_addr, backend_watchdog, debug, i_am_john, no_ui):
