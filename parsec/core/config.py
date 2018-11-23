@@ -10,7 +10,7 @@ def _cast_int(v):
     return int(v) if v is not None else None
 
 
-def get_settings_path():
+def get_default_settings_path():
     return os.path.expandvars("%APPDATA%\parsec" if os.name == "nt" else "$HOME/.config/parsec")
 
 
@@ -24,6 +24,8 @@ class CoreConfig:
         default=config("PARSEC_BACKEND_WATCHDOG", cast=_cast_int, default=None)
     )
     local_storage_dir = attr.ib(default=config("PARSEC_LOCAL_STORAGE_DIR", default=""))
-    base_settings_path = attr.ib(default=config("BASE_SETTINGS_PATH", default=get_settings_path()))
+    base_settings_path = attr.ib(
+        default=config("BASE_SETTINGS_PATH", default=get_default_settings_path())
+    )
     block_size = attr.ib(default=2 ** 16)
     sentry_url = attr.ib(default=config("SENTRY_URL", default=""))

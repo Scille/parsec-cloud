@@ -1,163 +1,268 @@
+import base64
+import json
+import pendulum
 import triopg
+from typing import Optional, Tuple
 from structlog import get_logger
 from uuid import UUID
+from nacl.public import PublicKey, PrivateKey
+from nacl.signing import VerifyKey, SigningKey
 
 from parsec.utils import call_with_control, ejson_dumps, ejson_loads
+from parsec.types import UserID, DeviceName
 
 
 logger = get_logger()
 
 
-async def init_db(url, force=False):
-    async with triopg.connect(url) as conn, conn.transaction():
+class DBInitError(Exception):
+    pass
+
+
+async def init_db(
+    url: str, user_id: UserID, device_name: DeviceName, force: bool = False
+) -> Optional[Tuple[VerifyKey, PrivateKey, SigningKey]]:
+    """
+    Raises:
+        DBInitError
+        triopg.exceptions.PostgresError
+    Returns: Tuple of (root key verify key, new user private key and new device signing key)
+             or None if database already initialized.
+    """
+    async with triopg.connect(url) as conn:
         if force:
-            # TODO: Ideally we would totally drop the db here instead of just
-            # the databases we know...
-            await conn.execute(
-                """
-                DROP TABLE IF EXISTS
-                    users,
-                    devices,
+            async with conn.transaction():
+                await _drop_db(conn)
+        if not await _is_db_initialized(conn):
+            async with conn.transaction():
+                await _create_db_tables(conn)
+                return await _bootstrap_db(conn, user_id, device_name)
 
-                    user_invitations,
-                    unconfigured_devices,
-                    device_configuration_tries,
 
-                    messages,
-                    vlobs,
-                    beacons,
+def build_signed_pubkey_payload(user_id: UserID, pubkey: PublicKey, now: pendulum.Pendulum):
+    data = {
+        "public_key": base64.encodebytes(pubkey.encode()).decode("utf8"),
+        "timestamp": now.isoformat(),
+        "user_id": user_id,
+    }
+    return json.dumps(data).encode("utf8")
 
-                    blockstore
-                CASCADE;
 
-                DROP TYPE IF EXISTS
-                    USER_INVITATION_STATUS,
-                    DEVICE_INVITATION_STATUS,
-                    DEVICE_CONF_TRY_STATUS
-                CASCADE;
-                """
-            )
-        else:
-            # TODO: not a really elegant way to determine if the database
-            # is already initialized...
-            db_initialized = await conn.execute(
-                """
-                SELECT exists (
-                    SELECT 1 FROM information_schema.tables
-                    WHERE table_schema = 'public' AND table_name = 'users'
-                )
+def build_signed_verifykey_payload(
+    user_id: UserID, device_name: DeviceName, verifykey: VerifyKey, now: pendulum.Pendulum
+):
+    data = {
+        "verify_key": base64.encodebytes(verifykey.encode()).decode("utf8"),
+        "timestamp": now.isoformat(),
+        "user_id": user_id,
+        "device_name": device_name,
+    }
+    return json.dumps(data).encode("utf8")
+
+
+def extract_signed_pubkey_payload(payload: bytes):
+    pass
+
+
+async def _bootstrap_db(conn, user_id, device_name):
+    now = pendulum.now()
+    root_signkey = SigningKey.generate()
+    user_privkey = PrivateKey.generate()
+    device_signkey = SigningKey.generate()
+
+    # TODO...
+    from parsec.core.encryption_manager import sign_and_add_meta
+
+    public_key_payload = sign_and_add_meta(
+        "root", root_signkey, build_signed_pubkey_payload(user_id, user_privkey.public_key, now)
+    )
+    verify_key_payload = sign_and_add_meta(
+        "root",
+        root_signkey,
+        build_signed_verifykey_payload(user_id, device_name, device_signkey.verify_key, now),
+    )
+
+    await conn.execute(
+        """
+        INSERT INTO users (user_id, created_on, broadcast_key)
+        VALUES ($1, $2, $3)
+        """,
+        user_id,
+        now,
+        public_key_payload,
+    )
+
+    await conn.execute(
+        """
+        INSERT INTO devices (device_id, user_id, device_name, created_on, verify_key)
+        VALUES ($1, $2, $3, $4, $5)
+        """,
+        f"{user_id}@{device_name}",
+        user_id,
+        device_name,
+        now,
+        verify_key_payload,
+    )
+
+    await conn.execute(
+        """
+        INSERT INTO root_key(verify_key) VALUES ($1)
+        """,
+        root_signkey.verify_key.encode(),
+    )
+
+    return (root_signkey.verify_key, user_privkey, device_signkey)
+
+
+async def _drop_db(conn):
+    # TODO: Ideally we would totally drop the db here instead of just
+    # the databases we know...
+    await conn.execute(
+        """
+        DROP TABLE IF EXISTS
+            root_key,
+            users,
+            devices,
+
+            user_invitations,
+            unconfigured_devices,
+            device_configuration_tries,
+
+            messages,
+            vlobs,
+            beacons,
+
+            blockstore
+        CASCADE;
+
+        DROP TYPE IF EXISTS
+            USER_INVITATION_STATUS,
+            DEVICE_INVITATION_STATUS,
+            DEVICE_CONF_TRY_STATUS
+        CASCADE;
+    """
+    )
+
+
+async def _is_db_initialized(conn):
+    # TODO: not a really elegant way to determine if the database
+    # is already initialized...
+    try:
+        await get_root_verify_key(conn)
+        return True
+    except DBInitError:
+        return False
+
+
+async def get_root_verify_key(conn) -> VerifyKey:
+    try:
+        root_key = await conn.fetchrow(
             """
-            )
-            if db_initialized:
-                return
-
-        await conn.execute(
-            """
-            CREATE TABLE users (
-                user_id VARCHAR(32) PRIMARY KEY,
-                created_on TIMESTAMP NOT NULL,
-                broadcast_key BYTEA NOT NULL
-            );
-
-            CREATE TABLE devices (
-                device_id VARCHAR(65) PRIMARY KEY,
-                device_name VARCHAR(32),
-                user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
-                created_on TIMESTAMP NOT NULL,
-                verify_key BYTEA NOT NULL,
-                revocated_on TIMESTAMP,
-                UNIQUE (user_id, device_id)
-            );
+            SELECT verify_key from root_key;
             """
         )
+        if not root_key:
+            raise DBInitError("Database not initialized (cannot retreive root key).")
 
-        await conn.execute(
-            """
-            CREATE TYPE USER_INVITATION_STATUS AS ENUM ('pending', 'claimed', 'rejected');
-            CREATE TABLE user_invitations (
-                _id SERIAL PRIMARY KEY,
-                status USER_INVITATION_STATUS NOT NULL,
-                user_id VARCHAR(32) NOT NULL,
-                invited_on TIMESTAMP NOT NULL,
-                invitation_token TEXT NOT NULL,
-                claim_tries INTEGER NOT NULL,
-                claimed_on TIMESTAMP
-            )"""
-        )
+    except triopg.exceptions.UndefinedTableError as exc:
+        await conn.execute("ROLLBACK;")
+        raise DBInitError("Database not initialized (tables not created).") from exc
 
-        await conn.execute(
-            """
-            CREATE TABLE unconfigured_devices (
-                _id SERIAL PRIMARY KEY,
-                user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
-                device_name VARCHAR(32) NOT NULL,
-                created_on TIMESTAMP NOT NULL,
-                configure_token TEXT NOT NULL,
-                UNIQUE(user_id, device_name)
-            )"""
-        )
+    return VerifyKey(root_key["verify_key"])
 
-        await conn.execute(
-            """
-            CREATE TYPE DEVICE_CONF_TRY_STATUS AS ENUM ('waiting_answer', 'accepted', 'refused');
-            CREATE TABLE device_configuration_tries (
-                config_try_id VARCHAR(32) PRIMARY KEY,
-                user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
-                status DEVICE_CONF_TRY_STATUS NOT NULL,
-                refused_reason TEXT,
-                device_name VARCHAR(32) NOT NULL,
-                device_verify_key BYTEA NOT NULL,
-                exchange_cipherkey BYTEA NOT NULL,
-                salt BYTEA NOT NULL,
-                ciphered_user_privkey BYTEA,
-                ciphered_user_manifest_access BYTEA,
-                UNIQUE(user_id, config_try_id)
-            )"""
-        )
 
-        await conn.execute(
-            """
-            CREATE TABLE messages (
-                _id SERIAL PRIMARY KEY,
-                recipient VARCHAR(32) REFERENCES users (user_id) NOT NULL,
-                sender VARCHAR(65) REFERENCES devices (device_id) NOT NULL,
-                body BYTEA NOT NULL
-            )"""
-        )
+async def _create_db_tables(conn):
+    await conn.execute(
+        """
+        CREATE TABLE root_key (
+            verify_key BYTEA NOT NULL
+        );
 
-        await conn.execute(
-            """
-            CREATE TABLE vlobs (
-                _id SERIAL PRIMARY KEY,
-                vlob_id UUID NOT NULL,
-                version INTEGER NOT NULL,
-                rts TEXT NOT NULL,
-                wts TEXT NOT NULL,
-                blob BYTEA NOT NULL,
-                UNIQUE(vlob_id, version)
-            )"""
-        )
+        -- TODO: rename to public_key
+        CREATE TABLE users (
+            user_id VARCHAR(32) PRIMARY KEY,
+            created_on TIMESTAMP NOT NULL,
+            broadcast_key BYTEA NOT NULL
+        );
 
-        await conn.execute(
-            """
-            CREATE TABLE beacons (
-                _id SERIAL PRIMARY KEY,
-                beacon_id UUID NOT NULL,
-                beacon_index INTEGER NOT NULL,
-                src_id UUID NOT NULL,
-                -- src_id UUID REFERENCES vlobs (vlob_id) NOT NULL,
-                src_version INTEGER NOT NULL
-            )"""
-        )
+        CREATE TABLE devices (
+            device_id VARCHAR(65) PRIMARY KEY,
+            device_name VARCHAR(32),
+            user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
+            created_on TIMESTAMP NOT NULL,
+            verify_key BYTEA NOT NULL,
+            revocated_on TIMESTAMP,
+            UNIQUE (user_id, device_id)
+        );
 
-        await conn.execute(
-            """
-            CREATE TABLE blockstore (
-                _id SERIAL PRIMARY KEY,
-                block_id UUID UNIQUE NOT NULL,
-                block BYTEA NOT NULL
-            )"""
-        )
+        CREATE TYPE USER_INVITATION_STATUS AS ENUM ('pending', 'claimed', 'rejected');
+        CREATE TABLE user_invitations (
+            _id SERIAL PRIMARY KEY,
+            status USER_INVITATION_STATUS NOT NULL,
+            user_id VARCHAR(32) NOT NULL,
+            invited_on TIMESTAMP NOT NULL,
+            invitation_token TEXT NOT NULL,
+            claim_tries INTEGER NOT NULL,
+            claimed_on TIMESTAMP
+        );
+
+        CREATE TABLE unconfigured_devices (
+            _id SERIAL PRIMARY KEY,
+            user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
+            device_name VARCHAR(32) NOT NULL,
+            created_on TIMESTAMP NOT NULL,
+            configure_token TEXT NOT NULL,
+            UNIQUE(user_id, device_name)
+        );
+
+        CREATE TYPE DEVICE_CONF_TRY_STATUS AS ENUM ('waiting_answer', 'accepted', 'refused');
+        CREATE TABLE device_configuration_tries (
+            config_try_id VARCHAR(32) PRIMARY KEY,
+            user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
+            status DEVICE_CONF_TRY_STATUS NOT NULL,
+            refused_reason TEXT,
+            device_name VARCHAR(32) NOT NULL,
+            device_verify_key BYTEA NOT NULL,
+            exchange_cipherkey BYTEA NOT NULL,
+            salt BYTEA NOT NULL,
+            ciphered_user_privkey BYTEA,
+            ciphered_user_manifest_access BYTEA,
+            UNIQUE(user_id, config_try_id)
+        );
+
+        CREATE TABLE messages (
+            _id SERIAL PRIMARY KEY,
+            recipient VARCHAR(32) REFERENCES users (user_id) NOT NULL,
+            sender VARCHAR(65) REFERENCES devices (device_id) NOT NULL,
+            body BYTEA NOT NULL
+        );
+
+        CREATE TABLE vlobs (
+            _id SERIAL PRIMARY KEY,
+            vlob_id UUID NOT NULL,
+            version INTEGER NOT NULL,
+            rts TEXT NOT NULL,
+            wts TEXT NOT NULL,
+            blob BYTEA NOT NULL,
+            UNIQUE(vlob_id, version)
+        );
+
+        CREATE TABLE beacons (
+            _id SERIAL PRIMARY KEY,
+            beacon_id UUID NOT NULL,
+            beacon_index INTEGER NOT NULL,
+            src_id UUID NOT NULL,
+            -- src_id UUID REFERENCES vlobs (vlob_id) NOT NULL,
+            src_version INTEGER NOT NULL
+        );
+
+        CREATE TABLE blockstore (
+            _id SERIAL PRIMARY KEY,
+            block_id UUID UNIQUE NOT NULL,
+            block BYTEA NOT NULL
+        );
+    """
+    )
 
 
 class PGHandler:

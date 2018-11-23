@@ -1,4 +1,4 @@
-from .handler import PGHandler, init_db
+from .handler import PGHandler, init_db, DBInitError
 from .blockstore import PGBlockStoreComponent
 from .message import PGMessageComponent
 from .user import PGUserComponent
@@ -8,6 +8,7 @@ from .beacon import PGBeaconComponent
 
 __all__ = [
     "init_db",
+    "DBInitError",
     "PGHandler",
     "PGBlockStoreComponent",
     "PGMessageComponent",

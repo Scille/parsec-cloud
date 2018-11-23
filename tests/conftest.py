@@ -222,13 +222,25 @@ def server_factory(tcp_stream_spy):
     return _server_factory
 
 
-@pytest.fixture
-def device_factory():
+@pytest.fixture(scope="session")
+def root_signing_key():
+    return SigningKey.generate()
+
+
+@pytest.fixture()
+def device_factory(root_signing_key):
     users = {}
     devices = {}
     count = 0
+    default_root_verify_key = root_signing_key.verify_key.encode()
 
-    def _device_factory(user_id=None, device_name=None, user_manifest_in_v0=False, local_db=None):
+    def _device_factory(
+        user_id=None,
+        device_name=None,
+        user_manifest_in_v0=False,
+        local_db=None,
+        root_verify_key=default_root_verify_key,
+    ):
         nonlocal count
         count += 1
 
@@ -268,6 +280,7 @@ def device_factory():
             local_db = InMemoryLocalDB()
         device = Device(
             f"{user_id}@{device_name}",
+            root_verify_key,
             user_privkey,
             device_signkey,
             local_symkey,

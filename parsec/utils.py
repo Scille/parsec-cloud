@@ -8,6 +8,11 @@ from uuid import UUID
 from pendulum import Pendulum
 from nacl.secret import SecretBox
 import nacl.utils
+from nacl.public import PrivateKey
+
+
+def generate_asym_key():
+    return PrivateKey.generate()
 
 
 def generate_sym_key():
