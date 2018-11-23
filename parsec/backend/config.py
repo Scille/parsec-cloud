@@ -3,6 +3,8 @@ import attr
 import itertools
 from collections import defaultdict
 
+from parsec.utils import decode_urlsafe_root_verify_key
+
 
 blockstore_environ_vars = {
     "S3": ["S3_REGION", "S3_BUCKET", "S3_KEY", "S3_SECRET"],
@@ -124,6 +126,15 @@ def config_factory(db_url="MOCKED", blockstore_type="MOCKED", debug=False, envir
         raw_conf["BLOCKSTORE_TYPE"], raw_conf
     )
 
+    if "ROOT_VERIFY_KEY" not in raw_conf:
+        raise ValueError("Missing mandatory environ variable `ROOT_VERIFY_KEY`")
+    try:
+        config.__dict__["root_verify_key"] = decode_urlsafe_root_verify_key(
+            raw_conf.get("ROOT_VERIFY_KEY")
+        )
+    except Exception as exc:
+        raise ValueError("Invalid `ROOT_VERIFY_KEY` environ variable") from exc
+
     config.__dict__["sentry_url"] = raw_conf.get("SENTRY_URL") or None
 
     return config
@@ -172,6 +183,8 @@ class BackendConfig:
 
     db_url = attr.ib(default=None)
     db_type = attr.ib(default=None)
+
+    root_verify_key = attr.ib(default=None)
 
     blockstore_config = attr.ib(default=None)
 

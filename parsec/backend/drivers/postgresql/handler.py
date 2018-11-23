@@ -15,28 +15,33 @@ from parsec.types import UserID, DeviceName
 logger = get_logger()
 
 
-class DBInitError(Exception):
-    pass
-
-
 async def init_db(
     url: str, user_id: UserID, device_name: DeviceName, force: bool = False
 ) -> Optional[Tuple[VerifyKey, PrivateKey, SigningKey]]:
     """
     Raises:
-        DBInitError
         triopg.exceptions.PostgresError
     Returns: Tuple of (root key verify key, new user private key and new device signing key)
              or None if database already initialized.
     """
     async with triopg.connect(url) as conn:
-        if force:
-            async with conn.transaction():
-                await _drop_db(conn)
-        if not await _is_db_initialized(conn):
-            async with conn.transaction():
-                await _create_db_tables(conn)
-                return await _bootstrap_db(conn, user_id, device_name)
+        already_initialized = await _ensure_tables_in_place(conn, force)
+        if not already_initialized:
+            return await _insert_first_user_and_device(conn, user_id, device_name)
+
+
+async def _ensure_tables_in_place(conn, force):
+    if force:
+        async with conn.transaction():
+            await _drop_db(conn)
+
+    already_initialized = await _is_db_initialized(conn)
+
+    if not already_initialized:
+        async with conn.transaction():
+            await _create_db_tables(conn)
+
+    return already_initialized
 
 
 def build_signed_pubkey_payload(user_id: UserID, pubkey: PublicKey, now: pendulum.Pendulum):
@@ -61,10 +66,11 @@ def build_signed_verifykey_payload(
 
 
 def extract_signed_pubkey_payload(payload: bytes):
+    # TODO
     pass
 
 
-async def _bootstrap_db(conn, user_id, device_name):
+async def _insert_first_user_and_device(conn, user_id, device_name):
     now = pendulum.now()
     root_signkey = SigningKey.generate()
     user_privkey = PrivateKey.generate()
@@ -104,13 +110,6 @@ async def _bootstrap_db(conn, user_id, device_name):
         verify_key_payload,
     )
 
-    await conn.execute(
-        """
-        INSERT INTO root_key(verify_key) VALUES ($1)
-        """,
-        root_signkey.verify_key.encode(),
-    )
-
     return (root_signkey.verify_key, user_privkey, device_signkey)
 
 
@@ -120,7 +119,6 @@ async def _drop_db(conn):
     await conn.execute(
         """
         DROP TABLE IF EXISTS
-            root_key,
             users,
             devices,
 
@@ -147,41 +145,21 @@ async def _drop_db(conn):
 async def _is_db_initialized(conn):
     # TODO: not a really elegant way to determine if the database
     # is already initialized...
-    try:
-        await get_root_verify_key(conn)
-        return True
-    except DBInitError:
-        return False
-
-
-async def get_root_verify_key(conn) -> VerifyKey:
-    try:
-        root_key = await conn.fetchrow(
-            """
-            SELECT verify_key from root_key;
-            """
-        )
-        if not root_key:
-            raise DBInitError("Database not initialized (cannot retreive root key).")
-
-    except triopg.exceptions.UndefinedTableError as exc:
-        await conn.execute("ROLLBACK;")
-        raise DBInitError("Database not initialized (tables not created).") from exc
-
-    return VerifyKey(root_key["verify_key"])
+    root_key = await conn.fetchrow(
+        """
+        SELECT true FROM pg_catalog.pg_tables WHERE tablename = 'users';
+        """
+    )
+    return bool(root_key)
 
 
 async def _create_db_tables(conn):
     await conn.execute(
         """
-        CREATE TABLE root_key (
-            verify_key BYTEA NOT NULL
-        );
-
-        -- TODO: rename to public_key
         CREATE TABLE users (
             user_id VARCHAR(32) PRIMARY KEY,
             created_on TIMESTAMP NOT NULL,
+            -- TODO: rename to public_key
             broadcast_key BYTEA NOT NULL
         );
 
@@ -274,13 +252,15 @@ class PGHandler:
         self._run_connections_control = None
 
     async def init(self, nursery):
-        await init_db(self.url)
         self._run_connections_control = await nursery.start(
             call_with_control, self._run_connections
         )
 
     async def _run_connections(self, started_cb):
         async with triopg.create_pool(self.url) as self.pool:
+            async with self.pool.acquire() as conn:
+                if not await _is_db_initialized(conn):
+                    raise RuntimeError("Database not initialized !")
             # This connection is dedicated to the notifications listening, so it
             # would only complicate stuff to include it into the connection pool
             async with triopg.connect(self.url) as self.notification_conn:

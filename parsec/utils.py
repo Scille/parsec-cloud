@@ -9,6 +9,18 @@ from pendulum import Pendulum
 from nacl.secret import SecretBox
 import nacl.utils
 from nacl.public import PrivateKey
+from nacl.signing import VerifyKey
+
+
+def encode_urlsafe_root_verify_key(key: VerifyKey):
+    return base64.urlsafe_b64encode(key.encode()).decode("utf8")
+
+
+def decode_urlsafe_root_verify_key(raw):
+    if isinstance(raw, VerifyKey):
+        # Useful during tests
+        return raw
+    return VerifyKey(base64.urlsafe_b64decode(raw.encode("utf8")))
 
 
 def generate_asym_key():

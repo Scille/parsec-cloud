@@ -14,6 +14,7 @@ from nacl.public import PrivateKey
 from nacl.signing import SigningKey
 import nacl
 
+from parsec.utils import encode_urlsafe_root_verify_key
 from parsec.core import Core, CoreConfig
 from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.schemas import loads_manifest, dumps_manifest
@@ -109,7 +110,7 @@ def _patch_url_if_xdist(url):
 DEFAULT_POSTGRESQL_TEST_URL = "postgresql:///parsec_test"
 
 
-def get_postgresql_url():
+def _get_postgresql_url():
     return _patch_url_if_xdist(
         os.environ.get("PARSEC_POSTGRESQL_TEST_URL", DEFAULT_POSTGRESQL_TEST_URL)
     )
@@ -119,7 +120,7 @@ def get_postgresql_url():
 def postgresql_url(request):
     if not pytest.config.getoption("--postgresql"):
         pytest.skip("`--postgresql` option not provided")
-    return get_postgresql_url()
+    return _get_postgresql_url()
 
 
 @pytest.fixture
@@ -323,15 +324,24 @@ def default_devices(alice, alice2, bob):
 
 @pytest.fixture
 def bootstrap_postgresql(url):
-    from threading import Thread
-    from parsec.backend.drivers import postgresql as pg_driver
+    # In theory we should use TrioPG here to do db init, but:
+    # - Duck typing and similar api makes `_ensure_tables_in_place` compatible
+    #   with both
+    # - AsyncPG should be slightly faster than TrioPG
+    # - Most important: a trio loop is potentially already started inside this
+    #   thread (i.e. if the test is mark as trio). Hence we must spawn another
+    #   thread just to run the new trio loop.
 
-    def _bootstrap():
-        trio_asyncio.run(pg_driver.handler.init_db, url, True)
+    import asyncio
+    import asyncpg
+    from parsec.backend.drivers.postgresql.handler import _ensure_tables_in_place
 
-    t = Thread(target=_bootstrap)
-    t.start()
-    t.join()
+    async def _bootstrap():
+        conn = await asyncpg.connect(url)
+        await _ensure_tables_in_place(conn, force=True)
+        await conn.close()
+
+    asyncio.get_event_loop().run_until_complete(_bootstrap())
 
 
 @pytest.fixture()
@@ -346,7 +356,7 @@ def backend_store(request):
             return "MOCKED"
 
         # TODO: would be better to create a new postgresql cluster for each test
-        url = get_postgresql_url()
+        url = _get_postgresql_url()
         try:
             bootstrap_postgresql(url)
         except asyncpg.exceptions.InvalidCatalogNameError as exc:
@@ -405,7 +415,9 @@ async def nursery():
 
 
 @pytest.fixture
-def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, default_devices):
+def backend_factory(
+    asyncio_loop, event_bus_factory, blockstore, backend_store, default_devices, root_signing_key
+):
     # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
     # the backend should inherit from the one with the asyncio loop context manager.
     # This mean the nursery fixture cannot use the backend object otherwise we
@@ -413,6 +425,7 @@ def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, 
     # nursery fixture is done with calling the backend's postgresql stuff.
 
     blockstore_type, blockstore_config = blockstore
+    default_urlsafe_root_verify_key = encode_urlsafe_root_verify_key(root_signing_key.verify_key)
 
     @asynccontextmanager
     async def _backend_factory(devices=default_devices, config={}, event_bus=None):
@@ -420,7 +433,11 @@ def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, 
             config = backend_config_factory(
                 db_url=backend_store,
                 blockstore_type=blockstore_type,
-                environ={**blockstore_config, **config},
+                environ={
+                    "ROOT_VERIFY_KEY": default_urlsafe_root_verify_key,
+                    **blockstore_config,
+                    **config,
+                },
             )
             if not event_bus:
                 event_bus = event_bus_factory()

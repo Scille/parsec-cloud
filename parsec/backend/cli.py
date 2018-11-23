@@ -1,10 +1,10 @@
 import os
 import trio
 import trio_asyncio
-from base64 import urlsafe_b64encode
 import click
 from functools import partial
 
+from parsec.utils import encode_urlsafe_root_verify_key
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import BackendApp, config_factory
 from parsec.backend.user import NotFoundError
@@ -34,8 +34,11 @@ def init_cmd(db, force, settings, backend_base_url, user_id, device_name):
     """
     Initialize a new backend's PostgreSQL database.
 
-    After creating database's table,  the root verify key and
-    first user/device public/signing keys.
+    Creates database's table, generates the root verify/signing key and inserts
+    first user/device (signed with root siging key).
+
+    Note root signing key is dropped after this operation to ensure only
+    the first device can sign new users/devices.
     """
     if not db.startswith("postgresql://"):
         raise SystemExit("Can only initialize a PostgreSQL database.")
@@ -65,9 +68,11 @@ def init_cmd(db, force, settings, backend_base_url, user_id, device_name):
                 user_manifest_access,
                 password=password,
             )
-            url_param_root_verify_key = urlsafe_b64encode(root_verify_key.encode()).decode("utf8")
+            url_param_root_verify_key = encode_urlsafe_root_verify_key(root_verify_key)
 
             click.secho("Database initialized", fg="green")
+            click.secho("Backend environment variables: ", fg="green", nl=False)
+            click.echo(f"ROOT_VERIFY_KEY={url_param_root_verify_key}")
             if backend_base_url:
                 click.secho("Backend URL: ", fg="green", nl=False)
                 click.echo(f"{backend_base_url}?root-verify-key={url_param_root_verify_key}")
