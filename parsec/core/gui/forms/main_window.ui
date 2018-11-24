@@ -102,13 +102,13 @@ color: rgb(255, 255, 255);
          <property name="styleSheet">
           <string notr="true">QWidget#widget_menu
 {
-background-color: rgb(21, 84, 169);
+background-color: rgb(12, 65, 157);
 }
 
 QPushButton, QPushButton:pressed
 {
 color: rgb(255, 255, 255);
-background-color: rgb(21, 84, 169);
+background-color: rgb(12, 65, 157);
 text-align: left;
 padding-left: 10px;
 }
@@ -460,12 +460,15 @@ border: 0;
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">border-top: 2px solid rgb(46, 146, 208);
+             <string notr="true">QPushButton
+{
+border-top: 2px solid rgb(46, 146, 208);
 border-bottom: 2px solid rgb(46, 146, 208);
 color: rgb(255, 255, 255);
 text-align: left;
 padding-left: 10px;
 background-color: rgb(22, 84, 169);
+}
 </string>
             </property>
             <property name="text">
