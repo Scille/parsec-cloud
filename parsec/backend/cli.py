@@ -78,7 +78,7 @@ def init_cmd(db, force, settings, backend_base_url, user_id, device_name):
                 click.echo(f"{backend_base_url}?root-verify-key={url_param_root_verify_key}")
             else:
                 click.secho("Backend URL template: ", fg="green", nl=False)
-                click.echo(f"ws://<domain>?=root-verify-key={url_param_root_verify_key}")
+                click.echo(f"ws://<domain>?root-verify-key={url_param_root_verify_key}")
 
     except (KeyboardInterrupt, click.Abort):
         click.secho("Aborting...", fg="yellow")
