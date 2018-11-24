@@ -2,7 +2,6 @@
     <qresource prefix="/icons">
         <file>images/icons/edit.png</file>
         <file>images/icons/file.png</file>
-        <file>images/icons/workspace.png</file>
         <file>images/icons/menu_devices.png</file>
         <file>images/icons/menu_folder.png</file>
         <file>images/icons/menu_group.png</file>
@@ -45,6 +44,10 @@
         <file>images/icons/folder-up_selected.png</file>
         <file>images/icons/parsec.png</file>
         <file>images/icons/white_cross.png</file>
+        <file>images/icons/garbage_workspace.png</file>
+        <file>images/icons/info_workspace.png</file>
+        <file>images/icons/share_workspace.png</file>
+        <file>images/icons/workspace.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>

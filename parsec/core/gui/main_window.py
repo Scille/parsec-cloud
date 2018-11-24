@@ -383,6 +383,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._hide_all_central_widgets()
         self.widget_menu.show()
         self.button_files.setChecked(True)
+        self.widget_title.show()
+        self.label_title.setText(QCoreApplication.translate("MainWindow", "Documents"))
+        self.label_mountpoint.setText(settings.get_value("mountpoint"))
         self.mount_widget.reset()
         self.mount_widget.show()
 
@@ -390,6 +393,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._hide_all_central_widgets()
         self.widget_menu.show()
         self.button_users.setChecked(True)
+        self.widget_title.show()
+        self.label_title.setText(QCoreApplication.translate("MainWindow", "Users"))
+        self.label_mountpoint.setText(settings.get_value("mountpoint"))
         self.users_widget.reset()
         self.users_widget.show()
 
@@ -397,6 +403,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._hide_all_central_widgets()
         self.widget_menu.show()
         self.button_devices.setChecked(True)
+        self.widget_title.show()
+        self.label_title.setText(QCoreApplication.translate("MainWindow", "Devices"))
+        self.label_mountpoint.setText(settings.get_value("mountpoint"))
         self.devices_widget.reset()
         self.devices_widget.show()
 
@@ -404,6 +413,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._hide_all_central_widgets()
         self.widget_menu.show()
         self.button_settings.setChecked(True)
+        self.widget_title.show()
+        self.label_title.setText(QCoreApplication.translate("MainWindow", "Settings"))
+        self.label_mountpoint.setText(settings.get_value("mountpoint"))
         self.settings_widget.reset()
         self.settings_widget.show()
 
@@ -419,6 +431,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.settings_widget.hide()
         self.login_widget.hide()
         self.devices_widget.hide()
+        self.widget_title.hide()
         self.button_files.setChecked(False)
         self.button_users.setChecked(False)
         self.button_settings.setChecked(False)

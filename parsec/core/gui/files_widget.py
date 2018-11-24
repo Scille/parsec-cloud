@@ -61,6 +61,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def set_workspace(self, workspace):
         self.workspace = workspace
+        self.label_current_workspace.setText(workspace)
         self.load("")
 
     def load(self, directory):
@@ -68,8 +69,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_directory = directory
         if self.current_directory:
             self._add_parent_folder()
+        if not self.current_directory:
+            self.label_current_directory.hide()
+            self.label_caret.hide()
+        else:
+            self.label_current_directory.setText(self.current_directory)
+            self.label_current_directory.show()
+            self.label_caret.show()
         dir_path = os.path.join("/", self.workspace, self.current_directory)
-        self.label_current_directory.setText(dir_path)
         dir_stat = core_call().stat(dir_path)
         for child in dir_stat["children"]:
             child_stat = core_call().stat(os.path.join(dir_path, child))
@@ -152,10 +159,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.load(self.current_directory)
 
     def filter_files(self, pattern):
+        pattern = pattern.lower()
         for i in range(self.list_files.count()):
             item = self.list_files.item(i)
             widget = self.list_files.itemWidget(item)
-            if pattern not in widget.name:
+            if pattern not in widget.name.lower():
                 item.setHidden(True)
             else:
                 item.setHidden(False)

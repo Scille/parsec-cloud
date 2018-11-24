@@ -22,6 +22,10 @@ class ParentItemWidget(QWidget, Ui_ParentItemWidget):
             self.setStyleSheet("background-color: rgb(255, 255, 255); color: rgb(0, 0, 0);")
             self.label_icon.setPixmap(QPixmap(":/icons/images/icons/folder-up.png"))
 
+    @property
+    def name(self):
+        return ""
+
 
 class FolderItemWidget(QWidget, Ui_FolderItemWidget):
     delete_clicked = pyqtSignal(QListWidgetItem)
@@ -50,10 +54,6 @@ class FolderItemWidget(QWidget, Ui_FolderItemWidget):
     def name(self):
         return self.label_name.text()
 
-    @name.setter
-    def name(self, v):
-        self.label_name.setText(v)
-
 
 class FileItemWidget(QWidget, Ui_FileItemWidget):
     delete_clicked = pyqtSignal(QListWidgetItem)
@@ -62,6 +62,9 @@ class FileItemWidget(QWidget, Ui_FileItemWidget):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.item = item
+        self.size = size
+        self.updated = updated
+        self.created = created
         self.label_name.setText(name)
         self.label_size.setText(get_filesize(size))
         self.button_delete.clicked.connect(self.emit_delete)
@@ -92,7 +95,3 @@ class FileItemWidget(QWidget, Ui_FileItemWidget):
     @property
     def name(self):
         return self.label_name.text()
-
-    @name.setter
-    def name(self, v):
-        self.label_name.setText(v)

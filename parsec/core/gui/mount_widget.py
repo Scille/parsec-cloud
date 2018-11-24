@@ -19,7 +19,6 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.files_widget.back_clicked.connect(self.reset)
 
     def set_mountpoint(self, mountpoint):
-        self.label_mountpoint.setText(mountpoint)
         self.files_widget.mountpoint = mountpoint
 
     def load_workspace(self, workspace_name):
