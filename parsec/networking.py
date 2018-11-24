@@ -30,8 +30,8 @@ async def serve_client(dispatch_request, sockstream) -> None:
             pass
         return filtered_data
 
+    sock = CookedSocket(sockstream)
     try:
-        sock = CookedSocket(sockstream)
         while True:
             try:
                 req = await sock.recv()
