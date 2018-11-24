@@ -36,16 +36,6 @@ except ImportError as exc:
     revoke_cmd = _generate_bad_cmd(exc)
 
 
-try:
-    from parsec.ui.fuse import cli as fuse_cmd
-except ImportError as exc:
-    fuse_cmd = _generate_bad_cmd(exc, hint="is fusepy installed ?")
-
-
-except NameError:
-    pass
-
-
 @click.group()
 def cli():
     pass
@@ -55,10 +45,6 @@ cli.add_command(core_cmd, "core")
 cli.add_command(backend_cmd, "backend")
 cli.add_command(init_cmd, "init")
 cli.add_command(revoke_cmd, "revoke_user")
-try:
-    cli.add_command(fuse_cmd, "fuse")
-except NameError:
-    pass
 
 
 if __name__ == "__main__":
