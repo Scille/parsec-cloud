@@ -76,7 +76,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.button_import_folder.clicked.connect(self.import_folder_clicked)
         self.table_files.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table_files.customContextMenuRequested.connect(self.show_context_menu)
-        self.table_files.currentItemChanged.connect(self.set_item_selected)
+        self.table_files.itemSelectionChanged.connect(self.change_selection)
         self.table_files.cellClicked.connect(self.item_clicked)
         self.table_files.cellDoubleClicked.connect(self.item_double_clicked)
         self.line_edit_search.textChanged.connect(self.filter_files)
@@ -86,44 +86,35 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         core_call().connect_event("fs.entry.updated", self._on_fs_entry_updated_trio)
         core_call().connect_event("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
+        self.previous_selection = []
 
     def item_clicked(self, row, column):
         if column == 5 and self.table_files.item(row, 1).data(Qt.UserRole) != "parent_folder":
             self.delete_item(row)
 
-    def set_item_selected(self, current, previous):
-        if previous:
-            self.table_files.setRangeSelected(
-                QTableWidgetSelectionRange(previous.row(), 0, 6, previous.row()), False
-            )
-            name_type = self.table_files.item(previous.row(), 1)
-            type_item = self.table_files.item(previous.row(), 0)
-            if name_type.data(Qt.UserRole) == "folder":
-                type_item.setIcon(QIcon(":/icons/images/icons/folder.png"))
-                garbage_item = self.table_files.item(previous.row(), 5)
-                garbage_item.setIcon(QIcon(":/icons/images/icons/garbage.png"))
-            elif name_type.data(Qt.UserRole) == "file":
-                type_item.setIcon(QIcon(":/icons/images/icons/file.png"))
-                garbage_item = self.table_files.item(previous.row(), 5)
-                garbage_item.setIcon(QIcon(":/icons/images/icons/garbage.png"))
-            else:
-                type_item.setIcon(QIcon(":/icons/images/icons/folder-up.png"))
-        if current:
-            self.table_files.setRangeSelected(
-                QTableWidgetSelectionRange(current.row(), 0, 6, current.row()), False
-            )
-            name_type = self.table_files.item(current.row(), 1)
-            type_item = self.table_files.item(current.row(), 0)
-            if name_type.data(Qt.UserRole) == "folder":
-                type_item.setIcon(QIcon(":/icons/images/icons/folder_selected.png"))
-                garbage_item = self.table_files.item(current.row(), 5)
-                garbage_item.setIcon(QIcon(":/icons/images/icons/garbage_selected.png"))
-            elif name_type.data(Qt.UserRole) == "file":
-                type_item.setIcon(QIcon(":/icons/images/icons/file_selected.png"))
-                garbage_item = self.table_files.item(current.row(), 5)
-                garbage_item.setIcon(QIcon(":/icons/images/icons/garbage_selected.png"))
-            else:
-                type_item.setIcon(QIcon(":/icons/images/icons/folder-up_selected.png"))
+    def change_selection(self):
+        selected = self.table_files.selectedItems()
+        for item in self.previous_selection:
+            if item.column() == 0:
+                if item.data(Qt.UserRole) == "folder":
+                    item.setIcon(QIcon(":/icons/images/icons/folder.png"))
+                elif item.data(Qt.UserRole) == "file":
+                    item.setIcon(QIcon(":/icons/images/icons/file.png"))
+                else:
+                    item.setIcon(QIcon(":/icons/images/icons/folder-up.png"))
+            if item.column() == 5 and not item.icon().isNull():
+                item.setIcon(QIcon(":/icons/images/icons/garbage.png"))
+        for item in selected:
+            if item.column() == 0:
+                if item.data(Qt.UserRole) == "folder":
+                    item.setIcon(QIcon(":/icons/images/icons/folder_selected.png"))
+                elif item.data(Qt.UserRole) == "file":
+                    item.setIcon(QIcon(":/icons/images/icons/file_selected.png"))
+                else:
+                    item.setIcon(QIcon(":/icons/images/icons/folder-up_selected.png"))
+            if item.column() == 5 and not item.icon().isNull():
+                item.setIcon(QIcon(":/icons/images/icons/garbage_selected.png"))
+        self.previous_selection = selected
 
     def set_workspace(self, workspace):
         self.workspace = workspace
@@ -131,7 +122,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.load("")
 
     def load(self, directory):
+        self.table_files.clearContents()
         self.table_files.setRowCount(0)
+        self.table_files.setSortingEnabled(False)
+        self.previous_selection = []
         self.current_directory = directory
         if self.current_directory:
             self._add_parent_folder()
@@ -152,6 +146,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self._add_file(
                     child, child_stat["size"], child_stat["created"], child_stat["updated"]
                 )
+        self.table_files.setSortingEnabled(True)
 
     def _import_folder(self, src, dst):
         err = False
@@ -252,13 +247,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         row_idx = self.table_files.rowCount()
         self.table_files.insertRow(row_idx)
         item = QTableWidgetItem(QIcon(":/icons/images/icons/folder-up.png"), "")
+        item.setData(Qt.UserRole, "parent_folder")
         self.table_files.setItem(row_idx, 0, item)
         item = QTableWidgetItem(QCoreApplication.translate("FilesWidget", "Parent Folder"))
-        item.setData(Qt.UserRole, "parent_folder")
         self.table_files.setItem(row_idx, 1, item)
         item = CustomTableItem()
+        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
         self.table_files.setItem(row_idx, 2, item)
         item = CustomTableItem()
+        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
         self.table_files.setItem(row_idx, 3, item)
         item = CustomTableItem()
         item.setData(Qt.UserRole, 0)
@@ -270,9 +267,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         row_idx = self.table_files.rowCount()
         self.table_files.insertRow(row_idx)
         item = QTableWidgetItem(QIcon(":/icons/images/icons/folder.png"), "")
+        item.setData(Qt.UserRole, "folder")
         self.table_files.setItem(row_idx, 0, item)
         item = QTableWidgetItem(folder_name)
-        item.setData(Qt.UserRole, "folder")
         self.table_files.setItem(row_idx, 1, item)
         item = CustomTableItem()
         item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
@@ -290,9 +287,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         row_idx = self.table_files.rowCount()
         self.table_files.insertRow(row_idx)
         item = QTableWidgetItem(QIcon(":/icons/images/icons/file.png"), "")
+        item.setData(Qt.UserRole, "file")
         self.table_files.setItem(row_idx, 0, item)
         item = QTableWidgetItem(file_name)
-        item.setData(Qt.UserRole, "file")
         self.table_files.setItem(row_idx, 1, item)
         item = CustomTableItem(created_on.format("%x %X"))
         item.setData(Qt.UserRole, created_on)
@@ -308,6 +305,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def delete_item(self, row):
         name_item = self.table_files.item(row, 1)
+        type_item = self.table_files.item(row, 0)
         QCoreApplication.processEvents()
         result = ask_question(
             self,
@@ -320,7 +318,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
         path = os.path.join("/", self.workspace, self.current_directory, name_item.text())
         try:
-            if name_item.data(Qt.UserRole) == "folder":
+            if type_item.data(Qt.UserRole) == "folder":
                 self._delete_folder(path)
             else:
                 core_call().delete_file(path)
@@ -355,39 +353,40 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def show_context_menu(self, pos):
         global_pos = self.table_files.mapToGlobal(pos)
         row = self.table_files.currentRow()
-        item = self.table_files.item(row, 1)
-        if item.data(Qt.UserRole) == "parent_folder":
+        name_item = self.table_files.item(row, 1)
+        type_item = self.table_files.item(row, 0)
+        if type_item.data(Qt.UserRole) == "parent_folder":
             return
         menu = QMenu(self.table_files)
-        if item.data(Qt.UserRole) == "file":
+        if type_item.data(Qt.UserRole) == "file":
             action = menu.addAction(QCoreApplication.translate("FilesWidget", "Open"))
         else:
             action = menu.addAction(QCoreApplication.translate("FilesWidget", "Open in explorer"))
-        action.triggered.connect(self.open_file(item.text()))
+        action.triggered.connect(self.open_file(name_item.text()))
         action = menu.addAction(QCoreApplication.translate("FilesWidget", "Rename"))
-        action.triggered.connect(self.rename(item))
+        action.triggered.connect(self.rename(name_item, type_item))
         menu.exec_(global_pos)
 
-    def rename(self, item):
+    def rename(self, name_item, type_item):
         def _inner_rename():
             new_name = get_text(
                 self,
                 QCoreApplication.translate("FilesWidget", "New name"),
                 QCoreApplication.translate("FilesWidget", "Enter file new name"),
                 placeholder="File name",
-                default_text=item.text(),
+                default_text=name_item.text(),
             )
             if not new_name:
                 return
             try:
-                if item.data(Qt.UserRole) == "folder":
+                if type_item.data(Qt.UserRole) == "folder":
                     core_call().move_folder(
-                        os.path.join("/", self.workspace, self.current_directory, item.text()),
+                        os.path.join("/", self.workspace, self.current_directory, name_item.text()),
                         os.path.join("/", self.workspace, self.current_directory, new_name),
                     )
                 else:
                     core_call().move_file(
-                        os.path.join("/", self.workspace, self.current_directory, item.text()),
+                        os.path.join("/", self.workspace, self.current_directory, name_item.text()),
                         os.path.join("/", self.workspace, self.current_directory, new_name),
                     )
                 self.load(self.current_directory)
@@ -405,19 +404,24 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         return _inner_open_file
 
     def item_double_clicked(self, row, column):
-        item = self.table_files.item(row, 1)
-        if item.data(Qt.UserRole) == "parent_folder":
+        name_item = self.table_files.item(row, 1)
+        type_item = self.table_files.item(row, 0)
+        if type_item.data(Qt.UserRole) == "parent_folder":
             self.load(os.path.dirname(self.current_directory))
-        elif item.data(Qt.UserRole) == "file":
+        elif type_item.data(Qt.UserRole) == "file":
             desktop.open_file(
-                os.path.join(self.mountpoint, self.workspace, self.current_directory, item.text())
+                os.path.join(
+                    self.mountpoint, self.workspace, self.current_directory, name_item.text()
+                )
             )
-        elif item.data(Qt.UserRole) == "folder":
-            self.load(os.path.join(os.path.join(self.current_directory, item.text())))
+        elif type_item.data(Qt.UserRole) == "folder":
+            self.load(os.path.join(os.path.join(self.current_directory, name_item.text())))
 
     def reset(self):
         self.workspace = ""
         self.current_directory = ""
+        self.previous_selection = []
+        self.table_files.clearContents()
         self.table_files.setRowCount(0)
 
     def _on_fs_entry_synced_trio(self, event, path, id):
