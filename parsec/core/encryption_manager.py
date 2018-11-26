@@ -1,11 +1,17 @@
 import attr
 import pickle
 import hashlib
-from nacl.public import SealedBox, PublicKey, PrivateKey
-from nacl.secret import SecretBox
-from nacl.signing import VerifyKey, SigningKey
-from nacl.exceptions import CryptoError
 
+from parsec.crypto import (
+    encrypt_for,
+    encrypt_for_self,
+    decrypt_for,
+    encrypt_with_secret_key,
+    verify_signature_from,
+    decrypt_with_secret_key,
+    PublicKey,
+    VerifyKey,
+)
 from parsec.schema import UnknownCheckedSchema, fields
 from parsec.utils import from_jsonb64, to_jsonb64
 from parsec.core.local_db import LocalDBMissingEntry
@@ -89,163 +95,6 @@ class RemoteDevice:
         return "%s@%s" % (self.user.user_id, self.name)
 
 
-def encrypt_with_symkey(key: bytes, data: bytes) -> bytes:
-    """
-    Raises:
-        MessageEncryptionError: if key is invalid.
-    """
-    try:
-        box = SecretBox(key)
-        return box.encrypt(data)
-    except CryptoError as exc:
-        raise MessageEncryptionError() from exc
-
-
-def decrypt_with_symkey(key: bytes, ciphered: bytes) -> bytes:
-    """
-    Raises:
-        MessageEncryptionError: if key is invalid.
-    """
-    try:
-        box = SecretBox(key)
-        return box.decrypt(ciphered)
-    except CryptoError as exc:
-        raise MessageEncryptionError() from exc
-
-
-def sign_and_add_meta(device_id: str, device_signkey: SigningKey, data: bytes) -> bytes:
-    """
-    Raises:
-        MessageSignatureError: if the signature operation fails.
-    """
-    try:
-        signed = device_signkey.sign(data)
-    except CryptoError as exc:
-        raise MessageSignatureError() from exc
-
-    return device_id.encode("utf8") + b"@" + signed
-
-
-def extract_meta_from_signature(signed_with_meta: bytes) -> tuple:
-    """
-    Raises:
-        MessageFormatError: if the metadata cannot be extracted
-    """
-    try:
-        user_id, device_name, signed = signed_with_meta.split(b"@", 2)
-        return user_id.decode("utf8"), device_name.decode("utf8"), signed
-    except (ValueError, UnicodeDecodeError) as exc:
-        raise MessageFormatError(
-            "Message doesn't contain author metadata along with signed message"
-        ) from exc
-
-
-def encrypt_for_self(
-    device_id: str, device_signkey: SigningKey, device_pubkey: PublicKey, data: bytes
-) -> bytes:
-    return encrypt_for(device_id, device_signkey, device_pubkey, data)
-
-
-def encrypt_for(
-    author_id: str, author_signkey: SigningKey, recipient_pubkey: PublicKey, data: bytes
-) -> bytes:
-    """
-    Sign and encrypt a message.
-
-    Raises:
-        MessageEncryptionError: if encryption fails.
-        MessageSignatureError: if signature fails.
-    """
-    try:
-        signed_with_meta = sign_and_add_meta(author_id, author_signkey, data)
-    except CryptoError as exc:
-        raise MessageSignatureError() from exc
-
-    try:
-        box = SealedBox(recipient_pubkey)
-        return box.encrypt(signed_with_meta)
-    except CryptoError as exc:
-        raise MessageEncryptionError() from exc
-
-
-def decrypt_for(recipient_privkey: PrivateKey, ciphered: bytes) -> tuple:
-    """
-    Decrypt a message and return it signed data and author metadata.
-
-    Raises:
-        MessageFormatError: if the author metadata cannot be extracted.
-        MessageEncryptionError: if key is invalid.
-
-    Returns: a tuple of (<user_id>, <device_name>, <signed_message>)
-
-    Note: Once decrypted, the masseg should be passed to
-    :func:`verify_signature_from` to be finally converted to plain text.
-    """
-    try:
-        box = SealedBox(recipient_privkey)
-        signed_with_meta = box.decrypt(ciphered)
-    except CryptoError as exc:
-        raise MessageEncryptionError() from exc
-
-    return extract_meta_from_signature(signed_with_meta)
-
-
-def verify_signature_from(author_verifykey: VerifyKey, signed_text: bytes) -> dict:
-    """
-    Verify signature and decode message.
-
-    Returns: The plain text message as a dict.
-
-    Raises:
-        MessageSignatureError: if signature was forged or otherwise corrupt.
-    """
-    try:
-        return author_verifykey.verify(signed_text)
-    except CryptoError as exc:
-        raise MessageSignatureError() from exc
-
-
-def encrypt_with_secret_key(
-    author_id: str, author_signkey: SigningKey, key: bytes, data: bytes
-) -> bytes:
-    """
-    Sign and encrypt a message with a symetric key.
-
-    Raises:
-        MessageSignatureError: if the signature operation fails
-        MessageEncryptionError: if encryption operation fails.
-    """
-    signed_with_meta = sign_and_add_meta(author_id, author_signkey, data)
-
-    try:
-        box = SecretBox(key)
-        return box.encrypt(signed_with_meta)
-    except CryptoError as exc:
-        raise MessageEncryptionError() from exc
-
-
-def decrypt_with_secret_key(key: bytes, ciphered: bytes) -> tuple:
-    """
-    Decrypt a message with a symetric key.
-
-    Raises:
-        MessageFormatError: if the author metadata cannot be extracted.
-        MessageEncryptionError: if key is invalid.
-
-    Returns: a tuple of (<user_id>, <device_name>, <signed_message>)
-
-    Note: Once decrypted, the masseg should be passed to
-    :func:`verify_signature_from` to be finally converted to plain text.
-    """
-    try:
-        box = SecretBox(key)
-        signed_with_meta = box.decrypt(ciphered)
-    except CryptoError as exc:
-        raise MessageEncryptionError() from exc
-
-    return extract_meta_from_signature(signed_with_meta)
-
-
 class EncryptionManager(BaseAsyncComponent):
     def __init__(self, device, backend_cmds_sender):
         super().__init__()
@@ -317,8 +166,9 @@ class EncryptionManager(BaseAsyncComponent):
         Returns: The device or None if it couldn't be found.
 
         Raises:
-            BackendNotAvailable: if the backend is offline.
-            BackendGetUserError: if the reponse returned by the backend is invalid.
+            parsec.core.backend_connection.BackendNotAvailable: if the backend is offline.
+            BackendGetUserError: if the response returned by the backend is invalid.
+            parsec.crypto.CryptoError: if the device returnded by the backend is corrupted or invalid.
         """
         # First, try the quick win with the memory cache
         key = (user_id, device_name)
@@ -352,8 +202,9 @@ class EncryptionManager(BaseAsyncComponent):
         Returns: The user or None if it couldn't be found.
 
         Raises:
-            BackendNotAvailable: if the backend is offline.
-            BackendGetUserError: if the reponse returned by the backend is invalid.
+            parsec.core.backend_connection.BackendNotAvailable: if the backend is offline.
+            BackendGetUserError: if the response returned by the backend is invalid.
+            parsec.crypto.CryptoError: if the user returnded by the backend is corrupted or invalid.
         """
         # First, try the quick win with the memory cache
         try:
@@ -378,6 +229,12 @@ class EncryptionManager(BaseAsyncComponent):
         return remote_user
 
     async def encrypt_for(self, recipient: str, data: bytes) -> bytes:
+        """
+        Raises:
+                parsec.core.backend_connection.BackendNotAvailable: if the backend is offline.
+                BackendGetUserError: if the response returned by the backend is invalid.
+                parsec.crypto.CryptoError: if the user returnded by the backend is corrupted or invalid.
+        """
         user = await self.fetch_remote_user(recipient)
         if not user:
             raise MessageEncryptionError("Unknown recipient `%s`" % recipient)

@@ -5,10 +5,9 @@ import triopg
 from typing import Optional, Tuple
 from structlog import get_logger
 from uuid import UUID
-from nacl.public import PublicKey, PrivateKey
-from nacl.signing import VerifyKey, SigningKey
 
 from parsec.utils import call_with_control, ejson_dumps, ejson_loads
+from parsec.crypto import PublicKey, PrivateKey, VerifyKey, SigningKey
 from parsec.types import UserID, DeviceName
 
 

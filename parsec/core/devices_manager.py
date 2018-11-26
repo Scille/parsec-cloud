@@ -2,12 +2,18 @@ import re
 import attr
 from pathlib import Path
 from structlog import get_logger
-from nacl.public import PrivateKey, PublicKey, SealedBox
-from nacl.signing import SigningKey
-from nacl.pwhash import argon2i
-from nacl.secret import SecretBox
-import nacl.utils
 
+from parsec.crypto import (
+    PrivateKey,
+    PublicKey,
+    SealedBox,
+    SigningKey,
+    CryptoError,
+    generate_secret_key,
+    derivate_secret_key_from_password,
+    encrypt_raw_with_secret_key,
+    decrypt_raw_with_secret_key,
+)
 from parsec.schema import UnknownCheckedSchema, fields, validate
 from parsec.core.fs.utils import new_access
 from parsec.core.backend_connection import backend_send_anonymous_cmd
@@ -17,13 +23,6 @@ from parsec import pkcs11_encryption_tool
 
 
 logger = get_logger()
-
-
-# TODO: SENSITIVE is really slow which is not good for unittests...
-# CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_SENSITIVE
-# CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_SENSITIVE
-CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_INTERACTIVE
-CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
 
 
 class DeviceLoadingError(Exception):
@@ -125,17 +124,6 @@ def loads_user_manifest_access(data):
     return user_manifest_access
 
 
-def _secret_box_factory(password, salt):
-    key = argon2i.kdf(
-        SecretBox.KEY_SIZE, password, salt, opslimit=CRYPTO_OPSLIMIT, memlimit=CRYPTO_MEMLIMIT
-    )
-    return SecretBox(key)
-
-
-def _generate_salt():
-    return nacl.utils.random(argon2i.SALTBYTES)
-
-
 class Device:
     def __repr__(self):
         return f"<{type(self).__name__}(id={self.id!r}, local_db={self.local_db!r})>"
@@ -225,17 +213,16 @@ class LocalDevicesManager:
 
         user_manifest_access_raw, _ = user_manifest_access_schema.dumps(user_manifest_access)
         device_conf = {"device_id": device_id}
-        local_symkey = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
+        local_symkey = generate_secret_key()
         if password:
-            salt = _generate_salt()
-            box = _secret_box_factory(password.encode("utf8"), salt)
+            key, salt = derivate_secret_key_from_password(password)
             device_conf["salt"] = salt
             device_conf["encryption"] = "password"
-            device_conf["device_signkey"] = box.encrypt(device_signkey)
-            device_conf["user_privkey"] = box.encrypt(user_privkey)
-            device_conf["local_symkey"] = box.encrypt(local_symkey)
-            device_conf["user_manifest_access"] = box.encrypt(
-                user_manifest_access_raw.encode("utf8")
+            device_conf["device_signkey"] = encrypt_raw_with_secret_key(key, device_signkey)
+            device_conf["user_privkey"] = encrypt_raw_with_secret_key(key, user_privkey)
+            device_conf["local_symkey"] = encrypt_raw_with_secret_key(key, local_symkey)
+            device_conf["user_manifest_access"] = encrypt_raw_with_secret_key(
+                key, user_manifest_access_raw.encode("utf8")
             )
         else:
             device_conf["encryption"] = "quedalle"
@@ -285,20 +272,20 @@ class LocalDevicesManager:
                     f"provided but encryption is `{device_conf['encryption']}`"
                 )
 
-            box = _secret_box_factory(password.encode("utf8"), device_conf["salt"])
+            key, _ = derivate_secret_key_from_password(password, salt=device_conf["salt"])
             try:
-                user_privkey = box.decrypt(device_conf["user_privkey"])
-                device_signkey = box.decrypt(device_conf["device_signkey"])
-                local_symkey = box.decrypt(device_conf["local_symkey"])
-                user_manifest_access_raw = box.decrypt(device_conf["user_manifest_access"]).decode(
-                    "utf8"
-                )
+                user_privkey = decrypt_raw_with_secret_key(key, device_conf["user_privkey"])
+                device_signkey = decrypt_raw_with_secret_key(key, device_conf["device_signkey"])
+                local_symkey = decrypt_raw_with_secret_key(key, device_conf["local_symkey"])
+                user_manifest_access_raw = decrypt_raw_with_secret_key(
+                    key, device_conf["user_manifest_access"]
+                ).decode("utf8")
                 user_manifest_access, errors = user_manifest_access_schema.loads(
                     user_manifest_access_raw
                 )
                 # TODO: improve data validation
                 assert not errors
-            except nacl.exceptions.CryptoError as exc:
+            except CryptoError as exc:
                 raise DeviceLoadingError(
                     f"Invalid `{device_conf_path}` device config: decryption key failure"
                 ) from exc
@@ -359,28 +346,26 @@ async def configure_new_device(
         DeviceConfigureError
     """
     if (password and use_pkcs11) or (not password and not use_pkcs11):
-        raise DeviceConfigureError(
-            "Password or PKCS #11 required, and password must by empty when using PKCS #11"
-        )
+        raise ValueError("Must choose between password and PKCS #11 mode.")
 
-    salt = _generate_salt()
-    if password:
-        box = _secret_box_factory(password.encode("utf8"), salt)
-    else:
-        box = None
     user_id, device_name = device_id.split("@")
     exchange_cipherkey_privkey = PrivateKey.generate()
     device_signkey = SigningKey.generate()
 
-    if use_pkcs11:
+    if password:
+        key, salt = derivate_secret_key_from_password(password)
+        exchange_cipherkey_encrypted = encrypt_raw_with_secret_key(
+            key, exchange_cipherkey_privkey.public_key.encode()
+        )
+
+    else:  # PKCS11
+        salt = b"xxx"  # Dummy salt
         try:
             exchange_cipherkey_encrypted = pkcs11_encryption_tool.encrypt_data(
                 pkcs11_token_id, pkcs11_key_id, exchange_cipherkey_privkey.public_key.encode()
             )
         except pkcs11_encryption_tool.NoKeysFound:
             raise DeviceConfigureError("Invalid PKCS #11 token id or key id")
-    else:
-        exchange_cipherkey_encrypted = box.encrypt(exchange_cipherkey_privkey.public_key.encode())
 
     rep = await backend_send_anonymous_cmd(
         backend_addr,
@@ -391,7 +376,7 @@ async def configure_new_device(
             "configure_device_token": configure_device_token,
             "device_verify_key": to_jsonb64(device_signkey.verify_key.encode()),
             "exchange_cipherkey": to_jsonb64(exchange_cipherkey_encrypted),
-            "salt": to_jsonb64(salt),
+            "salt": to_jsonb64(salt) if salt else None,
         },
     )
 
@@ -404,13 +389,13 @@ async def configure_new_device(
     try:
         user_privkey_raw = box.decrypt(ciphered)
         user_privkey = PrivateKey(user_privkey_raw)
-    except nacl.exceptions.CryptoError as exc:
+    except CryptoError as exc:
         raise DeviceConfigureError() from exc
 
     ciphered = from_jsonb64(rep["ciphered_user_manifest_access"])
     try:
         user_manifest_access_raw = box.decrypt(ciphered)
-    except nacl.exceptions.CryptoError as exc:
+    except CryptoError as exc:
         raise DeviceConfigureError() from exc
     user_manifest_access, errors = user_manifest_access_schema.loads(user_manifest_access_raw)
     # TODO: improve data validation
@@ -451,7 +436,7 @@ async def get_device_configuration_try(backend_cmds_sender, config_try_id):
         configuration_status=rep["configuration_status"],
         device_verify_key=from_jsonb64(rep["device_verify_key"]),
         exchange_cipherkey=from_jsonb64(rep["exchange_cipherkey"]),
-        salt=from_jsonb64(rep["salt"]),
+        salt=from_jsonb64(rep["salt"]) if rep["salt"] else None,
     )
 
 
@@ -466,18 +451,19 @@ async def accept_device_configuration_try(
 ):
     """
     Raises:
+        ValueError
         BackendNotAvailable
         DeviceConfigurationPasswordError
     """
     if (password and pkcs11_pin) or (not password and not pkcs11_pin):
-        raise DeviceConfigurationPasswordError("Password must by empty when using PKCS #11")
+        raise ValueError("Must choose between password and PKCS #11 mode.")
 
     config_try = await get_device_configuration_try(backend_cmds_sender, config_try_id)
 
     if password:
         try:
-            box = _secret_box_factory(password.encode("utf8"), config_try.salt)
-            exchange_cipherkey_raw = box.decrypt(config_try.exchange_cipherkey)
+            key, _ = derivate_secret_key_from_password(password, config_try.salt)
+            exchange_cipherkey_raw = decrypt_raw_with_secret_key(key, config_try.exchange_cipherkey)
             box = SealedBox(PublicKey(exchange_cipherkey_raw))
             ciphered_user_privkey = box.encrypt(device.user_privkey.encode())
             user_manifest_access_raw, errors = user_manifest_access_schema.dumps(
@@ -485,10 +471,10 @@ async def accept_device_configuration_try(
             )
             assert not errors, errors
             ciphered_user_manifest_access = box.encrypt(user_manifest_access_raw.encode("utf8"))
-        except nacl.exceptions.CryptoError as exc:
+        except CryptoError as exc:
             raise DeviceConfigurationPasswordError(str(exc)) from exc
 
-    if pkcs11_pin:
+    else:  # PKCS11
         try:
             exchange_cipherkey_raw = pkcs11_encryption_tool.decrypt_data(
                 pkcs11_pin, pkcs11_token_id, pkcs11_key_id, config_try.exchange_cipherkey
@@ -505,7 +491,7 @@ async def accept_device_configuration_try(
             )
             assert not errors, errors
             ciphered_user_manifest_access = box.encrypt(user_manifest_access_raw.encode("utf8"))
-        except nacl.exceptions.CryptoError as exc:
+        except CryptoError as exc:
             raise DeviceConfigurationPasswordError(str(exc)) from exc
 
     rep = await backend_cmds_sender.send(

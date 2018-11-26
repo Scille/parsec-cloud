@@ -2,12 +2,11 @@ import attr
 import trio
 from uuid import uuid4
 from structlog import get_logger
-from nacl.public import PublicKey
-from nacl.signing import VerifyKey
 from json import JSONDecodeError
 
-from parsec.event_bus import EventBus
 from parsec.utils import ParsecError
+from parsec.event_bus import EventBus
+from parsec.crypto import PublicKey, VerifyKey
 from parsec.networking import CookedSocket
 from parsec.handshake import HandshakeFormatError, ServerHandshake
 from parsec.schema import BaseCmdSchema, fields, OneOfSchema
@@ -325,8 +324,8 @@ class BackendApp:
                 except (NotFoundError, KeyError):
                     result_req = hs.build_bad_identity_result_req()
                 else:
-                    if "revocated_on" in device and device["revocated_on"]:
-                        raise BackendAuthError("Backend has revoked this device")
+                    if device.get("revocated_on"):
+                        raise BackendAuthError("Device revoked.")
                     broadcast_key = PublicKey(user["broadcast_key"])
                     verify_key = VerifyKey(device["verify_key"])
                     context = ClientContext(hs.identity, broadcast_key, verify_key)

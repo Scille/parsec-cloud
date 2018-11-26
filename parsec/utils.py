@@ -6,9 +6,6 @@ import inspect
 from functools import wraps
 from uuid import UUID
 from pendulum import Pendulum
-from nacl.secret import SecretBox
-import nacl.utils
-from nacl.public import PrivateKey
 from nacl.signing import VerifyKey
 
 
@@ -21,14 +18,6 @@ def decode_urlsafe_root_verify_key(raw):
         # Useful during tests
         return raw
     return VerifyKey(base64.urlsafe_b64decode(raw.encode("utf8")))
-
-
-def generate_asym_key():
-    return PrivateKey.generate()
-
-
-def generate_sym_key():
-    return nacl.utils.random(SecretBox.KEY_SIZE)
 
 
 def to_jsonb64(raw: bytes):

@@ -1,8 +1,8 @@
 import attr
-import nacl.utils
-from nacl.exceptions import BadSignatureError
+from secrets import token_bytes
 
 from parsec import schema_fields as fields
+from parsec.crypto import CryptoError
 from parsec.schema import UnknownCheckedSchema
 
 
@@ -57,7 +57,7 @@ class ServerHandshake:
     def build_challenge_req(self):
         assert self.state == "stalled"
 
-        self.challenge = nacl.utils.random(self.challenge_size)
+        self.challenge = token_bytes(self.challenge_size)
         data, _ = HandshakeChallengeSchema.dump(
             {"handshake": "challenge", "challenge": self.challenge}
         )
@@ -104,8 +104,8 @@ class ServerHandshake:
                 if returned_challenge != self.challenge:
                     raise HandshakeFormatError("Invalid returned challenge")
 
-            except BadSignatureError:
-                raise HandshakeFormatError("Invalid answer signature")
+            except CryptoError as exc:
+                raise HandshakeFormatError("Invalid answer signature") from exc
 
         self.state = "result"
         data, _ = HandshakeResultSchema.dump({"handshake": "result", "result": "ok"})

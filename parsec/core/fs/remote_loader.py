@@ -3,7 +3,7 @@ from hashlib import sha256
 from parsec.utils import from_jsonb64
 from parsec.core.schemas import loads_manifest, dumps_manifest
 from parsec.core.fs.utils import remote_to_local_manifest
-from parsec.core.encryption_manager import decrypt_with_symkey
+from parsec.crypto import decrypt_raw_with_secret_key
 
 
 class RemoteLoader:
@@ -17,7 +17,11 @@ class RemoteLoader:
         # TODO: validate answer
         assert rep["status"] == "ok", rep
         ciphered = from_jsonb64(rep["block"])
-        block = decrypt_with_symkey(access["key"], ciphered)
+        block = decrypt_raw_with_secret_key(access["key"], ciphered)
+        # TODO: let encryption manager do the digest check ?
+        # TODO: is digest even useful ? Given nacl.secret.Box does digest check
+        # on the ciphered data they cannot be tempered. And given each block
+        # has an unique key, valid blocks cannot be switched together.
         # TODO: better exceptions
         assert sha256(block).hexdigest() == access["digest"], access
 

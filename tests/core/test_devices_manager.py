@@ -10,15 +10,10 @@ from parsec.core.fs.utils import new_access
 from parsec.pkcs11_encryption_tool import DevicePKCS11Error, NoKeysFound
 
 
-@pytest.fixture
-def fast_crypto():
-    # Default crypto is really slow, so hack it just enough to give it a boost
-    from nacl.pwhash import argon2i
-
-    with patch("parsec.core.devices_manager.CRYPTO_OPSLIMIT", argon2i.OPSLIMIT_INTERACTIVE), patch(
-        "parsec.core.devices_manager.CRYPTO_MEMLIMIT", argon2i.MEMLIMIT_INTERACTIVE
-    ):
-        yield
+@pytest.fixture(autouse=True, scope="module")
+def realcrypto(unmock_crypto):
+    with unmock_crypto():
+        pass
 
 
 @pytest.fixture
@@ -106,7 +101,7 @@ def test_register_already_exists_device(tmpdir, alice_cleartext_device, alice):
         )
 
 
-def test_register_new_encrypted_device(tmpdir, fast_crypto, alice):
+def test_register_new_encrypted_device(tmpdir, alice):
     password = "S3Cr37"
 
     device_id = alice.id
@@ -139,7 +134,7 @@ def test_register_new_encrypted_device(tmpdir, fast_crypto, alice):
 
 @patch("parsec.pkcs11_encryption_tool.encrypt_data")
 @patch("parsec.pkcs11_encryption_tool.decrypt_data")
-def test_register_new_pkcs11_device(decrypt_data, encrypt_data, tmpdir, fast_crypto, alice):
+def test_register_new_pkcs11_device(decrypt_data, encrypt_data, tmpdir, alice):
     def encrypt_data_mock(token_id, key_id, input_data):
         if token_id != 1 or key_id != 2:
             raise NoKeysFound()

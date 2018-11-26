@@ -23,6 +23,9 @@ except ImportError:
     BaseSchema = Schema
 
 
+__all__ = ("ValidationError", "UnknownCheckedSchema", "BaseCmdSchema", "validate")
+
+
 class UnknownCheckedSchema(BaseSchema):
 
     """

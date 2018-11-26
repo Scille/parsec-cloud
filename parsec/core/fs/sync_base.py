@@ -5,7 +5,7 @@ from typing import Union
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_placeholder_manifest
 from parsec.core.fs.types import Path, Access, LocalFolderManifest, LocalFileManifest, LocalManifest
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSEntryNotFound
-from parsec.core.encryption_manager import decrypt_with_symkey, encrypt_with_symkey
+from parsec.crypto import decrypt_raw_with_secret_key, encrypt_raw_with_secret_key
 from parsec.core.schemas import dumps_manifest, loads_manifest
 from parsec.utils import to_jsonb64, from_jsonb64
 
@@ -199,7 +199,7 @@ class BaseSyncer:
         raise NotImplementedError()
 
     async def _backend_block_post(self, access, blob):
-        ciphered = encrypt_with_symkey(access["key"], bytes(blob))
+        ciphered = encrypt_raw_with_secret_key(access["key"], bytes(blob))
         payload = {"cmd": "blockstore_post", "id": access["id"], "block": to_jsonb64(ciphered)}
         ret = await self.backend_cmds_sender.send(payload)
         # If a previous attempt of uploading this block has been processed by
@@ -214,7 +214,7 @@ class BaseSyncer:
         ret = await self.backend_cmds_sender.send(payload)
         assert ret["status"] == "ok"
         ciphered = from_jsonb64(ret["block"])
-        blob = decrypt_with_symkey(access["key"], ciphered)
+        blob = decrypt_raw_with_secret_key(access["key"], ciphered)
         return blob
 
     async def _backend_vlob_group_check(self, to_check):

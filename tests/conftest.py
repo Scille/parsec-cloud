@@ -71,29 +71,36 @@ def pytest_runtest_setup(item):
             pytest.skip("fuse is not available")
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(autouse=True, scope="session", name="unmock_crypto")
 def mock_crypto():
-    from nacl.secret import SecretBox
-
     # Crypto is CPU hungry
     if pytest.config.getoption("--realcrypto"):
-        yield
+
+        def unmock():
+            pass
+
+        yield unmock
+
     else:
 
-        def unsecure_but_fast_sbf(password, salt):
-            key = password[: SecretBox.KEY_SIZE] + b"\x00" * (SecretBox.KEY_SIZE - len(password))
-            return SecretBox(key)
+        def unsecure_but_fast_argon2i_kdf(size, password, salt, *args, **kwargs):
+            data = password + salt
+            return data[:size] + b"\x00" * (size - len(data))
 
-        with patch("parsec.core.devices_manager._secret_box_factory", new=unsecure_but_fast_sbf):
-            yield
+        from parsec.crypto import argon2i
 
+        vanilla_kdf = argon2i.kdf
 
-from parsec.core.devices_manager import _secret_box_factory as vanilla_sbf
+        def unmock():
+            return patch("parsec.crypto.argon2i.kdf", new=vanilla_kdf)
+
+        with patch("parsec.crypto.argon2i.kdf", new=unsecure_but_fast_argon2i_kdf):
+            yield unmock
 
 
 @pytest.fixture
-def realcrypto():
-    with patch("parsec.core.devices_manager._secret_box_factory", new=vanilla_sbf):
+def realcrypto(unmock_crypto):
+    with unmock_crypto():
         yield
 
 
