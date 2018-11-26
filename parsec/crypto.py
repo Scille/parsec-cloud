@@ -1,4 +1,5 @@
 from typing import Tuple
+import pendulum
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey, VerifyKey
 from nacl.secret import SecretBox
@@ -6,7 +7,9 @@ from nacl.utils import random
 from nacl.pwhash import argon2i
 from nacl.exceptions import CryptoError
 
-from parsec.types import UserID, DeviceName
+from parsec.api.base import DeviceIDField
+from parsec.schema import UnknownCheckedSchema, fields, ValidationError
+from parsec.types import DeviceID
 
 
 __all__ = ("CryptoError", "PrivateKey", "PublicKey", "SigningKey", "VerifyKey")
@@ -17,6 +20,15 @@ __all__ = ("CryptoError", "PrivateKey", "PublicKey", "SigningKey", "VerifyKey")
 # CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_SENSITIVE
 CRYPTO_OPSLIMIT = argon2i.OPSLIMIT_INTERACTIVE
 CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
+
+
+class SignedMetadataSchema(UnknownCheckedSchema):
+    device_id = DeviceIDField(required=True)
+    timestamp = fields.DateTime(required=True)
+    content = fields.Base64Bytes(required=True)
+
+
+signed_metadata_schema = SignedMetadataSchema(strict=True)
 
 
 class CryptoMetadataError(CryptoError):
@@ -57,37 +69,39 @@ def decrypt_raw_with_secret_key(key: bytes, ciphered: bytes) -> bytes:
     return box.decrypt(ciphered)
 
 
-def sign_and_add_meta(device_id: str, device_signkey: SigningKey, data: bytes) -> bytes:
+def sign_and_add_meta(device_id: DeviceID, device_signkey: SigningKey, data: bytes) -> bytes:
     """
     Raises:
         CryptoError: if the signature operation fails.
     """
-    signed = device_signkey.sign(data)
-    return f"{device_id}@".encode("utf8") + signed
+    return signed_metadata_schema.dumps(
+        {"device_id": device_id, "timestamp": pendulum.now(), "content": device_signkey.sign(data)}
+    )[0].encode("utf8")
 
 
-def extract_meta_from_signature(signed_with_meta: bytes) -> Tuple[UserID, DeviceName, bytes]:
+def extract_meta_from_signature(signed_with_meta: bytes) -> Tuple[DeviceID, bytes]:
     """
     Raises:
         CryptoMetadataError: if the metadata cannot be extracted
     """
     try:
-        user_id, device_name, signed = signed_with_meta.split(b"@", 2)
-        return user_id.decode("utf8"), device_name.decode("utf8"), signed
-    except (ValueError, UnicodeDecodeError) as exc:
+        meta = signed_metadata_schema.loads(signed_with_meta.decode("utf8"))[0]
+        return DeviceID(meta["device_id"]), meta["content"]
+
+    except (ValidationError, UnicodeDecodeError) as exc:
         raise CryptoMetadataError(
             "Message doesn't contain author metadata along with signed message"
         ) from exc
 
 
 def encrypt_for_self(
-    device_id: str, device_signkey: SigningKey, device_pubkey: PublicKey, data: bytes
+    device_id: DeviceID, device_signkey: SigningKey, device_pubkey: PublicKey, data: bytes
 ) -> bytes:
     return encrypt_for(device_id, device_signkey, device_pubkey, data)
 
 
 def encrypt_for(
-    author_id: str, author_signkey: SigningKey, recipient_pubkey: PublicKey, data: bytes
+    author_id: DeviceID, author_signkey: SigningKey, recipient_pubkey: PublicKey, data: bytes
 ) -> bytes:
     """
     Sign and encrypt a message.
@@ -101,7 +115,7 @@ def encrypt_for(
     return box.encrypt(signed_with_meta)
 
 
-def decrypt_for(recipient_privkey: PrivateKey, ciphered: bytes) -> Tuple[UserID, DeviceName, bytes]:
+def decrypt_for(recipient_privkey: PrivateKey, ciphered: bytes) -> Tuple[DeviceID, bytes]:
     """
     Decrypt a message and return it signed data and author metadata.
 
@@ -132,7 +146,7 @@ def verify_signature_from(author_verifykey: VerifyKey, signed_text: bytes) -> by
 
 
 def encrypt_with_secret_key(
-    author_id: str, author_signkey: SigningKey, key: bytes, data: bytes
+    author_id: DeviceID, author_signkey: SigningKey, key: bytes, data: bytes
 ) -> bytes:
     """
     Sign and encrypt a message with a symetric key.
@@ -145,7 +159,7 @@ def encrypt_with_secret_key(
     return box.encrypt(signed_with_meta)
 
 
-def decrypt_with_secret_key(key: bytes, ciphered: bytes) -> Tuple[UserID, DeviceName, bytes]:
+def decrypt_with_secret_key(key: bytes, ciphered: bytes) -> Tuple[DeviceID, bytes]:
     """
     Decrypt a signed message with a symetric key.
 

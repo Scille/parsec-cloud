@@ -226,20 +226,18 @@ class Sharing:
         """
         expected_user_id, expected_device_name = sender_id.split("@")
         try:
-            sender_user_id, sender_device_name, raw = await self.encryption_manager.decrypt_for_self(
-                ciphered
-            )
+            real_sender_id, raw = await self.encryption_manager.decrypt_for_self(ciphered)
         except EncryptionManagerError as exc:
             raise SharingRecipientError(f"Cannot decrypt message from `{sender_id}`") from exc
-        if sender_user_id != expected_user_id or sender_device_name != expected_device_name:
+        if real_sender_id != sender_id:
             raise SharingRecipientError(
                 f"Message was said to be send by `{sender_id}`, "
-                f" but is signed by {sender_user_id@sender_device_name}"
+                f" but is signed by {real_sender_id}"
             )
 
         msg, errors = generic_message_content_schema.loads(raw.decode("utf8"))
         if errors:
-            raise SharingInvalidMessageError("Not a valid message: %r" % errors)
+            raise SharingInvalidMessageError(f"Not a valid message: {errors!r}")
 
         if msg["type"] == "share":
             user_manifest_access, user_manifest = await self._get_user_manifest()

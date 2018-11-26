@@ -14,6 +14,7 @@ from nacl.public import PrivateKey
 from nacl.signing import SigningKey
 import nacl
 
+from parsec.types import DeviceID
 from parsec.utils import encode_urlsafe_root_verify_key
 from parsec.core import Core, CoreConfig
 from parsec.core.local_db import LocalDBMissingEntry
@@ -246,11 +247,11 @@ def device_factory():
         count += 1
 
         if not user_id:
-            user_id = f"user-{count}"
+            user_id = f"user_{count}"
         if not device_name:
-            device_name = f"device-{count}"
+            device_name = f"device_{count}"
 
-        device_id = f"{user_id}@{device_name}"
+        device_id = DeviceID(f"{user_id}@{device_name}")
         assert device_id not in devices
 
         try:
@@ -280,12 +281,7 @@ def device_factory():
         if not local_db:
             local_db = InMemoryLocalDB()
         device = Device(
-            f"{user_id}@{device_name}",
-            user_privkey,
-            device_signkey,
-            local_symkey,
-            user_manifest_access,
-            local_db,
+            device_id, user_privkey, device_signkey, local_symkey, user_manifest_access, local_db
         )
         if not user_manifest_in_v0:
             device.local_db.set(user_manifest_access, dumps_manifest(user_manifest_v1))

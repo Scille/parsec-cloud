@@ -1,17 +1,33 @@
 from parsec.schema import fields, ValidationError
-from parsec.types import parse_user_id
+from parsec.types import DeviceID, UserID, DeviceName
 
 
 class APIValidationError(Exception):
     pass
 
 
-class UserIDField(fields.Field):
+class DeviceIDField(fields.Field):
     def _deserialize(self, value, attr, data):
         try:
-            parse_user_id(value)
+            return DeviceID(value)
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
 
-__all__ = ("APIValidationError", "UserIDField")
+class UserIDField(fields.Field):
+    def _deserialize(self, value, attr, data):
+        try:
+            return UserID(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+class DeviceNameField(fields.Field):
+    def _deserialize(self, value, attr, data):
+        try:
+            return DeviceName(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+__all__ = ("APIValidationError", "DeviceIDField", "UserIDField", "DeviceNameField")

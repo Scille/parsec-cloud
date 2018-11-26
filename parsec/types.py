@@ -1,35 +1,39 @@
-from typing import NewType
 import re
 
 
-UserID = NewType("UserID", str)
-DeviceName = NewType("DeviceName", str)
-DeviceID = NewType("DeviceID", str)
+class UserID(str):
+    __slots__ = ()
+    regex = re.compile(r"^\w{1,32}$")
+
+    def __init__(self, raw):
+        if not self.regex.match(raw):
+            raise ValueError("Invalid user ID")
 
 
-def parse_user_id(raw):
-    if not re.match(r"^\w{1,32}$", raw):
-        raise ValueError("Invalid user ID")
-    return UserID(raw)
+class DeviceName(str):
+    __slots__ = ()
+    regex = re.compile(r"^\w{1,32}$")
+
+    def __init__(self, raw):
+        if not self.regex.match(raw):
+            raise ValueError("Invalid device name")
 
 
-def parse_device_name(raw):
-    if not re.match(r"^\w{1,32}$", raw):
-        raise ValueError("Invalid device name")
-    return DeviceName(raw)
+class DeviceID(str):
+    __slots__ = ()
+    regex = re.compile(r"^\w{1,32}@\w{1,32}$")
+
+    def __init__(self, raw):
+        if not self.regex.match(raw):
+            raise ValueError("Invalid device ID")
+
+    @property
+    def user_id(self) -> UserID:
+        return UserID(self.split("@")[0])
+
+    @property
+    def device_name(self) -> DeviceName:
+        return DeviceName(self.split("@")[1])
 
 
-def parse_device_id(raw):
-    if not re.match(r"^\w{1,32}@\w{1,32}$", raw):
-        raise ValueError("Invalid device ID")
-    return DeviceID(raw)
-
-
-__all__ = (
-    "UserID",
-    "DeviceName",
-    "DeviceID",
-    "parse_user_id",
-    "parse_device_name",
-    "parse_device_id",
-)
+__all__ = ("UserID", "DeviceName", "DeviceID")

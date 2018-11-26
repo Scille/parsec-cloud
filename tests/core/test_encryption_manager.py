@@ -17,15 +17,13 @@ async def test_encryption_manager_fetch_remote_device_local_cache(
 ):
     with pytest.raises(BackendNotAvailable):
         with offline(backend_addr):
-            await encryption_manager.fetch_remote_device(bob.user_id, bob.device_name)
+            await encryption_manager.fetch_remote_device(bob.id)
 
-    remote_bob = await encryption_manager.fetch_remote_device(bob.user_id, bob.device_name)
+    remote_bob = await encryption_manager.fetch_remote_device(bob.id)
     assert remote_bob.device_verifykey == bob.device_verifykey
 
     with offline(backend_addr):
-        remot_bob_offline = await encryption_manager.fetch_remote_device(
-            bob.user_id, bob.device_name
-        )
+        remot_bob_offline = await encryption_manager.fetch_remote_device(bob.id)
     assert remot_bob_offline == remote_bob
 
 
@@ -47,7 +45,7 @@ async def test_encryption_manager_fetch_remote_user_local_cache(
 
 @pytest.mark.trio
 async def test_encryption_manager_fetch_self_device_offline(encryption_manager, alice):
-    remote_device = await encryption_manager.fetch_remote_device(alice.user_id, alice.device_name)
+    remote_device = await encryption_manager.fetch_remote_device(alice.id)
     assert remote_device.device_verifykey == alice.device_verifykey
 
 
