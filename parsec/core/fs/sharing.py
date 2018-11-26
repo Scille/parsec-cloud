@@ -1,13 +1,15 @@
 from structlog import get_logger
 from itertools import count
 
+from parsec.types import UserID, DeviceID
+from parsec.utils import to_jsonb64
+from parsec.api.base import DeviceIDField, UserIDField, DeviceNameField
 from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.core.schemas import ManifestAccessSchema
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
-from parsec.core.fs.utils import is_placeholder_manifest, is_workspace_manifest
+from parsec.core.fs.utils import is_workspace_manifest
 from parsec.core.fs.types import Path
 from parsec.core.encryption_manager import EncryptionManagerError
-from parsec.utils import to_jsonb64
 
 
 logger = get_logger()
@@ -36,7 +38,7 @@ class SharingInvalidMessageError(SharingError):
 class _BackendMessageGetRepMessagesSchema(UnknownCheckedSchema):
     count = fields.Int(required=True)
     body = fields.Base64Bytes(required=True)
-    sender_id = fields.String(required=True)
+    sender_id = DeviceIDField(required=True)
 
 
 BackendMessageGetRepMessagesSchema = _BackendMessageGetRepMessagesSchema()
@@ -61,10 +63,12 @@ BackendUserGetRepDeviceSchema = _BackendUserGetRepDeviceSchema()
 
 class _BackendUserGetRepSchema(UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
-    user_id = fields.String(required=True)
+    user_id = UserIDField(required=True)
     created_on = fields.DateTime(required=True)
     broadcast_key = fields.Base64Bytes(required=True)
-    devices = fields.Map(fields.String(), fields.Nested(BackendUserGetRepDeviceSchema), missing={})
+    devices = fields.Map(
+        DeviceNameField(), fields.Nested(BackendUserGetRepDeviceSchema), missing={}
+    )
 
 
 backend_user_get_rep_schema = _BackendUserGetRepSchema()
@@ -119,7 +123,7 @@ class Sharing:
         self.remote_loader = remote_loader
         self.event_bus = event_bus
 
-    async def share(self, path: Path, recipient: str):
+    async def share(self, path: Path, recipient: UserID):
         """
         Raises:
             SharingError
@@ -218,7 +222,7 @@ class Sharing:
             user_manifest["last_processed_message"] = new_last_processed_message
             self.local_folder_fs.update_manifest(user_manifest_access, user_manifest)
 
-    async def _process_message(self, sender_id, ciphered):
+    async def _process_message(self, sender_id: DeviceID, ciphered: bytes):
         """
         Raises:
             SharingRecipientError
