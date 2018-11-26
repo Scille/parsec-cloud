@@ -3,8 +3,9 @@ import random
 import string
 from typing import List
 
-from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields
 from parsec.utils import to_jsonb64
+from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields
+from parsec.api import find_user_req_schema, find_user_rep_schema
 from parsec.backend.exceptions import NotFoundError, AlreadyExistsError, UserClaimError
 
 
@@ -88,15 +89,6 @@ class _UserClaimSchema(BaseCmdSchema):
 
 
 UserClaimSchema = _UserClaimSchema()
-
-
-class _FindUserSchema(BaseCmdSchema):
-    query = fields.String(missing=None, allow_none=True)
-    page = fields.Int(missing=1, validate=lambda n: n > 0)
-    per_page = fields.Integer(validate=lambda n: 0 < n <= 100, missing=100)
-
-
-FindUserSchema = _FindUserSchema()
 
 
 def _generate_token():
@@ -283,15 +275,17 @@ class BaseUserComponent:
         return {"status": "ok"}
 
     async def api_user_find(self, client_ctx, msg):
-        msg = FindUserSchema.load_or_abort(msg)
+        msg = find_user_req_schema.load_or_abort(msg)
         results, total = await self.find(**msg)
-        return {
-            "status": "ok",
-            "results": results,
-            "page": msg["page"],
-            "per_page": msg["per_page"],
-            "total": total,
-        }
+        return find_user_rep_schema.dump(
+            {
+                "status": "ok",
+                "results": results,
+                "page": msg["page"],
+                "per_page": msg["per_page"],
+                "total": total,
+            }
+        ).data
 
     async def create_invitation(self, invitation_token: str, author: str, user_id: str):
         raise NotImplementedError()
