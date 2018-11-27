@@ -37,6 +37,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     fs_changed_qt = pyqtSignal(str, UUID, str)
     load_workspace_clicked = pyqtSignal(str)
 
+    COLUMNS_NUMBER = 3
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
@@ -54,7 +56,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         )
         button.clicked.connect(self.load_workspace)
         self.layout_workspaces.addWidget(
-            button, int(self.workspaces_count / 4), int(self.workspaces_count % 4)
+            button,
+            int(self.workspaces_count / self.COLUMNS_NUMBER),
+            int(self.workspaces_count % self.COLUMNS_NUMBER),
         )
         self.workspaces_count += 1
         button.share_clicked.connect(self.share_workspace)

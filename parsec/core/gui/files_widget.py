@@ -153,7 +153,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         if self.line_edit_search.text():
             self.filter_files(self.line_edit_search.text())
 
-
     def _import_folder(self, src, dst):
         err = False
         try:
