@@ -5,14 +5,14 @@ from nacl.signing import SigningKey, VerifyKey
 from nacl.secret import SecretBox
 from nacl.utils import random
 from nacl.pwhash import argon2i
-from nacl.exceptions import CryptoError
+from nacl.exceptions import CryptoError, BadSignatureError
 
 from parsec.api.base import DeviceIDField
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError
 from parsec.types import DeviceID
 
 
-__all__ = ("CryptoError", "PrivateKey", "PublicKey", "SigningKey", "VerifyKey")
+__all__ = ("CryptoError", "BadSignatureError", "PrivateKey", "PublicKey", "SigningKey", "VerifyKey")
 
 
 # TODO: SENSITIVE is really slow which is not good for unittests...

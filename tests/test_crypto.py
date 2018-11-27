@@ -1,6 +1,8 @@
 import pytest
 
 from parsec.crypto import (
+    CryptoError,
+    BadSignatureError,
     generate_secret_key,
     encrypt_for_self,
     encrypt_for,
@@ -9,9 +11,6 @@ from parsec.crypto import (
     encrypt_with_secret_key,
     decrypt_with_secret_key,
 )
-
-
-# TODO: test corrupted/forged messages
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -58,3 +57,26 @@ def test_encrypt_with_secret_key(alice):
 
     returned_msg = verify_signature_from(alice.device_verifykey, signed_msg)
     assert returned_msg == msg
+
+
+def test_decrypt_bad_secret_key(alice, bob):
+    msg = b"Hello world !"
+    key = generate_secret_key()
+    bad_key = generate_secret_key()
+
+    ciphered_msg = encrypt_with_secret_key(alice.id, alice.device_signkey, key, msg)
+
+    with pytest.raises(CryptoError):
+        decrypt_with_secret_key(bad_key, ciphered_msg)
+
+
+def test_decrypt_for_other_bad_receiver(alice, bob, mallory):
+    msg = b"Hello world !"
+    ciphered_msg = encrypt_for(alice.id, alice.device_signkey, bob.user_pubkey, msg)
+
+    with pytest.raises(CryptoError):
+        decrypt_for(mallory.user_privkey, ciphered_msg)
+
+    device_id, signed_msg = decrypt_for(bob.user_privkey, ciphered_msg)
+    with pytest.raises(BadSignatureError):
+        verify_signature_from(mallory.device_verifykey, signed_msg)
