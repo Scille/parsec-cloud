@@ -142,20 +142,6 @@ async def asyncio_loop():
 
 
 @pytest.fixture
-def always_logs():
-    """
-    By default, pytest-logbook only print last test's logs in case of error.
-    With this fixture all logs are outputed as soon as they are created.
-    """
-    from logbook import StreamHandler
-    import sys
-
-    sh = StreamHandler(sys.stdout)
-    with sh.applicationbound():
-        yield
-
-
-@pytest.fixture
 def unused_tcp_port():
     """Find an unused localhost TCP port from 1024-65535 and return it."""
     with contextlib.closing(socket.socket()) as sock:
