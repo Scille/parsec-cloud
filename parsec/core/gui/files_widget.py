@@ -124,6 +124,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def load(self, directory):
         self.table_files.clearContents()
         self.table_files.setRowCount(0)
+        old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
+        old_order = self.table_files.horizontalHeader().sortIndicatorOrder()
         self.table_files.setSortingEnabled(False)
         self.previous_selection = []
         self.current_directory = directory
@@ -146,7 +148,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self._add_file(
                     child, child_stat["size"], child_stat["created"], child_stat["updated"]
                 )
+        self.table_files.sortItems(old_sort, old_order)
         self.table_files.setSortingEnabled(True)
+        if self.line_edit_search.text():
+            self.filter_files(self.line_edit_search.text())
+
 
     def _import_folder(self, src, dst):
         err = False
@@ -222,11 +228,13 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def filter_files(self, pattern):
         pattern = pattern.lower()
         for i in range(self.table_files.rowCount()):
-            item = self.table_files.item(i, 1)
-            if pattern not in item.text().lower():
-                self.table_files.setRowHidden(i, True)
-            else:
-                self.table_files.setRowHidden(i, False)
+            type_item = self.table_files.item(i, 0)
+            name_item = self.table_files.item(i, 1)
+            if type_item.data(Qt.UserRole) != "parent_folder":
+                if pattern not in name_item.text().lower():
+                    self.table_files.setRowHidden(i, True)
+                else:
+                    self.table_files.setRowHidden(i, False)
 
     def _create_folder(self, folder_name):
         try:
