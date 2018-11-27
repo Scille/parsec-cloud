@@ -4,6 +4,7 @@ import trio_asyncio
 import click
 from functools import partial
 
+from parsec.types import UserID, DeviceName
 from parsec.utils import encode_urlsafe_root_verify_key
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import BackendApp, config_factory
@@ -28,8 +29,8 @@ DEFAULT_DEVICES_PATH = os.path.join(get_default_settings_path(), "devices")
     help="Path to store new first device configuration.",
 )
 @click.option("--backend-base-url", "-b", "backend_base_url")
-@click.argument("user_id", metavar="user-id")
-@click.argument("device_name", metavar="device-name")
+@click.argument("user_id", metavar="user-id", type=UserID)
+@click.argument("device_name", metavar="device-name", type=DeviceName)
 def init_cmd(db, force, settings, backend_base_url, user_id, device_name):
     """
     Initialize a new backend's PostgreSQL database.

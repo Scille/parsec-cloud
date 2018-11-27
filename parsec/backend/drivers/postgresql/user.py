@@ -499,17 +499,10 @@ class PGUserComponent(BaseUserComponent):
         async with self.dbh.pool.acquire() as conn:
             if query:
                 all_results = await conn.fetch(
-                    """
-                    SELECT user_id FROM users WHERE user_id LIKE $1 ORDER BY user_id
-                    """,
-                    f"{query}%",
+                    "SELECT user_id FROM users WHERE user_id LIKE $1 ORDER BY user_id", f"{query}%"
                 )
             else:
-                all_results = await conn.fetch(
-                    """
-                    SELECT user_id FROM users ORDER BY user_id
-                    """
-                )
-            # TODO: should user LIMIT and OFFSET in the SQL query instead
+                all_results = await conn.fetch("SELECT user_id FROM users ORDER BY user_id")
+            # TODO: should use LIMIT and OFFSET in the SQL query instead
             results = [x[0] for x in all_results[(page - 1) * per_page : page * per_page]]
             return results, len(all_results)

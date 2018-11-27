@@ -6,16 +6,17 @@ from typing import Optional, Tuple
 from structlog import get_logger
 from uuid import UUID
 
+from parsec.crypto import sign_and_add_meta
+from parsec.types import UserID, DeviceID
 from parsec.utils import call_with_control, ejson_dumps, ejson_loads
 from parsec.crypto import PublicKey, PrivateKey, VerifyKey, SigningKey
-from parsec.types import UserID, DeviceName
 
 
 logger = get_logger()
 
 
 async def init_db(
-    url: str, user_id: UserID, device_name: DeviceName, force: bool = False
+    url: str, device_id: DeviceID, force: bool = False
 ) -> Optional[Tuple[VerifyKey, PrivateKey, SigningKey]]:
     """
     Raises:
@@ -26,7 +27,7 @@ async def init_db(
     async with triopg.connect(url) as conn:
         already_initialized = await _ensure_tables_in_place(conn, force)
         if not already_initialized:
-            return await _insert_first_user_and_device(conn, user_id, device_name)
+            return await _insert_first_user_and_device(conn, device_id)
 
 
 async def _ensure_tables_in_place(conn, force):
@@ -53,13 +54,12 @@ def build_signed_pubkey_payload(user_id: UserID, pubkey: PublicKey, now: pendulu
 
 
 def build_signed_verifykey_payload(
-    user_id: UserID, device_name: DeviceName, verifykey: VerifyKey, now: pendulum.Pendulum
+    device_id: DeviceID, verifykey: VerifyKey, now: pendulum.Pendulum
 ):
     data = {
         "verify_key": base64.encodebytes(verifykey.encode()).decode("utf8"),
         "timestamp": now.isoformat(),
-        "user_id": user_id,
-        "device_name": device_name,
+        "device_id": device_id,
     }
     return json.dumps(data).encode("utf8")
 
@@ -69,22 +69,22 @@ def extract_signed_pubkey_payload(payload: bytes):
     pass
 
 
-async def _insert_first_user_and_device(conn, user_id, device_name):
+async def _insert_first_user_and_device(conn, device_id):
     now = pendulum.now()
     root_signkey = SigningKey.generate()
     user_privkey = PrivateKey.generate()
     device_signkey = SigningKey.generate()
-
-    # TODO...
-    from parsec.core.encryption_manager import sign_and_add_meta
+    root_device_id = DeviceID("root@root")
 
     public_key_payload = sign_and_add_meta(
-        "root", root_signkey, build_signed_pubkey_payload(user_id, user_privkey.public_key, now)
+        root_device_id,
+        root_signkey,
+        build_signed_pubkey_payload(device_id.user_id, user_privkey.public_key, now),
     )
     verify_key_payload = sign_and_add_meta(
-        "root",
+        root_device_id,
         root_signkey,
-        build_signed_verifykey_payload(user_id, device_name, device_signkey.verify_key, now),
+        build_signed_verifykey_payload(device_id, device_signkey.verify_key, now),
     )
 
     await conn.execute(
@@ -92,7 +92,7 @@ async def _insert_first_user_and_device(conn, user_id, device_name):
         INSERT INTO users (user_id, created_on, broadcast_key)
         VALUES ($1, $2, $3)
         """,
-        user_id,
+        device_id.user_id,
         now,
         public_key_payload,
     )
@@ -102,9 +102,9 @@ async def _insert_first_user_and_device(conn, user_id, device_name):
         INSERT INTO devices (device_id, user_id, device_name, created_on, verify_key)
         VALUES ($1, $2, $3, $4, $5)
         """,
-        f"{user_id}@{device_name}",
-        user_id,
-        device_name,
+        device_id,
+        device_id.user_id,
+        device_id.device_name,
         now,
         verify_key_payload,
     )
@@ -164,12 +164,12 @@ async def _create_db_tables(conn):
 
         CREATE TABLE devices (
             device_id VARCHAR(65) PRIMARY KEY,
-            device_name VARCHAR(32),
+            device_name VARCHAR(32) NOT NULL,
             user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
             created_on TIMESTAMP NOT NULL,
             verify_key BYTEA NOT NULL,
             revocated_on TIMESTAMP,
-            UNIQUE (user_id, device_id)
+            UNIQUE (user_id, device_name)
         );
 
         CREATE TYPE USER_INVITATION_STATUS AS ENUM ('pending', 'claimed', 'rejected');
