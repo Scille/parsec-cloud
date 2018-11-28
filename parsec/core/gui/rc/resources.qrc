@@ -55,6 +55,7 @@
         <file>images/icons/add-plus-button.png</file>
         <file>images/icons/go-back_button.png</file>
         <file>images/icons/import_button.png</file>
+        <file>images/icons/edit_blue.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>

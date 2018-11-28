@@ -51,6 +51,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button.share_clicked.connect(self.share_workspace)
         button.details_clicked.connect(self.show_workspace_details)
         button.delete_clicked.connect(self.delete_workspace)
+        button.rename_clicked.connect(self.rename_workspace)
 
     def show_workspace_details(self, workspace_button):
         text = "{}\n\nCreated by {}.\nShared with {} people.".format(
@@ -61,34 +62,31 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def delete_workspace(self, workspace_button):
         show_warning(self, QCoreApplication.translate("WorkspacesWidget", "Not yet implemented."))
 
-    def action_rename_workspace(self, workspace_button):
-        def _inner_rename_workspace():
-            current_file_path = os.path.join("/", workspace_button.name)
-            new_name = get_text(
+    def rename_workspace(self, workspace_button):
+        current_file_path = os.path.join("/", workspace_button.name)
+        new_name = get_text(
+            self,
+            QCoreApplication.translate("WorkspacesWidget", "New name"),
+            QCoreApplication.translate("WorkspacesWidget", "Enter workspace new name"),
+            placeholder=QCoreApplication.translate("WorkspacesWidget", "Workspace name"),
+        )
+        if not new_name:
+            return
+        try:
+            core_call().rename_workspace(current_file_path, os.path.join("/", new_name))
+            workspace_button.name = new_name
+        except FileExistsError:
+            show_warning(
                 self,
-                QCoreApplication.translate("WorkspacesWidget", "New name"),
-                QCoreApplication.translate("WorkspacesWidget", "Enter workspace new name"),
-                placeholder=QCoreApplication.translate("WorkspacesWidget", "Workspace name"),
+                QCoreApplication.translate(
+                    "WorkspacesWidget", "A workspace with the same name already exists."
+                ),
             )
-            if not new_name:
-                return
-            try:
-                core_call().rename_workspace(current_file_path, os.path.join("/", new_name))
-                workspace_button.rename(new_name)
-            except FileExistsError:
-                show_warning(
-                    self,
-                    QCoreApplication.translate(
-                        "WorkspacesWidget", "A workspace with the same name already exists."
-                    ),
-                )
-            except:
-                show_error(
-                    self,
-                    QCoreApplication.translate("WorkspacesWidget", "Can not rename the workspace."),
-                )
-
-        return _inner_rename_workspace
+        except:
+            show_error(
+                self,
+                QCoreApplication.translate("WorkspacesWidget", "Can not rename the workspace."),
+            )
 
     def share_workspace(self, workspace_button):
         current_device = core_call().logged_device()
@@ -109,6 +107,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 self,
                 QCoreApplication.translate("WorkspacesWidget", "The workspaces has been shared."),
             )
+            workspace_button.participants = workspace_button.participants + [user]
         except SharingRecipientError:
             show_warning(
                 self,

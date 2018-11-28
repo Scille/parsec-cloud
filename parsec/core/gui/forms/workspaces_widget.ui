@@ -134,6 +134,9 @@ padding-left: 10px;
          <height>50</height>
         </size>
        </property>
+       <property name="flat">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
     </layout>
