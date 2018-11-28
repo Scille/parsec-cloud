@@ -1,96 +1,109 @@
-import trio
+import attr
 import random
 import string
-from typing import List
+from typing import List, Iterable, Tuple
+import pendulum
 
-from parsec.utils import to_jsonb64
-from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields
-from parsec.api import find_user_req_schema, find_user_rep_schema
-from parsec.backend.exceptions import NotFoundError, AlreadyExistsError, UserClaimError
-
-from .user2 import BaseUserComponent as BaseUserComponent2, User, Device, DevicesMapping
-
-
-class _UserIDSchema(BaseCmdSchema):
-    user_id = fields.String(required=True)
-
-
-UserIDSchema = _UserIDSchema()
-
-
-class _DeviceDeclareSchema(BaseCmdSchema):
-    device_name = fields.String(required=True)
-
-
-DeviceDeclareSchema = _DeviceDeclareSchema()
+from parsec.types import UserID
+from parsec.event_bus import EventBus
+from parsec.crypto import VerifyKey
+from parsec.trustchain import (
+    unsecure_certified_device_extract_verify_key,
+    unsecure_certified_user_extract_public_key,
+)
+from parsec.api.user import (
+    user_get_req_schema,
+    user_get_rep_schema,
+    user_find_req_schema,
+    user_find_rep_schema,
+    user_invite_req_schema,
+)
+from parsec.backend.exceptions import NotFoundError, AlreadyExistsError
 
 
-class _DeviceGetConfigurationTrySchema(BaseCmdSchema):
-    config_try_id = fields.String(required=True)
+@attr.s(slots=True, frozen=True, repr=False)
+class Device:
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.device_id})"
+
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
+
+    @property
+    def device_name(self):
+        return self.device_id.device_name
+
+    @property
+    def user_id(self):
+        return self.device_id.user_id
+
+    @property
+    def verify_key(self):
+        return unsecure_certified_device_extract_verify_key(self.certified_device)
+
+    device_id = attr.ib()
+    certified_device = attr.ib()
+    device_certifier = attr.ib()
+
+    created_on = attr.ib(factory=pendulum.now)
+    revocated_on = attr.ib(default=None)
+    certified_revocation = attr.ib(default=None)
+    revocation_certifier = attr.ib(default=None)
 
 
-DeviceGetConfigurationTrySchema = _DeviceGetConfigurationTrySchema()
+class DevicesMapping:
+    """
+    Basically a frozen dict.
+    """
+
+    __slots__ = ("_read_only_mapping",)
+
+    def __init__(self, *devices: Iterable[Device]):
+        self._read_only_mapping = {d.device_name: d for d in devices}
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self._read_only_mapping!r})"
+
+    def __getitem__(self, key):
+        return self._read_only_mapping[key]
+
+    def items(self):
+        return self._read_only_mapping.items()
+
+    def keys(self):
+        return self._read_only_mapping.keys()
+
+    def values(self):
+        return self._read_only_mapping.values()
+
+    def __iter__(self):
+        return self._read_only_mapping.__iter__()
+
+    def __in__(self, key):
+        return self._read_only_mapping.__in__(key)
 
 
-class _DeviceAcceptConfigurationTrySchema(BaseCmdSchema):
-    config_try_id = fields.String(required=True)
-    ciphered_user_privkey = fields.Base64Bytes(required=True)
-    ciphered_user_manifest_access = fields.Base64Bytes(required=True)
+@attr.s(slots=True, frozen=True, repr=False)
+class User:
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.user_id})"
 
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
 
-DeviceAcceptConfigurationTrySchema = _DeviceAcceptConfigurationTrySchema()
+    @property
+    def public_key(self):
+        return unsecure_certified_user_extract_public_key(self.certified_user)
 
+    user_id = attr.ib()
+    certified_user = attr.ib()
+    user_certifier = attr.ib()
+    devices = attr.ib(factory=DevicesMapping)
 
-class _DeviceRefuseConfigurationTrySchema(BaseCmdSchema):
-    config_try_id = fields.String(required=True)
-    reason = fields.String(required=True)
-
-
-DeviceRefuseConfigurationTrySchema = _DeviceRefuseConfigurationTrySchema()
-
-
-class _DeviceConfigureSchema(BaseCmdSchema):
-    configure_device_token = fields.String(required=True)
-    user_id = fields.String(required=True)
-    device_name = fields.String(required=True)
-    device_verify_key = fields.Base64Bytes(required=True)
-    # TODO: should be itself ciphered with a password-derived key
-    # to mitigate man-in-the-middle attack
-    exchange_cipherkey = fields.Base64Bytes(required=True)
-    salt = fields.Base64Bytes(required=True)
-
-
-DeviceConfigureSchema = _DeviceConfigureSchema()
-
-
-class _DeviceSchema(UnknownCheckedSchema):
-    created_on = fields.DateTime(required=True)
-    revocated_on = fields.DateTime()
-    verify_key = fields.Base64Bytes(required=True)
-
-
-DeviceSchema = _DeviceSchema()
-
-
-class _UserSchema(BaseCmdSchema):
-    user_id = fields.String(required=True)
-    created_on = fields.DateTime(required=True)
-    broadcast_key = fields.Base64Bytes(required=True)
-    devices = fields.Map(fields.String(), fields.Nested(DeviceSchema), required=True)
-
-
-UserSchema = _UserSchema()
-
-
-class _UserClaimSchema(BaseCmdSchema):
-    invitation_token = fields.String(required=True)
-    user_id = fields.String(required=True)
-    broadcast_key = fields.Base64Bytes(required=True)
-    device_name = fields.String(required=True)
-    device_verify_key = fields.Base64Bytes(required=True)
-
-
-UserClaimSchema = _UserClaimSchema()
+    created_on = attr.ib(factory=pendulum.now)
+    revocated_on = attr.ib(default=None)
+    certified_revocation = attr.ib(default=None)
+    revocation_certifier = attr.ib(default=None)
 
 
 def _generate_token():
@@ -98,190 +111,26 @@ def _generate_token():
 
 
 class BaseUserComponent:
-    def __init__(self, root_verify_key, event_bus):
+    def __init__(self, root_verify_key: VerifyKey, event_bus: EventBus):
         self.root_verify_key = root_verify_key
         self.event_bus = event_bus
 
-    api_user_get = BaseUserComponent2.api_user_get
-    # async def api_user_get(self, client_ctx, msg):
-    #     msg = UserIDSchema.load_or_abort(msg)
-    #     try:
-    #         user = await self.get(msg["user_id"])
-    #     except NotFoundError:
-    #         return {"status": "not_found", "reason": f"No user with id `{msg['user_id']}`."}
-
-    #     data, errors = UserSchema.dump(user)
-    #     if errors:
-    #         raise RuntimeError(f"Dump error with {user!r}: {errors}")
-
-    #     return {"status": "ok", **data}
-
-    async def api_user_invite(self, client_ctx, msg):
-        msg = UserIDSchema.load_or_abort(msg)
-        token = _generate_token()
+    async def api_user_get(self, client_ctx, msg):
+        msg = user_get_req_schema.load_or_abort(msg)
         try:
-            await self.create_invitation(token, msg["user_id"])
-        except AlreadyExistsError:
-            return {
-                "status": "already_exists",
-                "reason": f"User `{msg['user_id']}` already exists.",
-            }
+            user = await self.get(msg["user_id"])
+        except NotFoundError as exc:
+            return {"status": "not_found", "reason": str(exc)}
 
-        return {"status": "ok", "user_id": msg["user_id"], "invitation_token": token}
-
-    async def api_user_claim(self, client_ctx, msg):
-        msg = UserClaimSchema.load_or_abort(msg)
-        try:
-            await self.claim_invitation(**msg)
-        except UserClaimError as exc:
-            return {"status": "claim_error", "reason": str(exc)}
-
-        return {"status": "ok"}
-
-    async def api_device_declare(self, client_ctx, msg):
-        msg = DeviceDeclareSchema.load_or_abort(msg)
-        configure_device_token = _generate_token()
-        try:
-            await self.declare_unconfigured_device(
-                configure_device_token, client_ctx.user_id, msg["device_name"]
-            )
-        except AlreadyExistsError:
-            return {
-                "status": "already_exists",
-                "reason": f"Device `{msg['device_name']}` already exists.",
-            }
-
-        return {"status": "ok", "configure_device_token": configure_device_token}
-
-    async def api_device_configure(self, client_ctx, msg):
-        msg = DeviceConfigureSchema.load_or_abort(msg)
-        user_id = msg["user_id"]
-        device_name = msg["device_name"]
-        try:
-            device = await self.get_unconfigured_device(user_id, device_name)
-        except NotFoundError:
-            return {
-                "status": "not_found",
-                "reason": f"No unconfigured device `{user_id}@{device_name}`.",
-            }
-
-        if device["configure_token"] != msg["configure_device_token"]:
-            return {"status": "invalid_token", "reason": "Wrong device configuration token."}
-
-        config_try_id = _generate_token()
-        await self.register_device_configuration_try(
-            config_try_id,
-            user_id,
-            msg["device_name"],
-            msg["device_verify_key"],
-            msg["exchange_cipherkey"],
-            msg["salt"],
-        )
-
-        claim_answered = trio.Event()
-
-        def _on_claim_answered(event, subject, config_try_id):
-            if subject == user_id and config_try_id == config_try_id:
-                claim_answered.set()
-
-        self.event_bus.connect("device.try_claim_answered", _on_claim_answered, weak=True)
-
-        self.event_bus.send(
-            "device.try_claim_submitted",
-            author=client_ctx.id,
-            user_id=user_id,
-            device_name=device_name,
-            config_try_id=config_try_id,
-        )
-        with trio.move_on_after(5 * 60) as cancel_scope:
-            await claim_answered.wait()
-        if cancel_scope.cancelled_caught:
-            return {
-                "status": "timeout",
-                "reason": (
-                    "Timeout while waiting for existing device " "to validate our configuration."
-                ),
-            }
-
-        # Should not raise NotFoundError given we created this just above
-        config_try = await self.retrieve_device_configuration_try(config_try_id, user_id)
-
-        if config_try["status"] != "accepted":
-            return {"status": "configuration_refused", "reason": config_try["refused_reason"]}
-
-        await self.configure_device(user_id, device_name, msg["device_verify_key"])
-
-        return {
-            "status": "ok",
-            "ciphered_user_privkey": to_jsonb64(config_try["ciphered_user_privkey"]),
-            "ciphered_user_manifest_access": to_jsonb64(
-                config_try["ciphered_user_manifest_access"]
-            ),
-        }
-
-    async def api_device_get_configuration_try(self, client_ctx, msg):
-        msg = DeviceGetConfigurationTrySchema.load_or_abort(msg)
-        try:
-            config_try = await self.retrieve_device_configuration_try(
-                msg["config_try_id"], client_ctx.user_id
-            )
-        except NotFoundError:
-            return {"status": "not_found", "reason": "Unknown device configuration try."}
-
-        return {
-            "status": "ok",
-            "device_name": config_try["device_name"],
-            "configuration_status": config_try["status"],
-            "device_verify_key": to_jsonb64(config_try["device_verify_key"]),
-            "exchange_cipherkey": to_jsonb64(config_try["exchange_cipherkey"]),
-            "salt": to_jsonb64(config_try["salt"]),
-        }
-
-    async def api_device_accept_configuration_try(self, client_ctx, msg):
-        msg = DeviceAcceptConfigurationTrySchema.load_or_abort(msg)
-        try:
-            await self.accept_device_configuration_try(
-                msg["config_try_id"],
-                client_ctx.user_id,
-                msg["ciphered_user_privkey"],
-                msg["ciphered_user_manifest_access"],
-            )
-        except NotFoundError:
-            return {"status": "not_found", "reason": "Unknown device configuration try."}
-
-        except AlreadyExistsError:
-            return {"status": "already_done", "reason": "Device configuration try already done."}
-
-        self.event_bus.send(
-            "device.try_claim_answered",
-            subject=client_ctx.user_id,
-            config_try_id=msg["config_try_id"],
-        )
-        return {"status": "ok"}
-
-    async def api_device_refuse_configuration_try(self, client_ctx, msg):
-        msg = DeviceRefuseConfigurationTrySchema.load_or_abort(msg)
-        try:
-            await self.refuse_device_configuration_try(
-                msg["config_try_id"], client_ctx.user_id, msg["reason"]
-            )
-        except NotFoundError:
-            return {"status": "not_found", "reason": "Unknown device configuration try."}
-
-        except AlreadyExistsError:
-            return {"status": "already_done", "reason": "Device configuration try already done."}
-
-        self.event_bus.send(
-            "device.try_claim_answered",
-            subject=client_ctx.user_id,
-            config_try_id=msg["config_try_id"],
-        )
-        return {"status": "ok"}
+        data, errors = user_get_rep_schema.dump(user)
+        if errors:
+            raise RuntimeError(f"Dump error with {user!r}: {errors}")
+        return data
 
     async def api_user_find(self, client_ctx, msg):
-        msg = find_user_req_schema.load_or_abort(msg)
+        msg = user_find_req_schema.load_or_abort(msg)
         results, total = await self.find(**msg)
-        return find_user_rep_schema.dump(
+        return user_find_rep_schema.dump(
             {
                 "status": "ok",
                 "results": results,
@@ -291,7 +140,48 @@ class BaseUserComponent:
             }
         ).data
 
-    async def create_invitation(self, invitation_token: str, author: str, user_id: str):
+    async def api_user_invite(self, client_ctx, msg):
+        msg = user_invite_req_schema.load_or_abort(msg)
+        try:
+            await self.create_invitation(msg["user_id"])
+        except AlreadyExistsError as exc:
+            return {"status": "already_exists", "reason": str(exc)}
+
+        return {"status": "ok"}
+
+    async def api_user_claim(self, client_ctx, msg):
+        raise NotImplementedError()
+
+    async def api_device_declare(self, client_ctx, msg):
+        raise NotImplementedError()
+
+    async def api_device_configure(self, client_ctx, msg):
+        raise NotImplementedError()
+
+    async def api_device_get_configuration_try(self, client_ctx, msg):
+        raise NotImplementedError()
+
+    async def api_device_accept_configuration_try(self, client_ctx, msg):
+        raise NotImplementedError()
+
+    async def api_device_refuse_configuration_try(self, client_ctx, msg):
+        raise NotImplementedError()
+
+    async def create(self, user: User) -> None:
+        raise NotImplementedError()
+
+    async def create_device(self, device: Device) -> None:
+        raise NotImplementedError()
+
+    async def get(self, user_id: UserID) -> User:
+        raise NotImplementedError()
+
+    async def find(
+        self, query: str = None, page: int = 1, per_page: int = 100
+    ) -> Tuple[List[UserID], int]:
+        raise NotImplementedError()
+
+    async def create_invitation(self, user: UserID) -> None:
         raise NotImplementedError()
 
     async def claim_invitation(
@@ -338,20 +228,8 @@ class BaseUserComponent:
     async def refuse_device_configuration_try(self, config_try_id: str, user_id: str, reason: str):
         raise NotImplementedError()
 
-    async def create(self, user_id: str, broadcast_key: bytes, devices: List[str]):
-        raise NotImplementedError()
-
-    async def create_device(self, user_id: str, device_name: str, verify_key: bytes):
-        raise NotImplementedError()
-
-    async def get(self, user_id: str):
-        raise NotImplementedError()
-
     async def revoke_user(self, user_id: str):
         raise NotImplementedError()
 
     async def revoke_device(self, user_id: str, device_name: str):
-        raise NotImplementedError()
-
-    async def find(self, query: str = None, page: int = 1, per_page: int = 100):
         raise NotImplementedError()

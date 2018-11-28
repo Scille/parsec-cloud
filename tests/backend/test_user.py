@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, ANY
 from pendulum import Pendulum
 
-from parsec.api.user import get_user_rep_schema
+from parsec.api.user import user_get_rep_schema
 from parsec.utils import to_jsonb64
 
 from tests.common import freeze_time
@@ -18,20 +18,26 @@ def mock_generate_token():
 async def test_api_user_get_ok(backend, alice_backend_sock, bob):
     await alice_backend_sock.send({"cmd": "user_get", "user_id": "bob"})
     rep = await alice_backend_sock.recv()
-    cooked, errors = get_user_rep_schema.load(rep)
+    cooked, errors = user_get_rep_schema.load(rep)
     assert not errors
     assert cooked == {
         "status": "ok",
         "user_id": bob.user_id,
-        "certified_public_key": ANY,
+        "certified_user": ANY,
+        "user_certifier": None,
         "created_on": Pendulum(2000, 1, 1),
         "revocated_on": None,
+        "certified_revocation": None,
+        "revocation_certifier": None,
         "devices": {
             bob.device_name: {
                 "device_id": bob.id,
                 "created_on": Pendulum(2000, 1, 1),
                 "revocated_on": None,
-                "certified_verify_key": ANY,
+                "certified_revocation": None,
+                "revocation_certifier": None,
+                "certified_device": ANY,
+                "device_certifier": None,
             }
         },
     }
@@ -44,7 +50,7 @@ async def test_api_user_get_ok(backend, alice_backend_sock, bob):
 async def test_api_user_get_bad_msg(alice_backend_sock, bad_msg):
     await alice_backend_sock.send({"cmd": "user_get", **bad_msg})
     rep = await alice_backend_sock.recv()
-    cooked, errors = get_user_rep_schema.with_error_schema.load(rep)
+    cooked, errors = user_get_rep_schema.with_error_schema.load(rep)
     assert not errors
     assert cooked["status"] == "bad_message"
 
@@ -53,9 +59,9 @@ async def test_api_user_get_bad_msg(alice_backend_sock, bad_msg):
 async def test_api_user_get_not_found(alice_backend_sock):
     await alice_backend_sock.send({"cmd": "user_get", "user_id": "dummy"})
     rep = await alice_backend_sock.recv()
-    cooked, errors = get_user_rep_schema.with_error_schema.load(rep)
+    cooked, errors = user_get_rep_schema.with_error_schema.load(rep)
     assert not errors
-    assert cooked == {"status": "not_found", "reason": "No user with id `dummy`."}
+    assert cooked["status"] == "not_found"
 
 
 @pytest.mark.trio

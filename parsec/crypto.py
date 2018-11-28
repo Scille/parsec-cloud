@@ -2,14 +2,13 @@ from typing import Tuple
 import pendulum
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 from nacl.public import PrivateKey, PublicKey, SealedBox
-from nacl.signing import SigningKey, VerifyKey, SignedMessage
+from nacl.signing import SigningKey, VerifyKey
 from nacl.bindings import crypto_sign_BYTES
 from nacl.secret import SecretBox
 from nacl.utils import random
 from nacl.pwhash import argon2i
 from nacl.exceptions import CryptoError, BadSignatureError
 
-from parsec.api.base import DeviceIDField
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError
 from parsec.types import DeviceID
 
@@ -25,7 +24,7 @@ CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
 
 
 class SignedMetadataSchema(UnknownCheckedSchema):
-    device_id = DeviceIDField(required=True)
+    device_id = fields.DeviceID(required=True)
     timestamp = fields.DateTime(required=True)
     content = fields.Base64Bytes(required=True)
 

@@ -29,7 +29,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         self._users[user.user_id] = user
 
-    async def create_device(self, device: Device):
+    async def create_device(self, device: Device) -> None:
         if device.user_id not in self._users:
             raise NotFoundError(f"User `{device.user_id}` doesn't exists")
 
@@ -56,6 +56,12 @@ class MemoryUserComponent(BaseUserComponent):
         # PostgreSQL does case insensitive sort
         sorted_results = sorted(results, key=lambda s: s.lower())
         return sorted_results[(page - 1) * per_page : page * per_page], len(results)
+
+    async def invite(self, user: UserID) -> None:
+        if user_id in self._users:
+            raise AlreadyExistsError("User `%s` already exists" % user_id)
+
+        raise NotImplementedError()
 
     async def create_invitation(self, invitation_token, user_id):
         if user_id in self._users:

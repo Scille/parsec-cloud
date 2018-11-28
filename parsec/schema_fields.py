@@ -15,6 +15,8 @@ from marshmallow.fields import (
 )
 
 from parsec.utils import to_jsonb64, from_jsonb64
+from parsec.crypto import VerifyKey as _VerifyKey, PublicKey as _PublicKey
+from parsec.types import DeviceID as _DeviceID, UserID as _UserID, DeviceName as _DeviceName
 
 
 # TODO: test this field and use it everywhere in the api !
@@ -131,6 +133,66 @@ class Map(Field):
         return ret
 
 
+class VerifyKey(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return to_jsonb64(value.encode())
+
+    def _deserialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        try:
+            return _VerifyKey(from_jsonb64(value))
+
+        except Exception:
+            raise ValidationError("Invalid verify key.")
+
+
+class PublicKey(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return to_jsonb64(value.encode())
+
+    def _deserialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        try:
+            return _PublicKey(from_jsonb64(value))
+
+        except Exception:
+            raise ValidationError("Invalid verify key.")
+
+
+class DeviceID(Field):
+    def _deserialize(self, value, attr, data):
+        try:
+            return _DeviceID(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+class UserID(Field):
+    def _deserialize(self, value, attr, data):
+        try:
+            return _UserID(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+
+class DeviceName(Field):
+    def _deserialize(self, value, attr, data):
+        try:
+            return _DeviceName(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+
 __all__ = (
     "Int",
     "String",
@@ -146,4 +208,9 @@ __all__ = (
     "DateTime",
     "CheckedConstant",
     "Map",
+    "VerifyKey",
+    "PublicKey",
+    "DeviceID",
+    "UserID",
+    "DeviceName",
 )

@@ -7,35 +7,10 @@ from parsec.schema import (
     post_load,
     abort,
 )
-from parsec.types import DeviceID, UserID, DeviceName
 
 
 class APIValidationError(Exception):
     pass
-
-
-class DeviceIDField(fields.Field):
-    def _deserialize(self, value, attr, data):
-        try:
-            return DeviceID(value)
-        except ValueError as exc:
-            raise ValidationError(str(exc)) from exc
-
-
-class UserIDField(fields.Field):
-    def _deserialize(self, value, attr, data):
-        try:
-            return UserID(value)
-        except ValueError as exc:
-            raise ValidationError(str(exc)) from exc
-
-
-class DeviceNameField(fields.Field):
-    def _deserialize(self, value, attr, data):
-        try:
-            return DeviceName(value)
-        except ValueError as exc:
-            raise ValidationError(str(exc)) from exc
 
 
 class BaseReqSchema(UnknownCheckedSchema):
@@ -94,11 +69,4 @@ class RepWithErrorSchema(OneOfSchema):
     type_schemas = {}  # Overridden by children
 
 
-__all__ = (
-    "APIValidationError",
-    "DeviceIDField",
-    "UserIDField",
-    "DeviceNameField",
-    "BaseReqSchema",
-    "BaseRepSchema",
-)
+__all__ = ("APIValidationError", "BaseReqSchema", "BaseRepSchema")

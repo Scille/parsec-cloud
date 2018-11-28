@@ -3,7 +3,6 @@ from itertools import count
 
 from parsec.types import UserID, DeviceID
 from parsec.utils import to_jsonb64
-from parsec.api.base import DeviceIDField, UserIDField, DeviceNameField
 from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.core.schemas import ManifestAccessSchema
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
@@ -38,7 +37,7 @@ class SharingInvalidMessageError(SharingError):
 class _BackendMessageGetRepMessagesSchema(UnknownCheckedSchema):
     count = fields.Int(required=True)
     body = fields.Base64Bytes(required=True)
-    sender_id = DeviceIDField(required=True)
+    sender_id = fields.DeviceID(required=True)
 
 
 BackendMessageGetRepMessagesSchema = _BackendMessageGetRepMessagesSchema()
@@ -63,11 +62,11 @@ BackendUserGetRepDeviceSchema = _BackendUserGetRepDeviceSchema()
 
 class _BackendUserGetRepSchema(UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
-    user_id = UserIDField(required=True)
+    user_id = fields.UserID(required=True)
     created_on = fields.DateTime(required=True)
     broadcast_key = fields.Base64Bytes(required=True)
     devices = fields.Map(
-        DeviceNameField(), fields.Nested(BackendUserGetRepDeviceSchema), missing={}
+        fields.DeviceName(), fields.Nested(BackendUserGetRepDeviceSchema), missing={}
     )
 
 

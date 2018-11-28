@@ -14,13 +14,11 @@ import hypothesis
 from parsec.types import DeviceID
 from parsec.crypto import (
     PrivateKey,
-    PublicKey,
     SigningKey,
-    VerifyKey,
     generate_secret_key,
     encode_urlsafe_root_verify_key,
 )
-from parsec.trust_chain import certify
+from parsec.trustchain import certify_user, certify_device
 from parsec.core import Core, CoreConfig
 from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.schemas import loads_manifest, dumps_manifest
@@ -237,11 +235,11 @@ def root_key_certifier():
         def verify_key(self):
             return self.signing_key.verify_key
 
-        @classmethod
-        def certify(cls, payload):
-            if isinstance(payload, (VerifyKey, PublicKey)):
-                payload = payload.encode()
-            return certify(cls.id, cls.signing_key, payload)
+        def certify_user(self, user_id, public_key):
+            return certify_user(self.id, self.signing_key, user_id, public_key)
+
+        def certify_device(self, device_id, verify_key):
+            return certify_device(self.id, self.signing_key, device_id, verify_key)
 
     return RootKeyCertifier()
 
@@ -450,13 +448,17 @@ def backend_factory(
                 for device in devices:
                     backend_device = BackendDevice(
                         device_id=device.id,
-                        certified_verify_key=root_key_certifier.certify(device.device_verifykey),
-                        verify_key_trustchain=(root_key_certifier.id,),
+                        certified_device=root_key_certifier.certify_device(
+                            device.id, device.device_verifykey
+                        ),
+                        device_certifier=None,
                     )
                     backend_user = BackendUser(
                         user_id=device.user_id,
-                        certified_public_key=root_key_certifier.certify(device.user_pubkey),
-                        public_key_trustchain=(root_key_certifier.id,),
+                        certified_user=root_key_certifier.certify_user(
+                            device.user_id, device.user_pubkey
+                        ),
+                        user_certifier=None,
                         devices=BackendDevicesMapping(backend_device),
                     )
                     try:
