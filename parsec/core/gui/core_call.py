@@ -144,10 +144,18 @@ class _CoreCall:
             use_pkcs11,
             pkcs11_token_id,
             pkcs11_key_id,
+            self._parsec_core.config.cert_path,
+            self._parsec_core.config.ca_path,
         )
 
     def claim_user(self, *args):
-        return self._trio_portal.run(claim_user, self._parsec_core.backend_addr, *args)
+        return self._trio_portal.run(
+            claim_user,
+            self._parsec_core.backend_addr,
+            *args,
+            cert_path=self._parsec_core.config.cert_path,
+            ca_path=self._parsec_core.config.ca_path
+        )
 
     def create_workspace(self, *args):
         return self._trio_portal.run(self._parsec_core.fs.workspace_create, *args)

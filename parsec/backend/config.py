@@ -103,10 +103,12 @@ def _extract_blockstore_config(blockstore_type, environ):
         raise ValueError("BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, `SWIFT` or `RAID1`")
 
 
-def config_factory(db_url="MOCKED", blockstore_type="MOCKED", debug=False, environ={}):
+def config_factory(
+    db_url="MOCKED", blockstore_type="MOCKED", keyfile=None, certfile=None, debug=False, environ={}
+):
     raw_conf = {**environ, "DB_URL": db_url, "BLOCKSTORE_TYPE": blockstore_type, "DEBUG": debug}
 
-    config = BackendConfig(debug=raw_conf.get("DEBUG", False))
+    config = BackendConfig(debug=raw_conf.get("DEBUG", False), ca_path=keyfile, cert_path=certfile)
 
     if "DB_URL" not in raw_conf:
         raise ValueError("Missing mandatory config `DB_URL`")
@@ -180,3 +182,6 @@ class BackendConfig:
     debug = attr.ib(default=False)
 
     handshake_challenge_size = attr.ib(default=48)
+
+    ca_path = attr.ib(default="localhost.ca")
+    cert_path = attr.ib(default="localhost.cer")

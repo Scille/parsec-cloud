@@ -106,7 +106,8 @@ def revoke_cmd(user_id, device_name, store):
 @click.option("--pubkeys", default=None)
 @click.option("--host", "-H", default="127.0.0.1", help="Host to listen on (default: 127.0.0.1)")
 @click.option("--port", "-P", default=6777, type=int, help=("Port to listen on (default: 6777)"))
-@click.option("--ssl", "-S", is_flag=True)
+@click.option("--keyfile", default=None)
+@click.option("--certfile", default=None)
 @click.option(
     "--store", "-s", default="MOCKED", help="Store configuration (default: mocked in memory)"
 )
@@ -135,10 +136,15 @@ def backend_cmd(log_level, log_format, log_file, log_filter, pdb, **kwargs):
         return _backend(**kwargs)
 
 
-def _backend(host, port, ssl, pubkeys, store, blockstore, debug):
+def _backend(host, port, keyfile, certfile, pubkeys, store, blockstore, debug):
     try:
         config = config_factory(
-            debug=debug, blockstore_type=blockstore, db_url=store, environ=os.environ
+            debug=debug,
+            keyfile=keyfile,
+            certfile=certfile,
+            blockstore_type=blockstore,
+            db_url=store,
+            environ=os.environ,
         )
     except ValueError as exc:
         raise SystemExit(f"Invalid configuration: {exc}")
@@ -162,9 +168,13 @@ def _backend(host, port, ssl, pubkeys, store, blockstore, debug):
                 )
 
             try:
-                if ssl:
+                if keyfile and certfile:
                     await trio.serve_tcp(
-                        partial(backend.handle_client_with_ssl, swallow_crash=True), port, host=host
+                        partial(
+                            backend.handle_client_with_ssl, certfile, keyfile, swallow_crash=True
+                        ),
+                        port,
+                        host=host,
                     )
                 else:
                     await trio.serve_tcp(

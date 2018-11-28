@@ -2,7 +2,7 @@ import trio
 from structlog import get_logger
 from urllib.parse import urlparse
 
-from parsec.cert import CA
+from parsec.cert import cert_builder
 from parsec.networking import CookedSocket, client_cooked_socket_factory
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake, HandshakeError
 
@@ -18,14 +18,15 @@ class BackendNotAvailable(BackendError):
     pass
 
 
-def upgrade_stream_to_ssl(raw_stream, hostname):
+def upgrade_stream_to_ssl(cert_path, ca_path, raw_stream, hostname):
     ssl_context = trio.ssl.create_default_context()
+    _, CA = cert_builder(cert_path, ca_path)
     CA.configure_trust(ssl_context)
     return trio.ssl.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
 
 
 async def backend_connection_factory(
-    addr: str, auth_id=None, auth_signkey=None, ssl=False
+    addr: str, auth_id=None, auth_signkey=None, cert_path=None, ca_path=None
 ) -> CookedSocket:
     """
     Connect and authenticate to the given backend.
@@ -57,7 +58,7 @@ async def backend_connection_factory(
         raise BackendNotAvailable() from exc
 
     if parsed_addr.scheme == "wss":
-        conn = upgrade_stream_to_ssl(conn, parsed_addr.hostname)
+        conn = upgrade_stream_to_ssl(cert_path, ca_path, conn, parsed_addr.hostname)
 
     try:
         sock = client_cooked_socket_factory(conn, parsed_addr.hostname)
@@ -85,7 +86,9 @@ async def backend_connection_factory(
     return sock
 
 
-async def backend_send_anonymous_cmd(addr: str, req: dict) -> dict:
+async def backend_send_anonymous_cmd(
+    addr: str, req: dict, cert_path: str = None, ca_path: str = None
+) -> dict:
     """
     Send a single request to the backend as anonymous user.
 
@@ -102,7 +105,7 @@ async def backend_send_anonymous_cmd(addr: str, req: dict) -> dict:
     Returns:
         The backend reponse deserialized as a dict.
     """
-    sock = await backend_connection_factory(addr)
+    sock = await backend_connection_factory(addr, cert_path=cert_path, ca_path=ca_path)
     # TODO: avoid this hack by splitting BackendConnection functions
     try:
         await sock.send(req)

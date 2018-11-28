@@ -13,11 +13,13 @@ logger = get_logger()
 
 
 class BackendCmdsSender(BaseAsyncComponent):
-    def __init__(self, device: Device, backend_addr: str):
+    def __init__(self, device: Device, backend_addr: str, cert_path: str, ca_path: str):
         super().__init__()
         self.device = device
         self.backend_addr = backend_addr
         self._sock = None
+        self.cert_path = cert_path
+        self.ca_path = ca_path
 
     async def _init(self, nursery):
         # TODO: Try to open connection with the backend on a dedicated
@@ -34,7 +36,11 @@ class BackendCmdsSender(BaseAsyncComponent):
             await self._sock.aclose()
         try:
             self._sock = await backend_connection_factory(
-                self.backend_addr, self.device.id, self.device.device_signkey
+                self.backend_addr,
+                self.device.id,
+                self.device.device_signkey,
+                self.cert_path,
+                self.ca_path,
             )
         except HandshakeBadIdentity as exc:
             # TODO: think about the handling of this kind of exception...

@@ -90,7 +90,12 @@ async def user_claim(req: dict, client_ctx: ClientContext, core: Core) -> dict:
     user_id, device_name = msg["id"].split("@")
     try:
         user_privkey, device_signkey, user_manifest_access = await claim_user(
-            core.backend_addr, user_id, device_name, msg["invitation_token"]
+            core.backend_addr,
+            user_id,
+            device_name,
+            msg["invitation_token"],
+            core.config.cert_path,
+            core.config.ca_path,
         )
     except BackendNotAvailable:
         return {"status": "backend_not_available", "reason": "Backend not available"}
@@ -139,6 +144,8 @@ async def device_configure(req: dict, client_ctx: ClientContext, core: Core) -> 
             msg["use_pkcs11"],
             msg["pkcs11_token_id"],
             msg["pkcs11_key_id"],
+            core.config.cert_path,
+            core.config.ca_path,
         )
     except BackendNotAvailable as exc:
         return {"status": "backend_not_available", "reason": "Backend not available"}

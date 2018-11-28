@@ -545,6 +545,8 @@ def core_factory(tmpdir, event_bus_factory, backend_addr, default_devices):
                 "backend_addr": backend_addr,
                 "local_storage_dir": (core_dir / "local_storage").strpath,
                 "base_settings_path": (core_dir / "settings").strpath,
+                "ca_path": "localhost.ca",
+                "cert_path": "localhost.cer",
                 **config,
             }
         )

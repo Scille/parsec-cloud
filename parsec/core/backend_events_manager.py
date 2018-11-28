@@ -77,7 +77,7 @@ class BackendEventsManager(BaseAsyncComponent):
     - events are message sent downstream from the backend to the client core
     """
 
-    def __init__(self, device: Device, backend_addr: str, event_bus):
+    def __init__(self, device: Device, backend_addr: str, event_bus, cert_path, ca_path):
         super().__init__()
         self.device = device
         self.backend_addr = backend_addr
@@ -93,6 +93,8 @@ class BackendEventsManager(BaseAsyncComponent):
         self._task_info = None
         self.event_bus.connect("backend.beacon.listen", self._on_beacon_listen, weak=True)
         self.event_bus.connect("backend.beacon.unlisten", self._on_beacon_unlisten, weak=True)
+        self.cert_path = cert_path
+        self.ca_path = ca_path
 
     def _on_beacon_listen(self, sender, beacon_id):
         key = ("beacon.updated", beacon_id)
@@ -206,7 +208,11 @@ class BackendEventsManager(BaseAsyncComponent):
     async def _event_pump(self, *, task_status=trio.TASK_STATUS_IGNORED):
         with trio.open_cancel_scope() as cancel_scope:
             sock = await backend_connection_factory(
-                self.backend_addr, self.device.id, self.device.device_signkey
+                self.backend_addr,
+                self.device.id,
+                self.device.device_signkey,
+                self.cert_path,
+                self.ca_path,
             )
 
             # Copy `self._subscribed_events` to avoid concurrent modifications

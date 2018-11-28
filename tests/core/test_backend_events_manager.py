@@ -9,9 +9,9 @@ from tests.open_tcp_stream_mock_wrapper import offline
 
 
 @pytest.fixture
-async def backend_event_manager(event_bus, running_backend, alice):
+async def backend_event_manager(event_bus, running_backend, alice, cert_path=None, ca_path=None):
     async with trio.open_nursery() as nursery:
-        em = BackendEventsManager(alice, running_backend.addr, event_bus)
+        em = BackendEventsManager(alice, running_backend.addr, event_bus, cert_path, ca_path)
         await em.init(nursery)
         try:
             yield em
@@ -27,9 +27,11 @@ def default_events_plus(*events):
 
 
 @pytest.mark.trio
-async def test_init_end_with_backend_online_status_event(event_bus, running_backend, alice):
+async def test_init_end_with_backend_online_status_event(
+    event_bus, running_backend, alice, cert_path=None, ca_path=None
+):
     async with trio.open_nursery() as nursery:
-        em = BackendEventsManager(alice, running_backend.addr, event_bus)
+        em = BackendEventsManager(alice, running_backend.addr, event_bus, cert_path, ca_path)
 
         with event_bus.listen() as spy:
             await em.init(nursery)
@@ -40,9 +42,11 @@ async def test_init_end_with_backend_online_status_event(event_bus, running_back
 
 
 @pytest.mark.trio
-async def test_init_end_with_backend_offline_status_event(unused_tcp_addr, event_bus, alice):
+async def test_init_end_with_backend_offline_status_event(
+    unused_tcp_addr, event_bus, alice, cert_path=None, ca_path=None
+):
     async with trio.open_nursery() as nursery:
-        em = BackendEventsManager(alice, unused_tcp_addr, event_bus)
+        em = BackendEventsManager(alice, unused_tcp_addr, event_bus, cert_path, ca_path)
 
         with event_bus.listen() as spy:
             await em.init(nursery)
@@ -53,10 +57,12 @@ async def test_init_end_with_backend_offline_status_event(unused_tcp_addr, event
 
 
 @pytest.mark.trio
-async def test_listen_beacon_on_init(event_bus, running_backend, alice):
+async def test_listen_beacon_on_init(
+    event_bus, running_backend, alice, cert_path=None, ca_path=None
+):
     beacon_id = uuid4()
     async with trio.open_nursery() as nursery:
-        em = BackendEventsManager(alice, running_backend.addr, event_bus)
+        em = BackendEventsManager(alice, running_backend.addr, event_bus, cert_path, ca_path)
 
         event_bus.send("backend.beacon.listen", beacon_id=beacon_id)
 

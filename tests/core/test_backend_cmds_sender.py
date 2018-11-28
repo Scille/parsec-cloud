@@ -53,7 +53,7 @@ async def test_too_slow_request(
     sockets = []
 
     # Socket accept request but never reply
-    def _bcf_hook(addr, device_id, device_signkey):
+    def _bcf_hook(addr, device_id, device_signkey, cert_path, ca_path):
         sock = AsyncMock(spec_set=CookedSocket)
 
         async def _mcs_recv():
