@@ -20,20 +20,6 @@ from parsec.core.fs import FSEntryNotFound
 from parsec.core.fs.sharing import SharingRecipientError
 
 
-class SharedDialog(QDialog, Ui_SharedDialog):
-    def __init__(self, is_owner, creator, shared_list, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setupUi(self)
-        self.setWindowFlags(Qt.SplashScreen)
-        if is_owner:
-            self.label_title.setText(QCoreApplication.translate("WorkspacesWidget", "Shared with"))
-            for user in shared_list:
-                self.list_shared.addItem(user)
-        else:
-            self.label_title.setText(QCoreApplication.translate("WorkspacesWidget", "Shared by"))
-            self.list_shared.addItem(creator)
-
-
 class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     fs_changed_qt = pyqtSignal(str, UUID, str)
     load_workspace_clicked = pyqtSignal(str)
@@ -67,10 +53,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button.delete_clicked.connect(self.delete_workspace)
 
     def show_workspace_details(self, workspace_button):
-        s = SharedDialog(
-            workspace_button.is_owner, workspace_button.creator, workspace_button.shared_with
+        text = "{}\n\nCreated by {}.\nShared with {} people.".format(
+            workspace_button.name, workspace_button.creator, len(workspace_button.shared_with)
         )
-        s.exec_()
+        show_info(self, text)
 
     def delete_workspace(self, workspace_button):
         show_warning(self, QCoreApplication.translate("WorkspacesWidget", "Not yet implemented."))
