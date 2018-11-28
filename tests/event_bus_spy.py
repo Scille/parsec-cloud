@@ -2,16 +2,9 @@ import trio
 import attr
 import pendulum
 from contextlib import contextmanager
+from unittest.mock import ANY
 
 from parsec.event_bus import EventBus
-
-
-class ANY:
-    def __repr__(self):
-        return "<ANY>"
-
-
-ANY = ANY()
 
 
 def convert_dicts_with_any(a, b):

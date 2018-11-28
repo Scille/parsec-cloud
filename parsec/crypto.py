@@ -1,7 +1,9 @@
 from typing import Tuple
 import pendulum
+from base64 import urlsafe_b64encode, urlsafe_b64decode
 from nacl.public import PrivateKey, PublicKey, SealedBox
-from nacl.signing import SigningKey, VerifyKey
+from nacl.signing import SigningKey, VerifyKey, SignedMessage
+from nacl.bindings import crypto_sign_BYTES
 from nacl.secret import SecretBox
 from nacl.utils import random
 from nacl.pwhash import argon2i
@@ -39,6 +41,28 @@ def generate_secret_key():
     return random(SecretBox.KEY_SIZE)
 
 
+def encode_urlsafe_root_verify_key(key: VerifyKey) -> str:
+    """
+    Raises:
+        ValueError
+    """
+    return urlsafe_b64encode(key.encode()).decode("utf8")
+
+
+def decode_urlsafe_root_verify_key(raw: str) -> VerifyKey:
+    """
+    Raises:
+        ValueError
+    """
+    if isinstance(raw, VerifyKey):
+        # Useful during tests
+        return raw
+    try:
+        return VerifyKey(urlsafe_b64decode(raw.encode("utf8")))
+    except CryptoError as exc:
+        raise ValueError("Invalid verify key") from exc
+
+
 def derivate_secret_key_from_password(password: str, salt: bytes = None) -> Tuple[bytes, bytes]:
     salt = salt or random(argon2i.SALTBYTES)
     key = argon2i.kdf(
@@ -69,29 +93,37 @@ def decrypt_raw_with_secret_key(key: bytes, ciphered: bytes) -> bytes:
     return box.decrypt(ciphered)
 
 
-def sign_and_add_meta(device_id: DeviceID, device_signkey: SigningKey, data: bytes) -> bytes:
+def sign_and_add_meta(device_id: DeviceID, device_signkey: SigningKey, signedmeta: bytes) -> bytes:
     """
     Raises:
         CryptoError: if the signature operation fails.
     """
     return signed_metadata_schema.dumps(
-        {"device_id": device_id, "timestamp": pendulum.now(), "content": device_signkey.sign(data)}
+        {
+            "device_id": device_id,
+            "timestamp": pendulum.now(),
+            "content": device_signkey.sign(signedmeta),
+        }
     )[0].encode("utf8")
 
 
-def extract_meta_from_signature(signed_with_meta: bytes) -> Tuple[DeviceID, bytes]:
+def decode_signedmeta(signedmeta: bytes) -> Tuple[DeviceID, bytes]:
     """
     Raises:
         CryptoMetadataError: if the metadata cannot be extracted
     """
     try:
-        meta = signed_metadata_schema.loads(signed_with_meta.decode("utf8"))[0]
+        meta = signed_metadata_schema.loads(signedmeta.decode("utf8"))[0]
         return DeviceID(meta["device_id"]), meta["content"]
 
     except (ValidationError, UnicodeDecodeError) as exc:
         raise CryptoMetadataError(
             "Message doesn't contain author metadata along with signed message"
         ) from exc
+
+
+def unsecure_extract_msg_from_signed(signed: bytes) -> bytes:
+    return signed[crypto_sign_BYTES:]
 
 
 def encrypt_for_self(
@@ -109,10 +141,10 @@ def encrypt_for(
     Raises:
         CryptoError: if encryption or signature fails.
     """
-    signed_with_meta = sign_and_add_meta(author_id, author_signkey, data)
+    signedmeta = sign_and_add_meta(author_id, author_signkey, data)
 
     box = SealedBox(recipient_pubkey)
-    return box.encrypt(signed_with_meta)
+    return box.encrypt(signedmeta)
 
 
 def decrypt_for(recipient_privkey: PrivateKey, ciphered: bytes) -> Tuple[DeviceID, bytes]:
@@ -129,8 +161,8 @@ def decrypt_for(recipient_privkey: PrivateKey, ciphered: bytes) -> Tuple[DeviceI
     :func:`verify_signature_from` to be finally converted to plain text.
     """
     box = SealedBox(recipient_privkey)
-    signed_with_meta = box.decrypt(ciphered)
-    return extract_meta_from_signature(signed_with_meta)
+    signedmeta = box.decrypt(ciphered)
+    return decode_signedmeta(signedmeta)
 
 
 def verify_signature_from(author_verifykey: VerifyKey, signed_text: bytes) -> bytes:
@@ -154,9 +186,9 @@ def encrypt_with_secret_key(
     Raises:
         CryptoError: if the encryption or signature operation fails.
     """
-    signed_with_meta = sign_and_add_meta(author_id, author_signkey, data)
+    signedmeta = sign_and_add_meta(author_id, author_signkey, data)
     box = SecretBox(key)
-    return box.encrypt(signed_with_meta)
+    return box.encrypt(signedmeta)
 
 
 def decrypt_with_secret_key(key: bytes, ciphered: bytes) -> Tuple[DeviceID, bytes]:
@@ -173,5 +205,5 @@ def decrypt_with_secret_key(key: bytes, ciphered: bytes) -> Tuple[DeviceID, byte
     :func:`verify_signature_from` to be finally converted to plain text.
     """
     box = SecretBox(key)
-    signed_with_meta = box.decrypt(ciphered)
-    return extract_meta_from_signature(signed_with_meta)
+    signedmeta = box.decrypt(ciphered)
+    return decode_signedmeta(signedmeta)

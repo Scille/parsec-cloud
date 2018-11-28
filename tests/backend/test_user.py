@@ -1,6 +1,8 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, ANY
+from pendulum import Pendulum
 
+from parsec.api.user import get_user_rep_schema
 from parsec.utils import to_jsonb64
 
 from tests.common import freeze_time
@@ -13,32 +15,57 @@ def mock_generate_token():
 
 
 @pytest.mark.trio
-async def test_user_get_ok(backend, alice_backend_sock, bob):
+async def test_api_user_get_ok(backend, alice_backend_sock, bob):
     await alice_backend_sock.send({"cmd": "user_get", "user_id": "bob"})
     rep = await alice_backend_sock.recv()
-    assert rep == {
+    cooked, errors = get_user_rep_schema.load(rep)
+    assert not errors
+    assert cooked == {
         "status": "ok",
-        "user_id": "bob",
-        "broadcast_key": to_jsonb64(bob.user_pubkey.encode()),
-        "created_on": "2000-01-01T00:00:00+00:00",
+        "user_id": bob.user_id,
+        "certified_public_key": ANY,
+        "created_on": Pendulum(2000, 1, 1),
+        "revocated_on": None,
         "devices": {
             bob.device_name: {
-                "created_on": "2000-01-01T00:00:00+00:00",
+                "device_id": bob.id,
+                "created_on": Pendulum(2000, 1, 1),
                 "revocated_on": None,
-                "verify_key": to_jsonb64(bob.device_verifykey.encode()),
+                "certified_verify_key": ANY,
             }
         },
     }
 
 
+@pytest.mark.parametrize(
+    "bad_msg", [{"user_id": 42}, {"user_id": None}, {"user_id": "alice", "unknown": "field"}, {}]
+)
 @pytest.mark.trio
-async def test_user_find(backend, alice_backend_sock):
+async def test_api_user_get_bad_msg(alice_backend_sock, bad_msg):
+    await alice_backend_sock.send({"cmd": "user_get", **bad_msg})
+    rep = await alice_backend_sock.recv()
+    cooked, errors = get_user_rep_schema.with_error_schema.load(rep)
+    assert not errors
+    assert cooked["status"] == "bad_message"
+
+
+@pytest.mark.trio
+async def test_api_user_get_not_found(alice_backend_sock):
+    await alice_backend_sock.send({"cmd": "user_get", "user_id": "dummy"})
+    rep = await alice_backend_sock.recv()
+    cooked, errors = get_user_rep_schema.with_error_schema.load(rep)
+    assert not errors
+    assert cooked == {"status": "not_found", "reason": "No user with id `dummy`."}
+
+
+@pytest.mark.trio
+async def test_api_user_find(backend, alice_backend_sock):
     # Populate with cool guys
     dk = b"<dummy key>"
     await backend.user.create("Philippe", devices=[("p1", dk), ("p2", dk)], broadcast_key=dk)
     await backend.user.create("Mike", devices=[("m1", dk)], broadcast_key=dk)
     await backend.user.create("Blacky", devices=[], broadcast_key=dk)
-    await backend.user.create("Philippe2", devices=[("pe1", dk)], broadcast_key=dk)
+    await backend.user.create("Philip_J_Fry", devices=[("pe1", dk)], broadcast_key=dk)
 
     # Test exact match
     await alice_backend_sock.send({"cmd": "user_find", "query": "Mike"})
@@ -50,7 +77,7 @@ async def test_user_find(backend, alice_backend_sock):
     rep = await alice_backend_sock.recv()
     assert rep == {
         "status": "ok",
-        "results": ["Philippe", "Philippe2"],
+        "results": ["Philippe", "Philip_J_Fry"],
         "per_page": 100,
         "page": 1,
         "total": 2,
@@ -82,23 +109,6 @@ async def test_user_find(backend, alice_backend_sock):
         await alice_backend_sock.send({"cmd": "user_find", **bad})
         rep = await alice_backend_sock.recv()
         assert rep["status"] == "bad_message"
-
-
-@pytest.mark.parametrize(
-    "bad_msg", [{"user_id": 42}, {"user_id": None}, {"user_id": "alice", "unknown": "field"}, {}]
-)
-@pytest.mark.trio
-async def test_user_get_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send({"cmd": "user_get", **bad_msg})
-    rep = await alice_backend_sock.recv()
-    assert rep["status"] == "bad_message"
-
-
-@pytest.mark.trio
-async def test_user_get_not_found(alice_backend_sock):
-    await alice_backend_sock.send({"cmd": "user_get", "user_id": "dummy"})
-    rep = await alice_backend_sock.recv()
-    assert rep == {"status": "not_found", "reason": "No user with id `dummy`."}
 
 
 @pytest.mark.trio

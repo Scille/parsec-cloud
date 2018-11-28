@@ -8,6 +8,8 @@ from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields
 from parsec.api import find_user_req_schema, find_user_rep_schema
 from parsec.backend.exceptions import NotFoundError, AlreadyExistsError, UserClaimError
 
+from .user2 import BaseUserComponent as BaseUserComponent2, User, Device, DevicesMapping
+
 
 class _UserIDSchema(BaseCmdSchema):
     user_id = fields.String(required=True)
@@ -96,21 +98,23 @@ def _generate_token():
 
 
 class BaseUserComponent:
-    def __init__(self, event_bus):
+    def __init__(self, root_verify_key, event_bus):
+        self.root_verify_key = root_verify_key
         self.event_bus = event_bus
 
-    async def api_user_get(self, client_ctx, msg):
-        msg = UserIDSchema.load_or_abort(msg)
-        try:
-            user = await self.get(msg["user_id"])
-        except NotFoundError:
-            return {"status": "not_found", "reason": f"No user with id `{msg['user_id']}`."}
+    api_user_get = BaseUserComponent2.api_user_get
+    # async def api_user_get(self, client_ctx, msg):
+    #     msg = UserIDSchema.load_or_abort(msg)
+    #     try:
+    #         user = await self.get(msg["user_id"])
+    #     except NotFoundError:
+    #         return {"status": "not_found", "reason": f"No user with id `{msg['user_id']}`."}
 
-        data, errors = UserSchema.dump(user)
-        if errors:
-            raise RuntimeError(f"Dump error with {user!r}: {errors}")
+    #     data, errors = UserSchema.dump(user)
+    #     if errors:
+    #         raise RuntimeError(f"Dump error with {user!r}: {errors}")
 
-        return {"status": "ok", **data}
+    #     return {"status": "ok", **data}
 
     async def api_user_invite(self, client_ctx, msg):
         msg = UserIDSchema.load_or_abort(msg)

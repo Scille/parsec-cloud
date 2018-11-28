@@ -21,6 +21,8 @@ async def test_init_db(postgresql_url, backend_factory):
         alice1 = await backend1.user.get(alice_device_id.user_id)
         assert alice1["created_on"] == Pendulum(2000, 1, 1)
 
+    # TODO: check trust chain on alice1
+
     with freeze_time("2000-01-02"):
         await init_db(postgresql_url, alice_device_id, False)
 

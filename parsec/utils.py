@@ -6,18 +6,6 @@ import inspect
 from functools import wraps
 from uuid import UUID
 from pendulum import Pendulum
-from nacl.signing import VerifyKey
-
-
-def encode_urlsafe_root_verify_key(key: VerifyKey):
-    return base64.urlsafe_b64encode(key.encode()).decode("utf8")
-
-
-def decode_urlsafe_root_verify_key(raw):
-    if isinstance(raw, VerifyKey):
-        # Useful during tests
-        return raw
-    return VerifyKey(base64.urlsafe_b64decode(raw.encode("utf8")))
 
 
 def to_jsonb64(raw: bytes):

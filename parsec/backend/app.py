@@ -4,9 +4,9 @@ from uuid import uuid4
 from structlog import get_logger
 from json import JSONDecodeError
 
+from parsec.types import DeviceID
 from parsec.utils import ParsecError
 from parsec.event_bus import EventBus
-from parsec.crypto import PublicKey, VerifyKey
 from parsec.networking import CookedSocket
 from parsec.handshake import HandshakeFormatError, ServerHandshake
 from parsec.schema import BaseCmdSchema, fields, OneOfSchema
@@ -110,6 +110,7 @@ class AnonymousClientContext:
 class ClientContext:
     anonymous = False
     id = attr.ib()
+    # TODO: rename to public_key
     broadcast_key = attr.ib()
     verify_key = attr.ib()
     conn_id = attr.ib(factory=lambda: uuid4().hex)
@@ -136,12 +137,13 @@ class BackendApp:
         self.dbh = None
 
         if self.config.db_url == "MOCKED":
-            self.user = MemoryUserComponent(self.event_bus)
+            self.user = MemoryUserComponent(config.root_verify_key, self.event_bus)
             self.message = MemoryMessageComponent(self.event_bus)
             self.beacon = MemoryBeaconComponent(self.event_bus)
             self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
 
             self.blockstore = blockstore_factory(self.config)
+
         else:
             self.dbh = PGHandler(self.config.db_url, self.event_bus)
             self.user = PGUserComponent(self.dbh, self.event_bus)
@@ -314,22 +316,20 @@ class BackendApp:
                 result_req = hs.build_result_req()
             else:
                 try:
-                    userid, deviceid = hs.identity.split("@")
+                    device_id = DeviceID(hs.identity)
                 except ValueError:
                     raise HandshakeFormatError()
 
                 try:
-                    user = await self.user.get(userid)
-                    device = user["devices"][deviceid]
+                    user = await self.user.get(device_id.user_id)
+                    device = user.devices[device_id.device_name]
                 except (NotFoundError, KeyError):
                     result_req = hs.build_bad_identity_result_req()
                 else:
-                    if device.get("revocated_on"):
+                    if device.revocated_on:
                         raise BackendAuthError("Device revoked.")
-                    broadcast_key = PublicKey(user["broadcast_key"])
-                    verify_key = VerifyKey(device["verify_key"])
-                    context = ClientContext(hs.identity, broadcast_key, verify_key)
-                    result_req = hs.build_result_req(verify_key)
+                    context = ClientContext(hs.identity, user.public_key, device.verify_key)
+                    result_req = hs.build_result_req(device.verify_key)
 
         except BackendAuthError:
             result_req = hs.build_revoked_device_result_req()

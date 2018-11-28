@@ -10,12 +10,17 @@ import trio_asyncio
 
 from async_generator import asynccontextmanager
 import hypothesis
-from nacl.public import PrivateKey
-from nacl.signing import SigningKey
-import nacl
 
 from parsec.types import DeviceID
-from parsec.utils import encode_urlsafe_root_verify_key
+from parsec.crypto import (
+    PrivateKey,
+    PublicKey,
+    SigningKey,
+    VerifyKey,
+    generate_secret_key,
+    encode_urlsafe_root_verify_key,
+)
+from parsec.trust_chain import certify
 from parsec.core import Core, CoreConfig
 from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.schemas import loads_manifest, dumps_manifest
@@ -24,6 +29,11 @@ from parsec.core.encryption_manager import encrypt_with_secret_key
 from parsec.core.devices_manager import Device
 from parsec.core.mountpoint import FUSE_AVAILABLE
 from parsec.backend import BackendApp, config_factory as backend_config_factory
+from parsec.backend.user import (
+    User as BackendUser,
+    Device as BackendDevice,
+    DevicesMapping as BackendDevicesMapping,
+)
 from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake
 
@@ -218,8 +228,22 @@ def server_factory(tcp_stream_spy):
 
 
 @pytest.fixture(scope="session")
-def root_signing_key():
-    return SigningKey.generate()
+def root_key_certifier():
+    class RootKeyCertifier:
+        id = DeviceID("root@root")
+        signing_key = SigningKey.generate()
+
+        @property
+        def verify_key(self):
+            return self.signing_key.verify_key
+
+        @classmethod
+        def certify(cls, payload):
+            if isinstance(payload, (VerifyKey, PublicKey)):
+                payload = payload.encode()
+            return certify(cls.id, cls.signing_key, payload)
+
+    return RootKeyCertifier()
 
 
 @pytest.fixture()
@@ -255,15 +279,9 @@ def device_factory():
             user_manifest_v1["need_sync"] = False
 
         users[user_id] = (user_privkey, user_manifest_access, user_manifest_v1)
-        # try:
-        #     user_privkey, user_manifest_access = users[user_id]
-        # except KeyError:
-        #     user_privkey = PrivateKey.generate().encode()
-        #     user_manifest_access = new_access()
-        #     users[user_id] = (user_privkey, user_manifest_access)
 
         device_signkey = SigningKey.generate().encode()
-        local_symkey = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
+        local_symkey = generate_secret_key()
         if not local_db:
             local_db = InMemoryLocalDB()
         device = Device(
@@ -310,8 +328,8 @@ def bootstrap_postgresql(url):
     #   with both
     # - AsyncPG should be slightly faster than TrioPG
     # - Most important: a trio loop is potentially already started inside this
-    #   thread (i.e. if the test is mark as trio). Hence we must spawn another
-    #   thread just to run the new trio loop.
+    #   thread (i.e. if the test is mark as trio). Hence we would have to spawn
+    #   another thread just to run the new trio loop.
 
     import asyncio
     import asyncpg
@@ -397,7 +415,7 @@ async def nursery():
 
 @pytest.fixture
 def backend_factory(
-    asyncio_loop, event_bus_factory, blockstore, backend_store, default_devices, root_signing_key
+    asyncio_loop, event_bus_factory, blockstore, backend_store, default_devices, root_key_certifier
 ):
     # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
     # the backend should inherit from the one with the asyncio loop context manager.
@@ -406,7 +424,7 @@ def backend_factory(
     # nursery fixture is done with calling the backend's postgresql stuff.
 
     blockstore_type, blockstore_config = blockstore
-    default_urlsafe_root_verify_key = encode_urlsafe_root_verify_key(root_signing_key.verify_key)
+    default_urlsafe_root_verify_key = encode_urlsafe_root_verify_key(root_key_certifier.verify_key)
 
     @asynccontextmanager
     async def _backend_factory(devices=default_devices, config={}, event_bus=None):
@@ -430,12 +448,19 @@ def backend_factory(
             # Need to initialize backend with users/devices
             with freeze_time("2000-01-01"):
                 for device in devices:
+                    backend_device = BackendDevice(
+                        device_id=device.id,
+                        certified_verify_key=root_key_certifier.certify(device.device_verifykey),
+                        verify_key_trustchain=(root_key_certifier.id,),
+                    )
+                    backend_user = BackendUser(
+                        user_id=device.user_id,
+                        certified_public_key=root_key_certifier.certify(device.user_pubkey),
+                        public_key_trustchain=(root_key_certifier.id,),
+                        devices=BackendDevicesMapping(backend_device),
+                    )
                     try:
-                        await backend.user.create(
-                            user_id=device.user_id,
-                            broadcast_key=device.user_pubkey.encode(),
-                            devices=[(device.device_name, device.device_verifykey.encode())],
-                        )
+                        await backend.user.create(backend_user)
 
                         access = device.user_manifest_access
                         try:
@@ -458,11 +483,8 @@ def backend_factory(
                         )
 
                     except UserAlreadyExistsError:
-                        await backend.user.create_device(
-                            user_id=device.user_id,
-                            device_name=device.device_name,
-                            verify_key=device.device_verifykey.encode(),
-                        )
+                        await backend.user.create_device(backend_device)
+
             try:
                 yield backend
 

@@ -1,7 +1,9 @@
-from parsec.backend.user import BaseUserComponent
 import pendulum
-from typing import List
 
+from parsec.types import UserID
+from parsec.crypto import VerifyKey
+from parsec.event_bus import EventBus
+from parsec.backend.user import BaseUserComponent, User, Device, DevicesMapping
 from parsec.backend.exceptions import (
     AlreadyExistsError,
     AlreadyRevokedError,
@@ -12,12 +14,48 @@ from parsec.backend.exceptions import (
 
 
 class MemoryUserComponent(BaseUserComponent):
-    def __init__(self, event_bus):
-        super().__init__(event_bus)
+    def __init__(self, root_verify_key: VerifyKey, event_bus: EventBus):
+        super().__init__(root_verify_key, event_bus)
         self._users = {}
+        self._creation_dates = {}
+        self._revocation_dates = {}
         self._invitations = {}
         self._device_configuration_tries = {}
         self._unconfigured_devices = {}
+
+    async def create(self, user: User) -> None:
+        if user.user_id in self._users:
+            raise AlreadyExistsError(f"User `{user.user_id}` already exists")
+
+        self._users[user.user_id] = user
+
+    async def create_device(self, device: Device):
+        if device.user_id not in self._users:
+            raise NotFoundError(f"User `{device.user_id}` doesn't exists")
+
+        user = self._users[device.user_id]
+        if device.device_name in user.devices:
+            raise AlreadyExistsError(f"Device `{device.device_id}` already exists")
+
+        self._users[device.user_id] = user.evolve(
+            devices=DevicesMapping(*user.devices.values(), device)
+        )
+
+    async def get(self, user_id: UserID) -> User:
+        try:
+            return self._users[user_id]
+
+        except KeyError:
+            raise NotFoundError(user_id)
+
+    async def find(self, query: str = None, page: int = 0, per_page: int = 100):
+        if query:
+            results = [user_id for user_id in self._users.keys() if user_id.startswith(query)]
+        else:
+            results = list(self._users.keys())
+        # PostgreSQL does case insensitive sort
+        sorted_results = sorted(results, key=lambda s: s.lower())
+        return sorted_results[(page - 1) * per_page : page * per_page], len(results)
 
     async def create_invitation(self, invitation_token, user_id):
         if user_id in self._users:
@@ -155,51 +193,6 @@ class MemoryUserComponent(BaseUserComponent):
         config_try["status"] = "refused"
         config_try["refused_reason"] = reason
 
-    async def create(self, user_id: str, broadcast_key: bytes, devices: List[str]):
-        assert isinstance(broadcast_key, (bytes, bytearray))
-
-        if isinstance(devices, dict):
-            devices = list(devices.items())
-
-        for _, key in devices:
-            assert isinstance(key, (bytes, bytearray))
-
-        if user_id in self._users:
-            raise AlreadyExistsError("User `%s` already exists" % user_id)
-
-        now = pendulum.utcnow()
-        self._users[user_id] = {
-            "user_id": user_id,
-            "created_on": now,
-            "broadcast_key": broadcast_key,
-            "devices": {
-                name: {"created_on": now, "verify_key": key, "revocated_on": None}
-                for name, key in devices
-            },
-        }
-
-    async def create_device(self, user_id: str, device_name: str, verify_key: bytes):
-        if user_id not in self._users:
-            raise NotFoundError("User `%s` doesn't exists" % user_id)
-
-        user = self._users[user_id]
-        if device_name in user["devices"]:
-            raise AlreadyExistsError("Device `%s@%s` already exists" % (user_id, device_name))
-
-        user["devices"][device_name] = {
-            "created_on": pendulum.utcnow(),
-            "verify_key": verify_key,
-            "revocated_on": None,
-            "configured": True,
-        }
-
-    async def get(self, user_id: str):
-        try:
-            return self._users[user_id]
-
-        except KeyError:
-            raise NotFoundError(user_id)
-
     async def revoke_user(self, user_id: str):
         user = self.get(user_id)
         revocated_on = pendulum.now()
@@ -217,12 +210,3 @@ class MemoryUserComponent(BaseUserComponent):
             raise AlreadyRevokedError(f"Device `{user_id}@{device_name}` already revoked")
 
         device["revocated_on"] = pendulum.now()
-
-    async def find(self, query: str = None, page: int = 0, per_page: int = 100):
-        if query:
-            results = [user_id for user_id in self._users.keys() if user_id.startswith(query)]
-        else:
-            results = list(self._users.keys())
-        # PostgreSQL does case insensitive sort
-        sorted_results = sorted(results, key=lambda s: s.lower())
-        return sorted_results[(page - 1) * per_page : page * per_page], len(results)

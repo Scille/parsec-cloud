@@ -3,7 +3,7 @@ import attr
 import itertools
 from collections import defaultdict
 
-from parsec.utils import decode_urlsafe_root_verify_key
+from parsec.crypto import decode_urlsafe_root_verify_key
 
 
 blockstore_environ_vars = {

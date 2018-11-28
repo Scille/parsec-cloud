@@ -5,7 +5,7 @@ import click
 from functools import partial
 
 from parsec.types import UserID, DeviceName
-from parsec.utils import encode_urlsafe_root_verify_key
+from parsec.crypto import encode_urlsafe_root_verify_key
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import BackendApp, config_factory
 from parsec.backend.user import NotFoundError
