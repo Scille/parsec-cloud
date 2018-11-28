@@ -6,21 +6,19 @@ import pendulum
 from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import (
     QWidget,
-    QListWidgetItem,
     QMenu,
     QStyledItemDelegate,
     QStyle,
     QFileDialog,
     QHeaderView,
-    QTableWidgetSelectionRange,
     QTableWidgetItem,
     QStyleOptionViewItem,
 )
-from PyQt5.QtGui import QColor, QIcon, QPalette
+from PyQt5.QtGui import QIcon
 
 from parsec.core.gui import desktop
 from parsec.core.gui.core_call import core_call
-from parsec.core.gui.custom_widgets import show_error, show_warning, ask_question, get_text
+from parsec.core.gui.custom_widgets import show_error, ask_question, get_text
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.gui.file_size import get_filesize
 from parsec.core.fs import FSEntryNotFound

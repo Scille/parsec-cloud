@@ -1,8 +1,8 @@
 import os
 from uuid import UUID
 
-from PyQt5.QtCore import pyqtSignal, QCoreApplication, QPoint, Qt
-from PyQt5.QtWidgets import QWidget, QMenu, QDialog
+from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
+from PyQt5.QtWidgets import QWidget, QDialog
 
 from parsec.core.gui.custom_widgets import (
     show_error,
@@ -13,6 +13,7 @@ from parsec.core.gui.custom_widgets import (
 )
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.workspace_button import WorkspaceButton
+from parsec.core.gui.custom_widgets import show_warning
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
 from parsec.core.gui.ui.shared_dialog import Ui_SharedDialog
 from parsec.core.fs import FSEntryNotFound
@@ -63,12 +64,16 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.workspaces_count += 1
         button.share_clicked.connect(self.share_workspace)
         button.details_clicked.connect(self.show_workspace_details)
+        button.delete_clicked.connect(self.delete_workspace)
 
     def show_workspace_details(self, workspace_button):
         s = SharedDialog(
             workspace_button.is_owner, workspace_button.creator, workspace_button.shared_with
         )
         s.exec_()
+
+    def delete_workspace(self, workspace_button):
+        show_warning(self, QCoreApplication.translate("WorkspacesWidget", "Not yet implemented."))
 
     def action_rename_workspace(self, workspace_button):
         def _inner_rename_workspace():

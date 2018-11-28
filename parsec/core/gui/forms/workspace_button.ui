@@ -36,24 +36,12 @@
 background-color: rgb(255, 255, 255);
 }
 
-/*
-QMenu
+QToolTip
 {
-border: 1px solid rgb(11, 56, 166);
-}
-
-QMenu::item
-{
-background-color: rgb(255, 255, 255);
-color: rgb(0, 0, 0);
-}
-
-QMenu::item:selected
-{
-background-color: rgb(45, 144, 209);
+background-color: rgb(46, 146, 208);
+border: 1px solid rgb(12, 65, 157);
 color: rgb(255, 255, 255);
-}
-*/</string>
+}</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -392,6 +380,12 @@ border: 2px solid rgb(47, 145, 208);
                 <height>32</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Workspace information</string>
+              </property>
+              <property name="statusTip">
+               <string/>
+              </property>
               <property name="text">
                <string/>
               </property>
@@ -449,6 +443,12 @@ border: 2px solid rgb(47, 145, 208);
                 <height>32</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Share the workspace</string>
+              </property>
+              <property name="statusTip">
+               <string/>
+              </property>
               <property name="text">
                <string/>
               </property>
@@ -500,8 +500,14 @@ border: 2px solid rgb(47, 145, 208);
                 <height>32</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Delete the workspace</string>
+              </property>
+              <property name="statusTip">
+               <string/>
+              </property>
               <property name="styleSheet">
-               <string notr="true">border: 0;</string>
+               <string notr="true"/>
               </property>
               <property name="text">
                <string/>

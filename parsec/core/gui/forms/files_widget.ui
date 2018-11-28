@@ -55,6 +55,13 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
 {
 border: none;
 background: none;
+}
+
+QToolTip
+{
+background-color: rgb(46, 146, 208);
+border: 1px solid rgb(12, 65, 157);
+color: rgb(255, 255, 255);
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -388,23 +395,41 @@ height: 16px;
          <height>64</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>Return to the list of workspaces</string>
+       </property>
+       <property name="statusTip">
+        <string/>
+       </property>
+       <property name="whatsThis">
+        <string/>
+       </property>
+       <property name="accessibleName">
+        <string/>
+       </property>
+       <property name="accessibleDescription">
+        <string/>
+       </property>
        <property name="styleSheet">
-        <string notr="true">border-top-left-radius: 32px;
+        <string notr="true">QPushButton#button_back
+{
+border-top-left-radius: 32px;
 border-bottom-left-radius: 32px;
 background-color: rgb(12, 65, 157);
-padding-left: 10px;</string>
+padding-left: 10px;
+}</string>
        </property>
        <property name="text">
         <string/>
        </property>
        <property name="icon">
         <iconset resource="../rc/resources.qrc">
-         <normaloff>:/icons/images/icons/go-back.png</normaloff>:/icons/images/icons/go-back.png</iconset>
+         <normaloff>:/icons/images/icons/go-back_button.png</normaloff>:/icons/images/icons/go-back_button.png</iconset>
        </property>
        <property name="iconSize">
         <size>
-         <width>36</width>
-         <height>36</height>
+         <width>50</width>
+         <height>50</height>
         </size>
        </property>
       </widget>
@@ -423,22 +448,28 @@ padding-left: 10px;</string>
          <height>64</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>Import a folder</string>
+       </property>
        <property name="styleSheet">
-        <string notr="true">border: 0;
+        <string notr="true">QPushButton#button_import_folder
+{
+border: 0;
 background-color: rgb(12, 65, 157);
-padding-left: 10px;</string>
+padding-left: 10px;
+}</string>
        </property>
        <property name="text">
         <string/>
        </property>
        <property name="icon">
         <iconset resource="../rc/resources.qrc">
-         <normaloff>:/icons/images/icons/import.png</normaloff>:/icons/images/icons/import.png</iconset>
+         <normaloff>:/icons/images/icons/import_button.png</normaloff>:/icons/images/icons/import_button.png</iconset>
        </property>
        <property name="iconSize">
         <size>
-         <width>36</width>
-         <height>36</height>
+         <width>50</width>
+         <height>50</height>
         </size>
        </property>
       </widget>
@@ -457,22 +488,28 @@ padding-left: 10px;</string>
          <height>64</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>Import multiple files</string>
+       </property>
        <property name="styleSheet">
-        <string notr="true">border: 0;
+        <string notr="true">QPushButton#button_import_files
+{
+border: 0;
 background-color: rgb(12, 65, 157);
-padding-left: 10px;</string>
+padding-left: 10px;
+}</string>
        </property>
        <property name="text">
         <string/>
        </property>
        <property name="icon">
         <iconset resource="../rc/resources.qrc">
-         <normaloff>:/icons/images/icons/import.png</normaloff>:/icons/images/icons/import.png</iconset>
+         <normaloff>:/icons/images/icons/import_button.png</normaloff>:/icons/images/icons/import_button.png</iconset>
        </property>
        <property name="iconSize">
         <size>
-         <width>36</width>
-         <height>36</height>
+         <width>50</width>
+         <height>50</height>
         </size>
        </property>
       </widget>
@@ -491,22 +528,28 @@ padding-left: 10px;</string>
          <height>64</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>Add a folder</string>
+       </property>
        <property name="styleSheet">
-        <string notr="true">border: 0;
+        <string notr="true">QPushButton#button_create_folder
+{
+border: 0;
 background-color: rgb(12, 65, 157);
-padding-left: 10px;</string>
+padding-left: 10px;
+}</string>
        </property>
        <property name="text">
         <string/>
        </property>
        <property name="icon">
         <iconset resource="../rc/resources.qrc">
-         <normaloff>:/icons/images/icons/new_document.png</normaloff>:/icons/images/icons/new_document.png</iconset>
+         <normaloff>:/icons/images/icons/add-plus-button.png</normaloff>:/icons/images/icons/add-plus-button.png</iconset>
        </property>
        <property name="iconSize">
         <size>
-         <width>36</width>
-         <height>36</height>
+         <width>50</width>
+         <height>50</height>
         </size>
        </property>
       </widget>

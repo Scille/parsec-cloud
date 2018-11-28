@@ -51,6 +51,10 @@
         <file>images/icons/sort_arrows.png</file>
         <file>images/icons/sort_down_arrow.png</file>
         <file>images/icons/sort_up_arrow.png</file>
+        <file>images/icons/hard-drive_grey.png</file>
+        <file>images/icons/add-plus-button.png</file>
+        <file>images/icons/go-back_button.png</file>
+        <file>images/icons/import_button.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>

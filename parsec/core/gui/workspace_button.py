@@ -9,6 +9,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     clicked = pyqtSignal(str)
     share_clicked = pyqtSignal(QWidget)
     details_clicked = pyqtSignal(QWidget)
+    delete_clicked = pyqtSignal(QWidget)
 
     def __init__(self, workspace_name, is_owner, creator, files, shared_with=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -28,12 +29,16 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.setGraphicsEffect(effect)
         self.button_details.clicked.connect(self.button_details_clicked)
         self.button_share.clicked.connect(self.button_share_clicked)
+        self.button_delete.clicked.connect(self.button_delete_clicked)
 
     def button_details_clicked(self):
         self.details_clicked.emit(self)
 
     def button_share_clicked(self):
         self.share_clicked.emit(self)
+
+    def button_delete_clicked(self):
+        self.delete_clicked.emit(self)
 
     @property
     def name(self):
