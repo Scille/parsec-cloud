@@ -464,7 +464,7 @@ padding-left: 10px;
        </property>
        <property name="icon">
         <iconset resource="../rc/resources.qrc">
-         <normaloff>:/icons/images/icons/import_button.png</normaloff>:/icons/images/icons/import_button.png</iconset>
+         <normaloff>:/icons/images/icons/import_folder.png</normaloff>:/icons/images/icons/import_folder.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -504,7 +504,7 @@ padding-left: 10px;
        </property>
        <property name="icon">
         <iconset resource="../rc/resources.qrc">
-         <normaloff>:/icons/images/icons/import_button.png</normaloff>:/icons/images/icons/import_button.png</iconset>
+         <normaloff>:/icons/images/icons/import_file.png</normaloff>:/icons/images/icons/import_file.png</iconset>
        </property>
        <property name="iconSize">
         <size>

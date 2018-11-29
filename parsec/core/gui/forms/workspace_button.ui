@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>244</height>
+    <height>280</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -19,7 +19,7 @@
   <property name="maximumSize">
    <size>
     <width>400</width>
-    <height>300</height>
+    <height>280</height>
    </size>
   </property>
   <property name="font">
@@ -96,18 +96,18 @@ border: 2px solid rgb(47, 145, 208);
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>32</height>
+            <height>45</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>32</height>
+            <height>45</height>
            </size>
           </property>
           <property name="font">
            <font>
-            <pointsize>15</pointsize>
+            <pointsize>14</pointsize>
             <weight>75</weight>
             <bold>true</bold>
            </font>
@@ -150,7 +150,7 @@ border: 2px solid rgb(47, 145, 208);
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="../rc/resources.qrc">:/icons/images/icons/user.png</pixmap>
+           <pixmap resource="../rc/resources.qrc">:/icons/images/icons/owner.png</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
@@ -178,7 +178,7 @@ border: 2px solid rgb(47, 145, 208);
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="../rc/resources.qrc">:/icons/images/icons/share_workspace.png</pixmap>
+           <pixmap resource="../rc/resources.qrc">:/icons/images/icons/share_info.png</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
