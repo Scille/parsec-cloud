@@ -2,7 +2,6 @@ import trio
 from structlog import get_logger
 from urllib.parse import urlparse
 
-from parsec.cert import cert_builder
 from parsec.networking import CookedSocket, client_cooked_socket_factory
 from parsec.handshake import ClientHandshake, AnonymousClientHandshake, HandshakeError
 
@@ -20,8 +19,7 @@ class BackendNotAvailable(BackendError):
 
 def upgrade_stream_to_ssl(cert_path, ca_path, raw_stream, hostname):
     ssl_context = trio.ssl.create_default_context()
-    _, CA = cert_builder(cert_path, ca_path)
-    CA.configure_trust(ssl_context)
+    ssl_context.load_default_certs(purpose=trio.ssl.Purpose.SERVER_AUTH)
     return trio.ssl.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
 
 
