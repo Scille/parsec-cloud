@@ -351,8 +351,6 @@ async def configure_new_device(
     use_pkcs11=False,
     pkcs11_token_id=0,
     pkcs11_key_id=0,
-    cert_path=None,
-    ca_path=None,
 ):
     """
     Raises:
@@ -394,8 +392,6 @@ async def configure_new_device(
             "exchange_cipherkey": to_jsonb64(exchange_cipherkey_encrypted),
             "salt": to_jsonb64(salt),
         },
-        cert_path=cert_path,
-        ca_path=ca_path,
     )
 
     # TODO: better answer deserialization
@@ -551,9 +547,7 @@ async def invite_user(backend_cmds_sender, user_id):
     return rep["invitation_token"]
 
 
-async def claim_user(
-    backend_addr, user_id, device_name, invitation_token, cert_path=None, ca_path=None
-):
+async def claim_user(backend_addr, user_id, device_name, invitation_token):
     user_privkey = PrivateKey.generate()
     device_signkey = SigningKey.generate()
     rep = await backend_send_anonymous_cmd(
@@ -566,8 +560,6 @@ async def claim_user(
             "broadcast_key": to_jsonb64(user_privkey.public_key.encode()),
             "device_verify_key": to_jsonb64(device_signkey.verify_key.encode()),
         },
-        cert_path=cert_path,
-        ca_path=ca_path,
     )
     # TODO: deserialization
     if rep["status"] != "ok":

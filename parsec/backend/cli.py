@@ -106,6 +106,7 @@ def revoke_cmd(user_id, device_name, store):
 @click.option("--pubkeys", default=None)
 @click.option("--host", "-H", default="127.0.0.1", help="Host to listen on (default: 127.0.0.1)")
 @click.option("--port", "-P", default=6777, type=int, help=("Port to listen on (default: 6777)"))
+@click.option("--ssl", "-S", is_flag=True)
 @click.option("--keyfile", default=None)
 @click.option("--certfile", default=None)
 @click.option(
@@ -136,7 +137,7 @@ def backend_cmd(log_level, log_format, log_file, log_filter, pdb, **kwargs):
         return _backend(**kwargs)
 
 
-def _backend(host, port, keyfile, certfile, pubkeys, store, blockstore, debug):
+def _backend(host, port, ssl, keyfile, certfile, pubkeys, store, blockstore, debug):
     try:
         config = config_factory(
             debug=debug,
@@ -168,7 +169,7 @@ def _backend(host, port, keyfile, certfile, pubkeys, store, blockstore, debug):
                 )
 
             try:
-                if keyfile and certfile:
+                if ssl:
                     await trio.serve_tcp(
                         partial(
                             backend.handle_client_with_ssl, certfile, keyfile, swallow_crash=True

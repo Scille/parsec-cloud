@@ -340,11 +340,11 @@ class BackendApp:
         await sock.send(result_req)
         return context
 
-    async def handle_client_with_ssl(self, stream, cert_path, ca_path, swallow_crash=False):
+    async def handle_client_with_ssl(self, cert_path, ca_path, stream, swallow_crash=False):
         ssl_context = trio.ssl.create_default_context(trio.ssl.Purpose.CLIENT_AUTH)
         ssl_context.load_default_certs()
         ssl_stream = trio.ssl.SSLStream(stream, ssl_context, server_side=True)
-        await self.handle_client(ssl_stream, ssl=True, swallow_crash=swallow_crash)
+        await self.handle_client(ssl_stream, swallow_crash=swallow_crash)
 
     async def handle_client(self, conn, swallow_crash=False):
         sock = server_cooked_socket_factory(conn)

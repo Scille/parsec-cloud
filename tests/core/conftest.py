@@ -30,12 +30,10 @@ async def encryption_manager(encryption_manager_factory, alice):
 
 
 @pytest.fixture
-def backend_cmds_sender_factory(backend_addr, cert_path=None, ca_path=None):
+def backend_cmds_sender_factory(backend_addr):
     @asynccontextmanager
-    async def _backend_cmds_sender_factory(
-        device, backend_addr=backend_addr, cert_path=cert_path, ca_path=ca_path
-    ):
-        bcs = BackendCmdsSender(device, backend_addr, cert_path, ca_path)
+    async def _backend_cmds_sender_factory(device, backend_addr=backend_addr):
+        bcs = BackendCmdsSender(device, backend_addr)
         async with trio.open_nursery() as nursery:
             await bcs.init(nursery)
             try:

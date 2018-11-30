@@ -142,15 +142,9 @@ class LoggedClientManager:
         # └─ mountpoint_manager
 
         self.backend_events_manager = BackendEventsManager(
-            device,
-            self.config.backend_addr,
-            self.event_bus,
-            self.config.cert_path,
-            self.config.ca_path,
+            device, self.config.backend_addr, self.event_bus
         )
-        self.backend_cmds_sender = BackendCmdsSender(
-            device, self.config.backend_addr, self.config.cert_path, self.config.ca_path
-        )
+        self.backend_cmds_sender = BackendCmdsSender(device, self.config.backend_addr)
         self.encryption_manager = EncryptionManager(device, self.backend_cmds_sender)
 
         self.fs = FS(device, self.backend_cmds_sender, self.encryption_manager, self.event_bus)
