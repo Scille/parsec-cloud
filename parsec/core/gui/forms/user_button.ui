@@ -85,8 +85,11 @@ color: rgb(255, 255, 255);
         </size>
        </property>
        <property name="styleSheet">
-        <string notr="true">border: 2px solid rgb(45, 145, 207);
-padding: 20px;</string>
+        <string notr="true">QLabel#label
+{
+border: 2px solid rgb(45, 145, 207);
+padding: 20px;
+}</string>
        </property>
        <property name="text">
         <string/>

@@ -1,5 +1,6 @@
 from PyQt5.QtCore import pyqtSignal, QCoreApplication
 from PyQt5.QtWidgets import QWidget, QInputDialog
+from PyQt5.QtGui import QPixmap
 
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.custom_widgets import get_text
@@ -8,9 +9,13 @@ from parsec.core.gui.ui.users_widget import Ui_UsersWidget
 
 
 class UserButton(QWidget, Ui_UserButton):
-    def __init__(self, user_name, *args, **kwargs):
+    def __init__(self, user_name, is_current_user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        if is_current_user:
+            self.label.setPixmap(QPixmap(":/icons/images/icons/user_owner.png"))
+        else:
+            self.label.setPixmap(QPixmap(":/icons/images/icons/user.png"))
         self.label_user.setText(user_name)
 
     @property
@@ -60,10 +65,10 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.line_edit_user_id.setText(login)
         self.line_edit_token.setText(token)
 
-    def add_user(self, user_name):
+    def add_user(self, user_name, is_current_user):
         if user_name in self.users:
             return
-        button = UserButton(user_name)
+        button = UserButton(user_name, is_current_user)
         self.layout_users.addWidget(button, int(self.users_count / 4), int(self.users_count % 4))
         self.users_count += 1
         self.users.append(user_name)
@@ -80,5 +85,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 w = item.widget()
                 self.layout_users.removeWidget(w)
                 w.setParent(None)
+        logged_device = core_call().logged_device()
+        user_id = logged_device.id.split("@")[0]
         for user in core_call().get_devices():
-            self.add_user(user.split("@")[0])
+            user_name = user.split("@")[0]
+            self.add_user(user_name, is_current_user=user_id == user_name)

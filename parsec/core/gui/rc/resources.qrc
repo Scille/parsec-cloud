@@ -59,6 +59,7 @@
         <file>images/icons/import_folder.png</file>
         <file>images/icons/owner.png</file>
         <file>images/icons/share_info.png</file>
+        <file>images/icons/user_owner.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>
