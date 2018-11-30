@@ -183,5 +183,5 @@ class BackendConfig:
 
     handshake_challenge_size = attr.ib(default=48)
 
-    ca_path = attr.ib(default="localhost.ca")
-    cert_path = attr.ib(default="localhost.cer")
+    ca_path = attr.ib(default=None)
+    cert_path = attr.ib(default=None)

@@ -342,7 +342,10 @@ class BackendApp:
 
     async def handle_client_with_ssl(self, cert_path, ca_path, stream, swallow_crash=False):
         ssl_context = trio.ssl.create_default_context(trio.ssl.Purpose.CLIENT_AUTH)
-        ssl_context.load_default_certs()
+        if cert_path and ca_path:
+            ssl_context.load_cert_chain(cert_path, ca_path)
+        else:
+            ssl_context.load_default_certs()
         ssl_stream = trio.ssl.SSLStream(stream, ssl_context, server_side=True)
         await self.handle_client(ssl_stream, swallow_crash=swallow_crash)
 
