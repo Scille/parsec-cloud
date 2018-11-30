@@ -1,1 +1,1 @@
-web: python -m parsec.cli backend -l DEBUG -h 0.0.0.0
+web: python -m parsec.cli backend -l DEBUG -H 0.0.0.0 -P $PORT
