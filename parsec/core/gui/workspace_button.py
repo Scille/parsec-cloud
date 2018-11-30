@@ -79,6 +79,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.shared_with = value
         if self.shared_with:
             self.label_shared.show()
+            self.name = self.name
 
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:
