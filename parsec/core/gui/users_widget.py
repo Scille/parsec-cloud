@@ -34,11 +34,12 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.line_edit_search.textChanged.connect(self.filter_users)
 
     def filter_users(self, pattern):
+        pattern = pattern.lower()
         for i in range(self.layout_users.count()):
             item = self.layout_users.itemAt(i)
             if item:
                 w = item.widget()
-                if pattern and pattern not in w.name:
+                if pattern and pattern not in w.name.lower():
                     w.hide()
                 else:
                     w.show()
