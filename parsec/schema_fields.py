@@ -15,8 +15,8 @@ from marshmallow.fields import (
 )
 
 from parsec.utils import to_jsonb64, from_jsonb64
-from parsec.crypto import VerifyKey as _VerifyKey, PublicKey as _PublicKey
 from parsec.types import DeviceID as _DeviceID, UserID as _UserID, DeviceName as _DeviceName
+from parsec.crypto_types import VerifyKey as _VerifyKey, PublicKey as _PublicKey
 
 
 # TODO: test this field and use it everywhere in the api !

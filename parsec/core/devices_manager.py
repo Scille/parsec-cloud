@@ -3,6 +3,7 @@ import attr
 from pathlib import Path
 from structlog import get_logger
 
+from parsec.types import DeviceID
 from parsec.crypto import (
     PrivateKey,
     PublicKey,
@@ -129,16 +130,33 @@ class Device:
         return f"<{type(self).__name__}(id={self.id!r}, local_db={self.local_db!r})>"
 
     def __init__(
-        self, id, user_privkey, device_signkey, local_symkey, user_manifest_access, local_db
+        self,
+        device_id: DeviceID,
+        user_privkey,
+        device_signkey,
+        local_symkey,
+        user_manifest_access,
+        local_db,
     ):
-        assert is_valid_device_id(id)
-        self.id = id
-        self.user_id, self.device_name = id.split("@")
+        self.device_id = device_id
         self.user_privkey = PrivateKey(user_privkey)
         self.device_signkey = SigningKey(device_signkey)
         self.local_symkey = local_symkey
         self.user_manifest_access = user_manifest_access
         self.local_db = local_db
+
+    # TODO: remove `id` field (replaced by more explicit `device_id`)
+    @property
+    def id(self):
+        return self.device_id
+
+    @property
+    def user_id(self):
+        return self.device_id.user_id
+
+    @property
+    def device_name(self):
+        return self.device_id.device_name
 
     @property
     def user_pubkey(self):

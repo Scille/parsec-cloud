@@ -1,9 +1,9 @@
 import pendulum
 
-from parsec.types import UserID
+from parsec.types import UserID, DeviceID
 from parsec.crypto import VerifyKey
 from parsec.event_bus import EventBus
-from parsec.backend.user import BaseUserComponent, User, Device, DevicesMapping
+from parsec.backend.user import BaseUserComponent, User, Device, DevicesMapping, UserInvitation
 from parsec.backend.exceptions import (
     AlreadyExistsError,
     AlreadyRevokedError,
@@ -41,6 +41,13 @@ class MemoryUserComponent(BaseUserComponent):
             devices=DevicesMapping(*user.devices.values(), device)
         )
 
+    async def get_device(self, device_id: DeviceID) -> Device:
+        user = await self.get(device_id.user_id)
+        try:
+            return user.devices[device_id.device_name]
+        except KeyError:
+            raise NotFoundError(device_id)
+
     async def get(self, user_id: UserID) -> User:
         try:
             return self._users[user_id]
@@ -57,22 +64,27 @@ class MemoryUserComponent(BaseUserComponent):
         sorted_results = sorted(results, key=lambda s: s.lower())
         return sorted_results[(page - 1) * per_page : page * per_page], len(results)
 
-    async def invite(self, user: UserID) -> None:
-        if user_id in self._users:
-            raise AlreadyExistsError("User `%s` already exists" % user_id)
+    async def create_invitation(self, invitation: UserInvitation) -> None:
+        if invitation.user_id in self._users:
+            raise AlreadyExistsError("User `%s` already exists" % invitation.user_id)
+        self._invitations[invitation.user_id] = invitation
 
-        raise NotImplementedError()
+    # async def invite(self, user: UserID) -> None:
+    #     if user_id in self._users:
+    #         raise AlreadyExistsError("User `%s` already exists" % user_id)
 
-    async def create_invitation(self, invitation_token, user_id):
-        if user_id in self._users:
-            raise AlreadyExistsError("User `%s` already exists" % user_id)
+    #     raise NotImplementedError()
 
-        # Overwrite previous invitation if any
-        self._invitations[user_id] = {
-            "date": pendulum.utcnow(),
-            "invitation_token": invitation_token,
-            "claim_tries": 0,
-        }
+    # async def create_invitation(self, invitation_token, user_id):
+    #     if user_id in self._users:
+    #         raise AlreadyExistsError("User `%s` already exists" % user_id)
+
+    #     # Overwrite previous invitation if any
+    #     self._invitations[user_id] = {
+    #         "date": pendulum.utcnow(),
+    #         "invitation_token": invitation_token,
+    #         "claim_tries": 0,
+    #     }
 
     async def claim_invitation(
         self,

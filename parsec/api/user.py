@@ -58,13 +58,51 @@ user_find_req_schema = FindUserReqSchema()
 
 
 class UserInviteReqSchema(BaseReqSchema):
-    certified_invited_user_id = fields.Base64Bytes(required=True)
-    user_id = fields.UserID(required=True)
+    certified_invitation = fields.Base64Bytes(required=True)
 
 
 class UserInviteRepSchema(BaseRepSchema):
-    pass
+    user_id = fields.UserID(required=True)
 
 
 user_invite_req_schema = UserInviteReqSchema()
 user_invite_rep_schema = UserInviteRepSchema()
+
+
+class UserGetInvitationCreatorReqSchema(BaseReqSchema):
+    invited_user_id = fields.UserID(required=True)
+
+
+class UserGetInvitationCreatorRepSchema(UserGetRepSchema):
+    pass
+
+
+user_get_invitation_creator_req_schema = UserGetInvitationCreatorReqSchema()
+user_get_invitation_creator_rep_schema = UserGetInvitationCreatorRepSchema()
+
+
+class UserClaimInvitationReqSchema(BaseReqSchema):
+    encrypted_claim = fields.Base64Bytes(required=True)
+
+
+class UserClaimInvitationRepSchema(BaseRepSchema):
+    pass
+
+
+user_claim_invitation_req_schema = UserClaimInvitationReqSchema()
+user_claim_invitation_rep_schema = UserClaimInvitationRepSchema()
+
+
+class UserResolveInvitationClaimReqSchema(BaseReqSchema):
+    user_id = fields.UserID(required=True)
+    outcome = fields.UserID(required=True)  # TODO: use oneof field ?
+    certified_user = fields.Base64Bytes()
+    certified_device = fields.Base64Bytes()
+
+
+class UserResolveInvitationClaimRepSchema(BaseRepSchema):
+    pass
+
+
+user_resolve_invitation_claim_req_schema = UserResolveInvitationClaimReqSchema()
+user_resolve_invitation_claim_rep_schema = UserResolveInvitationClaimRepSchema()

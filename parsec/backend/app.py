@@ -28,6 +28,7 @@ from parsec.backend.drivers.postgresql import (
 )
 
 from parsec.backend.exceptions import NotFoundError
+from parsec.backend.utils import check_anonymous_api_allowed, anonymous_api
 
 
 logger = get_logger()
@@ -109,6 +110,7 @@ class AnonymousClientContext:
 @attr.s
 class ClientContext:
     anonymous = False
+    # TODO: rename to device_id
     id = attr.ib()
     # TODO: rename to public_key
     broadcast_key = attr.ib()
@@ -122,11 +124,15 @@ class ClientContext:
 
     @property
     def user_id(self):
-        return self.id.split("@")[0]
+        return self.id.user_id
+
+    @property
+    def device_id(self):
+        return self.id
 
     @property
     def device_name(self):
-        return self.id.split("@")[1]
+        return self.id.device_name
 
 
 class BackendApp:
@@ -158,6 +164,8 @@ class BackendApp:
             "device_configure": self.user.api_device_configure,
             "ping": self._api_ping,
         }
+        for fn in self.anonymous_cmds.values():
+            check_anonymous_api_allowed(fn)
 
         self.cmds = {
             "event_subscribe": self._api_event_subscribe,
@@ -192,6 +200,7 @@ class BackendApp:
         if self.dbh:
             await self.dbh.teardown()
 
+    @anonymous_api
     async def _api_ping(self, client_ctx, msg):
         msg = cmd_PING_Schema.load_or_abort(msg)
         if self.dbh:
@@ -311,7 +320,7 @@ class BackendApp:
             answer_req = await sock.recv()
 
             hs.process_answer_req(answer_req)
-            if hs.identity == "anonymous":
+            if hs.is_anonymous():
                 context = AnonymousClientContext()
                 result_req = hs.build_result_req()
             else:

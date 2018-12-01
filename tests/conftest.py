@@ -7,14 +7,16 @@ import contextlib
 from unittest.mock import patch
 import trio
 import trio_asyncio
-
+from typing import Tuple
 from async_generator import asynccontextmanager
 import hypothesis
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, UserID
 from parsec.crypto import (
     PrivateKey,
+    PublicKey,
     SigningKey,
+    VerifyKey,
     generate_secret_key,
     encode_urlsafe_root_verify_key,
 )
@@ -241,6 +243,31 @@ def root_key_certifier():
         def certify_device(self, device_id, verify_key):
             return certify_device(self.id, self.signing_key, device_id, verify_key)
 
+        def device_factory(self, device_id: str, verify_key: VerifyKey = None) -> BackendDevice:
+            device_id = DeviceID(device_id)
+            verify_key = verify_key or VerifyKey.generate()
+            return BackendDevice(
+                device_id=device_id,
+                certified_device=self.certify_device(device_id, verify_key),
+                device_certifier=None,
+            )
+
+        def user_factory(
+            self, user_id: str, public_key: PublicKey, devices: Tuple[str, VerifyKey] = ()
+        ) -> BackendUser:
+            user_id = UserID(user_id)
+            cooked_devices = []
+            for device_name, device_verify_key in devices:
+                cooked_devices.append(
+                    self.device_factory(f"{user_id}@{device_name}", device_verify_key)
+                )
+            return BackendUser(
+                user_id,
+                certified_user=self.certify_user(user_id, public_key),
+                user_certifier=None,
+                devices=BackendDevicesMapping(*cooked_devices),
+            )
+
     return RootKeyCertifier()
 
 
@@ -446,20 +473,10 @@ def backend_factory(
             # Need to initialize backend with users/devices
             with freeze_time("2000-01-01"):
                 for device in devices:
-                    backend_device = BackendDevice(
-                        device_id=device.id,
-                        certified_device=root_key_certifier.certify_device(
-                            device.id, device.device_verifykey
-                        ),
-                        device_certifier=None,
-                    )
-                    backend_user = BackendUser(
-                        user_id=device.user_id,
-                        certified_user=root_key_certifier.certify_user(
-                            device.user_id, device.user_pubkey
-                        ),
-                        user_certifier=None,
-                        devices=BackendDevicesMapping(backend_device),
+                    backend_user = root_key_certifier.user_factory(
+                        device.user_id,
+                        device.user_pubkey,
+                        [(device.device_name, device.device_verifykey)],
                     )
                     try:
                         await backend.user.create(backend_user)
@@ -485,7 +502,7 @@ def backend_factory(
                         )
 
                     except UserAlreadyExistsError:
-                        await backend.user.create_device(backend_device)
+                        await backend.user.create_device(backend_user.devices[device.device_name])
 
             try:
                 yield backend

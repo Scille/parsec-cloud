@@ -1,16 +1,17 @@
 from typing import Tuple
 import pendulum
 from base64 import urlsafe_b64encode, urlsafe_b64decode
-from nacl.public import PrivateKey, PublicKey, SealedBox
-from nacl.signing import SigningKey, VerifyKey
+from json import JSONDecodeError
+from nacl.public import SealedBox
 from nacl.bindings import crypto_sign_BYTES
 from nacl.secret import SecretBox
 from nacl.utils import random
 from nacl.pwhash import argon2i
 from nacl.exceptions import CryptoError, BadSignatureError
 
-from parsec.schema import UnknownCheckedSchema, fields, ValidationError
 from parsec.types import DeviceID
+from parsec.crypto_types import PrivateKey, PublicKey, SigningKey, VerifyKey
+from parsec.schema import UnknownCheckedSchema, fields, ValidationError
 
 
 __all__ = ("CryptoError", "BadSignatureError", "PrivateKey", "PublicKey", "SigningKey", "VerifyKey")
@@ -115,7 +116,7 @@ def decode_signedmeta(signedmeta: bytes) -> Tuple[DeviceID, bytes]:
         meta = signed_metadata_schema.loads(signedmeta.decode("utf8"))[0]
         return DeviceID(meta["device_id"]), meta["content"]
 
-    except (ValidationError, UnicodeDecodeError) as exc:
+    except (ValidationError, UnicodeDecodeError, JSONDecodeError) as exc:
         raise CryptoMetadataError(
             "Message doesn't contain author metadata along with signed message"
         ) from exc

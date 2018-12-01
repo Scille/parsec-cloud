@@ -29,8 +29,10 @@ class InMemoryLocalDB(LocalDB):
         del self._data[access["id"]]
 
 
-def freeze_time(timestr):
-    return pendulum.test(pendulum.parse(timestr))
+def freeze_time(time):
+    if isinstance(time, str):
+        time = pendulum.parse(time)
+    return pendulum.test(time)
 
 
 class AsyncMock(Mock):
