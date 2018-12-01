@@ -1,9 +1,8 @@
 import attr
 from secrets import token_bytes
 
-from parsec import schema_fields as fields
 from parsec.crypto import CryptoError
-from parsec.schema import UnknownCheckedSchema
+from parsec.schema import UnknownCheckedSchema, fields, ValidationError
 
 
 class HandshakeError(Exception):
@@ -22,29 +21,29 @@ class HandshakeRevokedDevice(HandshakeError):
     pass
 
 
-class _HandshakeChallengeSchema(UnknownCheckedSchema):
+class HandshakeChallengeSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
     challenge = fields.Base64Bytes(required=True)
 
 
-HandshakeChallengeSchema = _HandshakeChallengeSchema()
+handshake_challenge_schema = HandshakeChallengeSchema(strict=True)
 
 
-class _HandshakeAnswerSchema(UnknownCheckedSchema):
+class HandshakeAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
-    identity = fields.String(required=True)
-    answer = fields.Base64Bytes(required=True, allow_none=True)
+    identity = fields.DeviceID(allow_none=True, missing=None)
+    answer = fields.Base64Bytes(allow_none=True, missing=None)
 
 
-HandshakeAnswerSchema = _HandshakeAnswerSchema()
+handshake_answer_schema = HandshakeAnswerSchema(strict=True)
 
 
-class _HandshakeResultSchema(UnknownCheckedSchema):
+class HandshakeResultSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("result", required=True)
     result = fields.String(required=True)
 
 
-HandshakeResultSchema = _HandshakeResultSchema()
+handshake_result_schema = HandshakeResultSchema(strict=True)
 
 
 @attr.s
@@ -52,51 +51,62 @@ class ServerHandshake:
     challenge_size = attr.ib(default=48)
     challenge = attr.ib(default=None)
     answer = attr.ib(default=None)
+    identity = attr.ib(default=None)
     state = attr.ib(default="stalled")
 
+    def is_anonymous(self):
+        return self.identity is None
+
     def build_challenge_req(self):
-        assert self.state == "stalled"
+        if not self.state == "stalled":
+            raise HandshakeError("Invalid state.")
 
         self.challenge = token_bytes(self.challenge_size)
-        data, _ = HandshakeChallengeSchema.dump(
-            {"handshake": "challenge", "challenge": self.challenge}
-        )
-
         self.state = "challenge"
-        return data
+
+        return handshake_challenge_schema.dump(
+            {"handshake": "challenge", "challenge": self.challenge}
+        ).data
 
     def process_answer_req(self, req):
-        assert self.state == "challenge"
+        if not self.state == "challenge":
+            raise HandshakeError("Invalid state.")
 
-        data, errors = HandshakeAnswerSchema.load(req)
-        if errors:
-            raise HandshakeFormatError("Invalid `answer` request %s: %s" % (req, errors))
+        try:
+            data = handshake_answer_schema.load(req).data
+        except ValidationError as exc:
+            raise HandshakeFormatError(f"Invalid `answer` request {req}: {exc}") from exc
 
         self.answer = data["answer"] or b""
         self.identity = data["identity"]
-
         self.state = "answer"
 
     def build_bad_format_result_req(self):
-        assert self.state in ("answer", "challenge")
+        if not self.state in ("answer", "challenge"):
+            raise HandshakeError("Invalid state.")
+
         self.state = "result"
-        data, _ = HandshakeResultSchema.dump({"handshake": "result", "result": "bad_format"})
-        return data
+        return handshake_result_schema.dump({"handshake": "result", "result": "bad_format"}).data
 
     def build_bad_identity_result_req(self):
-        assert self.state == "answer"
+        if not self.state == "answer":
+            raise HandshakeError("Invalid state.")
+
         self.state = "result"
-        data, _ = HandshakeResultSchema.dump({"handshake": "result", "result": "bad_identity"})
-        return data
+        return handshake_result_schema.dump({"handshake": "result", "result": "bad_identity"}).data
 
     def build_revoked_device_result_req(self):
-        assert self.state == "answer"
+        if not self.state == "answer":
+            raise HandshakeError("Invalid state.")
+
         self.state = "result"
-        data, _ = HandshakeResultSchema.dump({"handshake": "result", "result": "revoked_device"})
-        return data
+        return handshake_result_schema.dump(
+            {"handshake": "result", "result": "revoked_device"}
+        ).data
 
     def build_result_req(self, verify_key=None):
-        assert self.state == "answer"
+        if not self.state == "answer":
+            raise HandshakeError("Invalid state.")
 
         if verify_key:
             try:
@@ -108,8 +118,7 @@ class ServerHandshake:
                 raise HandshakeFormatError("Invalid answer signature") from exc
 
         self.state = "result"
-        data, _ = HandshakeResultSchema.dump({"handshake": "result", "result": "ok"})
-        return data
+        return handshake_result_schema.dump({"handshake": "result", "result": "ok"}).data
 
 
 @attr.s
@@ -118,20 +127,21 @@ class ClientHandshake:
     user_signkey = attr.ib()
 
     def process_challenge_req(self, req):
-        data, errors = HandshakeChallengeSchema.load(req)
-        if errors:
-            raise HandshakeFormatError("Invalid `challenge` request %s: %s" % (req, errors))
+        try:
+            data = handshake_challenge_schema.load(req).data
+        except ValidationError as exc:
+            raise HandshakeFormatError(f"Invalid `challenge` request {req}: {exc}") from exc
 
         answer = self.user_signkey.sign(data["challenge"])
-        rep, _ = HandshakeAnswerSchema.dump(
+        return handshake_answer_schema.dump(
             {"handshake": "answer", "identity": self.user_id, "answer": answer}
-        )
-        return rep
+        ).data
 
     def process_result_req(self, req):
-        data, errors = HandshakeResultSchema.load(req)
-        if errors:
-            raise HandshakeFormatError("Invalid `result` request %s: %s" % (req, errors))
+        try:
+            data = handshake_result_schema.load(req).data
+        except ValidationError as exc:
+            raise HandshakeFormatError(f"Invalid `result` request {req}: {exc}") from exc
 
         if data["result"] != "ok":
             if data["result"] == "bad_identity":
@@ -140,29 +150,28 @@ class ClientHandshake:
                 raise HandshakeRevokedDevice("Backend rejected revoked device")
 
             else:
-                raise HandshakeFormatError("Bad result for result handshake: %s" % data["result"])
+                raise HandshakeFormatError(f"Bad result for `result` handshake: {data['result']}")
 
 
 @attr.s
 class AnonymousClientHandshake:
     def process_challenge_req(self, req):
-        data, errors = HandshakeChallengeSchema.load(req)
-        if errors:
-            raise HandshakeFormatError("Invalid `challenge` request %s: %s" % (req, errors))
+        try:
+            handshake_challenge_schema.load(req).data
+        except ValidationError as exc:
+            raise HandshakeFormatError(f"Invalid `challenge` request {req}: {exc}") from exc
 
-        rep, _ = HandshakeAnswerSchema.dump(
-            {"handshake": "answer", "identity": "anonymous", "answer": None}
-        )
-        return rep
+        return handshake_answer_schema.dump({"handshake": "answer"}).data
 
     def process_result_req(self, req):
-        data, errors = HandshakeResultSchema.load(req)
-        if errors:
-            raise HandshakeFormatError("Invalid `result` request %s: %s" % (req, errors))
+        try:
+            data = handshake_result_schema.load(req).data
+        except ValidationError as exc:
+            raise HandshakeFormatError(f"Invalid `result` request {req}: {exc}") from exc
 
         if data["result"] != "ok":
             if data["result"] == "bad_identity":
                 raise HandshakeBadIdentity("Backend didn't recognized our identity")
 
             else:
-                raise HandshakeFormatError("Bad result for result handshake: %s" % data["result"])
+                raise HandshakeFormatError(f"Bad result for `result` handshake: {data['result']}")

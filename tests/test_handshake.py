@@ -6,6 +6,7 @@ from parsec.handshake import (
     HandshakeBadIdentity,
     ServerHandshake,
     ClientHandshake,
+    AnonymousClientHandshake,
 )
 
 
@@ -23,6 +24,7 @@ def test_good_handshake(alice):
     sh.process_answer_req(answer_req)
     assert sh.state == "answer"
     assert sh.identity == alice.id
+    assert not sh.is_anonymous()
     result_req = sh.build_result_req(alice.device_verifykey)
     assert sh.state == "result"
 
@@ -72,11 +74,15 @@ def test_process_result_req_bad_identity(alice):
     "req",
     [
         {},
-        {"handshake": "foo", "identity": "alice@test", "answer": b"1234567890"},
-        {"handshake": "answer", "identity": "alice@test", "answer": b"1234567890", "foo": "bar"},
+        {"handshake": "foo", "identity": "alice@test", "answer": "MTIzNDU2Nzg5MA=="},
+        {
+            "handshake": "answer",
+            "identity": "alice@test",
+            "answer": "MTIzNDU2Nzg5MA==",
+            "foo": "bar",
+        },
         {"handshake": "answer", "identity": "alice@test", "answer": 42},
-        {"handshake": "answer", "answer": b"1234567890"},
-        {"handshake": "answer", "identity": "alice@test"},
+        {"handshake": "answer", "identity": "dummy", "answer": "MTIzNDU2Nzg5MA=="},
     ],
 )
 def test_process_answer_req_bad_format(req):
@@ -148,3 +154,24 @@ def test_build_bad_format_result_req(alice):
     )
     req = sh.build_bad_format_result_req()
     assert req == {"handshake": "result", "result": "bad_format"}
+
+
+def test_good_anonymous_handshake():
+    sh = ServerHandshake()
+
+    ch = AnonymousClientHandshake()
+    assert sh.state == "stalled"
+
+    challenge_req = sh.build_challenge_req()
+    assert sh.state == "challenge"
+
+    answer_req = ch.process_challenge_req(challenge_req)
+
+    sh.process_answer_req(answer_req)
+    assert sh.state == "answer"
+    assert sh.identity is None
+    assert sh.is_anonymous()
+    result_req = sh.build_result_req()
+    assert sh.state == "result"
+
+    ch.process_result_req(result_req)
