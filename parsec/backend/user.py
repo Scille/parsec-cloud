@@ -29,6 +29,9 @@ from parsec.backend.utils import anonymous_api
 from parsec.backend.exceptions import NotFoundError, AlreadyExistsError
 
 
+USER_INVITATION_VALIDITY = 3600
+
+
 @attr.s(slots=True, frozen=True, repr=False)
 class Device:
     def __repr__(self):
@@ -123,6 +126,13 @@ class UserInvitation:
     certified_user_invitation = attr.ib()
     user_invitation_certifier = attr.ib()
     created_on = attr.ib(factory=pendulum.now)
+    claimed = attr.ib(default=False)
+
+    def is_valid(self) -> bool:
+        return (
+            not self.claimed
+            and (pendulum.now() - self.created_on).total_seconds() < USER_INVITATION_VALIDITY
+        )
 
 
 def _generate_token():
@@ -137,7 +147,7 @@ class BaseUserComponent:
     async def api_user_get(self, client_ctx, msg):
         msg = user_get_req_schema.load_or_abort(msg)
         try:
-            user = await self.get(msg["user_id"])
+            user = await self.get_user(msg["user_id"])
         except NotFoundError as exc:
             return {"status": "not_found", "reason": str(exc)}
 
@@ -189,18 +199,18 @@ class BaseUserComponent:
             invitation = UserInvitation(
                 data["user_id"], msg["certified_invitation"], certifier_id, data["timestamp"]
             )
-            await self.create_invitation(invitation)
+            await self.create_user_invitation(invitation)
         except AlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
 
         return {"status": "ok"}
 
     @anonymous_api
-    async def api_user_get_user_invitation_creator(self, client_ctx, msg):
+    async def api_user_get_invitation_creator(self, client_ctx, msg):
         msg = user_get_invitation_creator_req_schema.load_or_abort(msg)
         try:
-            invitation = await self.get_invitation(msg["invited_user_id"])
-            if invitation.status == "claimed":
+            invitation = await self.get_user_invitation(msg["invited_user_id"])
+            if not invitation.is_valid():
                 return {"status": "not_found"}
             certifier = await self.get_device(invitation.user_invitation_certifier)
 
@@ -245,7 +255,7 @@ class BaseUserComponent:
             invitation = UserInvitation(
                 data["user_id"], msg["certified_invitation"], certifier_id, data["timestamp"]
             )
-            await self.create_invitation(invitation)
+            await self.create_user_invitation(invitation)
         except AlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
 
@@ -267,13 +277,13 @@ class BaseUserComponent:
     async def api_device_refuse_configuration_try(self, client_ctx, msg):
         raise NotImplementedError()
 
-    async def create(self, user: User) -> None:
+    async def create_user(self, user: User) -> None:
         raise NotImplementedError()
 
     async def create_device(self, device: Device) -> None:
         raise NotImplementedError()
 
-    async def get(self, user_id: UserID) -> User:
+    async def get_user(self, user_id: UserID) -> User:
         raise NotImplementedError()
 
     async def get_device(self, device_id: DeviceID) -> Device:
@@ -284,10 +294,13 @@ class BaseUserComponent:
     ) -> Tuple[List[UserID], int]:
         raise NotImplementedError()
 
-    async def create_invitation(self, invitation: UserInvitation) -> None:
+    async def create_user_invitation(self, invitation: UserInvitation) -> None:
         raise NotImplementedError()
 
-    async def claim_invitation(
+    async def get_user_invitation(self, user_id: UserID) -> UserInvitation:
+        raise NotImplementedError()
+
+    async def claim_user_invitation(
         self,
         invitation_token: str,
         user_id: str,

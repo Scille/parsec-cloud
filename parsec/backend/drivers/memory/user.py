@@ -23,7 +23,7 @@ class MemoryUserComponent(BaseUserComponent):
         self._device_configuration_tries = {}
         self._unconfigured_devices = {}
 
-    async def create(self, user: User) -> None:
+    async def create_user(self, user: User) -> None:
         if user.user_id in self._users:
             raise AlreadyExistsError(f"User `{user.user_id}` already exists")
 
@@ -42,13 +42,13 @@ class MemoryUserComponent(BaseUserComponent):
         )
 
     async def get_device(self, device_id: DeviceID) -> Device:
-        user = await self.get(device_id.user_id)
+        user = await self.get_user(device_id.user_id)
         try:
             return user.devices[device_id.device_name]
         except KeyError:
             raise NotFoundError(device_id)
 
-    async def get(self, user_id: UserID) -> User:
+    async def get_user(self, user_id: UserID) -> User:
         try:
             return self._users[user_id]
 
@@ -64,10 +64,16 @@ class MemoryUserComponent(BaseUserComponent):
         sorted_results = sorted(results, key=lambda s: s.lower())
         return sorted_results[(page - 1) * per_page : page * per_page], len(results)
 
-    async def create_invitation(self, invitation: UserInvitation) -> None:
+    async def create_user_invitation(self, invitation: UserInvitation) -> None:
         if invitation.user_id in self._users:
             raise AlreadyExistsError("User `%s` already exists" % invitation.user_id)
         self._invitations[invitation.user_id] = invitation
+
+    async def get_user_invitation(self, user_id: UserID) -> UserInvitation:
+        try:
+            return self._invitations[user_id]
+        except KeyError:
+            raise NotFoundError(user_id)
 
     # async def invite(self, user: UserID) -> None:
     #     if user_id in self._users:
@@ -86,7 +92,7 @@ class MemoryUserComponent(BaseUserComponent):
     #         "claim_tries": 0,
     #     }
 
-    async def claim_invitation(
+    async def claim_user_invitation(
         self,
         invitation_token: str,
         user_id: str,

@@ -161,6 +161,7 @@ class BackendApp:
 
         self.anonymous_cmds = {
             "user_claim": self.user.api_user_claim,
+            "user_get_invitation_creator": self.user.api_user_get_invitation_creator,
             "device_configure": self.user.api_device_configure,
             "ping": self._api_ping,
         }
@@ -330,7 +331,7 @@ class BackendApp:
                     raise HandshakeFormatError()
 
                 try:
-                    user = await self.user.get(device_id.user_id)
+                    user = await self.user.get_user(device_id.user_id)
                     device = user.devices[device_id.device_name]
                 except (NotFoundError, KeyError):
                     result_req = hs.build_bad_identity_result_req()

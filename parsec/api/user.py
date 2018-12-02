@@ -73,7 +73,7 @@ class UserGetInvitationCreatorReqSchema(BaseReqSchema):
     invited_user_id = fields.UserID(required=True)
 
 
-class UserGetInvitationCreatorRepSchema(UserGetRepSchema):
+class UserGetInvitationCreatorRepSchema(BaseRepSchema, DeviceSchema):
     pass
 
 
@@ -82,6 +82,7 @@ user_get_invitation_creator_rep_schema = UserGetInvitationCreatorRepSchema()
 
 
 class UserClaimInvitationReqSchema(BaseReqSchema):
+    invited_user_id = fields.UserID(required=True)
     encrypted_claim = fields.Base64Bytes(required=True)
 
 

@@ -479,7 +479,7 @@ def backend_factory(
                         [(device.device_name, device.device_verifykey)],
                     )
                     try:
-                        await backend.user.create(backend_user)
+                        await backend.user.create_user(backend_user)
 
                         access = device.user_manifest_access
                         try:
