@@ -226,6 +226,7 @@ border: 1px solid rgb(12, 65, 157);
 
 QHeaderView::section
 {
+padding-left: 15px;
 border: 0;
 background-color: rgb(12, 65, 157);
 color: white;
@@ -238,6 +239,8 @@ text-align: left;
 QTableWidget::item
 {
 background-color: rgb(255, 255, 255);
+border: 0px;
+padding: 15px;
 }
 
 QTableWidget::item:selected

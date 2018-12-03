@@ -36,6 +36,7 @@ class CustomTableItem(QTableWidgetItem):
 class ItemDelegate(QStyledItemDelegate):
     def paint(self, painter, option, index):
         view_option = QStyleOptionViewItem(option)
+        view_option.decorationAlignment |= Qt.AlignHCenter
         # Qt tries to be nice and adds a lovely background color
         # on the focused item. Since we select items by rows and not
         # individually, we don't want that, so we remove the focus
@@ -57,9 +58,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.setColumnWidth(0, 60)
         h_header.setSectionResizeMode(1, QHeaderView.Stretch)
         h_header.setSectionResizeMode(2, QHeaderView.Fixed)
-        self.table_files.setColumnWidth(2, 180)
+        self.table_files.setColumnWidth(2, 200)
         h_header.setSectionResizeMode(3, QHeaderView.Fixed)
-        self.table_files.setColumnWidth(3, 180)
+        self.table_files.setColumnWidth(3, 200)
         h_header.setSectionResizeMode(4, QHeaderView.Fixed)
         self.table_files.setColumnWidth(4, 100)
         h_header.setSectionResizeMode(5, QHeaderView.Fixed)
