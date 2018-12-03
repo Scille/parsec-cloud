@@ -87,7 +87,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.previous_selection = []
 
     def item_clicked(self, row, column):
-        if column == 5 and self.table_files.item(row, 1).data(Qt.UserRole) != "parent_folder":
+        if column == 5 and self.table_files.item(row, 0).data(Qt.UserRole) != "parent_folder":
             self.delete_item(row)
 
     def change_selection(self):
