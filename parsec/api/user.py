@@ -2,10 +2,6 @@ from parsec.schema import UnknownCheckedSchema, fields
 from parsec.api.base import BaseReqSchema, BaseRepSchema
 
 
-class UserGetReqSchema(BaseReqSchema):
-    user_id = fields.UserID(required=True)
-
-
 class DeviceSchema(UnknownCheckedSchema):
     device_id = fields.DeviceID(required=True)
     created_on = fields.DateTime(required=True)
@@ -30,6 +26,13 @@ class UserSchema(UnknownCheckedSchema):
     user_certifier = fields.Nested(DeviceSchema, allow_none=True)
 
     devices = fields.Map(fields.DeviceName(), fields.Nested(DeviceSchema), required=True)
+
+
+#### Access user API ####
+
+
+class UserGetReqSchema(BaseReqSchema):
+    user_id = fields.UserID(required=True)
 
 
 class UserGetRepSchema(BaseRepSchema, UserSchema):
@@ -57,12 +60,15 @@ user_find_rep_schema = FindUserRepSchema()
 user_find_req_schema = FindUserReqSchema()
 
 
+#### User creation API ####
+
+
 class UserInviteReqSchema(BaseReqSchema):
-    certified_invitation = fields.Base64Bytes(required=True)
+    user_id = fields.UserID(required=True)
 
 
 class UserInviteRepSchema(BaseRepSchema):
-    user_id = fields.UserID(required=True)
+    encrypted_claim = fields.Base64Bytes(required=True)
 
 
 user_invite_req_schema = UserInviteReqSchema()
@@ -81,29 +87,104 @@ user_get_invitation_creator_req_schema = UserGetInvitationCreatorReqSchema()
 user_get_invitation_creator_rep_schema = UserGetInvitationCreatorRepSchema()
 
 
-class UserClaimInvitationReqSchema(BaseReqSchema):
+class UserClaimReqSchema(BaseReqSchema):
     invited_user_id = fields.UserID(required=True)
     encrypted_claim = fields.Base64Bytes(required=True)
 
 
-class UserClaimInvitationRepSchema(BaseRepSchema):
+class UserClaimRepSchema(BaseRepSchema):
     pass
 
 
-user_claim_invitation_req_schema = UserClaimInvitationReqSchema()
-user_claim_invitation_rep_schema = UserClaimInvitationRepSchema()
+user_claim_req_schema = UserClaimReqSchema()
+user_claim_rep_schema = UserClaimRepSchema()
 
 
-class UserResolveInvitationClaimReqSchema(BaseReqSchema):
+class UserCancelInvitationReqSchema(BaseReqSchema):
     user_id = fields.UserID(required=True)
-    outcome = fields.UserID(required=True)  # TODO: use oneof field ?
-    certified_user = fields.Base64Bytes()
-    certified_device = fields.Base64Bytes()
 
 
-class UserResolveInvitationClaimRepSchema(BaseRepSchema):
+class UserCancelInvitationRepSchema(BaseRepSchema):
     pass
 
 
-user_resolve_invitation_claim_req_schema = UserResolveInvitationClaimReqSchema()
-user_resolve_invitation_claim_rep_schema = UserResolveInvitationClaimRepSchema()
+user_cancel_invitation_req_schema = UserCancelInvitationReqSchema()
+user_cancel_invitation_rep_schema = UserCancelInvitationRepSchema()
+
+
+class UserCreateReqSchema(BaseReqSchema):
+    certified_user = fields.Base64Bytes(required=True)
+    certified_device = fields.Base64Bytes(required=True)
+
+
+class UserCreateRepSchema(BaseRepSchema):
+    pass
+
+
+user_create_req_schema = UserCreateReqSchema()
+user_create_rep_schema = UserCreateRepSchema()
+
+
+#### Device creation API ####
+
+
+class DeviceInviteReqSchema(BaseReqSchema):
+    device_id = fields.DeviceID(required=True)
+
+
+class DeviceInviteRepSchema(BaseRepSchema):
+    encrypted_claim = fields.Base64Bytes(required=True)
+
+
+device_invite_req_schema = DeviceInviteReqSchema()
+device_invite_rep_schema = DeviceInviteRepSchema()
+
+
+class DeviceGetInvitationCreatorReqSchema(BaseReqSchema):
+    invited_device_id = fields.DeviceID(required=True)
+
+
+class DeviceGetInvitationCreatorRepSchema(BaseRepSchema, DeviceSchema):
+    pass
+
+
+device_get_invitation_creator_req_schema = DeviceGetInvitationCreatorReqSchema()
+device_get_invitation_creator_rep_schema = DeviceGetInvitationCreatorRepSchema()
+
+
+class DeviceClaimReqSchema(BaseReqSchema):
+    invited_device_id = fields.DeviceID(required=True)
+    encrypted_claim = fields.Base64Bytes(required=True)
+
+
+class DeviceClaimRepSchema(BaseRepSchema):
+    pass
+
+
+device_claim_req_schema = DeviceClaimReqSchema()
+device_claim_rep_schema = DeviceClaimRepSchema()
+
+
+class DeviceCancelInvitationReqSchema(BaseReqSchema):
+    device_id = fields.DeviceID(required=True)
+
+
+class DeviceCancelInvitationRepSchema(BaseRepSchema):
+    pass
+
+
+device_cancel_invitation_req_schema = DeviceCancelInvitationReqSchema()
+device_cancel_invitation_rep_schema = DeviceCancelInvitationRepSchema()
+
+
+class DeviceCreateReqSchema(BaseReqSchema):
+    certified_device = fields.Base64Bytes(required=True)
+    certified_device = fields.Base64Bytes(required=True)
+
+
+class DeviceCreateRepSchema(BaseRepSchema):
+    pass
+
+
+device_create_req_schema = DeviceCreateReqSchema()
+device_create_rep_schema = DeviceCreateRepSchema()

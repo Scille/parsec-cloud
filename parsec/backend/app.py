@@ -162,7 +162,7 @@ class BackendApp:
         self.anonymous_cmds = {
             "user_claim": self.user.api_user_claim,
             "user_get_invitation_creator": self.user.api_user_get_invitation_creator,
-            "device_configure": self.user.api_device_configure,
+            "device_get_invitation_creator": self.user.api_device_get_invitation_creator,
             "ping": self._api_ping,
         }
         for fn in self.anonymous_cmds.values():
@@ -173,23 +173,28 @@ class BackendApp:
             "event_unsubscribe": self._api_event_unsubscribe,
             "event_listen": self._api_event_listen,
             "event_list_subscribed": self._api_event_list_subscribed,
+            "ping": self._api_ping,
+            # User&Device
             "user_get": self.user.api_user_get,
-            "user_invite": self.user.api_user_invite,
             "user_find": self.user.api_user_find,
-            "device_declare": self.user.api_device_declare,
-            "device_get_configuration_try": self.user.api_device_get_configuration_try,
-            "device_accept_configuration_try": self.user.api_device_accept_configuration_try,
-            "device_refuse_configuration_try": self.user.api_device_refuse_configuration_try,
+            "user_invite": self.user.api_user_invite,
+            "user_cancel_invitation": self.user.api_user_cancel_invitation,
+            "user_create": self.user.api_user_create,
+            "device_invite": self.user.api_device_invite,
+            "device_cancel_invitation": self.user.api_device_cancel_invitation,
+            "device_create": self.user.api_device_create,
+            # Blockstore
             "blockstore_post": self._api_blockstore_post,
             "blockstore_get": self._api_blockstore_get,
+            # Vlob
             "vlob_group_check": self.vlob.api_vlob_group_check,
             "vlob_create": self.vlob.api_vlob_create,
             "vlob_read": self.vlob.api_vlob_read,
             "vlob_update": self.vlob.api_vlob_update,
+            # Beacon
             "beacon_read": self.beacon.api_beacon_read,
             "message_get": self.message.api_message_get,
             "message_new": self.message.api_message_new,
-            "ping": self._api_ping,
         }
 
     async def init(self, nursery):

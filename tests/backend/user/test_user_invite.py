@@ -1,65 +1,62 @@
 import pytest
 
-from parsec.trustchain import certify_user_invitation
-from parsec.utils import to_jsonb64
+from parsec.api.user import user_invite_rep_schema
+from parsec.backend.user import PEER_EVENT_MAX_WAIT
 
 
 @pytest.mark.trio
-async def test_user_invite(alice_backend_sock, alice, mallory):
-    certified_invitation = certify_user_invitation(
-        alice.device_id, alice.device_signkey, mallory.user_id
-    )
-    await alice_backend_sock.send(
-        {"cmd": "user_invite", "certified_invitation": to_jsonb64(certified_invitation)}
-    )
+async def test_user_invite(backend, alice_backend_sock, alice, mallory):
+    await alice_backend_sock.send({"cmd": "user_invite", "user_id": mallory.user_id})
+
+    # Waiting for user.claimed event
+    await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
+
+    backend.event_bus.send("user.claimed", user_id="foo", encrypted_claim=b"<dummy>")
+    backend.event_bus.send("user.claimed", user_id=mallory.user_id, encrypted_claim=b"<good>")
+
     rep = await alice_backend_sock.recv()
-    assert rep == {"status": "ok"}
+    cooked_rep = user_invite_rep_schema.load(rep).data
+    assert cooked_rep == {"status": "ok", "encrypted_claim": b"<good>"}
 
 
 @pytest.mark.trio
-async def test_user_invite_bad_certified(alice_backend_sock):
-    await alice_backend_sock.send(
-        {"cmd": "user_invite", "certified_invitation": to_jsonb64(b"foo")}
-    )
+async def test_user_invite_already_exists(alice_backend_sock, bob):
+    await alice_backend_sock.send({"cmd": "user_invite", "user_id": bob.user_id})
+    rep = await alice_backend_sock.recv()
+    assert rep == {"status": "already_exists", "reason": "User `bob` already exists"}
+
+
+@pytest.mark.trio
+async def test_user_invite_timeout(mock_clock, backend, alice_backend_sock, alice, mallory):
+    await alice_backend_sock.send({"cmd": "user_invite", "user_id": mallory.user_id})
+
+    await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
+    mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
+
     rep = await alice_backend_sock.recv()
     assert rep == {
-        "status": "invalid_certification",
-        "reason": (
-            "Invalid certification data (Message doesn't contain"
-            " author metadata along with signed message)."
-        ),
+        "status": "timeout",
+        "reason": "Timeout while waiting for new user to be claimed.",
     }
 
 
 @pytest.mark.trio
-async def test_user_invite_bad_signature(alice_backend_sock, alice):
-    certified = (
-        "{"
-        f'"device_id": "{alice.device_id}", '
-        '"timestamp": "2000-01-01T00:00:00Z", '
-        '"content": ""'
-        "}"
-    ).encode()
-    await alice_backend_sock.send(
-        {"cmd": "user_invite", "certified_invitation": to_jsonb64(certified)}
-    )
-    rep = await alice_backend_sock.recv()
-    assert rep == {
-        "status": "invalid_certification",
-        "reason": "Invalid certification data (Signature was forged or corrupt).",
-    }
+async def test_concurrent_user_invite(
+    backend, alice_backend_sock, bob_backend_sock, alice, bob, mallory
+):
+    await alice_backend_sock.send({"cmd": "user_invite", "user_id": mallory.user_id})
+    await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
 
+    await bob_backend_sock.send({"cmd": "user_invite", "user_id": mallory.user_id})
+    backend.event_bus.spy.clear()
+    await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
 
-@pytest.mark.trio
-async def test_user_invite_bad_certifier(alice_backend_sock, bob, mallory):
-    certified_invitation = certify_user_invitation(
-        bob.device_id, bob.device_signkey, mallory.user_id
-    )
-    await alice_backend_sock.send(
-        {"cmd": "user_invite", "certified_invitation": to_jsonb64(certified_invitation)}
-    )
-    rep = await alice_backend_sock.recv()
-    assert rep == {
-        "status": "invalid_certification",
-        "reason": "Certifier is not the authenticated device.",
-    }
+    backend.event_bus.send("user.claimed", user_id=mallory.user_id, encrypted_claim=b"<good>")
+
+    alice_rep = await alice_backend_sock.recv()
+    cooked_alice_rep = user_invite_rep_schema.load(alice_rep).data
+    assert cooked_alice_rep == {"status": "ok", "encrypted_claim": b"<good>"}
+
+    bob_rep = await bob_backend_sock.recv()
+    cooked_bob_rep = user_invite_rep_schema.load(bob_rep).data
+    assert cooked_bob_rep == {"status": "ok", "encrypted_claim": b"<good>"}

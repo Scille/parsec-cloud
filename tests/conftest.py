@@ -271,7 +271,7 @@ def root_key_certifier():
     return RootKeyCertifier()
 
 
-@pytest.fixture()
+@pytest.fixture
 def device_factory():
     users = {}
     devices = {}
@@ -567,6 +567,12 @@ async def anonymous_backend_sock(backend_sock_factory, backend):
 @pytest.fixture
 async def alice_backend_sock(backend_sock_factory, backend, alice):
     async with backend_sock_factory(backend, alice) as sock:
+        yield sock
+
+
+@pytest.fixture
+async def alice2_backend_sock(backend_sock_factory, backend, alice2):
+    async with backend_sock_factory(backend, alice2) as sock:
         yield sock
 
 

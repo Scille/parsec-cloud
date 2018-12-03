@@ -52,7 +52,7 @@ async def test_api_user_get_not_found(alice_backend_sock):
     rep = await alice_backend_sock.recv()
     cooked, errors = user_get_rep_schema.with_error_schema.load(rep)
     assert not errors
-    assert cooked["status"] == "not_found"
+    assert cooked == {"status": "not_found"}
 
 
 @pytest.mark.trio

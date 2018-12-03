@@ -3,7 +3,14 @@ import pendulum
 from parsec.types import UserID, DeviceID
 from parsec.crypto import VerifyKey
 from parsec.event_bus import EventBus
-from parsec.backend.user import BaseUserComponent, User, Device, DevicesMapping, UserInvitation
+from parsec.backend.user import (
+    BaseUserComponent,
+    User,
+    Device,
+    DevicesMapping,
+    UserInvitation,
+    DeviceInvitation,
+)
 from parsec.backend.exceptions import (
     AlreadyExistsError,
     AlreadyRevokedError,
@@ -17,8 +24,6 @@ class MemoryUserComponent(BaseUserComponent):
     def __init__(self, root_verify_key: VerifyKey, event_bus: EventBus):
         super().__init__(root_verify_key, event_bus)
         self._users = {}
-        self._creation_dates = {}
-        self._revocation_dates = {}
         self._invitations = {}
         self._device_configuration_tries = {}
         self._unconfigured_devices = {}
@@ -66,14 +71,39 @@ class MemoryUserComponent(BaseUserComponent):
 
     async def create_user_invitation(self, invitation: UserInvitation) -> None:
         if invitation.user_id in self._users:
-            raise AlreadyExistsError("User `%s` already exists" % invitation.user_id)
+            raise AlreadyExistsError(f"User `{invitation.user_id}` already exists")
         self._invitations[invitation.user_id] = invitation
 
     async def get_user_invitation(self, user_id: UserID) -> UserInvitation:
+        if user_id in self._users:
+            raise NotFoundError(user_id)
         try:
             return self._invitations[user_id]
         except KeyError:
             raise NotFoundError(user_id)
+
+    async def user_cancel_invitation(self, user_id: UserID) -> None:
+        self._invitations.pop(user_id, None)
+
+    async def create_device_invitation(self, invitation: DeviceInvitation) -> None:
+        user = await self.get_user(invitation.device_id.user_id)
+        if invitation.device_id.device_name in user.devices:
+            raise AlreadyExistsError(f"Device `{invitation.device_id}` already exists")
+        self._invitations[invitation.device_id] = invitation
+
+    async def get_device_invitation(self, device_id: UserID) -> DeviceInvitation:
+        try:
+            self._users[device_id.user_id].devices[device_id.device_name]
+            raise NotFoundError(device_id)
+        except KeyError:
+            pass
+        try:
+            return self._invitations[device_id]
+        except KeyError:
+            raise NotFoundError(device_id)
+
+    async def device_cancel_invitation(self, device_id: DeviceID) -> None:
+        self._invitations.pop(device_id, None)
 
     # async def invite(self, user: UserID) -> None:
     #     if user_id in self._users:

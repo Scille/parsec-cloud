@@ -76,7 +76,9 @@ class EventBus:
             self._event_handlers[event].add(weak)
         else:
             self._event_handlers[event].add(cb)
+        self.send("event.connected", event_name=event)
 
     def disconnect(self, event, cb):
         logger.debug("disconnect event", event_name=event, cb=cb)
         self._event_handlers[event].discard(cb)
+        self.send("event.disconnected", event_name=event)
