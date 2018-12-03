@@ -162,6 +162,7 @@ class BackendApp:
         self.anonymous_cmds = {
             "user_claim": self.user.api_user_claim,
             "user_get_invitation_creator": self.user.api_user_get_invitation_creator,
+            "device_claim": self.user.api_device_claim,
             "device_get_invitation_creator": self.user.api_device_get_invitation_creator,
             "ping": self._api_ping,
         }

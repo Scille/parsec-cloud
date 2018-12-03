@@ -158,7 +158,7 @@ class DeviceClaimReqSchema(BaseReqSchema):
 
 
 class DeviceClaimRepSchema(BaseRepSchema):
-    pass
+    encrypted_answer = fields.Base64Bytes(required=True)
 
 
 device_claim_req_schema = DeviceClaimReqSchema()
@@ -179,7 +179,7 @@ device_cancel_invitation_rep_schema = DeviceCancelInvitationRepSchema()
 
 class DeviceCreateReqSchema(BaseReqSchema):
     certified_device = fields.Base64Bytes(required=True)
-    certified_device = fields.Base64Bytes(required=True)
+    encrypted_answer = fields.Base64Bytes(required=True)
 
 
 class DeviceCreateRepSchema(BaseRepSchema):

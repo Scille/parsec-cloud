@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import ANY
 from pendulum import Pendulum
 
-from parsec.backend.user import User, UserInvitation, USER_INVITATION_VALIDITY, PEER_EVENT_MAX_WAIT
+from parsec.backend.user import User, UserInvitation, INVITATION_VALIDITY, PEER_EVENT_MAX_WAIT
 
 from tests.common import freeze_time
 
@@ -16,7 +16,7 @@ async def mallory_invitation(backend, alice, mallory):
 
 @pytest.mark.trio
 async def test_user_get_invitation_creator_too_late(anonymous_backend_sock, mallory_invitation):
-    with freeze_time(mallory_invitation.created_on.add(seconds=USER_INVITATION_VALIDITY + 1)):
+    with freeze_time(mallory_invitation.created_on.add(seconds=INVITATION_VALIDITY + 1)):
         await anonymous_backend_sock.send(
             {"cmd": "user_get_invitation_creator", "invited_user_id": mallory_invitation.user_id}
         )

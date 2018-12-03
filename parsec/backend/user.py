@@ -31,6 +31,7 @@ from parsec.api.user import (
     device_get_invitation_creator_rep_schema,
     device_invite_req_schema,
     device_claim_req_schema,
+    device_claim_rep_schema,
     device_cancel_invitation_req_schema,
     device_create_req_schema,
 )
@@ -39,7 +40,7 @@ from parsec.backend.exceptions import NotFoundError, AlreadyExistsError
 
 
 PEER_EVENT_MAX_WAIT = 300
-USER_INVITATION_VALIDITY = 3600
+INVITATION_VALIDITY = 3600
 
 
 @attr.s(slots=True, frozen=True, repr=False)
@@ -137,7 +138,7 @@ class UserInvitation:
     created_on = attr.ib(factory=pendulum.now)
 
     def is_valid(self) -> bool:
-        return (pendulum.now() - self.created_on).total_seconds() < USER_INVITATION_VALIDITY
+        return (pendulum.now() - self.created_on).total_seconds() < INVITATION_VALIDITY
 
 
 @attr.s(slots=True, frozen=True, repr=False)
@@ -150,7 +151,7 @@ class DeviceInvitation:
     created_on = attr.ib(factory=pendulum.now)
 
     def is_valid(self) -> bool:
-        return (pendulum.now() - self.created_on).total_seconds() < USER_INVITATION_VALIDITY
+        return (pendulum.now() - self.created_on).total_seconds() < INVITATION_VALIDITY
 
 
 def _generate_token():
@@ -425,15 +426,17 @@ class BaseUserComponent:
 
         replied = trio.Event()
         replied_ok = False
+        replied_encrypted_answer = None
 
-        def _on_reply(event, device_id):
-            nonlocal replied_ok
+        def _on_reply(event, device_id, encrypted_answer=None):
+            nonlocal replied_ok, replied_encrypted_answer
             if device_id == invitation.device_id:
                 replied_ok = event == "device.created"
+                replied_encrypted_answer = encrypted_answer
                 replied.set()
 
         self.event_bus.connect("device.created", _on_reply, weak=True)
-        self.event_bus.connect("device.device_claim_denied", _on_reply, weak=True)
+        self.event_bus.connect("device.invitation.cancelled", _on_reply, weak=True)
         with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
             await replied.wait()
         if cancel_scope.cancelled_caught:
@@ -443,7 +446,13 @@ class BaseUserComponent:
             }
         if not replied_ok:
             return {"status": "denied", "reason": ("Invitation creator rejected us.")}
-        return {"status": "ok"}
+
+        raw_data = {"status": "ok", "encrypted_answer": replied_encrypted_answer}
+        data, errors = device_claim_rep_schema.dump(raw_data)
+
+        if errors:
+            raise RuntimeError(f"Dump error with {raw_data!r}: {errors}")
+        return data
 
     async def api_device_cancel_invitation(self, client_ctx, msg):
         msg = device_cancel_invitation_req_schema.load_or_abort(msg)
@@ -481,6 +490,9 @@ class BaseUserComponent:
                 "reason": f"Invalid certification data ({exc}).",
             }
 
+        if data["device_id"].user_id != client_ctx.user_id:
+            return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
+
         try:
             device = Device(
                 device_id=data["device_id"],
@@ -492,7 +504,9 @@ class BaseUserComponent:
         except AlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
 
-        self.event_bus.send("device.created", device_id=device.device_id)
+        self.event_bus.send(
+            "device.created", device_id=device.device_id, encrypted_answer=msg["encrypted_answer"]
+        )
         return {"status": "ok"}
 
     #### Virtual methods ####
