@@ -17,6 +17,11 @@
    <string notr="true">QWidget#LoginRegisterDeviceWidget
 {
 background-color: rgb(12, 65, 156);
+}
+
+QPushButton:disabled
+{
+background-color: rgb(128, 128, 128);
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
