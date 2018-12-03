@@ -118,6 +118,9 @@ border: 2px solid rgb(47, 145, 208);
           <property name="styleSheet">
            <string notr="true"/>
           </property>
+          <property name="lineWidth">
+           <number>0</number>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -126,6 +129,9 @@ border: 2px solid rgb(47, 145, 208);
           </property>
           <property name="wordWrap">
            <bool>true</bool>
+          </property>
+          <property name="textInteractionFlags">
+           <set>Qt::NoTextInteraction</set>
           </property>
          </widget>
         </item>
@@ -256,6 +262,9 @@ border: 2px solid rgb(47, 145, 208);
             <property name="styleSheet">
              <string notr="true"/>
             </property>
+            <property name="lineWidth">
+             <number>0</number>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -266,7 +275,7 @@ border: 2px solid rgb(47, 145, 208);
              <bool>false</bool>
             </property>
             <property name="textInteractionFlags">
-             <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+             <set>Qt::NoTextInteraction</set>
             </property>
            </widget>
           </item>
@@ -301,6 +310,9 @@ border: 2px solid rgb(47, 145, 208);
             <property name="styleSheet">
              <string notr="true"/>
             </property>
+            <property name="lineWidth">
+             <number>0</number>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -311,7 +323,7 @@ border: 2px solid rgb(47, 145, 208);
              <bool>false</bool>
             </property>
             <property name="textInteractionFlags">
-             <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+             <set>Qt::NoTextInteraction</set>
             </property>
            </widget>
           </item>
@@ -346,6 +358,9 @@ border: 2px solid rgb(47, 145, 208);
             <property name="styleSheet">
              <string notr="true"/>
             </property>
+            <property name="lineWidth">
+             <number>0</number>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -356,7 +371,7 @@ border: 2px solid rgb(47, 145, 208);
              <bool>false</bool>
             </property>
             <property name="textInteractionFlags">
-             <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+             <set>Qt::NoTextInteraction</set>
             </property>
            </widget>
           </item>
@@ -391,6 +406,9 @@ border: 2px solid rgb(47, 145, 208);
             <property name="styleSheet">
              <string notr="true"/>
             </property>
+            <property name="lineWidth">
+             <number>0</number>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -401,7 +419,7 @@ border: 2px solid rgb(47, 145, 208);
              <bool>false</bool>
             </property>
             <property name="textInteractionFlags">
-             <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+             <set>Qt::NoTextInteraction</set>
             </property>
            </widget>
           </item>

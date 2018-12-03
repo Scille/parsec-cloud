@@ -124,6 +124,9 @@ color: rgb(255, 255, 255);
           <property name="text">
            <string/>
           </property>
+          <property name="textInteractionFlags">
+           <set>Qt::TextSelectableByMouse</set>
+          </property>
          </widget>
         </item>
         <item>
@@ -170,6 +173,9 @@ color: rgb(255, 255, 255);
           </property>
           <property name="text">
            <string/>
+          </property>
+          <property name="textInteractionFlags">
+           <set>Qt::TextSelectableByMouse</set>
           </property>
          </widget>
         </item>
