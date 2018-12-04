@@ -1,7 +1,7 @@
 import os
 import pathlib
 
-from PyQt5.QtCore import QFileInfo, QCoreApplication
+from PyQt5.QtCore import QFileInfo, QCoreApplication, Qt
 from PyQt5.QtWidgets import QWidget, QFileDialog
 
 from parsec.core.gui import settings
@@ -19,31 +19,25 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
             settings.set_value("mountpoint", mountpoint)
         self.line_edit_mountpoint.setText(mountpoint)
         mountpoint_enabled = settings.get_value("mountpoint_enabled", None)
-        if mountpoint_enabled is None:
-            if os.name == "nt":
-                settings.set_value("mountpoint_enabled", False)
-                mountpoint_enabled = False
-            else:
-                settings.set_value("mountpoint_enabled", True)
-                mountpoint_enabled = True
+        if os.name == "nt":
+            settings.set_value("mountpoint_enabled", False)
+            mountpoint_enabled = False
+            self.checkbox_enable_mountpoint.setDisabled(True)
+        elif mountpoint_enabled is None:
+            settings.set_value("mountpoint_enabled", True)
+            mountpoint_enabled = True
         if mountpoint_enabled:
             self.button_choose_mountpoint.setDisabled(False)
         else:
             self.button_choose_mountpoint.setDisabled(True)
-        self.checkbox_enable_mountpoint.setChecked(mountpoint_enabled)
+        self.checkbox_enable_mountpoint.setChecked(
+            Qt.Checked if mountpoint_enabled else Qt.Unchecked
+        )
         self.button_choose_mountpoint.clicked.connect(self.choose_mountpoint)
         self.checkbox_enable_mountpoint.stateChanged.connect(self.enable_mountpoint)
 
     def enable_mountpoint(self, state):
-        state = bool(state)
-        if state and os.name == "nt":
-            show_warning(
-                self,
-                QCoreApplication.translate(
-                    "SettingsWidget", "Mountpoints are not handled on Windows right now."
-                ),
-            )
-            return
+        state = state == Qt.Checked
         settings.set_value("mountpoint_enabled", state)
         if state:
             self.button_choose_mountpoint.setDisabled(False)
