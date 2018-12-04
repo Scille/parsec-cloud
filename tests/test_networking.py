@@ -7,6 +7,7 @@ from hypothesis import given, strategies as st
 from string import printable
 
 from parsec.networking import CookedSocket
+from parsec.schema import UnknownCheckedSchema, fields
 
 
 json_nested_strategy = st.recursive(
@@ -72,3 +73,32 @@ class TestCookedSocket:
         with pytest.raises(json.JSONDecodeError):
             with trio.move_on_after(1):
                 await self.cclient.recv()
+
+
+@pytest.mark.slow
+@pytest.mark.trio
+async def test_big_buffer_bench():
+    rserver, rclient = trio.testing.memory_stream_pair()
+    cclient = CookedSocket(rclient)
+    cserver = CookedSocket(rserver)
+    MAX_MSG_SIZE = 2 ** 20
+
+    class Schema(UnknownCheckedSchema):
+        data = fields.Base64Bytes()
+
+    schema = Schema(strict=True)
+
+    payload = {"data": b"x" * (MAX_MSG_SIZE - 50)}
+
+    for _ in range(10):
+        await cclient.send(schema.dump(payload).data)
+        raw = await cserver.recv()
+        server_payload = schema.load(raw).data
+        assert server_payload == payload
+        del raw
+
+        await cserver.send(schema.dump(server_payload).data)
+        raw = await cclient.recv()
+        roundtrip_payload = schema.load(raw).data
+        assert roundtrip_payload == payload
+        del raw

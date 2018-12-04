@@ -74,14 +74,13 @@ async def test_device_revoke_invalid_certified(alice_backend_sock, alice2, bob):
 @pytest.mark.trio
 async def test_device_revoke_certify_too_old(alice_backend_sock, alice, bob):
     now = pendulum.Pendulum(2000, 1, 1)
-    certified_revocation = certify_device_revocation(alice.device_id, alice.device_signkey, bob.device_id, now=now)
+    certified_revocation = certify_device_revocation(
+        alice.device_id, alice.device_signkey, bob.device_id, now=now
+    )
 
     with freeze_time(now.add(seconds=INVITATION_VALIDITY + 1)):
         await alice_backend_sock.send(
-            {
-                "cmd": "device_revoke",
-                "certified_revocation": certified_revocation,
-            }
+            {"cmd": "device_revoke", "certified_revocation": certified_revocation}
         )
         rep = await alice_backend_sock.recv()
         assert rep == {
