@@ -5,7 +5,7 @@ from PyQt5.QtCore import QFileInfo, QCoreApplication
 from PyQt5.QtWidgets import QWidget, QFileDialog
 
 from parsec.core.gui import settings
-from parsec.core.gui.custom_widgets import show_error, show_info
+from parsec.core.gui.custom_widgets import show_error, show_info, show_warning
 from parsec.core.gui.ui.settings_widget import Ui_SettingsWidget
 
 
@@ -20,8 +20,12 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
         self.line_edit_mountpoint.setText(mountpoint)
         mountpoint_enabled = settings.get_value("mountpoint_enabled", None)
         if mountpoint_enabled is None:
-            settings.set_value("mountpoint_enabled", True)
-            mountpoint_enabled = True
+            if os.name == "nt":
+                settings.set_value("mountpoint_enabled", False)
+                mountpoint_enabled = False
+            else:
+                settings.set_value("mountpoint_enabled", True)
+                mountpoint_enabled = True
         if mountpoint_enabled:
             self.button_choose_mountpoint.setDisabled(False)
         else:
@@ -32,6 +36,14 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
 
     def enable_mountpoint(self, state):
         state = bool(state)
+        if state and os.name == "nt":
+            show_warning(
+                self,
+                QCoreApplication.translate(
+                    "SettingsWidget", "Mountpoints are not handled on Windows right now."
+                ),
+            )
+            return
         settings.set_value("mountpoint_enabled", state)
         if state:
             self.button_choose_mountpoint.setDisabled(False)

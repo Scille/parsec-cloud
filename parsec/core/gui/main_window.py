@@ -129,7 +129,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         except Exception as exc:
             logger.warning("Mountpoint start failed", mountpoint=mountpoint, exc_info=exc)
             return None
-
         self.mount_widget.set_mountpoint(mountpoint)
         self.label_mountpoint.setText(mountpoint)
         logger.info("Mountpoint started", mountpoint=mountpoint)
