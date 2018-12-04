@@ -30,6 +30,7 @@ class AlreadyRevokedError(ParsecError):
     reason = "Element already revoked."
 
 
+# TODO: remove me
 class UserClaimError(ParsecError):
     status = "user_claim_error"
     reason = "User related error."

@@ -181,9 +181,11 @@ class BackendApp:
             "user_invite": self.user.api_user_invite,
             "user_cancel_invitation": self.user.api_user_cancel_invitation,
             "user_create": self.user.api_user_create,
+            "user_revoke": self.user.api_user_revoke,  # TODO: remove and only use device_revoke ?
             "device_invite": self.user.api_device_invite,
             "device_cancel_invitation": self.user.api_device_cancel_invitation,
             "device_create": self.user.api_device_create,
+            "device_revoke": self.user.api_device_revoke,
             # Blockstore
             "blockstore_post": self._api_blockstore_post,
             "blockstore_get": self._api_blockstore_get,
@@ -342,7 +344,7 @@ class BackendApp:
                 except (NotFoundError, KeyError):
                     result_req = hs.build_bad_identity_result_req()
                 else:
-                    if device.revocated_on:
+                    if user.revocated_on or device.revocated_on:
                         raise BackendAuthError("Device revoked.")
                     context = ClientContext(hs.identity, user.public_key, device.verify_key)
                     result_req = hs.build_result_req(device.verify_key)
@@ -391,7 +393,7 @@ class BackendApp:
 
     async def _handle_client_loop(self, sock, client_ctx):
 
-        # TODO: Should find a way to avoid using this filder if we're not in log debug...
+        # TODO: Should find a way to avoid using this filter if we're not in log debug...
         def _filter_big_fields(data):
             # As hacky as arbitrary... but works well so far !
             filtered_data = data.copy()

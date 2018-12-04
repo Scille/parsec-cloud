@@ -3,6 +3,9 @@ import pendulum
 
 from parsec.utils import to_jsonb64
 from parsec.trustchain import certify_user, certify_device
+from parsec.backend.user import INVITATION_VALIDITY
+
+from tests.common import freeze_time
 
 
 @pytest.mark.trio
@@ -36,7 +39,7 @@ async def test_user_create_ok(backend, backend_sock_factory, alice_backend_sock,
 
 
 @pytest.mark.trio
-async def test_user_create_invalid_certified(backend, alice_backend_sock, alice, bob, mallory):
+async def test_user_create_invalid_certified(alice_backend_sock, alice, bob, mallory):
     now = pendulum.now()
     good_certified_user = certify_user(
         alice.device_id, alice.device_signkey, mallory.user_id, mallory.user_pubkey, now=now
@@ -54,6 +57,7 @@ async def test_user_create_invalid_certified(backend, alice_backend_sock, alice,
     for cu, cd in [
         (good_certified_user, bad_certified_device),
         (bad_certified_user, good_certified_device),
+        (bad_certified_user, bad_certified_device),
     ]:
         await alice_backend_sock.send(
             {
@@ -70,7 +74,7 @@ async def test_user_create_invalid_certified(backend, alice_backend_sock, alice,
 
 
 @pytest.mark.trio
-async def test_user_create_not_matching_user_device(backend, alice_backend_sock, alice, mallory):
+async def test_user_create_not_matching_user_device(alice_backend_sock, alice, mallory):
     now = pendulum.now()
     certified_user = certify_user(
         alice.device_id, alice.device_signkey, mallory.user_id, mallory.user_pubkey, now=now
@@ -94,7 +98,7 @@ async def test_user_create_not_matching_user_device(backend, alice_backend_sock,
 
 
 @pytest.mark.trio
-async def test_user_create_already_exists(backend, alice_backend_sock, alice, bob):
+async def test_user_create_already_exists(alice_backend_sock, alice, bob):
     now = pendulum.now()
     certified_user = certify_user(
         alice.device_id, alice.device_signkey, bob.user_id, bob.user_pubkey, now=now
@@ -115,24 +119,41 @@ async def test_user_create_already_exists(backend, alice_backend_sock, alice, bo
 
 
 @pytest.mark.trio
-async def test_user_create_bad_certifier(backend, alice_backend_sock, bob, mallory):
-    now = pendulum.now()
-    certified_user = certify_user(
-        bob.device_id, bob.device_signkey, mallory.user_id, mallory.user_pubkey, now=now
+async def test_device_create_certify_too_old(alice_backend_sock, alice, mallory):
+    too_old = pendulum.Pendulum(2000, 1, 1)
+    now = too_old.add(seconds=INVITATION_VALIDITY + 1)
+    good_certified_user = certify_user(
+        alice.device_id, alice.device_signkey, mallory.user_id, mallory.user_pubkey, now=now
     )
-    certified_device = certify_device(
-        bob.device_id, bob.device_signkey, mallory.device_id, mallory.device_verifykey, now=now
+    good_certified_device = certify_device(
+        alice.device_id, alice.device_signkey, mallory.device_id, mallory.device_verifykey, now=now
+    )
+    bad_certified_user = certify_user(
+        alice.device_id, alice.device_signkey, mallory.user_id, mallory.user_pubkey, now=too_old
+    )
+    bad_certified_device = certify_device(
+        alice.device_id,
+        alice.device_signkey,
+        mallory.device_id,
+        mallory.device_verifykey,
+        now=too_old,
     )
 
-    await alice_backend_sock.send(
-        {
-            "cmd": "user_create",
-            "certified_user": to_jsonb64(certified_user),
-            "certified_device": to_jsonb64(certified_device),
-        }
-    )
-    rep = await alice_backend_sock.recv()
-    assert rep == {
-        "status": "invalid_certification",
-        "reason": "Certifier is not the authenticated device.",
-    }
+    with freeze_time(now):
+        for cu, cd in [
+            (good_certified_user, bad_certified_device),
+            (bad_certified_user, good_certified_device),
+            (bad_certified_user, bad_certified_device),
+        ]:
+            await alice_backend_sock.send(
+                {
+                    "cmd": "user_create",
+                    "certified_user": to_jsonb64(cu),
+                    "certified_device": to_jsonb64(cd),
+                }
+            )
+            rep = await alice_backend_sock.recv()
+            assert rep == {
+                "status": "invalid_certification",
+                "reason": "Invalid certification data (Timestamp is too old.).",
+            }

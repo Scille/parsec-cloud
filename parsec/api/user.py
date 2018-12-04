@@ -125,6 +125,18 @@ user_create_req_schema = UserCreateReqSchema()
 user_create_rep_schema = UserCreateRepSchema()
 
 
+class UserRevokeReqSchema(BaseReqSchema):
+    certified_revocation = fields.Base64Bytes(required=True)
+
+
+class UserRevokeRepSchema(BaseRepSchema):
+    pass
+
+
+user_revoke_req_schema = UserRevokeReqSchema()
+user_revoke_rep_schema = UserRevokeRepSchema()
+
+
 #### Device creation API ####
 
 
@@ -188,3 +200,15 @@ class DeviceCreateRepSchema(BaseRepSchema):
 
 device_create_req_schema = DeviceCreateReqSchema()
 device_create_rep_schema = DeviceCreateRepSchema()
+
+
+class DeviceRevokeReqSchema(BaseReqSchema):
+    certified_revocation = fields.Base64Bytes(required=True)
+
+
+class DeviceRevokeRepSchema(BaseRepSchema):
+    pass
+
+
+device_revoke_req_schema = DeviceRevokeReqSchema()
+device_revoke_rep_schema = DeviceRevokeRepSchema()

@@ -14,6 +14,8 @@ from parsec.trustchain import (
     certified_extract_parts,
     validate_payload_certified_user,
     validate_payload_certified_device,
+    validate_payload_certified_user_revocation,
+    validate_payload_certified_device_revocation,
     TrustChainError,
 )
 from parsec.api.user import (
@@ -27,6 +29,7 @@ from parsec.api.user import (
     user_claim_req_schema,
     user_cancel_invitation_req_schema,
     user_create_req_schema,
+    user_revoke_req_schema,
     device_get_invitation_creator_req_schema,
     device_get_invitation_creator_rep_schema,
     device_invite_req_schema,
@@ -34,9 +37,10 @@ from parsec.api.user import (
     device_claim_rep_schema,
     device_cancel_invitation_req_schema,
     device_create_req_schema,
+    device_revoke_req_schema,
 )
 from parsec.backend.utils import anonymous_api
-from parsec.backend.exceptions import NotFoundError, AlreadyExistsError
+from parsec.backend.exceptions import NotFoundError, AlreadyExistsError, AlreadyRevokedError
 
 
 PEER_EVENT_MAX_WAIT = 300
@@ -353,6 +357,47 @@ class BaseUserComponent:
         self.event_bus.send("user.created", user_id=user.user_id)
         return {"status": "ok"}
 
+    async def api_user_revoke(self, client_ctx, msg):
+        msg = user_revoke_req_schema.load_or_abort(msg)
+
+        try:
+            certifier_id, payload = certified_extract_parts(msg["certified_revocation"])
+        except TrustChainError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
+
+        if certifier_id != client_ctx.device_id:
+            return {
+                "status": "invalid_certification",
+                "reason": "Certifier is not the authenticated device.",
+            }
+
+        try:
+            data = validate_payload_certified_user_revocation(
+                client_ctx.verify_key, payload, pendulum.now()
+            )
+        except TrustChainError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
+
+        try:
+            await self.revoke_user(data["user_id"], msg["certified_revocation"], certifier_id)
+
+        except NotFoundError:
+            return {"status": "not_found"}
+
+        except AlreadyRevokedError:
+            return {
+                "status": "already_revoked",
+                "reason": f"User `{data['user_id']}` already revoked",
+            }
+
+        return {"status": "ok"}
+
     #### Device creation API ####
 
     async def api_device_invite(self, client_ctx, msg):
@@ -509,6 +554,47 @@ class BaseUserComponent:
         )
         return {"status": "ok"}
 
+    async def api_device_revoke(self, client_ctx, msg):
+        msg = device_revoke_req_schema.load_or_abort(msg)
+
+        try:
+            certifier_id, payload = certified_extract_parts(msg["certified_revocation"])
+        except TrustChainError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
+
+        if certifier_id != client_ctx.device_id:
+            return {
+                "status": "invalid_certification",
+                "reason": "Certifier is not the authenticated device.",
+            }
+
+        try:
+            data = validate_payload_certified_device_revocation(
+                client_ctx.verify_key, payload, pendulum.now()
+            )
+        except TrustChainError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
+
+        try:
+            await self.revoke_device(data["device_id"], msg["certified_revocation"], certifier_id)
+
+        except NotFoundError:
+            return {"status": "not_found"}
+
+        except AlreadyRevokedError:
+            return {
+                "status": "already_revoked",
+                "reason": f"Device `{data['device_id']}` already revoked",
+            }
+
+        return {"status": "ok"}
+
     #### Virtual methods ####
 
     async def create_user(self, user: User) -> None:
@@ -587,8 +673,12 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
-    async def revoke_user(self, user_id: UserID) -> None:
+    async def revokeuser(
+        self, user_id: UserID, certified_revocation: bytes, revocation_certifier: DeviceID
+    ) -> None:
         raise NotImplementedError()
 
-    async def revoke_device(self, device_id: DeviceID) -> None:
+    async def revokedevice(
+        self, device_id: DeviceID, certified_revocation: bytes, revocation_certifier: DeviceID
+    ) -> None:
         raise NotImplementedError()
