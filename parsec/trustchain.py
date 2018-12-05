@@ -49,12 +49,6 @@ class CertifiedUserSchema(UnknownCheckedSchema):
     public_key = fields.PublicKey(required=True)
 
 
-class CertifiedUserRevocationSchema(UnknownCheckedSchema):
-    type = fields.CheckedConstant("user_revocation", required=True)
-    timestamp = fields.DateTime(required=True)
-    user_id = fields.UserID(required=True)
-
-
 class CertifiedDeviceRevocationSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("device_revocation", required=True)
     timestamp = fields.DateTime(required=True)
@@ -63,7 +57,6 @@ class CertifiedDeviceRevocationSchema(UnknownCheckedSchema):
 
 certified_device_schema = CertifiedDeviceSchema(strict=True)
 certified_user_schema = CertifiedUserSchema(strict=True)
-certified_user_revocation_schema = CertifiedUserRevocationSchema(strict=True)
 certified_device_revocation_schema = CertifiedDeviceRevocationSchema(strict=True)
 
 
@@ -168,27 +161,6 @@ def unsecure_certified_user_extract_public_key(data: bytes) -> PublicKey:
     _, signed = decode_signedmeta(data)
     raw = unsecure_extract_msg_from_signed(signed)
     return certified_user_schema.loads(raw.decode("utf8")).data["public_key"]
-
-
-def certify_user_revocation(
-    certifier_id: DeviceID, certifier_key: SigningKey, revoke_user_id: UserID, now: Pendulum = None
-) -> bytes:
-    payload = certified_user_revocation_schema.dumps(
-        {"type": "user_revocation", "timestamp": now or pendulum.now(), "user_id": revoke_user_id}
-    ).data.encode("utf8")
-    return sign_and_add_meta(certifier_id, certifier_key, payload)
-
-
-def validate_payload_certified_user_revocation(
-    certifier_key: VerifyKey, payload: bytes, now: Pendulum
-) -> dict:
-    """
-    Raises:
-        TrustChainError
-    """
-    return _validate_certified_payload(
-        certified_user_revocation_schema, certifier_key, payload, now
-    )
 
 
 def certify_device_revocation(

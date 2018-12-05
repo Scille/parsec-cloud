@@ -1,7 +1,7 @@
 import pytest
 
 from parsec.utils import to_jsonb64
-from parsec.handshake import (
+from parsec.api.protocole.handshake import (
     HandshakeFormatError,
     HandshakeBadIdentity,
     ServerHandshake,
@@ -175,3 +175,7 @@ def test_good_anonymous_handshake():
     assert sh.state == "result"
 
     ch.process_result_req(result_req)
+
+
+# TODO: test with revoked device
+# TODO: test with user with all devices revoked

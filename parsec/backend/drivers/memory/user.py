@@ -99,23 +99,6 @@ class MemoryUserComponent(BaseUserComponent):
     async def device_cancel_invitation(self, device_id: DeviceID) -> None:
         self._invitations.pop(device_id, None)
 
-    async def revoke_user(
-        self, user_id: UserID, certified_revocation: bytes, revocation_certifier: DeviceID
-    ) -> None:
-        try:
-            user = self._users[user_id]
-            if user.revocated_on:
-                raise AlreadyRevokedError()
-
-            self._users[user_id] = user.evolve(
-                revocated_on=pendulum.now(),
-                certified_revocation=certified_revocation,
-                revocation_certifier=revocation_certifier,
-            )
-
-        except KeyError:
-            raise NotFoundError(user_id)
-
     async def revoke_device(
         self, device_id: DeviceID, certified_revocation: bytes, revocation_certifier: DeviceID
     ) -> None:

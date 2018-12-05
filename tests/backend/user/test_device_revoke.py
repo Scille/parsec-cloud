@@ -4,6 +4,7 @@ import pendulum
 from parsec.trustchain import certify_device_revocation
 from parsec.handshake import HandshakeRevokedDevice
 from parsec.backend.user import INVITATION_VALIDITY
+from parsec.api.protocole import device_revoke_serializer
 
 from tests.common import freeze_time
 
@@ -18,7 +19,11 @@ def bob_revocation(alice, bob):
 async def test_device_revoke_ok(
     backend, backend_sock_factory, alice_backend_sock, bob, bob_revocation
 ):
-    await alice_backend_sock.send({"cmd": "device_revoke", "certified_revocation": bob_revocation})
+    await alice_backend_sock.send(
+        device_revoke_serializer.req_dump(
+            {"cmd": "device_revoke", "certified_revocation": bob_revocation}
+        )
+    )
     rep = await alice_backend_sock.recv()
     assert rep == {"status": "ok"}
 
@@ -35,20 +40,33 @@ async def test_device_revoke_unknown(alice_backend_sock, alice):
     )
 
     await alice_backend_sock.send(
-        {"cmd": "device_revoke", "certified_revocation": certified_revocation}
+        device_revoke_serializer.req_dump(
+            {"cmd": "device_revoke", "certified_revocation": certified_revocation}
+        )
     )
-    rep = await alice_backend_sock.recv()
+    raw_rep = await alice_backend_sock.recv()
+    rep = device_revoke_serializer.rep_load(raw_rep)
     assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio
 async def test_device_revoke_already_revoked(alice_backend_sock, bob, bob_revocation):
-    await alice_backend_sock.send({"cmd": "device_revoke", "certified_revocation": bob_revocation})
-    rep = await alice_backend_sock.recv()
+    await alice_backend_sock.send(
+        device_revoke_serializer.req_dump(
+            {"cmd": "device_revoke", "certified_revocation": bob_revocation}
+        )
+    )
+    raw_rep = await alice_backend_sock.recv()
+    rep = device_revoke_serializer.rep_load(raw_rep)
     assert rep == {"status": "ok"}
 
-    await alice_backend_sock.send({"cmd": "device_revoke", "certified_revocation": bob_revocation})
-    rep = await alice_backend_sock.recv()
+    await alice_backend_sock.send(
+        device_revoke_serializer.req_dump(
+            {"cmd": "device_revoke", "certified_revocation": bob_revocation}
+        )
+    )
+    raw_rep = await alice_backend_sock.recv()
+    rep = device_revoke_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "already_revoked",
         "reason": f"Device `{bob.device_id}` already revoked",
@@ -62,9 +80,12 @@ async def test_device_revoke_invalid_certified(alice_backend_sock, alice2, bob):
     )
 
     await alice_backend_sock.send(
-        {"cmd": "device_revoke", "certified_revocation": certified_revocation}
+        device_revoke_serializer.req_dump(
+            {"cmd": "device_revoke", "certified_revocation": certified_revocation}
+        )
     )
-    rep = await alice_backend_sock.recv()
+    raw_rep = await alice_backend_sock.recv()
+    rep = device_revoke_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "invalid_certification",
         "reason": "Certifier is not the authenticated device.",
@@ -80,9 +101,12 @@ async def test_device_revoke_certify_too_old(alice_backend_sock, alice, bob):
 
     with freeze_time(now.add(seconds=INVITATION_VALIDITY + 1)):
         await alice_backend_sock.send(
-            {"cmd": "device_revoke", "certified_revocation": certified_revocation}
+            device_revoke_serializer.req_dump(
+                {"cmd": "device_revoke", "certified_revocation": certified_revocation}
+            )
         )
-        rep = await alice_backend_sock.recv()
+        raw_rep = await alice_backend_sock.recv()
+        rep = device_revoke_serializer.rep_load(raw_rep)
         assert rep == {
             "status": "invalid_certification",
             "reason": "Invalid certification data (Timestamp is too old.).",

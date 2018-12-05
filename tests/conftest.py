@@ -523,8 +523,8 @@ async def backend(backend_factory):
 
 
 @pytest.fixture(scope="session")
-def backend_addr(root_signing_key):
-    default_urlsafe_root_verify_key = encode_urlsafe_root_verify_key(root_signing_key.verify_key)
+def backend_addr(root_key_certifier):
+    default_urlsafe_root_verify_key = encode_urlsafe_root_verify_key(root_key_certifier.verify_key)
     return f"tcp://parsec-backend.localhost:9999?root-verify-key={default_urlsafe_root_verify_key}"
 
 

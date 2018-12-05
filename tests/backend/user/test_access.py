@@ -2,24 +2,22 @@ import pytest
 from unittest.mock import ANY
 from pendulum import Pendulum
 
-from parsec.api.user import user_get_rep_schema
+from parsec.api.protocole import user_get_serializer, user_find_serializer
 
 
 @pytest.mark.trio
 async def test_api_user_get_ok(backend, alice_backend_sock, bob):
-    await alice_backend_sock.send({"cmd": "user_get", "user_id": "bob"})
-    rep = await alice_backend_sock.recv()
-    cooked, errors = user_get_rep_schema.load(rep)
-    assert not errors
-    assert cooked == {
+    await alice_backend_sock.send(
+        user_get_serializer.req_dump({"cmd": "user_get", "user_id": "bob"})
+    )
+    raw_rep = await alice_backend_sock.recv()
+    rep = user_get_serializer.rep_load(raw_rep)
+    assert rep == {
         "status": "ok",
         "user_id": bob.user_id,
         "certified_user": ANY,
         "user_certifier": None,
         "created_on": Pendulum(2000, 1, 1),
-        "revocated_on": None,
-        "certified_revocation": None,
-        "revocation_certifier": None,
         "devices": {
             bob.device_name: {
                 "device_id": bob.id,
@@ -40,19 +38,19 @@ async def test_api_user_get_ok(backend, alice_backend_sock, bob):
 @pytest.mark.trio
 async def test_api_user_get_bad_msg(alice_backend_sock, bad_msg):
     await alice_backend_sock.send({"cmd": "user_get", **bad_msg})
-    rep = await alice_backend_sock.recv()
-    cooked, errors = user_get_rep_schema.with_error_schema.load(rep)
-    assert not errors
-    assert cooked["status"] == "bad_message"
+    raw_rep = await alice_backend_sock.recv()
+    rep = user_get_serializer.rep_load(raw_rep)
+    assert rep["status"] == "bad_message"
 
 
 @pytest.mark.trio
 async def test_api_user_get_not_found(alice_backend_sock):
-    await alice_backend_sock.send({"cmd": "user_get", "user_id": "dummy"})
-    rep = await alice_backend_sock.recv()
-    cooked, errors = user_get_rep_schema.with_error_schema.load(rep)
-    assert not errors
-    assert cooked == {"status": "not_found"}
+    await alice_backend_sock.send(
+        user_get_serializer.req_dump({"cmd": "user_get", "user_id": "dummy"})
+    )
+    raw_rep = await alice_backend_sock.recv()
+    rep = user_get_serializer.rep_load(raw_rep)
+    assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio
@@ -73,13 +71,19 @@ async def test_api_user_find(alice, backend, alice_backend_sock, root_key_certif
         await backend.user.create_user(user)
 
     # Test exact match
-    await alice_backend_sock.send({"cmd": "user_find", "query": "Mike"})
-    rep = await alice_backend_sock.recv()
+    await alice_backend_sock.send(
+        user_find_serializer.req_dump({"cmd": "user_find", "query": "Mike"})
+    )
+    raw_rep = await alice_backend_sock.recv()
+    rep = user_find_serializer.rep_load(raw_rep)
     assert rep == {"status": "ok", "results": ["Mike"], "per_page": 100, "page": 1, "total": 1}
 
     # Test partial search
-    await alice_backend_sock.send({"cmd": "user_find", "query": "Phil"})
-    rep = await alice_backend_sock.recv()
+    await alice_backend_sock.send(
+        user_find_serializer.req_dump({"cmd": "user_find", "query": "Phil"})
+    )
+    raw_rep = await alice_backend_sock.recv()
+    rep = user_find_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "ok",
         "results": ["Philip_J_Fry", "Philippe"],
@@ -89,8 +93,13 @@ async def test_api_user_find(alice, backend, alice_backend_sock, root_key_certif
     }
 
     # Test pagination
-    await alice_backend_sock.send({"cmd": "user_find", "page": 1, "per_page": 1, "query": "Phil"})
-    rep = await alice_backend_sock.recv()
+    await alice_backend_sock.send(
+        user_find_serializer.req_dump(
+            {"cmd": "user_find", "page": 1, "per_page": 1, "query": "Phil"}
+        )
+    )
+    raw_rep = await alice_backend_sock.recv()
+    rep = user_find_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "ok",
         "results": ["Philip_J_Fry"],
@@ -100,13 +109,19 @@ async def test_api_user_find(alice, backend, alice_backend_sock, root_key_certif
     }
 
     # Test out of pagination
-    await alice_backend_sock.send({"cmd": "user_find", "page": 2, "per_page": 5, "query": "Phil"})
-    rep = await alice_backend_sock.recv()
+    await alice_backend_sock.send(
+        user_find_serializer.req_dump(
+            {"cmd": "user_find", "page": 2, "per_page": 5, "query": "Phil"}
+        )
+    )
+    raw_rep = await alice_backend_sock.recv()
+    rep = user_find_serializer.rep_load(raw_rep)
     assert rep == {"status": "ok", "results": [], "per_page": 5, "page": 2, "total": 2}
 
     # Test no params
-    await alice_backend_sock.send({"cmd": "user_find"})
-    rep = await alice_backend_sock.recv()
+    await alice_backend_sock.send(user_find_serializer.req_dump({"cmd": "user_find"}))
+    raw_rep = await alice_backend_sock.recv()
+    rep = user_find_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "ok",
         "results": ["alice", "Blacky", "bob", "Mike", "Philip_J_Fry", "Philippe"],
@@ -118,5 +133,6 @@ async def test_api_user_find(alice, backend, alice_backend_sock, root_key_certif
     # Test bad params
     for bad in [{"dummy": 42}, {"query": 42}, {"page": 0}, {"per_page": 0}, {"per_page": 101}]:
         await alice_backend_sock.send({"cmd": "user_find", **bad})
-        rep = await alice_backend_sock.recv()
+        raw_rep = await alice_backend_sock.recv()
+        rep = user_find_serializer.rep_load(raw_rep)
         assert rep["status"] == "bad_message"

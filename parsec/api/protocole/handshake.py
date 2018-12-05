@@ -3,9 +3,10 @@ from secrets import token_bytes
 
 from parsec.crypto import CryptoError
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError
+from parsec.api.protocole.base import ProtocoleError
 
 
-class HandshakeError(Exception):
+class HandshakeError(ProtocoleError):
     pass
 
 

@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import ANY
 from pendulum import Pendulum
 
+from parsec.api.protocole import user_get_invitation_creator_serializer, user_claim_serializer
 from parsec.backend.user import User, UserInvitation, INVITATION_VALIDITY, PEER_EVENT_MAX_WAIT
 
 from tests.common import freeze_time
@@ -18,9 +19,15 @@ async def mallory_invitation(backend, alice, mallory):
 async def test_user_get_invitation_creator_too_late(anonymous_backend_sock, mallory_invitation):
     with freeze_time(mallory_invitation.created_on.add(seconds=INVITATION_VALIDITY + 1)):
         await anonymous_backend_sock.send(
-            {"cmd": "user_get_invitation_creator", "invited_user_id": mallory_invitation.user_id}
+            user_get_invitation_creator_serializer.req_dump(
+                {
+                    "cmd": "user_get_invitation_creator",
+                    "invited_user_id": mallory_invitation.user_id,
+                }
+            )
         )
-        rep = await anonymous_backend_sock.recv()
+        raw_rep = await anonymous_backend_sock.recv()
+    rep = user_get_invitation_creator_serializer.rep_load(raw_rep)
     assert rep == {"status": "not_found"}
 
 
@@ -29,7 +36,8 @@ async def test_user_get_invitation_creator_unknown(anonymous_backend_sock):
     await anonymous_backend_sock.send(
         {"cmd": "user_get_invitation_creator", "invited_user_id": "zack"}
     )
-    rep = await anonymous_backend_sock.recv()
+    raw_rep = await anonymous_backend_sock.recv()
+    rep = user_get_invitation_creator_serializer.rep_load(raw_rep)
     assert rep == {"status": "not_found"}
 
 
@@ -39,11 +47,12 @@ async def test_user_get_invitation_creator_ok(anonymous_backend_sock, mallory_in
         await anonymous_backend_sock.send(
             {"cmd": "user_get_invitation_creator", "invited_user_id": mallory_invitation.user_id}
         )
-        rep = await anonymous_backend_sock.recv()
+        raw_rep = await anonymous_backend_sock.recv()
+    rep = user_get_invitation_creator_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "ok",
         "device_id": mallory_invitation.creator,
-        "created_on": "2000-01-01T00:00:00+00:00",
+        "created_on": Pendulum(2000, 1, 1),
         "certified_device": ANY,
         "device_certifier": None,
         "revocated_on": None,
@@ -70,7 +79,8 @@ async def test_user_claim_ok(backend, anonymous_backend_sock, mallory_invitation
         backend.event_bus.send("user.created", user_id="dummy")
         backend.event_bus.send("user.created", user_id=mallory_invitation.user_id)
 
-        rep = await anonymous_backend_sock.recv()
+        raw_rep = await anonymous_backend_sock.recv()
+    rep = user_claim_serializer.rep_load(raw_rep)
     assert rep == {"status": "ok"}
 
 
@@ -88,7 +98,8 @@ async def test_user_claim_timeout(mock_clock, backend, anonymous_backend_sock, m
         await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "user.created"})
         mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
-        rep = await anonymous_backend_sock.recv()
+        raw_rep = await anonymous_backend_sock.recv()
+    rep = user_claim_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "timeout",
         "reason": "Timeout while waiting for invitation creator to answer.",
@@ -112,7 +123,8 @@ async def test_user_claim_denied(backend, anonymous_backend_sock, mallory_invita
         backend.event_bus.send("user.created", user_id="dummy")
         backend.event_bus.send("user.invitation.cancelled", user_id=mallory_invitation.user_id)
 
-        rep = await anonymous_backend_sock.recv()
+        raw_rep = await anonymous_backend_sock.recv()
+    rep = user_claim_serializer.rep_load(raw_rep)
     assert rep == {"status": "denied", "reason": "Invitation creator rejected us."}
 
 
@@ -121,7 +133,8 @@ async def test_user_claim_unknown(anonymous_backend_sock):
     await anonymous_backend_sock.send(
         {"cmd": "user_claim", "invited_user_id": "dummy", "encrypted_claim": b"<foo>"}
     )
-    rep = await anonymous_backend_sock.recv()
+    raw_rep = await anonymous_backend_sock.recv()
+    rep = user_claim_serializer.rep_load(raw_rep)
     assert rep == {"status": "not_found"}
 
 
@@ -145,5 +158,6 @@ async def test_user_claim_already_exists(
                 "encrypted_claim": b"<foo>",
             }
         )
-        rep = await anonymous_backend_sock.recv()
+        raw_rep = await anonymous_backend_sock.recv()
+    rep = user_claim_serializer.rep_load(raw_rep)
     assert rep == {"status": "not_found"}

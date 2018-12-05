@@ -1,7 +1,5 @@
 import trio
 import attr
-import random
-import string
 from typing import List, Tuple
 import pendulum
 
@@ -14,30 +12,24 @@ from parsec.trustchain import (
     certified_extract_parts,
     validate_payload_certified_user,
     validate_payload_certified_device,
-    validate_payload_certified_user_revocation,
     validate_payload_certified_device_revocation,
     TrustChainError,
 )
-from parsec.api.user import (
-    user_get_req_schema,
-    user_get_rep_schema,
-    user_find_req_schema,
-    user_find_rep_schema,
-    user_get_invitation_creator_req_schema,
-    user_get_invitation_creator_rep_schema,
-    user_invite_req_schema,
-    user_claim_req_schema,
-    user_cancel_invitation_req_schema,
-    user_create_req_schema,
-    user_revoke_req_schema,
-    device_get_invitation_creator_req_schema,
-    device_get_invitation_creator_rep_schema,
-    device_invite_req_schema,
-    device_claim_req_schema,
-    device_claim_rep_schema,
-    device_cancel_invitation_req_schema,
-    device_create_req_schema,
-    device_revoke_req_schema,
+from parsec.api.protocole import (
+    user_get_serializer,
+    user_find_serializer,
+    user_get_invitation_creator_serializer,
+    user_invite_serializer,
+    user_claim_serializer,
+    user_cancel_invitation_serializer,
+    user_create_serializer,
+    device_get_invitation_creator_serializer,
+    device_invite_serializer,
+    device_claim_serializer,
+    device_cancel_invitation_serializer,
+    device_create_serializer,
+    device_revoke_serializer,
+    ValidationError,
 )
 from parsec.backend.utils import anonymous_api
 from parsec.backend.exceptions import NotFoundError, AlreadyExistsError, AlreadyRevokedError
@@ -121,15 +113,15 @@ class User:
     def public_key(self):
         return unsecure_certified_user_extract_public_key(self.certified_user)
 
+    def is_revocated(self):
+        return any((False for d in self.devices.values if d.revocated_on), True)
+
     user_id = attr.ib()
     certified_user = attr.ib()
     user_certifier = attr.ib()
     devices = attr.ib(factory=DevicesMapping)
 
     created_on = attr.ib(factory=pendulum.now)
-    revocated_on = attr.ib(default=None)
-    certified_revocation = attr.ib(default=None)
-    revocation_certifier = attr.ib(default=None)
 
 
 @attr.s(slots=True, frozen=True, repr=False)
@@ -158,10 +150,6 @@ class DeviceInvitation:
         return (pendulum.now() - self.created_on).total_seconds() < INVITATION_VALIDITY
 
 
-def _generate_token():
-    return "".join([random.choice(string.digits) for _ in range(6)])
-
-
 class BaseUserComponent:
     def __init__(self, root_verify_key: VerifyKey, event_bus: EventBus):
         self.root_verify_key = root_verify_key
@@ -170,21 +158,36 @@ class BaseUserComponent:
     #### Access user API ####
 
     async def api_user_get(self, client_ctx, msg):
-        msg = user_get_req_schema.load_or_abort(msg)
+        try:
+            msg = user_get_serializer.req_load(msg)
+        except ValidationError as exc:
+            return {"status": "bad_message", "errors": exc.messages}
+
         try:
             user = await self.get_user(msg["user_id"])
         except NotFoundError as exc:
             return {"status": "not_found"}
 
-        data, errors = user_get_rep_schema.dump(user)
-        if errors:
-            raise RuntimeError(f"Dump error with {user!r}: {errors}")
-        return data
+        return user_get_serializer.rep_dump(
+            {
+                "status": "ok",
+                "user_id": user.user_id,
+                "created_on": user.created_on,
+                "certified_user": user.certified_user,
+                "user_certifier": user.user_certifier,
+                "devices": user.devices,
+            }
+        )
 
     async def api_user_find(self, client_ctx, msg):
-        msg = user_find_req_schema.load_or_abort(msg)
+        try:
+            msg = user_find_serializer.req_load(msg)
+        except ValidationError as exc:
+            return {"status": "bad_message", "errors": exc.messages}
+
         results, total = await self.find(**msg)
-        return user_find_rep_schema.dump(
+
+        return user_find_serializer.rep_dump(
             {
                 "status": "ok",
                 "results": results,
@@ -192,12 +195,16 @@ class BaseUserComponent:
                 "per_page": msg["per_page"],
                 "total": total,
             }
-        ).data
+        )
 
     #### User creation API ####
 
     async def api_user_invite(self, client_ctx, msg):
-        msg = user_invite_req_schema.load_or_abort(msg)
+        try:
+            msg = user_invite_serializer.req_load(msg)
+        except ValidationError as exc:
+            return {"status": "bad_message", "errors": exc.messages}
+
         invitation = UserInvitation(msg["user_id"], client_ctx.device_id)
         try:
             await self.create_user_invitation(invitation)
@@ -224,11 +231,16 @@ class BaseUserComponent:
                 "status": "timeout",
                 "reason": ("Timeout while waiting for new user to be claimed."),
             }
-        return {"status": "ok", "encrypted_claim": _encrypted_claim}
+        return user_invite_serializer.rep_dump(
+            {"status": "ok", "encrypted_claim": _encrypted_claim}
+        )
 
     @anonymous_api
     async def api_user_get_invitation_creator(self, client_ctx, msg):
-        msg = user_get_invitation_creator_req_schema.load_or_abort(msg)
+        try:
+            msg = user_get_invitation_creator_serializer.req_load(msg)
+        except ValidationError as exc:
+            return {"status": "bad_message", "errors": exc.messages}
         try:
             invitation = await self.get_user_invitation(msg["invited_user_id"])
             if not invitation.is_valid():
@@ -238,15 +250,14 @@ class BaseUserComponent:
         except NotFoundError:
             return {"status": "not_found"}
 
-        data, errors = user_get_invitation_creator_rep_schema.dump(certifier)
-
-        if errors:
-            raise RuntimeError(f"Dump error with {certifier!r}: {errors}")
-        return data
+        return user_get_invitation_creator_serializer.rep_dump(certifier)
 
     @anonymous_api
     async def api_user_claim(self, client_ctx, msg):
-        msg = user_claim_req_schema.load_or_abort(msg)
+        try:
+            msg = user_claim_serializer.req_load(msg)
+        except ValidationError as exc:
+            return {"status": "bad_message", "errors": exc.messages}
 
         try:
             invitation = await self.get_user_invitation(msg["invited_user_id"])
@@ -282,19 +293,25 @@ class BaseUserComponent:
             }
         if not replied_ok:
             return {"status": "denied", "reason": "Invitation creator rejected us."}
-        return {"status": "ok"}
+        return user_claim_serializer.rep_dump({"status": "ok"})
 
     async def api_user_cancel_invitation(self, client_ctx, msg):
-        msg = user_cancel_invitation_req_schema.load_or_abort(msg)
+        try:
+            msg = user_cancel_invitation_serializer.req_load(msg)
+        except ValidationError as exc:
+            return {"status": "bad_message", "errors": exc.messages}
 
         await self.user_cancel_invitation(msg["user_id"])
 
         self.event_bus.send("user.invitation.cancelled", user_id=msg["user_id"])
 
-        return {"status": "ok"}
+        return user_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
     async def api_user_create(self, client_ctx, msg):
-        msg = user_create_req_schema.load_or_abort(msg)
+        try:
+            msg = user_create_serializer.req_load(msg)
+        except ValidationError as exc:
+            return {"status": "bad_message", "errors": exc.messages}
 
         try:
             u_certifier_id, u_payload = certified_extract_parts(msg["certified_user"])
@@ -355,53 +372,15 @@ class BaseUserComponent:
             return {"status": "already_exists", "reason": str(exc)}
 
         self.event_bus.send("user.created", user_id=user.user_id)
-        return {"status": "ok"}
-
-    async def api_user_revoke(self, client_ctx, msg):
-        msg = user_revoke_req_schema.load_or_abort(msg)
-
-        try:
-            certifier_id, payload = certified_extract_parts(msg["certified_revocation"])
-        except TrustChainError as exc:
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
-            }
-
-        if certifier_id != client_ctx.device_id:
-            return {
-                "status": "invalid_certification",
-                "reason": "Certifier is not the authenticated device.",
-            }
-
-        try:
-            data = validate_payload_certified_user_revocation(
-                client_ctx.verify_key, payload, pendulum.now()
-            )
-        except TrustChainError as exc:
-            return {
-                "status": "invalid_certification",
-                "reason": f"Invalid certification data ({exc}).",
-            }
-
-        try:
-            await self.revoke_user(data["user_id"], msg["certified_revocation"], certifier_id)
-
-        except NotFoundError:
-            return {"status": "not_found"}
-
-        except AlreadyRevokedError:
-            return {
-                "status": "already_revoked",
-                "reason": f"User `{data['user_id']}` already revoked",
-            }
-
-        return {"status": "ok"}
+        return user_create_serializer.rep_dump({"status": "ok"})
 
     #### Device creation API ####
 
     async def api_device_invite(self, client_ctx, msg):
-        msg = device_invite_req_schema.load_or_abort(msg)
+        try:
+            msg = device_invite_serializer.req_load(msg)
+        except ValidationError as exc:
+            return {"status": "bad_message", "errors": exc.messages}
         if msg["device_id"].user_id != client_ctx.user_id:
             return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
@@ -431,11 +410,16 @@ class BaseUserComponent:
                 "status": "timeout",
                 "reason": ("Timeout while waiting for new device to be claimed."),
             }
-        return {"status": "ok", "encrypted_claim": _encrypted_claim}
+        return device_invite_serializer.rep_dump(
+            {"status": "ok", "encrypted_claim": _encrypted_claim}
+        )
 
     @anonymous_api
     async def api_device_get_invitation_creator(self, client_ctx, msg):
-        msg = device_get_invitation_creator_req_schema.load_or_abort(msg)
+        try:
+            msg = device_get_invitation_creator_serializer.req_load(msg)
+        except ValidationError as exc:
+            return {"status": "bad_message", "errors": exc.messages}
         try:
             invitation = await self.get_device_invitation(msg["invited_device_id"])
             if not invitation.is_valid():
@@ -445,15 +429,14 @@ class BaseUserComponent:
         except NotFoundError:
             return {"status": "not_found"}
 
-        data, errors = device_get_invitation_creator_rep_schema.dump(certifier)
-
-        if errors:
-            raise RuntimeError(f"Dump error with {certifier!r}: {errors}")
-        return data
+        return device_get_invitation_creator_serializer.rep_dump(certifier)
 
     @anonymous_api
     async def api_device_claim(self, client_ctx, msg):
-        msg = device_claim_req_schema.load_or_abort(msg)
+        try:
+            msg = device_claim_serializer.req_load(msg)
+        except ValidationError as exc:
+            return {"status": "bad_message", "errors": exc.messages}
 
         try:
             invitation = await self.get_device_invitation(msg["invited_device_id"])
@@ -492,15 +475,15 @@ class BaseUserComponent:
         if not replied_ok:
             return {"status": "denied", "reason": ("Invitation creator rejected us.")}
 
-        raw_data = {"status": "ok", "encrypted_answer": replied_encrypted_answer}
-        data, errors = device_claim_rep_schema.dump(raw_data)
-
-        if errors:
-            raise RuntimeError(f"Dump error with {raw_data!r}: {errors}")
-        return data
+        return device_claim_serializer.rep_dump(
+            {"status": "ok", "encrypted_answer": replied_encrypted_answer}
+        )
 
     async def api_device_cancel_invitation(self, client_ctx, msg):
-        msg = device_cancel_invitation_req_schema.load_or_abort(msg)
+        try:
+            msg = device_cancel_invitation_serializer.req_load(msg)
+        except ValidationError as exc:
+            return {"status": "bad_message", "errors": exc.messages}
         if msg["device_id"].user_id != client_ctx.user_id:
             return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
@@ -508,10 +491,13 @@ class BaseUserComponent:
 
         self.event_bus.send("device.invitation.cancelled", device_id=msg["device_id"])
 
-        return {"status": "ok"}
+        return device_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
     async def api_device_create(self, client_ctx, msg):
-        msg = device_create_req_schema.load_or_abort(msg)
+        try:
+            msg = device_create_serializer.req_load(msg)
+        except ValidationError as exc:
+            return {"status": "bad_message", "errors": exc.messages}
 
         try:
             certifier_id, payload = certified_extract_parts(msg["certified_device"])
@@ -552,10 +538,13 @@ class BaseUserComponent:
         self.event_bus.send(
             "device.created", device_id=device.device_id, encrypted_answer=msg["encrypted_answer"]
         )
-        return {"status": "ok"}
+        return device_create_serializer.rep_dump({"status": "ok"})
 
     async def api_device_revoke(self, client_ctx, msg):
-        msg = device_revoke_req_schema.load_or_abort(msg)
+        try:
+            msg = device_revoke_serializer.req_load(msg)
+        except ValidationError as exc:
+            return {"status": "bad_message", "errors": exc.messages}
 
         try:
             certifier_id, payload = certified_extract_parts(msg["certified_revocation"])
@@ -593,7 +582,7 @@ class BaseUserComponent:
                 "reason": f"Device `{data['device_id']}` already revoked",
             }
 
-        return {"status": "ok"}
+        return device_revoke_serializer.rep_dump({"status": "ok"})
 
     #### Virtual methods ####
 
@@ -673,12 +662,7 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
-    async def revokeuser(
-        self, user_id: UserID, certified_revocation: bytes, revocation_certifier: DeviceID
-    ) -> None:
-        raise NotImplementedError()
-
-    async def revokedevice(
+    async def revoke_device(
         self, device_id: DeviceID, certified_revocation: bytes, revocation_certifier: DeviceID
     ) -> None:
         raise NotImplementedError()

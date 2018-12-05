@@ -8,9 +8,8 @@ from parsec.types import DeviceID
 from parsec.utils import ParsecError
 from parsec.event_bus import EventBus
 from parsec.networking import CookedSocket
-from parsec.handshake import HandshakeFormatError, ServerHandshake
 from parsec.schema import BaseCmdSchema, fields, OneOfSchema
-
+from parsec.api.protocole import HandshakeFormatError, ServerHandshake
 from parsec.backend.exceptions import BackendAuthError
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.drivers.memory import (
@@ -181,7 +180,6 @@ class BackendApp:
             "user_invite": self.user.api_user_invite,
             "user_cancel_invitation": self.user.api_user_cancel_invitation,
             "user_create": self.user.api_user_create,
-            "user_revoke": self.user.api_user_revoke,  # TODO: remove and only use device_revoke ?
             "device_invite": self.user.api_device_invite,
             "device_cancel_invitation": self.user.api_device_cancel_invitation,
             "device_create": self.user.api_device_create,
@@ -344,7 +342,7 @@ class BackendApp:
                 except (NotFoundError, KeyError):
                     result_req = hs.build_bad_identity_result_req()
                 else:
-                    if user.revocated_on or device.revocated_on:
+                    if device.revocated_on:
                         raise BackendAuthError("Device revoked.")
                     context = ClientContext(hs.identity, user.public_key, device.verify_key)
                     result_req = hs.build_result_req(device.verify_key)
