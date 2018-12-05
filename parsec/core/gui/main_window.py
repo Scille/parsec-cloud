@@ -60,6 +60,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.add_tray_icon()
         self.connect_all()
         self.setWindowTitle("Parsec - Community Edition - v{}".format(PARSEC_VERSION))
+        self.tray_message_shown = False
 
     def add_tray_icon(self):
         if not QSystemTrayIcon.isSystemTrayAvailable():
@@ -68,7 +69,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tray = QSystemTrayIcon(self)
         menu = QMenu()
         action = menu.addAction(QCoreApplication.translate(self.__class__.__name__, "Show window"))
-        action.triggered.connect(self.show)
+        action.triggered.connect(self.show_top)
         action = menu.addAction(QCoreApplication.translate(self.__class__.__name__, "Exit"))
         action.triggered.connect(self.close_app)
         self.tray.setContextMenu(menu)
@@ -98,8 +99,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
-            self.show()
-            self.raise_()
+            self.show_top()
+
+    def show_top(self):
+        self.show()
+        self.raise_()
 
     def logout(self):
         self.unmount()
@@ -371,11 +375,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if self.tray:
                 self.tray.hide()
         else:
-            if self.tray:
+            if self.tray and not self.tray_message_shown:
                 self.tray.showMessage(
                     "Parsec",
                     QCoreApplication.translate(self.__class__.__name__, "Parsec is still running."),
                 )
+                self.tray_message_shown = True
             event.ignore()
             self.hide()
 
