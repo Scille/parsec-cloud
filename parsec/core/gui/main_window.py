@@ -7,6 +7,7 @@ from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
 
+from parsec.core.backend_connection import BackendNotAvailable
 from parsec.pkcs11_encryption_tool import DevicePKCS11Error
 from parsec.core.devices_manager import (
     DeviceLoadingError,
@@ -208,6 +209,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(
                 self.users_widget,
                 QCoreApplication.translate("MainWindow", "Can not register the user."),
+            )
+        except BackendNotAvailable:
+            show_error(
+                self.users_widget,
+                QCoreApplication.translate(
+                    "MainWindow",
+                    "The connection to the backend has been lost, can not register the user.",
+                ),
             )
 
     def handle_register_user(
