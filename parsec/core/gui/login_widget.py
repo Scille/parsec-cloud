@@ -36,14 +36,6 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
             )
 
     def reset(self):
-        if len(self.devices) == 1:
-            self.line_edit_device.setText(self.devices[0])
-        elif len(self.devices) > 1:
-            last_device = settings.get_value("last_device")
-            if last_device and last_device in self.devices:
-                self.line_edit_device.setText(last_device)
-        else:
-            self.line_edit_device.setText("")
         self.line_edit_password.setText("")
         self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
         self.line_edit_password.setDisabled(False)
