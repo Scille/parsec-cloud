@@ -7,8 +7,8 @@ from json import JSONDecodeError
 from parsec.types import DeviceID
 from parsec.utils import ParsecError
 from parsec.event_bus import EventBus
-from parsec.networking import CookedSocket
 from parsec.schema import BaseCmdSchema, fields, OneOfSchema
+from parsec.api.transport import PatateTCPTransport, TransportError
 from parsec.api.protocole import HandshakeFormatError, ServerHandshake
 from parsec.backend.exceptions import BackendAuthError
 from parsec.backend.blockstore import blockstore_factory
@@ -355,7 +355,7 @@ class BackendApp:
         return context
 
     async def handle_client(self, sockstream, swallow_crash=False):
-        sock = CookedSocket(sockstream)
+        sock = PatateTCPTransport(sockstream)
         client_ctx = None
         try:
             logger.debug("start handshake")
@@ -369,7 +369,7 @@ class BackendApp:
 
             await self._handle_client_loop(sock, client_ctx)
 
-        except trio.BrokenStreamError:
+        except TransportError:
             # Client has closed connection
             pass
 

@@ -340,7 +340,7 @@ class LocalDevicesManager:
             assert not errors
 
         return Device(
-            id=device_id,
+            device_id=device_id,
             user_privkey=user_privkey,
             device_signkey=device_signkey,
             local_symkey=local_symkey,

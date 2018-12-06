@@ -14,6 +14,8 @@ def timestamp():
     return current_clock().current_time()
 
 
+# TODO: replace by a function
+# TODO: BaseAsyncComponent seems not needed
 class SyncMonitor(BaseAsyncComponent):
     def __init__(self, fs, event_bus):
         super().__init__()

@@ -2,7 +2,6 @@ import trio
 from structlog import get_logger
 from urllib.parse import urlparse
 
-from parsec.networking import CookedSocket
 from parsec.api.protocole import ClientHandshake, AnonymousClientHandshake, HandshakeError
 
 
@@ -17,7 +16,9 @@ class BackendNotAvailable(BackendError):
     pass
 
 
-async def backend_connection_factory(addr: str, auth_id=None, auth_signkey=None) -> CookedSocket:
+async def backend_connection_factory(
+    addr: str, auth_id=None, auth_signkey=None
+) -> trio.SocketStream:
     """
     Connect and authenticate to the given backend.
 

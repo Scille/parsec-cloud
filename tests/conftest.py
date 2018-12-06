@@ -35,7 +35,7 @@ from parsec.backend.user import (
     DevicesMapping as BackendDevicesMapping,
 )
 from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
-from parsec.handshake import ClientHandshake, AnonymousClientHandshake
+from parsec.api.protocole import ClientHandshake, AnonymousClientHandshake
 
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")

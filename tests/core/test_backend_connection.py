@@ -10,6 +10,7 @@ from parsec.core.backend_connection import (
 from parsec.backend.exceptions import AlreadyRevokedError, NotFoundError
 from parsec.handshake import ServerHandshake, HandshakeRevokedDevice
 from parsec.networking import CookedSocket
+from parsec.trustchain import certify_device_revocation
 
 from tests.open_tcp_stream_mock_wrapper import offline
 
@@ -61,17 +62,11 @@ async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backen
 
 
 @pytest.mark.trio
-async def test_revoked_device_handshake(alice, backend, backend_sock_factory):
-    async with backend_sock_factory(backend, alice):
-        pass
-
-    await backend.user.revoke_device(alice.user_id, alice.device_name)
-
-    with pytest.raises(AlreadyRevokedError):
-        await backend.user.revoke_device(alice.user_id, alice.device_name)
-
-    with pytest.raises(NotFoundError):
-        await backend.user.revoke_device(alice.user_id, "bar")
+async def test_revoked_device_handshake(backend, backend_sock_factory, alice, alice2):
+    certified_revocation = certify_device_revocation(
+        alice.device_id, alice.device_signkey, alice2.device_id
+    )
+    await backend.user.revoke_device(alice.device_id, certified_revocation, alice2.device_id)
 
     with pytest.raises(HandshakeRevokedDevice):
         async with backend_sock_factory(backend, alice):

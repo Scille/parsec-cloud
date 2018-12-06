@@ -5,7 +5,7 @@ from structlog import get_logger
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.backend_connection import BackendNotAvailable, backend_connection_factory
 from parsec.core.devices_manager import Device
-from parsec.handshake import HandshakeBadIdentity
+from parsec.api.protocole import HandshakeBadIdentity
 
 
 PER_CMD_TIMEOUT = 30

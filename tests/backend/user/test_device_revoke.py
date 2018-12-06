@@ -2,9 +2,8 @@ import pytest
 import pendulum
 
 from parsec.trustchain import certify_device_revocation
-from parsec.handshake import HandshakeRevokedDevice
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.protocole import device_revoke_serializer
+from parsec.api.protocole import device_revoke_serializer, HandshakeRevokedDevice
 
 from tests.common import freeze_time
 

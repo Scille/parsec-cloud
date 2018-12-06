@@ -6,12 +6,6 @@ class ProtocoleError(Exception, ABC):
     pass
 
 
-class CmdRepError(ProtocoleError):
-    def __init__(self, rep):
-        super().__init__(rep)
-        self.rep = rep
-
-
 # Expose `marshmallow.ValidationError` as a child of `ProtocoleError`
 ProtocoleError.register(ValidationError)
 
@@ -99,7 +93,6 @@ class CmdSerializer:
         """
         Raises:
             ValidationError
-            CmdRepError
         """
         return self.rep_schema.load(data).data
 

@@ -4,7 +4,6 @@ import attr
 from structlog import get_logger
 
 from parsec.event_bus import EventBus
-from parsec.networking import serve_client
 from parsec.core.base import BaseAsyncComponent, taskify
 from parsec.core.fs import FS
 from parsec.core.sync_monitor import SyncMonitor
@@ -115,12 +114,6 @@ class Core(BaseAsyncComponent):
             return await self._logged_client_manager.backend_cmds_sender.ping()
         else:
             return False
-
-    async def handle_client(self, sockstream):
-        from parsec.core.api import dispatch_request
-
-        ctx = ClientContext(self.event_bus)
-        await serve_client(lambda req: dispatch_request(req, ctx, self), sockstream)
 
 
 class LoggedClientManager:

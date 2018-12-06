@@ -242,6 +242,7 @@ async def _create_db_tables(conn):
     )
 
 
+# TODO: replace by a fonction
 class PGHandler:
     def __init__(self, url, event_bus):
         self.url = url

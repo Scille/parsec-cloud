@@ -89,6 +89,7 @@ def sync_wrap(cls, methods):
 class CallController:
     need_stop = attr.ib(factory=trio.Event)
     stopped = attr.ib(factory=trio.Event)
+    obj = attr.ib(default=None)
 
     async def stop(self):
         self.need_stop.set()
@@ -98,8 +99,9 @@ class CallController:
 async def call_with_control(controlled_fn, *, task_status=trio.TASK_STATUS_IGNORED):
     controller = CallController()
 
-    async def _started_cb(**kwargs):
-        controller.__dict__.update(kwargs)
+    async def _started_cb(obj=None):
+        controller = CallController()
+        controller.obj = obj
         task_status.started(controller)
         await controller.need_stop.wait()
 

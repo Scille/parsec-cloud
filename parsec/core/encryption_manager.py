@@ -14,11 +14,11 @@ from parsec.crypto import (
     PublicKey,
     VerifyKey,
 )
-from parsec.schema import UnknownCheckedSchema, fields
 from parsec.utils import from_jsonb64, to_jsonb64
 from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.base import BaseAsyncComponent
-from parsec.core.devices_manager import is_valid_user_id, is_valid_device_name
+from parsec.core.devices_manager import is_valid_user_id
+from parsec.api.protocole import CmdRepError, user_get_serializer
 
 
 class EncryptionManagerError(Exception):
@@ -47,25 +47,6 @@ class MessageEncryptionError(EncryptionManagerError):
 
 class MessageSignatureError(EncryptionManagerError):
     pass
-
-
-class BackendUserGetRepDevicesSchema(UnknownCheckedSchema):
-    created_on = fields.DateTime(required=True)
-    revocated_on = fields.DateTime(allow_none=True)
-    verify_key = fields.Base64Bytes(required=True)
-
-
-class BackendUserGetRepSchema(UnknownCheckedSchema):
-    status = fields.CheckedConstant("ok", required=True)
-    user_id = fields.String(required=True)
-    created_on = fields.DateTime(required=True)
-    broadcast_key = fields.Base64Bytes(required=True)
-    devices = fields.Map(
-        fields.String(), fields.Nested(BackendUserGetRepDevicesSchema), required=True
-    )
-
-
-backend_user_get_rep_schema = BackendUserGetRepSchema()
 
 
 @attr.s(init=False, slots=True)
@@ -109,15 +90,14 @@ class EncryptionManager(BaseAsyncComponent):
 
     async def _populate_remote_user_cache(self, user_id: UserID):
         raw_rep = await self.backend_cmds_sender.send({"cmd": "user_get", "user_id": user_id})
-        rep, errors = backend_user_get_rep_schema.load(raw_rep)
-        if errors:
-            if raw_rep.get("status") == "not_found":
+        try:
+            rep, errors = user_get_serializer.rep_load(raw_rep)
+        except CmdRepError as exc:
+            if exc.rep["status"] == "not_found":
                 # User doesn't exit, nothing to populate then
                 return
-            else:
-                raise BackendGetUserError(
-                    "Cannot retrieve user `%s`: %r (errors: %r)" % (user_id, raw_rep, errors)
-                )
+            raise
+
         user_data = {
             "user_id": rep["user_id"],
             "broadcast_key": to_jsonb64(rep["broadcast_key"]),
