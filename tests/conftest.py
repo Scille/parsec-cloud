@@ -36,11 +36,17 @@ from parsec.backend.user import (
 )
 from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
 from parsec.api.protocole import ClientHandshake, AnonymousClientHandshake
+from parsec.api.transport import PatateTCPTransport
 
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
 
-from tests.common import freeze_time, FreezeTestOnBrokenStreamCookedSocket, InMemoryLocalDB
+from tests.common import (
+    freeze_time,
+    FreezeTestOnBrokenStreamCookedSocket,
+    InMemoryLocalDB,
+    FreezeTestOnTransportError,
+)
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 from tests.event_bus_spy import SpiedEventBus
 
@@ -535,25 +541,29 @@ async def running_backend(server_factory, backend_addr, backend):
         yield server
 
 
+# TODO: rename to backend_transport_factory
 @pytest.fixture
 def backend_sock_factory(server_factory):
     @asynccontextmanager
     async def _backend_sock_factory(backend, auth_as):
         async with server_factory(backend.handle_client) as server:
-            sockstream = server.connection_factory()
-            sock = FreezeTestOnBrokenStreamCookedSocket(sockstream)
+            stream = server.connection_factory()
+            transport = FreezeTestOnTransportError(PatateTCPTransport(stream))
+
             if auth_as:
                 # Handshake
                 if auth_as == "anonymous":
                     ch = AnonymousClientHandshake()
                 else:
+                    # TODO: change auth_as type
                     ch = ClientHandshake(auth_as.id, auth_as.device_signkey)
-                challenge_req = await sock.recv()
+                challenge_req = await transport.recv()
                 answer_req = ch.process_challenge_req(challenge_req)
-                await sock.send(answer_req)
-                result_req = await sock.recv()
+                await transport.send(answer_req)
+                result_req = await transport.recv()
                 ch.process_result_req(result_req)
-            yield sock
+
+            yield transport
 
     return _backend_sock_factory
 

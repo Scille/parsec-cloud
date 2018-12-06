@@ -24,10 +24,10 @@ class DeviceSchema(UnknownCheckedSchema):
 
     revocated_on = fields.DateTime(allow_none=True)
     certified_revocation = fields.Base64Bytes(allow_none=True)
-    revocation_certifier = fields.Nested("DeviceSchema", allow_none=True)
+    revocation_certifier = fields.DeviceID(allow_none=True)
 
     certified_device = fields.Base64Bytes(required=True)
-    device_certifier = fields.Nested("DeviceSchema", allow_none=True)
+    device_certifier = fields.DeviceID(allow_none=True)
 
 
 class UserSchema(UnknownCheckedSchema):
@@ -35,7 +35,7 @@ class UserSchema(UnknownCheckedSchema):
     created_on = fields.DateTime(required=True)
 
     certified_user = fields.Base64Bytes(required=True)
-    user_certifier = fields.Nested(DeviceSchema, allow_none=True)
+    user_certifier = fields.DeviceID(allow_none=True)
 
     devices = fields.Map(fields.DeviceName(), fields.Nested(DeviceSchema), required=True)
 
@@ -48,7 +48,7 @@ class UserGetReqSchema(BaseReqSchema):
 
 
 class UserGetRepSchema(BaseRepSchema, UserSchema):
-    pass
+    trustchain = fields.Map(fields.DeviceID(), fields.Nested(DeviceSchema), required=True)
 
 
 user_get_serializer = CmdSerializer(UserGetReqSchema, UserGetRepSchema)

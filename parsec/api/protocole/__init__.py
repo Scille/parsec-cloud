@@ -1,4 +1,4 @@
-from parsec.api.protocole.base import ProtocoleError, ValidationError, CmdRepError
+from parsec.api.protocole.base import ProtocoleError, ValidationError
 from parsec.api.protocole.handshake import (
     HandshakeError,
     HandshakeFormatError,
@@ -28,7 +28,6 @@ from parsec.api.protocole.user import (
 __all__ = (
     "ProtocoleError",
     "ValidationError",
-    "CmdRepError",
     "HandshakeError",
     "HandshakeFormatError",
     "HandshakeBadIdentity",

@@ -1,4 +1,3 @@
-import attr
 import trio
 from uuid import uuid4
 from async_generator import asynccontextmanager
@@ -7,7 +6,7 @@ from urllib.parse import urlparse
 
 from parsec.types import DeviceID
 from parsec.crypto import SigningKey
-from parsec.core.backend_connection2.cmds import BackendCmds
+from parsec.core.backend_connection2.cmds import BackendCmds, AnonymousBackendCmds
 from parsec.core.backend_connection2.exceptions import BackendNotAvailable
 from parsec.api.transport import BaseTransport, TransportError, PatateTCPTransport
 from parsec.api.protocole import ProtocoleError, AnonymousClientHandshake, ClientHandshake
@@ -57,13 +56,20 @@ async def _do_handshade(
         raise
 
 
+async def backend_anonymous_cmds_connect(addr: str) -> AnonymousBackendCmds:
+    log = logger.bind(addr=addr, auth="<anonymous>", id=uuid4().hex)
+    transport = await _transport_factory(log, addr)
+    _do_handshade(log, transport)
+    return AnonymousBackendCmds(log, transport)
+
+
 async def backend_cmds_connect(
-    addr, device_id: DeviceID = None, signing_key: SigningKey = None
+    addr: str, device_id: DeviceID, signing_key: SigningKey
 ) -> BackendCmds:
-    log = logger.bind(addr=addr, auth=device_id or "<anonymous>", id=uuid4().hex)
-    transport = await _transport_factory(addr, log)
-    _do_handshade(transport, device_id, signing_key, log)
-    return BackendCmds(transport, log)
+    log = logger.bind(addr=addr, auth=device_id, id=uuid4().hex)
+    transport = await _transport_factory(log, addr)
+    _do_handshade(log, transport, device_id, signing_key)
+    return BackendCmds(log, transport)
 
 
 class BackendCmdsPool:

@@ -9,6 +9,7 @@ from parsec.core import Core
 from parsec.core.fs import FS
 from parsec.core.local_db import LocalDB, LocalDBMissingEntry
 from parsec.networking import CookedSocket
+from parsec.api.transport import BaseTransport, TransportError
 
 
 class InMemoryLocalDB(LocalDB):
@@ -93,6 +94,40 @@ class FreezeTestOnBrokenStreamCookedSocket(CookedSocket):
             return await super().recv()
 
         except trio.BrokenStreamError as exc:
+            # Wait here until this coroutine is cancelled
+            await trio.sleep_forever()
+
+
+class FreezeTestOnTransportError(BaseTransport):
+    """
+    When a server crashes during test, it is possible the client coroutine
+    receives a `TransportError` exception. Hence we end up with two
+    exceptions: the server crash (i.e. the original exception we are interested
+    into) and the client not receiving an answer.
+    The solution is simply to freeze the coroutine receiving the broken stream
+    error until it will be cancelled by the original exception bubbling up.
+    """
+
+    def __init__(self, transport):
+        self.transport = transport
+
+    @property
+    def stream(self):
+        return self.transport.stream
+
+    async def send(self, msg):
+        try:
+            return await self.transport.send(msg)
+
+        except TransportError as exc:
+            # Wait here until this coroutine is cancelled
+            await trio.sleep_forever()
+
+    async def recv(self):
+        try:
+            return await self.transport.recv()
+
+        except TransportError as exc:
             # Wait here until this coroutine is cancelled
             await trio.sleep_forever()
 

@@ -1,5 +1,5 @@
 import attr
-from typing import List
+from typing import Tuple, List, Dict
 from structlog import get_logger
 
 from parsec.types import DeviceID, UserID
@@ -20,7 +20,7 @@ from parsec.api.protocole import (
     device_create_serializer,
     device_revoke_serializer,
 )
-from parsec.core.device_types import RemoteDevice, RemoteUser, DevicesMapping
+from parsec.core.types import RemoteDevice, RemoteUser, DevicesMapping
 
 
 logger = get_logger()
@@ -33,7 +33,7 @@ class BackendCmds:
         # TODO: use logger...
         self.log = log or logger
 
-    async def user_get(self, user_id: UserID) -> RemoteUser:
+    async def user_get(self, user_id: UserID) -> Tuple[RemoteUser, Dict[DeviceID, RemoteDevice]]:
         raw_req = {"cmd": "user_get", "user_id": user_id}
         req = user_get_serializer.req_dump(raw_req)
         raw_rep = await self.transport.send(req)
@@ -52,7 +52,7 @@ class BackendCmds:
                     revocation_certifier=rep_device["revocation_certifier"],
                 )
             )
-        return RemoteUser(
+        user = RemoteUser(
             user_id=rep["user_id"],
             certified_user=rep["certified_user"],
             user_certifier=rep["user_certifier"],
@@ -62,6 +62,19 @@ class BackendCmds:
             certified_revocation=rep["certified_revocation"],
             revocation_certifier=rep["revocation_certifier"],
         )
+        trustchain = {
+            k: RemoteDevice(
+                device_id=v["device_id"],
+                certified_device=v["certified_device"],
+                device_certifier=v["device_certifier"],
+                created_on=v["created_on"],
+                revocated_on=v["revocated_on"],
+                certified_revocation=v["certified_revocation"],
+                revocation_certifier=v["revocation_certifier"],
+            )
+            for k, v in rep["trustchain"].items()
+        }
+        return (user, trustchain)
 
     async def user_find(
         self, query: str = None, page: int = 1, per_page: int = 100
@@ -128,9 +141,11 @@ class BackendCmds:
         device_revoke_serializer.rep_load(raw_rep)
 
 
-@attr.s(slots=True)
 class BackendAnonymousCmds:
-    transport = attr.ib()
+    def __init__(self, transport: BaseTransport, log=None):
+        self.transport = transport
+        # TODO: use logger...
+        self.log = log or logger
 
     async def user_get_invitation_creator(self, invited_user_id: UserID) -> RemoteDevice:
         raw_req = {"cmd": "user_get_invitation_creator", "invited_user_id": invited_user_id}

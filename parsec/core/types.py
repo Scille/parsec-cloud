@@ -5,9 +5,41 @@ from parsec.trustchain import (
     unsecure_certified_device_extract_verify_key,
     unsecure_certified_user_extract_public_key,
 )
+from parsec.crypto import SigningKey, PrivateKey
 
 
-@attr.s(slots=True, frozen=True, repr=False)
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
+class LocalDevice:
+    device_id: DeviceID
+    signing_key: SigningKey
+    private_key: PrivateKey
+    user_manifest_access: dict  # TODO: Better typing
+    local_secret_key: bytes
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.device_id})"
+
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
+
+    @property
+    def device_name(self):
+        return self.device_id.device_name
+
+    @property
+    def user_id(self):
+        return self.device_id.user_id
+
+    @property
+    def verify_key(self):
+        return self.signing_key.verify_key
+
+    @property
+    def public_key(self):
+        return self.private_key.public_key
+
+
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class RemoteDevice:
     def __repr__(self):
         return f"{self.__class__.__name__}({self.device_id})"
@@ -27,56 +59,24 @@ class RemoteDevice:
     def verify_key(self):
         return unsecure_certified_device_extract_verify_key(self.certified_device)
 
-    device_id = attr.ib()
-    certified_device = attr.ib()
-    device_certifier = attr.ib()
+    device_id: DeviceID
+    certified_device: bytes
+    device_certifier: DeviceID
 
-    created_on = attr.ib(factory=pendulum.now)
-    revocated_on = attr.ib(default=None)
-    certified_revocation = attr.ib(default=None)
-    revocation_certifier = attr.ib(default=None)
-
-
-@attr.s(slots=True, frozen=True, repr=False)
-class LocalDevice:
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.device_id})"
-
-    def evolve(self, **kwargs):
-        return attr.evolve(self, **kwargs)
-
-    @property
-    def device_name(self):
-        return self.device_id.device_name
-
-    @property
-    def user_id(self):
-        return self.device_id.user_id
-
-    @property
-    def verify_key(self):
-        return unsecure_certified_device_extract_verify_key(self.certified_device)
-
-    device_id = attr.ib()
-    certified_device = attr.ib()
-    device_certifier = attr.ib()
-    signing_key = attr.ib()
-    private_key = attr.ib()
-
-    created_on = attr.ib(factory=pendulum.now)
-    revocated_on = attr.ib(default=None)
-    certified_revocation = attr.ib(default=None)
-    revocation_certifier = attr.ib(default=None)
+    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+    revocated_on: pendulum.Pendulum = None
+    certified_revocation: bytes = None
+    revocation_certifier: DeviceID = None
 
 
-class DevicesMapping:
+class RemoteDevicesMapping:
     """
     Basically a frozen dict.
     """
 
     __slots__ = ("_read_only_mapping",)
 
-    def __init__(self, *devices: RemoteDevice):
+    def __init__(self, *devices: Device):
         self._read_only_mapping = {d.device_name: d for d in devices}
 
     def __repr__(self):
@@ -101,7 +101,7 @@ class DevicesMapping:
         return self._read_only_mapping.__in__(key)
 
 
-@attr.s(slots=True, frozen=True, repr=False)
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class RemoteUser:
     def __repr__(self):
         return f"{self.__class__.__name__}({self.user_id})"
@@ -113,12 +113,12 @@ class RemoteUser:
     def public_key(self):
         return unsecure_certified_user_extract_public_key(self.certified_user)
 
-    user_id = attr.ib()
-    certified_user = attr.ib()
-    user_certifier = attr.ib()
-    devices = attr.ib(factory=DevicesMapping)
+    def is_revocated(self):
+        return any((False for d in self.devices.values if d.revocated_on), True)
 
-    created_on = attr.ib(factory=pendulum.now)
-    revocated_on = attr.ib(default=None)
-    certified_revocation = attr.ib(default=None)
-    revocation_certifier = attr.ib(default=None)
+    user_id: UserID
+    certified_user: bytes
+    user_certifier: DeviceID
+    devices: RemoteDevicesMapping = attr.ib(factory=RemoteDevicesMapping)
+
+    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)

@@ -29,6 +29,7 @@ async def test_api_user_get_ok(backend, alice_backend_sock, bob):
                 "device_certifier": None,
             }
         },
+        "trustchain": {},
     }
 
 

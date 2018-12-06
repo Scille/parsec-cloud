@@ -5,6 +5,7 @@ from async_generator import asynccontextmanager
 
 from parsec.types import UserID
 from parsec.event_bus import EventBus
+from parsec.core.types import LocalDevice
 from parsec.core.config import CoreConfig
 from parsec.core.backend_connection2 import backend_cmds_create_pool, backend_listen_events
 from parsec.core.connection_monitor import monitor_connection
@@ -14,12 +15,14 @@ from parsec.core.beacons_monitor import monitor_beacons
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import SyncMonitor
 from parsec.core.fs import FS
+from parsec.core.local_db import LocalDB
 
 
-@attr.s
+@attr.s(frozen=True, slots=True)
 class LoggedCore:
     config = attr.ib()
     device = attr.ib()
+    local_db = attr.ib()
     event_bus = attr.ib()
     encryption_manager = attr.ib()
     mountpoint_manager = attr.ib()
@@ -46,7 +49,7 @@ class LoggedCore:
 
 
 @asynccontextmanager
-async def logged_core_factory(config: CoreConfig, device, event_bus: EventBus = None):
+async def logged_core_factory(config: CoreConfig, device: LocalDevice, event_bus: EventBus = None):
     event_bus = event_bus or EventBus()
 
     # Plenty of nested scope to order components init/teardown
@@ -72,19 +75,21 @@ async def logged_core_factory(config: CoreConfig, device, event_bus: EventBus = 
                     # TODO: rework mountpoint manager to avoid init/teardown
                     await mountpoint_manager.init(monitor_nursery)
 
-                    fs = FS(device, backend_cmds_pool, encryption_manager, event_bus)
+                    local_db = LocalDB(config.local_db_folder, device)
+                    fs = FS(device, local_db, backend_cmds_pool, encryption_manager, event_bus)
 
                     # Finally start monitoring coroutines
                     await monitor_nursery.start(monitor_beacons, device, fs, event_bus)
                     await monitor_nursery.start(monitor_messages, fs, event_bus)
                     # TODO: replace SyncMonitor by a function
-                    sync_monitor = SyncMonitor()
+                    sync_monitor = SyncMonitor(fs, event_bus)
                     await monitor_nursery.start(sync_monitor.run)
 
                     try:
                         yield LoggedCore(
                             config=config,
                             device=device,
+                            local_db=local_db,
                             event_bus=event_bus,
                             encryption_manager=encryption_manager,
                             mountpoint_manager=mountpoint_manager,

@@ -18,7 +18,7 @@ from parsec.utils import from_jsonb64, to_jsonb64
 from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.devices_manager import is_valid_user_id
-from parsec.api.protocole import CmdRepError, user_get_serializer
+from parsec.api.protocole import user_get_serializer
 
 
 class EncryptionManagerError(Exception):
@@ -89,14 +89,17 @@ class EncryptionManager(BaseAsyncComponent):
         pass
 
     async def _populate_remote_user_cache(self, user_id: UserID):
-        raw_rep = await self.backend_cmds_sender.send({"cmd": "user_get", "user_id": user_id})
-        try:
-            rep, errors = user_get_serializer.rep_load(raw_rep)
-        except CmdRepError as exc:
-            if exc.rep["status"] == "not_found":
-                # User doesn't exit, nothing to populate then
-                return
-            raise
+        async with self.backend_cmds_pool.acquire() as cmds:
+            user = cmds.user_get(user_id)
+            # TODO: handle exception...
+        # raw_rep = await self.backend_cmds_sender.send({"cmd": "user_get", "user_id": user_id})
+        # try:
+        #     rep, errors = user_get_serializer.rep_load(raw_rep)
+        # except CmdRepError as exc:
+        #     if exc.rep["status"] == "not_found":
+        #         # User doesn't exit, nothing to populate then
+        #         return
+        #     raise
 
         user_data = {
             "user_id": rep["user_id"],

@@ -1,6 +1,6 @@
 import trio
 import attr
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Union
 import pendulum
 
 from parsec.types import UserID, DeviceID
@@ -39,7 +39,7 @@ PEER_EVENT_MAX_WAIT = 300
 INVITATION_VALIDITY = 3600
 
 
-@attr.s(slots=True, frozen=True, repr=False)
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class Device:
     def __repr__(self):
         return f"{self.__class__.__name__}({self.device_id})"
@@ -59,14 +59,14 @@ class Device:
     def verify_key(self):
         return unsecure_certified_device_extract_verify_key(self.certified_device)
 
-    device_id = attr.ib()
-    certified_device = attr.ib()
-    device_certifier = attr.ib()
+    device_id: DeviceID
+    certified_device: bytes
+    device_certifier: DeviceID
 
-    created_on = attr.ib(factory=pendulum.now)
-    revocated_on = attr.ib(default=None)
-    certified_revocation = attr.ib(default=None)
-    revocation_certifier = attr.ib(default=None)
+    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+    revocated_on: pendulum.Pendulum = None
+    certified_revocation: bytes = None
+    revocation_certifier: DeviceID = None
 
 
 class DevicesMapping:
@@ -101,7 +101,7 @@ class DevicesMapping:
         return self._read_only_mapping.__in__(key)
 
 
-@attr.s(slots=True, frozen=True, repr=False)
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class User:
     def __repr__(self):
         return f"{self.__class__.__name__}({self.user_id})"
@@ -116,35 +116,35 @@ class User:
     def is_revocated(self):
         return any((False for d in self.devices.values if d.revocated_on), True)
 
-    user_id = attr.ib()
-    certified_user = attr.ib()
-    user_certifier = attr.ib()
-    devices = attr.ib(factory=DevicesMapping)
+    user_id: UserID
+    certified_user: bytes
+    user_certifier: DeviceID
+    devices: DevicesMapping = attr.ib(factory=DevicesMapping)
 
-    created_on = attr.ib(factory=pendulum.now)
+    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
 
 
-@attr.s(slots=True, frozen=True, repr=False)
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class UserInvitation:
     def __repr__(self):
         return f"{self.__class__.__name__}({self.user_id})"
 
-    user_id = attr.ib()
-    creator = attr.ib()
-    created_on = attr.ib(factory=pendulum.now)
+    user_id: UserID
+    creator: DeviceID
+    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
 
     def is_valid(self) -> bool:
         return (pendulum.now() - self.created_on).total_seconds() < INVITATION_VALIDITY
 
 
-@attr.s(slots=True, frozen=True, repr=False)
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class DeviceInvitation:
     def __repr__(self):
         return f"{self.__class__.__name__}({self.device_id})"
 
-    device_id = attr.ib()
-    creator = attr.ib()
-    created_on = attr.ib(factory=pendulum.now)
+    device_id: DeviceID
+    creator: DeviceID
+    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
 
     def is_valid(self) -> bool:
         return (pendulum.now() - self.created_on).total_seconds() < INVITATION_VALIDITY
@@ -164,7 +164,7 @@ class BaseUserComponent:
             return {"status": "bad_message", "errors": exc.messages}
 
         try:
-            user = await self.get_user(msg["user_id"])
+            user, trustchain = await self.get_user_with_trustchain(msg["user_id"])
         except NotFoundError as exc:
             return {"status": "not_found"}
 
@@ -176,6 +176,7 @@ class BaseUserComponent:
                 "certified_user": user.certified_user,
                 "user_certifier": user.user_certifier,
                 "devices": user.devices,
+                "trustchain": trustchain,
             }
         )
 
@@ -245,12 +246,24 @@ class BaseUserComponent:
             invitation = await self.get_user_invitation(msg["invited_user_id"])
             if not invitation.is_valid():
                 return {"status": "not_found"}
-            certifier = await self.get_device(invitation.creator)
+            device, trustchain = await self.get_device_with_trustchain(invitation.creator)
 
         except NotFoundError:
             return {"status": "not_found"}
 
-        return user_get_invitation_creator_serializer.rep_dump(certifier)
+        return user_get_invitation_creator_serializer.rep_dump(
+            {
+                "status": "ok",
+                "device_id": device.device_id,
+                "created_on": device.created_on,
+                "certified_device": device.certified_device,
+                "device_certifier": device.device_certifier,
+                "revocated_on": device.revocated_on,
+                "certified_revocation": device.certified_revocation,
+                "revocation_certifier": device.revocation_certifier,
+                "trustchain": trustchain,
+            }
+        )
 
     @anonymous_api
     async def api_user_claim(self, client_ctx, msg):
@@ -424,12 +437,24 @@ class BaseUserComponent:
             invitation = await self.get_device_invitation(msg["invited_device_id"])
             if not invitation.is_valid():
                 return {"status": "not_found"}
-            certifier = await self.get_device(invitation.creator)
+            device, trustchain = await self.get_device_with_trustchain(invitation.creator)
 
         except NotFoundError:
             return {"status": "not_found"}
 
-        return device_get_invitation_creator_serializer.rep_dump(certifier)
+        return device_get_invitation_creator_serializer.rep_dump(
+            {
+                "status": "ok",
+                "device_id": device.device_id,
+                "created_on": device.created_on,
+                "certified_device": device.certified_device,
+                "device_certifier": device.device_certifier,
+                "revocated_on": device.revocated_on,
+                "certified_revocation": device.certified_revocation,
+                "revocation_certifier": device.revocation_certifier,
+                "trustchain": trustchain,
+            }
+        )
 
     @anonymous_api
     async def api_device_claim(self, client_ctx, msg):
@@ -607,7 +632,25 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
+    async def get_user_with_trustchain(
+        self, user_id: UserID
+    ) -> Tuple[User, Dict[DeviceID, Device]]:
+        """
+        Raises:
+            NotFoundError
+        """
+        raise NotImplementedError()
+
     async def get_device(self, device_id: DeviceID) -> Device:
+        """
+        Raises:
+            NotFoundError
+        """
+        raise NotImplementedError()
+
+    async def get_device_with_trustchain(
+        self, device_id: DeviceID
+    ) -> Tuple[Device, Dict[DeviceID, Device]]:
         """
         Raises:
             NotFoundError
