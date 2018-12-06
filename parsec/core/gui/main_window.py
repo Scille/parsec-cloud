@@ -188,7 +188,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     self.show_settings_widget()
                     return
             self.widget_menu.show()
-            self.button_user.setText("    " + device_id.split("@")[0])
+            self.label_username.setText(device_id.split("@")[0])
+            self.label_device.setText("@" + device_id.split("@")[1])
             self.show_mount_widget()
         except (DeviceLoadingError, DevicePKCS11Error):
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))

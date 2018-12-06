@@ -451,7 +451,7 @@ background-color: rgb(21, 84, 169);
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="button_user">
+           <widget class="QWidget" name="widget_info" native="true">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -464,13 +464,8 @@ background-color: rgb(21, 84, 169);
               <height>64</height>
              </size>
             </property>
-            <property name="font">
-             <font>
-              <pointsize>13</pointsize>
-             </font>
-            </property>
             <property name="styleSheet">
-             <string notr="true">QPushButton
+             <string notr="true">QWidget#widget_info
 {
 border-top: 2px solid rgb(46, 146, 208);
 border-bottom: 2px solid rgb(46, 146, 208);
@@ -481,22 +476,101 @@ background-color: rgb(22, 84, 169);
 }
 </string>
             </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset resource="../rc/resources.qrc">
-              <normaloff>:/icons/images/icons/user_menu.png</normaloff>:/icons/images/icons/user_menu.png</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>32</width>
-              <height>32</height>
-             </size>
-            </property>
-            <property name="flat">
-             <bool>true</bool>
-            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_6">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <property name="leftMargin">
+              <number>15</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="label_4">
+               <property name="minimumSize">
+                <size>
+                 <width>28</width>
+                 <height>35</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>28</width>
+                 <height>35</height>
+                </size>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="pixmap">
+                <pixmap resource="../rc/resources.qrc">:/icons/images/icons/user_menu.png</pixmap>
+               </property>
+               <property name="scaledContents">
+                <bool>true</bool>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_5">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <property name="leftMargin">
+                <number>20</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="label_username">
+                 <property name="font">
+                  <font>
+                   <pointsize>12</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                  </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">QLabel#label_username
+{
+color: rgb(255, 255, 255);
+}</string>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="label_device">
+                 <property name="font">
+                  <font>
+                   <pointsize>12</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                  </font>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">QLabel#label_device
+{
+color: rgb(255, 255, 255);
+}</string>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
            </widget>
           </item>
           <item>
