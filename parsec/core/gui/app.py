@@ -44,7 +44,7 @@ def run_gui(parsec_core, trio_portal, cancel_scope):
     # splash.show()
     # app.processEvents()
 
-    lang.switch_to_locale()
+    lang.switch_language()
 
     win = MainWindow()
 

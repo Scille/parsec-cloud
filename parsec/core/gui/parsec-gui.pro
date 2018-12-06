@@ -12,7 +12,8 @@ SOURCES += app.py \
            workspaces_widget.py
 
 
-TRANSLATIONS += tr/parsec_fr.ts
+TRANSLATIONS += tr/parsec_fr.ts \
+                tr/parsec_en.ts
 
 
 FORMS += forms/main_window.ui \

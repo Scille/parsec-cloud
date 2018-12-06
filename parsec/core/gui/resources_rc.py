@@ -6,3 +6,11 @@ except ImportError as exc:
 You must install the parsec package or run `python setup.py generate_pyqt_resources_bundle`
 """
     ) from exc
+
+
+if __name__ == "__main__":
+    from PyQt5.QtCore import QDirIterator
+
+    it = QDirIterator(":", QDirIterator.Subdirectories)
+    while it.hasNext():
+        print(it.next())

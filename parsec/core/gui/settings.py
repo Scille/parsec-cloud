@@ -16,6 +16,11 @@ ENTRIES = {
         "encode": lambda raw: "true" if raw else "false",
         "decode": lambda raw: raw.lower() == "true",
     },
+    "tray_enabled": {
+        "encode": lambda raw: "true" if raw else "false",
+        "decode": lambda raw: raw.lower() == "true",
+    },
+    "language": {"encode": identity, "decode": identity},
 }
 
 
