@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>501</width>
-    <height>379</height>
+    <height>402</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,82 +22,43 @@ background-color: rgb(255, 255, 255);
 QWidget#widget_users
 {
 border: 1px solid rgb(28, 78, 163);
+}
+
+QToolTip
+{
+background-color: rgb(46, 146, 208);
+border: 1px solid rgb(12, 65, 157);
+color: rgb(255, 255, 255);
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="leftMargin">
-    <number>10</number>
+    <number>0</number>
    </property>
    <property name="topMargin">
-    <number>10</number>
+    <number>15</number>
    </property>
    <property name="rightMargin">
     <number>0</number>
    </property>
    <property name="bottomMargin">
-    <number>0</number>
+    <number>15</number>
    </property>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QPushButton" name="button_add_user">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>32</height>
-        </size>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>12</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
-       <property name="layoutDirection">
-        <enum>Qt::RightToLeft</enum>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">background-color: rgb(45, 144, 209);
-border: 1px solid rgb(11, 56, 166);
-color: rgb(255, 255, 255);
-padding-left: 10px;
-padding-right: 10px;
-font-weight: bold;</string>
-       </property>
-       <property name="text">
-        <string>Add a new user</string>
-       </property>
-       <property name="icon">
-        <iconset resource="../rc/resources.qrc">
-         <normaloff>:/icons/images/icons/add_user.png</normaloff>:/icons/images/icons/add_user.png</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>24</width>
-         <height>24</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-    </layout>
-   </item>
    <item>
     <widget class="QWidget" name="widget_info" native="true">
      <layout class="QVBoxLayout" name="verticalLayout_3">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>30</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
       <item>
        <widget class="QLabel" name="label_3">
         <property name="font">
@@ -203,55 +164,48 @@ color: rgb(28, 78, 163);</string>
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="label_4">
-     <property name="font">
-      <font>
-       <pointsize>13</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="rightMargin">
+      <number>30</number>
      </property>
-     <property name="styleSheet">
-      <string notr="true">color: rgb(28, 78, 163);</string>
-     </property>
-     <property name="text">
-      <string>Users list</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLineEdit" name="line_edit_search">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>32</height>
-      </size>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>12</pointsize>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">background-image: url(:/icons/images/icons/search.png);
+     <item>
+      <widget class="QLineEdit" name="line_edit_search">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>32</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-image: url(:/icons/images/icons/search.png);
 background-repeat: no-repeat;
 background-position: right;
 border: 1px solid rgb(28, 78, 163);
 padding-left: 10px;
 color: rgb(28, 78, 163);</string>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="placeholderText">
-      <string>Search users</string>
-     </property>
-    </widget>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="placeholderText">
+        <string>Search users</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <property name="spacing">
       <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>30</number>
      </property>
      <item>
       <widget class="QPushButton" name="pushButton_4">
@@ -262,8 +216,11 @@ color: rgb(28, 78, 163);</string>
         </size>
        </property>
        <property name="styleSheet">
-        <string notr="true">background-color: rgb(12, 65, 157);
-border: 0;</string>
+        <string notr="true">QPushButton#pushButton_4
+{
+background-color: rgb(12, 65, 157);
+border: 0;
+}</string>
        </property>
        <property name="text">
         <string/>
@@ -317,6 +274,64 @@ border: 0;</string>
       </size>
      </property>
     </spacer>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="button_add_user">
+       <property name="minimumSize">
+        <size>
+         <width>80</width>
+         <height>64</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>80</width>
+         <height>64</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Add a user</string>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#button_add_user
+{
+border-top-left-radius: 32px;
+border-bottom-left-radius: 32px;
+background-color: rgb(12, 65, 157);
+padding-left: 10px;
+}</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="../rc/resources.qrc">
+         <normaloff>:/icons/images/icons/add-plus-button.png</normaloff>:/icons/images/icons/add-plus-button.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>50</width>
+         <height>50</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

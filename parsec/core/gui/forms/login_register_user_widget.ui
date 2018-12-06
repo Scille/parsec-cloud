@@ -17,6 +17,11 @@
    <string notr="true">QWidget#LoginRegisterUserWidget
 {
 background-color: rgb(12, 65, 156);
+}
+
+QPushButton:disabled
+{
+background-color: rgb(128, 128, 128);
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -626,9 +631,12 @@ image: url(:/icons/images/icons/checked.png)
               <enum>Qt::RightToLeft</enum>
              </property>
              <property name="styleSheet">
-              <string notr="true">border: 1px solid rgb(255, 255, 255);
+              <string notr="true">QPushButton#button_register
+{
+border: 1px solid rgb(255, 255, 255);
 color: rgb(255, 255, 255);
-padding: 7px;</string>
+padding: 7px;
+}</string>
              </property>
              <property name="text">
               <string>Register</string>

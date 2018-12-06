@@ -7,6 +7,7 @@ from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
 
+from parsec.core.backend_connection import BackendNotAvailable
 from parsec.pkcs11_encryption_tool import DevicePKCS11Error
 from parsec.core.devices_manager import (
     DeviceLoadingError,
@@ -60,6 +61,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.add_tray_icon()
         self.connect_all()
         self.setWindowTitle("Parsec - Community Edition - v{}".format(PARSEC_VERSION))
+        self.tray_message_shown = False
 
     def add_tray_icon(self):
         if not QSystemTrayIcon.isSystemTrayAvailable():
@@ -68,7 +70,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tray = QSystemTrayIcon(self)
         menu = QMenu()
         action = menu.addAction(QCoreApplication.translate(self.__class__.__name__, "Show window"))
-        action.triggered.connect(self.show)
+        action.triggered.connect(self.show_top)
         action = menu.addAction(QCoreApplication.translate(self.__class__.__name__, "Exit"))
         action.triggered.connect(self.close_app)
         self.tray.setContextMenu(menu)
@@ -98,8 +100,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
-            self.show()
-            self.raise_()
+            self.show_top()
+
+    def show_top(self):
+        self.show()
+        self.raise_()
 
     def logout(self):
         self.unmount()
@@ -129,8 +134,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         except Exception as exc:
             logger.warning("Mountpoint start failed", mountpoint=mountpoint, exc_info=exc)
             return None
-
         self.mount_widget.set_mountpoint(mountpoint)
+        self.label_mountpoint.setText(mountpoint)
         logger.info("Mountpoint started", mountpoint=mountpoint)
         return mountpoint
 
@@ -204,6 +209,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(
                 self.users_widget,
                 QCoreApplication.translate("MainWindow", "Can not register the user."),
+            )
+        except BackendNotAvailable:
+            show_error(
+                self.users_widget,
+                QCoreApplication.translate(
+                    "MainWindow",
+                    "The connection to the backend has been lost, can not register the user.",
+                ),
             )
 
     def handle_register_user(
@@ -371,11 +384,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if self.tray:
                 self.tray.hide()
         else:
-            if self.tray:
+            if self.tray and not self.tray_message_shown:
                 self.tray.showMessage(
                     "Parsec",
                     QCoreApplication.translate(self.__class__.__name__, "Parsec is still running."),
                 )
+                self.tray_message_shown = True
             event.ignore()
             self.hide()
 
@@ -385,7 +399,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_files.setChecked(True)
         self.widget_title.show()
         self.label_title.setText(QCoreApplication.translate("MainWindow", "Documents"))
-        self.label_mountpoint.setText(settings.get_value("mountpoint"))
         self.mount_widget.reset()
         self.mount_widget.show()
 
@@ -395,7 +408,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_users.setChecked(True)
         self.widget_title.show()
         self.label_title.setText(QCoreApplication.translate("MainWindow", "Users"))
-        self.label_mountpoint.setText(settings.get_value("mountpoint"))
         self.users_widget.reset()
         self.users_widget.show()
 
@@ -405,7 +417,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_devices.setChecked(True)
         self.widget_title.show()
         self.label_title.setText(QCoreApplication.translate("MainWindow", "Devices"))
-        self.label_mountpoint.setText(settings.get_value("mountpoint"))
         self.devices_widget.reset()
         self.devices_widget.show()
 
@@ -415,7 +426,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_settings.setChecked(True)
         self.widget_title.show()
         self.label_title.setText(QCoreApplication.translate("MainWindow", "Settings"))
-        self.label_mountpoint.setText(settings.get_value("mountpoint"))
         self.settings_widget.reset()
         self.settings_widget.show()
 

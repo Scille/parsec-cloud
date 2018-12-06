@@ -48,6 +48,18 @@
         <file>images/icons/info_workspace.png</file>
         <file>images/icons/share_workspace.png</file>
         <file>images/icons/workspace.png</file>
+        <file>images/icons/sort_arrows.png</file>
+        <file>images/icons/sort_down_arrow.png</file>
+        <file>images/icons/sort_up_arrow.png</file>
+        <file>images/icons/hard-drive_grey.png</file>
+        <file>images/icons/edit_blue.png</file>
+        <file>images/icons/add-plus-button.png</file>
+        <file>images/icons/go-back_button.png</file>
+        <file>images/icons/import_file.png</file>
+        <file>images/icons/import_folder.png</file>
+        <file>images/icons/owner.png</file>
+        <file>images/icons/share_info.png</file>
+        <file>images/icons/user_owner.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>

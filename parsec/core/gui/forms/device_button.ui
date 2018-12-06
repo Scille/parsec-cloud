@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>UserButton</class>
- <widget class="QWidget" name="UserButton">
+ <class>DeviceButton</class>
+ <widget class="QWidget" name="DeviceButton">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -111,7 +111,7 @@ padding: 20px;
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="label_user">
+    <widget class="QLabel" name="label_device">
      <property name="font">
       <font>
        <pointsize>12</pointsize>
