@@ -3,7 +3,7 @@ import attr
 import itertools
 from collections import defaultdict
 
-from parsec.crypto import decode_urlsafe_root_verify_key
+from parsec.crypto import load_root_verify_key
 
 
 blockstore_environ_vars = {
@@ -105,7 +105,9 @@ def _extract_blockstore_config(blockstore_type, environ):
         raise ValueError("BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, `SWIFT` or `RAID1`")
 
 
-def config_factory(db_url="MOCKED", blockstore_type="MOCKED", debug=False, environ={}):
+def config_factory(
+    root_verify_key, db_url="MOCKED", blockstore_type="MOCKED", debug=False, environ={}
+):
     raw_conf = {**environ, "DB_URL": db_url, "BLOCKSTORE_TYPE": blockstore_type, "DEBUG": debug}
 
     config = BackendConfig(debug=raw_conf.get("DEBUG", False))
@@ -126,14 +128,10 @@ def config_factory(db_url="MOCKED", blockstore_type="MOCKED", debug=False, envir
         raw_conf["BLOCKSTORE_TYPE"], raw_conf
     )
 
-    if "ROOT_VERIFY_KEY" not in raw_conf:
-        raise ValueError("Missing mandatory environ variable `ROOT_VERIFY_KEY`")
     try:
-        config.__dict__["root_verify_key"] = decode_urlsafe_root_verify_key(
-            raw_conf.get("ROOT_VERIFY_KEY")
-        )
+        config.__dict__["root_verify_key"] = load_root_verify_key(root_verify_key)
     except Exception as exc:
-        raise ValueError("Invalid `ROOT_VERIFY_KEY` environ variable") from exc
+        raise ValueError("Invalid root verify key.") from exc
 
     config.__dict__["sentry_url"] = raw_conf.get("SENTRY_URL") or None
 

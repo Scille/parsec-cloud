@@ -1,20 +1,23 @@
 import attr
 import pendulum
 
+from parsec.types import DeviceID, UserID
 from parsec.trustchain import (
     unsecure_certified_device_extract_verify_key,
     unsecure_certified_user_extract_public_key,
 )
-from parsec.crypto import SigningKey, PrivateKey
+from parsec.crypto import SigningKey, PrivateKey, SigningKey, VerifyKey
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class LocalDevice:
+
+    backend_addr: str
+    root_verify_key: VerifyKey
     device_id: DeviceID
     signing_key: SigningKey
     private_key: PrivateKey
     user_manifest_access: dict  # TODO: Better typing
-    local_secret_key: bytes
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.device_id})"
@@ -41,6 +44,16 @@ class LocalDevice:
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class RemoteDevice:
+
+    device_id: DeviceID
+    certified_device: bytes
+    device_certifier: DeviceID
+
+    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+    revocated_on: pendulum.Pendulum = None
+    certified_revocation: bytes = None
+    revocation_certifier: DeviceID = None
+
     def __repr__(self):
         return f"{self.__class__.__name__}({self.device_id})"
 
@@ -59,15 +72,6 @@ class RemoteDevice:
     def verify_key(self):
         return unsecure_certified_device_extract_verify_key(self.certified_device)
 
-    device_id: DeviceID
-    certified_device: bytes
-    device_certifier: DeviceID
-
-    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-    revocated_on: pendulum.Pendulum = None
-    certified_revocation: bytes = None
-    revocation_certifier: DeviceID = None
-
 
 class RemoteDevicesMapping:
     """
@@ -76,7 +80,7 @@ class RemoteDevicesMapping:
 
     __slots__ = ("_read_only_mapping",)
 
-    def __init__(self, *devices: Device):
+    def __init__(self, *devices: RemoteDevice):
         self._read_only_mapping = {d.device_name: d for d in devices}
 
     def __repr__(self):
@@ -103,6 +107,14 @@ class RemoteDevicesMapping:
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class RemoteUser:
+
+    user_id: UserID
+    certified_user: bytes
+    user_certifier: DeviceID
+    devices: RemoteDevicesMapping = attr.ib(factory=RemoteDevicesMapping)
+
+    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+
     def __repr__(self):
         return f"{self.__class__.__name__}({self.user_id})"
 
@@ -115,10 +127,3 @@ class RemoteUser:
 
     def is_revocated(self):
         return any((False for d in self.devices.values if d.revocated_on), True)
-
-    user_id: UserID
-    certified_user: bytes
-    user_certifier: DeviceID
-    devices: RemoteDevicesMapping = attr.ib(factory=RemoteDevicesMapping)
-
-    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)

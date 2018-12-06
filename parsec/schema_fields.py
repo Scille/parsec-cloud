@@ -16,7 +16,12 @@ from marshmallow.fields import (
 
 from parsec.utils import to_jsonb64, from_jsonb64
 from parsec.types import DeviceID as _DeviceID, UserID as _UserID, DeviceName as _DeviceName
-from parsec.crypto_types import VerifyKey as _VerifyKey, PublicKey as _PublicKey
+from parsec.crypto_types import (
+    SigningKey as _SigningKey,
+    VerifyKey as _VerifyKey,
+    PrivateKey as _PrivateKey,
+    PublicKey as _PublicKey,
+)
 
 
 # TODO: test this field and use it everywhere in the api !
@@ -133,6 +138,24 @@ class Map(Field):
         return ret
 
 
+class SigningKey(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return to_jsonb64(value.encode())
+
+    def _deserialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        try:
+            return _SigningKey(from_jsonb64(value))
+
+        except Exception:
+            raise ValidationError("Invalid signing key.")
+
+
 class VerifyKey(Field):
     def _serialize(self, value, attr, obj):
         if value is None:
@@ -149,6 +172,24 @@ class VerifyKey(Field):
 
         except Exception:
             raise ValidationError("Invalid verify key.")
+
+
+class PrivateKey(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return to_jsonb64(value.encode())
+
+    def _deserialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        try:
+            return _PrivateKey(from_jsonb64(value))
+
+        except Exception:
+            raise ValidationError("Invalid secret key.")
 
 
 class PublicKey(Field):

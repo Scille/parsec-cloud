@@ -4,19 +4,18 @@ import trio_asyncio
 import click
 from functools import partial
 
-from parsec.types import UserID, DeviceName
-from parsec.crypto import encode_urlsafe_root_verify_key
+from parsec.types import DeviceID
+from parsec.crypto import dump_root_verify_key
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import BackendApp, config_factory
-from parsec.backend.user import NotFoundError
-from parsec.backend.exceptions import AlreadyRevokedError
 from parsec.backend.drivers.postgresql import init_db
 from parsec.core.fs.utils import new_access
-from parsec.core.config import get_default_settings_path
+from parsec.core.config import get_default_config_dir
 from parsec.core.devices_manager import LocalDevicesManager
 
 
-DEFAULT_DEVICES_PATH = os.path.join(get_default_settings_path(), "devices")
+# TODO: avoid using parsec.core.config
+DEFAULT_DEVICES_PATH = os.path.join(get_default_config_dir(os.environ), "devices")
 
 
 @click.command()
@@ -29,9 +28,8 @@ DEFAULT_DEVICES_PATH = os.path.join(get_default_settings_path(), "devices")
     help="Path to store new first device configuration.",
 )
 @click.option("--backend-base-url", "-b", "backend_base_url")
-@click.argument("user_id", metavar="user-id", type=UserID)
-@click.argument("device_name", metavar="device-name", type=DeviceName)
-def init_cmd(db, force, settings, backend_base_url, user_id, device_name):
+@click.argument("device_id", metavar="user-id", type=DeviceID)
+def init_cmd(db, force, settings, backend_base_url, device_id):
     """
     Initialize a new backend's PostgreSQL database.
 
@@ -48,7 +46,7 @@ def init_cmd(db, force, settings, backend_base_url, user_id, device_name):
 
     async def _init_db():
         nonlocal keys
-        keys = await init_db(db, user_id, device_name, force=force)
+        keys = await init_db(db, device_id, force=force)
 
     try:
         trio_asyncio.run(_init_db)
@@ -59,21 +57,19 @@ def init_cmd(db, force, settings, backend_base_url, user_id, device_name):
             root_verify_key, user_private_key, device_signing_key = keys
             password = click.prompt("Device password", hide_input=True, confirmation_prompt=True)
             devices_manager = LocalDevicesManager(settings)
-            device_id = f"{user_id}@{device_name}"
             user_manifest_access = new_access()
             devices_manager.register_new_device(
-                device_id,
-                root_verify_key.encode(),
-                user_private_key.encode(),
-                device_signing_key.encode(),
-                user_manifest_access,
+                device_id=device_id,
+                user_privkey=user_private_key.encode(),
+                device_signkey=device_signing_key.encode(),
+                user_manifest_access=user_manifest_access,
                 password=password,
             )
-            url_param_root_verify_key = encode_urlsafe_root_verify_key(root_verify_key)
+            url_param_root_verify_key = dump_root_verify_key(root_verify_key)
 
             click.secho("Database initialized", fg="green")
             click.secho("Backend environment variables: ", fg="green", nl=False)
-            click.echo(f"ROOT_VERIFY_KEY={url_param_root_verify_key}")
+            click.echo(f"Root verify key: {url_param_root_verify_key}")
             if backend_base_url:
                 click.secho("Backend URL: ", fg="green", nl=False)
                 click.echo(f"{backend_base_url}?root-verify-key={url_param_root_verify_key}")
@@ -91,38 +87,7 @@ def init_cmd(db, force, settings, backend_base_url, user_id, device_name):
 
 
 @click.command()
-@click.argument("user_id", nargs=1)
-@click.option("--device-name", default=None, help="Device name")
-@click.option(
-    "--store", "-s", default="postgresql://127.0.0.1/parsec", help="Postgresql url of store"
-)
-def revoke_cmd(user_id, device_name, store):
-    async def _revoke_user(user_id):
-        async with trio.open_nursery() as nursery:
-            await backend.init(nursery)
-            try:
-                if device_name:
-                    await backend.user.revoke_device(f"{user_id}@{device_name}")
-                else:
-                    await backend.user.revoke_user(user_id)
-            except AlreadyRevokedError as exc:
-                print(str(exc))
-            except NotFoundError as exc:
-                print(str(exc))
-            finally:
-                await backend.teardown()
-
-    try:
-        config = config_factory(db_url=store, blockstore_types="MOCKED")
-    except ValueError as exc:
-        raise SystemExit(f"Invalid configuration: {exc}")
-
-    backend = BackendApp(config)
-    trio_asyncio.run(_revoke_user, user_id)
-
-
-@click.command()
-@click.option("--pubkeys", default=None)
+@click.option("--root-verify-key", "--rvk", required=True)
 @click.option("--host", "-H", default="127.0.0.1", help="Host to listen on (default: 127.0.0.1)")
 @click.option("--port", "-P", default=6777, type=int, help=("Port to listen on (default: 6777)"))
 @click.option(
@@ -142,15 +107,18 @@ def revoke_cmd(user_id, device_name, store):
 @click.option("--log-file", "-o")
 @click.option("--log-filter", default=None)
 @click.option("--debug", "-d", is_flag=True)
-def backend_cmd(log_level, log_format, log_file, log_filter, **kwargs):
+def backend_cmd(
+    rvk, host, port, store, blockstore, log_level, log_format, log_file, log_filter, debug
+):
     configure_logging(log_level, log_format, log_file, log_filter)
-    return _backend(**kwargs)
 
-
-def _backend(host, port, pubkeys, store, blockstore, debug):
     try:
         config = config_factory(
-            debug=debug, blockstore_type=blockstore, db_url=store, environ=os.environ
+            root_verify_key=rvk,
+            debug=debug,
+            blockstore_type=blockstore,
+            db_url=store,
+            environ=os.environ,
         )
     except ValueError as exc:
         raise SystemExit(f"Invalid configuration: {exc}")

@@ -1,6 +1,6 @@
 from typing import Tuple
 import pendulum
-from base64 import urlsafe_b64encode, urlsafe_b64decode
+from base64 import b32decode, b32encode
 from json import JSONDecodeError
 from nacl.public import SealedBox
 from nacl.bindings import crypto_sign_BYTES
@@ -41,15 +41,18 @@ def generate_secret_key():
     return random(SecretBox.KEY_SIZE)
 
 
-def encode_urlsafe_root_verify_key(key: VerifyKey) -> str:
+def dump_root_verify_key(key: VerifyKey) -> str:
     """
     Raises:
         ValueError
     """
-    return urlsafe_b64encode(key.encode()).decode("utf8")
+    # Note we replace padding char `=` by a simple `s` (which is not part of
+    # the base32 so no risk of colision) to avoid copy/paste errors silly
+    # escaping issues when carring the key around.
+    return b32encode(key.encode()).decode("utf8").replace("=", "s")
 
 
-def decode_urlsafe_root_verify_key(raw: str) -> VerifyKey:
+def load_root_verify_key(raw: str) -> VerifyKey:
     """
     Raises:
         ValueError
@@ -58,7 +61,7 @@ def decode_urlsafe_root_verify_key(raw: str) -> VerifyKey:
         # Useful during tests
         return raw
     try:
-        return VerifyKey(urlsafe_b64decode(raw.encode("utf8")))
+        return VerifyKey(b32decode(raw.replace("s", "=").encode("utf8")))
     except CryptoError as exc:
         raise ValueError("Invalid verify key") from exc
 

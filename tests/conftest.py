@@ -18,7 +18,7 @@ from parsec.crypto import (
     SigningKey,
     VerifyKey,
     generate_secret_key,
-    encode_urlsafe_root_verify_key,
+    dump_root_verify_key,
 )
 from parsec.trustchain import certify_user, certify_device
 from parsec.core import Core, CoreConfig
@@ -68,7 +68,7 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def hypothesis_settings(request):
     return hypothesis.settings(
         max_examples=pytest.config.getoption("--hypothesis-max-examples"),
@@ -140,8 +140,8 @@ def _get_postgresql_url():
     )
 
 
-@pytest.fixture
-def postgresql_url(request):
+@pytest.fixture(scope="session")
+def postgresql_url():
     if not pytest.config.getoption("--postgresql"):
         pytest.skip("`--postgresql` option not provided")
     return _get_postgresql_url()
@@ -157,7 +157,7 @@ async def asyncio_loop():
             yield loop
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def unused_tcp_port():
     """Find an unused localhost TCP port from 1024-65535 and return it."""
     with contextlib.closing(socket.socket()) as sock:
@@ -165,12 +165,12 @@ def unused_tcp_port():
         return sock.getsockname()[1]
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def unused_tcp_addr(unused_tcp_port):
     return "tcp://127.0.0.1:%s" % unused_tcp_port
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def event_bus_factory():
     return SpiedEventBus
 
@@ -187,7 +187,7 @@ def tcp_stream_spy():
         yield open_tcp_stream_mock_wrapper
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def monitor():
     from tests.monitor import Monitor
 
@@ -455,19 +455,16 @@ def backend_factory(
     # nursery fixture is done with calling the backend's postgresql stuff.
 
     blockstore_type, blockstore_config = blockstore
-    default_urlsafe_root_verify_key = encode_urlsafe_root_verify_key(root_key_certifier.verify_key)
+    rvk = dump_root_verify_key(root_key_certifier.verify_key)
 
     @asynccontextmanager
     async def _backend_factory(devices=default_devices, config={}, event_bus=None):
         async with trio.open_nursery() as nursery:
             config = backend_config_factory(
+                root_verify_key=rvk,
                 db_url=backend_store,
                 blockstore_type=blockstore_type,
-                environ={
-                    "ROOT_VERIFY_KEY": default_urlsafe_root_verify_key,
-                    **blockstore_config,
-                    **config,
-                },
+                environ={**blockstore_config, **config},
             )
             if not event_bus:
                 event_bus = event_bus_factory()
@@ -530,8 +527,8 @@ async def backend(backend_factory):
 
 @pytest.fixture(scope="session")
 def backend_addr(root_key_certifier):
-    default_urlsafe_root_verify_key = encode_urlsafe_root_verify_key(root_key_certifier.verify_key)
-    return f"tcp://parsec-backend.localhost:9999?root-verify-key={default_urlsafe_root_verify_key}"
+    rvk = dump_root_verify_key(root_key_certifier.verify_key)
+    return f"tcp://parsec-backend.localhost:9999?root-verify-key={rvk}"
 
 
 @pytest.fixture

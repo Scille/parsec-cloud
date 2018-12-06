@@ -22,7 +22,7 @@ class SigningKey(_SigningKey):
         return obj
 
     def __eq__(self, other):
-        return isinstance(other, _SigningKey) and self._key == other._key
+        return isinstance(other, _SigningKey) and self._signing_key == other._signing_key
 
 
 class VerifyKey(_VerifyKey):

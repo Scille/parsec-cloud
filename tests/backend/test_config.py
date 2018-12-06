@@ -4,12 +4,7 @@ from nacl.signing import VerifyKey
 from parsec.backend.config import config_factory
 
 
-GOOD_ROOT_VERIFY_KEY = "jFXHe520IMZ_bm39Dvjz5jc4fW5nM6VGj2vFq1ioZxg="
-
-
-def test_missing_root_verify_key():
-    with pytest.raises(ValueError):
-        config_factory(environ={})
+GOOD_ROOT_VERIFY_KEY = "DP3SBOVY6BAYNWUJKL5COQEFYTJSXDKKUKGO55ZU5SRI4XLMDHIQssss"
 
 
 @pytest.mark.parametrize(
@@ -17,9 +12,9 @@ def test_missing_root_verify_key():
 )
 def test_bad_root_verify_key(bad):
     with pytest.raises(ValueError):
-        config_factory(environ={"ROOT_VERIFY_KEY": bad})
+        config_factory(root_verify_key=bad)
 
 
 def test_good_root_verify_key():
-    config = config_factory(environ={"ROOT_VERIFY_KEY": GOOD_ROOT_VERIFY_KEY})
+    config = config_factory(root_verify_key=GOOD_ROOT_VERIFY_KEY)
     assert isinstance(config.root_verify_key, VerifyKey)

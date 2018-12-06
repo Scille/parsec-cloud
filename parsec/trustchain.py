@@ -70,7 +70,7 @@ def _validate_certified_payload(
     try:
         raw = verify_signature_from(certifier_key, payload)
         data = schema.loads(raw.decode("utf8")).data
-    except (CryptoError, ValidationError, JSONDecodeError) as exc:
+    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
         raise TrustChainError(*exc.args) from exc
 
     if not timestamps_in_the_ballpark(data["timestamp"], now or pendulum.now()):
@@ -101,7 +101,7 @@ def certify_device(
         ).data.encode("utf8")
         return sign_and_add_meta(certifier_id, certifier_key, payload)
 
-    except (CryptoError, ValidationError, JSONDecodeError) as exc:
+    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
         raise TrustChainError(*exc.args) from exc
 
 
@@ -143,7 +143,7 @@ def certify_user(
         ).data.encode("utf8")
         return sign_and_add_meta(certifier_id, certifier_key, payload)
 
-    except (CryptoError, ValidationError, JSONDecodeError) as exc:
+    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
         raise TrustChainError(*exc.args) from exc
 
 

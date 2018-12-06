@@ -33,6 +33,10 @@ async def test_api_user_get_ok(backend, alice_backend_sock, bob):
     }
 
 
+# TODO: test user_get with complex trustchain
+# TODO: test user_get with revocation filled
+
+
 @pytest.mark.parametrize(
     "bad_msg", [{"user_id": 42}, {"user_id": None}, {"user_id": "alice", "unknown": "field"}, {}]
 )

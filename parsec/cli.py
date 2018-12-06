@@ -29,7 +29,7 @@ except ImportError as exc:
 
 
 try:
-    from parsec.backend.cli import backend_cmd, init_cmd, revoke_cmd
+    from parsec.backend.cli import backend_cmd, init_cmd
 except ImportError as exc:
     backend_cmd = _generate_bad_cmd(exc)
     init_cmd = _generate_bad_cmd(exc)
@@ -44,7 +44,6 @@ def cli():
 cli.add_command(core_cmd, "core")
 cli.add_command(backend_cmd, "backend")
 cli.add_command(init_cmd, "init")
-cli.add_command(revoke_cmd, "revoke_user")
 
 
 if __name__ == "__main__":
