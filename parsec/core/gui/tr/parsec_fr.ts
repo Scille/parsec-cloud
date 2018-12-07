@@ -5,7 +5,7 @@
     <message>
         <location filename="../forms/device_button.ui" line="31"/>
         <source>Form</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -74,7 +74,7 @@
     <message>
         <location filename="../forms/files_widget.ui" line="461"/>
         <source>Import a folder</source>
-        <translation type="unfinished">Importer un répertoire</translation>
+        <translation>Importer un répertoire</translation>
     </message>
     <message>
         <location filename="../forms/files_widget.ui" line="293"/>
@@ -295,37 +295,37 @@
     <message>
         <location filename="../forms/files_widget.ui" line="344"/>
         <source>Created</source>
-        <translation type="unfinished"></translation>
+        <translation>Créé le</translation>
     </message>
     <message>
         <location filename="../forms/files_widget.ui" line="349"/>
         <source>Updated</source>
-        <translation type="unfinished"></translation>
+        <translation>Modifié le</translation>
     </message>
     <message>
         <location filename="../forms/files_widget.ui" line="408"/>
         <source>Return to the list of workspaces</source>
-        <translation type="unfinished"></translation>
+        <translation>Retourner à la liste des espaces de travail</translation>
     </message>
     <message>
         <location filename="../forms/files_widget.ui" line="501"/>
         <source>Import multiple files</source>
-        <translation type="unfinished"></translation>
+        <translation>Importer plusieurs fichiers</translation>
     </message>
     <message>
         <location filename="../forms/files_widget.ui" line="541"/>
         <source>Add a folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Créer un répertoire</translation>
     </message>
     <message>
         <location filename="../files_widget.py" line="278"/>
         <source>Parent Folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Répertoire parent</translation>
     </message>
     <message>
         <location filename="../files_widget.py" line="298"/>
         <source>Parent Workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>Retour à la liste des espaces de travail</translation>
     </message>
 </context>
 <context>
@@ -333,7 +333,7 @@
     <message>
         <location filename="../custom_widgets.py" line="65"/>
         <source>User name</source>
-        <translation type="unfinished">Nom d&apos;utilisateur</translation>
+        <translation>Nom d&apos;utilisateur</translation>
     </message>
 </context>
 <context>
@@ -594,7 +594,7 @@
         <translation>   Configuration</translation>
     </message>
     <message>
-        <location filename="../forms/main_window.ui" line="538"/>
+        <location filename="../forms/main_window.ui" line="612"/>
         <source>   Log Out</source>
         <translation>   Se déconnecter</translation>
     </message>
@@ -649,7 +649,7 @@
         <translation>Impossible de créer le nouvel appareil.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="369"/>
+        <location filename="../main_window.py" line="370"/>
         <source>Are you sure you want to quit ?</source>
         <translation>Êtes-vous sûr de vouloir quitter ?</translation>
     </message>
@@ -659,24 +659,24 @@
         <translation>Impossible d&apos;enregistrer l&apos;utilisateur.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="401"/>
+        <location filename="../main_window.py" line="402"/>
         <source>Documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Documents</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="410"/>
+        <location filename="../main_window.py" line="411"/>
         <source>Users</source>
-        <translation type="unfinished"></translation>
+        <translation>Utilisateurs</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="419"/>
+        <location filename="../main_window.py" line="420"/>
         <source>Devices</source>
-        <translation type="unfinished"></translation>
+        <translation>Appareils</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="428"/>
+        <location filename="../main_window.py" line="429"/>
         <source>Settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Configuration</translation>
     </message>
 </context>
 <context>
@@ -760,54 +760,59 @@
         <translation>Enregistrer un nouvel appareil</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="30"/>
+        <location filename="../forms/register_device.ui" line="108"/>
         <source>Device name</source>
         <translation>Nom de l&apos;appareil</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="44"/>
+        <location filename="../forms/register_device.ui" line="128"/>
         <source>Password</source>
         <translation>Mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="53"/>
+        <location filename="../forms/register_device.ui" line="137"/>
         <source>Use PKCS #11 authentication instead of password</source>
         <translation>S&apos;authentifier en utilisant une PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="63"/>
+        <location filename="../forms/register_device.ui" line="147"/>
         <source>PKCS #11 PIN</source>
         <translation>PIN de la PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="70"/>
+        <location filename="../forms/register_device.ui" line="154"/>
         <source>Token ID</source>
         <translation>Jeton de la PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="77"/>
+        <location filename="../forms/register_device.ui" line="161"/>
         <source>Key ID</source>
         <translation>Clef de la PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="117"/>
+        <location filename="../forms/register_device.ui" line="222"/>
         <source>Device&apos;s token</source>
         <translation>Jeton de l&apos;appareil</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="127"/>
+        <location filename="../forms/register_device.ui" line="238"/>
         <source>Token</source>
         <translation>Jeton</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="136"/>
+        <location filename="../forms/register_device.ui" line="247"/>
         <source>Waiting for the new device...</source>
         <translation>En attente du nouvel appareil...</translation>
     </message>
     <message>
-        <location filename="../forms/register_device.ui" line="166"/>
+        <location filename="../forms/register_device.ui" line="291"/>
         <source>OK</source>
         <translation>Ok</translation>
+    </message>
+    <message>
+        <location filename="../forms/register_device.ui" line="352"/>
+        <source>Close</source>
+        <translation>Fermer</translation>
     </message>
 </context>
 <context>
@@ -838,7 +843,7 @@
         <translation>Réseau</translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="80"/>
+        <location filename="../settings_widget.py" line="116"/>
         <source>The choosen folder is not writable.</source>
         <translation>Le répertoire choisi n&apos;est pas accessible en écriture.</translation>
     </message>
@@ -858,89 +863,94 @@
         <translation>Activer le point de montage</translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="62"/>
+        <location filename="../settings_widget.py" line="98"/>
         <source>You must log off and on again for the changes to take effect.</source>
         <translation>Vous devez vous déconnecter et vous reconnecter pour activer les changements.</translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="71"/>
+        <location filename="../settings_widget.py" line="107"/>
         <source>Choose a mountpoint</source>
         <translation>Choisir un point de montage</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="396"/>
         <source>Behavior</source>
-        <translation type="unfinished"></translation>
+        <translation>Comportement</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="410"/>
         <source>Close button minimizes Parsec in the tray</source>
-        <translation type="unfinished"></translation>
+        <translation>Le bouton de fermeture place Parsec dans le tray</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="474"/>
         <source>Localization</source>
-        <translation type="unfinished"></translation>
+        <translation>Localisation</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="490"/>
         <source>Language</source>
-        <translation type="unfinished"></translation>
+        <translation>Langue</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="649"/>
         <source>Proxy</source>
-        <translation type="unfinished"></translation>
+        <translation>Proxy</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="668"/>
         <source>Proxy type</source>
-        <translation type="unfinished"></translation>
+        <translation>Type de proxy</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="688"/>
         <source>No proxy</source>
-        <translation type="unfinished"></translation>
+        <translation>Aucun proxy</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="693"/>
         <source>HTTP</source>
-        <translation type="unfinished"></translation>
+        <translation>HTTP</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="698"/>
         <source>Socks4</source>
-        <translation type="unfinished"></translation>
+        <translation>Socks4</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="703"/>
         <source>Socks5</source>
-        <translation type="unfinished"></translation>
+        <translation>Socks5</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="754"/>
         <source>Host</source>
-        <translation type="unfinished"></translation>
+        <translation>Hôte</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="776"/>
         <source>Port</source>
-        <translation type="unfinished"></translation>
+        <translation>Port</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="802"/>
         <source>Username</source>
-        <translation type="unfinished"></translation>
+        <translation>Nom d&apos;utilisateur</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="827"/>
         <source>Password</source>
-        <translation type="unfinished">Mot de passe</translation>
+        <translation>Mot de passe</translation>
     </message>
     <message>
         <location filename="../forms/settings_widget.ui" line="532"/>
         <source>Apply</source>
-        <translation type="unfinished"></translation>
+        <translation>Appliquer</translation>
+    </message>
+    <message>
+        <location filename="../settings_widget.py" line="62"/>
+        <source>Modification will take effect the next time you start the application.</source>
+        <translation>Les modifications seront effectives au redémarrage de l&apos;application.</translation>
     </message>
 </context>
 <context>
@@ -1009,7 +1019,7 @@
     <message>
         <location filename="../forms/users_widget.ui" line="308"/>
         <source>Add a user</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajouter un utilisateur</translation>
     </message>
 </context>
 <context>
@@ -1022,32 +1032,32 @@
     <message>
         <location filename="../forms/workspace_button.ui" line="153"/>
         <source>You are this workspace&apos;s owner.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vous êtes le propriétaire de cet espace de travail.</translation>
     </message>
     <message>
         <location filename="../forms/workspace_button.ui" line="181"/>
         <source>This workspace is shared.</source>
-        <translation type="unfinished"></translation>
+        <translation>Cet espace de travail est partagé.</translation>
     </message>
     <message>
         <location filename="../forms/workspace_button.ui" line="462"/>
         <source>Rename the workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>Renommer l&apos;espace de travail</translation>
     </message>
     <message>
         <location filename="../forms/workspace_button.ui" line="528"/>
         <source>Workspace information</source>
-        <translation type="unfinished"></translation>
+        <translation>Informations sur l&apos;espace de travail</translation>
     </message>
     <message>
         <location filename="../forms/workspace_button.ui" line="600"/>
         <source>Share the workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>Partager l&apos;espace de travail</translation>
     </message>
     <message>
         <location filename="../forms/workspace_button.ui" line="666"/>
         <source>Delete the workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>Supprimer l&apos;espace de travail</translation>
     </message>
 </context>
 <context>
@@ -1155,12 +1165,12 @@
     <message>
         <location filename="../forms/workspaces_widget.ui" line="110"/>
         <source>Add a new workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajouter un nouvel espace de travail</translation>
     </message>
     <message>
         <location filename="../workspaces_widget.py" line="63"/>
         <source>Not yet implemented.</source>
-        <translation type="unfinished"></translation>
+        <translation>Cette fonctionnalité n&apos;est pas encore implémentée.</translation>
     </message>
 </context>
 </TS>
