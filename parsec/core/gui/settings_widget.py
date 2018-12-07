@@ -55,21 +55,28 @@ class SettingsWidget(QWidget, Ui_SettingsWidget):
             self.combo_languages.setCurrentText(current)
         self.combo_languages.currentTextChanged.connect(self.current_language_changed)
         self.button_apply_language.clicked.connect(self.apply_language)
+        self.checkbox_tray.stateChanged.connect(self.tray_changed)
+
+    def tray_changed(self, state):
+        settings.set_value("tray_enabled", state == Qt.Checked)
+        show_info(
+            self,
+            QCoreApplication.translate(
+                "SettingsWidget",
+                "Modification will take effect the next time you start the application.",
+            ),
+        )
 
     def apply_language(self):
-        ret = lang.switch_language(lang_key=self.combo_languages.currentData())
-        if not ret:
-            show_error(
-                self,
-                QCoreApplication.translate(
-                    "SettingsWidget",
-                    "Could not switch the language to {}".format(
-                        self.combo_languages.currentText()
-                    ),
-                ),
-            )
-        else:
-            self.button_apply_language.setDisabled(True)
+        settings.set_value("language", self.combo_languages.currentData())
+        show_info(
+            self,
+            QCoreApplication.translate(
+                "SettingsWidget",
+                "Modification will take effect the next time you start the application.",
+            ),
+        )
+        self.button_apply_language.setDisabled(True)
 
     def current_language_changed(self, _):
         if self.combo_languages.currentData() != settings.get_value("language"):

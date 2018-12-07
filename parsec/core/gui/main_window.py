@@ -64,8 +64,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tray_message_shown = False
 
     def add_tray_icon(self):
-        if not QSystemTrayIcon.isSystemTrayAvailable():
-            self.action_put_in_tray.setDisabled(True)
+        if not QSystemTrayIcon.isSystemTrayAvailable() or not settings.get_value(
+            "tray_enabled", True
+        ):
             return
         self.tray = QSystemTrayIcon(self)
         menu = QMenu()
@@ -361,7 +362,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def closeEvent(self, event):
         if (
-            not QSystemTrayIcon.isSystemTrayAvailable()
+            not settings.get_value("tray_enabled")
+            or not QSystemTrayIcon.isSystemTrayAvailable()
             or self.close_requested
             or core_call().is_debug()
             or self.force_close
