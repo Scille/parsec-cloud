@@ -65,7 +65,7 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
                 ),
             )
         finally:
-            self.button_box.setEnabled(True)
+            self.button_close.setEnabled(True)
 
     def reset(self):
         self.device_name.setText("")
@@ -83,7 +83,7 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
         self.combo_pkcs11_key.addItem("0")
         self.combo_pkcs11_token.clear()
         self.combo_pkcs11_token.addItem("0")
-        self.button_box.setEnabled(True)
+        self.button_close.setEnabled(True)
 
     def device_config_done(self, status):
         self.config_waiter_panel.hide()
@@ -91,7 +91,7 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
         self.outcome_panel.show()
 
     def emit_register_device(self):
-        self.button_box.setEnabled(False)
+        self.button_close.setEnabled(False)
         self.button_register_device.hide()
         self.config_waiter_panel.show()
 
@@ -102,7 +102,7 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
             show_error(
                 self, QCoreApplication.translate("RegisterDevice", "Can not reach the server.")
             )
-            self.button_box.setEnabled(True)
+            self.button_close.setEnabled(True)
         except:
             show_error(
                 self,
@@ -110,4 +110,4 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
                     "RegisterDevice", "An unknown error occured. Can not register the new device."
                 ),
             )
-            self.button_box.setEnabled(True)
+            self.button_close.setEnabled(True)
