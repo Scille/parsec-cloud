@@ -89,3 +89,6 @@ class FuseMountpointManager:
             await self.stop()
         except MountpointNotStarted:
             pass
+
+
+MountpointManager = FuseMountpointManager

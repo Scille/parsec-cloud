@@ -135,6 +135,14 @@ def encrypt_for_self(
     return encrypt_for(device_id, device_signkey, device_pubkey, data)
 
 
+def encrypt_raw_for(recipient_pubkey: PublicKey, data: bytes) -> bytes:
+    return SealedBox(recipient_pubkey).encrypt(data)
+
+
+def decrypt_raw_for(recipient_privkey: PrivateKey, ciphered: bytes):
+    return SealedBox(recipient_privkey).decrypt(ciphered)
+
+
 def encrypt_for(
     author_id: DeviceID, author_signkey: SigningKey, recipient_pubkey: PublicKey, data: bytes
 ) -> bytes:

@@ -28,7 +28,9 @@ async def test_message_from_bob_to_alice(alice, bob, alice_backend_sock, bob_bac
     rep = await alice_backend_sock.recv()
     assert rep == {
         "status": "ok",
-        "messages": [{"body": to_jsonb64(b"Hello from Bob !"), "sender_id": bob.id, "count": 1}],
+        "messages": [
+            {"body": to_jsonb64(b"Hello from Bob !"), "sender_id": bob.device_id, "count": 1}
+        ],
     }
 
 

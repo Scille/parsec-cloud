@@ -21,41 +21,41 @@ def realcrypto(unmock_crypto):
 
 def test_encrypt_for_self(alice):
     msg = b"Hello world !"
-    ciphered_msg = encrypt_for_self(alice.id, alice.device_signkey, alice.user_pubkey, msg)
+    ciphered_msg = encrypt_for_self(alice.device_id, alice.signing_key, alice.public_key, msg)
     assert isinstance(ciphered_msg, bytes)
 
-    device_id, signed_msg = decrypt_for(alice.user_privkey, ciphered_msg)
+    device_id, signed_msg = decrypt_for(alice.private_key, ciphered_msg)
     assert isinstance(signed_msg, bytes)
-    assert device_id == alice.id
+    assert device_id == alice.device_id
 
-    returned_msg = verify_signature_from(alice.device_verifykey, signed_msg)
+    returned_msg = verify_signature_from(alice.verify_key, signed_msg)
     assert returned_msg == msg
 
 
 def test_encrypt_for_other(alice, bob):
     msg = b"Hello world !"
-    ciphered_msg = encrypt_for(alice.id, alice.device_signkey, bob.user_pubkey, msg)
+    ciphered_msg = encrypt_for(alice.device_id, alice.signing_key, bob.public_key, msg)
     assert isinstance(ciphered_msg, bytes)
 
-    device_id, signed_msg = decrypt_for(bob.user_privkey, ciphered_msg)
+    device_id, signed_msg = decrypt_for(bob.private_key, ciphered_msg)
     assert isinstance(signed_msg, bytes)
-    assert device_id == alice.id
+    assert device_id == alice.device_id
 
-    returned_msg = verify_signature_from(alice.device_verifykey, signed_msg)
+    returned_msg = verify_signature_from(alice.verify_key, signed_msg)
     assert returned_msg == msg
 
 
 def test_encrypt_with_secret_key(alice):
     msg = b"Hello world !"
     key = generate_secret_key()
-    ciphered_msg = encrypt_with_secret_key(alice.id, alice.device_signkey, key, msg)
+    ciphered_msg = encrypt_with_secret_key(alice.device_id, alice.signing_key, key, msg)
     assert isinstance(ciphered_msg, bytes)
 
     device_id, signed_msg = decrypt_with_secret_key(key, ciphered_msg)
     assert isinstance(signed_msg, bytes)
-    assert device_id == alice.id
+    assert device_id == alice.device_id
 
-    returned_msg = verify_signature_from(alice.device_verifykey, signed_msg)
+    returned_msg = verify_signature_from(alice.verify_key, signed_msg)
     assert returned_msg == msg
 
 
@@ -64,7 +64,7 @@ def test_decrypt_bad_secret_key(alice, bob):
     key = generate_secret_key()
     bad_key = generate_secret_key()
 
-    ciphered_msg = encrypt_with_secret_key(alice.id, alice.device_signkey, key, msg)
+    ciphered_msg = encrypt_with_secret_key(alice.device_id, alice.signing_key, key, msg)
 
     with pytest.raises(CryptoError):
         decrypt_with_secret_key(bad_key, ciphered_msg)
@@ -72,11 +72,11 @@ def test_decrypt_bad_secret_key(alice, bob):
 
 def test_decrypt_for_other_bad_receiver(alice, bob, mallory):
     msg = b"Hello world !"
-    ciphered_msg = encrypt_for(alice.id, alice.device_signkey, bob.user_pubkey, msg)
+    ciphered_msg = encrypt_for(alice.device_id, alice.signing_key, bob.public_key, msg)
 
     with pytest.raises(CryptoError):
-        decrypt_for(mallory.user_privkey, ciphered_msg)
+        decrypt_for(mallory.private_key, ciphered_msg)
 
-    device_id, signed_msg = decrypt_for(bob.user_privkey, ciphered_msg)
+    device_id, signed_msg = decrypt_for(bob.private_key, ciphered_msg)
     with pytest.raises(BadSignatureError):
-        verify_signature_from(mallory.device_verifykey, signed_msg)
+        verify_signature_from(mallory.verify_key, signed_msg)

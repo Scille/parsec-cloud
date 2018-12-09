@@ -11,7 +11,7 @@ from tests.common import freeze_time
 @pytest.fixture
 def bob_revocation(alice, bob):
     now = pendulum.now()
-    return certify_device_revocation(alice.device_id, alice.device_signkey, bob.device_id, now=now)
+    return certify_device_revocation(alice.device_id, alice.signing_key, bob.device_id, now=now)
 
 
 @pytest.mark.trio
@@ -35,7 +35,7 @@ async def test_device_revoke_ok(
 @pytest.mark.trio
 async def test_device_revoke_unknown(alice_backend_sock, alice):
     certified_revocation = certify_device_revocation(
-        alice.device_id, alice.device_signkey, "zack@foo", now=pendulum.now()
+        alice.device_id, alice.signing_key, "zack@foo", now=pendulum.now()
     )
 
     await alice_backend_sock.send(
@@ -75,7 +75,7 @@ async def test_device_revoke_already_revoked(alice_backend_sock, bob, bob_revoca
 @pytest.mark.trio
 async def test_device_revoke_invalid_certified(alice_backend_sock, alice2, bob):
     certified_revocation = certify_device_revocation(
-        alice2.device_id, alice2.device_signkey, bob.device_id, now=pendulum.now()
+        alice2.device_id, alice2.signing_key, bob.device_id, now=pendulum.now()
     )
 
     await alice_backend_sock.send(
@@ -95,7 +95,7 @@ async def test_device_revoke_invalid_certified(alice_backend_sock, alice2, bob):
 async def test_device_revoke_certify_too_old(alice_backend_sock, alice, bob):
     now = pendulum.Pendulum(2000, 1, 1)
     certified_revocation = certify_device_revocation(
-        alice.device_id, alice.device_signkey, bob.device_id, now=now
+        alice.device_id, alice.signing_key, bob.device_id, now=now
     )
 
     with freeze_time(now.add(seconds=INVITATION_VALIDITY + 1)):

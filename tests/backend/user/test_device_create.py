@@ -20,16 +20,6 @@ class NewDevice:
     def verify_key(self):
         return self.signing_key.verify_key
 
-    # TODO: needed for `backend_sock_factory`
-
-    @property
-    def id(self):
-        return self.device_id
-
-    @property
-    def device_signkey(self):
-        return self.signing_key
-
 
 @pytest.fixture
 def alice_nd(alice):
@@ -40,7 +30,7 @@ def alice_nd(alice):
 async def test_device_create_ok(backend, backend_sock_factory, alice_backend_sock, alice, alice_nd):
     now = pendulum.now()
     certified_device = certify_device(
-        alice.device_id, alice.device_signkey, alice_nd.device_id, alice_nd.verify_key, now=now
+        alice.device_id, alice.signing_key, alice_nd.device_id, alice_nd.verify_key, now=now
     )
 
     with backend.event_bus.listen() as spy:
@@ -72,7 +62,7 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
 async def test_device_create_invalid_certified(alice_backend_sock, bob, alice_nd):
     now = pendulum.now()
     certified_device = certify_device(
-        bob.device_id, bob.device_signkey, alice_nd.device_id, alice_nd.verify_key, now=now
+        bob.device_id, bob.signing_key, alice_nd.device_id, alice_nd.verify_key, now=now
     )
 
     await alice_backend_sock.send(
@@ -96,7 +86,7 @@ async def test_device_create_invalid_certified(alice_backend_sock, bob, alice_nd
 async def test_device_create_already_exists(alice_backend_sock, alice, alice2):
     now = pendulum.now()
     certified_device = certify_device(
-        alice.device_id, alice.device_signkey, alice2.device_id, alice2.device_verifykey, now=now
+        alice.device_id, alice.signing_key, alice2.device_id, alice2.verify_key, now=now
     )
 
     await alice_backend_sock.send(
@@ -121,7 +111,7 @@ async def test_device_create_already_exists(alice_backend_sock, alice, alice2):
 async def test_device_create_not_own_user(bob_backend_sock, bob, alice_nd):
     now = pendulum.now()
     certified_device = certify_device(
-        bob.device_id, bob.device_signkey, alice_nd.device_id, alice_nd.verify_key, now=now
+        bob.device_id, bob.signing_key, alice_nd.device_id, alice_nd.verify_key, now=now
     )
 
     await bob_backend_sock.send(
@@ -143,7 +133,7 @@ async def test_device_create_not_own_user(bob_backend_sock, bob, alice_nd):
 async def test_device_create_certify_too_old(alice_backend_sock, alice, alice_nd):
     now = pendulum.Pendulum(2000, 1, 1)
     certified_device = certify_device(
-        alice.device_id, alice.device_signkey, alice_nd.device_id, alice_nd.verify_key, now=now
+        alice.device_id, alice.signing_key, alice_nd.device_id, alice_nd.verify_key, now=now
     )
 
     with freeze_time(now.add(seconds=INVITATION_VALIDITY + 1)):

@@ -2,7 +2,6 @@ import queue
 import threading
 import trio
 import click
-from uuid import UUID
 from urllib.parse import urlparse
 
 from parsec.logging import configure_logging, configure_sentry_logging
@@ -11,37 +10,10 @@ from parsec.core.devices_manager import DeviceSavingAlreadyExists
 from parsec.core.gui import run_gui
 
 
-JOHN_DOE_DEVICE_ID = "johndoe@test"
-JOHN_DOE_PRIVATE_KEY = (
-    b"]x\xd3\xa9$S\xa92\x9ex\x91\xa7\xee\x04SY\xbe\xe6"
-    b"\x03\xf0\x1d\xe2\xcc7\x8a\xd7L\x137\x9e\xa7\xc6"
-)
-JOHN_DOE_DEVICE_SIGNING_KEY = (
-    b"w\xac\xd8\xb4\x88B:i\xd6G\xb9\xd6\xc5\x0f\xf6\x99"
-    b"\xccH\xfa\xaeY\x00:\xdeP\x84\t@\xfe\xf8\x8a\xa5"
-)
-JOHN_DOE_USER_MANIFEST_ACCESS = {
-    "id": UUID("230165e6acd441f4a0b4f2c8c0dc91f0"),
-    "rts": "c7121459551b40e78e35f49115097594",
-    "wts": "3c7d3cb553854ffea524092487674a0b",
-    "key": (
-        b"\x8d\xa3k\xb8\xd8'a6?\xf8\xc7\xf2p\xba\xc8=\xb9\r\x9a"
-        b"\x0e\xea\xb1\xb8\x93\xae\xc2\xc2\x8c\x16\x8e\xa4\xc3"
-    ),
-}
 DEFAULT_CORE_SOCKET = "tcp://127.0.0.1:6776"
 
 
 @click.command()
-@click.option(
-    "--socket",
-    "-s",
-    default=DEFAULT_CORE_SOCKET,
-    help=(
-        "Socket path (`tcp://<domain:port>` or `unix://<path>`) "
-        "exposing the core API (default: %s)." % DEFAULT_CORE_SOCKET
-    ),
-)
 @click.option("--backend-addr", "-A", default="tcp://127.0.0.1:6777")
 @click.option("--backend-watchdog", "-W", type=click.INT, default=None)
 @click.option("--debug", "-d", is_flag=True)
@@ -51,7 +23,6 @@ DEFAULT_CORE_SOCKET = "tcp://127.0.0.1:6776"
 @click.option("--log-format", "-f", default="CONSOLE", type=click.Choice(("CONSOLE", "JSON")))
 @click.option("--log-file", "-o")
 @click.option("--log-filter", default=None)
-@click.option("--I-am-John", is_flag=True, help="Log as dummy John Doe user")
 @click.option("--no-ui", help="Disable the GUI", is_flag=True)
 def core_cmd(log_level, log_format, log_file, log_filter, **kwargs):
     configure_logging(log_level, log_format, log_file, log_filter)

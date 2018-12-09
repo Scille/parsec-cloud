@@ -8,6 +8,7 @@ from parsec.api.protocole.handshake import (
     ClientHandshake,
     AnonymousClientHandshake,
 )
+from parsec.api.protocole.misc import ping_serializer
 from parsec.api.protocole.user import (
     user_get_serializer,
     user_find_serializer,
@@ -35,6 +36,7 @@ __all__ = (
     "ServerHandshake",
     "ClientHandshake",
     "AnonymousClientHandshake",
+    "ping_serializer",
     "user_get_serializer",
     "user_find_serializer",
     "user_invite_serializer",

@@ -1,21 +1,29 @@
-from typing import List
 import trio
 import attr
 from async_generator import asynccontextmanager
 
-from parsec.types import UserID
 from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice
 from parsec.core.config import CoreConfig
 from parsec.core.backend_connection2 import backend_cmds_create_pool, backend_listen_events
 from parsec.core.connection_monitor import monitor_connection
 from parsec.core.encryption_manager import EncryptionManager
-from parsec.core.mountpoint_manager import MountpointManager
+from parsec.core.mountpoint import mountpoint_manager_factory
 from parsec.core.beacons_monitor import monitor_beacons
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import SyncMonitor
 from parsec.core.fs import FS
 from parsec.core.local_db import LocalDB
+
+
+def _expose_cmds(name, wrapper_name=None):
+    async def wrapper(self, *args, **kwargs):
+        async with self.backend_cmds_pool.acquire() as cmds:
+            return await getattr(cmds, name)(*args, **kwargs)
+
+    wrapper.__name__ = wrapper_name or name
+
+    return wrapper
 
 
 @attr.s(frozen=True, slots=True)
@@ -29,23 +37,18 @@ class LoggedCore:
     backend_cmds_pool = attr.ib()
     fs = attr.ib()
 
-    async def user_find(
-        self, query: str = None, page: int = 1, per_page: int = 100
-    ) -> List[UserID]:
-        """
-        Raises:
-            BackendNotAvailable
-        """
-        async with self.backend_cmds_pool.acquire() as cmds:
-            return await cmds.user_find(query, page, per_page)
+    ping_backend = _expose_cmds("ping", wrapper_name="ping_backend")
 
-    async def ping_backend(self) -> None:
-        """
-        Raises:
-            BackendNotAvailable
-        """
-        async with self.backend_cmds_pool.acquire() as cmds:
-            return await cmds.ping()
+    user_get = _expose_cmds("user_get")
+    user_find = _expose_cmds("user_find")
+    user_invite = _expose_cmds("user_invite")
+    user_cancel_invitation = _expose_cmds("user_cancel_invitation")
+    user_create = _expose_cmds("user_create")
+
+    device_invite = _expose_cmds("device_invite")
+    device_cancel_invitation = _expose_cmds("device_cancel_invitation")
+    device_create = _expose_cmds("device_create")
+    device_revoke = _expose_cmds("device_revoke")
 
 
 @asynccontextmanager
@@ -57,26 +60,33 @@ async def logged_core_factory(config: CoreConfig, device: LocalDevice, event_bus
 
         # Monitor connection must be first given it will watch on
         # other monitors' events
-        await root_nursery.start(monitor_connection)
+        await root_nursery.start(monitor_connection, event_bus)
 
         async with trio.open_nursery() as backend_conn_nursery:
-            await backend_conn_nursery.start(
-                backend_listen_events, device, config.backend_addr, event_bus
-            )
+            await backend_conn_nursery.start(backend_listen_events, device, event_bus)
 
             async with backend_cmds_create_pool(
-                config.backend_addr, device.device_id, device.signing_key
+                device.backend_addr,
+                device.device_id,
+                device.signing_key,
+                config.backend_max_connections,
             ) as backend_cmds_pool:
 
-                encryption_manager = EncryptionManager(backend_cmds_pool, event_bus)
-                mountpoint_manager = MountpointManager(event_bus)
+                # TODO
+                # encryption_manager = EncryptionManager(backend_cmds_pool, event_bus)
+                from unittest.mock import Mock
+
+                encryption_manager = Mock()
 
                 async with trio.open_nursery() as monitor_nursery:
-                    # TODO: rework mountpoint manager to avoid init/teardown
-                    await mountpoint_manager.init(monitor_nursery)
 
-                    local_db = LocalDB(config.local_db_folder, device)
-                    fs = FS(device, local_db, backend_cmds_pool, encryption_manager, event_bus)
+                    local_db = LocalDB(config.data_dir, device)
+                    # TODO
+                    from tests.common import AsyncMock
+
+                    global FS
+                    fs = AsyncMock(spec=FS)
+                    # fs = FS(device, local_db, backend_cmds_pool, encryption_manager, event_bus)
 
                     # Finally start monitoring coroutines
                     await monitor_nursery.start(monitor_beacons, device, fs, event_bus)
@@ -84,6 +94,10 @@ async def logged_core_factory(config: CoreConfig, device: LocalDevice, event_bus
                     # TODO: replace SyncMonitor by a function
                     sync_monitor = SyncMonitor(fs, event_bus)
                     await monitor_nursery.start(sync_monitor.run)
+
+                    mountpoint_manager = mountpoint_manager_factory(fs, event_bus)
+                    # TODO: rework mountpoint manager to avoid init/teardown
+                    await mountpoint_manager.init(monitor_nursery)
 
                     try:
                         yield LoggedCore(

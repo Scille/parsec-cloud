@@ -20,7 +20,7 @@ async def test_api_user_get_ok(backend, alice_backend_sock, bob):
         "created_on": Pendulum(2000, 1, 1),
         "devices": {
             bob.device_name: {
-                "device_id": bob.id,
+                "device_id": bob.device_id,
                 "created_on": Pendulum(2000, 1, 1),
                 "revocated_on": None,
                 "certified_revocation": None,
@@ -61,8 +61,8 @@ async def test_api_user_get_not_found(alice_backend_sock):
 @pytest.mark.trio
 async def test_api_user_find(alice, backend, alice_backend_sock, root_key_certifier):
     # We won't use those keys anyway
-    dpk = alice.user_pubkey
-    dvk = alice.device_verifykey
+    dpk = alice.public_key
+    dvk = alice.verify_key
     # Populate with cool guys
     for cool_guy, devices_names in [
         ("Philippe", ["p1", "p2"]),

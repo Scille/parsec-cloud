@@ -12,15 +12,15 @@ from parsec.core.devices_manager2.manager import (
 
 
 __all__ = (
-    PasswordDeviceDecryptor,
-    PasswordDeviceEncryptor,
-    PKCS11DeviceDecryptor,
-    PKCS11DeviceEncryptor,
-    generate_new_device,
-    LocalDevicesManager,
-    DeviceManagerError,
-    DeviceConfigNotFound,
-    DeviceConfigAleadyExists,
-    DeviceLoadingError,
-    DeviceSavingError,
+    "PasswordDeviceDecryptor",
+    "PasswordDeviceEncryptor",
+    "PKCS11DeviceDecryptor",
+    "PKCS11DeviceEncryptor",
+    "generate_new_device",
+    "LocalDevicesManager",
+    "DeviceManagerError",
+    "DeviceConfigNotFound",
+    "DeviceConfigAleadyExists",
+    "DeviceLoadingError",
+    "DeviceSavingError",
 )

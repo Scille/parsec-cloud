@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 from parsec.types import DeviceID
 from parsec.crypto import SigningKey
-from parsec.core.backend_connection2.cmds import BackendCmds, AnonymousBackendCmds
+from parsec.core.backend_connection2.cmds import BackendCmds, BackendAnonymousCmds
 from parsec.core.backend_connection2.exceptions import BackendNotAvailable
 from parsec.api.transport import BaseTransport, TransportError, PatateTCPTransport
 from parsec.api.protocole import ProtocoleError, AnonymousClientHandshake, ClientHandshake
@@ -56,20 +56,37 @@ async def _do_handshade(
         raise
 
 
-async def backend_anonymous_cmds_connect(addr: str) -> AnonymousBackendCmds:
+@asynccontextmanager
+async def backend_anonymous_cmds_connect(addr: str) -> BackendAnonymousCmds:
     log = logger.bind(addr=addr, auth="<anonymous>", id=uuid4().hex)
     transport = await _transport_factory(log, addr)
-    _do_handshade(log, transport)
-    return AnonymousBackendCmds(log, transport)
+    await _do_handshade(log, transport)
+    try:
+        yield BackendAnonymousCmds(transport, log)
+
+    finally:
+        await transport.aclose()
 
 
-async def backend_cmds_connect(
+async def _backend_cmds_connect(
     addr: str, device_id: DeviceID, signing_key: SigningKey
 ) -> BackendCmds:
     log = logger.bind(addr=addr, auth=device_id, id=uuid4().hex)
     transport = await _transport_factory(log, addr)
-    _do_handshade(log, transport, device_id, signing_key)
-    return BackendCmds(log, transport)
+    await _do_handshade(log, transport, device_id, signing_key)
+    return BackendCmds(transport, log)
+
+
+@asynccontextmanager
+async def backend_cmds_connect(
+    addr: str, device_id: DeviceID, signing_key: SigningKey
+) -> BackendCmds:
+    cmds = await _backend_cmds_connect(addr, device_id, signing_key)
+    try:
+        yield cmds
+
+    finally:
+        await cmds.transport.aclose()
 
 
 class BackendCmdsPool:
@@ -82,17 +99,17 @@ class BackendCmdsPool:
 
     @asynccontextmanager
     async def acquire(self, fresh=False):
-        async with self.lock.acquire():
+        async with self.lock:
             try:
                 conn = self.conns.pop()
             except IndexError:
-                conn = await backend_cmds_connect(self.addr, self.device_id, self.signing_key)
+                conn = await _backend_cmds_connect(self.addr, self.device_id, self.signing_key)
 
             try:
                 yield conn
 
             except TransportError:
-                await conn.aclose()
+                await conn.transport.aclose()
                 raise
 
             else:
@@ -101,15 +118,15 @@ class BackendCmdsPool:
 
 @asynccontextmanager
 async def backend_cmds_create_pool(
-    addr: str, device_id: DeviceID = None, signing_key: SigningKey = None, max=10
+    addr: str, device_id: DeviceID, signing_key: SigningKey, max: int
 ):
-    pool = BackendCmdsPool(addr, device_id, signing_key)
+    pool = BackendCmdsPool(addr, device_id, signing_key, max)
     try:
         yield pool
 
     finally:
         for conn in pool.conns:
             try:
-                await conn.aclose()
+                await conn.transport.aclose()
             except TransportError:
                 pass

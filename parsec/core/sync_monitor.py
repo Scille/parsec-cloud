@@ -42,11 +42,12 @@ class SyncMonitor(BaseAsyncComponent):
     def running(self):
         return self._running
 
-    async def run(self):
+    async def run(self, *, task_status=trio.TASK_STATUS_IGNORED):
         if self.running:
             raise RuntimeError("Already running")
         self._running = True
 
+        task_status.started()
         while True:
             await self._backend_online_event.wait()
             try:

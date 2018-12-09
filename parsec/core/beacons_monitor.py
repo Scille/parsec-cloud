@@ -9,12 +9,13 @@ logger = get_logger()
 # only bother about them when they're really needed
 
 
-async def monitor_beacons(device, fs, event_bus):
+async def monitor_beacons(device, fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
     workspaces = set()
 
+    # TODO: temporary disabled
     # TODO: stop using private attribute `fs._local_folder_fs`
-    for beacon_id in fs._local_folder_fs.get_local_beacons():
-        event_bus.send("backend.beacon.listen", beacon_id=beacon_id)
+    # for beacon_id in fs._local_folder_fs.get_local_beacons():
+    #     event_bus.send("backend.beacon.listen", beacon_id=beacon_id)
 
     def _on_workspace_loaded(sender, path, id):
         workspaces.add(id)
@@ -44,6 +45,7 @@ async def monitor_beacons(device, fs, event_bus):
     event_bus.connect("fs.workspace.unloaded", _on_workspace_unloaded, weak=True)
     event_bus.connect("backend.beacon.updated", _on_beacon_updated, weak=True)
 
+    task_status.started()
     await trio.sleep_forever()
 
 

@@ -51,13 +51,10 @@ async def test_user_get_invitation_creator_ok(anonymous_backend_sock, mallory_in
     rep = user_get_invitation_creator_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "ok",
-        "device_id": mallory_invitation.creator,
+        "user_id": mallory_invitation.creator.user_id,
         "created_on": Pendulum(2000, 1, 1),
-        "certified_device": ANY,
-        "device_certifier": None,
-        "revocated_on": None,
-        "certified_revocation": None,
-        "revocation_certifier": None,
+        "certified_user": ANY,
+        "user_certifier": None,
     }
 
 

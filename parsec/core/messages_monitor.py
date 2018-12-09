@@ -8,7 +8,7 @@ from parsec.core.backend_connection import BackendNotAvailable
 logger = get_logger()
 
 
-async def monitor_messages(fs, event_bus):
+async def monitor_messages(fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
     msg_arrived = trio.Event()
     backend_online_event = trio.Event()
     process_message_cancel_scope = None
@@ -30,6 +30,7 @@ async def monitor_messages(fs, event_bus):
     event_bus.connect("backend.online", _on_backend_online, weak=True)
     event_bus.connect("backend.offline", _on_backend_offline, weak=True)
 
+    task_status.started()
     while True:
         try:
 

@@ -10,6 +10,7 @@ import trio_asyncio
 from typing import Tuple
 from async_generator import asynccontextmanager
 import hypothesis
+from pathlib import Path
 
 from parsec.types import DeviceID, UserID
 from parsec.crypto import (
@@ -22,6 +23,8 @@ from parsec.crypto import (
 )
 from parsec.trustchain import certify_user, certify_device
 from parsec.core import Core, CoreConfig
+from parsec.core.devices_manager2 import generate_new_device
+from parsec.core.logged_core import logged_core_factory
 from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.schemas import loads_manifest, dumps_manifest
 from parsec.core.fs.utils import new_access, new_local_user_manifest, local_to_remote_manifest
@@ -327,24 +330,26 @@ def device_factory():
     return _device_factory
 
 
-@pytest.fixture
-def alice(device_factory):
-    return device_factory("alice", "dev1")
+@pytest.fixture(scope="session")
+def alice(backend_addr, root_verify_key):
+    return generate_new_device(DeviceID("alice@dev1"), backend_addr, root_verify_key)
 
 
-@pytest.fixture
-def alice2(device_factory):
-    return device_factory("alice", "dev2")
+@pytest.fixture(scope="session")
+def alice2(backend_addr, root_verify_key, alice):
+    alice2 = generate_new_device(DeviceID("alice@dev2"), backend_addr, root_verify_key)
+    alice2.evolve(private_key=alice.private_key, user_manifest_access=alice.user_manifest_access)
+    return alice2
 
 
-@pytest.fixture
-def bob(device_factory):
-    return device_factory("bob", "dev1")
+@pytest.fixture(scope="session")
+def bob(backend_addr, root_verify_key):
+    return generate_new_device(DeviceID("bob@dev1"), backend_addr, root_verify_key)
 
 
-@pytest.fixture
-def mallory(device_factory):
-    return device_factory("mallory", "dev1")
+@pytest.fixture(scope="session")
+def mallory(backend_addr, root_verify_key):
+    return generate_new_device(DeviceID("mallory@dev1"), backend_addr, root_verify_key)
 
 
 @pytest.fixture
@@ -477,32 +482,32 @@ def backend_factory(
             with freeze_time("2000-01-01"):
                 for device in devices:
                     backend_user = root_key_certifier.user_factory(
-                        device.user_id,
-                        device.user_pubkey,
-                        [(device.device_name, device.device_verifykey)],
+                        device.user_id, device.public_key, [(device.device_name, device.verify_key)]
                     )
                     try:
                         await backend.user.create_user(backend_user)
 
-                        access = device.user_manifest_access
-                        try:
-                            local_user_manifest = loads_manifest(device.local_db.get(access))
-                        except LocalDBMissingEntry:
-                            continue
-                        else:
-                            if local_user_manifest["base_version"] == 0:
-                                continue
+                        # TODO: still useful ?
 
-                        remote_user_manifest = local_to_remote_manifest(local_user_manifest)
-                        ciphered = encrypt_with_secret_key(
-                            device.id,
-                            device.device_signkey,
-                            access["key"],
-                            dumps_manifest(remote_user_manifest),
-                        )
-                        await backend.vlob.create(
-                            access["id"], access["rts"], access["wts"], ciphered
-                        )
+                        # access = device.user_manifest_access
+                        # try:
+                        #     local_user_manifest = loads_manifest(device.local_db.get(access))
+                        # except LocalDBMissingEntry:
+                        #     continue
+                        # else:
+                        #     if local_user_manifest["base_version"] == 0:
+                        #         continue
+
+                        # remote_user_manifest = local_to_remote_manifest(local_user_manifest)
+                        # ciphered = encrypt_with_secret_key(
+                        #     device.id,
+                        #     device.device_signkey,
+                        #     access["key"],
+                        #     dumps_manifest(remote_user_manifest),
+                        # )
+                        # await backend.vlob.create(
+                        #     access["id"], access["rts"], access["wts"], ciphered
+                        # )
 
                     except UserAlreadyExistsError:
                         await backend.user.create_device(backend_user.devices[device.device_name])
@@ -553,7 +558,7 @@ def backend_sock_factory(server_factory):
                     ch = AnonymousClientHandshake()
                 else:
                     # TODO: change auth_as type
-                    ch = ClientHandshake(auth_as.id, auth_as.device_signkey)
+                    ch = ClientHandshake(auth_as.device_id, auth_as.signing_key)
                 challenge_req = await transport.recv()
                 answer_req = ch.process_challenge_req(challenge_req)
                 await transport.send(answer_req)
@@ -650,46 +655,37 @@ def core_sock_factory(server_factory):
     return _core_sock_factory
 
 
-@pytest.fixture
-async def alice_core(core, alice):
-    assert not core.auth_device, "Core already logged"
-    await core.login(alice)
-    return core
+@pytest.fixture(scope="session")
+def root_signing_key():
+    return SigningKey.generate()
+
+
+@pytest.fixture(scope="session")
+def root_verify_key(root_signing_key):
+    return root_signing_key.verify_key
 
 
 @pytest.fixture
-async def alice_core_sock(core_sock_factory, alice_core):
-    async with core_sock_factory(alice_core) as sock:
-        yield sock
+def core_config(tmpdir):
+    tmpdir = Path(tmpdir)
+    return CoreConfig(
+        config_dir=tmpdir / "config", cache_dir=tmpdir / "cache", data_dir=tmpdir / "data"
+    )
 
 
 @pytest.fixture
-async def core2(core_factory):
-    async with core_factory() as core2:
-        yield core2
+async def alice_core(core_config, alice):
+    async with logged_core_factory(core_config, alice) as alice_core:
+        yield alice_core
 
 
 @pytest.fixture
-async def alice2_core2(core2, alice2):
-    assert not core2.auth_device, "Core already logged"
-    await core2.login(alice2)
-    return core2
+async def alice2_core(core_config, alice2):
+    async with logged_core_factory(core_config, alice2) as alice2_core:
+        yield alice2_core
 
 
 @pytest.fixture
-async def bob_core2(core2, bob):
-    assert not core2.auth_device, "Core already logged"
-    await core2.login(bob)
-    return core2
-
-
-@pytest.fixture
-async def alice2_core2_sock(core_sock_factory, alice2_core2):
-    async with core_sock_factory(alice2_core2) as sock:
-        yield sock
-
-
-@pytest.fixture
-async def bob_core2_sock(core_sock_factory, bob_core2):
-    async with core_sock_factory(bob_core2) as sock:
-        yield sock
+async def bob_core(core_config, bob):
+    async with logged_core_factory(core_config, bob) as bob_core:
+        yield bob_core

@@ -24,7 +24,7 @@ def test_certify_user(alice, mallory):
 
     with freeze_time(now):
         certification = certify_user(
-            alice.device_id, alice.device_signkey, mallory.user_id, mallory.user_pubkey
+            alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key
         )
     assert isinstance(certification, bytes)
 
@@ -32,11 +32,11 @@ def test_certify_user(alice, mallory):
     assert certifier == alice.device_id
     assert isinstance(payload, bytes)
 
-    data = validate_payload_certified_user(alice.device_verifykey, payload, now)
+    data = validate_payload_certified_user(alice.verify_key, payload, now)
     assert data == {
         "type": "user",
         "user_id": mallory.user_id,
-        "public_key": mallory.user_pubkey,
+        "public_key": mallory.public_key,
         "timestamp": now,
     }
 
@@ -44,31 +44,31 @@ def test_certify_user(alice, mallory):
 def test_validate_bad_certified_user(alice):
     now = Pendulum(2000, 1, 1)
     with pytest.raises(TrustChainError):
-        validate_payload_certified_user(alice.device_verifykey, b"", now)
+        validate_payload_certified_user(alice.verify_key, b"", now)
 
 
 def test_validate_certified_user_bad_certifier(alice, bob, mallory):
     now = Pendulum(2000, 1, 1)
     certification = certify_user(
-        alice.device_id, alice.device_signkey, mallory.user_id, mallory.user_pubkey
+        alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key
     )
     certifier, payload = certified_extract_parts(certification)
 
     with pytest.raises(TrustChainError):
-        validate_payload_certified_user(bob.device_verifykey, payload, now)
+        validate_payload_certified_user(bob.verify_key, payload, now)
 
 
 def test_validate_certified_user_too_old(alice, bob, mallory):
     now = Pendulum(2000, 1, 1)
     with freeze_time(now):
         certification = certify_user(
-            alice.device_id, alice.device_signkey, mallory.user_id, mallory.user_pubkey
+            alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key
         )
 
     certifier, payload = certified_extract_parts(certification)
     now = now.add(seconds=MAX_TS_BALLPARK + 1)
     with pytest.raises(TrustChainError):
-        validate_payload_certified_user(alice.device_verifykey, payload, now)
+        validate_payload_certified_user(alice.verify_key, payload, now)
 
 
 def test_certify_device(alice, mallory):
@@ -76,7 +76,7 @@ def test_certify_device(alice, mallory):
 
     with freeze_time(now):
         certification = certify_device(
-            alice.device_id, alice.device_signkey, mallory.device_id, mallory.device_verifykey
+            alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key
         )
     assert isinstance(certification, bytes)
 
@@ -84,11 +84,11 @@ def test_certify_device(alice, mallory):
     assert certifier == alice.device_id
     assert isinstance(payload, bytes)
 
-    data = validate_payload_certified_device(alice.device_verifykey, payload, now)
+    data = validate_payload_certified_device(alice.verify_key, payload, now)
     assert data == {
         "type": "device",
         "device_id": mallory.device_id,
-        "verify_key": mallory.device_verifykey,
+        "verify_key": mallory.verify_key,
         "timestamp": now,
     }
 
@@ -96,28 +96,28 @@ def test_certify_device(alice, mallory):
 def test_validate_bad_certified_device(alice):
     now = Pendulum(2000, 1, 1)
     with pytest.raises(TrustChainError):
-        validate_payload_certified_device(alice.device_verifykey, b"", now)
+        validate_payload_certified_device(alice.verify_key, b"", now)
 
 
 def test_validate_certified_device_bad_certifier(alice, bob, mallory):
     now = Pendulum(2000, 1, 1)
     certification = certify_device(
-        alice.device_id, alice.device_signkey, mallory.device_id, mallory.device_signkey
+        alice.device_id, alice.signing_key, mallory.device_id, mallory.signing_key
     )
     certifier, payload = certified_extract_parts(certification)
 
     with pytest.raises(TrustChainError):
-        validate_payload_certified_device(bob.device_verifykey, payload, now)
+        validate_payload_certified_device(bob.verify_key, payload, now)
 
 
 def test_validate_certified_device_too_old(alice, bob, mallory):
     now = Pendulum(2000, 1, 1)
     with freeze_time(now):
         certification = certify_device(
-            alice.device_id, alice.device_signkey, mallory.device_id, mallory.device_signkey
+            alice.device_id, alice.signing_key, mallory.device_id, mallory.signing_key
         )
 
     certifier, payload = certified_extract_parts(certification)
     now = now.add(seconds=MAX_TS_BALLPARK + 1)
     with pytest.raises(TrustChainError):
-        validate_payload_certified_device(alice.device_verifykey, payload, now)
+        validate_payload_certified_device(alice.verify_key, payload, now)

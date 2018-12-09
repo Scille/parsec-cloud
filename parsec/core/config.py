@@ -34,24 +34,32 @@ def get_default_config_dir(environ):
         return Path(path) / "parsec"
 
 
-@attr.s(slots=True, frozen=True)
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class CoreConfig:
+    config_dir: Path
+    data_dir: Path
     cache_dir: Path
-    settings_dir: Path
 
     debug: bool = False
     backend_watchdog: int = 0
+    backend_max_connections: int = 4
 
     sentry_url: Optional[str] = None
 
 
 def config_factory(
-    config_dir=None, data_dir=None, cache_dir=None, backend_watchdog=0, debug=False, environ={}
+    config_dir=None,
+    data_dir=None,
+    cache_dir=None,
+    backend_watchdog=0,
+    backend_max_connections=4,
+    debug=False,
+    environ={},
 ):
     return CoreConfig(
-        cache_dir=cache_dir or get_default_cache_dir(environ),
+        config_dir=config_dir or get_default_config_dir(environ),
         data_dir=data_dir or get_default_data_dir(environ),
-        settings_dir=settings_dir or get_default_config_dir(environ),
+        cache_dir=cache_dir or get_default_cache_dir(environ),
         debug=debug,
         backend_watchdog=backend_watchdog,
         sentry_url=environ.get("SENTRY_URL") or None,

@@ -61,13 +61,10 @@ async def test_device_get_invitation_creator_ok(anonymous_backend_sock, alice_nd
     rep = device_get_invitation_creator_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "ok",
-        "device_id": alice_nd_invitation.creator,
+        "user_id": alice_nd_invitation.creator.user_id,
         "created_on": Pendulum(2000, 1, 1),
-        "certified_device": ANY,
-        "device_certifier": None,
-        "revocated_on": None,
-        "certified_revocation": None,
-        "revocation_certifier": None,
+        "certified_user": ANY,
+        "user_certifier": None,
     }
 
 

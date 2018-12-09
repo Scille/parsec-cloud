@@ -88,8 +88,12 @@ class UserGetInvitationCreatorReqSchema(BaseReqSchema):
     invited_user_id = fields.UserID(required=True)
 
 
-class UserGetInvitationCreatorRepSchema(BaseRepSchema, DeviceSchema):
-    pass
+class UserGetInvitationCreatorRepSchema(BaseRepSchema):
+    user_id = fields.String(required=True)
+    created_on = fields.DateTime(required=True)
+
+    certified_user = fields.Base64Bytes(required=True)
+    user_certifier = fields.DeviceID(allow_none=True)
 
 
 user_get_invitation_creator_serializer = CmdSerializer(
@@ -152,8 +156,12 @@ class DeviceGetInvitationCreatorReqSchema(BaseReqSchema):
     invited_device_id = fields.DeviceID(required=True)
 
 
-class DeviceGetInvitationCreatorRepSchema(BaseRepSchema, DeviceSchema):
-    pass
+class DeviceGetInvitationCreatorRepSchema(BaseRepSchema):
+    user_id = fields.String(required=True)
+    created_on = fields.DateTime(required=True)
+
+    certified_user = fields.Base64Bytes(required=True)
+    user_certifier = fields.DeviceID(allow_none=True)
 
 
 device_get_invitation_creator_serializer = CmdSerializer(

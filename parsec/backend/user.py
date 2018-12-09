@@ -246,21 +246,19 @@ class BaseUserComponent:
             invitation = await self.get_user_invitation(msg["invited_user_id"])
             if not invitation.is_valid():
                 return {"status": "not_found"}
-            device, trustchain = await self.get_device_with_trustchain(invitation.creator)
 
-        except NotFoundError:
+            user, trustchain = await self.get_user_with_trustchain(invitation.creator.user_id)
+
+        except NotFoundError as exc:
             return {"status": "not_found"}
 
         return user_get_invitation_creator_serializer.rep_dump(
             {
                 "status": "ok",
-                "device_id": device.device_id,
-                "created_on": device.created_on,
-                "certified_device": device.certified_device,
-                "device_certifier": device.device_certifier,
-                "revocated_on": device.revocated_on,
-                "certified_revocation": device.certified_revocation,
-                "revocation_certifier": device.revocation_certifier,
+                "user_id": user.user_id,
+                "created_on": user.created_on,
+                "certified_user": user.certified_user,
+                "user_certifier": user.user_certifier,
                 "trustchain": trustchain,
             }
         )
@@ -437,21 +435,19 @@ class BaseUserComponent:
             invitation = await self.get_device_invitation(msg["invited_device_id"])
             if not invitation.is_valid():
                 return {"status": "not_found"}
-            device, trustchain = await self.get_device_with_trustchain(invitation.creator)
 
-        except NotFoundError:
+            user, trustchain = await self.get_user_with_trustchain(invitation.creator.user_id)
+
+        except NotFoundError as exc:
             return {"status": "not_found"}
 
         return device_get_invitation_creator_serializer.rep_dump(
             {
                 "status": "ok",
-                "device_id": device.device_id,
-                "created_on": device.created_on,
-                "certified_device": device.certified_device,
-                "device_certifier": device.device_certifier,
-                "revocated_on": device.revocated_on,
-                "certified_revocation": device.certified_revocation,
-                "revocation_certifier": device.revocation_certifier,
+                "user_id": user.user_id,
+                "created_on": user.created_on,
+                "certified_user": user.certified_user,
+                "user_certifier": user.user_certifier,
                 "trustchain": trustchain,
             }
         )
