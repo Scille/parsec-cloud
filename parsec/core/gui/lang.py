@@ -17,7 +17,7 @@ def switch_language(lang_key=None):
     global _current_translator
 
     if not lang_key:
-        lang_key = settings.get_value("language")
+        lang_key = settings.get_value("global/language")
     if not lang_key:
         lang_key = get_locale_language()
         logger.info("No language in settings, trying local language '{}'".format(lang_key))
@@ -34,7 +34,7 @@ def switch_language(lang_key=None):
         return False
 
     QCoreApplication.removeTranslator(_current_translator)
-    settings.set_value("language", lang_key)
+    settings.set_value("global/language", lang_key)
     _current_translator = translator
     QCoreApplication.processEvents()
     return True

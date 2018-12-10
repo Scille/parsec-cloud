@@ -34,6 +34,8 @@ FORMS += forms/main_window.ui \
          forms/input_dialog.ui \
          forms/question_dialog.ui \
          forms/shared_dialog.ui \
-         forms/device_button.ui
+         forms/device_button.ui \
+         forms/network_settings_widget.ui \
+         forms/global_settings_widget.ui
 
 RESOURCES += rc/resources.qrc

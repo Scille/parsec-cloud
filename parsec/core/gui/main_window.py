@@ -65,7 +65,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def add_tray_icon(self):
         if not QSystemTrayIcon.isSystemTrayAvailable() or not settings.get_value(
-            "tray_enabled", True
+            "global/tray_enabled", True
         ):
             return
         self.tray = QSystemTrayIcon(self)
@@ -125,7 +125,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 logger.info("Mountpoint stopped")
 
     def mount(self):
-        base_mountpoint = settings.get_value("mountpoint")
+        base_mountpoint = settings.get_value("global/mountpoint")
         if not base_mountpoint:
             return None
         mountpoint = os.path.join(base_mountpoint, self.current_device.id)
@@ -150,7 +150,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     'Can not mount in "{}" (permissions problems ?). Go '
                     "to Settings/Global to a set mountpoint, then File/Remount to "
                     "mount it.",
-                ).format(settings.get_value("mountpoint")),
+                ).format(settings.get_value("global/mountpoint")),
             )
             self.show_settings_widget()
             return
@@ -174,7 +174,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             core_call().logout()
             core_call().login(device)
             settings.set_value("last_device", device_id)
-            if settings.get_value("mountpoint_enabled"):
+            if settings.get_value("global/mountpoint_enabled"):
                 mountpoint = self.mount()
                 if mountpoint is None:
                     show_error(
@@ -184,7 +184,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                             'Can not mount in "{}" (permissions problems ?). Go '
                             "to Settings/Global to a set mountpoint, then File/Remount to "
                             "mount it.",
-                        ).format(settings.get_value("mountpoint")),
+                        ).format(settings.get_value("global/mountpoint")),
                     )
                     self.show_settings_widget()
                     return
@@ -362,7 +362,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def closeEvent(self, event):
         if (
-            not settings.get_value("tray_enabled")
+            not settings.get_value("global/tray_enabled")
             or not QSystemTrayIcon.isSystemTrayAvailable()
             or self.close_requested
             or core_call().is_debug()
