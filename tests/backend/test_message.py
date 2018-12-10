@@ -8,11 +8,11 @@ from parsec.backend.drivers import postgresql as pg_driver
 
 @pytest.mark.trio
 async def test_message_from_bob_to_alice(alice, bob, alice_backend_sock, bob_backend_sock):
-    await alice_backend_sock.send({"cmd": "event_subscribe", "event": "message.received"})
+    await alice_backend_sock.send({"cmd": "events_subscribe", "message_received": True})
     rep = await alice_backend_sock.recv()
     assert rep == {"status": "ok"}
 
-    await alice_backend_sock.send({"cmd": "event_listen"})
+    await alice_backend_sock.send({"cmd": "events_listen"})
 
     await bob_backend_sock.send(
         {"cmd": "message_new", "recipient": alice.user_id, "body": to_jsonb64(b"Hello from Bob !")}
@@ -49,11 +49,11 @@ async def test_message_from_bob_to_alice_multi_backends(
             backend_1, alice
         ) as alice_backend_sock, backend_sock_factory(backend_2, bob) as bob_backend_sock:
 
-            await alice_backend_sock.send({"cmd": "event_subscribe", "event": "message.received"})
+            await alice_backend_sock.send({"cmd": "events_subscribe", "message_received": True})
             rep = await alice_backend_sock.recv()
             assert rep == {"status": "ok"}
 
-            await alice_backend_sock.send({"cmd": "event_listen"})
+            await alice_backend_sock.send({"cmd": "events_listen"})
 
             await bob_backend_sock.send(
                 {

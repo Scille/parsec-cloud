@@ -300,6 +300,11 @@ class BackendAnonymousCmds:
 async def backend_cmds_factory(
     addr: str, device_id: DeviceID, signing_key: SigningKey
 ) -> BackendCmds:
+    """
+    Raises:
+        parsec.api.protocole.ProtocoleError
+        BackendNotAvailable
+    """
     async with authenticated_transport_factory(addr, device_id, signing_key) as transport:
         log = logger.bind(addr=addr, auth=device_id, id=uuid4().hex)
         yield BackendCmds(transport, log)

@@ -28,11 +28,6 @@ class BaseReqSchema(UnknownCheckedSchema):
 
 
 class BaseRepSchema(UnknownCheckedSchema):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.with_error_schema = RepWithErrorSchema()
-        self.with_error_schema.type_schemas["ok"] = self
-
     status = fields.CheckedConstant("ok", required=True)
 
 

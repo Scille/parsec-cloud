@@ -2,15 +2,15 @@ import attr
 import trio
 from uuid import uuid4
 from structlog import get_logger
-from json import JSONDecodeError
 
 from parsec.types import DeviceID
 from parsec.utils import ParsecError
 from parsec.event_bus import EventBus
-from parsec.schema import BaseCmdSchema, fields, OneOfSchema
+from parsec.schema import BaseCmdSchema, fields
 from parsec.api.transport import PatateTCPTransport, TransportError
 from parsec.api.protocole import HandshakeFormatError, ServerHandshake
 from parsec.backend.exceptions import BackendAuthError
+from parsec.backend.events import EventsComponent
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.drivers.memory import (
     MemoryUserComponent,
@@ -40,65 +40,6 @@ class _cmd_PING_Schema(BaseCmdSchema):
 cmd_PING_Schema = _cmd_PING_Schema()
 
 
-class _cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema(BaseCmdSchema):
-    event = fields.CheckedConstant("beacon.updated")
-    beacon_id = fields.UUID(missing=None)
-
-
-cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema = _cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema()
-
-
-class _cmd_EVENT_SUBSCRIBE_MessageReceivedSchema(BaseCmdSchema):
-    event = fields.CheckedConstant("message.received")
-
-
-cmd_EVENT_SUBSCRIBE_MessageReceivedSchema = _cmd_EVENT_SUBSCRIBE_MessageReceivedSchema()
-
-
-class _cmd_EVENT_SUBSCRIBE_DeviceTryclaimSubmittedSchema(BaseCmdSchema):
-    event = fields.CheckedConstant("device.try_claim_submitted")
-
-
-cmd_EVENT_SUBSCRIBE_DeviceTryclaimSubmittedSchema = (
-    _cmd_EVENT_SUBSCRIBE_DeviceTryclaimSubmittedSchema()
-)
-
-
-class _cmd_EVENT_SUBSCRIBE_PingedSchema(BaseCmdSchema):
-    event = fields.CheckedConstant("pinged")
-    ping = fields.String(missing=None)
-
-
-cmd_EVENT_SUBSCRIBE_PingedSchema = _cmd_EVENT_SUBSCRIBE_PingedSchema()
-
-
-class _cmd_EVENT_SUBSCRIBE_Schema(BaseCmdSchema, OneOfSchema):
-    type_field = "event"
-    type_field_remove = False
-    type_schemas = {
-        "beacon.updated": cmd_EVENT_SUBSCRIBE_BeaconUpdatedSchema,
-        "message.received": cmd_EVENT_SUBSCRIBE_MessageReceivedSchema,
-        "device.try_claim_submitted": cmd_EVENT_SUBSCRIBE_DeviceTryclaimSubmittedSchema,
-        "pinged": cmd_EVENT_SUBSCRIBE_PingedSchema,
-    }
-
-    def get_obj_type(self, obj):
-        return obj["event"]
-
-
-cmd_EVENT_SUBSCRIBE_Schema = _cmd_EVENT_SUBSCRIBE_Schema()
-
-
-class _cmd_EVENT_LISTEN_Schema(BaseCmdSchema):
-    wait = fields.Boolean(missing=True)
-
-
-cmd_EVENT_LISTEN_Schema = _cmd_EVENT_LISTEN_Schema()
-
-
-cmd_EVENT_LIST_SUBSCRIBED = BaseCmdSchema()
-
-
 @attr.s
 class AnonymousClientContext:
     id = "anonymous"
@@ -115,8 +56,8 @@ class ClientContext:
     broadcast_key = attr.ib()
     verify_key = attr.ib()
     conn_id = attr.ib(factory=lambda: uuid4().hex)
-    subscribed_events = attr.ib(default=attr.Factory(dict), init=False)
-    events = attr.ib(default=attr.Factory(lambda: trio.Queue(100)), init=False)
+    subscribed_events = attr.ib(factory=dict, init=False)
+    events = attr.ib(factory=lambda: trio.Queue(100), init=False)
 
     def __attrs_post_init__(self):
         self.logger = logger.bind(client_id=self.id, conn_id=self.conn_id)
@@ -140,6 +81,7 @@ class BackendApp:
         self.config = config
         self.nursery = None
         self.dbh = None
+        self.events = EventsComponent(self.event_bus)
 
         if self.config.db_url == "MOCKED":
             self.user = MemoryUserComponent(config.root_verify_key, self.event_bus)
@@ -169,10 +111,8 @@ class BackendApp:
             check_anonymous_api_allowed(fn)
 
         self.cmds = {
-            "event_subscribe": self._api_event_subscribe,
-            "event_unsubscribe": self._api_event_unsubscribe,
-            "event_listen": self._api_event_listen,
-            "event_list_subscribed": self._api_event_list_subscribed,
+            "events_subscribe": self.events.api_events_subscribe,
+            "events_listen": self.events.api_events_listen,
             "ping": self._api_ping,
             # User&Device
             "user_get": self.user.api_user_get,
@@ -228,96 +168,6 @@ class BackendApp:
 
         return await self.blockstore.api_blockstore_get(client_ctx, msg)
 
-    async def _api_event_subscribe(self, client_ctx, msg):
-        msg = cmd_EVENT_SUBSCRIBE_Schema.load_or_abort(msg)
-        event = msg["event"]
-
-        if event == "beacon.updated":
-            expected_beacon_id = msg["beacon_id"]
-            key = (event, expected_beacon_id)
-
-            def _build_event_msg(author, beacon_id, index, src_id, src_version):
-                if beacon_id != expected_beacon_id:
-                    return None
-                return {
-                    "event": event,
-                    "beacon_id": beacon_id,
-                    "index": index,
-                    "src_id": src_id,
-                    "src_version": src_version,
-                }
-
-        elif event == "message.received":
-            key = event
-
-            def _build_event_msg(author, recipient, index):
-                if recipient != client_ctx.user_id:
-                    return None
-                return {"event": event, "index": index}
-
-        elif event == "device.try_claim_submitted":
-            key = event
-
-            def _build_event_msg(author, user_id, device_name, config_try_id):
-                if user_id != client_ctx.user_id:
-                    return None
-                return {"event": event, "device_name": device_name, "config_try_id": config_try_id}
-
-        elif event == "pinged":
-            expected_ping = msg["ping"]
-            key = (event, expected_ping)
-
-            def _build_event_msg(author, ping):
-                if expected_ping and ping != expected_ping:
-                    return None
-                return {"event": event, "ping": ping}
-
-        def _handle_event(sender, author, **kwargs):
-            if author == client_ctx.id:
-                return
-            try:
-                msg = _build_event_msg(author, **kwargs)
-                if msg:
-                    client_ctx.events.put_nowait(msg)
-            except trio.WouldBlock:
-                client_ctx.logger.warning("event queue is full")
-
-        client_ctx.subscribed_events[key] = _handle_event
-        self.event_bus.connect(event, _handle_event, weak=True)
-        return {"status": "ok"}
-
-    async def _api_event_unsubscribe(self, client_ctx, msg):
-        msg = cmd_EVENT_SUBSCRIBE_Schema.load_or_abort(msg)
-        if msg["event"] == "pinged":
-            key = (msg["event"], msg["ping"])
-        elif msg["event"] == "beacon.updated":
-            key = (msg["event"], msg["beacon_id"])
-        else:
-            key = msg["event"]
-
-        try:
-            del client_ctx.subscribed_events[key]
-        except KeyError:
-            return {"status": "not_subscribed", "reason": f"Not subscribed to {key!r}"}
-
-        return {"status": "ok"}
-
-    async def _api_event_listen(self, client_ctx, msg):
-        msg = cmd_EVENT_LISTEN_Schema.load_or_abort(msg)
-        if msg["wait"]:
-            event_data = await client_ctx.events.get()
-        else:
-            try:
-                event_data = client_ctx.events.get_nowait()
-            except trio.WouldBlock:
-                return {"status": "no_events"}
-
-        return {"status": "ok", **event_data}
-
-    async def _api_event_list_subscribed(self, client_ctx, msg):
-        cmd_EVENT_LIST_SUBSCRIBED.load_or_abort(msg)  # empty msg expected
-        return {"status": "ok", "subscribed": list(client_ctx.subscribed_events.keys())}
-
     async def _do_handshake(self, transport):
         context = None
         try:
@@ -371,7 +221,7 @@ class BackendApp:
 
         except TransportError as exc:
             # Client has closed connection or sent an invalid trame
-            rep = {"status": "invalid_msg_format", "reason": "Invalid message format: %s" % exc}
+            rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
             try:
                 await transport.send(rep)
             except TransportError:

@@ -7,6 +7,14 @@ from tests.open_tcp_stream_mock_wrapper import offline
 
 
 @pytest.mark.trio
+async def test_backend_offline(backend_addr, alice):
+    async with backend_cmds_pool_factory(backend_addr, alice.device_id, alice.signing_key) as cmds:
+        with pytest.raises(BackendNotAvailable):
+            # Must send a request given the pool lazily creates connections
+            await cmds.ping("Whatever")
+
+
+@pytest.mark.trio
 async def test_backend_switch_offline(running_backend, alice, tcp_stream_spy):
     async with backend_cmds_pool_factory(
         running_backend.addr, alice.device_id, alice.signing_key
@@ -34,3 +42,42 @@ async def test_backend_switch_offline(running_backend, alice, tcp_stream_spy):
         # Finally make sure we can still connect to the backend
         pong = await cmds.ping("Hello World !")
         assert pong == "Hello World !"
+
+
+@pytest.mark.trio
+@pytest.mark.parametrize("cmds_used", (False, True))
+async def test_backend_closed_cmds(cmds_used, running_backend, alice):
+    async with backend_cmds_pool_factory(
+        running_backend.addr, alice.device_id, alice.signing_key
+    ) as cmds:
+        if cmds_used:
+            await cmds.ping("Whatever")
+    with pytest.raises(trio.ClosedResourceError):
+        await cmds.ping("Whatever")
+
+
+@pytest.mark.trio
+async def test_concurrency_sends(running_backend, alice):
+
+    CONCURRENCY = 10
+    work_done_counter = 0
+    work_all_done = trio.Event()
+
+    async def sender(cmds, x):
+        nonlocal work_done_counter
+        rep = await cmds.ping(x)
+        assert rep == x
+        work_done_counter += 1
+        if work_done_counter == CONCURRENCY:
+            work_all_done.set()
+
+    async with backend_cmds_pool_factory(
+        running_backend.addr, alice.device_id, alice.signing_key
+    ) as cmds:
+
+        async with trio.open_nursery() as nursery:
+            for x in range(CONCURRENCY):
+                nursery.start_soon(sender, cmds, str(x))
+
+        with trio.fail_after(1):
+            await work_all_done.wait()

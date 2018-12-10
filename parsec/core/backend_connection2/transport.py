@@ -7,8 +7,17 @@ from urllib.parse import urlparse
 from parsec.types import DeviceID
 from parsec.crypto import SigningKey
 from parsec.api.transport import BaseTransport, TransportError, PatateTCPTransport
-from parsec.api.protocole import ProtocoleError, AnonymousClientHandshake, ClientHandshake
-from parsec.core.backend_connection2.exceptions import BackendNotAvailable
+from parsec.api.protocole import (
+    ProtocoleError,
+    HandshakeRevokedDevice,
+    AnonymousClientHandshake,
+    ClientHandshake,
+)
+from parsec.core.backend_connection2.exceptions import (
+    BackendNotAvailable,
+    BackendHandshakeError,
+    BackendDeviceRevokedError,
+)
 
 
 __all__ = (
@@ -57,10 +66,15 @@ async def _do_handshade(
         await transport.aclose()
         raise BackendNotAvailable() from exc
 
+    except HandshakeRevokedDevice as exc:
+        transport.log.warning("Handshake failed", reason=exc)
+        await transport.aclose()
+        raise BackendDeviceRevokedError() from exc
+
     except ProtocoleError as exc:
         transport.log.warning("Handshake failed", reason=exc)
         await transport.aclose()
-        raise
+        raise BackendHandshakeError() from exc
 
 
 async def _authenticated_transport_factory(
@@ -111,11 +125,12 @@ class TransportPool:
         self.device_id = device_id
         self.signing_key = signing_key
         self.transports = []
-        self.lock = trio.Semaphore(max)
+        self._closed = False
+        self._lock = trio.Semaphore(max)
 
     @asynccontextmanager
     async def acquire(self, force_fresh=False):
-        async with self.lock:
+        async with self._lock:
             transport = None
             if not force_fresh:
                 try:
@@ -123,6 +138,9 @@ class TransportPool:
                 except IndexError:
                     pass
             if not transport:
+                if self._closed:
+                    raise trio.ClosedResourceError()
+
                 transport = await _authenticated_transport_factory(
                     self.addr, self.device_id, self.signing_key
                 )
@@ -147,6 +165,7 @@ async def transport_pool_factory(
         yield pool
 
     finally:
+        pool._closed = True
         for transport in pool.transports:
             try:
                 await transport.aclose()

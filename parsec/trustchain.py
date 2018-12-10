@@ -21,15 +21,15 @@ class TrustChainError(Exception):
     pass
 
 
-class TrustChainInvalidDataError(Exception):
+class TrustChainInvalidDataError(TrustChainError):
     pass
 
 
-class TrustChainTooOldError(Exception):
+class TrustChainTooOldError(TrustChainError):
     pass
 
 
-class TrustChainBrokenChainError(Exception):
+class TrustChainBrokenChainError(TrustChainError):
     pass
 
 
