@@ -1,6 +1,6 @@
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Iterable
 from structlog import get_logger
-from uuid import uuid4
+from uuid import uuid4, UUID
 from async_generator import asynccontextmanager
 
 from parsec.types import DeviceID, UserID
@@ -9,6 +9,8 @@ from parsec.api.transport import BaseTransport, TransportError
 from parsec.api.protocole import (
     ProtocoleError,
     ping_serializer,
+    events_subscribe_serializer,
+    events_listen_serializer,
     user_get_serializer,
     user_find_serializer,
     user_invite_serializer,
@@ -108,13 +110,45 @@ class BackendCmds:
         self.transport = transport
         self.log = log or logger
 
-    async def ping(self, ping: str):
+    async def ping(self, ping: str) -> str:
         raw_req = {"cmd": "ping", "ping": ping}
         req = _req_dump(ping_serializer, raw_req)
         await _transport_send(self.transport, req)
         raw_rep = await _transport_recv(self.transport)
         rep = _rep_load(ping_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
         return rep["pong"]
+
+    async def events_subscribe(
+        self,
+        message_received: bool = False,
+        beacon_updated: Iterable[UUID] = (),
+        pinged: Iterable[str] = (),
+    ) -> None:
+        raw_req = {
+            "cmd": "events_subscribe",
+            "message_received": message_received,
+            "beacon_updated": beacon_updated,
+            "pinged": pinged,
+        }
+        req = _req_dump(events_subscribe_serializer, raw_req)
+        await _transport_send(self.transport, req)
+        raw_rep = await _transport_recv(self.transport)
+        rep = _rep_load(events_subscribe_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
+
+    async def events_listen(self, wait: bool = True) -> dict:
+        raw_req = {"cmd": "events_listen", "wait": wait}
+        req = _req_dump(events_listen_serializer, raw_req)
+        await _transport_send(self.transport, req)
+        raw_rep = await _transport_recv(self.transport)
+        rep = _rep_load(events_listen_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
+        rep.pop("status")
+        return rep
 
     async def user_get(self, user_id: UserID) -> Tuple[RemoteUser, Dict[DeviceID, RemoteDevice]]:
         raw_req = {"cmd": "user_get", "user_id": user_id}
@@ -122,6 +156,8 @@ class BackendCmds:
         await _transport_send(self.transport, req)
         raw_rep = await _transport_recv(self.transport)
         rep = _rep_load(user_get_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
 
         devices = []
         for rep_device in rep["devices"].values():
@@ -167,21 +203,29 @@ class BackendCmds:
         req = _req_dump(user_find_serializer, raw_req)
         await _transport_send(self.transport, req)
         raw_rep = await _transport_recv(self.transport)
-        return _rep_load(user_find_serializer, raw_rep)["results"]
+        rep = _rep_load(user_find_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
+        return rep["results"]
 
     async def user_invite(self, user_id: UserID) -> bytes:
         raw_req = {"cmd": "user_invite", "user_id": user_id}
         req = _req_dump(user_invite_serializer, raw_req)
         await _transport_send(self.transport, req)
         raw_rep = await _transport_recv(self.transport)
-        return _rep_load(user_invite_serializer, raw_rep)["encrypted_claim"]
+        rep = _rep_load(user_invite_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
+        return rep["encrypted_claim"]
 
     async def user_cancel_invitation(self, user_id: UserID) -> None:
         raw_req = {"cmd": "user_cancel_invitation", "user_id": user_id}
         req = _req_dump(user_cancel_invitation_serializer, raw_req)
         await _transport_send(self.transport, req)
         raw_rep = await _transport_recv(self.transport)
-        _rep_load(user_cancel_invitation_serializer, raw_rep)
+        rep = _rep_load(user_cancel_invitation_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
 
     async def user_create(self, certified_user: bytes, certified_device: bytes) -> None:
         raw_req = {
@@ -192,7 +236,9 @@ class BackendCmds:
         req = _req_dump(user_create_serializer, raw_req)
         await _transport_send(self.transport, req)
         raw_rep = await _transport_recv(self.transport)
-        _rep_load(user_create_serializer, raw_rep)
+        rep = _rep_load(user_create_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
 
     async def device_invite(self, device_id: DeviceID) -> bytes:
         raw_req = {"cmd": "device_invite", "device_id": device_id}
@@ -209,7 +255,9 @@ class BackendCmds:
         req = _req_dump(device_cancel_invitation_serializer, raw_req)
         await _transport_send(self.transport, req)
         raw_rep = await _transport_recv(self.transport)
-        _rep_load(device_cancel_invitation_serializer, raw_rep)
+        rep = _rep_load(device_cancel_invitation_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
 
     async def device_create(self, certified_device: bytes, encrypted_answer: bytes) -> None:
         raw_req = {
@@ -220,14 +268,18 @@ class BackendCmds:
         req = _req_dump(device_create_serializer, raw_req)
         await _transport_send(self.transport, req)
         raw_rep = await _transport_recv(self.transport)
-        _rep_load(device_create_serializer, raw_rep)
+        rep = _rep_load(device_create_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
 
     async def device_revoke(self, certified_revocation: bytes) -> None:
         raw_req = {"cmd": "device_revoke", "certified_revocation": certified_revocation}
         req = _req_dump(device_revoke_serializer, raw_req)
         await _transport_send(self.transport, req)
         raw_rep = await _transport_recv(self.transport)
-        _rep_load(device_revoke_serializer, raw_rep)
+        rep = _rep_load(device_revoke_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
 
 
 class BackendAnonymousCmds:
@@ -242,6 +294,8 @@ class BackendAnonymousCmds:
         await _transport_send(self.transport, req)
         raw_rep = await _transport_recv(self.transport)
         rep = _rep_load(ping_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
         return rep["pong"]
 
     async def user_get_invitation_creator(self, invited_user_id: UserID) -> RemoteUser:
@@ -250,6 +304,8 @@ class BackendAnonymousCmds:
         await _transport_send(self.transport, req)
         raw_rep = await _transport_recv(self.transport)
         rep = _rep_load(user_get_invitation_creator_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
         return RemoteUser(
             user_id=rep["user_id"],
             created_on=rep["created_on"],
@@ -266,7 +322,9 @@ class BackendAnonymousCmds:
         req = _req_dump(user_claim_serializer, raw_req)
         await _transport_send(self.transport, req)
         raw_rep = await _transport_recv(self.transport)
-        _rep_load(user_claim_serializer, raw_rep)
+        rep = _rep_load(user_claim_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
 
     async def device_get_invitation_creator(self, invited_device_id: DeviceID) -> RemoteUser:
         raw_req = {"cmd": "device_get_invitation_creator", "invited_device_id": invited_device_id}
@@ -274,6 +332,8 @@ class BackendAnonymousCmds:
         await _transport_send(self.transport, req)
         raw_rep = await _transport_recv(self.transport)
         rep = _rep_load(device_get_invitation_creator_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
         return RemoteUser(
             user_id=rep["user_id"],
             created_on=rep["created_on"],
