@@ -4,7 +4,7 @@ from structlog import get_logger
 from parsec.types import DeviceID, UserID
 from parsec.api.transport import BaseTransport
 from parsec.api.protocole import (
-    ValidationError,
+    ProtocoleError,
     ping_serializer,
     user_get_serializer,
     user_find_serializer,
@@ -21,29 +21,22 @@ from parsec.api.protocole import (
     device_revoke_serializer,
 )
 from parsec.core.types import RemoteDevice, RemoteUser, RemoteDevicesMapping
+from parsec.core.backend_connection2.exceptions import BackendConnectionError
 
 
 logger = get_logger()
 # TODO: exceptions
 
 
-class BackendCmdsError(Exception):
+class BackendCmdsInvalidRequest(BackendConnectionError):
     pass
 
 
-class BackendCmdsInvalidRequest(BackendCmdsError):
+class BackendCmdsInvalidResponse(BackendConnectionError):
     pass
 
 
-class BackendCmdsInvalidResponse(BackendCmdsError):
-    pass
-
-
-class BackendCmdsBadCommand(BackendCmdsError):
-    pass
-
-
-class BackendCmdsBadResponse(BackendCmdsError):
+class BackendCmdsBadResponse(BackendConnectionError):
     pass
 
 
@@ -51,7 +44,7 @@ def _req_dump(serializer, raw_req):
     try:
         return serializer.req_dump(raw_req)
 
-    except ValidationError as exc:
+    except ProtocoleError as exc:
         raise BackendCmdsInvalidRequest() from exc
 
 
@@ -59,7 +52,7 @@ def _rep_load(serializer, raw_rep):
     try:
         return serializer.rep_load(raw_rep)
 
-    except ValidationError as exc:
+    except ProtocoleError as exc:
         raise BackendCmdsInvalidResponse() from exc
 
 

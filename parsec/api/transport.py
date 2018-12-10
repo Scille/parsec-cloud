@@ -1,27 +1,14 @@
-from abc import ABC
 from trio import BrokenResourceError
 import struct
 
 from parsec.utils import ejson_dumps, ejson_loads
 
 
-__all__ = (
-    "TransportError",
-    "BrokenResourceError",
-    "BaseTransport",
-    "TCPTransport",
-    "PatateTCPTransport",
-)
+__all__ = ("TransportError", "BaseTransport", "TCPTransport", "PatateTCPTransport")
 
 
-class TransportError(Exception, ABC):
+class TransportError(Exception):
     pass
-
-
-# Expose `trio.BrokenResourceError` as a child of `TransportError`
-# Note we don't do the same for `trio.ClosedResourceError` given this
-# exception should be only raised in case of programming error.
-TransportError.register(BrokenResourceError)
 
 
 class BaseTransport:
@@ -46,6 +33,10 @@ class BaseTransport:
         raise NotImplementedError()
 
 
+# Note we let `trio.ClosedResourceError` exceptions bubble up given
+# they should be only raised in case of programming error.
+
+
 class TCPTransport(BaseTransport):
     MAX_MSG_SIZE = 2 ** 20  # 1Mo
 
@@ -53,15 +44,24 @@ class TCPTransport(BaseTransport):
         self.stream = stream
 
     async def aclose(self) -> None:
-        await self.stream.aclose()
+        try:
+            await self.stream.aclose()
+        except BrokenResourceError as exc:
+            raise TransportError(*exc.args) from exc
 
     async def send(self, msg: bytes) -> None:
         assert len(msg) <= self.MAX_MSG_SIZE
-        await self.stream.send_all(struct.pack("!L", len(msg)))
-        await self.stream.send_all(msg)
+        try:
+            await self.stream.send_all(struct.pack("!L", len(msg)))
+            await self.stream.send_all(msg)
+        except BrokenResourceError as exc:
+            raise TransportError(*exc.args) from exc
 
     async def recv(self) -> bytes:
-        msg_size_raw = await self.stream.receive_some(4)
+        try:
+            msg_size_raw = await self.stream.receive_some(4)
+        except BrokenResourceError as exc:
+            raise TransportError(*exc.args) from exc
         if not msg_size_raw:
             # Empty body should normally never occurs, though it is sent
             # when peer closes connection
@@ -71,7 +71,10 @@ class TCPTransport(BaseTransport):
         if msg_size > self.MAX_MSG_SIZE:
             raise TransportError("Message too big")
 
-        msg = await self.stream.receive_some(msg_size)
+        try:
+            msg = await self.stream.receive_some(msg_size)
+        except BrokenResourceError as exc:
+            raise TransportError(*exc.args) from exc
         if not msg:
             # Empty body should normally never occurs, though it is sent
             # when peer closes connection
@@ -83,9 +86,15 @@ class TCPTransport(BaseTransport):
 # TODO: remove me !
 class PatateTCPTransport(TCPTransport):
     async def send(self, msg: dict) -> None:
-        msg = ejson_dumps(msg).encode("utf8")
+        try:
+            msg = ejson_dumps(msg).encode("utf8")
+        except Exception as exc:
+            raise TransportError("Cannot serialize data.") from exc
         await super().send(msg)
 
     async def recv(self) -> dict:
         msg = await super().recv()
-        return ejson_loads(msg.decode("utf8"))
+        try:
+            return ejson_loads(msg.decode("utf8"))
+        except Exception as exc:
+            raise TransportError("Cannot deserialize data.") from exc

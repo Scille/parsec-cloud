@@ -73,8 +73,15 @@ async def _backend_cmds_connect(
 ) -> BackendCmds:
     log = logger.bind(addr=addr, auth=device_id, id=uuid4().hex)
     transport = await _transport_factory(log, addr)
-    await _do_handshade(log, transport, device_id, signing_key)
-    return BackendCmds(transport, log)
+    try:
+        await _do_handshade(log, transport, device_id, signing_key)
+
+    except:
+        await transport.aclose()
+        raise
+
+    else:
+        return BackendCmds(transport, log)
 
 
 @asynccontextmanager
@@ -98,11 +105,15 @@ class BackendCmdsPool:
         self.lock = trio.Semaphore(max)
 
     @asynccontextmanager
-    async def acquire(self, fresh=False):
+    async def acquire(self, force_fresh=False):
         async with self.lock:
-            try:
-                conn = self.conns.pop()
-            except IndexError:
+            conn = None
+            if not force_fresh:
+                try:
+                    conn = self.conns.pop()
+                except IndexError:
+                    pass
+            if not conn:
                 conn = await _backend_cmds_connect(self.addr, self.device_id, self.signing_key)
 
             try:

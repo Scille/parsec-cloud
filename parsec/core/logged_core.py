@@ -14,12 +14,22 @@ from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import SyncMonitor
 from parsec.core.fs import FS
 from parsec.core.local_db import LocalDB
+from parsec.core.backend_connection2 import BackendNotAvailable
 
 
-def _expose_cmds(name, wrapper_name=None):
+def _expose_cmds_with_retrier(name, wrapper_name=None):
     async def wrapper(self, *args, **kwargs):
-        async with self.backend_cmds_pool.acquire() as cmds:
-            return await getattr(cmds, name)(*args, **kwargs)
+        try:
+            async with self.backend_cmds_pool.acquire() as cmds:
+                return await getattr(cmds, name)(*args, **kwargs)
+
+        except BackendNotAvailable as exc:
+            print(exc)
+            import pdb
+
+            pdb.set_trace()
+            async with self.backend_cmds_pool.acquire(force_fresh=True) as cmds:
+                return await getattr(cmds, name)(*args, **kwargs)
 
     wrapper.__name__ = wrapper_name or name
 
@@ -37,18 +47,18 @@ class LoggedCore:
     backend_cmds_pool = attr.ib()
     fs = attr.ib()
 
-    ping_backend = _expose_cmds("ping", wrapper_name="ping_backend")
+    backend_ping = _expose_cmds_with_retrier("ping", wrapper_name="backend_ping")
 
-    user_get = _expose_cmds("user_get")
-    user_find = _expose_cmds("user_find")
-    user_invite = _expose_cmds("user_invite")
-    user_cancel_invitation = _expose_cmds("user_cancel_invitation")
-    user_create = _expose_cmds("user_create")
+    user_get = _expose_cmds_with_retrier("user_get")
+    user_find = _expose_cmds_with_retrier("user_find")
+    user_invite = _expose_cmds_with_retrier("user_invite")
+    user_cancel_invitation = _expose_cmds_with_retrier("user_cancel_invitation")
+    user_create = _expose_cmds_with_retrier("user_create")
 
-    device_invite = _expose_cmds("device_invite")
-    device_cancel_invitation = _expose_cmds("device_cancel_invitation")
-    device_create = _expose_cmds("device_create")
-    device_revoke = _expose_cmds("device_revoke")
+    device_invite = _expose_cmds_with_retrier("device_invite")
+    device_cancel_invitation = _expose_cmds_with_retrier("device_cancel_invitation")
+    device_create = _expose_cmds_with_retrier("device_create")
+    device_revoke = _expose_cmds_with_retrier("device_revoke")
 
 
 @asynccontextmanager

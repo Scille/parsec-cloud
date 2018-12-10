@@ -29,9 +29,8 @@ from parsec.api.protocole import (
     device_cancel_invitation_serializer,
     device_create_serializer,
     device_revoke_serializer,
-    ValidationError,
 )
-from parsec.backend.utils import anonymous_api
+from parsec.backend.utils import anonymous_api, catch_protocole_errors
 from parsec.backend.exceptions import NotFoundError, AlreadyExistsError, AlreadyRevokedError
 
 
@@ -157,11 +156,9 @@ class BaseUserComponent:
 
     #### Access user API ####
 
+    @catch_protocole_errors
     async def api_user_get(self, client_ctx, msg):
-        try:
-            msg = user_get_serializer.req_load(msg)
-        except ValidationError as exc:
-            return {"status": "bad_message", "errors": exc.messages}
+        msg = user_get_serializer.req_load(msg)
 
         try:
             user, trustchain = await self.get_user_with_trustchain(msg["user_id"])
@@ -180,14 +177,10 @@ class BaseUserComponent:
             }
         )
 
+    @catch_protocole_errors
     async def api_user_find(self, client_ctx, msg):
-        try:
-            msg = user_find_serializer.req_load(msg)
-        except ValidationError as exc:
-            return {"status": "bad_message", "errors": exc.messages}
-
+        msg = user_find_serializer.req_load(msg)
         results, total = await self.find(**msg)
-
         return user_find_serializer.rep_dump(
             {
                 "status": "ok",
@@ -200,11 +193,9 @@ class BaseUserComponent:
 
     #### User creation API ####
 
+    @catch_protocole_errors
     async def api_user_invite(self, client_ctx, msg):
-        try:
-            msg = user_invite_serializer.req_load(msg)
-        except ValidationError as exc:
-            return {"status": "bad_message", "errors": exc.messages}
+        msg = user_invite_serializer.req_load(msg)
 
         invitation = UserInvitation(msg["user_id"], client_ctx.device_id)
         try:
@@ -237,11 +228,10 @@ class BaseUserComponent:
         )
 
     @anonymous_api
+    @catch_protocole_errors
     async def api_user_get_invitation_creator(self, client_ctx, msg):
-        try:
-            msg = user_get_invitation_creator_serializer.req_load(msg)
-        except ValidationError as exc:
-            return {"status": "bad_message", "errors": exc.messages}
+        msg = user_get_invitation_creator_serializer.req_load(msg)
+
         try:
             invitation = await self.get_user_invitation(msg["invited_user_id"])
             if not invitation.is_valid():
@@ -264,11 +254,9 @@ class BaseUserComponent:
         )
 
     @anonymous_api
+    @catch_protocole_errors
     async def api_user_claim(self, client_ctx, msg):
-        try:
-            msg = user_claim_serializer.req_load(msg)
-        except ValidationError as exc:
-            return {"status": "bad_message", "errors": exc.messages}
+        msg = user_claim_serializer.req_load(msg)
 
         try:
             invitation = await self.get_user_invitation(msg["invited_user_id"])
@@ -306,11 +294,9 @@ class BaseUserComponent:
             return {"status": "denied", "reason": "Invitation creator rejected us."}
         return user_claim_serializer.rep_dump({"status": "ok"})
 
+    @catch_protocole_errors
     async def api_user_cancel_invitation(self, client_ctx, msg):
-        try:
-            msg = user_cancel_invitation_serializer.req_load(msg)
-        except ValidationError as exc:
-            return {"status": "bad_message", "errors": exc.messages}
+        msg = user_cancel_invitation_serializer.req_load(msg)
 
         await self.user_cancel_invitation(msg["user_id"])
 
@@ -318,11 +304,9 @@ class BaseUserComponent:
 
         return user_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
+    @catch_protocole_errors
     async def api_user_create(self, client_ctx, msg):
-        try:
-            msg = user_create_serializer.req_load(msg)
-        except ValidationError as exc:
-            return {"status": "bad_message", "errors": exc.messages}
+        msg = user_create_serializer.req_load(msg)
 
         try:
             u_certifier_id, u_payload = certified_extract_parts(msg["certified_user"])
@@ -387,11 +371,9 @@ class BaseUserComponent:
 
     #### Device creation API ####
 
+    @catch_protocole_errors
     async def api_device_invite(self, client_ctx, msg):
-        try:
-            msg = device_invite_serializer.req_load(msg)
-        except ValidationError as exc:
-            return {"status": "bad_message", "errors": exc.messages}
+        msg = device_invite_serializer.req_load(msg)
         if msg["device_id"].user_id != client_ctx.user_id:
             return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
@@ -426,11 +408,10 @@ class BaseUserComponent:
         )
 
     @anonymous_api
+    @catch_protocole_errors
     async def api_device_get_invitation_creator(self, client_ctx, msg):
-        try:
-            msg = device_get_invitation_creator_serializer.req_load(msg)
-        except ValidationError as exc:
-            return {"status": "bad_message", "errors": exc.messages}
+        msg = device_get_invitation_creator_serializer.req_load(msg)
+
         try:
             invitation = await self.get_device_invitation(msg["invited_device_id"])
             if not invitation.is_valid():
@@ -453,11 +434,9 @@ class BaseUserComponent:
         )
 
     @anonymous_api
+    @catch_protocole_errors
     async def api_device_claim(self, client_ctx, msg):
-        try:
-            msg = device_claim_serializer.req_load(msg)
-        except ValidationError as exc:
-            return {"status": "bad_message", "errors": exc.messages}
+        msg = device_claim_serializer.req_load(msg)
 
         try:
             invitation = await self.get_device_invitation(msg["invited_device_id"])
@@ -500,11 +479,10 @@ class BaseUserComponent:
             {"status": "ok", "encrypted_answer": replied_encrypted_answer}
         )
 
+    @catch_protocole_errors
     async def api_device_cancel_invitation(self, client_ctx, msg):
-        try:
-            msg = device_cancel_invitation_serializer.req_load(msg)
-        except ValidationError as exc:
-            return {"status": "bad_message", "errors": exc.messages}
+        msg = device_cancel_invitation_serializer.req_load(msg)
+
         if msg["device_id"].user_id != client_ctx.user_id:
             return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
@@ -514,11 +492,9 @@ class BaseUserComponent:
 
         return device_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
+    @catch_protocole_errors
     async def api_device_create(self, client_ctx, msg):
-        try:
-            msg = device_create_serializer.req_load(msg)
-        except ValidationError as exc:
-            return {"status": "bad_message", "errors": exc.messages}
+        msg = device_create_serializer.req_load(msg)
 
         try:
             certifier_id, payload = certified_extract_parts(msg["certified_device"])
@@ -561,11 +537,9 @@ class BaseUserComponent:
         )
         return device_create_serializer.rep_dump({"status": "ok"})
 
+    @catch_protocole_errors
     async def api_device_revoke(self, client_ctx, msg):
-        try:
-            msg = device_revoke_serializer.req_load(msg)
-        except ValidationError as exc:
-            return {"status": "bad_message", "errors": exc.messages}
+        msg = device_revoke_serializer.req_load(msg)
 
         try:
             certifier_id, payload = certified_extract_parts(msg["certified_revocation"])

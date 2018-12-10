@@ -9,8 +9,10 @@ class BackendConnectionError(Exception, ABC):
 
 
 BackendConnectionError.register(ProtocoleError)
-BackendConnectionError.register(TransportError)
 
 
-class BackendNotAvailable(BackendConnectionError):
+class BackendNotAvailable(BackendConnectionError, ABC):
     pass
+
+
+BackendNotAvailable.register(TransportError)

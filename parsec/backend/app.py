@@ -318,13 +318,13 @@ class BackendApp:
         cmd_EVENT_LIST_SUBSCRIBED.load_or_abort(msg)  # empty msg expected
         return {"status": "ok", "subscribed": list(client_ctx.subscribed_events.keys())}
 
-    async def _do_handshake(self, sock):
+    async def _do_handshake(self, transport):
         context = None
         try:
             hs = ServerHandshake(self.config.handshake_challenge_size)
             challenge_req = hs.build_challenge_req()
-            await sock.send(challenge_req)
-            answer_req = await sock.recv()
+            await transport.send(challenge_req)
+            answer_req = await transport.recv()
 
             hs.process_answer_req(answer_req)
             if hs.is_anonymous():
@@ -351,15 +351,15 @@ class BackendApp:
             result_req = hs.build_revoked_device_result_req()
         except HandshakeFormatError:
             result_req = hs.build_bad_format_result_req()
-        await sock.send(result_req)
+        await transport.send(result_req)
         return context
 
     async def handle_client(self, sockstream, swallow_crash=False):
-        sock = PatateTCPTransport(sockstream)
+        transport = PatateTCPTransport(sockstream)
         client_ctx = None
         try:
             logger.debug("start handshake")
-            client_ctx = await self._do_handshake(sock)
+            client_ctx = await self._do_handshake(transport)
             if not client_ctx:
                 # Invalid handshake
                 logger.debug("bad handshake")
@@ -367,17 +367,22 @@ class BackendApp:
 
             client_ctx.logger.debug("handshake done")
 
-            await self._handle_client_loop(sock, client_ctx)
+            await self._handle_client_loop(transport, client_ctx)
 
         except TransportError:
-            # Client has closed connection
-            pass
+            # Client has closed connection or sent an invalid trame
+            rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
+            try:
+                await transport.send(rep)
+            except TransportError:
+                pass
+            await transport.aclose()
 
         except ParsecError as exc:
             logger.debug("BAD HANDSHAKE")
             rep = exc.to_dict()
-            await sock.send(rep)
-            await sock.aclose()
+            await transport.send(rep)
+            await transport.aclose()
 
         except Exception as exc:
             # If we are here, something unexpected happened...
@@ -385,11 +390,11 @@ class BackendApp:
                 client_ctx.logger.error("Unexpected crash", exc_info=exc)
             else:
                 logger.error("Unexpected crash", exc_info=exc)
-            await sock.aclose()
+            await transport.aclose()
             if not swallow_crash:
                 raise
 
-    async def _handle_client_loop(self, sock, client_ctx):
+    async def _handle_client_loop(self, transport, client_ctx):
 
         # TODO: Should find a way to avoid using this filter if we're not in log debug...
         def _filter_big_fields(data):
@@ -408,13 +413,7 @@ class BackendApp:
             return filtered_data
 
         while True:
-            try:
-                req = await sock.recv()
-            except JSONDecodeError:
-                rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
-                await sock.send(rep)
-                continue
-
+            req = await transport.recv()
             if not req:  # Client disconnected
                 client_ctx.logger.debug("CLIENT DISCONNECTED")
                 break
@@ -435,4 +434,4 @@ class BackendApp:
                 except ParsecError as err:
                     rep = err.to_dict()
             client_ctx.logger.debug("rep", rep=_filter_big_fields(rep))
-            await sock.send(rep)
+            await transport.send(rep)

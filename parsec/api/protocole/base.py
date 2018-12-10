@@ -1,13 +1,16 @@
-from abc import ABC
 from parsec.schema import fields, UnknownCheckedSchema, OneOfSchema, post_load, ValidationError
 
 
-class ProtocoleError(Exception, ABC):
+__all__ = ("ProtocoleError", "BaseReqSchema", "BaseRepSchema", "CmdSerializer")
+
+
+class ProtocoleError(Exception):
     pass
 
 
-# Expose `marshmallow.ValidationError` as a child of `ProtocoleError`
-ProtocoleError.register(ValidationError)
+class InvalidMessageError(ProtocoleError):
+    def __init__(self, errors: dict):
+        self.errors = errors
 
 
 class BaseReqSchema(UnknownCheckedSchema):
@@ -78,30 +81,39 @@ class CmdSerializer:
     def req_load(self, data):
         """
         Raises:
-            ValidationError
+            ProtocoleError
         """
-        return self.req_schema.load(data).data
+        try:
+            return self.req_schema.load(data).data
+        except ValidationError as exc:
+            raise ProtocoleError(exc.messages) from exc
 
     def req_dump(self, data):
         """
         Raises:
-            ValidationError
+            ProtocoleError
         """
-        return self.req_schema.dump(data).data
+        try:
+            return self.req_schema.dump(data).data
+        except ValidationError as exc:
+            raise ProtocoleError(exc.messages) from exc
 
     def rep_load(self, data):
         """
         Raises:
-            ValidationError
+            ProtocoleError
         """
-        return self.rep_schema.load(data).data
+        try:
+            return self.rep_schema.load(data).data
+        except ValidationError as exc:
+            raise ProtocoleError(exc.messages) from exc
 
     def rep_dump(self, data):
         """
         Raises:
-            ValidationError
+            ProtocoleError
         """
-        return self.rep_schema.dump(data).data
-
-
-__all__ = ("ValidationError", "BaseReqSchema", "BaseRepSchema")
+        try:
+            return self.rep_schema.dump(data).data
+        except ValidationError as exc:
+            raise ProtocoleError(exc.messages) from exc
