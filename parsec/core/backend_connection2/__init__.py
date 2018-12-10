@@ -1,26 +1,37 @@
-from parsec.core.backend_connection2.conn import (
-    backend_cmds_connect,
-    backend_anonymous_cmds_connect,
-    backend_cmds_create_pool,
+from parsec.core.backend_connection2.exceptions import BackendConnectionError, BackendNotAvailable
+from parsec.core.backend_connection2.transport import (
+    authenticated_transport_factory,
+    anonymous_transport_factory,
+    transport_pool_factory,
+    TransportPool,
 )
 from parsec.core.backend_connection2.events import backend_listen_events
-from parsec.core.backend_connection2.exceptions import (
-    BackendConnectionError,
-    ProtocoleError,
-    TransportError,
-    BackendNotAvailable,
+from parsec.core.backend_connection2.cmds import (
+    BackendCmdsInvalidRequest,
+    BackendCmdsInvalidResponse,
+    BackendCmdsBadResponse,
+    backend_cmds_factory,
+    backend_anonymous_cmds_factory,
+    BackendCmds,
+    BackendAnonymousCmds,
 )
-from parsec.core.backend_connection2.cmds import BackendCmds, BackendAnonymousCmds
+from parsec.core.backend_connection2.cmds_pool import backend_cmds_pool_factory, BackendCmdsPool
 
 __all__ = (
-    "backend_cmds_connect",
-    "backend_anonymous_cmds_connect",
-    "backend_cmds_create_pool",
-    "backend_listen_events",
     "BackendConnectionError",
-    "ProtocoleError",
-    "TransportError",
     "BackendNotAvailable",
+    "authenticated_transport_factory",
+    "anonymous_transport_factory",
+    "transport_pool_factory",
+    "TransportPool",
+    "backend_listen_events",
+    "BackendCmdsInvalidRequest",
+    "BackendCmdsInvalidResponse",
+    "BackendCmdsBadResponse",
+    "backend_cmds_factory",
+    "backend_anonymous_cmds_factory",
     "BackendCmds",
     "BackendAnonymousCmds",
+    "backend_cmds_pool_factory",
+    "BackendCmdsPool",
 )

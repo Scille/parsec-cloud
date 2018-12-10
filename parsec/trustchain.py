@@ -21,6 +21,18 @@ class TrustChainError(Exception):
     pass
 
 
+class TrustChainInvalidDataError(Exception):
+    pass
+
+
+class TrustChainTooOldError(Exception):
+    pass
+
+
+class TrustChainBrokenChainError(Exception):
+    pass
+
+
 ROOT_DEVICE_ID = DeviceID("root@root")
 
 # TODO: configurable ?
@@ -65,16 +77,18 @@ def _validate_certified_payload(
 ) -> dict:
     """
     Raises:
-        TrustChainError
+        TrustChainInvalidDataError
+        TrustChainTooOldError
     """
     try:
         raw = verify_signature_from(certifier_key, payload)
         data = schema.loads(raw.decode("utf8")).data
+
     except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
-        raise TrustChainError(*exc.args) from exc
+        raise TrustChainInvalidDataError(*exc.args) from exc
 
     if not timestamps_in_the_ballpark(data["timestamp"], now or pendulum.now()):
-        raise TrustChainError("Timestamp is too old.")
+        raise TrustChainTooOldError("Timestamp is too old.")
 
     return data
 
@@ -88,7 +102,7 @@ def certify_device(
 ) -> bytes:
     """
     Raises:
-        TrustChainError
+        TrustChainInvalidDataError
     """
     try:
         payload = certified_device_schema.dumps(
@@ -102,7 +116,7 @@ def certify_device(
         return sign_and_add_meta(certifier_id, certifier_key, payload)
 
     except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
-        raise TrustChainError(*exc.args) from exc
+        raise TrustChainInvalidDataError(*exc.args) from exc
 
 
 def validate_payload_certified_device(
@@ -110,15 +124,24 @@ def validate_payload_certified_device(
 ) -> dict:
     """
     Raises:
-        TrustChainError
+        TrustChainInvalidDataError
+        TrustChainTooOldError
     """
     return _validate_certified_payload(certified_device_schema, certifier_key, payload, now)
 
 
 def unsecure_certified_device_extract_verify_key(data: bytes) -> VerifyKey:
-    _, signed = decode_signedmeta(data)
-    raw = unsecure_extract_msg_from_signed(signed)
-    return certified_device_schema.loads(raw.decode("utf8")).data["verify_key"]
+    """
+    Raises:
+        TrustChainInvalidDataError
+    """
+    try:
+        _, signed = decode_signedmeta(data)
+        raw = unsecure_extract_msg_from_signed(signed)
+        return certified_device_schema.loads(raw.decode("utf8")).data["verify_key"]
+
+    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+        raise TrustChainInvalidDataError(*exc.args) from exc
 
 
 def certify_user(
@@ -130,7 +153,7 @@ def certify_user(
 ) -> bytes:
     """
     Raises:
-        TrustChainError
+        TrustChainInvalidDataError
     """
     try:
         payload = certified_user_schema.dumps(
@@ -144,7 +167,7 @@ def certify_user(
         return sign_and_add_meta(certifier_id, certifier_key, payload)
 
     except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
-        raise TrustChainError(*exc.args) from exc
+        raise TrustChainInvalidDataError(*exc.args) from exc
 
 
 def validate_payload_certified_user(
@@ -152,15 +175,24 @@ def validate_payload_certified_user(
 ) -> dict:
     """
     Raises:
-        TrustChainError
+        TrustChainInvalidDataError
+        TrustChainTooOldError
     """
     return _validate_certified_payload(certified_user_schema, certifier_key, payload, now)
 
 
 def unsecure_certified_user_extract_public_key(data: bytes) -> PublicKey:
-    _, signed = decode_signedmeta(data)
-    raw = unsecure_extract_msg_from_signed(signed)
-    return certified_user_schema.loads(raw.decode("utf8")).data["public_key"]
+    """
+    Raises:
+        TrustChainInvalidDataError
+    """
+    try:
+        _, signed = decode_signedmeta(data)
+        raw = unsecure_extract_msg_from_signed(signed)
+        return certified_user_schema.loads(raw.decode("utf8")).data["public_key"]
+
+    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+        raise TrustChainInvalidDataError(*exc.args) from exc
 
 
 def certify_device_revocation(
@@ -169,14 +201,22 @@ def certify_device_revocation(
     revoked_device_id: DeviceID,
     now: Pendulum = None,
 ) -> bytes:
-    payload = certified_device_revocation_schema.dumps(
-        {
-            "type": "device_revocation",
-            "timestamp": now or pendulum.now(),
-            "device_id": revoked_device_id,
-        }
-    ).data.encode("utf8")
-    return sign_and_add_meta(certifier_id, certifier_key, payload)
+    """
+    Raises:
+        TrustChainInvalidDataError
+    """
+    try:
+        payload = certified_device_revocation_schema.dumps(
+            {
+                "type": "device_revocation",
+                "timestamp": now or pendulum.now(),
+                "device_id": revoked_device_id,
+            }
+        ).data.encode("utf8")
+        return sign_and_add_meta(certifier_id, certifier_key, payload)
+
+    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+        raise TrustChainInvalidDataError(*exc.args) from exc
 
 
 def validate_payload_certified_device_revocation(
@@ -184,7 +224,8 @@ def validate_payload_certified_device_revocation(
 ) -> dict:
     """
     Raises:
-        TrustChainError
+        TrustChainInvalidDataError
+        TrustChainTooOldError
     """
     return _validate_certified_payload(
         certified_device_revocation_schema, certifier_key, payload, now
@@ -194,18 +235,25 @@ def validate_payload_certified_device_revocation(
 def certified_extract_parts(certified: bytes) -> Tuple[DeviceID, bytes]:
     """
     Raises:
-        TrustChainError
+        TrustChainInvalidDataError
     Returns: Tuple of certifier device id and payload
     """
     try:
         return decode_signedmeta(certified)
+
     except CryptoError as exc:
-        raise TrustChainError(*exc.args) from exc
+        raise TrustChainInvalidDataError(*exc.args) from exc
 
 
 def cascade_validate_devices(
     certified_devices, root_verify_key, root_device_id=ROOT_DEVICE_ID
 ) -> Tuple[dict]:
+    """
+    Raises:
+        TrustChainBrokenChainError
+        TrustChainInvalidDataError
+        TrustChainTooOldError
+    """
     devices = []
     for certified_device in reversed(certified_devices):
         certifier_id, certified_payload = certified_extract_parts(certified_device)

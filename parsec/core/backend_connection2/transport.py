@@ -1,104 +1,154 @@
 import trio
+from uuid import uuid4
+from async_generator import asynccontextmanager
 from structlog import get_logger
 from urllib.parse import urlparse
 
-from parsec.api.protocole import ClientHandshake, AnonymousClientHandshake, HandshakeError
+from parsec.types import DeviceID
+from parsec.crypto import SigningKey
+from parsec.api.transport import BaseTransport, TransportError, PatateTCPTransport
+from parsec.api.protocole import ProtocoleError, AnonymousClientHandshake, ClientHandshake
+from parsec.core.backend_connection2.exceptions import BackendNotAvailable
+
+
+__all__ = (
+    "authenticated_transport_factory",
+    "anonymous_transport_factory",
+    "transport_pool_factory",
+    "TransportPool",
+)
 
 
 logger = get_logger()
 
 
-class BackendError(Exception):
-    pass
-
-
-class BackendNotAvailable(BackendError):
-    pass
-
-
-async def backend_connection_factory(
-    addr: str, auth_id=None, auth_signkey=None
-) -> trio.SocketStream:
-    """
-    Connect and authenticate to the given backend.
-
-    Args:
-        addr: Address of the backend.
-        auth_id: Device ID to authenticate as. If left to None, anonymous
-                 authentifaction will be performed.
-        auth_signkey: Device signkey to use for authentication
-
-    Raises:
-        BackendNotAvailable: if connection with backend failed.
-        HandshakeError: if handshake failed.
-
-    Returns:
-        A cooked socket ready to communicate with the backend.
-    """
-    if auth_id and not auth_signkey:
-        raise ValueError("Signing key is mandatory for non anonymous authentication")
-
-    log = logger.bind(addr=addr, auth=auth_id or "<anonymous>")
-
+async def _transport_factory(addr: str) -> BaseTransport:
+    # TODO: handle ssl and websocket here
     parsed_addr = urlparse(addr)
     try:
-        sockstream = await trio.open_tcp_stream(parsed_addr.hostname, parsed_addr.port)
+        stream = await trio.open_tcp_stream(parsed_addr.hostname, parsed_addr.port)
+        return PatateTCPTransport(stream)
 
     except OSError as exc:
-        log.debug("Impossible to connect to backend", reason=exc)
+        logger.debug("Impossible to connect to backend", reason=exc)
         raise BackendNotAvailable() from exc
 
+
+async def _do_handshade(
+    transport: BaseTransport, device_id: DeviceID = None, signing_key: SigningKey = None
+):
+    if device_id and not signing_key:
+        raise ValueError("Signing key is mandatory for non anonymous authentication")
+
     try:
-        sock = CookedSocket(sockstream)
-        if not auth_id:
+        if not device_id:
             ch = AnonymousClientHandshake()
         else:
-            ch = ClientHandshake(auth_id, auth_signkey)
-        challenge_req = await sock.recv()
+            ch = ClientHandshake(device_id, signing_key)
+        challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
-        await sock.send(answer_req)
-        result_req = await sock.recv()
+        await transport.send(answer_req)
+        result_req = await transport.recv()
         ch.process_result_req(result_req)
-        log.debug("Connected")
+        transport.log.debug("Connected")
 
-    except trio.BrokenStreamError as exc:
-        log.debug("Connection lost during handshake", reason=exc)
-        await sockstream.aclose()
+    except TransportError as exc:
+        transport.log.debug("Connection lost during handshake", reason=exc)
+        await transport.aclose()
         raise BackendNotAvailable() from exc
 
-    except HandshakeError as exc:
-        log.warning("Handshake failed", reason=exc)
-        await sockstream.aclose()
+    except ProtocoleError as exc:
+        transport.log.warning("Handshake failed", reason=exc)
+        await transport.aclose()
         raise
 
-    return sock
 
-
-async def backend_send_anonymous_cmd(addr: str, req: dict) -> dict:
-    """
-    Send a single request to the backend as anonymous user.
-
-    Args:
-        addr: Address of the backend.
-        req: Request data to send.
-
-    Raises:
-        BackendNotAvailable: if connection with backend failed.
-        HandshakeError: if handshake failed.
-        TypeError: if provided msg is not a valid JSON serializable object.
-        json.JSONDecodeError: if the backend answer is not a valid json.
-
-    Returns:
-        The backend reponse deserialized as a dict.
-    """
-    sock = await backend_connection_factory(addr)
-    # TODO: avoid this hack by splitting BackendConnection functions
+async def _authenticated_transport_factory(
+    addr: str, device_id: DeviceID, signing_key: SigningKey
+) -> BaseTransport:
+    transport = await _transport_factory(addr)
+    # TODO: a bit ugly to configure and connect a logger here,
+    # use contextvar instead ?
+    transport.log = logger.bind(addr=addr, auth=device_id, id=uuid4().hex)
     try:
-        await sock.send(req)
-        return await sock.recv()
+        await _do_handshade(transport, device_id, signing_key)
 
-    except trio.BrokenStreamError as exc:
-        raise BackendNotAvailable() from exc
+    except:
+        await transport.aclose()
+        raise
+
+    else:
+        return transport
+
+
+@asynccontextmanager
+async def authenticated_transport_factory(
+    addr: str, device_id: DeviceID, signing_key: SigningKey
+) -> BaseTransport:
+    transport = await _authenticated_transport_factory(addr, device_id, signing_key)
+    try:
+        yield transport
 
     finally:
-        await sock.aclose()
+        await transport.aclose()
+
+
+@asynccontextmanager
+async def anonymous_transport_factory(addr: str) -> BaseTransport:
+    transport = await _transport_factory(addr)
+    transport.log = logger.bind(addr=addr, auth="<anonymous>", id=uuid4().hex)
+    await _do_handshade(transport)
+    try:
+        yield transport
+
+    finally:
+        await transport.aclose()
+
+
+class TransportPool:
+    def __init__(self, addr, device_id, signing_key, max):
+        self.addr = addr
+        self.device_id = device_id
+        self.signing_key = signing_key
+        self.transports = []
+        self.lock = trio.Semaphore(max)
+
+    @asynccontextmanager
+    async def acquire(self, force_fresh=False):
+        async with self.lock:
+            transport = None
+            if not force_fresh:
+                try:
+                    transport = self.transports.pop()
+                except IndexError:
+                    pass
+            if not transport:
+                transport = await _authenticated_transport_factory(
+                    self.addr, self.device_id, self.signing_key
+                )
+
+            try:
+                yield transport
+
+            except TransportError:
+                await transport.aclose()
+                raise
+
+            else:
+                self.transports.append(transport)
+
+
+@asynccontextmanager
+async def transport_pool_factory(
+    addr: str, device_id: DeviceID, signing_key: SigningKey, max: int = 4
+) -> TransportPool:
+    pool = TransportPool(addr, device_id, signing_key, max)
+    try:
+        yield pool
+
+    finally:
+        for transport in pool.transports:
+            try:
+                await transport.aclose()
+            except TransportError:
+                pass

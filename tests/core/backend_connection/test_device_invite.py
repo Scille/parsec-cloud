@@ -5,11 +5,7 @@ from parsec.types import DeviceID
 from parsec.crypto import PrivateKey, SigningKey
 from parsec.trustchain import certify_device
 from parsec.core.types import RemoteUser
-from parsec.core.backend_connection2 import (
-    BackendNotAvailable,
-    backend_cmds_connect,
-    backend_anonymous_cmds_connect,
-)
+from parsec.core.backend_connection2 import backend_cmds_factory, backend_anonymous_cmds_factory
 from parsec.core.invite_claim import (
     generate_device_encrypted_claim,
     extract_device_encrypted_claim,
@@ -19,18 +15,12 @@ from parsec.core.invite_claim import (
 
 
 @pytest.mark.trio
-async def test_device_invite_backend_offline(alice_core, alice2):
-    with pytest.raises(BackendNotAvailable):
-        await alice_core.device_invite(alice2.device_id)
-
-
-@pytest.mark.trio
-async def test_device_invite_then_claim_ok(alice, alice_core, running_backend):
+async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_backend):
     nd_id = DeviceID("alice@new_device")
     nd_signing_key = SigningKey.generate()
 
     async def _alice_invite():
-        encrypted_claim = await alice_core.device_invite(nd_id)
+        encrypted_claim = await alice_backend_cmds.device_invite(nd_id)
         claim = extract_device_encrypted_claim(alice.private_key, encrypted_claim)
 
         certified_device = certify_device(
@@ -39,11 +29,11 @@ async def test_device_invite_then_claim_ok(alice, alice_core, running_backend):
         encrypted_answer = generate_device_encrypted_answer(
             claim["answer_public_key"], alice.private_key, alice.user_manifest_access
         )
-        await alice_core.device_create(certified_device, encrypted_answer)
+        await alice_backend_cmds.device_create(certified_device, encrypted_answer)
 
     async def _alice_nd_claim():
-        async with backend_anonymous_cmds_connect(running_backend.addr) as conn:
-            invitation_creator = await conn.device_get_invitation_creator(nd_id)
+        async with backend_anonymous_cmds_factory(running_backend.addr) as cmds:
+            invitation_creator = await cmds.device_get_invitation_creator(nd_id)
             assert isinstance(invitation_creator, RemoteUser)
 
             answer_private_key = PrivateKey.generate()
@@ -53,7 +43,7 @@ async def test_device_invite_then_claim_ok(alice, alice_core, running_backend):
                 nd_signing_key.verify_key,
                 answer_private_key.public_key,
             )
-            encrypted_answer = await conn.device_claim(nd_id, encrypted_claim)
+            encrypted_answer = await cmds.device_claim(nd_id, encrypted_claim)
 
             answer = extract_device_encrypted_answer(answer_private_key, encrypted_answer)
             assert answer["private_key"] == alice.private_key
@@ -71,6 +61,6 @@ async def test_device_invite_then_claim_ok(alice, alice_core, running_backend):
         nursery.start_soon(_alice_nd_claim)
 
     # Now alice's new device should be able to connect to backend
-    async with backend_cmds_connect(running_backend.addr, nd_id, nd_signing_key) as conn:
-        pong = await conn.ping("Hello World !")
+    async with backend_cmds_factory(running_backend.addr, nd_id, nd_signing_key) as cmds:
+        pong = await cmds.ping("Hello World !")
         assert pong == "Hello World !"

@@ -33,6 +33,9 @@ class SignedMetadataSchema(UnknownCheckedSchema):
 signed_metadata_schema = SignedMetadataSchema(strict=True)
 
 
+# Note to simplify things, we adopt CryptoError as our root error type
+
+
 class CryptoMetadataError(CryptoError):
     pass
 
@@ -47,8 +50,8 @@ def dump_root_verify_key(key: VerifyKey) -> str:
         ValueError
     """
     # Note we replace padding char `=` by a simple `s` (which is not part of
-    # the base32 so no risk of colision) to avoid copy/paste errors silly
-    # escaping issues when carring the key around.
+    # the base32 table so no risk of collision) to avoid copy/paste errors
+    # and silly escaping issues when carrying the key around.
     return b32encode(key.encode()).decode("utf8").replace("=", "s")
 
 

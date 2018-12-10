@@ -1,18 +1,6 @@
-from abc import ABC
-
-from parsec.api.protocole import ProtocoleError
-from parsec.api.transport import TransportError
-
-
-class BackendConnectionError(Exception, ABC):
+class BackendConnectionError(Exception):
     pass
 
 
-BackendConnectionError.register(ProtocoleError)
-
-
-class BackendNotAvailable(BackendConnectionError, ABC):
+class BackendNotAvailable(BackendConnectionError):
     pass
-
-
-BackendNotAvailable.register(TransportError)

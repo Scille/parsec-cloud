@@ -369,9 +369,9 @@ class BackendApp:
 
             await self._handle_client_loop(transport, client_ctx)
 
-        except TransportError:
+        except TransportError as exc:
             # Client has closed connection or sent an invalid trame
-            rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
+            rep = {"status": "invalid_msg_format", "reason": "Invalid message format: %s" % exc}
             try:
                 await transport.send(rep)
             except TransportError:

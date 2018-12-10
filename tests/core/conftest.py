@@ -4,6 +4,7 @@ from async_generator import asynccontextmanager
 
 from parsec.core.backend_cmds_sender import BackendCmdsSender
 from parsec.core.encryption_manager import EncryptionManager
+from parsec.core.backend_connection2 import backend_cmds_factory
 from parsec.core.fs import FS
 
 
@@ -101,3 +102,25 @@ def backend_addr_factory(running_backend, tcp_stream_spy):
         return addr
 
     return _backend_addr_factory
+
+
+@pytest.fixture
+async def alice_backend_cmds(running_backend, alice):
+    async with backend_cmds_factory(
+        running_backend.addr, alice.device_id, alice.signing_key
+    ) as cmds:
+        yield cmds
+
+
+@pytest.fixture
+async def alice2_backend_cmds(running_backend, alice2):
+    async with backend_cmds_factory(
+        running_backend.addr, alice2.device_id, alice2.signing_key
+    ) as cmds:
+        yield cmds
+
+
+@pytest.fixture
+async def bob_backend_cmds(running_backend, bob):
+    async with backend_cmds_factory(running_backend.addr, bob.device_id, bob.signing_key) as cmds:
+        yield cmds
