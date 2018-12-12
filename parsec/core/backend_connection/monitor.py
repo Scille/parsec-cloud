@@ -1,7 +1,7 @@
 import trio
 
 
-async def monitor_connection(event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
+async def backend_monitor_connection(event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
     events = {
         "backend.offline": trio.Event(),
         "backend.online": trio.Event(),

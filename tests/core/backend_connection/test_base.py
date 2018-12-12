@@ -2,8 +2,6 @@ import pytest
 
 from parsec.core.backend_connection import backend_cmds_factory, backend_anonymous_cmds_factory
 
-# from tests.common import freeze_time
-
 
 @pytest.mark.trio
 async def test_anonymous_ping(running_backend):

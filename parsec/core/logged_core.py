@@ -1,12 +1,16 @@
 import trio
 import attr
+from typing import Optional
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice
 from parsec.core.config import CoreConfig
-from parsec.core.backend_connection import backend_cmds_pool_factory, backend_listen_events
-from parsec.core.connection_monitor import monitor_connection
+from parsec.core.backend_connection import (
+    backend_cmds_pool_factory,
+    backend_listen_events,
+    backend_monitor_connection,
+)
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.mountpoint import mountpoint_manager_factory
 from parsec.core.beacons_monitor import monitor_beacons
@@ -29,7 +33,9 @@ class LoggedCore:
 
 
 @asynccontextmanager
-async def logged_core_factory(config: CoreConfig, device: LocalDevice, event_bus: EventBus = None):
+async def logged_core_factory(
+    config: CoreConfig, device: LocalDevice, event_bus: Optional[EventBus] = None
+):
     event_bus = event_bus or EventBus()
 
     # Plenty of nested scope to order components init/teardown
@@ -37,7 +43,7 @@ async def logged_core_factory(config: CoreConfig, device: LocalDevice, event_bus
 
         # Monitor connection must be first given it will watch on
         # other monitors' events
-        await root_nursery.start(monitor_connection, event_bus)
+        await root_nursery.start(backend_monitor_connection, event_bus)
 
         async with trio.open_nursery() as backend_conn_nursery:
             await backend_conn_nursery.start(backend_listen_events, device, event_bus)
