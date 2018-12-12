@@ -69,15 +69,13 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         if user_name in self.users:
             return
         button = UserButton(user_name, is_current_user)
-        self.layout_users.addWidget(button, int(self.users_count / 4), int(self.users_count % 4))
-        self.users_count += 1
+        self.layout_users.addWidget(button, int(len(self.users) / 4), int(len(self.users) % 4))
         self.users.append(user_name)
 
     def reset(self):
         self.line_edit_user_id.setText("")
         self.line_edit_token.setText("")
         self.widget_info.hide()
-        self.users_count = 0
         self.users = []
         while self.layout_users.count() != 0:
             item = self.layout_users.takeAt(0)
@@ -87,6 +85,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 w.setParent(None)
         logged_device = core_call().logged_device()
         user_id = logged_device.id.split("@")[0]
-        for user in core_call().get_devices():
-            user_name = user.split("@")[0]
-            self.add_user(user_name, is_current_user=user_id == user_name)
+        users, _ = core_call().find_user()
+        for user in users:
+            self.add_user(user, is_current_user=user_id == user)
