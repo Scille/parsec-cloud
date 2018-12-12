@@ -24,6 +24,22 @@ QToolTip
 background-color: rgb(46, 146, 208);
 border: 1px solid rgb(12, 65, 157);
 color: rgb(255, 255, 255);
+}
+
+QScrollBar:vertical
+{
+background: rgb(255, 255, 255);
+}
+
+QScrollBar::handle:vertical
+{
+background: rgb(12, 65, 157);
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
+{
+border: none;
+background: none;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -43,36 +59,91 @@ color: rgb(255, 255, 255);
     <number>15</number>
    </property>
    <item>
-    <layout class="QGridLayout" name="layout_workspaces">
-     <property name="sizeConstraint">
-      <enum>QLayout::SetMaximumSize</enum>
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(255, 255, 255);</string>
      </property>
-     <property name="leftMargin">
-      <number>20</number>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
      </property>
-     <property name="topMargin">
-      <number>50</number>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
      </property>
-     <property name="rightMargin">
-      <number>20</number>
+     <property name="lineWidth">
+      <number>0</number>
      </property>
-     <property name="bottomMargin">
-      <number>20</number>
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOff</enum>
      </property>
-     <property name="spacing">
-      <number>40</number>
+     <property name="widgetResizable">
+      <bool>true</bool>
      </property>
-    </layout>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>679</width>
+        <height>273</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <layout class="QGridLayout" name="layout_workspaces">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetMaximumSize</enum>
+         </property>
+         <property name="leftMargin">
+          <number>20</number>
+         </property>
+         <property name="topMargin">
+          <number>50</number>
+         </property>
+         <property name="rightMargin">
+          <number>20</number>
+         </property>
+         <property name="bottomMargin">
+          <number>20</number>
+         </property>
+         <property name="spacing">
+          <number>40</number>
+         </property>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </widget>
    </item>
    <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Minimum</enum>
+     </property>
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>40</height>
+       <height>10</height>
       </size>
      </property>
     </spacer>
