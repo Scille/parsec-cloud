@@ -1,17 +1,17 @@
-from parsec.core.backend_connection2.exceptions import (
+from parsec.core.backend_connection.exceptions import (
     BackendConnectionError,
     BackendNotAvailable,
     BackendHandshakeError,
     BackendDeviceRevokedError,
 )
-from parsec.core.backend_connection2.transport import (
+from parsec.core.backend_connection.transport import (
     authenticated_transport_factory,
     anonymous_transport_factory,
     transport_pool_factory,
     TransportPool,
 )
-from parsec.core.backend_connection2.event_listener import backend_listen_events
-from parsec.core.backend_connection2.cmds import (
+from parsec.core.backend_connection.event_listener import backend_listen_events
+from parsec.core.backend_connection.cmds import (
     BackendCmdsInvalidRequest,
     BackendCmdsInvalidResponse,
     BackendCmdsBadResponse,
@@ -20,7 +20,7 @@ from parsec.core.backend_connection2.cmds import (
     BackendCmds,
     BackendAnonymousCmds,
 )
-from parsec.core.backend_connection2.cmds_pool import backend_cmds_pool_factory, BackendCmdsPool
+from parsec.core.backend_connection.cmds_pool import backend_cmds_pool_factory, BackendCmdsPool
 
 
 __all__ = (

@@ -1,6 +1,6 @@
 import pytest
 
-from parsec.core.backend_connection2 import backend_cmds_factory, backend_anonymous_cmds_factory
+from parsec.core.backend_connection import backend_cmds_factory, backend_anonymous_cmds_factory
 
 # from tests.common import freeze_time
 

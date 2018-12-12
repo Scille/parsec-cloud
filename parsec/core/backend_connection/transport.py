@@ -13,7 +13,7 @@ from parsec.api.protocole import (
     AnonymousClientHandshake,
     ClientHandshake,
 )
-from parsec.core.backend_connection2.exceptions import (
+from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
     BackendHandshakeError,
     BackendDeviceRevokedError,

@@ -8,7 +8,7 @@ from parsec.crypto import SigningKey, VerifyKey, PrivateKey
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError, post_load
 from parsec.core.schemas import ManifestAccessSchema
 from parsec.core.types import LocalDevice
-from parsec.core.devices_manager2.cipher import (
+from parsec.core.devices_manager.cipher import (
     BaseLocalDeviceEncryptor,
     BaseLocalDeviceDecryptor,
     CipherError,

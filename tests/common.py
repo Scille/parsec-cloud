@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from contextlib import ExitStack
 from inspect import iscoroutinefunction
 
-from parsec.core import Core
+from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import FS
 from parsec.core.local_db import LocalDB, LocalDBMissingEntry
 from parsec.networking import CookedSocket
@@ -169,14 +169,14 @@ async def create_shared_workspace(name, creator, *shared_with):
 
     with ExitStack() as stack:
         for x in (creator, *shared_with):
-            if isinstance(x, Core):
+            if isinstance(x, LoggedCore):
                 # In case core has been passed
                 spies.append(stack.enter_context(x.event_bus.listen()))
                 fss.append(x.fs)
             elif isinstance(x, FS):
                 fss.append(x)
             else:
-                raise ValueError(f"{x!r} is not a {FS!r} or a {Core!r}")
+                raise ValueError(f"{x!r} is not a {FS!r} or a {LoggedCore!r}")
 
         creator_fs, *shared_with_fss = fss
         path = f"/{name}"

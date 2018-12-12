@@ -1,7 +1,7 @@
 import pytest
 import trio
 
-from parsec.core.backend_connection2 import BackendNotAvailable, backend_cmds_pool_factory
+from parsec.core.backend_connection import BackendNotAvailable, backend_cmds_pool_factory
 
 from tests.open_tcp_stream_mock_wrapper import offline
 

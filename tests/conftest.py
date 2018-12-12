@@ -22,14 +22,14 @@ from parsec.crypto import (
     dump_root_verify_key,
 )
 from parsec.trustchain import certify_user, certify_device
-from parsec.core import Core, CoreConfig
-from parsec.core.devices_manager2 import generate_new_device
+from parsec.core import CoreConfig
+from parsec.core.devices_manager import generate_new_device
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.schemas import loads_manifest, dumps_manifest
 from parsec.core.fs.utils import new_access, new_local_user_manifest, local_to_remote_manifest
 from parsec.core.encryption_manager import encrypt_with_secret_key
-from parsec.core.devices_manager import Device
+# from parsec.core.devices_manager import Device
 from parsec.core.mountpoint import FUSE_AVAILABLE
 from parsec.backend import BackendApp, config_factory as backend_config_factory
 from parsec.backend.user import (
@@ -280,54 +280,54 @@ def root_key_certifier():
     return RootKeyCertifier()
 
 
-@pytest.fixture
-def device_factory():
-    users = {}
-    devices = {}
-    count = 0
+# @pytest.fixture
+# def device_factory():
+#     users = {}
+#     devices = {}
+#     count = 0
 
-    def _device_factory(user_id=None, device_name=None, user_manifest_in_v0=False, local_db=None):
-        nonlocal count
-        count += 1
+#     def _device_factory(user_id=None, device_name=None, user_manifest_in_v0=False, local_db=None):
+#         nonlocal count
+#         count += 1
 
-        if not user_id:
-            user_id = f"user_{count}"
-        if not device_name:
-            device_name = f"device_{count}"
+#         if not user_id:
+#             user_id = f"user_{count}"
+#         if not device_name:
+#             device_name = f"device_{count}"
 
-        device_id = DeviceID(f"{user_id}@{device_name}")
-        assert device_id not in devices
+#         device_id = DeviceID(f"{user_id}@{device_name}")
+#         assert device_id not in devices
 
-        try:
-            user_privkey, user_manifest_access, user_manifest_v1 = users[user_id]
-        except KeyError:
-            user_privkey = PrivateKey.generate().encode()
-            user_manifest_access = new_access()
-            user_manifest_v1 = None
+#         try:
+#             user_privkey, user_manifest_access, user_manifest_v1 = users[user_id]
+#         except KeyError:
+#             user_privkey = PrivateKey.generate().encode()
+#             user_manifest_access = new_access()
+#             user_manifest_v1 = None
 
-        if not user_manifest_v1 and not user_manifest_in_v0:
-            with freeze_time("2000-01-01"):
-                user_manifest_v1 = new_local_user_manifest(device_id)
-            user_manifest_v1["base_version"] = 1
-            user_manifest_v1["is_placeholder"] = False
-            user_manifest_v1["need_sync"] = False
+#         if not user_manifest_v1 and not user_manifest_in_v0:
+#             with freeze_time("2000-01-01"):
+#                 user_manifest_v1 = new_local_user_manifest(device_id)
+#             user_manifest_v1["base_version"] = 1
+#             user_manifest_v1["is_placeholder"] = False
+#             user_manifest_v1["need_sync"] = False
 
-        users[user_id] = (user_privkey, user_manifest_access, user_manifest_v1)
+#         users[user_id] = (user_privkey, user_manifest_access, user_manifest_v1)
 
-        device_signkey = SigningKey.generate().encode()
-        local_symkey = generate_secret_key()
-        if not local_db:
-            local_db = InMemoryLocalDB()
-        device = Device(
-            device_id, user_privkey, device_signkey, local_symkey, user_manifest_access, local_db
-        )
-        if not user_manifest_in_v0:
-            device.local_db.set(user_manifest_access, dumps_manifest(user_manifest_v1))
+#         device_signkey = SigningKey.generate().encode()
+#         local_symkey = generate_secret_key()
+#         if not local_db:
+#             local_db = InMemoryLocalDB()
+#         device = Device(
+#             device_id, user_privkey, device_signkey, local_symkey, user_manifest_access, local_db
+#         )
+#         if not user_manifest_in_v0:
+#             device.local_db.set(user_manifest_access, dumps_manifest(user_manifest_v1))
 
-        devices[device_id] = device
-        return device
+#         devices[device_id] = device
+#         return device
 
-    return _device_factory
+#     return _device_factory
 
 
 @pytest.fixture(scope="session")

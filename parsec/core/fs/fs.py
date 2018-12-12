@@ -5,7 +5,7 @@ from uuid import UUID
 from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice
 from parsec.core.local_db import LocalDB
-from parsec.core.backend_connection2 import BackendCmds
+from parsec.core.backend_connection import BackendCmds
 from parsec.core.fs.local_folder_fs import (
     FSManifestLocalMiss,
     FSMultiManifestLocalMiss,

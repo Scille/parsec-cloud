@@ -29,8 +29,8 @@ from parsec.api.protocole import (
     device_revoke_serializer,
 )
 from parsec.core.types import RemoteDevice, RemoteUser, RemoteDevicesMapping
-from parsec.core.backend_connection2.exceptions import BackendConnectionError, BackendNotAvailable
-from parsec.core.backend_connection2.transport import (
+from parsec.core.backend_connection.exceptions import BackendConnectionError, BackendNotAvailable
+from parsec.core.backend_connection.transport import (
     authenticated_transport_factory,
     anonymous_transport_factory,
 )

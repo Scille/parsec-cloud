@@ -4,7 +4,7 @@ import pendulum
 
 from parsec.trustchain import certify_user, certify_device
 from parsec.core.types import RemoteUser
-from parsec.core.backend_connection2 import backend_cmds_factory, backend_anonymous_cmds_factory
+from parsec.core.backend_connection import backend_cmds_factory, backend_anonymous_cmds_factory
 from parsec.core.invite_claim import generate_user_encrypted_claim, extract_user_encrypted_claim
 
 

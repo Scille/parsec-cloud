@@ -5,7 +5,7 @@ from parsec.types import DeviceID
 from parsec.crypto import PrivateKey, SigningKey
 from parsec.trustchain import certify_device
 from parsec.core.types import RemoteUser
-from parsec.core.backend_connection2 import backend_cmds_factory, backend_anonymous_cmds_factory
+from parsec.core.backend_connection import backend_cmds_factory, backend_anonymous_cmds_factory
 from parsec.core.invite_claim import (
     generate_device_encrypted_claim,
     extract_device_encrypted_claim,

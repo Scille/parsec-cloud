@@ -1,12 +1,12 @@
 from json import JSONDecodeError
 
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError
-from parsec.core.devices_manager2.cipher import (
+from parsec.core.devices_manager.cipher import (
     CipherError,
     BaseLocalDeviceEncryptor,
     BaseLocalDeviceDecryptor,
 )
-from parsec.core.devices_manager2.pkcs11_tools import (
+from parsec.core.devices_manager.pkcs11_tools import (
     DevicePKCS11Error,
     encrypt_data,
     decrypt_data,

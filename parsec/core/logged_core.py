@@ -5,7 +5,7 @@ from async_generator import asynccontextmanager
 from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice
 from parsec.core.config import CoreConfig
-from parsec.core.backend_connection2 import backend_cmds_pool_factory, backend_listen_events
+from parsec.core.backend_connection import backend_cmds_pool_factory, backend_listen_events
 from parsec.core.connection_monitor import monitor_connection
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.mountpoint import mountpoint_manager_factory

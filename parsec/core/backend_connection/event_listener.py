@@ -3,12 +3,12 @@ from structlog import get_logger
 
 from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice
-from parsec.core.backend_connection2.exceptions import (
+from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
     BackendHandshakeError,
     BackendDeviceRevokedError,
 )
-from parsec.core.backend_connection2.cmds import (
+from parsec.core.backend_connection.cmds import (
     BackendCmdsInvalidResponse,
     BackendCmdsBadResponse,
     backend_cmds_factory,

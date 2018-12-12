@@ -3,7 +3,7 @@ import trio
 from trio.testing import wait_all_tasks_blocked
 from uuid import uuid4
 
-from parsec.core.backend_connection2 import backend_listen_events
+from parsec.core.backend_connection import backend_listen_events
 
 from tests.open_tcp_stream_mock_wrapper import offline
 

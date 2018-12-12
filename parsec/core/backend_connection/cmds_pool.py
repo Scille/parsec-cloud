@@ -3,9 +3,9 @@ from async_generator import asynccontextmanager
 
 from parsec.types import DeviceID
 from parsec.crypto import SigningKey
-from parsec.core.backend_connection2.exceptions import BackendNotAvailable
-from parsec.core.backend_connection2.transport import transport_pool_factory, TransportPool
-from parsec.core.backend_connection2.cmds import BackendCmds
+from parsec.core.backend_connection.exceptions import BackendNotAvailable
+from parsec.core.backend_connection.transport import transport_pool_factory, TransportPool
+from parsec.core.backend_connection.cmds import BackendCmds
 
 
 __all__ = ("backend_cmds_pool_factory", "BackendCmdsPool")

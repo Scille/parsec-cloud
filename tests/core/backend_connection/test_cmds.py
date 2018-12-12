@@ -4,7 +4,7 @@ import trio
 from parsec.api.protocole import ServerHandshake
 from parsec.trustchain import certify_device_revocation
 from parsec.api.transport import PatateTCPTransport
-from parsec.core.backend_connection2 import (
+from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendHandshakeError,
     BackendDeviceRevokedError,

@@ -2,9 +2,9 @@ import pytest
 import trio
 from async_generator import asynccontextmanager
 
-from parsec.core.backend_cmds_sender import BackendCmdsSender
+# from parsec.core.backend_cmds_sender import BackendCmdsSender
 from parsec.core.encryption_manager import EncryptionManager
-from parsec.core.backend_connection2 import backend_cmds_factory
+from parsec.core.backend_connection import backend_cmds_factory
 from parsec.core.fs import FS
 
 
