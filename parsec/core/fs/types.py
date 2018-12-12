@@ -1,5 +1,4 @@
-import os
-from pathlib import PurePosixPath, PureWindowsPath
+from pathlib import PurePosixPath
 from typing import NewType, Union
 
 
@@ -42,6 +41,7 @@ class Path(PurePosixPath):
         return reversed(list(self.walk_from_path()))
 
 
+# TODO: rename in VlobAccess ?
 Access = NewType("Access", dict)
 BlockAccess = NewType("BlockAccess", dict)
 

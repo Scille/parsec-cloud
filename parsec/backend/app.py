@@ -89,7 +89,7 @@ class BackendApp:
             self.beacon = MemoryBeaconComponent(self.event_bus)
             self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
 
-            self.blockstore = blockstore_factory(self.config)
+            self.blockstore = blockstore_factory(self.config.blockstore_config)
 
         else:
             self.dbh = PGHandler(self.config.db_url, self.event_bus)
@@ -98,7 +98,9 @@ class BackendApp:
             self.beacon = PGBeaconComponent(self.dbh, self.event_bus)
             self.vlob = PGVlobComponent(self.dbh, self.event_bus, self.beacon)
 
-            self.blockstore = blockstore_factory(self.config, postgresql_dbh=self.dbh)
+            self.blockstore = blockstore_factory(
+                self.config.blockstore_config, postgresql_dbh=self.dbh
+            )
 
         self.anonymous_cmds = {
             "user_claim": self.user.api_user_claim,
@@ -114,6 +116,10 @@ class BackendApp:
             "events_subscribe": self.events.api_events_subscribe,
             "events_listen": self.events.api_events_listen,
             "ping": self._api_ping,
+            "beacon_read": self.beacon.api_beacon_read,
+            # Message
+            "message_get": self.message.api_message_get,
+            "message_new": self.message.api_message_new,
             # User&Device
             "user_get": self.user.api_user_get,
             "user_find": self.user.api_user_find,
@@ -125,17 +131,13 @@ class BackendApp:
             "device_create": self.user.api_device_create,
             "device_revoke": self.user.api_device_revoke,
             # Blockstore
-            "blockstore_post": self._api_blockstore_post,
-            "blockstore_get": self._api_blockstore_get,
+            "blockstore_create": self.blockstore.api_blockstore_create,
+            "blockstore_read": self.blockstore.api_blockstore_read,
             # Vlob
             "vlob_group_check": self.vlob.api_vlob_group_check,
             "vlob_create": self.vlob.api_vlob_create,
             "vlob_read": self.vlob.api_vlob_read,
             "vlob_update": self.vlob.api_vlob_update,
-            # Beacon
-            "beacon_read": self.beacon.api_beacon_read,
-            "message_get": self.message.api_message_get,
-            "message_new": self.message.api_message_new,
         }
 
     async def init(self, nursery):
@@ -155,18 +157,6 @@ class BackendApp:
         else:
             self.event_bus.send("pinged", author=client_ctx.id, ping=msg["ping"])
         return {"status": "ok", "pong": msg["ping"]}
-
-    async def _api_blockstore_post(self, client_ctx, msg):
-        if not self.blockstore:
-            return {"status": "not_available", "reason": "Blockstore not available"}
-
-        return await self.blockstore.api_blockstore_post(client_ctx, msg)
-
-    async def _api_blockstore_get(self, client_ctx, msg):
-        if not self.blockstore:
-            return {"status": "not_available", "reason": "Blockstore not available"}
-
-        return await self.blockstore.api_blockstore_get(client_ctx, msg)
 
     async def _do_handshake(self, transport):
         context = None

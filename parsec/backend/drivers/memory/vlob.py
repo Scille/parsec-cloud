@@ -1,22 +1,22 @@
 from uuid import UUID
-from typing import List
+from typing import List, Tuple
 
-from parsec.backend.vlob import VlobAtom, BaseVlobComponent
-from parsec.backend.exceptions import (
-    TrustSeedError,
-    VersionError,
-    NotFoundError,
-    AlreadyExistsError,
+from parsec.types import DeviceID
+from parsec.backend.vlob import (
+    BaseVlobComponent,
+    VlobTrustSeedError,
+    VlobVersionError,
+    VlobNotFoundError,
+    VlobAlreadyExistsError,
 )
 
 
 class MemoryVlob:
-    def __init__(self, *args, **kwargs):
-        atom = VlobAtom(*args, **kwargs)
-        self.id = atom.id
-        self.read_trust_seed = atom.read_trust_seed
-        self.write_trust_seed = atom.write_trust_seed
-        self.blob_versions = [atom.blob]
+    def __init__(self, id, rts, wts, blob):
+        self.id = id
+        self.rts = rts
+        self.wts = wts
+        self.blob_versions = [blob]
 
 
 class MemoryVlobComponent(BaseVlobComponent):
@@ -25,7 +25,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         self.beacon_component = beacon_component
         self.vlobs = {}
 
-    async def group_check(self, to_check):
+    async def group_check(self, to_check: List[dict]) -> List[dict]:
         changed = []
         for item in to_check:
             id = item["id"]
@@ -35,62 +35,67 @@ class MemoryVlobComponent(BaseVlobComponent):
                 changed.append({"id": id, "version": version})
             else:
                 try:
-                    vlob = await self.read(id, rts)
-                except NotFoundError:
+                    current_version, _ = await self.read(id, rts)
+                except (VlobNotFoundError, VlobTrustSeedError):
                     continue
-                if vlob.version != version:
-                    changed.append({"id": id, "version": vlob.version})
+                if current_version != version:
+                    changed.append({"id": id, "version": current_version})
         return changed
 
-    async def create(self, id: UUID, rts, wts, blob, notify_beacon=None, author="anonymous"):
+    async def create(
+        self,
+        id: UUID,
+        rts: str,
+        wts: str,
+        blob: bytes,
+        notify_beacon: UUID = None,
+        author: DeviceID = None,
+    ) -> None:
         vlob = MemoryVlob(id, rts, wts, blob)
         if vlob.id in self.vlobs:
-            raise AlreadyExistsError("Vlob already exists.")
+            raise VlobAlreadyExistsError()
         self.vlobs[vlob.id] = vlob
 
-        await self.beacon_component.update(notify_beacon, id, 1, author)
+        if notify_beacon and author:
+            await self.beacon_component.update(notify_beacon, id, 1, author)
 
-        return VlobAtom(
-            id=vlob.id,
-            read_trust_seed=vlob.read_trust_seed,
-            write_trust_seed=vlob.write_trust_seed,
-            blob=vlob.blob_versions[0],
-        )
-
-    async def read(self, id: UUID, rts, version=None):
+    async def read(self, id: UUID, rts: str, version: int = None) -> Tuple[int, bytes]:
         try:
             vlob = self.vlobs[id]
-            if vlob.read_trust_seed != rts:
-                raise TrustSeedError()
+            if vlob.rts != rts:
+                raise VlobTrustSeedError()
 
         except KeyError:
-            raise NotFoundError("Vlob not found.")
+            raise VlobNotFoundError()
 
         version = version or len(vlob.blob_versions)
         try:
-            return VlobAtom(
-                id=vlob.id,
-                read_trust_seed=vlob.read_trust_seed,
-                write_trust_seed=vlob.write_trust_seed,
-                blob=vlob.blob_versions[version - 1],
-                version=version,
-            )
+            return version, vlob.blob_versions[version - 1]
 
         except IndexError:
-            raise VersionError("Wrong blob version.")
+            raise VlobVersionError()
 
-    async def update(self, id: UUID, wts, version, blob, notify_beacon=None, author="anonymous"):
+    async def update(
+        self,
+        id: UUID,
+        wts: str,
+        version: int,
+        blob: bytes,
+        notify_beacon: UUID = None,
+        author: DeviceID = None,
+    ) -> None:
         try:
             vlob = self.vlobs[id]
-            if vlob.write_trust_seed != wts:
-                raise TrustSeedError("Invalid write trust seed.")
+            if vlob.wts != wts:
+                raise VlobTrustSeedError()
 
         except KeyError:
-            raise NotFoundError("Vlob not found.")
+            raise VlobNotFoundError()
 
         if version - 1 == len(vlob.blob_versions):
             vlob.blob_versions.append(blob)
         else:
-            raise VersionError("Wrong blob version.")
+            raise VlobVersionError()
 
-        await self.beacon_component.update(notify_beacon, id, version, author)
+        if notify_beacon and author:
+            await self.beacon_component.update(notify_beacon, id, version, author)

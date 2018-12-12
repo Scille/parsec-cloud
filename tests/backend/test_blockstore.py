@@ -1,8 +1,13 @@
 import trio
 import pytest
+from uuid import uuid4
 
-from parsec.backend.exceptions import TimeoutError
-from parsec.utils import to_jsonb64
+from parsec.backend.blockstore import BlockstoreTimeoutError
+from parsec.api.protocole import blockstore_create_serializer, blockstore_read_serializer
+
+
+BLOCK_ID = uuid4()
+BLOCK_DATA = b"Hodi ho !"
 
 
 def _get_existing_block(backend):
@@ -10,141 +15,135 @@ def _get_existing_block(backend):
     return list(backend.test_populate_data["blocks"].items())[0]
 
 
+async def create(sock, id, block, **kwargs):
+    await sock.send(
+        blockstore_create_serializer.req_dump(
+            {"cmd": "blockstore_create", "id": id, "block": block, **kwargs}
+        )
+    )
+    raw_rep = await sock.recv()
+    return blockstore_create_serializer.rep_load(raw_rep)
+
+
+async def read(sock, id, **kwargs):
+    await sock.send(
+        blockstore_read_serializer.req_dump({"cmd": "blockstore_read", "id": id, **kwargs})
+    )
+    raw_rep = await sock.recv()
+    return blockstore_read_serializer.rep_load(raw_rep)
+
+
 @pytest.mark.trio
-async def test_blockstore_post_and_get(alice_backend_sock, bob_backend_sock):
-    block_id = "b00008dba3834f08abc6eb3aec280c6a"
+async def test_blockstore_create_and_read(alice_backend_sock, bob_backend_sock):
+    rep = await create(alice_backend_sock, BLOCK_ID, BLOCK_DATA)
+    assert rep == {"status": "ok"}
 
-    block = to_jsonb64(b"Hodi ho !")
-    await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block})
-    rep = await alice_backend_sock.recv()
-    assert rep["status"] == "ok"
-
-    await bob_backend_sock.send({"cmd": "blockstore_get", "id": block_id})
-    rep = await bob_backend_sock.recv()
-    assert rep == {"status": "ok", "block": block}
+    rep = await read(bob_backend_sock, BLOCK_ID)
+    assert rep == {"status": "ok", "block": BLOCK_DATA}
 
     # Test not found as well
 
-    dummy_id = "6a8c947e3fac4a24850f857e44c6c50b"
-    await bob_backend_sock.send({"cmd": "blockstore_get", "id": dummy_id})
-    rep = await bob_backend_sock.recv()
-    assert rep == {"status": "not_found_error", "reason": "Unknown block id."}
+    dummy_id = uuid4()
+    rep = await read(bob_backend_sock, dummy_id)
+    assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio
 @pytest.mark.raid1_blockstore
-async def test_raid1_blockstore_post_and_get(alice_backend_sock, bob_backend_sock):
-    await test_blockstore_post_and_get(alice_backend_sock, bob_backend_sock)
+async def test_raid1_blockstore_create_and_read(alice_backend_sock, bob_backend_sock):
+    await test_blockstore_create_and_read(alice_backend_sock, bob_backend_sock)
 
 
 @pytest.mark.trio
 @pytest.mark.raid1_blockstore
-async def test_raid1_blockstore_post_partial_failure(alice_backend_sock, bob_backend_sock, backend):
-    async def mock_post(id, block):
+async def test_raid1_blockstore_create_partial_failure(
+    alice_backend_sock, bob_backend_sock, backend
+):
+    async def mock_create(id, block):
         await trio.sleep(0)
-        raise TimeoutError()
+        raise BlockstoreTimeoutError()
 
-    backend.blockstore.blockstores[1].post = mock_post
+    backend.blockstore.blockstores[1].create = mock_create
 
-    block_id = "b00008dba3834f08abc6eb3aec280c6a"
-    block = to_jsonb64(b"Hodi ho !")
-    await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block})
-    rep = await alice_backend_sock.recv()
-    assert rep["status"] == "timeout"
+    rep = await create(alice_backend_sock, BLOCK_ID, BLOCK_DATA)
+    rep == {"status": "timeout"}
 
 
 @pytest.mark.trio
 @pytest.mark.raid1_blockstore
-async def test_raid1_blockstore_post_partial_exists(alice_backend_sock, bob_backend_sock, backend):
-    block_id = "b00008dba3834f08abc6eb3aec280c6a"
-    await backend.blockstore.blockstores[1].post(block_id, b"Hodi ho !")
+async def test_raid1_blockstore_create_partial_exists(alice_backend_sock, backend):
+    await backend.blockstore.blockstores[1].create(BLOCK_ID, BLOCK_DATA)
 
-    block = to_jsonb64(b"Hodi ho !")
-    await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block})
-    rep = await alice_backend_sock.recv()
+    rep = await create(alice_backend_sock, BLOCK_ID, BLOCK_DATA)
     assert rep == {"status": "ok"}
 
 
 @pytest.mark.trio
 @pytest.mark.raid1_blockstore
-async def test_raid1_blockstore_get_partial_failure(alice_backend_sock, bob_backend_sock, backend):
-    block_id = "b00008dba3834f08abc6eb3aec280c6a"
+async def test_raid1_blockstore_read_partial_failure(alice_backend_sock, backend):
+    await backend.blockstore.blockstores[1].create(BLOCK_ID, BLOCK_DATA)
 
-    await backend.blockstore.blockstores[1].post(block_id, b"Hodi ho !")
-
-    await bob_backend_sock.send({"cmd": "blockstore_get", "id": block_id})
-    rep = await bob_backend_sock.recv()
-    assert rep == {"status": "not_found_error", "reason": "Unknown block id."}
+    rep = await read(alice_backend_sock, BLOCK_ID)
+    assert rep == {"status": "ok", "block": BLOCK_DATA}
 
 
 @pytest.mark.trio
 @pytest.mark.raid0_blockstore
-async def test_raid0_blockstore_post_and_get(alice_backend_sock, bob_backend_sock):
-    await test_blockstore_post_and_get(alice_backend_sock, bob_backend_sock)
+async def test_raid0_blockstore_create_and_read(alice_backend_sock, bob_backend_sock):
+    await test_blockstore_create_and_read(alice_backend_sock, bob_backend_sock)
 
 
 @pytest.mark.parametrize(
     "bad_msg",
     [
         {},
-        {"id": "b00008dba3834f08abc6eb3aec280c6a", "blob": to_jsonb64(b"..."), "bad_field": "foo"},
-        {"id": "not an uuid", "blob": to_jsonb64(b"...")},
-        {"id": 42, "blob": to_jsonb64(b"...")},
-        {"id": None, "blob": to_jsonb64(b"...")},
-        {"id": "b00008dba3834f08abc6eb3aec280c6a", "blob": 42},
-        {"id": "b00008dba3834f08abc6eb3aec280c6a", "blob": None},
-        {"blob": to_jsonb64(b"...")},
+        {"id": BLOCK_ID, "block": BLOCK_DATA, "bad_field": "foo"},
+        {"id": "not an uuid", "block": BLOCK_DATA},
+        {"id": 42, "block": BLOCK_DATA},
+        {"id": None, "block": BLOCK_DATA},
+        {"id": BLOCK_ID, "block": 42},
+        {"id": BLOCK_ID, "block": None},
+        {"block": BLOCK_DATA},
     ],
 )
 @pytest.mark.trio
-async def test_blockstore_post_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send({"cmd": "blockstore_post", **bad_msg})
-    rep = await alice_backend_sock.recv()
+async def test_blockstore_create_bad_msg(alice_backend_sock, bad_msg):
+    await alice_backend_sock.send({"cmd": "blockstore_create", **bad_msg})
+    raw_rep = await alice_backend_sock.recv()
+    rep = blockstore_create_serializer.rep_load(raw_rep)
     assert rep["status"] == "bad_message"
 
 
 @pytest.mark.trio
-async def test_blockstore_get_not_found(alice_backend_sock):
-    await alice_backend_sock.send(
-        {"cmd": "blockstore_get", "id": "b00008dba3834f08abc6eb3aec280c6a"}
-    )
-    rep = await alice_backend_sock.recv()
-    assert rep == {"status": "not_found_error", "reason": "Unknown block id."}
+async def test_blockstore_read_not_found(alice_backend_sock):
+    rep = await read(alice_backend_sock, BLOCK_ID)
+    assert rep == {"status": "not_found"}
 
 
 @pytest.mark.parametrize(
     "bad_msg",
-    [
-        {"id": "b00008dba3834f08abc6eb3aec280c6a", "bad_field": "foo"},
-        {"id": "not_an_uuid"},
-        {"id": 42},
-        {"id": None},
-        {},
-    ],
+    [{"id": BLOCK_ID, "bad_field": "foo"}, {"id": "not_an_uuid"}, {"id": 42}, {"id": None}, {}],
 )
 @pytest.mark.trio
-async def test_blockstore_get_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send({"cmd": "blockstore_get", **bad_msg})
-    rep = await alice_backend_sock.recv()
-    # Id and trust_seed are invalid anyway, but here we test another layer
-    # so it's not important as long as we get our `bad_message` status
+async def test_blockstore_read_bad_msg(alice_backend_sock, bad_msg):
+    await alice_backend_sock.send({"cmd": "blockstore_read", **bad_msg})
+    raw_rep = await alice_backend_sock.recv()
+    rep = blockstore_read_serializer.rep_load(raw_rep)
+    # Valid ID doesn't exists in database but this is ok given here we test
+    # another layer so it's not important as long as we get our
+    # `bad_message` status
     assert rep["status"] == "bad_message"
 
 
 @pytest.mark.trio
 async def test_blockstore_conflicting_id(alice_backend_sock):
-    block_id = "b00008dba3834f08abc6eb3aec280c6a"
+    block_v1 = b"v1"
+    rep = await create(alice_backend_sock, BLOCK_ID, block_v1)
+    assert rep == {"status": "ok"}
 
-    block_v1 = to_jsonb64(b"v1")
-    await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block_v1})
-    rep = await alice_backend_sock.recv()
-    assert rep["status"] == "ok"
+    block_v2 = b"v2"
+    rep = await create(alice_backend_sock, BLOCK_ID, block_v2)
+    assert rep == {"status": "already_exists"}
 
-    block_v2 = to_jsonb64(b"v2")
-    await alice_backend_sock.send({"cmd": "blockstore_post", "id": block_id, "block": block_v2})
-    rep = await alice_backend_sock.recv()
-    assert rep["status"] == "ok"
-
-    await alice_backend_sock.send({"cmd": "blockstore_get", "id": block_id})
-    rep = await alice_backend_sock.recv()
+    rep = await read(alice_backend_sock, BLOCK_ID)
     assert rep == {"status": "ok", "block": block_v1}

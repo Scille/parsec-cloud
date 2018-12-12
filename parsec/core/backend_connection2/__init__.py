@@ -22,6 +22,7 @@ from parsec.core.backend_connection2.cmds import (
 )
 from parsec.core.backend_connection2.cmds_pool import backend_cmds_pool_factory, BackendCmdsPool
 
+
 __all__ = (
     "BackendConnectionError",
     "BackendNotAvailable",

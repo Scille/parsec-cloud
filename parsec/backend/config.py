@@ -1,9 +1,13 @@
 import re
 import attr
 import itertools
+from typing import List
 from collections import defaultdict
 
 from parsec.crypto import load_root_verify_key
+
+
+__all__ = ("config_factory", "BackendConfig", "BaseBlockstoreConfig")
 
 
 blockstore_environ_vars = {
@@ -138,15 +142,19 @@ def config_factory(
     return config
 
 
+class BaseBlockstoreConfig:
+    pass
+
+
 @attr.s(frozen=True)
-class RAIDBlockstoreConfig:
+class RAIDBlockstoreConfig(BaseBlockstoreConfig):
     type = attr.ib()
 
-    blockstores = attr.ib(default=None)
+    blockstores: List[BaseBlockstoreConfig] = attr.ib(default=None)
 
 
 @attr.s(frozen=True)
-class S3BlockstoreConfig:
+class S3BlockstoreConfig(BaseBlockstoreConfig):
     type = "S3"
 
     s3_region = attr.ib(default=None)
@@ -156,7 +164,7 @@ class S3BlockstoreConfig:
 
 
 @attr.s(frozen=True)
-class SWIFTBlockstoreConfig:
+class SWIFTBlockstoreConfig(BaseBlockstoreConfig):
     type = "SWIFT"
 
     swift_authurl = attr.ib(default=None)
@@ -167,12 +175,12 @@ class SWIFTBlockstoreConfig:
 
 
 @attr.s(frozen=True)
-class PostgreSQLBlockstoreConfig:
+class PostgreSQLBlockstoreConfig(BaseBlockstoreConfig):
     type = "POSTGRESQL"
 
 
 @attr.s(frozen=True)
-class MockedBlockstoreConfig:
+class MockedBlockstoreConfig(BaseBlockstoreConfig):
     type = "MOCKED"
 
 

@@ -2,10 +2,10 @@ from triopg.exceptions import UniqueViolationError
 
 from parsec.utils import ParsecError
 from parsec.backend.exceptions import AlreadyExistsError, NotFoundError
-from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.backend.blockstore import BaseBlockstoreComponent
 
 
-class PGBlockStoreComponent(BaseBlockStoreComponent):
+class PGBlockstoreComponent(BaseBlockstoreComponent):
     def __init__(self, dbh):
         self.dbh = dbh
 

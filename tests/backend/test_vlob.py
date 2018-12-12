@@ -1,7 +1,10 @@
 import pytest
-from uuid import UUID
+from uuid import uuid4, UUID
 
 from parsec.utils import to_jsonb64
+
+
+VLOB_ID = uuid4()
 
 
 async def populate_backend_vlob(backend):

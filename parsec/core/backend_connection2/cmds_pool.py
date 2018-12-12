@@ -14,7 +14,8 @@ __all__ = ("backend_cmds_pool_factory", "BackendCmdsPool")
 logger = get_logger()
 
 
-class BackendCmdsPool:
+# TODO: create&use a BaseBackendCmds for the inheritance
+class BackendCmdsPool(BackendCmds):
     def __init__(self, transport_pool: TransportPool, log=None):
         self.transport_pool = transport_pool
         # TODO: use logger...

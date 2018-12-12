@@ -1,13 +1,17 @@
 from triopg import UniqueViolationError
 
 from parsec.utils import ParsecError
-from parsec.backend.vlob import VlobAtom, BaseVlobComponent
+from parsec.backend.vlob import BaseVlobComponent
 from parsec.backend.exceptions import (
     TrustSeedError,
     VersionError,
     NotFoundError,
     AlreadyExistsError,
 )
+
+# TODO: fix this mock
+class VlobAtom:
+    pass
 
 
 class PGVlobComponent(BaseVlobComponent):

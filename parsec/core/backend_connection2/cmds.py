@@ -11,6 +11,9 @@ from parsec.api.protocole import (
     ping_serializer,
     events_subscribe_serializer,
     events_listen_serializer,
+    vlob_read_serializer,
+    blockstore_create_serializer,
+    blockstore_read_serializer,
     user_get_serializer,
     user_find_serializer,
     user_invite_serializer,
@@ -110,6 +113,8 @@ class BackendCmds:
         self.transport = transport
         self.log = log or logger
 
+    ### Events&misc API ###
+
     async def ping(self, ping: str) -> str:
         raw_req = {"cmd": "ping", "ping": ping}
         req = _req_dump(ping_serializer, raw_req)
@@ -149,6 +154,41 @@ class BackendCmds:
             raise BackendCmdsBadResponse(rep)
         rep.pop("status")
         return rep
+
+    ### Vlob API ###
+
+    async def vlob_read(self, id: UUID, rts: str) -> Tuple[int, bytes]:
+        raw_req = {"cmd": "vlob_read", "id": id, "rts": rts}
+        req = _req_dump(vlob_read_serializer, raw_req)
+        await _transport_send(self.transport, req)
+        raw_rep = await _transport_recv(self.transport)
+        rep = _rep_load(vlob_read_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
+        return rep["version"], rep["blob"]
+
+    ### Blockstore API ###
+
+    async def blockstore_create(self, id: UUID, block: bytes) -> None:
+        raw_req = {"cmd": "blockstore_create", "id": id, "block": block}
+        req = _req_dump(blockstore_create_serializer, raw_req)
+        await _transport_send(self.transport, req)
+        raw_rep = await _transport_recv(self.transport)
+        rep = _rep_load(blockstore_create_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
+
+    async def blockstore_read(self, id: UUID) -> bytes:
+        raw_req = {"cmd": "blockstore_read", "id": id}
+        req = _req_dump(blockstore_read_serializer, raw_req)
+        await _transport_send(self.transport, req)
+        raw_rep = await _transport_recv(self.transport)
+        rep = _rep_load(blockstore_read_serializer, raw_rep)
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
+        return rep["block"]
+
+    ### User API ###
 
     async def user_get(self, user_id: UserID) -> Tuple[RemoteUser, Dict[DeviceID, RemoteDevice]]:
         raw_req = {"cmd": "user_get", "user_id": user_id}

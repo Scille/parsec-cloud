@@ -1,21 +1,26 @@
-from parsec.backend.exceptions import AlreadyExistsError, NotFoundError
-from parsec.backend.blockstore import BaseBlockStoreComponent
+from uuid import UUID
+
+from parsec.backend.blockstore import (
+    BaseBlockstoreComponent,
+    BlockstoreAlreadyExistsError,
+    BlockstoreNotFoundError,
+)
 
 
-class MemoryBlockStoreComponent(BaseBlockStoreComponent):
+class MemoryBlockstoreComponent(BaseBlockstoreComponent):
     def __init__(self):
         self.blocks = {}
 
-    async def get(self, id):
+    async def read(self, id: UUID) -> bytes:
         try:
             return self.blocks[id]
 
         except KeyError:
-            raise NotFoundError("Unknown block id.")
+            raise BlockstoreNotFoundError()
 
-    async def post(self, id, block):
+    async def create(self, id: UUID, block: bytes) -> None:
         if id in self.blocks:
             # Should never happen
-            raise AlreadyExistsError("A block already exists with id `%s`." % id)
+            raise BlockstoreAlreadyExistsError()
 
         self.blocks[id] = block
