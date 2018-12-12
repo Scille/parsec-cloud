@@ -119,7 +119,7 @@ class BackendApp:
             "beacon_read": self.beacon.api_beacon_read,
             # Message
             "message_get": self.message.api_message_get,
-            "message_new": self.message.api_message_new,
+            "message_send": self.message.api_message_send,
             # User&Device
             "user_get": self.user.api_user_get,
             "user_find": self.user.api_user_find,

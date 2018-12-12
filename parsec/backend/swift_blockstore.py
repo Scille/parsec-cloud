@@ -1,8 +1,6 @@
 from unittest.mock import Mock
 import pbr.version
-
-from parsec.backend.blockstore import BaseBlockStoreComponent
-from parsec.backend.exceptions import AlreadyExistsError, NotFoundError
+from uuid import UUID
 
 original_version_info = pbr.version.VersionInfo
 
@@ -20,8 +18,15 @@ pbr.version.VersionInfo = Mock(side_effect=side_effect)
 import swiftclient  # noqa
 from swiftclient.exceptions import ClientException  # noqa
 
+from parsec.backend.blockstore import (
+    BaseBlockstoreComponent,
+    BlockstoreAlreadyExistsError,
+    BlockstoreNotFoundError,
+    BlockstoreTimeoutError,
+)
 
-class SwiftBlockStoreComponent(BaseBlockStoreComponent):
+
+class SwiftBlockstoreComponent(BaseBlockstoreComponent):
     def __init__(self, auth_url, tenant, container, user, password):
         self.swift_client = swiftclient.Connection(
             authurl=auth_url, user=":".join([user, tenant]), key=password
@@ -29,19 +34,19 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
         self._container = container
         self.swift_client.head_container(container)
 
-    async def get(self, id):
+    async def read(self, id: UUID) -> bytes:
         try:
             _, obj = self.swift_client.get_object(self._container, str(id))
         except ClientException as exc:
             if exc.http_status == 404:
-                raise NotFoundError("Unknown block id.")
+                raise BlockstoreNotFoundError() from exc
 
             else:
-                raise exc
+                raise BlockstoreTimeoutError() from exc
 
         return obj
 
-    async def post(self, id, block):
+    async def create(self, id: UUID, block: bytes) -> None:
         # TODO find a more efficient way to check if block already exists
         try:
             _, obj = self.swift_client.get_object(self._container, str(id))
@@ -49,9 +54,7 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
             if exc.http_status == 404:
                 self.swift_client.put_object(self._container, str(id), block)
             else:
-                raise exc
+                raise BlockstoreTimeoutError() from exc
 
         else:
-            raise AlreadyExistsError("A block already exists with id `%s`." % id)
-
-        return id
+            raise BlockstoreAlreadyExistsError()

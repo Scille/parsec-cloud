@@ -7,10 +7,10 @@ from parsec.backend.utils import catch_protocole_errors
 
 class BaseMessageComponent:
     @catch_protocole_errors
-    async def api_message_new(self, client_ctx, msg):
+    async def api_message_send(self, client_ctx, msg):
         msg = message_send_serializer.req_load(msg)
 
-        await self.message_send(client_ctx.id, msg["recipient"], msg["body"])
+        await self.send(client_ctx.id, msg["recipient"], msg["body"])
 
         return message_send_serializer.rep_dump({"status": "ok"})
 
@@ -19,7 +19,7 @@ class BaseMessageComponent:
         msg = message_get_serializer.req_load(msg)
 
         offset = msg["offset"]
-        messages = await self.message_get(client_ctx.user_id, offset)
+        messages = await self.get(client_ctx.user_id, offset)
 
         return message_get_serializer.rep_dump(
             {
@@ -34,5 +34,5 @@ class BaseMessageComponent:
     async def send(self, sender: DeviceID, recipient: UserID, body: bytes) -> None:
         raise NotImplementedError()
 
-    async def get(self, recipient: UserID, offset: int) -> List[Tuple[UserID, bytes]]:
+    async def get(self, recipient: UserID, offset: int) -> List[Tuple[DeviceID, bytes]]:
         raise NotImplementedError()

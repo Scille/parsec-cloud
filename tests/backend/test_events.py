@@ -21,9 +21,9 @@ BEACON_ID = uuid4()
     ],
 )
 async def test_events_subscribe_ok(alice_backend_sock, events):
-    sock = alice_backend_sock
-
-    await sock.send(events_subscribe_serializer.req_dump({"cmd": "events_subscribe", **events}))
+    await alice_backend_sock.send(
+        events_subscribe_serializer.req_dump({"cmd": "events_subscribe", **events})
+    )
     raw_rep = await alice_backend_sock.recv()
     rep = events_subscribe_serializer.rep_load(raw_rep)
     assert rep == {"status": "ok"}
@@ -41,9 +41,7 @@ async def test_events_subscribe_ok(alice_backend_sock, events):
     ],
 )
 async def test_events_subscribe_bad_msg(alice_backend_sock, events):
-    sock = alice_backend_sock
-
-    await sock.send({"cmd": "events_subscribe", **events})
+    await alice_backend_sock.send({"cmd": "events_subscribe", **events})
     raw_rep = await alice_backend_sock.recv()
     rep = events_subscribe_serializer.rep_load(raw_rep)
     assert rep["status"] == "bad_message"
@@ -80,9 +78,7 @@ async def get_pinged_events(sock):
 
 @pytest.mark.trio
 async def test_events_subscribe_ping(alice_backend_sock, alice2_backend_sock):
-    sock = alice_backend_sock
-
-    await subscribe_pinged(sock, ["foo", "bar"])
+    await subscribe_pinged(alice_backend_sock, ["foo", "bar"])
 
     # Should ignore our own events
     await ping(alice2_backend_sock, "nope")
@@ -96,13 +92,11 @@ async def test_events_subscribe_ping(alice_backend_sock, alice2_backend_sock):
 
 @pytest.mark.trio
 async def test_event_resubscribe(alice_backend_sock, alice2_backend_sock):
-    sock = alice_backend_sock
-
-    await subscribe_pinged(sock, ["foo", "bar"])
+    await subscribe_pinged(alice_backend_sock, ["foo", "bar"])
 
     await ping(alice2_backend_sock, "foo")
 
-    await subscribe_pinged(sock, ["bar", "spam"])
+    await subscribe_pinged(alice_backend_sock, ["bar", "spam"])
 
     await ping(alice2_backend_sock, "foo")
     await ping(alice2_backend_sock, "bar")

@@ -1,4 +1,5 @@
 import trio
+from uuid import UUID
 
 from parsec.backend.blockstore import (
     BaseBlockstoreComponent,
@@ -11,7 +12,7 @@ class RAID1BlockstoreComponent(BaseBlockstoreComponent):
     def __init__(self, blockstores):
         self.blockstores = blockstores
 
-    async def read(self, id):
+    async def read(self, id: UUID) -> bytes:
         async def _single_blockstore_read(nursery, blockstore, id):
             nonlocal value
             try:
@@ -30,7 +31,7 @@ class RAID1BlockstoreComponent(BaseBlockstoreComponent):
 
         return value
 
-    async def create(self, id, block):
+    async def create(self, id: UUID, block: bytes) -> None:
         async def _single_blockstore_create(nursery, blockstore, id, block):
             try:
                 await blockstore.create(id, block)

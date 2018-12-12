@@ -15,5 +15,5 @@ class MemoryMessageComponent(BaseMessageComponent):
         index = len(self._messages[recipient])
         self.event_bus.send("message.received", author=sender, recipient=recipient, index=index)
 
-    async def get(self, recipient: UserID, offset: int) -> List[Tuple[UserID, bytes]]:
+    async def get(self, recipient: UserID, offset: int) -> List[Tuple[DeviceID, bytes]]:
         return self._messages[recipient][offset:]

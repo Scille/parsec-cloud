@@ -18,12 +18,12 @@ message_send_serializer = CmdSerializer(MessageSendReqSchema, MessageSendRepSche
 
 
 class MessageGetReqSchema(BaseReqSchema):
-    offset = fields.Integer(missing=0)
+    offset = fields.Integer(required=True, validate=lambda n: n >= 0)
 
 
 class MessageSchema(UnknownCheckedSchema):
-    sender = fields.UserID(required=True)
-    offset = fields.Integer(required=True)
+    sender = fields.DeviceID(required=True)
+    count = fields.Integer(required=True)
     body = fields.Base64Bytes(required=True)
 
 

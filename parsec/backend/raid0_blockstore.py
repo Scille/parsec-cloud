@@ -14,6 +14,6 @@ class RAID0BlockstoreComponent(BaseBlockstoreComponent):
         blockstore = self._get_blockstore(id)
         return await blockstore.read(id)
 
-    async def create(self, id, block):
+    async def create(self, id: UUID, block: bytes) -> None:
         blockstore = self._get_blockstore(id)
-        return await blockstore.create(id, block)
+        await blockstore.create(id, block)
