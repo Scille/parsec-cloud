@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>607</width>
-    <height>720</height>
+    <height>800</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -248,7 +248,7 @@ image: url(:/icons/images/icons/checked.png)
        <widget class="QWidget" name="widget_password" native="true">
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <property name="spacing">
-          <number>15</number>
+          <number>10</number>
          </property>
          <property name="leftMargin">
           <number>0</number>
@@ -349,6 +349,33 @@ image: url(:/icons/images/icons/checked.png)
              </property>
              <property name="echoMode">
               <enum>QLineEdit::Password</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <widget class="QLabel" name="label_password_strength">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
              </property>
             </widget>
            </item>

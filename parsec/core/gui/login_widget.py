@@ -1,3 +1,5 @@
+from zxcvbn import zxcvbn
+
 from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
 from PyQt5.QtWidgets import QWidget, QCompleter
 
@@ -9,6 +11,15 @@ from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 from parsec.core.gui.ui.login_register_user_widget import Ui_LoginRegisterUserWidget
 from parsec.core.gui.ui.login_register_device_widget import Ui_LoginRegisterDeviceWidget
+
+
+PASSWORD_STRENGTH_TEXTS = [
+    QCoreApplication.translate("LoginWidget", "Very weak"),
+    QCoreApplication.translate("LoginWidget", "Weak"),
+    QCoreApplication.translate("LoginWidget", "Good"),
+    QCoreApplication.translate("LoginWidget", "Strong"),
+    QCoreApplication.translate("LoginWidget", "Very strong"),
+]
 
 
 class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
@@ -71,6 +82,32 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_token.textChanged.connect(self.check_infos)
+        self.line_edit_password.textChanged.connect(self.password_changed)
+
+    def password_changed(self, text):
+        if len(text):
+            self.label_password_strength.show()
+            result = zxcvbn(text)
+            score = result["score"]
+            self.label_password_strength.setText(
+                QCoreApplication.translate("LoginWidget", "Password strength: {}").format(
+                    PASSWORD_STRENGTH_TEXTS[score]
+                )
+            )
+            if score == 0 or score == 1:
+                self.label_password_strength.setStyleSheet(
+                    "color: white; background-color: rgb(194, 51, 51);"
+                )
+            elif score == 2:
+                self.label_password_strength.setStyleSheet(
+                    "color: white; background-color: rgb(219, 125, 58);"
+                )
+            else:
+                self.label_password_strength.setStyleSheet(
+                    "color: white; background-color: rgb(55, 130, 65);"
+                )
+        else:
+            self.label_password_strength.hide()
 
     def check_infos(self, _):
         if (
@@ -96,6 +133,7 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
         self.combo_pkcs11_token.clear()
         self.combo_pkcs11_token.addItem("0")
         self.widget_pkcs11.hide()
+        self.label_password_strength.hide()
 
     def emit_register(self):
         if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
@@ -138,6 +176,32 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_token.textChanged.connect(self.check_infos)
+        self.line_edit_password.textChanged.connect(self.password_changed)
+
+    def password_changed(self, text):
+        if len(text):
+            self.label_password_strength.show()
+            result = zxcvbn(text)
+            score = result["score"]
+            self.label_password_strength.setText(
+                QCoreApplication.translate("LoginWidget", "Password strength: {}").format(
+                    PASSWORD_STRENGTH_TEXTS[score]
+                )
+            )
+            if score == 0 or score == 1:
+                self.label_password_strength.setStyleSheet(
+                    "color: white; background-color: rgb(194, 51, 51);"
+                )
+            elif score == 2:
+                self.label_password_strength.setStyleSheet(
+                    "color: white; background-color: rgb(219, 125, 58);"
+                )
+            else:
+                self.label_password_strength.setStyleSheet(
+                    "color: white; background-color: rgb(55, 130, 65);"
+                )
+        else:
+            self.label_password_strength.hide()
 
     def reset(self):
         self.line_edit_login.setText("")
@@ -150,6 +214,7 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
         self.line_edit_password_check.setEnabled(True)
         self.line_edit_device.setEnabled(True)
         self.line_edit_token.setEnabled(True)
+        self.label_password_strength.hide()
         self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
         self.line_edit_password.setDisabled(False)
         self.line_edit_password_check.setDisabled(False)
