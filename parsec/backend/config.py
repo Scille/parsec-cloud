@@ -1,10 +1,10 @@
 import re
 import attr
 import itertools
-from typing import List
+from typing import List, Union
 from collections import defaultdict
 
-from parsec.crypto import load_root_verify_key
+from parsec.crypto import load_root_verify_key, VerifyKey
 
 
 __all__ = ("config_factory", "BackendConfig", "BaseBlockstoreConfig")
@@ -109,39 +109,6 @@ def _extract_blockstore_config(blockstore_type, environ):
         raise ValueError("BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, `SWIFT` or `RAID1`")
 
 
-def config_factory(
-    root_verify_key, db_url="MOCKED", blockstore_type="MOCKED", debug=False, environ={}
-):
-    raw_conf = {**environ, "DB_URL": db_url, "BLOCKSTORE_TYPE": blockstore_type, "DEBUG": debug}
-
-    config = BackendConfig(debug=raw_conf.get("DEBUG", False))
-
-    if "DB_URL" not in raw_conf:
-        raise ValueError("Missing mandatory config `DB_URL`")
-    config.__dict__["db_url"] = raw_conf["DB_URL"]
-    if config.db_url.startswith("postgresql://"):
-        config.__dict__["db_type"] = "POSTGRESQL"
-    elif config.db_url == "MOCKED":
-        config.__dict__["db_type"] = "MOCKED"
-    else:
-        raise ValueError("DB_URL must be `MOCKED` or `postgresql://...`")
-
-    if "BLOCKSTORE_TYPE" not in raw_conf:
-        raise ValueError("Missing mandatory config `BLOCKSTORE_TYPE`")
-    config.__dict__["blockstore_config"] = _extract_blockstore_config(
-        raw_conf["BLOCKSTORE_TYPE"], raw_conf
-    )
-
-    try:
-        config.__dict__["root_verify_key"] = load_root_verify_key(root_verify_key)
-    except Exception as exc:
-        raise ValueError("Invalid root verify key.") from exc
-
-    config.__dict__["sentry_url"] = raw_conf.get("SENTRY_URL") or None
-
-    return config
-
-
 class BaseBlockstoreConfig:
     pass
 
@@ -184,18 +151,46 @@ class MockedBlockstoreConfig(BaseBlockstoreConfig):
     type = "MOCKED"
 
 
-@attr.s(frozen=True)
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class BackendConfig:
 
-    db_url = attr.ib(default=None)
-    db_type = attr.ib(default=None)
+    db_url: str = None
+    db_type: str = None
 
-    root_verify_key = attr.ib(default=None)
+    root_verify_key: VerifyKey = None
 
-    blockstore_config = attr.ib(default=None)
+    blockstore_config: BaseBlockstoreConfig = None
 
-    sentry_url = attr.ib(default=None)
+    sentry_url: str = None
 
-    debug = attr.ib(default=False)
+    debug: bool = False
 
-    handshake_challenge_size = attr.ib(default=48)
+    handshake_challenge_size: int = 48
+
+
+def config_factory(
+    root_verify_key: Union[str, VerifyKey],
+    db_url: str = "MOCKED",
+    blockstore_type: str = "MOCKED",
+    debug: bool = False,
+    environ: dict = {},
+) -> BackendConfig:
+    config = {"debug": debug, "db_url": db_url}
+
+    if db_url.startswith("postgresql://"):
+        config["db_type"] = "POSTGRESQL"
+    elif db_url == "MOCKED":
+        config["db_type"] = "MOCKED"
+    else:
+        raise ValueError("DB_URL must be `MOCKED` or `postgresql://...`")
+
+    config["blockstore_config"] = _extract_blockstore_config(blockstore_type, environ)
+
+    try:
+        config["root_verify_key"] = load_root_verify_key(root_verify_key)
+    except Exception as exc:
+        raise ValueError("Invalid root verify key.") from exc
+
+    config["sentry_url"] = environ.get("SENTRY_URL") or None
+
+    return BackendConfig(**config)

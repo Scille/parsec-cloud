@@ -1,6 +1,6 @@
 import os
 import attr
-from typing import Optional
+from typing import Optional, Dict
 from pathlib import Path
 
 
@@ -48,14 +48,14 @@ class CoreConfig:
 
 
 def config_factory(
-    config_dir=None,
-    data_dir=None,
-    cache_dir=None,
-    backend_watchdog=0,
-    backend_max_connections=4,
-    debug=False,
-    environ={},
-):
+    config_dir: Path = None,
+    data_dir: Path = None,
+    cache_dir: Path = None,
+    backend_watchdog: int = 0,
+    backend_max_connections: int = 4,
+    debug: bool = False,
+    environ: dict = {},
+) -> CoreConfig:
     return CoreConfig(
         config_dir=config_dir or get_default_config_dir(environ),
         data_dir=data_dir or get_default_data_dir(environ),

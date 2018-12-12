@@ -17,6 +17,7 @@ from parsec.crypto import (
 from parsec.utils import from_jsonb64, to_jsonb64
 from parsec.core.local_db import LocalDBMissingEntry
 from parsec.core.base import BaseAsyncComponent
+
 # from parsec.core.devices_manager import is_valid_user_id
 is_valid_user_id = lambda x: True
 from parsec.api.protocole import user_get_serializer
