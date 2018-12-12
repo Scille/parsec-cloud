@@ -71,7 +71,7 @@ class FileSyncerMixin(BaseSyncer):
         data = bytearray(cs.size)
         for bs in cs.buffers:
             if isinstance(bs.buffer, BlockBuffer):
-                buff = await self._backend_block_get(bs.buffer.access)
+                buff = await self._backend_block_read(bs.buffer.access)
             elif isinstance(bs.buffer, DirtyBlockBuffer):
                 buff = self.local_file_fs.get_block(bs.buffer.access)
             else:
@@ -164,7 +164,7 @@ class FileSyncerMixin(BaseSyncer):
             else:
                 # Create a new block from existing data
                 block_access = new_block_access(data, cs.start)
-                await self._backend_block_post(block_access, data)
+                await self._backend_block_create(block_access, data)
                 blocks.append(block_access)
 
         to_sync_manifest["blocks"] = blocks

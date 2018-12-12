@@ -4,7 +4,7 @@ from pathlib import Path
 from json import JSONDecodeError
 
 from parsec.types import DeviceID
-from parsec.crypto import SigningKey, VerifyKey, PrivateKey
+from parsec.crypto import SigningKey, VerifyKey, PrivateKey, generate_secret_key
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError, post_load
 from parsec.core.schemas import ManifestAccessSchema
 from parsec.core.types import LocalDevice
@@ -23,6 +23,7 @@ class LocalDeviceSchema(UnknownCheckedSchema):
     signing_key = fields.SigningKey(required=True)
     private_key = fields.PrivateKey(required=True)
     user_manifest_access = fields.Nested(ManifestAccessSchema, required=True)
+    local_symkey = fileds.Base64Field(required=True)
 
     @post_load
     def make_obj(self, data):
@@ -62,6 +63,7 @@ def generate_new_device(
         signing_key=SigningKey.generate(),
         private_key=PrivateKey.generate(),
         user_manifest_access=new_access(),
+        local_symkey=generate_secret_key(),
     )
 
 

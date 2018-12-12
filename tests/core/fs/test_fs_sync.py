@@ -606,13 +606,13 @@ async def test_create_already_existing_block(running_backend, alice_fs, alice2_f
 
     # Now hack a bit the fs to simulate poor connection with backend
 
-    vanilla_backend_block_post = alice_fs._syncer._backend_block_post
+    vanilla_backend_block_create = alice_fs._syncer._backend_block_create
 
-    async def mocked_backend_block_post(*args, **kwargs):
-        await vanilla_backend_block_post(*args, **kwargs)
+    async def mocked_backend_block_create(*args, **kwargs):
+        await vanilla_backend_block_create(*args, **kwargs)
         raise BackendNotAvailable()
 
-    alice_fs._syncer._backend_block_post = mocked_backend_block_post
+    alice_fs._syncer._backend_block_create = mocked_backend_block_create
 
     # Write into the file locally and try to sync this.
     # We should end up with a block synced in the backend but still considered
@@ -626,7 +626,7 @@ async def test_create_already_existing_block(running_backend, alice_fs, alice2_f
     # Now retry the sync with a good connection, we should be able to reach
     # eventual consistency.
 
-    alice_fs._syncer._backend_block_post = vanilla_backend_block_post
+    alice_fs._syncer._backend_block_create = vanilla_backend_block_create
     await alice_fs.sync("/w/foo.txt")
 
     # Finally test this so-called consistency ;-)

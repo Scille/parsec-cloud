@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, NewType
 import pendulum
 from base64 import b32decode, b32encode
 from json import JSONDecodeError
@@ -14,7 +14,20 @@ from parsec.crypto_types import PrivateKey, PublicKey, SigningKey, VerifyKey
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError
 
 
-__all__ = ("CryptoError", "BadSignatureError", "PrivateKey", "PublicKey", "SigningKey", "VerifyKey")
+__all__ = (
+    "CryptoError",
+    "BadSignatureError",
+    "PrivateKey",
+    "PublicKey",
+    "SigningKey",
+    "VerifyKey",
+    "SymetricKey",
+    "HashDigest",
+)
+
+
+SymetricKey = NewType("SymetricKey", bytes)
+HashDigest = NewType("HashDigest", bytes)
 
 
 # TODO: SENSITIVE is really slow which is not good for unittests...

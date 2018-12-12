@@ -6,6 +6,7 @@ from marshmallow import (
     validates_schema,
     post_load,
 )
+from json import JSONDecodeError
 from marshmallow import validate  # noqa: republishing
 
 from parsec import schema_fields as fields  # noqa: republishing
@@ -37,6 +38,12 @@ class UnknownCheckedSchema(BaseSchema):
         for key in original_data:
             if key not in self.fields or self.fields[key].dump_only:
                 raise ValidationError("Unknown field name {}".format(key))
+
+    def dumps(self):
+        try:
+            self.dump()
+        except (UnicodeDecodeError, JSONDecodeError) as exc:
+            raise ValidationError(str(exc)) from exc
 
 
 class InvalidCmd(Exception):

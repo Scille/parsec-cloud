@@ -14,6 +14,7 @@ from parsec.api.protocole import (
     beacon_read_serializer,
     message_send_serializer,
     message_get_serializer,
+    vlob_group_check_serializer,
     vlob_read_serializer,
     vlob_create_serializer,
     vlob_update_serializer,
@@ -65,7 +66,9 @@ class BackendCmdsInvalidResponse(BackendConnectionError):
 
 
 class BackendCmdsBadResponse(BackendConnectionError):
-    pass
+    @property
+    def status(self):
+        return self.args[0]["status"]
 
 
 async def _send_cmd(transport, serializer, **req):
@@ -175,6 +178,14 @@ class BackendCmds:
         return [(item["count"], item["sender"], item["body"]) for item in rep["messages"]]
 
     ### Vlob API ###
+
+    async def vlob_group_check(self, to_check: list) -> list:
+        rep = await _send_cmd(
+            self.transport, vlob_group_check_serializer, cmd="vlob_group_check", to_check=to_check
+        )
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
+        return rep["changed"]
 
     async def vlob_create(self, id: UUID, rts: str, wts: str, blob: bytes) -> None:
         rep = await _send_cmd(

@@ -1,46 +1,12 @@
 import attr
 import pendulum
 
-from parsec.types import DeviceID, UserID
+from parsec.types import DeviceID, DeviceName, UserID
 from parsec.trustchain import (
     unsecure_certified_device_extract_verify_key,
     unsecure_certified_user_extract_public_key,
 )
-from parsec.crypto import SigningKey, PrivateKey, SigningKey, VerifyKey
-
-
-@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
-class LocalDevice:
-
-    backend_addr: str
-    root_verify_key: VerifyKey
-    device_id: DeviceID
-    signing_key: SigningKey
-    private_key: PrivateKey
-    user_manifest_access: dict  # TODO: Better typing
-    local_symkey: bytes
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.device_id})"
-
-    def evolve(self, **kwargs):
-        return attr.evolve(self, **kwargs)
-
-    @property
-    def device_name(self):
-        return self.device_id.device_name
-
-    @property
-    def user_id(self):
-        return self.device_id.user_id
-
-    @property
-    def verify_key(self):
-        return self.signing_key.verify_key
-
-    @property
-    def public_key(self):
-        return self.private_key.public_key
+from parsec.crypto import SigningKey, VerifyKey
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -62,15 +28,15 @@ class RemoteDevice:
         return attr.evolve(self, **kwargs)
 
     @property
-    def device_name(self):
+    def device_name(self) -> DeviceName:
         return self.device_id.device_name
 
     @property
-    def user_id(self):
+    def user_id(self) -> UserID:
         return self.device_id.user_id
 
     @property
-    def verify_key(self):
+    def verify_key(self) -> VerifyKey:
         return unsecure_certified_device_extract_verify_key(self.certified_device)
 
 
@@ -123,8 +89,8 @@ class RemoteUser:
         return attr.evolve(self, **kwargs)
 
     @property
-    def public_key(self):
+    def public_key(self) -> PublicKey:
         return unsecure_certified_user_extract_public_key(self.certified_user)
 
-    def is_revocated(self):
+    def is_revocated(self) -> bool:
         return any((False for d in self.devices.values if d.revocated_on), True)
