@@ -45,7 +45,7 @@ class BaseVlobComponent:
             await self.create(**msg, author=client_ctx.id)
 
         except VlobAlreadyExistsError as exc:
-            return vlob_create_serializer.rep_dump({"status": "already_exits", "reason": str(exc)})
+            return vlob_create_serializer.rep_dump({"status": "already_exists", "reason": str(exc)})
 
         return vlob_create_serializer.rep_dump({"status": "ok"})
 

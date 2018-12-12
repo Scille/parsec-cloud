@@ -31,7 +31,22 @@ from parsec.api.protocole import (
     device_revoke_serializer,
 )
 from parsec.backend.utils import anonymous_api, catch_protocole_errors
-from parsec.backend.exceptions import NotFoundError, AlreadyExistsError, AlreadyRevokedError
+
+
+class UserError(Exception):
+    pass
+
+
+class UserNotFoundError(UserError):
+    pass
+
+
+class UserAlreadyExistsError(UserError):
+    pass
+
+
+class UserAlreadyRevokedError(UserError):
+    pass
 
 
 PEER_EVENT_MAX_WAIT = 300
@@ -162,7 +177,7 @@ class BaseUserComponent:
 
         try:
             user, trustchain = await self.get_user_with_trustchain(msg["user_id"])
-        except NotFoundError as exc:
+        except UserNotFoundError as exc:
             return {"status": "not_found"}
 
         return user_get_serializer.rep_dump(
@@ -201,7 +216,7 @@ class BaseUserComponent:
         try:
             await self.create_user_invitation(invitation)
 
-        except AlreadyExistsError as exc:
+        except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
 
         # Wait for invited user to send `user_claim`
@@ -239,7 +254,7 @@ class BaseUserComponent:
 
             user, trustchain = await self.get_user_with_trustchain(invitation.creator.user_id)
 
-        except NotFoundError as exc:
+        except UserNotFoundError as exc:
             return {"status": "not_found"}
 
         return user_get_invitation_creator_serializer.rep_dump(
@@ -263,7 +278,7 @@ class BaseUserComponent:
             if not invitation.is_valid():
                 return {"status": "not_found"}
 
-        except NotFoundError:
+        except UserNotFoundError:
             return {"status": "not_found"}
 
         self.event_bus.send(
@@ -363,7 +378,7 @@ class BaseUserComponent:
                 created_on=u_data["timestamp"],
             )
             await self.create_user(user)
-        except AlreadyExistsError as exc:
+        except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
 
         self.event_bus.send("user.created", user_id=user.user_id)
@@ -381,7 +396,7 @@ class BaseUserComponent:
         try:
             await self.create_device_invitation(invitation)
 
-        except AlreadyExistsError as exc:
+        except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
 
         # Wait for invited user to send `user_claim`
@@ -419,7 +434,7 @@ class BaseUserComponent:
 
             user, trustchain = await self.get_user_with_trustchain(invitation.creator.user_id)
 
-        except NotFoundError as exc:
+        except UserNotFoundError as exc:
             return {"status": "not_found"}
 
         return device_get_invitation_creator_serializer.rep_dump(
@@ -443,7 +458,7 @@ class BaseUserComponent:
             if not invitation.is_valid():
                 return {"status": "not_found"}
 
-        except NotFoundError:
+        except UserNotFoundError:
             return {"status": "not_found"}
 
         self.event_bus.send(
@@ -529,7 +544,7 @@ class BaseUserComponent:
                 created_on=data["timestamp"],
             )
             await self.create_device(device)
-        except AlreadyExistsError as exc:
+        except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
 
         self.event_bus.send(
@@ -568,10 +583,10 @@ class BaseUserComponent:
         try:
             await self.revoke_device(data["device_id"], msg["certified_revocation"], certifier_id)
 
-        except NotFoundError:
+        except UserNotFoundError:
             return {"status": "not_found"}
 
-        except AlreadyRevokedError:
+        except UserAlreadyRevokedError:
             return {
                 "status": "already_revoked",
                 "reason": f"Device `{data['device_id']}` already revoked",
@@ -584,21 +599,21 @@ class BaseUserComponent:
     async def create_user(self, user: User) -> None:
         """
         Raises:
-            AlreadyExistsError
+            UserAlreadyExistsError
         """
         raise NotImplementedError()
 
     async def create_device(self, device: Device) -> None:
         """
         Raises:
-            AlreadyExistsError
+            UserAlreadyExistsError
         """
         raise NotImplementedError()
 
     async def get_user(self, user_id: UserID) -> User:
         """
         Raises:
-            NotFoundError
+            UserNotFoundError
         """
         raise NotImplementedError()
 
@@ -607,14 +622,14 @@ class BaseUserComponent:
     ) -> Tuple[User, Dict[DeviceID, Device]]:
         """
         Raises:
-            NotFoundError
+            UserNotFoundError
         """
         raise NotImplementedError()
 
     async def get_device(self, device_id: DeviceID) -> Device:
         """
         Raises:
-            NotFoundError
+            UserNotFoundError
         """
         raise NotImplementedError()
 
@@ -623,7 +638,7 @@ class BaseUserComponent:
     ) -> Tuple[Device, Dict[DeviceID, Device]]:
         """
         Raises:
-            NotFoundError
+            UserNotFoundError
         """
         raise NotImplementedError()
 
@@ -635,14 +650,14 @@ class BaseUserComponent:
     async def create_user_invitation(self, invitation: UserInvitation) -> None:
         """
         Raises:
-            AlreadyExistsError
+            UserAlreadyExistsError
         """
         raise NotImplementedError()
 
     async def get_user_invitation(self, user_id: UserID) -> UserInvitation:
         """
         Raises:
-            NotFoundError
+            UserNotFoundError
         """
 
         raise NotImplementedError()
@@ -656,15 +671,15 @@ class BaseUserComponent:
     async def create_device_invitation(self, invitation: DeviceInvitation) -> None:
         """
         Raises:
-            AlreadyExistsError
-            NotFoundError
+            UserAlreadyExistsError
+            UserNotFoundError
         """
         raise NotImplementedError()
 
     async def get_device_invitation(self, user_id: UserID) -> DeviceInvitation:
         """
         Raises:
-            NotFoundError
+            UserNotFoundError
         """
 
         raise NotImplementedError()
@@ -678,4 +693,9 @@ class BaseUserComponent:
     async def revoke_device(
         self, device_id: DeviceID, certified_revocation: bytes, revocation_certifier: DeviceID
     ) -> None:
+        """
+        Raises:
+            UserNotFoundError
+            UserAlreadyRevokedError
+        """
         raise NotImplementedError()

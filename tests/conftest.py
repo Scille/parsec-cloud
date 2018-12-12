@@ -37,7 +37,7 @@ from parsec.backend.user import (
     Device as BackendDevice,
     DevicesMapping as BackendDevicesMapping,
 )
-from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
+from parsec.backend.user import UserAlreadyExistsError
 from parsec.api.protocole import ClientHandshake, AnonymousClientHandshake
 from parsec.api.transport import PatateTCPTransport
 

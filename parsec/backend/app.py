@@ -3,13 +3,11 @@ import trio
 from uuid import uuid4
 from structlog import get_logger
 
-from parsec.types import DeviceID
 from parsec.utils import ParsecError
 from parsec.event_bus import EventBus
 from parsec.schema import BaseCmdSchema, fields
 from parsec.api.transport import PatateTCPTransport, TransportError
 from parsec.api.protocole import HandshakeFormatError, ServerHandshake
-from parsec.backend.exceptions import BackendAuthError
 from parsec.backend.events import EventsComponent
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.drivers.memory import (
@@ -25,8 +23,7 @@ from parsec.backend.drivers.postgresql import (
     PGMessageComponent,
     PGBeaconComponent,
 )
-
-from parsec.backend.exceptions import NotFoundError
+from parsec.backend.user import UserNotFoundError
 from parsec.backend.utils import check_anonymous_api_allowed, anonymous_api
 
 
@@ -170,27 +167,26 @@ class BackendApp:
             if hs.is_anonymous():
                 context = AnonymousClientContext()
                 result_req = hs.build_result_req()
+
             else:
                 try:
-                    device_id = DeviceID(hs.identity)
-                except ValueError:
-                    raise HandshakeFormatError()
+                    user = await self.user.get_user(hs.identity.user_id)
+                    device = user.devices[hs.identity.device_name]
 
-                try:
-                    user = await self.user.get_user(device_id.user_id)
-                    device = user.devices[device_id.device_name]
-                except (NotFoundError, KeyError):
+                except (UserNotFoundError, KeyError):
                     result_req = hs.build_bad_identity_result_req()
+
                 else:
                     if device.revocated_on:
-                        raise BackendAuthError("Device revoked.")
-                    context = ClientContext(hs.identity, user.public_key, device.verify_key)
-                    result_req = hs.build_result_req(device.verify_key)
+                        result_req = hs.build_revoked_device_result_req()
 
-        except BackendAuthError:
-            result_req = hs.build_revoked_device_result_req()
+                    else:
+                        context = ClientContext(hs.identity, user.public_key, device.verify_key)
+                        result_req = hs.build_result_req(device.verify_key)
+
         except HandshakeFormatError:
             result_req = hs.build_bad_format_result_req()
+
         await transport.send(result_req)
         return context
 

@@ -1,4 +1,4 @@
-from parsec.schema import UnknownCheckedSchema, fields, validate
+from parsec.schema import UnknownCheckedSchema, fields, validate, post_load
 from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 
 
@@ -11,7 +11,7 @@ __all__ = (
 
 
 _validate_trust_seed = validate.Length(max=32)
-_validate_version = lambda n: n > 1
+_validate_version = validate.Range(min=1)
 
 
 class CheckEntrySchema(UnknownCheckedSchema):
@@ -38,7 +38,6 @@ vlob_group_check_serializer = CmdSerializer(VlobGroupCheckReqSchema, VlobGroupCh
 
 class VlobCreateReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
-    block = fields.Base64Bytes(required=True)
     rts = fields.String(required=True, validate=_validate_trust_seed)
     wts = fields.String(required=True, validate=_validate_trust_seed)
     blob = fields.Base64Bytes(required=True)
@@ -54,12 +53,18 @@ vlob_create_serializer = CmdSerializer(VlobCreateReqSchema, VlobCreateRepSchema)
 
 class VlobReadReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
-    version = fields.Integer(validate=_validate_version, missing=None)
+    rts = fields.String(required=True, validate=_validate_trust_seed)
+    version = fields.Integer(validate=lambda n: n is None or _validate_version(n), missing=None)
+
+    @post_load
+    def _default_version_value(self, item):
+        item["version"] = item["version"] or 0
+        return item
 
 
 class VlobReadRepSchema(BaseRepSchema):
     version = fields.Integer(required=True, validate=_validate_version)
-    block = fields.Base64Bytes(required=True)
+    blob = fields.Base64Bytes(required=True)
 
 
 vlob_read_serializer = CmdSerializer(VlobReadReqSchema, VlobReadRepSchema)

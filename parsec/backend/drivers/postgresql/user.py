@@ -5,13 +5,14 @@ from typing import List
 
 from parsec.utils import ParsecError
 from parsec.backend.user import BaseUserComponent
-from parsec.backend.exceptions import (
-    AlreadyExistsError,
-    AlreadyRevokedError,
-    NotFoundError,
-    UserClaimError,
-    OutOfDateError,
-)
+
+# from parsec.backend.exceptions import (
+#     AlreadyExistsError,
+#     AlreadyRevokedError,
+#     NotFoundError,
+#     UserClaimError,
+#     OutOfDateError,
+# )
 
 
 class PGUserComponent(BaseUserComponent):

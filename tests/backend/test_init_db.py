@@ -3,7 +3,7 @@ from pendulum import Pendulum
 
 from parsec.types import DeviceID
 from parsec.backend.drivers.postgresql import init_db
-from parsec.backend.exceptions import NotFoundError
+from parsec.backend.user import UserNotFoundError
 
 from tests.common import freeze_time
 
@@ -38,7 +38,7 @@ async def test_init_db(postgresql_url, backend_factory):
     ) as backend3:
         bob3 = await backend3.user.get(bob_device_id.user_id)
         assert bob3["created_on"] == Pendulum(2000, 1, 3)
-        with pytest.raises(NotFoundError):
+        with pytest.raises(UserNotFoundError):
             await backend3.user.get(alice_device_id.user_id)
 
     assert keys3[0] != keys1[0]
