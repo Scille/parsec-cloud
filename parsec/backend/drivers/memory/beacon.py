@@ -3,11 +3,12 @@ from collections import defaultdict
 from uuid import UUID
 
 from parsec.types import DeviceID
+from parsec.event_bus import EventBus
 from parsec.backend.beacon import BaseBeaconComponent
 
 
 class MemoryBeaconComponent(BaseBeaconComponent):
-    def __init__(self, event_bus):
+    def __init__(self, event_bus: EventBus):
         self.event_bus = event_bus
         self.beacons = defaultdict(list)
 

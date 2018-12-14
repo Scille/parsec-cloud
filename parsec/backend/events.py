@@ -9,7 +9,7 @@ def _pinged_callback_factory(client_ctx, pings):
     pings = set(pings)
 
     def _on_pinged(event, author, ping):
-        if author == client_ctx.id or ping not in pings:
+        if author == client_ctx.device_id or ping not in pings:
             return
 
         try:
@@ -24,7 +24,7 @@ def _beacon_updated_callback_factory(client_ctx, beacons_ids):
     beacons_ids = set(beacons_ids)
 
     def _on_beacon_updated(event, author, beacon_id, index, src_id, src_version):
-        if author == client_ctx.id or beacon_id not in beacons_ids:
+        if author == client_ctx.device_id or beacon_id not in beacons_ids:
             return
 
         msg = {
@@ -44,7 +44,7 @@ def _beacon_updated_callback_factory(client_ctx, beacons_ids):
 
 def _message_received_callback_factory(client_ctx):
     def _on_message_received(event, author, recipient, index):
-        if author == client_ctx.id or recipient != client_ctx.user_id:
+        if author == client_ctx.device_id or recipient != client_ctx.user_id:
             return
 
         try:

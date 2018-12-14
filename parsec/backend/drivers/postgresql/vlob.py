@@ -1,6 +1,6 @@
 from triopg import UniqueViolationError
 
-from parsec.utils import ParsecError
+# from parsec.utils import ParsecError
 from parsec.backend.vlob import BaseVlobComponent
 
 # from parsec.backend.exceptions import (

@@ -1,7 +1,9 @@
-from typing import List
+import attr
+import pendulum
+from typing import List, Dict, Union
 
 from parsec.types import DeviceID, UserID
-from parsec.schema import UnknownCheckedSchema, fields, validate, post_load
+from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
 from parsec.core.types.base import SchemaSerializationError, EntryName, EntryNameField
 from parsec.core.types.access import (
     BlockAccess,
@@ -84,7 +86,7 @@ class LocalFolderManifestSchema(UnknownCheckedSchema):
     created = fields.DateTime(required=True)
     updated = fields.DateTime(required=True)
     children = fields.Map(
-        fields.EntryNameField(validate=validate.Length(min=1, max=256)),
+        EntryNameField(validate=validate.Length(min=1, max=256)),
         fields.Nested(ManifestAccessSchema),
         required=True,
     )

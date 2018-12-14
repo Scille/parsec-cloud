@@ -2,11 +2,12 @@ from typing import List, Tuple
 from collections import defaultdict
 
 from parsec.types import UserID, DeviceID
+from parsec.event_bus import EventBus
 from parsec.backend.message import BaseMessageComponent
 
 
 class MemoryMessageComponent(BaseMessageComponent):
-    def __init__(self, event_bus):
+    def __init__(self, event_bus: EventBus):
         self.event_bus = event_bus
         self._messages = defaultdict(list)
 

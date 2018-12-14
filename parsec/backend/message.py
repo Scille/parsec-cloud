@@ -10,7 +10,7 @@ class BaseMessageComponent:
     async def api_message_send(self, client_ctx, msg):
         msg = message_send_serializer.req_load(msg)
 
-        await self.send(client_ctx.id, msg["recipient"], msg["body"])
+        await self.send(client_ctx.device_id, msg["recipient"], msg["body"])
 
         return message_send_serializer.rep_dump({"status": "ok"})
 

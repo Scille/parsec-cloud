@@ -1,32 +1,59 @@
 import pytest
 import trio
 from uuid import uuid4
+from async_generator import asynccontextmanager
 
-from parsec.api.protocole import events_subscribe_serializer
+from parsec.api.protocole import events_subscribe_serializer, events_listen_serializer
 
 
 BEACON_ID = uuid4()
+
+
+async def events_subscribe(sock, **kwargs):
+    await sock.send(events_subscribe_serializer.req_dump({"cmd": "events_subscribe", **kwargs}))
+    raw_rep = await sock.recv()
+    rep = events_subscribe_serializer.rep_load(raw_rep)
+    assert rep == {"status": "ok"}
+
+
+async def events_listen_nowait(sock):
+    await sock.send(events_listen_serializer.req_dump({"cmd": "events_listen", "wait": False}))
+    with trio.fail_after(1):
+        raw_rep = await sock.recv()
+    return events_listen_serializer.rep_load(raw_rep)
+
+
+class Listen:
+    def __init__(self):
+        self.rep = None
+
+
+@asynccontextmanager
+async def events_listen(sock):
+    await sock.send(events_listen_serializer.req_dump({"cmd": "events_listen"}))
+    listen = Listen()
+
+    yield listen
+
+    with trio.fail_after(1):
+        raw_rep = await sock.recv()
+    listen.rep = events_listen_serializer.rep_load(raw_rep)
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize(
     "events",
     [
-        {"pinged": [], "beacon.updated": [], "message.received": False},
-        {"pinged": ["foo"], "beacon.updated": [BEACON_ID], "message.received": True},
-        {"beacon.updated": [BEACON_ID], "message.received": True},
-        {"pinged": ["foo"], "message.received": True},
-        {"pinged": ["foo"], "beacon.updated": [BEACON_ID]},
+        {"pinged": [], "beacon_updated": [], "message_received": False},
+        {"pinged": ["foo"], "beacon_updated": [BEACON_ID], "message_received": True},
+        {"beacon_updated": [BEACON_ID], "message_received": True},
+        {"pinged": ["foo"], "message_received": True},
+        {"pinged": ["foo"], "beacon_updated": [BEACON_ID]},
         {},
     ],
 )
 async def test_events_subscribe_ok(alice_backend_sock, events):
-    await alice_backend_sock.send(
-        events_subscribe_serializer.req_dump({"cmd": "events_subscribe", **events})
-    )
-    raw_rep = await alice_backend_sock.recv()
-    rep = events_subscribe_serializer.rep_load(raw_rep)
-    assert rep == {"status": "ok"}
+    await events_subscribe(alice_backend_sock, **events)
 
 
 @pytest.mark.trio
@@ -67,8 +94,7 @@ async def get_pinged_events(sock):
     await trio.sleep(0.1)
     events = []
     while True:
-        await sock.send({"cmd": "events_listen", "wait": False})
-        rep = await sock.recv()
+        rep = await events_listen_nowait(sock)
         if rep["status"] == "no_events":
             return events
         assert rep["status"] == "ok"
@@ -117,14 +143,10 @@ async def test_cross_backend_event(backend_factory, backend_sock_factory, alice,
 
             await subscribe_pinged(alice_sock, ["foo"])
 
-            await alice_sock.send({"cmd": "event_listen"})
-
-            await ping(bob_sock, "bar")
-            await ping(bob_sock, "foo")
-
-            with trio.fail_after(1):
-                rep = await alice_sock.recv()
-            assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}
+            async with events_listen(alice_sock) as listen:
+                await ping(bob_sock, "bar")
+                await ping(bob_sock, "foo")
+            assert listen.rep == {"status": "ok", "event": "pinged", "ping": "foo"}
 
             await ping(bob_sock, "foo")
 
@@ -132,15 +154,13 @@ async def test_cross_backend_event(backend_factory, backend_sock_factory, alice,
             # the sender got it answer
             with trio.fail_after(1):
                 while True:
-                    await alice_sock.send({"cmd": "event_listen", "wait": False})
-                    rep = await alice_sock.recv()
+                    rep = await events_listen_nowait(alice_sock)
                     if rep["status"] != "no_events":
                         break
                     await trio.sleep(0.1)
             assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}
 
-            await alice_sock.send({"cmd": "event_listen", "wait": False})
-            rep = await alice_sock.recv()
+            rep = await events_listen_nowait(alice_sock)
             assert rep == {"status": "no_events"}
 
 

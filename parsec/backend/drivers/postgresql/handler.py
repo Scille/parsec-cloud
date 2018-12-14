@@ -281,10 +281,6 @@ class PGHandler:
         if self._run_connections_control:
             await self._run_connections_control.stop()
 
-    async def ping(self, author, ping):
-        async with self.pool.acquire() as conn:
-            await send_signal(conn, "pinged", author=author, ping=ping)
-
 
 async def send_signal(conn, signal, **kwargs):
     raw_data = ejson_dumps({"__signal__": signal, **kwargs})

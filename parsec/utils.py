@@ -39,29 +39,6 @@ def ejson_loads(raw):
     return json.loads(raw)
 
 
-class ParsecError(Exception):
-    status = "error"
-
-    def __init__(self, reason=None, **kwargs):
-        if reason:
-            self.kwargs = {**kwargs, "reason": reason}
-        else:
-            self.kwargs = kwargs
-
-    def to_dict(self):
-        return {"status": self.status, **self.kwargs}
-
-
-def abort(status="bad_message", **kwargs):
-    """
-    Raises:
-        ParsecError
-    """
-    error = ParsecError(**kwargs)
-    error.status = status
-    raise error
-
-
 def _sync_wrap_method(method):
     if inspect.iscoroutinefunction(method):
 

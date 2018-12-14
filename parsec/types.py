@@ -14,6 +14,9 @@ class UserID(str):
         if not isinstance(raw, str) or not self.regex.match(raw):
             raise ValueError("Invalid user ID")
 
+    def __repr__(self):
+        return f"<UserID {super().__repr__()}>"
+
 
 class DeviceName(str):
     __slots__ = ()
@@ -23,6 +26,9 @@ class DeviceName(str):
         if not isinstance(raw, str) or not self.regex.match(raw):
             raise ValueError("Invalid device name")
 
+    def __repr__(self):
+        return f"<DeviceName {super().__repr__()}>"
+
 
 class DeviceID(str):
     __slots__ = ()
@@ -31,6 +37,9 @@ class DeviceID(str):
     def __init__(self, raw):
         if not isinstance(raw, str) or not self.regex.match(raw):
             raise ValueError("Invalid device ID")
+
+    def __repr__(self):
+        return f"<DeviceID {super().__repr__()}>"
 
     @property
     def user_id(self) -> UserID:

@@ -42,7 +42,7 @@ class BaseVlobComponent:
     async def api_vlob_create(self, client_ctx, msg):
         msg = vlob_create_serializer.req_load(msg)
         try:
-            await self.create(**msg, author=client_ctx.id)
+            await self.create(**msg, author=client_ctx.device_id)
 
         except VlobAlreadyExistsError as exc:
             return vlob_create_serializer.rep_dump({"status": "already_exists", "reason": str(exc)})
@@ -70,7 +70,7 @@ class BaseVlobComponent:
         msg = vlob_update_serializer.req_load(msg)
 
         try:
-            await self.update(**msg, author=client_ctx.id)
+            await self.update(**msg, author=client_ctx.device_id)
 
         except (VlobNotFoundError, VlobTrustSeedError) as exc:
             # Don't leak existence information if trust seed is invalid

@@ -1,13 +1,8 @@
 import pytest
-import trio
-from async_generator import asynccontextmanager
 
-from parsec.api.protocole import (
-    message_send_serializer,
-    message_get_serializer,
-    events_subscribe_serializer,
-    events_listen_serializer,
-)
+from parsec.api.protocole import message_send_serializer, message_get_serializer
+
+from tests.backend.test_events import events_subscribe, events_listen, events_listen_nowait
 
 
 async def message_send(sock, recipient, body):
@@ -24,30 +19,6 @@ async def message_get(sock, offset=0):
     await sock.send(message_get_serializer.req_dump({"cmd": "message_get", "offset": offset}))
     raw_rep = await sock.recv()
     return message_get_serializer.rep_load(raw_rep)
-
-
-async def events_subscribe(sock, **kwargs):
-    await sock.send(events_subscribe_serializer.req_dump({"cmd": "events_subscribe", **kwargs}))
-    raw_rep = await sock.recv()
-    rep = events_subscribe_serializer.rep_load(raw_rep)
-    assert rep == {"status": "ok"}
-
-
-class Listen:
-    def __init__(self):
-        self.rep = None
-
-
-@asynccontextmanager
-async def events_listen(sock):
-    await sock.send(events_listen_serializer.req_dump({"cmd": "events_listen"}))
-    listen = Listen()
-
-    yield listen
-
-    with trio.fail_after(1):
-        raw_rep = await sock.recv()
-    listen.rep = events_listen_serializer.rep_load(raw_rep)
 
 
 @pytest.mark.trio
@@ -107,3 +78,27 @@ async def test_message_from_bob_to_alice_multi_backends(
                 "status": "ok",
                 "messages": [{"body": b"Hello from Bob !", "sender": "bob@dev1", "count": 1}],
             }
+
+
+@pytest.mark.trio
+async def test_message_received_event(backend, alice_backend_sock, alice, bob):
+    await events_subscribe(alice_backend_sock, message_received=True)
+
+    # Good message
+    await backend.message.send(bob.device_id, alice.user_id, b"Hello from bob to alice")
+    await backend.message.send(bob.device_id, alice.user_id, b"Goodbye from bob to alice")
+    reps = [
+        await events_listen_nowait(alice_backend_sock),
+        await events_listen_nowait(alice_backend_sock),
+        await events_listen_nowait(alice_backend_sock),
+    ]
+    assert reps == [
+        {"status": "ok", "event": "message.received", "index": 1},
+        {"status": "ok", "event": "message.received", "index": 2},
+        {"status": "no_events"},
+    ]
+
+    # Message to self is silly... and doesn't trigger event !
+    await backend.message.send(alice.device_id, alice.user_id, b"Hello to myself")
+    rep = await events_listen_nowait(alice_backend_sock)
+    assert rep == {"status": "no_events"}

@@ -43,19 +43,19 @@ class MemoryUserComponent(BaseUserComponent):
             devices=DevicesMapping(*user.devices.values(), device)
         )
 
-    def _get_trustchain(self, *devices_ids):
+    async def _get_trustchain(self, *devices_ids):
         trustchain = {}
 
-        def _recursive_extract_creators(device_id):
+        async def _recursive_extract_creators(device_id):
             if not device_id or device_id in trustchain:
                 return
-            device = self.get_device(device_id)
+            device = await self.get_device(device_id)
             trustchain[device_id] = device
-            _recursive_extract_creators(device.device_certifier)
-            _recursive_extract_creators(device.revocation_certifier)
+            await _recursive_extract_creators(device.device_certifier)
+            await _recursive_extract_creators(device.revocation_certifier)
 
         for device_id in devices_ids:
-            _recursive_extract_creators(device_id)
+            await _recursive_extract_creators(device_id)
         return trustchain
 
     async def get_user(self, user_id: UserID) -> User:
@@ -69,7 +69,7 @@ class MemoryUserComponent(BaseUserComponent):
         self, user_id: UserID
     ) -> Tuple[User, Dict[DeviceID, Device]]:
         user = await self.get_user(user_id)
-        trustchain = self._get_trustchain(user.user_certifier)
+        trustchain = await self._get_trustchain(user.user_certifier)
         return user, trustchain
 
     async def get_device(self, device_id: DeviceID) -> Device:
@@ -84,7 +84,9 @@ class MemoryUserComponent(BaseUserComponent):
         self, device_id: DeviceID
     ) -> Tuple[Device, Dict[DeviceID, Device]]:
         device = await self.get_device(device_id)
-        trustchain = self._get_trustchain(device.device_certifier, device.revocation_certifier)
+        trustchain = await self._get_trustchain(
+            device.device_certifier, device.revocation_certifier
+        )
         return device, trustchain
 
     async def find(self, query: str = None, page: int = 0, per_page: int = 100):

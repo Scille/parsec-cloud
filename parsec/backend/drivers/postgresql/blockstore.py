@@ -1,6 +1,6 @@
 from triopg.exceptions import UniqueViolationError
 
-from parsec.utils import ParsecError
+# from parsec.utils import ParsecError
 
 # from parsec.backend.exceptions import AlreadyExistsError, NotFoundError
 from parsec.backend.blockstore import BaseBlockstoreComponent

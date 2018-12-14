@@ -1,4 +1,4 @@
-from parsec.utils import ParsecError
+# from parsec.utils import ParsecError
 from parsec.backend.message import BaseMessageComponent
 from parsec.backend.drivers.postgresql.handler import send_signal
 

@@ -6,8 +6,8 @@ from parsec.core.types.local_manifests import (
     LocalFolderManifest,
     LocalWorkspaceManifest,
     LocalUserManifest,
-    local_manifest_load,
-    local_manifest_dump,
+    local_manifest_loads,
+    local_manifest_dumps,
 )
 from parsec.core.types.remote_device import RemoteDevice, RemoteDevicesMapping, RemoteUser
 from parsec.core.types.remote_manifests import (
@@ -15,8 +15,8 @@ from parsec.core.types.remote_manifests import (
     FolderManifest,
     WorkspaceManifest,
     UserManifest,
-    remote_manifest_load,
-    remote_manifest_dump,
+    remote_manifest_loads,
+    remote_manifest_dumps,
 )
 
 
@@ -35,8 +35,8 @@ __all__ = (
     "LocalFolderManifest",
     "LocalWorkspaceManifest",
     "LocalUserManifest",
-    "local_manifest_load",
-    "local_manifest_dump",
+    "local_manifest_loads",
+    "local_manifest_dumps",
     "RemoteDevice",
     "RemoteDevicesMapping",
     "RemoteUser",
@@ -44,6 +44,6 @@ __all__ = (
     "FolderManifest",
     "WorkspaceManifest",
     "UserManifest",
-    "remote_manifest_load",
-    "remote_manifest_dump",
+    "remote_manifest_loads",
+    "remote_manifest_dumps",
 )

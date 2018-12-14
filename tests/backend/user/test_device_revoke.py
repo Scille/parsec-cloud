@@ -49,6 +49,22 @@ async def test_device_revoke_unknown(alice_backend_sock, alice):
 
 
 @pytest.mark.trio
+async def test_device_good_user_bad_device(alice_backend_sock, alice):
+    certified_revocation = certify_device_revocation(
+        alice.device_id, alice.signing_key, f"{alice.user_id}@foo", now=pendulum.now()
+    )
+
+    await alice_backend_sock.send(
+        device_revoke_serializer.req_dump(
+            {"cmd": "device_revoke", "certified_revocation": certified_revocation}
+        )
+    )
+    raw_rep = await alice_backend_sock.recv()
+    rep = device_revoke_serializer.rep_load(raw_rep)
+    assert rep == {"status": "not_found"}
+
+
+@pytest.mark.trio
 async def test_device_revoke_already_revoked(alice_backend_sock, bob, bob_revocation):
     await alice_backend_sock.send(
         device_revoke_serializer.req_dump(

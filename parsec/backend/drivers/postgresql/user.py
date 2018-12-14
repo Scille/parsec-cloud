@@ -3,7 +3,7 @@ import pendulum
 from triopg.exceptions import UniqueViolationError
 from typing import List
 
-from parsec.utils import ParsecError
+# from parsec.utils import ParsecError
 from parsec.backend.user import BaseUserComponent
 
 # from parsec.backend.exceptions import (

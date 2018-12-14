@@ -6,11 +6,9 @@ from marshmallow import (
     validates_schema,
     post_load,
 )
-from json import JSONDecodeError
 from marshmallow import validate  # noqa: republishing
 
 from parsec import schema_fields as fields  # noqa: republishing
-from parsec.utils import abort
 
 try:
     import toastedmarshmallow
@@ -24,7 +22,7 @@ except ImportError:
     BaseSchema = Schema
 
 
-__all__ = ("ValidationError", "UnknownCheckedSchema", "BaseCmdSchema", "validate")
+__all__ = ("ValidationError", "UnknownCheckedSchema", "BaseCmdSchema", "validate", "fields")
 
 
 class UnknownCheckedSchema(BaseSchema):
@@ -39,11 +37,11 @@ class UnknownCheckedSchema(BaseSchema):
             if key not in self.fields or self.fields[key].dump_only:
                 raise ValidationError("Unknown field name {}".format(key))
 
-    def dumps(self):
-        try:
-            self.dump()
-        except (UnicodeDecodeError, JSONDecodeError) as exc:
-            raise ValidationError(str(exc)) from exc
+    # def dumps(self, data):
+    #     try:
+    #         self.dump(data)
+    #     except (UnicodeDecodeError, JSONDecodeError) as exc:
+    #         raise ValidationError(str(exc)) from exc
 
 
 class InvalidCmd(Exception):
@@ -63,15 +61,6 @@ class BaseCmdSchema(UnknownCheckedSchema):
     def __init__(self, drop_cmd_field=True, **kwargs):
         super().__init__(**kwargs)
         self.drop_cmd_field = drop_cmd_field
-
-    # TODO: remove this and use the load instead
-    def load_or_abort(self, msg):
-        parsed_msg, errors = super().load(msg)
-        if errors:
-            raise abort(errors=errors)
-
-        else:
-            return parsed_msg
 
 
 # Shamelessly taken from marshmallow-oneofschema (

@@ -2,6 +2,8 @@ from uuid import UUID
 from typing import List, Tuple
 
 from parsec.types import DeviceID
+from parsec.event_bus import EventBus
+from parsec.backend.beacon import BaseBeaconComponent
 from parsec.backend.vlob import (
     BaseVlobComponent,
     VlobTrustSeedError,
@@ -20,7 +22,7 @@ class MemoryVlob:
 
 
 class MemoryVlobComponent(BaseVlobComponent):
-    def __init__(self, event_bus, beacon_component):
+    def __init__(self, event_bus: EventBus, beacon_component: BaseBeaconComponent):
         self.event_bus = event_bus
         self.beacon_component = beacon_component
         self.vlobs = {}

@@ -3,7 +3,6 @@ import trio
 from uuid import uuid4
 from structlog import get_logger
 
-from parsec.utils import ParsecError
 from parsec.event_bus import EventBus
 from parsec.schema import BaseCmdSchema, fields
 from parsec.api.transport import PatateTCPTransport, TransportError
@@ -15,6 +14,7 @@ from parsec.backend.drivers.memory import (
     MemoryVlobComponent,
     MemoryMessageComponent,
     MemoryBeaconComponent,
+    MemoryPingComponent,
 )
 from parsec.backend.drivers.postgresql import (
     PGHandler,
@@ -22,9 +22,10 @@ from parsec.backend.drivers.postgresql import (
     PGVlobComponent,
     PGMessageComponent,
     PGBeaconComponent,
+    PGPingComponent,
 )
 from parsec.backend.user import UserNotFoundError
-from parsec.backend.utils import check_anonymous_api_allowed, anonymous_api
+from parsec.backend.utils import check_anonymous_api_allowed
 
 
 logger = get_logger()
@@ -39,7 +40,7 @@ cmd_PING_Schema = _cmd_PING_Schema()
 
 @attr.s
 class AnonymousClientContext:
-    id = "anonymous"
+    device_id = None
     anonymous = True
     logger = logger
 
@@ -47,29 +48,23 @@ class AnonymousClientContext:
 @attr.s
 class ClientContext:
     anonymous = False
-    # TODO: rename to device_id
-    id = attr.ib()
-    # TODO: rename to public_key
-    broadcast_key = attr.ib()
+    device_id = attr.ib()
+    public_key = attr.ib()
     verify_key = attr.ib()
     conn_id = attr.ib(factory=lambda: uuid4().hex)
     subscribed_events = attr.ib(factory=dict, init=False)
     events = attr.ib(factory=lambda: trio.Queue(100), init=False)
 
     def __attrs_post_init__(self):
-        self.logger = logger.bind(client_id=self.id, conn_id=self.conn_id)
+        self.logger = logger.bind(client_id=str(self.device_id), conn_id=self.conn_id)
 
     @property
     def user_id(self):
-        return self.id.user_id
-
-    @property
-    def device_id(self):
-        return self.id
+        return self.device_id.user_id
 
     @property
     def device_name(self):
-        return self.id.device_name
+        return self.device_id.device_name
 
 
 class BackendApp:
@@ -85,7 +80,7 @@ class BackendApp:
             self.message = MemoryMessageComponent(self.event_bus)
             self.beacon = MemoryBeaconComponent(self.event_bus)
             self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
-
+            self.ping = MemoryPingComponent(self.event_bus)
             self.blockstore = blockstore_factory(self.config.blockstore_config)
 
         else:
@@ -94,7 +89,7 @@ class BackendApp:
             self.message = PGMessageComponent(self.dbh, self.event_bus)
             self.beacon = PGBeaconComponent(self.dbh, self.event_bus)
             self.vlob = PGVlobComponent(self.dbh, self.event_bus, self.beacon)
-
+            self.ping = PGPingComponent(self.dbh, self.event_bus)
             self.blockstore = blockstore_factory(
                 self.config.blockstore_config, postgresql_dbh=self.dbh
             )
@@ -104,7 +99,7 @@ class BackendApp:
             "user_get_invitation_creator": self.user.api_user_get_invitation_creator,
             "device_claim": self.user.api_device_claim,
             "device_get_invitation_creator": self.user.api_device_get_invitation_creator,
-            "ping": self._api_ping,
+            "ping": self.ping.api_ping,
         }
         for fn in self.anonymous_cmds.values():
             check_anonymous_api_allowed(fn)
@@ -112,7 +107,7 @@ class BackendApp:
         self.cmds = {
             "events_subscribe": self.events.api_events_subscribe,
             "events_listen": self.events.api_events_listen,
-            "ping": self._api_ping,
+            "ping": self.ping.api_ping,
             "beacon_read": self.beacon.api_beacon_read,
             # Message
             "message_get": self.message.api_message_get,
@@ -145,15 +140,6 @@ class BackendApp:
     async def teardown(self):
         if self.dbh:
             await self.dbh.teardown()
-
-    @anonymous_api
-    async def _api_ping(self, client_ctx, msg):
-        msg = cmd_PING_Schema.load_or_abort(msg)
-        if self.dbh:
-            await self.dbh.ping(author=client_ctx.id, ping=msg["ping"])
-        else:
-            self.event_bus.send("pinged", author=client_ctx.id, ping=msg["ping"])
-        return {"status": "ok", "pong": msg["ping"]}
 
     async def _do_handshake(self, transport):
         context = None
@@ -214,12 +200,6 @@ class BackendApp:
                 pass
             await transport.aclose()
 
-        except ParsecError as exc:
-            logger.debug("BAD HANDSHAKE")
-            rep = exc.to_dict()
-            await transport.send(rep)
-            await transport.aclose()
-
         except Exception as exc:
             # If we are here, something unexpected happened...
             if client_ctx:
@@ -265,9 +245,6 @@ class BackendApp:
             except KeyError:
                 rep = {"status": "unknown_command", "reason": "Unknown command"}
             else:
-                try:
-                    rep = await cmd_func(client_ctx, req)
-                except ParsecError as err:
-                    rep = err.to_dict()
+                rep = await cmd_func(client_ctx, req)
             client_ctx.logger.debug("rep", rep=_filter_big_fields(rep))
             await transport.send(rep)

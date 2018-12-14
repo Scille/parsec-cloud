@@ -1,7 +1,9 @@
+import attr
 from pathlib import PurePosixPath
 from typing import NewType, Union
 
 from parsec.crypto import SymetricKey, HashDigest
+from parsec.schema import UnknownCheckedSchema, fields, validate
 from parsec.core.types.base import TrustSeed, AccessID, TrustSeedField
 
 
@@ -25,7 +27,7 @@ manifest_access_schema = ManifestAccessSchema(strict=True)
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BlockAccess:
-    id: Id
+    id: AccessID
     key: SymetricKey
     offset: int
     size: int
@@ -46,7 +48,7 @@ block_access_schema = BlockAccessSchema(strict=True)
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class DirtyBlockAccess:
-    id: Id
+    id: AccessID
     key: SymetricKey
     offset: int
     size: int
