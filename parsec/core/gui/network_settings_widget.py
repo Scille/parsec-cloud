@@ -51,6 +51,10 @@ class NetworkSettingsWidget(QWidget, Ui_NetworkSettingsWidget):
             self.line_edit_download_limit.setText(
                 str(settings.get_value("network/download_limit", 10))
             )
+        if settings.get_value("network/simultaneous_connections", None):
+            self.spin_sim_connections.setValue(
+                settings.get_value("network/simultaneous_connections", 1)
+            )
 
     def switch_network_limits(self, widget):
         def _inner_switch_network_limits(state):
@@ -70,8 +74,12 @@ class NetworkSettingsWidget(QWidget, Ui_NetworkSettingsWidget):
         if self.combo_proxy_type.currentIndex() != 0:
             settings.set_value("network/proxy_type", self.combo_proxy_type.currentText())
         settings.set_value("network/proxy_host", self.line_edit_proxy_host.text())
-        settings.set_value("network/proxy_port", int(self.line_edit_proxy_port.text()))
+        if self.line_edit_proxy_port.text():
+            settings.set_value("network/proxy_port", int(self.line_edit_proxy_port.text()))
         settings.set_value("network/proxy_username", self.line_edit_proxy_username.text())
+        settings.set_value(
+            "network/simultaneous_connections", int(self.spin_sim_connections.value())
+        )
         if self.radio_upload_no_limit.isChecked():
             settings.set_value("network/upload_limit", -1)
         else:

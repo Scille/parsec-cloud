@@ -27,6 +27,10 @@ ENTRIES = {
     "network/proxy_port": {"encode": lambda raw: str(raw), "decode": lambda raw: int(raw)},
     "network/upload_limit": {"encode": lambda raw: str(raw), "decode": lambda raw: int(raw)},
     "network/download_limit": {"encode": lambda raw: str(raw), "decode": lambda raw: int(raw)},
+    "network/simultaneous_connections": {
+        "encode": lambda raw: str(raw),
+        "decode": lambda raw: int(raw),
+    },
 }
 
 
