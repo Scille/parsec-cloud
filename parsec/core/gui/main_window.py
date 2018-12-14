@@ -1,8 +1,8 @@
 import os
 
-from PyQt5.QtCore import QCoreApplication, Qt
+from PyQt5.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QSystemTrayIcon, QMenu
-from PyQt5.QtGui import QIcon, QFontDatabase
+from PyQt5.QtGui import QIcon, QFontDatabase, QPixmap
 from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
@@ -34,6 +34,8 @@ logger = get_logger()
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
+    connection_state_changed = pyqtSignal(bool)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -62,6 +64,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.connect_all()
         self.setWindowTitle("Parsec - Community Edition - v{}".format(PARSEC_VERSION))
         self.tray_message_shown = False
+        core_call().connect_event("backend.connection.ready", self._on_connection_changed)
+        core_call().connect_event("backend.connection.lost", self._on_connection_changed)
+        self.connection_state_changed.connect(self._on_connection_state_changed)
 
     def add_tray_icon(self):
         if not QSystemTrayIcon.isSystemTrayAvailable() or not settings.get_value(
@@ -389,12 +394,29 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             if self.tray and not self.tray_message_shown:
                 self.tray.showMessage(
-                    "Parsec",
-                    QCoreApplication.translate(self.__class__.__name__, "Parsec is still running."),
+                    "Parsec", QCoreApplication.translate("MainWindow", "Parsec is still running.")
                 )
                 self.tray_message_shown = True
             event.ignore()
             self.hide()
+
+    def _on_connection_state_changed(self, state):
+        if state:
+            self.label_connection_text.setText(
+                QCoreApplication.translate("MainWindow", "Connected")
+            )
+            self.label_connection_icon.setPixmap(QPixmap(":/icons/images/icons/cloud_online.png"))
+        else:
+            self.label_connection_text.setText(
+                QCoreApplication.translate("MainWindow", "Disconnected")
+            )
+            self.label_connection_icon.setPixmap(QPixmap(":/icons/images/icons/cloud_offline.png"))
+
+    def _on_connection_changed(self, event):
+        if event == "backend.connection.ready":
+            self.connection_state_changed.emit(True)
+        elif event == "backend.connection.lost":
+            self.connection_state_changed.emit(False)
 
     def show_mount_widget(self):
         self._hide_all_central_widgets()

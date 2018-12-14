@@ -451,6 +451,61 @@ background-color: rgb(21, 84, 169);
            </spacer>
           </item>
           <item>
+           <widget class="QWidget" name="widget_connection" native="true">
+            <property name="styleSheet">
+             <string notr="true">QWidget#widget_connection
+{
+border-top: 2px solid rgb(46, 146, 208);
+border-bottom: 2px solid rgb(46, 146, 208);
+color: rgb(255, 255, 255);
+text-align: left;
+padding-left: 10px;
+background-color: rgb(22, 84, 169);
+}
+</string>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_5">
+             <item>
+              <widget class="QLabel" name="label_connection_icon">
+               <property name="minimumSize">
+                <size>
+                 <width>45</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>45</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="scaledContents">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_connection_text">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">color: rgb(255, 255, 255);</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
            <widget class="QWidget" name="widget_info" native="true">
             <property name="minimumSize">
              <size>
