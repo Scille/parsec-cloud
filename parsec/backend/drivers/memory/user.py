@@ -69,7 +69,11 @@ class MemoryUserComponent(BaseUserComponent):
         self, user_id: UserID
     ) -> Tuple[User, Dict[DeviceID, Device]]:
         user = await self.get_user(user_id)
-        trustchain = await self._get_trustchain(user.user_certifier)
+        trustchain = await self._get_trustchain(
+            user.user_certifier,
+            *[device.device_certifier for device in user.devices.values()],
+            *[device.revocation_certifier for device in user.devices.values()],
+        )
         return user, trustchain
 
     async def get_device(self, device_id: DeviceID) -> Device:

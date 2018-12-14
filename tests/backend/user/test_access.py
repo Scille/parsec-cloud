@@ -5,7 +5,7 @@ from pendulum import Pendulum
 
 from parsec.types import DeviceID
 from parsec.crypto import SigningKey, PrivateKey
-from parsec.trustchain import certify_user, certify_device
+from parsec.trustchain import certify_user, certify_device, certify_device_revocation
 from parsec.api.protocole import user_get_serializer, user_find_serializer
 from parsec.backend.user import (
     User as BackendUser,
@@ -99,37 +99,54 @@ async def create_device(backend, creator, device_id):
     return local_device
 
 
+async def revoke_device(backend, revoker, device_id):
+    certified_revocation = certify_device_revocation(
+        revoker.device_id, revoker.signing_key, device_id
+    )
+    await backend.user.revoke_device(device_id, certified_revocation, revoker.device_id)
+
+
 @pytest.mark.trio
 async def test_api_user_get_ok_deep_trustchain(backend, alice_backend_sock, alice):
-    # <root> --> alice@dev1 --> philippe@dev1 --> mike@dev1 --> mike@dev2
-    with freeze_time("2000-01-01"):
-        ph1 = await create_user(backend, alice, "philippe@dev1")
-        mike1 = await create_user(backend, ph1, "mike@dev1")
+    # <root> --> alice@dev1 --> roger@dev1 --> mike@dev1 --> mike@dev2
+    #                       --> philippe@dev1 --> philippe@dev2
+    d1 = Pendulum(2000, 1, 1)
+    d2 = Pendulum(2000, 1, 2)
+
+    with freeze_time(d1):
+        roger1 = await create_user(backend, alice, "roger@dev1")
+        mike1 = await create_user(backend, roger1, "mike@dev1")
         mike2 = await create_device(backend, mike1, "mike@dev2")
+        ph1 = await create_user(backend, alice, "philippe@dev1")
+        ph2 = await create_device(backend, ph1, "philippe@dev2")
+
+    with freeze_time(d2):
+        await revoke_device(backend, ph1, roger1.device_id)
+        await revoke_device(backend, ph2, mike2.device_id)
 
     rep = await user_get(alice_backend_sock, mike2.device_id.user_id)
     assert rep == {
         "status": "ok",
         "user_id": mike2.device_id.user_id,
         "certified_user": ANY,
-        "user_certifier": ph1.device_id,
-        "created_on": Pendulum(2000, 1, 1),
+        "user_certifier": roger1.device_id,
+        "created_on": d1,
         "devices": {
             mike1.device_id.device_name: {
                 "device_id": mike1.device_id,
-                "created_on": Pendulum(2000, 1, 1),
+                "created_on": d1,
                 "revocated_on": None,
                 "certified_revocation": None,
                 "revocation_certifier": None,
                 "certified_device": ANY,
-                "device_certifier": ph1.device_id,
+                "device_certifier": roger1.device_id,
             },
             mike2.device_id.device_name: {
                 "device_id": mike2.device_id,
-                "created_on": Pendulum(2000, 1, 1),
-                "revocated_on": None,
-                "certified_revocation": None,
-                "revocation_certifier": None,
+                "created_on": d1,
+                "revocated_on": d2,
+                "certified_revocation": ANY,
+                "revocation_certifier": ph2.device_id,
                 "certified_device": ANY,
                 "device_certifier": mike1.device_id,
             },
@@ -137,27 +154,51 @@ async def test_api_user_get_ok_deep_trustchain(backend, alice_backend_sock, alic
         "trustchain": {
             alice.device_id: {
                 "device_id": alice.device_id,
-                "created_on": Pendulum(2000, 1, 1),
+                "created_on": d1,
                 "revocated_on": None,
                 "certified_revocation": None,
                 "revocation_certifier": None,
                 "certified_device": ANY,
                 "device_certifier": None,
             },
+            mike1.device_id: {
+                "device_id": mike1.device_id,
+                "created_on": d1,
+                "revocated_on": None,
+                "certified_revocation": None,
+                "revocation_certifier": None,
+                "certified_device": ANY,
+                "device_certifier": roger1.device_id,
+            },
+            roger1.device_id: {
+                "device_id": roger1.device_id,
+                "created_on": d1,
+                "revocated_on": d2,
+                "certified_revocation": ANY,
+                "revocation_certifier": ph1.device_id,
+                "certified_device": ANY,
+                "device_certifier": alice.device_id,
+            },
             ph1.device_id: {
                 "device_id": ph1.device_id,
-                "created_on": Pendulum(2000, 1, 1),
+                "created_on": d1,
                 "revocated_on": None,
                 "certified_revocation": None,
                 "revocation_certifier": None,
                 "certified_device": ANY,
                 "device_certifier": alice.device_id,
             },
+            ph2.device_id: {
+                "device_id": ph2.device_id,
+                "created_on": d1,
+                "revocated_on": None,
+                "certified_revocation": None,
+                "revocation_certifier": None,
+                "certified_device": ANY,
+                "device_certifier": ph1.device_id,
+            },
         },
     }
-
-
-# TODO: test user_get with revocation filled
 
 
 @pytest.mark.parametrize(

@@ -128,7 +128,7 @@ class User:
         return unsecure_certified_user_extract_public_key(self.certified_user)
 
     def is_revocated(self):
-        return any((False for d in self.devices.values if d.revocated_on), True)
+        return any((False for d in self.devices.values if not d.revocated_on), True)
 
     user_id: UserID
     certified_user: bytes
