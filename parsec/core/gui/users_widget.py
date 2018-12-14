@@ -2,6 +2,8 @@ from PyQt5.QtCore import pyqtSignal, QCoreApplication
 from PyQt5.QtWidgets import QWidget, QInputDialog
 from PyQt5.QtGui import QPixmap
 
+from parsec.core.backend_connection import BackendNotAvailable
+
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.custom_widgets import get_text
 from parsec.core.gui.ui.user_button import Ui_UserButton
@@ -34,7 +36,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         super().__init__(*args, **kwargs)
 
         self.setupUi(self)
-        self.reset()
+        self.users = []
+        self.widget_info.hide()
         self.button_add_user.clicked.connect(self.emit_register_user)
         self.line_edit_search.textChanged.connect(self.filter_users)
 
@@ -83,8 +86,11 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 w = item.widget()
                 self.layout_users.removeWidget(w)
                 w.setParent(None)
-        logged_device = core_call().logged_device()
-        user_id = logged_device.id.split("@")[0]
-        users, _ = core_call().find_user()
-        for user in users:
-            self.add_user(user, is_current_user=user_id == user)
+        try:
+            logged_device = core_call().logged_device()
+            user_id = logged_device.id.split("@")[0]
+            users, _ = core_call().find_user()
+            for user in users:
+                self.add_user(user, is_current_user=user_id == user)
+        except BackendNotAvailable:
+            pass

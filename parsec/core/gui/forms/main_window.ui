@@ -482,6 +482,9 @@ background-color: rgb(22, 84, 169);
                <property name="text">
                 <string/>
                </property>
+               <property name="pixmap">
+                <pixmap resource="../rc/resources.qrc">:/icons/images/icons/cloud_offline.png</pixmap>
+               </property>
                <property name="scaledContents">
                 <bool>true</bool>
                </property>
@@ -498,7 +501,7 @@ background-color: rgb(22, 84, 169);
                 <string notr="true">color: rgb(255, 255, 255);</string>
                </property>
                <property name="text">
-                <string/>
+                <string>Disconnected</string>
                </property>
               </widget>
              </item>

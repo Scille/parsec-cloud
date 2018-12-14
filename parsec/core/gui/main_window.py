@@ -221,8 +221,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(
                 self.users_widget,
                 QCoreApplication.translate(
-                    "MainWindow",
-                    "The connection to the backend has been lost, can not register the user.",
+                    "MainWindow", "You are currently offline and can not register the user."
                 ),
             )
 
