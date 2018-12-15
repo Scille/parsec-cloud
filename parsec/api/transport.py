@@ -42,6 +42,20 @@ class TCPTransport(BaseTransport):
 
     def __init__(self, stream):
         self.stream = stream
+        # vanilla_send_all_hook = self.stream.send_stream.send_all_hook
+        # vanilla_receive_some_hook = self.stream.receive_stream.receive_some_hook
+        # async def send_all_hook():
+        #     print('send_all==>', self.stream.send_stream._outgoing._data)
+        #     if vanilla_send_all_hook:
+        #         await vanilla_send_all_hook()
+        #     print('<==send_all', self.stream.send_stream._outgoing._data)
+        # async def receive_some_hook():
+        #     print('receive_some==>', self.stream.receive_stream._incoming._data)
+        #     if vanilla_receive_some_hook:
+        #         await vanilla_receive_some_hook()
+        #     print('<==receive_some', self.stream.receive_stream._incoming._data)
+        # self.stream.send_stream.send_all_hook = send_all_hook
+        # self.stream.receive_stream.receive_some_hook = receive_some_hook
 
     async def aclose(self) -> None:
         try:
@@ -60,6 +74,9 @@ class TCPTransport(BaseTransport):
     async def recv(self) -> bytes:
         try:
             msg_size_raw = await self.stream.receive_some(4)
+            while len(msg_size_raw) < 4:
+                msg_size_raw += await self.stream.receive_some(4 - len(msg_size_raw))
+
         except BrokenResourceError as exc:
             raise TransportError(*exc.args) from exc
         if not msg_size_raw:
@@ -73,6 +90,9 @@ class TCPTransport(BaseTransport):
 
         try:
             msg = await self.stream.receive_some(msg_size)
+            while len(msg) < msg_size:
+                msg += await self.stream.receive_some(msg_size - len(msg))
+
         except BrokenResourceError as exc:
             raise TransportError(*exc.args) from exc
         if not msg:

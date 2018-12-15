@@ -81,7 +81,17 @@ def str_based_field_factory(value_type):
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
-    return type(f"{value_type.__name__}Field", (Field,), {"_deserialize": _deserialize})
+    def _serialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        return str(value)
+
+    return type(
+        f"{value_type.__name__}Field",
+        (Field,),
+        {"_deserialize": _deserialize, "_serialize": _serialize},
+    )
 
 
 # TODO: test this field and use it everywhere in the api !

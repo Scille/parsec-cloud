@@ -59,7 +59,7 @@ async def _do_handshade(
         await transport.send(answer_req)
         result_req = await transport.recv()
         ch.process_result_req(result_req)
-        transport.log.debug("Connected")
+        transport.log.debug("Handshake done")
 
     except TransportError as exc:
         transport.log.debug("Connection lost during handshake", reason=exc)
@@ -83,11 +83,12 @@ async def _authenticated_transport_factory(
     transport = await _transport_factory(addr)
     # TODO: a bit ugly to configure and connect a logger here,
     # use contextvar instead ?
-    transport.log = logger.bind(addr=addr, auth=device_id, id=uuid4().hex)
+    transport.log = logger.bind(auth=device_id, id=uuid4().hex)
+    transport.log.info("Transport setup", addr=addr)
     try:
         await _do_handshade(transport, device_id, signing_key)
 
-    except:
+    except Exception:
         await transport.aclose()
         raise
 
@@ -110,7 +111,8 @@ async def authenticated_transport_factory(
 @asynccontextmanager
 async def anonymous_transport_factory(addr: str) -> BaseTransport:
     transport = await _transport_factory(addr)
-    transport.log = logger.bind(addr=addr, auth="<anonymous>", id=uuid4().hex)
+    transport.log = logger.bind(auth="<anonymous>", id=uuid4().hex)
+    transport.log.info("Transport setup", addr=addr)
     await _do_handshade(transport)
     try:
         yield transport
@@ -148,7 +150,7 @@ class TransportPool:
             try:
                 yield transport
 
-            except TransportError:
+            except Exception:
                 await transport.aclose()
                 raise
 

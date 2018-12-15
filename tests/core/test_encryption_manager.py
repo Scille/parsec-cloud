@@ -17,13 +17,13 @@ async def test_encryption_manager_fetch_remote_device_local_cache(
 ):
     with pytest.raises(BackendNotAvailable):
         with offline(backend_addr):
-            await encryption_manager.fetch_remote_device(bob.id)
+            await encryption_manager.fetch_remote_device(bob.device_id)
 
-    remote_bob = await encryption_manager.fetch_remote_device(bob.id)
-    assert remote_bob.device_verifykey == bob.device_verifykey
+    remote_bob = await encryption_manager.fetch_remote_device(bob.device_id)
+    assert remote_bob.verify_key == bob.verify_key
 
     with offline(backend_addr):
-        remot_bob_offline = await encryption_manager.fetch_remote_device(bob.id)
+        remot_bob_offline = await encryption_manager.fetch_remote_device(bob.device_id)
     assert remot_bob_offline == remote_bob
 
 
@@ -36,7 +36,7 @@ async def test_encryption_manager_fetch_remote_user_local_cache(
             await encryption_manager.fetch_remote_user(bob.user_id)
 
     remote_bob = await encryption_manager.fetch_remote_user(bob.user_id)
-    assert remote_bob.user_pubkey == bob.user_pubkey
+    assert remote_bob.public_key == bob.public_key
 
     with offline(backend_addr):
         remot_bob_offline = await encryption_manager.fetch_remote_user(bob.user_id)
@@ -45,11 +45,14 @@ async def test_encryption_manager_fetch_remote_user_local_cache(
 
 @pytest.mark.trio
 async def test_encryption_manager_fetch_self_device_offline(encryption_manager, alice):
-    remote_device = await encryption_manager.fetch_remote_device(alice.id)
-    assert remote_device.device_verifykey == alice.device_verifykey
+    remote_device = await encryption_manager.fetch_remote_device(alice.device_id)
+    assert remote_device.verify_key == alice.verify_key
 
 
 @pytest.mark.trio
 async def test_encryption_manager_fetch_self_offline(encryption_manager, alice):
     remote_user = await encryption_manager.fetch_remote_user(alice.user_id)
-    assert remote_user.user_pubkey == alice.user_pubkey
+    assert remote_user.public_key == alice.public_key
+
+
+# TODO: test bad trustchain

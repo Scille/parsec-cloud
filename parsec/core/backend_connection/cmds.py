@@ -90,6 +90,7 @@ async def _send_cmd(transport, serializer, **req):
         raw_rep = await transport.recv()
 
     except TransportError as exc:
+        transport.log.debug("send req failed (backend not available)")
         raise BackendNotAvailable() from exc
 
     transport.log.debug("recv rep", req=_shorten_data(raw_rep))
@@ -266,9 +267,6 @@ class BackendCmds:
             user_certifier=rep["user_certifier"],
             devices=RemoteDevicesMapping(*devices),
             created_on=rep["created_on"],
-            revocated_on=rep["revocated_on"],
-            certified_revocation=rep["certified_revocation"],
-            revocation_certifier=rep["revocation_certifier"],
         )
         trustchain = {
             k: RemoteDevice(

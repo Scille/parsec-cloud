@@ -3,6 +3,7 @@ from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerialize
 
 
 __all__ = (
+    "user_get_serializer",
     "user_find_serializer",
     "user_invite_serializer",
     "user_get_invitation_creator_serializer",

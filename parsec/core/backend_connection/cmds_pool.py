@@ -59,7 +59,7 @@ class BackendCmdsPool(BackendCmds):
 
 @asynccontextmanager
 async def backend_cmds_pool_factory(
-    addr: str, device_id: DeviceID, signing_key: SigningKey
+    addr: str, device_id: DeviceID, signing_key: SigningKey, max: int = 4
 ) -> BackendCmdsPool:
-    async with transport_pool_factory(addr, device_id, signing_key) as transport_pool:
+    async with transport_pool_factory(addr, device_id, signing_key, max) as transport_pool:
         yield BackendCmdsPool(transport_pool)

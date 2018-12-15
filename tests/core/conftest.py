@@ -2,18 +2,21 @@ import pytest
 import trio
 from async_generator import asynccontextmanager
 
-# from parsec.core.backend_cmds_sender import BackendCmdsSender
+from parsec.core.backend_connection import backend_cmds_pool_factory
 from parsec.core.encryption_manager import EncryptionManager
-from parsec.core.backend_connection import backend_cmds_factory
 from parsec.core.fs import FS
+
+from tests.common import InMemoryLocalDB
 
 
 @pytest.fixture
-def encryption_manager_factory(backend_cmds_sender_factory, backend_addr):
+def encryption_manager_factory(backend_addr):
     @asynccontextmanager
     async def _encryption_manager_factory(device, backend_addr=backend_addr):
-        async with backend_cmds_sender_factory(device, backend_addr=backend_addr) as bcs:
-            em = EncryptionManager(device, bcs)
+        async with backend_cmds_pool_factory(
+            backend_addr, device.device_id, device.signing_key
+        ) as cmds:
+            em = EncryptionManager(device, InMemoryLocalDB(), cmds)
             async with trio.open_nursery() as nursery:
                 await em.init(nursery)
                 try:
@@ -25,65 +28,39 @@ def encryption_manager_factory(backend_cmds_sender_factory, backend_addr):
 
 
 @pytest.fixture
-async def encryption_manager(encryption_manager_factory, alice):
+async def encryption_manager(running_backend, encryption_manager_factory, alice):
     async with encryption_manager_factory(alice) as em:
         yield em
 
 
 @pytest.fixture
-def backend_cmds_sender_factory(backend_addr):
-    @asynccontextmanager
-    async def _backend_cmds_sender_factory(device, backend_addr=backend_addr):
-        bcs = BackendCmdsSender(device, backend_addr)
-        async with trio.open_nursery() as nursery:
-            await bcs.init(nursery)
-            try:
-                yield bcs
-            finally:
-                await bcs.teardown()
-
-    return _backend_cmds_sender_factory
-
-
-@pytest.fixture
-def fs_factory(
-    backend_cmds_sender_factory, encryption_manager_factory, event_bus_factory, backend_addr
-):
+def fs_factory(encryption_manager_factory, event_bus_factory, backend_addr):
     @asynccontextmanager
     async def _fs_factory(device, backend_addr=backend_addr, event_bus=None):
         if not event_bus:
             event_bus = event_bus_factory()
 
-        async with encryption_manager_factory(
-            device, backend_addr=backend_addr
-        ) as encryption_manager, backend_cmds_sender_factory(
-            device, backend_addr=backend_addr
-        ) as backend_cmds_sender:
-            fs = FS(device, backend_cmds_sender, encryption_manager, event_bus)
+        async with encryption_manager_factory(device, backend_addr=backend_addr) as em:
+            fs = FS(device, em.backend_cmds, em, event_bus)
             yield fs
 
     return _fs_factory
 
 
 @pytest.fixture
-async def backend_cmds_sender(alice):
-    return backend_cmds_sender_factory(alice)
-
-
-@pytest.fixture
-async def alice_fs(request, fs_factory, alice):
+async def alice_fs(fs_factory, alice):
     async with fs_factory(alice) as fs:
         yield fs
 
 
 @pytest.fixture
-async def alice2_fs(request, fs_factory, alice2):
+async def alice2_fs(fs_factory, alice2):
     async with fs_factory(alice2) as fs:
         yield fs
 
 
 @pytest.fixture
-async def bob_fs(request, fs_factory, bob):
+async def bob_fs(fs_factory, bob):
     async with fs_factory(bob) as fs:
         yield fs
 
@@ -106,7 +83,7 @@ def backend_addr_factory(running_backend, tcp_stream_spy):
 
 @pytest.fixture
 async def alice_backend_cmds(running_backend, alice):
-    async with backend_cmds_factory(
+    async with backend_cmds_pool_factory(
         running_backend.addr, alice.device_id, alice.signing_key
     ) as cmds:
         yield cmds
@@ -114,7 +91,7 @@ async def alice_backend_cmds(running_backend, alice):
 
 @pytest.fixture
 async def alice2_backend_cmds(running_backend, alice2):
-    async with backend_cmds_factory(
+    async with backend_cmds_pool_factory(
         running_backend.addr, alice2.device_id, alice2.signing_key
     ) as cmds:
         yield cmds
@@ -122,5 +99,7 @@ async def alice2_backend_cmds(running_backend, alice2):
 
 @pytest.fixture
 async def bob_backend_cmds(running_backend, bob):
-    async with backend_cmds_factory(running_backend.addr, bob.device_id, bob.signing_key) as cmds:
+    async with backend_cmds_pool_factory(
+        running_backend.addr, bob.device_id, bob.signing_key
+    ) as cmds:
         yield cmds
