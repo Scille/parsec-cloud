@@ -2,13 +2,13 @@ from structlog import get_logger
 from itertools import count
 
 from parsec.types import UserID, DeviceID
-from parsec.utils import to_jsonb64
 from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.core.schemas import ManifestAccessSchema
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
 from parsec.core.fs.utils import is_workspace_manifest
 from parsec.core.fs.types import Path
 from parsec.core.encryption_manager import EncryptionManagerError
+from parsec.core.backend_connection import BackendCmdsBadResponse
 
 
 logger = get_logger()
@@ -107,7 +107,7 @@ class Sharing:
     def __init__(
         self,
         device,
-        backend_cmds_sender,
+        backend_cmds,
         encryption_manager,
         local_folder_fs,
         syncer,
@@ -115,7 +115,7 @@ class Sharing:
         event_bus,
     ):
         self.device = device
-        self.backend_cmds_sender = backend_cmds_sender
+        self.backend_cmds = backend_cmds
         self.encryption_manager = encryption_manager
         self.local_folder_fs = local_folder_fs
         self.syncer = syncer
@@ -155,7 +155,12 @@ class Sharing:
         await self.syncer.sync(path, recursive=False)
 
         # Now we can build the sharing message...
-        msg = {"type": "share", "author": self.device.id, "access": access, "name": path.name}
+        msg = {
+            "type": "share",
+            "author": self.device.device_id,
+            "access": access,
+            "name": path.name,
+        }
         raw, errors = sharing_message_content_schema.dumps(msg)
         if errors:
             # TODO: Do we really want to log the message content ? Wouldn't
@@ -169,13 +174,12 @@ class Sharing:
             raise SharingRecipientError(f"Cannot create message for `{recipient}`") from exc
 
         # ...And finally send the message
-        rep = await self.backend_cmds_sender.send(
-            {"cmd": "message_new", "recipient": recipient, "body": to_jsonb64(ciphered)}
-        )
-        if rep.get("status") != "ok":
+        try:
+            await self.backend_cmds.message_send(recipient=recipient, body=ciphered)
+        except BackendCmdsBadResponse as exc:
             raise SharingBackendMessageError(
-                "Error while trying to send sharing message to backend: %r" % rep
-            )
+                f"Error while trying to send sharing message to backend: {exc}"
+            ) from exc
 
     # TODO: message handling should be in it own module, but given it is
     # only used for sharing so far...
@@ -199,20 +203,16 @@ class Sharing:
 
         _, user_manifest = await self._get_user_manifest()
         initial_last_processed_message = user_manifest["last_processed_message"]
-        rep = await self.backend_cmds_sender.send(
-            {"cmd": "message_get", "offset": initial_last_processed_message}
-        )
-        rep, errors = backend_message_get_rep_schema.load(rep)
-        if errors:
-            raise SharingBackendMessageError(
-                "Cannot retreive user messages: %r (errors: %r)" % (rep, errors)
-            )
+        try:
+            messages = await self.backend_cmds.message_get(offset=initial_last_processed_message)
+        except BackendCmdsBadResponse as exc:
+            raise SharingBackendMessageError(f"Cannot retreive user messages: {exc}") from exc
 
         new_last_processed_message = initial_last_processed_message
-        for msg in rep["messages"]:
+        for msg_count, msg_sender, msg_body in messages:
             try:
-                await self._process_message(msg["sender_id"], msg["body"])
-                new_last_processed_message = msg["count"]
+                await self._process_message(msg_sender, msg_body)
+                new_last_processed_message = msg_count
             except SharingError as exc:
                 logger.warning("Invalid sharing message", reason=exc)
 

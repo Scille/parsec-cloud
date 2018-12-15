@@ -65,7 +65,7 @@ class EncryptionManager(BaseAsyncComponent):
         except BackendCmdsBadResponse as exc:
             if exc.status == "not_found":
                 # User doesn't exit, nothing to populate then
-                pass
+                return
             else:
                 raise
         # TODO: verify trustchain here

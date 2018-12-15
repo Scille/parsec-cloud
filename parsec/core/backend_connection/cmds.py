@@ -168,7 +168,6 @@ class BackendCmds:
         )
         if rep["status"] != "ok":
             raise BackendCmdsBadResponse(rep)
-        return rep["version"], rep["blob"]
 
     async def message_get(self, offset: int) -> List[Tuple[int, DeviceID, bytes]]:
         rep = await _send_cmd(

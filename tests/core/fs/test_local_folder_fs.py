@@ -275,8 +275,8 @@ def test_folder_operations(tmpdir, hypothesis_settings, device_factory, local_fo
             tentative += 1
 
             self.last_step_id_to_path = set()
-            self.device = device_factory()
-            self.local_folder_fs = local_folder_fs_factory(self.device)
+            self.device, self.local_db = device_factory()
+            self.local_folder_fs = local_folder_fs_factory(self.device, self.local_db)
 
             self.folder_oracle = pathlib.Path(tmpdir / f"oracle-test-{tentative}")
             self.folder_oracle.mkdir()

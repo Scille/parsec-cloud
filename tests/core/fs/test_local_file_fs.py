@@ -26,7 +26,7 @@ class File:
 def foo_txt(alice, local_folder_fs):
     access = new_access()
     with freeze_time("2000-01-02"):
-        manifest = new_local_file_manifest(alice.id)
+        manifest = new_local_file_manifest(alice.device_id)
         manifest["is_placeholder"] = False
         manifest["need_sync"] = False
         manifest["base_version"] = 1
@@ -164,10 +164,10 @@ def test_file_operations(tmpdir, hypothesis_settings, device_factory, local_file
             nonlocal tentative
             tentative += 1
 
-            self.device = device_factory()
-            self.local_file_fs = local_file_fs_factory(self.device)
+            self.device, self.local_db = device_factory()
+            self.local_file_fs = local_file_fs_factory(self.device, self.local_db)
             self.access = new_access()
-            manifest = new_local_file_manifest(self.device.id)
+            manifest = new_local_file_manifest(self.device.device_id)
             self.local_file_fs.local_folder_fs.set_manifest(self.access, manifest)
 
             self.fd = self.local_file_fs.open(self.access)

@@ -30,7 +30,7 @@ class RemoteLoader:
         self.local_db.set(access, block)
 
     async def load_manifest(self, access: Access) -> None:
-        blob, _ = await self.backend_cmds.vlob_read(access["id"], access["rts"])
+        _, blob = await self.backend_cmds.vlob_read(access["id"], access["rts"])
         raw_remote_manifest = await self.encryption_manager.decrypt_with_secret_key(
             access["key"], blob
         )
