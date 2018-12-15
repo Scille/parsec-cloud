@@ -2,6 +2,7 @@ from uuid import uuid4
 from hashlib import sha256
 import pendulum
 
+from parsec.types import DeviceID
 from parsec.crypto import generate_secret_key
 from parsec.core.fs.types import (
     LocalUserManifest,
@@ -59,8 +60,7 @@ def new_block_access(block: bytes, offset: int) -> BlockAccess:
     )
 
 
-def new_local_user_manifest(author: str) -> LocalUserManifest:
-    assert "@" in author
+def new_local_user_manifest(author: DeviceID) -> LocalUserManifest:
     now = pendulum.now()
 
     return LocalUserManifest(
@@ -79,9 +79,7 @@ def new_local_user_manifest(author: str) -> LocalUserManifest:
     )
 
 
-def new_local_workspace_manifest(author: str) -> LocalWorkspaceManifest:
-    assert "@" in author
-    author_user_id = author.split("@")[0]
+def new_local_workspace_manifest(author: DeviceID) -> LocalWorkspaceManifest:
     now = pendulum.now()
 
     return LocalWorkspaceManifest(
@@ -95,14 +93,13 @@ def new_local_workspace_manifest(author: str) -> LocalWorkspaceManifest:
             "updated": now,
             "base_version": 0,
             "children": {},
-            "creator": author_user_id,
-            "participants": [author_user_id],
+            "creator": author.user_id,
+            "participants": [author.user_id],
         }
     )
 
 
-def new_local_folder_manifest(author) -> LocalFolderManifest:
-    assert "@" in author
+def new_local_folder_manifest(author: DeviceID) -> LocalFolderManifest:
     now = pendulum.now()
 
     return LocalFolderManifest(

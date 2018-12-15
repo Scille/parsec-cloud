@@ -1,9 +1,9 @@
 import trio
 
 
-async def test_new_sharing_trigger_event(alice_core, bob_core2):
+async def test_new_sharing_trigger_event(alice_core, bob_core):
     await alice_core.event_bus.spy.wait_for_backend_connection_ready()
-    await bob_core2.event_bus.spy.wait_for_backend_connection_ready()
+    await bob_core.event_bus.spy.wait_for_backend_connection_ready()
 
     # First, create a folder and sync it on backend
     await alice_core.fs.workspace_create("/foo")
@@ -14,7 +14,7 @@ async def test_new_sharing_trigger_event(alice_core, bob_core2):
 
     # Bob should get a notification
     with trio.fail_after(seconds=1):
-        await bob_core2.event_bus.spy.wait(
+        await bob_core.event_bus.spy.wait(
             "sharing.new",
-            kwargs={"path": f"/foo (shared by alice)", "access": bob_core2.event_bus.spy.ANY},
+            kwargs={"path": f"/foo (shared by alice)", "access": bob_core.event_bus.spy.ANY},
         )

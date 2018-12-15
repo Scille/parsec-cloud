@@ -218,8 +218,13 @@ class BaseSyncer:
         return [entry["id"] for entry in ret["changed"]]
 
     async def _backend_vlob_read(self, access, version=None):
-        ret = await self.backend_cmds.vlob_read(access["id"], access["rts"], version)
-        raw = await self.encryption_manager.decrypt_with_secret_key(access["key"], ret["blob"])
+        try:
+            _, blob = await self.backend_cmds.vlob_read(access["id"], access["rts"], version)
+        except BackendCmdsBadResponse as exc:
+            if exc.status == "not_found":
+                return None
+            raise
+        raw = await self.encryption_manager.decrypt_with_secret_key(access["key"], blob)
         return loads_manifest(raw)
 
     async def _backend_vlob_create(self, access, manifest, notify_beacon):
@@ -227,19 +232,25 @@ class BaseSyncer:
         ciphered = self.encryption_manager.encrypt_with_secret_key(
             access["key"], dumps_manifest(manifest)
         )
-        ret = await self.backend_cmds.vlob_create(
-            access["id"], access["wts"], access["rts"], ciphered, notify_beacon
-        )
-        if ret["status"] == "already_exists_error":
-            raise SyncConcurrencyError(access)
+        try:
+            await self.backend_cmds.vlob_create(
+                access["id"], access["rts"], access["wts"], ciphered, notify_beacon
+            )
+        except BackendCmdsBadResponse as exc:
+            if exc.status == "already_exists":
+                raise SyncConcurrencyError(access)
+            raise
 
     async def _backend_vlob_update(self, access, manifest, notify_beacon):
         assert manifest["version"] > 1
         ciphered = self.encryption_manager.encrypt_with_secret_key(
             access["key"], dumps_manifest(manifest)
         )
-        ret = await self.backend_cmds.vlob_update(
-            access["id"], access["wts"], manifest["version"], ciphered, notify_beacon
-        )
-        if ret["status"] == "version_error":
-            raise SyncConcurrencyError(access)
+        try:
+            await self.backend_cmds.vlob_update(
+                access["id"], access["wts"], manifest["version"], ciphered, notify_beacon
+            )
+        except BackendCmdsBadResponse as exc:
+            if exc.status == "bad_version":
+                raise SyncConcurrencyError(access)
+            raise

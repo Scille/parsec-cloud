@@ -34,7 +34,7 @@ class FS:
 
         self._local_folder_fs = LocalFolderFS(device, local_db, event_bus)
         self._local_file_fs = LocalFileFS(device, local_db, self._local_folder_fs, event_bus)
-        self._remote_loader = RemoteLoader(backend_cmds, encryption_manager, device.local_db)
+        self._remote_loader = RemoteLoader(backend_cmds, encryption_manager, local_db)
         self._syncer = Syncer(
             device,
             backend_cmds,

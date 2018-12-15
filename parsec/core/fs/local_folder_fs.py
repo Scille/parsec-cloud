@@ -43,7 +43,7 @@ class FSMultiManifestLocalMiss(Exception):
 
 class LocalFolderFS:
     def __init__(self, device: LocalDevice, local_db: LocalDB, event_bus: EventBus):
-        self.local_author = device.id
+        self.local_author = device.device_id
         self.root_access = device.user_manifest_access
         self._local_db = local_db
         self.event_bus = event_bus

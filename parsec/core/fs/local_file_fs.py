@@ -80,17 +80,17 @@ class LocalFileFS:
     ):
         self.event_bus = event_bus
         self.local_folder_fs = local_folder_fs
-        self._local_db = device.local_db
+        self.local_db = local_db
         self._opened_cursors = {}
         self._hot_files = {}
         self._next_fd = 1
         # TODO: handle fs.entry.moved events coming from sync
 
     def get_block(self, access: BlockAccess) -> bytes:
-        return self._local_db.get(access)
+        return self.local_db.get(access)
 
     def set_block(self, access: BlockAccess, block: bytes, deletable=False) -> None:
-        return self._local_db.set(access, block, deletable)
+        return self.local_db.set(access, block, deletable)
 
     def _get_cursor_from_fd(self, fd: FileDescriptor) -> FileCursor:
         try:

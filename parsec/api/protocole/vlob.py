@@ -41,7 +41,7 @@ class VlobCreateReqSchema(BaseReqSchema):
     rts = fields.String(required=True, validate=_validate_trust_seed)
     wts = fields.String(required=True, validate=_validate_trust_seed)
     blob = fields.Base64Bytes(required=True)
-    notify_beacon = fields.UUID()
+    notify_beacon = fields.UUID(missing=None)
 
 
 class VlobCreateRepSchema(BaseRepSchema):
@@ -75,7 +75,7 @@ class VlobUpdateReqSchema(BaseReqSchema):
     version = fields.Integer(required=True, validate=_validate_version)
     wts = fields.String(required=True, validate=_validate_trust_seed)
     blob = fields.Base64Bytes(required=True)
-    notify_beacon = fields.UUID()
+    notify_beacon = fields.UUID(missing=None)
 
 
 class VlobUpdateRepSchema(BaseRepSchema):

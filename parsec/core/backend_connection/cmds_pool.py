@@ -45,6 +45,20 @@ class BackendCmdsPool(BackendCmds):
 
     ping = _expose_cmds_with_retrier("ping")
 
+    events_subscribe = _expose_cmds_with_retrier("events_subscribe")
+    events_listen = _expose_cmds_with_retrier("events_listen")
+    beacon_read = _expose_cmds_with_retrier("beacon_read")
+    message_send = _expose_cmds_with_retrier("message_send")
+    message_get = _expose_cmds_with_retrier("message_get")
+
+    vlob_group_check = _expose_cmds_with_retrier("vlob_group_check")
+    vlob_create = _expose_cmds_with_retrier("vlob_create")
+    vlob_read = _expose_cmds_with_retrier("vlob_read")
+    vlob_update = _expose_cmds_with_retrier("vlob_update")
+
+    blockstore_create = _expose_cmds_with_retrier("blockstore_create")
+    blockstore_read = _expose_cmds_with_retrier("blockstore_read")
+
     user_get = _expose_cmds_with_retrier("user_get")
     user_find = _expose_cmds_with_retrier("user_find")
     user_invite = _expose_cmds_with_retrier("user_invite")
