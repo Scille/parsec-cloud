@@ -49,7 +49,7 @@ class PGUserComponent(BaseUserComponent):
             raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
 
         if result != "INSERT 0 1":
-            raise UserError(f"Insertion error in PostgreSQL: {result}")
+            raise UserError(f"Insertion error: {result}")
 
         await conn.executemany(
             """INSERT INTO devices (
@@ -118,7 +118,7 @@ class PGUserComponent(BaseUserComponent):
         )
 
         if result != "INSERT 0 1":
-            raise UserError(f"Insertion error in PostgreSQL: {result}")
+            raise UserError(f"Insertion error: {result}")
 
     async def get_user(self, user_id: UserID) -> User:
         async with self.dbh.pool.acquire() as conn:
