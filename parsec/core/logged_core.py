@@ -55,21 +55,12 @@ async def logged_core_factory(
                 config.backend_max_connections,
             ) as backend_cmds_pool:
 
-                # TODO
-                # encryption_manager = EncryptionManager(backend_cmds_pool, event_bus)
-                from unittest.mock import Mock
-
-                encryption_manager = Mock()
+                local_db = LocalDB(config.data_dir, device)
+                encryption_manager = EncryptionManager(device, local_db, backend_cmds_pool)
 
                 async with trio.open_nursery() as monitor_nursery:
 
-                    local_db = LocalDB(config.data_dir, device)
-                    # TODO
-                    from tests.common import AsyncMock
-
-                    global FS
-                    fs = AsyncMock(spec=FS)
-                    # fs = FS(device, local_db, backend_cmds_pool, encryption_manager, event_bus)
+                    fs = FS(device, local_db, backend_cmds_pool, encryption_manager, event_bus)
 
                     # Finally start monitoring coroutines
                     await monitor_nursery.start(monitor_beacons, device, fs, event_bus)

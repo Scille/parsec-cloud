@@ -8,18 +8,88 @@ from parsec.core.devices_manager import generate_new_device
 from parsec.core.backend_connection import backend_cmds_pool_factory
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.fs import FS
-from parsec.core.fs.utils import new_local_user_manifest
 
 from tests.common import freeze_time, InMemoryLocalDB
 
 
 @pytest.fixture
-def encryption_manager_factory(backend_addr):
+def device_factory(backend_addr, root_verify_key):
+    users = {}
+    devices = {}
+    count = 0
+
+    def _device_factory(user_id=None, device_name=None):
+        nonlocal count
+        count += 1
+
+        if not user_id:
+            user_id = f"user_{count}"
+        if not device_name:
+            device_name = f"device_{count}"
+
+        device_id = DeviceID(f"{user_id}@{device_name}")
+        assert device_id not in devices
+
+        device = generate_new_device(device_id, backend_addr, root_verify_key)
+        try:
+            private_key, user_manifest_access = users[user_id]
+        except KeyError:
+            users[user_id] = (device.private_key, device.user_manifest_access)
+        else:
+            device = device.evolve(
+                private_key=private_key, user_manifest_access=user_manifest_access
+            )
+        return device
+
+    return _device_factory
+
+
+@pytest.fixture
+def local_db_factory(initial_user_manifest_state):
+    local_dbs = {}
+
+    def _local_db_factory(device, user_manifest_in_v0=False, force=True):
+        device_id = device.device_id
+        assert force or (device_id not in local_dbs)
+
+        local_db = InMemoryLocalDB()
+        local_dbs[device_id] = local_db
+        if user_manifest_in_v0:
+            initial_user_manifest_state.set_v0_in_device(device_id)
+        else:
+            user_manifest = initial_user_manifest_state.get_initial_for_device(device)
+            local_db.set(device.user_manifest_access, dumps_manifest(user_manifest))
+
+        return local_db
+
+    return _local_db_factory
+
+
+@pytest.fixture()
+def alice_local_db(local_db_factory, alice):
+    with freeze_time("2000-01-01"):
+        return local_db_factory(alice)
+
+
+@pytest.fixture()
+def alice2_local_db(local_db_factory, alice2):
+    with freeze_time("2000-01-01"):
+        return local_db_factory(alice2)
+
+
+@pytest.fixture()
+def bob_local_db(local_db_factory, bob):
+    with freeze_time("2000-01-01"):
+        return local_db_factory(bob)
+
+
+@pytest.fixture
+def encryption_manager_factory():
     @asynccontextmanager
-    async def _encryption_manager_factory(device, local_db=None, backend_addr=backend_addr):
+    async def _encryption_manager_factory(device, local_db=None):
         local_db = local_db or InMemoryLocalDB()
         async with backend_cmds_pool_factory(
-            backend_addr, device.device_id, device.signing_key
+            device.backend_addr, device.device_id, device.signing_key
         ) as cmds:
             em = EncryptionManager(device, local_db, cmds)
             async with trio.open_nursery() as nursery:
@@ -39,32 +109,18 @@ async def encryption_manager(running_backend, encryption_manager_factory, alice)
 
 
 @pytest.fixture
-def fs_factory(encryption_manager_factory, event_bus_factory, backend_addr):
+def fs_factory(encryption_manager_factory, local_db_factory, event_bus_factory):
     @asynccontextmanager
-    async def _fs_factory(device, local_db, backend_addr=backend_addr, event_bus=None):
+    async def _fs_factory(device, local_db=None, event_bus=None):
         if not event_bus:
             event_bus = event_bus_factory()
+        local_db = local_db or local_db_factory(device)
 
-        async with encryption_manager_factory(device, local_db, backend_addr=backend_addr) as em:
+        async with encryption_manager_factory(device, local_db) as em:
             fs = FS(device, local_db, em.backend_cmds, em, event_bus)
             yield fs
 
     return _fs_factory
-
-
-@pytest.fixture()
-def alice_local_db():
-    return InMemoryLocalDB()
-
-
-@pytest.fixture()
-def alice2_local_db():
-    return InMemoryLocalDB()
-
-
-@pytest.fixture()
-def bob_local_db():
-    return InMemoryLocalDB()
 
 
 @pytest.fixture
@@ -123,53 +179,3 @@ async def bob_backend_cmds(running_backend, bob):
         running_backend.addr, bob.device_id, bob.signing_key
     ) as cmds:
         yield cmds
-
-
-@pytest.fixture
-def device_factory(backend_addr, root_verify_key):
-    users = {}
-    devices = {}
-    count = 0
-
-    def _device_factory(user_id=None, device_name=None, user_manifest_in_v0=False, local_db=None):
-        nonlocal count
-        count += 1
-
-        if not user_id:
-            user_id = f"user_{count}"
-        if not device_name:
-            device_name = f"device_{count}"
-
-        device_id = DeviceID(f"{user_id}@{device_name}")
-        assert device_id not in devices
-
-        device = generate_new_device(device_id, backend_addr, root_verify_key)
-        try:
-            private_key, user_manifest_access, user_manifest_v1 = users[user_id]
-        except KeyError:
-            user_manifest_v1 = None
-            private_key = device.private_key
-            user_manifest_access = device.user_manifest_access
-        else:
-            device = device.evolve(
-                private_key=private_key, user_manifest_access=user_manifest_access
-            )
-
-        if not user_manifest_v1 and not user_manifest_in_v0:
-            with freeze_time("2000-01-01"):
-                user_manifest_v1 = new_local_user_manifest(device_id)
-            user_manifest_v1["base_version"] = 1
-            user_manifest_v1["is_placeholder"] = False
-            user_manifest_v1["need_sync"] = False
-
-        users[user_id] = (private_key, user_manifest_access, user_manifest_v1)
-
-        if not local_db:
-            local_db = InMemoryLocalDB()
-        if not user_manifest_in_v0:
-            local_db.set(user_manifest_access, dumps_manifest(user_manifest_v1))
-
-        devices[device_id] = device
-        return device, local_db
-
-    return _device_factory

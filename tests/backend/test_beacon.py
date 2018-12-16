@@ -15,14 +15,14 @@ VLOB_WTS = "<wts>"
 
 
 @pytest.fixture
-async def vlob_ids(backend):
+async def vlob_ids(backend, alice):
     ids = (
         UUID("fc0dfa885c6c4d3781341e10bf94b080"),
         UUID("7a0efe58bad146df861a53207c550860"),
         UUID("af20bbfcc3294b96bb536fe65efc86b4"),
     )
     for id in ids:
-        await backend.vlob.create(id, "<rts>", "<wts>", b"")
+        await backend.vlob.create(id, "<rts>", "<wts>", b"", alice.device_id)
     return ids
 
 
@@ -62,15 +62,10 @@ async def test_beacon_multimessages(backend, alice_backend_sock, vlob_ids):
 
 
 @pytest.mark.trio
-async def test_beacon_in_vlob_update(backend, alice_backend_sock, alice2):
-    await backend.vlob.create(VLOB_ID, VLOB_RTS, VLOB_WTS, blob=b"foo")
+async def test_beacon_in_vlob_update(backend, alice_backend_sock, alice):
+    await backend.vlob.create(VLOB_ID, VLOB_RTS, VLOB_WTS, blob=b"foo", author=alice.device_id)
     await backend.vlob.update(
-        VLOB_ID,
-        VLOB_WTS,
-        version=2,
-        blob=b"bar",
-        notify_beacon=BEACON_ID_1,
-        author=alice2.device_id,
+        VLOB_ID, VLOB_WTS, version=2, blob=b"bar", notify_beacon=BEACON_ID_1, author=alice.device_id
     )
 
     rep = await beacon_read(alice_backend_sock, BEACON_ID_1, 0)
@@ -78,9 +73,9 @@ async def test_beacon_in_vlob_update(backend, alice_backend_sock, alice2):
 
 
 @pytest.mark.trio
-async def test_beacon_in_vlob_create(backend, alice_backend_sock, alice2):
+async def test_beacon_in_vlob_create(backend, alice_backend_sock, alice):
     await backend.vlob.create(
-        VLOB_ID, VLOB_RTS, VLOB_WTS, b"foo", notify_beacon=BEACON_ID_1, author=alice2.device_id
+        VLOB_ID, VLOB_RTS, VLOB_WTS, b"foo", notify_beacon=BEACON_ID_1, author=alice.device_id
     )
 
     rep = await beacon_read(alice_backend_sock, BEACON_ID_1, 0)

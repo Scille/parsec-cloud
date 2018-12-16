@@ -26,10 +26,7 @@ class FolderSyncerMixin(BaseSyncer):
         # This folder hasn't been modified locally, just download
         # last version from the backend if any.
         target_remote_manifest = await self._backend_vlob_read(access)
-        if (
-            not target_remote_manifest
-            or target_remote_manifest["version"] == manifest["base_version"]
-        ):
+        if target_remote_manifest["version"] == manifest["base_version"]:
             return None
         return target_remote_manifest
 

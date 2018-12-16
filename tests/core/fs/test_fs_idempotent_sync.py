@@ -29,24 +29,15 @@ def check_fs_dump(entry, is_root=True):
 
 @pytest.mark.slow
 def test_fs_online_idempotent_sync(
-    hypothesis_settings,
-    oracle_fs_with_sync_factory,
-    unused_tcp_addr,
-    device_factory,
-    backend_factory,
-    server_factory,
-    fs_factory,
-    backend_addr,
+    hypothesis_settings, device_factory, backend_factory, server_factory, fs_factory, backend_addr
 ):
     class FSOnlineIdempotentSync(TrioRuleBasedStateMachine):
         BadPath = Bundle("bad_path")
         GoodPath = Bundle("good_path")
 
-        async def start_fs(self, device, local_db):
+        async def start_fs(self, device):
             async def _fs_controlled_cb(started_cb):
-                async with fs_factory(
-                    device=device, local_db=local_db, backend_addr=backend_addr
-                ) as fs:
+                async with fs_factory(device=device) as fs:
                     await started_cb(fs=fs)
 
             return await self.get_root_nursery().start(call_with_control, _fs_controlled_cb)
@@ -65,9 +56,9 @@ def test_fs_online_idempotent_sync(
 
         @initialize(target=BadPath)
         async def init(self):
-            self.device, self.local_db = device_factory()
+            self.device = device_factory()
             self.backend_controller = await self.start_backend([self.device])
-            self.fs_controller = await self.start_fs(self.device, self.local_db)
+            self.fs_controller = await self.start_fs(self.device)
 
             await self.fs.workspace_create("/w")
             await self.fs.file_create("/w/good_file.txt")

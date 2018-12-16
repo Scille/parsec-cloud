@@ -218,12 +218,7 @@ class BaseSyncer:
         return [entry["id"] for entry in ret["changed"]]
 
     async def _backend_vlob_read(self, access, version=None):
-        try:
-            _, blob = await self.backend_cmds.vlob_read(access["id"], access["rts"], version)
-        except BackendCmdsBadResponse as exc:
-            if exc.status == "not_found":
-                return None
-            raise
+        _, blob = await self.backend_cmds.vlob_read(access["id"], access["rts"], version)
         raw = await self.encryption_manager.decrypt_with_secret_key(access["key"], blob)
         return loads_manifest(raw)
 

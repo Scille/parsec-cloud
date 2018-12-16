@@ -13,12 +13,19 @@ import hypothesis
 from pathlib import Path
 
 from parsec.types import DeviceID, UserID
-from parsec.crypto import PublicKey, SigningKey, VerifyKey, dump_root_verify_key
+from parsec.crypto import (
+    PublicKey,
+    SigningKey,
+    VerifyKey,
+    dump_root_verify_key,
+    encrypt_with_secret_key,
+)
 from parsec.trustchain import certify_user, certify_device
 from parsec.core import CoreConfig
 from parsec.core.devices_manager import generate_new_device
 from parsec.core.logged_core import logged_core_factory
-
+from parsec.core.fs.utils import new_local_user_manifest, local_to_remote_manifest, copy_manifest
+from parsec.core.schemas import dumps_manifest
 from parsec.core.mountpoint import FUSE_AVAILABLE
 from parsec.backend import BackendApp, config_factory as backend_config_factory
 from parsec.backend.user import (
@@ -276,7 +283,9 @@ def alice(backend_addr, root_verify_key):
 @pytest.fixture(scope="session")
 def alice2(backend_addr, root_verify_key, alice):
     alice2 = generate_new_device(DeviceID("alice@dev2"), backend_addr, root_verify_key)
-    alice2.evolve(private_key=alice.private_key, user_manifest_access=alice.user_manifest_access)
+    alice2 = alice2.evolve(
+        private_key=alice.private_key, user_manifest_access=alice.user_manifest_access
+    )
     return alice2
 
 
@@ -387,9 +396,71 @@ async def nursery():
     raise RuntimeError("Bad kitty ! Bad !!!")
 
 
+class InitialState:
+    def __init__(self):
+        self._location_in_v0 = set()
+        self._v1 = {}
+
+    def set_v0_in_backend(self, user_id):
+        assert user_id not in self._location_in_v0
+        self._location_in_v0.add(user_id)
+
+    def set_v0_in_device(self, device_id):
+        assert device_id not in self._location_in_v0
+        self._location_in_v0.add(device_id)
+
+    def get_initial_for_device(self, device):
+        if device.device_id in self._location_in_v0:
+            return None
+
+        in_device, _ = self._generate_or_retrieve_v1(device)
+        return copy_manifest(in_device)
+
+    def get_initial_for_backend(self, device):
+        if device.device_id in self._location_in_v0:
+            return None
+
+        _, in_backend = self._generate_or_retrieve_v1(device)
+        return copy_manifest(in_backend)
+
+    def _generate_or_retrieve_v1(self, device):
+        try:
+            return self._v1[device.user_id]
+
+        except KeyError:
+            user_manifest = new_local_user_manifest(device.device_id)
+            user_manifest["base_version"] = 1
+            user_manifest["is_placeholder"] = False
+            user_manifest["need_sync"] = False
+
+            remote_user_manifest = local_to_remote_manifest(user_manifest)
+
+            self._v1[device.user_id] = (user_manifest, remote_user_manifest)
+            return (user_manifest, remote_user_manifest)
+
+
+@pytest.fixture
+def initial_user_manifest_state():
+    # User manifest is stored in backend vlob and in devices's local db.
+    # Hence this fixture allow us to centralize the first version of this user
+    # manifest.
+    # In most tests we want to be in a state were backend and devices all
+    # store the same user manifest (named the "v1" here).
+    # But sometime we want a completly fresh start ("v1" doesn't exist,
+    # hence devices and backend are empty) or only a single device to begin
+    # with no knowledge of the "v1".
+    return InitialState()
+
+
 @pytest.fixture
 def backend_factory(
-    asyncio_loop, event_bus_factory, blockstore, backend_store, default_devices, root_key_certifier
+    asyncio_loop,
+    event_bus_factory,
+    initial_user_manifest_state,
+    blockstore,
+    backend_store,
+    default_devices,
+    root_key_certifier,
 ):
     # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
     # the backend should inherit from the one with the asyncio loop context manager.
@@ -425,27 +496,22 @@ def backend_factory(
                     try:
                         await backend.user.create_user(backend_user)
 
-                        # TODO: still useful ?
-
-                        # access = device.user_manifest_access
-                        # try:
-                        #     local_user_manifest = loads_manifest(device.local_db.get(access))
-                        # except LocalDBMissingEntry:
-                        #     continue
-                        # else:
-                        #     if local_user_manifest["base_version"] == 0:
-                        #         continue
-
-                        # remote_user_manifest = local_to_remote_manifest(local_user_manifest)
-                        # ciphered = encrypt_with_secret_key(
-                        #     device.id,
-                        #     device.device_signkey,
-                        #     access["key"],
-                        #     dumps_manifest(remote_user_manifest),
-                        # )
-                        # await backend.vlob.create(
-                        #     access["id"], access["rts"], access["wts"], ciphered
-                        # )
+                        access = device.user_manifest_access
+                        user_manifest = initial_user_manifest_state.get_initial_for_backend(device)
+                        if user_manifest:
+                            ciphered = encrypt_with_secret_key(
+                                device.device_id,
+                                device.signing_key,
+                                access["key"],
+                                dumps_manifest(user_manifest),
+                            )
+                            await backend.vlob.create(
+                                access["id"],
+                                access["rts"],
+                                access["wts"],
+                                ciphered,
+                                device.device_id,
+                            )
 
                     except UserAlreadyExistsError:
                         await backend.user.create_device(backend_user.devices[device.device_name])
@@ -469,8 +535,8 @@ async def backend(backend_factory):
 
 
 @pytest.fixture(scope="session")
-def backend_addr(root_key_certifier):
-    rvk = dump_root_verify_key(root_key_certifier.verify_key)
+def backend_addr(root_verify_key):
+    rvk = dump_root_verify_key(root_verify_key)
     return f"tcp://parsec-backend.localhost:9999?root-verify-key={rvk}"
 
 
@@ -532,54 +598,54 @@ async def bob_backend_sock(backend_sock_factory, backend, bob):
         yield sock
 
 
-@pytest.fixture
-def core_factory(tmpdir, event_bus_factory, backend_addr, default_devices):
-    count = 0
+# @pytest.fixture
+# def core_factory(tmpdir, event_bus_factory, backend_addr, default_devices):
+#     count = 0
 
-    @asynccontextmanager
-    async def _core_factory(devices=default_devices, config={}, event_bus=None):
-        nonlocal count
-        count += 1
+#     @asynccontextmanager
+#     async def _core_factory(devices=default_devices, config={}, event_bus=None):
+#         nonlocal count
+#         count += 1
 
-        core_dir = tmpdir / f"core-{count}"
-        config = CoreConfig(
-            **{
-                "backend_addr": backend_addr,
-                "local_storage_dir": (core_dir / "local_storage").strpath,
-                "base_settings_path": (core_dir / "settings").strpath,
-                **config,
-            }
-        )
-        if not event_bus:
-            event_bus = event_bus_factory()
-        core = Core(config, event_bus=event_bus)
-        async with trio.open_nursery() as nursery:
-            await core.init(nursery)
+#         core_dir = tmpdir / f"core-{count}"
+#         config = CoreConfig(
+#             **{
+#                 "backend_addr": backend_addr,
+#                 "local_storage_dir": (core_dir / "local_storage").strpath,
+#                 "base_settings_path": (core_dir / "settings").strpath,
+#                 **config,
+#             }
+#         )
+#         if not event_bus:
+#             event_bus = event_bus_factory()
+#         core = Core(config, event_bus=event_bus)
+#         async with trio.open_nursery() as nursery:
+#             await core.init(nursery)
 
-            for device in devices:
-                core.local_devices_manager.register_new_device(
-                    device.id,
-                    device.user_privkey.encode(),
-                    device.device_signkey.encode(),
-                    device.user_manifest_access,
-                    "<secret>",
-                )
+#             for device in devices:
+#                 core.local_devices_manager.register_new_device(
+#                     device.id,
+#                     device.user_privkey.encode(),
+#                     device.device_signkey.encode(),
+#                     device.user_manifest_access,
+#                     "<secret>",
+#                 )
 
-            try:
-                yield core
-            finally:
-                await core.teardown()
-                # Don't do `nursery.cancel_scope.cancel()` given `core.teardown()`
-                # should have stopped all our coroutines (i.e. if the nursery is
-                # hanging, something on top of us should be fixed...)
+#             try:
+#                 yield core
+#             finally:
+#                 await core.teardown()
+#                 # Don't do `nursery.cancel_scope.cancel()` given `core.teardown()`
+#                 # should have stopped all our coroutines (i.e. if the nursery is
+#                 # hanging, something on top of us should be fixed...)
 
-    return _core_factory
+#     return _core_factory
 
 
-@pytest.fixture
-async def core(core_factory):
-    async with core_factory() as core:
-        yield core
+# @pytest.fixture
+# async def core(core_factory):
+#     async with core_factory() as core:
+#         yield core
 
 
 # TODO: remove me
@@ -613,18 +679,18 @@ def core_config(tmpdir):
 
 
 @pytest.fixture
-async def alice_core(core_config, alice):
-    async with logged_core_factory(core_config, alice) as alice_core:
+async def alice_core(event_bus_factory, core_config, alice):
+    async with logged_core_factory(core_config, alice, event_bus_factory()) as alice_core:
         yield alice_core
 
 
 @pytest.fixture
-async def alice2_core(core_config, alice2):
-    async with logged_core_factory(core_config, alice2) as alice2_core:
+async def alice2_core(event_bus_factory, core_config, alice2):
+    async with logged_core_factory(core_config, alice2, event_bus_factory()) as alice2_core:
         yield alice2_core
 
 
 @pytest.fixture
-async def bob_core(core_config, bob):
-    async with logged_core_factory(core_config, bob) as bob_core:
+async def bob_core(event_bus_factory, core_config, bob):
+    async with logged_core_factory(core_config, bob, event_bus_factory()) as bob_core:
         yield bob_core
