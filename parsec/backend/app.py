@@ -76,7 +76,7 @@ class BackendApp:
         self.events = EventsComponent(self.event_bus)
 
         if self.config.db_url == "MOCKED":
-            self.user = MemoryUserComponent()
+            self.user = MemoryUserComponent(self.event_bus)
             self.message = MemoryMessageComponent(self.event_bus)
             self.beacon = MemoryBeaconComponent(self.event_bus)
             self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)

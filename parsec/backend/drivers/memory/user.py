@@ -2,6 +2,7 @@ import pendulum
 from typing import Tuple, Dict
 
 from parsec.types import UserID, DeviceID
+from parsec.event_bus import EventBus
 from parsec.backend.user import (
     BaseUserComponent,
     User,
@@ -16,7 +17,8 @@ from parsec.backend.user import (
 
 
 class MemoryUserComponent(BaseUserComponent):
-    def __init__(self):
+    def __init__(self, event_bus: EventBus):
+        self.event_bus = event_bus
         self._users = {}
         self._invitations = {}
         self._device_configuration_tries = {}
