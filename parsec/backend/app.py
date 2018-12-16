@@ -76,7 +76,7 @@ class BackendApp:
         self.events = EventsComponent(self.event_bus)
 
         if self.config.db_url == "MOCKED":
-            self.user = MemoryUserComponent(config.root_verify_key, self.event_bus)
+            self.user = MemoryUserComponent()
             self.message = MemoryMessageComponent(self.event_bus)
             self.beacon = MemoryBeaconComponent(self.event_bus)
             self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
@@ -85,11 +85,11 @@ class BackendApp:
 
         else:
             self.dbh = PGHandler(self.config.db_url, self.event_bus)
-            self.user = PGUserComponent(self.dbh, self.event_bus)
+            self.user = PGUserComponent(self.dbh)
             self.message = PGMessageComponent(self.dbh, self.event_bus)
-            self.beacon = PGBeaconComponent(self.dbh, self.event_bus)
+            self.beacon = PGBeaconComponent(self.dbh)
             self.vlob = PGVlobComponent(self.dbh, self.event_bus, self.beacon)
-            self.ping = PGPingComponent(self.dbh, self.event_bus)
+            self.ping = PGPingComponent(self.dbh)
             self.blockstore = blockstore_factory(
                 self.config.blockstore_config, postgresql_dbh=self.dbh
             )

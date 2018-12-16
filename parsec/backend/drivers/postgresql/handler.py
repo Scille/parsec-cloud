@@ -6,10 +6,10 @@ from typing import Optional, Tuple
 from structlog import get_logger
 from uuid import UUID
 
-from parsec.crypto import sign_and_add_meta
 from parsec.types import UserID, DeviceID
+from parsec.event_bus import EventBus
+from parsec.crypto import PublicKey, PrivateKey, VerifyKey, SigningKey, sign_and_add_meta
 from parsec.utils import call_with_control, ejson_dumps, ejson_loads
-from parsec.crypto import PublicKey, PrivateKey, VerifyKey, SigningKey
 
 
 logger = get_logger()
@@ -157,20 +157,24 @@ async def _create_db_tables(conn):
         """
         CREATE TABLE users (
             user_id VARCHAR(32) PRIMARY KEY,
-            created_on TIMESTAMP NOT NULL,
-            -- TODO: rename to public_key
-            broadcast_key BYTEA NOT NULL
+            certified_user BYTEA NOT NULL,
+            user_certifier VARCHAR(32),
+            created_on TIMESTAMP NOT NULL
         );
 
         CREATE TABLE devices (
             device_id VARCHAR(65) PRIMARY KEY,
-            device_name VARCHAR(32) NOT NULL,
             user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
+            certified_device BYTEA NOT NULL,
+            device_certifier VARCHAR(32) REFERENCES devices (device_id),
             created_on TIMESTAMP NOT NULL,
-            verify_key BYTEA NOT NULL,
             revocated_on TIMESTAMP,
-            UNIQUE (user_id, device_name)
+            certified_revocation BYTEA,
+            revocation_certifier VARCHAR(32) REFERENCES devices (device_id)
         );
+
+        ALTER TABLE users
+        ADD CONSTRAINT FK_users_devices FOREIGN KEY (user_certifier) REFERENCES devices(device_id);
 
         CREATE TYPE USER_INVITATION_STATUS AS ENUM ('pending', 'claimed', 'rejected');
         CREATE TABLE user_invitations (
@@ -244,7 +248,7 @@ async def _create_db_tables(conn):
 
 # TODO: replace by a fonction
 class PGHandler:
-    def __init__(self, url, event_bus):
+    def __init__(self, url: str, event_bus: EventBus):
         self.url = url
         self.event_bus = event_bus
         self.pool = None

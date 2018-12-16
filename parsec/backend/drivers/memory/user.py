@@ -2,8 +2,6 @@ import pendulum
 from typing import Tuple, Dict
 
 from parsec.types import UserID, DeviceID
-from parsec.crypto import VerifyKey
-from parsec.event_bus import EventBus
 from parsec.backend.user import (
     BaseUserComponent,
     User,
@@ -18,8 +16,7 @@ from parsec.backend.user import (
 
 
 class MemoryUserComponent(BaseUserComponent):
-    def __init__(self, root_verify_key: VerifyKey, event_bus: EventBus):
-        super().__init__(root_verify_key, event_bus)
+    def __init__(self):
         self._users = {}
         self._invitations = {}
         self._device_configuration_tries = {}

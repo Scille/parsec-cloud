@@ -77,7 +77,6 @@ async def call_with_control(controlled_fn, *, task_status=trio.TASK_STATUS_IGNOR
     controller = CallController()
 
     async def _started_cb(obj=None):
-        controller = CallController()
         controller.obj = obj
         task_status.started(controller)
         await controller.need_stop.wait()

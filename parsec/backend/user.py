@@ -165,10 +165,6 @@ class DeviceInvitation:
 
 
 class BaseUserComponent:
-    def __init__(self, root_verify_key: VerifyKey, event_bus: EventBus):
-        self.root_verify_key = root_verify_key
-        self.event_bus = event_bus
-
     #### Access user API ####
 
     @catch_protocole_errors
