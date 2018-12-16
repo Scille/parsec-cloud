@@ -5,6 +5,10 @@ from parsec.api.protocole import message_send_serializer, message_get_serializer
 from parsec.backend.utils import catch_protocole_errors
 
 
+class MessageError(Exception):
+    pass
+
+
 class BaseMessageComponent:
     @catch_protocole_errors
     async def api_message_send(self, client_ctx, msg):

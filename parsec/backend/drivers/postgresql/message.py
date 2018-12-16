@@ -1,25 +1,29 @@
-# from parsec.utils import ParsecError
-from parsec.backend.message import BaseMessageComponent
-from parsec.backend.drivers.postgresql.handler import send_signal
+from typing import List, Tuple
+
+from parsec.types import UserID, DeviceID
+from parsec.backend.message import BaseMessageComponent, MessageError
+from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
 
 
 class PGMessageComponent(BaseMessageComponent):
-    def __init__(self, dbh, event_bus):
+    def __init__(self, dbh: PGHandler):
         self.dbh = dbh
 
-    async def perform_message_new(self, sender_device_id, recipient_user_id, body):
+    async def send(self, sender: DeviceID, recipient: UserID, body: bytes) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 result = await conn.execute(
                     """
-                    INSERT INTO messages (sender, recipient, body) VALUES ($1, $2, $3)
+                    INSERT INTO messages (
+                        sender, recipient, body
+                    ) VALUES ($1, $2, $3)
                     """,
-                    sender_device_id,
-                    recipient_user_id,
+                    sender,
+                    recipient,
                     body,
                 )
                 if result != "INSERT 0 1":
-                    raise ParsecError("Insertion error")
+                    raise MessageError(f"Insertion error: {result}")
 
                 # TODO: index doesn't seem to be used in the core, and is complicated to get here...
                 # Maybe we should replace it by a timestamp ?
@@ -27,20 +31,18 @@ class PGMessageComponent(BaseMessageComponent):
                     """
                     SELECT COUNT(*) FROM messages WHERE recipient = $1
                     """,
-                    recipient_user_id,
+                    recipient,
                 )
                 await send_signal(
-                    conn,
-                    "message.received",
-                    author=sender_device_id,
-                    recipient=recipient_user_id,
-                    index=index,
+                    conn, "message.received", author=sender, recipient=recipient, index=index
                 )
 
-    async def perform_message_get(self, recipient_user_id, offset):
+    async def get(self, recipient: UserID, offset: int) -> List[Tuple[DeviceID, bytes]]:
         async with self.dbh.pool.acquire() as conn:
-            return await conn.fetch(
+            data = await conn.fetch(
                 "SELECT sender, body FROM messages WHERE recipient = $1 ORDER BY _id ASC OFFSET $2",
-                recipient_user_id,
+                recipient,
                 offset,
             )
+        # TODO: we should configure a DeviceID custom serializer in dbh
+        return [(DeviceID(d[0]), d[1]) for d in data]
