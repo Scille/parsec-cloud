@@ -225,6 +225,7 @@ async def _create_db_tables(conn):
             rts TEXT NOT NULL,
             wts TEXT NOT NULL,
             blob BYTEA NOT NULL,
+            author VARCHAR(65) REFERENCES devices (device_id) NOT NULL,
             UNIQUE(vlob_id, version)
         );
 
@@ -240,7 +241,8 @@ async def _create_db_tables(conn):
         CREATE TABLE blockstore (
             _id SERIAL PRIMARY KEY,
             block_id UUID UNIQUE NOT NULL,
-            block BYTEA NOT NULL
+            block BYTEA NOT NULL,
+            author VARCHAR(65) REFERENCES devices (device_id) NOT NULL
         );
     """
     )

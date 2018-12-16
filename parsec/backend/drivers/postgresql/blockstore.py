@@ -1,6 +1,7 @@
 from triopg.exceptions import UniqueViolationError
 from uuid import UUID
 
+from parsec.types import DeviceID
 from parsec.backend.blockstore import (
     BlockstoreError,
     BaseBlockstoreComponent,
@@ -21,12 +22,15 @@ class PGBlockstoreComponent(BaseBlockstoreComponent):
                 raise BlockstoreNotFoundError()
         return block[0]
 
-    async def create(self, id: UUID, block: bytes) -> None:
+    async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 try:
                     result = await conn.execute(
-                        "INSERT INTO blockstore (block_id, block) VALUES ($1, $2)", id, block
+                        "INSERT INTO blockstore (block_id, block, author) VALUES ($1, $2, $3)",
+                        id,
+                        block,
+                        author,
                     )
                     if result != "INSERT 0 1":
                         raise BlockstoreError(f"Insertion error: {result}")

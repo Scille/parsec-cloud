@@ -1,6 +1,9 @@
+import trio
 from unittest.mock import Mock
 import pbr.version
 from uuid import UUID
+from functools import partial
+
 
 original_version_info = pbr.version.VersionInfo
 
@@ -15,15 +18,21 @@ def side_effect(key):
 
 pbr.version.VersionInfo = Mock(side_effect=side_effect)
 
-import swiftclient  # noqa
-from swiftclient.exceptions import ClientException  # noqa
+import swiftclient
+from swiftclient.exceptions import ClientException
 
+from parsec.types import DeviceID
 from parsec.backend.blockstore import (
     BaseBlockstoreComponent,
     BlockstoreAlreadyExistsError,
     BlockstoreNotFoundError,
     BlockstoreTimeoutError,
 )
+
+
+# Swift custom headers are case insensitive, but `get_object`
+# return them in lower case in a case-sensitive dict...
+AUTHOR_META_HEADER = "X-Object-Meta-AUTHOR".lower()
 
 
 class SwiftBlockstoreComponent(BaseBlockstoreComponent):
@@ -36,7 +45,10 @@ class SwiftBlockstoreComponent(BaseBlockstoreComponent):
 
     async def read(self, id: UUID) -> bytes:
         try:
-            _, obj = self.swift_client.get_object(self._container, str(id))
+            headers, obj = await trio.run_sync_in_worker_thread(
+                self.swift_client.get_object, self._container, str(id)
+            )
+
         except ClientException as exc:
             if exc.http_status == 404:
                 raise BlockstoreNotFoundError() from exc
@@ -44,15 +56,27 @@ class SwiftBlockstoreComponent(BaseBlockstoreComponent):
             else:
                 raise BlockstoreTimeoutError() from exc
 
+        # Remember, to retreive the author: DeviceID(headers[AUTHOR_META_HEADER])
         return obj
 
-    async def create(self, id: UUID, block: bytes) -> None:
+    async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
         # TODO find a more efficient way to check if block already exists
         try:
-            _, obj = self.swift_client.get_object(self._container, str(id))
+            _, obj = await trio.run_sync_in_worker_thread(
+                self.swift_client.get_object, self._container, str(id)
+            )
+
         except ClientException as exc:
             if exc.http_status == 404:
-                self.swift_client.put_object(self._container, str(id), block)
+                await trio.run_sync_in_worker_thread(
+                    partial(
+                        self.swift_client.put_object,
+                        self._container,
+                        str(id),
+                        block,
+                        headers={AUTHOR_META_HEADER: author},
+                    )
+                )
             else:
                 raise BlockstoreTimeoutError() from exc
 

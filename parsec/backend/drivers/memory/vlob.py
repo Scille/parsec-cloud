@@ -14,11 +14,11 @@ from parsec.backend.vlob import (
 
 
 class MemoryVlob:
-    def __init__(self, id, rts, wts, blob):
+    def __init__(self, id, rts, wts):
         self.id = id
         self.rts = rts
         self.wts = wts
-        self.blob_versions = [blob]
+        self.blob_versions = []
 
 
 class MemoryVlobComponent(BaseVlobComponent):
@@ -50,15 +50,16 @@ class MemoryVlobComponent(BaseVlobComponent):
         rts: str,
         wts: str,
         blob: bytes,
+        author: DeviceID,
         notify_beacon: UUID = None,
-        author: DeviceID = None,
     ) -> None:
-        vlob = MemoryVlob(id, rts, wts, blob)
+        vlob = MemoryVlob(id, rts, wts)
+        vlob.blob_versions.append((blob, author))
         if vlob.id in self.vlobs:
             raise VlobAlreadyExistsError()
         self.vlobs[vlob.id] = vlob
 
-        if notify_beacon and author:
+        if notify_beacon:
             await self.beacon_component.update(notify_beacon, id, 1, author)
 
     async def read(self, id: UUID, rts: str, version: int = None) -> Tuple[int, bytes]:
@@ -70,9 +71,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             raise VlobNotFoundError()
 
-        version = version or len(vlob.blob_versions)
+        if version is None:
+            version = len(vlob.blob_versions)
         try:
-            return version, vlob.blob_versions[version - 1]
+            return (version, vlob.blob_versions[version - 1][0])
 
         except IndexError:
             raise VlobVersionError()
@@ -83,8 +85,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         wts: str,
         version: int,
         blob: bytes,
+        author: DeviceID,
         notify_beacon: UUID = None,
-        author: DeviceID = None,
     ) -> None:
         try:
             vlob = self.vlobs[id]
@@ -95,9 +97,9 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobNotFoundError()
 
         if version - 1 == len(vlob.blob_versions):
-            vlob.blob_versions.append(blob)
+            vlob.blob_versions.append((blob, author))
         else:
             raise VlobVersionError()
 
-        if notify_beacon and author:
+        if notify_beacon:
             await self.beacon_component.update(notify_beacon, id, version, author)

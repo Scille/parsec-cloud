@@ -56,11 +56,6 @@ class VlobReadReqSchema(BaseReqSchema):
     rts = fields.String(required=True, validate=_validate_trust_seed)
     version = fields.Integer(validate=lambda n: n is None or _validate_version(n), missing=None)
 
-    @post_load
-    def _default_version_value(self, item):
-        item["version"] = item["version"] or 0
-        return item
-
 
 class VlobReadRepSchema(BaseRepSchema):
     version = fields.Integer(required=True, validate=_validate_version)

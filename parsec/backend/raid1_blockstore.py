@@ -1,6 +1,7 @@
 import trio
 from uuid import UUID
 
+from parsec.types import DeviceID
 from parsec.backend.blockstore import (
     BaseBlockstoreComponent,
     BlockstoreAlreadyExistsError,
@@ -31,10 +32,10 @@ class RAID1BlockstoreComponent(BaseBlockstoreComponent):
 
         return value
 
-    async def create(self, id: UUID, block: bytes) -> None:
+    async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
         async def _single_blockstore_create(nursery, blockstore, id, block):
             try:
-                await blockstore.create(id, block)
+                await blockstore.create(id, block, author)
             except BlockstoreAlreadyExistsError:
                 # It's possible a previous tentative to upload this block has
                 # failed due to another blockstore not available. In such case

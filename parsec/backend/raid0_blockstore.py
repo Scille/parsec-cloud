@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from parsec.types import DeviceID
 from parsec.backend.blockstore import BaseBlockstoreComponent
 
 
@@ -14,6 +15,6 @@ class RAID0BlockstoreComponent(BaseBlockstoreComponent):
         blockstore = self._get_blockstore(id)
         return await blockstore.read(id)
 
-    async def create(self, id: UUID, block: bytes) -> None:
+    async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
         blockstore = self._get_blockstore(id)
-        await blockstore.create(id, block)
+        await blockstore.create(id, block, author)

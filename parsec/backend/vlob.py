@@ -94,8 +94,8 @@ class BaseVlobComponent:
         rts: str,
         wts: str,
         blob: bytes,
+        author: DeviceID,
         notify_beacon: UUID = None,
-        author: DeviceID = None,
     ) -> None:
         """
         Raises:
@@ -118,8 +118,8 @@ class BaseVlobComponent:
         wts: str,
         version: int,
         blob: bytes,
+        author: DeviceID,
         notify_beacon: UUID = None,
-        author: DeviceID = None,
     ) -> None:
         """
         Raises:

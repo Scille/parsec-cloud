@@ -60,15 +60,17 @@ async def vlob_update(sock, id, wts, version, blob, check_rep=True):
 
 
 @pytest.fixture
-async def vlobs(backend):
+async def vlobs(backend, alice):
     Access = namedtuple("Access", "id,rts,wts")
     accesses = (
         Access(UUID("00000000000000000000000000000001"), "<1 rts>", "<1 wts>"),
         Access(UUID("00000000000000000000000000000002"), "<2 rts>", "<2 wts>"),
     )
-    await backend.vlob.create(*accesses[0], b"1 blob v1")
-    await backend.vlob.update(accesses[0].id, accesses[0].wts, 2, b"1 blob v2")
-    await backend.vlob.create(*accesses[1], b"2 blob v1")
+    await backend.vlob.create(*accesses[0], b"1 blob v1", author=alice.device_id)
+    await backend.vlob.update(
+        accesses[0].id, accesses[0].wts, 2, b"1 blob v2", author=alice.device_id
+    )
+    await backend.vlob.create(*accesses[1], b"2 blob v1", author=alice.device_id)
     return accesses
 
 
