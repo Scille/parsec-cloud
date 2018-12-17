@@ -54,9 +54,15 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         button.rename_clicked.connect(self.rename_workspace)
 
     def show_workspace_details(self, workspace_button):
-        text = "{}\n\nCreated by {}.\nShared with {} people.".format(
-            workspace_button.name, workspace_button.creator, len(workspace_button.shared_with)
+        text = QCoreApplication.translate("WorkspacesWidget", "{}\n\nCreated by {}.\n").format(
+            workspace_button.name, workspace_button.creator
         )
+        if len(workspace_button.participants):
+            text += QCoreApplication.translate("WorkspacesWidget", "Shared with {} people.").format(
+                len(workspace_button.participants)
+            )
+        else:
+            text += QCoreApplication.translate("WorkspacesWidget", "Not shared.")
         show_info(self, text)
 
     def delete_workspace(self, workspace_button):
