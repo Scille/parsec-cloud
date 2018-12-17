@@ -1,12 +1,13 @@
 import os
 
-from PyQt5.QtCore import QCoreApplication, Qt
+from PyQt5.QtCore import QCoreApplication, Qt, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QSystemTrayIcon, QMenu
-from PyQt5.QtGui import QIcon, QFontDatabase
+from PyQt5.QtGui import QIcon, QFontDatabase, QPixmap
 from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
 
+from parsec.core.backend_connection import BackendNotAvailable
 from parsec.pkcs11_encryption_tool import DevicePKCS11Error
 from parsec.core.devices_manager import (
     DeviceLoadingError,
@@ -33,6 +34,8 @@ logger = get_logger()
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
+    connection_state_changed = pyqtSignal(bool)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -60,15 +63,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.add_tray_icon()
         self.connect_all()
         self.setWindowTitle("Parsec - Community Edition - v{}".format(PARSEC_VERSION))
+        self.tray_message_shown = False
+        core_call().connect_event("backend.connection.ready", self._on_connection_changed)
+        core_call().connect_event("backend.connection.lost", self._on_connection_changed)
+        self.connection_state_changed.connect(self._on_connection_state_changed)
 
     def add_tray_icon(self):
-        if not QSystemTrayIcon.isSystemTrayAvailable():
-            self.action_put_in_tray.setDisabled(True)
+        if not QSystemTrayIcon.isSystemTrayAvailable() or not settings.get_value(
+            "global/tray_enabled", True
+        ):
             return
         self.tray = QSystemTrayIcon(self)
         menu = QMenu()
         action = menu.addAction(QCoreApplication.translate(self.__class__.__name__, "Show window"))
-        action.triggered.connect(self.show)
+        action.triggered.connect(self.show_top)
         action = menu.addAction(QCoreApplication.translate(self.__class__.__name__, "Exit"))
         action.triggered.connect(self.close_app)
         self.tray.setContextMenu(menu)
@@ -98,8 +106,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
-            self.show()
-            self.raise_()
+            self.show_top()
+
+    def show_top(self):
+        self.show()
+        self.raise_()
 
     def logout(self):
         self.unmount()
@@ -119,7 +130,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 logger.info("Mountpoint stopped")
 
     def mount(self):
-        base_mountpoint = settings.get_value("mountpoint")
+        base_mountpoint = settings.get_value("global/mountpoint")
         if not base_mountpoint:
             return None
         mountpoint = os.path.join(base_mountpoint, self.current_device.id)
@@ -129,8 +140,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         except Exception as exc:
             logger.warning("Mountpoint start failed", mountpoint=mountpoint, exc_info=exc)
             return None
-
         self.mount_widget.set_mountpoint(mountpoint)
+        self.label_mountpoint.setText(mountpoint)
         logger.info("Mountpoint started", mountpoint=mountpoint)
         return mountpoint
 
@@ -144,7 +155,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     'Can not mount in "{}" (permissions problems ?). Go '
                     "to Settings/Global to a set mountpoint, then File/Remount to "
                     "mount it.",
-                ).format(settings.get_value("mountpoint")),
+                ).format(settings.get_value("global/mountpoint")),
             )
             self.show_settings_widget()
             return
@@ -168,7 +179,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             core_call().logout()
             core_call().login(device)
             settings.set_value("last_device", device_id)
-            if settings.get_value("mountpoint_enabled"):
+            if settings.get_value("global/mountpoint_enabled"):
                 mountpoint = self.mount()
                 if mountpoint is None:
                     show_error(
@@ -178,12 +189,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                             'Can not mount in "{}" (permissions problems ?). Go '
                             "to Settings/Global to a set mountpoint, then File/Remount to "
                             "mount it.",
-                        ).format(settings.get_value("mountpoint")),
+                        ).format(settings.get_value("global/mountpoint")),
                     )
                     self.show_settings_widget()
                     return
             self.widget_menu.show()
-            self.button_user.setText("    " + device_id.split("@")[0])
+            self.label_username.setText(device_id.split("@")[0])
+            self.label_device.setText("@" + device_id.split("@")[1])
             self.show_mount_widget()
         except (DeviceLoadingError, DevicePKCS11Error):
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
@@ -204,6 +216,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             show_error(
                 self.users_widget,
                 QCoreApplication.translate("MainWindow", "Can not register the user."),
+            )
+        except BackendNotAvailable:
+            show_error(
+                self.users_widget,
+                QCoreApplication.translate(
+                    "MainWindow", "You are currently offline and can not register the user."
+                ),
             )
 
     def handle_register_user(
@@ -347,7 +366,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def closeEvent(self, event):
         if (
-            not QSystemTrayIcon.isSystemTrayAvailable()
+            not settings.get_value("global/tray_enabled")
+            or not QSystemTrayIcon.isSystemTrayAvailable()
             or self.close_requested
             or core_call().is_debug()
             or self.force_close
@@ -366,23 +386,44 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 event.accept()
             if core_call().is_mounted():
                 core_call().unmount()
+            self.mount_widget.stop()
             core_call().logout()
             core_call().stop()
             if self.tray:
                 self.tray.hide()
         else:
-            if self.tray:
+            if self.tray and not self.tray_message_shown:
                 self.tray.showMessage(
-                    "Parsec",
-                    QCoreApplication.translate(self.__class__.__name__, "Parsec is still running."),
+                    "Parsec", QCoreApplication.translate("MainWindow", "Parsec is still running.")
                 )
+                self.tray_message_shown = True
             event.ignore()
             self.hide()
+
+    def _on_connection_state_changed(self, state):
+        if state:
+            self.label_connection_text.setText(
+                QCoreApplication.translate("MainWindow", "Connected")
+            )
+            self.label_connection_icon.setPixmap(QPixmap(":/icons/images/icons/cloud_online.png"))
+        else:
+            self.label_connection_text.setText(
+                QCoreApplication.translate("MainWindow", "Disconnected")
+            )
+            self.label_connection_icon.setPixmap(QPixmap(":/icons/images/icons/cloud_offline.png"))
+
+    def _on_connection_changed(self, event):
+        if event == "backend.connection.ready":
+            self.connection_state_changed.emit(True)
+        elif event == "backend.connection.lost":
+            self.connection_state_changed.emit(False)
 
     def show_mount_widget(self):
         self._hide_all_central_widgets()
         self.widget_menu.show()
         self.button_files.setChecked(True)
+        self.widget_title.show()
+        self.label_title.setText(QCoreApplication.translate("MainWindow", "Documents"))
         self.mount_widget.reset()
         self.mount_widget.show()
 
@@ -390,6 +431,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._hide_all_central_widgets()
         self.widget_menu.show()
         self.button_users.setChecked(True)
+        self.widget_title.show()
+        self.label_title.setText(QCoreApplication.translate("MainWindow", "Users"))
         self.users_widget.reset()
         self.users_widget.show()
 
@@ -397,6 +440,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._hide_all_central_widgets()
         self.widget_menu.show()
         self.button_devices.setChecked(True)
+        self.widget_title.show()
+        self.label_title.setText(QCoreApplication.translate("MainWindow", "Devices"))
         self.devices_widget.reset()
         self.devices_widget.show()
 
@@ -404,6 +449,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._hide_all_central_widgets()
         self.widget_menu.show()
         self.button_settings.setChecked(True)
+        self.widget_title.show()
+        self.label_title.setText(QCoreApplication.translate("MainWindow", "Settings"))
         self.settings_widget.reset()
         self.settings_widget.show()
 
@@ -419,6 +466,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.settings_widget.hide()
         self.login_widget.hide()
         self.devices_widget.hide()
+        self.widget_title.hide()
         self.button_files.setChecked(False)
         self.button_users.setChecked(False)
         self.button_settings.setChecked(False)

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>632</width>
-    <height>671</height>
+    <height>750</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,6 +17,11 @@
    <string notr="true">QWidget#LoginRegisterUserWidget
 {
 background-color: rgb(12, 65, 156);
+}
+
+QPushButton:disabled
+{
+background-color: rgb(128, 128, 128);
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -117,51 +122,7 @@ image: url(:/icons/images/icons/checked.png)
       <item>
        <widget class="QWidget" name="widget_2" native="true">
         <property name="styleSheet">
-         <string notr="true">QLineEdit
-{
-border: 2px solid rgb(46, 145, 208);
-background-color: white;
-color: black;
-}
-
-QComboBox
-{
-border: 2px solid rgb(46, 145, 208);
-background-color: white;
-color: black;
-}
-
-QComboBox::drop-down
-{
-border: 0px;
-}
-
-QComboBox::down-arrow
-{
-image: url(:/icons/images/icons/down-arrow.png);
-width: 16px;
-height: 16px;
-padding-right: 5px;
-}
-
-QCheckBox
-{
-color: rgb(255, 255, 255);
-}
-
-QCheckBox::indicator
-{
-width: 15px;
-height: 15px;
-background-color: rgb(255, 255, 255);
-border: 2px solid rgb(46, 145, 208);
-color: black;
-}
-
-QCheckBox::indicator:checked
-{
-image: url(:/icons/images/icons/checked.png)
-}</string>
+         <string notr="true"/>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
          <property name="spacing">
@@ -303,7 +264,7 @@ image: url(:/icons/images/icons/checked.png)
           <widget class="QWidget" name="widget_password" native="true">
            <layout class="QVBoxLayout" name="verticalLayout_2">
             <property name="spacing">
-             <number>15</number>
+             <number>10</number>
             </property>
             <property name="leftMargin">
              <number>0</number>
@@ -404,6 +365,36 @@ image: url(:/icons/images/icons/checked.png)
                 </property>
                 <property name="echoMode">
                  <enum>QLineEdit::Password</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout">
+              <item>
+               <widget class="QLabel" name="label_password_strength">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="lineWidth">
+                 <number>0</number>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
                 </property>
                </widget>
               </item>
@@ -626,9 +617,12 @@ image: url(:/icons/images/icons/checked.png)
               <enum>Qt::RightToLeft</enum>
              </property>
              <property name="styleSheet">
-              <string notr="true">border: 1px solid rgb(255, 255, 255);
+              <string notr="true">QPushButton#button_register
+{
+border: 1px solid rgb(255, 255, 255);
 color: rgb(255, 255, 255);
-padding: 7px;</string>
+padding: 7px;
+}</string>
              </property>
              <property name="text">
               <string>Register</string>

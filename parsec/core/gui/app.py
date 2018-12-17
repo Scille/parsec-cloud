@@ -37,14 +37,14 @@ def run_gui(parsec_core, trio_portal, cancel_scope):
     app.setOrganizationDomain("parsec.cloud")
     app.setApplicationName("Parsec")
 
-    if not settings.get_value("mountpoint", None):
-        settings.set_value("mountpoint", os.path.join(str(pathlib.Path.home()), "parsec"))
+    if not settings.get_value("global/mountpoint", None):
+        settings.set_value("global/mountpoint", os.path.join(str(pathlib.Path.home()), "parsec"))
 
     # splash = QSplashScreen(QPixmap(':/logos/images/logos/parsec.png'))
     # splash.show()
     # app.processEvents()
 
-    lang.switch_to_locale()
+    lang.switch_language()
 
     win = MainWindow()
 

@@ -1,67 +1,40 @@
+from structlog import get_logger
+
 from PyQt5.QtCore import QTranslator, QCoreApplication
 
 from parsec.core.gui.desktop import get_locale_language
+from parsec.core.gui import settings
 
 
-_LANGUAGES = {"English": "en", "Français": "fr", "Deutsch": "de", "Español": "es", "中文": "zh"}
-
-_current_language = "en"
+LANGUAGES = {"English": "en", "Français": "fr"}
 
 _current_translator = None
 
-
-def translate(cls, text):
-    return QCoreApplication.translate(cls.__class__.__name__, text)
+logger = get_logger()
 
 
-def switch_to_locale():
-    global _current_language
-    global _current_translator
-
-    translator = QTranslator()
-    locale = get_locale_language()
-    tr_file = ":/translations/parsec_{}".format(locale)
-    if not translator.load(tr_file):
-        return False
-    if QCoreApplication.installTranslator(translator):
-        QCoreApplication.removeTranslator(_current_translator)
-        _current_translator = translator
-        _current_language = locale
-        return True
-    return False
-
-
-def switch_to_language_name(lang_name):
-    lang_key = _LANGUAGES.get(lang_name)
-    return switch_to_language_key(lang_key)
-
-
-def switch_to_language_key(lang_key):
-    global _current_language
+def switch_language(lang_key=None):
     global _current_translator
 
     if not lang_key:
-        return False
+        lang_key = settings.get_value("global/language")
+    if not lang_key:
+        lang_key = get_locale_language()
+        logger.info("No language in settings, trying local language '{}'".format(lang_key))
+    if lang_key not in LANGUAGES.values():
+        lang_key = "en"
+        logger.warning("Language '{}' unavailable, defaulting to English".format(lang_key))
     translator = QTranslator()
-    translator.load(":/translations/parsec_{}".format(lang_key))
-    if QCoreApplication.installTranslator(translator):
-        QCoreApplication.removeTranslator(_current_translator)
-        _current_language = lang_key
-        _current_translator = translator
-        return True
-    return False
+    path = ":/translations/translations/parsec_{}.qm".format(lang_key)
+    if not translator.load(path):
+        logger.warning("Unable to load the translations for language '{}'".format(lang_key))
+        return False
+    if not QCoreApplication.installTranslator(translator):
+        logger.warning("Failed to install the translator for language '{}'".format(lang_key))
+        return False
 
-
-def get_current_language_name():
-    for lang_name, lang_key in _LANGUAGES.items():
-        if _current_language == lang_key:
-            return lang_name
-    return "English"
-
-
-def get_language_name_from_key(lang_key):
-    return _LANGUAGES.get(lang_key)
-
-
-def get_current_language_key():
-    return _current_language
+    QCoreApplication.removeTranslator(_current_translator)
+    settings.set_value("global/language", lang_key)
+    _current_translator = translator
+    QCoreApplication.processEvents()
+    return True

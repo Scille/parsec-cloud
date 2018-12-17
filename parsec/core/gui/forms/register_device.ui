@@ -10,11 +10,83 @@
     <x>0</x>
     <y>0</y>
     <width>463</width>
-    <height>403</height>
+    <height>457</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Register new device</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QDialog#RegisterDevice
+{
+background-color: rgb(255, 255, 255);
+}
+
+QLineEdit
+{
+border: 1px solid rgb(30, 78, 162);
+padding-left: 10px;
+}
+
+QLineEdit[readOnly=&quot;true&quot;]
+{
+background-color: rgb(230, 230, 230);
+}
+
+QLineEdit:!enabled
+{
+border: 1px solid rgb(180, 180, 180);
+}
+
+QPushButton
+{
+background-color: rgb(45, 144, 209);
+border: 1px solid rgb(11, 56, 166);
+color: rgb(255, 255, 255);
+padding-left: 10px;
+padding-right: 10px;
+}
+
+QPushButton:disabled
+{
+border: 1px solid rgb(65, 75, 106);
+background-color: rgb(112, 122, 153);
+color: rgb(255, 255, 255);
+}
+
+QCheckBox::indicator
+{
+width: 15px;
+height: 15px;
+background-color: rgb(255, 255, 255);
+border: 2px solid rgb(30, 78, 162);
+color: black;
+}
+
+QCheckBox::indicator:checked
+{
+image: url(:/icons/images/icons/checked.png)
+}
+
+QComboBox
+{
+border: 1px solid rgb(30, 78, 162);
+background-color: white;
+color: black;
+}
+
+QComboBox::drop-down
+{
+border: 0px;
+}
+
+QComboBox::down-arrow
+{
+image: url(:/icons/images/icons/down-arrow.png);
+width: 16px;
+height: 16px;
+padding-right: 5px;
+}</string>
   </property>
   <property name="modal">
    <bool>true</bool>
@@ -26,6 +98,12 @@
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
         <widget class="QLineEdit" name="device_name">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>32</height>
+          </size>
+         </property>
          <property name="placeholderText">
           <string>Device name</string>
          </property>
@@ -37,6 +115,12 @@
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QLineEdit" name="password">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>32</height>
+          </size>
+         </property>
          <property name="echoMode">
           <enum>QLineEdit::Password</enum>
          </property>
@@ -79,13 +163,34 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QComboBox" name="combo_pkcs11_token"/>
+         <widget class="QComboBox" name="combo_pkcs11_token">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+         </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QComboBox" name="combo_pkcs11_key"/>
+         <widget class="QComboBox" name="combo_pkcs11_key">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+         </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QLineEdit" name="line_edit_pkcs11_pin"/>
+         <widget class="QLineEdit" name="line_edit_pkcs11_pin">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -120,6 +225,12 @@
           </item>
           <item>
            <widget class="QLineEdit" name="device_token">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>32</height>
+             </size>
+            </property>
             <property name="readOnly">
              <bool>true</bool>
             </property>
@@ -162,8 +273,32 @@
      </item>
      <item>
       <widget class="QPushButton" name="button_register_device">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>32</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::RightToLeft</enum>
+       </property>
        <property name="text">
         <string>OK</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../rc/resources.qrc">
+         <normaloff>:/icons/images/icons/checked_white.png</normaloff>:/icons/images/icons/checked_white.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
        </property>
       </widget>
      </item>
@@ -183,18 +318,65 @@
     </spacer>
    </item>
    <item>
-    <widget class="QDialogButtonBox" name="button_box">
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Close</set>
-     </property>
-     <property name="centerButtons">
-      <bool>true</bool>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="button_close">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>32</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::RightToLeft</enum>
+       </property>
+       <property name="text">
+        <string>Close</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../rc/resources.qrc">
+         <normaloff>:/icons/images/icons/white_cross.png</normaloff>:/icons/images/icons/white_cross.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../rc/resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>check_box_use_pkcs11</sender>
@@ -229,34 +411,18 @@
    </hints>
   </connection>
   <connection>
-   <sender>button_box</sender>
-   <signal>accepted()</signal>
+   <sender>button_close</sender>
+   <signal>clicked()</signal>
    <receiver>RegisterDevice</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>231</x>
-     <y>377</y>
+     <y>376</y>
     </hint>
     <hint type="destinationlabel">
      <x>231</x>
-     <y>202</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>button_box</sender>
-   <signal>rejected()</signal>
-   <receiver>RegisterDevice</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>231</x>
-     <y>377</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>231</x>
-     <y>202</y>
+     <y>201</y>
     </hint>
    </hints>
   </connection>

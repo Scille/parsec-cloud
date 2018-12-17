@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>525</width>
-    <height>361</height>
+    <width>532</width>
+    <height>543</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -67,6 +67,11 @@ QLineEdit[readOnly=&quot;true&quot;]
 background-color: rgb(230, 230, 230);
 }
 
+QLineEdit:!enabled
+{
+border: 1px solid rgb(180, 180, 180);
+}
+
 QPushButton
 {
 background-color: rgb(45, 144, 209);
@@ -95,6 +100,26 @@ color: black;
 QCheckBox::indicator:checked
 {
 image: url(:/icons/images/icons/checked.png)
+}
+
+QComboBox
+{
+border: 1px solid rgb(30, 78, 162);
+background-color: white;
+color: black;
+}
+
+QComboBox::drop-down
+{
+border: 0px;
+}
+
+QComboBox::down-arrow
+{
+image: url(:/icons/images/icons/down-arrow.png);
+width: 16px;
+height: 16px;
+padding-right: 5px;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -102,218 +127,26 @@ image: url(:/icons/images/icons/checked.png)
     <number>5</number>
    </property>
    <property name="leftMargin">
-    <number>10</number>
+    <number>0</number>
    </property>
    <property name="topMargin">
-    <number>10</number>
+    <number>15</number>
    </property>
    <property name="rightMargin">
-    <number>0</number>
+    <number>30</number>
    </property>
    <property name="bottomMargin">
-    <number>0</number>
+    <number>20</number>
    </property>
    <item>
     <widget class="QTabWidget" name="tab_settings">
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <property name="tabShape">
-      <enum>QTabWidget::Rounded</enum>
-     </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>-1</number>
      </property>
-     <property name="iconSize">
-      <size>
-       <width>24</width>
-       <height>24</height>
-      </size>
-     </property>
-     <widget class="QWidget" name="tab_app">
-      <attribute name="icon">
-       <iconset>
-        <selectedoff>:/icons/images/icons/settings_off.png</selectedoff>
-        <selectedon>:/icons/images/icons/settings_on.png</selectedon>
-       </iconset>
-      </attribute>
-      <attribute name="title">
-       <string>Global</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <property name="leftMargin">
-        <number>10</number>
-       </property>
-       <property name="topMargin">
-        <number>15</number>
-       </property>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QLabel" name="label_2">
-           <property name="minimumSize">
-            <size>
-             <width>16</width>
-             <height>16</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16</width>
-             <height>16</height>
-            </size>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="pixmap">
-            <pixmap resource="../rc/resources.qrc">:/icons/images/icons/right-chevron_black.png</pixmap>
-           </property>
-           <property name="scaledContents">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
-           <property name="text">
-            <string>Mountpoint</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <property name="leftMargin">
-          <number>20</number>
-         </property>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <item>
-            <widget class="QLineEdit" name="line_edit_mountpoint">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>32</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-               <weight>50</weight>
-               <bold>false</bold>
-              </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="button_choose_mountpoint">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>32</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="layoutDirection">
-              <enum>Qt::RightToLeft</enum>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
-             <property name="text">
-              <string>Choose mountpoint</string>
-             </property>
-             <property name="icon">
-              <iconset resource="../rc/resources.qrc">
-               <normaloff>:/icons/images/icons/edit_white.png</normaloff>:/icons/images/icons/edit_white.png</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>24</width>
-               <height>24</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="checkbox_enable_mountpoint">
-           <property name="text">
-            <string>Enable mountpoint</string>
-           </property>
-           <property name="tristate">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_network">
-      <attribute name="icon">
-       <iconset>
-        <selectedoff>:/icons/images/icons/wifi_off.png</selectedoff>
-        <selectedon>:/icons/images/icons/wifi_on.png</selectedon>
-       </iconset>
-      </attribute>
-      <attribute name="title">
-       <string>Network</string>
-      </attribute>
-     </widget>
     </widget>
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
