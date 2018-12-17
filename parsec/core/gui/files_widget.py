@@ -1,4 +1,6 @@
 import os
+import queue
+import threading
 import pathlib
 from enum import IntEnum
 from uuid import UUID
@@ -94,6 +96,20 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         core_call().connect_event("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
         self.previous_selection = []
+        self.file_queue = queue.Queue(1024)
+        self.import_thread = threading.Thread(target=self._import_files)
+        self.import_thread.start()
+
+    def stop(self):
+        self.file_queue.put_nowait((None, None))
+        self.import_thread.join()
+
+    def _import_files(self):
+        while True:
+            src, dst = self.file_queue.get()
+            if src is None or dst is None:
+                return
+            self._import_file(src, dst)
 
     def item_clicked(self, row, column):
         file_type = self.table_files.item(row, 0).data(Qt.UserRole)
@@ -179,7 +195,10 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                     if f.is_dir():
                         err |= self._import_folder(f, os.path.join(dst, f.name))
                     elif f.is_file():
-                        err |= self._import_file(f, os.path.join(dst, f.name))
+                        try:
+                            self.file_queue.put_nowait((f, os.path.join(dst, f.name)))
+                        except queue.Full:
+                            err = True
                 except:
                     err = True
         except:
@@ -212,16 +231,19 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         )
         if not paths:
             return
+        err = False
         for path in paths:
             p = pathlib.Path(path)
-            err = self._import_file(
-                str(p), os.path.join("/", self.workspace, self.current_directory, p.name)
-            )
+            try:
+                self.file_queue.put_nowait(
+                    (str(p), os.path.join("/", self.workspace, self.current_directory, p.name))
+                )
+            except queue.Full:
+                err = True
         if err:
             show_error(
                 self, QCoreApplication.translate("FilesWidget", "Some files could not be imported.")
             )
-        self.load(self.current_directory)
 
     def import_folder_clicked(self):
         path = QFileDialog.getExistingDirectory(
@@ -239,7 +261,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             show_error(
                 self, QCoreApplication.translate("FilesWidget", "The folder could not be imported.")
             )
-        self.load(self.current_directory)
 
     def filter_files(self, pattern):
         pattern = pattern.lower()
@@ -434,7 +455,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                         os.path.join("/", self.workspace, self.current_directory, name_item.text()),
                         os.path.join("/", self.workspace, self.current_directory, new_name),
                     )
-                self.load(self.current_directory)
             except:
                 show_error(self, QCoreApplication.translate("FilesWidget", "Can not rename."))
 

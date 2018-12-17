@@ -386,6 +386,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 event.accept()
             if core_call().is_mounted():
                 core_call().unmount()
+            self.mount_widget.stop()
             core_call().logout()
             core_call().stop()
             if self.tray:
