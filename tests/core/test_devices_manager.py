@@ -120,7 +120,7 @@ def mocked_pkcs11():
 def test_pkcs11_save_and_load(mocked_pkcs11, local_device_manager, alice):
     pin, token_id, key_id = mocked_pkcs11
     encryptor = PKCS11DeviceEncryptor(token_id, key_id)
-    decryptor = PKCS11DeviceDecryptor(pin, token_id, key_id)
+    decryptor = PKCS11DeviceDecryptor(token_id, key_id, pin)
 
     local_device_manager.save_device(alice, encryptor)
 
@@ -137,13 +137,13 @@ def test_pkcs11_save_and_load(mocked_pkcs11, local_device_manager, alice):
         local_device_manager.save_device(alice, bad_encryptor)
 
     with pytest.raises(DeviceManagerError):
-        bad_decryptor = PKCS11DeviceDecryptor("foo", token_id, key_id)
+        bad_decryptor = PKCS11DeviceDecryptor(token_id, key_id, "foo")
         local_device_manager.load_device(alice.device_id, bad_decryptor)
 
     with pytest.raises(DeviceManagerError):
-        bad_decryptor = PKCS11DeviceDecryptor(pin, 42, key_id)
+        bad_decryptor = PKCS11DeviceDecryptor(42, key_id, pin)
         local_device_manager.load_device(alice.device_id, bad_decryptor)
 
     with pytest.raises(DeviceManagerError):
-        bad_decryptor = PKCS11DeviceDecryptor(pin, token_id, 42)
+        bad_decryptor = PKCS11DeviceDecryptor(token_id, 42, pin)
         local_device_manager.load_device(alice.device_id, bad_decryptor)

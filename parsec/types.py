@@ -1,9 +1,79 @@
 import re
-from typing import NewType
+from urllib.parse import urlsplit, urlunsplit, parse_qs
+
+from parsec.crypto_types import VerifyKey, export_root_verify_key, import_root_verify_key
 
 
-CertifiedPublicKeyDump = NewType("CertifiedPublicKeyDump", bytes)
-CertifiedVerifyKeyDump = NewType("CertifiedVerifyKeyDump", bytes)
+__all__ = (
+    "BackendOrganizationBootstrapAddr",
+    "BackendOrganizationAddr",
+    "UserID",
+    "DeviceName",
+    "DeviceID",
+)
+
+
+class BackendOrganizationAddr(str):
+    __slots__ = ("_root_verify_key", "_domain")
+    path_regex = re.compile(r"^/(\w{1,32})$")
+
+    def __init__(self, raw: str):
+        if not isinstance(raw, str):
+            raise ValueError("Invalid user backend domain address.")
+
+        parsed = urlsplit(raw)
+
+        if not self.path_regex.match(parsed.path):
+            raise ValueError("Invalid domain name in backend domain address")
+        self._domain = parsed.path[1:]
+
+        query = parse_qs(parsed.query)
+        try:
+            self._root_verify_key = import_root_verify_key(query["rvk"][0])
+
+        except (KeyError, IndexError) as exc:
+            raise ValueError("Backend domain address must contains `rvk` params.") from exc
+
+    def get_domain(self) -> str:
+        return self._domain
+
+    def get_root_verify_key(self) -> VerifyKey:
+        return self._root_verify_key
+
+
+class BackendOrganizationBootstrapAddr(str):
+    __slots__ = ("_bootstrap_token", "_organization")
+    path_regex = re.compile(r"^/\w{1,32}$")
+
+    def __init__(self, raw: str):
+        if not isinstance(raw, str):
+            raise ValueError("Invalid user backend domain address.")
+
+        parsed = urlsplit(raw)
+
+        if not self.path_regex.match(parsed.path):
+            raise ValueError("Invalid domain name in backend domain address")
+        self._organization = parsed.path[1:]
+
+        query = parse_qs(parsed.query)
+        try:
+            self._bootstrap_token = query["bootstrap-token"][0]
+
+        except (KeyError, IndexError) as exc:
+            raise ValueError(
+                "Backend domain address must contains a `bootstrap-token` param."
+            ) from exc
+
+    def get_organization(self) -> str:
+        return self._organization
+
+    def get_bootstrap_token(self) -> str:
+        return self._bootstrap_token
+
+    def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:
+        scheme, netloc, path, _, fragment = urlsplit(self)
+        query = f"rvk={export_root_verify_key(root_verify_key)}"
+        return BackendOrganizationAddr(urlunsplit((scheme, netloc, path, query, fragment)))
 
 
 class UserID(str):
@@ -48,6 +118,3 @@ class DeviceID(str):
     @property
     def device_name(self) -> DeviceName:
         return DeviceName(self.split("@")[1])
-
-
-__all__ = ("UserID", "DeviceName", "DeviceID")

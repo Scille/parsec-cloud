@@ -22,6 +22,10 @@ class BaseLocalDeviceDecryptor:
     def decrypt(self, ciphered: bytes) -> bytes:
         raise NotImplementedError()
 
+    @staticmethod
+    def can_decrypt(ciphertext: bytes) -> bool:
+        raise NotImplementedError()
+
 
 class PasswordPayloadSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("password", required=True)
@@ -69,3 +73,12 @@ class PasswordDeviceDecryptor(BaseLocalDeviceDecryptor):
 
         except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
             raise CipherError(str(exc)) from exc
+
+    @staticmethod
+    def can_decrypt(ciphertext: bytes) -> bool:
+        try:
+            password_payload_schema.loads(ciphertext.decode("utf8")).data
+            return True
+
+        except (ValidationError, JSONDecodeError, ValueError) as exc:
+            return False

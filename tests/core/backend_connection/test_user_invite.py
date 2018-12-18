@@ -10,9 +10,13 @@ from parsec.core.invite_claim import generate_user_encrypted_claim, extract_user
 
 @pytest.mark.trio
 async def test_user_invite_then_claim_ok(alice, alice_backend_cmds, mallory, running_backend):
+    token = "424242"
+
     async def _alice_invite():
         encrypted_claim = await alice_backend_cmds.user_invite(mallory.user_id)
         claim = extract_user_encrypted_claim(alice.private_key, encrypted_claim)
+
+        assert claim["token"] == token
 
         now = pendulum.now()
         certified_user = certify_user(
@@ -34,6 +38,7 @@ async def test_user_invite_then_claim_ok(alice, alice_backend_cmds, mallory, run
 
             encrypted_claim = generate_user_encrypted_claim(
                 invitation_creator.public_key,
+                token,
                 mallory.device_id,
                 mallory.public_key,
                 mallory.verify_key,

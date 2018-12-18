@@ -10,6 +10,7 @@ from parsec.api.protocole import HandshakeFormatError, ServerHandshake
 from parsec.backend.events import EventsComponent
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.drivers.memory import (
+    MemoryOrganizationComponent,
     MemoryUserComponent,
     MemoryVlobComponent,
     MemoryMessageComponent,
@@ -18,6 +19,7 @@ from parsec.backend.drivers.memory import (
 )
 from parsec.backend.drivers.postgresql import (
     PGHandler,
+    PGOrganizationComponent,
     PGUserComponent,
     PGVlobComponent,
     PGMessageComponent,
@@ -77,6 +79,7 @@ class BackendApp:
 
         if self.config.db_url == "MOCKED":
             self.user = MemoryUserComponent(self.event_bus)
+            self.organization = MemoryOrganizationComponent(self.user)
             self.message = MemoryMessageComponent(self.event_bus)
             self.beacon = MemoryBeaconComponent(self.event_bus)
             self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
@@ -99,6 +102,8 @@ class BackendApp:
             "user_get_invitation_creator": self.user.api_user_get_invitation_creator,
             "device_claim": self.user.api_device_claim,
             "device_get_invitation_creator": self.user.api_device_get_invitation_creator,
+            "organization_create": self.organization.api_organization_create,
+            "organization_bootstrap": self.organization.api_organization_bootstrap,
             "ping": self.ping.api_ping,
         }
         for fn in self.anonymous_cmds.values():

@@ -28,7 +28,8 @@ class PGUserComponent(BaseUserComponent):
             async with conn.transaction():
                 await self._create_user(conn, user)
 
-    async def _create_user(self, conn, user: User) -> None:
+    @staticmethod
+    async def _create_user(conn, user: User) -> None:
         try:
             result = await conn.execute(
                 """

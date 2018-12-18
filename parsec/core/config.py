@@ -1,5 +1,6 @@
 import os
 import attr
+import json
 from typing import Optional, Dict
 from pathlib import Path
 
@@ -44,6 +45,8 @@ class CoreConfig:
     backend_watchdog: int = 0
     backend_max_connections: int = 4
 
+    invitation_token_size: int = 8
+
     sentry_url: Optional[str] = None
 
 
@@ -63,4 +66,39 @@ def config_factory(
         debug=debug,
         backend_watchdog=backend_watchdog,
         sentry_url=environ.get("SENTRY_URL") or None,
+    )
+
+
+def load_config(config_dir: Path, **extra_config) -> CoreConfig:
+
+    try:
+        raw_conf = (config_dir / "config.json").read_text()
+        data_conf = json.loads(raw_conf)
+    except (ValueError, OSError, json.JSONDecodeError):
+        # Config file not created yet, fallback to
+        data_conf = {}
+
+    try:
+        data_conf["data_dir"] = Path(data_conf["data_dir"])
+    except (KeyError, ValueError):
+        pass
+
+    try:
+        data_conf["cache_dir"] = Path(data_conf["cache_dir"])
+    except (KeyError, ValueError):
+        pass
+
+    return config_factory(config_dir=config_dir, **data_conf, **extra_config)
+
+
+def save_config(config: CoreConfig):
+    (config.config_dir / "config.json").write_text(
+        json.dumps(
+            {
+                "data_dir": str(config.data_dir),
+                "cache_dir": str(config.cache_dir),
+                "backend_watchdog": config.backend_watchdog,
+                "sentry_url": config.sentry_url,
+            }
+        )
     )

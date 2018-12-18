@@ -1,6 +1,6 @@
 import trio
 import attr
-from typing import List, Tuple, Dict, Union
+from typing import List, Tuple, Dict, Union, Optional
 import pendulum
 
 from parsec.types import UserID, DeviceID
@@ -75,7 +75,7 @@ class Device:
 
     device_id: DeviceID
     certified_device: bytes
-    device_certifier: DeviceID
+    device_certifier: Optional[DeviceID]
 
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
     revocated_on: pendulum.Pendulum = None
@@ -132,10 +132,34 @@ class User:
 
     user_id: UserID
     certified_user: bytes
-    user_certifier: DeviceID
+    user_certifier: Optional[DeviceID]
     devices: DevicesMapping = attr.ib(factory=DevicesMapping)
 
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+
+
+def new_user_factory(
+    device_id: DeviceID,
+    certifier: DeviceID,
+    certified_user: bytes,
+    certified_device: bytes,
+    now: pendulum.Pendulum = None,
+) -> User:
+    now = now or pendulum.now()
+    return User(
+        user_id=device_id.user_id,
+        certified_user=certified_user,
+        user_certifier=certifier,
+        devices=DevicesMapping(
+            Device(
+                device_id=device_id,
+                certified_device=certified_device,
+                device_certifier=certifier,
+                created_on=now,
+            )
+        ),
+        created_on=now,
+    )
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -322,6 +346,7 @@ class BaseUserComponent:
         try:
             u_certifier_id, u_payload = certified_extract_parts(msg["certified_user"])
             d_certifier_id, d_payload = certified_extract_parts(msg["certified_device"])
+
         except TrustChainError as exc:
             return {
                 "status": "invalid_certification",
@@ -335,12 +360,10 @@ class BaseUserComponent:
             }
 
         try:
-            u_data = validate_payload_certified_user(
-                client_ctx.verify_key, u_payload, pendulum.now()
-            )
-            d_data = validate_payload_certified_device(
-                client_ctx.verify_key, d_payload, pendulum.now()
-            )
+            now = pendulum.now()
+            u_data = validate_payload_certified_user(client_ctx.verify_key, u_payload, now)
+            d_data = validate_payload_certified_device(client_ctx.verify_key, d_payload, now)
+
         except TrustChainError as exc:
             return {
                 "status": "invalid_certification",
@@ -352,6 +375,7 @@ class BaseUserComponent:
                 "status": "invalid_data",
                 "reason": "Device and User must have the same user ID.",
             }
+
         if u_data["timestamp"] != d_data["timestamp"]:
             return {
                 "status": "invalid_data",

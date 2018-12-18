@@ -1,4 +1,5 @@
 from .handler import PGHandler, init_db
+from .organization import PGOrganizationComponent
 from .blockstore import PGBlockstoreComponent
 from .message import PGMessageComponent
 from .user import PGUserComponent
@@ -10,6 +11,7 @@ from .ping import PGPingComponent
 __all__ = [
     "init_db",
     "PGHandler",
+    "PGOrganizationComponent",
     "PGBlockstoreComponent",
     "PGMessageComponent",
     "PGUserComponent",

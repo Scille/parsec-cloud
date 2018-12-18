@@ -17,7 +17,7 @@ from parsec.crypto import (
     PublicKey,
     SigningKey,
     VerifyKey,
-    dump_root_verify_key,
+    export_root_verify_key,
     encrypt_with_secret_key,
 )
 from parsec.trustchain import certify_user, certify_device
@@ -469,7 +469,7 @@ def backend_factory(
     # nursery fixture is done with calling the backend's postgresql stuff.
 
     blockstore_type, blockstore_config = blockstore
-    rvk = dump_root_verify_key(root_key_certifier.verify_key)
+    rvk = export_root_verify_key(root_key_certifier.verify_key)
 
     @asynccontextmanager
     async def _backend_factory(devices=default_devices, config={}, event_bus=None):
@@ -536,7 +536,7 @@ async def backend(backend_factory):
 
 @pytest.fixture(scope="session")
 def backend_addr(root_verify_key):
-    rvk = dump_root_verify_key(root_verify_key)
+    rvk = export_root_verify_key(root_verify_key)
     return f"tcp://parsec-backend.localhost:9999?root-verify-key={rvk}"
 
 

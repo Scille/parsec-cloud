@@ -3,7 +3,6 @@ from uuid import UUID
 from typing import List, Tuple
 
 from parsec.types import DeviceID
-from parsec.event_bus import EventBus
 from parsec.backend.beacon import BaseBeaconComponent
 from parsec.backend.vlob import (
     BaseVlobComponent,

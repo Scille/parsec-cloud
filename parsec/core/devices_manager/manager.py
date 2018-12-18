@@ -1,5 +1,5 @@
 import attr
-from typing import List
+from typing import List, Tuple
 from pathlib import Path
 from json import JSONDecodeError
 
@@ -53,6 +53,8 @@ class DeviceSavingError(DeviceManagerError):
     pass
 
 
+# TODO: replace backend_addr by a pasec.types.BackendOrganizationAddr
+# so we can remove root_verify_key
 def generate_new_device(
     device_id: DeviceID, backend_addr: str, root_verify_key: VerifyKey
 ) -> LocalDevice:
@@ -67,16 +69,21 @@ def generate_new_device(
     )
 
 
+# TODO: remove this class: helper functions are easier to work with
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class LocalDevicesManager:
     config_path: Path
 
-    def _get_key_file(self, device_id: DeviceID):
-        return self.config_path / device_id / f"{device_id}.keys"
+    @property
+    def devices_config_path(self):
+        return self.config_path / "devices"
 
-    def list_available_devices(self) -> List[DeviceID]:
+    def _get_key_file(self, device_id: DeviceID):
+        return self.devices_config_path / device_id / f"{device_id}.keys"
+
+    def list_available_devices(self) -> List[Tuple[DeviceID, str]]:
         try:
-            candidate_pathes = list(self.config_path.iterdir())
+            candidate_pathes = list(self.devices_config_path.iterdir())
         except FileNotFoundError:
             return []
 
@@ -85,13 +92,36 @@ class LocalDevicesManager:
         for device_path in candidate_pathes:
             try:
                 device_id = DeviceID(device_path.name)
-                if not self._get_key_file(device_id).exists():
-                    continue
-                devices.append(device_id)
             except ValueError:
                 continue
 
+            try:
+                cipher = self.get_cipher_info(device_id)
+                devices.append((device_id, cipher))
+
+            except DeviceManagerError:
+                continue
+
         return devices
+
+    def get_cipher_info(self, device_id: DeviceID) -> str:
+        from .pkcs11_cipher import PKCS11DeviceDecryptor
+        from .cipher import PasswordDeviceDecryptor
+
+        key_file = self._get_key_file(device_id)
+        try:
+            ciphertext = key_file.read_bytes()
+        except OSError as exc:
+            raise DeviceConfigNotFound(str(key_file))
+
+        for decryptor_cls, cipher in (
+            (PKCS11DeviceDecryptor, "pkcs11"),
+            (PasswordDeviceDecryptor, "password"),
+        ):
+            if decryptor_cls.can_decrypt(ciphertext):
+                return cipher
+
+        raise DeviceLoadingError("Unknown cipher.")
 
     def load_device(self, device_id: DeviceID, decryptor: BaseLocalDeviceDecryptor) -> LocalDevice:
         """
@@ -110,14 +140,19 @@ class LocalDevicesManager:
         except (CipherError, ValidationError, JSONDecodeError, ValueError, OSError) as exc:
             raise DeviceLoadingError(str(exc)) from exc
 
-    def save_device(self, device: LocalDevice, encryptor: BaseLocalDeviceEncryptor) -> None:
+    def save_device(
+        self, device: LocalDevice, encryptor: BaseLocalDeviceEncryptor, force: bool = False
+    ) -> None:
         """
         Raises:
             DeviceManagerError
         """
         key_file = self._get_key_file(device.device_id)
         if key_file.exists():
-            raise DeviceConfigAleadyExists(str(key_file))
+            if force:
+                key_file.unlink()
+            else:
+                raise DeviceConfigAleadyExists(str(key_file))
 
         try:
             raw = local_device_schema.dumps(device).data.encode("utf8")

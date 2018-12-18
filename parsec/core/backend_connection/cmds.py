@@ -4,11 +4,13 @@ from uuid import uuid4, UUID
 from async_generator import asynccontextmanager
 
 from parsec.types import DeviceID, UserID
-from parsec.crypto import SigningKey
+from parsec.crypto import SigningKey, VerifyKey
 from parsec.api.transport import BaseTransport, TransportError
 from parsec.api.protocole import (
     ProtocoleError,
     ping_serializer,
+    organization_create_serializer,
+    organization_bootstrap_serializer,
     events_subscribe_serializer,
     events_listen_serializer,
     beacon_read_serializer,
@@ -34,7 +36,7 @@ from parsec.api.protocole import (
     device_create_serializer,
     device_revoke_serializer,
 )
-from parsec.core.types import RemoteDevice, RemoteUser, RemoteDevicesMapping
+from parsec.core.types import RemoteDevice, RemoteUser, RemoteDevicesMapping, LocalDevice
 from parsec.core.backend_connection.exceptions import BackendConnectionError, BackendNotAvailable
 from parsec.core.backend_connection.transport import (
     authenticated_transport_factory,
@@ -91,7 +93,7 @@ async def _send_cmd(transport, serializer, **req):
 
     except TransportError as exc:
         transport.log.debug("send req failed (backend not available)")
-        raise BackendNotAvailable() from exc
+        raise BackendNotAvailable("Backend not available.") from exc
 
     transport.log.debug("recv rep", req=_shorten_data(raw_rep))
 
@@ -384,6 +386,35 @@ class BackendAnonymousCmds:
         if rep["status"] != "ok":
             raise BackendCmdsBadResponse(rep)
         return rep["pong"]
+
+    async def organization_create(self, name: str) -> str:
+        rep = await _send_cmd(
+            self.transport, organization_create_serializer, cmd="organization_create", name=name
+        )
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
+        return rep["bootstrap_token"]
+
+    async def organization_bootstrap(
+        self,
+        name: str,
+        bootstrap_token: str,
+        root_verify_key: VerifyKey,
+        certified_user: bytes,
+        certified_device: bytes,
+    ) -> None:
+        rep = await _send_cmd(
+            self.transport,
+            organization_bootstrap_serializer,
+            cmd="organization_bootstrap",
+            name=name,
+            bootstrap_token=bootstrap_token,
+            root_verify_key=root_verify_key,
+            certified_user=certified_user,
+            certified_device=certified_device,
+        )
+        if rep["status"] != "ok":
+            raise BackendCmdsBadResponse(rep)
 
     async def user_get_invitation_creator(self, invited_user_id: UserID) -> RemoteUser:
         rep = await _send_cmd(

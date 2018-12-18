@@ -2,32 +2,35 @@ import base64
 import json
 import pendulum
 import triopg
-from typing import Optional, Tuple
 from structlog import get_logger
 from uuid import UUID
 
 from parsec.types import UserID, DeviceID
 from parsec.event_bus import EventBus
-from parsec.crypto import PublicKey, PrivateKey, VerifyKey, SigningKey, sign_and_add_meta
+from parsec.crypto import PublicKey, VerifyKey, SigningKey
 from parsec.utils import call_with_control, ejson_dumps, ejson_loads
+from parsec.core.types import LocalDevice
 
 
 logger = get_logger()
 
 
+# TODO: remove me and create domain api to do that in core instead
 async def init_db(
-    url: str, device_id: DeviceID, force: bool = False
-) -> Optional[Tuple[VerifyKey, PrivateKey, SigningKey]]:
+    url: str, device: LocalDevice, root_signing_key: SigningKey, force: bool = False
+) -> bool:
     """
     Raises:
         triopg.exceptions.PostgresError
-    Returns: Tuple of (root key verify key, new user private key and new device signing key)
-             or None if database already initialized.
     """
     async with triopg.connect(url) as conn:
         already_initialized = await _ensure_tables_in_place(conn, force)
         if not already_initialized:
-            return await _insert_first_user_and_device(conn, device_id)
+            await _insert_first_user_and_device(conn, device, root_signing_key)
+            return True
+
+        else:
+            return False
 
 
 async def _ensure_tables_in_place(conn, force):
@@ -69,47 +72,56 @@ def extract_signed_pubkey_payload(payload: bytes):
     pass
 
 
-async def _insert_first_user_and_device(conn, device_id):
+# TODO: dirty stuff, should be replaced by the domain API
+async def _insert_first_user_and_device(conn, device, root_signing_key):
+    from parsec.trustchain import certify_user, certify_device
+    from parsec.backend.drivers.postgresql import PGUserComponent
+    from parsec.backend.user import User, DevicesMapping, Device
+    from parsec.api.constants import root_device_id
+
     now = pendulum.now()
-    root_signkey = SigningKey.generate()
-    user_privkey = PrivateKey.generate()
-    device_signkey = SigningKey.generate()
-    root_device_id = DeviceID("root@root")
 
-    public_key_payload = sign_and_add_meta(
-        root_device_id,
-        root_signkey,
-        build_signed_pubkey_payload(device_id.user_id, user_privkey.public_key, now),
+    # First insert root user
+    user = User(
+        user_id=root_device_id.user_id,
+        certified_user=None,
+        user_certifier=None,
+        devices=DevicesMapping(
+            Device(
+                device_id=root_device_id,
+                certified_device=None,
+                device_certifier=None,
+                created_on=now,
+            )
+        ),
+        created_on=now,
     )
-    verify_key_payload = sign_and_add_meta(
-        root_device_id,
-        root_signkey,
-        build_signed_verifykey_payload(device_id, device_signkey.verify_key, now),
-    )
+    await PGUserComponent._create_user(conn, user)
 
-    await conn.execute(
-        """
-        INSERT INTO users (user_id, created_on, broadcast_key)
-        VALUES ($1, $2, $3)
-        """,
-        device_id.user_id,
-        now,
-        public_key_payload,
-    )
+    # Then insert the real first user
 
-    await conn.execute(
-        """
-        INSERT INTO devices (device_id, user_id, device_name, created_on, verify_key)
-        VALUES ($1, $2, $3, $4, $5)
-        """,
-        device_id,
-        device_id.user_id,
-        device_id.device_name,
-        now,
-        verify_key_payload,
+    certified_user = certify_user(
+        root_device_id, root_signing_key, device.user_id, device.public_key, now=now
+    )
+    certified_device = certify_device(
+        root_device_id, root_signing_key, device.device_id, device.verify_key, now=now
     )
 
-    return (root_signkey.verify_key, user_privkey, device_signkey)
+    user = User(
+        user_id=device.user_id,
+        certified_user=certified_user,
+        user_certifier=root_device_id,
+        devices=DevicesMapping(
+            Device(
+                device_id=device.device_id,
+                certified_device=certified_device,
+                device_certifier=root_device_id,
+                created_on=now,
+            )
+        ),
+        created_on=now,
+    )
+    await PGUserComponent._create_user(conn, user)
 
 
 async def _drop_db(conn):
@@ -118,6 +130,8 @@ async def _drop_db(conn):
     await conn.execute(
         """
         DROP TABLE IF EXISTS
+            organizations,
+
             users,
             devices,
 
@@ -155,9 +169,15 @@ async def _is_db_initialized(conn):
 async def _create_db_tables(conn):
     await conn.execute(
         """
+        CREATE TABLE organizations (
+            name VARCHAR(32) PRIMARY KEY,
+            bootstrap_token VARCHAR(32) NOT NULL,
+            root_verify_key BYTEA
+        );
+
         CREATE TABLE users (
             user_id VARCHAR(32) PRIMARY KEY,
-            certified_user BYTEA NOT NULL,
+            certified_user BYTEA,
             user_certifier VARCHAR(32),
             created_on TIMESTAMP NOT NULL
         );
@@ -165,7 +185,7 @@ async def _create_db_tables(conn):
         CREATE TABLE devices (
             device_id VARCHAR(65) PRIMARY KEY,
             user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
-            certified_device BYTEA NOT NULL,
+            certified_device BYTEA,
             device_certifier VARCHAR(32) REFERENCES devices (device_id),
             created_on TIMESTAMP NOT NULL,
             revocated_on TIMESTAMP,

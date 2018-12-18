@@ -27,10 +27,11 @@ def kill_window(window):
     return _inner_kill_window
 
 
-def run_gui(parsec_core, trio_portal, cancel_scope):
+def run_gui():
+    # def run_gui(parsec_core, trio_portal, cancel_scope):
     print("Starting UI")
 
-    init_core_call(parsec_core=parsec_core, trio_portal=trio_portal, cancel_scope=cancel_scope)
+    # init_core_call(parsec_core=parsec_core, trio_portal=trio_portal, cancel_scope=cancel_scope)
 
     app = QApplication([])
     app.setOrganizationName("Scille")

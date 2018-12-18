@@ -71,36 +71,32 @@ class TCPTransport(BaseTransport):
         except BrokenResourceError as exc:
             raise TransportError(*exc.args) from exc
 
-    async def recv(self) -> bytes:
+    async def _recv_exactly(self, size):
+        out = bytearray(size)
+        offset = 0
         try:
-            msg_size_raw = await self.stream.receive_some(4)
-            while len(msg_size_raw) < 4:
-                msg_size_raw += await self.stream.receive_some(4 - len(msg_size_raw))
+            while offset < size:
+                buff = await self.stream.receive_some(size - offset)
+                if not buff:
+                    # Empty body should normally never occurs, though it is sent
+                    # when peer closes connection
+                    raise TransportError("Peer has closed connection")
+                out[offset : offset + len(buff)] = buff
+                offset += len(buff)
 
         except BrokenResourceError as exc:
             raise TransportError(*exc.args) from exc
-        if not msg_size_raw:
-            # Empty body should normally never occurs, though it is sent
-            # when peer closes connection
-            raise TransportError("Peer has closed connection")
+
+        return out
+
+    async def recv(self) -> bytes:
+        msg_size_raw = await self._recv_exactly(4)
 
         msg_size, = struct.unpack("!L", msg_size_raw)
         if msg_size > self.MAX_MSG_SIZE:
             raise TransportError("Message too big")
 
-        try:
-            msg = await self.stream.receive_some(msg_size)
-            while len(msg) < msg_size:
-                msg += await self.stream.receive_some(msg_size - len(msg))
-
-        except BrokenResourceError as exc:
-            raise TransportError(*exc.args) from exc
-        if not msg:
-            # Empty body should normally never occurs, though it is sent
-            # when peer closes connection
-            raise TransportError("Peer has closed connection")
-
-        return msg
+        return await self._recv_exactly(msg_size)
 
 
 # TODO: remove me !

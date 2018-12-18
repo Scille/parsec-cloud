@@ -10,6 +10,14 @@ from parsec.core.devices_manager.manager import (
     DeviceLoadingError,
     DeviceSavingError,
 )
+from parsec.core.devices_manager.helpers import (
+    get_cipher_info,
+    list_available_devices,
+    load_device_with_password,
+    save_device_with_password,
+    load_device_with_pkcs11,
+    save_device_with_pkcs11,
+)
 
 
 __all__ = (
@@ -25,4 +33,10 @@ __all__ = (
     "DeviceConfigAleadyExists",
     "DeviceLoadingError",
     "DeviceSavingError",
+    "get_cipher_info",
+    "list_available_devices",
+    "load_device_with_password",
+    "save_device_with_password",
+    "load_device_with_pkcs11",
+    "save_device_with_pkcs11",
 )

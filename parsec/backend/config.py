@@ -4,7 +4,7 @@ import itertools
 from typing import List, Union
 from collections import defaultdict
 
-from parsec.crypto import load_root_verify_key, VerifyKey
+from parsec.crypto import import_root_verify_key, VerifyKey
 
 
 __all__ = ("config_factory", "BackendConfig", "BaseBlockstoreConfig")
@@ -168,6 +168,7 @@ class BackendConfig:
     handshake_challenge_size: int = 48
 
 
+# TODO: root_verify_key no longer in config (stored per device)
 def config_factory(
     root_verify_key: Union[str, VerifyKey],
     db_url: str = "MOCKED",
@@ -187,7 +188,7 @@ def config_factory(
     config["blockstore_config"] = _extract_blockstore_config(blockstore_type, environ)
 
     try:
-        config["root_verify_key"] = load_root_verify_key(root_verify_key)
+        config["root_verify_key"] = import_root_verify_key(root_verify_key)
     except Exception as exc:
         raise ValueError("Invalid root verify key.") from exc
 

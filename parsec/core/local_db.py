@@ -5,7 +5,8 @@ from shutil import rmtree
 from parsec.crypto import encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
 
 # TODO: shouldn't use core.fs.types.Acces here
-from parsec.core.fs.types import Access
+# from parsec.core.fs.types import Access
+Access = None  # TODO: hack to fix recursive import
 
 
 # TODO: should be in config.py

@@ -8,6 +8,10 @@ from parsec.api.protocole.handshake import (
     ClientHandshake,
     AnonymousClientHandshake,
 )
+from parsec.api.protocole.organization import (
+    organization_create_serializer,
+    organization_bootstrap_serializer,
+)
 from parsec.api.protocole.events import events_subscribe_serializer, events_listen_serializer
 from parsec.api.protocole.ping import ping_serializer
 from parsec.api.protocole.beacon import beacon_read_serializer
@@ -46,6 +50,9 @@ __all__ = (
     "ServerHandshake",
     "ClientHandshake",
     "AnonymousClientHandshake",
+    # Organization
+    "organization_create_serializer",
+    "organization_bootstrap_serializer",
     # Events
     "events_subscribe_serializer",
     "events_listen_serializer",

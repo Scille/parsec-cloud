@@ -5,7 +5,7 @@ import click
 from functools import partial
 
 from parsec.types import DeviceID
-from parsec.crypto import dump_root_verify_key
+from parsec.crypto import export_root_verify_key
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import BackendApp, config_factory
 from parsec.backend.drivers.postgresql import init_db
@@ -21,15 +21,9 @@ DEFAULT_DEVICES_PATH = os.path.join(get_default_config_dir(os.environ), "devices
 @click.command()
 @click.option("--db", required=True, help="PostgreSQL database url")
 @click.option("--force", "-f", is_flag=True)
-@click.option(
-    "--settings",
-    type=click.Path(file_okay=False, writable=True),
-    default=DEFAULT_DEVICES_PATH,
-    help="Path to store new first device configuration.",
-)
-@click.option("--backend-base-url", "-b", "backend_base_url")
+@click.option("--backend-base-url", "-b", "backend_base_url", required=True)
 @click.argument("device_id", metavar="user-id", type=DeviceID)
-def init_cmd(db, force, settings, backend_base_url, device_id):
+def init_cmd(db, force, backend_base_url, device_id):
     """
     Initialize a new backend's PostgreSQL database.
 
@@ -42,37 +36,38 @@ def init_cmd(db, force, settings, backend_base_url, device_id):
     if not db.startswith("postgresql://"):
         raise SystemExit("Can only initialize a PostgreSQL database.")
 
-    keys = None
+    from parsec.crypto import SigningKey
+    from parsec.core.devices_manager import generate_new_device, save_device_with_password
+    from parsec.core.config import get_default_config_dir
+
+    config_dir = get_default_config_dir(os.environ)
+    root_signing_key = SigningKey.generate()
+
+    url_param_root_verify_key = export_root_verify_key(root_signing_key.verify_key)
+    backend_addr = f"{backend_base_url}?rvk={url_param_root_verify_key}"
+
+    device = generate_new_device(device_id, backend_addr, root_signing_key.verify_key)
+    init_done = False
 
     async def _init_db():
-        nonlocal keys
-        keys = await init_db(db, device_id, force=force)
+        nonlocal init_done
+        init_done = await init_db(db, device, root_signing_key, force=force)
 
     try:
         trio_asyncio.run(_init_db)
 
-        if not keys:
+        if not init_done:
             click.secho("Database already initialized, nothing to do.", fg="green")
         else:
-            root_verify_key, user_private_key, device_signing_key = keys
             password = click.prompt("Device password", hide_input=True, confirmation_prompt=True)
-            devices_manager = LocalDevicesManager(settings)
-            user_manifest_access = new_access()
-            devices_manager.register_new_device(
-                device_id=device_id,
-                user_privkey=user_private_key.encode(),
-                device_signkey=device_signing_key.encode(),
-                user_manifest_access=user_manifest_access,
-                password=password,
-            )
-            url_param_root_verify_key = dump_root_verify_key(root_verify_key)
+            save_device_with_password(config_dir, device, password)
 
             click.secho("Database initialized", fg="green")
             click.secho("Backend environment variables: ", fg="green", nl=False)
             click.echo(f"Root verify key: {url_param_root_verify_key}")
             if backend_base_url:
                 click.secho("Backend URL: ", fg="green", nl=False)
-                click.echo(f"{backend_base_url}?root-verify-key={url_param_root_verify_key}")
+                click.echo(backend_addr)
             else:
                 click.secho("Backend URL template: ", fg="green", nl=False)
                 click.echo(f"ws://<domain>?root-verify-key={url_param_root_verify_key}")
@@ -82,6 +77,7 @@ def init_cmd(db, force, settings, backend_base_url, device_id):
 
     except Exception as exc:
         click.secho("DB initialization failed: ", fg="red", nl=False)
+        raise
         click.echo(str(exc))
         raise SystemExit(1)
 
@@ -144,6 +140,7 @@ def backend_cmd(
         f"Starting Parsec Backend on {host}:{port} (db={config.db_type}, blockstore={config.blockstore_config.type})"
     )
     try:
+        # from tests.monitor import Monitor
         trio_asyncio.run(_run_backend)
     except KeyboardInterrupt:
         print("bye ;-)")

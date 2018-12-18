@@ -1,9 +1,14 @@
 import trio
 import attr
-from typing import Optional
+import pendulum
+from typing import Tuple, Optional
 from async_generator import asynccontextmanager
 
+from parsec.types import DeviceID, UserID
 from parsec.event_bus import EventBus
+from parsec.crypto import PublicKey, VerifyKey
+from parsec.trustchain import certify_user, certify_device
+from parsec.core.invite_claim import extract_user_encrypted_claim
 from parsec.core.types import LocalDevice
 from parsec.core.config import CoreConfig
 from parsec.core.backend_connection import (
@@ -30,6 +35,65 @@ class LoggedCore:
     mountpoint_manager = attr.ib()
     backend_cmds = attr.ib()
     fs = attr.ib()
+
+    # Helper functions
+
+    async def user_invite(self, user_id: UserID) -> Tuple[DeviceID, PublicKey, VerifyKey]:
+        """
+        Raises:
+            core.backend_connection.BackendConnectionError
+            core.trustchain.TrustChainError
+        """
+        encrypted_claim = await self.backend_cmds.user_invite(user_id)
+
+        claim = extract_user_encrypted_claim(self.device.private_key, encrypted_claim)
+        return claim["device_id"], claim["public_key"], claim["verify_key"]
+
+    async def user_create(
+        self, device_id: UserID, public_key: PublicKey, verify_key: VerifyKey
+    ) -> None:
+        """
+        Raises:
+            core.backend_connection.BackendConnectionError
+            core.trustchain.TrustChainError
+        """
+        now = pendulum.now()
+        certified_user = certify_user(
+            self.device.device_id, self.device.signing_key, device_id.user_id, public_key, now=now
+        )
+        certified_device = certify_device(
+            self.device.device_id, self.device.signing_key, device_id, verify_key, now=now
+        )
+        await self.backend_cmds.user_create(certified_user, certified_device)
+
+    async def user_claim(backend_addr: str, device_id: DeviceID, token: str):
+        public_key = PublicKey.generate()
+        signing_key = SigningKey.generate()
+
+        async with backend_anonymous_cmds_factory(backend_addr) as cmds:
+            invitation_creator = await cmds.user_get_invitation_creator(device_id.user_id)
+
+            encrypted_claim = generate_user_encrypted_claim(
+                invitation_creator.public_key, token, device_id, public_key, verify_key
+            )
+            await cmds.user_claim(device_id.user_id, encrypted_claim)
+
+            if pkcs11:
+                save_device_with_password(config_dir, device_id, token_id, key_id, pin)
+            else:
+                save_device_with_password(config_dir, device_id, password)
+
+        async with backend_anonymous_cmds_factory(backend_addr) as cmds:
+            invitation_creator = await cmds.user_get_invitation_creator(mallory.user_id)
+            assert isinstance(invitation_creator, RemoteUser)
+
+            encrypted_claim = generate_user_encrypted_claim(
+                invitation_creator.public_key,
+                mallory.device_id,
+                mallory.public_key,
+                mallory.verify_key,
+            )
+            await cmds.user_claim(mallory.user_id, encrypted_claim)
 
 
 @asynccontextmanager

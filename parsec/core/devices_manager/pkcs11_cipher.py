@@ -43,10 +43,10 @@ class PKCS11DeviceEncryptor(BaseLocalDeviceEncryptor):
 
 
 class PKCS11DeviceDecryptor(BaseLocalDeviceDecryptor):
-    def __init__(self, pin: str, token_id: int, key_id: int):
-        self.pin = pin
+    def __init__(self, token_id: int, key_id: int, pin: str):
         self.key_id = key_id
         self.token_id = token_id
+        self.pin = pin
         # Force loading to crash early if opensc-pkcs11.so is not available
         get_LIB()
 
@@ -61,3 +61,12 @@ class PKCS11DeviceDecryptor(BaseLocalDeviceDecryptor):
 
         except (DevicePKCS11Error, ValidationError, JSONDecodeError, ValueError) as exc:
             raise CipherError(str(exc)) from exc
+
+    @staticmethod
+    def can_decrypt(ciphertext: bytes) -> bool:
+        try:
+            pkcs11_payload_schema.loads(ciphertext.decode("utf8")).data
+            return True
+
+        except (ValidationError, JSONDecodeError, ValueError) as exc:
+            return False

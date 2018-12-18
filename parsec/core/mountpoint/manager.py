@@ -1,8 +1,10 @@
+import os
 import warnings
 import trio
 import logging
 from pathlib import Path
 
+from parsec.types import DeviceID
 from parsec.core.mountpoint.exceptions import MountpointAlreadyStarted, MountpointNotStarted
 
 try:
@@ -19,6 +21,13 @@ except (ImportError, OSError) as exc:
 else:
     from parsec.core.mountpoint.thread import run_fuse_in_thread
     from parsec.core.mountpoint.process import run_fuse_in_process
+
+
+def get_default_mountpoint(device_id: DeviceID):
+    if os.name == "nt":
+        raise NotImplementedError()
+    else:
+        return Path(f"/media/{device_id}")
 
 
 class FuseMountpointManager:

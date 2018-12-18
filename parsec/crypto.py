@@ -1,7 +1,7 @@
 from typing import Tuple, NewType
 import pendulum
-from base64 import b32decode, b32encode
 from json import JSONDecodeError
+from secrets import token_hex
 from nacl.public import SealedBox
 from nacl.bindings import crypto_sign_BYTES
 from nacl.secret import SecretBox
@@ -10,7 +10,14 @@ from nacl.pwhash import argon2i
 from nacl.exceptions import CryptoError, BadSignatureError
 
 from parsec.types import DeviceID
-from parsec.crypto_types import PrivateKey, PublicKey, SigningKey, VerifyKey
+from parsec.crypto_types import (
+    PrivateKey,
+    PublicKey,
+    SigningKey,
+    VerifyKey,
+    export_root_verify_key,
+    import_root_verify_key,
+)
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError
 
 
@@ -23,6 +30,9 @@ __all__ = (
     "VerifyKey",
     "SymetricKey",
     "HashDigest",
+    "generate_token",
+    "export_root_verify_key",
+    "import_root_verify_key",
 )
 
 
@@ -53,33 +63,12 @@ class CryptoMetadataError(CryptoError):
     pass
 
 
+def generate_token(length: int):
+    return token_hex(length)
+
+
 def generate_secret_key():
     return random(SecretBox.KEY_SIZE)
-
-
-def dump_root_verify_key(key: VerifyKey) -> str:
-    """
-    Raises:
-        ValueError
-    """
-    # Note we replace padding char `=` by a simple `s` (which is not part of
-    # the base32 table so no risk of collision) to avoid copy/paste errors
-    # and silly escaping issues when carrying the key around.
-    return b32encode(key.encode()).decode("utf8").replace("=", "s")
-
-
-def load_root_verify_key(raw: str) -> VerifyKey:
-    """
-    Raises:
-        ValueError
-    """
-    if isinstance(raw, VerifyKey):
-        # Useful during tests
-        return raw
-    try:
-        return VerifyKey(b32decode(raw.replace("s", "=").encode("utf8")))
-    except CryptoError as exc:
-        raise ValueError("Invalid verify key") from exc
 
 
 def derivate_secret_key_from_password(password: str, salt: bytes = None) -> Tuple[bytes, bytes]:
