@@ -40,7 +40,7 @@ async def _transport_factory(addr: str) -> BaseTransport:
 
     except OSError as exc:
         logger.debug("Impossible to connect to backend", reason=exc)
-        raise BackendNotAvailable() from exc
+        raise BackendNotAvailable(exc) from exc
 
 
 async def _do_handshade(

@@ -66,3 +66,20 @@ async def spinner(txt, sep=" ", scheme="dots", color="magenta"):
 
         finally:
             nursery.cancel_scope.cancel()
+
+
+@contextmanager
+def cli_exception_handler(debug):
+    try:
+        yield debug
+
+    except KeyboardInterrupt:
+        click.echo("bye ;-)")
+        raise SystemExit(0)
+
+    except Exception as exc:
+        click.echo(click.style("Error: ", fg="red") + str(exc))
+        if debug:
+            raise
+        else:
+            raise SystemExit(1)

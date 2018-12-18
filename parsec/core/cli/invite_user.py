@@ -1,7 +1,7 @@
 import trio
 import click
 
-from parsec.spinner import spinner
+from parsec.cli_utils import spinner
 from parsec.types import UserID
 from parsec.core import logged_core_factory
 from parsec.core.invite_claim import (

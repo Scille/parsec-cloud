@@ -4,8 +4,6 @@ import itertools
 from typing import List, Union
 from collections import defaultdict
 
-from parsec.crypto import import_root_verify_key, VerifyKey
-
 
 __all__ = ("config_factory", "BackendConfig", "BaseBlockstoreConfig")
 
@@ -157,8 +155,6 @@ class BackendConfig:
     db_url: str = None
     db_type: str = None
 
-    root_verify_key: VerifyKey = None
-
     blockstore_config: BaseBlockstoreConfig = None
 
     sentry_url: str = None
@@ -168,13 +164,8 @@ class BackendConfig:
     handshake_challenge_size: int = 48
 
 
-# TODO: root_verify_key no longer in config (stored per device)
 def config_factory(
-    root_verify_key: Union[str, VerifyKey],
-    db_url: str = "MOCKED",
-    blockstore_type: str = "MOCKED",
-    debug: bool = False,
-    environ: dict = {},
+    db_url: str = "MOCKED", blockstore_type: str = "MOCKED", debug: bool = False, environ: dict = {}
 ) -> BackendConfig:
     config = {"debug": debug, "db_url": db_url}
 
@@ -186,11 +177,6 @@ def config_factory(
         raise ValueError("DB_URL must be `MOCKED` or `postgresql://...`")
 
     config["blockstore_config"] = _extract_blockstore_config(blockstore_type, environ)
-
-    try:
-        config["root_verify_key"] = import_root_verify_key(root_verify_key)
-    except Exception as exc:
-        raise ValueError("Invalid root verify key.") from exc
 
     config["sentry_url"] = environ.get("SENTRY_URL") or None
 

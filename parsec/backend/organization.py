@@ -113,7 +113,10 @@ class BaseOrganizationComponent:
             }
 
         user = new_user_factory(
-            root_device_id, d_data["device_id"], msg["certified_user"], msg["certified_device"]
+            device_id=d_data["device_id"],
+            certifier=root_device_id,
+            certified_user=msg["certified_user"],
+            certified_device=msg["certified_device"],
         )
         try:
             await self.bootstrap(msg["name"], msg["bootstrap_token"], root_verify_key, user)

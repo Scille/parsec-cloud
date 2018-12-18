@@ -112,7 +112,7 @@ class LocalDevicesManager:
         try:
             ciphertext = key_file.read_bytes()
         except OSError as exc:
-            raise DeviceConfigNotFound(str(key_file))
+            raise DeviceConfigNotFound(f"Config file {key_file} is missing")
 
         for decryptor_cls, cipher in (
             (PKCS11DeviceDecryptor, "pkcs11"),
@@ -121,7 +121,7 @@ class LocalDevicesManager:
             if decryptor_cls.can_decrypt(ciphertext):
                 return cipher
 
-        raise DeviceLoadingError("Unknown cipher.")
+        raise DeviceLoadingError(f"Unknown cipher for {key_file}")
 
     def load_device(self, device_id: DeviceID, decryptor: BaseLocalDeviceDecryptor) -> LocalDevice:
         """
@@ -129,16 +129,18 @@ class LocalDevicesManager:
             DeviceManagerError
         """
         key_file = self._get_key_file(device_id)
-        if not key_file.exists():
-            raise DeviceConfigNotFound(str(key_file))
 
         try:
             ciphertext = key_file.read_bytes()
+        except OSError as exc:
+            raise DeviceConfigNotFound(f"Config file {key_file} is missing") from exc
+
+        try:
             raw = decryptor.decrypt(ciphertext)
             return local_device_schema.loads(raw.decode("utf8")).data
 
-        except (CipherError, ValidationError, JSONDecodeError, ValueError, OSError) as exc:
-            raise DeviceLoadingError(str(exc)) from exc
+        except (CipherError, ValidationError, JSONDecodeError, ValueError) as exc:
+            raise DeviceLoadingError(f"Cannot load {key_file}: {exc}") from exc
 
     def save_device(
         self, device: LocalDevice, encryptor: BaseLocalDeviceEncryptor, force: bool = False
@@ -152,7 +154,7 @@ class LocalDevicesManager:
             if force:
                 key_file.unlink()
             else:
-                raise DeviceConfigAleadyExists(str(key_file))
+                raise DeviceConfigAleadyExists(f"Device {device.device_id} already exists")
 
         try:
             raw = local_device_schema.dumps(device).data.encode("utf8")
@@ -162,4 +164,4 @@ class LocalDevicesManager:
             key_file.write_bytes(ciphertext)
 
         except (CipherError, ValidationError, JSONDecodeError, ValueError, OSError) as exc:
-            raise DeviceSavingError(str(exc)) from exc
+            raise DeviceSavingError(f"Cannot save {key_file}: {exc}") from exc

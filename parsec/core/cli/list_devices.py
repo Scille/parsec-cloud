@@ -13,4 +13,5 @@ def list_devices(config_dir):
     num_devices_display = click.style(str(len(devices)), fg="green")
     click.echo(f"Found {num_devices_display} device(s):")
     for device, cipher in devices:
-        click.echo(f"{device} (cipher: {cipher})")
+        device_display = click.style(device, fg="yellow")
+        click.echo(f"{device_display} (cipher: {cipher})")

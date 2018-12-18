@@ -1,127 +1,31 @@
-import base64
-import json
-import pendulum
 import triopg
 from structlog import get_logger
 from uuid import UUID
 
-from parsec.types import UserID, DeviceID
 from parsec.event_bus import EventBus
-from parsec.crypto import PublicKey, VerifyKey, SigningKey
 from parsec.utils import call_with_control, ejson_dumps, ejson_loads
-from parsec.core.types import LocalDevice
 
 
 logger = get_logger()
 
 
-# TODO: remove me and create domain api to do that in core instead
-async def init_db(
-    url: str, device: LocalDevice, root_signing_key: SigningKey, force: bool = False
-) -> bool:
+async def init_db(url: str, force: bool = False) -> bool:
     """
     Raises:
         triopg.exceptions.PostgresError
     """
     async with triopg.connect(url) as conn:
-        already_initialized = await _ensure_tables_in_place(conn, force)
+        if force:
+            async with conn.transaction():
+                await _drop_db(conn)
+
+        already_initialized = await _is_db_initialized(conn)
+
         if not already_initialized:
-            await _insert_first_user_and_device(conn, device, root_signing_key)
-            return True
+            async with conn.transaction():
+                await _create_db_tables(conn)
 
-        else:
-            return False
-
-
-async def _ensure_tables_in_place(conn, force):
-    if force:
-        async with conn.transaction():
-            await _drop_db(conn)
-
-    already_initialized = await _is_db_initialized(conn)
-
-    if not already_initialized:
-        async with conn.transaction():
-            await _create_db_tables(conn)
-
-    return already_initialized
-
-
-def build_signed_pubkey_payload(user_id: UserID, pubkey: PublicKey, now: pendulum.Pendulum):
-    data = {
-        "public_key": base64.encodebytes(pubkey.encode()).decode("utf8"),
-        "timestamp": now.isoformat(),
-        "user_id": user_id,
-    }
-    return json.dumps(data).encode("utf8")
-
-
-def build_signed_verifykey_payload(
-    device_id: DeviceID, verifykey: VerifyKey, now: pendulum.Pendulum
-):
-    data = {
-        "verify_key": base64.encodebytes(verifykey.encode()).decode("utf8"),
-        "timestamp": now.isoformat(),
-        "device_id": device_id,
-    }
-    return json.dumps(data).encode("utf8")
-
-
-def extract_signed_pubkey_payload(payload: bytes):
-    # TODO
-    pass
-
-
-# TODO: dirty stuff, should be replaced by the domain API
-async def _insert_first_user_and_device(conn, device, root_signing_key):
-    from parsec.trustchain import certify_user, certify_device
-    from parsec.backend.drivers.postgresql import PGUserComponent
-    from parsec.backend.user import User, DevicesMapping, Device
-    from parsec.api.constants import root_device_id
-
-    now = pendulum.now()
-
-    # First insert root user
-    user = User(
-        user_id=root_device_id.user_id,
-        certified_user=None,
-        user_certifier=None,
-        devices=DevicesMapping(
-            Device(
-                device_id=root_device_id,
-                certified_device=None,
-                device_certifier=None,
-                created_on=now,
-            )
-        ),
-        created_on=now,
-    )
-    await PGUserComponent._create_user(conn, user)
-
-    # Then insert the real first user
-
-    certified_user = certify_user(
-        root_device_id, root_signing_key, device.user_id, device.public_key, now=now
-    )
-    certified_device = certify_device(
-        root_device_id, root_signing_key, device.device_id, device.verify_key, now=now
-    )
-
-    user = User(
-        user_id=device.user_id,
-        certified_user=certified_user,
-        user_certifier=root_device_id,
-        devices=DevicesMapping(
-            Device(
-                device_id=device.device_id,
-                certified_device=certified_device,
-                device_certifier=root_device_id,
-                created_on=now,
-            )
-        ),
-        created_on=now,
-    )
-    await PGUserComponent._create_user(conn, user)
+        return already_initialized
 
 
 async def _drop_db(conn):
