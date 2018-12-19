@@ -1,39 +1,20 @@
 import click
-import traceback
 
-
-def _generate_bad_cmd(exc, hint=None):
-    error_msg = "".join(
-        [
-            "Not available: Importing this module has failed with error:\n\n",
-            *traceback.format_exception(exc, exc, exc.__traceback__),
-            f"\n\n{hint}\n" if hint else "",
-        ]
-    )
-
-    @click.command(
-        context_settings=dict(ignore_unknown_options=True),
-        help=f"Not available{' (' + hint + ')' if hint else ''}",
-    )
-    @click.argument("args", nargs=-1, type=click.UNPROCESSED)
-    def bad_cmd(args):
-        raise SystemExit(error_msg)
-
-    return bad_cmd
+from parsec.cli_utils import generate_not_available_cmd
 
 
 try:
     from parsec.core.cli import core_cmd
 except ImportError as exc:
-    core_cmd = _generate_bad_cmd(exc)
+    core_cmd = generate_not_available_cmd(exc)
 
 
 try:
     from parsec.backend.cli import backend_cmd, init_cmd
 except ImportError as exc:
-    backend_cmd = _generate_bad_cmd(exc)
-    init_cmd = _generate_bad_cmd(exc)
-    revoke_cmd = _generate_bad_cmd(exc)
+    backend_cmd = generate_not_available_cmd(exc)
+    init_cmd = generate_not_available_cmd(exc)
+    revoke_cmd = generate_not_available_cmd(exc)
 
 
 @click.group()

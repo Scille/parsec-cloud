@@ -170,7 +170,7 @@ def oracle_fs_factory(tmpdir):
 
             if src != dst:
                 # Recursively move the path and it children by doing copy&delete
-                for child_src, entry in self.entries_stats.items():
+                for child_src, entry in self.entries_stats.copy().items():
                     # Note `child_src` will also contain `src` itself here
                     try:
                         relative = child_src.relative_to(src)

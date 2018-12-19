@@ -39,7 +39,7 @@ class OpenTCPStreamMockWrapper:
         return self._socks[netloc]
 
     async def __call__(self, host, port, **kwargs):
-        netloc = f"{host}:{port}"
+        netloc = f"{host}:{port}" if port is not None else host
         hook = self._hooks.get(netloc)
         if hook and netloc not in self._offlines:
             if inspect.iscoroutinefunction(hook):

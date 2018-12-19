@@ -1,7 +1,9 @@
 import trio
 
 
-async def backend_monitor_connection(event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
+async def monitor_backend_connection(
+    backend_online, event_bus, *, task_status=trio.TASK_STATUS_IGNORED
+):
     events = {
         "backend.offline": trio.Event(),
         "backend.online": trio.Event(),
@@ -16,6 +18,9 @@ async def backend_monitor_connection(event_bus, *, task_status=trio.TASK_STATUS_
     event_bus.connect("backend.online", _on_event, weak=True)
     event_bus.connect("sync_monitor.reconnection_sync.done", _on_event, weak=True)
     event_bus.connect("message_monitor.reconnection_message_processing.done", _on_event, weak=True)
+
+    if backend_online:
+        events["backend.online"].set()
 
     task_status.started()
     while True:

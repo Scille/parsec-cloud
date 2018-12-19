@@ -24,13 +24,13 @@ def realcrypto(unmock_crypto):
 
 
 @pytest.fixture
-def alice(backend_addr, root_key_certifier):
-    return generate_new_device(DeviceID("alice@pc1"), backend_addr, root_key_certifier.verify_key)
+def alice(backend_addr, root_verify_key):
+    return generate_new_device(DeviceID("alice@pc1"), backend_addr, root_verify_key)
 
 
 @pytest.fixture
-def bob(backend_addr, root_key_certifier):
-    return generate_new_device(DeviceID("bob@pc2"), backend_addr, root_key_certifier.verify_key)
+def bob(backend_addr, root_verify_key):
+    return generate_new_device(DeviceID("bob@pc2"), backend_addr, root_verify_key)
 
 
 @pytest.fixture
@@ -46,13 +46,16 @@ def test_list_no_devices(path_exists, tmpdir, local_device_manager):
     assert not devices
 
 
-def test_list_devices(local_device_manager, alice, bob):
+def test_list_devices(mocked_pkcs11, local_device_manager, alice, bob):
     encryptor = PasswordDeviceEncryptor("S3Cr37")
     local_device_manager.save_device(alice, encryptor)
+
+    _, token_id, key_id = mocked_pkcs11
+    encryptor = PKCS11DeviceEncryptor(token_id, key_id)
     local_device_manager.save_device(bob, encryptor)
 
     devices = local_device_manager.list_available_devices()
-    assert set(devices) == {alice.device_id, bob.device_id}
+    assert set(devices) == {(alice.device_id, "password"), (bob.device_id, "pkcs11")}
 
 
 @pytest.mark.parametrize("path_exists", (True, False))

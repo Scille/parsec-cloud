@@ -165,3 +165,20 @@ class BackendEventsManager:
 async def backend_listen_events(device, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
     backend_events_manager = BackendEventsManager(device, event_bus)
     await backend_events_manager.run(task_status=task_status)
+
+
+# async def backend_listen_events2(device, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
+#         self.device = device
+#         self.event_bus = event_bus
+#         self._backend_online = False
+#         self._subscribed_beacons = set()
+#         self._subscribed_beacons_changed = trio.Event()
+#         self._task_info = None
+#         self.event_bus.connect("backend.beacon.listen", self._on_beacon_listen, weak=True)
+#         self.event_bus.connect("backend.beacon.unlisten", self._on_beacon_unlisten, weak=True)
+
+
+#     backend_events_manager = BackendEventsManager(device, event_bus)
+
+
+#     await backend_events_manager.run(task_status=task_status)

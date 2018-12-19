@@ -1,4 +1,4 @@
-from parsec.schema import UnknownCheckedSchema, fields, validate, post_load
+from parsec.schema import UnknownCheckedSchema, fields, validate
 from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 
 
@@ -17,7 +17,7 @@ _validate_version = validate.Range(min=1)
 class CheckEntrySchema(UnknownCheckedSchema):
     id = fields.UUID(required=True)
     rts = fields.String(required=True, validate=_validate_trust_seed)
-    version = fields.Integer(required=True, validate=_validate_version)
+    version = fields.Integer(required=True, validate=validate.Range(min=0))
 
 
 class ChangedEntrySchema(UnknownCheckedSchema):

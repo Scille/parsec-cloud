@@ -90,19 +90,6 @@ def _core(socket, backend_addr, backend_watchdog, debug, i_am_john, no_ui):
         print("bye ;-)")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 # @click.command()
 # @click.option("--device", "-D", type=DeviceID, required=True)
 # @click.option("--pkcs11", is_flag=True)

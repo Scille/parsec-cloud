@@ -219,21 +219,13 @@ async def test_api_user_get_not_found(alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_api_user_find(alice, backend, alice_backend_sock, root_key_certifier):
-    # We won't use those keys anyway
-    dpk = alice.public_key
-    dvk = alice.verify_key
+async def test_api_user_find(alice, backend, alice_backend_sock):
     # Populate with cool guys
-    for cool_guy, devices_names in [
-        ("Philippe", ["p1", "p2"]),
-        ("Mike", ["m1"]),
-        ("Blacky", []),
-        ("Philip_J_Fry", ["pe1"]),
-    ]:
-        user = root_key_certifier.user_factory(
-            cool_guy, dpk, devices=[(d, dvk) for d in devices_names]
-        )
-        await backend.user.create_user(user)
+    await create_user(backend, alice, "Philippe@p1")
+    await create_device(backend, alice, "Philippe@p2")
+    await create_user(backend, alice, "Mike@p1")
+    await create_user(backend, alice, "Blacky@p1")
+    await create_user(backend, alice, "Philip_J_Fry@p1")
 
     # Test exact match
     rep = await user_find(alice_backend_sock, query="Mike")

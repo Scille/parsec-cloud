@@ -1,5 +1,6 @@
 import trio
 import click
+import traceback
 from async_generator import asynccontextmanager
 from contextlib import contextmanager
 
@@ -83,3 +84,24 @@ def cli_exception_handler(debug):
             raise
         else:
             raise SystemExit(1)
+
+
+def generate_not_available_cmd(exc, hint=None):
+    error_msg = "".join(
+        [
+            click.style("Not available: ", fg="red"),
+            "Importing this module has failed with error:\n\n",
+            *traceback.format_exception(exc, exc, exc.__traceback__),
+            f"\n\n{hint}\n" if hint else "",
+        ]
+    )
+
+    @click.command(
+        context_settings=dict(ignore_unknown_options=True),
+        help=f"Not available{' (' + hint + ')' if hint else ''}",
+    )
+    @click.argument("args", nargs=-1, type=click.UNPROCESSED)
+    def bad_cmd(args):
+        raise SystemExit(error_msg)
+
+    return bad_cmd

@@ -1,4 +1,4 @@
-from typing import Tuple, NewType
+from typing import Tuple, NewType, Optional
 import pendulum
 from json import JSONDecodeError
 from secrets import token_hex
@@ -48,7 +48,8 @@ CRYPTO_MEMLIMIT = argon2i.MEMLIMIT_INTERACTIVE
 
 
 class SignedMetadataSchema(UnknownCheckedSchema):
-    device_id = fields.DeviceID(required=True)
+    # No device_id means it has been signed by the root key
+    device_id = fields.DeviceID(missing=None)
     timestamp = fields.DateTime(required=True)
     content = fields.Base64Bytes(required=True)
 
@@ -101,7 +102,9 @@ def decrypt_raw_with_secret_key(key: bytes, ciphered: bytes) -> bytes:
     return box.decrypt(ciphered)
 
 
-def sign_and_add_meta(device_id: DeviceID, device_signkey: SigningKey, signedmeta: bytes) -> bytes:
+def sign_and_add_meta(
+    device_id: Optional[DeviceID], device_signkey: SigningKey, signedmeta: bytes
+) -> bytes:
     """
     Raises:
         CryptoError: if the signature operation fails.
@@ -115,14 +118,18 @@ def sign_and_add_meta(device_id: DeviceID, device_signkey: SigningKey, signedmet
     )[0].encode("utf8")
 
 
-def decode_signedmeta(signedmeta: bytes) -> Tuple[DeviceID, bytes]:
+def decode_signedmeta(signedmeta: bytes) -> Tuple[Optional[DeviceID], bytes]:
     """
     Raises:
         CryptoMetadataError: if the metadata cannot be extracted
     """
     try:
         meta = signed_metadata_schema.loads(signedmeta.decode("utf8"))[0]
-        return DeviceID(meta["device_id"]), meta["content"]
+        if meta["device_id"]:
+            device_id = DeviceID(meta["device_id"])
+        else:
+            device_id = None
+        return device_id, meta["content"]
 
     except (ValidationError, UnicodeDecodeError, JSONDecodeError) as exc:
         raise CryptoMetadataError(

@@ -11,7 +11,7 @@ from parsec.core.backend_connection.transport import (
     TransportPool,
 )
 from parsec.core.backend_connection.event_listener import backend_listen_events
-from parsec.core.backend_connection.monitor import backend_monitor_connection
+from parsec.core.backend_connection.monitor import monitor_backend_connection
 from parsec.core.backend_connection.cmds import (
     BackendCmdsInvalidRequest,
     BackendCmdsInvalidResponse,
@@ -33,7 +33,7 @@ __all__ = (
     "transport_pool_factory",
     "TransportPool",
     "backend_listen_events",
-    "backend_monitor_connection",
+    "monitor_backend_connection",
     "BackendCmdsInvalidRequest",
     "BackendCmdsInvalidResponse",
     "BackendCmdsBadResponse",

@@ -91,6 +91,10 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
     return config_factory(config_dir=config_dir, **data_conf, **extra_config)
 
 
+def reload_config(config: CoreConfig) -> CoreConfig:
+    return load_config(config.config_dir, debug=config.debug)
+
+
 def save_config(config: CoreConfig):
     (config.config_dir / "config.json").write_text(
         json.dumps(

@@ -1,6 +1,5 @@
 from trio import BrokenResourceError
 import struct
-
 from parsec.utils import ejson_dumps, ejson_loads
 
 

@@ -140,7 +140,7 @@ class User:
 
 def new_user_factory(
     device_id: DeviceID,
-    certifier: DeviceID,
+    certifier: Optional[DeviceID],
     certified_user: bytes,
     certified_device: bytes,
     now: pendulum.Pendulum = None,

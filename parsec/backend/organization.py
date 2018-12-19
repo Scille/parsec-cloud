@@ -11,7 +11,6 @@ from parsec.trustchain import (
     validate_payload_certified_user,
     validate_payload_certified_device,
 )
-from parsec.api.constants import root_device_id
 from parsec.api.protocole import organization_create_serializer, organization_bootstrap_serializer
 from parsec.backend.user import new_user_factory, User
 from parsec.backend.utils import catch_protocole_errors, anonymous_api
@@ -114,7 +113,7 @@ class BaseOrganizationComponent:
 
         user = new_user_factory(
             device_id=d_data["device_id"],
-            certifier=root_device_id,
+            certifier=None,
             certified_user=msg["certified_user"],
             certified_device=msg["certified_device"],
         )

@@ -233,9 +233,15 @@ async def test_group_check(alice_backend_sock, vlobs):
     rep = await vlob_group_check(
         alice_backend_sock,
         [
+            # Ignore unknown id/rts
             {"id": VLOB_ID, "rts": VLOB_RTS, "version": 1},
+            # Version 0 is accepted
+            {"id": VLOB_ID, "rts": VLOB_RTS, "version": 0},
             {"id": vlobs[0].id, "rts": vlobs[0].rts, "version": 1},
             {"id": vlobs[1].id, "rts": vlobs[1].rts, "version": 1},
         ],
     )
-    assert rep == {"status": "ok", "changed": [{"id": vlobs[0].id, "version": 2}]}
+    assert rep == {
+        "status": "ok",
+        "changed": [{"id": VLOB_ID, "version": 0}, {"id": vlobs[0].id, "version": 2}],
+    }

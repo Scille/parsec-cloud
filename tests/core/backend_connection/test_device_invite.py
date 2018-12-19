@@ -18,11 +18,13 @@ from parsec.core.invite_claim import (
 async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_backend):
     nd_id = DeviceID("alice@new_device")
     nd_signing_key = SigningKey.generate()
+    token = "123456"
 
     async def _alice_invite():
         encrypted_claim = await alice_backend_cmds.device_invite(nd_id)
         claim = extract_device_encrypted_claim(alice.private_key, encrypted_claim)
 
+        assert claim["token"] == token
         certified_device = certify_device(
             alice.device_id, alice.signing_key, claim["device_id"], claim["verify_key"]
         )
@@ -38,10 +40,11 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
 
             answer_private_key = PrivateKey.generate()
             encrypted_claim = generate_device_encrypted_claim(
-                invitation_creator.public_key,
-                nd_id,
-                nd_signing_key.verify_key,
-                answer_private_key.public_key,
+                creator_public_key=invitation_creator.public_key,
+                token=token,
+                device_id=nd_id,
+                verify_key=nd_signing_key.verify_key,
+                answer_public_key=answer_private_key.public_key,
             )
             encrypted_answer = await cmds.device_claim(nd_id, encrypted_claim)
 

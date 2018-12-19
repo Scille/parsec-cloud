@@ -7,32 +7,22 @@ import contextlib
 from unittest.mock import patch
 import trio
 import trio_asyncio
-from typing import Tuple
 from async_generator import asynccontextmanager
 import hypothesis
 from pathlib import Path
 
-from parsec.types import DeviceID, UserID
-from parsec.crypto import (
-    PublicKey,
-    SigningKey,
-    VerifyKey,
-    export_root_verify_key,
-    encrypt_with_secret_key,
-)
+from parsec.types import DeviceID
+from parsec.crypto import SigningKey, export_root_verify_key, encrypt_with_secret_key
 from parsec.trustchain import certify_user, certify_device
 from parsec.core import CoreConfig
+from parsec.core.types import LocalDevice
 from parsec.core.devices_manager import generate_new_device
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.fs.utils import new_local_user_manifest, local_to_remote_manifest, copy_manifest
 from parsec.core.schemas import dumps_manifest
 from parsec.core.mountpoint import FUSE_AVAILABLE
 from parsec.backend import BackendApp, config_factory as backend_config_factory
-from parsec.backend.user import (
-    User as BackendUser,
-    Device as BackendDevice,
-    DevicesMapping as BackendDevicesMapping,
-)
+from parsec.backend.user import User as BackendUser, new_user_factory as new_backend_user_factory
 from parsec.backend.user import UserAlreadyExistsError
 from parsec.api.protocole import ClientHandshake, AnonymousClientHandshake
 from parsec.api.transport import PatateTCPTransport
@@ -40,11 +30,7 @@ from parsec.api.transport import PatateTCPTransport
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
 
-from tests.common import (
-    freeze_time,
-    FreezeTestOnBrokenStreamCookedSocket,
-    FreezeTestOnTransportError,
-)
+from tests.common import freeze_time, FreezeTestOnTransportError
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 from tests.event_bus_spy import SpiedEventBus
 
@@ -232,50 +218,6 @@ def server_factory(tcp_stream_spy):
 
 
 @pytest.fixture(scope="session")
-def root_key_certifier():
-    class RootKeyCertifier:
-        id = DeviceID("root@root")
-        signing_key = SigningKey.generate()
-
-        @property
-        def verify_key(self):
-            return self.signing_key.verify_key
-
-        def certify_user(self, user_id, public_key):
-            return certify_user(self.id, self.signing_key, user_id, public_key)
-
-        def certify_device(self, device_id, verify_key):
-            return certify_device(self.id, self.signing_key, device_id, verify_key)
-
-        def device_factory(self, device_id: str, verify_key: VerifyKey = None) -> BackendDevice:
-            device_id = DeviceID(device_id)
-            verify_key = verify_key or VerifyKey.generate()
-            return BackendDevice(
-                device_id=device_id,
-                certified_device=self.certify_device(device_id, verify_key),
-                device_certifier=None,
-            )
-
-        def user_factory(
-            self, user_id: str, public_key: PublicKey, devices: Tuple[str, VerifyKey] = ()
-        ) -> BackendUser:
-            user_id = UserID(user_id)
-            cooked_devices = []
-            for device_name, device_verify_key in devices:
-                cooked_devices.append(
-                    self.device_factory(f"{user_id}@{device_name}", device_verify_key)
-                )
-            return BackendUser(
-                user_id,
-                certified_user=self.certify_user(user_id, public_key),
-                user_certifier=None,
-                devices=BackendDevicesMapping(*cooked_devices),
-            )
-
-    return RootKeyCertifier()
-
-
-@pytest.fixture(scope="session")
 def alice(backend_addr, root_verify_key):
     return generate_new_device(DeviceID("alice@dev1"), backend_addr, root_verify_key)
 
@@ -460,7 +402,7 @@ def backend_factory(
     blockstore,
     backend_store,
     default_devices,
-    root_key_certifier,
+    root_signing_key,
 ):
     # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
     # the backend should inherit from the one with the asyncio loop context manager.
@@ -469,13 +411,18 @@ def backend_factory(
     # nursery fixture is done with calling the backend's postgresql stuff.
 
     blockstore_type, blockstore_config = blockstore
-    rvk = export_root_verify_key(root_key_certifier.verify_key)
+
+    def _local_to_backend_device(device: LocalDevice) -> BackendUser:
+        certified_user = certify_user(None, root_signing_key, device.user_id, device.public_key)
+        certified_device = certify_device(
+            None, root_signing_key, device.device_id, device.verify_key
+        )
+        return new_backend_user_factory(device.device_id, None, certified_user, certified_device)
 
     @asynccontextmanager
     async def _backend_factory(devices=default_devices, config={}, event_bus=None):
         async with trio.open_nursery() as nursery:
             config = backend_config_factory(
-                root_verify_key=rvk,
                 db_url=backend_store,
                 blockstore_type=blockstore_type,
                 environ={**blockstore_config, **config},
@@ -490,9 +437,7 @@ def backend_factory(
             # Need to initialize backend with users/devices
             with freeze_time("2000-01-01"):
                 for device in devices:
-                    backend_user = root_key_certifier.user_factory(
-                        device.user_id, device.public_key, [(device.device_name, device.verify_key)]
-                    )
+                    backend_user = _local_to_backend_device(device)
                     try:
                         await backend.user.create_user(backend_user)
 
@@ -534,16 +479,30 @@ async def backend(backend_factory):
         yield backend
 
 
+# TODO: rename to organization_addr ?
 @pytest.fixture(scope="session")
-def backend_addr(root_verify_key):
+def backend_addr(unused_tcp_addr, root_verify_key):
     rvk = export_root_verify_key(root_verify_key)
-    return f"tcp://parsec-backend.localhost:9999?root-verify-key={rvk}"
+    return f"{unused_tcp_addr}?rvk={rvk}"
 
 
 @pytest.fixture
-async def running_backend(server_factory, backend_addr, backend):
+def running_backend_ready(request):
+    # Useful to synchronize other fixtures that need to connect to
+    # the backend if it is available
+    event = trio.Event()
+    # Nothing to wait if current test doesn't use `running_backend` fixture
+    if "running_backend" not in request.fixturenames:
+        event.set()
+
+    return event
+
+
+@pytest.fixture
+async def running_backend(server_factory, backend_addr, backend, running_backend_ready):
     async with server_factory(backend.handle_client, backend_addr) as server:
         server.backend = backend
+        running_backend_ready.set()
         yield server
 
 
@@ -598,68 +557,6 @@ async def bob_backend_sock(backend_sock_factory, backend, bob):
         yield sock
 
 
-# @pytest.fixture
-# def core_factory(tmpdir, event_bus_factory, backend_addr, default_devices):
-#     count = 0
-
-#     @asynccontextmanager
-#     async def _core_factory(devices=default_devices, config={}, event_bus=None):
-#         nonlocal count
-#         count += 1
-
-#         core_dir = tmpdir / f"core-{count}"
-#         config = CoreConfig(
-#             **{
-#                 "backend_addr": backend_addr,
-#                 "local_storage_dir": (core_dir / "local_storage").strpath,
-#                 "base_settings_path": (core_dir / "settings").strpath,
-#                 **config,
-#             }
-#         )
-#         if not event_bus:
-#             event_bus = event_bus_factory()
-#         core = Core(config, event_bus=event_bus)
-#         async with trio.open_nursery() as nursery:
-#             await core.init(nursery)
-
-#             for device in devices:
-#                 core.local_devices_manager.register_new_device(
-#                     device.id,
-#                     device.user_privkey.encode(),
-#                     device.device_signkey.encode(),
-#                     device.user_manifest_access,
-#                     "<secret>",
-#                 )
-
-#             try:
-#                 yield core
-#             finally:
-#                 await core.teardown()
-#                 # Don't do `nursery.cancel_scope.cancel()` given `core.teardown()`
-#                 # should have stopped all our coroutines (i.e. if the nursery is
-#                 # hanging, something on top of us should be fixed...)
-
-#     return _core_factory
-
-
-# @pytest.fixture
-# async def core(core_factory):
-#     async with core_factory() as core:
-#         yield core
-
-
-# TODO: remove me
-@pytest.fixture
-def core_sock_factory(server_factory):
-    @asynccontextmanager
-    async def _core_sock_factory(core):
-        async with server_factory(core.handle_client) as server:
-            sockstream = server.connection_factory()
-            yield FreezeTestOnBrokenStreamCookedSocket(sockstream)
-
-    return _core_sock_factory
-
-
 @pytest.fixture(scope="session")
 def root_signing_key():
     return SigningKey.generate()
@@ -679,18 +576,21 @@ def core_config(tmpdir):
 
 
 @pytest.fixture
-async def alice_core(event_bus_factory, core_config, alice):
+async def alice_core(running_backend_ready, event_bus_factory, core_config, alice):
+    await running_backend_ready.wait()
     async with logged_core_factory(core_config, alice, event_bus_factory()) as alice_core:
         yield alice_core
 
 
 @pytest.fixture
-async def alice2_core(event_bus_factory, core_config, alice2):
+async def alice2_core(running_backend_ready, event_bus_factory, core_config, alice2):
+    await running_backend_ready.wait()
     async with logged_core_factory(core_config, alice2, event_bus_factory()) as alice2_core:
         yield alice2_core
 
 
 @pytest.fixture
-async def bob_core(event_bus_factory, core_config, bob):
+async def bob_core(running_backend_ready, event_bus_factory, core_config, bob):
+    await running_backend_ready.wait()
     async with logged_core_factory(core_config, bob, event_bus_factory()) as bob_core:
         yield bob_core

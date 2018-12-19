@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 import pendulum
 from pendulum import Pendulum
 from json import JSONDecodeError
@@ -32,8 +32,6 @@ class TrustChainTooOldError(TrustChainError):
 class TrustChainBrokenChainError(TrustChainError):
     pass
 
-
-ROOT_DEVICE_ID = DeviceID("root@root")
 
 # TODO: configurable ?
 MAX_TS_BALLPARK = 30 * 60
@@ -94,7 +92,7 @@ def _validate_certified_payload(
 
 
 def certify_device(
-    certifier_id: DeviceID,
+    certifier_id: Optional[DeviceID],
     certifier_key: SigningKey,
     device_id: DeviceID,
     verify_key: VerifyKey,
@@ -145,7 +143,7 @@ def unsecure_certified_device_extract_verify_key(data: bytes) -> VerifyKey:
 
 
 def certify_user(
-    certifier_id: DeviceID,
+    certifier_id: Optional[DeviceID],
     certifier_key: SigningKey,
     user_id: UserID,
     public_key: PublicKey,
@@ -245,29 +243,29 @@ def certified_extract_parts(certified: bytes) -> Tuple[DeviceID, bytes]:
         raise TrustChainInvalidDataError(*exc.args) from exc
 
 
-def cascade_validate_devices(
-    certified_devices, root_verify_key, root_device_id=ROOT_DEVICE_ID
-) -> Tuple[dict]:
-    """
-    Raises:
-        TrustChainBrokenChainError
-        TrustChainInvalidDataError
-        TrustChainTooOldError
-    """
-    devices = []
-    for certified_device in reversed(certified_devices):
-        certifier_id, certified_payload = certified_extract_parts(certified_device)
-        if not devices:
-            if certifier_id != ROOT_DEVICE_ID:
-                raise TrustChainError(f"Device {device} is signed {device}")  # TODO
-            certifier_key = root_verify_key
+# def cascade_validate_devices(
+#     certified_devices, root_verify_key, root_device_id=ROOT_DEVICE_ID
+# ) -> Tuple[dict]:
+#     """
+#     Raises:
+#         TrustChainBrokenChainError
+#         TrustChainInvalidDataError
+#         TrustChainTooOldError
+#     """
+#     devices = []
+#     for certified_device in reversed(certified_devices):
+#         certifier_id, certified_payload = certified_extract_parts(certified_device)
+#         if not devices:
+#             if certifier_id != ROOT_DEVICE_ID:
+#                 raise TrustChainError(f"Device {device} is signed {device}")  # TODO
+#             certifier_key = root_verify_key
 
-        else:
-            if certifier_id != devices[-1].id:
-                raise TrustChainError(f"Device {device} is signed {device}")  # TODO
-            certifier_key = devices[-1]["verify_key"]
+#         else:
+#             if certifier_id != devices[-1].id:
+#                 raise TrustChainError(f"Device {device} is signed {device}")  # TODO
+#             certifier_key = devices[-1]["verify_key"]
 
-        validated = validate_payload_certified_device(certifier_key, certified_payload)
-        devices.append(validated)
+#         validated = validate_payload_certified_device(certifier_key, certified_payload)
+#         devices.append(validated)
 
-    return tuple(reversed(devices))
+#     return tuple(reversed(devices))

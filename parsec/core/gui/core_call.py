@@ -1,11 +1,11 @@
-from parsec.core.app import NotLoggedError
-from parsec.core.devices_manager import (
-    invite_user,
-    claim_user,
-    declare_device,
-    accept_device_configuration_try,
-    configure_new_device,
-)
+# from parsec.core import logged_core_factory
+# from parsec.core.devices_manager import (
+#     invite_user,
+#     claim_user,
+#     declare_device,
+#     accept_device_configuration_try,
+#     configure_new_device,
+# )
 
 
 class _CoreCall:

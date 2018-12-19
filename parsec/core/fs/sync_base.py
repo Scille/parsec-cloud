@@ -214,8 +214,8 @@ class BaseSyncer:
         return decrypt_raw_with_secret_key(access["key"], ciphered)
 
     async def _backend_vlob_group_check(self, to_check):
-        ret = await self.backend_cmds.vlob_group_check(to_check)
-        return [entry["id"] for entry in ret["changed"]]
+        changed = await self.backend_cmds.vlob_group_check(to_check)
+        return [entry["id"] for entry in changed]
 
     async def _backend_vlob_read(self, access, version=None):
         _, blob = await self.backend_cmds.vlob_read(access["id"], access["rts"], version)

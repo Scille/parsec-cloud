@@ -8,7 +8,6 @@ from parsec.cli_utils import spinner, operation, cli_exception_handler
 from parsec.types import DeviceID, BackendOrganizationBootstrapAddr
 from parsec.crypto import SigningKey
 from parsec.trustchain import certify_user, certify_device
-from parsec.api.constants import root_device_id
 from parsec.core.config import get_default_config_dir
 from parsec.core.backend_connection import backend_anonymous_cmds_factory
 from parsec.core.devices_manager import generate_new_device, save_device_with_password
@@ -27,12 +26,8 @@ async def _bootstrap_organization(debug, device_id, organization_bootstrap_addr,
         save_device_with_password(config_dir, device, password, force=force)
 
     now = pendulum.now()
-    certified_user = certify_user(
-        root_device_id, root_signing_key, device.user_id, device.public_key, now
-    )
-    certified_device = certify_device(
-        root_device_id, root_signing_key, device_id, device.verify_key, now
-    )
+    certified_user = certify_user(None, root_signing_key, device.user_id, device.public_key, now)
+    certified_device = certify_device(None, root_signing_key, device_id, device.verify_key, now)
 
     async with spinner(f"Sending {device_display} to server"):
         async with backend_anonymous_cmds_factory(organization_bootstrap_addr) as cmds:
