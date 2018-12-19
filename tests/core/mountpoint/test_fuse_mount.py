@@ -49,7 +49,7 @@ async def test_fuse_available(alice_fs, event_bus):
 
 @pytest.mark.trio
 @pytest.mark.fuse
-async def test_mount_fuse(alice_fs, event_bus, tmpdir, monitor, fuse_mode):
+async def test_mount_fuse(alice_fs, event_bus, tmpdir, fuse_mode):
     # Populate a bit the fs first...
 
     await alice_fs.workspace_create("/w")

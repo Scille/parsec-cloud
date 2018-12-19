@@ -41,7 +41,7 @@ async def test_beacon_notif_on_new_entry_sync(type, running_backend, alice_core,
 
 
 @pytest.mark.trio
-async def test_beacon_notif_on_new_workspace_sync(running_backend, alice_core, alice2_fs, monitor):
+async def test_beacon_notif_on_new_workspace_sync(running_backend, alice_core, alice2_fs):
     await alice_core.event_bus.spy.wait_for_backend_connection_ready()
 
     await alice2_fs.workspace_create("/foo")

@@ -232,7 +232,7 @@ async def _fuzzer_cmd(id, core, fs_state):
 
 @pytest.mark.trio
 @pytest.mark.slow
-async def test_fuzz_core(running_backend, alice_core, monitor):
+async def test_fuzz_core(running_backend, alice_core):
     await alice_core.event_bus.spy.wait_for_backend_connection_ready()
     try:
         async with trio.open_nursery() as nursery:
