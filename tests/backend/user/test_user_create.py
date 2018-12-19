@@ -1,4 +1,5 @@
 import pytest
+import trio
 import pendulum
 
 from parsec.trustchain import certify_user, certify_device
@@ -36,9 +37,11 @@ async def test_user_create_ok(backend, backend_sock_factory, alice_backend_sock,
         rep = await user_create(
             alice_backend_sock, certified_user=certified_user, certified_device=certified_device
         )
+        assert rep == {"status": "ok"}
 
-    spy.assert_event_occured("user.created", kwargs={"user_id": mallory.user_id})
-    assert rep == {"status": "ok"}
+        with trio.fail_after(1):
+            # No guarantees this event occurs before the command's return
+            spy.wait("user.created", kwargs={"user_id": mallory.user_id})
 
     # Make sure mallory can connect now
     async with backend_sock_factory(backend, mallory) as sock:
