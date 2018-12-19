@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import ANY
 from pendulum import Pendulum
+from async_generator import asynccontextmanager
 
 from parsec.types import DeviceID
 from parsec.api.protocole import device_get_invitation_creator_serializer, device_claim_serializer
@@ -18,47 +19,50 @@ async def alice_nd_invitation(backend, alice):
     return invitation
 
 
+async def device_get_invitation_creator(sock, **kwargs):
+    await sock.send(
+        device_get_invitation_creator_serializer.req_dump(
+            {"cmd": "device_get_invitation_creator", **kwargs}
+        )
+    )
+    raw_rep = await sock.recv()
+    rep = device_get_invitation_creator_serializer.rep_load(raw_rep)
+    return rep
+
+
+@asynccontextmanager
+async def device_claim(sock, **kwargs):
+    reps = []
+    await sock.send(device_claim_serializer.req_dump({"cmd": "device_claim", **kwargs}))
+    yield reps
+    raw_rep = await sock.recv()
+    rep = device_claim_serializer.rep_load(raw_rep)
+    reps.append(rep)
+
+
 @pytest.mark.trio
 async def test_device_get_invitation_creator_too_late(anonymous_backend_sock, alice_nd_invitation):
     with freeze_time(alice_nd_invitation.created_on.add(seconds=INVITATION_VALIDITY + 1)):
-        await anonymous_backend_sock.send(
-            device_get_invitation_creator_serializer.req_dump(
-                {
-                    "cmd": "device_get_invitation_creator",
-                    "invited_device_id": alice_nd_invitation.device_id,
-                }
-            )
+        rep = await device_get_invitation_creator(
+            anonymous_backend_sock, invited_device_id=alice_nd_invitation.device_id
         )
-        raw_rep = await anonymous_backend_sock.recv()
-    rep = device_get_invitation_creator_serializer.rep_load(raw_rep)
     assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio
-async def test_device_get_invitation_creator_unknown(anonymous_backend_sock):
-    await anonymous_backend_sock.send(
-        device_get_invitation_creator_serializer.req_dump(
-            {"cmd": "device_get_invitation_creator", "invited_device_id": "zack@foo"}
-        )
+async def test_device_get_invitation_creator_unknown(anonymous_backend_sock, mallory):
+    rep = await device_get_invitation_creator(
+        anonymous_backend_sock, invited_device_id=mallory.device_id
     )
-    raw_rep = await anonymous_backend_sock.recv()
-    rep = device_get_invitation_creator_serializer.rep_load(raw_rep)
     assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio
 async def test_device_get_invitation_creator_ok(anonymous_backend_sock, alice_nd_invitation):
     with freeze_time(alice_nd_invitation.created_on):
-        await anonymous_backend_sock.send(
-            device_get_invitation_creator_serializer.req_dump(
-                {
-                    "cmd": "device_get_invitation_creator",
-                    "invited_device_id": alice_nd_invitation.device_id,
-                }
-            )
+        rep = await device_get_invitation_creator(
+            anonymous_backend_sock, invited_device_id=alice_nd_invitation.device_id
         )
-        raw_rep = await anonymous_backend_sock.recv()
-    rep = device_get_invitation_creator_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "ok",
         "user_id": alice_nd_invitation.creator.user_id,
@@ -74,25 +78,24 @@ async def test_device_get_invitation_creator_ok(anonymous_backend_sock, alice_nd
 @pytest.mark.trio
 async def test_device_claim_ok(backend, anonymous_backend_sock, alice_nd_invitation):
     with freeze_time(alice_nd_invitation.created_on):
-        await anonymous_backend_sock.send(
-            device_claim_serializer.req_dump(
-                {
-                    "cmd": "device_claim",
-                    "invited_device_id": alice_nd_invitation.device_id,
-                    "encrypted_claim": b"<foo>",
-                }
+        async with device_claim(
+            anonymous_backend_sock,
+            invited_device_id=alice_nd_invitation.device_id,
+            encrypted_claim=b"<foo>",
+        ) as prep:
+
+            await backend.event_bus.spy.wait(
+                "event.connected", kwargs={"event_name": "device.created"}
             )
-        )
-
-        await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "device.created"})
-        backend.event_bus.send("device.created", device_id="dummy@foo", encrypted_answer=b"<dummy>")
-        backend.event_bus.send(
-            "device.created", device_id=alice_nd_invitation.device_id, encrypted_answer=b"<good>"
-        )
-
-        raw_rep = await anonymous_backend_sock.recv()
-    rep = device_claim_serializer.rep_load(raw_rep)
-    assert rep == {"status": "ok", "encrypted_answer": b"<good>"}
+            backend.event_bus.send(
+                "device.created", device_id="dummy@foo", encrypted_answer=b"<dummy>"
+            )
+            backend.event_bus.send(
+                "device.created",
+                device_id=alice_nd_invitation.device_id,
+                encrypted_answer=b"<good>",
+            )
+    assert prep[0] == {"status": "ok", "encrypted_answer": b"<good>"}
 
 
 @pytest.mark.trio
@@ -100,22 +103,18 @@ async def test_device_claim_timeout(
     mock_clock, backend, anonymous_backend_sock, alice_nd_invitation
 ):
     with freeze_time(alice_nd_invitation.created_on):
-        await anonymous_backend_sock.send(
-            device_claim_serializer.req_dump(
-                {
-                    "cmd": "device_claim",
-                    "invited_device_id": alice_nd_invitation.device_id,
-                    "encrypted_claim": b"<foo>",
-                }
+        async with device_claim(
+            anonymous_backend_sock,
+            invited_device_id=alice_nd_invitation.device_id,
+            encrypted_claim=b"<foo>",
+        ) as prep:
+
+            await backend.event_bus.spy.wait(
+                "event.connected", kwargs={"event_name": "device.created"}
             )
-        )
+            mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
-        await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "device.created"})
-        mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
-
-        raw_rep = await anonymous_backend_sock.recv()
-    rep = device_claim_serializer.rep_load(raw_rep)
-    assert rep == {
+    assert prep[0] == {
         "status": "timeout",
         "reason": "Timeout while waiting for invitation creator to answer.",
     }
@@ -124,39 +123,32 @@ async def test_device_claim_timeout(
 @pytest.mark.trio
 async def test_device_claim_denied(backend, anonymous_backend_sock, alice_nd_invitation):
     with freeze_time(alice_nd_invitation.created_on):
-        await anonymous_backend_sock.send(
-            device_claim_serializer.req_dump(
-                {
-                    "cmd": "device_claim",
-                    "invited_device_id": alice_nd_invitation.device_id,
-                    "encrypted_claim": b"<foo>",
-                }
+        async with device_claim(
+            anonymous_backend_sock,
+            invited_device_id=alice_nd_invitation.device_id,
+            encrypted_claim=b"<foo>",
+        ) as prep:
+
+            await backend.event_bus.spy.wait(
+                "event.connected", kwargs={"event_name": "device.invitation.cancelled"}
             )
-        )
+            backend.event_bus.send("device.created", device_id="dummy")
+            backend.event_bus.send(
+                "device.invitation.cancelled", device_id=alice_nd_invitation.device_id
+            )
 
-        await backend.event_bus.spy.wait(
-            "event.connected", kwargs={"event_name": "device.invitation.cancelled"}
-        )
-        backend.event_bus.send("device.created", device_id="dummy")
-        backend.event_bus.send(
-            "device.invitation.cancelled", device_id=alice_nd_invitation.device_id
-        )
-
-        raw_rep = await anonymous_backend_sock.recv()
-    rep = device_claim_serializer.rep_load(raw_rep)
-    assert rep == {"status": "denied", "reason": "Invitation creator rejected us."}
+    assert prep[0] == {"status": "denied", "reason": "Invitation creator rejected us."}
 
 
 @pytest.mark.trio
-async def test_device_claim_unknown(anonymous_backend_sock):
-    await anonymous_backend_sock.send(
-        device_claim_serializer.req_dump(
-            {"cmd": "device_claim", "invited_device_id": "dummy@foo", "encrypted_claim": b"<foo>"}
-        )
-    )
-    raw_rep = await anonymous_backend_sock.recv()
-    rep = device_claim_serializer.rep_load(raw_rep)
-    assert rep == {"status": "not_found"}
+async def test_device_claim_unknown(anonymous_backend_sock, mallory):
+    async with device_claim(
+        anonymous_backend_sock, invited_device_id=mallory.device_id, encrypted_claim=b"<foo>"
+    ) as prep:
+
+        pass
+
+    assert prep[0] == {"status": "not_found"}
 
 
 @pytest.mark.trio
@@ -172,15 +164,12 @@ async def test_device_claim_already_exists(
     )
 
     with freeze_time(alice_nd_invitation.created_on):
-        await anonymous_backend_sock.send(
-            device_claim_serializer.req_dump(
-                {
-                    "cmd": "device_claim",
-                    "invited_device_id": alice_nd_invitation.device_id,
-                    "encrypted_claim": b"<foo>",
-                }
-            )
-        )
-        raw_rep = await anonymous_backend_sock.recv()
-    rep = device_claim_serializer.rep_load(raw_rep)
-    assert rep == {"status": "not_found"}
+        async with device_claim(
+            anonymous_backend_sock,
+            invited_device_id=alice_nd_invitation.device_id,
+            encrypted_claim=b"<foo>",
+        ) as prep:
+
+            pass
+
+    assert prep[0] == {"status": "not_found"}

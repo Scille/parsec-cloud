@@ -294,16 +294,17 @@ class BaseUserComponent:
         msg = user_claim_serializer.req_load(msg)
 
         try:
-            invitation = await self.get_user_invitation(msg["invited_user_id"])
+            invitation = await self.claim_user_invitation(
+                msg["invited_user_id"], msg["encrypted_claim"]
+            )
             if not invitation.is_valid():
                 return {"status": "not_found"}
 
-        except UserNotFoundError:
+        except UserAlreadyExistsError:
             return {"status": "not_found"}
 
-        self.event_bus.send(
-            "user.claimed", user_id=invitation.user_id, encrypted_claim=msg["encrypted_claim"]
-        )
+        except UserNotFoundError:
+            return {"status": "not_found"}
 
         # Wait for creator user to accept (or refuse) our claim
 
@@ -333,9 +334,7 @@ class BaseUserComponent:
     async def api_user_cancel_invitation(self, client_ctx, msg):
         msg = user_cancel_invitation_serializer.req_load(msg)
 
-        await self.user_cancel_invitation(msg["user_id"])
-
-        self.event_bus.send("user.invitation.cancelled", user_id=msg["user_id"])
+        await self.cancel_user_invitation(msg["user_id"])
 
         return user_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
@@ -398,10 +397,10 @@ class BaseUserComponent:
                 created_on=u_data["timestamp"],
             )
             await self.create_user(user)
+
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
 
-        self.event_bus.send("user.created", user_id=user.user_id)
         return user_create_serializer.rep_dump({"status": "ok"})
 
     #### Device creation API ####
@@ -474,16 +473,17 @@ class BaseUserComponent:
         msg = device_claim_serializer.req_load(msg)
 
         try:
-            invitation = await self.get_device_invitation(msg["invited_device_id"])
+            invitation = await self.claim_device_invitation(
+                msg["invited_device_id"], msg["encrypted_claim"]
+            )
             if not invitation.is_valid():
                 return {"status": "not_found"}
 
-        except UserNotFoundError:
+        except UserAlreadyExistsError:
             return {"status": "not_found"}
 
-        self.event_bus.send(
-            "device.claimed", device_id=invitation.device_id, encrypted_claim=msg["encrypted_claim"]
-        )
+        except UserNotFoundError:
+            return {"status": "not_found"}
 
         # Wait for creator device to accept (or refuse) our claim
 
@@ -521,9 +521,7 @@ class BaseUserComponent:
         if msg["device_id"].user_id != client_ctx.user_id:
             return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
-        await self.device_cancel_invitation(msg["device_id"])
-
-        self.event_bus.send("device.invitation.cancelled", device_id=msg["device_id"])
+        await self.cancel_device_invitation(msg["device_id"])
 
         return device_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
@@ -563,13 +561,10 @@ class BaseUserComponent:
                 device_certifier=certifier_id,
                 created_on=data["timestamp"],
             )
-            await self.create_device(device)
+            await self.create_device(device, encrypted_answer=msg["encrypted_answer"])
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
 
-        self.event_bus.send(
-            "device.created", device_id=device.device_id, encrypted_answer=msg["encrypted_answer"]
-        )
         return device_create_serializer.rep_dump({"status": "ok"})
 
     @catch_protocole_errors
@@ -623,7 +618,7 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
-    async def create_device(self, device: Device) -> None:
+    async def create_device(self, device: Device, encrypted_answer: bytes = b"") -> None:
         """
         Raises:
             UserAlreadyExistsError
@@ -677,12 +672,22 @@ class BaseUserComponent:
     async def get_user_invitation(self, user_id: UserID) -> UserInvitation:
         """
         Raises:
+            UserAlreadyExistsError
             UserNotFoundError
         """
-
         raise NotImplementedError()
 
-    async def user_cancel_invitation(self, user_id: UserID) -> None:
+    async def claim_user_invitation(
+        self, user_id: UserID, encrypted_claim: bytes = b""
+    ) -> UserInvitation:
+        """
+        Raises:
+            UserAlreadyExistsError
+            UserNotFoundError
+        """
+        raise NotImplementedError()
+
+    async def cancel_user_invitation(self, user_id: UserID) -> None:
         """
         Raises: Nothing
         """
@@ -696,15 +701,25 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
-    async def get_device_invitation(self, user_id: UserID) -> DeviceInvitation:
+    async def get_device_invitation(self, device_id: DeviceID) -> DeviceInvitation:
         """
         Raises:
+            UserAlreadyExistsError
             UserNotFoundError
         """
-
         raise NotImplementedError()
 
-    async def device_cancel_invitation(self, device_id: DeviceID) -> None:
+    async def claim_device_invitation(
+        self, device_id: DeviceID, encrypted_claim: bytes = b""
+    ) -> UserInvitation:
+        """
+        Raises:
+            UserAlreadyExistsError
+            UserNotFoundError
+        """
+        raise NotImplementedError()
+
+    async def cancel_device_invitation(self, device_id: DeviceID) -> None:
         """
         Raises: Nothing
         """

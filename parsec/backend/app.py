@@ -88,7 +88,8 @@ class BackendApp:
 
         else:
             self.dbh = PGHandler(self.config.db_url, self.event_bus)
-            self.user = PGUserComponent(self.dbh)
+            self.user = PGUserComponent(self.dbh, self.event_bus)
+            self.organization = PGOrganizationComponent(self.dbh, self.user)
             self.message = PGMessageComponent(self.dbh)
             self.beacon = PGBeaconComponent(self.dbh)
             self.vlob = PGVlobComponent(self.dbh, self.beacon)

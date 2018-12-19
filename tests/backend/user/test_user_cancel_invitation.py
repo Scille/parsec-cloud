@@ -14,26 +14,23 @@ async def mallory_invitation(backend, alice, mallory):
     return invitation
 
 
+async def user_cancel_invitation(sock, **kwargs):
+    await sock.send(
+        user_cancel_invitation_serializer.req_dump({"cmd": "user_cancel_invitation", **kwargs})
+    )
+    raw_rep = await sock.recv()
+    rep = user_cancel_invitation_serializer.rep_load(raw_rep)
+    return rep
+
+
 @pytest.mark.trio
 async def test_user_cancel_invitation_ok(alice_backend_sock, mallory_invitation):
     with freeze_time(mallory_invitation.created_on):
-        await alice_backend_sock.send(
-            user_cancel_invitation_serializer.req_dump(
-                {"cmd": "user_cancel_invitation", "user_id": mallory_invitation.user_id}
-            )
-        )
-        raw_rep = await alice_backend_sock.recv()
-    rep = user_cancel_invitation_serializer.rep_load(raw_rep)
+        rep = await user_cancel_invitation(alice_backend_sock, user_id=mallory_invitation.user_id)
     assert rep == {"status": "ok"}
 
 
 @pytest.mark.trio
-async def test_user_cancel_invitation_unknown(alice_backend_sock):
-    await alice_backend_sock.send(
-        user_cancel_invitation_serializer.req_dump(
-            {"cmd": "user_cancel_invitation", "user_id": "zack"}
-        )
-    )
-    raw_rep = await alice_backend_sock.recv()
-    rep = user_cancel_invitation_serializer.rep_load(raw_rep)
+async def test_user_cancel_invitation_unknown(alice_backend_sock, mallory):
+    rep = await user_cancel_invitation(alice_backend_sock, user_id=mallory.user_id)
     assert rep == {"status": "ok"}

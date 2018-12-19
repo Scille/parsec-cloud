@@ -29,8 +29,9 @@ class MemoryUserComponent(BaseUserComponent):
             raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
 
         self._users[user.user_id] = user
+        self.event_bus.send("user.created", user_id=user.user_id)
 
-    async def create_device(self, device: Device) -> None:
+    async def create_device(self, device: Device, encrypted_answer: bytes = b"") -> None:
         if device.user_id not in self._users:
             raise UserNotFoundError(f"User `{device.user_id}` doesn't exists")
 
@@ -40,6 +41,9 @@ class MemoryUserComponent(BaseUserComponent):
 
         self._users[device.user_id] = user.evolve(
             devices=DevicesMapping(*user.devices.values(), device)
+        )
+        self.event_bus.send(
+            "device.created", device_id=device.device_id, encrypted_answer=encrypted_answer
         )
 
     async def _get_trustchain(self, *devices_ids):
@@ -108,14 +112,24 @@ class MemoryUserComponent(BaseUserComponent):
 
     async def get_user_invitation(self, user_id: UserID) -> UserInvitation:
         if user_id in self._users:
-            raise UserNotFoundError(user_id)
+            raise UserAlreadyExistsError(user_id)
         try:
             return self._invitations[user_id]
         except KeyError:
             raise UserNotFoundError(user_id)
 
-    async def user_cancel_invitation(self, user_id: UserID) -> None:
-        self._invitations.pop(user_id, None)
+    async def claim_user_invitation(
+        self, user_id: UserID, encrypted_claim: bytes = b""
+    ) -> UserInvitation:
+        invitation = await self.get_user_invitation(user_id)
+        self.event_bus.send(
+            "user.claimed", user_id=invitation.user_id, encrypted_claim=encrypted_claim
+        )
+        return invitation
+
+    async def cancel_user_invitation(self, user_id: UserID) -> None:
+        if self._invitations.pop(user_id, None):
+            self.event_bus.send("user.invitation.cancelled", user_id=user_id)
 
     async def create_device_invitation(self, invitation: DeviceInvitation) -> None:
         user = await self.get_user(invitation.device_id.user_id)
@@ -123,10 +137,10 @@ class MemoryUserComponent(BaseUserComponent):
             raise UserAlreadyExistsError(f"Device `{invitation.device_id}` already exists")
         self._invitations[invitation.device_id] = invitation
 
-    async def get_device_invitation(self, device_id: UserID) -> DeviceInvitation:
+    async def get_device_invitation(self, device_id: DeviceID) -> DeviceInvitation:
         try:
             self._users[device_id.user_id].devices[device_id.device_name]
-            raise UserNotFoundError(device_id)
+            raise UserAlreadyExistsError(device_id)
         except KeyError:
             pass
         try:
@@ -134,8 +148,18 @@ class MemoryUserComponent(BaseUserComponent):
         except KeyError:
             raise UserNotFoundError(device_id)
 
-    async def device_cancel_invitation(self, device_id: DeviceID) -> None:
-        self._invitations.pop(device_id, None)
+    async def claim_device_invitation(
+        self, device_id: DeviceID, encrypted_claim: bytes = b""
+    ) -> UserInvitation:
+        invitation = await self.get_device_invitation(device_id)
+        self.event_bus.send(
+            "device.claimed", device_id=invitation.device_id, encrypted_claim=encrypted_claim
+        )
+        return invitation
+
+    async def cancel_device_invitation(self, device_id: DeviceID) -> None:
+        if self._invitations.pop(device_id, None):
+            self.event_bus.send("device.invitation.cancelled", device_id=device_id)
 
     async def revoke_device(
         self, device_id: DeviceID, certified_revocation: bytes, revocation_certifier: DeviceID

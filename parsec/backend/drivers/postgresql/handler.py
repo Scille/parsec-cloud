@@ -15,17 +15,21 @@ async def init_db(url: str, force: bool = False) -> bool:
         triopg.exceptions.PostgresError
     """
     async with triopg.connect(url) as conn:
-        if force:
-            async with conn.transaction():
-                await _drop_db(conn)
+        await _init_db(conn, force)
 
-        already_initialized = await _is_db_initialized(conn)
 
-        if not already_initialized:
-            async with conn.transaction():
-                await _create_db_tables(conn)
+async def _init_db(conn, force: bool = False) -> bool:
+    if force:
+        async with conn.transaction():
+            await _drop_db(conn)
 
-        return already_initialized
+    already_initialized = await _is_db_initialized(conn)
+
+    if not already_initialized:
+        async with conn.transaction():
+            await _create_db_tables(conn)
+
+    return already_initialized
 
 
 async def _drop_db(conn):
@@ -40,8 +44,7 @@ async def _drop_db(conn):
             devices,
 
             user_invitations,
-            unconfigured_devices,
-            device_configuration_tries,
+            device_invitations,
 
             messages,
             vlobs,
@@ -100,39 +103,16 @@ async def _create_db_tables(conn):
         ALTER TABLE users
         ADD CONSTRAINT FK_users_devices FOREIGN KEY (user_certifier) REFERENCES devices(device_id);
 
-        CREATE TYPE USER_INVITATION_STATUS AS ENUM ('pending', 'claimed', 'rejected');
         CREATE TABLE user_invitations (
-            _id SERIAL PRIMARY KEY,
-            status USER_INVITATION_STATUS NOT NULL,
-            user_id VARCHAR(32) NOT NULL,
-            invited_on TIMESTAMP NOT NULL,
-            invitation_token TEXT NOT NULL,
-            claim_tries INTEGER NOT NULL,
-            claimed_on TIMESTAMP
+            user_id VARCHAR(32) PRIMARY KEY,
+            creator VARCHAR(65) REFERENCES devices (device_id) NOT NULL,
+            created_on TIMESTAMP NOT NULL
         );
 
-        CREATE TABLE unconfigured_devices (
-            _id SERIAL PRIMARY KEY,
-            user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
-            device_name VARCHAR(32) NOT NULL,
-            created_on TIMESTAMP NOT NULL,
-            configure_token TEXT NOT NULL,
-            UNIQUE(user_id, device_name)
-        );
-
-        CREATE TYPE DEVICE_CONF_TRY_STATUS AS ENUM ('waiting_answer', 'accepted', 'refused');
-        CREATE TABLE device_configuration_tries (
-            config_try_id VARCHAR(32) PRIMARY KEY,
-            user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
-            status DEVICE_CONF_TRY_STATUS NOT NULL,
-            refused_reason TEXT,
-            device_name VARCHAR(32) NOT NULL,
-            device_verify_key BYTEA NOT NULL,
-            exchange_cipherkey BYTEA NOT NULL,
-            salt BYTEA NOT NULL,
-            ciphered_user_privkey BYTEA,
-            ciphered_user_manifest_access BYTEA,
-            UNIQUE(user_id, config_try_id)
+        CREATE TABLE device_invitations (
+            device_id VARCHAR(65) PRIMARY KEY,
+            creator VARCHAR(65) REFERENCES devices (device_id) NOT NULL,
+            created_on TIMESTAMP NOT NULL
         );
 
         CREATE TABLE messages (
@@ -201,9 +181,6 @@ class PGHandler:
     def _on_notification(self, connection, pid, channel, payload):
         data = ejson_loads(payload)
         signal = data.pop("__signal__")
-        if signal == "beacon.updated":
-            data["beacon_id"] = UUID(data["beacon_id"])
-            data["src_id"] = UUID(data["src_id"])
         logger.debug("notif received", pid=pid, channel=channel, payload=payload)
         self.event_bus.send(signal, **data)
 

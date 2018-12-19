@@ -3,9 +3,23 @@ import pendulum
 
 from parsec.trustchain import certify_user, certify_device
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.protocole import user_create_serializer
+from parsec.api.protocole import user_create_serializer, ping_serializer
 
 from tests.common import freeze_time
+
+
+async def user_create(sock, **kwargs):
+    await sock.send(user_create_serializer.req_dump({"cmd": "user_create", **kwargs}))
+    raw_rep = await sock.recv()
+    rep = user_create_serializer.rep_load(raw_rep)
+    return rep
+
+
+async def ping(sock, **kwargs):
+    await sock.send(ping_serializer.req_dump({"cmd": "ping", **kwargs}))
+    raw_rep = await sock.recv()
+    rep = ping_serializer.rep_load(raw_rep)
+    return rep
 
 
 @pytest.mark.trio
@@ -19,25 +33,16 @@ async def test_user_create_ok(backend, backend_sock_factory, alice_backend_sock,
     )
 
     with backend.event_bus.listen() as spy:
-        await alice_backend_sock.send(
-            user_create_serializer.req_dump(
-                {
-                    "cmd": "user_create",
-                    "certified_user": certified_user,
-                    "certified_device": certified_device,
-                }
-            )
+        rep = await user_create(
+            alice_backend_sock, certified_user=certified_user, certified_device=certified_device
         )
-        raw_rep = await alice_backend_sock.recv()
 
     spy.assert_event_occured("user.created", kwargs={"user_id": mallory.user_id})
-    rep = user_create_serializer.rep_load(raw_rep)
     assert rep == {"status": "ok"}
 
     # Make sure mallory can connect now
     async with backend_sock_factory(backend, mallory) as sock:
-        await sock.send({"cmd": "ping", "ping": "Hello world !"})
-        rep = await sock.recv()
+        rep = await ping(sock, ping="Hello world !")
         assert rep == {"status": "ok", "pong": "Hello world !"}
 
 
@@ -62,14 +67,7 @@ async def test_user_create_invalid_certified(alice_backend_sock, alice, bob, mal
         (bad_certified_user, good_certified_device),
         (bad_certified_user, bad_certified_device),
     ]:
-        await alice_backend_sock.send(
-            user_create_serializer.req_dump(
-                {"cmd": "user_create", "certified_user": cu, "certified_device": cd}
-            )
-        )
-        raw_rep = await alice_backend_sock.recv()
-
-        rep = user_create_serializer.rep_load(raw_rep)
+        rep = await user_create(alice_backend_sock, certified_user=cu, certified_device=cd)
         assert rep == {
             "status": "invalid_certification",
             "reason": "Certifier is not the authenticated device.",
@@ -86,18 +84,9 @@ async def test_user_create_not_matching_user_device(alice_backend_sock, alice, m
         alice.device_id, alice.signing_key, "zack@foo", mallory.verify_key, now=now
     )
 
-    await alice_backend_sock.send(
-        user_create_serializer.req_dump(
-            {
-                "cmd": "user_create",
-                "certified_user": certified_user,
-                "certified_device": certified_device,
-            }
-        )
+    rep = await user_create(
+        alice_backend_sock, certified_user=certified_user, certified_device=certified_device
     )
-    raw_rep = await alice_backend_sock.recv()
-
-    rep = user_create_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "invalid_data",
         "reason": "Device and User must have the same user ID.",
@@ -114,23 +103,14 @@ async def test_user_create_already_exists(alice_backend_sock, alice, bob):
         alice.device_id, alice.signing_key, bob.device_id, bob.verify_key, now=now
     )
 
-    await alice_backend_sock.send(
-        user_create_serializer.req_dump(
-            {
-                "cmd": "user_create",
-                "certified_user": certified_user,
-                "certified_device": certified_device,
-            }
-        )
+    rep = await user_create(
+        alice_backend_sock, certified_user=certified_user, certified_device=certified_device
     )
-    raw_rep = await alice_backend_sock.recv()
-
-    rep = user_create_serializer.rep_load(raw_rep)
     assert rep == {"status": "already_exists", "reason": "User `bob` already exists"}
 
 
 @pytest.mark.trio
-async def test_device_create_certify_too_old(alice_backend_sock, alice, mallory):
+async def test_user_create_certify_too_old(alice_backend_sock, alice, mallory):
     too_old = pendulum.Pendulum(2000, 1, 1)
     now = too_old.add(seconds=INVITATION_VALIDITY + 1)
     good_certified_user = certify_user(
@@ -152,13 +132,7 @@ async def test_device_create_certify_too_old(alice_backend_sock, alice, mallory)
             (bad_certified_user, good_certified_device),
             (bad_certified_user, bad_certified_device),
         ]:
-            await alice_backend_sock.send(
-                user_create_serializer.req_dump(
-                    {"cmd": "user_create", "certified_user": cu, "certified_device": cd}
-                )
-            )
-            raw_rep = await alice_backend_sock.recv()
-            rep = user_create_serializer.rep_load(raw_rep)
+            rep = await user_create(alice_backend_sock, certified_user=cu, certified_device=cd)
             assert rep == {
                 "status": "invalid_certification",
                 "reason": "Invalid certification data (Timestamp is too old.).",

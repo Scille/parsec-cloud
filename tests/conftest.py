@@ -249,8 +249,7 @@ def default_devices(alice, alice2, bob):
 @pytest.fixture
 def bootstrap_postgresql(url):
     # In theory we should use TrioPG here to do db init, but:
-    # - Duck typing and similar api makes `_ensure_tables_in_place` compatible
-    #   with both
+    # - Duck typing and similar api makes `_init_db` compatible with both
     # - AsyncPG should be slightly faster than TrioPG
     # - Most important: a trio loop is potentially already started inside this
     #   thread (i.e. if the test is mark as trio). Hence we would have to spawn
@@ -258,11 +257,11 @@ def bootstrap_postgresql(url):
 
     import asyncio
     import asyncpg
-    from parsec.backend.drivers.postgresql.handler import _ensure_tables_in_place
+    from parsec.backend.drivers.postgresql.handler import _init_db
 
     async def _bootstrap():
         conn = await asyncpg.connect(url)
-        await _ensure_tables_in_place(conn, force=True)
+        await _init_db(conn, force=True)
         await conn.close()
 
     asyncio.get_event_loop().run_until_complete(_bootstrap())

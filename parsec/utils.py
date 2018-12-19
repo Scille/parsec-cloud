@@ -5,7 +5,7 @@ import trio
 import inspect
 from functools import wraps
 from uuid import UUID
-from pendulum import Pendulum
+from pendulum import Pendulum, parse as pendulum_parse
 
 
 def to_jsonb64(raw: bytes):
@@ -19,14 +19,13 @@ def from_jsonb64(msg: str):
 def _json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
     if isinstance(obj, Pendulum):
-        serial = obj.isoformat()
-        return serial
+        return {"__type__": "datetime", "__value__": obj.isoformat()}
 
     if isinstance(obj, UUID):
-        return obj.hex
+        return {"__type__": "uuid", "__value__": obj.hex}
 
     elif isinstance(obj, bytes):
-        return to_jsonb64(obj)
+        return {"__type__": "bytes", "__value__": to_jsonb64(obj)}
 
     raise TypeError("Type %s not serializable" % type(obj))
 
@@ -36,7 +35,29 @@ def ejson_dumps(obj):
 
 
 def ejson_loads(raw):
-    return json.loads(raw)
+    def _recursive_load_special_types(data):
+        if isinstance(data, list):
+            return [_recursive_load_special_types(x) for x in data]
+        elif isinstance(data, dict):
+            try:
+                type = data["__type__"]
+                value = data["__value__"]
+                if type == "bytes":
+                    return from_jsonb64(value)
+                elif type == "uuid":
+                    return UUID(value)
+                elif type == "datetime":
+                    return pendulum_parse(value)
+
+            except KeyError:
+                pass
+
+            return {k: _recursive_load_special_types(v) for k, v in data.items()}
+
+        else:
+            return data
+
+    return _recursive_load_special_types(json.loads(raw))
 
 
 def _sync_wrap_method(method):

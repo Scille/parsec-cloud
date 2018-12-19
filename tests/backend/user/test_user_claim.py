@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import ANY
 from pendulum import Pendulum
+from async_generator import asynccontextmanager
 
 from parsec.api.protocole import user_get_invitation_creator_serializer, user_claim_serializer
 from parsec.backend.user import User, UserInvitation, INVITATION_VALIDITY, PEER_EVENT_MAX_WAIT
@@ -15,40 +16,48 @@ async def mallory_invitation(backend, alice, mallory):
     return invitation
 
 
+async def user_get_invitation_creator(sock, **kwargs):
+    await sock.send(
+        user_get_invitation_creator_serializer.req_dump(
+            {"cmd": "user_get_invitation_creator", **kwargs}
+        )
+    )
+    raw_rep = await sock.recv()
+    rep = user_get_invitation_creator_serializer.rep_load(raw_rep)
+    return rep
+
+
+@asynccontextmanager
+async def user_claim(sock, **kwargs):
+    reps = []
+    await sock.send(user_claim_serializer.req_dump({"cmd": "user_claim", **kwargs}))
+    yield reps
+    raw_rep = await sock.recv()
+    rep = user_claim_serializer.rep_load(raw_rep)
+    reps.append(rep)
+
+
 @pytest.mark.trio
 async def test_user_get_invitation_creator_too_late(anonymous_backend_sock, mallory_invitation):
     with freeze_time(mallory_invitation.created_on.add(seconds=INVITATION_VALIDITY + 1)):
-        await anonymous_backend_sock.send(
-            user_get_invitation_creator_serializer.req_dump(
-                {
-                    "cmd": "user_get_invitation_creator",
-                    "invited_user_id": mallory_invitation.user_id,
-                }
-            )
+        rep = await user_get_invitation_creator(
+            anonymous_backend_sock, invited_user_id=mallory_invitation.user_id
         )
-        raw_rep = await anonymous_backend_sock.recv()
-    rep = user_get_invitation_creator_serializer.rep_load(raw_rep)
     assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio
-async def test_user_get_invitation_creator_unknown(anonymous_backend_sock):
-    await anonymous_backend_sock.send(
-        {"cmd": "user_get_invitation_creator", "invited_user_id": "zack"}
-    )
-    raw_rep = await anonymous_backend_sock.recv()
-    rep = user_get_invitation_creator_serializer.rep_load(raw_rep)
+async def test_user_get_invitation_creator_unknown(anonymous_backend_sock, mallory):
+    rep = await user_get_invitation_creator(anonymous_backend_sock, invited_user_id=mallory.user_id)
     assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio
 async def test_user_get_invitation_creator_ok(anonymous_backend_sock, mallory_invitation):
     with freeze_time(mallory_invitation.created_on):
-        await anonymous_backend_sock.send(
-            {"cmd": "user_get_invitation_creator", "invited_user_id": mallory_invitation.user_id}
+        rep = await user_get_invitation_creator(
+            anonymous_backend_sock, invited_user_id=mallory_invitation.user_id
         )
-        raw_rep = await anonymous_backend_sock.recv()
-    rep = user_get_invitation_creator_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "ok",
         "user_id": mallory_invitation.creator.user_id,
@@ -64,40 +73,36 @@ async def test_user_get_invitation_creator_ok(anonymous_backend_sock, mallory_in
 @pytest.mark.trio
 async def test_user_claim_ok(backend, anonymous_backend_sock, mallory_invitation):
     with freeze_time(mallory_invitation.created_on):
-        await anonymous_backend_sock.send(
-            {
-                "cmd": "user_claim",
-                "invited_user_id": mallory_invitation.user_id,
-                "encrypted_claim": b"<foo>",
-            }
-        )
+        async with user_claim(
+            anonymous_backend_sock,
+            invited_user_id=mallory_invitation.user_id,
+            encrypted_claim=b"<foo>",
+        ) as prep:
 
-        await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "user.created"})
-        backend.event_bus.send("user.created", user_id="dummy")
-        backend.event_bus.send("user.created", user_id=mallory_invitation.user_id)
+            await backend.event_bus.spy.wait(
+                "event.connected", kwargs={"event_name": "user.created"}
+            )
+            backend.event_bus.send("user.created", user_id="dummy")
+            backend.event_bus.send("user.created", user_id=mallory_invitation.user_id)
 
-        raw_rep = await anonymous_backend_sock.recv()
-    rep = user_claim_serializer.rep_load(raw_rep)
-    assert rep == {"status": "ok"}
+    assert prep[0] == {"status": "ok"}
 
 
 @pytest.mark.trio
 async def test_user_claim_timeout(mock_clock, backend, anonymous_backend_sock, mallory_invitation):
     with freeze_time(mallory_invitation.created_on):
-        await anonymous_backend_sock.send(
-            {
-                "cmd": "user_claim",
-                "invited_user_id": mallory_invitation.user_id,
-                "encrypted_claim": b"<foo>",
-            }
-        )
+        async with user_claim(
+            anonymous_backend_sock,
+            invited_user_id=mallory_invitation.user_id,
+            encrypted_claim=b"<foo>",
+        ) as prep:
 
-        await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "user.created"})
-        mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
+            await backend.event_bus.spy.wait(
+                "event.connected", kwargs={"event_name": "user.created"}
+            )
+            mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
 
-        raw_rep = await anonymous_backend_sock.recv()
-    rep = user_claim_serializer.rep_load(raw_rep)
-    assert rep == {
+    assert prep[0] == {
         "status": "timeout",
         "reason": "Timeout while waiting for invitation creator to answer.",
     }
@@ -106,33 +111,30 @@ async def test_user_claim_timeout(mock_clock, backend, anonymous_backend_sock, m
 @pytest.mark.trio
 async def test_user_claim_denied(backend, anonymous_backend_sock, mallory_invitation):
     with freeze_time(mallory_invitation.created_on):
-        await anonymous_backend_sock.send(
-            {
-                "cmd": "user_claim",
-                "invited_user_id": mallory_invitation.user_id,
-                "encrypted_claim": b"<foo>",
-            }
-        )
+        async with user_claim(
+            anonymous_backend_sock,
+            invited_user_id=mallory_invitation.user_id,
+            encrypted_claim=b"<foo>",
+        ) as prep:
 
-        await backend.event_bus.spy.wait(
-            "event.connected", kwargs={"event_name": "user.invitation.cancelled"}
-        )
-        backend.event_bus.send("user.created", user_id="dummy")
-        backend.event_bus.send("user.invitation.cancelled", user_id=mallory_invitation.user_id)
+            await backend.event_bus.spy.wait(
+                "event.connected", kwargs={"event_name": "user.invitation.cancelled"}
+            )
+            backend.event_bus.send("user.created", user_id="dummy")
+            backend.event_bus.send("user.invitation.cancelled", user_id=mallory_invitation.user_id)
 
-        raw_rep = await anonymous_backend_sock.recv()
-    rep = user_claim_serializer.rep_load(raw_rep)
-    assert rep == {"status": "denied", "reason": "Invitation creator rejected us."}
+    assert prep[0] == {"status": "denied", "reason": "Invitation creator rejected us."}
 
 
 @pytest.mark.trio
-async def test_user_claim_unknown(anonymous_backend_sock):
-    await anonymous_backend_sock.send(
-        {"cmd": "user_claim", "invited_user_id": "dummy", "encrypted_claim": b"<foo>"}
-    )
-    raw_rep = await anonymous_backend_sock.recv()
-    rep = user_claim_serializer.rep_load(raw_rep)
-    assert rep == {"status": "not_found"}
+async def test_user_claim_unknown(anonymous_backend_sock, mallory):
+    async with user_claim(
+        anonymous_backend_sock, invited_user_id=mallory.user_id, encrypted_claim=b"<foo>"
+    ) as prep:
+
+        pass
+
+    assert prep[0] == {"status": "not_found"}
 
 
 @pytest.mark.trio
@@ -148,13 +150,12 @@ async def test_user_claim_already_exists(
     )
 
     with freeze_time(mallory_invitation.created_on):
-        await anonymous_backend_sock.send(
-            {
-                "cmd": "user_claim",
-                "invited_user_id": mallory_invitation.user_id,
-                "encrypted_claim": b"<foo>",
-            }
-        )
-        raw_rep = await anonymous_backend_sock.recv()
-    rep = user_claim_serializer.rep_load(raw_rep)
-    assert rep == {"status": "not_found"}
+        async with user_claim(
+            anonymous_backend_sock,
+            invited_user_id=mallory_invitation.user_id,
+            encrypted_claim=b"<foo>",
+        ) as prep:
+
+            pass
+
+    assert prep[0] == {"status": "not_found"}

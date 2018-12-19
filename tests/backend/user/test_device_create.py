@@ -26,6 +26,13 @@ def alice_nd(alice):
     return NewDevice(DeviceID(f"{alice.user_id}@new_device"), SigningKey.generate())
 
 
+async def device_create(sock, **kwargs):
+    await sock.send(device_create_serializer.req_dump({"cmd": "device_create", **kwargs}))
+    raw_rep = await sock.recv()
+    rep = device_create_serializer.rep_load(raw_rep)
+    return rep
+
+
 @pytest.mark.trio
 async def test_device_create_ok(backend, backend_sock_factory, alice_backend_sock, alice, alice_nd):
     now = pendulum.now()
@@ -34,18 +41,9 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
     )
 
     with backend.event_bus.listen() as spy:
-        await alice_backend_sock.send(
-            device_create_serializer.req_dump(
-                {
-                    "cmd": "device_create",
-                    "certified_device": certified_device,
-                    "encrypted_answer": b"<good>",
-                }
-            )
+        rep = await device_create(
+            alice_backend_sock, certified_device=certified_device, encrypted_answer=b"<good>"
         )
-        raw_rep = await alice_backend_sock.recv()
-
-    rep = device_create_serializer.rep_load(raw_rep)
     assert rep == {"status": "ok"}
     spy.assert_event_occured(
         "device.created", kwargs={"device_id": alice_nd.device_id, "encrypted_answer": b"<good>"}
@@ -65,17 +63,9 @@ async def test_device_create_invalid_certified(alice_backend_sock, bob, alice_nd
         bob.device_id, bob.signing_key, alice_nd.device_id, alice_nd.verify_key, now=now
     )
 
-    await alice_backend_sock.send(
-        device_create_serializer.req_dump(
-            {
-                "cmd": "device_create",
-                "certified_device": certified_device,
-                "encrypted_answer": b"<good>",
-            }
-        )
+    rep = await device_create(
+        alice_backend_sock, certified_device=certified_device, encrypted_answer=b"<good>"
     )
-    raw_rep = await alice_backend_sock.recv()
-    rep = device_create_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "invalid_certification",
         "reason": "Certifier is not the authenticated device.",
@@ -89,18 +79,9 @@ async def test_device_create_already_exists(alice_backend_sock, alice, alice2):
         alice.device_id, alice.signing_key, alice2.device_id, alice2.verify_key, now=now
     )
 
-    await alice_backend_sock.send(
-        device_create_serializer.req_dump(
-            {
-                "cmd": "device_create",
-                "certified_device": certified_device,
-                "encrypted_answer": b"<good>",
-            }
-        )
+    rep = await device_create(
+        alice_backend_sock, certified_device=certified_device, encrypted_answer=b"<good>"
     )
-    raw_rep = await alice_backend_sock.recv()
-
-    rep = device_create_serializer.rep_load(raw_rep)
     assert rep == {
         "status": "already_exists",
         "reason": f"Device `{alice2.device_id}` already exists",
@@ -114,18 +95,9 @@ async def test_device_create_not_own_user(bob_backend_sock, bob, alice_nd):
         bob.device_id, bob.signing_key, alice_nd.device_id, alice_nd.verify_key, now=now
     )
 
-    await bob_backend_sock.send(
-        device_create_serializer.req_dump(
-            {
-                "cmd": "device_create",
-                "certified_device": certified_device,
-                "encrypted_answer": b"<good>",
-            }
-        )
+    rep = await device_create(
+        bob_backend_sock, certified_device=certified_device, encrypted_answer=b"<good>"
     )
-    raw_rep = await bob_backend_sock.recv()
-
-    rep = device_create_serializer.rep_load(raw_rep)
     assert rep == {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
 
@@ -137,18 +109,9 @@ async def test_device_create_certify_too_old(alice_backend_sock, alice, alice_nd
     )
 
     with freeze_time(now.add(seconds=INVITATION_VALIDITY + 1)):
-        await alice_backend_sock.send(
-            device_create_serializer.req_dump(
-                {
-                    "cmd": "device_create",
-                    "certified_device": certified_device,
-                    "encrypted_answer": b"<good>",
-                }
-            )
+        rep = await device_create(
+            alice_backend_sock, certified_device=certified_device, encrypted_answer=b"<good>"
         )
-        raw_rep = await alice_backend_sock.recv()
-
-        rep = device_create_serializer.rep_load(raw_rep)
         assert rep == {
             "status": "invalid_certification",
             "reason": "Invalid certification data (Timestamp is too old.).",
