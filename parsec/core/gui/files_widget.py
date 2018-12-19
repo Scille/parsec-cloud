@@ -111,6 +111,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 return
             self._import_file(src, dst)
 
+    # slot
     def item_clicked(self, row, column):
         file_type = self.table_files.item(row, 0).data(Qt.UserRole)
         if (
@@ -120,6 +121,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         ):
             self.delete_item(row)
 
+    # slot
     def change_selection(self):
         selected = self.table_files.selectedItems()
         for item in self.previous_selection:
@@ -223,6 +225,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if fd_out:
                 core_call().file_close(fd_out)
 
+    # slot
     def import_files_clicked(self):
         paths, _ = QFileDialog.getOpenFileNames(
             self,
@@ -245,6 +248,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self, QCoreApplication.translate("FilesWidget", "Some files could not be imported.")
             )
 
+    # slot
     def import_folder_clicked(self):
         path = QFileDialog.getExistingDirectory(
             self,
@@ -262,6 +266,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 self, QCoreApplication.translate("FilesWidget", "The folder could not be imported.")
             )
 
+    # slot
     def filter_files(self, pattern):
         pattern = pattern.lower()
         for i in range(self.table_files.rowCount()):
@@ -404,6 +409,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 core_call().delete_file(child_path)
         core_call().delete_folder(path)
 
+    # slot
     def create_folder_clicked(self):
         folder_name = get_text(
             self,
@@ -415,6 +421,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             return
         self._create_folder(folder_name)
 
+    # slot
     def show_context_menu(self, pos):
         global_pos = self.table_files.mapToGlobal(pos)
         row = self.table_files.currentRow()
@@ -433,6 +440,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         action.triggered.connect(self.rename(name_item, type_item))
         menu.exec_(global_pos)
 
+    # slot
     def rename(self, name_item, type_item):
         def _inner_rename():
             new_name = get_text(
@@ -460,6 +468,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         return _inner_rename
 
+    # slot
     def open_file(self, file_name):
         def _inner_open_file():
             desktop.open_file(
@@ -468,6 +477,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
         return _inner_open_file
 
+    # slot
     def item_double_clicked(self, row, column):
         name_item = self.table_files.item(row, 1)
         type_item = self.table_files.item(row, 0)
@@ -492,12 +502,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.clearContents()
         self.table_files.setRowCount(0)
 
+    # slot
     def _on_fs_entry_synced_trio(self, event, path, id):
         self.fs_changed_qt.emit(event, id, path)
 
+    # slot
     def _on_fs_entry_updated_trio(self, event, id):
         self.fs_changed_qt.emit(event, id, None)
 
+    # slot
     def _on_fs_changed_qt(self, event, id, path):
         if not path:
             try:

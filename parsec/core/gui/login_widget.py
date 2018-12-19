@@ -59,12 +59,17 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         self.devices = core_call().get_devices()
         if len(self.devices) == 1:
             self.line_edit_device.setText(self.devices[0])
+            self.line_edit_password.setFocus()
         elif len(self.devices) > 1:
             last_device = settings.get_value("last_device")
             if last_device and last_device in self.devices:
                 self.line_edit_device.setText(last_device)
+                self.line_edit_password.setFocus()
+            else:
+                self.line_edit_device.setFocus()
         else:
             self.line_edit_device.setText("")
+            self.line_edit_device.setFocus()
         completer = QCompleter(self.devices)
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         completer.popup().setStyleSheet("border: 2px solid rgb(46, 145, 208); border-top: 0;")

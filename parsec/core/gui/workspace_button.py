@@ -19,9 +19,14 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         self.creator = creator
         self.shared_with = shared_with or []
         self.name = workspace_name
-        for i, f in enumerate(files[:4], 1):
-            label = getattr(self, "label_file{}".format(i))
-            label.setText(f)
+        if not len(files):
+            self.label_empty.show()
+            self.widget_files.hide()
+        else:
+            for i, f in enumerate(files[:4], 1):
+                label = getattr(self, "label_file{}".format(i))
+                label.setText(f)
+            self.label_empty.hide()
         effect = QGraphicsDropShadowEffect(self)
         effect.setColor(QColor(164, 164, 164))
         effect.setBlurRadius(10)

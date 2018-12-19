@@ -67,6 +67,7 @@ padding-bottom: 20px;</string>
 border: 2px solid rgb(46, 145, 208);
 background-color: white;
 color: black;
+padding-left: 5px;
 }
 
 QComboBox
@@ -74,6 +75,7 @@ QComboBox
 border: 2px solid rgb(46, 145, 208);
 background-color: white;
 color: black;
+padding-left: 5px;
 }
 
 QComboBox::drop-down

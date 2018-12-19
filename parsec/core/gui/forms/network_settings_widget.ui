@@ -14,7 +14,12 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QLineEdit
+   <string notr="true">QWidget#NetworkSettingsWidget
+{
+background-color: rgb(255, 255, 255);
+}
+
+QLineEdit
 {
 border: 1px solid rgb(30, 78, 162);
 padding-left: 10px;
@@ -83,6 +88,7 @@ QComboBox
 border: 1px solid rgb(30, 78, 162);
 background-color: white;
 color: black;
+padding-left: 5px;
 }
 
 QComboBox::drop-down
