@@ -60,7 +60,6 @@ class SwiftBlockstoreComponent(BaseBlockstoreComponent):
         return obj
 
     async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
-        # TODO find a more efficient way to check if block already exists
         try:
             _, obj = await trio.run_sync_in_worker_thread(
                 self.swift_client.get_object, self._container, str(id)
