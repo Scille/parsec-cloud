@@ -42,6 +42,7 @@ class BaseAsyncComponent:
         raise NotImplementedError()
 
 
+# TODO: replace by `parsec.utils.call_with_control`
 def taskify(func, *args, **kwargs):
     async def _task(*, task_status=trio.TASK_STATUS_IGNORED):
         task = trio.hazmat.current_task()

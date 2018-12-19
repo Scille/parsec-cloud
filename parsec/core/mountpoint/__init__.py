@@ -1,4 +1,8 @@
-from parsec.core.mountpoint.manager import FuseMountpointManager, FUSE_AVAILABLE
+from parsec.core.mountpoint.manager import (
+    FuseMountpointManager,
+    FUSE_AVAILABLE,
+    get_default_mountpoint,
+)
 from parsec.core.mountpoint.not_available import NotAvailableMountpointManager
 from parsec.core.mountpoint.exceptions import (
     MountpointManagerError,
@@ -18,6 +22,7 @@ def mountpoint_manager_factory(fs, event_bus, **kwargs):
 
 __all__ = (
     "mountpoint_manager_factory",
+    "get_default_mountpoint",
     "MountpointManagerError",
     "MountpointManagerNotAvailable",
     "MountpointAlreadyStarted",

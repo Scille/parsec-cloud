@@ -241,7 +241,7 @@ test_requirements = [
     "wheel",
     "Sphinx",
     "flake8",
-    "hypothesis",
+    "hypothesis==3.82.2",  # Hypothesis-trio not compatible with new versions
     "hypothesis-trio>=0.2.1",
     "black==18.9b0",  # Pin black to avoid flaky style check
 ]
@@ -254,7 +254,7 @@ extra_requirements = {
     "backend": [
         # PostgreSQL
         "triopg==0.3.0",
-        "trio-asyncio==0.9.1",
+        "trio-asyncio==0.10.0",
         # S3
         "boto3==1.4.4",
         "botocore==1.5.46",

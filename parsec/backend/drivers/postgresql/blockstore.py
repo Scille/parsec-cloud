@@ -1,29 +1,38 @@
 from triopg.exceptions import UniqueViolationError
+from uuid import UUID
 
-from parsec.utils import ParsecError
-from parsec.backend.exceptions import AlreadyExistsError, NotFoundError
-from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.types import DeviceID
+from parsec.backend.blockstore import (
+    BlockstoreError,
+    BaseBlockstoreComponent,
+    BlockstoreAlreadyExistsError,
+    BlockstoreNotFoundError,
+)
+from parsec.backend.drivers.postgresql.handler import PGHandler
 
 
-class PGBlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, dbh):
+class PGBlockstoreComponent(BaseBlockstoreComponent):
+    def __init__(self, dbh: PGHandler):
         self.dbh = dbh
 
-    async def get(self, id):
+    async def read(self, id: UUID) -> bytes:
         async with self.dbh.pool.acquire() as conn:
             block = await conn.fetchrow("SELECT block FROM blockstore WHERE block_id = $1", id)
             if not block:
-                raise NotFoundError("Unknown block id.")
+                raise BlockstoreNotFoundError()
         return block[0]
 
-    async def post(self, id, block):
+    async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 try:
                     result = await conn.execute(
-                        "INSERT INTO blockstore (block_id, block) VALUES ($1, $2)", id, block
+                        "INSERT INTO blockstore (block_id, block, author) VALUES ($1, $2, $3)",
+                        id,
+                        block,
+                        author,
                     )
                     if result != "INSERT 0 1":
-                        raise ParsecError("Insertion error.")
+                        raise BlockstoreError(f"Insertion error: {result}")
                 except UniqueViolationError as exc:
-                    raise AlreadyExistsError("A block already exists with id `%s`." % id) from exc
+                    raise BlockstoreAlreadyExistsError() from exc

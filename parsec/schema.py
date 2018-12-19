@@ -9,7 +9,6 @@ from marshmallow import (
 from marshmallow import validate  # noqa: republishing
 
 from parsec import schema_fields as fields  # noqa: republishing
-from parsec.utils import abort
 
 try:
     import toastedmarshmallow
@@ -23,6 +22,9 @@ except ImportError:
     BaseSchema = Schema
 
 
+__all__ = ("ValidationError", "UnknownCheckedSchema", "BaseCmdSchema", "validate", "fields")
+
+
 class UnknownCheckedSchema(BaseSchema):
 
     """
@@ -34,6 +36,12 @@ class UnknownCheckedSchema(BaseSchema):
         for key in original_data:
             if key not in self.fields or self.fields[key].dump_only:
                 raise ValidationError("Unknown field name {}".format(key))
+
+    # def dumps(self, data):
+    #     try:
+    #         self.dump(data)
+    #     except (UnicodeDecodeError, JSONDecodeError) as exc:
+    #         raise ValidationError(str(exc)) from exc
 
 
 class InvalidCmd(Exception):
@@ -54,31 +62,12 @@ class BaseCmdSchema(UnknownCheckedSchema):
         super().__init__(**kwargs)
         self.drop_cmd_field = drop_cmd_field
 
-    def load(self, msg, **kwargs):
-        # TODO: big hack to work around cmd_EVENT_SUBSCRIBE_Schema using OneOfSchema
-        if kwargs:
-            return super().load(msg)
-
-        parsed_msg, errors = super().load(msg)
-        if errors:
-            raise InvalidCmd(errors)
-        return parsed_msg
-
-    # TODO: remove this and use the load instead
-    def load_or_abort(self, msg):
-        parsed_msg, errors = super().load(msg)
-        if errors:
-            raise abort(errors=errors)
-
-        else:
-            return parsed_msg
-
 
 # Shamelessly taken from marshmallow-oneofschema (
 # https://github.com/maximkulkin/marshmallow-oneofschema - MIT licensed)
 # This is needed because marshmallow-oneofschema depends of marshmallow which
 # cannot be installed along with toastedmarshmallow
-class OneOfSchema(BaseSchema):
+class OneOfSchema(UnknownCheckedSchema):
     """
     This is a special kind of schema that actually multiplexes other schemas
     based on object type. When serializing values, it uses get_obj_type() method
@@ -135,6 +124,7 @@ class OneOfSchema(BaseSchema):
     type_field = "type"
     type_field_remove = True
     type_schemas = []
+    fallback_type_schema = None
 
     def get_obj_type(self, obj):
         """Returns name of object schema"""
@@ -170,7 +160,10 @@ class OneOfSchema(BaseSchema):
 
         type_schema = self.type_schemas.get(obj_type)
         if not type_schema:
-            return MarshalResult(None, {"_schema": "Unsupported object type: %s" % obj_type})
+            if not self.fallback_type_schema:
+                return MarshalResult(None, {"_schema": "Unsupported object type: %s" % obj_type})
+            else:
+                type_schema = self.fallback_type_schema
 
         schema = type_schema if isinstance(type_schema, Schema) else type_schema()
         result = schema.dump(obj, many=False, update_fields=update_fields, **kwargs)
@@ -220,8 +213,12 @@ class OneOfSchema(BaseSchema):
         except TypeError:
             # data_type could be unhashable
             return UnmarshalResult({}, {self.type_field: ["Invalid value: %s" % data_type]})
+
         if not type_schema:
-            return UnmarshalResult({}, {self.type_field: ["Unsupported value: %s" % data_type]})
+            if not self.fallback_type_schema:
+                return UnmarshalResult({}, {self.type_field: ["Unsupported value: %s" % data_type]})
+            else:
+                type_schema = self.fallback_type_schema
 
         schema = type_schema if isinstance(type_schema, Schema) else type_schema()
         return schema.load(data, many=False, partial=partial)

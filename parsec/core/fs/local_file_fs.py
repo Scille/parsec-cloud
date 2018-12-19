@@ -2,7 +2,9 @@ import attr
 from math import inf
 from typing import List, Union, Optional
 
-from parsec.core.local_db import LocalDBMissingEntry
+from parsec.event_bus import EventBus
+from parsec.core.types import LocalDevice
+from parsec.core.local_db import LocalDB, LocalDBMissingEntry
 from parsec.core.fs.utils import is_file_manifest, new_block_access
 from parsec.core.fs.buffer_ordering import (
     quick_filter_block_accesses,
@@ -10,7 +12,7 @@ from parsec.core.fs.buffer_ordering import (
     NullFillerBuffer,
     merge_buffers_with_limits,
 )
-from parsec.core.fs.local_folder_fs import mark_manifest_modified
+from parsec.core.fs.local_folder_fs import LocalFolderFS, mark_manifest_modified
 from parsec.core.fs.types import FileDescriptor, Access, BlockAccess, LocalFileManifest
 
 
@@ -69,20 +71,26 @@ class FSInvalidFileDescriptor(Exception):
 
 
 class LocalFileFS:
-    def __init__(self, device, local_folder_fs, event_bus):
+    def __init__(
+        self,
+        device: LocalDevice,
+        local_db: LocalDB,
+        local_folder_fs: LocalFolderFS,
+        event_bus: EventBus,
+    ):
         self.event_bus = event_bus
         self.local_folder_fs = local_folder_fs
-        self._local_db = device.local_db
+        self.local_db = local_db
         self._opened_cursors = {}
         self._hot_files = {}
         self._next_fd = 1
         # TODO: handle fs.entry.moved events coming from sync
 
     def get_block(self, access: BlockAccess) -> bytes:
-        return self._local_db.get(access)
+        return self.local_db.get(access)
 
     def set_block(self, access: BlockAccess, block: bytes, deletable=False) -> None:
-        return self._local_db.set(access, block, deletable)
+        return self.local_db.set(access, block, deletable)
 
     def _get_cursor_from_fd(self, fd: FileDescriptor) -> FileCursor:
         try:

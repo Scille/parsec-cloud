@@ -1,45 +1,42 @@
-from parsec.utils import to_jsonb64
-from parsec.schema import BaseCmdSchema, fields
+from typing import List, Tuple
+
+from parsec.types import DeviceID, UserID
+from parsec.api.protocole import message_send_serializer, message_get_serializer
+from parsec.backend.utils import catch_protocole_errors
 
 
-class _cmd_NEW_Schema(BaseCmdSchema):
-    recipient = fields.String(required=True)
-    body = fields.Base64Bytes(required=True)
-
-
-cmd_NEW_Schema = _cmd_NEW_Schema()
-
-
-class _cmd_GET_Schema(BaseCmdSchema):
-    # TODO: accept negative offset to fetch only last message ?
-    offset = fields.Integer(missing=0)
-
-
-cmd_GET_Schema = _cmd_GET_Schema()
+class MessageError(Exception):
+    pass
 
 
 class BaseMessageComponent:
-    async def perform_message_new(self, sender_device_id, recipient_user_id, body):
-        raise NotImplementedError()
+    @catch_protocole_errors
+    async def api_message_send(self, client_ctx, msg):
+        msg = message_send_serializer.req_load(msg)
 
-    async def perform_message_get(self, recipient_user_id, offset):
-        raise NotImplementedError()
+        await self.send(client_ctx.device_id, msg["recipient"], msg["body"])
 
-    async def api_message_new(self, client_ctx, msg):
-        msg = cmd_NEW_Schema.load_or_abort(msg)
-        await self.perform_message_new(
-            sender_device_id=client_ctx.id, recipient_user_id=msg["recipient"], body=msg["body"]
-        )
-        return {"status": "ok"}
+        return message_send_serializer.rep_dump({"status": "ok"})
 
+    @catch_protocole_errors
     async def api_message_get(self, client_ctx, msg):
-        msg = cmd_GET_Schema.load_or_abort(msg)
+        msg = message_get_serializer.req_load(msg)
+
         offset = msg["offset"]
-        messages = await self.perform_message_get(client_ctx.user_id, offset)
-        return {
-            "status": "ok",
-            "messages": [
-                {"count": i, "body": to_jsonb64(data[1]), "sender_id": data[0]}
-                for i, data in enumerate(messages, offset + 1)
-            ],
-        }
+        messages = await self.get(client_ctx.user_id, offset)
+
+        return message_get_serializer.rep_dump(
+            {
+                "status": "ok",
+                "messages": [
+                    {"count": i, "body": body, "sender": sender}
+                    for i, (sender, body) in enumerate(messages, offset + 1)
+                ],
+            }
+        )
+
+    async def send(self, sender: DeviceID, recipient: UserID, body: bytes) -> None:
+        raise NotImplementedError()
+
+    async def get(self, recipient: UserID, offset: int) -> List[Tuple[DeviceID, bytes]]:
+        raise NotImplementedError()

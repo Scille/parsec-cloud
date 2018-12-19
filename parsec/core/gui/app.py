@@ -1,9 +1,12 @@
 import os
 import pathlib
 import signal
+from structlog import get_logger
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication
+
+from parsec.core.config import CoreConfig
 
 try:
     from parsec.core.gui import lang
@@ -18,6 +21,9 @@ You must install the parsec package or run `python setup.py generate_pyqt_forms`
     ) from exc
 
 
+logger = get_logger()
+
+
 def kill_window(window):
     def _inner_kill_window(*args):
         window.force_close = True
@@ -27,10 +33,11 @@ def kill_window(window):
     return _inner_kill_window
 
 
-def run_gui(parsec_core, trio_portal, cancel_scope):
-    print("Starting UI")
+def run_gui(config: CoreConfig):
+    # def run_gui(parsec_core, trio_portal, cancel_scope):
+    logger.info("Starting UI")
 
-    init_core_call(parsec_core=parsec_core, trio_portal=trio_portal, cancel_scope=cancel_scope)
+    # init_core_call(parsec_core=parsec_core, trio_portal=trio_portal, cancel_scope=cancel_scope)
 
     app = QApplication([])
     app.setOrganizationName("Scille")

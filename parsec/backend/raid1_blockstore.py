@@ -1,39 +1,44 @@
 import trio
+from uuid import UUID
 
-from parsec.backend.exceptions import AlreadyExistsError, NotFoundError
-from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.types import DeviceID
+from parsec.backend.blockstore import (
+    BaseBlockstoreComponent,
+    BlockstoreAlreadyExistsError,
+    BlockstoreNotFoundError,
+)
 
 
-class RAID1BlockStoreComponent(BaseBlockStoreComponent):
+class RAID1BlockstoreComponent(BaseBlockstoreComponent):
     def __init__(self, blockstores):
         self.blockstores = blockstores
 
-    async def get(self, id):
-        async def _single_blockstore_get(nursery, blockstore, id):
+    async def read(self, id: UUID) -> bytes:
+        async def _single_blockstore_read(nursery, blockstore, id):
             nonlocal value
             try:
-                value = await blockstore.get(id)
+                value = await blockstore.read(id)
                 nursery.cancel_scope.cancel()
-            except NotFoundError:
+            except BlockstoreNotFoundError:
                 pass
 
         value = None
         async with trio.open_nursery() as nursery:
             for blockstore in self.blockstores:
-                nursery.start_soon(_single_blockstore_get, nursery, blockstore, id)
+                nursery.start_soon(_single_blockstore_read, nursery, blockstore, id)
 
         if not value:
-            raise NotFoundError("Unknown block id.")
+            raise BlockstoreNotFoundError()
 
         return value
 
-    async def post(self, id, block):
-        async def _single_blockstore_post(nursery, blockstore, id, block):
+    async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
+        async def _single_blockstore_create(nursery, blockstore, id, block):
             try:
-                await blockstore.post(id, block)
-            except AlreadyExistsError:
+                await blockstore.create(id, block, author)
+            except BlockstoreAlreadyExistsError:
                 # It's possible a previous tentative to upload this block has
-                # failed due another blockstore not available. In such case
+                # failed due to another blockstore not available. In such case
                 # a retrial will raise AlreadyExistsError on all the blockstores
                 # that sucessfully uploaded the block during last attempt.
                 # Only solution to solve this is to ignore AlreadyExistsError.
@@ -41,4 +46,4 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
 
         async with trio.open_nursery() as nursery:
             for blockstore in self.blockstores:
-                nursery.start_soon(_single_blockstore_post, nursery, blockstore, id, block)
+                nursery.start_soon(_single_blockstore_create, nursery, blockstore, id, block)

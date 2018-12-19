@@ -232,18 +232,20 @@ async def _fuzzer_cmd(id, core, fs_state):
 
 @pytest.mark.trio
 @pytest.mark.slow
-async def test_fuzz_core(running_backend, core, alice):
+async def test_fuzz_core(running_backend, alice_core, monitor):
+    await alice_core.event_bus.spy.wait_for_backend_connection_ready()
     try:
-        await core.login(alice)
         async with trio.open_nursery() as nursery:
             fs_state = FSState()
             for i in range(FUZZ_PARALLELISM):
-                nursery.start_soon(fuzzer, i, core, fs_state)
+                nursery.start_soon(fuzzer, i, alice_core, fs_state)
             await trio.sleep(FUZZ_TIME)
             nursery.cancel_scope.cancel()
+
     except:
         print(fs_state.format_logs())
         raise
+
     finally:
 
         def prettify(tree, indent=0):

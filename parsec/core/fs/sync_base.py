@@ -1,13 +1,12 @@
 import trio
 from uuid import UUID
-from typing import Union
 
+from parsec.crypto import decrypt_raw_with_secret_key, encrypt_raw_with_secret_key
+from parsec.core.backend_connection import BackendCmdsBadResponse
+from parsec.core.schemas import dumps_manifest, loads_manifest
 from parsec.core.fs.utils import is_file_manifest, is_folder_manifest, is_placeholder_manifest
 from parsec.core.fs.types import Path, Access, LocalFolderManifest, LocalFileManifest, LocalManifest
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSEntryNotFound
-from parsec.core.encryption_manager import decrypt_with_symkey, encrypt_with_symkey
-from parsec.core.schemas import dumps_manifest, loads_manifest
-from parsec.utils import to_jsonb64, from_jsonb64
 
 
 class SyncConcurrencyError(Exception):
@@ -21,7 +20,7 @@ class BaseSyncer:
     def __init__(
         self,
         device,
-        backend_cmds_sender,
+        backend_cmds,
         encryption_manager,
         local_folder_fs,
         local_file_fs,
@@ -32,7 +31,7 @@ class BaseSyncer:
         self.device = device
         self.local_folder_fs = local_folder_fs
         self.local_file_fs = local_file_fs
-        self.backend_cmds_sender = backend_cmds_sender
+        self.backend_cmds = backend_cmds
         self.encryption_manager = encryption_manager
         self.event_bus = event_bus
         self.block_size = block_size
@@ -198,37 +197,29 @@ class BaseSyncer:
     ) -> None:
         raise NotImplementedError()
 
-    async def _backend_block_post(self, access, blob):
-        ciphered = encrypt_with_symkey(access["key"], bytes(blob))
-        payload = {"cmd": "blockstore_post", "id": access["id"], "block": to_jsonb64(ciphered)}
-        ret = await self.backend_cmds_sender.send(payload)
-        # If a previous attempt of uploading this block has been processed by
-        # the backend but we lost the connection before receiving the response
-        # Note we neglect the possibility of another id collision with another
-        # unrelated block because we trust probability and uuid4, who doesn't ?
-        if ret["status"] != "already_exists_error":
-            assert ret["status"] == "ok"
+    async def _backend_block_create(self, access, blob):
+        ciphered = encrypt_raw_with_secret_key(access["key"], bytes(blob))
+        try:
+            await self.backend_cmds.blockstore_create(access["id"], ciphered)
+        except BackendCmdsBadResponse as exc:
+            # If a previous attempt of uploading this block has been processed by
+            # the backend but we lost the connection before receiving the response
+            # Note we neglect the possibility of another id collision with another
+            # unrelated block because we trust probability and uuid4, who doesn't ?
+            if exc.args[0]["status"] != "already_exists":
+                raise
 
-    async def _backend_block_get(self, access):
-        payload = {"cmd": "blockstore_get", "id": access["id"]}
-        ret = await self.backend_cmds_sender.send(payload)
-        assert ret["status"] == "ok"
-        ciphered = from_jsonb64(ret["block"])
-        blob = decrypt_with_symkey(access["key"], ciphered)
-        return blob
+    async def _backend_block_read(self, access):
+        ciphered = await self.backend_cmds.blockstore_read(access["id"])
+        return decrypt_raw_with_secret_key(access["key"], ciphered)
 
     async def _backend_vlob_group_check(self, to_check):
-        payload = {"cmd": "vlob_group_check", "to_check": to_check}
-        ret = await self.backend_cmds_sender.send(payload)
-        assert ret["status"] == "ok"
-        return [UUID(entry["id"]) for entry in ret["changed"]]
+        changed = await self.backend_cmds.vlob_group_check(to_check)
+        return [entry["id"] for entry in changed]
 
     async def _backend_vlob_read(self, access, version=None):
-        payload = {"cmd": "vlob_read", "id": access["id"], "rts": access["rts"], "version": version}
-        ret = await self.backend_cmds_sender.send(payload)
-        assert ret["status"] == "ok"
-        ciphered = from_jsonb64(ret["blob"])
-        raw = await self.encryption_manager.decrypt_with_secret_key(access["key"], ciphered)
+        _, blob = await self.backend_cmds.vlob_read(access["id"], access["rts"], version)
+        raw = await self.encryption_manager.decrypt_with_secret_key(access["key"], blob)
         return loads_manifest(raw)
 
     async def _backend_vlob_create(self, access, manifest, notify_beacon):
@@ -236,33 +227,25 @@ class BaseSyncer:
         ciphered = self.encryption_manager.encrypt_with_secret_key(
             access["key"], dumps_manifest(manifest)
         )
-        payload = {
-            "cmd": "vlob_create",
-            "id": access["id"],
-            "wts": access["wts"],
-            "rts": access["rts"],
-            "blob": to_jsonb64(ciphered),
-            "notify_beacon": notify_beacon,
-        }
-        ret = await self.backend_cmds_sender.send(payload)
-        if ret["status"] == "already_exists_error":
-            raise SyncConcurrencyError(access)
-        assert ret["status"] == "ok"
+        try:
+            await self.backend_cmds.vlob_create(
+                access["id"], access["rts"], access["wts"], ciphered, notify_beacon
+            )
+        except BackendCmdsBadResponse as exc:
+            if exc.status == "already_exists":
+                raise SyncConcurrencyError(access)
+            raise
 
     async def _backend_vlob_update(self, access, manifest, notify_beacon):
         assert manifest["version"] > 1
         ciphered = self.encryption_manager.encrypt_with_secret_key(
             access["key"], dumps_manifest(manifest)
         )
-        payload = {
-            "cmd": "vlob_update",
-            "id": access["id"],
-            "wts": access["wts"],
-            "version": manifest["version"],
-            "blob": to_jsonb64(ciphered),
-            "notify_beacon": notify_beacon,
-        }
-        ret = await self.backend_cmds_sender.send(payload)
-        if ret["status"] == "version_error":
-            raise SyncConcurrencyError(access)
-        assert ret["status"] == "ok"
+        try:
+            await self.backend_cmds.vlob_update(
+                access["id"], access["wts"], manifest["version"], ciphered, notify_beacon
+            )
+        except BackendCmdsBadResponse as exc:
+            if exc.status == "bad_version":
+                raise SyncConcurrencyError(access)
+            raise

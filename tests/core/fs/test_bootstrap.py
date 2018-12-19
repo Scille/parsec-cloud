@@ -6,12 +6,13 @@ from tests.common import freeze_time
 
 @pytest.mark.trio
 async def test_lazy_root_manifest_generation(
-    backend_factory, backend_addr, server_factory, device_factory, fs_factory
+    backend_factory, backend_addr, server_factory, device_factory, local_db_factory, fs_factory
 ):
     with freeze_time("2000-01-01"):
-        zack1 = device_factory("zack", "1", user_manifest_in_v0=True)
+        zack1 = device_factory("zack", "1")
+        zack1_local_db = local_db_factory(zack1, user_manifest_in_v0=True)
 
-    async with fs_factory(zack1) as fs:
+    async with fs_factory(zack1, zack1_local_db) as fs:
         with freeze_time("2000-01-02"):
             stat = await fs.stat("/")
 
@@ -46,15 +47,17 @@ async def test_lazy_root_manifest_generation(
 
 @pytest.mark.trio
 async def test_concurrent_devices_agreed_on_root_manifest(
-    backend_factory, backend_addr, server_factory, device_factory, fs_factory
+    backend_factory, backend_addr, server_factory, device_factory, local_db_factory, fs_factory
 ):
     with freeze_time("2000-01-01"):
-        zack1 = device_factory("zack", "1", user_manifest_in_v0=True)
+        zack1 = device_factory("zack", "1")
+        zack1_local_db = local_db_factory(zack1, user_manifest_in_v0=True)
 
     with freeze_time("2000-01-02"):
-        zack2 = device_factory("zack", "2", user_manifest_in_v0=True)
+        zack2 = device_factory("zack", "2")
+        zack2_local_db = local_db_factory(zack2, user_manifest_in_v0=True)
 
-    async with fs_factory(zack1) as fs1, fs_factory(zack2) as fs2:
+    async with fs_factory(zack1, zack1_local_db) as fs1, fs_factory(zack2, zack2_local_db) as fs2:
 
         with freeze_time("2000-01-03"):
             await fs1.workspace_create("/from_1")

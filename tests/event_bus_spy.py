@@ -2,16 +2,9 @@ import trio
 import attr
 import pendulum
 from contextlib import contextmanager
+from unittest.mock import ANY
 
 from parsec.event_bus import EventBus
-
-
-class ANY:
-    def __repr__(self):
-        return "<ANY>"
-
-
-ANY = ANY()
 
 
 def convert_dicts_with_any(a, b):
@@ -154,7 +147,7 @@ class EventBusSpy:
             if cooked_occured == cooked_expected:
                 break
         else:
-            raise AssertionError(f"Event {cooked_expected} didn't occured")
+            raise AssertionError(f"Event {expected} didn't occured")
 
     def assert_events_occured(self, events):
         expected_events = self._cook_events_params(events)
@@ -184,16 +177,16 @@ class SpiedEventBus(EventBus):
 
     def send(self, event, **kwargs):
         for spy in self._spies:
-            spy(event, **kwargs)
+            spy._on_event_cb(event, **kwargs)
         super().send(event, **kwargs)
 
     def create_spy(self):
         spy = EventBusSpy()
-        self._spies.append(spy._on_event_cb)
+        self._spies.append(spy)
         return spy
 
     def destroy_spy(self, spy):
-        self._spies.remove(spy._on_event_cb)
+        self._spies.remove(spy)
 
     @contextmanager
     def listen(self):

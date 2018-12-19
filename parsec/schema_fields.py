@@ -6,6 +6,7 @@ from marshmallow.fields import (
     Int,
     String,
     List,
+    Dict,
     Nested,
     Integer,
     UUID,
@@ -14,6 +15,83 @@ from marshmallow.fields import (
 )
 
 from parsec.utils import to_jsonb64, from_jsonb64
+from parsec.types import DeviceID as _DeviceID, UserID as _UserID, DeviceName as _DeviceName
+from parsec.crypto_types import (
+    SigningKey as _SigningKey,
+    VerifyKey as _VerifyKey,
+    PrivateKey as _PrivateKey,
+    PublicKey as _PublicKey,
+)
+
+
+__all__ = (
+    "Int",
+    "String",
+    "List",
+    "Dict",
+    "Nested",
+    "Integer",
+    "UUID",
+    "Boolean",
+    "Field",
+    "Path",
+    "Base64Bytes",
+    "DateTime",
+    "CheckedConstant",
+    "Map",
+    "VerifyKey",
+    "SigningKey",
+    "PublicKey",
+    "PrivateKey",
+    "SymetricKey",
+    "DeviceID",
+    "UserID",
+    "DeviceName",
+)
+
+
+def bytes_based_field_factory(value_type):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return to_jsonb64(value)
+
+    def _deserialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        try:
+            return value_type(from_jsonb64(value))
+
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+    return type(
+        f"{value_type.__name__}Field",
+        (Field,),
+        {"_serialize": _serialize, "_deserialize": _deserialize},
+    )
+
+
+def str_based_field_factory(value_type):
+    def _deserialize(self, value, attr, data):
+        try:
+            return value_type(value)
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+
+    def _serialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        return str(value)
+
+    return type(
+        f"{value_type.__name__}Field",
+        (Field,),
+        {"_deserialize": _deserialize, "_serialize": _serialize},
+    )
 
 
 # TODO: test this field and use it everywhere in the api !
@@ -130,18 +208,79 @@ class Map(Field):
         return ret
 
 
-__all__ = (
-    "Int",
-    "String",
-    "List",
-    "Nested",
-    "Integer",
-    "UUID",
-    "Boolean",
-    "Field",
-    "Path",
-    "Base64Bytes",
-    "DateTime",
-    "CheckedConstant",
-    "Map",
-)
+class SigningKey(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return to_jsonb64(value.encode())
+
+    def _deserialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        try:
+            return _SigningKey(from_jsonb64(value))
+
+        except Exception:
+            raise ValidationError("Invalid signing key.")
+
+
+class VerifyKey(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return to_jsonb64(value.encode())
+
+    def _deserialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        try:
+            return _VerifyKey(from_jsonb64(value))
+
+        except Exception:
+            raise ValidationError("Invalid verify key.")
+
+
+class PrivateKey(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return to_jsonb64(value.encode())
+
+    def _deserialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        try:
+            return _PrivateKey(from_jsonb64(value))
+
+        except Exception:
+            raise ValidationError("Invalid secret key.")
+
+
+class PublicKey(Field):
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return None
+
+        return to_jsonb64(value.encode())
+
+    def _deserialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        try:
+            return _PublicKey(from_jsonb64(value))
+
+        except Exception:
+            raise ValidationError("Invalid verify key.")
+
+
+SymetricKey = Base64Bytes
+DeviceID = str_based_field_factory(_DeviceID)
+UserID = str_based_field_factory(_UserID)
+DeviceName = str_based_field_factory(_DeviceName)

@@ -1,113 +1,130 @@
-import attr
-import random
-import string
+from typing import List, Tuple
+from uuid import UUID
 
-from parsec.utils import to_jsonb64
-from parsec.schema import BaseCmdSchema, UnknownCheckedSchema, fields, validate
-
-
-TRUST_SEED_LENGTH = 12
-
-
-def generate_trust_seed():
-    # Use SystemRandom to get cryptographically secure seeds
-    return "".join(
-        random.SystemRandom().choice(string.ascii_uppercase + string.digits)
-        for _ in range(TRUST_SEED_LENGTH)
-    )
+from parsec.types import DeviceID
+from parsec.api.protocole import (
+    vlob_group_check_serializer,
+    vlob_create_serializer,
+    vlob_read_serializer,
+    vlob_update_serializer,
+)
+from parsec.backend.utils import catch_protocole_errors
 
 
-@attr.s
-class VlobAtom:
-    id = attr.ib()
-    read_trust_seed = attr.ib(factory=generate_trust_seed)
-    write_trust_seed = attr.ib(factory=generate_trust_seed)
-    blob = attr.ib(default=b"")
-    version = attr.ib(default=1)
-    is_sink = attr.ib(default=False)
+class VlobError(Exception):
+    pass
 
 
-class _CheckEntrySchema(UnknownCheckedSchema):
-    id = fields.UUID(required=True)
-    rts = fields.String(required=True)
-    version = fields.Integer(required=True)
+class VlobTrustSeedError(VlobError):
+    pass
 
 
-CheckEntrySchema = _CheckEntrySchema()
+class VlobVersionError(VlobError):
+    pass
 
 
-class _cmd_GROUP_CHECK_Schema(BaseCmdSchema):
-    to_check = fields.List(fields.Nested(CheckEntrySchema), required=True)
+class VlobNotFoundError(VlobError):
+    pass
 
 
-cmd_GROUP_CHECK_Schema = _cmd_GROUP_CHECK_Schema()
-
-
-class _cmd_CREATE_Schema(BaseCmdSchema):
-    id = fields.UUID(required=True)
-    rts = fields.String(required=True)
-    wts = fields.String(required=True)
-    blob = fields.Base64Bytes(required=True)
-    notify_beacon = fields.UUID()
-
-
-cmd_CREATE_Schema = _cmd_CREATE_Schema()
-
-
-class _cmd_READ_Schema(BaseCmdSchema):
-    id = fields.UUID(required=True)
-    version = fields.Integer(validate=lambda n: n >= 1, allow_none=True)
-    rts = fields.String(required=True)
-
-
-cmd_READ_Schema = _cmd_READ_Schema()
-
-
-class _cmd_UPDATE_Schema(BaseCmdSchema):
-    id = fields.UUID(required=True)
-    version = fields.Integer(validate=lambda n: n > 1)
-    wts = fields.String(required=True)
-    blob = fields.Base64Bytes(required=True)
-    notify_beacon = fields.UUID()
-
-
-cmd_UPDATE_Schema = _cmd_UPDATE_Schema()
+class VlobAlreadyExistsError(VlobError):
+    pass
 
 
 class BaseVlobComponent:
+    @catch_protocole_errors
     async def api_vlob_group_check(self, client_ctx, msg):
-        msg = cmd_GROUP_CHECK_Schema.load_or_abort(msg)
-        changed = await self.group_check(**msg)
-        return {"status": "ok", "changed": changed}
+        msg = vlob_group_check_serializer.req_load(msg)
+        changed = await self.group_check(msg["to_check"])
+        return vlob_group_check_serializer.rep_dump({"status": "ok", "changed": changed})
 
+    @catch_protocole_errors
     async def api_vlob_create(self, client_ctx, msg):
-        msg = cmd_CREATE_Schema.load_or_abort(msg)
-        await self.create(**msg, author=client_ctx.id)
-        return {"status": "ok"}
+        msg = vlob_create_serializer.req_load(msg)
+        try:
+            await self.create(**msg, author=client_ctx.device_id)
 
+        except VlobAlreadyExistsError as exc:
+            return vlob_create_serializer.rep_dump({"status": "already_exists", "reason": str(exc)})
+
+        return vlob_create_serializer.rep_dump({"status": "ok"})
+
+    @catch_protocole_errors
     async def api_vlob_read(self, client_ctx, msg):
-        msg = cmd_READ_Schema.load_or_abort(msg)
-        atom = await self.read(**msg)
-        return {
-            "status": "ok",
-            "id": atom.id,
-            "blob": to_jsonb64(atom.blob),
-            "version": atom.version,
-        }
+        msg = vlob_read_serializer.req_load(msg)
 
+        try:
+            version, blob = await self.read(**msg)
+
+        except (VlobNotFoundError, VlobTrustSeedError) as exc:
+            # Don't leak existence information if trust seed is invalid
+            return vlob_create_serializer.rep_dump({"status": "not_found"})
+
+        except VlobVersionError as exc:
+            return vlob_create_serializer.rep_dump({"status": "bad_version"})
+
+        return vlob_read_serializer.rep_dump({"status": "ok", "blob": blob, "version": version})
+
+    @catch_protocole_errors
     async def api_vlob_update(self, client_ctx, msg):
-        msg = cmd_UPDATE_Schema.load_or_abort(msg)
-        await self.update(**msg, author=client_ctx.id)
-        return {"status": "ok"}
+        msg = vlob_update_serializer.req_load(msg)
 
-    async def group_check(self, to_check):
+        try:
+            await self.update(**msg, author=client_ctx.device_id)
+
+        except (VlobNotFoundError, VlobTrustSeedError) as exc:
+            # Don't leak existence information if trust seed is invalid
+            return vlob_create_serializer.rep_dump({"status": "not_found"})
+
+        except VlobVersionError as exc:
+            return vlob_create_serializer.rep_dump({"status": "bad_version"})
+
+        return vlob_update_serializer.rep_dump({"status": "ok"})
+
+    async def group_check(self, to_check: List[dict]) -> List[dict]:
+        """
+        Raises:
+            Nothing !
+        """
         raise NotImplementedError()
 
-    async def create(self, id, rts, wts, blob, notify_beacon=None, author="anonymous"):
+    async def create(
+        self,
+        id: UUID,
+        rts: str,
+        wts: str,
+        blob: bytes,
+        author: DeviceID,
+        notify_beacon: UUID = None,
+    ) -> None:
+        """
+        Raises:
+            VlobAlreadyExistsError
+        """
         raise NotImplementedError()
 
-    async def read(self, id, rts, version=None):
+    async def read(self, id: UUID, rts: str, version: int = None) -> Tuple[int, bytes]:
+        """
+        Raises:
+            VlobTrustSeedError
+            VlobVersionError
+            VlobNotFoundError
+        """
         raise NotImplementedError()
 
-    async def update(self, id, wts, version, blob, notify_beacon=None, author="anonymous"):
+    async def update(
+        self,
+        id: UUID,
+        wts: str,
+        version: int,
+        blob: bytes,
+        author: DeviceID,
+        notify_beacon: UUID = None,
+    ) -> None:
+        """
+        Raises:
+            VlobTrustSeedError
+            VlobVersionError
+            VlobNotFoundError
+        """
         raise NotImplementedError()

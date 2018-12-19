@@ -1,13 +1,14 @@
 from structlog import get_logger
 from itertools import count
 
+from parsec.types import UserID, DeviceID
 from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.core.schemas import ManifestAccessSchema
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
-from parsec.core.fs.utils import is_placeholder_manifest, is_workspace_manifest
+from parsec.core.fs.utils import is_workspace_manifest
 from parsec.core.fs.types import Path
 from parsec.core.encryption_manager import EncryptionManagerError
-from parsec.utils import to_jsonb64
+from parsec.core.backend_connection import BackendCmdsBadResponse
 
 
 logger = get_logger()
@@ -36,7 +37,7 @@ class SharingInvalidMessageError(SharingError):
 class _BackendMessageGetRepMessagesSchema(UnknownCheckedSchema):
     count = fields.Int(required=True)
     body = fields.Base64Bytes(required=True)
-    sender_id = fields.String(required=True)
+    sender_id = fields.DeviceID(required=True)
 
 
 BackendMessageGetRepMessagesSchema = _BackendMessageGetRepMessagesSchema()
@@ -61,10 +62,12 @@ BackendUserGetRepDeviceSchema = _BackendUserGetRepDeviceSchema()
 
 class _BackendUserGetRepSchema(UnknownCheckedSchema):
     status = fields.CheckedConstant("ok", required=True)
-    user_id = fields.String(required=True)
+    user_id = fields.UserID(required=True)
     created_on = fields.DateTime(required=True)
     broadcast_key = fields.Base64Bytes(required=True)
-    devices = fields.Map(fields.String(), fields.Nested(BackendUserGetRepDeviceSchema), missing={})
+    devices = fields.Map(
+        fields.DeviceName(), fields.Nested(BackendUserGetRepDeviceSchema), missing={}
+    )
 
 
 backend_user_get_rep_schema = _BackendUserGetRepSchema()
@@ -104,7 +107,7 @@ class Sharing:
     def __init__(
         self,
         device,
-        backend_cmds_sender,
+        backend_cmds,
         encryption_manager,
         local_folder_fs,
         syncer,
@@ -112,14 +115,14 @@ class Sharing:
         event_bus,
     ):
         self.device = device
-        self.backend_cmds_sender = backend_cmds_sender
+        self.backend_cmds = backend_cmds
         self.encryption_manager = encryption_manager
         self.local_folder_fs = local_folder_fs
         self.syncer = syncer
         self.remote_loader = remote_loader
         self.event_bus = event_bus
 
-    async def share(self, path: Path, recipient: str):
+    async def share(self, path: Path, recipient: UserID):
         """
         Raises:
             SharingError
@@ -152,7 +155,12 @@ class Sharing:
         await self.syncer.sync(path, recursive=False)
 
         # Now we can build the sharing message...
-        msg = {"type": "share", "author": self.device.id, "access": access, "name": path.name}
+        msg = {
+            "type": "share",
+            "author": self.device.device_id,
+            "access": access,
+            "name": path.name,
+        }
         raw, errors = sharing_message_content_schema.dumps(msg)
         if errors:
             # TODO: Do we really want to log the message content ? Wouldn't
@@ -166,13 +174,12 @@ class Sharing:
             raise SharingRecipientError(f"Cannot create message for `{recipient}`") from exc
 
         # ...And finally send the message
-        rep = await self.backend_cmds_sender.send(
-            {"cmd": "message_new", "recipient": recipient, "body": to_jsonb64(ciphered)}
-        )
-        if rep.get("status") != "ok":
+        try:
+            await self.backend_cmds.message_send(recipient=recipient, body=ciphered)
+        except BackendCmdsBadResponse as exc:
             raise SharingBackendMessageError(
-                "Error while trying to send sharing message to backend: %r" % rep
-            )
+                f"Error while trying to send sharing message to backend: {exc}"
+            ) from exc
 
     # TODO: message handling should be in it own module, but given it is
     # only used for sharing so far...
@@ -196,20 +203,16 @@ class Sharing:
 
         _, user_manifest = await self._get_user_manifest()
         initial_last_processed_message = user_manifest["last_processed_message"]
-        rep = await self.backend_cmds_sender.send(
-            {"cmd": "message_get", "offset": initial_last_processed_message}
-        )
-        rep, errors = backend_message_get_rep_schema.load(rep)
-        if errors:
-            raise SharingBackendMessageError(
-                "Cannot retreive user messages: %r (errors: %r)" % (rep, errors)
-            )
+        try:
+            messages = await self.backend_cmds.message_get(offset=initial_last_processed_message)
+        except BackendCmdsBadResponse as exc:
+            raise SharingBackendMessageError(f"Cannot retreive user messages: {exc}") from exc
 
         new_last_processed_message = initial_last_processed_message
-        for msg in rep["messages"]:
+        for msg_count, msg_sender, msg_body in messages:
             try:
-                await self._process_message(msg["sender_id"], msg["body"])
-                new_last_processed_message = msg["count"]
+                await self._process_message(msg_sender, msg_body)
+                new_last_processed_message = msg_count
             except SharingError as exc:
                 logger.warning("Invalid sharing message", reason=exc)
 
@@ -218,7 +221,7 @@ class Sharing:
             user_manifest["last_processed_message"] = new_last_processed_message
             self.local_folder_fs.update_manifest(user_manifest_access, user_manifest)
 
-    async def _process_message(self, sender_id, ciphered):
+    async def _process_message(self, sender_id: DeviceID, ciphered: bytes):
         """
         Raises:
             SharingRecipientError
@@ -226,20 +229,18 @@ class Sharing:
         """
         expected_user_id, expected_device_name = sender_id.split("@")
         try:
-            sender_user_id, sender_device_name, raw = await self.encryption_manager.decrypt_for_self(
-                ciphered
-            )
+            real_sender_id, raw = await self.encryption_manager.decrypt_for_self(ciphered)
         except EncryptionManagerError as exc:
             raise SharingRecipientError(f"Cannot decrypt message from `{sender_id}`") from exc
-        if sender_user_id != expected_user_id or sender_device_name != expected_device_name:
+        if real_sender_id != sender_id:
             raise SharingRecipientError(
                 f"Message was said to be send by `{sender_id}`, "
-                f" but is signed by {sender_user_id@sender_device_name}"
+                f" but is signed by {real_sender_id}"
             )
 
         msg, errors = generic_message_content_schema.loads(raw.decode("utf8"))
         if errors:
-            raise SharingInvalidMessageError("Not a valid message: %r" % errors)
+            raise SharingInvalidMessageError(f"Not a valid message: {errors!r}")
 
         if msg["type"] == "share":
             user_manifest_access, user_manifest = await self._get_user_manifest()

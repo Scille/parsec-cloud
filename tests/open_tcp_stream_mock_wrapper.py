@@ -3,33 +3,45 @@ from contextlib import contextmanager
 from unittest.mock import patch
 import inspect
 import trio
+from urllib.parse import urlparse
+
+
+def addr_to_netloc(addr):
+    return urlparse(addr).netloc
 
 
 class OpenTCPStreamMockWrapper:
     def __init__(self):
-        self.socks = defaultdict(list)
+        self._socks = defaultdict(list)
         self._hooks = {}
         self._offlines = set()
 
     @contextmanager
     def install_hook(self, addr, hook):
-        self.push_hook(addr, hook)
+        netloc = addr_to_netloc(addr)
+        self.push_hook(netloc, hook)
         try:
             yield
         finally:
-            self.pop_hook(addr)
+            self.pop_hook(netloc)
 
     def push_hook(self, addr, hook):
-        assert addr not in self._hooks
-        self._hooks[addr] = hook
+        netloc = addr_to_netloc(addr)
+        assert netloc not in self._hooks
+        self._hooks[netloc] = hook
 
     def pop_hook(self, addr):
-        self._hooks.pop(addr)
+        netloc = addr_to_netloc(addr)
+        self._hooks.pop(netloc)
+
+    def get_socks(self, addr):
+        netloc = addr_to_netloc(addr)
+        return self._socks[netloc]
 
     async def __call__(self, host, port, **kwargs):
-        addr = "tcp://%s:%s" % (host, port)
-        hook = self._hooks.get(addr)
-        if hook and addr not in self._offlines:
+        netloc = f"{host}:{port}" if port is not None else host
+        hook = self._hooks.get(netloc)
+        if hook and netloc not in self._offlines:
             if inspect.iscoroutinefunction(hook):
                 sock = await hook(host, port, **kwargs)
             else:
@@ -37,14 +49,15 @@ class OpenTCPStreamMockWrapper:
         else:
             raise ConnectionRefusedError(111, "Connection refused")
 
-        self.socks[addr].append(sock)
+        self._socks[netloc].append(sock)
         return sock
 
     def switch_offline(self, addr):
-        if addr in self._offlines:
+        netloc = addr_to_netloc(addr)
+        if netloc in self._offlines:
             return
 
-        for sock in self.socks[addr]:
+        for sock in self._socks[netloc]:
 
             async def _broken_stream(*args, **kwargs):
                 raise trio.BrokenStreamError()
@@ -55,18 +68,19 @@ class OpenTCPStreamMockWrapper:
             sock.send_stream.send_all_hook = _broken_stream
             sock.receive_stream.receive_some_hook = _broken_stream
 
-        self._offlines.add(addr)
+        self._offlines.add(netloc)
 
     def switch_online(self, addr):
-        if addr not in self._offlines:
+        netloc = addr_to_netloc(addr)
+        if netloc not in self._offlines:
             return
 
-        for sock in self.socks[addr]:
+        for sock in self._socks[netloc]:
             sock.send_stream.send_all_hook = sock.send_stream.send_all_hook.old_send_all_hook
             sock.receive_stream.receive_some_hook = (
                 sock.receive_stream.receive_some_hook.old_receive_some_hook
             )
-        self._offlines.remove(addr)
+        self._offlines.remove(netloc)
 
     @contextmanager
     def offline(self, addr):

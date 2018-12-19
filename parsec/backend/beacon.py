@@ -1,28 +1,32 @@
-from parsec.schema import BaseCmdSchema, fields
+from uuid import UUID
+from typing import List, Tuple
 
-
-class _cmd_READ_Schema(BaseCmdSchema):
-    id = fields.UUID(required=True)
-    offset = fields.Integer(required=True)
-
-
-cmd_READ_Schema = _cmd_READ_Schema()
+from parsec.types import DeviceID
+from parsec.api.protocole import beacon_read_serializer
+from parsec.backend.utils import catch_protocole_errors
 
 
 class BaseBeaconComponent:
+    @catch_protocole_errors
     async def api_beacon_read(self, client_ctx, msg):
-        msg = cmd_READ_Schema.load_or_abort(msg)
-        items = await self.read(**msg)
-        return {
-            "status": "ok",
-            "id": msg["id"],
-            "offset": msg["offset"],
-            "items": items,
-            "count": len(items),
-        }
+        msg = beacon_read_serializer.req_load(msg)
 
-    async def read(self, id, offset):
+        # TODO: raise error if too many events since offset ?
+        items = await self.read(msg["id"], msg["offset"])
+
+        return beacon_read_serializer.rep_dump(
+            {
+                "status": "ok",
+                "items": [
+                    {"src_id": src_id, "src_version": src_version} for src_id, src_version in items
+                ],
+            }
+        )
+
+    async def read(self, id: UUID, offset: int) -> List[Tuple[UUID, int]]:
         raise NotImplementedError()
 
-    async def update(self, id, src_id, src_version, author="anonymous"):
+    async def update(
+        self, id: UUID, src_id: UUID, src_version: int, author: DeviceID = None
+    ) -> None:
         raise NotImplementedError()

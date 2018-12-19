@@ -1,74 +1,96 @@
-from parsec.backend.exceptions import AlreadyExistsError
-from parsec.utils import to_jsonb64
-from parsec.schema import BaseCmdSchema, fields
+from uuid import UUID
+from typing import Tuple
+
+from parsec.types import DeviceID
+from parsec.api.protocole import blockstore_create_serializer, blockstore_read_serializer
+from parsec.backend.config import BaseBlockstoreConfig
+from parsec.backend.utils import catch_protocole_errors
 
 
-class _cmd_GET_Schema(BaseCmdSchema):
-    id = fields.UUID(required=True)
+class BlockstoreError(Exception):
+    pass
 
 
-cmd_GET_Schema = _cmd_GET_Schema()
+class BlockstoreAlreadyExistsError(BlockstoreError):
+    pass
 
 
-class _cmd_POST_Schema(BaseCmdSchema):
-    id = fields.UUID(required=True)
-    block = fields.Base64Bytes(required=True)
+class BlockstoreNotFoundError(BlockstoreError):
+    pass
 
 
-cmd_POST_Schema = _cmd_POST_Schema()
+class BlockstoreTimeoutError(BlockstoreError):
+    pass
 
 
-class BaseBlockStoreComponent:
-    async def api_blockstore_get(self, client_ctx, msg):
-        msg = cmd_GET_Schema.load_or_abort(msg)
-        block = await self.get(msg["id"])
-        return {"status": "ok", "block": to_jsonb64(block)}
+class BaseBlockstoreComponent:
+    @catch_protocole_errors
+    async def api_blockstore_read(self, client_ctx, msg):
+        msg = blockstore_read_serializer.req_load(msg)
 
-    async def api_blockstore_post(self, client_ctx, msg):
-        msg = cmd_POST_Schema.load_or_abort(msg)
         try:
-            await self.post(**msg)
-        except AlreadyExistsError:
-            pass
-        return {"status": "ok"}
+            block = await self.read(msg["id"])
 
-    async def get(self, id):
+        except BlockstoreNotFoundError:
+            return blockstore_read_serializer.rep_dump({"status": "not_found"})
+
+        except BlockstoreTimeoutError:
+            return blockstore_read_serializer.rep_dump({"status": "timeout"})
+
+        return blockstore_read_serializer.rep_dump({"status": "ok", "block": block})
+
+    @catch_protocole_errors
+    async def api_blockstore_create(self, client_ctx, msg):
+        msg = blockstore_create_serializer.req_load(msg)
+
+        try:
+            await self.create(**msg, author=client_ctx.device_id)
+
+        except BlockstoreAlreadyExistsError:
+            return blockstore_read_serializer.rep_dump({"status": "already_exists"})
+
+        except BlockstoreTimeoutError:
+            return blockstore_read_serializer.rep_dump({"status": "timeout"})
+
+        return blockstore_create_serializer.rep_dump({"status": "ok"})
+
+    async def read(self, id: UUID) -> Tuple[bytes, DeviceID]:
         """
         Raises:
-            NotFoundError
+            BlockstoreNotFoundError
+            BlockstoreTimeoutError
         """
         raise NotImplementedError()
 
-    async def post(self, id, block):
+    async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
         """
         Raises:
-            AlreadyExistsError
+            BlockstoreAlreadyExistsError
+            BlockstoreTimeoutError
         """
         raise NotImplementedError()
 
 
-def blockstore_factory(config, postgresql_dbh=None):
-    return _blockstore_factory(config.blockstore_config, postgresql_dbh)
-
-
-def _blockstore_factory(config, postgresql_dbh):
+def blockstore_factory(
+    config: BaseBlockstoreConfig, postgresql_dbh=None
+) -> BaseBlockstoreComponent:
     if config.type == "MOCKED":
-        from parsec.backend.drivers.memory import MemoryBlockStoreComponent
+        from parsec.backend.drivers.memory import MemoryBlockstoreComponent
 
-        return MemoryBlockStoreComponent()
+        return MemoryBlockstoreComponent()
 
     elif config.type == "POSTGRESQL":
-        from parsec.backend.drivers.postgresql import PGBlockStoreComponent
+        from parsec.backend.drivers.postgresql import PGBlockstoreComponent
 
         if not postgresql_dbh:
             raise ValueError("PostgreSQL blockstore is not available")
-        return PGBlockStoreComponent(postgresql_dbh)
+        return PGBlockstoreComponent(postgresql_dbh)
 
     elif config.type == "S3":
         try:
-            from parsec.backend.s3_blockstore import S3BlockStoreComponent
+            from parsec.backend.s3_blockstore import S3BlockstoreComponent
 
-            return S3BlockStoreComponent(
+            return S3BlockstoreComponent(
                 config.s3_region, config.s3_bucket, config.s3_key, config.s3_secret
             )
         except ImportError as exc:
@@ -76,9 +98,9 @@ def _blockstore_factory(config, postgresql_dbh):
 
     elif config.type == "SWIFT":
         try:
-            from parsec.backend.swift_blockstore import SwiftBlockStoreComponent
+            from parsec.backend.swift_blockstore import SwiftBlockstoreComponent
 
-            return SwiftBlockStoreComponent(
+            return SwiftBlockstoreComponent(
                 config.swift_authurl,
                 config.swift_tenant,
                 config.swift_container,
@@ -89,22 +111,22 @@ def _blockstore_factory(config, postgresql_dbh):
             raise ValueError("Swift blockstore is not available") from exc
 
     elif config.type == "RAID1":
-        from parsec.backend.raid1_blockstore import RAID1BlockStoreComponent
+        from parsec.backend.raid1_blockstore import RAID1BlockstoreComponent
 
         blockstores = [
-            _blockstore_factory(subconf, postgresql_dbh) for subconf in config.blockstores
+            blockstore_factory(subconf, postgresql_dbh) for subconf in config.blockstores
         ]
 
-        return RAID1BlockStoreComponent(blockstores)
+        return RAID1BlockstoreComponent(blockstores)
 
     elif config.type == "RAID0":
-        from parsec.backend.raid0_blockstore import RAID0BlockStoreComponent
+        from parsec.backend.raid0_blockstore import RAID0BlockstoreComponent
 
         blockstores = [
-            _blockstore_factory(subconf, postgresql_dbh) for subconf in config.blockstores
+            blockstore_factory(subconf, postgresql_dbh) for subconf in config.blockstores
         ]
 
-        return RAID0BlockStoreComponent(blockstores)
+        return RAID0BlockstoreComponent(blockstores)
 
     else:
         raise ValueError(f"Unknown blockstore type `{config.type}`")

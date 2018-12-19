@@ -14,8 +14,10 @@ def timestamp():
     return current_clock().current_time()
 
 
+# TODO: replace by a function
+# TODO: BaseAsyncComponent seems not needed
 class SyncMonitor(BaseAsyncComponent):
-    def __init__(self, fs, event_bus):
+    def __init__(self, backend_online, fs, event_bus):
         super().__init__()
         self.fs = fs
         self.event_bus = event_bus
@@ -27,6 +29,9 @@ class SyncMonitor(BaseAsyncComponent):
 
         self.event_bus.connect("backend.online", self._on_backend_online, weak=True)
         self.event_bus.connect("backend.offline", self._on_backend_offline, weak=True)
+
+        if backend_online:
+            self._on_backend_online(None)
 
     def _on_backend_online(self, event):
         self._backend_online_event.set()
@@ -40,11 +45,12 @@ class SyncMonitor(BaseAsyncComponent):
     def running(self):
         return self._running
 
-    async def run(self):
+    async def run(self, *, task_status=trio.TASK_STATUS_IGNORED):
         if self.running:
             raise RuntimeError("Already running")
         self._running = True
 
+        task_status.started()
         while True:
             await self._backend_online_event.wait()
             try:
@@ -120,3 +126,8 @@ class SyncMonitor(BaseAsyncComponent):
                 updated_entries[id] = (last_updated, new_last_updated)
             else:
                 del updated_entries[id]
+
+
+async def monitor_sync(backend_online, fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
+    sync_monitor = SyncMonitor(backend_online, fs, event_bus)
+    await sync_monitor.run(task_status=task_status)

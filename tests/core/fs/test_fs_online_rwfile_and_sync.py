@@ -18,22 +18,22 @@ PLAYGROUND_SIZE = BLOCK_SIZE * 10
 @pytest.mark.slow
 def test_fs_online_rwfile_and_sync(
     hypothesis_settings,
-    unused_tcp_addr,
     device_factory,
+    local_db_factory,
     backend_factory,
     server_factory,
     fs_factory,
     backend_addr,
 ):
     class FSOnlineRwFileAndSync(TrioRuleBasedStateMachine):
-        async def restart_fs(self, device):
+        async def restart_fs(self, device, local_db):
             try:
                 await self.fs_controller.stop()
             except AttributeError:
                 pass
 
             async def _fs_controlled_cb(started_cb):
-                async with fs_factory(device=device, backend_addr=backend_addr) as fs:
+                async with fs_factory(device=device, local_db=local_db) as fs:
                     await started_cb(fs=fs)
 
             self.fs_controller = await self.get_root_nursery().start(
@@ -61,8 +61,9 @@ def test_fs_online_rwfile_and_sync(
         @initialize()
         async def init(self):
             self.device = device_factory()
+            self.local_db = local_db_factory(self.device)
             await self.start_backend()
-            await self.restart_fs(self.device)
+            await self.restart_fs(self.device, self.local_db)
             await self.fs.workspace_create("/w")
             await self.fs.file_create("/w/foo.txt")
             await self.fs.sync("/")
@@ -70,17 +71,13 @@ def test_fs_online_rwfile_and_sync(
 
         @rule()
         async def restart(self):
-            await self.restart_fs(self.device)
+            await self.restart_fs(self.device, self.local_db)
 
         @rule()
         async def reset(self):
-            self.device = device_factory(user_id=self.device.user_id)
-            await self.backend.user.create_device(
-                user_id=self.device.user_id,
-                device_name=self.device.device_name,
-                verify_key=self.device.device_verifykey.encode(),
-            )
-            await self.restart_fs(self.device)
+            # TODO: would be cleaner to recreate a new device...
+            self.local_db = local_db_factory(self.device, force=True)
+            await self.restart_fs(self.device, self.local_db)
             await self.fs.sync("/")
             self.file_oracle.reset()
 

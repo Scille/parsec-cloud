@@ -5,10 +5,11 @@ from unittest.mock import Mock
 from contextlib import ExitStack
 from inspect import iscoroutinefunction
 
-from parsec.core import Core
+from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import FS
 from parsec.core.local_db import LocalDB, LocalDBMissingEntry
 from parsec.networking import CookedSocket
+from parsec.api.transport import BaseTransport, TransportError
 
 
 class InMemoryLocalDB(LocalDB):
@@ -29,8 +30,10 @@ class InMemoryLocalDB(LocalDB):
         del self._data[access["id"]]
 
 
-def freeze_time(timestr):
-    return pendulum.test(pendulum.parse(timestr))
+def freeze_time(time):
+    if isinstance(time, str):
+        time = pendulum.parse(time)
+    return pendulum.test(time)
 
 
 class AsyncMock(Mock):
@@ -95,6 +98,40 @@ class FreezeTestOnBrokenStreamCookedSocket(CookedSocket):
             await trio.sleep_forever()
 
 
+class FreezeTestOnTransportError(BaseTransport):
+    """
+    When a server crashes during test, it is possible the client coroutine
+    receives a `TransportError` exception. Hence we end up with two
+    exceptions: the server crash (i.e. the original exception we are interested
+    into) and the client not receiving an answer.
+    The solution is simply to freeze the coroutine receiving the broken stream
+    error until it will be cancelled by the original exception bubbling up.
+    """
+
+    def __init__(self, transport):
+        self.transport = transport
+
+    @property
+    def stream(self):
+        return self.transport.stream
+
+    async def send(self, msg):
+        try:
+            return await self.transport.send(msg)
+
+        except TransportError as exc:
+            # Wait here until this coroutine is cancelled
+            await trio.sleep_forever()
+
+    async def recv(self):
+        try:
+            return await self.transport.recv()
+
+        except TransportError as exc:
+            # Wait here until this coroutine is cancelled
+            await trio.sleep_forever()
+
+
 @attr.s
 class CallController:
     need_stop = attr.ib(factory=trio.Event)
@@ -132,14 +169,14 @@ async def create_shared_workspace(name, creator, *shared_with):
 
     with ExitStack() as stack:
         for x in (creator, *shared_with):
-            if isinstance(x, Core):
+            if isinstance(x, LoggedCore):
                 # In case core has been passed
                 spies.append(stack.enter_context(x.event_bus.listen()))
                 fss.append(x.fs)
             elif isinstance(x, FS):
                 fss.append(x)
             else:
-                raise ValueError(f"{x!r} is not a {FS!r} or a {Core!r}")
+                raise ValueError(f"{x!r} is not a {FS!r} or a {LoggedCore!r}")
 
         creator_fs, *shared_with_fss = fss
         path = f"/{name}"

@@ -83,12 +83,11 @@ def fuse_service_factory(
 
             async def _fuse_controlled_cb(started_cb):
                 device = device_factory()
-                event_bus = event_bus_factory()
-                async with fs_factory(device, unused_tcp_addr) as fs:
+                async with fs_factory(device) as fs:
 
                     await fs.workspace_create(f"/{self.default_workspace_name}")
 
-                    fuse = FuseMountpointManager(fs, event_bus, mode=fuse_mode)
+                    fuse = FuseMountpointManager(fs, fs.event_bus, mode=fuse_mode)
                     async with trio.open_nursery() as nursery:
                         await fuse.init(nursery)
                         try:

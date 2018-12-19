@@ -2,6 +2,10 @@ import math
 import inspect
 from uuid import UUID
 
+from parsec.event_bus import EventBus
+from parsec.core.types import LocalDevice
+from parsec.core.local_db import LocalDB
+from parsec.core.backend_connection import BackendCmds
 from parsec.core.fs.local_folder_fs import (
     FSManifestLocalMiss,
     FSMultiManifestLocalMiss,
@@ -15,17 +19,25 @@ from parsec.core.fs.types import Path
 
 
 class FS:
-    def __init__(self, device, backend_cmds_sender, encryption_manager, event_bus):
-        super().__init__()
-        self.event_bus = event_bus
+    def __init__(
+        self,
+        device: LocalDevice,
+        local_db: LocalDB,
+        backend_cmds: BackendCmds,
+        encryption_manager,
+        event_bus: EventBus,
+    ):
         self.device = device
+        self.local_db = local_db
+        self.backend_cmds = backend_cmds
+        self.event_bus = event_bus
 
-        self._local_folder_fs = LocalFolderFS(device, event_bus)
-        self._local_file_fs = LocalFileFS(device, self._local_folder_fs, event_bus)
-        self._remote_loader = RemoteLoader(backend_cmds_sender, encryption_manager, device.local_db)
+        self._local_folder_fs = LocalFolderFS(device, local_db, event_bus)
+        self._local_file_fs = LocalFileFS(device, local_db, self._local_folder_fs, event_bus)
+        self._remote_loader = RemoteLoader(backend_cmds, encryption_manager, local_db)
         self._syncer = Syncer(
             device,
-            backend_cmds_sender,
+            backend_cmds,
             encryption_manager,
             self._local_folder_fs,
             self._local_file_fs,
@@ -33,7 +45,7 @@ class FS:
         )
         self._sharing = Sharing(
             device,
-            backend_cmds_sender,
+            backend_cmds,
             encryption_manager,
             self._local_folder_fs,
             self._syncer,

@@ -9,6 +9,7 @@ from parsec.core.mountpoint import (
     FuseMountpointManager,
     MountpointManagerNotAvailable,
 )
+from parsec.core import logged_core_factory
 
 
 @pytest.mark.trio
@@ -99,19 +100,18 @@ async def test_mount_fuse(alice_fs, event_bus, tmpdir, monitor, fuse_mode):
 @pytest.mark.trio
 @pytest.mark.fuse
 @pytest.mark.parametrize("fuse_stop_mode", ["manual", "logout"])
-async def test_umount_fuse(alice_core, tmpdir, fuse_stop_mode, fuse_mode):
-    alice_core.mountpoint_manager.mode = fuse_mode
+async def test_umount_fuse(core_config, alice, tmpdir, fuse_stop_mode, fuse_mode):
+    async with logged_core_factory(core_config, alice) as alice_core:
 
-    mountpoint = f"{tmpdir}/fuse_mountpoint"
+        alice_core.mountpoint_manager.mode = fuse_mode
+        mountpoint = f"{tmpdir}/fuse_mountpoint"
 
-    await alice_core.mountpoint_manager.start(mountpoint)
-    assert alice_core.mountpoint_manager.is_started()
+        await alice_core.mountpoint_manager.start(mountpoint)
+        assert alice_core.mountpoint_manager.is_started()
 
-    if fuse_stop_mode == "manual":
-        await alice_core.mountpoint_manager.stop()
-        assert not alice_core.mountpoint_manager.is_started()
-    else:
-        await alice_core.logout()
+        if fuse_stop_mode == "manual":
+            await alice_core.mountpoint_manager.stop()
+            assert not alice_core.mountpoint_manager.is_started()
 
 
 @pytest.mark.trio

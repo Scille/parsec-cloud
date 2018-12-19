@@ -26,7 +26,7 @@ class File:
 def foo_txt(alice, local_folder_fs):
     access = new_access()
     with freeze_time("2000-01-02"):
-        manifest = new_local_file_manifest(alice.id)
+        manifest = new_local_file_manifest(alice.device_id)
         manifest["is_placeholder"] = False
         manifest["need_sync"] = False
         manifest["base_version"] = 1
@@ -155,7 +155,9 @@ def test_block_not_loaded_entry(local_folder_fs, local_file_fs, foo_txt):
 
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Windows file style not compatible with oracle")
-def test_file_operations(tmpdir, hypothesis_settings, device_factory, local_file_fs_factory):
+def test_file_operations(
+    tmpdir, hypothesis_settings, device_factory, local_db_factory, local_file_fs_factory
+):
     tentative = 0
 
     class FileOperationsStateMachine(RuleBasedStateMachine):
@@ -165,9 +167,10 @@ def test_file_operations(tmpdir, hypothesis_settings, device_factory, local_file
             tentative += 1
 
             self.device = device_factory()
-            self.local_file_fs = local_file_fs_factory(self.device)
+            self.local_db = local_db_factory(self.device)
+            self.local_file_fs = local_file_fs_factory(self.device, self.local_db)
             self.access = new_access()
-            manifest = new_local_file_manifest(self.device.id)
+            manifest = new_local_file_manifest(self.device.device_id)
             self.local_file_fs.local_folder_fs.set_manifest(self.access, manifest)
 
             self.fd = self.local_file_fs.open(self.access)

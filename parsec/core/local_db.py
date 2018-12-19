@@ -2,8 +2,11 @@ import os
 from pathlib import Path
 from shutil import rmtree
 
+from parsec.crypto import encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
+
 # TODO: shouldn't use core.fs.types.Acces here
-from parsec.core.fs.types import Access
+# from parsec.core.fs.types import Access
+Access = None  # TODO: hack to fix recursive import
 
 
 # TODO: should be in config.py
@@ -28,12 +31,6 @@ class LocalDB:
         self._cache.mkdir(parents=True, exist_ok=True)
         self._placeholders = self._path / "placeholders"
         self._placeholders.mkdir(parents=True, exist_ok=True)
-
-        # TODO: fix recursive import
-        from parsec.core.encryption_manager import encrypt_with_symkey, decrypt_with_symkey
-
-        self._encrypt_with_symkey = encrypt_with_symkey
-        self._decrypt_with_symkey = decrypt_with_symkey
 
     @property
     def path(self):
@@ -64,12 +61,12 @@ class LocalDB:
         if not file:
             raise LocalDBMissingEntry(access)
         ciphered = file.read_bytes()
-        return self._decrypt_with_symkey(access["key"], ciphered)
+        return decrypt_raw_with_secret_key(access["key"], ciphered)
 
     def set(self, access: Access, raw: bytes, deletable: bool = True):
         assert isinstance(raw, (bytes, bytearray))
 
-        ciphered = self._encrypt_with_symkey(access["key"], raw)
+        ciphered = encrypt_raw_with_secret_key(access["key"], raw)
 
         if deletable:
             if self.get_cache_size() + len(ciphered) > self.max_cache_size:

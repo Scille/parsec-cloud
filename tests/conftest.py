@@ -7,28 +7,30 @@ import contextlib
 from unittest.mock import patch
 import trio
 import trio_asyncio
-
 from async_generator import asynccontextmanager
 import hypothesis
-from nacl.public import PrivateKey
-from nacl.signing import SigningKey
-import nacl
+from pathlib import Path
 
-from parsec.core import Core, CoreConfig
-from parsec.core.local_db import LocalDBMissingEntry
-from parsec.core.schemas import loads_manifest, dumps_manifest
-from parsec.core.fs.utils import new_access, new_local_user_manifest, local_to_remote_manifest
-from parsec.core.encryption_manager import encrypt_with_secret_key
-from parsec.core.devices_manager import Device
+from parsec.types import DeviceID
+from parsec.crypto import SigningKey, export_root_verify_key, encrypt_with_secret_key
+from parsec.trustchain import certify_user, certify_device
+from parsec.core import CoreConfig
+from parsec.core.types import LocalDevice
+from parsec.core.devices_manager import generate_new_device
+from parsec.core.logged_core import logged_core_factory
+from parsec.core.fs.utils import new_local_user_manifest, local_to_remote_manifest, copy_manifest
+from parsec.core.schemas import dumps_manifest
 from parsec.core.mountpoint import FUSE_AVAILABLE
 from parsec.backend import BackendApp, config_factory as backend_config_factory
-from parsec.backend.exceptions import AlreadyExistsError as UserAlreadyExistsError
-from parsec.handshake import ClientHandshake, AnonymousClientHandshake
+from parsec.backend.user import User as BackendUser, new_user_factory as new_backend_user_factory
+from parsec.backend.user import UserAlreadyExistsError
+from parsec.api.protocole import ClientHandshake, AnonymousClientHandshake
+from parsec.api.transport import PatateTCPTransport
 
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
 
-from tests.common import freeze_time, FreezeTestOnBrokenStreamCookedSocket, InMemoryLocalDB
+from tests.common import freeze_time, FreezeTestOnTransportError
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 from tests.event_bus_spy import SpiedEventBus
 
@@ -50,7 +52,7 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def hypothesis_settings(request):
     return hypothesis.settings(
         max_examples=pytest.config.getoption("--hypothesis-max-examples"),
@@ -70,29 +72,36 @@ def pytest_runtest_setup(item):
             pytest.skip("fuse is not available")
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(autouse=True, scope="session", name="unmock_crypto")
 def mock_crypto():
-    from nacl.secret import SecretBox
-
     # Crypto is CPU hungry
     if pytest.config.getoption("--realcrypto"):
-        yield
+
+        def unmock():
+            pass
+
+        yield unmock
+
     else:
 
-        def unsecure_but_fast_sbf(password, salt):
-            key = password[: SecretBox.KEY_SIZE] + b"\x00" * (SecretBox.KEY_SIZE - len(password))
-            return SecretBox(key)
+        def unsecure_but_fast_argon2i_kdf(size, password, salt, *args, **kwargs):
+            data = password + salt
+            return data[:size] + b"\x00" * (size - len(data))
 
-        with patch("parsec.core.devices_manager._secret_box_factory", new=unsecure_but_fast_sbf):
-            yield
+        from parsec.crypto import argon2i
 
+        vanilla_kdf = argon2i.kdf
 
-from parsec.core.devices_manager import _secret_box_factory as vanilla_sbf
+        def unmock():
+            return patch("parsec.crypto.argon2i.kdf", new=vanilla_kdf)
+
+        with patch("parsec.crypto.argon2i.kdf", new=unsecure_but_fast_argon2i_kdf):
+            yield unmock
 
 
 @pytest.fixture
-def realcrypto():
-    with patch("parsec.core.devices_manager._secret_box_factory", new=vanilla_sbf):
+def realcrypto(unmock_crypto):
+    with unmock_crypto():
         yield
 
 
@@ -109,17 +118,17 @@ def _patch_url_if_xdist(url):
 DEFAULT_POSTGRESQL_TEST_URL = "postgresql:///parsec_test"
 
 
-def get_postgresql_url():
+def _get_postgresql_url():
     return _patch_url_if_xdist(
         os.environ.get("PARSEC_POSTGRESQL_TEST_URL", DEFAULT_POSTGRESQL_TEST_URL)
     )
 
 
-@pytest.fixture
-def postgresql_url(request):
+@pytest.fixture(scope="session")
+def postgresql_url():
     if not pytest.config.getoption("--postgresql"):
         pytest.skip("`--postgresql` option not provided")
-    return get_postgresql_url()
+    return _get_postgresql_url()
 
 
 @pytest.fixture
@@ -132,21 +141,7 @@ async def asyncio_loop():
             yield loop
 
 
-@pytest.fixture
-def always_logs():
-    """
-    By default, pytest-logbook only print last test's logs in case of error.
-    With this fixture all logs are outputed as soon as they are created.
-    """
-    from logbook import StreamHandler
-    import sys
-
-    sh = StreamHandler(sys.stdout)
-    with sh.applicationbound():
-        yield
-
-
-@pytest.fixture
+@pytest.fixture(scope="session")
 def unused_tcp_port():
     """Find an unused localhost TCP port from 1024-65535 and return it."""
     with contextlib.closing(socket.socket()) as sock:
@@ -154,12 +149,12 @@ def unused_tcp_port():
         return sock.getsockname()[1]
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def unused_tcp_addr(unused_tcp_port):
     return "tcp://127.0.0.1:%s" % unused_tcp_port
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def event_bus_factory():
     return SpiedEventBus
 
@@ -176,7 +171,7 @@ def tcp_stream_spy():
         yield open_tcp_stream_mock_wrapper
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def monitor():
     from tests.monitor import Monitor
 
@@ -222,85 +217,28 @@ def server_factory(tcp_stream_spy):
     return _server_factory
 
 
-@pytest.fixture
-def device_factory():
-    users = {}
-    devices = {}
-    count = 0
-
-    def _device_factory(user_id=None, device_name=None, user_manifest_in_v0=False, local_db=None):
-        nonlocal count
-        count += 1
-
-        if not user_id:
-            user_id = f"user-{count}"
-        if not device_name:
-            device_name = f"device-{count}"
-
-        device_id = f"{user_id}@{device_name}"
-        assert device_id not in devices
-
-        try:
-            user_privkey, user_manifest_access, user_manifest_v1 = users[user_id]
-        except KeyError:
-            user_privkey = PrivateKey.generate().encode()
-            user_manifest_access = new_access()
-            user_manifest_v1 = None
-
-        if not user_manifest_v1 and not user_manifest_in_v0:
-            with freeze_time("2000-01-01"):
-                user_manifest_v1 = new_local_user_manifest(device_id)
-            user_manifest_v1["base_version"] = 1
-            user_manifest_v1["is_placeholder"] = False
-            user_manifest_v1["need_sync"] = False
-
-        users[user_id] = (user_privkey, user_manifest_access, user_manifest_v1)
-        # try:
-        #     user_privkey, user_manifest_access = users[user_id]
-        # except KeyError:
-        #     user_privkey = PrivateKey.generate().encode()
-        #     user_manifest_access = new_access()
-        #     users[user_id] = (user_privkey, user_manifest_access)
-
-        device_signkey = SigningKey.generate().encode()
-        local_symkey = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
-        if not local_db:
-            local_db = InMemoryLocalDB()
-        device = Device(
-            f"{user_id}@{device_name}",
-            user_privkey,
-            device_signkey,
-            local_symkey,
-            user_manifest_access,
-            local_db,
-        )
-        if not user_manifest_in_v0:
-            device.local_db.set(user_manifest_access, dumps_manifest(user_manifest_v1))
-
-        devices[device_id] = device
-        return device
-
-    return _device_factory
+@pytest.fixture(scope="session")
+def alice(backend_addr, root_verify_key):
+    return generate_new_device(DeviceID("alice@dev1"), backend_addr, root_verify_key)
 
 
-@pytest.fixture
-def alice(device_factory):
-    return device_factory("alice", "dev1")
+@pytest.fixture(scope="session")
+def alice2(backend_addr, root_verify_key, alice):
+    alice2 = generate_new_device(DeviceID("alice@dev2"), backend_addr, root_verify_key)
+    alice2 = alice2.evolve(
+        private_key=alice.private_key, user_manifest_access=alice.user_manifest_access
+    )
+    return alice2
 
 
-@pytest.fixture
-def alice2(device_factory):
-    return device_factory("alice", "dev2")
+@pytest.fixture(scope="session")
+def bob(backend_addr, root_verify_key):
+    return generate_new_device(DeviceID("bob@dev1"), backend_addr, root_verify_key)
 
 
-@pytest.fixture
-def bob(device_factory):
-    return device_factory("bob", "dev1")
-
-
-@pytest.fixture
-def mallory(device_factory):
-    return device_factory("mallory", "dev1")
+@pytest.fixture(scope="session")
+def mallory(backend_addr, root_verify_key):
+    return generate_new_device(DeviceID("mallory@dev1"), backend_addr, root_verify_key)
 
 
 @pytest.fixture
@@ -310,15 +248,23 @@ def default_devices(alice, alice2, bob):
 
 @pytest.fixture
 def bootstrap_postgresql(url):
-    from threading import Thread
-    from parsec.backend.drivers import postgresql as pg_driver
+    # In theory we should use TrioPG here to do db init, but:
+    # - Duck typing and similar api makes `_init_db` compatible with both
+    # - AsyncPG should be slightly faster than TrioPG
+    # - Most important: a trio loop is potentially already started inside this
+    #   thread (i.e. if the test is mark as trio). Hence we would have to spawn
+    #   another thread just to run the new trio loop.
 
-    def _bootstrap():
-        trio_asyncio.run(pg_driver.handler.init_db, url, True)
+    import asyncio
+    import asyncpg
+    from parsec.backend.drivers.postgresql.handler import _init_db
 
-    t = Thread(target=_bootstrap)
-    t.start()
-    t.join()
+    async def _bootstrap():
+        conn = await asyncpg.connect(url)
+        await _init_db(conn, force=True)
+        await conn.close()
+
+    asyncio.get_event_loop().run_until_complete(_bootstrap())
 
 
 @pytest.fixture()
@@ -333,7 +279,7 @@ def backend_store(request):
             return "MOCKED"
 
         # TODO: would be better to create a new postgresql cluster for each test
-        url = get_postgresql_url()
+        url = _get_postgresql_url()
         try:
             bootstrap_postgresql(url)
         except asyncpg.exceptions.InvalidCatalogNameError as exc:
@@ -391,8 +337,72 @@ async def nursery():
     raise RuntimeError("Bad kitty ! Bad !!!")
 
 
+class InitialState:
+    def __init__(self):
+        self._location_in_v0 = set()
+        self._v1 = {}
+
+    def set_v0_in_backend(self, user_id):
+        assert user_id not in self._location_in_v0
+        self._location_in_v0.add(user_id)
+
+    def set_v0_in_device(self, device_id):
+        assert device_id not in self._location_in_v0
+        self._location_in_v0.add(device_id)
+
+    def get_initial_for_device(self, device):
+        if device.device_id in self._location_in_v0:
+            return None
+
+        in_device, _ = self._generate_or_retrieve_v1(device)
+        return copy_manifest(in_device)
+
+    def get_initial_for_backend(self, device):
+        if device.device_id in self._location_in_v0:
+            return None
+
+        _, in_backend = self._generate_or_retrieve_v1(device)
+        return copy_manifest(in_backend)
+
+    def _generate_or_retrieve_v1(self, device):
+        try:
+            return self._v1[device.user_id]
+
+        except KeyError:
+            user_manifest = new_local_user_manifest(device.device_id)
+            user_manifest["base_version"] = 1
+            user_manifest["is_placeholder"] = False
+            user_manifest["need_sync"] = False
+
+            remote_user_manifest = local_to_remote_manifest(user_manifest)
+
+            self._v1[device.user_id] = (user_manifest, remote_user_manifest)
+            return (user_manifest, remote_user_manifest)
+
+
 @pytest.fixture
-def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, default_devices):
+def initial_user_manifest_state():
+    # User manifest is stored in backend vlob and in devices's local db.
+    # Hence this fixture allow us to centralize the first version of this user
+    # manifest.
+    # In most tests we want to be in a state were backend and devices all
+    # store the same user manifest (named the "v1" here).
+    # But sometime we want a completly fresh start ("v1" doesn't exist,
+    # hence devices and backend are empty) or only a single device to begin
+    # with no knowledge of the "v1".
+    return InitialState()
+
+
+@pytest.fixture
+def backend_factory(
+    asyncio_loop,
+    event_bus_factory,
+    initial_user_manifest_state,
+    blockstore,
+    backend_store,
+    default_devices,
+    root_signing_key,
+):
     # Given the postgresql driver uses trio-asyncio, any coroutine dealing with
     # the backend should inherit from the one with the asyncio loop context manager.
     # This mean the nursery fixture cannot use the backend object otherwise we
@@ -400,6 +410,13 @@ def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, 
     # nursery fixture is done with calling the backend's postgresql stuff.
 
     blockstore_type, blockstore_config = blockstore
+
+    def _local_to_backend_device(device: LocalDevice) -> BackendUser:
+        certified_user = certify_user(None, root_signing_key, device.user_id, device.public_key)
+        certified_device = certify_device(
+            None, root_signing_key, device.device_id, device.verify_key
+        )
+        return new_backend_user_factory(device.device_id, None, certified_user, certified_device)
 
     @asynccontextmanager
     async def _backend_factory(devices=default_devices, config={}, event_bus=None):
@@ -419,39 +436,30 @@ def backend_factory(asyncio_loop, event_bus_factory, blockstore, backend_store, 
             # Need to initialize backend with users/devices
             with freeze_time("2000-01-01"):
                 for device in devices:
+                    backend_user = _local_to_backend_device(device)
                     try:
-                        await backend.user.create(
-                            user_id=device.user_id,
-                            broadcast_key=device.user_pubkey.encode(),
-                            devices=[(device.device_name, device.device_verifykey.encode())],
-                        )
+                        await backend.user.create_user(backend_user)
 
                         access = device.user_manifest_access
-                        try:
-                            local_user_manifest = loads_manifest(device.local_db.get(access))
-                        except LocalDBMissingEntry:
-                            continue
-                        else:
-                            if local_user_manifest["base_version"] == 0:
-                                continue
-
-                        remote_user_manifest = local_to_remote_manifest(local_user_manifest)
-                        ciphered = encrypt_with_secret_key(
-                            device.id,
-                            device.device_signkey,
-                            access["key"],
-                            dumps_manifest(remote_user_manifest),
-                        )
-                        await backend.vlob.create(
-                            access["id"], access["rts"], access["wts"], ciphered
-                        )
+                        user_manifest = initial_user_manifest_state.get_initial_for_backend(device)
+                        if user_manifest:
+                            ciphered = encrypt_with_secret_key(
+                                device.device_id,
+                                device.signing_key,
+                                access["key"],
+                                dumps_manifest(user_manifest),
+                            )
+                            await backend.vlob.create(
+                                access["id"],
+                                access["rts"],
+                                access["wts"],
+                                ciphered,
+                                device.device_id,
+                            )
 
                     except UserAlreadyExistsError:
-                        await backend.user.create_device(
-                            user_id=device.user_id,
-                            device_name=device.device_name,
-                            verify_key=device.device_verifykey.encode(),
-                        )
+                        await backend.user.create_device(backend_user.devices[device.device_name])
+
             try:
                 yield backend
 
@@ -470,37 +478,56 @@ async def backend(backend_factory):
         yield backend
 
 
-@pytest.fixture
-def backend_addr():
-    return "tcp://parsec-backend.localhost:9999"
+# TODO: rename to organization_addr ?
+@pytest.fixture(scope="session")
+def backend_addr(unused_tcp_addr, root_verify_key):
+    rvk = export_root_verify_key(root_verify_key)
+    return f"{unused_tcp_addr}?rvk={rvk}"
 
 
 @pytest.fixture
-async def running_backend(server_factory, backend_addr, backend):
+def running_backend_ready(request):
+    # Useful to synchronize other fixtures that need to connect to
+    # the backend if it is available
+    event = trio.Event()
+    # Nothing to wait if current test doesn't use `running_backend` fixture
+    if "running_backend" not in request.fixturenames:
+        event.set()
+
+    return event
+
+
+@pytest.fixture
+async def running_backend(server_factory, backend_addr, backend, running_backend_ready):
     async with server_factory(backend.handle_client, backend_addr) as server:
         server.backend = backend
+        running_backend_ready.set()
         yield server
 
 
+# TODO: rename to backend_transport_factory
 @pytest.fixture
 def backend_sock_factory(server_factory):
     @asynccontextmanager
     async def _backend_sock_factory(backend, auth_as):
         async with server_factory(backend.handle_client) as server:
-            sockstream = server.connection_factory()
-            sock = FreezeTestOnBrokenStreamCookedSocket(sockstream)
+            stream = server.connection_factory()
+            transport = FreezeTestOnTransportError(PatateTCPTransport(stream))
+
             if auth_as:
                 # Handshake
                 if auth_as == "anonymous":
                     ch = AnonymousClientHandshake()
                 else:
-                    ch = ClientHandshake(auth_as.id, auth_as.device_signkey)
-                challenge_req = await sock.recv()
+                    # TODO: change auth_as type
+                    ch = ClientHandshake(auth_as.device_id, auth_as.signing_key)
+                challenge_req = await transport.recv()
                 answer_req = ch.process_challenge_req(challenge_req)
-                await sock.send(answer_req)
-                result_req = await sock.recv()
+                await transport.send(answer_req)
+                result_req = await transport.recv()
                 ch.process_result_req(result_req)
-            yield sock
+
+            yield transport
 
     return _backend_sock_factory
 
@@ -518,112 +545,51 @@ async def alice_backend_sock(backend_sock_factory, backend, alice):
 
 
 @pytest.fixture
+async def alice2_backend_sock(backend_sock_factory, backend, alice2):
+    async with backend_sock_factory(backend, alice2) as sock:
+        yield sock
+
+
+@pytest.fixture
 async def bob_backend_sock(backend_sock_factory, backend, bob):
     async with backend_sock_factory(backend, bob) as sock:
         yield sock
 
 
-@pytest.fixture
-def core_factory(tmpdir, event_bus_factory, backend_addr, default_devices):
-    count = 0
+@pytest.fixture(scope="session")
+def root_signing_key():
+    return SigningKey.generate()
 
-    @asynccontextmanager
-    async def _core_factory(devices=default_devices, config={}, event_bus=None):
-        nonlocal count
-        count += 1
 
-        core_dir = tmpdir / f"core-{count}"
-        config = CoreConfig(
-            **{
-                "backend_addr": backend_addr,
-                "local_storage_dir": (core_dir / "local_storage").strpath,
-                "base_settings_path": (core_dir / "settings").strpath,
-                **config,
-            }
-        )
-        if not event_bus:
-            event_bus = event_bus_factory()
-        core = Core(config, event_bus=event_bus)
-        async with trio.open_nursery() as nursery:
-            await core.init(nursery)
-
-            for device in devices:
-                core.local_devices_manager.register_new_device(
-                    device.id,
-                    device.user_privkey.encode(),
-                    device.device_signkey.encode(),
-                    device.user_manifest_access,
-                    "<secret>",
-                )
-
-            try:
-                yield core
-            finally:
-                await core.teardown()
-                # Don't do `nursery.cancel_scope.cancel()` given `core.teardown()`
-                # should have stopped all our coroutines (i.e. if the nursery is
-                # hanging, something on top of us should be fixed...)
-
-    return _core_factory
+@pytest.fixture(scope="session")
+def root_verify_key(root_signing_key):
+    return root_signing_key.verify_key
 
 
 @pytest.fixture
-async def core(core_factory):
-    async with core_factory() as core:
-        yield core
+def core_config(tmpdir):
+    tmpdir = Path(tmpdir)
+    return CoreConfig(
+        config_dir=tmpdir / "config", cache_dir=tmpdir / "cache", data_dir=tmpdir / "data"
+    )
 
 
 @pytest.fixture
-def core_sock_factory(server_factory):
-    @asynccontextmanager
-    async def _core_sock_factory(core):
-        async with server_factory(core.handle_client) as server:
-            sockstream = server.connection_factory()
-            yield FreezeTestOnBrokenStreamCookedSocket(sockstream)
-
-    return _core_sock_factory
+async def alice_core(running_backend_ready, event_bus_factory, core_config, alice):
+    await running_backend_ready.wait()
+    async with logged_core_factory(core_config, alice, event_bus_factory()) as alice_core:
+        yield alice_core
 
 
 @pytest.fixture
-async def alice_core(core, alice):
-    assert not core.auth_device, "Core already logged"
-    await core.login(alice)
-    return core
+async def alice2_core(running_backend_ready, event_bus_factory, core_config, alice2):
+    await running_backend_ready.wait()
+    async with logged_core_factory(core_config, alice2, event_bus_factory()) as alice2_core:
+        yield alice2_core
 
 
 @pytest.fixture
-async def alice_core_sock(core_sock_factory, alice_core):
-    async with core_sock_factory(alice_core) as sock:
-        yield sock
-
-
-@pytest.fixture
-async def core2(core_factory):
-    async with core_factory() as core2:
-        yield core2
-
-
-@pytest.fixture
-async def alice2_core2(core2, alice2):
-    assert not core2.auth_device, "Core already logged"
-    await core2.login(alice2)
-    return core2
-
-
-@pytest.fixture
-async def bob_core2(core2, bob):
-    assert not core2.auth_device, "Core already logged"
-    await core2.login(bob)
-    return core2
-
-
-@pytest.fixture
-async def alice2_core2_sock(core_sock_factory, alice2_core2):
-    async with core_sock_factory(alice2_core2) as sock:
-        yield sock
-
-
-@pytest.fixture
-async def bob_core2_sock(core_sock_factory, bob_core2):
-    async with core_sock_factory(bob_core2) as sock:
-        yield sock
+async def bob_core(running_backend_ready, event_bus_factory, core_config, bob):
+    await running_backend_ready.wait()
+    async with logged_core_factory(core_config, bob, event_bus_factory()) as bob_core:
+        yield bob_core

@@ -1,8 +1,10 @@
 from uuid import UUID
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 import pendulum
 
-from parsec.core.local_db import LocalDBMissingEntry
+from parsec.event_bus import EventBus
+from parsec.core.types import LocalDevice
+from parsec.core.local_db import LocalDB, LocalDBMissingEntry
 from parsec.core.schemas import dumps_manifest, loads_manifest
 from parsec.core.fs.utils import (
     is_file_manifest,
@@ -40,10 +42,10 @@ class FSMultiManifestLocalMiss(Exception):
 
 
 class LocalFolderFS:
-    def __init__(self, device, event_bus):
-        self.local_author = device.id
+    def __init__(self, device: LocalDevice, local_db: LocalDB, event_bus: EventBus):
+        self.local_author = device.device_id
         self.root_access = device.user_manifest_access
-        self._local_db = device.local_db
+        self._local_db = local_db
         self.event_bus = event_bus
         self._manifests_cache = {}
 

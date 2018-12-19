@@ -3,6 +3,8 @@ import structlog
 import logging
 from raven.handlers.logging import SentryHandler
 
+from parsec.structlog_bonus import wrap_dict
+
 
 def configure_logging(log_level="WARNING", log_format="CONSOLE", log_file=None, log_filter=None):
 
@@ -14,15 +16,17 @@ def configure_logging(log_level="WARNING", log_format="CONSOLE", log_file=None, 
     ]
 
     if log_filter:
+        log_filter = re.compile(log_filter)
 
         def dropper(logger, method_name, event_dict):
-            if not re.match(log_filter, str(event_dict)):
+            if not log_filter.match(str(event_dict)):
                 raise structlog.DropEvent
             return event_dict
 
         shared_processors.append(dropper)
 
     structlog.configure(
+        context_class=wrap_dict(dict),
         processors=[
             structlog.stdlib.filter_by_level,
             *shared_processors,

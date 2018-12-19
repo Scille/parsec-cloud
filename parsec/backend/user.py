@@ -1,359 +1,736 @@
 import trio
-import random
-import string
-from typing import List
+import attr
+from typing import List, Tuple, Dict, Union, Optional
+import pendulum
 
-from parsec.schema import UnknownCheckedSchema, BaseCmdSchema, fields
-from parsec.utils import to_jsonb64
-from parsec.backend.exceptions import NotFoundError, AlreadyExistsError, UserClaimError
-
-
-class _UserIDSchema(BaseCmdSchema):
-    user_id = fields.String(required=True)
-
-
-UserIDSchema = _UserIDSchema()
-
-
-class _DeviceDeclareSchema(BaseCmdSchema):
-    device_name = fields.String(required=True)
-
-
-DeviceDeclareSchema = _DeviceDeclareSchema()
-
-
-class _DeviceGetConfigurationTrySchema(BaseCmdSchema):
-    config_try_id = fields.String(required=True)
-
-
-DeviceGetConfigurationTrySchema = _DeviceGetConfigurationTrySchema()
-
-
-class _DeviceAcceptConfigurationTrySchema(BaseCmdSchema):
-    config_try_id = fields.String(required=True)
-    ciphered_user_privkey = fields.Base64Bytes(required=True)
-    ciphered_user_manifest_access = fields.Base64Bytes(required=True)
+from parsec.types import UserID, DeviceID
+from parsec.event_bus import EventBus
+from parsec.crypto import VerifyKey
+from parsec.trustchain import (
+    unsecure_certified_device_extract_verify_key,
+    unsecure_certified_user_extract_public_key,
+    certified_extract_parts,
+    validate_payload_certified_user,
+    validate_payload_certified_device,
+    validate_payload_certified_device_revocation,
+    TrustChainError,
+)
+from parsec.api.protocole import (
+    user_get_serializer,
+    user_find_serializer,
+    user_get_invitation_creator_serializer,
+    user_invite_serializer,
+    user_claim_serializer,
+    user_cancel_invitation_serializer,
+    user_create_serializer,
+    device_get_invitation_creator_serializer,
+    device_invite_serializer,
+    device_claim_serializer,
+    device_cancel_invitation_serializer,
+    device_create_serializer,
+    device_revoke_serializer,
+)
+from parsec.backend.utils import anonymous_api, catch_protocole_errors
 
 
-DeviceAcceptConfigurationTrySchema = _DeviceAcceptConfigurationTrySchema()
+class UserError(Exception):
+    pass
 
 
-class _DeviceRefuseConfigurationTrySchema(BaseCmdSchema):
-    config_try_id = fields.String(required=True)
-    reason = fields.String(required=True)
+class UserNotFoundError(UserError):
+    pass
 
 
-DeviceRefuseConfigurationTrySchema = _DeviceRefuseConfigurationTrySchema()
+class UserAlreadyExistsError(UserError):
+    pass
 
 
-class _DeviceConfigureSchema(BaseCmdSchema):
-    configure_device_token = fields.String(required=True)
-    user_id = fields.String(required=True)
-    device_name = fields.String(required=True)
-    device_verify_key = fields.Base64Bytes(required=True)
-    # TODO: should be itself ciphered with a password-derived key
-    # to mitigate man-in-the-middle attack
-    exchange_cipherkey = fields.Base64Bytes(required=True)
-    salt = fields.Base64Bytes(required=True)
+class UserAlreadyRevokedError(UserError):
+    pass
 
 
-DeviceConfigureSchema = _DeviceConfigureSchema()
+PEER_EVENT_MAX_WAIT = 300
+INVITATION_VALIDITY = 3600
 
 
-class _DeviceSchema(UnknownCheckedSchema):
-    created_on = fields.DateTime(required=True)
-    revocated_on = fields.DateTime()
-    verify_key = fields.Base64Bytes(required=True)
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
+class Device:
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.device_id})"
+
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
+
+    @property
+    def device_name(self):
+        return self.device_id.device_name
+
+    @property
+    def user_id(self):
+        return self.device_id.user_id
+
+    @property
+    def verify_key(self):
+        return unsecure_certified_device_extract_verify_key(self.certified_device)
+
+    device_id: DeviceID
+    certified_device: bytes
+    device_certifier: Optional[DeviceID]
+
+    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+    revocated_on: pendulum.Pendulum = None
+    certified_revocation: bytes = None
+    revocation_certifier: DeviceID = None
 
 
-DeviceSchema = _DeviceSchema()
+class DevicesMapping:
+    """
+    Basically a frozen dict.
+    """
+
+    __slots__ = ("_read_only_mapping",)
+
+    def __init__(self, *devices: Device):
+        self._read_only_mapping = {d.device_name: d for d in devices}
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self._read_only_mapping!r})"
+
+    def __getitem__(self, key):
+        return self._read_only_mapping[key]
+
+    def items(self):
+        return self._read_only_mapping.items()
+
+    def keys(self):
+        return self._read_only_mapping.keys()
+
+    def values(self):
+        return self._read_only_mapping.values()
+
+    def __iter__(self):
+        return self._read_only_mapping.__iter__()
+
+    def __in__(self, key):
+        return self._read_only_mapping.__in__(key)
 
 
-class _UserSchema(BaseCmdSchema):
-    user_id = fields.String(required=True)
-    created_on = fields.DateTime(required=True)
-    broadcast_key = fields.Base64Bytes(required=True)
-    devices = fields.Map(fields.String(), fields.Nested(DeviceSchema), required=True)
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
+class User:
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.user_id})"
+
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
+
+    @property
+    def public_key(self):
+        return unsecure_certified_user_extract_public_key(self.certified_user)
+
+    def is_revocated(self):
+        return any((False for d in self.devices.values if not d.revocated_on), True)
+
+    user_id: UserID
+    certified_user: bytes
+    user_certifier: Optional[DeviceID]
+    devices: DevicesMapping = attr.ib(factory=DevicesMapping)
+
+    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
 
 
-UserSchema = _UserSchema()
+def new_user_factory(
+    device_id: DeviceID,
+    certifier: Optional[DeviceID],
+    certified_user: bytes,
+    certified_device: bytes,
+    now: pendulum.Pendulum = None,
+) -> User:
+    now = now or pendulum.now()
+    return User(
+        user_id=device_id.user_id,
+        certified_user=certified_user,
+        user_certifier=certifier,
+        devices=DevicesMapping(
+            Device(
+                device_id=device_id,
+                certified_device=certified_device,
+                device_certifier=certifier,
+                created_on=now,
+            )
+        ),
+        created_on=now,
+    )
 
 
-class _UserClaimSchema(BaseCmdSchema):
-    invitation_token = fields.String(required=True)
-    user_id = fields.String(required=True)
-    broadcast_key = fields.Base64Bytes(required=True)
-    device_name = fields.String(required=True)
-    device_verify_key = fields.Base64Bytes(required=True)
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
+class UserInvitation:
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.user_id})"
+
+    user_id: UserID
+    creator: DeviceID
+    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+
+    def is_valid(self) -> bool:
+        return (pendulum.now() - self.created_on).total_seconds() < INVITATION_VALIDITY
 
 
-UserClaimSchema = _UserClaimSchema()
+@attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
+class DeviceInvitation:
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.device_id})"
 
+    device_id: DeviceID
+    creator: DeviceID
+    created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
 
-class _FindUserSchema(BaseCmdSchema):
-    query = fields.String(missing=None, allow_none=True)
-    page = fields.Int(missing=1, validate=lambda n: n > 0)
-    per_page = fields.Integer(validate=lambda n: 0 < n <= 100, missing=100)
-
-
-FindUserSchema = _FindUserSchema()
-
-
-def _generate_token():
-    return "".join([random.choice(string.digits) for _ in range(6)])
+    def is_valid(self) -> bool:
+        return (pendulum.now() - self.created_on).total_seconds() < INVITATION_VALIDITY
 
 
 class BaseUserComponent:
-    def __init__(self, event_bus):
-        self.event_bus = event_bus
+    #### Access user API ####
 
+    @catch_protocole_errors
     async def api_user_get(self, client_ctx, msg):
-        msg = UserIDSchema.load_or_abort(msg)
+        msg = user_get_serializer.req_load(msg)
+
         try:
-            user = await self.get(msg["user_id"])
-        except NotFoundError:
-            return {"status": "not_found", "reason": f"No user with id `{msg['user_id']}`."}
+            user, trustchain = await self.get_user_with_trustchain(msg["user_id"])
+        except UserNotFoundError as exc:
+            return {"status": "not_found"}
 
-        data, errors = UserSchema.dump(user)
-        if errors:
-            raise RuntimeError(f"Dump error with {user!r}: {errors}")
-
-        return {"status": "ok", **data}
-
-    async def api_user_invite(self, client_ctx, msg):
-        msg = UserIDSchema.load_or_abort(msg)
-        token = _generate_token()
-        try:
-            await self.create_invitation(token, msg["user_id"])
-        except AlreadyExistsError:
-            return {
-                "status": "already_exists",
-                "reason": f"User `{msg['user_id']}` already exists.",
+        return user_get_serializer.rep_dump(
+            {
+                "status": "ok",
+                "user_id": user.user_id,
+                "created_on": user.created_on,
+                "certified_user": user.certified_user,
+                "user_certifier": user.user_certifier,
+                "devices": user.devices,
+                "trustchain": trustchain,
             }
-
-        return {"status": "ok", "user_id": msg["user_id"], "invitation_token": token}
-
-    async def api_user_claim(self, client_ctx, msg):
-        msg = UserClaimSchema.load_or_abort(msg)
-        try:
-            await self.claim_invitation(**msg)
-        except UserClaimError as exc:
-            return {"status": "claim_error", "reason": str(exc)}
-
-        return {"status": "ok"}
-
-    async def api_device_declare(self, client_ctx, msg):
-        msg = DeviceDeclareSchema.load_or_abort(msg)
-        configure_device_token = _generate_token()
-        try:
-            await self.declare_unconfigured_device(
-                configure_device_token, client_ctx.user_id, msg["device_name"]
-            )
-        except AlreadyExistsError:
-            return {
-                "status": "already_exists",
-                "reason": f"Device `{msg['device_name']}` already exists.",
-            }
-
-        return {"status": "ok", "configure_device_token": configure_device_token}
-
-    async def api_device_configure(self, client_ctx, msg):
-        msg = DeviceConfigureSchema.load_or_abort(msg)
-        user_id = msg["user_id"]
-        device_name = msg["device_name"]
-        try:
-            device = await self.get_unconfigured_device(user_id, device_name)
-        except NotFoundError:
-            return {
-                "status": "not_found",
-                "reason": f"No unconfigured device `{user_id}@{device_name}`.",
-            }
-
-        if device["configure_token"] != msg["configure_device_token"]:
-            return {"status": "invalid_token", "reason": "Wrong device configuration token."}
-
-        config_try_id = _generate_token()
-        await self.register_device_configuration_try(
-            config_try_id,
-            user_id,
-            msg["device_name"],
-            msg["device_verify_key"],
-            msg["exchange_cipherkey"],
-            msg["salt"],
         )
+
+    @catch_protocole_errors
+    async def api_user_find(self, client_ctx, msg):
+        msg = user_find_serializer.req_load(msg)
+        results, total = await self.find(**msg)
+        return user_find_serializer.rep_dump(
+            {
+                "status": "ok",
+                "results": results,
+                "page": msg["page"],
+                "per_page": msg["per_page"],
+                "total": total,
+            }
+        )
+
+    #### User creation API ####
+
+    @catch_protocole_errors
+    async def api_user_invite(self, client_ctx, msg):
+        msg = user_invite_serializer.req_load(msg)
+
+        invitation = UserInvitation(msg["user_id"], client_ctx.device_id)
+        try:
+            await self.create_user_invitation(invitation)
+
+        except UserAlreadyExistsError as exc:
+            return {"status": "already_exists", "reason": str(exc)}
+
+        # Wait for invited user to send `user_claim`
 
         claim_answered = trio.Event()
+        _encrypted_claim = None
 
-        def _on_claim_answered(event, subject, config_try_id):
-            if subject == user_id and config_try_id == config_try_id:
+        def _on_user_claimed(event, user_id, encrypted_claim):
+            nonlocal _encrypted_claim
+            if user_id == invitation.user_id:
                 claim_answered.set()
+                _encrypted_claim = encrypted_claim
 
-        self.event_bus.connect("device.try_claim_answered", _on_claim_answered, weak=True)
-
-        self.event_bus.send(
-            "device.try_claim_submitted",
-            author=client_ctx.id,
-            user_id=user_id,
-            device_name=device_name,
-            config_try_id=config_try_id,
-        )
-        with trio.move_on_after(5 * 60) as cancel_scope:
+        self.event_bus.connect("user.claimed", _on_user_claimed, weak=True)
+        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
             await claim_answered.wait()
         if cancel_scope.cancelled_caught:
             return {
                 "status": "timeout",
-                "reason": (
-                    "Timeout while waiting for existing device " "to validate our configuration."
-                ),
+                "reason": ("Timeout while waiting for new user to be claimed."),
+            }
+        return user_invite_serializer.rep_dump(
+            {"status": "ok", "encrypted_claim": _encrypted_claim}
+        )
+
+    @anonymous_api
+    @catch_protocole_errors
+    async def api_user_get_invitation_creator(self, client_ctx, msg):
+        msg = user_get_invitation_creator_serializer.req_load(msg)
+
+        try:
+            invitation = await self.get_user_invitation(msg["invited_user_id"])
+            if not invitation.is_valid():
+                return {"status": "not_found"}
+
+            user, trustchain = await self.get_user_with_trustchain(invitation.creator.user_id)
+
+        except UserNotFoundError as exc:
+            return {"status": "not_found"}
+
+        return user_get_invitation_creator_serializer.rep_dump(
+            {
+                "status": "ok",
+                "user_id": user.user_id,
+                "created_on": user.created_on,
+                "certified_user": user.certified_user,
+                "user_certifier": user.user_certifier,
+                "trustchain": trustchain,
+            }
+        )
+
+    @anonymous_api
+    @catch_protocole_errors
+    async def api_user_claim(self, client_ctx, msg):
+        msg = user_claim_serializer.req_load(msg)
+
+        try:
+            invitation = await self.claim_user_invitation(
+                msg["invited_user_id"], msg["encrypted_claim"]
+            )
+            if not invitation.is_valid():
+                return {"status": "not_found"}
+
+        except UserAlreadyExistsError:
+            return {"status": "not_found"}
+
+        except UserNotFoundError:
+            return {"status": "not_found"}
+
+        # Wait for creator user to accept (or refuse) our claim
+
+        replied = trio.Event()
+        replied_ok = False
+
+        def _on_reply(event, user_id):
+            nonlocal replied_ok
+            if user_id == invitation.user_id:
+                replied_ok = event == "user.created"
+                replied.set()
+
+        self.event_bus.connect("user.created", _on_reply, weak=True)
+        self.event_bus.connect("user.invitation.cancelled", _on_reply, weak=True)
+        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
+            await replied.wait()
+        if cancel_scope.cancelled_caught:
+            return {
+                "status": "timeout",
+                "reason": "Timeout while waiting for invitation creator to answer.",
+            }
+        if not replied_ok:
+            return {"status": "denied", "reason": "Invitation creator rejected us."}
+        return user_claim_serializer.rep_dump({"status": "ok"})
+
+    @catch_protocole_errors
+    async def api_user_cancel_invitation(self, client_ctx, msg):
+        msg = user_cancel_invitation_serializer.req_load(msg)
+
+        await self.cancel_user_invitation(msg["user_id"])
+
+        return user_cancel_invitation_serializer.rep_dump({"status": "ok"})
+
+    @catch_protocole_errors
+    async def api_user_create(self, client_ctx, msg):
+        msg = user_create_serializer.req_load(msg)
+
+        try:
+            u_certifier_id, u_payload = certified_extract_parts(msg["certified_user"])
+            d_certifier_id, d_payload = certified_extract_parts(msg["certified_device"])
+
+        except TrustChainError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
             }
 
-        # Should not raise NotFoundError given we created this just above
-        config_try = await self.retrieve_device_configuration_try(config_try_id, user_id)
+        if u_certifier_id != client_ctx.device_id or d_certifier_id != client_ctx.device_id:
+            return {
+                "status": "invalid_certification",
+                "reason": "Certifier is not the authenticated device.",
+            }
 
-        if config_try["status"] != "accepted":
-            return {"status": "configuration_refused", "reason": config_try["refused_reason"]}
-
-        await self.configure_device(user_id, device_name, msg["device_verify_key"])
-
-        return {
-            "status": "ok",
-            "ciphered_user_privkey": to_jsonb64(config_try["ciphered_user_privkey"]),
-            "ciphered_user_manifest_access": to_jsonb64(
-                config_try["ciphered_user_manifest_access"]
-            ),
-        }
-
-    async def api_device_get_configuration_try(self, client_ctx, msg):
-        msg = DeviceGetConfigurationTrySchema.load_or_abort(msg)
         try:
-            config_try = await self.retrieve_device_configuration_try(
-                msg["config_try_id"], client_ctx.user_id
-            )
-        except NotFoundError:
-            return {"status": "not_found", "reason": "Unknown device configuration try."}
+            now = pendulum.now()
+            u_data = validate_payload_certified_user(client_ctx.verify_key, u_payload, now)
+            d_data = validate_payload_certified_device(client_ctx.verify_key, d_payload, now)
 
-        return {
-            "status": "ok",
-            "device_name": config_try["device_name"],
-            "configuration_status": config_try["status"],
-            "device_verify_key": to_jsonb64(config_try["device_verify_key"]),
-            "exchange_cipherkey": to_jsonb64(config_try["exchange_cipherkey"]),
-            "salt": to_jsonb64(config_try["salt"]),
-        }
+        except TrustChainError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
 
-    async def api_device_accept_configuration_try(self, client_ctx, msg):
-        msg = DeviceAcceptConfigurationTrySchema.load_or_abort(msg)
+        if u_data["user_id"] != d_data["device_id"].user_id:
+            return {
+                "status": "invalid_data",
+                "reason": "Device and User must have the same user ID.",
+            }
+
+        if u_data["timestamp"] != d_data["timestamp"]:
+            return {
+                "status": "invalid_data",
+                "reason": "Device and User must have the same timestamp.",
+            }
+
         try:
-            await self.accept_device_configuration_try(
-                msg["config_try_id"],
-                client_ctx.user_id,
-                msg["ciphered_user_privkey"],
-                msg["ciphered_user_manifest_access"],
+            user = User(
+                user_id=u_data["user_id"],
+                certified_user=msg["certified_user"],
+                user_certifier=u_certifier_id,
+                devices=DevicesMapping(
+                    Device(
+                        device_id=d_data["device_id"],
+                        certified_device=msg["certified_device"],
+                        device_certifier=d_certifier_id,
+                        created_on=d_data["timestamp"],
+                    )
+                ),
+                created_on=u_data["timestamp"],
             )
-        except NotFoundError:
-            return {"status": "not_found", "reason": "Unknown device configuration try."}
+            await self.create_user(user)
 
-        except AlreadyExistsError:
-            return {"status": "already_done", "reason": "Device configuration try already done."}
+        except UserAlreadyExistsError as exc:
+            return {"status": "already_exists", "reason": str(exc)}
 
-        self.event_bus.send(
-            "device.try_claim_answered",
-            subject=client_ctx.user_id,
-            config_try_id=msg["config_try_id"],
+        return user_create_serializer.rep_dump({"status": "ok"})
+
+    #### Device creation API ####
+
+    @catch_protocole_errors
+    async def api_device_invite(self, client_ctx, msg):
+        msg = device_invite_serializer.req_load(msg)
+        if msg["device_id"].user_id != client_ctx.user_id:
+            return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
+
+        invitation = DeviceInvitation(msg["device_id"], client_ctx.device_id)
+        try:
+            await self.create_device_invitation(invitation)
+
+        except UserAlreadyExistsError as exc:
+            return {"status": "already_exists", "reason": str(exc)}
+
+        # Wait for invited user to send `user_claim`
+
+        claim_answered = trio.Event()
+        _encrypted_claim = None
+
+        def _on_device_claimed(event, device_id, encrypted_claim):
+            nonlocal _encrypted_claim
+            if device_id == invitation.device_id:
+                claim_answered.set()
+                _encrypted_claim = encrypted_claim
+
+        self.event_bus.connect("device.claimed", _on_device_claimed, weak=True)
+        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
+            await claim_answered.wait()
+        if cancel_scope.cancelled_caught:
+            return {
+                "status": "timeout",
+                "reason": ("Timeout while waiting for new device to be claimed."),
+            }
+        return device_invite_serializer.rep_dump(
+            {"status": "ok", "encrypted_claim": _encrypted_claim}
         )
-        return {"status": "ok"}
 
-    async def api_device_refuse_configuration_try(self, client_ctx, msg):
-        msg = DeviceRefuseConfigurationTrySchema.load_or_abort(msg)
+    @anonymous_api
+    @catch_protocole_errors
+    async def api_device_get_invitation_creator(self, client_ctx, msg):
+        msg = device_get_invitation_creator_serializer.req_load(msg)
+
         try:
-            await self.refuse_device_configuration_try(
-                msg["config_try_id"], client_ctx.user_id, msg["reason"]
-            )
-        except NotFoundError:
-            return {"status": "not_found", "reason": "Unknown device configuration try."}
+            invitation = await self.get_device_invitation(msg["invited_device_id"])
+            if not invitation.is_valid():
+                return {"status": "not_found"}
 
-        except AlreadyExistsError:
-            return {"status": "already_done", "reason": "Device configuration try already done."}
+            user, trustchain = await self.get_user_with_trustchain(invitation.creator.user_id)
 
-        self.event_bus.send(
-            "device.try_claim_answered",
-            subject=client_ctx.user_id,
-            config_try_id=msg["config_try_id"],
+        except UserNotFoundError as exc:
+            return {"status": "not_found"}
+
+        return device_get_invitation_creator_serializer.rep_dump(
+            {
+                "status": "ok",
+                "user_id": user.user_id,
+                "created_on": user.created_on,
+                "certified_user": user.certified_user,
+                "user_certifier": user.user_certifier,
+                "trustchain": trustchain,
+            }
         )
-        return {"status": "ok"}
 
-    async def api_user_find(self, client_ctx, msg):
-        msg = FindUserSchema.load_or_abort(msg)
-        results, total = await self.find(**msg)
-        return {
-            "status": "ok",
-            "results": results,
-            "page": msg["page"],
-            "per_page": msg["per_page"],
-            "total": total,
-        }
+    @anonymous_api
+    @catch_protocole_errors
+    async def api_device_claim(self, client_ctx, msg):
+        msg = device_claim_serializer.req_load(msg)
 
-    async def create_invitation(self, invitation_token: str, author: str, user_id: str):
+        try:
+            invitation = await self.claim_device_invitation(
+                msg["invited_device_id"], msg["encrypted_claim"]
+            )
+            if not invitation.is_valid():
+                return {"status": "not_found"}
+
+        except UserAlreadyExistsError:
+            return {"status": "not_found"}
+
+        except UserNotFoundError:
+            return {"status": "not_found"}
+
+        # Wait for creator device to accept (or refuse) our claim
+
+        replied = trio.Event()
+        replied_ok = False
+        replied_encrypted_answer = None
+
+        def _on_reply(event, device_id, encrypted_answer=None):
+            nonlocal replied_ok, replied_encrypted_answer
+            if device_id == invitation.device_id:
+                replied_ok = event == "device.created"
+                replied_encrypted_answer = encrypted_answer
+                replied.set()
+
+        self.event_bus.connect("device.created", _on_reply, weak=True)
+        self.event_bus.connect("device.invitation.cancelled", _on_reply, weak=True)
+        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
+            await replied.wait()
+        if cancel_scope.cancelled_caught:
+            return {
+                "status": "timeout",
+                "reason": ("Timeout while waiting for invitation creator to answer."),
+            }
+        if not replied_ok:
+            return {"status": "denied", "reason": ("Invitation creator rejected us.")}
+
+        return device_claim_serializer.rep_dump(
+            {"status": "ok", "encrypted_answer": replied_encrypted_answer}
+        )
+
+    @catch_protocole_errors
+    async def api_device_cancel_invitation(self, client_ctx, msg):
+        msg = device_cancel_invitation_serializer.req_load(msg)
+
+        if msg["device_id"].user_id != client_ctx.user_id:
+            return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
+
+        await self.cancel_device_invitation(msg["device_id"])
+
+        return device_cancel_invitation_serializer.rep_dump({"status": "ok"})
+
+    @catch_protocole_errors
+    async def api_device_create(self, client_ctx, msg):
+        msg = device_create_serializer.req_load(msg)
+
+        try:
+            certifier_id, payload = certified_extract_parts(msg["certified_device"])
+        except TrustChainError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
+
+        if certifier_id != client_ctx.device_id:
+            return {
+                "status": "invalid_certification",
+                "reason": "Certifier is not the authenticated device.",
+            }
+
+        try:
+            data = validate_payload_certified_device(client_ctx.verify_key, payload, pendulum.now())
+        except TrustChainError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
+
+        if data["device_id"].user_id != client_ctx.user_id:
+            return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
+
+        try:
+            device = Device(
+                device_id=data["device_id"],
+                certified_device=msg["certified_device"],
+                device_certifier=certifier_id,
+                created_on=data["timestamp"],
+            )
+            await self.create_device(device, encrypted_answer=msg["encrypted_answer"])
+        except UserAlreadyExistsError as exc:
+            return {"status": "already_exists", "reason": str(exc)}
+
+        return device_create_serializer.rep_dump({"status": "ok"})
+
+    @catch_protocole_errors
+    async def api_device_revoke(self, client_ctx, msg):
+        msg = device_revoke_serializer.req_load(msg)
+
+        try:
+            certifier_id, payload = certified_extract_parts(msg["certified_revocation"])
+        except TrustChainError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
+
+        if certifier_id != client_ctx.device_id:
+            return {
+                "status": "invalid_certification",
+                "reason": "Certifier is not the authenticated device.",
+            }
+
+        try:
+            data = validate_payload_certified_device_revocation(
+                client_ctx.verify_key, payload, pendulum.now()
+            )
+        except TrustChainError as exc:
+            return {
+                "status": "invalid_certification",
+                "reason": f"Invalid certification data ({exc}).",
+            }
+
+        try:
+            await self.revoke_device(data["device_id"], msg["certified_revocation"], certifier_id)
+
+        except UserNotFoundError:
+            return {"status": "not_found"}
+
+        except UserAlreadyRevokedError:
+            return {
+                "status": "already_revoked",
+                "reason": f"Device `{data['device_id']}` already revoked",
+            }
+
+        return device_revoke_serializer.rep_dump({"status": "ok"})
+
+    #### Virtual methods ####
+
+    async def create_user(self, user: User) -> None:
+        """
+        Raises:
+            UserAlreadyExistsError
+        """
         raise NotImplementedError()
 
-    async def claim_invitation(
-        self,
-        invitation_token: str,
-        user_id: str,
-        broadcast_key: bytes,
-        device_name: str,
-        device_verify_key: bytes,
-    ):
+    async def create_device(self, device: Device, encrypted_answer: bytes = b"") -> None:
+        """
+        Raises:
+            UserAlreadyExistsError
+        """
         raise NotImplementedError()
 
-    async def declare_unconfigured_device(
-        self, token: str, author: str, user_id: str, device_name: str
-    ):
+    async def get_user(self, user_id: UserID) -> User:
+        """
+        Raises:
+            UserNotFoundError
+        """
         raise NotImplementedError()
 
-    async def get_unconfigured_device(self, user_id: str, device_name: str):
+    async def get_user_with_trustchain(
+        self, user_id: UserID
+    ) -> Tuple[User, Dict[DeviceID, Device]]:
+        """
+        Raises:
+            UserNotFoundError
+        """
         raise NotImplementedError()
 
-    async def register_device_configuration_try(
-        self,
-        config_try_id: str,
-        user_id: str,
-        device_name: str,
-        device_verify_key: bytes,
-        exchange_cipherkey: bytes,
-        salt: bytes,
-    ):
+    async def get_device(self, device_id: DeviceID) -> Device:
+        """
+        Raises:
+            UserNotFoundError
+        """
         raise NotImplementedError()
 
-    async def retrieve_device_configuration_try(self, config_try_id: str, user_id: str):
+    async def get_device_with_trustchain(
+        self, device_id: DeviceID
+    ) -> Tuple[Device, Dict[DeviceID, Device]]:
+        """
+        Raises:
+            UserNotFoundError
+        """
         raise NotImplementedError()
 
-    async def accept_device_configuration_try(
-        self,
-        config_try_id: str,
-        user_id: str,
-        ciphered_user_privkey: bytes,
-        ciphered_user_manifest_access: bytes,
-    ):
+    async def find(
+        self, query: str = None, page: int = 1, per_page: int = 100
+    ) -> Tuple[List[UserID], int]:
         raise NotImplementedError()
 
-    async def refuse_device_configuration_try(self, config_try_id: str, user_id: str, reason: str):
+    async def create_user_invitation(self, invitation: UserInvitation) -> None:
+        """
+        Raises:
+            UserAlreadyExistsError
+        """
         raise NotImplementedError()
 
-    async def create(self, user_id: str, broadcast_key: bytes, devices: List[str]):
+    async def get_user_invitation(self, user_id: UserID) -> UserInvitation:
+        """
+        Raises:
+            UserAlreadyExistsError
+            UserNotFoundError
+        """
         raise NotImplementedError()
 
-    async def create_device(self, user_id: str, device_name: str, verify_key: bytes):
+    async def claim_user_invitation(
+        self, user_id: UserID, encrypted_claim: bytes = b""
+    ) -> UserInvitation:
+        """
+        Raises:
+            UserAlreadyExistsError
+            UserNotFoundError
+        """
         raise NotImplementedError()
 
-    async def get(self, user_id: str):
+    async def cancel_user_invitation(self, user_id: UserID) -> None:
+        """
+        Raises: Nothing
+        """
         raise NotImplementedError()
 
-    async def revoke_user(self, user_id: str):
+    async def create_device_invitation(self, invitation: DeviceInvitation) -> None:
+        """
+        Raises:
+            UserAlreadyExistsError
+            UserNotFoundError
+        """
         raise NotImplementedError()
 
-    async def revoke_device(self, user_id: str, device_name: str):
+    async def get_device_invitation(self, device_id: DeviceID) -> DeviceInvitation:
+        """
+        Raises:
+            UserAlreadyExistsError
+            UserNotFoundError
+        """
         raise NotImplementedError()
 
-    async def find(self, query: str = None, page: int = 1, per_page: int = 100):
+    async def claim_device_invitation(
+        self, device_id: DeviceID, encrypted_claim: bytes = b""
+    ) -> UserInvitation:
+        """
+        Raises:
+            UserAlreadyExistsError
+            UserNotFoundError
+        """
+        raise NotImplementedError()
+
+    async def cancel_device_invitation(self, device_id: DeviceID) -> None:
+        """
+        Raises: Nothing
+        """
+        raise NotImplementedError()
+
+    async def revoke_device(
+        self, device_id: DeviceID, certified_revocation: bytes, revocation_certifier: DeviceID
+    ) -> None:
+        """
+        Raises:
+            UserNotFoundError
+            UserAlreadyRevokedError
+        """
         raise NotImplementedError()

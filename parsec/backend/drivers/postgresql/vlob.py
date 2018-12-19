@@ -1,21 +1,26 @@
 from triopg import UniqueViolationError
+from uuid import UUID
+from typing import List, Tuple
 
-from parsec.utils import ParsecError
-from parsec.backend.vlob import VlobAtom, BaseVlobComponent
-from parsec.backend.exceptions import (
-    TrustSeedError,
-    VersionError,
-    NotFoundError,
-    AlreadyExistsError,
+from parsec.types import DeviceID
+from parsec.backend.beacon import BaseBeaconComponent
+from parsec.backend.vlob import (
+    BaseVlobComponent,
+    VlobError,
+    VlobTrustSeedError,
+    VlobVersionError,
+    VlobNotFoundError,
+    VlobAlreadyExistsError,
 )
+from parsec.backend.drivers.postgresql.handler import PGHandler
 
 
 class PGVlobComponent(BaseVlobComponent):
-    def __init__(self, dbh, event_bus, beacon_component):
+    def __init__(self, dbh: PGHandler, beacon_component: BaseBeaconComponent):
         self.dbh = dbh
         self.beacon_component = beacon_component
 
-    async def group_check(self, to_check):
+    async def group_check(self, to_check: List[dict]) -> List[dict]:
         changed = []
         to_check_dict = {}
         for x in to_check:
@@ -37,48 +42,65 @@ class PGVlobComponent(BaseVlobComponent):
 
         for id, rts, version in rows:
             if rts != to_check_dict[id]["rts"]:
-                raise TrustSeedError()
+                continue
             if version != to_check_dict[id]["version"]:
                 changed.append({"id": id, "version": version})
 
         return changed
 
-    async def create(self, id, rts, wts, blob, notify_beacon=None, author="anonymous"):
+    async def create(
+        self,
+        id: UUID,
+        rts: str,
+        wts: str,
+        blob: bytes,
+        author: DeviceID,
+        notify_beacon: UUID = None,
+    ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 try:
                     result = await conn.execute(
-                        "INSERT INTO vlobs (vlob_id, rts, wts, version, blob) VALUES ($1, $2, $3, 1, $4)",
+                        """
+                        INSERT INTO vlobs (
+                            vlob_id, rts, wts, version, blob, author
+                        ) VALUES ($1, $2, $3, 1, $4, $5)
+                        """,
                         id,
                         rts,
                         wts,
                         blob,
+                        author,
                     )
                 except UniqueViolationError:
-                    raise AlreadyExistsError("Vlob already exists.")
+                    raise VlobAlreadyExistsError()
 
                 if result != "INSERT 0 1":
-                    raise ParsecError("Insertion error.")
+                    raise VlobError(f"Insertion error: {result}")
 
                 if notify_beacon:
                     await self.beacon_component.ll_update(conn, notify_beacon, id, 1, author)
 
-        return VlobAtom(id=id, read_trust_seed=rts, write_trust_seed=wts, blob=blob)
-
-    async def read(self, id, rts, version=None):
+    async def read(self, id: UUID, rts: str, version: int = None) -> Tuple[int, bytes]:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 if version is None:
                     data = await conn.fetchrow(
-                        "SELECT rts, wts, version, blob FROM vlobs WHERE vlob_id = $1 ORDER BY version DESC LIMIT 1",
+                        """
+                        SELECT rts, version, blob
+                        FROM vlobs WHERE vlob_id = $1 ORDER BY version DESC LIMIT 1
+                        """,
                         id,
                     )
                     if not data:
-                        raise NotFoundError("Vlob not found.")
+                        raise VlobNotFoundError()
 
                 else:
                     data = await conn.fetchrow(
-                        "SELECT rts, wts, version, blob FROM vlobs WHERE vlob_id = $1 AND version = $2",
+                        """
+                        SELECT rts, version, blob
+                        FROM vlobs WHERE vlob_id = $1 AND version = $2
+                        """,
                         id,
                         version,
                     )
@@ -88,50 +110,62 @@ class PGVlobComponent(BaseVlobComponent):
                             "SELECT true FROM vlobs WHERE vlob_id = $1", id
                         )
                         if exists:
-                            raise VersionError("Wrong blob version.")
+                            raise VlobVersionError()
 
                         else:
-                            raise NotFoundError("Vlob not found.")
+                            raise VlobNotFoundError()
 
             if data["rts"] != rts:
-                raise TrustSeedError()
+                raise VlobTrustSeedError()
 
-        return VlobAtom(
-            id=id,
-            read_trust_seed=rts,
-            write_trust_seed=data["wts"],
-            blob=data["blob"],
-            version=data["version"],
-        )
+        return data[1:]
 
-    async def update(self, id, wts, version, blob, notify_beacon=None, author="anonymous"):
+    async def update(
+        self,
+        id: UUID,
+        wts: str,
+        version: int,
+        blob: bytes,
+        author: DeviceID,
+        notify_beacon: UUID = None,
+    ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 previous = await conn.fetchrow(
-                    "SELECT wts, version, rts FROM vlobs WHERE vlob_id = $1 ORDER BY version DESC LIMIT 1",
+                    """
+                    SELECT wts, version, rts
+                    FROM vlobs WHERE vlob_id = $1 ORDER BY version DESC LIMIT 1
+                    """,
                     id,
                 )
                 if not previous:
-                    raise NotFoundError("Vlob not found.")
+                    raise VlobNotFoundError()
                 elif previous[0] != wts:
-                    raise TrustSeedError("Invalid write trust seed.")
+                    raise VlobTrustSeedError()
                 elif previous[1] != version - 1:
-                    raise VersionError("Wrong blob version.")
+                    raise VlobVersionError()
 
                 rts = previous[2]
                 try:
                     result = await conn.execute(
-                        "INSERT INTO vlobs (vlob_id, rts, wts, version, blob) VALUES ($1, $2, $3, $4, $5)",
+                        """
+                        INSERT INTO vlobs (
+                            vlob_id, rts, wts, version, blob, author
+                        ) VALUES ($1, $2, $3, $4, $5, $6)
+                        """,
                         id,
                         rts,
                         wts,
                         version,
                         blob,
+                        author,
                     )
                 except UniqueViolationError:
-                    raise VersionError("Wrong blob version.")
+                    # Should not occurs in theory given we are in a transaction
+                    raise VlobVersionError()
 
                 if result != "INSERT 0 1":
-                    raise ParsecError("Insertion error.")
+                    raise VlobError(f"Insertion error: {result}")
+
                 if notify_beacon:
                     await self.beacon_component.ll_update(conn, notify_beacon, id, version, author)
