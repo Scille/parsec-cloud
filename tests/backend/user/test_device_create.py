@@ -49,7 +49,7 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
 
         with trio.fail_after(1):
             # No guarantees this event occurs before the command's return
-            spy.wait(
+            await spy.wait(
                 "device.created",
                 kwargs={"device_id": alice_nd.device_id, "encrypted_answer": b"<good>"},
             )

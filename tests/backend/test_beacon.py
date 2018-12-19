@@ -1,5 +1,6 @@
-from uuid import UUID
 import pytest
+from uuid import UUID
+import trio
 
 from parsec.api.protocole import beacon_read_serializer
 
@@ -96,6 +97,12 @@ async def test_beacon_updated_event(backend, alice_backend_sock, vlob_ids, alice
     await backend.beacon.update(
         BEACON_ID_2, src_id=vlob_ids[1], src_version=3, author=bob.device_id
     )
+
+    with trio.fail_after(1):
+        # No guarantees those events occur before the commands' return
+        await backend.event_bus.spy.wait_multiple(
+            ["beacon.updated", "beacon.updated", "beacon.updated"]
+        )
 
     reps = [
         await events_listen_nowait(alice_backend_sock),

@@ -3,7 +3,11 @@ import trio
 from uuid import uuid4
 from async_generator import asynccontextmanager
 
-from parsec.api.protocole import events_subscribe_serializer, events_listen_serializer
+from parsec.api.protocole import (
+    events_subscribe_serializer,
+    events_listen_serializer,
+    ping_serializer,
+)
 
 
 BEACON_ID = uuid4()
@@ -81,29 +85,14 @@ async def subscribe_pinged(sock, pings):
 
 
 async def ping(sock, subject):
-    await sock.send({"cmd": "ping", "ping": subject})
-    rep = await sock.recv()
+    await sock.send(ping_serializer.req_dump({"cmd": "ping", "ping": subject}))
+    raw_rep = await sock.recv()
+    rep = ping_serializer.rep_load(raw_rep)
     assert rep == {"status": "ok", "pong": subject}
 
 
-async def get_pinged_events(sock):
-    # There is no guarantee an event is ready to be received once
-    # the sender got it answer (this is true for the in memory stub
-    # but not when testing against PostgreSQL).
-    # TODO: find a better way to wait for event to be dispatched by PostgreSQL
-    await trio.sleep(0.1)
-    events = []
-    while True:
-        rep = await events_listen_nowait(sock)
-        if rep["status"] == "no_events":
-            return events
-        assert rep["status"] == "ok"
-        assert rep["event"] == "pinged"
-        events.append(rep["ping"])
-
-
 @pytest.mark.trio
-async def test_events_subscribe_ping(alice_backend_sock, alice2_backend_sock):
+async def test_events_subscribe_ping(backend, alice_backend_sock, alice2_backend_sock):
     await subscribe_pinged(alice_backend_sock, ["foo", "bar"])
 
     # Should ignore our own events
@@ -111,13 +100,18 @@ async def test_events_subscribe_ping(alice_backend_sock, alice2_backend_sock):
     await ping(alice_backend_sock, "bar")
     await ping(alice2_backend_sock, "foo")
 
-    events = await get_pinged_events(alice_backend_sock)
+    with trio.fail_after(1):
+        # No guarantees those events occur before the commands' return
+        await backend.event_bus.spy.wait_multiple(["pinged", "pinged", "pinged"])
 
-    assert events == ["foo"]
+    rep = await events_listen_nowait(alice_backend_sock)
+    assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}
+    rep = await events_listen_nowait(alice_backend_sock)
+    assert rep == {"status": "no_events"}
 
 
 @pytest.mark.trio
-async def test_event_resubscribe(alice_backend_sock, alice2_backend_sock):
+async def test_event_resubscribe(backend, alice_backend_sock, alice2_backend_sock):
     await subscribe_pinged(alice_backend_sock, ["foo", "bar"])
 
     await ping(alice2_backend_sock, "foo")
@@ -128,9 +122,18 @@ async def test_event_resubscribe(alice_backend_sock, alice2_backend_sock):
     await ping(alice2_backend_sock, "bar")
     await ping(alice2_backend_sock, "spam")
 
-    events = await get_pinged_events(alice_backend_sock)
+    with trio.fail_after(1):
+        # No guarantees those events occur before the commands' return
+        await backend.event_bus.spy.wait_multiple(["pinged", "pinged", "pinged", "pinged"])
 
-    assert events == ["foo", "bar", "spam"]
+    rep = await events_listen_nowait(alice_backend_sock)
+    assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}
+    rep = await events_listen_nowait(alice_backend_sock)
+    assert rep == {"status": "ok", "event": "pinged", "ping": "bar"}
+    rep = await events_listen_nowait(alice_backend_sock)
+    assert rep == {"status": "ok", "event": "pinged", "ping": "spam"}
+    rep = await events_listen_nowait(alice_backend_sock)
+    assert rep == {"status": "no_events"}
 
 
 @pytest.mark.trio

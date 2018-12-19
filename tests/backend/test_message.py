@@ -1,4 +1,5 @@
 import pytest
+import trio
 
 from parsec.api.protocole import message_send_serializer, message_get_serializer
 
@@ -87,6 +88,11 @@ async def test_message_received_event(backend, alice_backend_sock, alice, bob):
     # Good message
     await backend.message.send(bob.device_id, alice.user_id, b"Hello from bob to alice")
     await backend.message.send(bob.device_id, alice.user_id, b"Goodbye from bob to alice")
+
+    with trio.fail_after(1):
+        # No guarantees those events occur before the commands' return
+        await backend.event_bus.spy.wait_multiple(["message.received", "message.received"])
+
     reps = [
         await events_listen_nowait(alice_backend_sock),
         await events_listen_nowait(alice_backend_sock),

@@ -41,7 +41,7 @@ async def test_user_create_ok(backend, backend_sock_factory, alice_backend_sock,
 
         with trio.fail_after(1):
             # No guarantees this event occurs before the command's return
-            spy.wait("user.created", kwargs={"user_id": mallory.user_id})
+            await spy.wait("user.created", kwargs={"user_id": mallory.user_id})
 
     # Make sure mallory can connect now
     async with backend_sock_factory(backend, mallory) as sock:
