@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch
+from pathlib import Path
 import os
 import trio
 
@@ -99,26 +100,17 @@ async def test_mount_fuse(alice_fs, event_bus, tmpdir, fuse_mode):
 
 @pytest.mark.trio
 @pytest.mark.fuse
-@pytest.mark.parametrize("fuse_stop_mode", ["manual", "logout"])
-async def test_umount_fuse(core_config, alice, tmpdir, fuse_stop_mode, fuse_mode):
+async def test_umount_fuse(core_config, alice, tmpdir, fuse_mode):
+    core_config = core_config.evolve(mountpoint_enabled=True)
     async with logged_core_factory(core_config, alice) as alice_core:
-
-        alice_core.mountpoint_manager.mode = fuse_mode
-        mountpoint = f"{tmpdir}/fuse_mountpoint"
-
-        await alice_core.mountpoint_manager.start(mountpoint)
-        assert alice_core.mountpoint_manager.is_started()
-
-        if fuse_stop_mode == "manual":
-            await alice_core.mountpoint_manager.stop()
-            assert not alice_core.mountpoint_manager.is_started()
+        assert trio.Path(alice_core.mountpoint).exists()
 
 
 @pytest.mark.trio
 @pytest.mark.fuse
 @pytest.mark.skipif(os.name == "nt", reason="Windows doesn't support threaded fuse")
-async def test_hard_crash_in_fuse_thread(alice_core, tmpdir):
-    alice_core.mountpoint_manager.mode = "thread"
+async def test_hard_crash_in_fuse_thread(core_config, alice, tmpdir, fuse_mode):
+    core_config = core_config.evolve(mountpoint_enabled=True)
 
     class ToughLuckError(Exception):
         pass
@@ -126,33 +118,18 @@ async def test_hard_crash_in_fuse_thread(alice_core, tmpdir):
     def _crash_fuse(*args, **kwargs):
         raise ToughLuckError()
 
-    mountpoint = f"{tmpdir}/fuse_mountpoint"
     with patch("parsec.core.mountpoint.thread.FUSE", new=_crash_fuse):
         with pytest.raises(ToughLuckError):
-            await alice_core.mountpoint_manager.start(mountpoint)
+            async with logged_core_factory(core_config, alice):
+                pass
 
 
 @pytest.mark.trio
 @pytest.mark.fuse
-async def test_hard_crash_in_fuse_process(alice_core, tmpdir):
-    alice_core.mountpoint_manager.mode = "process"
-
-    class ToughLuckError(Exception):
-        pass
-
-    def _crash_fuse(*args, **kwargs):
-        raise ToughLuckError()
-
-    mountpoint = f"{tmpdir}/fuse_mountpoint"
-    with patch("parsec.core.mountpoint.process.FUSE", new=_crash_fuse):
-        with pytest.raises(RuntimeError):
-            await alice_core.mountpoint_manager.start(mountpoint)
-
-
-@pytest.mark.trio
-@pytest.mark.fuse
-async def test_mount_missing_path(alice_core, tmpdir, fuse_mode):
-    alice_core.mountpoint_manager.mode = fuse_mode
+async def test_mount_missing_path(core_config, alice, tmpdir):
     # Path should be created if it doesn' exist
-    mountpoint = f"{tmpdir}/dummy/dummy/dummy"
-    await alice_core.mountpoint_manager.start(mountpoint)
+    base_mountpoint = Path(f"{tmpdir}/dummy/dummy/dummy")
+    core_config = core_config.evolve(mountpoint_enabled=True, mountpoint_base_dir=base_mountpoint)
+    async with logged_core_factory(core_config, alice) as alice_core:
+        assert str(alice_core.mountpoint) == f"{base_mountpoint}/{alice.device_id}"
+        assert trio.Path(alice_core.mountpoint).exists()

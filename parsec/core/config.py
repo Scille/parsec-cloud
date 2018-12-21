@@ -60,6 +60,9 @@ class CoreConfig:
 
     sentry_url: Optional[str] = None
 
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
+
 
 def config_factory(
     config_dir: Path = None,
