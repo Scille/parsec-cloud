@@ -264,7 +264,9 @@ def bootstrap_postgresql(url):
         await _init_db(conn, force=True)
         await conn.close()
 
-    asyncio.get_event_loop().run_until_complete(_bootstrap())
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(_bootstrap())
 
 
 @pytest.fixture()
