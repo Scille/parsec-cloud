@@ -55,14 +55,17 @@ def bytes_based_field_factory(value_type):
         if value is None:
             return None
 
-        return to_jsonb64(value)
+        return value
 
     def _deserialize(self, value, attr, data):
         if value is None:
             return None
 
+        if not isinstance(value, bytes):
+            raise ValidationError("Not bytes")
+
         try:
-            return value_type(from_jsonb64(value))
+            return value_type(value)
 
         except Exception as exc:
             raise ValidationError(str(exc)) from exc
@@ -128,14 +131,16 @@ class Base64Bytes(Field):
         if value is None:
             return None
 
-        return to_jsonb64(value)
+        return value
+        # return to_jsonb64(value)
 
     def _deserialize(self, value, attr, data):
         if value is None:
             return None
 
         try:
-            return from_jsonb64(value)
+            return value
+            # return from_jsonb64(value)
 
         except Exception:
             raise ValidationError("Invalid base64-encoded bytes")
@@ -281,6 +286,7 @@ class PublicKey(Field):
 
 
 SymetricKey = Base64Bytes
+Base64Bytes = bytes_based_field_factory(bytes)
 DeviceID = str_based_field_factory(_DeviceID)
 UserID = str_based_field_factory(_UserID)
 DeviceName = str_based_field_factory(_DeviceName)

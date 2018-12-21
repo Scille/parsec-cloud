@@ -1,13 +1,21 @@
-import attr
 import trio
+import attr
 from uuid import uuid4
 from structlog import get_logger
 
 from parsec.event_bus import EventBus
-from parsec.schema import BaseCmdSchema, fields
-from parsec.api.transport import PatateTCPTransport, TransportError
-from parsec.api.protocole import HandshakeFormatError, ServerHandshake
+from parsec.api.transport import TCPTransport, TransportError
+from parsec.api.protocole import (
+    packb,
+    unpackb,
+    ProtocoleError,
+    MessageSerializationError,
+    InvalidMessageError,
+    HandshakeFormatError,
+    ServerHandshake,
+)
 from parsec.backend.events import EventsComponent
+from parsec.backend.utils import check_anonymous_api_allowed
 from parsec.backend.blockstore import blockstore_factory
 from parsec.backend.drivers.memory import (
     MemoryOrganizationComponent,
@@ -27,28 +35,13 @@ from parsec.backend.drivers.postgresql import (
     PGPingComponent,
 )
 from parsec.backend.user import UserNotFoundError
-from parsec.backend.utils import check_anonymous_api_allowed
 
 
 logger = get_logger()
 
 
-class _cmd_PING_Schema(BaseCmdSchema):
-    ping = fields.String(required=True)
-
-
-cmd_PING_Schema = _cmd_PING_Schema()
-
-
 @attr.s
-class AnonymousClientContext:
-    device_id = None
-    anonymous = True
-    logger = logger
-
-
-@attr.s
-class ClientContext:
+class LoggedClientContext:
     anonymous = False
     device_id = attr.ib()
     public_key = attr.ib()
@@ -67,6 +60,17 @@ class ClientContext:
     @property
     def device_name(self):
         return self.device_id.device_name
+
+
+@attr.s
+class AnonymousClientContext:
+    device_id = None
+    anonymous = True
+    logger = logger
+
+
+def _filter_binary_fields(data):
+    return {k: v if not isinstance(v, bytes) else b"[...]" for k, v in data.items()}
 
 
 class BackendApp:
@@ -98,19 +102,7 @@ class BackendApp:
                 self.config.blockstore_config, postgresql_dbh=self.dbh
             )
 
-        self.anonymous_cmds = {
-            "user_claim": self.user.api_user_claim,
-            "user_get_invitation_creator": self.user.api_user_get_invitation_creator,
-            "device_claim": self.user.api_device_claim,
-            "device_get_invitation_creator": self.user.api_device_get_invitation_creator,
-            "organization_create": self.organization.api_organization_create,
-            "organization_bootstrap": self.organization.api_organization_bootstrap,
-            "ping": self.ping.api_ping,
-        }
-        for fn in self.anonymous_cmds.values():
-            check_anonymous_api_allowed(fn)
-
-        self.cmds = {
+        self.logged_cmds = {
             "events_subscribe": self.events.api_events_subscribe,
             "events_listen": self.events.api_events_listen,
             "ping": self.ping.api_ping,
@@ -137,6 +129,17 @@ class BackendApp:
             "vlob_read": self.vlob.api_vlob_read,
             "vlob_update": self.vlob.api_vlob_update,
         }
+        self.anonymous_cmds = {
+            "user_claim": self.user.api_user_claim,
+            "user_get_invitation_creator": self.user.api_user_get_invitation_creator,
+            "device_claim": self.user.api_device_claim,
+            "device_get_invitation_creator": self.user.api_device_get_invitation_creator,
+            "organization_create": self.organization.api_organization_create,
+            "organization_bootstrap": self.organization.api_organization_bootstrap,
+            "ping": self.ping.api_ping,
+        }
+        for fn in self.anonymous_cmds.values():
+            check_anonymous_api_allowed(fn)
 
     async def init(self, nursery):
         self.nursery = nursery
@@ -173,17 +176,19 @@ class BackendApp:
                         result_req = hs.build_revoked_device_result_req()
 
                     else:
-                        context = ClientContext(hs.identity, user.public_key, device.verify_key)
+                        context = LoggedClientContext(
+                            hs.identity, user.public_key, device.verify_key
+                        )
                         result_req = hs.build_result_req(device.verify_key)
 
-        except HandshakeFormatError:
+        except ProtocoleError:
             result_req = hs.build_bad_format_result_req()
 
         await transport.send(result_req)
         return context
 
     async def handle_client(self, sockstream, swallow_crash=False):
-        transport = PatateTCPTransport(sockstream)
+        transport = TCPTransport(sockstream)
         client_ctx = None
         try:
             logger.debug("start handshake")
@@ -197,11 +202,11 @@ class BackendApp:
 
             await self._handle_client_loop(transport, client_ctx)
 
-        except TransportError as exc:
+        except (TransportError, MessageSerializationError) as exc:
             # Client has closed connection or sent an invalid trame
             rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
             try:
-                await transport.send(rep)
+                await transport.send(packb(rep))
             except TransportError:
                 pass
             await transport.aclose()
@@ -217,40 +222,40 @@ class BackendApp:
                 raise
 
     async def _handle_client_loop(self, transport, client_ctx):
-
-        # TODO: Should find a way to avoid using this filter if we're not in log debug...
-        def _filter_big_fields(data):
-            # As hacky as arbitrary... but works well so far !
-            filtered_data = data.copy()
-            try:
-                if len(data["block"]) > 200:
-                    filtered_data["block"] = f"{data['block'][:100]}[...]{data['block'][-100:]}"
-            except (KeyError, ValueError, TypeError):
-                pass
-            try:
-                if len(data["blob"]) > 200:
-                    filtered_data["blob"] = f"{data['blob'][:100]}[...]{data['blob'][-100:]}"
-            except (KeyError, ValueError, TypeError):
-                pass
-            return filtered_data
-
         while True:
-            req = await transport.recv()
-            if not req:  # Client disconnected
+            raw_req = await transport.recv()
+            if not raw_req:  # Client disconnected
                 client_ctx.logger.debug("CLIENT DISCONNECTED")
                 break
 
-            client_ctx.logger.debug("req", req=_filter_big_fields(req))
-            # TODO: handle bad msg
+            req = unpackb(raw_req)
+            client_ctx.logger.debug("req", req=_filter_binary_fields(req))
             try:
                 cmd = req.get("cmd", "<missing>")
+                if not isinstance(cmd, str):
+                    raise KeyError()
                 if client_ctx.anonymous:
                     cmd_func = self.anonymous_cmds[cmd]
                 else:
-                    cmd_func = self.cmds[cmd]
+                    cmd_func = self.logged_cmds[cmd]
+
             except KeyError:
                 rep = {"status": "unknown_command", "reason": "Unknown command"}
+
             else:
-                rep = await cmd_func(client_ctx, req)
-            client_ctx.logger.debug("rep", rep=_filter_big_fields(rep))
-            await transport.send(rep)
+                try:
+                    rep = await cmd_func(client_ctx, req)
+
+                except InvalidMessageError as exc:
+                    rep = {
+                        "status": "bad_message",
+                        "errors": exc.errors,
+                        "reason": "Invalid message.",
+                    }
+
+                except ProtocoleError as exc:
+                    rep = {"status": "bad_message", "reason": str(exc)}
+
+            client_ctx.logger.debug("rep", rep=_filter_binary_fields(rep))
+            raw_rep = packb(rep)
+            await transport.send(raw_rep)

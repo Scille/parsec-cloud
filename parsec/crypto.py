@@ -1,6 +1,5 @@
 from typing import Tuple, NewType, Optional
 import pendulum
-from json import JSONDecodeError
 from secrets import token_hex
 from nacl.public import SealedBox
 from nacl.bindings import crypto_sign_BYTES
@@ -19,6 +18,10 @@ from parsec.crypto_types import (
     import_root_verify_key,
 )
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError
+
+# TODO: should isolate generic serialization stuff from api
+from parsec.api.protocole import ProtocoleError
+from parsec.api.protocole.base import Serializer
 
 
 __all__ = (
@@ -54,7 +57,7 @@ class SignedMetadataSchema(UnknownCheckedSchema):
     content = fields.Base64Bytes(required=True)
 
 
-signed_metadata_schema = SignedMetadataSchema(strict=True)
+signed_metadata_serializer = Serializer(SignedMetadataSchema)
 
 
 # Note to simplify things, we adopt CryptoError as our root error type
@@ -109,13 +112,13 @@ def sign_and_add_meta(
     Raises:
         CryptoError: if the signature operation fails.
     """
-    return signed_metadata_schema.dumps(
+    return signed_metadata_serializer.dumps(
         {
             "device_id": device_id,
             "timestamp": pendulum.now(),
             "content": device_signkey.sign(signedmeta),
         }
-    )[0].encode("utf8")
+    )
 
 
 def decode_signedmeta(signedmeta: bytes) -> Tuple[Optional[DeviceID], bytes]:
@@ -124,14 +127,14 @@ def decode_signedmeta(signedmeta: bytes) -> Tuple[Optional[DeviceID], bytes]:
         CryptoMetadataError: if the metadata cannot be extracted
     """
     try:
-        meta = signed_metadata_schema.loads(signedmeta.decode("utf8"))[0]
+        meta = signed_metadata_serializer.loads(signedmeta)
         if meta["device_id"]:
             device_id = DeviceID(meta["device_id"])
         else:
             device_id = None
         return device_id, meta["content"]
 
-    except (ValidationError, UnicodeDecodeError, JSONDecodeError) as exc:
+    except (ValidationError, UnicodeDecodeError, ProtocoleError) as exc:
         raise CryptoMetadataError(
             "Message doesn't contain author metadata along with signed message"
         ) from exc

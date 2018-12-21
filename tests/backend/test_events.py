@@ -4,6 +4,7 @@ from uuid import uuid4
 from async_generator import asynccontextmanager
 
 from parsec.api.protocole import (
+    packb,
     events_subscribe_serializer,
     events_listen_serializer,
     ping_serializer,
@@ -14,17 +15,17 @@ BEACON_ID = uuid4()
 
 
 async def events_subscribe(sock, **kwargs):
-    await sock.send(events_subscribe_serializer.req_dump({"cmd": "events_subscribe", **kwargs}))
+    await sock.send(events_subscribe_serializer.req_dumps({"cmd": "events_subscribe", **kwargs}))
     raw_rep = await sock.recv()
-    rep = events_subscribe_serializer.rep_load(raw_rep)
+    rep = events_subscribe_serializer.rep_loads(raw_rep)
     assert rep == {"status": "ok"}
 
 
 async def events_listen_nowait(sock):
-    await sock.send(events_listen_serializer.req_dump({"cmd": "events_listen", "wait": False}))
+    await sock.send(events_listen_serializer.req_dumps({"cmd": "events_listen", "wait": False}))
     with trio.fail_after(1):
         raw_rep = await sock.recv()
-    return events_listen_serializer.rep_load(raw_rep)
+    return events_listen_serializer.rep_loads(raw_rep)
 
 
 class Listen:
@@ -34,14 +35,14 @@ class Listen:
 
 @asynccontextmanager
 async def events_listen(sock):
-    await sock.send(events_listen_serializer.req_dump({"cmd": "events_listen"}))
+    await sock.send(events_listen_serializer.req_dumps({"cmd": "events_listen"}))
     listen = Listen()
 
     yield listen
 
     with trio.fail_after(1):
         raw_rep = await sock.recv()
-    listen.rep = events_listen_serializer.rep_load(raw_rep)
+    listen.rep = events_listen_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio
@@ -72,22 +73,25 @@ async def test_events_subscribe_ok(alice_backend_sock, events):
     ],
 )
 async def test_events_subscribe_bad_msg(alice_backend_sock, events):
-    await alice_backend_sock.send({"cmd": "events_subscribe", **events})
+    await alice_backend_sock.send(packb({"cmd": "events_subscribe", **events}))
     raw_rep = await alice_backend_sock.recv()
-    rep = events_subscribe_serializer.rep_load(raw_rep)
+    rep = events_subscribe_serializer.rep_loads(raw_rep)
     assert rep["status"] == "bad_message"
 
 
 async def subscribe_pinged(sock, pings):
-    await sock.send({"cmd": "events_subscribe", "pinged": pings})
-    rep = await sock.recv()
+    raw_req = events_subscribe_serializer.req_dumps({"cmd": "events_subscribe", "pinged": pings})
+    await sock.send(raw_req)
+    raw_rep = await sock.recv()
+    rep = events_subscribe_serializer.rep_loads(raw_rep)
     assert rep == {"status": "ok"}
 
 
 async def ping(sock, subject):
-    await sock.send(ping_serializer.req_dump({"cmd": "ping", "ping": subject}))
+    raw_req = ping_serializer.req_dumps({"cmd": "ping", "ping": subject})
+    await sock.send(raw_req)
     raw_rep = await sock.recv()
-    rep = ping_serializer.rep_load(raw_rep)
+    rep = ping_serializer.rep_loads(raw_rep)
     assert rep == {"status": "ok", "pong": subject}
 
 

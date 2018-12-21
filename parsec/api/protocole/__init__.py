@@ -1,4 +1,10 @@
-from parsec.api.protocole.base import ProtocoleError, InvalidMessageError
+from parsec.api.protocole.base import (
+    ProtocoleError,
+    MessageSerializationError,
+    InvalidMessageError,
+    packb,
+    unpackb,
+)
 from parsec.api.protocole.handshake import (
     HandshakeError,
     HandshakeFormatError,
@@ -42,7 +48,10 @@ from parsec.api.protocole.user import (
 
 __all__ = (
     "ProtocoleError",
+    "MessageSerializationError",
     "InvalidMessageError",
+    "packb",
+    "unpackb",
     "HandshakeError",
     "HandshakeFormatError",
     "HandshakeBadIdentity",

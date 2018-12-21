@@ -15,9 +15,9 @@ def bob_revocation(alice, bob):
 
 
 async def device_revoke(sock, **kwargs):
-    await sock.send(device_revoke_serializer.req_dump({"cmd": "device_revoke", **kwargs}))
+    await sock.send(device_revoke_serializer.req_dumps({"cmd": "device_revoke", **kwargs}))
     raw_rep = await sock.recv()
-    rep = device_revoke_serializer.rep_load(raw_rep)
+    rep = device_revoke_serializer.rep_loads(raw_rep)
     return rep
 
 

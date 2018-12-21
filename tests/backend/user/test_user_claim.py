@@ -18,22 +18,22 @@ async def mallory_invitation(backend, alice, mallory):
 
 async def user_get_invitation_creator(sock, **kwargs):
     await sock.send(
-        user_get_invitation_creator_serializer.req_dump(
+        user_get_invitation_creator_serializer.req_dumps(
             {"cmd": "user_get_invitation_creator", **kwargs}
         )
     )
     raw_rep = await sock.recv()
-    rep = user_get_invitation_creator_serializer.rep_load(raw_rep)
+    rep = user_get_invitation_creator_serializer.rep_loads(raw_rep)
     return rep
 
 
 @asynccontextmanager
 async def user_claim(sock, **kwargs):
     reps = []
-    await sock.send(user_claim_serializer.req_dump({"cmd": "user_claim", **kwargs}))
+    await sock.send(user_claim_serializer.req_dumps({"cmd": "user_claim", **kwargs}))
     yield reps
     raw_rep = await sock.recv()
-    rep = user_claim_serializer.rep_load(raw_rep)
+    rep = user_claim_serializer.rep_loads(raw_rep)
     reps.append(rep)
 
 

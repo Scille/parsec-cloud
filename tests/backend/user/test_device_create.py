@@ -7,7 +7,7 @@ from parsec.types import DeviceID
 from parsec.crypto import SigningKey
 from parsec.trustchain import certify_device
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.protocole import device_create_serializer
+from parsec.api.protocole import packb, device_create_serializer, ping_serializer
 
 from tests.common import freeze_time
 
@@ -28,9 +28,9 @@ def alice_nd(alice):
 
 
 async def device_create(sock, **kwargs):
-    await sock.send(device_create_serializer.req_dump({"cmd": "device_create", **kwargs}))
+    await sock.send(device_create_serializer.req_dumps({"cmd": "device_create", **kwargs}))
     raw_rep = await sock.recv()
-    rep = device_create_serializer.rep_load(raw_rep)
+    rep = device_create_serializer.rep_loads(raw_rep)
     return rep
 
 
@@ -56,8 +56,9 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
 
     # Make sure the new device can connect now
     async with backend_sock_factory(backend, alice_nd) as sock:
-        await sock.send({"cmd": "ping", "ping": "Hello world !"})
-        rep = await sock.recv()
+        await sock.send(packb({"cmd": "ping", "ping": "Hello world !"}))
+        raw_rep = await sock.recv()
+        rep = ping_serializer.rep_loads(raw_rep)
         assert rep == {"status": "ok", "pong": "Hello world !"}
 
 

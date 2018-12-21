@@ -4,6 +4,7 @@ from pathlib import Path
 from json import JSONDecodeError
 
 from parsec.types import DeviceID
+from parsec.utils import ejson_dumps, ejson_loads
 from parsec.crypto import SigningKey, VerifyKey, PrivateKey, generate_secret_key
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError, post_load
 from parsec.core.schemas import ManifestAccessSchema
@@ -137,7 +138,7 @@ class LocalDevicesManager:
 
         try:
             raw = decryptor.decrypt(ciphertext)
-            return local_device_schema.loads(raw.decode("utf8")).data
+            return local_device_schema.load(ejson_loads(raw.decode("utf8"))).data
 
         except (CipherError, ValidationError, JSONDecodeError, ValueError) as exc:
             raise DeviceLoadingError(f"Cannot load {key_file}: {exc}") from exc
@@ -157,7 +158,7 @@ class LocalDevicesManager:
                 raise DeviceConfigAleadyExists(f"Device {device.device_id} already exists")
 
         try:
-            raw = local_device_schema.dumps(device).data.encode("utf8")
+            raw = ejson_dumps(local_device_schema.dump(device).data).encode("utf8")
             ciphertext = encryptor.encrypt(raw)
 
             key_file.parent.mkdir(exist_ok=True, parents=True)

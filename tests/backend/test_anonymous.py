@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import patch
 
+from parsec.api.protocole.base import packb, unpackb
 from parsec.backend.utils import anonymous_api, check_anonymous_api_allowed
 
 
@@ -30,9 +31,9 @@ async def test_anonymous_api_in_backend_app(backend_factory):
 
 @pytest.mark.trio
 async def test_connect_as_anonymous(anonymous_backend_sock):
-    await anonymous_backend_sock.send({"cmd": "ping", "ping": "foo"})
+    await anonymous_backend_sock.send(packb({"cmd": "ping", "ping": "foo"}))
     rep = await anonymous_backend_sock.recv()
-    assert rep == {"status": "ok", "pong": "foo"}
+    assert unpackb(rep) == {"status": "ok", "pong": "foo"}
 
 
 @pytest.mark.trio
@@ -51,6 +52,6 @@ async def test_anonymous_has_limited_access(anonymous_backend_sock):
         "message_new",
         "pubkey_get",
     ]:
-        await anonymous_backend_sock.send({"cmd": cmd})
+        await anonymous_backend_sock.send(packb({"cmd": cmd}))
         rep = await anonymous_backend_sock.recv()
-        assert rep == {"status": "unknown_command", "reason": "Unknown command"}
+        assert unpackb(rep) == {"status": "unknown_command", "reason": "Unknown command"}

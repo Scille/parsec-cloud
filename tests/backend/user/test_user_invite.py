@@ -8,10 +8,10 @@ from parsec.api.protocole import user_invite_serializer
 @asynccontextmanager
 async def user_invite(sock, **kwargs):
     reps = []
-    await sock.send(user_invite_serializer.req_dump({"cmd": "user_invite", **kwargs}))
+    await sock.send(user_invite_serializer.req_dumps({"cmd": "user_invite", **kwargs}))
     yield reps
     raw_rep = await sock.recv()
-    rep = user_invite_serializer.rep_load(raw_rep)
+    rep = user_invite_serializer.rep_loads(raw_rep)
     reps.append(rep)
 
 

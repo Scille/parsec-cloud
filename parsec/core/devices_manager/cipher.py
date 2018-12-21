@@ -7,6 +7,7 @@ from parsec.crypto import (
     encrypt_raw_with_secret_key,
     decrypt_raw_with_secret_key,
 )
+from parsec.utils import ejson_dumps, ejson_loads
 
 
 class CipherError(Exception):
@@ -49,9 +50,9 @@ class PasswordDeviceEncryptor(BaseLocalDeviceEncryptor):
             key, salt = derivate_secret_key_from_password(self.password)
 
             ciphertext = encrypt_raw_with_secret_key(key, plaintext)
-            return password_payload_schema.dumps(
-                {"salt": salt, "ciphertext": ciphertext}
-            ).data.encode("utf8")
+            return ejson_dumps(
+                password_payload_schema.dump({"salt": salt, "ciphertext": ciphertext}).data
+            ).encode("utf8")
 
         except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
             raise CipherError(str(exc)) from exc
@@ -67,7 +68,7 @@ class PasswordDeviceDecryptor(BaseLocalDeviceDecryptor):
             CipherError
         """
         try:
-            payload = password_payload_schema.loads(ciphertext.decode("utf8")).data
+            payload = password_payload_schema.load(ejson_loads(ciphertext.decode("utf8"))).data
             key, _ = derivate_secret_key_from_password(self.password, payload["salt"])
             return decrypt_raw_with_secret_key(key, payload["ciphertext"])
 
@@ -77,7 +78,7 @@ class PasswordDeviceDecryptor(BaseLocalDeviceDecryptor):
     @staticmethod
     def can_decrypt(ciphertext: bytes) -> bool:
         try:
-            password_payload_schema.loads(ciphertext.decode("utf8")).data
+            password_payload_schema.load(ejson_loads(ciphertext.decode("utf8"))).data
             return True
 
         except (ValidationError, JSONDecodeError, ValueError) as exc:

@@ -3,6 +3,7 @@ from uuid import uuid4, UUID
 from collections import namedtuple
 
 from parsec.api.protocole import (
+    packb,
     vlob_group_check_serializer,
     vlob_create_serializer,
     vlob_read_serializer,
@@ -17,20 +18,20 @@ VLOB_WTS = "<wts>"
 
 async def vlob_group_check(sock, to_check):
     await sock.send(
-        vlob_group_check_serializer.req_dump({"cmd": "vlob_group_check", "to_check": to_check})
+        vlob_group_check_serializer.req_dumps({"cmd": "vlob_group_check", "to_check": to_check})
     )
     raw_rep = await sock.recv()
-    return vlob_group_check_serializer.rep_load(raw_rep)
+    return vlob_group_check_serializer.rep_loads(raw_rep)
 
 
 async def vlob_create(sock, id, rts, wts, blob, check_rep=True):
     await sock.send(
-        vlob_create_serializer.req_dump(
+        vlob_create_serializer.req_dumps(
             {"cmd": "vlob_create", "id": id, "rts": rts, "wts": wts, "blob": blob}
         )
     )
     raw_rep = await sock.recv()
-    rep = vlob_create_serializer.rep_load(raw_rep)
+    rep = vlob_create_serializer.rep_loads(raw_rep)
     if check_rep:
         assert rep == {"status": "ok"}
     return rep
@@ -38,22 +39,22 @@ async def vlob_create(sock, id, rts, wts, blob, check_rep=True):
 
 async def vlob_read(sock, id, rts, version=None):
     await sock.send(
-        vlob_read_serializer.req_dump(
+        vlob_read_serializer.req_dumps(
             {"cmd": "vlob_read", "id": id, "rts": rts, "version": version}
         )
     )
     raw_rep = await sock.recv()
-    return vlob_read_serializer.rep_load(raw_rep)
+    return vlob_read_serializer.rep_loads(raw_rep)
 
 
 async def vlob_update(sock, id, wts, version, blob, check_rep=True):
     await sock.send(
-        vlob_update_serializer.req_dump(
+        vlob_update_serializer.req_dumps(
             {"cmd": "vlob_update", "id": id, "wts": wts, "version": version, "blob": blob}
         )
     )
     raw_rep = await sock.recv()
-    rep = vlob_update_serializer.rep_load(raw_rep)
+    rep = vlob_update_serializer.rep_loads(raw_rep)
     if check_rep:
         assert rep == {"status": "ok"}
     return rep
@@ -92,10 +93,10 @@ async def test_vlob_create_and_read(alice_backend_sock, bob_backend_sock):
 @pytest.mark.parametrize(
     "bad_msg",
     [
-        {"id": VLOB_ID, "wts": VLOB_WTS, "blob": b"..."},
-        {"id": VLOB_ID, "rts": VLOB_RTS, "blob": b"..."},
-        {"id": VLOB_ID, "rts": 42, "wts": VLOB_WTS, "blob": b"..."},
-        {"id": VLOB_ID, "rts": VLOB_RTS, "wts": 42, "blob": b"..."},
+        {"id": str(VLOB_ID), "wts": VLOB_WTS, "blob": b"..."},
+        {"id": str(VLOB_ID), "rts": VLOB_RTS, "blob": b"..."},
+        {"id": str(VLOB_ID), "rts": 42, "wts": VLOB_WTS, "blob": b"..."},
+        {"id": str(VLOB_ID), "rts": VLOB_RTS, "wts": 42, "blob": b"..."},
         {"rts": VLOB_RTS, "wts": VLOB_WTS, "blob": b"...", "bad_field": "foo"},
         {"rts": VLOB_RTS, "wts": VLOB_WTS, "blob": 42},
         {"rts": VLOB_RTS, "wts": VLOB_WTS, "blob": None},
@@ -105,9 +106,9 @@ async def test_vlob_create_and_read(alice_backend_sock, bob_backend_sock):
 )
 @pytest.mark.trio
 async def test_vlob_create_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send({"cmd": "vlob_create", **bad_msg})
+    await alice_backend_sock.send(packb({"cmd": "vlob_create", **bad_msg}))
     raw_rep = await alice_backend_sock.recv()
-    rep = vlob_create_serializer.rep_load(raw_rep)
+    rep = vlob_create_serializer.rep_loads(raw_rep)
     assert rep["status"] == "bad_message"
 
 
@@ -136,23 +137,23 @@ async def test_vlob_read_ok(alice_backend_sock, vlobs):
 @pytest.mark.parametrize(
     "bad_msg",
     [
-        {"id": VLOB_ID, "rts": VLOB_RTS, "bad_field": "foo"},
+        {"id": str(VLOB_ID), "rts": VLOB_RTS, "bad_field": "foo"},
         {"id": "<not an uuid>", "rts": VLOB_RTS},
-        {"id": VLOB_ID},
-        {"id": VLOB_ID, "rts": 42},
-        {"id": VLOB_ID, "rts": None},
+        {"id": str(VLOB_ID)},
+        {"id": str(VLOB_ID), "rts": 42},
+        {"id": str(VLOB_ID), "rts": None},
         {"id": 42, "rts": VLOB_RTS},
         {"id": None, "rts": VLOB_RTS},
-        {"id": VLOB_ID, "rts": VLOB_RTS, "version": 0},
-        {"id": VLOB_ID, "rts": VLOB_RTS, "version": "foo"},
+        {"id": str(VLOB_ID), "rts": VLOB_RTS, "version": 0},
+        {"id": str(VLOB_ID), "rts": VLOB_RTS, "version": "foo"},
         {},
     ],
 )
 @pytest.mark.trio
 async def test_vlob_read_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send({"cmd": "vlob_read", **bad_msg})
+    await alice_backend_sock.send(packb({"cmd": "vlob_read", **bad_msg}))
     raw_rep = await alice_backend_sock.recv()
-    rep = vlob_read_serializer.rep_load(raw_rep)
+    rep = vlob_read_serializer.rep_loads(raw_rep)
     # Id and trust_seed are invalid anyway, but here we test another layer
     # so it's not important as long as we get our `bad_message` status
     assert rep["status"] == "bad_message"
@@ -182,15 +183,15 @@ async def test_vlob_update_not_found(alice_backend_sock):
 @pytest.mark.parametrize(
     "bad_msg",
     [
-        {"id": VLOB_ID, "wts": VLOB_WTS, "version": "42", "blob": b"...", "bad_field": "foo"},
-        {"id": VLOB_ID, "wts": VLOB_WTS, "version": "42", "blob": None},
-        {"id": VLOB_ID, "wts": VLOB_WTS, "version": "42", "blob": 42},
-        {"id": VLOB_ID, "wts": VLOB_WTS, "version": "42"},
-        {"id": VLOB_ID, "wts": VLOB_WTS, "version": None, "blob": b"..."},
-        {"id": VLOB_ID, "wts": VLOB_WTS, "version": -1, "blob": b"..."},
-        {"id": VLOB_ID, "wts": None, "version": "42", "blob": b"..."},
-        {"id": VLOB_ID, "wts": 42, "version": "42", "blob": b"..."},
-        {"id": VLOB_ID, "version": "42", "blob": b"..."},
+        {"id": str(VLOB_ID), "wts": VLOB_WTS, "version": "42", "blob": b"...", "bad_field": "foo"},
+        {"id": str(VLOB_ID), "wts": VLOB_WTS, "version": "42", "blob": None},
+        {"id": str(VLOB_ID), "wts": VLOB_WTS, "version": "42", "blob": 42},
+        {"id": str(VLOB_ID), "wts": VLOB_WTS, "version": "42"},
+        {"id": str(VLOB_ID), "wts": VLOB_WTS, "version": None, "blob": b"..."},
+        {"id": str(VLOB_ID), "wts": VLOB_WTS, "version": -1, "blob": b"..."},
+        {"id": str(VLOB_ID), "wts": None, "version": "42", "blob": b"..."},
+        {"id": str(VLOB_ID), "wts": 42, "version": "42", "blob": b"..."},
+        {"id": str(VLOB_ID), "version": "42", "blob": b"..."},
         {"id": 42, "wts": VLOB_WTS, "version": "42", "blob": b"..."},
         {"id": None, "wts": VLOB_WTS, "version": "42", "blob": b"..."},
         {"wts": VLOB_WTS, "version": "42", "blob": b"..."},
@@ -199,9 +200,9 @@ async def test_vlob_update_not_found(alice_backend_sock):
 )
 @pytest.mark.trio
 async def test_vlob_update_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send({"cmd": "vlob_update", **bad_msg})
+    await alice_backend_sock.send(packb({"cmd": "vlob_update", **bad_msg}))
     raw_rep = await alice_backend_sock.recv()
-    rep = vlob_update_serializer.rep_load(raw_rep)
+    rep = vlob_update_serializer.rep_loads(raw_rep)
     # Id and wts are invalid anyway, but here we test another layer
     # so it's not important as long as we get our `bad_message` status
     assert rep["status"] == "bad_message"

@@ -1,6 +1,6 @@
 import pytest
 
-from parsec.utils import to_jsonb64
+from parsec.api.protocole.base import packb, unpackb, ProtocoleError
 from parsec.api.protocole.handshake import (
     HandshakeFormatError,
     HandshakeBadIdentity,
@@ -44,8 +44,8 @@ def test_good_handshake(alice):
 )
 def test_process_challenge_req_bad_format(alice, req):
     ch = ClientHandshake(alice.device_id, alice.signing_key)
-    with pytest.raises(HandshakeFormatError):
-        ch.process_challenge_req(req)
+    with pytest.raises(ProtocoleError):
+        ch.process_challenge_req(packb(req))
 
 
 @pytest.mark.parametrize(
@@ -60,14 +60,14 @@ def test_process_challenge_req_bad_format(alice, req):
 )
 def test_process_result_req_bad_format(alice, req):
     ch = ClientHandshake(alice.device_id, alice.signing_key)
-    with pytest.raises(HandshakeFormatError):
-        ch.process_result_req(req)
+    with pytest.raises(ProtocoleError):
+        ch.process_result_req(packb(req))
 
 
 def test_process_result_req_bad_identity(alice):
     ch = ClientHandshake(alice.device_id, alice.signing_key)
     with pytest.raises(HandshakeBadIdentity):
-        ch.process_result_req({"handshake": "result", "result": "bad_identity"})
+        ch.process_result_req(packb({"handshake": "result", "result": "bad_identity"}))
 
 
 @pytest.mark.parametrize(
@@ -88,20 +88,19 @@ def test_process_result_req_bad_identity(alice):
 def test_process_answer_req_bad_format(req):
     sh = ServerHandshake()
     sh.build_challenge_req()
-    with pytest.raises(HandshakeFormatError):
-        sh.process_answer_req(req)
+    with pytest.raises(ProtocoleError):
+        sh.process_answer_req(packb(req))
 
 
 def test_build_result_req_bad_key(alice, bob):
     sh = ServerHandshake()
     sh.build_challenge_req()
-    sh.process_answer_req(
-        {
-            "handshake": "answer",
-            "identity": alice.device_id,
-            "answer": to_jsonb64(alice.signing_key.sign(sh.challenge)),
-        }
-    )
+    answer = {
+        "handshake": "answer",
+        "identity": alice.device_id,
+        "answer": alice.signing_key.sign(sh.challenge),
+    }
+    sh.process_answer_req(packb(answer))
     with pytest.raises(HandshakeFormatError):
         sh.build_result_req(bob.verify_key)
 
@@ -109,7 +108,8 @@ def test_build_result_req_bad_key(alice, bob):
 def test_build_result_req_answer_is_none(alice):
     sh = ServerHandshake()
     sh.build_challenge_req()
-    sh.process_answer_req({"handshake": "answer", "identity": alice.device_id, "answer": None})
+    answer = {"handshake": "answer", "identity": alice.device_id, "answer": None}
+    sh.process_answer_req(packb(answer))
     with pytest.raises(HandshakeFormatError):
         sh.build_result_req(alice.verify_key)
 
@@ -117,13 +117,12 @@ def test_build_result_req_answer_is_none(alice):
 def test_build_result_req_bad_challenge(alice):
     sh = ServerHandshake()
     sh.build_challenge_req()
-    sh.process_answer_req(
-        {
-            "handshake": "answer",
-            "identity": alice.device_id,
-            "answer": to_jsonb64(alice.signing_key.sign(sh.challenge + b"-dummy")),
-        }
-    )
+    answer = {
+        "handshake": "answer",
+        "identity": alice.device_id,
+        "answer": alice.signing_key.sign(sh.challenge + b"-dummy"),
+    }
+    sh.process_answer_req(packb(answer))
     with pytest.raises(HandshakeFormatError):
         sh.build_result_req(alice.verify_key)
 
@@ -131,29 +130,27 @@ def test_build_result_req_bad_challenge(alice):
 def test_build_bad_identity_result_req(alice):
     sh = ServerHandshake()
     sh.build_challenge_req()
-    sh.process_answer_req(
-        {
-            "handshake": "answer",
-            "identity": alice.device_id,
-            "answer": to_jsonb64(alice.signing_key.sign(sh.challenge + b"-dummy")),
-        }
-    )
+    answer = {
+        "handshake": "answer",
+        "identity": alice.device_id,
+        "answer": alice.signing_key.sign(sh.challenge + b"-dummy"),
+    }
+    sh.process_answer_req(packb(answer))
     req = sh.build_bad_identity_result_req()
-    assert req == {"handshake": "result", "result": "bad_identity"}
+    assert unpackb(req) == {"handshake": "result", "result": "bad_identity"}
 
 
 def test_build_bad_format_result_req(alice):
     sh = ServerHandshake()
     sh.build_challenge_req()
-    sh.process_answer_req(
-        {
-            "handshake": "answer",
-            "identity": alice.device_id,
-            "answer": to_jsonb64(alice.signing_key.sign(sh.challenge + b"-dummy")),
-        }
-    )
+    answer = {
+        "handshake": "answer",
+        "identity": alice.device_id,
+        "answer": alice.signing_key.sign(sh.challenge + b"-dummy"),
+    }
+    sh.process_answer_req(packb(answer))
     req = sh.build_bad_format_result_req()
-    assert req == {"handshake": "result", "result": "bad_format"}
+    assert unpackb(req) == {"handshake": "result", "result": "bad_format"}
 
 
 def test_good_anonymous_handshake():

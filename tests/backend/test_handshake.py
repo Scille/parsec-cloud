@@ -1,5 +1,6 @@
 import pytest
 
+from parsec.api.protocole import packb, unpackb
 from parsec.api.transport import PatateTCPTransport
 
 
@@ -15,9 +16,11 @@ async def test_handshake_unknown_device(bad_part, backend, server_factory, alice
             identity = f"{alice.user_id}@dummy"
 
         await transport.recv()  # Get challenge
-        await transport.send({"handshake": "answer", "identity": identity, "answer": "fooo"})
+        await transport.send(
+            packb({"handshake": "answer", "identity": identity, "answer": b"fooo"})
+        )
         result_req = await transport.recv()
-        assert result_req == {"handshake": "result", "result": "bad_identity"}
+        assert unpackb(result_req) == {"handshake": "result", "result": "bad_identity"}
 
 
 @pytest.mark.trio
@@ -27,6 +30,7 @@ async def test_handshake_invalid_format(backend, server_factory):
         transport = PatateTCPTransport(stream)
 
         await transport.recv()  # Get challenge
-        await transport.send({"handshake": "answer", "dummy": "field"})
+        req = {"handshake": "answer", "dummy": "field"}
+        await transport.send(packb(req))
         result_req = await transport.recv()
-        assert result_req == {"handshake": "result", "result": "bad_format"}
+        assert unpackb(result_req) == {"handshake": "result", "result": "bad_format"}

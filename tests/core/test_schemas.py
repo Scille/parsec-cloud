@@ -11,7 +11,7 @@ REMOVE_FIELD = object()
 class TestBlockAccessSchema:
     ORIGINAL = {
         "id": "4f55b4d5b08544e2a784daf73754c7e2",
-        "key": "PG15IGtleT4=\n",
+        "key": b"<my key>",
         "offset": 0,
         "size": 4096,
         "digest": "63b0a598a7f3a679d6bff87e6692ae7248bc88b3d0c23444e25d5b8567039953",
@@ -35,10 +35,6 @@ class TestBlockAccessSchema:
         "bad_patch",
         [
             {"unkown": "field"},
-            {
-                # bad base64 encoding for key
-                "key": "PG15IGtleT4"
-            },
             {"id": REMOVE_FIELD},
             {"key": REMOVE_FIELD},
             {"offset": REMOVE_FIELD},
@@ -169,13 +165,13 @@ class TestFolderManifestSchema:
                 "id": "8aadbc777ece4a4fb5fa0564ecfbb54f",
                 "rts": "9809c436b3af4fba9dd6955ad03e0310",
                 "wts": "004714d9997147efa52a696127694fdc",
-                "key": "PGZvbyBrZXk+\n",
+                "key": b"<foo key>",
             },
             "bar.txt": {
                 "id": "51c865a60b194d9bb087df000056c299",
                 "rts": "5a48035bdd7c4082b1101b28b6656d0c",
                 "wts": "9b2ab384ed6b426daa1214f49587458a",
-                "key": "PGJhci50eHQga2V5Pg==\n",
+                "key": b"<bar.txt key>",
             },
         },
     }
@@ -392,13 +388,13 @@ class TestLocalFolderManifestSchema:
                 "id": "8aadbc777ece4a4fb5fa0564ecfbb54f",
                 "rts": "9809c436b3af4fba9dd6955ad03e0310",
                 "wts": "004714d9997147efa52a696127694fdc",
-                "key": "PGZvbyBrZXk+\n",
+                "key": b"<foo key>",
             },
             "bar.txt": {
                 "id": "51c865a60b194d9bb087df000056c299",
                 "rts": "d756228815074b1f9ea6e5d383bcb995",
                 "wts": "ba4fddebe99d4f3e9f17ccb84a524e19",
-                "key": "PGJhci50eHQga2V5Pg==\n",
+                "key": b"<bar.txt key>",
             },
         },
     }
