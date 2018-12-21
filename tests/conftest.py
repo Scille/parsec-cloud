@@ -572,7 +572,10 @@ def root_verify_key(root_signing_key):
 def core_config(tmpdir):
     tmpdir = Path(tmpdir)
     return CoreConfig(
-        config_dir=tmpdir / "config", cache_dir=tmpdir / "cache", data_dir=tmpdir / "data"
+        config_dir=tmpdir / "config",
+        cache_dir=tmpdir / "cache",
+        data_dir=tmpdir / "data",
+        mountpoint_base_dir=tmpdir / "mnt",
     )
 
 
