@@ -27,7 +27,7 @@ class LoggedCore:
     local_db = attr.ib()
     event_bus = attr.ib()
     encryption_manager = attr.ib()
-    mountpoint_manager = attr.ib()
+    mountpoint = attr.ib()
     backend_cmds = attr.ib()
     fs = attr.ib()
 
@@ -67,9 +67,15 @@ async def logged_core_factory(
                 await monitor_nursery.start(monitor_messages, backend_online, fs, event_bus)
                 await monitor_nursery.start(monitor_sync, backend_online, fs, event_bus)
 
-                mountpoint_manager = mountpoint_manager_factory(fs, event_bus)
-                # TODO: rework mountpoint manager to avoid init/teardown
-                await mountpoint_manager.init(monitor_nursery)
+                if config.mountpoint_enabled:
+                    # TODO: rework mountpoint manager to avoid init/teardown
+                    mountpoint_manager = mountpoint_manager_factory(fs, event_bus)
+                    await mountpoint_manager.init(monitor_nursery)
+                    mountpoint = config.mountpoint_base_dir / device.device_id
+                    await mountpoint_manager.start(mountpoint)
+
+                else:
+                    mountpoint = None
 
                 try:
                     yield LoggedCore(
@@ -78,11 +84,12 @@ async def logged_core_factory(
                         local_db=local_db,
                         event_bus=event_bus,
                         encryption_manager=encryption_manager,
-                        mountpoint_manager=mountpoint_manager,
+                        mountpoint=mountpoint,
                         backend_cmds=backend_cmds_pool,
                         fs=fs,
                     )
                     root_nursery.cancel_scope.cancel()
 
                 finally:
-                    await mountpoint_manager.teardown()
+                    if config.mountpoint_enabled:
+                        await mountpoint_manager.teardown()

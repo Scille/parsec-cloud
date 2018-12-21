@@ -3,9 +3,13 @@ import attr
 import json
 from typing import Optional, Dict
 from pathlib import Path
+from structlog import get_logger
 
 
-def get_default_data_dir(environ):
+logger = get_logger()
+
+
+def get_default_data_dir(environ: dict):
     if os.name == "nt":
         return Path(environ["APPDATA"]) / "parsec/data"
     else:
@@ -15,7 +19,7 @@ def get_default_data_dir(environ):
         return Path(path) / "parsec"
 
 
-def get_default_cache_dir(environ):
+def get_default_cache_dir(environ: dict):
     if os.name == "nt":
         return Path(environ["APPDATA"]) / "parsec/cache"
     else:
@@ -25,7 +29,7 @@ def get_default_cache_dir(environ):
         return Path(path) / "parsec"
 
 
-def get_default_config_dir(environ):
+def get_default_config_dir(environ: dict):
     if os.name == "nt":
         return Path(environ["APPDATA"]) / "parsec/config"
     else:
@@ -35,17 +39,24 @@ def get_default_config_dir(environ):
         return Path(path) / "parsec"
 
 
+def get_default_mountpoint_base_dir(environ: dict):
+    return Path.home() / "parsec"
+
+
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class CoreConfig:
     config_dir: Path
     data_dir: Path
     cache_dir: Path
+    mountpoint_base_dir: Path
 
     debug: bool = False
     backend_watchdog: int = 0
     backend_max_connections: int = 4
 
     invitation_token_size: int = 8
+
+    mountpoint_enabled: bool = False
 
     sentry_url: Optional[str] = None
 
@@ -54,6 +65,8 @@ def config_factory(
     config_dir: Path = None,
     data_dir: Path = None,
     cache_dir: Path = None,
+    mountpoint_base_dir: Path = None,
+    mountpoint_enabled: bool = False,
     backend_watchdog: int = 0,
     backend_max_connections: int = 4,
     debug: bool = False,
@@ -63,6 +76,7 @@ def config_factory(
         config_dir=config_dir or get_default_config_dir(environ),
         data_dir=data_dir or get_default_data_dir(environ),
         cache_dir=cache_dir or get_default_cache_dir(environ),
+        mountpoint_base_dir=mountpoint_base_dir or get_default_mountpoint_base_dir(environ),
         debug=debug,
         backend_watchdog=backend_watchdog,
         sentry_url=environ.get("SENTRY_URL") or None,
@@ -71,11 +85,18 @@ def config_factory(
 
 def load_config(config_dir: Path, **extra_config) -> CoreConfig:
 
+    config_file = config_dir / "config.json"
     try:
-        raw_conf = (config_dir / "config.json").read_text()
+        raw_conf = config_file.read_text()
         data_conf = json.loads(raw_conf)
-    except (ValueError, OSError, json.JSONDecodeError):
-        # Config file not created yet, fallback to
+
+    except OSError:
+        # Config file not created yet, fallback to default
+        data_conf = {}
+
+    except (ValueError, json.JSONDecodeError) as exc:
+        # Config file broken, fallback to default
+        logger.warning(f"Ignoring invalid config in {config_file} ({exc})")
         data_conf = {}
 
     try:
@@ -85,6 +106,11 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
 
     try:
         data_conf["cache_dir"] = Path(data_conf["cache_dir"])
+    except (KeyError, ValueError):
+        pass
+
+    try:
+        data_conf["mountpoint_base_dir"] = Path(data_conf["mountpoint_base_dir"])
     except (KeyError, ValueError):
         pass
 
