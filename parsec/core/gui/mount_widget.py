@@ -7,11 +7,11 @@ from parsec.core.gui.ui.mount_widget import Ui_MountWidget
 
 
 class MountWidget(QWidget, Ui_MountWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, core, portal, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.files_widget = FilesWidget(parent=self)
-        self.workspaces_widget = WorkspacesWidget(parent=self)
+        self.files_widget = FilesWidget(core=core, portal=portal, parent=self)
+        self.workspaces_widget = WorkspacesWidget(core=core, portal=portal, parent=self)
         self.layout_content.addWidget(self.files_widget)
         self.layout_content.addWidget(self.workspaces_widget)
         self.files_widget.hide()

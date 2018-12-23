@@ -4,7 +4,6 @@ from PyQt5.QtGui import QPixmap
 
 from parsec.core.backend_connection import BackendNotAvailable
 
-from parsec.core.gui.core_call import core_call
 from parsec.core.gui.custom_widgets import get_text
 from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
@@ -87,9 +86,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 self.layout_users.removeWidget(w)
                 w.setParent(None)
         try:
-            logged_device = core_call().logged_device()
-            user_id = logged_device.id.split("@")[0]
-            users, _ = core_call().find_user()
+            user_id = self.core.device.user_id
+            users, _ = self.portal.run(self.core.fs.backend_cms.user_find)
             for user in users:
                 self.add_user(user, is_current_user=user_id == user)
         except BackendNotAvailable:

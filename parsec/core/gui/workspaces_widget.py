@@ -11,7 +11,6 @@ from parsec.core.gui.custom_widgets import (
     get_text,
     get_user_name,
 )
-from parsec.core.gui.core_call import core_call
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.custom_widgets import show_warning
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
@@ -26,13 +25,16 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     COLUMNS_NUMBER = 3
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, portal, core, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        core_call().connect_event("fs.entry.updated", self._on_fs_entry_updated_trio)
-        core_call().connect_event("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.core = core
+        self.portal = portal
+        self.core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
+        self.core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
         self.button_add_workspace.clicked.connect(self.create_workspace_clicked)
+        self.reset()
 
     def load_workspace(self, workspace):
         self.load_workspace_clicked.emit(workspace)
@@ -79,7 +81,9 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if not new_name:
             return
         try:
-            core_call().rename_workspace(current_file_path, os.path.join("/", new_name))
+            self.portal.run(
+                self.core.fs.workspace_rename, current_file_path, os.path.join("/", new_name)
+            )
             workspace_button.name = new_name
         except FileExistsError:
             show_warning(
@@ -95,10 +99,11 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             )
 
     def share_workspace(self, workspace_button):
-        current_device = core_call().logged_device()
-        current_user = current_device.id.split("@")[0]
+        current_user = self.core.device.user_id
         user = get_user_name(
-            self,
+            portal=self.portal,
+            core=self.core,
+            parent=self,
             title=QCoreApplication.translate("WorkspacesWidget", "Share a workspace"),
             message=QCoreApplication.translate(
                 "WorkspacesWidget", "Give a user name to share the workspace {} with."
@@ -108,7 +113,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if not user:
             return
         try:
-            core_call().share_workspace("/" + workspace_button.name, user)
+            self.portal.run(self.core.fs.share, "/" + workspace_button.name, user)
             show_info(
                 self,
                 QCoreApplication.translate("WorkspacesWidget", "The workspaces has been shared."),
@@ -139,7 +144,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         if not workspace_name:
             return
         try:
-            core_call().create_workspace(os.path.join("/", workspace_name))
+            self.portal.run(self.core.fs.workspace_create, os.path.join("/", workspace_name))
         except FileExistsError:
             show_error(
                 self,
@@ -157,11 +162,10 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 w = item.widget()
                 self.layout_workspaces.removeWidget(w)
                 w.setParent(None)
-        result = core_call().stat("/")
-        logged_device = core_call().logged_device()
-        user_id = logged_device.id.split("@")[0]
+        result = self.portal.run(self.core.fs.stat, "/")
+        user_id = self.core.device.user_id
         for workspace in result.get("children", []):
-            ws_infos = core_call().stat("/{}".format(workspace))
+            ws_infos = self.portal.run(self.core.fs.stat, "/{}".format(workspace))
             ws_infos["participants"].remove(user_id)
             self.add_workspace(
                 workspace,
@@ -180,7 +184,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def _on_fs_changed_qt(self, event, id, path):
         if not path:
             try:
-                path = core_call().get_entry_path(id)
+                path = self.portal.run(self.core.fs.get_entry_path, id)
             except FSEntryNotFound:
                 # Entry not locally present, nothing to do
                 return

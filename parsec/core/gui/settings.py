@@ -2,7 +2,7 @@ import os
 
 from PyQt5.QtCore import QSettings
 
-from parsec.core.gui.core_call import core_call
+from parsec.core.config import get_default_config_dir
 
 
 def identity(raw):
@@ -37,8 +37,7 @@ ENTRIES = {
 def get_value(key, default=None):
     decoder = ENTRIES[key]["decode"]
     value = QSettings(
-        os.path.join(core_call().get_config().base_settings_path, "parsec_gui.cfg"),
-        QSettings.IniFormat,
+        os.path.join(get_default_config_dir(os.environ), "parsec_gui.cfg"), QSettings.IniFormat
     ).value(key, default)
     if value is not None:
         value = decoder(value)
@@ -48,8 +47,7 @@ def get_value(key, default=None):
 def set_value(key, value):
     encode = ENTRIES[key]["encode"]
     settings = QSettings(
-        os.path.join(core_call().get_config().base_settings_path, "parsec_gui.cfg"),
-        QSettings.IniFormat,
+        os.path.join(get_default_config_dir(os.environ), "parsec_gui.cfg"), QSettings.IniFormat
     )
     settings.setValue(key, encode(value))
     settings.sync()

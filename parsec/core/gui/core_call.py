@@ -166,7 +166,7 @@ def core_call():
     return _CORE_CALL
 
 
-def init_core_call(parsec_core, trio_portal, cancel_scope):
+def init_core_call(config):
     global _CORE_CALL
 
-    _CORE_CALL = _CoreCall(parsec_core, trio_portal, cancel_scope)
+    _CORE_CALL = _CoreCall(config)

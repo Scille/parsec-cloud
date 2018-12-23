@@ -5,7 +5,6 @@ from parsec.core.gui.ui.register_device import Ui_RegisterDevice
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.custom_widgets import show_error
 from parsec.core.backend_connection import BackendNotAvailable
-from parsec.core.devices_manager import DeviceConfigurationPasswordError
 from parsec.pkcs11_encryption_tool import DevicePKCS11Error
 
 
@@ -51,11 +50,6 @@ class RegisterDevice(QDialog, Ui_RegisterDevice):
         except DevicePKCS11Error:
             show_error(
                 self, QCoreApplication.translate("RegisterDevice", "Invalid PKCS #11 information.")
-            )
-        except DeviceConfigurationPasswordError:
-            show_error(
-                self,
-                QCoreApplication.translate("RegisterDevice", "Invalid password or PKCS #11 PIN."),
             )
         except:
             show_error(

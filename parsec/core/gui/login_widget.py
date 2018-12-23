@@ -3,10 +3,10 @@ from zxcvbn import zxcvbn
 from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
 from PyQt5.QtWidgets import QWidget, QCompleter
 
+from parsec.core import devices_manager
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_widgets import show_error
 from parsec.core.gui import settings
-from parsec.core.gui.core_call import core_call
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 from parsec.core.gui.ui.login_register_user_widget import Ui_LoginRegisterUserWidget
@@ -26,9 +26,10 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
     login_with_password_clicked = pyqtSignal(str, str)
     login_with_pkcs11_clicked = pyqtSignal(str, str, int, int)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.core_config = core_config
         self.button_login.clicked.connect(self.emit_login)
         self.devices = []
         self.reset()
@@ -56,13 +57,13 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         self.combo_pkcs11_token.clear()
         self.combo_pkcs11_token.addItem("0")
         self.widget_pkcs11.hide()
-        self.devices = core_call().get_devices()
+        self.devices = devices_manager.list_available_devices(self.core_config.config_dir)
         if len(self.devices) == 1:
-            self.line_edit_device.setText(self.devices[0])
+            self.line_edit_device.setText(self.devices[0][0])
             self.line_edit_password.setFocus()
         elif len(self.devices) > 1:
             last_device = settings.get_value("last_device")
-            if last_device and last_device in self.devices:
+            if last_device and last_device in [d[0] for d in self.devices]:
                 self.line_edit_device.setText(last_device)
                 self.line_edit_password.setFocus()
             else:
@@ -70,7 +71,7 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         else:
             self.line_edit_device.setText("")
             self.line_edit_device.setFocus()
-        completer = QCompleter(self.devices)
+        completer = QCompleter([d[0] for d in self.devices])
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         completer.popup().setStyleSheet("border: 2px solid rgb(46, 145, 208); border-top: 0;")
         self.line_edit_device.setCompleter(completer)
@@ -296,11 +297,11 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     register_device_with_password_clicked = pyqtSignal(str, str, str, str)
     register_device_with_pkcs11_clicked = pyqtSignal(str, str, str, int, int)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
 
-        self.login_widget = LoginLoginWidget()
+        self.login_widget = LoginLoginWidget(core_config)
         self.layout.insertWidget(0, self.login_widget)
         self.register_user_widget = LoginRegisterUserWidget()
         self.layout.insertWidget(0, self.register_user_widget)

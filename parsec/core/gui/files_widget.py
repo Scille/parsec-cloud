@@ -20,7 +20,6 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QIcon
 
 from parsec.core.gui import desktop
-from parsec.core.gui.core_call import core_call
 from parsec.core.gui.custom_widgets import show_error, ask_question, get_text
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.gui.file_size import get_filesize
@@ -59,9 +58,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     fs_changed_qt = pyqtSignal(str, UUID, str)
     back_clicked = pyqtSignal()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, portal, core, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.core = core
+        self.portal = portal
         h_header = self.table_files.horizontalHeader()
         h_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         h_header.setSectionResizeMode(0, QHeaderView.Fixed)
@@ -92,8 +93,8 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_directory = ""
         self.mountpoint = ""
         self.workspace = None
-        core_call().connect_event("fs.entry.updated", self._on_fs_entry_updated_trio)
-        core_call().connect_event("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self.core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
+        self.core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
         self.previous_selection = []
         self.file_queue = queue.Queue(1024)
@@ -155,6 +156,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.sortItems(0)
 
     def load(self, directory):
+        if not self.workspace and not directory:
+            return
+
         self.table_files.clearContents()
         self.table_files.setRowCount(0)
         old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
@@ -174,9 +178,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             self.label_current_directory.show()
             self.label_caret.show()
         dir_path = os.path.join("/", self.workspace, self.current_directory)
-        dir_stat = core_call().stat(dir_path)
+        dir_stat = self.portal.run(self.core.fs.stat, dir_path)
         for child in dir_stat["children"]:
-            child_stat = core_call().stat(os.path.join(dir_path, child))
+            child_stat = self.portal.run(self.core.fs.stat, os.path.join(dir_path, child))
             if child_stat["is_folder"]:
                 self._add_folder(child)
             else:
@@ -191,7 +195,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def _import_folder(self, src, dst):
         err = False
         try:
-            core_call().create_folder(dst)
+            self.portal.run(self.core.fs.folder_create, dst)
             for f in src.iterdir():
                 try:
                     if f.is_dir():
@@ -210,20 +214,20 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def _import_file(self, src, dst):
         fd_out = None
         try:
-            core_call().file_create(dst)
-            fd_out = core_call().file_open(dst)
+            self.portal.run(self.core.fs.file_create, dst)
+            fd_out = self.portal.run(self.core.fs.file_fd_open, dst)
             with open(src, "rb") as fd_in:
                 while True:
                     chunk = fd_in.read(8192)
                     if not chunk:
                         break
-                    core_call().file_write(fd_out, chunk)
+                    self.portal.run(self.core.fs.file_fd_write, fd_out, chunk)
             return False
         except:
             return True
         finally:
             if fd_out:
-                core_call().file_close(fd_out)
+                self.portal.run(self.core.fs.file_fd_close, fd_out)
 
     # slot
     def import_files_clicked(self):
@@ -280,8 +284,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
 
     def _create_folder(self, folder_name):
         try:
-            core_call().create_folder(
-                os.path.join("/", self.workspace, self.current_directory, folder_name)
+            self.portal.run(
+                self.core.fs.folder_create,
+                os.path.join("/", self.workspace, self.current_directory, folder_name),
             )
             return True
         except FileExistsError:
@@ -391,7 +396,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             if type_item.data(Qt.UserRole) == FileType.Folder:
                 self._delete_folder(path)
             else:
-                core_call().delete_file(path)
+                self.portal.run(self.core.fs.delete, path)
             self.table_files.removeRow(row)
         except:
             show_error(
@@ -399,15 +404,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
             )
 
     def _delete_folder(self, path):
-        result = core_call().stat(path)
+        result = self.portal.run(self.core.fs.stat, path)
         for child in result.get("children", []):
             child_path = os.path.join(path, child)
-            file_infos = core_call().stat(os.path.join(path, child))
+            file_infos = self.portal.run(self.core.fs.stat, os.path.join(path, child))
             if file_infos["is_folder"]:
                 self._delete_folder(child_path)
             else:
-                core_call().delete_file(child_path)
-        core_call().delete_folder(path)
+                self.portal.run(self.core.fs.delete, child_path)
+        self.portal.run(self.core.fs.delete, path)
 
     # slot
     def create_folder_clicked(self):
@@ -454,12 +459,14 @@ class FilesWidget(QWidget, Ui_FilesWidget):
                 return
             try:
                 if type_item.data(Qt.UserRole) == FileType.Folder:
-                    core_call().move_folder(
+                    self.portal.run(
+                        self.core.fs.move,
                         os.path.join("/", self.workspace, self.current_directory, name_item.text()),
                         os.path.join("/", self.workspace, self.current_directory, new_name),
                     )
                 else:
-                    core_call().move_file(
+                    self.portal.run(
+                        self.core.fs.move,
                         os.path.join("/", self.workspace, self.current_directory, name_item.text()),
                         os.path.join("/", self.workspace, self.current_directory, new_name),
                     )
@@ -514,7 +521,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def _on_fs_changed_qt(self, event, id, path):
         if not path:
             try:
-                path = core_call().get_entry_path(id)
+                path = self.portal.run(self.core.fs.get_entry_path, id)
             except FSEntryNotFound:
                 # Entry not locally present, nothing to do
                 return

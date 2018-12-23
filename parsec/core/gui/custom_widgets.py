@@ -12,7 +12,6 @@ from PyQt5.QtWidgets import (
     QCompleter,
 )
 
-from parsec.core.gui.core_call import core_call
 from parsec.core.gui.ui.message_dialog import Ui_MessageDialog
 from parsec.core.gui.ui.input_dialog import Ui_InputDialog
 from parsec.core.gui.ui.question_dialog import Ui_QuestionDialog
@@ -57,9 +56,11 @@ def get_text(parent, title, message, placeholder="", default_text="", completion
 
 def get_user_name(parent, title, message, exclude=None):
     class InputDialog(QDialog, Ui_InputDialog):
-        def __init__(self, title, message, exclude=None, *args, **kwargs):
+        def __init__(self, portal, core, title, message, exclude=None, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.setupUi(self)
+            self.core = core
+            self.portal = portal
             self.label_title.setText(title)
             self.label_message.setText(message)
             self.line_edit_text.setPlaceholderText(
@@ -82,7 +83,9 @@ def get_user_name(parent, title, message, exclude=None):
         def show_auto_complete(self):
             self.timer.stop()
             if len(self.line_edit_text.text()):
-                users, total = core_call().find_user(self.line_edit_text.text())
+                users, total = self.portal.run(
+                    self.core.fs.backend_cmds.user_find, self.line_edit_text.text()
+                )
                 if self.exclude:
                     users = [u for u in users if u not in self.exclude]
                 completer = QCompleter(users)
