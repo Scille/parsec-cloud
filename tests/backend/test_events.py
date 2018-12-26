@@ -118,17 +118,23 @@ async def test_events_subscribe_ping(backend, alice_backend_sock, alice2_backend
 async def test_event_resubscribe(backend, alice_backend_sock, alice2_backend_sock):
     await subscribe_pinged(alice_backend_sock, ["foo", "bar"])
 
-    await ping(alice2_backend_sock, "foo")
+    with backend.event_bus.listen() as spy:
+        await ping(alice2_backend_sock, "foo")
+
+        with trio.fail_after(1):
+            # No guarantees those events occur before the commands' return
+            await spy.wait("pinged")
 
     await subscribe_pinged(alice_backend_sock, ["bar", "spam"])
 
-    await ping(alice2_backend_sock, "foo")
-    await ping(alice2_backend_sock, "bar")
-    await ping(alice2_backend_sock, "spam")
+    with backend.event_bus.listen() as spy:
+        await ping(alice2_backend_sock, "foo")
+        await ping(alice2_backend_sock, "bar")
+        await ping(alice2_backend_sock, "spam")
 
-    with trio.fail_after(1):
-        # No guarantees those events occur before the commands' return
-        await backend.event_bus.spy.wait_multiple(["pinged", "pinged", "pinged", "pinged"])
+        with trio.fail_after(1):
+            # No guarantees those events occur before the commands' return
+            await spy.wait_multiple(["pinged", "pinged", "pinged"])
 
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "ok", "event": "pinged", "ping": "foo"}
