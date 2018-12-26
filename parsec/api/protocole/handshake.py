@@ -24,7 +24,7 @@ class HandshakeRevokedDevice(HandshakeError):
 
 class HandshakeChallengeSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("challenge", required=True)
-    challenge = fields.Base64Bytes(required=True)
+    challenge = fields.Bytes(required=True)
 
 
 handshake_challenge_serializer = Serializer(HandshakeChallengeSchema)
@@ -33,7 +33,7 @@ handshake_challenge_serializer = Serializer(HandshakeChallengeSchema)
 class HandshakeAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
     identity = fields.DeviceID(allow_none=True, missing=None)
-    answer = fields.Base64Bytes(allow_none=True, missing=None)
+    answer = fields.Bytes(allow_none=True, missing=None)
 
 
 handshake_answer_serializer = Serializer(HandshakeAnswerSchema)

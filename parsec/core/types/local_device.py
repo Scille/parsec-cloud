@@ -47,7 +47,7 @@ class LocalDeviceSchema(UnknownCheckedSchema):
     signing_key = fields.SigningKey(required=True)
     private_key = fields.PrivateKey(required=True)
     user_manifest_access = fields.Nested(ManifestAccessSchema, required=True)
-    local_symkey = fields.Base64Bytes(required=True)
+    local_symkey = fields.Bytes(required=True)
 
     @post_load
     def make_obj(self, data):

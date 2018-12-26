@@ -30,8 +30,8 @@ class BaseLocalDeviceDecryptor:
 
 class PasswordPayloadSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("password", required=True)
-    salt = fields.Base64Bytes(required=True)
-    ciphertext = fields.Base64Bytes(required=True)
+    salt = fields.Bytes(required=True)
+    ciphertext = fields.Bytes(required=True)
 
 
 password_payload_schema = PasswordPayloadSchema(strict=True)

@@ -17,7 +17,7 @@ async def test_big_buffer_bench():
     client_transport = TCPTransport(client_stream)
 
     class Schema(UnknownCheckedSchema):
-        data = fields.Base64Bytes()
+        data = fields.Bytes()
 
     schema = Serializer(Schema)
 

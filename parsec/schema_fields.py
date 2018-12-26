@@ -35,7 +35,7 @@ __all__ = (
     "Boolean",
     "Field",
     "Path",
-    "Base64Bytes",
+    "Bytes",
     "DateTime",
     "CheckedConstant",
     "Map",
@@ -124,7 +124,7 @@ class UUID(UUID):
         return value.hex
 
 
-class Base64Bytes(Field):
+class Bytes(Field):
     """Pass bytes through json by encoding them into base64"""
 
     def _serialize(self, value, attr, obj):
@@ -285,8 +285,8 @@ class PublicKey(Field):
             raise ValidationError("Invalid verify key.")
 
 
-SymetricKey = Base64Bytes
-Base64Bytes = bytes_based_field_factory(bytes)
+SymetricKey = Bytes
+Bytes = bytes_based_field_factory(bytes)
 DeviceID = str_based_field_factory(_DeviceID)
 UserID = str_based_field_factory(_UserID)
 DeviceName = str_based_field_factory(_DeviceName)

@@ -54,7 +54,7 @@ class SignedMetadataSchema(UnknownCheckedSchema):
     # No device_id means it has been signed by the root key
     device_id = fields.DeviceID(missing=None)
     timestamp = fields.DateTime(required=True)
-    content = fields.Base64Bytes(required=True)
+    content = fields.Bytes(required=True)
 
 
 signed_metadata_serializer = Serializer(SignedMetadataSchema)

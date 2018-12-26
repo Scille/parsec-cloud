@@ -7,7 +7,7 @@ __all__ = ("message_send_serializer", "message_get_serializer")
 
 class MessageSendReqSchema(BaseReqSchema):
     recipient = fields.UserID(required=True)
-    body = fields.Base64Bytes(required=True)
+    body = fields.Bytes(required=True)
 
 
 class MessageSendRepSchema(BaseRepSchema):
@@ -24,7 +24,7 @@ class MessageGetReqSchema(BaseReqSchema):
 class MessageSchema(UnknownCheckedSchema):
     sender = fields.DeviceID(required=True)
     count = fields.Integer(required=True)
-    body = fields.Base64Bytes(required=True)
+    body = fields.Bytes(required=True)
 
 
 class MessageGetRepSchema(BaseRepSchema):

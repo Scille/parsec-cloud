@@ -7,7 +7,7 @@ __all__ = ("blockstore_create_serializer", "blockstore_read_serializer")
 
 class BlockstoreCreateReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
-    block = fields.Base64Bytes(required=True)
+    block = fields.Bytes(required=True)
 
 
 class BlockstoreCreateRepSchema(BaseRepSchema):
@@ -22,7 +22,7 @@ class BlockstoreReadReqSchema(BaseReqSchema):
 
 
 class BlockstoreReadRepSchema(BaseRepSchema):
-    block = fields.Base64Bytes(required=True)
+    block = fields.Bytes(required=True)
 
 
 blockstore_read_serializer = CmdSerializer(BlockstoreReadReqSchema, BlockstoreReadRepSchema)

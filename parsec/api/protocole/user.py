@@ -24,10 +24,10 @@ class DeviceSchema(UnknownCheckedSchema):
     created_on = fields.DateTime(required=True)
 
     revocated_on = fields.DateTime(allow_none=True)
-    certified_revocation = fields.Base64Bytes(allow_none=True)
+    certified_revocation = fields.Bytes(allow_none=True)
     revocation_certifier = fields.DeviceID(allow_none=True)
 
-    certified_device = fields.Base64Bytes(required=True)
+    certified_device = fields.Bytes(required=True)
     device_certifier = fields.DeviceID(allow_none=True)
 
 
@@ -35,7 +35,7 @@ class UserSchema(UnknownCheckedSchema):
     user_id = fields.String(required=True)
     created_on = fields.DateTime(required=True)
 
-    certified_user = fields.Base64Bytes(required=True)
+    certified_user = fields.Bytes(required=True)
     user_certifier = fields.DeviceID(allow_none=True)
 
     devices = fields.Map(fields.DeviceName(), fields.Nested(DeviceSchema), required=True)
@@ -79,7 +79,7 @@ class UserInviteReqSchema(BaseReqSchema):
 
 
 class UserInviteRepSchema(BaseRepSchema):
-    encrypted_claim = fields.Base64Bytes(required=True)
+    encrypted_claim = fields.Bytes(required=True)
 
 
 user_invite_serializer = CmdSerializer(UserInviteReqSchema, UserInviteRepSchema)
@@ -93,7 +93,7 @@ class UserGetInvitationCreatorRepSchema(BaseRepSchema):
     user_id = fields.String(required=True)
     created_on = fields.DateTime(required=True)
 
-    certified_user = fields.Base64Bytes(required=True)
+    certified_user = fields.Bytes(required=True)
     user_certifier = fields.DeviceID(allow_none=True)
 
 
@@ -104,7 +104,7 @@ user_get_invitation_creator_serializer = CmdSerializer(
 
 class UserClaimReqSchema(BaseReqSchema):
     invited_user_id = fields.UserID(required=True)
-    encrypted_claim = fields.Base64Bytes(required=True)
+    encrypted_claim = fields.Bytes(required=True)
 
 
 class UserClaimRepSchema(BaseRepSchema):
@@ -128,8 +128,8 @@ user_cancel_invitation_serializer = CmdSerializer(
 
 
 class UserCreateReqSchema(BaseReqSchema):
-    certified_user = fields.Base64Bytes(required=True)
-    certified_device = fields.Base64Bytes(required=True)
+    certified_user = fields.Bytes(required=True)
+    certified_device = fields.Bytes(required=True)
 
 
 class UserCreateRepSchema(BaseRepSchema):
@@ -147,7 +147,7 @@ class DeviceInviteReqSchema(BaseReqSchema):
 
 
 class DeviceInviteRepSchema(BaseRepSchema):
-    encrypted_claim = fields.Base64Bytes(required=True)
+    encrypted_claim = fields.Bytes(required=True)
 
 
 device_invite_serializer = CmdSerializer(DeviceInviteReqSchema, DeviceInviteRepSchema)
@@ -161,7 +161,7 @@ class DeviceGetInvitationCreatorRepSchema(BaseRepSchema):
     user_id = fields.String(required=True)
     created_on = fields.DateTime(required=True)
 
-    certified_user = fields.Base64Bytes(required=True)
+    certified_user = fields.Bytes(required=True)
     user_certifier = fields.DeviceID(allow_none=True)
 
 
@@ -172,11 +172,11 @@ device_get_invitation_creator_serializer = CmdSerializer(
 
 class DeviceClaimReqSchema(BaseReqSchema):
     invited_device_id = fields.DeviceID(required=True)
-    encrypted_claim = fields.Base64Bytes(required=True)
+    encrypted_claim = fields.Bytes(required=True)
 
 
 class DeviceClaimRepSchema(BaseRepSchema):
-    encrypted_answer = fields.Base64Bytes(required=True)
+    encrypted_answer = fields.Bytes(required=True)
 
 
 device_claim_serializer = CmdSerializer(DeviceClaimReqSchema, DeviceClaimRepSchema)
@@ -196,8 +196,8 @@ device_cancel_invitation_serializer = CmdSerializer(
 
 
 class DeviceCreateReqSchema(BaseReqSchema):
-    certified_device = fields.Base64Bytes(required=True)
-    encrypted_answer = fields.Base64Bytes(required=True)
+    certified_device = fields.Bytes(required=True)
+    encrypted_answer = fields.Bytes(required=True)
 
 
 class DeviceCreateRepSchema(BaseRepSchema):
@@ -208,7 +208,7 @@ device_create_serializer = CmdSerializer(DeviceCreateReqSchema, DeviceCreateRepS
 
 
 class DeviceRevokeReqSchema(BaseReqSchema):
-    certified_revocation = fields.Base64Bytes(required=True)
+    certified_revocation = fields.Bytes(required=True)
 
 
 class DeviceRevokeRepSchema(BaseRepSchema):
