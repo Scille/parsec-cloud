@@ -6,7 +6,7 @@ from pendulum import Pendulum
 from parsec.types import DeviceID
 from parsec.crypto import SigningKey, PrivateKey
 from parsec.trustchain import certify_user, certify_device, certify_device_revocation
-from parsec.api.protocole import user_get_serializer, user_find_serializer
+from parsec.api.protocole import packb, user_get_serializer, user_find_serializer
 from parsec.backend.user import (
     User as BackendUser,
     Device as BackendDevice,
@@ -17,15 +17,15 @@ from tests.common import freeze_time
 
 
 async def user_get(sock, user_id):
-    await sock.send(user_get_serializer.req_dump({"cmd": "user_get", "user_id": user_id}))
+    await sock.send(user_get_serializer.req_dumps({"cmd": "user_get", "user_id": user_id}))
     raw_rep = await sock.recv()
-    return user_get_serializer.rep_load(raw_rep)
+    return user_get_serializer.rep_loads(raw_rep)
 
 
 async def user_find(sock, **kwargs):
-    await sock.send(user_find_serializer.req_dump({"cmd": "user_find", **kwargs}))
+    await sock.send(user_find_serializer.req_dumps({"cmd": "user_find", **kwargs}))
     raw_rep = await sock.recv()
-    return user_find_serializer.rep_load(raw_rep)
+    return user_find_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio
@@ -206,9 +206,9 @@ async def test_api_user_get_ok_deep_trustchain(backend, alice_backend_sock, alic
 )
 @pytest.mark.trio
 async def test_api_user_get_bad_msg(alice_backend_sock, bad_msg):
-    await alice_backend_sock.send({"cmd": "user_get", **bad_msg})
+    await alice_backend_sock.send(packb({"cmd": "user_get", **bad_msg}))
     raw_rep = await alice_backend_sock.recv()
-    rep = user_get_serializer.rep_load(raw_rep)
+    rep = user_get_serializer.rep_loads(raw_rep)
     assert rep["status"] == "bad_message"
 
 
@@ -267,7 +267,7 @@ async def test_api_user_find(alice, backend, alice_backend_sock):
 
     # Test bad params
     for bad in [{"dummy": 42}, {"query": 42}, {"page": 0}, {"per_page": 0}, {"per_page": 101}]:
-        await alice_backend_sock.send({"cmd": "user_find", **bad})
+        await alice_backend_sock.send(packb({"cmd": "user_find", **bad}))
         raw_rep = await alice_backend_sock.recv()
-        rep = user_find_serializer.rep_load(raw_rep)
+        rep = user_find_serializer.rep_loads(raw_rep)
         assert rep["status"] == "bad_message"

@@ -1,5 +1,6 @@
 from json import JSONDecodeError
 
+from parsec.utils import ejson_loads, ejson_dumps
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError
 from parsec.core.devices_manager.cipher import (
     CipherError,
@@ -36,7 +37,9 @@ class PKCS11DeviceEncryptor(BaseLocalDeviceEncryptor):
         """
         try:
             ciphertext = encrypt_data(self.token_id, self.key_id, plaintext)
-            return pkcs11_payload_schema.dumps({"ciphertext": ciphertext}).data.encode("utf8")
+            return ejson_dumps(pkcs11_payload_schema.dump({"ciphertext": ciphertext}).data).encode(
+                "utf8"
+            )
 
         except (DevicePKCS11Error, ValidationError, JSONDecodeError, ValueError) as exc:
             raise CipherError(str(exc)) from exc
@@ -56,7 +59,7 @@ class PKCS11DeviceDecryptor(BaseLocalDeviceDecryptor):
             CipherError
         """
         try:
-            payload = pkcs11_payload_schema.loads(ciphertext.decode("utf8")).data
+            payload = pkcs11_payload_schema.load(ejson_loads(ciphertext.decode("utf8"))).data
             return decrypt_data(self.pin, self.token_id, self.key_id, payload["ciphertext"])
 
         except (DevicePKCS11Error, ValidationError, JSONDecodeError, ValueError) as exc:
@@ -65,7 +68,7 @@ class PKCS11DeviceDecryptor(BaseLocalDeviceDecryptor):
     @staticmethod
     def can_decrypt(ciphertext: bytes) -> bool:
         try:
-            pkcs11_payload_schema.loads(ciphertext.decode("utf8")).data
+            pkcs11_payload_schema.load(ejson_loads(ciphertext.decode("utf8"))).data
             return True
 
         except (ValidationError, JSONDecodeError, ValueError) as exc:

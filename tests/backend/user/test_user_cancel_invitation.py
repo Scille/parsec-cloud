@@ -16,10 +16,10 @@ async def mallory_invitation(backend, alice, mallory):
 
 async def user_cancel_invitation(sock, **kwargs):
     await sock.send(
-        user_cancel_invitation_serializer.req_dump({"cmd": "user_cancel_invitation", **kwargs})
+        user_cancel_invitation_serializer.req_dumps({"cmd": "user_cancel_invitation", **kwargs})
     )
     raw_rep = await sock.recv()
-    rep = user_cancel_invitation_serializer.rep_load(raw_rep)
+    rep = user_cancel_invitation_serializer.rep_loads(raw_rep)
     return rep
 
 

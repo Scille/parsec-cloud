@@ -13,10 +13,10 @@ def alice_nd_id(alice):
 @asynccontextmanager
 async def device_invite(sock, **kwargs):
     reps = []
-    await sock.send(device_invite_serializer.req_dump({"cmd": "device_invite", **kwargs}))
+    await sock.send(device_invite_serializer.req_dumps({"cmd": "device_invite", **kwargs}))
     yield reps
     raw_rep = await sock.recv()
-    rep = device_invite_serializer.rep_load(raw_rep)
+    rep = device_invite_serializer.rep_loads(raw_rep)
     reps.append(rep)
 
 

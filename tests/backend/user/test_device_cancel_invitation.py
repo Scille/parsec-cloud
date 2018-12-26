@@ -19,10 +19,10 @@ async def alice_nd_invitation(backend, alice):
 
 async def device_cancel_invitation(sock, **kwargs):
     await sock.send(
-        device_cancel_invitation_serializer.req_dump({"cmd": "device_cancel_invitation", **kwargs})
+        device_cancel_invitation_serializer.req_dumps({"cmd": "device_cancel_invitation", **kwargs})
     )
     raw_rep = await sock.recv()
-    rep = device_cancel_invitation_serializer.rep_load(raw_rep)
+    rep = device_cancel_invitation_serializer.rep_loads(raw_rep)
     return rep
 
 

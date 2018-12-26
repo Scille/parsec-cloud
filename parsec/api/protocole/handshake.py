@@ -2,8 +2,8 @@ import attr
 from secrets import token_bytes
 
 from parsec.crypto import CryptoError
-from parsec.schema import UnknownCheckedSchema, fields, ValidationError
-from parsec.api.protocole.base import ProtocoleError
+from parsec.schema import UnknownCheckedSchema, fields
+from parsec.api.protocole.base import ProtocoleError, Serializer
 
 
 class HandshakeError(ProtocoleError):
@@ -27,7 +27,7 @@ class HandshakeChallengeSchema(UnknownCheckedSchema):
     challenge = fields.Base64Bytes(required=True)
 
 
-handshake_challenge_schema = HandshakeChallengeSchema(strict=True)
+handshake_challenge_serializer = Serializer(HandshakeChallengeSchema)
 
 
 class HandshakeAnswerSchema(UnknownCheckedSchema):
@@ -36,7 +36,7 @@ class HandshakeAnswerSchema(UnknownCheckedSchema):
     answer = fields.Base64Bytes(allow_none=True, missing=None)
 
 
-handshake_answer_schema = HandshakeAnswerSchema(strict=True)
+handshake_answer_serializer = Serializer(HandshakeAnswerSchema)
 
 
 class HandshakeResultSchema(UnknownCheckedSchema):
@@ -44,7 +44,7 @@ class HandshakeResultSchema(UnknownCheckedSchema):
     result = fields.String(required=True)
 
 
-handshake_result_schema = HandshakeResultSchema(strict=True)
+handshake_result_serializer = Serializer(HandshakeResultSchema)
 
 
 @attr.s
@@ -58,54 +58,51 @@ class ServerHandshake:
     def is_anonymous(self):
         return self.identity is None
 
-    def build_challenge_req(self):
+    def build_challenge_req(self) -> bytes:
         if not self.state == "stalled":
             raise HandshakeError("Invalid state.")
 
         self.challenge = token_bytes(self.challenge_size)
         self.state = "challenge"
 
-        return handshake_challenge_schema.dump(
+        return handshake_challenge_serializer.dumps(
             {"handshake": "challenge", "challenge": self.challenge}
-        ).data
+        )
 
-    def process_answer_req(self, req):
+    def process_answer_req(self, req: bytes):
         if not self.state == "challenge":
             raise HandshakeError("Invalid state.")
 
-        try:
-            data = handshake_answer_schema.load(req).data
-        except ValidationError as exc:
-            raise HandshakeFormatError(f"Invalid `answer` request {req}: {exc}") from exc
+        data = handshake_answer_serializer.loads(req)
 
         self.answer = data["answer"] or b""
         self.identity = data["identity"]
         self.state = "answer"
 
-    def build_bad_format_result_req(self):
+    def build_bad_format_result_req(self) -> bytes:
         if not self.state in ("answer", "challenge"):
             raise HandshakeError("Invalid state.")
 
         self.state = "result"
-        return handshake_result_schema.dump({"handshake": "result", "result": "bad_format"}).data
+        return handshake_result_serializer.dumps({"handshake": "result", "result": "bad_format"})
 
-    def build_bad_identity_result_req(self):
+    def build_bad_identity_result_req(self) -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
         self.state = "result"
-        return handshake_result_schema.dump({"handshake": "result", "result": "bad_identity"}).data
+        return handshake_result_serializer.dumps({"handshake": "result", "result": "bad_identity"})
 
-    def build_revoked_device_result_req(self):
+    def build_revoked_device_result_req(self) -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
         self.state = "result"
-        return handshake_result_schema.dump(
+        return handshake_result_serializer.dumps(
             {"handshake": "result", "result": "revoked_device"}
-        ).data
+        )
 
-    def build_result_req(self, verify_key=None):
+    def build_result_req(self, verify_key=None) -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
@@ -119,7 +116,7 @@ class ServerHandshake:
                 raise HandshakeFormatError("Invalid answer signature") from exc
 
         self.state = "result"
-        return handshake_result_schema.dump({"handshake": "result", "result": "ok"}).data
+        return handshake_result_serializer.dumps({"handshake": "result", "result": "ok"})
 
 
 @attr.s
@@ -127,23 +124,15 @@ class ClientHandshake:
     user_id = attr.ib()
     user_signkey = attr.ib()
 
-    def process_challenge_req(self, req):
-        try:
-            data = handshake_challenge_schema.load(req).data
-        except ValidationError as exc:
-            raise HandshakeFormatError(f"Invalid `challenge` request {req}: {exc}") from exc
-
+    def process_challenge_req(self, req: bytes) -> bytes:
+        data = handshake_challenge_serializer.loads(req)
         answer = self.user_signkey.sign(data["challenge"])
-        return handshake_answer_schema.dump(
+        return handshake_answer_serializer.dumps(
             {"handshake": "answer", "identity": self.user_id, "answer": answer}
-        ).data
+        )
 
-    def process_result_req(self, req):
-        try:
-            data = handshake_result_schema.load(req).data
-        except ValidationError as exc:
-            raise HandshakeFormatError(f"Invalid `result` request {req}: {exc}") from exc
-
+    def process_result_req(self, req: bytes) -> bytes:
+        data = handshake_result_serializer.loads(req)
         if data["result"] != "ok":
             if data["result"] == "bad_identity":
                 raise HandshakeBadIdentity("Backend didn't recognized our identity")
@@ -156,20 +145,12 @@ class ClientHandshake:
 
 @attr.s
 class AnonymousClientHandshake:
-    def process_challenge_req(self, req):
-        try:
-            handshake_challenge_schema.load(req).data
-        except ValidationError as exc:
-            raise HandshakeFormatError(f"Invalid `challenge` request {req}: {exc}") from exc
+    def process_challenge_req(self, req: bytes) -> bytes:
+        handshake_challenge_serializer.loads(req)  # Sanity check
+        return handshake_answer_serializer.dumps({"handshake": "answer"})
 
-        return handshake_answer_schema.dump({"handshake": "answer"}).data
-
-    def process_result_req(self, req):
-        try:
-            data = handshake_result_schema.load(req).data
-        except ValidationError as exc:
-            raise HandshakeFormatError(f"Invalid `result` request {req}: {exc}") from exc
-
+    def process_result_req(self, req: bytes) -> bytes:
+        data = handshake_result_serializer.loads(req)
         if data["result"] != "ok":
             if data["result"] == "bad_identity":
                 raise HandshakeBadIdentity("Backend didn't recognized our identity")

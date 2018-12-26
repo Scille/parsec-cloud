@@ -81,7 +81,7 @@ async def _send_cmd(transport, serializer, **req):
             return data
 
     try:
-        raw_req = serializer.req_dump(req)
+        raw_req = serializer.req_dumps(req)
 
     except ProtocoleError as exc:
         raise BackendCmdsInvalidRequest() from exc
@@ -98,7 +98,7 @@ async def _send_cmd(transport, serializer, **req):
     transport.log.debug("recv rep", req=_shorten_data(raw_rep))
 
     try:
-        rep = serializer.rep_load(raw_rep)
+        rep = serializer.rep_loads(raw_rep)
 
     except ProtocoleError as exc:
         raise BackendCmdsInvalidResponse() from exc

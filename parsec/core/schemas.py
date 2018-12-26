@@ -2,6 +2,7 @@ from marshmallow import validate
 
 from parsec import schema_fields as fields
 from parsec.schema import UnknownCheckedSchema, OneOfSchema
+from parsec.utils import ejson_dumps, ejson_loads
 
 
 # Synchronized with backend data
@@ -169,14 +170,15 @@ class SchemaSerializationError(Exception):
 
 
 def dumps_manifest(manifest: dict):
-    raw, errors = typed_manifest_schema.dumps(manifest)
+    raw, errors = typed_manifest_schema.dump(manifest)
     if errors:
         raise SchemaSerializationError(errors)
-    return raw.encode("utf8")
+    return ejson_dumps(raw).encode("utf8")
 
 
 def loads_manifest(raw: bytes):
-    manifest, errors = typed_manifest_schema.loads(raw.decode("utf8"))
+    raw = ejson_loads(raw.decode("utf8"))
+    manifest, errors = typed_manifest_schema.load(raw)
     if errors:
         raise SchemaSerializationError(errors)
     return manifest

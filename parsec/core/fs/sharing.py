@@ -10,6 +10,8 @@ from parsec.core.fs.types import Path
 from parsec.core.encryption_manager import EncryptionManagerError
 from parsec.core.backend_connection import BackendCmdsBadResponse
 
+# TODO: move serializer away from api
+from parsec.api.protocole.base import InvalidMessageError, Serializer
 
 logger = get_logger()
 
@@ -34,73 +36,31 @@ class SharingInvalidMessageError(SharingError):
     pass
 
 
-class _BackendMessageGetRepMessagesSchema(UnknownCheckedSchema):
-    count = fields.Int(required=True)
-    body = fields.Base64Bytes(required=True)
-    sender_id = fields.DeviceID(required=True)
-
-
-BackendMessageGetRepMessagesSchema = _BackendMessageGetRepMessagesSchema()
-
-
-class _BackendMessageGetRepSchema(UnknownCheckedSchema):
-    status = fields.CheckedConstant("ok", required=True)
-    messages = fields.List(fields.Nested(BackendMessageGetRepMessagesSchema), required=True)
-
-
-backend_message_get_rep_schema = _BackendMessageGetRepSchema()
-
-
-class _BackendUserGetRepDeviceSchema(UnknownCheckedSchema):
-    created_on = fields.DateTime(required=True)
-    revocated_on = fields.DateTime(missing=None)
-    verify_key = fields.Base64Bytes(required=True)
-
-
-BackendUserGetRepDeviceSchema = _BackendUserGetRepDeviceSchema()
-
-
-class _BackendUserGetRepSchema(UnknownCheckedSchema):
-    status = fields.CheckedConstant("ok", required=True)
-    user_id = fields.UserID(required=True)
-    created_on = fields.DateTime(required=True)
-    broadcast_key = fields.Base64Bytes(required=True)
-    devices = fields.Map(
-        fields.DeviceName(), fields.Nested(BackendUserGetRepDeviceSchema), missing={}
-    )
-
-
-backend_user_get_rep_schema = _BackendUserGetRepSchema()
-
-
-class _SharingMessageContentSchema(UnknownCheckedSchema):
+class SharingMessageContentSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("share", required=True)
     author = fields.String(required=True)
     access = fields.Nested(ManifestAccessSchema, required=True)
     name = fields.String(required=True)
 
 
-sharing_message_content_schema = _SharingMessageContentSchema()
+sharing_message_content_serializer = Serializer(SharingMessageContentSchema)
 
 
-class _PingMessageContentSchema(UnknownCheckedSchema):
+class PingMessageContentSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("ping", required=True)
     ping = fields.String(required=True)
 
 
-PingMessageContentSchema = _PingMessageContentSchema()
-
-
-class _GenericMessageContentSchema(OneOfSchema):
+class GenericMessageContentSchema(OneOfSchema):
     type_field = "type"
     type_field_remove = False
-    type_schemas = {"share": sharing_message_content_schema, "ping": PingMessageContentSchema}
+    type_schemas = {"share": SharingMessageContentSchema, "ping": PingMessageContentSchema}
 
     def get_obj_type(self, obj):
         return obj["type"]
 
 
-generic_message_content_schema = _GenericMessageContentSchema()
+generic_message_content_serializer = Serializer(GenericMessageContentSchema)
 
 
 class Sharing:
@@ -161,15 +121,17 @@ class Sharing:
             "access": access,
             "name": path.name,
         }
-        raw, errors = sharing_message_content_schema.dumps(msg)
-        if errors:
+        try:
+            raw = sharing_message_content_serializer.dumps(msg)
+        except InvalidMessageError as exc:
             # TODO: Do we really want to log the message content ? Wouldn't
             # it be better just to raise a RuntimeError given we should never
             # be in this case ?
-            logger.error("Cannot dump sharing message", msg=msg, errors=errors)
+            logger.error("Cannot dump sharing message", msg=msg, errors=exc.errors)
             raise SharingError("Internal error")
+
         try:
-            ciphered = await self.encryption_manager.encrypt_for(recipient, raw.encode("utf8"))
+            ciphered = await self.encryption_manager.encrypt_for(recipient, raw)
         except EncryptionManagerError as exc:
             raise SharingRecipientError(f"Cannot create message for `{recipient}`") from exc
 
@@ -238,9 +200,11 @@ class Sharing:
                 f" but is signed by {real_sender_id}"
             )
 
-        msg, errors = generic_message_content_schema.loads(raw.decode("utf8"))
-        if errors:
-            raise SharingInvalidMessageError(f"Not a valid message: {errors!r}")
+        try:
+            msg = generic_message_content_serializer.loads(raw)
+
+        except InvalidMessageError as exc:
+            raise SharingInvalidMessageError(f"Not a valid message: {exc.errors}")
 
         if msg["type"] == "share":
             user_manifest_access, user_manifest = await self._get_user_manifest()

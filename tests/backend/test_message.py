@@ -8,18 +8,18 @@ from tests.backend.test_events import events_subscribe, events_listen, events_li
 
 async def message_send(sock, recipient, body):
     await sock.send(
-        message_send_serializer.req_dump(
+        message_send_serializer.req_dumps(
             {"cmd": "message_send", "recipient": recipient, "body": body}
         )
     )
     raw_rep = await sock.recv()
-    return message_send_serializer.rep_load(raw_rep)
+    return message_send_serializer.rep_loads(raw_rep)
 
 
 async def message_get(sock, offset=0):
-    await sock.send(message_get_serializer.req_dump({"cmd": "message_get", "offset": offset}))
+    await sock.send(message_get_serializer.req_dumps({"cmd": "message_get", "offset": offset}))
     raw_rep = await sock.recv()
-    return message_get_serializer.rep_load(raw_rep)
+    return message_get_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio

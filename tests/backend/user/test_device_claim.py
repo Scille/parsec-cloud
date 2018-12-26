@@ -21,22 +21,22 @@ async def alice_nd_invitation(backend, alice):
 
 async def device_get_invitation_creator(sock, **kwargs):
     await sock.send(
-        device_get_invitation_creator_serializer.req_dump(
+        device_get_invitation_creator_serializer.req_dumps(
             {"cmd": "device_get_invitation_creator", **kwargs}
         )
     )
     raw_rep = await sock.recv()
-    rep = device_get_invitation_creator_serializer.rep_load(raw_rep)
+    rep = device_get_invitation_creator_serializer.rep_loads(raw_rep)
     return rep
 
 
 @asynccontextmanager
 async def device_claim(sock, **kwargs):
     reps = []
-    await sock.send(device_claim_serializer.req_dump({"cmd": "device_claim", **kwargs}))
+    await sock.send(device_claim_serializer.req_dumps({"cmd": "device_claim", **kwargs}))
     yield reps
     raw_rep = await sock.recv()
-    rep = device_claim_serializer.rep_load(raw_rep)
+    rep = device_claim_serializer.rep_loads(raw_rep)
     reps.append(rep)
 
 

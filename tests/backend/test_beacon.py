@@ -29,10 +29,10 @@ async def vlob_ids(backend, alice):
 
 async def beacon_read(sock, id, offset):
     raw_rep = await sock.send(
-        beacon_read_serializer.req_dump({"cmd": "beacon_read", "id": id, "offset": offset})
+        beacon_read_serializer.req_dumps({"cmd": "beacon_read", "id": id, "offset": offset})
     )
     raw_rep = await sock.recv()
-    return beacon_read_serializer.rep_load(raw_rep)
+    return beacon_read_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio

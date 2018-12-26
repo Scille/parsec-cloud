@@ -25,7 +25,7 @@ from parsec.backend import BackendApp, config_factory as backend_config_factory
 from parsec.backend.user import User as BackendUser, new_user_factory as new_backend_user_factory
 from parsec.backend.user import UserAlreadyExistsError
 from parsec.api.protocole import ClientHandshake, AnonymousClientHandshake
-from parsec.api.transport import PatateTCPTransport
+from parsec.api.transport import TCPTransport
 
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
@@ -514,7 +514,7 @@ def backend_sock_factory(server_factory):
     async def _backend_sock_factory(backend, auth_as):
         async with server_factory(backend.handle_client) as server:
             stream = server.connection_factory()
-            transport = FreezeTestOnTransportError(PatateTCPTransport(stream))
+            transport = FreezeTestOnTransportError(TCPTransport(stream))
 
             if auth_as:
                 # Handshake

@@ -10,16 +10,16 @@ from tests.common import freeze_time
 
 
 async def user_create(sock, **kwargs):
-    await sock.send(user_create_serializer.req_dump({"cmd": "user_create", **kwargs}))
+    await sock.send(user_create_serializer.req_dumps({"cmd": "user_create", **kwargs}))
     raw_rep = await sock.recv()
-    rep = user_create_serializer.rep_load(raw_rep)
+    rep = user_create_serializer.rep_loads(raw_rep)
     return rep
 
 
 async def ping(sock, **kwargs):
-    await sock.send(ping_serializer.req_dump({"cmd": "ping", **kwargs}))
+    await sock.send(ping_serializer.req_dumps({"cmd": "ping", **kwargs}))
     raw_rep = await sock.recv()
-    rep = ping_serializer.rep_load(raw_rep)
+    rep = ping_serializer.rep_loads(raw_rep)
     return rep
 
 

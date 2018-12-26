@@ -1,4 +1,3 @@
-from json import JSONDecodeError
 from secrets import token_hex
 
 from parsec.types import DeviceID
@@ -10,6 +9,9 @@ from parsec.crypto import (
     encrypt_raw_for,
     decrypt_raw_for,
 )
+
+# TODO: move serializer away from protocole
+from parsec.api.protocole.base import Serializer, ProtocoleError
 from parsec.schema import ValidationError, UnknownCheckedSchema, fields
 from parsec.core.fs.types import Access
 from parsec.core.schemas import ManifestAccessSchema
@@ -35,7 +37,7 @@ class UserClaimSchema(UnknownCheckedSchema):
     verify_key = fields.VerifyKey(required=True)
 
 
-user_claim_schema = UserClaimSchema(strict=True)
+user_claim_serializer = Serializer(UserClaimSchema)
 
 
 def generate_user_encrypted_claim(
@@ -53,19 +55,19 @@ def generate_user_encrypted_claim(
         "verify_key": verify_key,
     }
     try:
-        raw = user_claim_schema.dumps(payload).data.encode("utf8")
+        raw = user_claim_serializer.dumps(payload)
         return encrypt_raw_for(creator_public_key, raw)
 
-    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+    except (CryptoError, ValidationError, ProtocoleError, ValueError) as exc:
         raise InviteClaimError(str(exc)) from exc
 
 
 def extract_user_encrypted_claim(creator_private_key: PrivateKey, encrypted_claim: bytes) -> dict:
     try:
         raw = decrypt_raw_for(creator_private_key, encrypted_claim)
-        return user_claim_schema.loads(raw.decode("utf8")).data
+        return user_claim_serializer.loads(raw)
 
-    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+    except (CryptoError, ValidationError, ProtocoleError, ValueError) as exc:
         raise InviteClaimError(str(exc)) from exc
 
 
@@ -80,7 +82,7 @@ class DeviceClaimSchema(UnknownCheckedSchema):
     answer_public_key = fields.PublicKey(required=True)
 
 
-device_claim_schema = DeviceClaimSchema(strict=True)
+device_claim_serializer = Serializer(DeviceClaimSchema)
 
 
 def generate_device_encrypted_claim(
@@ -98,19 +100,19 @@ def generate_device_encrypted_claim(
         "answer_public_key": answer_public_key,
     }
     try:
-        raw = device_claim_schema.dumps(payload).data.encode("utf8")
+        raw = device_claim_serializer.dumps(payload)
         return encrypt_raw_for(creator_public_key, raw)
 
-    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+    except (CryptoError, ValidationError, ProtocoleError, ValueError) as exc:
         raise InviteClaimError(str(exc)) from exc
 
 
 def extract_device_encrypted_claim(creator_private_key: PrivateKey, encrypted_claim: bytes) -> dict:
     try:
         raw = decrypt_raw_for(creator_private_key, encrypted_claim)
-        return device_claim_schema.loads(raw.decode("utf8")).data
+        return device_claim_serializer.loads(raw)
 
-    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+    except (CryptoError, ValidationError, ProtocoleError, ValueError) as exc:
         raise InviteClaimError(str(exc)) from exc
 
 
@@ -123,7 +125,7 @@ class DeviceClaimAnswerSchema(UnknownCheckedSchema):
     user_manifest_access = fields.Nested(ManifestAccessSchema, required=True)
 
 
-device_claim_answer_schema = DeviceClaimAnswerSchema(strict=True)
+device_claim_answer_serializer = Serializer(DeviceClaimAnswerSchema)
 
 
 def generate_device_encrypted_answer(
@@ -135,10 +137,10 @@ def generate_device_encrypted_answer(
         "user_manifest_access": user_manifest_access,
     }
     try:
-        raw = device_claim_answer_schema.dumps(payload).data.encode("utf8")
+        raw = device_claim_answer_serializer.dumps(payload)
         return encrypt_raw_for(creator_public_key, raw)
 
-    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+    except (CryptoError, ValidationError, ProtocoleError, ValueError) as exc:
         raise InviteClaimError(str(exc)) from exc
 
 
@@ -147,9 +149,9 @@ def extract_device_encrypted_answer(
 ) -> dict:
     try:
         raw = decrypt_raw_for(creator_private_key, encrypted_claim)
-        return device_claim_answer_schema.loads(raw.decode("utf8")).data
+        return device_claim_answer_serializer.loads(raw)
 
-    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+    except (CryptoError, ValidationError, ProtocoleError, ValueError) as exc:
         raise InviteClaimError(str(exc)) from exc
 
 
@@ -165,7 +167,7 @@ from parsec.types import UserID
 from parsec.trustchain import certify_device, certify_user
 from parsec.core.types import LocalDevice
 
-
+# TODO: remove this ?
 async def bootstrap_domain(backend_addr: str, token: str) -> LocalDevice:
     root_signing_key = SigningKey.generate()
     root_id = DeviceID("root@root")
