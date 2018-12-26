@@ -36,7 +36,7 @@ class BlockAccess:
 
 class BlockAccessSchema(UnknownCheckedSchema):
     id = fields.UUID(required=True)
-    key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
+    key = fields.Bytes(required=True, validate=validate.Length(min=1, max=4096))
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
     size = fields.Integer(required=True, validate=validate.Range(min=0))
     # TODO: provide digest as hexa string
@@ -56,7 +56,7 @@ class DirtyBlockAccess:
 
 class DirtyBlockAccessSchema(UnknownCheckedSchema):
     id = fields.UUID(required=True)
-    key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
+    key = fields.Bytes(required=True, validate=validate.Length(min=1, max=4096))
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
     size = fields.Integer(required=True, validate=validate.Range(min=0))
 

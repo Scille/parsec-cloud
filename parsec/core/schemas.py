@@ -10,7 +10,7 @@ from parsec.utils import ejson_dumps, ejson_loads
 
 class _BlockAccessSchema(UnknownCheckedSchema):
     id = fields.UUID(required=True)
-    key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
+    key = fields.Bytes(required=True, validate=validate.Length(min=1, max=4096))
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
     size = fields.Integer(required=True, validate=validate.Range(min=0))
     # TODO: provide digest as hexa string
@@ -22,7 +22,7 @@ BlockAccessSchema = _BlockAccessSchema()
 
 class _ManifestAccessSchema(UnknownCheckedSchema):
     id = fields.UUID(required=True)
-    key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
+    key = fields.Bytes(required=True, validate=validate.Length(min=1, max=4096))
     rts = fields.String(required=True, validate=validate.Length(min=1, max=32))
     wts = fields.String(required=True, validate=validate.Length(min=1, max=32))
 
@@ -83,7 +83,7 @@ UserManifestSchema = _UserManifestSchema()
 
 class _DirtyBlockAccessSchema(UnknownCheckedSchema):
     id = fields.UUID(required=True)
-    key = fields.Base64Bytes(required=True, validate=validate.Length(min=1, max=4096))
+    key = fields.Bytes(required=True, validate=validate.Length(min=1, max=4096))
     offset = fields.Integer(required=True, validate=validate.Range(min=0))
     size = fields.Integer(required=True, validate=validate.Range(min=0))
 

@@ -21,8 +21,8 @@ organization_create_serializer = CmdSerializer(
 class OrganizationBootstrapReqSchema(BaseReqSchema):
     name = fields.String(required=True)
     bootstrap_token = fields.String(required=True)
-    certified_user = fields.Base64Bytes(required=True)
-    certified_device = fields.Base64Bytes(required=True)
+    certified_user = fields.Bytes(required=True)
+    certified_device = fields.Bytes(required=True)
     root_verify_key = fields.VerifyKey(required=True)
 
 

@@ -17,7 +17,7 @@ from parsec.core.devices_manager.pkcs11_tools import (
 
 class PKCS11PayloadSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("PKCS11", required=True)
-    ciphertext = fields.Base64Bytes(required=True)
+    ciphertext = fields.Bytes(required=True)
 
 
 pkcs11_payload_schema = PKCS11PayloadSchema(strict=True)

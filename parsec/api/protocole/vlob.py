@@ -40,7 +40,7 @@ class VlobCreateReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
     rts = fields.String(required=True, validate=_validate_trust_seed)
     wts = fields.String(required=True, validate=_validate_trust_seed)
-    blob = fields.Base64Bytes(required=True)
+    blob = fields.Bytes(required=True)
     notify_beacon = fields.UUID(missing=None)
 
 
@@ -59,7 +59,7 @@ class VlobReadReqSchema(BaseReqSchema):
 
 class VlobReadRepSchema(BaseRepSchema):
     version = fields.Integer(required=True, validate=_validate_version)
-    blob = fields.Base64Bytes(required=True)
+    blob = fields.Bytes(required=True)
 
 
 vlob_read_serializer = CmdSerializer(VlobReadReqSchema, VlobReadRepSchema)
@@ -69,7 +69,7 @@ class VlobUpdateReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
     version = fields.Integer(required=True, validate=_validate_version)
     wts = fields.String(required=True, validate=_validate_trust_seed)
-    blob = fields.Base64Bytes(required=True)
+    blob = fields.Bytes(required=True)
     notify_beacon = fields.UUID(missing=None)
 
 
