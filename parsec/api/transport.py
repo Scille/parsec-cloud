@@ -2,7 +2,7 @@ from trio import BrokenResourceError
 import struct
 
 
-__all__ = ("TransportError", "BaseTransport", "TCPTransport", "PatateTCPTransport")
+__all__ = ("TransportError", "BaseTransport", "TCPTransport")
 
 
 class TransportError(Exception):
@@ -95,21 +95,3 @@ class TCPTransport(BaseTransport):
             raise TransportError("Message too big")
 
         return await self._recv_exactly(msg_size)
-
-
-# TODO: remove me !
-class PatateTCPTransport(TCPTransport):
-    async def send(self, msg: dict) -> None:
-        # try:
-        #     msg = ejson_dumps(msg).encode("utf8")
-        # except Exception as exc:
-        #     raise TransportError("Cannot serialize data.") from exc
-        await super().send(msg)
-
-    async def recv(self) -> dict:
-        msg = await super().recv()
-        return msg
-        # try:
-        #     return ejson_loads(msg.decode("utf8"))
-        # except Exception as exc:
-        #     raise TransportError("Cannot deserialize data.") from exc

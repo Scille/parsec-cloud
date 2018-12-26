@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 from parsec.types import DeviceID
 from parsec.crypto import SigningKey
-from parsec.api.transport import BaseTransport, TransportError, PatateTCPTransport
+from parsec.api.transport import BaseTransport, TransportError, TCPTransport
 from parsec.api.protocole import (
     ProtocoleError,
     HandshakeRevokedDevice,
@@ -36,7 +36,7 @@ async def _transport_factory(addr: str) -> BaseTransport:
     parsed_addr = urlparse(addr)
     try:
         stream = await trio.open_tcp_stream(parsed_addr.hostname, parsed_addr.port)
-        return PatateTCPTransport(stream)
+        return TCPTransport(stream)
 
     except OSError as exc:
         logger.debug("Impossible to connect to backend", reason=exc)
