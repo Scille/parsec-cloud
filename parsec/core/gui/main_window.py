@@ -55,8 +55,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.connect_all()
         self.setWindowTitle("Parsec - Community Edition - v{}".format(PARSEC_VERSION))
         self.tray_message_shown = False
-        # core_call().connect_event("backend.connection.ready", self._on_connection_changed)
-        # core_call().connect_event("backend.connection.lost", self._on_connection_changed)
         self.connection_state_changed.connect(self._on_connection_state_changed)
         self.show_login_widget()
 
@@ -115,6 +113,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.cancel_scope = self.core_queue.get()
         self.core = self.core_queue.get()
         self.label_mountpoint.setText(str(self.core.mountpoint))
+        self.label_username.setText(self.core.device.user_id)
+        self.label_device.setText(self.core.device.device_name)
+        self.core.event_bus.connect("backend.connection.ready", self._on_connection_changed)
+        self.core.event_bus.connect("backend.connection.lost", self._on_connection_changed)
 
     def stop_core(self):
         if not self.portal:
