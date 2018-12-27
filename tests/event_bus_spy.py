@@ -7,46 +7,6 @@ from unittest.mock import ANY
 from parsec.event_bus import EventBus
 
 
-def convert_dicts_with_any(a, b):
-    if a is ANY or b is ANY:
-        return ANY, ANY
-    any_fields = [k for k, v in a.items() if v is ANY] + [k for k, v in b.items() if v is ANY]
-    cooked_a = {k: v if k not in any_fields else ANY for k, v in a.items()}
-    cooked_b = {k: v if k not in any_fields else ANY for k, v in b.items()}
-    return cooked_a, cooked_b
-
-
-def convert_events_with_any(a, b):
-    if a.event is ANY or b.event is ANY:
-        a_event = b_event = ANY
-    else:
-        a_event = a.event
-        b_event = b.event
-
-    a_kwargs, b_kwargs = convert_dicts_with_any(a.kwargs, b.kwargs)
-
-    if a.dt is ANY or b.dt is ANY:
-        a_dt = b_dt = ANY
-    else:
-        a_dt = a.dt
-        b_dt = b.dt
-
-    return SpiedEvent(a_event, a_kwargs, a_dt), SpiedEvent(b_event, b_kwargs, b_dt)
-
-
-def compare_events_with_any(a, b):
-    ca, cb = convert_events_with_any(a, b)
-    return ca == cb
-
-
-def convert_event_lists_with_any(a, b):
-    converted = [convert_events_with_any(*x) for x in zip(a, b)]
-    return (
-        [ia for ia, _ in converted] + a[len(converted) :],
-        [ib for _, ib in converted] + b[len(converted) :],
-    )
-
-
 @attr.s(frozen=True, slots=True)
 class SpiedEvent:
     event = attr.ib()
@@ -84,7 +44,7 @@ class EventBusSpy:
     async def wait(self, event, dt=ANY, kwargs=ANY):
         expected = SpiedEvent(event, kwargs, dt)
         for occured_event in reversed(self.events):
-            if compare_events_with_any(expected, occured_event):
+            if expected == occured_event:
                 return occured_event
 
         return await self._wait(expected)
@@ -93,7 +53,7 @@ class EventBusSpy:
         catcher = trio.Queue(1)
 
         def _waiter(cooked_event):
-            if compare_events_with_any(cooked_expected_event, cooked_event):
+            if cooked_expected_event == cooked_event:
                 catcher.put_nowait(cooked_event)
                 self._waiters.remove(_waiter)
 
@@ -143,8 +103,7 @@ class EventBusSpy:
     def assert_event_occured(self, event, dt=ANY, kwargs=ANY):
         expected = SpiedEvent(event, kwargs, dt)
         for occured in self.events:
-            cooked_occured, cooked_expected = convert_events_with_any(occured, expected)
-            if cooked_occured == cooked_expected:
+            if occured == expected:
                 break
         else:
             raise AssertionError(f"Event {expected} didn't occured")
@@ -156,15 +115,14 @@ class EventBusSpy:
             for i, expected in enumerate(expected_events):
                 while True:
                     occured = next(occured_events)
-                    if compare_events_with_any(occured, expected):
+                    if occured == expected:
                         break
         except StopIteration:
             raise AssertionError("Missing events: " + "\n".join([str(x) for x in events[i:]]))
 
     def assert_events_exactly_occured(self, events):
         events = self._cook_events_params(events)
-        cooked_expected, cooked_observed = convert_event_lists_with_any(events, self.events)
-        assert cooked_observed == cooked_expected
+        assert self.events == events
 
 
 class SpiedEventBus(EventBus):
