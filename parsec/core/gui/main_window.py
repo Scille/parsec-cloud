@@ -114,6 +114,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.portal = self.core_queue.get()
         self.cancel_scope = self.core_queue.get()
         self.core = self.core_queue.get()
+        self.label_mountpoint.setText(str(self.core.mountpoint))
 
     def stop_core(self):
         if not self.portal:

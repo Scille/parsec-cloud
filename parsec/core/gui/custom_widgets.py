@@ -54,7 +54,7 @@ def get_text(parent, title, message, placeholder="", default_text="", completion
     return None
 
 
-def get_user_name(parent, title, message, exclude=None):
+def get_user_name(parent, portal, core, title, message, exclude=None):
     class InputDialog(QDialog, Ui_InputDialog):
         def __init__(self, portal, core, title, message, exclude=None, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -98,7 +98,9 @@ def get_user_name(parent, title, message, exclude=None):
         def text(self):
             return self.line_edit_text.text()
 
-    m = InputDialog(title=title, message=message, exclude=exclude, parent=parent)
+    m = InputDialog(
+        core=core, portal=portal, title=title, message=message, exclude=exclude, parent=parent
+    )
     status = m.exec_()
     if status == QDialog.Accepted:
         return m.text
