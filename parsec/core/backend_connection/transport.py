@@ -2,11 +2,10 @@ import trio
 from uuid import uuid4
 from async_generator import asynccontextmanager
 from structlog import get_logger
-from urllib.parse import urlparse
 
 from parsec.types import DeviceID
 from parsec.crypto import SigningKey
-from parsec.api.transport import BaseTransport, TransportError, TCPTransport
+from parsec.api.transport import BaseTransport, TransportError, ClientTransportFactory
 from parsec.api.protocole import (
     ProtocoleError,
     HandshakeRevokedDevice,
@@ -29,18 +28,6 @@ __all__ = (
 
 
 logger = get_logger()
-
-
-async def _transport_factory(addr: str) -> BaseTransport:
-    # TODO: handle ssl and websocket here
-    parsed_addr = urlparse(addr)
-    try:
-        stream = await trio.open_tcp_stream(parsed_addr.hostname, parsed_addr.port)
-        return TCPTransport(stream)
-
-    except OSError as exc:
-        logger.debug("Impossible to connect to backend", reason=exc)
-        raise BackendNotAvailable(exc) from exc
 
 
 async def _do_handshade(
@@ -78,13 +65,13 @@ async def _do_handshade(
 
 
 async def _authenticated_transport_factory(
-    addr: str, device_id: DeviceID, signing_key: SigningKey
+    transport_factory: ClientTransportFactory, device_id: DeviceID, signing_key: SigningKey
 ) -> BaseTransport:
-    transport = await _transport_factory(addr)
     # TODO: a bit ugly to configure and connect a logger here,
     # use contextvar instead ?
+    transport = await transport_factory.new_transport()
     transport.log = logger.bind(auth=device_id, id=uuid4().hex)
-    transport.log.info("Transport setup", addr=addr)
+    transport.log.info("Transport setup", addr=transport_factory.addr)
     try:
         await _do_handshade(transport, device_id, signing_key)
 
@@ -98,9 +85,14 @@ async def _authenticated_transport_factory(
 
 @asynccontextmanager
 async def authenticated_transport_factory(
-    addr: str, device_id: DeviceID, signing_key: SigningKey
+    addr: str,
+    device_id: DeviceID,
+    signing_key: SigningKey,
+    certfile: str = None,
+    keyfile: str = None,
 ) -> BaseTransport:
-    transport = await _authenticated_transport_factory(addr, device_id, signing_key)
+    transport_factory = ClientTransportFactory(addr, certfile, keyfile)
+    transport = await _authenticated_transport_factory(transport_factory, device_id, signing_key)
     try:
         yield transport
 
@@ -109,8 +101,11 @@ async def authenticated_transport_factory(
 
 
 @asynccontextmanager
-async def anonymous_transport_factory(addr: str) -> BaseTransport:
-    transport = await _transport_factory(addr)
+async def anonymous_transport_factory(
+    addr: str, certfile: str = None, keyfile: str = None
+) -> BaseTransport:
+    transport_factory = ClientTransportFactory(addr, certfile, keyfile)
+    transport = await transport_factory.new_transport()
     transport.log = logger.bind(auth="<anonymous>", id=uuid4().hex)
     transport.log.info("Transport setup", addr=addr)
     await _do_handshade(transport)
@@ -122,8 +117,8 @@ async def anonymous_transport_factory(addr: str) -> BaseTransport:
 
 
 class TransportPool:
-    def __init__(self, addr, device_id, signing_key, max):
-        self.addr = addr
+    def __init__(self, transport_factory, device_id, signing_key, max):
+        self.transport_factory = transport_factory
         self.device_id = device_id
         self.signing_key = signing_key
         self.transports = []
@@ -144,7 +139,7 @@ class TransportPool:
                     raise trio.ClosedResourceError()
 
                 transport = await _authenticated_transport_factory(
-                    self.addr, self.device_id, self.signing_key
+                    self.transport_factory, self.device_id, self.signing_key
                 )
 
             try:
@@ -160,9 +155,15 @@ class TransportPool:
 
 @asynccontextmanager
 async def transport_pool_factory(
-    addr: str, device_id: DeviceID, signing_key: SigningKey, max: int = 4
+    addr: str,
+    device_id: DeviceID,
+    signing_key: SigningKey,
+    max: int = 4,
+    certfile: str = None,
+    keyfile: str = None,
 ) -> TransportPool:
-    pool = TransportPool(addr, device_id, signing_key, max)
+    transport_factory = ClientTransportFactory(addr, certfile, keyfile)
+    pool = TransportPool(transport_factory, device_id, signing_key, max)
     try:
         yield pool
 

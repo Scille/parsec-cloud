@@ -25,7 +25,7 @@ from parsec.backend import BackendApp, config_factory as backend_config_factory
 from parsec.backend.user import User as BackendUser, new_user_factory as new_backend_user_factory
 from parsec.backend.user import UserAlreadyExistsError
 from parsec.api.protocole import ClientHandshake, AnonymousClientHandshake
-from parsec.api.transport import TCPTransport
+from parsec.api.transport import WebsocketTransport
 
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
@@ -151,7 +151,7 @@ def unused_tcp_port():
 
 @pytest.fixture(scope="session")
 def unused_tcp_addr(unused_tcp_port):
-    return "tcp://127.0.0.1:%s" % unused_tcp_port
+    return "ws://127.0.0.1:%s/foo" % unused_tcp_port
 
 
 @pytest.fixture(scope="session")
@@ -514,7 +514,8 @@ def backend_sock_factory(server_factory):
     async def _backend_sock_factory(backend, auth_as):
         async with server_factory(backend.handle_client) as server:
             stream = server.connection_factory()
-            transport = FreezeTestOnTransportError(TCPTransport(stream))
+            transport = await WebsocketTransport.init_for_client(stream, "foo", "bar")
+            transport = FreezeTestOnTransportError(transport)
 
             if auth_as:
                 # Handshake

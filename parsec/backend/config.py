@@ -4,6 +4,8 @@ import itertools
 from typing import List, Union
 from collections import defaultdict
 
+from parsec.api.transport import ServerTransportFactory
+
 
 __all__ = ("config_factory", "BackendConfig", "BaseBlockstoreConfig")
 
@@ -163,11 +165,30 @@ class BackendConfig:
 
     handshake_challenge_size: int = 48
 
+    transport_scheme: str = "ws"
+    certfile: str = None
+    keyfile: str = None
+
 
 def config_factory(
-    db_url: str = "MOCKED", blockstore_type: str = "MOCKED", debug: bool = False, environ: dict = {}
+    db_url: str = "MOCKED",
+    blockstore_type: str = "MOCKED",
+    transport_scheme: str = "ws",
+    certfile: str = None,
+    keyfile: str = None,
+    debug: bool = False,
+    environ: dict = {},
 ) -> BackendConfig:
-    config = {"debug": debug, "db_url": db_url}
+    if transport_scheme.lower() not in ("ws", "wss", "tcp", "tcp+ssl"):
+        raise ValueError("TRANSPORT_SCHEME must be `ws`, `wss`, `tcp` or `tcp+ssl`")
+
+    config = {
+        "db_url": db_url,
+        "transport_scheme": transport_scheme.lower(),
+        "certfile": certfile,
+        "keyfile": keyfile,
+        "debug": debug,
+    }
 
     if db_url.startswith("postgresql://"):
         config["db_type"] = "POSTGRESQL"

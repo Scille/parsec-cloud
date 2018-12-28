@@ -4,14 +4,13 @@ from uuid import uuid4
 from structlog import get_logger
 
 from parsec.event_bus import EventBus
-from parsec.api.transport import TCPTransport, TransportError
+from parsec.api.transport import TransportError, ServerTransportFactory
 from parsec.api.protocole import (
     packb,
     unpackb,
     ProtocoleError,
     MessageSerializationError,
     InvalidMessageError,
-    HandshakeFormatError,
     ServerHandshake,
 )
 from parsec.backend.events import EventsComponent
@@ -80,6 +79,10 @@ class BackendApp:
         self.nursery = None
         self.dbh = None
         self.events = EventsComponent(self.event_bus)
+
+        self.transport_factory = ServerTransportFactory(
+            config.transport_scheme, certfile=config.certfile, keyfile=config.keyfile
+        )
 
         if self.config.db_url == "MOCKED":
             self.user = MemoryUserComponent(self.event_bus)
@@ -187,8 +190,8 @@ class BackendApp:
         await transport.send(result_req)
         return context
 
-    async def handle_client(self, sockstream, swallow_crash=False):
-        transport = TCPTransport(sockstream)
+    async def handle_client(self, stream, swallow_crash=False):
+        transport = await self.transport_factory.wrap_with_transport(stream)
         client_ctx = None
         try:
             logger.debug("start handshake")

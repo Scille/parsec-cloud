@@ -4,7 +4,11 @@ from async_generator import asynccontextmanager
 from parsec.types import DeviceID
 from parsec.crypto import SigningKey
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
-from parsec.core.backend_connection.transport import transport_pool_factory, TransportPool
+from parsec.core.backend_connection.transport import (
+    transport_pool_factory,
+    TransportPool,
+    TransportError,
+)
 from parsec.core.backend_connection.cmds import BackendCmds
 
 
@@ -32,12 +36,16 @@ class BackendCmdsPool(BackendCmds):
 
                     return await getattr(cmds, name)(*args, **kwargs)
 
-            except BackendNotAvailable as exc:
-                async with self.transport_pool.acquire(force_fresh=True) as transport:
-                    cmds = BackendCmds(transport, transport.log)
-                    transport.cmds = cmds
+            except (BackendNotAvailable, TransportError):
+                try:
+                    async with self.transport_pool.acquire(force_fresh=True) as transport:
+                        cmds = BackendCmds(transport, transport.log)
+                        transport.cmds = cmds
 
-                    return await getattr(cmds, name)(*args, **kwargs)
+                        return await getattr(cmds, name)(*args, **kwargs)
+
+                except TransportError as exc:
+                    raise BackendNotAvailable(exc) from exc
 
         wrapper.__name__ = name
 

@@ -36,7 +36,7 @@ from parsec.api.protocole import (
     device_create_serializer,
     device_revoke_serializer,
 )
-from parsec.core.types import RemoteDevice, RemoteUser, RemoteDevicesMapping, LocalDevice
+from parsec.core.types import RemoteDevice, RemoteUser, RemoteDevicesMapping
 from parsec.core.backend_connection.exceptions import BackendConnectionError, BackendNotAvailable
 from parsec.core.backend_connection.transport import (
     authenticated_transport_factory,
@@ -481,13 +481,27 @@ async def backend_cmds_factory(
         parsec.api.protocole.ProtocoleError
         BackendNotAvailable
     """
-    async with authenticated_transport_factory(addr, device_id, signing_key) as transport:
-        log = logger.bind(addr=addr, auth=device_id, id=uuid4().hex)
-        yield BackendCmds(transport, log)
+    try:
+        async with authenticated_transport_factory(addr, device_id, signing_key) as transport:
+            # TODO: a logger is already configured in the transport...
+            log = logger.bind(addr=addr, auth=device_id, id=uuid4().hex)
+            yield BackendCmds(transport, log)
+
+    except TransportError as exc:
+        raise BackendNotAvailable(exc) from exc
 
 
 @asynccontextmanager
 async def backend_anonymous_cmds_factory(addr: str) -> BackendAnonymousCmds:
-    async with anonymous_transport_factory(addr) as transport:
-        log = logger.bind(addr=addr, auth="<anonymous>", id=uuid4().hex)
-        yield BackendAnonymousCmds(transport, log)
+    """
+    Raises:
+        BackendNotAvailable
+    """
+    try:
+        async with anonymous_transport_factory(addr) as transport:
+            # TODO: a logger is already configured in the transport...
+            log = logger.bind(addr=addr, auth="<anonymous>", id=uuid4().hex)
+            yield BackendAnonymousCmds(transport, log)
+
+    except TransportError as exc:
+        raise BackendNotAvailable(exc) from exc

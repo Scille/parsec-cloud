@@ -3,7 +3,7 @@ import trio
 
 from parsec.api.protocole import ServerHandshake
 from parsec.trustchain import certify_device_revocation
-from parsec.api.transport import TCPTransport
+from parsec.api.transport import WebsocketTransport
 from parsec.core.backend_connection import (
     BackendNotAvailable,
     BackendHandshakeError,
@@ -65,7 +65,7 @@ async def test_revoked_device_handshake(running_backend, backend, alice, alice2)
 @pytest.mark.trio
 async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backend_addr):
     async def poorly_serve_client(stream):
-        transport = TCPTransport(stream)
+        transport = await WebsocketTransport.init_for_client(stream, "foo", "bar")
         handshake = ServerHandshake()
         await transport.send(handshake.build_challenge_req())
         await transport.recv()

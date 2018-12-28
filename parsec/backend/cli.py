@@ -56,18 +56,56 @@ def init_cmd(db, force):
     help="Block store the clients should write into (default: mocked in memory). Set environment variables accordingly.",
 )
 @click.option(
+    "--transport-scheme",
+    default="ws",
+    type=click.Choice(("ws", "tcp")),
+    help="Connection's transport type.",
+)
+@click.option(
+    "--keyfile", default=None, type=click.File(exists=True, folder_okay=False), help="SSL key file"
+)
+@click.option(
+    "--certfile",
+    default=None,
+    type=click.File(exists=True, folder_okay=False),
+    help="SSL certificate file",
+)
+@click.option(
     "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
 )
 @click.option("--log-format", "-f", default="CONSOLE", type=click.Choice(("CONSOLE", "JSON")))
 @click.option("--log-file", "-o")
 @click.option("--log-filter", default=None)
 @click.option("--debug", "-d", is_flag=True)
-def run_cmd(host, port, store, blockstore, log_level, log_format, log_file, log_filter, debug):
+def run_cmd(
+    host,
+    port,
+    store,
+    blockstore,
+    transport_scheme,
+    keyfile,
+    certfile,
+    transport,
+    log_level,
+    log_format,
+    log_file,
+    log_filter,
+    debug,
+):
     configure_logging(log_level, log_format, log_file, log_filter)
+
+    if certfile or keyfile:
+        transport_scheme = "wss" if transport_scheme == "ws" else "tcp+ssl"
 
     try:
         config = config_factory(
-            debug=debug, blockstore_type=blockstore, db_url=store, environ=os.environ
+            blockstore_type=blockstore,
+            db_url=store,
+            transport_scheme=transport_scheme,
+            certfile=certfile,
+            keyfile=keyfile,
+            debug=debug,
+            environ=os.environ,
         )
     except ValueError as exc:
         raise SystemExit(f"Invalid configuration: {exc}")
@@ -93,7 +131,6 @@ def run_cmd(host, port, store, blockstore, log_level, log_format, log_file, log_
         f"Starting Parsec Backend on {host}:{port} (db={config.db_type}, blockstore={config.blockstore_config.type})"
     )
     try:
-        # from tests.monitor import Monitor
         trio_asyncio.run(_run_backend)
     except KeyboardInterrupt:
         print("bye ;-)")
