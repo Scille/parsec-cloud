@@ -190,7 +190,7 @@ def config_factory(
         "debug": debug,
     }
 
-    if db_url.startswith("postgresql://"):
+    if db_url.startswith("postgresql://") or db_url.startswith("postgres://"):
         config["db_type"] = "POSTGRESQL"
     elif db_url == "MOCKED":
         config["db_type"] = "MOCKED"
