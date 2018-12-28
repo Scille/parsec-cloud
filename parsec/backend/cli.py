@@ -62,12 +62,12 @@ def init_cmd(db, force):
     help="Connection's transport type.",
 )
 @click.option(
-    "--keyfile", default=None, type=click.File(exists=True, folder_okay=False), help="SSL key file"
+    "--keyfile", default=None, type=click.Path(exists=True, dir_okay=False), help="SSL key file"
 )
 @click.option(
     "--certfile",
     default=None,
-    type=click.File(exists=True, folder_okay=False),
+    type=click.Path(exists=True, dir_okay=False),
     help="SSL certificate file",
 )
 @click.option(
@@ -85,7 +85,6 @@ def run_cmd(
     transport_scheme,
     keyfile,
     certfile,
-    transport,
     log_level,
     log_format,
     log_file,
