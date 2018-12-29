@@ -262,7 +262,7 @@ class ClientTransportFactory:
             raise ValueError(f"Unknown scheme in {addr} (must be ws, wss, tcp or tcp+ssl)")
 
         self.hostname = parsed_addr.hostname
-        self.port = parsed_addr.port
+        self.port = parsed_addr.port or (443 if not use_ssl else 80)
         self.path = parsed_addr.path
 
         if not use_ssl:
