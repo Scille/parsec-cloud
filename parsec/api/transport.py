@@ -3,6 +3,7 @@ from trio import BrokenResourceError
 import struct
 from structlog import get_logger
 from urllib.parse import urlsplit
+from wsproto.frame_protocol import CloseReason
 from wsproto.connection import WSConnection, ConnectionType
 from wsproto.events import (
     ConnectionClosed,
@@ -189,10 +190,7 @@ class WebsocketTransport(BaseTransport):
             return transport
 
         logger.warning("[S] Unexpected event during websocket handshake", ws_event=event)
-        reason = f"[S] Unexpected event during websocket handshake: {event}"
-        transport.ws.close(code=1000, reason=reason)
-        await transport._net_send()
-        raise TransportError(reason)
+        raise TransportError(f"[S] Unexpected event during websocket handshake: {event}")
 
     async def aclose(self) -> None:
         try:

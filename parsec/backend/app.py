@@ -191,8 +191,33 @@ class BackendApp:
         return context
 
     async def handle_client(self, stream, swallow_crash=False):
-        transport = await self.transport_factory.wrap_with_transport(stream)
         client_ctx = None
+        try:
+            transport = await self.transport_factory.wrap_with_transport(stream)
+
+        except TransportError:
+            # A crash during transport setup could mean the client tried to
+            # access us from a web browser (hence sending http request).
+
+            content_body = b"This service requires use of the WebSocket protocol"
+            content = (
+                b"HTTP/1.1 426 OK\r\n"
+                b"Upgrade: WebSocket\r\n"
+                b"Content-Length: %d\r\n"
+                b"Connection: Upgrade\r\n"
+                b"Content-Type: text/html; charset=UTF-8\r\n"
+                b"\r\n"
+            ) % len(content_body)
+
+            try:
+                await stream.send_all(content + content_body)
+
+            except TransportError:
+                # Stream is really dead, nothing else to do...
+                pass
+
+            return
+
         try:
             logger.debug("start handshake")
             client_ctx = await self._do_handshake(transport)
@@ -206,7 +231,7 @@ class BackendApp:
             await self._handle_client_loop(transport, client_ctx)
 
         except (TransportError, MessageSerializationError) as exc:
-            # Client has closed connection or sent an invalid trame
+            # Client has closed connection or sent an invalid frame
             rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
             try:
                 await transport.send(packb(rep))
