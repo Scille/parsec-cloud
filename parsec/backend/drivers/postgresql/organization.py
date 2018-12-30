@@ -55,26 +55,15 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         if not data:
             raise OrganizationNotFoundError()
 
-        return Organization(
-            name=data[0], bootstrap_token=data[1], root_verify_key=VerifyKey(data[2])
-        )
+        rvk = VerifyKey(data[2]) if data[2] else None
+        return Organization(name=data[0], bootstrap_token=data[1], root_verify_key=rvk)
 
     async def bootstrap(
         self, name: str, bootstrap_token: str, root_verify_key: VerifyKey, user: User
     ) -> None:
-        organization = await self.get(name)
-
-        try:
-            await self.user.create_user(user)
-
-        except UserError as exc:
-            raise OrganizationFirstUserCreationError() from exc
-
-        self._organizations[name] = organization.evolve(root_verify_key=root_verify_key)
-
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                organization = self._get(conn, name)
+                organization = await self._get(conn, name)
 
                 if organization.is_bootstrapped():
                     raise OrganizationAlreadyBootstrappedError()
@@ -83,17 +72,17 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     raise OrganizationInvalidBootstrapTokenError()
 
                 try:
-                    await self.user_component._create_user(user)
+                    await self.user_component._create_user(conn, user)
                 except UserError as exc:
                     raise OrganizationFirstUserCreationError() from exc
 
-                result = conn.execute(
+                result = await conn.execute(
                     """
                     UPDATE organizations SET root_verify_key = $3 WHERE name = $1 AND bootstrap_token = $2 AND root_verify_key IS NULL;
                     """,
                     name,
                     bootstrap_token,
-                    root_verify_key,
+                    root_verify_key.encode(),
                 )
 
                 if result != "UPDATE 1":

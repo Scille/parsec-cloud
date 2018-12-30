@@ -77,8 +77,9 @@ async def _create_db_tables(conn):
     await conn.execute(
         """
         CREATE TABLE organizations (
-            name VARCHAR(32) PRIMARY KEY,
-            bootstrap_token VARCHAR(32) NOT NULL,
+            _id SERIAL PRIMARY KEY,
+            name VARCHAR(32) UNIQUE NOT NULL,
+            bootstrap_token TEXT NOT NULL,
             root_verify_key BYTEA
         );
 

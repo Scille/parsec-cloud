@@ -38,6 +38,13 @@ async def organization_bootstrap(
     return organization_bootstrap_serializer.rep_loads(raw_rep)
 
 
+@pytest.fixture
+async def fresh_organization(anonymous_backend_sock, name="cool_org_inc"):
+    rep = await organization_create(anonymous_backend_sock, name)
+    assert rep["status"] == "ok"
+    return name, rep["bootstrap_token"]
+
+
 @pytest.mark.trio
 async def test_organization_create_and_bootstrap(
     backend, backend_addr, anonymous_backend_sock, backend_sock_factory
@@ -77,3 +84,71 @@ async def test_organization_create_and_bootstrap(
 
     async with backend_sock_factory(backend, device) as sock:
         await ping(sock)
+
+
+@pytest.mark.trio
+async def test_organization_create_bad_name(anonymous_backend_sock):
+    rep = await organization_create(anonymous_backend_sock, "a" * 33)
+    assert rep["status"] == "bad_message"
+
+
+@pytest.mark.trio
+async def test_organization_bootstrap_bad_data(
+    anonymous_backend_sock, mallory, bob, root_signing_key, root_verify_key, fresh_organization
+):
+    good_rvk = root_verify_key
+    bad_rvk = bob.verify_key
+
+    now = pendulum.now()
+    good_cu = certify_user(None, root_signing_key, mallory.user_id, mallory.public_key, now)
+    good_cd = certify_device(None, root_signing_key, mallory.device_id, mallory.verify_key, now)
+
+    bad_now = now - pendulum.interval(seconds=1)
+    bad_now_cu = certify_user(None, root_signing_key, mallory.user_id, mallory.public_key, bad_now)
+    bad_now_cd = certify_device(
+        None, root_signing_key, mallory.device_id, mallory.verify_key, bad_now
+    )
+    bad_id_cu = certify_user(None, root_signing_key, bob.user_id, mallory.public_key, now)
+    bad_id_cd = certify_device(None, root_signing_key, bob.device_id, mallory.verify_key, now)
+    bad_key_cu = certify_user(None, bob.signing_key, mallory.user_id, mallory.public_key, now)
+    bad_key_cd = certify_device(None, bob.signing_key, mallory.device_id, mallory.verify_key, now)
+
+    good_name, good_bootstrap_token = fresh_organization
+    bad_name = "dummy-org"
+    bad_bootstrap_token = "bad-123456"
+
+    for i, (status, *params) in enumerate(
+        [
+            ("not_found", bad_name, good_bootstrap_token, good_cu, good_cd, good_rvk),
+            ("not_found", good_name, bad_bootstrap_token, good_cu, good_cd, good_rvk),
+            ("invalid_certification", good_name, good_bootstrap_token, good_cu, good_cd, bad_rvk),
+            ("invalid_data", good_name, good_bootstrap_token, bad_now_cu, good_cd, good_rvk),
+            ("invalid_data", good_name, good_bootstrap_token, bad_id_cu, good_cd, good_rvk),
+            (
+                "invalid_certification",
+                good_name,
+                good_bootstrap_token,
+                bad_key_cu,
+                good_cd,
+                good_rvk,
+            ),
+            ("invalid_data", good_name, good_bootstrap_token, good_cu, bad_now_cd, good_rvk),
+            ("invalid_data", good_name, good_bootstrap_token, good_cu, bad_id_cd, good_rvk),
+            (
+                "invalid_certification",
+                good_name,
+                good_bootstrap_token,
+                good_cu,
+                bad_key_cd,
+                good_rvk,
+            ),
+        ]
+    ):
+        rep = await organization_bootstrap(anonymous_backend_sock, *params)
+        assert rep["status"] == status
+
+    # Finaly cheap test to make sure our "good" data were really good
+    rep = await organization_bootstrap(
+        anonymous_backend_sock, good_name, good_bootstrap_token, good_cu, good_cd, good_rvk
+    )
+    assert rep["status"] == "ok"

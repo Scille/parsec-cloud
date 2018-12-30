@@ -1,4 +1,4 @@
-from parsec.schema import fields
+from parsec.schema import fields, validate
 from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 
 
@@ -6,7 +6,7 @@ __all__ = "organization_bootstrap_serializer"
 
 
 class OrganizationCreateReqSchema(BaseReqSchema):
-    name = fields.String(required=True)
+    name = fields.String(required=True, validate=validate.Length(min=1, max=32))
 
 
 class OrganizationCreateRepSchema(BaseRepSchema):
