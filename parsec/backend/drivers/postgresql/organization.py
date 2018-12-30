@@ -26,7 +26,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             try:
                 result = await conn.execute(
                     """
-                    INSERT INTO organization (
+                    INSERT INTO organizations (
                         name, bootstrap_token
                     ) VALUES ($1, $2)
                     """,

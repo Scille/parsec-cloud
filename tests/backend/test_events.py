@@ -87,7 +87,7 @@ async def subscribe_pinged(sock, pings):
     assert rep == {"status": "ok"}
 
 
-async def ping(sock, subject):
+async def ping(sock, subject="foo"):
     raw_req = ping_serializer.req_dumps({"cmd": "ping", "ping": subject})
     await sock.send(raw_req)
     raw_rep = await sock.recv()
