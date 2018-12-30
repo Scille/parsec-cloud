@@ -147,10 +147,12 @@ class WebsocketTransport(BaseTransport):
 
     async def _net_send(self):
         out_data = self.ws.bytes_to_send()
+        print(f"===> {out_data!r}")
         try:
             await self.stream.send_all(out_data)
 
         except BrokenResourceError as exc:
+            print("OOops !", exc)
             raise TransportError(*exc.args) from exc
 
     @classmethod
@@ -169,8 +171,6 @@ class WebsocketTransport(BaseTransport):
         else:
             logger.warning("[C] Unexpected event during websocket handshake", ws_event=event)
             reason = f"[C] Unexpected event during websocket handshake: {event}"
-            transport.ws.close(code=1000, reason=reason)
-            await transport._net_send()
             raise TransportError(reason)
 
         return transport
@@ -194,7 +194,10 @@ class WebsocketTransport(BaseTransport):
 
     async def aclose(self) -> None:
         try:
+            self.ws.close(code=CloseReason.NORMAL_CLOSURE)
+            await self._net_send()
             await self.stream.aclose()
+
         except BrokenResourceError as exc:
             raise TransportError(*exc.args) from exc
 
@@ -260,7 +263,7 @@ class ClientTransportFactory:
             raise ValueError(f"Unknown scheme in {addr} (must be ws, wss, tcp or tcp+ssl)")
 
         self.hostname = parsed_addr.hostname
-        self.port = parsed_addr.port or (443 if not use_ssl else 80)
+        self.port = parsed_addr.port or (80 if not use_ssl else 443)
         self.path = parsed_addr.path
 
         if not use_ssl:
