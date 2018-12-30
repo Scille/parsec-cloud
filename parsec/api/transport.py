@@ -74,7 +74,7 @@ class TCPTransport(BaseTransport):
         try:
             await self.stream.aclose()
         except BrokenResourceError as exc:
-            raise TransportError(*exc.args) from exc
+            pass
 
     async def send(self, msg: bytes) -> None:
         assert len(msg) <= self.MAX_MSG_SIZE
@@ -199,7 +199,7 @@ class WebsocketTransport(BaseTransport):
             await self.stream.aclose()
 
         except BrokenResourceError as exc:
-            raise TransportError(*exc.args) from exc
+            pass
 
     async def send(self, msg: bytes) -> None:
         """
