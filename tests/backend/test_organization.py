@@ -147,7 +147,7 @@ async def test_organization_bootstrap_bad_data(
         rep = await organization_bootstrap(anonymous_backend_sock, *params)
         assert rep["status"] == status
 
-    # Finaly cheap test to make sure our "good" data were really good
+    # Finally cheap test to make sure our "good" data were really good
     rep = await organization_bootstrap(
         anonymous_backend_sock, good_name, good_bootstrap_token, good_cu, good_cd, good_rvk
     )

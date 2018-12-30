@@ -5,6 +5,7 @@ from parsec.crypto_types import VerifyKey, export_root_verify_key, import_root_v
 
 
 __all__ = (
+    "OrganizationID",
     "BackendOrganizationBootstrapAddr",
     "BackendOrganizationAddr",
     "UserID",
@@ -13,19 +14,27 @@ __all__ = (
 )
 
 
+class OrganizationID(str):
+    __slots__ = ()
+    regex = re.compile(r"^\w{1,32}$")
+
+    def __init__(self, raw):
+        if not isinstance(raw, str) or not self.regex.match(raw):
+            raise ValueError("Invalid organization ID")
+
+    def __repr__(self):
+        return f"<OrganizationID {super().__repr__()}>"
+
+
 class BackendOrganizationAddr(str):
-    __slots__ = ("_root_verify_key", "_domain")
-    path_regex = re.compile(r"^/(\w{1,32})$")
+    __slots__ = ("_root_verify_key", "_organization")
 
     def __init__(self, raw: str):
         if not isinstance(raw, str):
             raise ValueError("Invalid user backend domain address.")
 
         parsed = urlsplit(raw)
-
-        if not self.path_regex.match(parsed.path):
-            raise ValueError("Invalid domain name in backend domain address")
-        self._domain = parsed.path[1:]
+        self._organization = OrganizationID(parsed.path[1:])
 
         query = parse_qs(parsed.query)
         try:
@@ -34,8 +43,8 @@ class BackendOrganizationAddr(str):
         except (KeyError, IndexError) as exc:
             raise ValueError("Backend domain address must contains `rvk` params.") from exc
 
-    def get_domain(self) -> str:
-        return self._domain
+    def get_organization(self) -> OrganizationID:
+        return self._organization
 
     def get_root_verify_key(self) -> VerifyKey:
         return self._root_verify_key
@@ -43,7 +52,14 @@ class BackendOrganizationAddr(str):
 
 class BackendOrganizationBootstrapAddr(str):
     __slots__ = ("_bootstrap_token", "_organization")
-    path_regex = re.compile(r"^/\w{1,32}$")
+
+    @classmethod
+    def build(
+        cls, backend_addr: str, name: str, bootstrap_token: str
+    ) -> "BackendOrganizationBootstrapAddr":
+        scheme, netloc, _, _, fragment = urlsplit(backend_addr)
+        query = f"bootstrap-token={bootstrap_token}"
+        return cls(urlunsplit((scheme, netloc, name, query, fragment)))
 
     def __init__(self, raw: str):
         if not isinstance(raw, str):
@@ -51,9 +67,7 @@ class BackendOrganizationBootstrapAddr(str):
 
         parsed = urlsplit(raw)
 
-        if not self.path_regex.match(parsed.path):
-            raise ValueError("Invalid domain name in backend domain address")
-        self._organization = parsed.path[1:]
+        self._organization = OrganizationID(parsed.path[1:])
 
         query = parse_qs(parsed.query)
         try:
@@ -64,7 +78,7 @@ class BackendOrganizationBootstrapAddr(str):
                 "Backend domain address must contains a `bootstrap-token` param."
             ) from exc
 
-    def get_organization(self) -> str:
+    def get_organization(self) -> OrganizationID:
         return self._organization
 
     def get_bootstrap_token(self) -> str:
