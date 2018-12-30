@@ -198,7 +198,7 @@ class WebsocketTransport(BaseTransport):
             await self._net_send()
             await self.stream.aclose()
 
-        except BrokenResourceError as exc:
+        except (BrokenResourceError, TransportError) as exc:
             pass
 
     async def send(self, msg: bytes) -> None:
