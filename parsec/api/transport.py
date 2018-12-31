@@ -84,7 +84,6 @@ class Transport:
         # a handshake, we need to send it and wait for a response.
         await transport._net_send()
         event = await transport._next_ws_event()
-        print("Client event", event)
 
         if isinstance(event, ConnectionEstablished):
             transport.logger.debug("WebSocket negotiation complete", ws_event=event)
@@ -103,7 +102,6 @@ class Transport:
 
         # Wait for client to init WebSocket handshake
         event = await transport._next_ws_event()
-        print("Server event", event)
         if isinstance(event, ConnectionRequested):
             transport.logger.debug("Accepting WebSocket upgrade")
             transport.ws.accept(event)
