@@ -9,14 +9,14 @@ from functools import partial
 
 from parsec.types import DeviceID
 from parsec.backend.blockstore import (
-    BaseblockStoreComponent,
+    BaseblockstoreComponent,
     BlockstoreAlreadyExistsError,
     BlockstoreNotFoundError,
     BlockstoreTimeoutError,
 )
 
 
-class S3BlockstoreComponent(BaseblockStoreComponent):
+class S3BlockstoreComponent(BaseblockstoreComponent):
     def __init__(self, s3_region, s3_bucket, s3_key, s3_secret):
         self._s3 = None
         self._s3_bucket = None
