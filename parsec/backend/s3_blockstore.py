@@ -9,14 +9,14 @@ from functools import partial
 
 from parsec.types import DeviceID
 from parsec.backend.blockstore import (
-    BaseblockStoreComponent,
+    BaseBlockstoreComponent,
     BlockstoreAlreadyExistsError,
     BlockstoreNotFoundError,
     BlockstoreTimeoutError,
 )
 
 
-class S3BlockstoreComponent(BaseblockStoreComponent):
+class S3BlockstoreComponent(BaseBlockstoreComponent):
     def __init__(self, s3_region, s3_bucket, s3_key, s3_secret):
         self._s3 = None
         self._s3_bucket = None
@@ -28,7 +28,7 @@ class S3BlockstoreComponent(BaseblockStoreComponent):
 
     async def read(self, id: UUID) -> bytes:
         try:
-            obj = self._s3.get_object(Bucket=self._s3_bucket, Key=id)
+            obj = self._s3.get_object(Bucket=self._s3_bucket, Key=str(id))
 
         except S3ClientError as exc:
             if exc.response["Error"]["Code"] == "404":
@@ -49,7 +49,7 @@ class S3BlockstoreComponent(BaseblockStoreComponent):
                 partial(
                     self._s3.put_object,
                     Bucket=self._s3_bucket,
-                    Key=id,
+                    Key=str(id),
                     Body=block,
                     Metadata={"author": author},
                 )

@@ -2,17 +2,16 @@ import trio
 from structlog import get_logger
 
 from parsec.event_bus import EventBus
+from parsec.api.transport import TransportError
 from parsec.core.types import LocalDevice
 from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
     BackendHandshakeError,
     BackendDeviceRevokedError,
-)
-from parsec.core.backend_connection.cmds import (
     BackendCmdsInvalidResponse,
     BackendCmdsBadResponse,
-    backend_cmds_factory,
 )
+from parsec.core.backend_connection.porcelain import backend_cmds_factory
 
 
 MAX_COOLDOWN = 30
@@ -23,7 +22,7 @@ class BackendEventsManager:
     def __init__(self, device: LocalDevice, event_bus: EventBus):
         self.device = device
         self.event_bus = event_bus
-        self._backend_online = False
+        self._backend_online = None
         self._subscribed_beacons = set()
         self._subscribed_beacons_changed = trio.Event()
         self._task_info = None
@@ -50,11 +49,12 @@ class BackendEventsManager:
         self._task_info = None
 
     def _event_pump_lost(self):
-        self._backend_online = False
-        self.event_bus.send("backend.offline")
+        if self._backend_online is not False:
+            self._backend_online = False
+            self.event_bus.send("backend.offline")
 
     def _event_pump_ready(self):
-        if not self._backend_online:
+        if self._backend_online is not True:
             self._backend_online = True
             self.event_bus.send("backend.online")
         self.event_bus.send("backend.listener.restarted")
@@ -84,9 +84,11 @@ class BackendEventsManager:
             try:
 
                 async with trio.open_nursery() as nursery:
+                    logger.info("Try to connect to backend...")
                     self._subscribed_beacons_changed.clear()
                     event_pump_cancel_scope = await nursery.start(self._event_pump)
                     backend_connection_failures = 0
+                    logger.info("Backend online")
                     self._event_pump_ready()
                     while True:
                         await self._subscribed_beacons_changed.wait()
@@ -95,19 +97,16 @@ class BackendEventsManager:
                         self._event_pump_ready()
                         event_pump_cancel_scope.cancel()
                         event_pump_cancel_scope = new_cancel_scope
+                        logger.info("Event listener restarted")
 
-            except BackendNotAvailable as exc:
+            except (TransportError, BackendNotAvailable) as exc:
                 # In case of connection failure, wait a bit and restart
                 self._event_pump_lost()
                 cooldown_time = 2 ** backend_connection_failures
                 backend_connection_failures += 1
                 if cooldown_time > MAX_COOLDOWN:
                     cooldown_time = MAX_COOLDOWN
-                logger.debug(
-                    "Connection lost with backend, retrying after cooldown",
-                    reason=exc,
-                    cooldown_time=cooldown_time,
-                )
+                logger.info("Backend offline", reason=exc, cooldown_time=cooldown_time)
                 await trio.sleep(cooldown_time)
 
             except (BackendCmdsInvalidResponse, BackendCmdsBadResponse):
@@ -125,7 +124,7 @@ class BackendEventsManager:
     async def _event_pump(self, *, task_status=trio.TASK_STATUS_IGNORED):
         with trio.open_cancel_scope() as cancel_scope:
             async with backend_cmds_factory(
-                self.device.backend_addr, self.device.device_id, self.device.signing_key
+                self.device.backend_addr, self.device.device_id, self.device.signing_key, max_pool=1
             ) as cmds:
                 # Copy `self._subscribed_beacons` to avoid concurrent modifications
                 await cmds.events_subscribe(

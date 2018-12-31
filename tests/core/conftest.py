@@ -5,7 +5,7 @@ from async_generator import asynccontextmanager
 from parsec.types import DeviceID
 from parsec.core.schemas import dumps_manifest
 from parsec.core.devices_manager import generate_new_device
-from parsec.core.backend_connection import backend_cmds_pool_factory
+from parsec.core.backend_connection import backend_cmds_factory
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.fs import FS
 
@@ -13,7 +13,7 @@ from tests.common import freeze_time, InMemoryLocalDB
 
 
 @pytest.fixture
-def device_factory(backend_addr, root_verify_key):
+def device_factory(backend_addr):
     users = {}
     devices = {}
     count = 0
@@ -30,7 +30,7 @@ def device_factory(backend_addr, root_verify_key):
         device_id = DeviceID(f"{user_id}@{device_name}")
         assert device_id not in devices
 
-        device = generate_new_device(device_id, backend_addr, root_verify_key)
+        device = generate_new_device(device_id, backend_addr)
         try:
             private_key, user_manifest_access = users[user_id]
         except KeyError:
@@ -88,7 +88,7 @@ def encryption_manager_factory():
     @asynccontextmanager
     async def _encryption_manager_factory(device, local_db=None):
         local_db = local_db or InMemoryLocalDB()
-        async with backend_cmds_pool_factory(
+        async with backend_cmds_factory(
             device.backend_addr, device.device_id, device.signing_key
         ) as cmds:
             em = EncryptionManager(device, local_db, cmds)
@@ -159,7 +159,7 @@ def backend_addr_factory(running_backend, tcp_stream_spy):
 
 @pytest.fixture
 async def alice_backend_cmds(running_backend, alice):
-    async with backend_cmds_pool_factory(
+    async with backend_cmds_factory(
         running_backend.addr, alice.device_id, alice.signing_key
     ) as cmds:
         yield cmds
@@ -167,7 +167,7 @@ async def alice_backend_cmds(running_backend, alice):
 
 @pytest.fixture
 async def alice2_backend_cmds(running_backend, alice2):
-    async with backend_cmds_pool_factory(
+    async with backend_cmds_factory(
         running_backend.addr, alice2.device_id, alice2.signing_key
     ) as cmds:
         yield cmds
@@ -175,7 +175,5 @@ async def alice2_backend_cmds(running_backend, alice2):
 
 @pytest.fixture
 async def bob_backend_cmds(running_backend, bob):
-    async with backend_cmds_pool_factory(
-        running_backend.addr, bob.device_id, bob.signing_key
-    ) as cmds:
+    async with backend_cmds_factory(running_backend.addr, bob.device_id, bob.signing_key) as cmds:
         yield cmds

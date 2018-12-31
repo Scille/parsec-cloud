@@ -3,6 +3,9 @@ from parsec.core.backend_connection.exceptions import (
     BackendNotAvailable,
     BackendHandshakeError,
     BackendDeviceRevokedError,
+    BackendCmdsInvalidRequest,
+    BackendCmdsInvalidResponse,
+    BackendCmdsBadResponse,
 )
 from parsec.core.backend_connection.transport import (
     authenticated_transport_factory,
@@ -12,22 +15,22 @@ from parsec.core.backend_connection.transport import (
 )
 from parsec.core.backend_connection.event_listener import backend_listen_events
 from parsec.core.backend_connection.monitor import monitor_backend_connection
-from parsec.core.backend_connection.cmds import (
-    BackendCmdsInvalidRequest,
-    BackendCmdsInvalidResponse,
-    BackendCmdsBadResponse,
+from parsec.core.backend_connection.porcelain import (
+    BackendCmdsPool,
     backend_cmds_factory,
-    backend_anonymous_cmds_factory,
-    BackendCmds,
     BackendAnonymousCmds,
+    backend_anonymous_cmds_factory,
 )
-from parsec.core.backend_connection.cmds_pool import backend_cmds_pool_factory, BackendCmdsPool
+
 
 __all__ = (
     "BackendConnectionError",
     "BackendNotAvailable",
     "BackendHandshakeError",
     "BackendDeviceRevokedError",
+    "BackendCmdsInvalidRequest",
+    "BackendCmdsInvalidResponse",
+    "BackendCmdsBadResponse",
     "authenticated_transport_factory",
     "anonymous_transport_factory",
     "transport_pool_factory",
@@ -37,10 +40,8 @@ __all__ = (
     "BackendCmdsInvalidRequest",
     "BackendCmdsInvalidResponse",
     "BackendCmdsBadResponse",
-    "backend_cmds_factory",
-    "backend_anonymous_cmds_factory",
-    "BackendCmds",
-    "BackendAnonymousCmds",
-    "backend_cmds_pool_factory",
     "BackendCmdsPool",
+    "backend_cmds_factory",
+    "BackendAnonymousCmds",
+    "backend_anonymous_cmds_factory",
 )

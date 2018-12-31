@@ -1,6 +1,5 @@
 import triopg
 from structlog import get_logger
-from uuid import UUID
 
 from parsec.event_bus import EventBus
 from parsec.utils import call_with_control, ejson_dumps, ejson_loads
@@ -15,7 +14,7 @@ async def init_db(url: str, force: bool = False) -> bool:
         triopg.exceptions.PostgresError
     """
     async with triopg.connect(url) as conn:
-        await _init_db(conn, force)
+        return await _init_db(conn, force)
 
 
 async def _init_db(conn, force: bool = False) -> bool:

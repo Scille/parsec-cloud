@@ -11,7 +11,7 @@ from async_generator import asynccontextmanager
 import hypothesis
 from pathlib import Path
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, BackendOrganizationAddr
 from parsec.crypto import SigningKey, export_root_verify_key, encrypt_with_secret_key
 from parsec.trustchain import certify_user, certify_device
 from parsec.core import CoreConfig
@@ -25,7 +25,7 @@ from parsec.backend import BackendApp, config_factory as backend_config_factory
 from parsec.backend.user import User as BackendUser, new_user_factory as new_backend_user_factory
 from parsec.backend.user import UserAlreadyExistsError
 from parsec.api.protocole import ClientHandshake, AnonymousClientHandshake
-from parsec.api.transport import TCPTransport
+from parsec.api.transport import Transport
 
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
@@ -151,7 +151,7 @@ def unused_tcp_port():
 
 @pytest.fixture(scope="session")
 def unused_tcp_addr(unused_tcp_port):
-    return "tcp://127.0.0.1:%s" % unused_tcp_port
+    return "ws://127.0.0.1:%s/foo" % unused_tcp_port
 
 
 @pytest.fixture(scope="session")
@@ -195,7 +195,7 @@ def server_factory(tcp_stream_spy):
         count += 1
 
         if not url:
-            url = f"tcp://server-{count}.localhost:9999"
+            url = f"ws://server-{count}.localhost:9999"
 
         try:
             async with trio.open_nursery() as nursery:
@@ -218,13 +218,13 @@ def server_factory(tcp_stream_spy):
 
 
 @pytest.fixture(scope="session")
-def alice(backend_addr, root_verify_key):
-    return generate_new_device(DeviceID("alice@dev1"), backend_addr, root_verify_key)
+def alice(backend_addr):
+    return generate_new_device(DeviceID("alice@dev1"), backend_addr)
 
 
 @pytest.fixture(scope="session")
-def alice2(backend_addr, root_verify_key, alice):
-    alice2 = generate_new_device(DeviceID("alice@dev2"), backend_addr, root_verify_key)
+def alice2(backend_addr, alice):
+    alice2 = generate_new_device(DeviceID("alice@dev2"), backend_addr)
     alice2 = alice2.evolve(
         private_key=alice.private_key, user_manifest_access=alice.user_manifest_access
     )
@@ -232,13 +232,13 @@ def alice2(backend_addr, root_verify_key, alice):
 
 
 @pytest.fixture(scope="session")
-def bob(backend_addr, root_verify_key):
-    return generate_new_device(DeviceID("bob@dev1"), backend_addr, root_verify_key)
+def bob(backend_addr):
+    return generate_new_device(DeviceID("bob@dev1"), backend_addr)
 
 
 @pytest.fixture(scope="session")
-def mallory(backend_addr, root_verify_key):
-    return generate_new_device(DeviceID("mallory@dev1"), backend_addr, root_verify_key)
+def mallory(backend_addr):
+    return generate_new_device(DeviceID("mallory@dev1"), backend_addr)
 
 
 @pytest.fixture
@@ -484,7 +484,7 @@ async def backend(backend_factory):
 @pytest.fixture(scope="session")
 def backend_addr(unused_tcp_addr, root_verify_key):
     rvk = export_root_verify_key(root_verify_key)
-    return f"{unused_tcp_addr}?rvk={rvk}"
+    return BackendOrganizationAddr(f"{unused_tcp_addr}?rvk={rvk}")
 
 
 @pytest.fixture
@@ -514,7 +514,8 @@ def backend_sock_factory(server_factory):
     async def _backend_sock_factory(backend, auth_as):
         async with server_factory(backend.handle_client) as server:
             stream = server.connection_factory()
-            transport = FreezeTestOnTransportError(TCPTransport(stream))
+            transport = await Transport.init_for_client(stream, server.addr)
+            transport = FreezeTestOnTransportError(transport)
 
             if auth_as:
                 # Handshake
@@ -573,8 +574,8 @@ def core_config(tmpdir):
     tmpdir = Path(tmpdir)
     return CoreConfig(
         config_dir=tmpdir / "config",
-        cache_dir=tmpdir / "cache",
-        data_dir=tmpdir / "data",
+        cache_base_dir=tmpdir / "cache",
+        data_base_dir=tmpdir / "data",
         mountpoint_base_dir=tmpdir / "mnt",
     )
 

@@ -5,6 +5,7 @@ from parsec.crypto_types import VerifyKey, export_root_verify_key, import_root_v
 
 
 __all__ = (
+    "OrganizationID",
     "BackendOrganizationBootstrapAddr",
     "BackendOrganizationAddr",
     "UserID",
@@ -13,49 +14,87 @@ __all__ = (
 )
 
 
-class BackendOrganizationAddr(str):
-    __slots__ = ("_root_verify_key", "_domain")
-    path_regex = re.compile(r"^/(\w{1,32})$")
+class OrganizationID(str):
+    __slots__ = ()
+    regex = re.compile(r"^\w{1,32}$")
+
+    def __init__(self, raw):
+        if not isinstance(raw, str) or not self.regex.match(raw):
+            raise ValueError("Invalid organization ID")
+
+    def __repr__(self):
+        return f"<OrganizationID {super().__repr__()}>"
+
+
+class BackendAddr(str):
+    __slots__ = ("_split",)
 
     def __init__(self, raw: str):
         if not isinstance(raw, str):
-            raise ValueError("Invalid user backend domain address.")
+            raise ValueError("Invalid backend address.")
 
-        parsed = urlsplit(raw)
+        self._split = urlsplit(raw)
 
-        if not self.path_regex.match(parsed.path):
-            raise ValueError("Invalid domain name in backend domain address")
-        self._domain = parsed.path[1:]
+        if self._split.scheme not in ("ws", "wss"):
+            raise ValueError("Backend addr must start with ws:// or wss://")
 
-        query = parse_qs(parsed.query)
+    @property
+    def scheme(self):
+        return self._split.scheme
+
+    @property
+    def hostname(self):
+        return self._split.hostname
+
+    @property
+    def port(self):
+        port = self._split.port
+        if port:
+            return port
+        else:
+            return 80 if self._split.scheme == "ws" else 443
+
+
+class BackendOrganizationAddr(BackendAddr):
+    __slots__ = ("_root_verify_key", "_organization")
+
+    def __init__(self, raw: str):
+        super().__init__(raw)
+
+        self._organization = OrganizationID(self._split.path[1:])
+
+        query = parse_qs(self._split.query)
         try:
             self._root_verify_key = import_root_verify_key(query["rvk"][0])
 
         except (KeyError, IndexError) as exc:
-            raise ValueError("Backend domain address must contains `rvk` params.") from exc
+            raise ValueError("Backend organization address must contains `rvk` params.") from exc
 
-    def get_domain(self) -> str:
-        return self._domain
+    @property
+    def organization(self) -> OrganizationID:
+        return self._organization
 
-    def get_root_verify_key(self) -> VerifyKey:
+    def root_verify_key(self) -> VerifyKey:
         return self._root_verify_key
 
 
-class BackendOrganizationBootstrapAddr(str):
+class BackendOrganizationBootstrapAddr(BackendAddr):
     __slots__ = ("_bootstrap_token", "_organization")
-    path_regex = re.compile(r"^/\w{1,32}$")
+
+    @classmethod
+    def build(
+        cls, backend_addr: str, name: str, bootstrap_token: str
+    ) -> "BackendOrganizationBootstrapAddr":
+        scheme, netloc, _, _, fragment = urlsplit(backend_addr)
+        query = f"bootstrap-token={bootstrap_token}"
+        return cls(urlunsplit((scheme, netloc, name, query, fragment)))
 
     def __init__(self, raw: str):
-        if not isinstance(raw, str):
-            raise ValueError("Invalid user backend domain address.")
+        super().__init__(raw)
 
-        parsed = urlsplit(raw)
+        self._organization = OrganizationID(self._split.path[1:])
 
-        if not self.path_regex.match(parsed.path):
-            raise ValueError("Invalid domain name in backend domain address")
-        self._organization = parsed.path[1:]
-
-        query = parse_qs(parsed.query)
+        query = parse_qs(self._split.query)
         try:
             self._bootstrap_token = query["bootstrap-token"][0]
 
@@ -64,10 +103,11 @@ class BackendOrganizationBootstrapAddr(str):
                 "Backend domain address must contains a `bootstrap-token` param."
             ) from exc
 
-    def get_organization(self) -> str:
+    @property
+    def organization(self) -> OrganizationID:
         return self._organization
 
-    def get_bootstrap_token(self) -> str:
+    def bootstrap_token(self) -> str:
         return self._bootstrap_token
 
     def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:

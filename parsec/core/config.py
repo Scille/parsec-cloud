@@ -9,17 +9,17 @@ from structlog import get_logger
 logger = get_logger()
 
 
-def get_default_data_dir(environ: dict):
+def get_default_data_base_dir(environ: dict):
     if os.name == "nt":
         return Path(environ["APPDATA"]) / "parsec/data"
     else:
         path = environ.get("XDG_DATA_HOME")
         if not path:
-            path = f"{environ.get('HOME')}/.local/share"
+            path = f"{environ['HOME']}/.local/share"
         return Path(path) / "parsec"
 
 
-def get_default_cache_dir(environ: dict):
+def get_default_cache_base_dir(environ: dict):
     if os.name == "nt":
         return Path(environ["APPDATA"]) / "parsec/cache"
     else:
@@ -46,8 +46,8 @@ def get_default_mountpoint_base_dir(environ: dict):
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class CoreConfig:
     config_dir: Path
-    data_dir: Path
-    cache_dir: Path
+    data_base_dir: Path
+    cache_base_dir: Path
     mountpoint_base_dir: Path
 
     debug: bool = False
@@ -60,28 +60,35 @@ class CoreConfig:
 
     sentry_url: Optional[str] = None
 
+    ssl_keyfile: Optional[str] = None
+    ssl_certfile: Optional[str] = None
+
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
 
 
 def config_factory(
     config_dir: Path = None,
-    data_dir: Path = None,
-    cache_dir: Path = None,
+    data_base_dir: Path = None,
+    cache_base_dir: Path = None,
     mountpoint_base_dir: Path = None,
     mountpoint_enabled: bool = False,
     backend_watchdog: int = 0,
     backend_max_connections: int = 4,
     debug: bool = False,
+    ssl_keyfile: str = None,
+    ssl_certfile: str = None,
     environ: dict = {},
 ) -> CoreConfig:
     return CoreConfig(
         config_dir=config_dir or get_default_config_dir(environ),
-        data_dir=data_dir or get_default_data_dir(environ),
-        cache_dir=cache_dir or get_default_cache_dir(environ),
+        data_base_dir=data_base_dir or get_default_data_base_dir(environ),
+        cache_base_dir=cache_base_dir or get_default_cache_base_dir(environ),
         mountpoint_base_dir=mountpoint_base_dir or get_default_mountpoint_base_dir(environ),
         debug=debug,
         backend_watchdog=backend_watchdog,
+        ssl_keyfile=ssl_keyfile,
+        ssl_certfile=ssl_certfile,
         sentry_url=environ.get("SENTRY_URL") or None,
     )
 
@@ -103,12 +110,12 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
         data_conf = {}
 
     try:
-        data_conf["data_dir"] = Path(data_conf["data_dir"])
+        data_conf["data_base_dir"] = Path(data_conf["data_base_dir"])
     except (KeyError, ValueError):
         pass
 
     try:
-        data_conf["cache_dir"] = Path(data_conf["cache_dir"])
+        data_conf["cache_base_dir"] = Path(data_conf["cache_base_dir"])
     except (KeyError, ValueError):
         pass
 
@@ -117,7 +124,7 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
     except (KeyError, ValueError):
         pass
 
-    return config_factory(config_dir=config_dir, **data_conf, **extra_config)
+    return config_factory(config_dir=config_dir, **data_conf, **extra_config, environ=os.environ)
 
 
 def reload_config(config: CoreConfig) -> CoreConfig:
@@ -128,8 +135,9 @@ def save_config(config: CoreConfig):
     (config.config_dir / "config.json").write_text(
         json.dumps(
             {
-                "data_dir": str(config.data_dir),
-                "cache_dir": str(config.cache_dir),
+                "data_base_dir": str(config.data_base_dir),
+                "cache_base_dir": str(config.cache_base_dir),
+                "mountpoint_base_dir": str(config.mountpoint_base_dir),
                 "backend_watchdog": config.backend_watchdog,
                 "sentry_url": config.sentry_url,
             }

@@ -60,7 +60,7 @@ async def test_organization_create_and_bootstrap(
     root_signing_key = SigningKey.generate()
     root_verify_key = root_signing_key.verify_key
 
-    device = generate_new_device(DeviceID("Zack@pc1"), backend_addr, root_verify_key)
+    device = generate_new_device(DeviceID("Zack@pc1"), backend_addr)
 
     now = pendulum.now()
     certified_user = certify_user(None, root_signing_key, device.user_id, device.public_key, now)
@@ -147,7 +147,7 @@ async def test_organization_bootstrap_bad_data(
         rep = await organization_bootstrap(anonymous_backend_sock, *params)
         assert rep["status"] == status
 
-    # Finaly cheap test to make sure our "good" data were really good
+    # Finally cheap test to make sure our "good" data were really good
     rep = await organization_bootstrap(
         anonymous_backend_sock, good_name, good_bootstrap_token, good_cu, good_cd, good_rvk
     )

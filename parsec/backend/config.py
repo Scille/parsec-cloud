@@ -104,7 +104,9 @@ def _extract_blockstore_config(blockstore_type, environ):
     elif blockstore_type == "RAID1":
         return _extract_raid1_blockstore_config(environ)
     else:
-        raise ValueError("BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, `SWIFT` or `RAID1`")
+        raise ValueError(
+            "BLOCKSTORE_TYPE must be `MOCKED`, `POSTGRESQL`, `S3`, `SWIFT`, `RAID0` or `RAID1`"
+        )
 
 
 class BaseBlockstoreConfig:
@@ -167,9 +169,9 @@ class BackendConfig:
 def config_factory(
     db_url: str = "MOCKED", blockstore_type: str = "MOCKED", debug: bool = False, environ: dict = {}
 ) -> BackendConfig:
-    config = {"debug": debug, "db_url": db_url}
+    config = {"db_url": db_url, "debug": debug}
 
-    if db_url.startswith("postgresql://"):
+    if db_url.startswith("postgresql://") or db_url.startswith("postgres://"):
         config["db_type"] = "POSTGRESQL"
     elif db_url == "MOCKED":
         config["db_type"] = "MOCKED"

@@ -2,7 +2,7 @@ import os
 import trio
 import trio_asyncio
 import click
-from functools import partial
+from structlog import get_logger
 
 from parsec.cli_utils import spinner
 from parsec.logging import configure_logging, configure_sentry_logging
@@ -13,6 +13,9 @@ from parsec.backend.drivers.postgresql import init_db
 __all__ = ("backend_cmd", "init_cmd", "run_cmd")
 
 
+logger = get_logger()
+
+
 @click.command(short_help="init the database")
 @click.option("--db", required=True, help="PostgreSQL database url")
 @click.option("--force", "-f", is_flag=True)
@@ -21,7 +24,7 @@ def init_cmd(db, force):
     Initialize a new backend's PostgreSQL database.
     """
     debug = "DEBUG" in os.environ
-    if not db.startswith("postgresql://"):
+    if not db.startswith("postgresql://") or db.startswith("postgres://"):
         raise SystemExit("Can only initialize a PostgreSQL database.")
 
     try:
@@ -56,18 +59,39 @@ def init_cmd(db, force):
     help="Block store the clients should write into (default: mocked in memory). Set environment variables accordingly.",
 )
 @click.option(
+    "--ssl-keyfile", default=None, type=click.Path(exists=True, dir_okay=False), help="SSL key file"
+)
+@click.option(
+    "--ssl-certfile",
+    default=None,
+    type=click.Path(exists=True, dir_okay=False),
+    help="SSL certificate file",
+)
+@click.option(
     "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
 )
 @click.option("--log-format", "-f", default="CONSOLE", type=click.Choice(("CONSOLE", "JSON")))
 @click.option("--log-file", "-o")
 @click.option("--log-filter", default=None)
 @click.option("--debug", "-d", is_flag=True)
-def run_cmd(host, port, store, blockstore, log_level, log_format, log_file, log_filter, debug):
+def run_cmd(
+    host,
+    port,
+    store,
+    blockstore,
+    ssl_keyfile,
+    ssl_certfile,
+    log_level,
+    log_format,
+    log_file,
+    log_filter,
+    debug,
+):
     configure_logging(log_level, log_format, log_file, log_filter)
 
     try:
         config = config_factory(
-            debug=debug, blockstore_type=blockstore, db_url=store, environ=os.environ
+            blockstore_type=blockstore, db_url=store, debug=debug, environ=os.environ
         )
     except ValueError as exc:
         raise SystemExit(f"Invalid configuration: {exc}")
@@ -77,14 +101,33 @@ def run_cmd(host, port, store, blockstore, log_level, log_format, log_file, log_
 
     backend = BackendApp(config)
 
+    if ssl_certfile or ssl_keyfile:
+        ssl_context = trio.ssl.create_default_context(trio.ssl.Purpose.SERVER_AUTH)
+        if ssl_certfile:
+            ssl_context.load_cert_chain(ssl_certfile, ssl_keyfile)
+        else:
+            ssl_context.load_default_certs()
+    else:
+        ssl_context = None
+
+    async def _serve_client(stream):
+        if ssl_context:
+            stream = trio.ssl.SSLStream(stream, ssl_context, server_side=True)
+
+        try:
+            await backend.handle_client(stream)
+
+        except Exception as exc:
+            # If we are here, something unexpected happened...
+            logger.error("Unexpected crash", exc_info=exc)
+            await stream.aclose()
+
     async def _run_backend():
         async with trio.open_nursery() as nursery:
             await backend.init(nursery)
 
             try:
-                await trio.serve_tcp(
-                    partial(backend.handle_client, swallow_crash=True), port, host=host
-                )
+                await trio.serve_tcp(_serve_client, port, host=host)
 
             finally:
                 await backend.teardown()
@@ -93,7 +136,6 @@ def run_cmd(host, port, store, blockstore, log_level, log_format, log_file, log_
         f"Starting Parsec Backend on {host}:{port} (db={config.db_type}, blockstore={config.blockstore_config.type})"
     )
     try:
-        # from tests.monitor import Monitor
         trio_asyncio.run(_run_backend)
     except KeyboardInterrupt:
         print("bye ;-)")

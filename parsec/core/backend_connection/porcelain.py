@@ -1,43 +1,43 @@
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, BackendOrganizationAddr
 from parsec.crypto import SigningKey
 from parsec.core.backend_connection.exceptions import BackendNotAvailable
-from parsec.core.backend_connection.transport import transport_pool_factory, TransportPool
-from parsec.core.backend_connection.cmds import BackendCmds
+from parsec.core.backend_connection.transport import (
+    transport_pool_factory,
+    anonymous_transport_factory,
+    TransportError,
+)
+from parsec.core.backend_connection import cmds
 
 
-__all__ = ("backend_cmds_pool_factory", "BackendCmdsPool")
+__all__ = (
+    "backend_cmds_factory",
+    "BackendCmdsPool",
+    "backend_anonymous_cmds_factory",
+    "BackendAnonymousCmds",
+)
 
 
 logger = get_logger()
 
 
-# TODO: create&use a BaseBackendCmds for the inheritance
-class BackendCmdsPool(BackendCmds):
-    def __init__(self, transport_pool: TransportPool, log=None):
+class BackendCmdsPool:
+    def __init__(self, transport_pool):
         self.transport_pool = transport_pool
-        # TODO: use logger...
-        self.log = log or logger
 
     def _expose_cmds_with_retrier(name):
+        cmd = getattr(cmds, name)
+
         async def wrapper(self, *args, **kwargs):
             try:
                 async with self.transport_pool.acquire() as transport:
-                    cmds = getattr(transport, "cmds", None)
-                    if not cmds:
-                        cmds = BackendCmds(transport, transport.log)
-                        transport.cmds = cmds
+                    return await cmd(transport, *args, **kwargs)
 
-                    return await getattr(cmds, name)(*args, **kwargs)
-
-            except BackendNotAvailable as exc:
+            except BackendNotAvailable:
                 async with self.transport_pool.acquire(force_fresh=True) as transport:
-                    cmds = BackendCmds(transport, transport.log)
-                    transport.cmds = cmds
-
-                    return await getattr(cmds, name)(*args, **kwargs)
+                    return await cmd(transport, *args, **kwargs)
 
         wrapper.__name__ = name
 
@@ -71,9 +71,44 @@ class BackendCmdsPool(BackendCmds):
     device_revoke = _expose_cmds_with_retrier("device_revoke")
 
 
+class BackendAnonymousCmds:
+    def __init__(self, transport):
+        self.transport = transport
+
+    def _expose_cmds(name):
+        cmd = getattr(cmds, name)
+
+        async def wrapper(self, *args, **kwargs):
+            return await cmd(self.transport, *args, **kwargs)
+
+        wrapper.__name__ = name
+
+        return wrapper
+
+    ping = _expose_cmds("ping")
+
+    organization_create = _expose_cmds("organization_create")
+    organization_bootstrap = _expose_cmds("organization_bootstrap")
+
+    user_get_invitation_creator = _expose_cmds("user_get_invitation_creator")
+    user_claim = _expose_cmds("user_claim")
+
+    device_get_invitation_creator = _expose_cmds("device_get_invitation_creator")
+    device_claim = _expose_cmds("device_claim")
+
+
 @asynccontextmanager
-async def backend_cmds_pool_factory(
-    addr: str, device_id: DeviceID, signing_key: SigningKey, max: int = 4
+async def backend_cmds_factory(
+    addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey, max_pool: int = 4
 ) -> BackendCmdsPool:
-    async with transport_pool_factory(addr, device_id, signing_key, max) as transport_pool:
+    async with transport_pool_factory(addr, device_id, signing_key, max_pool) as transport_pool:
         yield BackendCmdsPool(transport_pool)
+
+
+@asynccontextmanager
+async def backend_anonymous_cmds_factory(addr: BackendOrganizationAddr) -> BackendAnonymousCmds:
+    try:
+        async with anonymous_transport_factory(addr) as transport:
+            yield BackendAnonymousCmds(transport)
+    except TransportError as exc:
+        raise BackendNotAvailable(exc) from exc

@@ -215,6 +215,7 @@ requirements = [
     "attrs==18.1.0",
     "click==6.7",
     "msgpack==0.6.0",
+    "wsproto==0.12.0",
     # Can use marshmallow or the toasted flavour as you like ;-)
     # "marshmallow==2.14.0",
     "toastedmarshmallow==0.2.6",

@@ -2,7 +2,7 @@ import pytest
 import trio
 
 from parsec.schema import UnknownCheckedSchema, fields
-from parsec.api.transport import TCPTransport
+from parsec.api.transport import Transport
 from parsec.api.protocole.base import Serializer
 
 
@@ -10,11 +10,23 @@ from parsec.api.protocole.base import Serializer
 # marshmallow/json serialization
 @pytest.mark.slow
 @pytest.mark.trio
-async def test_big_buffer_bench():
+async def test_big_buffer_bench(backend_addr):
     server_stream, client_stream = trio.testing.memory_stream_pair()
 
-    server_transport = TCPTransport(server_stream)
-    client_transport = TCPTransport(client_stream)
+    client_transport = None
+    server_transport = None
+
+    async def _boot_server():
+        nonlocal server_transport
+        server_transport = await Transport.init_for_server(server_stream)
+
+    async def _boot_client():
+        nonlocal client_transport
+        client_transport = await Transport.init_for_client(client_stream, backend_addr)
+
+    async with trio.open_nursery() as nursery:
+        nursery.start_soon(_boot_client)
+        nursery.start_soon(_boot_server)
 
     class Schema(UnknownCheckedSchema):
         data = fields.Bytes()
@@ -22,7 +34,8 @@ async def test_big_buffer_bench():
     schema = Serializer(Schema)
 
     # Base64 encoding of the bytes make the payload bigger once serialized
-    roughly_max = int(TCPTransport.MAX_MSG_SIZE * 2 / 3)
+    # roughly_max = int(TCPTransport.MAX_MSG_SIZE * 2 / 3)
+    roughly_max = int(Transport.RECEIVE_BYTES * 2 / 3)
     payload = {"data": b"x" * roughly_max}
 
     for _ in range(10):

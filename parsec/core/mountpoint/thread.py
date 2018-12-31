@@ -4,9 +4,13 @@ import time
 import threading
 from pathlib import Path
 from fuse import FUSE
+from structlog import get_logger
 
 from parsec.core.mountpoint.operations import FuseOperations
 from parsec.core.mountpoint.exceptions import MountpointConfigurationError
+
+
+logger = get_logger()
 
 
 def _bootstrap_mountpoint(mountpoint):
@@ -118,7 +122,10 @@ async def _stop_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped):
             pass
         fuse_thread_stopped.wait()
 
-    await trio.run_sync_in_worker_thread(_stop_fuse)
+    with trio.open_cancel_scope(shield=True):
+        logger.info("Stopping fuse thread...")
+        await trio.run_sync_in_worker_thread(_stop_fuse)
+        logger.info("Fuse thread stopped")
 
     if os.name == "posix":
         try:
