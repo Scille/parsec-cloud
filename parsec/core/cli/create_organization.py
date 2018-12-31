@@ -2,7 +2,7 @@ import os
 import trio
 import click
 
-from parsec.types import OrganizationID, BackendOrganizationBootstrapAddr
+from parsec.types import OrganizationID, BackendAddr, BackendOrganizationBootstrapAddr
 from parsec.logging import configure_logging
 from parsec.cli_utils import spinner, cli_exception_handler
 from parsec.core.backend_connection import backend_anonymous_cmds_factory
@@ -20,7 +20,7 @@ async def _create_organization(debug, name, backend_addr):
 
 @click.command(short_help="create new organization")
 @click.argument("name", required=True, type=OrganizationID)
-@click.option("--addr", "-B", required=True)
+@click.option("--addr", "-B", required=True, type=BackendAddr)
 def create_organization(name, addr):
     debug = "DEBUG" in os.environ
     configure_logging(log_level="DEBUG" if debug else "WARNING")

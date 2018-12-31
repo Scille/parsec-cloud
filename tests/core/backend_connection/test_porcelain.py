@@ -1,14 +1,14 @@
 import pytest
 import trio
 
-from parsec.core.backend_connection import BackendNotAvailable, backend_cmds_pool_factory
+from parsec.core.backend_connection import BackendNotAvailable, backend_cmds_factory
 
 from tests.open_tcp_stream_mock_wrapper import offline
 
 
 @pytest.mark.trio
 async def test_backend_offline(backend_addr, alice):
-    async with backend_cmds_pool_factory(backend_addr, alice.device_id, alice.signing_key) as cmds:
+    async with backend_cmds_factory(backend_addr, alice.device_id, alice.signing_key) as cmds:
         with pytest.raises(BackendNotAvailable):
             # Must send a request given the pool lazily creates connections
             await cmds.ping("Whatever")
@@ -16,7 +16,7 @@ async def test_backend_offline(backend_addr, alice):
 
 @pytest.mark.trio
 async def test_backend_switch_offline(running_backend, alice, tcp_stream_spy):
-    async with backend_cmds_pool_factory(
+    async with backend_cmds_factory(
         running_backend.addr, alice.device_id, alice.signing_key
     ) as cmds:
         # First, have a good request to make sure a socket has been opened
@@ -47,7 +47,7 @@ async def test_backend_switch_offline(running_backend, alice, tcp_stream_spy):
 @pytest.mark.trio
 @pytest.mark.parametrize("cmds_used", (False, True))
 async def test_backend_closed_cmds(cmds_used, running_backend, alice):
-    async with backend_cmds_pool_factory(
+    async with backend_cmds_factory(
         running_backend.addr, alice.device_id, alice.signing_key
     ) as cmds:
         if cmds_used:
@@ -71,7 +71,7 @@ async def test_concurrency_sends(running_backend, alice):
         if work_done_counter == CONCURRENCY:
             work_all_done.set()
 
-    async with backend_cmds_pool_factory(
+    async with backend_cmds_factory(
         running_backend.addr, alice.device_id, alice.signing_key
     ) as cmds:
 

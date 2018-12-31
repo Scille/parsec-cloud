@@ -4,7 +4,7 @@ from uuid import uuid4
 from structlog import get_logger
 
 from parsec.event_bus import EventBus
-from parsec.api.transport import TransportError, ServerTransportFactory
+from parsec.api.transport import TransportError, Transport
 from parsec.api.protocole import (
     packb,
     unpackb,
@@ -79,10 +79,6 @@ class BackendApp:
         self.nursery = None
         self.dbh = None
         self.events = EventsComponent(self.event_bus)
-
-        self.transport_factory = ServerTransportFactory(
-            config.transport_scheme, certfile=config.certfile, keyfile=config.keyfile
-        )
 
         if self.config.db_url == "MOCKED":
             self.user = MemoryUserComponent(self.event_bus)
@@ -190,10 +186,9 @@ class BackendApp:
         await transport.send(result_req)
         return context
 
-    async def handle_client(self, stream, swallow_crash=False):
-        client_ctx = None
+    async def handle_client(self, stream):
         try:
-            transport = await self.transport_factory.wrap_with_transport(stream)
+            transport = await Transport.init_for_server(stream)
 
         except TransportError:
             # A crash during transport setup could mean the client tried to
@@ -211,6 +206,7 @@ class BackendApp:
 
             try:
                 await stream.send_all(content + content_body)
+                await stream.aclose()
 
             except TransportError:
                 # Stream is really dead, nothing else to do...
@@ -238,16 +234,6 @@ class BackendApp:
             except TransportError:
                 pass
             await transport.aclose()
-
-        except Exception as exc:
-            # If we are here, something unexpected happened...
-            if client_ctx:
-                client_ctx.logger.error("Unexpected crash", exc_info=exc)
-            else:
-                logger.error("Unexpected crash", exc_info=exc)
-            await transport.aclose()
-            if not swallow_crash:
-                raise
 
     async def _handle_client_loop(self, transport, client_ctx):
         while True:

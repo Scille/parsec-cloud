@@ -5,7 +5,7 @@ from uuid import UUID
 from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice
 from parsec.core.local_db import LocalDB
-from parsec.core.backend_connection import BackendCmds
+from parsec.core.backend_connection import BackendCmdsPool
 from parsec.core.fs.local_folder_fs import (
     FSManifestLocalMiss,
     FSMultiManifestLocalMiss,
@@ -23,7 +23,7 @@ class FS:
         self,
         device: LocalDevice,
         local_db: LocalDB,
-        backend_cmds: BackendCmds,
+        backend_cmds: BackendCmdsPool,
         encryption_manager,
         event_bus: EventBus,
     ):

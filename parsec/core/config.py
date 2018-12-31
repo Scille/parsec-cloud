@@ -60,6 +60,9 @@ class CoreConfig:
 
     sentry_url: Optional[str] = None
 
+    ssl_keyfile: Optional[str] = None
+    ssl_certfile: Optional[str] = None
+
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
 
@@ -73,6 +76,8 @@ def config_factory(
     backend_watchdog: int = 0,
     backend_max_connections: int = 4,
     debug: bool = False,
+    ssl_keyfile: str = None,
+    ssl_certfile: str = None,
     environ: dict = {},
 ) -> CoreConfig:
     return CoreConfig(
@@ -82,6 +87,8 @@ def config_factory(
         mountpoint_base_dir=mountpoint_base_dir or get_default_mountpoint_base_dir(environ),
         debug=debug,
         backend_watchdog=backend_watchdog,
+        ssl_keyfile=ssl_keyfile,
+        ssl_certfile=ssl_certfile,
         sentry_url=environ.get("SENTRY_URL") or None,
     )
 

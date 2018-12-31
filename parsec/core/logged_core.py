@@ -7,7 +7,7 @@ from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice
 from parsec.core.config import CoreConfig
 from parsec.core.backend_connection import (
-    backend_cmds_pool_factory,
+    backend_cmds_factory,
     backend_listen_events,
     monitor_backend_connection,
 )
@@ -46,7 +46,7 @@ async def logged_core_factory(
         # listen connection...
         backend_online = await root_nursery.start(backend_listen_events, device, event_bus)
 
-        async with backend_cmds_pool_factory(
+        async with backend_cmds_factory(
             device.backend_addr,
             device.device_id,
             device.signing_key,

@@ -8,7 +8,7 @@ from inspect import iscoroutinefunction
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import FS
 from parsec.core.local_db import LocalDB, LocalDBMissingEntry
-from parsec.api.transport import BaseTransport, TransportError
+from parsec.api.transport import Transport, TransportError
 
 
 class InMemoryLocalDB(LocalDB):
@@ -70,7 +70,7 @@ class AsyncMock(Mock):
             return super().__call__(*args, **kwargs)
 
 
-class FreezeTestOnTransportError(BaseTransport):
+class FreezeTestOnTransportError(Transport):
     """
     When a server crashes during test, it is possible the client coroutine
     receives a `TransportError` exception. Hence we end up with two

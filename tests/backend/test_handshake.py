@@ -1,7 +1,7 @@
 import pytest
 
 from parsec.api.protocole import packb, unpackb
-from parsec.api.transport import WebsocketTransport
+from parsec.api.transport import Transport
 
 
 @pytest.mark.trio
@@ -9,7 +9,7 @@ from parsec.api.transport import WebsocketTransport
 async def test_handshake_unknown_device(bad_part, backend, server_factory, alice):
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
-        transport = await WebsocketTransport.init_for_client(stream, "foo", "bar")
+        transport = await Transport.init_for_client(stream, server.addr)
         if bad_part == "user_id":
             identity = "zack@dummy"
         else:
@@ -27,7 +27,7 @@ async def test_handshake_unknown_device(bad_part, backend, server_factory, alice
 async def test_handshake_invalid_format(backend, server_factory):
     async with server_factory(backend.handle_client) as server:
         stream = server.connection_factory()
-        transport = await WebsocketTransport.init_for_client(stream, "foo", "bar")
+        transport = await Transport.init_for_client(stream, server.addr)
 
         await transport.recv()  # Get challenge
         req = {"handshake": "answer", "dummy": "field"}

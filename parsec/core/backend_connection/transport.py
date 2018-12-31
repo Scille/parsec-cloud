@@ -1,11 +1,11 @@
+import os
 import trio
-from uuid import uuid4
 from async_generator import asynccontextmanager
 from structlog import get_logger
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, BackendAddr
 from parsec.crypto import SigningKey
-from parsec.api.transport import BaseTransport, TransportError, ClientTransportFactory
+from parsec.api.transport import Transport, TransportError
 from parsec.api.protocole import (
     ProtocoleError,
     HandshakeRevokedDevice,
@@ -30,8 +30,51 @@ __all__ = (
 logger = get_logger()
 
 
+async def _connect(addr: BackendAddr, device_id: DeviceID = None, signing_key: SigningKey = None):
+    try:
+        stream = await trio.open_tcp_stream(addr.hostname, addr.port)
+
+    except OSError as exc:
+        logger.debug("Impossible to connect to backend", reason=exc)
+        raise BackendNotAvailable(exc) from exc
+
+    if addr.scheme == "wss":
+        stream = _upgrade_stream_to_ssl(stream, addr.hostname)
+
+    try:
+        transport = await Transport.init_for_client(stream, addr.hostname)
+    except TransportError as exc:
+        transport.logger.debug("Connection lost during transport creation", reason=exc)
+        raise BackendNotAvailable(exc) from exc
+
+    try:
+        await _do_handshade(transport, device_id, signing_key)
+
+    except Exception as exc:
+        transport.logger.debug("Connection lost during handshake", reason=exc)
+        await transport.aclose()
+        raise
+
+    return transport
+
+
+def _upgrade_stream_to_ssl(raw_stream, hostname):
+    # The ssl context should be generated once and stored into the config
+    # however this is tricky (should ssl configuration be stored per device ?)
+    keyfile = os.environ.get("SSL_KEYFILE")
+    certfile = os.environ.get("SSL_CERTFILE")
+
+    ssl_context = trio.ssl.create_default_context(trio.ssl.Purpose.CLIENT_AUTH)
+    if certfile:
+        ssl_context.load_cert_chain(certfile, keyfile)
+    else:
+        ssl_context.load_default_certs()
+
+    return trio.ssl.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
+
+
 async def _do_handshade(
-    transport: BaseTransport, device_id: DeviceID = None, signing_key: SigningKey = None
+    transport: Transport, device_id: DeviceID = None, signing_key: SigningKey = None
 ):
     if device_id and not signing_key:
         raise ValueError("Signing key is mandatory for non anonymous authentication")
@@ -46,53 +89,26 @@ async def _do_handshade(
         await transport.send(answer_req)
         result_req = await transport.recv()
         ch.process_result_req(result_req)
-        transport.log.debug("Handshake done")
+        transport.logger.debug("Handshake done")
 
     except TransportError as exc:
-        transport.log.debug("Connection lost during handshake", reason=exc)
-        await transport.aclose()
-        raise BackendNotAvailable() from exc
+        raise BackendNotAvailable(exc) from exc
 
     except HandshakeRevokedDevice as exc:
-        transport.log.warning("Handshake failed", reason=exc)
-        await transport.aclose()
-        raise BackendDeviceRevokedError() from exc
+        transport.logger.warning("Handshake failed", reason=exc)
+        raise BackendDeviceRevokedError(exc) from exc
 
     except ProtocoleError as exc:
-        transport.log.warning("Handshake failed", reason=exc)
-        await transport.aclose()
-        raise BackendHandshakeError() from exc
-
-
-async def _authenticated_transport_factory(
-    transport_factory: ClientTransportFactory, device_id: DeviceID, signing_key: SigningKey
-) -> BaseTransport:
-    # TODO: a bit ugly to configure and connect a logger here,
-    # use contextvar instead ?
-    transport = await transport_factory.new_transport()
-    transport.log = logger.bind(auth=device_id, id=uuid4().hex)
-    transport.log.info("Transport setup", addr=transport_factory.addr)
-    try:
-        await _do_handshade(transport, device_id, signing_key)
-
-    except Exception:
-        await transport.aclose()
-        raise
-
-    else:
-        return transport
+        transport.logger.warning("Handshake failed", reason=exc)
+        raise BackendHandshakeError(exc) from exc
 
 
 @asynccontextmanager
 async def authenticated_transport_factory(
-    addr: str,
-    device_id: DeviceID,
-    signing_key: SigningKey,
-    certfile: str = None,
-    keyfile: str = None,
-) -> BaseTransport:
-    transport_factory = ClientTransportFactory(addr, certfile, keyfile)
-    transport = await _authenticated_transport_factory(transport_factory, device_id, signing_key)
+    addr: BackendAddr, device_id: DeviceID, signing_key: SigningKey
+) -> Transport:
+    transport = await _connect(addr, device_id, signing_key)
+    transport.logger = transport.logger.bind(device_id=device_id, addr=addr)
     try:
         yield transport
 
@@ -101,14 +117,9 @@ async def authenticated_transport_factory(
 
 
 @asynccontextmanager
-async def anonymous_transport_factory(
-    addr: str, certfile: str = None, keyfile: str = None
-) -> BaseTransport:
-    transport_factory = ClientTransportFactory(addr, certfile, keyfile)
-    transport = await transport_factory.new_transport()
-    transport.log = logger.bind(auth="<anonymous>", id=uuid4().hex)
-    transport.log.info("Transport setup", addr=addr)
-    await _do_handshade(transport)
+async def anonymous_transport_factory(addr: BackendAddr) -> Transport:
+    transport = await _connect(addr)
+    transport.logger = transport.logger.bind(auth="<anonymous>", addr=addr)
     try:
         yield transport
 
@@ -117,8 +128,8 @@ async def anonymous_transport_factory(
 
 
 class TransportPool:
-    def __init__(self, transport_factory, device_id, signing_key, max):
-        self.transport_factory = transport_factory
+    def __init__(self, addr, device_id, signing_key, max):
+        self.addr = addr
         self.device_id = device_id
         self.signing_key = signing_key
         self.transports = []
@@ -134,13 +145,13 @@ class TransportPool:
                     transport = self.transports.pop()
                 except IndexError:
                     pass
+
             if not transport:
                 if self._closed:
                     raise trio.ClosedResourceError()
 
-                transport = await _authenticated_transport_factory(
-                    self.transport_factory, self.device_id, self.signing_key
-                )
+                transport = await _connect(self.addr, self.device_id, self.signing_key)
+                transport.logger = transport.logger.bind(device_id=self.device_id, addr=self.addr)
 
             try:
                 yield transport
@@ -155,22 +166,14 @@ class TransportPool:
 
 @asynccontextmanager
 async def transport_pool_factory(
-    addr: str,
-    device_id: DeviceID,
-    signing_key: SigningKey,
-    max: int = 4,
-    certfile: str = None,
-    keyfile: str = None,
+    addr: BackendAddr, device_id: DeviceID, signing_key: SigningKey, max: int = 4
 ) -> TransportPool:
-    transport_factory = ClientTransportFactory(addr, certfile, keyfile)
-    pool = TransportPool(transport_factory, device_id, signing_key, max)
+    pool = TransportPool(addr, device_id, signing_key, max)
     try:
         yield pool
 
     finally:
         pool._closed = True
-        for transport in pool.transports:
-            try:
-                await transport.aclose()
-            except TransportError:
-                pass
+        async with trio.open_nursery() as nursery:
+            for transport in pool.transports:
+                nursery.start_soon(transport.aclose)

@@ -11,7 +11,7 @@ from async_generator import asynccontextmanager
 import hypothesis
 from pathlib import Path
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, BackendOrganizationAddr
 from parsec.crypto import SigningKey, export_root_verify_key, encrypt_with_secret_key
 from parsec.trustchain import certify_user, certify_device
 from parsec.core import CoreConfig
@@ -25,7 +25,7 @@ from parsec.backend import BackendApp, config_factory as backend_config_factory
 from parsec.backend.user import User as BackendUser, new_user_factory as new_backend_user_factory
 from parsec.backend.user import UserAlreadyExistsError
 from parsec.api.protocole import ClientHandshake, AnonymousClientHandshake
-from parsec.api.transport import WebsocketTransport
+from parsec.api.transport import Transport
 
 # TODO: needed ?
 pytest.register_assert_rewrite("tests.event_bus_spy")
@@ -195,7 +195,7 @@ def server_factory(tcp_stream_spy):
         count += 1
 
         if not url:
-            url = f"tcp://server-{count}.localhost:9999"
+            url = f"ws://server-{count}.localhost:9999"
 
         try:
             async with trio.open_nursery() as nursery:
@@ -484,7 +484,7 @@ async def backend(backend_factory):
 @pytest.fixture(scope="session")
 def backend_addr(unused_tcp_addr, root_verify_key):
     rvk = export_root_verify_key(root_verify_key)
-    return f"{unused_tcp_addr}?rvk={rvk}"
+    return BackendOrganizationAddr(f"{unused_tcp_addr}?rvk={rvk}")
 
 
 @pytest.fixture
@@ -514,7 +514,7 @@ def backend_sock_factory(server_factory):
     async def _backend_sock_factory(backend, auth_as):
         async with server_factory(backend.handle_client) as server:
             stream = server.connection_factory()
-            transport = await WebsocketTransport.init_for_client(stream, "foo", "bar")
+            transport = await Transport.init_for_client(stream, server.addr)
             transport = FreezeTestOnTransportError(transport)
 
             if auth_as:
