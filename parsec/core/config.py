@@ -15,7 +15,7 @@ def get_default_data_dir(environ: dict):
     else:
         path = environ.get("XDG_DATA_HOME")
         if not path:
-            path = f"{environ.get('HOME')}/.local/share"
+            path = f"{environ['HOME']}/.local/share"
         return Path(path) / "parsec"
 
 
@@ -124,7 +124,7 @@ def load_config(config_dir: Path, **extra_config) -> CoreConfig:
     except (KeyError, ValueError):
         pass
 
-    return config_factory(config_dir=config_dir, **data_conf, **extra_config)
+    return config_factory(config_dir=config_dir, **data_conf, **extra_config, environ=os.environ)
 
 
 def reload_config(config: CoreConfig) -> CoreConfig:
