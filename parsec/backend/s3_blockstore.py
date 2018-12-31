@@ -28,7 +28,7 @@ class S3BlockstoreComponent(BaseBlockstoreComponent):
 
     async def read(self, id: UUID) -> bytes:
         try:
-            obj = self._s3.get_object(Bucket=self._s3_bucket, Key=id)
+            obj = self._s3.get_object(Bucket=self._s3_bucket, Key=str(id))
 
         except S3ClientError as exc:
             if exc.response["Error"]["Code"] == "404":
@@ -49,7 +49,7 @@ class S3BlockstoreComponent(BaseBlockstoreComponent):
                 partial(
                     self._s3.put_object,
                     Bucket=self._s3_bucket,
-                    Key=id,
+                    Key=str(id),
                     Body=block,
                     Metadata={"author": author},
                 )
