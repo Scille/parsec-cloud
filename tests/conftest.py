@@ -218,13 +218,13 @@ def server_factory(tcp_stream_spy):
 
 
 @pytest.fixture(scope="session")
-def alice(backend_addr, root_verify_key):
-    return generate_new_device(DeviceID("alice@dev1"), backend_addr, root_verify_key)
+def alice(backend_addr):
+    return generate_new_device(DeviceID("alice@dev1"), backend_addr)
 
 
 @pytest.fixture(scope="session")
-def alice2(backend_addr, root_verify_key, alice):
-    alice2 = generate_new_device(DeviceID("alice@dev2"), backend_addr, root_verify_key)
+def alice2(backend_addr, alice):
+    alice2 = generate_new_device(DeviceID("alice@dev2"), backend_addr)
     alice2 = alice2.evolve(
         private_key=alice.private_key, user_manifest_access=alice.user_manifest_access
     )
@@ -232,13 +232,13 @@ def alice2(backend_addr, root_verify_key, alice):
 
 
 @pytest.fixture(scope="session")
-def bob(backend_addr, root_verify_key):
-    return generate_new_device(DeviceID("bob@dev1"), backend_addr, root_verify_key)
+def bob(backend_addr):
+    return generate_new_device(DeviceID("bob@dev1"), backend_addr)
 
 
 @pytest.fixture(scope="session")
-def mallory(backend_addr, root_verify_key):
-    return generate_new_device(DeviceID("mallory@dev1"), backend_addr, root_verify_key)
+def mallory(backend_addr):
+    return generate_new_device(DeviceID("mallory@dev1"), backend_addr)
 
 
 @pytest.fixture

@@ -20,7 +20,7 @@ async def _bootstrap_organization(debug, device_id, organization_bootstrap_addr,
 
     device_display = click.style(device_id, fg="yellow")
     password = click.prompt("Device's password", hide_input=True, confirmation_prompt=True)
-    device = generate_new_device(device_id, organization_addr, root_verify_key)
+    device = generate_new_device(device_id, organization_addr)
 
     with operation(f"Creating locally {device_display}"):
         save_device_with_password(config_dir, device, password, force=force)
@@ -32,8 +32,8 @@ async def _bootstrap_organization(debug, device_id, organization_bootstrap_addr,
     async with spinner(f"Sending {device_display} to server"):
         async with backend_anonymous_cmds_factory(organization_bootstrap_addr) as cmds:
             await cmds.organization_bootstrap(
-                organization_bootstrap_addr.get_organization(),
-                organization_bootstrap_addr.get_bootstrap_token(),
+                organization_bootstrap_addr.organization,
+                organization_bootstrap_addr.bootstrap_token,
                 root_verify_key,
                 certified_user,
                 certified_device,

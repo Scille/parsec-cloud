@@ -5,7 +5,7 @@ from structlog import get_logger
 
 from parsec.types import DeviceID, BackendAddr
 from parsec.crypto import SigningKey
-from parsec.api.transport import Transport, TransportError
+from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
 from parsec.api.protocole import (
     ProtocoleError,
     HandshakeRevokedDevice,
@@ -108,7 +108,7 @@ async def authenticated_transport_factory(
     addr: BackendAddr, device_id: DeviceID, signing_key: SigningKey
 ) -> Transport:
     transport = await _connect(addr, device_id, signing_key)
-    transport.logger = transport.logger.bind(device_id=device_id, addr=addr)
+    transport.logger = transport.logger.bind(device_id=device_id)
     try:
         yield transport
 
@@ -119,7 +119,7 @@ async def authenticated_transport_factory(
 @asynccontextmanager
 async def anonymous_transport_factory(addr: BackendAddr) -> Transport:
     transport = await _connect(addr)
-    transport.logger = transport.logger.bind(auth="<anonymous>", addr=addr)
+    transport.logger = transport.logger.bind(auth="<anonymous>")
     try:
         yield transport
 
@@ -151,10 +151,13 @@ class TransportPool:
                     raise trio.ClosedResourceError()
 
                 transport = await _connect(self.addr, self.device_id, self.signing_key)
-                transport.logger = transport.logger.bind(device_id=self.device_id, addr=self.addr)
+                transport.logger = transport.logger.bind(device_id=self.device_id)
 
             try:
                 yield transport
+
+            except TransportClosedByPeer:
+                raise
 
             except Exception:
                 await transport.aclose()

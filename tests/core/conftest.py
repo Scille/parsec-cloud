@@ -13,7 +13,7 @@ from tests.common import freeze_time, InMemoryLocalDB
 
 
 @pytest.fixture
-def device_factory(backend_addr, root_verify_key):
+def device_factory(backend_addr):
     users = {}
     devices = {}
     count = 0
@@ -30,7 +30,7 @@ def device_factory(backend_addr, root_verify_key):
         device_id = DeviceID(f"{user_id}@{device_name}")
         assert device_id not in devices
 
-        device = generate_new_device(device_id, backend_addr, root_verify_key)
+        device = generate_new_device(device_id, backend_addr)
         try:
             private_key, user_manifest_access = users[user_id]
         except KeyError:

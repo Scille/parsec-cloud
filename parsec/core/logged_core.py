@@ -1,6 +1,7 @@
 import trio
 import attr
 from typing import Optional
+from pathlib import Path
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
@@ -34,7 +35,10 @@ class LoggedCore:
 
 @asynccontextmanager
 async def logged_core_factory(
-    config: CoreConfig, device: LocalDevice, event_bus: Optional[EventBus] = None
+    config: CoreConfig,
+    device: LocalDevice,
+    event_bus: Optional[EventBus] = None,
+    mountpoint: Optional[Path] = None,
 ):
     event_bus = event_bus or EventBus()
 
@@ -53,7 +57,7 @@ async def logged_core_factory(
             config.backend_max_connections,
         ) as backend_cmds_pool:
 
-            local_db = LocalDB(config.data_dir, device)
+            local_db = LocalDB(config.data_dir)
             encryption_manager = EncryptionManager(device, local_db, backend_cmds_pool)
             fs = FS(device, local_db, backend_cmds_pool, encryption_manager, event_bus)
 
@@ -71,7 +75,8 @@ async def logged_core_factory(
                     # TODO: rework mountpoint manager to avoid init/teardown
                     mountpoint_manager = mountpoint_manager_factory(fs, event_bus)
                     await mountpoint_manager.init(monitor_nursery)
-                    mountpoint = config.mountpoint_base_dir / device.device_id
+                    if not mountpoint:
+                        mountpoint = config.mountpoint_base_dir / device.device_id
                     await mountpoint_manager.start(mountpoint)
 
                 else:

@@ -24,13 +24,13 @@ def realcrypto(unmock_crypto):
 
 
 @pytest.fixture
-def alice(backend_addr, root_verify_key):
-    return generate_new_device(DeviceID("alice@pc1"), backend_addr, root_verify_key)
+def alice(backend_addr):
+    return generate_new_device(DeviceID("alice@pc1"), backend_addr)
 
 
 @pytest.fixture
-def bob(backend_addr, root_verify_key):
-    return generate_new_device(DeviceID("bob@pc2"), backend_addr, root_verify_key)
+def bob(backend_addr):
+    return generate_new_device(DeviceID("bob@pc2"), backend_addr)
 
 
 @pytest.fixture

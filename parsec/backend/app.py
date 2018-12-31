@@ -1,10 +1,9 @@
 import trio
 import attr
-from uuid import uuid4
 from structlog import get_logger
 
 from parsec.event_bus import EventBus
-from parsec.api.transport import TransportError, Transport
+from parsec.api.transport import TransportError, TransportClosedByPeer, Transport
 from parsec.api.protocole import (
     packb,
     unpackb,
@@ -42,15 +41,20 @@ logger = get_logger()
 @attr.s
 class LoggedClientContext:
     anonymous = False
+    transport = attr.ib()
     device_id = attr.ib()
     public_key = attr.ib()
     verify_key = attr.ib()
-    conn_id = attr.ib(factory=lambda: uuid4().hex)
-    subscribed_events = attr.ib(factory=dict, init=False)
-    events = attr.ib(factory=lambda: trio.Queue(100), init=False)
+    conn_id = attr.ib(init=False)
+    logger = attr.ib(init=False)
+    subscribed_events = attr.ib(factory=dict)
+    events = attr.ib(factory=lambda: trio.Queue(100))
 
     def __attrs_post_init__(self):
-        self.logger = logger.bind(client_id=str(self.device_id), conn_id=self.conn_id)
+        self.conn_id = self.transport.conn_id
+        self.logger = self.transport.logger = self.transport.logger.bind(
+            client_id=str(self.device_id)
+        )
 
     @property
     def user_id(self):
@@ -63,9 +67,15 @@ class LoggedClientContext:
 
 @attr.s
 class AnonymousClientContext:
+    transport = attr.ib()
+    conn_id = attr.ib(init=False)
+    logger = attr.ib(init=False)
     device_id = None
     anonymous = True
-    logger = logger
+
+    def __attrs_post_init__(self):
+        self.conn_id = self.transport.conn_id
+        self.logger = self.transport.logger = self.transport.logger.bind(client_id="<anonymous>")
 
 
 def _filter_binary_fields(data):
@@ -159,7 +169,7 @@ class BackendApp:
 
             hs.process_answer_req(answer_req)
             if hs.is_anonymous():
-                context = AnonymousClientContext()
+                context = AnonymousClientContext(transport)
                 result_req = hs.build_result_req()
 
             else:
@@ -176,7 +186,7 @@ class BackendApp:
 
                     else:
                         context = LoggedClientContext(
-                            hs.identity, user.public_key, device.verify_key
+                            transport, hs.identity, user.public_key, device.verify_key
                         )
                         result_req = hs.build_result_req(device.verify_key)
 
@@ -189,6 +199,9 @@ class BackendApp:
     async def handle_client(self, stream):
         try:
             transport = await Transport.init_for_server(stream)
+
+        except TransportClosedByPeer:
+            return
 
         except TransportError:
             # A crash during transport setup could mean the client tried to
@@ -214,8 +227,10 @@ class BackendApp:
 
             return
 
+        transport.logger.info("Client joined")
+
         try:
-            logger.debug("start handshake")
+            transport.logger.debug("start handshake")
             client_ctx = await self._do_handshake(transport)
             if not client_ctx:
                 # Invalid handshake
@@ -226,8 +241,12 @@ class BackendApp:
 
             await self._handle_client_loop(transport, client_ctx)
 
+        except TransportClosedByPeer:
+            transport.logger.info("Client has left")
+            return
+
         except (TransportError, MessageSerializationError) as exc:
-            # Client has closed connection or sent an invalid frame
+            transport.logger.info("Close client connection due to invalid data")
             rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
             try:
                 await transport.send(packb(rep))
@@ -236,12 +255,9 @@ class BackendApp:
             await transport.aclose()
 
     async def _handle_client_loop(self, transport, client_ctx):
+        transport.logger.info("Client handshake done")
         while True:
             raw_req = await transport.recv()
-            if not raw_req:  # Client disconnected
-                client_ctx.logger.debug("CLIENT DISCONNECTED")
-                break
-
             req = unpackb(raw_req)
             client_ctx.logger.debug("req", req=_filter_binary_fields(req))
             try:
@@ -254,9 +270,11 @@ class BackendApp:
                     cmd_func = self.logged_cmds[cmd]
 
             except KeyError:
+                client_ctx.logger.info("Invalid request", bad_cmd=cmd)
                 rep = {"status": "unknown_command", "reason": "Unknown command"}
 
             else:
+                client_ctx.logger.info("Request", cmd=cmd)
                 try:
                     rep = await cmd_func(client_ctx, req)
 

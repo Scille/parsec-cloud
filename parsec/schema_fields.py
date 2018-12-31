@@ -15,7 +15,12 @@ from marshmallow.fields import (
 )
 
 from parsec.utils import to_jsonb64, from_jsonb64
-from parsec.types import DeviceID as _DeviceID, UserID as _UserID, DeviceName as _DeviceName
+from parsec.types import (
+    DeviceID as _DeviceID,
+    UserID as _UserID,
+    DeviceName as _DeviceName,
+    BackendOrganizationAddr as _BackendOrganizationAddr,
+)
 from parsec.crypto_types import (
     SigningKey as _SigningKey,
     VerifyKey as _VerifyKey,
@@ -290,3 +295,4 @@ Bytes = bytes_based_field_factory(bytes)
 DeviceID = str_based_field_factory(_DeviceID)
 UserID = str_based_field_factory(_UserID)
 DeviceName = str_based_field_factory(_DeviceName)
+BackendOrganizationAddr = str_based_field_factory(_BackendOrganizationAddr)

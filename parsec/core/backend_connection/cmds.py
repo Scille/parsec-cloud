@@ -36,7 +36,6 @@ from parsec.api.protocole import (
 )
 from parsec.core.types import RemoteDevice, RemoteUser, RemoteDevicesMapping
 from parsec.core.backend_connection.exceptions import (
-    BackendConnectionError,
     BackendNotAvailable,
     BackendCmdsInvalidRequest,
     BackendCmdsInvalidResponse,
@@ -45,6 +44,8 @@ from parsec.core.backend_connection.exceptions import (
 
 
 async def _send_cmd(transport, serializer, **req):
+    transport.logger.info("Request", cmd=req["cmd"])
+
     def _shorten_data(data):
         if len(req) > 300:
             return data[:150] + b"[...]" + data[-150:]
@@ -63,8 +64,8 @@ async def _send_cmd(transport, serializer, **req):
         raw_rep = await transport.recv()
 
     except TransportError as exc:
-        transport.logger.debug("send req failed (backend not available)")
-        raise BackendNotAvailable("Backend not available.") from exc
+        transport.logger.info("Request failed (backend not available)", cmd=req["cmd"])
+        raise BackendNotAvailable(exc) from exc
 
     transport.logger.debug("recv rep", req=_shorten_data(raw_rep))
 
@@ -72,7 +73,8 @@ async def _send_cmd(transport, serializer, **req):
         rep = serializer.rep_loads(raw_rep)
 
     except ProtocoleError as exc:
-        raise BackendCmdsInvalidResponse() from exc
+        transport.logger.warning("Request failed (bad protocol)", cmd=req["cmd"], error=exc)
+        raise BackendCmdsInvalidResponse(exc) from exc
 
     if rep["status"] == "invalid_msg_format":
         raise BackendCmdsInvalidRequest(rep)

@@ -1,6 +1,6 @@
 import attr
 
-from parsec.types import DeviceID, UserID
+from parsec.types import DeviceID, UserID, BackendOrganizationAddr
 from parsec.crypto import SigningKey, PrivateKey, SigningKey, VerifyKey
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError, post_load
 from parsec.core.types.access import ManifestAccessSchema
@@ -9,8 +9,7 @@ from parsec.core.types.access import ManifestAccessSchema
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class LocalDevice:
 
-    backend_addr: str
-    root_verify_key: VerifyKey
+    backend_addr: BackendOrganizationAddr
     device_id: DeviceID
     signing_key: SigningKey
     private_key: PrivateKey
@@ -22,6 +21,10 @@ class LocalDevice:
 
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
+
+    @property
+    def root_verify_key(self):
+        return self.backend_addr.root_verify_key
 
     @property
     def device_name(self):

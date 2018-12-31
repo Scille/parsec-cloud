@@ -3,9 +3,9 @@ from typing import List, Tuple
 from pathlib import Path
 from json import JSONDecodeError
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, BackendOrganizationAddr
 from parsec.utils import ejson_dumps, ejson_loads
-from parsec.crypto import SigningKey, VerifyKey, PrivateKey, generate_secret_key
+from parsec.crypto import SigningKey, PrivateKey, generate_secret_key
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError, post_load
 from parsec.core.schemas import ManifestAccessSchema
 from parsec.core.types import LocalDevice
@@ -18,8 +18,7 @@ from parsec.core.fs.utils import new_access
 
 
 class LocalDeviceSchema(UnknownCheckedSchema):
-    backend_addr = fields.String(required=True)
-    root_verify_key = fields.VerifyKey(required=True)
+    backend_addr = fields.BackendOrganizationAddr(required=True)
     device_id = fields.DeviceID(required=True)
     signing_key = fields.SigningKey(required=True)
     private_key = fields.PrivateKey(required=True)
@@ -54,14 +53,9 @@ class DeviceSavingError(DeviceManagerError):
     pass
 
 
-# TODO: replace backend_addr by a pasec.types.BackendOrganizationAddr
-# so we can remove root_verify_key
-def generate_new_device(
-    device_id: DeviceID, backend_addr: str, root_verify_key: VerifyKey
-) -> LocalDevice:
+def generate_new_device(device_id: DeviceID, backend_addr: BackendOrganizationAddr) -> LocalDevice:
     return LocalDevice(
         backend_addr=backend_addr,
-        root_verify_key=root_verify_key,
         device_id=device_id,
         signing_key=SigningKey.generate(),
         private_key=PrivateKey.generate(),

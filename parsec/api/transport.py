@@ -22,6 +22,10 @@ class TransportError(Exception):
     pass
 
 
+class TransportClosedByPeer(TransportError):
+    pass
+
+
 # Note we let `trio.ClosedResourceError` exceptions bubble up given
 # they should be only raised in case of programming error.
 
@@ -32,7 +36,8 @@ class Transport:
     def __init__(self, stream, ws):
         self.stream = stream
         self.ws = ws
-        self.logger = logger.bind(conn_id=uuid4().hex)
+        self.conn_id = uuid4().hex
+        self.logger = logger.bind(conn_id=self.conn_id)
         self._ws_events = ws.events()
 
     async def _next_ws_event(self):
@@ -68,7 +73,6 @@ class Transport:
             await self.stream.send_all(out_data)
 
         except BrokenResourceError as exc:
-            print("OOops !", exc)
             raise TransportError(*exc.args) from exc
 
     @classmethod
@@ -136,7 +140,7 @@ class Transport:
 
             if isinstance(event, ConnectionClosed):
                 self.logger.debug("Connection closed", code=event.code, reason=event.reason)
-                raise TransportError("Peer has closed connection")
+                raise TransportClosedByPeer("Peer has closed connection")
 
             elif isinstance(event, BytesReceived):
                 return event.data
