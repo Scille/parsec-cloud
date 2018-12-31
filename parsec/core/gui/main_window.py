@@ -46,16 +46,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.close_requested = False
         self.tray = None
         self.widget_menu.hide()
-        self.login_widget = None
-        self.users_widget = None
-        self.devices_widget = None
-        self.settings_widget = None
-        self.mount_widget = None
+
+        self.mount_widget = MountWidget(parent=self)
+        self.main_widget_layout.addWidget(self.mount_widget)
+        self.users_widget = UsersWidget(parent=self)
+        self.main_widget_layout.addWidget(self.users_widget)
+        self.devices_widget = DevicesWidget(parent=self)
+        self.main_widget_layout.addWidget(self.devices_widget)
+        self.settings_widget = SettingsWidget(parent=self)
+        self.main_widget_layout.addWidget(self.settings_widget)
+        self.login_widget = LoginWidget(core_config=self.core_config, parent=self)
+        self.main_widget_layout.addWidget(self.login_widget)
+
         self.add_tray_icon()
-        self.connect_all()
         self.setWindowTitle("Parsec - Community Edition - v{}".format(PARSEC_VERSION))
         self.tray_message_shown = False
         self.connection_state_changed.connect(self._on_connection_state_changed)
+        self.connect_all()
         self.show_login_widget()
 
     def add_tray_icon(self):
@@ -80,6 +87,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_settings.clicked.connect(self.show_settings_widget)
         self.button_devices.clicked.connect(self.show_devices_widget)
         self.button_logout.clicked.connect(self.logout)
+        self.login_widget.login_with_password_clicked.connect(self.login_with_password)
+        self.login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
+        self.login_widget.register_user_with_password_clicked.connect(
+            self.register_user_with_password
+        )
+        self.login_widget.register_user_with_pkcs11_clicked.connect(self.register_user_with_pkcs11)
+        self.login_widget.register_device_with_password_clicked.connect(
+            self.register_device_with_password
+        )
+        self.login_widget.register_device_with_pkcs11_clicked.connect(
+            self.register_device_with_pkcs11
+        )
+        self.users_widget.register_user_clicked.connect(self.register_user)
 
     def tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
@@ -112,6 +132,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.portal = self.core_queue.get()
         self.cancel_scope = self.core_queue.get()
         self.core = self.core_queue.get()
+        self.mount_widget.set_core_attrs(portal=self.portal, core=self.core)
         self.label_mountpoint.setText(str(self.core.mountpoint))
         self.label_username.setText(self.core.device.user_id)
         self.label_device.setText(self.core.device.device_name)
@@ -121,15 +142,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def stop_core(self):
         if not self.portal:
             return
-        logger.info("Cancelling")
         self.portal.run_sync(self.cancel_scope.cancel)
-        logger.info("Joining core thread")
         self.core_thread.join()
-        logger.info("Core thread joined")
         self.portal = None
         self.core = None
         self.cancel_scope = None
         self.core_thread = None
+        self.mount_widget.set_core_attrs(None, None)
 
     def logout(self):
         if self.core_thread:
@@ -263,8 +282,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def show_mount_widget(self):
         self._hide_all_central_widgets()
-        self.mount_widget = MountWidget(core=self.core, portal=self.portal, parent=self)
-        self.main_widget_layout.addWidget(self.mount_widget)
         self.button_files.setChecked(True)
         self.label_title.setText(QCoreApplication.translate("MainWindow", "Documents"))
         self.widget_menu.show()
@@ -273,19 +290,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def show_users_widget(self):
         self._hide_all_central_widgets()
-        self.users_widget = UsersWidget(parent=self)
-        self.main_widget_layout.addWidget(self.users_widget)
         self.button_users.setChecked(True)
         self.label_title.setText(QCoreApplication.translate("MainWindow", "Users"))
-        self.users_widget.register_user_clicked.connect(self.register_user)
         self.widget_menu.show()
         self.widget_title.show()
         self.users_widget.show()
 
     def show_devices_widget(self):
         self._hide_all_central_widgets()
-        self.devices_widget = DevicesWidget(parent=self)
-        self.main_widget_layout.addWidget(self.devices_widget)
         self.button_devices.setChecked(True)
         self.label_title.setText(QCoreApplication.translate("MainWindow", "Devices"))
         self.widget_menu.show()
@@ -294,8 +306,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def show_settings_widget(self):
         self._hide_all_central_widgets()
-        self.settings_widget = SettingsWidget(parent=self)
-        self.main_widget_layout.addWidget(self.settings_widget)
         self.button_settings.setChecked(True)
         self.label_title.setText(QCoreApplication.translate("MainWindow", "Settings"))
         self.widget_menu.show()
@@ -304,44 +314,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def show_login_widget(self):
         self._hide_all_central_widgets()
-        self.login_widget = LoginWidget(core_config=self.core_config, parent=self)
-        self.main_widget_layout.addWidget(self.login_widget)
-        self.login_widget.login_with_password_clicked.connect(self.login_with_password)
-        self.login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
-        self.login_widget.register_user_with_password_clicked.connect(
-            self.register_user_with_password
-        )
-        self.login_widget.register_user_with_pkcs11_clicked.connect(self.register_user_with_pkcs11)
-        self.login_widget.register_device_with_password_clicked.connect(
-            self.register_device_with_password
-        )
-        self.login_widget.register_device_with_pkcs11_clicked.connect(
-            self.register_device_with_pkcs11
-        )
         self.login_widget.show()
 
     def _hide_all_central_widgets(self):
-        if self.login_widget:
-            self.main_widget_layout.removeWidget(self.login_widget)
-            self.login_widget.setParent(None)
-            self.login_widget = None
-        if self.mount_widget:
-            self.main_widget_layout.removeWidget(self.mount_widget)
-            self.mount_widget.setParent(None)
-            self.mount_widget = None
-        if self.settings_widget:
-            self.main_widget_layout.removeWidget(self.settings_widget)
-            self.settings_widget.setParent(None)
-            self.settings_widget = None
-        if self.users_widget:
-            self.main_widget_layout.removeWidget(self.users_widget)
-            self.users_widget.setParent(None)
-            self.users_widget = None
-        if self.devices_widget:
-            self.main_widget_layout.removeWidget(self.devices_widget)
-            self.devices_widget.setParent(None)
-            self.devices_widget = None
-        print(self.main_widget_layout.count())
+        self.login_widget.hide()
+        self.mount_widget.hide()
+        self.settings_widget.hide()
+        self.users_widget.hide()
+        self.devices_widget.hide()
         self.widget_title.hide()
         self.widget_menu.hide()
         self.button_files.setChecked(False)

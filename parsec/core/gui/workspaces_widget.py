@@ -25,16 +25,35 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
     COLUMNS_NUMBER = 3
 
-    def __init__(self, portal, core, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.core = core
-        self.portal = portal
-        self.core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
-        self.core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self._core = None
+        self._portal = None
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
         self.button_add_workspace.clicked.connect(self.create_workspace_clicked)
-        self.reset()
+
+    @property
+    def core(self):
+        return self._core
+
+    @core.setter
+    def core(self, c):
+        if self._core:
+            self.core.fs.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
+            self.core.fs.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self._core = c
+        if self._core:
+            self.core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
+            self.core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
+
+    @property
+    def portal(self):
+        return self._portal
+
+    @portal.setter
+    def portal(self, p):
+        self._portal = p
 
     def load_workspace(self, workspace):
         self.load_workspace_clicked.emit(workspace)
@@ -162,18 +181,19 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 w = item.widget()
                 self.layout_workspaces.removeWidget(w)
                 w.setParent(None)
-        result = self.portal.run(self.core.fs.stat, "/")
-        user_id = self.core.device.user_id
-        for workspace in result.get("children", []):
-            ws_infos = self.portal.run(self.core.fs.stat, "/{}".format(workspace))
-            ws_infos["participants"].remove(user_id)
-            self.add_workspace(
-                workspace,
-                user_id == ws_infos["creator"],
-                ws_infos["creator"],
-                files=ws_infos["children"][:4],
-                shared_with=ws_infos["participants"],
-            )
+        if self.portal:
+            result = self.portal.run(self.core.fs.stat, "/")
+            user_id = self.core.device.user_id
+            for workspace in result.get("children", []):
+                ws_infos = self.portal.run(self.core.fs.stat, "/{}".format(workspace))
+                ws_infos["participants"].remove(user_id)
+                self.add_workspace(
+                    workspace,
+                    user_id == ws_infos["creator"],
+                    ws_infos["creator"],
+                    files=ws_infos["children"][:4],
+                    shared_with=ws_infos["participants"],
+                )
 
     def _on_fs_entry_synced_trio(self, event, path, id):
         self.fs_changed_qt.emit(event, id, path)

@@ -58,11 +58,11 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     fs_changed_qt = pyqtSignal(str, UUID, str)
     back_clicked = pyqtSignal()
 
-    def __init__(self, portal, core, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.core = core
-        self.portal = portal
+        self._core = None
+        self._portal = None
         h_header = self.table_files.horizontalHeader()
         h_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         h_header.setSectionResizeMode(0, QHeaderView.Fixed)
@@ -93,13 +93,33 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.current_directory = ""
         self.mountpoint = ""
         self.workspace = None
-        self.core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
-        self.core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
         self.previous_selection = []
         self.file_queue = queue.Queue(1024)
         self.import_thread = threading.Thread(target=self._import_files)
         self.import_thread.start()
+
+    @property
+    def core(self):
+        return self._core
+
+    @core.setter
+    def core(self, c):
+        if self._core:
+            self.core.fs.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
+            self.core.fs.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
+        self._core = c
+        if self._core:
+            self.core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
+            self.core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
+
+    @property
+    def portal(self):
+        return self._portal
+
+    @portal.setter
+    def portal(self, p):
+        self._portal = p
 
     def stop(self):
         self.file_queue.put_nowait((None, None))
