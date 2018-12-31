@@ -40,7 +40,7 @@ def get_default_config_dir(environ: dict):
 
 
 def get_default_mountpoint_base_dir(environ: dict):
-    return Path.home() / "parsec"
+    return Path.home() / "parsec_mnt"
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
