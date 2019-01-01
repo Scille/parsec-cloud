@@ -171,13 +171,13 @@ def get_open_files(parent):
             )
             self.setFileMode(QFileDialog.AnyFile)
             self.setOption(QFileDialog.DontUseNativeDialog, True)
-            l = self.findChild(QListView, "listView")
-            if l:
-                l.setSelectionMode(QAbstractItemView.MultiSelection)
-            t = self.findChild(QTreeView)
-            if t:
-                t.setSelectionMode(QAbstractItemView.MultiSelection)
+            list_view = self.findChild(QListView, "listView")
+            if list_view:
+                list_view.setSelectionMode(QAbstractItemView.MultiSelection)
+            tree_view = self.findChild(QTreeView)
+            if tree_view:
+                tree_view.setSelectionMode(QAbstractItemView.MultiSelection)
 
-    f = FileDialog(parent=parent)
-    result = f.exec_()
-    return bool(result), f.selectedFiles()
+    file_dialog = FileDialog(parent=parent)
+    result = file_dialog.exec_()
+    return bool(result), file_dialog.selectedFiles()
