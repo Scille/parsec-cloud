@@ -167,6 +167,7 @@ from parsec.types import UserID
 from parsec.trustchain import certify_device, certify_user
 from parsec.core.types import LocalDevice
 
+
 # TODO: remove this ?
 async def bootstrap_domain(backend_addr: str, token: str) -> LocalDevice:
     root_signing_key = SigningKey.generate()
