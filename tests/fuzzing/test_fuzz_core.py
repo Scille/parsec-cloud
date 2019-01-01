@@ -242,7 +242,7 @@ async def test_fuzz_core(running_backend, alice_core):
             await trio.sleep(FUZZ_TIME)
             nursery.cancel_scope.cancel()
 
-    except:
+    except Exception:
         print(fs_state.format_logs())
         raise
 
