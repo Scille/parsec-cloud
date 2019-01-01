@@ -68,7 +68,7 @@ class GeneratePyQtResourcesBundle(Command):
 
             self.announce("Generating `parsec.core.gui._resources_rc`", level=distutils.log.INFO)
             processResourceFile(
-                [f"parsec/core/gui/rc/resources.qrc"], f"parsec/core/gui/_resources_rc.py", False
+                ["parsec/core/gui/rc/resources.qrc"], "parsec/core/gui/_resources_rc.py", False
             )
         except ImportError:
             print("PyQt5 not installed, skipping `parsec.core.gui._resources_rc` generation.")
