@@ -1,7 +1,7 @@
 import os
 import attr
 import json
-from typing import Optional, Dict
+from typing import Optional
 from pathlib import Path
 from structlog import get_logger
 

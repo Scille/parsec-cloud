@@ -34,11 +34,3 @@ Secure cloud framework
 
 * Free software: AGPL v3
 * Documentation: https://parsec-cloud.readthedocs.org.
-
-Credits
----------
-
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
-
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage

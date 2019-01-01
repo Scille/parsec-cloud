@@ -2,7 +2,13 @@ import pytest
 from uuid import UUID
 from pendulum import datetime
 
-from parsec.core.schemas import *
+from parsec.core.schemas import (
+    BlockAccessSchema,
+    FileManifestSchema,
+    FolderManifestSchema,
+    LocalFileManifestSchema,
+    LocalFolderManifestSchema,
+)
 
 
 REMOVE_FIELD = object()

@@ -1,16 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup, find_packages, distutils, Command
-from setuptools.command.build_py import build_py
-
 try:
     from cx_Freeze import setup, Executable
 except ImportError:
-    Executable = lambda x, **kw: x
+
+    def Executable(x, **kw):
+        return x
+
+    from setuptools import setup
+
+from setuptools import find_packages, distutils, Command
+from setuptools.command.build_py import build_py
+import itertools
+import glob
 
 
-# Awesome hack to Load `__version__`
+# Awesome hack to load `__version__`
+__version__ = None
 exec(open("parsec/_version.py", encoding="utf-8").read())
 
 
@@ -289,6 +296,21 @@ setup(
         "generate_pyqt": build_py_with_pyqt,
         "build_py": build_py_with_pyqt,
     },
+    # As you may know, setuptools is really broken, so we have to roll our
+    # globing ourself to include non-python files...
+    package_data={
+        "parsec.core.gui": [
+            x[len("parsec/core/gui/") :]
+            for x in itertools.chain(
+                glob.glob("parsec/core/gui/tr/**/*.ts", recursive=True),
+                glob.glob("parsec/core/gui/forms/**/*.ui", recursive=True),
+                glob.glob("parsec/core/gui/rc/**/*.png", recursive=True),
+                glob.glob("parsec/core/gui/rc/**/*.qm", recursive=True),
+                glob.glob("parsec/core/gui/rc/**/*.qrc", recursive=True),
+                glob.glob("parsec/core/gui/rc/**/*.otf", recursive=True),
+            )
+        ]
+    },
     entry_points={"console_scripts": ["parsec = parsec.cli:cli"]},
     options={"build_exe": build_exe_options},
     executables=[Executable("parsec/cli.py", targetName="parsec")],
@@ -296,11 +318,14 @@ setup(
     zip_safe=False,
     keywords="parsec",
     classifiers=[
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: Microsoft :: Windows",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Natural Language :: English",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
     ],
     test_suite="tests",
     tests_require=test_requirements,

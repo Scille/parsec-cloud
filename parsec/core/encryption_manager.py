@@ -111,7 +111,8 @@ class EncryptionManager(BaseAsyncComponent):
         Raises:
             parsec.core.backend_connection.BackendNotAvailable: if the backend is offline.
             BackendGetUserError: if the response returned by the backend is invalid.
-            parsec.crypto.CryptoError: if the device returnded by the backend is corrupted or invalid.
+            parsec.crypto.CryptoError: if the device returnded by the backend
+                is corrupted or invalid.
         """
         # First, try the quick win with the memory cache
         try:
@@ -173,7 +174,8 @@ class EncryptionManager(BaseAsyncComponent):
         Raises:
                 parsec.core.backend_connection.BackendNotAvailable: if the backend is offline.
                 BackendGetUserError: if the response returned by the backend is invalid.
-                parsec.crypto.CryptoError: if the user returnded by the backend is corrupted or invalid.
+                parsec.crypto.CryptoError: if the user returnded by the backend
+                    is corrupted or invalid.
         """
         user = await self.fetch_remote_user(recipient)
         if not user:
@@ -190,7 +192,8 @@ class EncryptionManager(BaseAsyncComponent):
         author_device = await self.fetch_remote_device(device_id)
         if not author_device:
             raise MessageSignatureError(
-                f"Message is said to be signed by `{device_id}`, but this device cannot be found on the backend."
+                f"Message is said to be signed by `{device_id}`, "
+                "but this device cannot be found on the backend."
             )
         return (device_id, verify_signature_from(author_device.verify_key, signed_data))
 
@@ -202,6 +205,7 @@ class EncryptionManager(BaseAsyncComponent):
         author_device = await self.fetch_remote_device(device_id)
         if not author_device:
             raise MessageSignatureError(
-                f"Message is said to be signed by `{device_id}`, but this device cannot be found on the backend."
+                f"Message is said to be signed by `{device_id}`, "
+                "but this device cannot be found on the backend."
             )
         return verify_signature_from(author_device.verify_key, signed)
