@@ -12,7 +12,6 @@ from parsec.core.gui.custom_widgets import (
     get_user_name,
 )
 from parsec.core.gui.workspace_button import WorkspaceButton
-from parsec.core.gui.custom_widgets import show_warning
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
 from parsec.core.gui.ui.shared_dialog import Ui_SharedDialog
 from parsec.core.fs import FSEntryNotFound

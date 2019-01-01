@@ -1,7 +1,7 @@
 import attr
 
 from parsec.types import DeviceID, UserID, BackendOrganizationAddr
-from parsec.crypto import SigningKey, PrivateKey, SigningKey, VerifyKey
+from parsec.crypto import SigningKey, PrivateKey, VerifyKey
 from parsec.schema import UnknownCheckedSchema, fields, ValidationError, post_load
 from parsec.core.types.access import ManifestAccessSchema
 
