@@ -149,7 +149,7 @@ class PGUserComponent(BaseUserComponent):
 
         devices_results = await conn.fetch(
             """
-            SELECT 
+            SELECT
                 device_id,
                 certified_device,
                 device_certifier,
@@ -192,7 +192,7 @@ class PGUserComponent(BaseUserComponent):
         while devices_to_fetch:
             results = await conn.fetch(
                 """
-            SELECT 
+            SELECT
                 device_id,
                 certified_device,
                 device_certifier,
