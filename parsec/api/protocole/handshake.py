@@ -80,7 +80,7 @@ class ServerHandshake:
         self.state = "answer"
 
     def build_bad_format_result_req(self) -> bytes:
-        if not self.state in ("answer", "challenge"):
+        if self.state not in ("answer", "challenge"):
             raise HandshakeError("Invalid state.")
 
         self.state = "result"
