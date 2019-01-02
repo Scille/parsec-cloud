@@ -83,7 +83,7 @@ def get_user_name(parent, portal, core, title, message, exclude=None):
         def show_auto_complete(self):
             self.timer.stop()
             if len(self.line_edit_text.text()):
-                users, total = self.portal.run(
+                users = self.portal.run(
                     self.core.fs.backend_cmds.user_find, self.line_edit_text.text()
                 )
                 if self.exclude:

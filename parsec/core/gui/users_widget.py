@@ -36,6 +36,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
 
         self.setupUi(self)
         self.users = []
+        self.portal = None
+        self.core = None
         self.widget_info.hide()
         self.button_add_user.clicked.connect(self.emit_register_user)
         self.line_edit_search.textChanged.connect(self.filter_users)
@@ -85,10 +87,11 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 w = item.widget()
                 self.layout_users.removeWidget(w)
                 w.setParent(None)
-        try:
-            user_id = self.core.device.user_id
-            users, _ = self.portal.run(self.core.fs.backend_cms.user_find)
-            for user in users:
-                self.add_user(user, is_current_user=user_id == user)
-        except BackendNotAvailable:
-            pass
+        if self.portal and self.core:
+            try:
+                user_id = self.core.device.user_id
+                users = self.portal.run(self.core.fs.backend_cmds.user_find)
+                for user in users:
+                    self.add_user(str(user), is_current_user=user_id == user)
+            except BackendNotAvailable:
+                pass
