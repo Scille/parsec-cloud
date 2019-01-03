@@ -88,6 +88,7 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_token.textChanged.connect(self.check_infos)
+        self.line_edit_url.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(self.password_changed)
 
     def password_changed(self, text):
@@ -120,6 +121,7 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
             len(self.line_edit_login.text())
             and len(self.line_edit_token.text())
             and len(self.line_edit_device.text())
+            and len(self.line_edit_url.text())
         ):
             self.button_register.setDisabled(False)
         else:
@@ -129,6 +131,7 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
         self.line_edit_login.setText("")
         self.line_edit_password.setText("")
         self.line_edit_password_check.setText("")
+        self.line_edit_url.setText("")
         self.line_edit_device.setText(get_default_device())
         self.line_edit_token.setText("")
         self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)

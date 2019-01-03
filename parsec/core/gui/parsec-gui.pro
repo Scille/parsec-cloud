@@ -21,7 +21,7 @@ FORMS += forms/main_window.ui \
          forms/users_widget.ui \
          forms/settings_widget.ui \
          forms/login_widget.ui \
-         forms/register_device.ui \
+         forms/register_device_dialog.ui \
          forms/devices_widget.ui \
          forms/login_login_widget.ui \
          forms/login_register_device_widget.ui \
@@ -36,6 +36,7 @@ FORMS += forms/main_window.ui \
          forms/shared_dialog.ui \
          forms/device_button.ui \
          forms/network_settings_widget.ui \
-         forms/global_settings_widget.ui
+         forms/global_settings_widget.ui \
+         forms/register_user_dialog.ui
 
 RESOURCES += rc/resources.qrc

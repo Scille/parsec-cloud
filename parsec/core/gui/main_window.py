@@ -99,7 +99,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.login_widget.register_device_with_pkcs11_clicked.connect(
             self.register_device_with_pkcs11
         )
-        self.users_widget.register_user_clicked.connect(self.register_user)
 
     def tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
@@ -177,9 +176,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_mount_widget()
         except DeviceManagerError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
-
-    def register_user(self, login):
-        pass
 
     def handle_register_user(
         self,

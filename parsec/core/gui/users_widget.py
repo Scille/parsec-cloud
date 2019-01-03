@@ -3,8 +3,10 @@ from PyQt5.QtWidgets import QWidget, QInputDialog
 from PyQt5.QtGui import QPixmap
 
 from parsec.core.backend_connection import BackendNotAvailable
+from parsec.core.invite_claim import generate_invitation_token, invite_and_create_user
 
 from parsec.core.gui.custom_widgets import get_text
+from parsec.core.gui.register_user_dialog import RegisterUserDialog
 from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
 
@@ -29,8 +31,6 @@ class UserButton(QWidget, Ui_UserButton):
 
 
 class UsersWidget(QWidget, Ui_UsersWidget):
-    register_user_clicked = pyqtSignal(str)
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -39,7 +39,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.portal = None
         self.core = None
         self.widget_info.hide()
-        self.button_add_user.clicked.connect(self.emit_register_user)
+        self.button_add_user.clicked.connect(self.register_user)
         self.line_edit_search.textChanged.connect(self.filter_users)
 
     def filter_users(self, pattern):
@@ -53,16 +53,17 @@ class UsersWidget(QWidget, Ui_UsersWidget):
                 else:
                     w.show()
 
-    def emit_register_user(self):
-        user_name = get_text(
-            self,
-            QCoreApplication.translate("UsersWidget", "New user"),
-            QCoreApplication.translate("UsersWidget", "Enter new user name"),
-            QCoreApplication.translate("UsersWidget", "User name"),
-        )
-        if not user_name:
-            return
-        self.register_user_clicked.emit(user_name)
+    def register_user(self):
+        d = RegisterUserDialog(parent=self, portal=self.portal, core=self.core)
+        d.exec_()
+        # try:
+        #     token = generate_invitation_token(self.core.config.invitation_token_size)
+        #     self.set_claim_infos(user_name, token)
+        #     print("Gonna wait ??")
+        #     #invite_device_id = self.portal.run(invite_and_create_user, self.core, user_name, token)
+        #     print("Finished waiting")
+        # except:
+        #     pass
 
     def set_claim_infos(self, login, token):
         self.widget_info.show()

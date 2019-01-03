@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>RegisterDevice</class>
- <widget class="QDialog" name="RegisterDevice">
+ <class>RegisterDeviceDialog</class>
+ <widget class="QDialog" name="RegisterDeviceDialog">
   <property name="windowModality">
    <enum>Qt::ApplicationModal</enum>
   </property>
@@ -17,7 +17,7 @@
    <string>Register new device</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QDialog#RegisterDevice
+   <string notr="true">QDialog#RegisterDeviceDialog
 {
 background-color: rgb(255, 255, 255);
 }
@@ -413,7 +413,7 @@ padding-right: 5px;
   <connection>
    <sender>button_close</sender>
    <signal>clicked()</signal>
-   <receiver>RegisterDevice</receiver>
+   <receiver>RegisterDeviceDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">

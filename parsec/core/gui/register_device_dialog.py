@@ -1,7 +1,7 @@
 from PyQt5.QtCore import pyqtSignal, Qt, QCoreApplication
 from PyQt5.QtWidgets import QDialog
 
-from parsec.core.gui.ui.register_device import Ui_RegisterDevice
+from parsec.core.gui.ui.register_device_dialog import Ui_RegisterDeviceDialog
 from parsec.core.gui.core_call import core_call
 from parsec.core.gui.custom_widgets import show_error
 from parsec.core.backend_connection import BackendNotAvailable
@@ -9,7 +9,7 @@ from parsec.pkcs11_encryption_tool import DevicePKCS11Error
 
 
 # TODO: rename to DeclareDevice
-class RegisterDevice(QDialog, Ui_RegisterDevice):
+class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
     device_try_claim_submitted_qt = pyqtSignal(str, str, str)
 
     def __init__(self, *args, **kwargs):
