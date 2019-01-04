@@ -25,6 +25,22 @@ class PGUserComponent(BaseUserComponent):
         self.dbh = dbh
         self.event_bus = event_bus
 
+    async def set_user_admin(self, user_id: UserID, is_admin: bool) -> None:
+        user = await self.get_user(user_id)
+
+        async with self.dbh.pool.acquire() as conn:
+            result = await conn.execute(
+                """
+                UPDATE users SET
+                    is_admin = $2
+                WHERE user_id = $1
+                """,
+                user_id,
+                is_admin,
+            )
+            if result != "UPDATE 1":
+                raise UserError(f"Update error: {result}")
+
     async def create_user(self, user: User) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
@@ -38,13 +54,15 @@ class PGUserComponent(BaseUserComponent):
                 """
                 INSERT INTO users (
                     user_id,
+                    is_admin,
                     certified_user,
                     user_certifier,
                     created_on
                 )
-                VALUES ($1, $2, $3, $4)
+                VALUES ($1, $2, $3, $4, $5)
                 """,
                 user.user_id,
+                user.is_admin,
                 user.certified_user,
                 user.user_certifier,
                 user.created_on,
@@ -138,7 +156,7 @@ class PGUserComponent(BaseUserComponent):
     async def _get_user(self, conn, user_id: UserID) -> User:
         user_result = await conn.fetchrow(
             """
-            SELECT certified_user, user_certifier, created_on
+            SELECT is_admin, certified_user, user_certifier, created_on
             FROM users
             WHERE user_id = $1
             """,
@@ -170,9 +188,10 @@ class PGUserComponent(BaseUserComponent):
 
         return User(
             user_id=UserID(user_id),
-            certified_user=user_result[0],
-            user_certifier=user_result[1],
-            created_on=user_result[2],
+            is_admin=user_result[0],
+            certified_user=user_result[1],
+            user_certifier=user_result[2],
+            created_on=user_result[3],
             devices=devices,
         )
 

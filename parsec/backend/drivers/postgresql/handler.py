@@ -84,6 +84,7 @@ async def _create_db_tables(conn):
 
         CREATE TABLE users (
             user_id VARCHAR(32) PRIMARY KEY,
+            is_admin BOOLEAN,
             certified_user BYTEA,
             user_certifier VARCHAR(32),
             created_on TIMESTAMP NOT NULL
