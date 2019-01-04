@@ -1,9 +1,7 @@
 import trio
 import click
 
-from parsec.cli_utils import cli_exception_handler
 from parsec.core import logged_core_factory
-from parsec.core.cli.utils import core_config_and_device_options
 from parsec.core.gui import run_gui
 
 

@@ -1,5 +1,3 @@
-import os
-import pathlib
 import signal
 from structlog import get_logger
 
@@ -10,7 +8,6 @@ from parsec.core.config import CoreConfig
 
 try:
     from parsec.core.gui import lang
-    from parsec.core.gui import settings
     from parsec.core.gui.main_window import MainWindow
 except ImportError as exc:
     raise ModuleNotFoundError(

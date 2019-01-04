@@ -1,8 +1,6 @@
 import trio
 import pendulum
-from itertools import count
-from typing import Union, List, Optional
-from uuid import UUID
+from typing import List
 from structlog import get_logger
 
 from parsec.core.fs.merge_folders import find_conflicting_name_for_child_entry
@@ -10,14 +8,7 @@ from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignme
 from parsec.core.fs.local_folder_fs import mark_manifest_modified
 from parsec.core.fs.local_file_fs import Buffer, DirtyBlockBuffer, BlockBuffer, NullFillerBuffer
 from parsec.core.fs.sync_base import SyncConcurrencyError, BaseSyncer
-from parsec.core.fs.types import (
-    LocalFileManifest,
-    RemoteFileManifest,
-    LocalFolderManifest,
-    Path,
-    Access,
-    BlockAccess,
-)
+from parsec.core.fs.types import LocalFileManifest, RemoteFileManifest, Path, Access
 from parsec.core.fs.utils import (
     is_file_manifest,
     new_access,

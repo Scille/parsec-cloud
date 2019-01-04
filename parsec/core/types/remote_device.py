@@ -6,7 +6,7 @@ from parsec.trustchain import (
     unsecure_certified_device_extract_verify_key,
     unsecure_certified_user_extract_public_key,
 )
-from parsec.crypto import SigningKey, VerifyKey, PublicKey
+from parsec.crypto import PublicKey, VerifyKey
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)

@@ -1,11 +1,8 @@
-from PyQt5.QtCore import pyqtSignal, QCoreApplication
-from PyQt5.QtWidgets import QWidget, QInputDialog
+from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPixmap
 
 from parsec.core.backend_connection import BackendNotAvailable
-from parsec.core.invite_claim import generate_invitation_token, invite_and_create_user
 
-from parsec.core.gui.custom_widgets import get_text
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
 from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget

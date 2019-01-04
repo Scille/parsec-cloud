@@ -3,7 +3,6 @@ import pathlib
 from PyQt5.QtCore import QCoreApplication, Qt, QTimer
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (
-    QMessageBox,
     QFileDialog,
     QAbstractItemView,
     QListView,

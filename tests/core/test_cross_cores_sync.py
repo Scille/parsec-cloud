@@ -208,7 +208,6 @@ async def test_fast_forward_on_offline_during_sync(
                         await alice2_core2.fs.folder_create("/bar")
 
                     async with wait_for_entries_synced(alice2_core2, ("/", "/bar", "/foo.txt")):
-                        pass
                         await alice2_core2.fs.sync("/")
 
             for path in ("/", "/bar", "/foo.txt"):

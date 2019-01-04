@@ -1,6 +1,4 @@
 import attr
-from pathlib import PurePosixPath
-from typing import NewType, Union
 
 from parsec.crypto import SymetricKey, HashDigest
 from parsec.schema import UnknownCheckedSchema, fields, validate
