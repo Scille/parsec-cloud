@@ -24,6 +24,10 @@ class MemoryUserComponent(BaseUserComponent):
         self._device_configuration_tries = {}
         self._unconfigured_devices = {}
 
+    async def set_user_admin(self, user_id: UserID, is_admin: bool) -> None:
+        user = await self.get_user(user_id)
+        self._users[user_id] = user.evolve(is_admin=is_admin)
+
     async def create_user(self, user: User) -> None:
         if user.user_id in self._users:
             raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")

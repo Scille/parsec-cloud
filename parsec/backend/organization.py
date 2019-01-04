@@ -111,6 +111,7 @@ class BaseOrganizationComponent:
 
         user = new_user_factory(
             device_id=d_data["device_id"],
+            is_admin=True,
             certifier=None,
             certified_user=msg["certified_user"],
             certified_device=msg["certified_device"],

@@ -23,8 +23,10 @@ async def device_revoke(sock, **kwargs):
 
 @pytest.mark.trio
 async def test_device_revoke_ok(
-    backend, backend_sock_factory, alice_backend_sock, bob, bob_revocation
+    backend, backend_sock_factory, alice_backend_sock, alice, bob, bob_revocation
 ):
+    await backend.user.set_user_admin(alice.user_id, True)
+
     rep = await device_revoke(alice_backend_sock, certified_revocation=bob_revocation)
     assert rep == {"status": "ok"}
 
@@ -35,7 +37,35 @@ async def test_device_revoke_ok(
 
 
 @pytest.mark.trio
-async def test_device_revoke_unknown(alice_backend_sock, alice, mallory):
+async def test_device_revoke_not_admin(
+    backend, backend_sock_factory, alice_backend_sock, bob, bob_revocation
+):
+    rep = await device_revoke(alice_backend_sock, certified_revocation=bob_revocation)
+    assert rep == {"status": "invalid_role", "reason": "User `alice` is not admin"}
+
+
+@pytest.mark.trio
+async def test_device_revoke_own_device_not_admin(
+    backend, backend_sock_factory, alice_backend_sock, alice, alice2
+):
+    now = pendulum.now()
+    alice2_revocation = certify_device_revocation(
+        alice.device_id, alice.signing_key, alice2.device_id, now=now
+    )
+
+    rep = await device_revoke(alice_backend_sock, certified_revocation=alice2_revocation)
+    assert rep == {"status": "ok"}
+
+    # Make sure alice2 cannot connect from now on
+    with pytest.raises(HandshakeRevokedDevice):
+        async with backend_sock_factory(backend, alice2):
+            pass
+
+
+@pytest.mark.trio
+async def test_device_revoke_unknown(backend, alice_backend_sock, alice, mallory):
+    await backend.user.set_user_admin(alice.user_id, True)
+
     certified_revocation = certify_device_revocation(
         alice.device_id, alice.signing_key, mallory.device_id, now=pendulum.now()
     )
@@ -45,7 +75,9 @@ async def test_device_revoke_unknown(alice_backend_sock, alice, mallory):
 
 
 @pytest.mark.trio
-async def test_device_good_user_bad_device(alice_backend_sock, alice):
+async def test_device_good_user_bad_device(backend, alice_backend_sock, alice):
+    await backend.user.set_user_admin(alice.user_id, True)
+
     certified_revocation = certify_device_revocation(
         alice.device_id, alice.signing_key, f"{alice.user_id}@foo", now=pendulum.now()
     )
@@ -55,7 +87,11 @@ async def test_device_good_user_bad_device(alice_backend_sock, alice):
 
 
 @pytest.mark.trio
-async def test_device_revoke_already_revoked(alice_backend_sock, bob, bob_revocation):
+async def test_device_revoke_already_revoked(
+    backend, alice_backend_sock, alice, bob, bob_revocation
+):
+    await backend.user.set_user_admin(alice.user_id, True)
+
     rep = await device_revoke(alice_backend_sock, certified_revocation=bob_revocation)
     assert rep == {"status": "ok"}
 
@@ -67,7 +103,9 @@ async def test_device_revoke_already_revoked(alice_backend_sock, bob, bob_revoca
 
 
 @pytest.mark.trio
-async def test_device_revoke_invalid_certified(alice_backend_sock, alice2, bob):
+async def test_device_revoke_invalid_certified(backend, alice_backend_sock, alice2, bob):
+    await backend.user.set_user_admin(alice2.user_id, True)
+
     certified_revocation = certify_device_revocation(
         alice2.device_id, alice2.signing_key, bob.device_id, now=pendulum.now()
     )
@@ -80,7 +118,9 @@ async def test_device_revoke_invalid_certified(alice_backend_sock, alice2, bob):
 
 
 @pytest.mark.trio
-async def test_device_revoke_certify_too_old(alice_backend_sock, alice, bob):
+async def test_device_revoke_certify_too_old(backend, alice_backend_sock, alice, bob):
+    await backend.user.set_user_admin(alice.user_id, True)
+
     now = pendulum.Pendulum(2000, 1, 1)
     certified_revocation = certify_device_revocation(
         alice.device_id, alice.signing_key, bob.device_id, now=now

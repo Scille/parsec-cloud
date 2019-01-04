@@ -9,8 +9,12 @@ from parsec.core.invite_claim import generate_user_encrypted_claim, extract_user
 
 
 @pytest.mark.trio
-async def test_user_invite_then_claim_ok(alice, alice_backend_cmds, mallory, running_backend):
+async def test_user_invite_then_claim_ok(
+    backend, running_backend, alice, alice_backend_cmds, mallory
+):
     token = "424242"
+
+    await backend.user.set_user_admin(alice.user_id, True)
 
     async def _alice_invite():
         encrypted_claim = await alice_backend_cmds.user_invite(mallory.user_id)

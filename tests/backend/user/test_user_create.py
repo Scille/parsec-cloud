@@ -4,9 +4,10 @@ import pendulum
 
 from parsec.trustchain import certify_user, certify_device
 from parsec.backend.user import INVITATION_VALIDITY
-from parsec.api.protocole import user_create_serializer, ping_serializer
+from parsec.api.protocole import user_create_serializer
 
 from tests.common import freeze_time
+from tests.backend.user.test_access import user_get
 
 
 async def user_create(sock, **kwargs):
@@ -16,15 +17,11 @@ async def user_create(sock, **kwargs):
     return rep
 
 
-async def ping(sock, **kwargs):
-    await sock.send(ping_serializer.req_dumps({"cmd": "ping", **kwargs}))
-    raw_rep = await sock.recv()
-    rep = ping_serializer.rep_loads(raw_rep)
-    return rep
-
-
 @pytest.mark.trio
-async def test_user_create_ok(backend, backend_sock_factory, alice_backend_sock, alice, mallory):
+@pytest.mark.parametrize("is_admin", [True, False])
+async def test_user_create_ok(
+    backend, backend_sock_factory, alice_backend_sock, alice, mallory, is_admin
+):
     now = pendulum.now()
     certified_user = certify_user(
         alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, now=now
@@ -35,7 +32,10 @@ async def test_user_create_ok(backend, backend_sock_factory, alice_backend_sock,
 
     with backend.event_bus.listen() as spy:
         rep = await user_create(
-            alice_backend_sock, certified_user=certified_user, certified_device=certified_device
+            alice_backend_sock,
+            certified_user=certified_user,
+            certified_device=certified_device,
+            is_admin=is_admin,
         )
         assert rep == {"status": "ok"}
 
@@ -45,8 +45,9 @@ async def test_user_create_ok(backend, backend_sock_factory, alice_backend_sock,
 
     # Make sure mallory can connect now
     async with backend_sock_factory(backend, mallory) as sock:
-        rep = await ping(sock, ping="Hello world !")
-        assert rep == {"status": "ok", "pong": "Hello world !"}
+        rep = await user_get(sock, user_id=mallory.user_id)
+        assert rep["status"] == "ok"
+        assert rep["is_admin"] == is_admin
 
 
 @pytest.mark.trio
