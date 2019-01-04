@@ -46,7 +46,7 @@ class S3BlockstoreComponent(BaseBlockstoreComponent):
     async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
         try:
             await trio.run_sync_in_worker_thread(
-                partial(self._s3.head_object, Bucket=self._s3_bucket, Key=id)
+                partial(self._s3.head_object, Bucket=self._s3_bucket, Key=str(id))
             )
         except S3ClientError as exc:
             if exc.response["Error"]["Code"] == "404":
