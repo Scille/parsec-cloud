@@ -129,28 +129,6 @@ class UUID(UUID):
         return value.hex
 
 
-class Bytes(Field):
-    """Pass bytes through json by encoding them into base64"""
-
-    def _serialize(self, value, attr, obj):
-        if value is None:
-            return None
-
-        return value
-        # return to_jsonb64(value)
-
-    def _deserialize(self, value, attr, data):
-        if value is None:
-            return None
-
-        try:
-            return value
-            # return from_jsonb64(value)
-
-        except Exception:
-            raise ValidationError("Invalid base64-encoded bytes")
-
-
 class DateTime(Field):
     """DateTime using pendulum instead of regular datetime"""
 
@@ -290,8 +268,8 @@ class PublicKey(Field):
             raise ValidationError("Invalid verify key.")
 
 
-SymetricKey = Bytes
 Bytes = bytes_based_field_factory(bytes)
+SymetricKey = Bytes
 DeviceID = str_based_field_factory(_DeviceID)
 UserID = str_based_field_factory(_UserID)
 DeviceName = str_based_field_factory(_DeviceName)

@@ -1,7 +1,7 @@
 import re
 import attr
 import itertools
-from typing import List, Union
+from typing import List
 from collections import defaultdict
 
 

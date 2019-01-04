@@ -1,8 +1,8 @@
 import os
 from uuid import UUID
 
-from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
-from PyQt5.QtWidgets import QWidget, QDialog
+from PyQt5.QtCore import QCoreApplication, pyqtSignal
+from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.custom_widgets import (
     show_error,
@@ -13,7 +13,6 @@ from parsec.core.gui.custom_widgets import (
 )
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
-from parsec.core.gui.ui.shared_dialog import Ui_SharedDialog
 from parsec.core.fs import FSEntryNotFound
 from parsec.core.fs.sharing import SharingRecipientError
 

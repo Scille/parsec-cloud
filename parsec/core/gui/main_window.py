@@ -1,22 +1,19 @@
-import os
 import queue
 import threading
 import trio
 
-from PyQt5.QtCore import QCoreApplication, Qt, pyqtSignal
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QSystemTrayIcon, QMenu
-from PyQt5.QtGui import QIcon, QFontDatabase, QPixmap
+from PyQt5.QtCore import QCoreApplication, pyqtSignal
+from PyQt5.QtWidgets import QMainWindow, QMenu, QSystemTrayIcon
+from PyQt5.QtGui import QIcon, QPixmap
 from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
 
-from parsec.core.backend_connection import BackendNotAvailable
-from parsec.pkcs11_encryption_tool import DevicePKCS11Error
 from parsec.core.devices_manager import DeviceManagerError, load_device_with_password
 
 from parsec.core.gui import settings
 from parsec.core import logged_core_factory
-from parsec.core.gui.custom_widgets import show_error, show_info, ask_question
+from parsec.core.gui.custom_widgets import ask_question, show_error
 from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget

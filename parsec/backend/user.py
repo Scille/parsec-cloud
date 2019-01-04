@@ -1,11 +1,9 @@
 import trio
 import attr
-from typing import List, Tuple, Dict, Union, Optional
+from typing import Dict, List, Optional, Tuple
 import pendulum
 
 from parsec.types import UserID, DeviceID
-from parsec.event_bus import EventBus
-from parsec.crypto import VerifyKey
 from parsec.trustchain import (
     unsecure_certified_device_extract_verify_key,
     unsecure_certified_user_extract_public_key,

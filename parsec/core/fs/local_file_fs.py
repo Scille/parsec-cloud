@@ -1,6 +1,6 @@
 import attr
 from math import inf
-from typing import List, Union, Optional
+from typing import List, Optional
 
 from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice

@@ -1,9 +1,7 @@
 import attr
 import pendulum
-from uuid import UUID
-from typing import List, Tuple, Optional
+from typing import Optional
 
-from parsec.types import DeviceID
 from parsec.crypto import generate_token, VerifyKey
 from parsec.trustchain import (
     TrustChainError,

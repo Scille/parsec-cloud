@@ -9,8 +9,8 @@ from functools import partial
 
 from parsec.types import DeviceID
 from parsec.backend.blockstore import (
-    BaseBlockstoreComponent,
     BlockstoreAlreadyExistsError,
+    BaseBlockstoreComponent,
     BlockstoreNotFoundError,
     BlockstoreTimeoutError,
 )
