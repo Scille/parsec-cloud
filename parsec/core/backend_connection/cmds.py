@@ -1,7 +1,7 @@
 from typing import Tuple, List, Dict, Iterable
 from uuid import UUID
 
-from parsec.types import DeviceID, UserID
+from parsec.types import DeviceID, UserID, DeviceName
 from parsec.crypto import VerifyKey
 from parsec.api.transport import Transport, TransportError
 from parsec.api.protocole import (
@@ -309,21 +309,21 @@ async def user_create(transport: Transport, certified_user: bytes, certified_dev
         raise BackendCmdsBadResponse(rep)
 
 
-async def device_invite(transport: Transport, device_id: DeviceID) -> bytes:
+async def device_invite(transport: Transport, device_name: DeviceName) -> bytes:
     rep = await _send_cmd(
-        transport, device_invite_serializer, cmd="device_invite", device_id=device_id
+        transport, device_invite_serializer, cmd="device_invite", device_name=device_name
     )
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)
     return rep["encrypted_claim"]
 
 
-async def device_cancel_invitation(transport: Transport, device_id: DeviceID) -> None:
+async def device_cancel_invitation(transport: Transport, device_name: DeviceName) -> None:
     rep = await _send_cmd(
         transport,
         device_cancel_invitation_serializer,
         cmd="device_cancel_invitation",
-        device_id=device_id,
+        device_name=device_name,
     )
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)

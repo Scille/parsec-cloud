@@ -143,7 +143,7 @@ user_create_serializer = CmdSerializer(UserCreateReqSchema, UserCreateRepSchema)
 
 
 class DeviceInviteReqSchema(BaseReqSchema):
-    device_id = fields.DeviceID(required=True)
+    invited_device_name = fields.DeviceName(required=True)
 
 
 class DeviceInviteRepSchema(BaseRepSchema):
@@ -183,7 +183,7 @@ device_claim_serializer = CmdSerializer(DeviceClaimReqSchema, DeviceClaimRepSche
 
 
 class DeviceCancelInvitationReqSchema(BaseReqSchema):
-    device_id = fields.DeviceID(required=True)
+    invited_device_name = fields.DeviceName(required=True)
 
 
 class DeviceCancelInvitationRepSchema(BaseRepSchema):
