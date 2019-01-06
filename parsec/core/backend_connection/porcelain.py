@@ -24,7 +24,8 @@ logger = get_logger()
 
 
 class BackendCmdsPool:
-    def __init__(self, transport_pool):
+    def __init__(self, addr, transport_pool):
+        self.addr = addr
         self.transport_pool = transport_pool
 
     def _expose_cmds_with_retrier(name):
@@ -72,7 +73,8 @@ class BackendCmdsPool:
 
 
 class BackendAnonymousCmds:
-    def __init__(self, transport):
+    def __init__(self, addr, transport):
+        self.addr = addr
         self.transport = transport
 
     def _expose_cmds(name):
@@ -102,13 +104,13 @@ async def backend_cmds_factory(
     addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey, max_pool: int = 4
 ) -> BackendCmdsPool:
     async with transport_pool_factory(addr, device_id, signing_key, max_pool) as transport_pool:
-        yield BackendCmdsPool(transport_pool)
+        yield BackendCmdsPool(addr, transport_pool)
 
 
 @asynccontextmanager
 async def backend_anonymous_cmds_factory(addr: BackendOrganizationAddr) -> BackendAnonymousCmds:
     try:
         async with anonymous_transport_factory(addr) as transport:
-            yield BackendAnonymousCmds(transport)
+            yield BackendAnonymousCmds(addr, transport)
     except TransportError as exc:
         raise BackendNotAvailable(exc) from exc

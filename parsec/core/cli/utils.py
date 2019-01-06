@@ -2,6 +2,7 @@ import os
 import trio
 import click
 from functools import wraps
+from pathlib import Path
 
 from parsec.types import DeviceID
 from parsec.logging import configure_logging, configure_sentry_logging
@@ -38,7 +39,7 @@ def core_config_options(fn):
     @click.option("--log-file", "-o")
     @click.option("--log-filter", default=None)
     @wraps(fn)
-    def wrapper(*args, **kwargs):
+    def wrapper(config_dir, *args, **kwargs):
         assert "config" not in kwargs
 
         ssl_keyfile = kwargs["ssl_keyfile"]
@@ -56,7 +57,7 @@ def core_config_options(fn):
             kwargs["log_level"], kwargs["log_format"], kwargs["log_file"], kwargs["log_filter"]
         )
 
-        config_dir = kwargs["config_dir"] or get_default_config_dir(os.environ)
+        config_dir = Path(config_dir) if config_dir else get_default_config_dir(os.environ)
         config = load_config(config_dir, debug="DEBUG" in os.environ)
 
         if config.sentry_url:

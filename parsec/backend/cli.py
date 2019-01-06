@@ -4,7 +4,7 @@ import trio_asyncio
 import click
 from structlog import get_logger
 
-from parsec.cli_utils import spinner
+from parsec.cli_utils import spinner, cli_exception_handler
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.backend import BackendApp, config_factory
 from parsec.backend.drivers.postgresql import init_db
@@ -23,11 +23,11 @@ def init_cmd(db, force):
     """
     Initialize a new backend's PostgreSQL database.
     """
-    debug = "DEBUG" in os.environ
     if not db.startswith("postgresql://") or db.startswith("postgres://"):
         raise SystemExit("Can only initialize a PostgreSQL database.")
 
-    try:
+    debug = "DEBUG" in os.environ
+    with cli_exception_handler(debug):
 
         async def _init_db(db, force):
             async with spinner("Initializing database"):
@@ -36,13 +36,6 @@ def init_cmd(db, force):
                 click.echo("Database already initialized, nothing to do.")
 
         trio_asyncio.run(_init_db, db, force)
-
-    except Exception as exc:
-        click.echo(click.style("Error: ", fg="red") + str(exc))
-        if debug:
-            raise
-        else:
-            raise SystemExit(1)
 
 
 @click.command(short_help="run the server")
@@ -73,7 +66,6 @@ def init_cmd(db, force):
 @click.option("--log-format", "-f", default="CONSOLE", type=click.Choice(("CONSOLE", "JSON")))
 @click.option("--log-file", "-o")
 @click.option("--log-filter", default=None)
-@click.option("--debug", "-d", is_flag=True)
 def run_cmd(
     host,
     port,
@@ -85,60 +77,63 @@ def run_cmd(
     log_format,
     log_file,
     log_filter,
-    debug,
 ):
     configure_logging(log_level, log_format, log_file, log_filter)
 
-    try:
-        config = config_factory(
-            blockstore_type=blockstore, db_url=store, debug=debug, environ=os.environ
-        )
-    except ValueError as exc:
-        raise SystemExit(f"Invalid configuration: {exc}")
-
-    if config.sentry_url:
-        configure_sentry_logging(config.sentry_url)
-
-    backend = BackendApp(config)
-
-    if ssl_certfile or ssl_keyfile:
-        ssl_context = trio.ssl.create_default_context(trio.ssl.Purpose.SERVER_AUTH)
-        if ssl_certfile:
-            ssl_context.load_cert_chain(ssl_certfile, ssl_keyfile)
-        else:
-            ssl_context.load_default_certs()
-    else:
-        ssl_context = None
-
-    async def _serve_client(stream):
-        if ssl_context:
-            stream = trio.ssl.SSLStream(stream, ssl_context, server_side=True)
+    debug = "DEBUG" in os.environ
+    with cli_exception_handler(debug):
 
         try:
-            await backend.handle_client(stream)
+            config = config_factory(
+                blockstore_type=blockstore, db_url=store, debug=debug, environ=os.environ
+            )
 
-        except Exception as exc:
-            # If we are here, something unexpected happened...
-            logger.error("Unexpected crash", exc_info=exc)
-            await stream.aclose()
+        except ValueError as exc:
+            raise ValueError(f"Invalid configuration: {exc}")
 
-    async def _run_backend():
-        async with trio.open_nursery() as nursery:
-            await backend.init(nursery)
+        if config.sentry_url:
+            configure_sentry_logging(config.sentry_url)
+
+        backend = BackendApp(config)
+
+        if ssl_certfile or ssl_keyfile:
+            ssl_context = trio.ssl.create_default_context(trio.ssl.Purpose.SERVER_AUTH)
+            if ssl_certfile:
+                ssl_context.load_cert_chain(ssl_certfile, ssl_keyfile)
+            else:
+                ssl_context.load_default_certs()
+        else:
+            ssl_context = None
+
+        async def _serve_client(stream):
+            if ssl_context:
+                stream = trio.ssl.SSLStream(stream, ssl_context, server_side=True)
 
             try:
-                await trio.serve_tcp(_serve_client, port, host=host)
+                await backend.handle_client(stream)
 
-            finally:
-                await backend.teardown()
+            except Exception as exc:
+                # If we are here, something unexpected happened...
+                logger.error("Unexpected crash", exc_info=exc)
+                await stream.aclose()
 
-    print(
-        f"Starting Parsec Backend on {host}:{port} (db={config.db_type}, blockstore={config.blockstore_config.type})"
-    )
-    try:
-        trio_asyncio.run(_run_backend)
-    except KeyboardInterrupt:
-        print("bye ;-)")
+        async def _run_backend():
+            async with trio.open_nursery() as nursery:
+                await backend.init(nursery)
+
+                try:
+                    await trio.serve_tcp(_serve_client, port, host=host)
+
+                finally:
+                    await backend.teardown()
+
+        print(
+            f"Starting Parsec Backend on {host}:{port} (db={config.db_type}, blockstore={config.blockstore_config.type})"
+        )
+        try:
+            trio_asyncio.run(_run_backend)
+        except KeyboardInterrupt:
+            print("bye ;-)")
 
 
 @click.group()

@@ -6,15 +6,17 @@ from parsec.cli_utils import spinner, operation, cli_exception_handler
 from parsec.core.cli.utils import core_config_options
 from parsec.types import BackendOrganizationAddr, DeviceID
 from parsec.core.devices_manager import save_device_with_password, save_device_with_pkcs11
-from parsec.core.invite_claim import claim_user as claim_user_the_real_one_damn_variable_shadowing
 from parsec.core.backend_connection import backend_anonymous_cmds_factory
+from parsec.core.invite_claim import (
+    claim_device as claim_device_the_real_one_damn_variable_shadowing
+)
 
 
-async def _claim_user(config, backend_addr, token, new_device_id, password, pkcs11):
+async def _claim_device(config, backend_addr, token, new_device_id, password, pkcs11):
     async with backend_anonymous_cmds_factory(backend_addr) as cmds:
 
         async with spinner("Waiting for referee to reply"):
-            device = await claim_user_the_real_one_damn_variable_shadowing(
+            device = await claim_device_the_real_one_damn_variable_shadowing(
                 cmds, new_device_id, token
             )
 
@@ -36,10 +38,10 @@ async def _claim_user(config, backend_addr, token, new_device_id, password, pkcs
 @click.option("--addr", "-B", required=True, type=BackendOrganizationAddr)
 @click.password_option()
 @click.option("--pkcs11", is_flag=True)
-def claim_user(config, addr, device, token, password, pkcs11, **kwargs):
+def claim_device(config, addr, device, token, password, pkcs11, **kwargs):
     if password and pkcs11:
         raise SystemExit("Password are PKCS11 options are exclusives.")
 
     debug = "DEBUG" in os.environ
     with cli_exception_handler(debug):
-        trio.run(_claim_user, config, addr, token, device, password, pkcs11)
+        trio.run(_claim_device, config, addr, token, device, password, pkcs11)
