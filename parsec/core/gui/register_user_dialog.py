@@ -42,6 +42,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.button_copy_username.clicked.connect(self.copy_field(self.line_edit_user))
         self.button_copy_token.clicked.connect(self.copy_field(self.line_edit_token))
         self.button_copy_url.clicked.connect(self.copy_field(self.line_edit_url))
+        self.closing_allowed = True
 
     def copy_field(self, widget):
         def _inner_copy_field():
@@ -63,6 +64,13 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.button_cancel.hide()
         self.button_register.show()
         self.line_edit_username.show()
+        self.closing_allowed = True
+
+    def closeEvent(self, event):
+        if not self.closing_allowed:
+            event.ignore()
+        else:
+            event.accept()
 
     def register_user(self):
         def _run_registration(username, token):
@@ -108,10 +116,8 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             self.button_cancel.show()
             self.line_edit_username.hide()
             self.button_register.hide()
+            self.closing_allowed = False
         except:
-            import traceback
-
-            traceback.print_exc()
             show_warning(
                 self,
                 QCoreApplication.translate("RegisterUserDialog", "Could not register the user."),
