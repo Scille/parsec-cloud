@@ -8,6 +8,7 @@ import trio
 
 from parsec.core.invite_claim import generate_invitation_token, invite_and_create_user
 
+from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import show_warning
 from parsec.core.gui.ui.register_user_dialog import Ui_RegisterUserDialog
 
@@ -38,6 +39,15 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.button_cancel.hide()
         self.button_register.clicked.connect(self.register_user)
         self.button_cancel.clicked.connect(self.cancel_register_user)
+        self.button_copy_username.clicked.connect(self.copy_field(self.line_edit_user))
+        self.button_copy_token.clicked.connect(self.copy_field(self.line_edit_token))
+        self.button_copy_url.clicked.connect(self.copy_field(self.line_edit_url))
+
+    def copy_field(self, widget):
+        def _inner_copy_field():
+            desktop.copy_to_clipboard(widget.text())
+
+        return _inner_copy_field
 
     def cancel_register_user(self):
         async def _cancel():
@@ -88,6 +98,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             self.line_edit_token.setCursorPosition(0)
             self.line_edit_url.setText(self.core.device.backend_addr)
             self.line_edit_url.setCursorPosition(0)
+            self.button_cancel.setFocus()
             self.widget_registration.show()
             self.cancel_event = trio.Event()
             self.register_thread = threading.Thread(
