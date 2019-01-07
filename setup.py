@@ -241,7 +241,7 @@ requirements = [
 
 
 test_requirements = [
-    "pytest>=3.8.1",
+    "pytest==4.0.2",
     "pytest-cov",
     "pytest-xdist",
     "pytest-trio>=0.5.1",
