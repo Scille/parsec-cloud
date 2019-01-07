@@ -21,7 +21,7 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
     token = "123456"
 
     async def _alice_invite():
-        encrypted_claim = await alice_backend_cmds.device_invite(nd_id)
+        encrypted_claim = await alice_backend_cmds.device_invite(nd_id.device_name)
         claim = extract_device_encrypted_claim(alice.private_key, encrypted_claim)
 
         assert claim["token"] == token

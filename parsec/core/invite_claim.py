@@ -1,20 +1,27 @@
 from secrets import token_hex
+import pendulum
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, UserID, DeviceName
 from parsec.crypto import (
     CryptoError,
     PublicKey,
     PrivateKey,
+    SigningKey,
     VerifyKey,
+    generate_secret_key,
     encrypt_raw_for,
     decrypt_raw_for,
 )
+from parsec.trustchain import certify_device, certify_user
 
 # TODO: move serializer away from protocole
 from parsec.api.protocole.base import Serializer, ProtocoleError
 from parsec.schema import ValidationError, UnknownCheckedSchema, fields
+from parsec.core.types import LocalDevice
 from parsec.core.fs.types import Access
 from parsec.core.schemas import ManifestAccessSchema
+from parsec.core.backend_connection import BackendCmdsPool
+from parsec.core.devices_manager import generate_new_device
 
 
 class InviteClaimError(Exception):
@@ -157,79 +164,110 @@ def extract_device_encrypted_answer(
 
 ### Helpers ###
 
-# TODO: use crypto.generate_token instead
-def generate_invitation_token(token_size):
-    return token_hex(token_size)
+
+def generate_invitation_token():
+    return token_hex(8)
 
 
-import pendulum
-from parsec.types import UserID
-from parsec.trustchain import certify_device, certify_user
-from parsec.core.types import LocalDevice
-
-
-# TODO: remove this ?
-async def bootstrap_domain(backend_addr: str, token: str) -> LocalDevice:
-    root_signing_key = SigningKey.generate()
-    root_id = DeviceID("root@root")
-    certify_device
-    device = generate_new_device(device, backend_addr, root_signing_key.verify_key)
-    certify_user()
-    async with backend_anonymous_cmds_factory(backend_addr) as cmds:
-        cmds.domain_bootstrap()
-
-
-async def invite_and_create_user(core, user_id: UserID, token: str) -> DeviceID:
+async def claim_user(cmds: BackendCmdsPool, new_device_id: DeviceID, token: str) -> LocalDevice:
     """
     Raises:
         InviteClaimError
         core.backend_connection.BackendConnectionError
         core.trustchain.TrustChainError
     """
-    encrypted_claim = await core.backend_cmds.user_invite(user_id)
+    device = generate_new_device(new_device_id, cmds.addr)
 
-    claim = extract_user_encrypted_claim(core.device.private_key, encrypted_claim)
+    invitation_creator = await cmds.user_get_invitation_creator(new_device_id.user_id)
+
+    encrypted_claim = generate_user_encrypted_claim(
+        invitation_creator.public_key, token, new_device_id, device.public_key, device.verify_key
+    )
+    await cmds.user_claim(new_device_id.user_id, encrypted_claim)
+
+    return device
+
+
+async def claim_device(cmds: BackendCmdsPool, new_device_id: DeviceID, token: str) -> LocalDevice:
+    """
+    Raises:
+        InviteClaimError
+        core.backend_connection.BackendConnectionError
+        core.trustchain.TrustChainError
+    """
+    device_signing_key = SigningKey.generate()
+    answer_private_key = PrivateKey.generate()
+
+    invitation_creator = await cmds.device_get_invitation_creator(new_device_id)
+
+    encrypted_claim = generate_device_encrypted_claim(
+        creator_public_key=invitation_creator.public_key,
+        token=token,
+        device_id=new_device_id,
+        verify_key=device_signing_key.verify_key,
+        answer_public_key=answer_private_key.public_key,
+    )
+    encrypted_answer = await cmds.device_claim(new_device_id, encrypted_claim)
+
+    answer = extract_device_encrypted_answer(answer_private_key, encrypted_answer)
+    return LocalDevice(
+        backend_addr=cmds.addr,
+        device_id=new_device_id,
+        signing_key=device_signing_key,
+        private_key=answer["private_key"],
+        user_manifest_access=answer["user_manifest_access"],
+        local_symkey=generate_secret_key(),
+    )
+
+
+async def invite_and_create_device(
+    device: LocalDevice, cmds: BackendCmdsPool, new_device_name: DeviceName, token: str
+) -> None:
+    """
+    Raises:
+        InviteClaimError
+        core.backend_connection.BackendConnectionError
+        core.trustchain.TrustChainError
+    """
+    encrypted_claim = await cmds.device_invite(new_device_name)
+
+    claim = extract_device_encrypted_claim(device.private_key, encrypted_claim)
+    if claim["token"] != token:
+        raise InviteClaimInvalidToken(claim["token"])
+
+    certified_device = certify_device(
+        device.device_id, device.signing_key, claim["device_id"], claim["verify_key"]
+    )
+    encrypted_answer = generate_device_encrypted_answer(
+        claim["answer_public_key"], device.private_key, device.user_manifest_access
+    )
+
+    await cmds.device_create(certified_device, encrypted_answer)
+
+
+async def invite_and_create_user(
+    device: LocalDevice, cmds: BackendCmdsPool, user_id: UserID, token: str
+) -> DeviceID:
+    """
+    Raises:
+        InviteClaimError
+        core.backend_connection.BackendConnectionError
+        core.trustchain.TrustChainError
+    """
+    encrypted_claim = await cmds.user_invite(user_id)
+
+    claim = extract_user_encrypted_claim(device.private_key, encrypted_claim)
     if claim["token"] != token:
         raise InviteClaimInvalidToken(claim["token"])
 
     device_id = claim["device_id"]
     now = pendulum.now()
     certified_user = certify_user(
-        core.device.device_id,
-        core.device.signing_key,
-        device_id.user_id,
-        claim["public_key"],
-        now=now,
+        device.device_id, device.signing_key, device_id.user_id, claim["public_key"], now=now
     )
     certified_device = certify_device(
-        core.device.device_id, core.device.signing_key, device_id, claim["verify_key"], now=now
+        device.device_id, device.signing_key, device_id, claim["verify_key"], now=now
     )
 
-    await core.backend_cmds.user_create(certified_user, certified_device)
+    await cmds.user_create(certified_user, certified_device)
     return device_id
-
-
-async def claim_and_save_user(backend_addr, root_verify_key, device_id, token: str) -> LocalDevice:
-    device = generate_new_device(device_id, backend_addr, root_verify_key)
-
-    async with backend_anonymous_cmds_factory(backend_addr) as cmds:
-        invitation_creator = await cmds.user_get_invitation_creator(device_id.user_id)
-
-        encrypted_claim = generate_user_encrypted_claim(
-            invitation_creator.public_key, token, device_id, device.public_key, device.verify_key
-        )
-        await cmds.user_claim(device_id.user_id, encrypted_claim)
-
-        if pkcs11:
-            save_device_with_password(config_dir, device_id, token_id, key_id, pin)
-        else:
-            save_device_with_password(config_dir, device_id, password)
-
-    async with backend_anonymous_cmds_factory(backend_addr) as cmds:
-        invitation_creator = await cmds.user_get_invitation_creator(mallory.user_id)
-        assert isinstance(invitation_creator, RemoteUser)
-
-        encrypted_claim = generate_user_encrypted_claim(
-            invitation_creator.public_key, mallory.device_id, mallory.public_key, mallory.verify_key
-        )
-        await cmds.user_claim(mallory.user_id, encrypted_claim)

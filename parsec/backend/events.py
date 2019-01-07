@@ -90,7 +90,32 @@ class EventsComponent:
         msg = events_listen_serializer.req_load(msg)
 
         if msg["wait"]:
-            event_data = await client_ctx.events.get()
+            # This is kind of a special case here:
+            # unlike other requests this one is going to (potentially) take
+            # a long time to complete. In the meantime we must monitor the
+            # connection with the client in order to make sure it is still
+            # online and handle websocket pings
+            event_data = None
+
+            async def _get_event(cancel_scope):
+                nonlocal event_data
+                event_data = await client_ctx.events.get()
+                cancel_scope.cancel()
+
+            async def _keep_transport_breathing(cancel_scope):
+                # If a command is received, the client is violating the
+                # request/reply pattern. We consider this as an order to stop
+                # listening events.
+                await client_ctx.transport.recv()
+                cancel_scope.cancel()
+
+            async with trio.open_nursery() as nursery:
+                nursery.start_soon(_get_event, nursery.cancel_scope)
+                nursery.start_soon(_keep_transport_breathing, nursery.cancel_scope)
+
+            if not event_data:
+                return {"status": "cancelled", "reason": "Client cancelled the listening"}
+
         else:
             try:
                 event_data = client_ctx.events.get_nowait()

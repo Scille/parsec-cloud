@@ -406,10 +406,9 @@ class BaseUserComponent:
     @catch_protocole_errors
     async def api_device_invite(self, client_ctx, msg):
         msg = device_invite_serializer.req_load(msg)
-        if msg["device_id"].user_id != client_ctx.user_id:
-            return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
 
-        invitation = DeviceInvitation(msg["device_id"], client_ctx.device_id)
+        invited_device_id = DeviceID(f"{client_ctx.device_id.user_id}@{msg['invited_device_name']}")
+        invitation = DeviceInvitation(invited_device_id, client_ctx.device_id)
         try:
             await self.create_device_invitation(invitation)
 
@@ -516,10 +515,9 @@ class BaseUserComponent:
     async def api_device_cancel_invitation(self, client_ctx, msg):
         msg = device_cancel_invitation_serializer.req_load(msg)
 
-        if msg["device_id"].user_id != client_ctx.user_id:
-            return {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
+        invited_device_id = DeviceID(f"{client_ctx.device_id.user_id}@{msg['invited_device_name']}")
 
-        await self.cancel_device_invitation(msg["device_id"])
+        await self.cancel_device_invitation(invited_device_id)
 
         return device_cancel_invitation_serializer.rep_dump({"status": "ok"})
 

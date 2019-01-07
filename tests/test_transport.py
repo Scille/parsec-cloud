@@ -2,8 +2,62 @@ import pytest
 import trio
 
 from parsec.schema import UnknownCheckedSchema, fields
-from parsec.api.transport import Transport
+from parsec.api.transport import Transport, TransportClosedByPeer
 from parsec.api.protocole.base import Serializer
+
+
+@pytest.fixture
+async def serve_tcp_testbed(unused_tcp_port):
+    async def _serve_tcp_testbed(*conns):
+        host = "127.0.0.1"
+        send_channel, receive_channel = trio.open_memory_channel(0)
+
+        async def _serve_client(stream):
+            server_fn = await receive_channel.receive()
+            transport = await Transport.init_for_server(stream)
+            await server_fn(transport)
+
+        async with trio.open_nursery() as nursery:
+            await nursery.start(trio.serve_tcp, _serve_client, unused_tcp_port)
+            assert len(nursery.child_tasks) == 1
+            serve_tcp_task = list(nursery.child_tasks)[0]
+            assert len(serve_tcp_task.child_nurseries) == 1
+            serve_tcp_nursery = serve_tcp_task.child_nurseries[0]
+
+            initial_tasks = serve_tcp_nursery.child_tasks.copy()
+
+            for client_fn, server_fn in conns:
+                stream = await trio.open_tcp_stream(host, unused_tcp_port)
+                await send_channel.send(server_fn)
+
+                transport = await Transport.init_for_client(stream, host)
+                await client_fn(transport)
+
+                await trio.testing.wait_all_tasks_blocked()
+                tasks = serve_tcp_nursery.child_tasks.copy()
+                assert tasks == initial_tasks
+
+            await send_channel.aclose()
+            nursery.cancel_scope.cancel()
+
+    return _serve_tcp_testbed
+
+
+@pytest.mark.trio
+@pytest.mark.parametrize("closing_end", ["client", "server"])
+async def test_no_transport_leaks_one_end_close(serve_tcp_testbed, closing_end):
+    async def closing_end_fn(transport):
+        with pytest.raises(TransportClosedByPeer):
+            await transport.recv()
+        await transport.aclose()
+
+    async def listening_end_fn(transport):
+        await transport.aclose()
+
+    if closing_end == "server":
+        await serve_tcp_testbed((listening_end_fn, closing_end_fn))
+    else:
+        await serve_tcp_testbed((closing_end_fn, listening_end_fn))
 
 
 # TODO: basically a benchmark to showcase the performances issues with

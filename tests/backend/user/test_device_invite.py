@@ -1,13 +1,14 @@
 import pytest
 from async_generator import asynccontextmanager
 
+from parsec.types import DeviceID
 from parsec.backend.user import PEER_EVENT_MAX_WAIT
 from parsec.api.protocole import device_invite_serializer
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def alice_nd_id(alice):
-    return f"{alice.user_id}@new_device"
+    return DeviceID(f"{alice.user_id}@new_device")
 
 
 @asynccontextmanager
@@ -22,7 +23,9 @@ async def device_invite(sock, **kwargs):
 
 @pytest.mark.trio
 async def test_device_invite(backend, alice_backend_sock, alice, alice_nd_id):
-    async with device_invite(alice_backend_sock, device_id=alice_nd_id) as prep:
+    async with device_invite(
+        alice_backend_sock, invited_device_name=alice_nd_id.device_name
+    ) as prep:
 
         # Waiting for device.claimed event
         await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
@@ -35,7 +38,7 @@ async def test_device_invite(backend, alice_backend_sock, alice, alice_nd_id):
 
 @pytest.mark.trio
 async def test_device_invite_already_exists(alice_backend_sock, alice):
-    async with device_invite(alice_backend_sock, device_id=alice.device_id) as prep:
+    async with device_invite(alice_backend_sock, invited_device_name=alice.device_name) as prep:
         pass
     assert prep[0] == {
         "status": "already_exists",
@@ -44,22 +47,10 @@ async def test_device_invite_already_exists(alice_backend_sock, alice):
 
 
 @pytest.mark.trio
-async def test_device_invite_bad_user_id(backend, alice_backend_sock, alice, bob):
-    async with device_invite(alice_backend_sock, device_id=f"{bob.user_id}@foo") as prep:
-        pass
-    assert prep[0] == {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
-
-
-@pytest.mark.trio
-async def test_device_invite_unknown_user(alice_backend_sock, alice, mallory):
-    async with device_invite(alice_backend_sock, device_id=mallory.device_id) as prep:
-        pass
-    assert prep[0] == {"status": "bad_user_id", "reason": "Device must be handled by it own user."}
-
-
-@pytest.mark.trio
 async def test_device_invite_timeout(mock_clock, backend, alice_backend_sock, alice, alice_nd_id):
-    async with device_invite(alice_backend_sock, device_id=alice_nd_id) as prep:
+    async with device_invite(
+        alice_backend_sock, invited_device_name=alice_nd_id.device_name
+    ) as prep:
         await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
         mock_clock.jump(PEER_EVENT_MAX_WAIT + 1)
     assert prep[0] == {
@@ -72,11 +63,15 @@ async def test_device_invite_timeout(mock_clock, backend, alice_backend_sock, al
 async def test_concurrent_device_invite(
     backend, alice_backend_sock, alice2_backend_sock, alice, alice_nd_id
 ):
-    async with device_invite(alice_backend_sock, device_id=alice_nd_id) as prep:
+    async with device_invite(
+        alice_backend_sock, invited_device_name=alice_nd_id.device_name
+    ) as prep:
 
         await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
 
-        async with device_invite(alice2_backend_sock, device_id=alice_nd_id) as prep2:
+        async with device_invite(
+            alice2_backend_sock, invited_device_name=alice_nd_id.device_name
+        ) as prep2:
 
             backend.event_bus.spy.clear()
             await backend.event_bus.spy.wait(

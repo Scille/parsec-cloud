@@ -2,6 +2,7 @@ import os
 import trio
 import click
 import pendulum
+from pathlib import Path
 
 from parsec.logging import configure_logging
 from parsec.cli_utils import spinner, operation, cli_exception_handler
@@ -13,13 +14,14 @@ from parsec.core.backend_connection import backend_anonymous_cmds_factory
 from parsec.core.devices_manager import generate_new_device, save_device_with_password
 
 
-async def _bootstrap_organization(debug, device_id, organization_bootstrap_addr, config_dir, force):
+async def _bootstrap_organization(
+    debug, device_id, organization_bootstrap_addr, config_dir, force, password
+):
     root_signing_key = SigningKey.generate()
     root_verify_key = root_signing_key.verify_key
     organization_addr = organization_bootstrap_addr.generate_organization_addr(root_verify_key)
 
     device_display = click.style(device_id, fg="yellow")
-    password = click.prompt("Device's password", hide_input=True, confirmation_prompt=True)
     device = generate_new_device(device_id, organization_addr)
 
     with operation(f"Creating locally {device_display}"):
@@ -48,14 +50,15 @@ async def _bootstrap_organization(debug, device_id, organization_bootstrap_addr,
 @click.option("--addr", "-B", type=BackendOrganizationBootstrapAddr, required=True)
 @click.option("--config-dir", type=click.Path(exists=True, file_okay=False))
 @click.option("--force", is_flag=True)
-def bootstrap_organization(device, addr, config_dir, force):
+@click.password_option()
+def bootstrap_organization(device, addr, config_dir, force, password):
     """
     Configure the organization and register it first user&device.
     """
 
-    config_dir = config_dir or get_default_config_dir(os.environ)
+    config_dir = Path(config_dir) if config_dir else get_default_config_dir(os.environ)
     debug = "DEBUG" in os.environ
     configure_logging(log_level="DEBUG" if debug else "WARNING")
 
     with cli_exception_handler(debug):
-        trio.run(_bootstrap_organization, debug, device, addr, config_dir, force)
+        trio.run(_bootstrap_organization, debug, device, addr, config_dir, force, password)
