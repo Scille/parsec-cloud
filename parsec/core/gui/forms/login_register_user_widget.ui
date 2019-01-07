@@ -657,7 +657,7 @@ image: url(:/icons/images/icons/checked.png)
             </spacer>
            </item>
            <item>
-            <widget class="QPushButton" name="button_register">
+            <widget class="QPushButton" name="button_claim">
              <property name="font">
               <font>
                <pointsize>13</pointsize>
@@ -667,7 +667,7 @@ image: url(:/icons/images/icons/checked.png)
               <enum>Qt::RightToLeft</enum>
              </property>
              <property name="styleSheet">
-              <string notr="true">QPushButton#button_register
+              <string notr="true">QPushButton#button_claim
 {
 border: 1px solid rgb(255, 255, 255);
 color: rgb(255, 255, 255);

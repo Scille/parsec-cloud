@@ -3,6 +3,8 @@ from zxcvbn import zxcvbn
 from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
 from PyQt5.QtWidgets import QWidget, QCompleter
 
+from parsec.types import BackendOrganizationAddr, DeviceID
+from parsec.crypto import PublicKey, SigningKey
 from parsec.core import devices_manager
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_widgets import show_error
@@ -78,13 +80,11 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
 
 
 class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
-    register_with_password_clicked = pyqtSignal(str, str, str, str)
-    register_with_pkcs11_clicked = pyqtSignal(str, str, str, int, int)
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.button_register.clicked.connect(self.emit_register)
+        self.core_config = core_config
+        self.button_claim.clicked.connect(self.claim_user)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_token.textChanged.connect(self.check_infos)
@@ -123,9 +123,9 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
             and len(self.line_edit_device.text())
             and len(self.line_edit_url.text())
         ):
-            self.button_register.setDisabled(False)
+            self.button_claim.setDisabled(False)
         else:
-            self.button_register.setDisabled(True)
+            self.button_claim.setDisabled(True)
 
     def reset(self):
         self.line_edit_login.setText("")
@@ -144,8 +144,10 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
         self.widget_pkcs11.hide()
         self.label_password_strength.hide()
 
-    def emit_register(self):
+    def claim_user(self):
+        use_pkcs11 = True
         if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
+            use_pkcs11 = False
             if (
                 len(self.line_edit_password.text()) > 0
                 or len(self.line_edit_password_check.text()) > 0
@@ -158,29 +160,58 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
                         ),
                     )
                     return
-            self.register_with_password_clicked.emit(
-                self.line_edit_login.text(),
-                self.line_edit_password.text(),
-                self.line_edit_device.text(),
-                self.line_edit_token.text(),
+
+        device = devices_manager.generate_new_device(
+            DeviceID("{}@{}".format(self.line_edit_login.text(), self.line_edit_device.text())),
+            self.line_edit_url.text())
+        try:
+            if use_pkcs1:
+                save_device_with_pkcs11(
+                    self.core_config.config_dir, int(self.line_edit_pkcs11_token.text()),
+                    int(self.line_edit_pkcs11.key.text()))
+            else:
+                save_device_with_password(self.core_config.config_dir,
+                                          self.line_edit_password.text())
+        except DeviceManagerError:
+            show_error(self, QCoreApplication.translate("LoginRegisterUserWidget",
+                                                        "Can not save the device."))
+            return
+
+        public_key = PublicKey.generate()
+        signing_key = SigningKey.generate()
+
+        async with backend_anonymous_cmds_factory(backend_addr) as cmds:
+            invitation_creator = await cmds.user_get_invitation_creator(device_id.user_id)
+
+            encrypted_claim = generate_user_encrypted_claim(
+                invitation_creator.public_key, token, device_id, public_key, verify_key
             )
-        else:
-            self.register_with_pkcs11_clicked.emit(
-                self.line_edit_login.text(),
-                self.line_edit_device.text(),
-                self.line_edit_token.text(),
-                int(self.combo_pkcs11_key.currentText()),
-                int(self.combo_pkcs11_token.currentText()),
-            )
+            await cmds.user_claim(device_id.user_id, encrypted_claim)
+
+            if pkcs11:
+                save_device_with_password(config_dir, device_id, token_id, key_id, pin)
+            else:
+                save_device_with_password(config_dir, device_id, password)
+
+        async with logged_core_factory(config, device) as core:
+            async with spinner("Waiting for invitation reply"):
+                claimd_args = await core.user_claim(claimd_user_id)
+            click.secho("✓", fg="green")
+
+            display_device = click.style(claimd_args[0], fg="yellow")
+            async with spinner(f"Adding {display_device} to backend"):
+                await core.user_create(*claimd_args)
+            click.secho("✓", fg="green")
 
 
 class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
     register_with_password_clicked = pyqtSignal(str, str, str, str)
     register_with_pkcs11_clicked = pyqtSignal(str, str, str, str)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.core_config = core_config
         self.button_register.clicked.connect(self.emit_register)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
@@ -295,8 +326,6 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
 class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_password_clicked = pyqtSignal(str, str)
     login_with_pkcs11_clicked = pyqtSignal(str, str, int, int)
-    register_user_with_password_clicked = pyqtSignal(str, str, str, str)
-    register_user_with_pkcs11_clicked = pyqtSignal(str, str, str, int, int)
     register_device_with_password_clicked = pyqtSignal(str, str, str, str)
     register_device_with_pkcs11_clicked = pyqtSignal(str, str, str, int, int)
 
@@ -306,21 +335,15 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
         self.login_widget = LoginLoginWidget(core_config)
         self.layout.insertWidget(0, self.login_widget)
-        self.register_user_widget = LoginRegisterUserWidget()
+        self.register_user_widget = LoginRegisterUserWidget(core_config)
         self.layout.insertWidget(0, self.register_user_widget)
-        self.register_device_widget = LoginRegisterDeviceWidget()
+        self.register_device_widget = LoginRegisterDeviceWidget(core_config)
         self.layout.insertWidget(0, self.register_device_widget)
         self.button_login_instead.clicked.connect(self.show_login_widget)
         self.button_register_user_instead.clicked.connect(self.show_register_user_widget)
         self.button_register_device_instead.clicked.connect(self.show_register_device_widget)
         self.login_widget.login_with_password_clicked.connect(self.emit_login_with_password)
         self.login_widget.login_with_pkcs11_clicked.connect(self.emit_login_with_pkcs11)
-        self.register_user_widget.register_with_password_clicked.connect(
-            self.emit_register_user_with_password
-        )
-        self.register_user_widget.register_with_pkcs11_clicked.connect(
-            self.emit_register_user_with_pkcs11
-        )
         self.register_device_widget.register_with_password_clicked.connect(
             self.emit_register_device_with_password
         )
@@ -328,12 +351,6 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             self.emit_register_device_with_pkcs11
         )
         self.reset()
-
-    def emit_register_user_with_password(self, login, password, device, token):
-        self.register_user_with_password_clicked.emit(login, password, device, token)
-
-    def emit_register_user_with_pkcs11(self, login, device, token, pkcs11_key, pkcs11_token):
-        self.register_user_with_pkcs11_clicked.emit(login, device, token, pkcs11_key, pkcs11_token)
 
     def emit_register_device_with_password(self, login, password, device, token):
         self.register_device_with_password_clicked.emit(login, password, device, token)

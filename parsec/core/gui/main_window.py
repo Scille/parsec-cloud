@@ -86,10 +86,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_logout.clicked.connect(self.logout)
         self.login_widget.login_with_password_clicked.connect(self.login_with_password)
         self.login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
-        self.login_widget.register_user_with_password_clicked.connect(
-            self.register_user_with_password
-        )
-        self.login_widget.register_user_with_pkcs11_clicked.connect(self.register_user_with_pkcs11)
         self.login_widget.register_device_with_password_clicked.connect(
             self.register_device_with_password
         )
@@ -173,31 +169,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_mount_widget()
         except DeviceManagerError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
-
-    def handle_register_user(
-        self,
-        user_id,
-        device_name,
-        token,
-        use_pkcs11=False,
-        password=None,
-        pkcs11_key=None,
-        pkcs11_token=None,
-    ):
-        pass
-
-    def register_user_with_password(self, user_id, password, device_name, token):
-        self.handle_register_user(user_id, device_name, token, password=password, use_pkcs11=False)
-
-    def register_user_with_pkcs11(self, user_id, device_name, token, pkcs11_key, pkcs11_token):
-        self.handle_register_user(
-            user_id,
-            device_name,
-            token,
-            use_pkcs11=True,
-            pkcs11_key=pkcs11_key,
-            pkcs11_token=pkcs11_token,
-        )
 
     def handle_register_device(
         self,
@@ -312,6 +283,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def show_login_widget(self):
         self._hide_all_central_widgets()
+        self.login_widget.reset()
         self.login_widget.show()
 
     def _hide_all_central_widgets(self):
