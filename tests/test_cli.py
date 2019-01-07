@@ -74,7 +74,7 @@ def _running(cmd, wait_for=None):
 
 
 def test_init_backend(postgresql_url, unused_tcp_port):
-    p = _run(f"backend init --force --db {postgresql_url}")
+    _run(f"backend init --force --db {postgresql_url}")
 
     # Already initialized db is ok
     p = _run(f"backend init --db {postgresql_url}")
@@ -109,7 +109,7 @@ def test_full_run(unused_tcp_port, tmpdir):
         ).group(1)
 
         print("####### Bootstrap organization #######")
-        p = _run(
+        _run(
             "core bootstrap_organization "
             f"{alice1} --addr={url} --config-dir={tmpdir} --password={password}"
         )
