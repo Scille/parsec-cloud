@@ -53,14 +53,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     def register_user(self):
         d = RegisterUserDialog(parent=self, portal=self.portal, core=self.core)
         d.exec_()
-        # try:
-        #     token = generate_invitation_token(self.core.config.invitation_token_size)
-        #     self.set_claim_infos(user_name, token)
-        #     print("Gonna wait ??")
-        #     #invite_device_id = self.portal.run(invite_and_create_user, self.core, user_name, token)
-        #     print("Finished waiting")
-        # except:
-        #     pass
+        self.reset()
 
     def set_claim_infos(self, login, token):
         self.widget_info.show()
