@@ -3,11 +3,14 @@ from zxcvbn import zxcvbn
 from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
 from PyQt5.QtWidgets import QWidget, QCompleter
 
+import trio
+
 from parsec.types import BackendOrganizationAddr, DeviceID
-from parsec.crypto import PublicKey, SigningKey
 from parsec.core import devices_manager
+from parsec.core.backend_connection import backend_anonymous_cmds_factory, BackendCmdsBadResponse
+from parsec.core.invite_claim import claim_user as core_claim_user
 from parsec.core.gui.desktop import get_default_device
-from parsec.core.gui.custom_widgets import show_error
+from parsec.core.gui.custom_widgets import show_error, show_info
 from parsec.core.gui import settings
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
@@ -80,6 +83,8 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
 
 
 class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
+    user_registered = pyqtSignal()
+
     def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
@@ -145,6 +150,20 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
         self.label_password_strength.hide()
 
     def claim_user(self):
+        async def _claim_user(
+            addr, device_id, token, use_pkcs11, password=None, pkcs11_token=None, pkcs11_key=None
+        ):
+            async with backend_anonymous_cmds_factory(addr) as cmds:
+                device = await core_claim_user(cmds, device_id, token)
+            if use_pkcs11:
+                devices_manager.save_device_with_pkcs11(
+                    self.core_config.config_dir, device, pkcs11_token, pkcs11_key
+                )
+            else:
+                devices_manager.save_device_with_password(
+                    self.core_config.config_dir, device, password
+                )
+
         use_pkcs11 = True
         if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
             use_pkcs11 = False
@@ -160,48 +179,73 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
                         ),
                     )
                     return
-
-        device = devices_manager.generate_new_device(
-            DeviceID("{}@{}".format(self.line_edit_login.text(), self.line_edit_device.text())),
-            self.line_edit_url.text())
+        backend_addr = None
+        device_id = None
         try:
-            if use_pkcs1:
-                save_device_with_pkcs11(
-                    self.core_config.config_dir, int(self.line_edit_pkcs11_token.text()),
-                    int(self.line_edit_pkcs11.key.text()))
-            else:
-                save_device_with_password(self.core_config.config_dir,
-                                          self.line_edit_password.text())
-        except DeviceManagerError:
-            show_error(self, QCoreApplication.translate("LoginRegisterUserWidget",
-                                                        "Can not save the device."))
-            return
-
-        public_key = PublicKey.generate()
-        signing_key = SigningKey.generate()
-
-        async with backend_anonymous_cmds_factory(backend_addr) as cmds:
-            invitation_creator = await cmds.user_get_invitation_creator(device_id.user_id)
-
-            encrypted_claim = generate_user_encrypted_claim(
-                invitation_creator.public_key, token, device_id, public_key, verify_key
+            backend_addr = BackendOrganizationAddr(self.line_edit_url.text())
+        except:
+            show_error(
+                self, QCoreApplication.translate("LoginRegisterUserWidget", "URL is invalid.")
             )
-            await cmds.user_claim(device_id.user_id, encrypted_claim)
-
-            if pkcs11:
-                save_device_with_password(config_dir, device_id, token_id, key_id, pin)
+            return
+        try:
+            device_id = DeviceID(
+                "{}@{}".format(self.line_edit_login.text(), self.line_edit_device.text())
+            )
+        except:
+            show_error(
+                self,
+                QCoreApplication.translate(
+                    "LoginRegisterUserWidget", "Login or device is invalid."
+                ),
+            )
+            return
+        try:
+            if use_pkcs11:
+                trio.run(
+                    _claim_user,
+                    backend_addr,
+                    device_id,
+                    self.line_edit_token.text(),
+                    True,
+                    None,
+                    int(self.line_edit_pkcs11_token.text()),
+                    int(self.line_edit_pkcs11.key.text()),
+                )
             else:
-                save_device_with_password(config_dir, device_id, password)
+                trio.run(
+                    _claim_user,
+                    backend_addr,
+                    device_id,
+                    self.line_edit_token.text(),
+                    False,
+                    self.line_edit_password.text(),
+                )
+            show_info(
+                self,
+                QCoreApplication.translate(
+                    "LoginRegisterUserWidget", "The user has been registered. You can now login."
+                ),
+            )
+            self.user_registered.emit()
+        except BackendCmdsBadResponse as exc:
+            print(exc)
+            show_error(
+                self,
+                QCoreApplication.translate(
+                    "LoginRegisterUserWidget", "Can not register the new user."
+                ),
+            )
+        except:
+            import traceback
 
-        async with logged_core_factory(config, device) as core:
-            async with spinner("Waiting for invitation reply"):
-                claimd_args = await core.user_claim(claimd_user_id)
-            click.secho("✓", fg="green")
-
-            display_device = click.style(claimd_args[0], fg="yellow")
-            async with spinner(f"Adding {display_device} to backend"):
-                await core.user_create(*claimd_args)
-            click.secho("✓", fg="green")
+            traceback.print_exc()
+            show_error(
+                self,
+                QCoreApplication.translate(
+                    "LoginRegisterUserWidget", "Can not register the new user."
+                ),
+            )
 
 
 class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
@@ -350,6 +394,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.register_device_widget.register_with_pkcs11_clicked.connect(
             self.emit_register_device_with_pkcs11
         )
+        self.register_user_widget.user_registered.connect(self.show_login_widget)
         self.reset()
 
     def emit_register_device_with_password(self, login, password, device, token):

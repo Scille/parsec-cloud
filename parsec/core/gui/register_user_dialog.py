@@ -9,32 +9,29 @@ import trio
 from parsec.core.invite_claim import generate_invitation_token, invite_and_create_user
 
 from parsec.core.gui import desktop
-from parsec.core.gui.custom_widgets import show_warning
+from parsec.core.gui.custom_widgets import show_warning, show_info
 from parsec.core.gui.ui.register_user_dialog import Ui_RegisterUserDialog
 
 
-async def _handle_invite_and_create_user(need_close, qt_on_done, core, username, token):
-    async with trio.open_nursery() as nursery:
-
-        async def _monitor():
-            await need_close.wait()
-            nursery.cancel_scope.cancel()
-
-        nursery.start_soon(_monitor)
-        await invite_and_create_user(core, username, token)
+async def _handle_invite_and_create_user(queue, qt_on_done, core, username, token):
+    with trio.open_cancel_scope() as cancel_scope:
+        queue.put(cancel_scope)
+        async with trio.open_nursery() as nursery:
+            await invite_and_create_user(core.device, core.backend_cmds, username, token)
+        qt_on_done.emit()
 
 
 class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
-    on_done = pyqtSignal()
+    on_registered = pyqtSignal()
 
     def __init__(self, portal, core, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.core = core
         self.portal = portal
+        self.cancel_scope = None
         self.register_thread = None
-        self.cancel_event = None
-        self.register_queue = queue.Queue()
+        self.register_queue = queue.Queue(1)
         self.widget_registration.hide()
         self.button_cancel.hide()
         self.button_register.clicked.connect(self.register_user)
@@ -42,6 +39,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.button_copy_username.clicked.connect(self.copy_field(self.line_edit_user))
         self.button_copy_token.clicked.connect(self.copy_field(self.line_edit_token))
         self.button_copy_url.clicked.connect(self.copy_field(self.line_edit_url))
+        self.on_registered.connect(self.user_registered)
         self.closing_allowed = True
 
     def copy_field(self, widget):
@@ -50,11 +48,29 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
 
         return _inner_copy_field
 
-    def cancel_register_user(self):
-        async def _cancel():
-            self.cancel_event.set()
+    def user_registered(self):
+        print("Registered")
+        self.register_thread.join()
+        self.register_thread = None
+        show_info(
+            self,
+            QCoreApplication.translate(
+                "RegisterUserDialog", "User has been registered. You may now close this window."
+            ),
+        )
+        self.line_edit_token.setText("")
+        self.line_edit_url.setText("")
+        self.line_edit_user.setText("")
+        self.widget_registration.hide()
+        self.button_cancel.hide()
+        self.button_register.show()
+        self.line_edit_username.show()
+        self.closing_allowed = True
 
-        self.portal.run(_cancel)
+    def cancel_register_user(self):
+        print("Cancel")
+        self.portal.run_sync(self.cancel_scope.cancel)
+        self.cancel_scope = None
         self.register_thread.join()
         self.register_thread = None
         self.line_edit_token.setText("")
@@ -76,8 +92,8 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         def _run_registration(username, token):
             self.portal.run(
                 _handle_invite_and_create_user,
-                self.cancel_event,
-                self.on_done,
+                self.register_queue,
+                self.on_registered,
                 self.core,
                 username,
                 token,
@@ -99,7 +115,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             )
             return
         try:
-            token = generate_invitation_token(self.core.config.invitation_token_size)
+            token = generate_invitation_token()
             self.line_edit_user.setText(self.line_edit_username.text())
             self.line_edit_user.setCursorPosition(0)
             self.line_edit_token.setText(token)
@@ -113,11 +129,15 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
                 target=_run_registration, args=(self.line_edit_username.text(), token)
             )
             self.register_thread.start()
+            self.cancel_scope = self.register_queue.get()
             self.button_cancel.show()
             self.line_edit_username.hide()
             self.button_register.hide()
             self.closing_allowed = False
         except:
+            import traceback
+
+            traceback.print_exc()
             show_warning(
                 self,
                 QCoreApplication.translate("RegisterUserDialog", "Could not register the user."),
