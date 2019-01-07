@@ -73,6 +73,7 @@ def _running(cmd, wait_for=None):
         print(p.live_stderr.read())
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
 def test_init_backend(postgresql_url, unused_tcp_port):
     _run(f"backend init --force --db {postgresql_url}")
 
@@ -92,6 +93,7 @@ def test_init_backend(postgresql_url, unused_tcp_port):
 
 
 @pytest.mark.slow
+@pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
 def test_full_run(unused_tcp_port, tmpdir):
     org = "org42"
     alice1 = "alice@pc1"
