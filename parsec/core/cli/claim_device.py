@@ -7,18 +7,14 @@ from parsec.core.cli.utils import core_config_options
 from parsec.types import BackendOrganizationAddr, DeviceID
 from parsec.core.devices_manager import save_device_with_password, save_device_with_pkcs11
 from parsec.core.backend_connection import backend_anonymous_cmds_factory
-from parsec.core.invite_claim import (
-    claim_device as claim_device_the_real_one_damn_variable_shadowing
-)
+from parsec.core.invite_claim import claim_device as actual_claim_device
 
 
 async def _claim_device(config, backend_addr, token, new_device_id, password, pkcs11):
     async with backend_anonymous_cmds_factory(backend_addr) as cmds:
 
         async with spinner("Waiting for referee to reply"):
-            device = await claim_device_the_real_one_damn_variable_shadowing(
-                cmds, new_device_id, token
-            )
+            device = await actual_claim_device(cmds, new_device_id, token)
 
     device_display = click.style(new_device_id, fg="yellow")
     with operation(f"Saving locally {device_display}"):

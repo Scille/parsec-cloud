@@ -13,12 +13,13 @@ CWD = Path(__file__).parent.parent
 def _run(cmd):
     print(f"========= RUN {cmd} ==============")
     env = {**os.environ.copy(), "DEBUG": "true"}
+    cooked_cmd = ("python -m parsec.cli " + cmd).split()
     ret = subprocess.run(
-        cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=CWD, env=env
+        cooked_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=CWD, env=env
     )
     print(ret.stdout.decode())
     print(ret.stderr.decode())
-    print(f"========= DONE {ret.returncode} ==============")
+    print(f"========= DONE {ret.returncode} ({cmd[:40]}) ==============")
     assert ret.returncode == 0
     return ret
 
@@ -27,9 +28,6 @@ class LivingStream:
     def __init__(self, stream):
         self.stream = stream
         self._already_read_data = ""
-
-    def rewind(self):
-        pass
 
     def read(self):
         new_data_size = len(self.stream.peek())
@@ -41,8 +39,9 @@ class LivingStream:
 @contextmanager
 def _running(cmd, wait_for=None):
     env = {**os.environ.copy(), "DEBUG": "true"}
+    cooked_cmd = ("python -m parsec.cli " + cmd).split()
     p = subprocess.Popen(
-        cmd.split(),
+        cooked_cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         stdin=subprocess.PIPE,
@@ -67,23 +66,24 @@ def _running(cmd, wait_for=None):
         yield p
 
     finally:
+        print(f"**************************** TERM to {p.pid} ({cmd[:40]})")
+        p.terminate()
+        p.wait()
         print(p.live_stdout.read())
         print(p.live_stderr.read())
-        p.kill()
-        p.wait()
 
 
 def test_init_backend(postgresql_url, unused_tcp_port):
-    p = _run(f"python -m parsec.cli backend init --force --db {postgresql_url}")
+    p = _run(f"backend init --force --db {postgresql_url}")
 
     # Already initialized db is ok
-    p = _run(f"python -m parsec.cli backend init --db {postgresql_url}")
+    p = _run(f"backend init --db {postgresql_url}")
     assert b"Database already initialized" in p.stdout
 
     # Test backend can run
     with _running(
         (
-            "python -m parsec.cli backend run --blockstore=POSTGRESQL "
+            "backend run --blockstore=POSTGRESQL "
             f"--store={postgresql_url} --port={unused_tcp_port}"
         ),
         wait_for="Starting Parsec Backend",
@@ -100,29 +100,23 @@ def test_full_run(unused_tcp_port, tmpdir):
     password = "P@ssw0rd."
 
     print("######## START BACKEND #########")
-    with _running(
-        f"python -m parsec.cli backend run --port={unused_tcp_port}",
-        wait_for="Starting Parsec Backend",
-    ):
+    with _running(f"backend run --port={unused_tcp_port}", wait_for="Starting Parsec Backend"):
 
         print("####### Create organization #######")
-        p = _run(
-            "python -m parsec.cli core create_organization "
-            f"{org} --addr=ws://localhost:{unused_tcp_port}"
-        )
+        p = _run("core create_organization " f"{org} --addr=ws://localhost:{unused_tcp_port}")
         url = re.search(
             r"^Bootstrap organization url: (.*)$", p.stdout.decode(), re.MULTILINE
         ).group(1)
 
         print("####### Bootstrap organization #######")
         p = _run(
-            "python -m parsec.cli core bootstrap_organization "
+            "core bootstrap_organization "
             f"{alice1} --addr={url} --config-dir={tmpdir} --password={password}"
         )
 
         print("####### Create another user #######")
         with _running(
-            "python -m parsec.cli core invite_user "
+            "core invite_user "
             f"--config-dir={tmpdir} --device={alice1} --password={password} bob",
             wait_for="Invitation token:",
         ) as p:
@@ -131,14 +125,14 @@ def test_full_run(unused_tcp_port, tmpdir):
             token = re.search(r"^Invitation token: (.*)$", stdout, re.MULTILINE).group(1)
 
             _run(
-                "python -m parsec.cli core claim_user "
+                "core claim_user "
                 f"--config-dir={tmpdir} --addr={url} --token={token} "
                 f"--password={password} {bob1}"
             )
 
         print("####### Create another device #######")
         with _running(
-            "python -m parsec.cli core invite_device "
+            "core invite_device "
             f"--config-dir={tmpdir} --device={alice1} --password={password} pc2",
             wait_for="Invitation token:",
         ) as p:
@@ -147,13 +141,13 @@ def test_full_run(unused_tcp_port, tmpdir):
             token = re.search(r"^Invitation token: (.*)$", stdout, re.MULTILINE).group(1)
 
             _run(
-                "python -m parsec.cli core claim_device "
+                "core claim_device "
                 f"--config-dir={tmpdir} --addr={url} --token={token} "
                 f"--password={password} {alice2}"
             )
 
         print("####### List users #######")
-        p = _run(f"python -m parsec.cli core list_devices --config-dir={tmpdir}")
+        p = _run(f"core list_devices --config-dir={tmpdir}")
         stdout = p.stdout.decode()
         assert alice1 in stdout
         assert alice2 in stdout
@@ -161,10 +155,10 @@ def test_full_run(unused_tcp_port, tmpdir):
 
         print("####### New users can communicate with backend #######")
         _run(
-            "python -m parsec.cli core create_workspace wksp1 "
+            "core create_workspace wksp1 "
             f"--config-dir={tmpdir} --device={bob1} --password={password}"
         )
         _run(
-            "python -m parsec.cli core create_workspace wksp2 "
+            "core create_workspace wksp2 "
             f"--config-dir={tmpdir} --device={alice2} --password={password}"
         )

@@ -2,11 +2,11 @@ import os
 import trio
 import click
 
+from parsec.types import BackendOrganizationAddr, DeviceID
 from parsec.cli_utils import spinner, operation, cli_exception_handler
 from parsec.core.cli.utils import core_config_options
-from parsec.types import BackendOrganizationAddr, DeviceID
 from parsec.core.devices_manager import save_device_with_password, save_device_with_pkcs11
-from parsec.core.invite_claim import claim_user as claim_user_the_real_one_damn_variable_shadowing
+from parsec.core.invite_claim import claim_user as actual_claim_user
 from parsec.core.backend_connection import backend_anonymous_cmds_factory
 
 
@@ -14,9 +14,7 @@ async def _claim_user(config, backend_addr, token, new_device_id, password, pkcs
     async with backend_anonymous_cmds_factory(backend_addr) as cmds:
 
         async with spinner("Waiting for referee to reply"):
-            device = await claim_user_the_real_one_damn_variable_shadowing(
-                cmds, new_device_id, token
-            )
+            device = await actual_claim_user(cmds, new_device_id, token)
 
     device_display = click.style(new_device_id, fg="yellow")
     with operation(f"Saving locally {device_display}"):
