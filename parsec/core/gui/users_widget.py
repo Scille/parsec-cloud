@@ -35,9 +35,12 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.users = []
         self.portal = None
         self.core = None
-        self.widget_info.hide()
         self.button_add_user.clicked.connect(self.register_user)
         self.line_edit_search.textChanged.connect(self.filter_users)
+
+    def set_core_attrs(self, core, portal):
+        self.portal = portal
+        self.core = core
 
     def filter_users(self, pattern):
         pattern = pattern.lower()
@@ -55,11 +58,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         d.exec_()
         self.reset()
 
-    def set_claim_infos(self, login, token):
-        self.widget_info.show()
-        self.line_edit_user_id.setText(login)
-        self.line_edit_token.setText(token)
-
     def add_user(self, user_name, is_current_user):
         if user_name in self.users:
             return
@@ -68,9 +66,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.users.append(user_name)
 
     def reset(self):
-        self.line_edit_user_id.setText("")
-        self.line_edit_token.setText("")
-        self.widget_info.hide()
         self.users = []
         while self.layout_users.count() != 0:
             item = self.layout_users.takeAt(0)

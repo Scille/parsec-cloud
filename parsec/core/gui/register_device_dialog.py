@@ -1,107 +1,143 @@
-from PyQt5.QtCore import pyqtSignal, Qt, QCoreApplication
+import threading
+import queue
+
+from PyQt5.QtCore import QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import QDialog
 
+import trio
+
+from parsec.core.invite_claim import generate_invitation_token, invite_and_create_device
+
+from parsec.core.gui import desktop
+from parsec.core.gui.custom_widgets import show_warning, show_info
 from parsec.core.gui.ui.register_device_dialog import Ui_RegisterDeviceDialog
-from parsec.core.gui.core_call import core_call
-from parsec.core.gui.custom_widgets import show_error
-from parsec.core.backend_connection import BackendNotAvailable
-from parsec.pkcs11_encryption_tool import DevicePKCS11Error
 
 
-# TODO: rename to DeclareDevice
+async def _handle_invite_and_create_device(queue, qt_on_done, core, device_name, token):
+    with trio.open_cancel_scope() as cancel_scope:
+        queue.put(cancel_scope)
+        async with trio.open_nursery() as nursery:
+            await invite_and_create_device(core.device, core.backend_cmds, device_name, token)
+        qt_on_done.emit()
+
+
 class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
-    device_try_claim_submitted_qt = pyqtSignal(str, str, str)
+    on_registered = pyqtSignal()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, portal, core, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.reset()
+        self.core = core
+        self.portal = portal
+        self.cancel_scope = None
+        self.register_thread = None
+        self.register_queue = queue.Queue(1)
+        self.widget_registration.hide()
+        self.button_cancel.hide()
+        self.button_register.clicked.connect(self.register_device)
+        self.button_cancel.clicked.connect(self.cancel_register_device)
+        self.button_copy_device.clicked.connect(self.copy_field(self.line_edit_device))
+        self.button_copy_token.clicked.connect(self.copy_field(self.line_edit_token))
+        self.button_copy_url.clicked.connect(self.copy_field(self.line_edit_url))
+        self.on_registered.connect(self.device_registered)
+        self.closing_allowed = True
 
-        self.button_register_device.clicked.connect(self.emit_register_device)
-        core_call().connect_event(
-            "backend.device.try_claim_submitted", self.on_device_try_claim_submitted_trio
+    def copy_field(self, widget):
+        def _inner_copy_field():
+            desktop.copy_to_clipboard(widget.text())
+
+        return _inner_copy_field
+
+    def device_registered(self):
+        self.register_thread.join()
+        self.register_thread = None
+        show_info(
+            self,
+            QCoreApplication.translate(
+                "RegisterDeviceDialog", "Device has been registered. You may now close this window."
+            ),
         )
-        self.device_try_claim_submitted_qt.connect(self.on_device_try_claim_submitted_qt)
+        self.line_edit_token.setText("")
+        self.line_edit_url.setText("")
+        self.line_edit_device.setText("")
+        self.widget_registration.hide()
+        self.button_cancel.hide()
+        self.button_register.show()
+        self.line_edit_device_name.show()
+        self.closing_allowed = True
 
-    def on_device_try_claim_submitted_trio(self, sender, device_name, config_try_id):
-        self.device_try_claim_submitted_qt.emit(sender, device_name, config_try_id)
+    def cancel_register_device(self):
+        self.portal.run_sync(self.cancel_scope.cancel)
+        self.cancel_scope = None
+        self.register_thread.join()
+        self.register_thread = None
+        self.line_edit_token.setText("")
+        self.line_edit_url.setText("")
+        self.line_edit_device.setText("")
+        self.widget_registration.hide()
+        self.button_cancel.hide()
+        self.button_register.show()
+        self.line_edit_device_name.show()
+        self.closing_allowed = True
 
-    def on_device_try_claim_submitted_qt(self, sender, device_name, config_try_id):
-        password = self.password.text()
-        try:
-            if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
-                core_call().accept_device_configuration_try(config_try_id, password)
-            else:
-                core_call().accept_device_configuration_try(
-                    config_try_id,
-                    pkcs11_pin=self.line_edit_pkcs11_pin.text(),
-                    pkcs11_token_id=int(self.combo_pkcs11_token.currentText()),
-                    pkcs11_key_id=int(self.combo_pkcs11_key.currentText()),
-                )
-            self.device_config_done(
-                QCoreApplication.translate(
-                    "RegisterDevice", "Device successfully added, you can close this window."
-                )
-            )
-        except BackendNotAvailable:
-            show_error(
-                self, QCoreApplication.translate("RegisterDevice", "Can not reach the server.")
-            )
-        except DevicePKCS11Error:
-            show_error(
-                self, QCoreApplication.translate("RegisterDevice", "Invalid PKCS #11 information.")
-            )
-        except:
-            show_error(
+    def closeEvent(self, event):
+        if not self.closing_allowed:
+            show_warning(
                 self,
                 QCoreApplication.translate(
-                    "RegisterDevice", "An unknown error occured. Can not register the new device."
+                    "RegisterDeviceDialog",
+                    "Can not close this window while waiting for the new device to register. Please cancel first.",
                 ),
             )
-        finally:
-            self.button_close.setEnabled(True)
+            event.ignore()
+        else:
+            event.accept()
 
-    def reset(self):
-        self.device_name.setText("")
-        self.password.setText("")
-        self.device_token.setText("")
-        self.config_waiter_panel.hide()
-        self.button_register_device.show()
-        self.outcome_panel.hide()
-        self.outcome_status.setText("")
-        self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
-        self.widget_pkcs11.hide()
-        self.password.setDisabled(False)
-        self.line_edit_pkcs11_pin.setText("")
-        self.combo_pkcs11_key.clear()
-        self.combo_pkcs11_key.addItem("0")
-        self.combo_pkcs11_token.clear()
-        self.combo_pkcs11_token.addItem("0")
-        self.button_close.setEnabled(True)
+    def register_device(self):
+        def _run_registration(device_name, token):
+            self.portal.run(
+                _handle_invite_and_create_device,
+                self.register_queue,
+                self.on_registered,
+                self.core,
+                device_name,
+                token,
+            )
 
-    def device_config_done(self, status):
-        self.config_waiter_panel.hide()
-        self.outcome_status.setText(status)
-        self.outcome_panel.show()
-
-    def emit_register_device(self):
-        self.button_close.setEnabled(False)
-        self.button_register_device.hide()
-        self.config_waiter_panel.show()
+        if not self.line_edit_device_name.text():
+            show_warning(
+                self,
+                QCoreApplication.translate("RegisterDeviceDialog", "Please enter a device name."),
+            )
+            return
 
         try:
-            configure_device_token = core_call().declare_device(self.device_name.text())
-            self.device_token.setText(configure_device_token)
-        except BackendNotAvailable:
-            show_error(
-                self, QCoreApplication.translate("RegisterDevice", "Can not reach the server.")
+            token = generate_invitation_token()
+            self.line_edit_device.setText(self.line_edit_device_name.text())
+            self.line_edit_device.setCursorPosition(0)
+            self.line_edit_token.setText(token)
+            self.line_edit_token.setCursorPosition(0)
+            self.line_edit_url.setText(self.core.device.backend_addr)
+            self.line_edit_url.setCursorPosition(0)
+            self.button_cancel.setFocus()
+            self.widget_registration.show()
+            self.cancel_event = trio.Event()
+            self.register_thread = threading.Thread(
+                target=_run_registration, args=(self.line_edit_device_name.text(), token)
             )
-            self.button_close.setEnabled(True)
+            self.register_thread.start()
+            self.cancel_scope = self.register_queue.get()
+            self.button_cancel.show()
+            self.line_edit_device_name.hide()
+            self.button_register.hide()
+            self.closing_allowed = False
         except:
-            show_error(
+            import traceback
+
+            traceback.print_exc()
+            show_warning(
                 self,
                 QCoreApplication.translate(
-                    "RegisterDevice", "An unknown error occured. Can not register the new device."
+                    "RegisterDeviceDialog", "Could not register the device."
                 ),
             )
-            self.button_close.setEnabled(True)

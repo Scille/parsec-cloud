@@ -9,6 +9,7 @@ from parsec.types import BackendOrganizationAddr, DeviceID
 from parsec.core import devices_manager
 from parsec.core.backend_connection import backend_anonymous_cmds_factory, BackendCmdsBadResponse
 from parsec.core.invite_claim import claim_user as core_claim_user
+from parsec.core.invite_claim import claim_device as core_claim_device
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_widgets import show_error, show_info
 from parsec.core.gui import settings
@@ -249,16 +250,16 @@ class LoginRegisterUserWidget(QWidget, Ui_LoginRegisterUserWidget):
 
 
 class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
-    register_with_password_clicked = pyqtSignal(str, str, str, str)
-    register_with_pkcs11_clicked = pyqtSignal(str, str, str, str)
+    device_registered = pyqtSignal()
 
     def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.core_config = core_config
-        self.button_register.clicked.connect(self.emit_register)
+        self.button_claim.clicked.connect(self.claim_device)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
+        self.line_edit_url.textChanged.connect(self.check_infos)
         self.line_edit_token.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(self.password_changed)
 
@@ -291,18 +292,13 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
         self.line_edit_login.setText("")
         self.line_edit_password.setText("")
         self.line_edit_password_check.setText("")
+        self.line_edit_url.setText("")
         self.line_edit_device.setText(get_default_device())
         self.line_edit_token.setText("")
-        self.line_edit_login.setEnabled(True)
         self.line_edit_password.setEnabled(True)
         self.line_edit_password_check.setEnabled(True)
-        self.line_edit_device.setEnabled(True)
-        self.line_edit_token.setEnabled(True)
         self.label_password_strength.hide()
         self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
-        self.line_edit_password.setDisabled(False)
-        self.line_edit_password_check.setDisabled(False)
-        self.set_error(None)
         self.combo_pkcs11_key.clear()
         self.combo_pkcs11_key.addItem("0")
         self.combo_pkcs11_token.clear()
@@ -314,21 +310,30 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
             len(self.line_edit_login.text())
             and len(self.line_edit_token.text())
             and len(self.line_edit_device.text())
+            and len(self.line_edit_url.text())
         ):
-            self.button_register.setDisabled(False)
+            self.button_claim.setDisabled(False)
         else:
-            self.button_register.setDisabled(True)
+            self.button_claim.setDisabled(True)
 
-    def set_error(self, error):
-        if not error:
-            self.label_error.setText("")
-            self.label_error.hide()
-        else:
-            self.label_error.setText(error)
-            self.label_error.show()
+    def claim_device(self):
+        async def _claim_device(
+            addr, device_id, token, use_pkcs11, password=None, pkcs11_token=None, pkcs11_key=None
+        ):
+            async with backend_anonymous_cmds_factory(addr) as cmds:
+                device = await core_claim_device(cmds, device_id, token)
+            if use_pkcs11:
+                devices_manager.save_device_with_pkcs11(
+                    self.core_config.config_dir, device, pkcs11_token, pkcs11_key
+                )
+            else:
+                devices_manager.save_device_with_password(
+                    self.core_config.config_dir, device, password
+                )
 
-    def emit_register(self):
+        use_pkcs11 = True
         if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
+            use_pkcs11 = False
             if (
                 len(self.line_edit_password.text()) > 0
                 or len(self.line_edit_password_check.text()) > 0
@@ -337,41 +342,75 @@ class LoginRegisterDeviceWidget(QWidget, Ui_LoginRegisterDeviceWidget):
                     show_error(
                         self,
                         QCoreApplication.translate(
-                            "LoginRegisterDeviceWidget", "Passwords don't match."
+                            "LoginRegisterDeviceWidget", "Passwords don't match"
                         ),
                     )
                     return
-            self.register_with_password_clicked.emit(
-                self.line_edit_login.text(),
-                self.line_edit_password.text(),
-                self.line_edit_device.text(),
-                self.line_edit_token.text(),
+        backend_addr = None
+        device_id = None
+        try:
+            backend_addr = BackendOrganizationAddr(self.line_edit_url.text())
+        except:
+            show_error(
+                self, QCoreApplication.translate("LoginRegisterDeviceWidget", "URL is invalid.")
             )
-        else:
-            self.register_with_pkcs11_clicked.emit(
-                self.line_edit_login.text(),
-                self.line_edit_device.text(),
-                self.line_edit_token.text(),
-                int(self.combo_pkcs11_key.currentText()),
-                int(self.combo_pkcs11_token.currentText()),
+            return
+        try:
+            device_id = DeviceID(
+                "{}@{}".format(self.line_edit_login.text(), self.line_edit_device.text())
             )
-        self.set_error(
-            QCoreApplication.translate(
-                "LoginRegisterDeviceWidget", "Waiting for existing device to register us..."
+        except:
+            show_error(
+                self,
+                QCoreApplication.translate(
+                    "LoginRegisterDeviceWidget", "Login or device is invalid."
+                ),
             )
-        )
-        self.line_edit_login.setEnabled(False)
-        self.line_edit_password.setEnabled(False)
-        self.line_edit_password_check.setEnabled(False)
-        self.line_edit_device.setEnabled(False)
-        self.line_edit_token.setEnabled(False)
+            return
+        try:
+            if use_pkcs11:
+                trio.run(
+                    _claim_device,
+                    backend_addr,
+                    device_id,
+                    self.line_edit_token.text(),
+                    True,
+                    None,
+                    int(self.line_edit_pkcs11_token.text()),
+                    int(self.line_edit_pkcs11.key.text()),
+                )
+            else:
+                trio.run(
+                    _claim_device,
+                    backend_addr,
+                    device_id,
+                    self.line_edit_token.text(),
+                    False,
+                    self.line_edit_password.text(),
+                )
+            show_info(
+                self,
+                QCoreApplication.translate(
+                    "LoginRegisterDeviceWidget",
+                    "The device has been registered. You can now login.",
+                ),
+            )
+            self.device_registered.emit()
+        except:
+            import traceback
+
+            traceback.print_exc()
+            show_error(
+                self,
+                QCoreApplication.translate(
+                    "LoginRegisterDeviceWidget", "Can not register the new device."
+                ),
+            )
 
 
 class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_password_clicked = pyqtSignal(str, str)
     login_with_pkcs11_clicked = pyqtSignal(str, str, int, int)
-    register_device_with_password_clicked = pyqtSignal(str, str, str, str)
-    register_device_with_pkcs11_clicked = pyqtSignal(str, str, str, int, int)
 
     def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -388,22 +427,9 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_register_device_instead.clicked.connect(self.show_register_device_widget)
         self.login_widget.login_with_password_clicked.connect(self.emit_login_with_password)
         self.login_widget.login_with_pkcs11_clicked.connect(self.emit_login_with_pkcs11)
-        self.register_device_widget.register_with_password_clicked.connect(
-            self.emit_register_device_with_password
-        )
-        self.register_device_widget.register_with_pkcs11_clicked.connect(
-            self.emit_register_device_with_pkcs11
-        )
         self.register_user_widget.user_registered.connect(self.show_login_widget)
+        self.register_device_widget.device_registered.connect(self.show_login_widget)
         self.reset()
-
-    def emit_register_device_with_password(self, login, password, device, token):
-        self.register_device_with_password_clicked.emit(login, password, device, token)
-
-    def emit_register_device_with_pkcs11(self, login, device, token, pkcs11_key, pkcs11_token):
-        self.register_device_with_pkcs11_clicked.emit(
-            login, device, token, pkcs11_key, pkcs11_token
-        )
 
     def emit_login_with_password(self, login, password):
         self.login_with_password_clicked.emit(login, password)

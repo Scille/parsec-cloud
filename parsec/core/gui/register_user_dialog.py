@@ -49,7 +49,6 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         return _inner_copy_field
 
     def user_registered(self):
-        print("Registered")
         self.register_thread.join()
         self.register_thread = None
         show_info(
@@ -68,7 +67,6 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.closing_allowed = True
 
     def cancel_register_user(self):
-        print("Cancel")
         self.portal.run_sync(self.cancel_scope.cancel)
         self.cancel_scope = None
         self.register_thread.join()
@@ -84,6 +82,13 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
 
     def closeEvent(self, event):
         if not self.closing_allowed:
+            show_warning(
+                self,
+                QCoreApplication.translate(
+                    "RegisterUserDialog",
+                    "Can not close this window while waiting for the new user to register. Please cancel first.",
+                ),
+            )
             event.ignore()
         else:
             event.accept()
@@ -135,9 +140,6 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             self.button_register.hide()
             self.closing_allowed = False
         except:
-            import traceback
-
-            traceback.print_exc()
             show_warning(
                 self,
                 QCoreApplication.translate("RegisterUserDialog", "Could not register the user."),

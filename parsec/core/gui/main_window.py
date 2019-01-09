@@ -86,12 +86,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_logout.clicked.connect(self.logout)
         self.login_widget.login_with_password_clicked.connect(self.login_with_password)
         self.login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
-        self.login_widget.register_device_with_password_clicked.connect(
-            self.register_device_with_password
-        )
-        self.login_widget.register_device_with_pkcs11_clicked.connect(
-            self.register_device_with_pkcs11
-        )
 
     def tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
@@ -103,16 +97,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def start_core(self):
         def _run_core():
-            logger.info("Starting core thread")
-
             async def _run():
                 portal = trio.BlockingTrioPortal()
                 self.core_queue.put(portal)
                 with trio.open_cancel_scope() as cancel_scope:
-                    logger.info("Cancel scope created")
                     self.core_queue.put(cancel_scope)
                     async with logged_core_factory(self.core_config, self.current_device) as core:
-                        logger.info("Core created")
                         self.core_queue.put(core)
                         await trio.sleep_forever()
 
@@ -125,8 +115,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.cancel_scope = self.core_queue.get()
         self.core = self.core_queue.get()
         self.mount_widget.set_core_attrs(portal=self.portal, core=self.core)
-        self.users_widget.portal = self.portal
-        self.users_widget.core = self.core
+        self.devices_widget.set_core_attrs(portal=self.portal, core=self.core)
+        self.users_widget.set_core_attrs(portal=self.portal, core=self.core)
         self.label_mountpoint.setText(str(self.core.mountpoint))
         self.label_username.setText(self.core.device.user_id)
         self.label_device.setText(self.core.device.device_name)
@@ -169,28 +159,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_mount_widget()
         except DeviceManagerError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
-
-    def handle_register_device(
-        self,
-        user_id,
-        device_name,
-        token,
-        use_pkcs11=False,
-        password=None,
-        pkcs11_key=None,
-        pkcs11_token=None,
-    ):
-        pass
-
-    def register_device_with_password(self, user_id, password, device_name, token):
-        self.handle_register_device(
-            user_id, device_name, token, use_pkcs11=False, password=password
-        )
-
-    def register_device_with_pkcs11(self, user_id, device_name, pkcs11_key, pkcs11_token):
-        self.handle_register_device(
-            user_id, device_name, use_pkcs11=True, pkcs11_key=pkcs11_key, pkcs11_token=pkcs11_token
-        )
 
     def close_app(self):
         self.close_requested = True
@@ -271,6 +239,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_title.setText(QCoreApplication.translate("MainWindow", "Devices"))
         self.widget_menu.show()
         self.widget_title.show()
+        self.devices_widget.reset()
         self.devices_widget.show()
 
     def show_settings_widget(self):
