@@ -44,7 +44,7 @@ async def _connect(addr: BackendAddr, device_id: DeviceID = None, signing_key: S
     try:
         transport = await Transport.init_for_client(stream, addr.hostname)
     except TransportError as exc:
-        transport.logger.debug("Connection lost during transport creation", reason=exc)
+        logger.debug("Connection lost during transport creation", reason=exc)
         raise BackendNotAvailable(exc) from exc
 
     try:
