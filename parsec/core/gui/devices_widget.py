@@ -1,8 +1,6 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPixmap
 
-from parsec.core.devices_manager import list_available_devices
-
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
 from parsec.core.gui.register_device_dialog import RegisterDeviceDialog
 from parsec.core.gui.ui.device_button import Ui_DeviceButton
