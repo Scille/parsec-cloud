@@ -23,6 +23,7 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.workspaces_widget.core = core
         self.files_widget.portal = portal
         self.files_widget.core = core
+        self.workspaces_widget.reset()
 
     def stop(self):
         self.files_widget.stop()

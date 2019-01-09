@@ -91,7 +91,6 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.table_files.cellDoubleClicked.connect(self.item_double_clicked)
         self.line_edit_search.textChanged.connect(self.filter_files)
         self.current_directory = ""
-        self.mountpoint = ""
         self.workspace = None
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
         self.previous_selection = []
@@ -499,7 +498,9 @@ class FilesWidget(QWidget, Ui_FilesWidget):
     def open_file(self, file_name):
         def _inner_open_file():
             desktop.open_file(
-                os.path.join(self.mountpoint, self.workspace, self.current_directory, file_name)
+                os.path.join(
+                    self.core.mountpoint, self.workspace, self.current_directory, file_name
+                )
             )
 
         return _inner_open_file
@@ -516,7 +517,7 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         elif file_type == FileType.File:
             desktop.open_file(
                 os.path.join(
-                    self.mountpoint, self.workspace, self.current_directory, name_item.text()
+                    self.core.mountpoint, self.workspace, self.current_directory, name_item.text()
                 )
             )
         elif file_type == FileType.Folder:
