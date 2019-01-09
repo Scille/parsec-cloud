@@ -33,6 +33,7 @@ async def test_api_user_get_ok(backend, alice_backend_sock, bob):
     rep = await user_get(alice_backend_sock, bob.user_id)
     assert rep == {
         "status": "ok",
+        "is_admin": False,
         "user_id": bob.user_id,
         "certified_user": ANY,
         "user_certifier": None,
@@ -127,6 +128,7 @@ async def test_api_user_get_ok_deep_trustchain(backend, alice_backend_sock, alic
     rep = await user_get(alice_backend_sock, mike2.device_id.user_id)
     assert rep == {
         "status": "ok",
+        "is_admin": False,
         "user_id": mike2.device_id.user_id,
         "certified_user": ANY,
         "user_certifier": roger1.device_id,

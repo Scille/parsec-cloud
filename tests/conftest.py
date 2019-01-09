@@ -418,7 +418,9 @@ def backend_factory(
         certified_device = certify_device(
             None, root_signing_key, device.device_id, device.verify_key
         )
-        return new_backend_user_factory(device.device_id, None, certified_user, certified_device)
+        return new_backend_user_factory(
+            device.device_id, False, None, certified_user, certified_device
+        )
 
     @asynccontextmanager
     async def _backend_factory(devices=default_devices, config={}, event_bus=None):

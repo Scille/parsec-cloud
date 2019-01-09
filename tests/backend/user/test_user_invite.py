@@ -17,6 +17,8 @@ async def user_invite(sock, **kwargs):
 
 @pytest.mark.trio
 async def test_user_invite(backend, alice_backend_sock, alice, mallory):
+    await backend.user.set_user_admin(alice.user_id, True)
+
     async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
 
         # Waiting for user.claimed event
@@ -29,7 +31,9 @@ async def test_user_invite(backend, alice_backend_sock, alice, mallory):
 
 
 @pytest.mark.trio
-async def test_user_invite_already_exists(alice_backend_sock, bob):
+async def test_user_invite_already_exists(backend, alice_backend_sock, alice, bob):
+    await backend.user.set_user_admin(alice.user_id, True)
+
     async with user_invite(alice_backend_sock, user_id=bob.user_id) as prep:
         pass
     assert prep[0] == {"status": "already_exists", "reason": "User `bob` already exists"}
@@ -37,6 +41,8 @@ async def test_user_invite_already_exists(alice_backend_sock, bob):
 
 @pytest.mark.trio
 async def test_user_invite_timeout(mock_clock, backend, alice_backend_sock, alice, mallory):
+    await backend.user.set_user_admin(alice.user_id, True)
+
     async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
 
         await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
@@ -49,9 +55,19 @@ async def test_user_invite_timeout(mock_clock, backend, alice_backend_sock, alic
 
 
 @pytest.mark.trio
+async def test_user_invite_not_admin(alice_backend_sock, mallory):
+    async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
+        pass
+    assert prep[0] == {"status": "invalid_role", "reason": "User `alice` is not admin"}
+
+
+@pytest.mark.trio
 async def test_concurrent_user_invite(
     backend, alice_backend_sock, bob_backend_sock, alice, bob, mallory
 ):
+    await backend.user.set_user_admin(alice.user_id, True)
+    await backend.user.set_user_admin(bob.user_id, True)
+
     async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep1:
 
         await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "user.claimed"})

@@ -131,6 +131,7 @@ class User:
     user_id: UserID
     certified_user: bytes
     user_certifier: Optional[DeviceID]
+    is_admin: bool = False
     devices: DevicesMapping = attr.ib(factory=DevicesMapping)
 
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
@@ -138,6 +139,7 @@ class User:
 
 def new_user_factory(
     device_id: DeviceID,
+    is_admin: bool,
     certifier: Optional[DeviceID],
     certified_user: bytes,
     certified_device: bytes,
@@ -146,6 +148,7 @@ def new_user_factory(
     now = now or pendulum.now()
     return User(
         user_id=device_id.user_id,
+        is_admin=is_admin,
         certified_user=certified_user,
         user_certifier=certifier,
         devices=DevicesMapping(
@@ -202,6 +205,7 @@ class BaseUserComponent:
             {
                 "status": "ok",
                 "user_id": user.user_id,
+                "is_admin": user.is_admin,
                 "created_on": user.created_on,
                 "certified_user": user.certified_user,
                 "user_certifier": user.user_certifier,
@@ -228,6 +232,19 @@ class BaseUserComponent:
 
     @catch_protocole_errors
     async def api_user_invite(self, client_ctx, msg):
+        # is_admin could have changed in db since the creation of the connection
+        try:
+            user, _ = await self.get_user_with_trustchain(client_ctx.device_id.user_id)
+
+        except UserNotFoundError as exc:
+            raise RuntimeError("User `{client_ctx.device_id.user_id}` disappeared !")
+
+        if not user.is_admin:
+            return {
+                "status": "invalid_role",
+                "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+            }
+
         msg = user_invite_serializer.req_load(msg)
 
         invitation = UserInvitation(msg["user_id"], client_ctx.device_id)
@@ -382,6 +399,7 @@ class BaseUserComponent:
         try:
             user = User(
                 user_id=u_data["user_id"],
+                is_admin=msg["is_admin"],
                 certified_user=msg["certified_user"],
                 user_certifier=u_certifier_id,
                 devices=DevicesMapping(
@@ -591,6 +609,19 @@ class BaseUserComponent:
                 "reason": f"Invalid certification data ({exc}).",
             }
 
+        if client_ctx.device_id.user_id != data["device_id"].user_id:
+            try:
+                user, _ = await self.get_user_with_trustchain(client_ctx.device_id.user_id)
+
+            except UserNotFoundError as exc:
+                raise RuntimeError("User `{client_ctx.device_id.user_id}` disappeared !")
+
+            if not user.is_admin:
+                return {
+                    "status": "invalid_role",
+                    "reason": f"User `{client_ctx.device_id.user_id}` is not admin",
+                }
+
         try:
             await self.revoke_device(data["device_id"], msg["certified_revocation"], certifier_id)
 
@@ -606,6 +637,13 @@ class BaseUserComponent:
         return device_revoke_serializer.rep_dump({"status": "ok"})
 
     #### Virtual methods ####
+
+    async def set_user_admin(self, user_id: UserID, is_admin: bool) -> None:
+        """
+        Raises:
+            UserNotFoundError
+        """
+        raise NotImplementedError()
 
     async def create_user(self, user: User) -> None:
         """
