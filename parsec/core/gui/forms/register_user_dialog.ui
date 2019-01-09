@@ -254,7 +254,7 @@ padding-right: 5px;
           </property>
           <property name="icon">
            <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/add-plus-button.png</normaloff>:/icons/images/icons/add-plus-button.png</iconset>
+            <normaloff>:/icons/images/icons/copy_to_clipboard.png</normaloff>:/icons/images/icons/copy_to_clipboard.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -274,7 +274,7 @@ padding-right: 5px;
           </property>
           <property name="icon">
            <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/add-plus-button.png</normaloff>:/icons/images/icons/add-plus-button.png</iconset>
+            <normaloff>:/icons/images/icons/copy_to_clipboard.png</normaloff>:/icons/images/icons/copy_to_clipboard.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -294,7 +294,7 @@ padding-right: 5px;
           </property>
           <property name="icon">
            <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/add-plus-button.png</normaloff>:/icons/images/icons/add-plus-button.png</iconset>
+            <normaloff>:/icons/images/icons/copy_to_clipboard.png</normaloff>:/icons/images/icons/copy_to_clipboard.png</iconset>
           </property>
           <property name="iconSize">
            <size>
