@@ -228,8 +228,6 @@ requirements = [
     "toastedmarshmallow==0.2.6",
     "pendulum==1.3.1",
     "PyNaCl==1.2.0",
-    "simplejson==3.10.0",
-    "python-decouple==3.1",
     "trio==0.9.0",
     "python-interface==1.4.0",
     "async_generator>=1.9",
