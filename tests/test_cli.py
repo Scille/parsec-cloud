@@ -5,9 +5,19 @@ from pathlib import Path
 from contextlib import contextmanager
 from time import sleep
 import subprocess
+from click.testing import CliRunner
 
+import parsec
+from parsec.cli import cli
 
 CWD = Path(__file__).parent.parent
+
+
+def test_version():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--version"])
+    assert result.exit_code == 0
+    assert f"parsec, version {parsec.__version__}\n" in result.output
 
 
 def _run(cmd):
