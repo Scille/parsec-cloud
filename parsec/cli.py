@@ -1,5 +1,6 @@
 import click
 
+import parsec
 from parsec.cli_utils import generate_not_available_cmd
 
 
@@ -16,6 +17,7 @@ except ImportError as exc:
 
 
 @click.group()
+@click.version_option(version=parsec.__version__, prog_name="parsec")
 def cli():
     pass
 
