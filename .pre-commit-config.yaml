@@ -1,0 +1,10 @@
+repos:
+-   repo: https://github.com/ambv/black
+    rev: 18.9b0
+    hooks:
+    - id: black
+      args:
+          - "--line-length=100"
+          - "--exclude=parsec/core/gui/_resources_rc.py"
+          - "--exclude=parsec/core/gui/ui/"
+      language_version: python3
