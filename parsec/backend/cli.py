@@ -41,9 +41,7 @@ def init_cmd(db, force):
 @click.command(short_help="run the server")
 @click.option("--host", "-H", default="127.0.0.1", help="Host to listen on (default: 127.0.0.1)")
 @click.option("--port", "-P", default=6777, type=int, help=("Port to listen on (default: 6777)"))
-@click.option(
-    "--store", "-s", default="MOCKED", help="Store configuration (default: mocked in memory)"
-)
+@click.option("--db", default="MOCKED", help="Database configuration (default: mocked in memory)")
 @click.option(
     "--blockstore",
     "-b",
@@ -69,7 +67,7 @@ def init_cmd(db, force):
 def run_cmd(
     host,
     port,
-    store,
+    db,
     blockstore,
     ssl_keyfile,
     ssl_certfile,
@@ -85,7 +83,7 @@ def run_cmd(
 
         try:
             config = config_factory(
-                blockstore_type=blockstore, db_url=store, debug=debug, environ=os.environ
+                blockstore_type=blockstore, db_url=db, debug=debug, environ=os.environ
             )
 
         except ValueError as exc:

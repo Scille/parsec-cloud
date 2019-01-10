@@ -83,10 +83,7 @@ def test_init_backend(postgresql_url, unused_tcp_port):
 
     # Test backend can run
     with _running(
-        (
-            "backend run --blockstore=POSTGRESQL "
-            f"--store={postgresql_url} --port={unused_tcp_port}"
-        ),
+        ("backend run --blockstore=POSTGRESQL " f"--db={postgresql_url} --port={unused_tcp_port}"),
         wait_for="Starting Parsec Backend",
     ):
         pass
