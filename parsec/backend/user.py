@@ -3,7 +3,7 @@ import attr
 from typing import Dict, List, Optional, Tuple
 import pendulum
 
-from parsec.types import UserID, DeviceID
+from parsec.types import UserID, DeviceID, FrozenDict
 from parsec.trustchain import (
     unsecure_certified_device_extract_verify_key,
     unsecure_certified_user_extract_public_key,
@@ -81,36 +81,9 @@ class Device:
     revocation_certifier: DeviceID = None
 
 
-class DevicesMapping:
-    """
-    Basically a frozen dict.
-    """
-
-    __slots__ = ("_read_only_mapping",)
-
+class DevicesMapping(FrozenDict):
     def __init__(self, *devices: Device):
-        self._read_only_mapping = {d.device_name: d for d in devices}
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self._read_only_mapping!r})"
-
-    def __getitem__(self, key):
-        return self._read_only_mapping[key]
-
-    def items(self):
-        return self._read_only_mapping.items()
-
-    def keys(self):
-        return self._read_only_mapping.keys()
-
-    def values(self):
-        return self._read_only_mapping.values()
-
-    def __iter__(self):
-        return self._read_only_mapping.__iter__()
-
-    def __in__(self, key):
-        return self._read_only_mapping.__in__(key)
+        super().__init__({d.device_name: d for d in devices})
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)

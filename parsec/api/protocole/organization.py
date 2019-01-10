@@ -1,4 +1,4 @@
-from parsec.schema import fields, validate
+from parsec.serde import fields, validate
 from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 
 

@@ -14,12 +14,9 @@ from parsec.crypto import (
 )
 from parsec.trustchain import certify_device, certify_user
 
-# TODO: move serializer away from protocole
-from parsec.api.protocole.base import Serializer, ProtocoleError
-from parsec.schema import ValidationError, UnknownCheckedSchema, fields
-from parsec.core.types import LocalDevice
-from parsec.core.fs.types import Access
-from parsec.core.schemas import ManifestAccessSchema
+from parsec.serde import Serializer, SerdeError, UnknownCheckedSchema, fields
+from parsec.core.types import LocalDevice, Access
+from parsec.core.types.access import ManifestAccessSchema
 from parsec.core.backend_connection import BackendCmdsPool
 from parsec.core.devices_manager import generate_new_device
 
@@ -65,7 +62,7 @@ def generate_user_encrypted_claim(
         raw = user_claim_serializer.dumps(payload)
         return encrypt_raw_for(creator_public_key, raw)
 
-    except (CryptoError, ValidationError, ProtocoleError, ValueError) as exc:
+    except (CryptoError, SerdeError) as exc:
         raise InviteClaimError(str(exc)) from exc
 
 
@@ -74,7 +71,7 @@ def extract_user_encrypted_claim(creator_private_key: PrivateKey, encrypted_clai
         raw = decrypt_raw_for(creator_private_key, encrypted_claim)
         return user_claim_serializer.loads(raw)
 
-    except (CryptoError, ValidationError, ProtocoleError, ValueError) as exc:
+    except (CryptoError, SerdeError) as exc:
         raise InviteClaimError(str(exc)) from exc
 
 
@@ -110,7 +107,7 @@ def generate_device_encrypted_claim(
         raw = device_claim_serializer.dumps(payload)
         return encrypt_raw_for(creator_public_key, raw)
 
-    except (CryptoError, ValidationError, ProtocoleError, ValueError) as exc:
+    except (CryptoError, SerdeError) as exc:
         raise InviteClaimError(str(exc)) from exc
 
 
@@ -119,7 +116,7 @@ def extract_device_encrypted_claim(creator_private_key: PrivateKey, encrypted_cl
         raw = decrypt_raw_for(creator_private_key, encrypted_claim)
         return device_claim_serializer.loads(raw)
 
-    except (CryptoError, ValidationError, ProtocoleError, ValueError) as exc:
+    except (CryptoError, SerdeError) as exc:
         raise InviteClaimError(str(exc)) from exc
 
 
@@ -147,7 +144,7 @@ def generate_device_encrypted_answer(
         raw = device_claim_answer_serializer.dumps(payload)
         return encrypt_raw_for(creator_public_key, raw)
 
-    except (CryptoError, ValidationError, ProtocoleError, ValueError) as exc:
+    except (CryptoError, SerdeError) as exc:
         raise InviteClaimError(str(exc)) from exc
 
 
@@ -158,7 +155,7 @@ def extract_device_encrypted_answer(
         raw = decrypt_raw_for(creator_private_key, encrypted_claim)
         return device_claim_answer_serializer.loads(raw)
 
-    except (CryptoError, ValidationError, ProtocoleError, ValueError) as exc:
+    except (CryptoError, SerdeError) as exc:
         raise InviteClaimError(str(exc)) from exc
 
 

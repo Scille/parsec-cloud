@@ -48,9 +48,9 @@ class LocalDB:
         try:
             return next(
                 (
-                    directory / str(access["id"])
+                    directory / str(access.id)
                     for directory in [self._cache, self._placeholders]
-                    if (directory / str(access["id"])).exists()
+                    if (directory / str(access.id)).exists()
                 )
             )
         except StopIteration:
@@ -61,12 +61,12 @@ class LocalDB:
         if not file:
             raise LocalDBMissingEntry(access)
         ciphered = file.read_bytes()
-        return decrypt_raw_with_secret_key(access["key"], ciphered)
+        return decrypt_raw_with_secret_key(access.key, ciphered)
 
     def set(self, access: Access, raw: bytes, deletable: bool = True):
         assert isinstance(raw, (bytes, bytearray))
 
-        ciphered = encrypt_raw_with_secret_key(access["key"], raw)
+        ciphered = encrypt_raw_with_secret_key(access.key, raw)
 
         if deletable:
             if self.get_cache_size() + len(ciphered) > self.max_cache_size:
@@ -76,9 +76,7 @@ class LocalDB:
             self.clear(access)
         except LocalDBMissingEntry:
             pass
-        file = (
-            self._cache / str(access["id"]) if deletable else self._placeholders / str(access["id"])
-        )
+        file = self._cache / str(access.id) if deletable else self._placeholders / str(access.id)
         file.write_bytes(ciphered)
 
     def clear(self, access: Access):

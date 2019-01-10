@@ -1,20 +1,17 @@
 import attr
 from typing import List, Tuple
 from pathlib import Path
-from json import JSONDecodeError
 
 from parsec.types import DeviceID, BackendOrganizationAddr
-from parsec.utils import ejson_dumps, ejson_loads
 from parsec.crypto import SigningKey, PrivateKey, generate_secret_key
-from parsec.schema import UnknownCheckedSchema, fields, ValidationError, post_load
-from parsec.core.schemas import ManifestAccessSchema
+from parsec.serde import Serializer, SerdeError, UnknownCheckedSchema, fields, post_load
 from parsec.core.types import LocalDevice
+from parsec.core.types.access import ManifestAccessSchema, ManifestAccess
 from parsec.core.devices_manager.cipher import (
     BaseLocalDeviceEncryptor,
     BaseLocalDeviceDecryptor,
     CipherError,
 )
-from parsec.core.fs.utils import new_access
 
 
 class LocalDeviceSchema(UnknownCheckedSchema):
@@ -30,7 +27,7 @@ class LocalDeviceSchema(UnknownCheckedSchema):
         return LocalDevice(**data)
 
 
-local_device_schema = LocalDeviceSchema(strict=True)
+local_device_serializer = Serializer(LocalDeviceSchema)
 
 
 class DeviceManagerError(Exception):
@@ -59,7 +56,7 @@ def generate_new_device(device_id: DeviceID, backend_addr: BackendOrganizationAd
         device_id=device_id,
         signing_key=SigningKey.generate(),
         private_key=PrivateKey.generate(),
-        user_manifest_access=new_access(),
+        user_manifest_access=ManifestAccess(),
         local_symkey=generate_secret_key(),
     )
 
@@ -132,9 +129,9 @@ class LocalDevicesManager:
 
         try:
             raw = decryptor.decrypt(ciphertext)
-            return local_device_schema.load(ejson_loads(raw.decode("utf8"))).data
+            return local_device_serializer.loads(raw)
 
-        except (CipherError, ValidationError, JSONDecodeError, ValueError) as exc:
+        except (CipherError, SerdeError) as exc:
             raise DeviceLoadingError(f"Cannot load {key_file}: {exc}") from exc
 
     def save_device(
@@ -152,11 +149,11 @@ class LocalDevicesManager:
                 raise DeviceConfigAleadyExists(f"Device {device.device_id} already exists")
 
         try:
-            raw = ejson_dumps(local_device_schema.dump(device).data).encode("utf8")
+            raw = local_device_serializer.dumps(device)
             ciphertext = encryptor.encrypt(raw)
 
             key_file.parent.mkdir(exist_ok=True, parents=True)
             key_file.write_bytes(ciphertext)
 
-        except (CipherError, ValidationError, JSONDecodeError, ValueError, OSError) as exc:
+        except (CipherError, SerdeError, OSError) as exc:
             raise DeviceSavingError(f"Cannot save {key_file}: {exc}") from exc

@@ -3,7 +3,7 @@ import trio
 from async_generator import asynccontextmanager
 
 from parsec.types import DeviceID
-from parsec.core.schemas import dumps_manifest
+from parsec.core.types import local_manifest_serializer
 from parsec.core.devices_manager import generate_new_device
 from parsec.core.backend_connection import backend_cmds_factory
 from parsec.core.encryption_manager import EncryptionManager
@@ -58,7 +58,9 @@ def local_db_factory(initial_user_manifest_state):
             initial_user_manifest_state.set_v0_in_device(device_id)
         else:
             user_manifest = initial_user_manifest_state.get_initial_for_device(device)
-            local_db.set(device.user_manifest_access, dumps_manifest(user_manifest))
+            local_db.set(
+                device.user_manifest_access, local_manifest_serializer.dumps(user_manifest)
+            )
 
         return local_db
 

@@ -341,8 +341,8 @@ def quick_filter_block_accesses(block_entries, start, end):
     """
     interestings = []
     for candidate in block_entries:
-        candidate_start = candidate["offset"]
-        candidate_end = candidate_start + candidate["size"]
+        candidate_start = candidate.offset
+        candidate_end = candidate_start + candidate.size
         if (
             start <= candidate_start <= end
             or start <= candidate_end <= end

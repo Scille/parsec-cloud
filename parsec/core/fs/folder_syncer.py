@@ -1,14 +1,8 @@
-from typing import Optional, List
+from typing import Optional, Dict
 from structlog import get_logger
 
-from parsec.core.fs.types import Access, Path, LocalFolderManifest, RemoteFolderManifest
-from parsec.core.fs.utils import (
-    is_user_manifest,
-    is_folder_manifest,
-    is_placeholder_manifest,
-    local_to_remote_manifest,
-    remote_to_local_manifest,
-)
+from parsec.core.types import Access, LocalManifest, FsPath, LocalFolderManifest, FolderManifest
+from parsec.core.fs.utils import is_user_manifest, is_folderish_manifest, is_placeholder_manifest
 from parsec.core.fs.sync_base import SyncConcurrencyError, BaseSyncer
 from parsec.core.fs.merge_folders import merge_local_folder_manifests, merge_remote_folder_manifests
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
@@ -20,17 +14,17 @@ logger = get_logger()
 class FolderSyncerMixin(BaseSyncer):
     async def _sync_folder_look_for_remote_changes(
         self, access: Access, manifest: LocalFolderManifest
-    ) -> Optional[RemoteFolderManifest]:
+    ) -> Optional[FolderManifest]:
         # Placeholder means we need synchro !
         assert not is_placeholder_manifest(manifest)
         # This folder hasn't been modified locally, just download
         # last version from the backend if any.
         target_remote_manifest = await self._backend_vlob_read(access)
-        if target_remote_manifest["version"] == manifest["base_version"]:
+        if target_remote_manifest.version == manifest.base_version:
             return None
         return target_remote_manifest
 
-    def _strip_placeholders(self, children: List[Access]):
+    def _strip_placeholders(self, children: Dict[Access, LocalManifest]):
         synced_children = {}
         for child_name, child_access in children.items():
             try:
@@ -44,10 +38,11 @@ class FolderSyncerMixin(BaseSyncer):
         return synced_children
 
     async def _sync_folder_actual_sync(
-        self, path: Path, access: Access, manifest: LocalFolderManifest
-    ) -> RemoteFolderManifest:
-        to_sync_manifest = local_to_remote_manifest(manifest)
-        to_sync_manifest["version"] += 1
+        self, path: FsPath, access: Access, manifest: LocalFolderManifest
+    ) -> FolderManifest:
+        # to_sync_manifest = manifest.to_remote(version=manifest.base_version + 1)
+        to_sync_manifest = manifest.to_remote()
+        to_sync_manifest = to_sync_manifest.evolve(version=manifest.base_version + 1)
 
         # Upload the folder manifest as new vlob version
         notify_beacons = self.local_folder_fs.get_beacon(path)
@@ -74,17 +69,15 @@ class FolderSyncerMixin(BaseSyncer):
 
                     if is_user_manifest(manifest):
                         logger.warning(
-                            "Concurrency error while creating user vlob", access_id=access["id"]
+                            "Concurrency error while creating user vlob", access_id=access.id
                         )
                     else:
-                        logger.warning(
-                            "Concurrency error while creating vlob", access_id=access["id"]
-                        )
+                        logger.warning("Concurrency error while creating vlob", access_id=access.id)
 
                     base = None
                     force_update = True
                 else:
-                    base = await self._backend_vlob_read(access, to_sync_manifest["version"] - 1)
+                    base = await self._backend_vlob_read(access, to_sync_manifest.version - 1)
 
                 # Do a 3-ways merge to fix the concurrency error, first we must
                 # fetch the base version and the new one present in the backend
@@ -108,15 +101,15 @@ class FolderSyncerMixin(BaseSyncer):
                     # error were the same than the one we wanted to make in the
                     # first place (e.g. when removing the same file)
                     break
-                to_sync_manifest["version"] = target["version"] + 1
+                to_sync_manifest = to_sync_manifest.evolve(version=target.version + 1)
 
         return to_sync_manifest
 
     async def _sync_folder(
-        self, path: Path, access: Access, manifest: LocalFolderManifest, recursive: bool
+        self, path: FsPath, access: Access, manifest: LocalFolderManifest, recursive: bool
     ) -> None:
         assert not is_placeholder_manifest(manifest)
-        assert is_folder_manifest(manifest)
+        assert is_folderish_manifest(manifest)
 
         # Synchronizing a folder is divided into three steps:
         # - first synchronizing it children
@@ -126,9 +119,7 @@ class FolderSyncerMixin(BaseSyncer):
 
         # Synchronizing children
         if recursive:
-            for child_name, child_access in sorted(
-                manifest["children"].items(), key=lambda x: x[0]
-            ):
+            for child_name, child_access in sorted(manifest.children.items(), key=lambda x: x[0]):
                 child_path = path / child_name
                 try:
                     await self._sync_nolock(child_path, True)
@@ -140,12 +131,12 @@ class FolderSyncerMixin(BaseSyncer):
             # and remove it placeholders (those are the children created since
             # the start of our sync)
             manifest = self.local_folder_fs.get_manifest(access)
-            assert is_folder_manifest(manifest)
+            assert is_folderish_manifest(manifest)
 
-        manifest["children"] = self._strip_placeholders(manifest["children"])
+        manifest = manifest.evolve(children=self._strip_placeholders(manifest.children))
 
         # Now we can synchronize the folder if needed
-        if not manifest["need_sync"]:
+        if not manifest.need_sync:
             target_remote_manifest = await self._sync_folder_look_for_remote_changes(
                 access, manifest
             )
@@ -156,15 +147,15 @@ class FolderSyncerMixin(BaseSyncer):
         else:
             target_remote_manifest = await self._sync_folder_actual_sync(path, access, manifest)
             event_type = "fs.entry.synced"
-        assert is_folder_manifest(target_remote_manifest)
+        assert is_folderish_manifest(target_remote_manifest)
 
         # Merge the synchronized version with the current one
         self._sync_folder_merge_back(path, access, manifest, target_remote_manifest)
 
-        self.event_bus.send(event_type, path=str(path), id=access["id"])
+        self.event_bus.send(event_type, path=str(path), id=access.id)
 
     async def _minimal_sync_folder(
-        self, path: Path, access: Access, manifest: LocalFolderManifest
+        self, path: FsPath, access: Access, manifest: LocalFolderManifest
     ) -> bool:
         """
         Returns: If additional sync are needed
@@ -173,32 +164,32 @@ class FolderSyncerMixin(BaseSyncer):
             BackendNotAvailable
         """
         if not is_placeholder_manifest(manifest):
-            return manifest["need_sync"]
+            return manifest.need_sync
 
-        synced_children = self._strip_placeholders(manifest["children"])
-        need_more_sync = synced_children.keys() != manifest["children"].keys()
-        manifest["children"] = synced_children
+        synced_children = self._strip_placeholders(manifest.children)
+        need_more_sync = synced_children.keys() != manifest.children.keys()
+        manifest = manifest.evolve(children=synced_children)
 
         target_remote_manifest = await self._sync_folder_actual_sync(path, access, manifest)
         self._sync_folder_merge_back(path, access, manifest, target_remote_manifest)
 
-        self.event_bus.send("fs.entry.minimal_synced", path=str(path), id=access["id"])
+        self.event_bus.send("fs.entry.minimal_synced", path=str(path), id=access.id)
         return need_more_sync
 
     def _sync_folder_merge_back(
         self,
-        path: Path,
+        path: FsPath,
         access: Access,
         base_manifest: LocalFolderManifest,
-        target_remote_manifest: RemoteFolderManifest,
+        target_remote_manifest: FolderManifest,
     ) -> None:
         # Merge with the current version of the manifest which may have
         # been modified in the meantime
-        assert is_folder_manifest(target_remote_manifest)
+        assert is_folderish_manifest(target_remote_manifest)
         current_manifest = self.local_folder_fs.get_manifest(access)
-        assert is_folder_manifest(current_manifest)
+        assert is_folderish_manifest(current_manifest)
 
-        target_manifest = remote_to_local_manifest(target_remote_manifest)
+        target_manifest = target_remote_manifest.to_local()
         final_manifest, conflicts = merge_local_folder_manifests(
             base_manifest, current_manifest, target_manifest
         )

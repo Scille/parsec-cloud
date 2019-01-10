@@ -128,7 +128,6 @@ def test_pkcs11_save_and_load(mocked_pkcs11, local_device_manager, alice):
     local_device_manager.save_device(alice, encryptor)
 
     alice_reloaded = local_device_manager.load_device(alice.device_id, decryptor)
-
     assert alice_reloaded == alice
 
     with pytest.raises(DeviceManagerError):

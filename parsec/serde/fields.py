@@ -14,7 +14,6 @@ from marshmallow.fields import (
     Field,
 )
 
-from parsec.utils import to_jsonb64, from_jsonb64
 from parsec.types import (
     DeviceID as _DeviceID,
     UserID as _UserID,
@@ -201,14 +200,14 @@ class SigningKey(Field):
         if value is None:
             return None
 
-        return to_jsonb64(value.encode())
+        return value.encode()
 
     def _deserialize(self, value, attr, data):
         if value is None:
             return None
 
         try:
-            return _SigningKey(from_jsonb64(value))
+            return _SigningKey(value)
 
         except Exception:
             raise ValidationError("Invalid signing key.")
@@ -219,14 +218,14 @@ class VerifyKey(Field):
         if value is None:
             return None
 
-        return to_jsonb64(value.encode())
+        return value.encode()
 
     def _deserialize(self, value, attr, data):
         if value is None:
             return None
 
         try:
-            return _VerifyKey(from_jsonb64(value))
+            return _VerifyKey(value)
 
         except Exception:
             raise ValidationError("Invalid verify key.")
@@ -237,14 +236,14 @@ class PrivateKey(Field):
         if value is None:
             return None
 
-        return to_jsonb64(value.encode())
+        return value.encode()
 
     def _deserialize(self, value, attr, data):
         if value is None:
             return None
 
         try:
-            return _PrivateKey(from_jsonb64(value))
+            return _PrivateKey(value)
 
         except Exception:
             raise ValidationError("Invalid secret key.")
@@ -255,14 +254,14 @@ class PublicKey(Field):
         if value is None:
             return None
 
-        return to_jsonb64(value.encode())
+        return value.encode()
 
     def _deserialize(self, value, attr, data):
         if value is None:
             return None
 
         try:
-            return _PublicKey(from_jsonb64(value))
+            return _PublicKey(value)
 
         except Exception:
             raise ValidationError("Invalid verify key.")

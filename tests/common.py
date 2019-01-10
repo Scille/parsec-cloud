@@ -17,16 +17,16 @@ class InMemoryLocalDB(LocalDB):
 
     def get(self, access):
         try:
-            return self._data[access["id"]]
+            return self._data[access.id]
         except KeyError:
             raise LocalDBMissingEntry(access)
 
     def set(self, access, raw: bytes, deletable=False):
         assert isinstance(raw, (bytes, bytearray))
-        self._data[access["id"]] = raw
+        self._data[access.id] = raw
 
     def clear(self, access):
-        del self._data[access["id"]]
+        del self._data[access.id]
 
 
 def freeze_time(time):

@@ -1,5 +1,15 @@
 import pendulum
 from itertools import count
+from typing import Optional
+
+from parsec.core.types import (
+    RemoteManifest,
+    LocalManifest,
+    UserManifest,
+    WorkspaceManifest,
+    LocalUserManifest,
+    LocalWorkspaceManifest,
+)
 
 
 def find_conflicting_name_for_child_entry(original_name: str, check_candidate_name) -> str:
@@ -83,93 +93,92 @@ def merge_children(base, diverged, target):
                 resolved[entry_name] = target_entry
                 conflict_entry_entry = resolved[conflict_entry_name] = diverged[entry_name]
                 conflicts.append(
-                    (
-                        entry_name,
-                        target_entry["id"],
-                        conflict_entry_name,
-                        conflict_entry_entry["id"],
-                    )
+                    (entry_name, target_entry.id, conflict_entry_name, conflict_entry_entry.id)
                 )
 
     return resolved, need_sync, conflicts
 
 
-def merge_remote_folder_manifests(base, diverged, target):
+def merge_remote_folder_manifests(
+    base: Optional[RemoteManifest], diverged: RemoteManifest, target: RemoteManifest
+) -> RemoteManifest:
     if base is None:
         base_version = 0
         base_children = {}
     else:
-        base_version = base["version"]
-        base_children = base["children"]
-    assert base_version + 1 == diverged["version"]
-    assert target["version"] >= diverged["version"]
+        base_version = base.version
+        base_children = base.children
+    assert base_version + 1 == diverged.version
+    assert target.version >= diverged.version
     # Not true when merging user manifest v1 given v0 is lazily generated
-    # assert diverged["created"] == target["created"]
+    # assert diverged.created == target.created
 
     children, need_sync, conflicts = merge_children(
-        base_children, diverged["children"], target["children"]
+        base_children, diverged.children, target.children
     )
 
     if not need_sync:
-        updated = target["updated"]
+        updated = target.updated
     else:
-        if target["updated"] > diverged["updated"]:
-            updated = target["updated"]
+        if target.updated > diverged.updated:
+            updated = target.updated
         else:
-            updated = diverged["updated"]
+            updated = diverged.updated
 
-    merged = {**target, "updated": updated, "children": children}
+    evolves = {"updated": updated, "children": children}
 
-    # Only user manifest has this field
-    if "last_processed_message" in target:
-        merged["last_processed_message"] = max(
-            diverged["last_processed_message"], target["last_processed_message"]
+    if isinstance(target, UserManifest):
+        # Only user manifest has this field
+        evolves["last_processed_message"] = max(
+            diverged.last_processed_message, target.last_processed_message
         )
 
-    # Only workspace manifest has this field
-    if "participants" in target:
-        merged["participants"] = list(set(target["participants"] + diverged["participants"]))
+    elif isinstance(target, WorkspaceManifest):
+        # Only workspace manifest has this field
+        evolves["participants"] = list({*target.participants, *diverged.participants})
 
+    merged = target.evolve(**evolves)
     return merged, need_sync, conflicts
 
 
-def merge_local_folder_manifests(base, diverged, target):
+def merge_local_folder_manifests(
+    base: Optional[LocalManifest], diverged: LocalManifest, target: LocalManifest
+) -> LocalManifest:
     if base is None:
         base_version = 0
         base_children = {}
     else:
-        base_version = base["base_version"]
-        base_children = base["children"]
-    assert base_version == diverged["base_version"]
-    assert target["base_version"] > diverged["base_version"]
+        base_version = base.base_version
+        base_children = base.children
+    assert base_version == diverged.base_version
+    assert target.base_version > diverged.base_version
     # Not true when merging user manifest v1 given v0 is lazily generated
-    # assert diverged["created"] == target["created"]
+    # assert diverged.created == target.created
 
     children, need_sync, conflicts = merge_children(
-        base_children, diverged["children"], target["children"]
+        base_children, diverged.children, target.children
     )
 
     if not need_sync:
-        updated = target["updated"]
+        updated = target.updated
     else:
         # TODO: potentially unsafe if two modifications are done within the same millisecond
-        if target["updated"] > diverged["updated"]:
-            updated = target["updated"]
+        if target.updated > diverged.updated:
+            updated = target.updated
         else:
-            updated = diverged["updated"]
+            updated = diverged.updated
 
-    merged = {**target, "need_sync": need_sync, "updated": updated, "children": children}
+    evolves = {"need_sync": need_sync, "updated": updated, "children": children}
 
-    # Only user manifest has this field
-    if "last_processed_message" in target:
-        merged["last_processed_message"] = max(
-            diverged["last_processed_message"], target["last_processed_message"]
+    if isinstance(target, LocalUserManifest):
+        # Only user manifest has this field
+        evolves["last_processed_message"] = max(
+            diverged.last_processed_message, target.last_processed_message
         )
 
-    # Only workspace manifest has this field
-    if "participants" in target:
-        merged["participants"] = list(
-            sorted(set(target["participants"] + diverged["participants"]))
-        )
+    elif isinstance(target, LocalWorkspaceManifest):
+        # Only workspace manifest has this field
+        evolves["participants"] = list(sorted(set(target.participants + diverged.participants)))
 
+    merged = target.evolve(**evolves)
     return merged, conflicts

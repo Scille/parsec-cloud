@@ -17,11 +17,7 @@ from parsec.crypto_types import (
     export_root_verify_key,
     import_root_verify_key,
 )
-from parsec.schema import UnknownCheckedSchema, fields, ValidationError
-
-# TODO: should isolate generic serialization stuff from api
-from parsec.api.protocole import ProtocoleError
-from parsec.api.protocole.base import Serializer
+from parsec.serde import Serializer, UnknownCheckedSchema, fields, SerdeError
 
 
 __all__ = (
@@ -134,7 +130,7 @@ def decode_signedmeta(signedmeta: bytes) -> Tuple[Optional[DeviceID], bytes]:
             device_id = None
         return device_id, meta["content"]
 
-    except (ValidationError, UnicodeDecodeError, ProtocoleError) as exc:
+    except SerdeError as exc:
         raise CryptoMetadataError(
             "Message doesn't contain author metadata along with signed message"
         ) from exc

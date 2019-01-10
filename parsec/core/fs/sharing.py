@@ -2,16 +2,14 @@ from structlog import get_logger
 from itertools import count
 
 from parsec.types import UserID, DeviceID
-from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields
-from parsec.core.schemas import ManifestAccessSchema
+from parsec.serde import Serializer, SerdeError, UnknownCheckedSchema, OneOfSchema, fields
+from parsec.core.types import FsPath
+from parsec.core.types.access import ManifestAccessSchema
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
 from parsec.core.fs.utils import is_workspace_manifest
-from parsec.core.fs.types import Path
 from parsec.core.encryption_manager import EncryptionManagerError
 from parsec.core.backend_connection import BackendCmdsBadResponse
 
-# TODO: move serializer away from api
-from parsec.api.protocole.base import InvalidMessageError, Serializer
 
 logger = get_logger()
 
@@ -82,7 +80,7 @@ class Sharing:
         self.remote_loader = remote_loader
         self.event_bus = event_bus
 
-    async def share(self, path: Path, recipient: UserID):
+    async def share(self, path: FsPath, recipient: UserID):
         """
         Raises:
             SharingError
@@ -105,9 +103,9 @@ class Sharing:
         # Note this is not done in a strictly atomic way so this information
         # can be erronous (consider it more of a UX helper than something to
         # rely on)
-        if recipient not in manifest["participants"]:
-            manifest["participants"].append(recipient)
-            manifest["participants"].sort()
+        if recipient not in manifest.participants:
+            participants = sorted({*manifest.participants, recipient})
+            manifest = manifest.evolve_and_mark_updated(participants=participants)
             self.local_folder_fs.update_manifest(access, manifest)
 
         # Make sure there is no placeholder in the path and the entry
@@ -123,12 +121,12 @@ class Sharing:
         }
         try:
             raw = sharing_message_content_serializer.dumps(msg)
-        except InvalidMessageError as exc:
+        except SerdeError as exc:
             # TODO: Do we really want to log the message content ? Wouldn't
             # it be better just to raise a RuntimeError given we should never
             # be in this case ?
             logger.error("Cannot dump sharing message", msg=msg, errors=exc.errors)
-            raise SharingError("Internal error")
+            raise SharingError("Internal error") from exc
 
         try:
             ciphered = await self.encryption_manager.encrypt_for(recipient, raw)
@@ -164,7 +162,7 @@ class Sharing:
         """
 
         _, user_manifest = await self._get_user_manifest()
-        initial_last_processed_message = user_manifest["last_processed_message"]
+        initial_last_processed_message = user_manifest.last_processed_message
         try:
             messages = await self.backend_cmds.message_get(offset=initial_last_processed_message)
         except BackendCmdsBadResponse as exc:
@@ -179,8 +177,10 @@ class Sharing:
                 logger.warning("Invalid sharing message", reason=exc)
 
         user_manifest_access, user_manifest = await self._get_user_manifest()
-        if user_manifest["last_processed_message"] < new_last_processed_message:
-            user_manifest["last_processed_message"] = new_last_processed_message
+        if user_manifest.last_processed_message < new_last_processed_message:
+            user_manifest = user_manifest.evolve_and_mark_updated(
+                last_processed_message=new_last_processed_message
+            )
             self.local_folder_fs.update_manifest(user_manifest_access, user_manifest)
 
     async def _process_message(self, sender_id: DeviceID, ciphered: bytes):
@@ -203,13 +203,13 @@ class Sharing:
         try:
             msg = generic_message_content_serializer.loads(raw)
 
-        except InvalidMessageError as exc:
-            raise SharingInvalidMessageError(f"Not a valid message: {exc.errors}")
+        except SerdeError as exc:
+            raise SharingInvalidMessageError(f"Not a valid message: {exc.errors}") from exc
 
         if msg["type"] == "share":
             user_manifest_access, user_manifest = await self._get_user_manifest()
 
-            for child_access in user_manifest["children"].values():
+            for child_access in user_manifest.children.values():
                 if child_access == msg["access"]:
                     # Shared entry already present, nothing to do then
                     return
@@ -219,15 +219,17 @@ class Sharing:
                     sharing_name = msg["name"]
                 else:
                     sharing_name = f"{msg['name']} {i}"
-                if sharing_name not in user_manifest["children"]:
+                if sharing_name not in user_manifest.children:
                     break
-            user_manifest["children"][sharing_name] = msg["access"]
+            user_manifest = user_manifest.evolve_children_and_mark_updated(
+                {sharing_name: msg["access"]}
+            )
             self.local_folder_fs.update_manifest(user_manifest_access, user_manifest)
 
             path = f"/{sharing_name}"
             self.event_bus.send("sharing.new", path=path, access=msg["access"])
-            self.event_bus.send("fs.entry.updated", id=user_manifest_access["id"])
-            self.event_bus.send("fs.entry.synced", id=msg["access"]["id"], path=str(path))
+            self.event_bus.send("fs.entry.updated", id=user_manifest_access.id)
+            self.event_bus.send("fs.entry.synced", id=msg["access"].id, path=str(path))
 
         elif msg["type"] == "ping":
             self.event_bus.send("pinged")

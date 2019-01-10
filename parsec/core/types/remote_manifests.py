@@ -1,10 +1,11 @@
 import attr
 import pendulum
-from typing import List, Dict, Union
+from typing import Tuple, Dict, Union
 
-from parsec.types import DeviceID, UserID
-from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
-from parsec.core.types.base import SchemaSerializationError, EntryName, EntryNameField
+from parsec.types import DeviceID, UserID, FrozenDict
+from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
+from parsec.core.types import local_manifests
+from parsec.core.types.base import EntryName, EntryNameField, serializer_factory
 from parsec.core.types.access import (
     BlockAccess,
     ManifestAccess,
@@ -18,6 +19,7 @@ __all__ = (
     "FolderManifest",
     "WorkspaceManifest",
     "UserManifest",
+    "RemoteManifest",
     "remote_manifest_dumps",
     "remote_manifest_loads",
 )
@@ -33,7 +35,22 @@ class FileManifest:
     created: pendulum.Pendulum
     updated: pendulum.Pendulum
     size: int
-    blocks: List[BlockAccess]
+    blocks: Tuple[BlockAccess] = attr.ib(converter=tuple)
+
+    def evolve(self, **data) -> "FileManifest":
+        return attr.evolve(self, **data)
+
+    def to_local(self) -> "local_manifests.LocalFileManifest":
+        return local_manifests.LocalFileManifest(
+            author=self.author,
+            base_version=self.version,
+            created=self.created,
+            updated=self.updated,
+            size=self.size,
+            blocks=self.blocks,
+            is_placeholder=False,
+            need_sync=False,
+        )
 
 
 class FileManifestSchema(UnknownCheckedSchema):
@@ -48,10 +65,12 @@ class FileManifestSchema(UnknownCheckedSchema):
 
     @post_load
     def make_obj(self, data):
+        data.pop("type")
+        data.pop("format")
         return FileManifest(**data)
 
 
-file_manifest_schema = FileManifestSchema(strict=True)
+file_manifest_serializer = serializer_factory(FileManifestSchema)
 
 
 # Folder manifest
@@ -63,7 +82,21 @@ class FolderManifest:
     version: int
     created: pendulum.Pendulum
     updated: pendulum.Pendulum
-    children: Dict[EntryName, ManifestAccess]
+    children: Dict[EntryName, ManifestAccess] = attr.ib(converter=FrozenDict)
+
+    def evolve(self, **data) -> "FolderManifest":
+        return attr.evolve(self, **data)
+
+    def to_local(self) -> "local_manifests.LocalFolderManifest":
+        return local_manifests.LocalFolderManifest(
+            author=self.author,
+            base_version=self.version,
+            created=self.created,
+            updated=self.updated,
+            children=self.children,
+            is_placeholder=False,
+            need_sync=False,
+        )
 
 
 class FolderManifestSchema(UnknownCheckedSchema):
@@ -81,10 +114,12 @@ class FolderManifestSchema(UnknownCheckedSchema):
 
     @post_load
     def make_obj(self, data):
+        data.pop("type")
+        data.pop("format")
         return FolderManifest(**data)
 
 
-folder_manifest_schema = FolderManifestSchema(strict=True)
+folder_manifest_serializer = serializer_factory(FolderManifestSchema)
 
 
 # Workspace manifest
@@ -93,7 +128,20 @@ folder_manifest_schema = FolderManifestSchema(strict=True)
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class WorkspaceManifest(FolderManifest):
     creator: UserID
-    participants: List[UserID]
+    participants: Tuple[UserID]
+
+    def to_local(self) -> "local_manifests.LocalFolderManifest":
+        return local_manifests.LocalWorkspaceManifest(
+            author=self.author,
+            base_version=self.version,
+            created=self.created,
+            updated=self.updated,
+            children=self.children,
+            creator=self.creator,
+            participants=self.participants,
+            is_placeholder=False,
+            need_sync=False,
+        )
 
 
 class WorkspaceManifestSchema(FolderManifestSchema):
@@ -103,10 +151,12 @@ class WorkspaceManifestSchema(FolderManifestSchema):
 
     @post_load
     def make_obj(self, data):
+        data.pop("type")
+        data.pop("format")
         return WorkspaceManifest(**data)
 
 
-workspace_manifest_schema = WorkspaceManifestSchema(strict=True)
+workspace_manifest_serializer = serializer_factory(WorkspaceManifestSchema)
 
 
 # User manifest
@@ -116,6 +166,18 @@ workspace_manifest_schema = WorkspaceManifestSchema(strict=True)
 class UserManifest(FolderManifest):
     last_processed_message: int
 
+    def to_local(self) -> "local_manifests.LocalFolderManifest":
+        return local_manifests.LocalUserManifest(
+            author=self.author,
+            base_version=self.version,
+            created=self.created,
+            updated=self.updated,
+            children=self.children,
+            last_processed_message=self.last_processed_message,
+            is_placeholder=False,
+            need_sync=False,
+        )
+
 
 class UserManifestSchema(FolderManifestSchema):
     type = fields.CheckedConstant("user_manifest", required=True)
@@ -123,10 +185,12 @@ class UserManifestSchema(FolderManifestSchema):
 
     @post_load
     def make_obj(self, data):
+        data.pop("type")
+        data.pop("format")
         return UserManifest(**data)
 
 
-user_manifest_schema = UserManifestSchema(strict=True)
+user_manifest_serializer = serializer_factory(UserManifestSchema)
 
 
 class TypedRemoteManifestSchema(OneOfSchema):
@@ -140,10 +204,19 @@ class TypedRemoteManifestSchema(OneOfSchema):
     }
 
     def get_obj_type(self, obj):
-        return obj["type"]
+        if isinstance(obj, WorkspaceManifest):
+            return "workspace_manifest"
+        elif isinstance(obj, UserManifest):
+            return "user_manifest"
+        elif isinstance(obj, FolderManifest):
+            return "folder_manifest"
+        elif isinstance(obj, FileManifest):
+            return "file_manifest"
+        else:
+            raise RuntimeError(f"Unknown object {obj}")
 
 
-typed_remote_manifest_schema = TypedRemoteManifestSchema(strict=True)
+remote_manifest_serializer = serializer_factory(TypedRemoteManifestSchema)
 
 
 RemoteManifest = Union[UserManifest, FolderManifest, WorkspaceManifest, UserManifest]
@@ -152,27 +225,14 @@ RemoteManifest = Union[UserManifest, FolderManifest, WorkspaceManifest, UserMani
 def remote_manifest_dumps(manifest: RemoteManifest) -> bytes:
     """
     Raises:
-        SchemaSerializationError
+        SerdeError
     """
-    try:
-        data = typed_remote_manifest_schema.dumps(manifest).data
-
-    except ValidationError as exc:
-        raise SchemaSerializationError(exc.messages) from exc
-
-    return data.encode("utf8")
+    return remote_manifest_serializer.dumps(manifest)
 
 
 def remote_manifest_loads(raw: bytes) -> RemoteManifest:
     """
     Raises:
-        SchemaSerializationError
+        SerdeError
     """
-    try:
-        return typed_remote_manifest_schema.loads(raw.decode("utf8")).data
-
-    except ValidationError as exc:
-        raise SchemaSerializationError(exc.messages) from exc
-
-    except ValueError as exc:
-        raise SchemaSerializationError(str(exc))
+    return remote_manifest_serializer.loads(raw)

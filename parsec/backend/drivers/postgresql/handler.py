@@ -2,7 +2,8 @@ import triopg
 from structlog import get_logger
 
 from parsec.event_bus import EventBus
-from parsec.utils import call_with_control, ejson_dumps, ejson_loads
+from parsec.serde import packb, unpackb
+from parsec.utils import call_with_control
 
 
 logger = get_logger()
@@ -180,7 +181,7 @@ class PGHandler:
                 await started_cb()
 
     def _on_notification(self, connection, pid, channel, payload):
-        data = ejson_loads(payload)
+        data = unpackb(payload)
         signal = data.pop("__signal__")
         logger.debug("notif received", pid=pid, channel=channel, payload=payload)
         self.event_bus.send(signal, **data)
@@ -191,6 +192,6 @@ class PGHandler:
 
 
 async def send_signal(conn, signal, **kwargs):
-    raw_data = ejson_dumps({"__signal__": signal, **kwargs})
+    raw_data = packb({"__signal__": signal, **kwargs})
     await conn.execute("SELECT pg_notify($1, $2)", "app_notification", raw_data)
     logger.debug("notif sent", signal=signal, kwargs=kwargs)
