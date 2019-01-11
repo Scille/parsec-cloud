@@ -1,4 +1,5 @@
-import pendulum
+from pendulum import Pendulum
+from uuid import UUID as _UUID
 from collections import Mapping
 from marshmallow import ValidationError
 from marshmallow.fields import (
@@ -9,7 +10,6 @@ from marshmallow.fields import (
     Dict,
     Nested,
     Integer,
-    UUID,
     Boolean,
     Field,
 )
@@ -35,7 +35,6 @@ __all__ = (
     "Dict",
     "Nested",
     "Integer",
-    "UUID",
     "Boolean",
     "Field",
     "Path",
@@ -120,32 +119,29 @@ class Path(Field):
         return value
 
 
-class UUID(UUID):
-    def _serialize(self, value, attr, obj):
-        if value is None:
-            return None
-
-        return value.hex
-
-
-class DateTime(Field):
-    """DateTime using pendulum instead of regular datetime"""
-
-    def _serialize(self, value, attr, obj):
-        if value is None:
-            return None
-
-        return value.isoformat()
+class UUID(Field):
+    """UUID already handled by pack/unpack"""
 
     def _deserialize(self, value, attr, data):
         if value is None:
             return None
 
-        try:
-            return pendulum.parse(value)
+        if not isinstance(value, _UUID):
+            raise ValidationError("Not an UUID")
+        return value
 
-        except Exception:
-            raise ValidationError("Invalid datetime")
+
+class DateTime(Field):
+    """DateTime already handled by pack/unpack"""
+
+    def _deserialize(self, value, attr, data):
+        if value is None:
+            return None
+
+        if not isinstance(value, Pendulum):
+            raise ValidationError("Not a datetime")
+
+        return value
 
 
 class CheckedConstant(Field):

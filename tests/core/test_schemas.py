@@ -23,7 +23,7 @@ REMOVE_FIELD = object()
 
 class TestBlockAccessSchema:
     ORIGINAL = {
-        "id": "4f55b4d5b08544e2a784daf73754c7e2",
+        "id": UUID("4f55b4d5b08544e2a784daf73754c7e2"),
         "key": b"<my key>",
         "offset": 0,
         "size": 4096,
@@ -79,8 +79,8 @@ class TestFileManifestSchema:
         "type": "file_manifest",
         "author": "alice@test",
         "version": 2,
-        "created": "2017-01-01T00:00:00+00:00",
-        "updated": "2017-12-31T23:59:59+00:00",
+        "created": datetime(2017, 1, 1),
+        "updated": datetime(2017, 12, 31, 23, 59, 59),
         "size": 800,
         "blocks": [
             {
@@ -169,17 +169,17 @@ class TestFolderManifestSchema:
         "type": "folder_manifest",
         "author": "alice@test",
         "version": 2,
-        "created": "2017-01-01T00:00:00+00:00",
-        "updated": "2017-12-31T23:59:59+00:00",
+        "created": datetime(2017, 1, 1),
+        "updated": datetime(2017, 12, 31, 23, 59, 59),
         "children": {
             "foo": {
-                "id": "8aadbc777ece4a4fb5fa0564ecfbb54f",
+                "id": UUID("8aadbc777ece4a4fb5fa0564ecfbb54f"),
                 "rts": "9809c436b3af4fba9dd6955ad03e0310",
                 "wts": "004714d9997147efa52a696127694fdc",
                 "key": b"<foo key>",
             },
             "bar.txt": {
-                "id": "51c865a60b194d9bb087df000056c299",
+                "id": UUID("51c865a60b194d9bb087df000056c299"),
                 "rts": "5a48035bdd7c4082b1101b28b6656d0c",
                 "wts": "9b2ab384ed6b426daa1214f49587458a",
                 "key": b"<bar.txt key>",
@@ -256,19 +256,19 @@ class TestLocalFileManifestSchema:
         "base_version": 0,
         "need_sync": True,
         "is_placeholder": True,
-        "created": "2017-01-01T00:00:00+00:00",
-        "updated": "2017-12-31T23:59:59+00:00",
+        "created": datetime(2017, 1, 1),
+        "updated": datetime(2017, 12, 31, 23, 59, 59),
         "size": 800,
         "blocks": [
             {
-                "id": "27537f7cedba434ea3bf7848ba17a2eb",
+                "id": UUID("27537f7cedba434ea3bf7848ba17a2eb"),
                 "key": "PGJsb2NrIDEga2V5Pg==\n",
                 "offset": 0,
                 "size": 4096,
                 "digest": "NHlUNUUwV0tPeXkweHFUNmVTdVlkUGdTNkpzYUduOGNUdWlEd0IzZ1Jscz0=\n",
             },
             {
-                "id": "b64041c3e3d649fc931ca54564701d38",
+                "id": UUID("b64041c3e3d649fc931ca54564701d38"),
                 "key": "PGJsb2NrIDIga2V5Pg==\n",
                 "offset": 5096,
                 "size": 2904,
@@ -277,14 +277,14 @@ class TestLocalFileManifestSchema:
         ],
         "dirty_blocks": [
             {
-                "id": "22cd9a5503ef49919f29f1452a9a628c",
+                "id": UUID("22cd9a5503ef49919f29f1452a9a628c"),
                 "key": "PGRpcnR5IGJsb2NrIDEga2V5Pg==\n",
                 "offset": 4096,
                 "size": 1000,
                 "digest": "NHlUNUUwV0tPeXkweHFUNmVTdVlkUGdTNkpzYUduOGNUdWlEd0IzZ1Jscz0=\n",
             },
             {
-                "id": "03ef5b652762404bb1d2a55474cbc95f",
+                "id": UUID("03ef5b652762404bb1d2a55474cbc95f"),
                 "key": "PGRpcnR5IGJsb2NrIDIga2V5Pg==\n",
                 "offset": 8000,
                 "size": 100,
@@ -388,17 +388,17 @@ class TestLocalFolderManifestSchema:
         "base_version": 0,
         "need_sync": True,
         "is_placeholder": True,
-        "created": "2017-01-01T00:00:00+00:00",
-        "updated": "2017-12-31T23:59:59+00:00",
+        "created": datetime(2017, 1, 1),
+        "updated": datetime(2017, 12, 31, 23, 59, 59),
         "children": {
             "foo": {
-                "id": "8aadbc777ece4a4fb5fa0564ecfbb54f",
+                "id": UUID("8aadbc777ece4a4fb5fa0564ecfbb54f"),
                 "rts": "9809c436b3af4fba9dd6955ad03e0310",
                 "wts": "004714d9997147efa52a696127694fdc",
                 "key": b"<foo key>",
             },
             "bar.txt": {
-                "id": "51c865a60b194d9bb087df000056c299",
+                "id": UUID("51c865a60b194d9bb087df000056c299"),
                 "rts": "d756228815074b1f9ea6e5d383bcb995",
                 "wts": "ba4fddebe99d4f3e9f17ccb84a524e19",
                 "key": b"<bar.txt key>",
