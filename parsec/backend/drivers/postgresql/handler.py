@@ -89,7 +89,7 @@ async def _create_db_tables(conn):
             is_admin BOOLEAN,
             certified_user BYTEA,
             user_certifier VARCHAR(32),
-            created_on TIMESTAMP NOT NULL
+            created_on TIMESTAMPTZ NOT NULL
         );
 
         CREATE TABLE devices (
@@ -97,8 +97,8 @@ async def _create_db_tables(conn):
             user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
             certified_device BYTEA,
             device_certifier VARCHAR(32) REFERENCES devices (device_id),
-            created_on TIMESTAMP NOT NULL,
-            revocated_on TIMESTAMP,
+            created_on TIMESTAMPTZ NOT NULL,
+            revocated_on TIMESTAMPTZ,
             certified_revocation BYTEA,
             revocation_certifier VARCHAR(32) REFERENCES devices (device_id)
         );
@@ -109,13 +109,13 @@ async def _create_db_tables(conn):
         CREATE TABLE user_invitations (
             user_id VARCHAR(32) PRIMARY KEY,
             creator VARCHAR(65) REFERENCES devices (device_id) NOT NULL,
-            created_on TIMESTAMP NOT NULL
+            created_on TIMESTAMPTZ NOT NULL
         );
 
         CREATE TABLE device_invitations (
             device_id VARCHAR(65) PRIMARY KEY,
             creator VARCHAR(65) REFERENCES devices (device_id) NOT NULL,
-            created_on TIMESTAMP NOT NULL
+            created_on TIMESTAMPTZ NOT NULL
         );
 
         CREATE TABLE messages (

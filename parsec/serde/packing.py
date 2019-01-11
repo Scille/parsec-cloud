@@ -1,5 +1,6 @@
 from uuid import UUID
 from pendulum import Pendulum
+from datetime import datetime
 from struct import pack as struct_pack, unpack as struct_unpack
 from msgpack import packb as msgpack_packb, unpackb as msgpack_unpackb, ExtType
 from msgpack.exceptions import ExtraData, FormatError, StackError
@@ -14,7 +15,9 @@ def packb(data: dict, exc_cls=SerdePackingError) -> bytes:
     """
 
     def _default(obj):
-        if isinstance(obj, Pendulum):
+        # TODO: we should be only testing against pendulum.Pendulum, but
+        # asyncpg returns datetime
+        if isinstance(obj, datetime):
             return ExtType(1, struct_pack("!d", obj.timestamp()))
         elif isinstance(obj, UUID):
             return ExtType(2, obj.bytes)
