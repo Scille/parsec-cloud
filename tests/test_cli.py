@@ -5,10 +5,15 @@ from pathlib import Path
 from contextlib import contextmanager
 from time import sleep
 import subprocess
+from unittest.mock import ANY, MagicMock, patch
+
+from async_generator import asynccontextmanager
 from click.testing import CliRunner
+
 
 import parsec
 from parsec.cli import cli
+from parsec.types import UserID, DeviceID
 
 CWD = Path(__file__).parent.parent
 
@@ -18,6 +23,37 @@ def test_version():
     result = runner.invoke(cli, ["--version"])
     assert result.exit_code == 0
     assert f"parsec, version {parsec.__version__}\n" in result.output
+
+
+def test_share_workspace():
+    # Mocking
+    factory_mock = MagicMock()
+    share_mock = MagicMock()
+
+    @asynccontextmanager
+    async def logged_core_factory(*args, **kwargs):
+        yield factory_mock(*args, **kwargs)
+
+    async def share(*args, **kwargs):
+        return share_mock(*args, **kwargs)
+
+    factory_mock.return_value.fs.share = share
+
+    with patch("parsec.core.cli.utils.get_cipher_info") as cipher_mock:
+        with patch("parsec.core.cli.utils.load_device_with_password") as load_mock:
+            with patch("parsec.core.cli.share_workspace.logged_core_factory", logged_core_factory):
+                cipher_mock.return_value = "password"
+                runner = CliRunner()
+                args = "core share_workspace --password bla -D bob@laptop ws1 alice"
+                result = runner.invoke(cli, args)
+
+    assert result.exit_code == 0
+    assert result.output == ""
+
+    cipher_mock.assert_called_once_with(ANY, DeviceID("bob@laptop"))
+    load_mock.assert_called_once_with(ANY, DeviceID("bob@laptop"), "bla")
+    factory_mock.assert_called_once_with(ANY, load_mock.return_value)
+    share_mock.assert_called_once_with("/ws1", UserID("alice"))
 
 
 def _run(cmd):
