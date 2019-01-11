@@ -1,13 +1,15 @@
-from parsec.core.types.base import TrustSeed, AccessID, EntryName, FileDescriptor, Path
-from parsec.core.types.access import ManifestAccess, BlockAccess, DirtyBlockAccess
-from parsec.core.types.local_device import LocalDevice, local_device_schema
+from typing import Union
+
+from parsec.core.types.base import TrustSeed, AccessID, EntryName, FileDescriptor, FsPath
+from parsec.core.types.access import Access, ManifestAccess, BlockAccess, DirtyBlockAccess
+from parsec.core.types.local_device import LocalDevice, local_device_serializer
 from parsec.core.types.local_manifests import (
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
     LocalUserManifest,
-    local_manifest_loads,
-    local_manifest_dumps,
+    LocalManifest,
+    local_manifest_serializer,
 )
 from parsec.core.types.remote_device import RemoteDevice, RemoteDevicesMapping, RemoteUser
 from parsec.core.types.remote_manifests import (
@@ -15,9 +17,12 @@ from parsec.core.types.remote_manifests import (
     FolderManifest,
     WorkspaceManifest,
     UserManifest,
-    remote_manifest_loads,
-    remote_manifest_dumps,
+    RemoteManifest,
+    remote_manifest_serializer,
 )
+
+
+Manifest = Union[LocalManifest, RemoteManifest]
 
 
 __all__ = (
@@ -25,18 +30,19 @@ __all__ = (
     "AccessID",
     "EntryName",
     "FileDescriptor",
-    "Path",
+    "FsPath",
+    "Access",
     "ManifestAccess",
     "BlockAccess",
     "DirtyBlockAccess",
     "LocalDevice",
-    "local_device_schema",
+    "local_device_serializer",
     "LocalFileManifest",
     "LocalFolderManifest",
     "LocalWorkspaceManifest",
     "LocalUserManifest",
-    "local_manifest_loads",
-    "local_manifest_dumps",
+    "LocalManifest",
+    "local_manifest_serializer",
     "RemoteDevice",
     "RemoteDevicesMapping",
     "RemoteUser",
@@ -44,6 +50,7 @@ __all__ = (
     "FolderManifest",
     "WorkspaceManifest",
     "UserManifest",
-    "remote_manifest_loads",
-    "remote_manifest_dumps",
+    "RemoteManifest",
+    "remote_manifest_serializer",
+    "Manifest",
 )

@@ -4,9 +4,9 @@ from pendulum import Pendulum
 from hypothesis.stateful import RuleBasedStateMachine, initialize, rule, run_state_machine_as_test
 from hypothesis import strategies as st
 
+from parsec.core.types import ManifestAccess, BlockAccess, LocalFileManifest
 from parsec.core.fs.local_file_fs import FSInvalidFileDescriptor, FSBlocksLocalMiss
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
-from parsec.core.fs.utils import new_block_access, new_access, new_local_file_manifest
 
 from tests.common import freeze_time
 
@@ -19,23 +19,22 @@ class File:
     def ensure_manifest(self, **kwargs):
         manifest = self.local_folder_fs.get_manifest(self.access)
         for k, v in kwargs.items():
-            assert manifest[k] == v
+            assert getattr(manifest, k) == v
 
 
 @pytest.fixture
 def foo_txt(alice, local_folder_fs):
-    access = new_access()
+    access = ManifestAccess()
     with freeze_time("2000-01-02"):
-        manifest = new_local_file_manifest(alice.device_id)
-        manifest["is_placeholder"] = False
-        manifest["need_sync"] = False
-        manifest["base_version"] = 1
+        manifest = LocalFileManifest(
+            author=alice.device_id, is_placeholder=False, need_sync=False, base_version=1
+        )
     local_folder_fs.set_manifest(access, manifest)
     return File(local_folder_fs, access)
 
 
 def test_open_unknown_file(local_file_fs):
-    dummy_access = new_access()
+    dummy_access = ManifestAccess()
     with pytest.raises(FSManifestLocalMiss):
         local_file_fs.open(dummy_access)
 
@@ -134,11 +133,11 @@ def test_block_not_loaded_entry(local_folder_fs, local_file_fs, foo_txt):
     foo_manifest = local_folder_fs.get_manifest(foo_txt.access)
     block1 = b"a" * 10
     block2 = b"b" * 5
-    block1_access = new_block_access(block1, 0)
-    block2_access = new_block_access(block2, 10)
-    foo_manifest["blocks"].append(block1_access)
-    foo_manifest["blocks"].append(block2_access)
-    foo_manifest["size"] = 15
+    block1_access = BlockAccess.from_block(block1, 0)
+    block2_access = BlockAccess.from_block(block2, 10)
+    foo_manifest = foo_manifest.evolve(
+        blocks=[*foo_manifest.blocks, block1_access, block2_access], size=15
+    )
     local_folder_fs.set_manifest(foo_txt.access, foo_manifest)
 
     fd = local_file_fs.open(foo_txt.access)
@@ -169,8 +168,8 @@ def test_file_operations(
             self.device = device_factory()
             self.local_db = local_db_factory(self.device)
             self.local_file_fs = local_file_fs_factory(self.device, self.local_db)
-            self.access = new_access()
-            manifest = new_local_file_manifest(self.device.device_id)
+            self.access = ManifestAccess()
+            manifest = LocalFileManifest(self.device.device_id)
             self.local_file_fs.local_folder_fs.set_manifest(self.access, manifest)
 
             self.fd = self.local_file_fs.open(self.access)

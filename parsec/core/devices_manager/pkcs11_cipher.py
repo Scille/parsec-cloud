@@ -1,7 +1,4 @@
-from json import JSONDecodeError
-
-from parsec.utils import ejson_loads, ejson_dumps
-from parsec.schema import UnknownCheckedSchema, fields, ValidationError
+from parsec.serde import Serializer, UnknownCheckedSchema, fields, SerdeError
 from parsec.core.devices_manager.cipher import (
     CipherError,
     BaseLocalDeviceEncryptor,
@@ -20,7 +17,7 @@ class PKCS11PayloadSchema(UnknownCheckedSchema):
     ciphertext = fields.Bytes(required=True)
 
 
-pkcs11_payload_schema = PKCS11PayloadSchema(strict=True)
+pkcs11_payload_serializer = Serializer(PKCS11PayloadSchema)
 
 
 class PKCS11DeviceEncryptor(BaseLocalDeviceEncryptor):
@@ -37,11 +34,9 @@ class PKCS11DeviceEncryptor(BaseLocalDeviceEncryptor):
         """
         try:
             ciphertext = encrypt_data(self.token_id, self.key_id, plaintext)
-            return ejson_dumps(pkcs11_payload_schema.dump({"ciphertext": ciphertext}).data).encode(
-                "utf8"
-            )
+            return pkcs11_payload_serializer.dumps({"ciphertext": ciphertext})
 
-        except (DevicePKCS11Error, ValidationError, JSONDecodeError, ValueError) as exc:
+        except (DevicePKCS11Error, SerdeError) as exc:
             raise CipherError(str(exc)) from exc
 
 
@@ -59,17 +54,17 @@ class PKCS11DeviceDecryptor(BaseLocalDeviceDecryptor):
             CipherError
         """
         try:
-            payload = pkcs11_payload_schema.load(ejson_loads(ciphertext.decode("utf8"))).data
+            payload = pkcs11_payload_serializer.loads(ciphertext)
             return decrypt_data(self.pin, self.token_id, self.key_id, payload["ciphertext"])
 
-        except (DevicePKCS11Error, ValidationError, JSONDecodeError, ValueError) as exc:
+        except (DevicePKCS11Error, SerdeError) as exc:
             raise CipherError(str(exc)) from exc
 
     @staticmethod
     def can_decrypt(ciphertext: bytes) -> bool:
         try:
-            pkcs11_payload_schema.load(ejson_loads(ciphertext.decode("utf8"))).data
+            pkcs11_payload_serializer.loads(ciphertext)
             return True
 
-        except (ValidationError, JSONDecodeError, ValueError) as exc:
+        except (SerdeError) as exc:
             return False

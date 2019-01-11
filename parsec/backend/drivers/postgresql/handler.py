@@ -1,8 +1,10 @@
 import triopg
 from structlog import get_logger
+from base64 import b64decode, b64encode
 
 from parsec.event_bus import EventBus
-from parsec.utils import call_with_control, ejson_dumps, ejson_loads
+from parsec.serde import packb, unpackb
+from parsec.utils import call_with_control
 
 
 logger = get_logger()
@@ -87,7 +89,7 @@ async def _create_db_tables(conn):
             is_admin BOOLEAN,
             certified_user BYTEA,
             user_certifier VARCHAR(32),
-            created_on TIMESTAMP NOT NULL
+            created_on TIMESTAMPTZ NOT NULL
         );
 
         CREATE TABLE devices (
@@ -95,8 +97,8 @@ async def _create_db_tables(conn):
             user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
             certified_device BYTEA,
             device_certifier VARCHAR(32) REFERENCES devices (device_id),
-            created_on TIMESTAMP NOT NULL,
-            revocated_on TIMESTAMP,
+            created_on TIMESTAMPTZ NOT NULL,
+            revocated_on TIMESTAMPTZ,
             certified_revocation BYTEA,
             revocation_certifier VARCHAR(32) REFERENCES devices (device_id)
         );
@@ -107,13 +109,13 @@ async def _create_db_tables(conn):
         CREATE TABLE user_invitations (
             user_id VARCHAR(32) PRIMARY KEY,
             creator VARCHAR(65) REFERENCES devices (device_id) NOT NULL,
-            created_on TIMESTAMP NOT NULL
+            created_on TIMESTAMPTZ NOT NULL
         );
 
         CREATE TABLE device_invitations (
             device_id VARCHAR(65) PRIMARY KEY,
             creator VARCHAR(65) REFERENCES devices (device_id) NOT NULL,
-            created_on TIMESTAMP NOT NULL
+            created_on TIMESTAMPTZ NOT NULL
         );
 
         CREATE TABLE messages (
@@ -180,7 +182,7 @@ class PGHandler:
                 await started_cb()
 
     def _on_notification(self, connection, pid, channel, payload):
-        data = ejson_loads(payload)
+        data = unpackb(b64decode(payload.encode("ascii")))
         signal = data.pop("__signal__")
         logger.debug("notif received", pid=pid, channel=channel, payload=payload)
         self.event_bus.send(signal, **data)
@@ -191,6 +193,8 @@ class PGHandler:
 
 
 async def send_signal(conn, signal, **kwargs):
-    raw_data = ejson_dumps({"__signal__": signal, **kwargs})
+    # PostgreSQL's NOTIFY only accept string as payload, hence we must
+    # use base64 on our payload...
+    raw_data = b64encode(packb({"__signal__": signal, **kwargs})).decode("ascii")
     await conn.execute("SELECT pg_notify($1, $2)", "app_notification", raw_data)
     logger.debug("notif sent", signal=signal, kwargs=kwargs)

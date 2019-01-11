@@ -3,17 +3,16 @@ from math import inf
 from typing import List, Optional
 
 from parsec.event_bus import EventBus
-from parsec.core.types import LocalDevice
+from parsec.core.types import FileDescriptor, Access, BlockAccess, LocalDevice, LocalFileManifest
 from parsec.core.local_db import LocalDB, LocalDBMissingEntry
-from parsec.core.fs.utils import is_file_manifest, new_block_access
+from parsec.core.fs.utils import is_file_manifest
 from parsec.core.fs.buffer_ordering import (
     quick_filter_block_accesses,
     Buffer,
     NullFillerBuffer,
     merge_buffers_with_limits,
 )
-from parsec.core.fs.local_folder_fs import LocalFolderFS, mark_manifest_modified
-from parsec.core.fs.types import FileDescriptor, Access, BlockAccess, LocalFileManifest
+from parsec.core.fs.local_folder_fs import LocalFolderFS
 
 
 def _shorten_data_repr(data: bytes) -> bytes:
@@ -103,10 +102,10 @@ class LocalFileFS:
     ) -> List[Buffer]:
         dirty_blocks: List[Buffer] = [
             DirtyBlockBuffer(*x)
-            for x in quick_filter_block_accesses(manifest["dirty_blocks"], start, end)
+            for x in quick_filter_block_accesses(manifest.dirty_blocks, start, end)
         ]
         blocks: List[Buffer] = [
-            BlockBuffer(*x) for x in quick_filter_block_accesses(manifest["blocks"], start, end)
+            BlockBuffer(*x) for x in quick_filter_block_accesses(manifest.blocks, start, end)
         ]
 
         return blocks + dirty_blocks
@@ -126,20 +125,20 @@ class LocalFileFS:
         return fd
 
     def _ensure_hot_file(self, access: Access, manifest: LocalFileManifest) -> HotFile:
-        hf = self._hot_files.get(access["id"])
+        hf = self._hot_files.get(access.id)
         if not hf:
-            hf = HotFile(manifest["size"], manifest["base_version"])
-            self._hot_files[access["id"]] = hf
+            hf = HotFile(manifest.size, manifest.base_version)
+            self._hot_files[access.id] = hf
         else:
-            assert hf.base_version == manifest["base_version"]
+            assert hf.base_version == manifest.base_version
 
         return hf
 
     def _get_hot_file(self, access: Access) -> HotFile:
-        return self._hot_files[access["id"]]
+        return self._hot_files[access.id]
 
     def _delete_hot_file(self, access: Access) -> None:
-        del self._hot_files[access["id"]]
+        del self._hot_files[access.id]
 
     def close(self, fd: FileDescriptor) -> None:
         self.flush(fd)
@@ -264,21 +263,21 @@ class LocalFileFS:
         assert is_file_manifest(manifest)
 
         hf = self._get_hot_file(cursor.access)
-        if manifest["size"] == hf.size and not hf.pending_writes:
+        if manifest.size == hf.size and not hf.pending_writes:
             return
 
         new_dirty_blocks = []
         for pw in hf.pending_writes:
-            block_access = new_block_access(pw.data, pw.start)
+            block_access = BlockAccess.from_block(pw.data, pw.start)
             self.set_block(block_access, pw.data, False)
             new_dirty_blocks.append(block_access)
 
         # TODO: clean overwritten dirty blocks
-        manifest["dirty_blocks"] += new_dirty_blocks
-        manifest["size"] = hf.size
-        mark_manifest_modified(manifest)
+        manifest = manifest.evolve_and_mark_updated(
+            dirty_blocks=(*manifest.dirty_blocks, *new_dirty_blocks), size=hf.size
+        )
 
         self.local_folder_fs.set_manifest(cursor.access, manifest)
 
         hf.pending_writes.clear()
-        self.event_bus.send("fs.entry.updated", id=cursor.access["id"])
+        self.event_bus.send("fs.entry.updated", id=cursor.access.id)

@@ -14,14 +14,14 @@ from hypothesis.stateful import (
 )
 from hypothesis import strategies as st
 
-from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, Path, is_folder_manifest
-from parsec.core.fs.utils import new_access, new_local_file_manifest
+from parsec.core.types import ManifestAccess, LocalFileManifest, FsPath
+from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, is_folder_manifest
 
 from tests.common import freeze_time
 
 
 def test_stat_root(local_folder_fs):
-    stat = local_folder_fs.stat(Path("/"))
+    stat = local_folder_fs.stat(FsPath("/"))
     assert stat == {
         "type": "root",
         "is_folder": True,
@@ -36,9 +36,9 @@ def test_stat_root(local_folder_fs):
 
 def test_workspace_create(local_folder_fs):
     with freeze_time("2000-01-02"):
-        local_folder_fs.workspace_create(Path("/foo"))
+        local_folder_fs.workspace_create(FsPath("/foo"))
 
-    root_stat = local_folder_fs.stat(Path("/"))
+    root_stat = local_folder_fs.stat(FsPath("/"))
     assert root_stat == {
         "type": "root",
         "is_folder": True,
@@ -50,7 +50,7 @@ def test_workspace_create(local_folder_fs):
         "children": ["foo"],
     }
 
-    stat = local_folder_fs.stat(Path("/foo"))
+    stat = local_folder_fs.stat(FsPath("/foo"))
     assert stat == {
         "type": "workspace",
         "is_folder": True,
@@ -68,12 +68,12 @@ def test_workspace_create(local_folder_fs):
 def test_file_create(local_folder_fs):
 
     with freeze_time("2000-01-02"):
-        local_folder_fs.workspace_create(Path("/w"))
+        local_folder_fs.workspace_create(FsPath("/w"))
 
     with freeze_time("2000-01-03"):
-        local_folder_fs.touch(Path("/w/foo.txt"))
+        local_folder_fs.touch(FsPath("/w/foo.txt"))
 
-    root_stat = local_folder_fs.stat(Path("/w"))
+    root_stat = local_folder_fs.stat(FsPath("/w"))
     assert root_stat == {
         "type": "workspace",
         "is_folder": True,
@@ -87,7 +87,7 @@ def test_file_create(local_folder_fs):
         "children": ["foo.txt"],
     }
 
-    foo_stat = local_folder_fs.stat(Path("/w/foo.txt"))
+    foo_stat = local_folder_fs.stat(FsPath("/w/foo.txt"))
     assert foo_stat == {
         "type": "file",
         "is_folder": False,
@@ -103,103 +103,103 @@ def test_file_create(local_folder_fs):
 @pytest.mark.parametrize("type", ["copy", "move"])
 def test_copy_folders_create_new_accesses(local_folder_fs, type):
     with freeze_time("2000-01-02"):
-        local_folder_fs.workspace_create(Path("/w"))
-        local_folder_fs.mkdir(Path("/w/foo"))
-        local_folder_fs.mkdir(Path("/w/foo/bar"))
-        local_folder_fs.mkdir(Path("/w/foo/bar/zob"))
-        local_folder_fs.mkdir(Path("/w/foo/bar/zob/fizz.txt"))
-        local_folder_fs.touch(Path("/w/foo/spam.txt"))
+        local_folder_fs.workspace_create(FsPath("/w"))
+        local_folder_fs.mkdir(FsPath("/w/foo"))
+        local_folder_fs.mkdir(FsPath("/w/foo/bar"))
+        local_folder_fs.mkdir(FsPath("/w/foo/bar/zob"))
+        local_folder_fs.mkdir(FsPath("/w/foo/bar/zob/fizz.txt"))
+        local_folder_fs.touch(FsPath("/w/foo/spam.txt"))
 
         existing_ids = set()
         pathes = ("", "bar", "bar/zob", "bar/zob/fizz.txt", "spam.txt")
         for path in pathes:
-            access, _ = local_folder_fs.get_entry(Path("/w/foo/" + path))
-            existing_ids.add(access["id"])
+            access, _ = local_folder_fs.get_entry(FsPath("/w/foo/" + path))
+            existing_ids.add(access.id)
 
     if type == "copy":
-        local_folder_fs.copy(Path("/w/foo"), Path("/w/foo2"))
-        stat = local_folder_fs.stat(Path("/w"))
+        local_folder_fs.copy(FsPath("/w/foo"), FsPath("/w/foo2"))
+        stat = local_folder_fs.stat(FsPath("/w"))
         assert stat["children"] == ["foo", "foo2"]
     else:
-        local_folder_fs.move(Path("/w/foo"), Path("/w/foo2"))
-        stat = local_folder_fs.stat(Path("/w"))
+        local_folder_fs.move(FsPath("/w/foo"), FsPath("/w/foo2"))
+        stat = local_folder_fs.stat(FsPath("/w"))
         assert stat["children"] == ["foo2"]
 
         for path in pathes:
-            access, _ = local_folder_fs.get_entry(Path("/w/foo2/" + path))
-            assert access["id"] not in existing_ids
+            access, _ = local_folder_fs.get_entry(FsPath("/w/foo2/" + path))
+            assert access.id not in existing_ids
 
 
 def test_rename_but_cannot_move_workspace(local_folder_fs):
-    local_folder_fs.workspace_create(Path("/spam"))
+    local_folder_fs.workspace_create(FsPath("/spam"))
     # Workpsace children should not have they access modified
-    local_folder_fs.mkdir(Path("/spam/bar"))
+    local_folder_fs.mkdir(FsPath("/spam/bar"))
 
     # Test bad move/copy
 
     with pytest.raises(PermissionError):
-        local_folder_fs.move(Path("/spam"), Path("/foo"))
+        local_folder_fs.move(FsPath("/spam"), FsPath("/foo"))
     with pytest.raises(PermissionError):
-        local_folder_fs.copy(Path("/spam"), Path("/foo"))
+        local_folder_fs.copy(FsPath("/spam"), FsPath("/foo"))
 
     # Now test the good rename
 
-    old_name_stat = local_folder_fs.stat(Path("/spam"))
+    old_name_stat = local_folder_fs.stat(FsPath("/spam"))
 
-    local_folder_fs.workspace_rename(Path("/spam"), Path("/foo"))
+    local_folder_fs.workspace_rename(FsPath("/spam"), FsPath("/foo"))
 
-    stat = local_folder_fs.stat(Path("/"))
+    stat = local_folder_fs.stat(FsPath("/"))
     assert stat["children"] == ["foo"]
 
-    new_name_stat = local_folder_fs.stat(Path("/foo"))
+    new_name_stat = local_folder_fs.stat(FsPath("/foo"))
     assert old_name_stat == new_name_stat
 
 
 def test_folder_file_outside_workpace_not_ok(local_folder_fs):
     with pytest.raises(PermissionError):
-        local_folder_fs.touch(Path("/foo"))
+        local_folder_fs.touch(FsPath("/foo"))
     with pytest.raises(PermissionError):
-        local_folder_fs.mkdir(Path("/bar"))
+        local_folder_fs.mkdir(FsPath("/bar"))
 
     # Make sure it is ok inside workspace
-    local_folder_fs.workspace_create(Path("/spam"))
-    local_folder_fs.touch(Path("/spam/foo"))
-    local_folder_fs.mkdir(Path("/spam/bar"))
+    local_folder_fs.workspace_create(FsPath("/spam"))
+    local_folder_fs.touch(FsPath("/spam/foo"))
+    local_folder_fs.mkdir(FsPath("/spam/bar"))
 
 
 def test_not_root_child_bad_workspace_create(local_folder_fs):
-    local_folder_fs.workspace_create(Path("/w"))
+    local_folder_fs.workspace_create(FsPath("/w"))
     with pytest.raises(PermissionError):
-        local_folder_fs.workspace_create(Path("/w/foo"))
+        local_folder_fs.workspace_create(FsPath("/w/foo"))
 
 
 def test_cannot_replace_root(local_folder_fs):
     with pytest.raises(FileExistsError):
-        local_folder_fs.touch(Path("/"))
+        local_folder_fs.touch(FsPath("/"))
     with pytest.raises(FileExistsError):
-        local_folder_fs.mkdir(Path("/"))
+        local_folder_fs.mkdir(FsPath("/"))
 
     with pytest.raises(PermissionError):
-        local_folder_fs.move(Path("/"), Path("/foo"))
+        local_folder_fs.move(FsPath("/"), FsPath("/foo"))
 
-    local_folder_fs.workspace_create(Path("/foo"))
+    local_folder_fs.workspace_create(FsPath("/foo"))
     with pytest.raises(PermissionError):
-        local_folder_fs.move(Path("/foo"), Path("/"))
+        local_folder_fs.move(FsPath("/foo"), FsPath("/"))
 
 
-def test_access_not_loaded_entry(alice, local_folder_fs):
+def test_access_not_loaded_entry(alice, bob, local_folder_fs):
     user_manifest = local_folder_fs.get_manifest(alice.user_manifest_access)
     with freeze_time("2000-01-02"):
-        foo_access = new_access()
-        foo_manifest = new_local_file_manifest("bob@test")
-        user_manifest["children"]["foo.txt"] = foo_access
+        foo_access = ManifestAccess()
+        foo_manifest = LocalFileManifest(bob.device_id)
+        user_manifest = user_manifest.evolve_children({"foo.txt": foo_access})
         local_folder_fs.set_manifest(alice.user_manifest_access, user_manifest)
 
     with pytest.raises(FSManifestLocalMiss):
-        local_folder_fs.stat(Path("/foo.txt"))
+        local_folder_fs.stat(FsPath("/foo.txt"))
 
     local_folder_fs.set_manifest(foo_access, foo_manifest)
-    stat = local_folder_fs.stat(Path("/foo.txt"))
+    stat = local_folder_fs.stat(FsPath("/foo.txt"))
     assert stat == {
         "type": "file",
         "is_folder": False,
@@ -214,7 +214,7 @@ def test_access_not_loaded_entry(alice, local_folder_fs):
 
 def test_access_unknown_entry(local_folder_fs):
     with pytest.raises(FileNotFoundError):
-        local_folder_fs.stat(Path("/dummy"))
+        local_folder_fs.stat(FsPath("/dummy"))
 
 
 class expect_raises:
@@ -251,7 +251,7 @@ class PathElement:
         return self.oracle_root / self.absolute_path[1:]
 
     def to_parsec(self):
-        return Path(self.absolute_path)
+        return FsPath(self.absolute_path)
 
     def __truediv__(self, path):
         return PathElement(os.path.join(self.absolute_path, path), self.oracle_root)
@@ -287,7 +287,7 @@ def test_folder_operations(
             oracle_root.mkdir()
             self.folder_oracle.chmod(0o500)  # Root oracle can no longer be removed this way
 
-            self.local_folder_fs.workspace_create(Path("/w"))
+            self.local_folder_fs.workspace_create(FsPath("/w"))
             (oracle_root / "w").mkdir()
 
             return PathElement("/w", oracle_root)
@@ -376,13 +376,13 @@ def test_folder_operations(
             new_id_to_path = set()
 
             def _recursive_build_id_to_path(access, path):
-                new_id_to_path.add((access["id"], path))
+                new_id_to_path.add((access.id, path))
                 try:
                     manifest = local_folder_fs.get_manifest(access)
                 except FSManifestLocalMiss:
                     return
                 if is_folder_manifest(manifest):
-                    for child_name, child_access in manifest["children"].items():
+                    for child_name, child_access in manifest.children.items():
                         _recursive_build_id_to_path(child_access, f"{path}/{child_name}")
 
             _recursive_build_id_to_path(local_folder_fs.root_access, "/")

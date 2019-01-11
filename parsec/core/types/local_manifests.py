@@ -1,10 +1,11 @@
 import attr
 import pendulum
-from typing import List, Dict, Union
+from typing import Tuple, Dict, Union
 
-from parsec.types import DeviceID, UserID
-from parsec.schema import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
-from parsec.core.types.base import SchemaSerializationError, EntryName, EntryNameField
+from parsec.types import DeviceID, UserID, FrozenDict
+from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
+from parsec.core.types import remote_manifests
+from parsec.core.types.base import EntryName, EntryNameField, serializer_factory
 from parsec.core.types.access import (
     BlockAccess,
     ManifestAccess,
@@ -31,21 +32,47 @@ __all__ = (
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class LocalFileManifest:
     author: DeviceID
-    base_version: int
-    need_sync: bool
-    is_placeholder: bool
-    created: pendulum.Pendulum
-    updated: pendulum.Pendulum
-    size: int
-    blocks: List[BlockAccess]
-    dirty_blocks: List[DirtyBlockAccess]
+    base_version: int = 0
+    need_sync: bool = True
+    is_placeholder: bool = True
+    created: pendulum.Pendulum = None
+    updated: pendulum.Pendulum = None
+    size: int = 0
+    blocks: Tuple[BlockAccess] = attr.ib(converter=tuple, default=())
+    dirty_blocks: Tuple[DirtyBlockAccess] = attr.ib(converter=tuple, default=())
+
+    def __attrs_post_init__(self):
+        if not self.created:
+            object.__setattr__(self, "created", pendulum.now())
+        if not self.updated:
+            object.__setattr__(self, "updated", self.created)
+
+    def evolve_and_mark_updated(self, **data) -> "LocalFileManifest":
+        if "updated" not in data:
+            data["updated"] = pendulum.now()
+        data.setdefault("need_sync", True)
+        return attr.evolve(self, **data)
+
+    def evolve(self, **data) -> "LocalFileManifest":
+        return attr.evolve(self, **data)
+
+    def to_remote(self, **data) -> "remote_manifests.FileManifest":
+        return remote_manifests.FileManifest(
+            author=self.author,
+            version=self.base_version,
+            created=self.created,
+            updated=self.updated,
+            size=self.size,
+            blocks=self.blocks,
+            **data,
+        )
 
 
 class LocalFileManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_file_manifest", required=True)
     author = fields.DeviceID(required=True)
-    base_version = fields.Integer(required=True, validate=validate.Range(min=1))
+    base_version = fields.Integer(required=True, validate=validate.Range(min=0))
     need_sync = fields.Boolean(required=True)
     is_placeholder = fields.Boolean(required=True)
     created = fields.DateTime(required=True)
@@ -56,10 +83,12 @@ class LocalFileManifestSchema(UnknownCheckedSchema):
 
     @post_load
     def make_obj(self, data):
-        return FileManifest(**data)
+        data.pop("type")
+        data.pop("format")
+        return LocalFileManifest(**data)
 
 
-local_file_manifest_schema = LocalFileManifestSchema(strict=True)
+local_file_manifest_serializer = serializer_factory(LocalFileManifestSchema)
 
 
 # Folder manifest
@@ -68,21 +97,56 @@ local_file_manifest_schema = LocalFileManifestSchema(strict=True)
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class LocalFolderManifest:
     author: DeviceID
-    base_version: int
-    need_sync: bool
-    is_placeholder: bool
-    created: pendulum.Pendulum
-    updated: pendulum.Pendulum
-    children: Dict[EntryName, ManifestAccess]
+    base_version: int = 0
+    need_sync: bool = True
+    is_placeholder: bool = True
+    created: pendulum.Pendulum = None
+    updated: pendulum.Pendulum = None
+    children: Dict[EntryName, ManifestAccess] = attr.ib(converter=FrozenDict, factory=FrozenDict)
+
+    def __attrs_post_init__(self):
+        if not self.created:
+            object.__setattr__(self, "created", pendulum.now())
+        if not self.updated:
+            object.__setattr__(self, "updated", self.created)
+
+    def evolve_and_mark_updated(self, **data) -> "LocalFileManifest":
+        if "updated" not in data:
+            data["updated"] = pendulum.now()
+        data.setdefault("need_sync", True)
+        return attr.evolve(self, **data)
+
+    def evolve(self, **data) -> "LocalFileManifest":
+        return attr.evolve(self, **data)
+
+    def evolve_children_and_mark_updated(self, data) -> "LocalFolderManifest":
+        return self.evolve_and_mark_updated(
+            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
+        )
+
+    def evolve_children(self, data) -> "LocalFolderManifest":
+        return self.evolve(
+            children={k: v for k, v in {**self.children, **data}.items() if v is not None}
+        )
+
+    def to_remote(self, **data) -> "remote_manifests.FolderManifest":
+        return remote_manifests.FolderManifest(
+            author=self.author,
+            version=self.base_version,
+            created=self.created,
+            updated=self.updated,
+            children=self.children,
+            **data,
+        )
 
 
 class LocalFolderManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_folder_manifest", required=True)
     author = fields.DeviceID(required=True)
-    base_version = fields.Integer(required=True, validate=validate.Range(min=1))
-    base_version = fields.Integer(required=True, validate=validate.Range(min=1))
+    base_version = fields.Integer(required=True, validate=validate.Range(min=0))
     need_sync = fields.Boolean(required=True)
+    is_placeholder = fields.Boolean(required=True)
     created = fields.DateTime(required=True)
     updated = fields.DateTime(required=True)
     children = fields.Map(
@@ -93,10 +157,12 @@ class LocalFolderManifestSchema(UnknownCheckedSchema):
 
     @post_load
     def make_obj(self, data):
-        return FolderManifest(**data)
+        data.pop("type")
+        data.pop("format")
+        return LocalFolderManifest(**data)
 
 
-local_folder_manifest_schema = LocalFolderManifestSchema(strict=True)
+local_folder_manifest_serializer = serializer_factory(LocalFolderManifestSchema)
 
 
 # Workspace manifest
@@ -104,8 +170,27 @@ local_folder_manifest_schema = LocalFolderManifestSchema(strict=True)
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class LocalWorkspaceManifest(LocalFolderManifest):
-    creator: UserID
-    participants: List[UserID]
+    creator: UserID = None
+    participants: Tuple[UserID] = attr.ib(converter=tuple, default=())
+
+    def __attrs_post_init__(self):
+        super().__attrs_post_init__()
+        if not self.creator:
+            object.__setattr__(self, "creator", self.author.user_id)
+        if not self.participants:
+            object.__setattr__(self, "participants", (self.creator,))
+
+    def to_remote(self, **data) -> "remote_manifests.WorkspaceManifest":
+        return remote_manifests.WorkspaceManifest(
+            author=self.author,
+            version=self.base_version,
+            created=self.created,
+            updated=self.updated,
+            children=self.children,
+            creator=self.creator,
+            participants=self.participants,
+            **data,
+        )
 
 
 class LocalWorkspaceManifestSchema(LocalFolderManifestSchema):
@@ -115,10 +200,12 @@ class LocalWorkspaceManifestSchema(LocalFolderManifestSchema):
 
     @post_load
     def make_obj(self, data):
-        return WorkspaceManifest(**data)
+        data.pop("type")
+        data.pop("format")
+        return LocalWorkspaceManifest(**data)
 
 
-local_workspace_manifest_schema = LocalWorkspaceManifestSchema(strict=True)
+local_workspace_manifest_serializer = serializer_factory(LocalWorkspaceManifestSchema)
 
 
 # User manifest
@@ -126,7 +213,18 @@ local_workspace_manifest_schema = LocalWorkspaceManifestSchema(strict=True)
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class LocalUserManifest(LocalFolderManifest):
-    last_processed_message: int
+    last_processed_message: int = 0
+
+    def to_remote(self, **data) -> "remote_manifests.UserManifest":
+        return remote_manifests.UserManifest(
+            author=self.author,
+            version=self.base_version,
+            created=self.created,
+            updated=self.updated,
+            children=self.children,
+            last_processed_message=self.last_processed_message,
+            **data,
+        )
 
 
 class LocalUserManifestSchema(LocalFolderManifestSchema):
@@ -135,10 +233,12 @@ class LocalUserManifestSchema(LocalFolderManifestSchema):
 
     @post_load
     def make_obj(self, data):
-        return UserManifest(**data)
+        data.pop("type")
+        data.pop("format")
+        return LocalUserManifest(**data)
 
 
-local_user_manifest_schema = LocalUserManifestSchema(strict=True)
+local_user_manifest_serializer = serializer_factory(LocalUserManifestSchema)
 
 
 class TypedLocalManifestSchema(OneOfSchema):
@@ -152,10 +252,19 @@ class TypedLocalManifestSchema(OneOfSchema):
     }
 
     def get_obj_type(self, obj):
-        return obj["type"]
+        if isinstance(obj, LocalWorkspaceManifest):
+            return "local_workspace_manifest"
+        elif isinstance(obj, LocalUserManifest):
+            return "local_user_manifest"
+        elif isinstance(obj, LocalFolderManifest):
+            return "local_folder_manifest"
+        elif isinstance(obj, LocalFileManifest):
+            return "local_file_manifest"
+        else:
+            raise RuntimeError(f"Unknown object {obj}")
 
 
-typed_local_manifest_schema = TypedLocalManifestSchema(strict=True)
+local_manifest_serializer = serializer_factory(TypedLocalManifestSchema)
 
 
 LocalManifest = Union[
@@ -166,27 +275,14 @@ LocalManifest = Union[
 def local_manifest_dumps(manifest: LocalManifest) -> bytes:
     """
     Raises:
-        SchemaSerializationError
+        SerdeError
     """
-    try:
-        data = typed_local_manifest_schema.dumps(manifest).data
-
-    except ValidationError as exc:
-        raise SchemaSerializationError(exc.messages) from exc
-
-    return data.encode("utf8")
+    return local_manifest_serializer.dumps(manifest)
 
 
 def local_manifest_loads(raw: bytes) -> LocalManifest:
     """
     Raises:
-        SchemaSerializationError
+        SerdeError
     """
-    try:
-        return typed_local_manifest_schema.loads(raw.decode("utf8")).data
-
-    except ValidationError as exc:
-        raise SchemaSerializationError(exc.messages) from exc
-
-    except ValueError as exc:
-        raise SchemaSerializationError(str(exc))
+    return local_manifest_serializer.loads(manifest)

@@ -2,8 +2,8 @@ import attr
 from secrets import token_bytes
 
 from parsec.crypto import CryptoError
-from parsec.schema import UnknownCheckedSchema, fields
-from parsec.api.protocole.base import ProtocoleError, Serializer
+from parsec.serde import UnknownCheckedSchema, fields
+from parsec.api.protocole.base import ProtocoleError, serializer_factory
 
 
 class HandshakeError(ProtocoleError):
@@ -27,7 +27,7 @@ class HandshakeChallengeSchema(UnknownCheckedSchema):
     challenge = fields.Bytes(required=True)
 
 
-handshake_challenge_serializer = Serializer(HandshakeChallengeSchema)
+handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
 
 
 class HandshakeAnswerSchema(UnknownCheckedSchema):
@@ -36,7 +36,7 @@ class HandshakeAnswerSchema(UnknownCheckedSchema):
     answer = fields.Bytes(allow_none=True, missing=None)
 
 
-handshake_answer_serializer = Serializer(HandshakeAnswerSchema)
+handshake_answer_serializer = serializer_factory(HandshakeAnswerSchema)
 
 
 class HandshakeResultSchema(UnknownCheckedSchema):
@@ -44,7 +44,7 @@ class HandshakeResultSchema(UnknownCheckedSchema):
     result = fields.String(required=True)
 
 
-handshake_result_serializer = Serializer(HandshakeResultSchema)
+handshake_result_serializer = serializer_factory(HandshakeResultSchema)
 
 
 @attr.s

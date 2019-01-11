@@ -3,58 +3,53 @@ import pendulum
 from typing import List
 from structlog import get_logger
 
+from parsec.core.types import (
+    FsPath,
+    LocalFileManifest,
+    FileManifest,
+    Access,
+    ManifestAccess,
+    BlockAccess,
+)
 from parsec.core.fs.merge_folders import find_conflicting_name_for_child_entry
 from parsec.core.fs.buffer_ordering import merge_buffers_with_limits_and_alignment
-from parsec.core.fs.local_folder_fs import mark_manifest_modified
 from parsec.core.fs.local_file_fs import Buffer, DirtyBlockBuffer, BlockBuffer, NullFillerBuffer
 from parsec.core.fs.sync_base import SyncConcurrencyError, BaseSyncer
-from parsec.core.fs.types import LocalFileManifest, RemoteFileManifest, Path, Access
-from parsec.core.fs.utils import (
-    is_file_manifest,
-    new_access,
-    new_block_access,
-    is_placeholder_manifest,
-    local_to_remote_manifest,
-    remote_to_local_manifest,
-)
+from parsec.core.fs.utils import is_file_manifest, is_placeholder_manifest
 
 
 logger = get_logger()
 
 
 def fast_forward_file(
-    local_base: LocalFileManifest,
-    local_current: LocalFileManifest,
-    remote_target: RemoteFileManifest,
+    local_base: LocalFileManifest, local_current: LocalFileManifest, remote_target: FileManifest
 ) -> LocalFileManifest:
-    assert local_base["base_version"] < remote_target["version"]
-    assert local_base["base_version"] <= local_current["base_version"]
-    assert local_current["base_version"] < remote_target["version"]
+    assert local_base.base_version < remote_target.version
+    assert local_base.base_version <= local_current.base_version
+    assert local_current.base_version < remote_target.version
 
-    processed_dirty_blocks_ids = [k["id"] for k in local_base["dirty_blocks"]]
-    merged = {
-        **local_current,
-        "blocks": remote_target["blocks"],
-        "dirty_blocks": [
-            k for k in local_current["dirty_blocks"] if k["id"] not in processed_dirty_blocks_ids
-        ],
-        "base_version": remote_target["version"],
-        "is_placeholder": False,
-    }
-    merged["need_sync"] = bool(merged["dirty_blocks"] or merged["size"] != remote_target["size"])
-    return LocalFileManifest(merged)
+    processed_dirty_blocks_ids = [k.id for k in local_base.dirty_blocks]
+    merged_dirty_blocks = [
+        k for k in local_current.dirty_blocks if k.id not in processed_dirty_blocks_ids
+    ]
+    merged_need_sync = bool(merged_dirty_blocks or local_current.size != remote_target.size)
+    return local_current.evolve(
+        blocks=remote_target.blocks,
+        dirty_blocks=merged_dirty_blocks,
+        base_version=remote_target.version,
+        is_placeholder=False,
+        need_sync=merged_need_sync,
+    )
 
 
 def get_sync_map(manifest, block_size: int) -> List[Buffer]:
     dirty_blocks: List[Buffer] = [
-        DirtyBlockBuffer(x["offset"], x["offset"] + x["size"], x) for x in manifest["dirty_blocks"]
+        DirtyBlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.dirty_blocks
     ]
-    blocks: List[Buffer] = [
-        BlockBuffer(x["offset"], x["offset"] + x["size"], x) for x in manifest["blocks"]
-    ]
+    blocks: List[Buffer] = [BlockBuffer(x.offset, x.offset + x.size, x) for x in manifest.blocks]
 
     return merge_buffers_with_limits_and_alignment(
-        blocks + dirty_blocks, 0, manifest["size"], block_size
+        blocks + dirty_blocks, 0, manifest.size, block_size
     )
 
 
@@ -92,40 +87,40 @@ class FileSyncerMixin(BaseSyncer):
 
     def _sync_file_look_resolve_concurrency(
         self,
-        path: Path,
+        path: FsPath,
         access: Access,
         diverged_manifest: LocalFileManifest,
-        target_remote_manifest: RemoteFileManifest,
+        target_remote_manifest: FileManifest,
     ) -> None:
         parent_access, parent_manifest = self.local_folder_fs.get_entry(path.parent)
         moved_name = find_conflicting_name_for_child_entry(
-            path.name, lambda name: name not in parent_manifest["children"]
+            path.name, lambda name: name not in parent_manifest.children
         )
-        moved_access = new_access()
-        parent_manifest["children"][moved_name] = moved_access
-        mark_manifest_modified(parent_manifest)
+        moved_access = ManifestAccess()
+        parent_manifest = parent_manifest.evolve_children_and_mark_updated(
+            {moved_name: moved_access}
+        )
 
-        diverged_manifest["base_version"] = 0
-        diverged_manifest["created"] = pendulum.now()
-        diverged_manifest["need_sync"] = True
-        diverged_manifest["is_placeholder"] = True
+        diverged_manifest = diverged_manifest.evolve(
+            base_version=0, created=pendulum.now(), need_sync=True, is_placeholder=True
+        )
 
         self.local_folder_fs.set_manifest(moved_access, diverged_manifest)
         self.local_folder_fs.set_manifest(parent_access, parent_manifest)
-        target_manifest = remote_to_local_manifest(target_remote_manifest)
+        target_manifest = target_remote_manifest.to_local()
         self.local_folder_fs.set_manifest(access, target_manifest)
 
         self.event_bus.send(
             "fs.entry.file_update_conflicted",
             path=str(path),
             diverged_path=str(path.parent / moved_name),
-            original_id=access["id"],
-            diverged_id=moved_access["id"],
+            original_id=access.id,
+            diverged_id=moved_access.id,
         )
-        self.event_bus.send("fs.entry.updated", id=moved_access["id"])
+        self.event_bus.send("fs.entry.updated", id=moved_access.id)
 
     async def _sync_file_look_for_remote_changes(
-        self, path: Path, access: Access, manifest: LocalFileManifest
+        self, path: FsPath, access: Access, manifest: LocalFileManifest
     ) -> bool:
         # Placeholder means we need synchro !
         assert not is_placeholder_manifest(manifest)
@@ -135,28 +130,29 @@ class FileSyncerMixin(BaseSyncer):
         target_remote_manifest = await self._backend_vlob_read(access)
 
         current_manifest = self.local_folder_fs.get_manifest(access)
-        if target_remote_manifest["version"] == current_manifest["base_version"]:
+        if target_remote_manifest.version == current_manifest.base_version:
             return False
 
         # Remote version has changed...
-        if current_manifest["need_sync"]:
+        if current_manifest.need_sync:
             # ...and modifications occured on our back, now we have a concurrency error !
             self._sync_file_look_resolve_concurrency(
                 path, access, current_manifest, target_remote_manifest
             )
         else:
-            target_local_manifest = remote_to_local_manifest(target_remote_manifest)
+            target_local_manifest = target_remote_manifest.to_local()
             # Otherwise just fast-forward the local data
             self.local_folder_fs.set_manifest(access, target_local_manifest)
         return True
 
     async def _sync_file_actual_sync(
-        self, path: Path, access: Access, manifest: LocalFileManifest
+        self, path: FsPath, access: Access, manifest: LocalFileManifest
     ) -> None:
         assert is_file_manifest(manifest)
 
-        to_sync_manifest = local_to_remote_manifest(manifest)
-        to_sync_manifest["version"] += 1
+        # to_sync_manifest = manifest.to_remote(version=manifest.base_version + 1)
+        to_sync_manifest = manifest.to_remote()
+        to_sync_manifest = to_sync_manifest.evolve(version=manifest.base_version + 1)
 
         # Compute the file's blocks and upload the new ones
         blocks = []
@@ -176,7 +172,7 @@ class FileSyncerMixin(BaseSyncer):
                     blocks += [bs.buffer.data for bs in cs.buffers]
                 else:
                     # Create a new block from existing data
-                    block_access = new_block_access(data, cs.start)
+                    block_access = BlockAccess.from_block(data, cs.start)
                     await self._backend_block_create(block_access, data)
                     blocks.append(block_access)
 
@@ -190,8 +186,9 @@ class FileSyncerMixin(BaseSyncer):
                 nursery.start_soon(_process_spaces)
                 nursery.start_soon(_process_spaces)
 
-        to_sync_manifest["blocks"] = blocks
-        to_sync_manifest["size"] = sync_map.size  # TODO: useful ?
+        to_sync_manifest = to_sync_manifest.evolve(
+            blocks=blocks, size=sync_map.size  # TODO: useful ?
+        )
 
         # Upload the file manifest as new vlob version
         notify_beacons = self.local_folder_fs.get_beacon(path)
@@ -208,7 +205,7 @@ class FileSyncerMixin(BaseSyncer):
             # backend's answer, hence wrongly believing this is still a
             # placeholder.
             if is_placeholder_manifest(manifest):
-                logger.warning("Concurrency error while creating vlob", access_id=access["id"])
+                logger.warning("Concurrency error while creating vlob", access_id=access.id)
 
             target_remote_manifest = await self._backend_vlob_read(access)
 
@@ -231,7 +228,7 @@ class FileSyncerMixin(BaseSyncer):
 
         return to_sync_manifest
 
-    async def _sync_file(self, path: Path, access: Access, manifest: LocalFileManifest) -> None:
+    async def _sync_file(self, path: FsPath, access: Access, manifest: LocalFileManifest) -> None:
         """
         Raises:
             FileSyncConcurrencyError
@@ -241,16 +238,16 @@ class FileSyncerMixin(BaseSyncer):
         assert is_file_manifest(manifest)
 
         # Now we can synchronize the folder if needed
-        if not manifest["need_sync"]:
+        if not manifest.need_sync:
             changed = await self._sync_file_look_for_remote_changes(path, access, manifest)
         else:
             await self._sync_file_actual_sync(path, access, manifest)
             changed = True
         if changed:
-            self.event_bus.send("fs.entry.synced", path=str(path), id=access["id"])
+            self.event_bus.send("fs.entry.synced", path=str(path), id=access.id)
 
     async def _minimal_sync_file(
-        self, path: Path, access: Access, manifest: LocalFileManifest
+        self, path: FsPath, access: Access, manifest: LocalFileManifest
     ) -> bool:
         """
         Returns: If additional sync are needed
@@ -259,33 +256,29 @@ class FileSyncerMixin(BaseSyncer):
             BackendNotAvailable
         """
         if not is_placeholder_manifest(manifest):
-            return manifest["need_sync"]
+            return manifest.need_sync
 
-        need_more_sync = bool(manifest["dirty_blocks"])
+        need_more_sync = bool(manifest.dirty_blocks)
         # Don't sync the dirty blocks for fast synchronization
         try:
-            last_block = manifest["blocks"][-1]
-            size = last_block["offset"] + last_block["size"]
+            last_block = manifest.blocks[-1]
+            size = last_block.offset + last_block.size
         except IndexError:
             size = 0
-        minimal_manifest = {
-            **manifest,
-            "updated": manifest["created"] if need_more_sync else manifest["updated"],
-            "size": size,
-            "blocks": manifest["blocks"],
-            "dirty_blocks": (),
-        }
+        minimal_manifest = manifest.evolve(
+            updated=manifest.created if need_more_sync else manifest.updated,
+            size=size,
+            blocks=manifest.blocks,
+            dirty_blocks=(),
+        )
 
         await self._sync_file_actual_sync(path, access, minimal_manifest)
 
-        self.event_bus.send("fs.entry.minimal_synced", path=str(path), id=access["id"])
+        self.event_bus.send("fs.entry.minimal_synced", path=str(path), id=access.id)
         return need_more_sync
 
     def _sync_file_merge_back(
-        self,
-        access: Access,
-        base_manifest: LocalFileManifest,
-        target_remote_manifest: RemoteFileManifest,
+        self, access: Access, base_manifest: LocalFileManifest, target_remote_manifest: FileManifest
     ) -> None:
         # Merge with the current version of the manifest which may have
         # been modified in the meantime

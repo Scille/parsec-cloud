@@ -1,7 +1,7 @@
 import pytest
 from pendulum import Pendulum
 
-from parsec.core.fs.types import Path
+from parsec.core.types import FsPath
 from parsec.core.backend_connection import BackendNotAvailable
 
 from tests.common import freeze_time, create_shared_workspace
@@ -327,7 +327,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
 
     with freeze_time("2000-01-03"):
         await alice_fs.workspace_create("/z")
-        z_by_alice = alice_fs._local_folder_fs.get_access(Path("/z"))
+        z_by_alice = alice_fs._local_folder_fs.get_access(FsPath("/z"))
         await alice_fs.file_write("/w/foo.txt", b"alice's v2")
         await alice_fs.folder_create("/w/bar/from_alice")
         await alice_fs.folder_create("/w/bar/spam")
@@ -335,7 +335,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
 
     with freeze_time("2000-01-04"):
         await alice2_fs.workspace_create("/z")
-        z_by_alice2 = alice2_fs._local_folder_fs.get_access(Path("/z"))
+        z_by_alice2 = alice2_fs._local_folder_fs.get_access(FsPath("/z"))
         await alice2_fs.file_write("/w/foo.txt", b"alice2's v2")
         await alice2_fs.folder_create("/w/bar/from_alice2")
         await alice2_fs.folder_create("/w/bar/spam")
@@ -484,9 +484,9 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     final_fs = await assert_same_fs(alice_fs, alice2_fs)
     assert final_fs["children"].keys() == {"w", "z", "z (conflict 2000-01-06 00:00:00)"}
     # Make sure z conflict hasn't changed workspace access
-    current_z = alice_fs._local_folder_fs.get_access(Path("/z"))
+    current_z = alice_fs._local_folder_fs.get_access(FsPath("/z"))
     assert current_z == z_by_alice
-    diverged_z = alice_fs._local_folder_fs.get_access(Path("/z (conflict 2000-01-06 00:00:00)"))
+    diverged_z = alice_fs._local_folder_fs.get_access(FsPath("/z (conflict 2000-01-06 00:00:00)"))
     assert diverged_z == z_by_alice2
 
     final_wkps = final_fs["children"]["w"]

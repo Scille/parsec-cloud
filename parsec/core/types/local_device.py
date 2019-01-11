@@ -2,7 +2,8 @@ import attr
 
 from parsec.types import BackendOrganizationAddr, DeviceID
 from parsec.crypto import PrivateKey, SigningKey
-from parsec.schema import UnknownCheckedSchema, fields, post_load
+from parsec.serde import UnknownCheckedSchema, fields, post_load
+from parsec.core.types.base import serializer_factory
 from parsec.core.types.access import ManifestAccessSchema
 
 
@@ -57,4 +58,4 @@ class LocalDeviceSchema(UnknownCheckedSchema):
         return LocalDevice(**data)
 
 
-local_device_schema = LocalDeviceSchema(strict=True)
+local_device_serializer = serializer_factory(LocalDeviceSchema)

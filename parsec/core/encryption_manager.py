@@ -13,7 +13,7 @@ from parsec.crypto import (
 )
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.local_db import LocalDBMissingEntry
-from parsec.core.types import RemoteDevice, RemoteUser
+from parsec.core.types import RemoteDevice, RemoteUser, ManifestAccess
 from parsec.core.backend_connection import BackendCmdsBadResponse
 
 
@@ -74,11 +74,10 @@ class EncryptionManager(BaseAsyncComponent):
         raw = pickle.dumps(user)
         self.local_db.set(self._build_remote_user_local_access(user_id), raw)
 
-    def _build_remote_user_local_access(self, user_id: UserID):
-        return {
-            "id": hashlib.sha256(user_id.encode("utf8")).hexdigest(),
-            "key": self.device.local_symkey,
-        }
+    def _build_remote_user_local_access(self, user_id: UserID) -> ManifestAccess:
+        return ManifestAccess(
+            id=hashlib.sha256(user_id.encode("utf8")).hexdigest(), key=self.device.local_symkey
+        )
 
     def _fetch_remote_user_from_local(self, user_id: UserID):
         try:

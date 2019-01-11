@@ -1,4 +1,4 @@
-from parsec.schema import UnknownCheckedSchema, fields
+from parsec.serde import UnknownCheckedSchema, fields
 from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 
 

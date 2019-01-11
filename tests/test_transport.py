@@ -1,7 +1,7 @@
 import pytest
 import trio
 
-from parsec.schema import UnknownCheckedSchema, fields
+from parsec.serde import UnknownCheckedSchema, fields
 from parsec.api.transport import Transport, TransportClosedByPeer
 from parsec.api.protocole.base import Serializer
 

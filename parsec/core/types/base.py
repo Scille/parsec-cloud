@@ -3,22 +3,15 @@ from uuid import UUID
 from typing import NewType
 from pathlib import PurePosixPath
 
-from parsec.schema_fields import str_based_field_factory
+from parsec.serde import Serializer, fields
 
 
-__all__ = (
-    "SchemaSerializationError",
-    "TrustSeed",
-    "AccessID",
-    "EntryName",
-    "EntryNameField",
-    "FileDescriptor",
-    "Path",
-)
+__all__ = ("TrustSeed", "AccessID", "EntryName", "EntryNameField", "FileDescriptor", "FsPath")
 
 
-class SchemaSerializationError(Exception):
-    pass
+def serializer_factory(schema_cls):
+    # TODO: add custom exceptions ?
+    return Serializer(schema_cls)
 
 
 TrustSeed = NewType("TrustSeed", str)
@@ -28,18 +21,19 @@ FileDescriptor = NewType("FileDescriptor", int)
 
 class EntryName(str):
     __slots__ = ()
-    regex = re.compile(r"^\w{1,256}$")
+    # TODO: This regex is a bit too loose...
+    regex = re.compile(r"^[^/]{1,256}$")
 
     def __init__(self, raw):
         if not isinstance(raw, str) or not self.regex.match(raw):
             raise ValueError("Invalid entry name")
 
 
-EntryNameField = str_based_field_factory(EntryName)
-TrustSeedField = str_based_field_factory(TrustSeed)
+EntryNameField = fields.str_based_field_factory(EntryName)
+TrustSeedField = fields.str_based_field_factory(TrustSeed)
 
 
-class Path(PurePosixPath):
+class FsPath(PurePosixPath):
     @classmethod
     def _from_parts(cls, args, init=True):
         self = object.__new__(cls)

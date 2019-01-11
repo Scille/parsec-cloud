@@ -6,9 +6,7 @@ from marshmallow import (
     validates_schema,
     post_load,
 )
-from marshmallow import validate  # noqa: republishing
 
-from parsec import schema_fields as fields  # noqa: republishing
 
 try:
     import toastedmarshmallow
@@ -21,8 +19,10 @@ try:
 except ImportError:
     BaseSchema = Schema
 
+from parsec.serde.fields import String
 
-__all__ = ("ValidationError", "UnknownCheckedSchema", "BaseCmdSchema", "validate", "fields")
+
+__all__ = ("UnknownCheckedSchema", "BaseCmdSchema")
 
 
 class UnknownCheckedSchema(BaseSchema):
@@ -37,20 +37,10 @@ class UnknownCheckedSchema(BaseSchema):
             if key not in self.fields or self.fields[key].dump_only:
                 raise ValidationError("Unknown field name {}".format(key))
 
-    # def dumps(self, data):
-    #     try:
-    #         self.dump(data)
-    #     except (UnicodeDecodeError, JSONDecodeError) as exc:
-    #         raise ValidationError(str(exc)) from exc
-
-
-class InvalidCmd(Exception):
-    pass
-
 
 class BaseCmdSchema(UnknownCheckedSchema):
 
-    cmd = fields.String(required=True)
+    cmd = String(required=True)
 
     @post_load
     def _drop_cmd_field(self, item):

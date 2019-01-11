@@ -18,8 +18,7 @@ from parsec.core import CoreConfig
 from parsec.core.types import LocalDevice
 from parsec.core.devices_manager import generate_new_device
 from parsec.core.logged_core import logged_core_factory
-from parsec.core.fs.utils import new_local_user_manifest, local_to_remote_manifest, copy_manifest
-from parsec.core.schemas import dumps_manifest
+from parsec.core.types import remote_manifest_serializer, LocalUserManifest
 from parsec.core.mountpoint import FUSE_AVAILABLE
 from parsec.backend import BackendApp, config_factory as backend_config_factory
 from parsec.backend.user import User as BackendUser, new_user_factory as new_backend_user_factory
@@ -357,26 +356,25 @@ class InitialState:
             return None
 
         in_device, _ = self._generate_or_retrieve_v1(device)
-        return copy_manifest(in_device)
+        return in_device
 
     def get_initial_for_backend(self, device):
         if device.device_id in self._location_in_v0:
             return None
 
         _, in_backend = self._generate_or_retrieve_v1(device)
-        return copy_manifest(in_backend)
+        return in_backend
 
     def _generate_or_retrieve_v1(self, device):
         try:
             return self._v1[device.user_id]
 
         except KeyError:
-            user_manifest = new_local_user_manifest(device.device_id)
-            user_manifest["base_version"] = 1
-            user_manifest["is_placeholder"] = False
-            user_manifest["need_sync"] = False
+            user_manifest = LocalUserManifest(
+                author=device.device_id, base_version=1, is_placeholder=False, need_sync=False
+            )
 
-            remote_user_manifest = local_to_remote_manifest(user_manifest)
+            remote_user_manifest = user_manifest.to_remote()
 
             self._v1[device.user_id] = (user_manifest, remote_user_manifest)
             return (user_manifest, remote_user_manifest)
@@ -450,15 +448,11 @@ def backend_factory(
                             ciphered = encrypt_with_secret_key(
                                 device.device_id,
                                 device.signing_key,
-                                access["key"],
-                                dumps_manifest(user_manifest),
+                                access.key,
+                                remote_manifest_serializer.dumps(user_manifest),
                             )
                             await backend.vlob.create(
-                                access["id"],
-                                access["rts"],
-                                access["wts"],
-                                ciphered,
-                                device.device_id,
+                                access.id, access.rts, access.wts, ciphered, device.device_id
                             )
 
                     except UserAlreadyExistsError:

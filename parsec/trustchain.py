@@ -1,10 +1,9 @@
 from typing import Tuple, Optional
 import pendulum
 from pendulum import Pendulum
-from json import JSONDecodeError
 
 from parsec.types import DeviceID, UserID
-from parsec.schema import ValidationError, UnknownCheckedSchema, fields
+from parsec.serde import SerdeError, Serializer, UnknownCheckedSchema, fields
 from parsec.crypto import (
     CryptoError,
     VerifyKey,
@@ -65,9 +64,9 @@ class CertifiedDeviceRevocationSchema(UnknownCheckedSchema):
     device_id = fields.DeviceID(required=True)
 
 
-certified_device_schema = CertifiedDeviceSchema(strict=True)
-certified_user_schema = CertifiedUserSchema(strict=True)
-certified_device_revocation_schema = CertifiedDeviceRevocationSchema(strict=True)
+certified_device_schema = Serializer(CertifiedDeviceSchema)
+certified_user_schema = Serializer(CertifiedUserSchema)
+certified_device_revocation_schema = Serializer(CertifiedDeviceRevocationSchema)
 
 
 def _validate_certified_payload(
@@ -80,9 +79,9 @@ def _validate_certified_payload(
     """
     try:
         raw = verify_signature_from(certifier_key, payload)
-        data = schema.loads(raw.decode("utf8")).data
+        data = schema.loads(raw)
 
-    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+    except (CryptoError, SerdeError) as exc:
         raise TrustChainInvalidDataError(*exc.args) from exc
 
     if not timestamps_in_the_ballpark(data["timestamp"], now or pendulum.now()):
@@ -110,10 +109,10 @@ def certify_device(
                 "device_id": device_id,
                 "verify_key": verify_key,
             }
-        ).data.encode("utf8")
+        )
         return sign_and_add_meta(certifier_id, certifier_key, payload)
 
-    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+    except (CryptoError, SerdeError) as exc:
         raise TrustChainInvalidDataError(*exc.args) from exc
 
 
@@ -136,9 +135,9 @@ def unsecure_certified_device_extract_verify_key(data: bytes) -> VerifyKey:
     try:
         _, signed = decode_signedmeta(data)
         raw = unsecure_extract_msg_from_signed(signed)
-        return certified_device_schema.loads(raw.decode("utf8")).data["verify_key"]
+        return certified_device_schema.loads(raw)["verify_key"]
 
-    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+    except (CryptoError, SerdeError) as exc:
         raise TrustChainInvalidDataError(*exc.args) from exc
 
 
@@ -161,10 +160,10 @@ def certify_user(
                 "user_id": user_id,
                 "public_key": public_key,
             }
-        ).data.encode("utf8")
+        )
         return sign_and_add_meta(certifier_id, certifier_key, payload)
 
-    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+    except (CryptoError, SerdeError) as exc:
         raise TrustChainInvalidDataError(*exc.args) from exc
 
 
@@ -187,9 +186,9 @@ def unsecure_certified_user_extract_public_key(data: bytes) -> PublicKey:
     try:
         _, signed = decode_signedmeta(data)
         raw = unsecure_extract_msg_from_signed(signed)
-        return certified_user_schema.loads(raw.decode("utf8")).data["public_key"]
+        return certified_user_schema.loads(raw)["public_key"]
 
-    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+    except (CryptoError, SerdeError) as exc:
         raise TrustChainInvalidDataError(*exc.args) from exc
 
 
@@ -210,10 +209,10 @@ def certify_device_revocation(
                 "timestamp": now or pendulum.now(),
                 "device_id": revoked_device_id,
             }
-        ).data.encode("utf8")
+        )
         return sign_and_add_meta(certifier_id, certifier_key, payload)
 
-    except (CryptoError, ValidationError, JSONDecodeError, ValueError) as exc:
+    except (CryptoError, SerdeError) as exc:
         raise TrustChainInvalidDataError(*exc.args) from exc
 
 
