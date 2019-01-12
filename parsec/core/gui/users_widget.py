@@ -66,6 +66,7 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.users.append(user_name)
 
     def reset(self):
+        self.line_edit_search.setText("")
         self.users = []
         while self.layout_users.count() != 0:
             item = self.layout_users.takeAt(0)

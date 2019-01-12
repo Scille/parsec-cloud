@@ -34,10 +34,22 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.portal = None
         self.core = None
         self.button_add_device.clicked.connect(self.register_new_device)
+        self.line_edit_search.textChanged.connect(self.filter_devices)
 
     def set_core_attrs(self, core, portal):
         self.portal = portal
         self.core = core
+
+    def filter_devices(self, pattern):
+        pattern = pattern.lower()
+        for i in range(self.layout_devices.count()):
+            item = self.layout_devices.itemAt(i)
+            if item:
+                w = item.widget()
+                if pattern and pattern not in w.name.lower():
+                    w.hide()
+                else:
+                    w.show()
 
     def register_new_device(self):
         self.register_device_dialog = RegisterDeviceDialog(
@@ -56,6 +68,7 @@ class DevicesWidget(QWidget, Ui_DevicesWidget):
         self.devices.append(device_name)
 
     def reset(self):
+        self.line_edit_search.setText("")
         self.devices = []
         while self.layout_devices.count() != 0:
             item = self.layout_devices.takeAt(0)
