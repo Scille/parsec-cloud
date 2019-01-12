@@ -1,7 +1,9 @@
+import os
 import trio
 import attr
 from typing import Optional
 from pathlib import Path
+from structlog import get_logger
 from async_generator import asynccontextmanager
 
 from parsec.event_bus import EventBus
@@ -19,6 +21,9 @@ from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.fs import FS
 from parsec.core.local_db import LocalDB
+
+
+logger = get_logger()
 
 
 @attr.s(frozen=True, slots=True)
@@ -40,6 +45,10 @@ async def logged_core_factory(
     event_bus: Optional[EventBus] = None,
     mountpoint: Optional[Path] = None,
 ):
+    if config.mountpoint_enabled and os.name == "nt":
+        logger.warning("Mountpoint disabled (not supported yet on Windows)")
+        config = config.evolve(mountpoint_enabled=False)
+
     event_bus = event_bus or EventBus()
 
     # Plenty of nested scope to order components init/teardown
