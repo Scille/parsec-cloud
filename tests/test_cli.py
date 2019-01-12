@@ -15,6 +15,7 @@ import parsec
 from parsec.cli import cli
 from parsec.types import UserID, DeviceID
 
+
 CWD = Path(__file__).parent.parent
 
 
