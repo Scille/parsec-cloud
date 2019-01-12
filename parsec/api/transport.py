@@ -152,4 +152,4 @@ class Transport:
 
             else:
                 self.logger.warning("Unexpected event", ws_event=event)
-                raise TransportError("Unexpected event: {event}")
+                raise TransportError(f"Unexpected event: {event}")
