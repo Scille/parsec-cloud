@@ -133,6 +133,7 @@ class Transport:
         Raises:
             TransportError
         """
+        data = bytearray()
         while True:
             event = await self._next_ws_event()
 
@@ -141,7 +142,9 @@ class Transport:
                 raise TransportClosedByPeer("Peer has closed connection")
 
             elif isinstance(event, BytesReceived):
-                return event.data
+                data += event.data
+                if event.message_finished:
+                    return data
 
             elif isinstance(event, PingReceived):
                 # wsproto handles ping events for you by placing a pong frame in
