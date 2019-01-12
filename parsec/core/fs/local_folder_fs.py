@@ -67,7 +67,7 @@ class LocalFolderFS:
 
     def dump(self) -> dict:
         def _recursive_dump(access: Access):
-            dump_data = {"access": access}
+            dump_data = {"access": attr.asdict(access)}
             try:
                 manifest = self.get_manifest(access)
             except FSManifestLocalMiss:

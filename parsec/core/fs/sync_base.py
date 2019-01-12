@@ -217,7 +217,7 @@ class BaseSyncer:
 
     async def _backend_vlob_group_check(self, to_check):
         changed = await self.backend_cmds.vlob_group_check(to_check)
-        return [entry.id for entry in changed]
+        return [entry["id"] for entry in changed]
 
     async def _backend_vlob_read(self, access, version=None):
         _, blob = await self.backend_cmds.vlob_read(access.id, access.rts, version)

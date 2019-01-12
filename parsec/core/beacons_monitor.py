@@ -46,13 +46,13 @@ async def monitor_beacons(device, fs, event_bus, *, task_status=trio.TASK_STATUS
 
 def _retreive_workspace_from_beacon(device, fs, beacon_id):
     # beacon_id is either the id of the user manifest or of a workpace manifest
-    if device.user_manifest_access["id"] == beacon_id:
+    if device.user_manifest_access.id == beacon_id:
         return "/"
 
     root_manifest = fs._local_folder_fs.get_manifest(device.user_manifest_access)
     # No need to go recursive given workspaces must be direct root children
-    for child_name, child_access in root_manifest["children"].items():
-        if child_access["id"] == beacon_id:
+    for child_name, child_access in root_manifest.children.items():
+        if child_access.id == beacon_id:
             return f"/{child_name}"
 
     return None
