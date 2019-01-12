@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from setuptools import find_packages, distutils, Command
+from setuptools.command.build_py import build_py
+
 try:
     from cx_Freeze import setup, Executable
 except ImportError:
@@ -10,8 +13,6 @@ except ImportError:
 
     from setuptools import setup
 
-from setuptools import find_packages, distutils, Command
-from setuptools.command.build_py import build_py
 import itertools
 import glob
 
