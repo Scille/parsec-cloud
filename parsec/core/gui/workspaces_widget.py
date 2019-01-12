@@ -1,5 +1,6 @@
 import os
 from uuid import UUID
+import pathlib
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import QWidget
@@ -209,5 +210,6 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         # We are only interested into modification of root manifest given we
         # don't care about the date of modification of the workspaces)
-        if path == "/":
+        path = pathlib.PurePath(path)
+        if len(path.parts) <= 2:
             self.reset()
