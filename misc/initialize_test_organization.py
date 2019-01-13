@@ -1,5 +1,6 @@
 import os
 import trio
+import itertools
 
 import click
 import pendulum
@@ -13,12 +14,22 @@ from parsec.types import DeviceID, BackendOrganizationBootstrapAddr
 from parsec.core import logged_core_factory
 from parsec.logging import configure_logging
 from parsec.core.config import get_default_config_dir, load_config
-from parsec.core.backend_connection import backend_cmds_factory
+from parsec.core.backend_connection import BackendCmdsBadResponse, backend_cmds_factory
 from parsec.core.backend_connection import backend_anonymous_cmds_factory
 from parsec.core.devices_manager import generate_new_device, save_device_with_password
 from parsec.core.devices_manager import load_device_with_password
 from parsec.core.invite_claim import generate_invitation_token, invite_and_create_device
 from parsec.core.invite_claim import invite_and_create_user, claim_device, claim_user
+
+
+async def retry(corofn, *args, retries=10, tick=0.1):
+    for i in itertools.count():
+        try:
+            return await corofn(*args)
+        except BackendCmdsBadResponse as exc:
+            if exc.status != 'not_found' or i >= retries:
+                raise
+            await trio.sleep(tick)
 
 
 @click.command()
@@ -121,7 +132,6 @@ async def amain(
     other_alice_device_id = DeviceID("@".join((alice_device.user_id, other_device_name)))
 
     async def invite_task():
-
         async with backend_cmds_factory(
             alice_device.backend_addr, alice_device.device_id, alice_device.signing_key
         ) as cmds:
@@ -129,13 +139,13 @@ async def amain(
 
     async def claim_task():
         async with backend_anonymous_cmds_factory(alice_device.backend_addr) as cmds:
-
-            other_alice_device = await claim_device(cmds, other_alice_device_id, token)
-            save_device_with_password(config_dir, other_alice_device, password, force=force)
+            other_alice_device = await retry(
+                claim_device, cmds, other_alice_device_id, token)
+            save_device_with_password(
+                config_dir, other_alice_device, password, force=force)
 
     async with trio.open_nursery() as nursery:
         nursery.start_soon(invite_task)
-        await trio.sleep(0.2)
         nursery.start_soon(claim_task)
 
     # Invite Bob in
@@ -143,7 +153,6 @@ async def amain(
     token = generate_invitation_token()
 
     async def invite_task():
-
         async with backend_cmds_factory(
             alice_device.backend_addr, alice_device.device_id, alice_device.signing_key
         ) as cmds:
@@ -151,13 +160,11 @@ async def amain(
 
     async def claim_task():
         async with backend_anonymous_cmds_factory(alice_device.backend_addr) as cmds:
-
-            bob_device = await claim_user(cmds, bob_device_id, token)
+            bob_device = await retry(claim_user, cmds, bob_device_id, token)
             save_device_with_password(config_dir, bob_device, password, force=force)
 
     async with trio.open_nursery() as nursery:
         nursery.start_soon(invite_task)
-        await trio.sleep(0.2)
         nursery.start_soon(claim_task)
 
     # Create bob workspace and share with Alice
