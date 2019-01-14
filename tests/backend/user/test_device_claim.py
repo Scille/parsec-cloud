@@ -15,7 +15,7 @@ async def alice_nd_invitation(backend, alice):
     invitation = DeviceInvitation(
         DeviceID(f"{alice.user_id}@new_device"), alice.device_id, Pendulum(2000, 1, 2)
     )
-    await backend.user.create_device_invitation(invitation)
+    await backend.user.create_device_invitation(alice.organization_id, invitation)
     return invitation
 
 
@@ -76,7 +76,7 @@ async def test_device_get_invitation_creator_ok(anonymous_backend_sock, alice_nd
 
 
 @pytest.mark.trio
-async def test_device_claim_ok(backend, anonymous_backend_sock, alice_nd_invitation):
+async def test_device_claim_ok(backend, anonymous_backend_sock, alice, alice_nd_invitation):
     with freeze_time(alice_nd_invitation.created_on):
         async with device_claim(
             anonymous_backend_sock,
@@ -88,10 +88,14 @@ async def test_device_claim_ok(backend, anonymous_backend_sock, alice_nd_invitat
                 "event.connected", kwargs={"event_name": "device.created"}
             )
             backend.event_bus.send(
-                "device.created", device_id="dummy@foo", encrypted_answer=b"<dummy>"
+                "device.created",
+                organization_id=alice.organization_id,
+                device_id="dummy@foo",
+                encrypted_answer=b"<dummy>",
             )
             backend.event_bus.send(
                 "device.created",
+                organization_id=alice.organization_id,
                 device_id=alice_nd_invitation.device_id,
                 encrypted_answer=b"<good>",
             )
@@ -121,7 +125,7 @@ async def test_device_claim_timeout(
 
 
 @pytest.mark.trio
-async def test_device_claim_denied(backend, anonymous_backend_sock, alice_nd_invitation):
+async def test_device_claim_denied(backend, anonymous_backend_sock, alice, alice_nd_invitation):
     with freeze_time(alice_nd_invitation.created_on):
         async with device_claim(
             anonymous_backend_sock,
@@ -132,9 +136,13 @@ async def test_device_claim_denied(backend, anonymous_backend_sock, alice_nd_inv
             await backend.event_bus.spy.wait(
                 "event.connected", kwargs={"event_name": "device.invitation.cancelled"}
             )
-            backend.event_bus.send("device.created", device_id="dummy")
             backend.event_bus.send(
-                "device.invitation.cancelled", device_id=alice_nd_invitation.device_id
+                "device.created", organization_id=alice.organization_id, device_id="dummy"
+            )
+            backend.event_bus.send(
+                "device.invitation.cancelled",
+                organization_id=alice.organization_id,
+                device_id=alice_nd_invitation.device_id,
             )
 
     assert prep[0] == {"status": "denied", "reason": "Invitation creator rejected us."}
@@ -156,11 +164,12 @@ async def test_device_claim_already_exists(
     mock_clock, backend, anonymous_backend_sock, alice, alice_nd_invitation
 ):
     await backend.user.create_device(
+        alice.organization_id,
         Device(
             device_id=alice_nd_invitation.device_id,
             certified_device=b"<foo>",
             device_certifier=alice.device_id,
-        )
+        ),
     )
 
     with freeze_time(alice_nd_invitation.created_on):
@@ -172,4 +181,17 @@ async def test_device_claim_already_exists(
 
             pass
 
+    assert prep[0] == {"status": "not_found"}
+
+
+@pytest.mark.trio
+async def test_device_claim_other_organization(
+    backend, sock_from_other_organization_factory, alice, alice_nd_invitation
+):
+    # Organizations should be isolated
+    async with sock_from_other_organization_factory(backend, anonymous=True) as sock:
+        async with device_claim(
+            sock, invited_device_id=alice_nd_invitation.device_id, encrypted_claim=b"<foo>"
+        ) as prep:
+            pass
     assert prep[0] == {"status": "not_found"}

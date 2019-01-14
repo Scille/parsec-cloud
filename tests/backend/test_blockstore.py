@@ -59,7 +59,7 @@ async def test_raid1_blockstore_create_and_read(alice_backend_sock, bob_backend_
 async def test_raid1_blockstore_create_partial_failure(
     alice_backend_sock, bob_backend_sock, backend
 ):
-    async def mock_create(id, block, author):
+    async def mock_create(organization_id, id, block, author):
         await trio.sleep(0)
         raise BlockstoreTimeoutError()
 
@@ -72,7 +72,9 @@ async def test_raid1_blockstore_create_partial_failure(
 @pytest.mark.trio
 @pytest.mark.raid1_blockstore
 async def test_raid1_blockstore_create_partial_exists(alice_backend_sock, alice, backend):
-    await backend.blockstore.blockstores[1].create(BLOCK_ID, BLOCK_DATA, alice.device_id)
+    await backend.blockstore.blockstores[1].create(
+        alice.organization_id, BLOCK_ID, BLOCK_DATA, alice.device_id
+    )
 
     rep = await create(alice_backend_sock, BLOCK_ID, BLOCK_DATA)
     assert rep == {"status": "ok"}
@@ -81,7 +83,9 @@ async def test_raid1_blockstore_create_partial_exists(alice_backend_sock, alice,
 @pytest.mark.trio
 @pytest.mark.raid1_blockstore
 async def test_raid1_blockstore_read_partial_failure(alice_backend_sock, alice, backend):
-    await backend.blockstore.blockstores[1].create(BLOCK_ID, BLOCK_DATA, alice.device_id)
+    await backend.blockstore.blockstores[1].create(
+        alice.organization_id, BLOCK_ID, BLOCK_DATA, alice.device_id
+    )
 
     rep = await read(alice_backend_sock, BLOCK_ID)
     assert rep == {"status": "ok", "block": BLOCK_DATA}

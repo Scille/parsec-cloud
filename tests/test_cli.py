@@ -13,7 +13,7 @@ from click.testing import CliRunner
 
 import parsec
 from parsec.cli import cli
-from parsec.types import UserID, DeviceID
+from parsec.backend.config import DEFAULT_ADMINISTRATOR_TOKEN
 
 
 CWD = Path(__file__).parent.parent
@@ -26,7 +26,7 @@ def test_version():
     assert f"parsec, version {parsec.__version__}\n" in result.output
 
 
-def test_share_workspace():
+def test_share_workspace(alice, bob):
     # Mocking
     factory_mock = MagicMock()
     share_mock = MagicMock()
@@ -45,16 +45,20 @@ def test_share_workspace():
             with patch("parsec.core.cli.share_workspace.logged_core_factory", logged_core_factory):
                 cipher_mock.return_value = "password"
                 runner = CliRunner()
-                args = "core share_workspace --password bla -D bob@laptop ws1 alice"
+                args = (
+                    "core share_workspace --password bla "
+                    f"--device={bob.organization_id}:{bob.device_id} "
+                    f"ws1 {alice.user_id}"
+                )
                 result = runner.invoke(cli, args)
 
     assert result.exit_code == 0
     assert result.output == ""
 
-    cipher_mock.assert_called_once_with(ANY, DeviceID("bob@laptop"))
-    load_mock.assert_called_once_with(ANY, DeviceID("bob@laptop"), "bla")
+    cipher_mock.assert_called_once_with(ANY, bob.organization_id, bob.device_id)
+    load_mock.assert_called_once_with(ANY, bob.organization_id, bob.device_id, "bla")
     factory_mock.assert_called_once_with(ANY, load_mock.return_value)
-    share_mock.assert_called_once_with("/ws1", UserID("alice"))
+    share_mock.assert_called_once_with("/ws1", alice.user_id)
 
 
 def _run(cmd):
@@ -138,18 +142,25 @@ def test_init_backend(postgresql_url, unused_tcp_port):
 
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
-def test_full_run(unused_tcp_port, tmpdir):
-    org = "org42"
-    alice1 = "alice@pc1"
-    alice2 = "alice@pc2"
-    bob1 = "bob@pc1"
+def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
+    org = alice.organization_id
+    alice1_slug = f"{alice.organization_id}:{alice.device_id}"
+    alice2_slug = f"{alice2.organization_id}:{alice2.device_id}"
+    bob1_slug = f"{bob.organization_id}:{bob.device_id}"
+    alice1 = alice.device_id
+    alice2 = alice2.device_id
+    bob1 = bob.device_id
     password = "P@ssw0rd."
 
     print("######## START BACKEND #########")
     with _running(f"backend run --port={unused_tcp_port}", wait_for="Starting Parsec Backend"):
 
         print("####### Create organization #######")
-        p = _run("core create_organization " f"{org} --addr=ws://localhost:{unused_tcp_port}")
+        p = _run(
+            "core create_organization "
+            f"{org} --addr=ws://localhost:{unused_tcp_port} "
+            f"--administrator-token={DEFAULT_ADMINISTRATOR_TOKEN}"
+        )
         url = re.search(
             r"^Bootstrap organization url: (.*)$", p.stdout.decode(), re.MULTILINE
         ).group(1)
@@ -163,7 +174,7 @@ def test_full_run(unused_tcp_port, tmpdir):
         print("####### Create another user #######")
         with _running(
             "core invite_user "
-            f"--config-dir={tmpdir} --device={alice1} --password={password} bob",
+            f"--config-dir={tmpdir} --device={alice1_slug} --password={password} {bob1.user_id}",
             wait_for="Invitation token:",
         ) as p:
             stdout = p.live_stdout.read()
@@ -179,7 +190,7 @@ def test_full_run(unused_tcp_port, tmpdir):
         print("####### Create another device #######")
         with _running(
             "core invite_device "
-            f"--config-dir={tmpdir} --device={alice1} --password={password} pc2",
+            f"--config-dir={tmpdir} --device={alice1_slug} --password={password} {alice2.device_name}",
             wait_for="Invitation token:",
         ) as p:
             stdout = p.live_stdout.read()
@@ -202,9 +213,9 @@ def test_full_run(unused_tcp_port, tmpdir):
         print("####### New users can communicate with backend #######")
         _run(
             "core create_workspace wksp1 "
-            f"--config-dir={tmpdir} --device={bob1} --password={password}"
+            f"--config-dir={tmpdir} --device={bob1_slug} --password={password}"
         )
         _run(
             "core create_workspace wksp2 "
-            f"--config-dir={tmpdir} --device={alice2} --password={password}"
+            f"--config-dir={tmpdir} --device={alice2_slug} --password={password}"
         )

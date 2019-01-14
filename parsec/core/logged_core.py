@@ -60,7 +60,7 @@ async def logged_core_factory(
         backend_online = await root_nursery.start(backend_listen_events, device, event_bus)
 
         async with backend_cmds_factory(
-            device.backend_addr,
+            device.organization_addr,
             device.device_id,
             device.signing_key,
             config.backend_max_connections,

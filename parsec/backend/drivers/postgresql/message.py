@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from parsec.types import UserID, DeviceID
+from parsec.types import UserID, DeviceID, OrganizationID
 from parsec.backend.message import BaseMessageComponent, MessageError
 from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
 
@@ -9,15 +9,40 @@ class PGMessageComponent(BaseMessageComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
 
-    async def send(self, sender: DeviceID, recipient: UserID, body: bytes) -> None:
+    async def send(
+        self, organization_id: OrganizationID, sender: DeviceID, recipient: UserID, body: bytes
+    ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 result = await conn.execute(
                     """
-                    INSERT INTO messages (
-                        sender, recipient, body
-                    ) VALUES ($1, $2, $3)
-                    """,
+INSERT INTO messages (
+    organization,
+    sender,
+    recipient,
+    body
+)
+SELECT
+    _id,
+    (
+        SELECT _id
+        FROM devices
+        WHERE
+            organization = organizations._id
+            AND device_id = $2
+    ),
+    (
+        SELECT _id
+        FROM users
+        WHERE
+            organization = organizations._id
+            AND user_id = $3
+    ),
+    $4
+FROM organizations
+WHERE organization_id = $1
+""",
+                    organization_id,
                     sender,
                     recipient,
                     body,
@@ -29,18 +54,50 @@ class PGMessageComponent(BaseMessageComponent):
                 # Maybe we should replace it by a timestamp ?
                 index, = await conn.fetchrow(
                     """
-                    SELECT COUNT(*) FROM messages WHERE recipient = $1
-                    """,
+SELECT COUNT(*) FROM messages
+WHERE recipient = (
+    SELECT _id
+    FROM users
+    WHERE
+        organization = (
+            SELECT _id from organizations WHERE organization_id = $1
+        )
+        AND user_id = $2
+)
+""",
+                    organization_id,
                     recipient,
                 )
                 await send_signal(
-                    conn, "message.received", author=sender, recipient=recipient, index=index
+                    conn,
+                    "message.received",
+                    organization_id=organization_id,
+                    author=sender,
+                    recipient=recipient,
+                    index=index,
                 )
 
-    async def get(self, recipient: UserID, offset: int) -> List[Tuple[DeviceID, bytes]]:
+    async def get(
+        self, organization_id: OrganizationID, recipient: UserID, offset: int
+    ) -> List[Tuple[DeviceID, bytes]]:
         async with self.dbh.pool.acquire() as conn:
             data = await conn.fetch(
-                "SELECT sender, body FROM messages WHERE recipient = $1 ORDER BY _id ASC OFFSET $2",
+                """
+SELECT devices.device_id, messages.body
+FROM messages
+LEFT JOIN devices ON messages.sender = devices._id
+WHERE recipient = (
+    SELECT _id
+    FROM users
+    WHERE
+        organization = (
+            SELECT _id from organizations WHERE organization_id = $1
+        )
+        AND user_id = $2
+)
+ORDER BY messages._id ASC OFFSET $3
+""",
+                organization_id,
                 recipient,
                 offset,
             )

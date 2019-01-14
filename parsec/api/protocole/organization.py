@@ -1,4 +1,4 @@
-from parsec.serde import fields, validate
+from parsec.serde import fields
 from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 
 
@@ -6,7 +6,7 @@ __all__ = "organization_bootstrap_serializer"
 
 
 class OrganizationCreateReqSchema(BaseReqSchema):
-    name = fields.String(required=True, validate=validate.Length(min=1, max=32))
+    organization_id = fields.OrganizationID(required=True)
 
 
 class OrganizationCreateRepSchema(BaseRepSchema):
@@ -19,7 +19,6 @@ organization_create_serializer = CmdSerializer(
 
 
 class OrganizationBootstrapReqSchema(BaseReqSchema):
-    name = fields.String(required=True)
     bootstrap_token = fields.String(required=True)
     certified_user = fields.Bytes(required=True)
     certified_device = fields.Bytes(required=True)

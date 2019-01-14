@@ -10,6 +10,7 @@ from parsec.core.backend_connection.exceptions import (
 from parsec.core.backend_connection.transport import (
     authenticated_transport_factory,
     anonymous_transport_factory,
+    administrator_transport_factory,
     transport_pool_factory,
     TransportPool,
 )
@@ -20,6 +21,8 @@ from parsec.core.backend_connection.porcelain import (
     backend_cmds_factory,
     BackendAnonymousCmds,
     backend_anonymous_cmds_factory,
+    BackendAdministratorCmds,
+    backend_administrator_cmds_factory,
 )
 
 
@@ -33,6 +36,7 @@ __all__ = (
     "BackendCmdsBadResponse",
     "authenticated_transport_factory",
     "anonymous_transport_factory",
+    "administrator_transport_factory",
     "transport_pool_factory",
     "TransportPool",
     "backend_listen_events",
@@ -44,4 +48,6 @@ __all__ = (
     "backend_cmds_factory",
     "BackendAnonymousCmds",
     "backend_anonymous_cmds_factory",
+    "BackendAdministratorCmds",
+    "backend_administrator_cmds_factory",
 )

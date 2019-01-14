@@ -1,7 +1,7 @@
 from uuid import UUID
 from typing import Tuple
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, OrganizationID
 from parsec.api.protocole import blockstore_create_serializer, blockstore_read_serializer
 from parsec.backend.config import BaseBlockstoreConfig
 from parsec.backend.utils import catch_protocole_errors
@@ -29,7 +29,7 @@ class BaseBlockstoreComponent:
         msg = blockstore_read_serializer.req_load(msg)
 
         try:
-            block = await self.read(msg["id"])
+            block = await self.read(client_ctx.organization_id, msg["id"])
 
         except BlockstoreNotFoundError:
             return blockstore_read_serializer.rep_dump({"status": "not_found"})
@@ -44,7 +44,7 @@ class BaseBlockstoreComponent:
         msg = blockstore_create_serializer.req_load(msg)
 
         try:
-            await self.create(**msg, author=client_ctx.device_id)
+            await self.create(client_ctx.organization_id, **msg, author=client_ctx.device_id)
 
         except BlockstoreAlreadyExistsError:
             return blockstore_read_serializer.rep_dump({"status": "already_exists"})
@@ -54,7 +54,7 @@ class BaseBlockstoreComponent:
 
         return blockstore_create_serializer.rep_dump({"status": "ok"})
 
-    async def read(self, id: UUID) -> Tuple[bytes, DeviceID]:
+    async def read(self, organization_id: OrganizationID, id: UUID) -> Tuple[bytes, DeviceID]:
         """
         Raises:
             BlockstoreNotFoundError
@@ -62,7 +62,9 @@ class BaseBlockstoreComponent:
         """
         raise NotImplementedError()
 
-    async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
+    async def create(
+        self, organization_id: OrganizationID, id: UUID, block: bytes, author: DeviceID
+    ) -> None:
         """
         Raises:
             BlockstoreAlreadyExistsError

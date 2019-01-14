@@ -4,7 +4,7 @@ import click
 from functools import wraps
 from pathlib import Path
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, OrganizationID
 from parsec.logging import configure_logging, configure_sentry_logging
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.devices_manager import (
@@ -69,9 +69,16 @@ def core_config_options(fn):
     return wrapper
 
 
+def unslug(val):
+    if ":" not in val:
+        raise ValueError("Must follow format `<organization>:<user_id>@<device_name>`")
+    raw_org, raw_device_id = val.split(":")
+    return (OrganizationID(raw_org), DeviceID(raw_device_id), val)
+
+
 def core_config_and_device_options(fn):
     @core_config_options
-    @click.option("--device", "-D", type=DeviceID, required=True)
+    @click.option("--device", "-D", type=unslug, required=True)
     @click.option("--password", "-P")
     @click.option("--pkcs11", is_flag=True)
     @wraps(fn)
@@ -81,34 +88,36 @@ def core_config_and_device_options(fn):
         if password and kwargs["pkcs11"]:
             raise SystemExit("Password are PKCS11 options are exclusives.")
 
-        device_id = kwargs["device"]
+        organization_id, device_id, slugname = kwargs["device"]
         try:
-            cipher = get_cipher_info(config.config_dir, device_id)
+            cipher = get_cipher_info(config.config_dir, organization_id, device_id)
         except DeviceManagerError as exc:
             raise SystemExit(f"Error with device {device_id}: {exc}")
 
         try:
             if kwargs["pkcs11"]:
                 if cipher != "pkcs11":
-                    raise SystemExit(f"Device {device_id} is ciphered with {cipher}.")
+                    raise SystemExit(f"Device {slugname} is ciphered with {cipher}.")
 
                 token_id = click.prompt("PCKS11 token id", type=int)
                 key_id = click.prompt("PCKS11 key id", type=int)
                 pin = click.prompt("PCKS11 pin", hide_input=True)
                 device = load_device_with_pkcs11(
-                    config.config_dir, device_id, token_id, key_id, pin
+                    config.config_dir, organization_id, device_id, token_id, key_id, pin
                 )
 
             else:
                 if cipher != "password":
-                    raise SystemExit(f"Device {device_id} is ciphered with {cipher}.")
+                    raise SystemExit(f"Device {slugname} is ciphered with {cipher}.")
 
                 if password is None:
                     password = click.prompt("password", hide_input=True)
-                device = load_device_with_password(config.config_dir, device_id, password)
+                device = load_device_with_password(
+                    config.config_dir, organization_id, device_id, password
+                )
 
         except DeviceManagerError as exc:
-            raise SystemExit(f"Cannot load device {device_id}: {exc}")
+            raise SystemExit(f"Cannot load device {slugname}: {exc}")
 
         kwargs["device"] = device
         return fn(**kwargs)

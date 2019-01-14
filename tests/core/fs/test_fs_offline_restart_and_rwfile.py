@@ -16,9 +16,7 @@ PLAYGROUND_SIZE = BLOCK_SIZE * 10
 
 
 @pytest.mark.slow
-def test_fs_offline_restart_and_rwfile(
-    device_factory, local_db_factory, unused_tcp_addr, fs_factory, hypothesis_settings
-):
+def test_fs_offline_restart_and_rwfile(hypothesis_settings, local_db_factory, fs_factory, alice):
     class FSOfflineRestartAndRWFile(TrioRuleBasedStateMachine):
         async def restart_fs(self):
             try:
@@ -43,8 +41,8 @@ def test_fs_offline_restart_and_rwfile(
 
         @initialize()
         async def init(self):
-            self.device = device_factory()
-            self.local_db = local_db_factory(self.device)
+            self.device = alice
+            self.local_db = local_db_factory(alice)
             await self.restart_fs()
             await self.fs.workspace_create("/w")
             await self.fs.file_create("/w/foo.txt")

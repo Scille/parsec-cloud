@@ -67,11 +67,20 @@ async def vlobs(backend, alice):
         Access(UUID("00000000000000000000000000000001"), "<1 rts>", "<1 wts>"),
         Access(UUID("00000000000000000000000000000002"), "<2 rts>", "<2 wts>"),
     )
-    await backend.vlob.create(*accesses[0], b"1 blob v1", author=alice.device_id)
-    await backend.vlob.update(
-        accesses[0].id, accesses[0].wts, 2, b"1 blob v2", author=alice.device_id
+    await backend.vlob.create(
+        alice.organization_id, *accesses[0], b"1 blob v1", author=alice.device_id
     )
-    await backend.vlob.create(*accesses[1], b"2 blob v1", author=alice.device_id)
+    await backend.vlob.update(
+        alice.organization_id,
+        accesses[0].id,
+        accesses[0].wts,
+        2,
+        b"1 blob v2",
+        author=alice.device_id,
+    )
+    await backend.vlob.create(
+        alice.organization_id, *accesses[1], b"2 blob v1", author=alice.device_id
+    )
     return accesses
 
 
@@ -134,6 +143,13 @@ async def test_vlob_read_ok(alice_backend_sock, vlobs):
     assert rep == {"status": "ok", "blob": b"1 blob v2", "version": 2}
 
 
+@pytest.mark.trio
+async def test_vlob_read_other_organization(backend, sock_from_other_organization_factory, vlobs):
+    async with sock_from_other_organization_factory(backend) as sock:
+        rep = await vlob_read(sock, vlobs[0].id, vlobs[0].rts)
+    assert rep == {"status": "not_found"}
+
+
 @pytest.mark.parametrize(
     "bad_msg",
     [
@@ -177,6 +193,15 @@ async def test_vlob_update_not_found(alice_backend_sock):
     rep = await vlob_update(
         alice_backend_sock, VLOB_ID, VLOB_WTS, version=2, blob=b"Next version.", check_rep=False
     )
+    assert rep == {"status": "not_found"}
+
+
+@pytest.mark.trio
+async def test_vlob_update_other_organization(backend, sock_from_other_organization_factory, vlobs):
+    async with sock_from_other_organization_factory(backend) as sock:
+        rep = await vlob_update(
+            sock, vlobs[0].id, vlobs[0].wts, version=3, blob=b"Next version.", check_rep=False
+        )
     assert rep == {"status": "not_found"}
 
 
@@ -246,3 +271,12 @@ async def test_group_check(alice_backend_sock, vlobs):
         "status": "ok",
         "changed": [{"id": VLOB_ID, "version": 0}, {"id": vlobs[0].id, "version": 2}],
     }
+
+
+@pytest.mark.trio
+async def test_vlob_group_check_other_organization(
+    backend, sock_from_other_organization_factory, vlobs
+):
+    async with sock_from_other_organization_factory(backend) as sock:
+        rep = await vlob_group_check(sock, [{"id": vlobs[0].id, "rts": vlobs[0].rts, "version": 1}])
+        assert rep == {"status": "ok", "changed": []}

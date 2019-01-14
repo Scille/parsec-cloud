@@ -2,6 +2,7 @@ import attr
 import pendulum
 from typing import Optional
 
+from parsec.types import OrganizationID
 from parsec.crypto import generate_token, VerifyKey
 from parsec.trustchain import (
     TrustChainError,
@@ -40,7 +41,7 @@ class OrganizationFirstUserCreationError(OrganizationError):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class Organization:
-    name: str
+    organization_id: OrganizationID
     bootstrap_token: str
     root_verify_key: Optional[VerifyKey] = None
 
@@ -55,14 +56,13 @@ class BaseOrganizationComponent:
     def __init__(self, bootstrap_token_size: int = 32):
         self.bootstrap_token_size = bootstrap_token_size
 
-    @anonymous_api
     @catch_protocole_errors
     async def api_organization_create(self, client_ctx, msg):
         msg = organization_create_serializer.req_load(msg)
 
         bootstrap_token = generate_token(self.bootstrap_token_size)
         try:
-            await self.create(msg["name"], bootstrap_token=bootstrap_token)
+            await self.create(msg["organization_id"], bootstrap_token=bootstrap_token)
 
         except OrganizationAlreadyExistsError:
             return {"status": "already_exists"}
@@ -100,13 +100,13 @@ class BaseOrganizationComponent:
         if u_data["user_id"] != d_data["device_id"].user_id:
             return {
                 "status": "invalid_data",
-                "reason": "Device and User must have the same user ID.",
+                "reason": "Device and user must have the same user ID.",
             }
 
         if u_data["timestamp"] != d_data["timestamp"]:
             return {
                 "status": "invalid_data",
-                "reason": "Device and User must have the same timestamp.",
+                "reason": "Device and user must have the same timestamp.",
             }
 
         user = new_user_factory(
@@ -117,7 +117,9 @@ class BaseOrganizationComponent:
             certified_device=msg["certified_device"],
         )
         try:
-            await self.bootstrap(msg["name"], msg["bootstrap_token"], root_verify_key, user)
+            await self.bootstrap(
+                client_ctx.organization_id, user, msg["bootstrap_token"], root_verify_key
+            )
 
         except OrganizationAlreadyBootstrappedError:
             return {"status": "already_bootstrapped"}
@@ -130,14 +132,14 @@ class BaseOrganizationComponent:
 
         return organization_bootstrap_serializer.rep_dump({"status": "ok"})
 
-    async def create(self, name: str, bootstrap_token: str) -> None:
+    async def create(self, id: OrganizationID, bootstrap_token: str) -> None:
         """
         Raises:
             OrganizationAlreadyExistsError
         """
         raise NotImplementedError()
 
-    async def get(self, name: str) -> Organization:
+    async def get(self, id: OrganizationID) -> Organization:
         """
         Raises:
             OrganizationNotFoundError
@@ -145,7 +147,7 @@ class BaseOrganizationComponent:
         raise NotImplementedError()
 
     async def bootstrap(
-        self, name: str, bootstrap_token: str, root_verify_key: VerifyKey, user: User
+        self, id: OrganizationID, user: User, bootstrap_token: str, root_verify_key: VerifyKey
     ) -> None:
         """
         Raises:

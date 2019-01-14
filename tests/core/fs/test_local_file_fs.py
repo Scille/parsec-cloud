@@ -155,7 +155,7 @@ def test_block_not_loaded_entry(local_folder_fs, local_file_fs, foo_txt):
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Windows file style not compatible with oracle")
 def test_file_operations(
-    tmpdir, hypothesis_settings, device_factory, local_db_factory, local_file_fs_factory
+    tmpdir, hypothesis_settings, local_db_factory, local_file_fs_factory, alice
 ):
     tentative = 0
 
@@ -165,7 +165,7 @@ def test_file_operations(
             nonlocal tentative
             tentative += 1
 
-            self.device = device_factory()
+            self.device = alice
             self.local_db = local_db_factory(self.device)
             self.local_file_fs = local_file_fs_factory(self.device, self.local_db)
             self.access = ManifestAccess()

@@ -104,3 +104,6 @@ async def test_big_buffer_bench(backend_addr):
         roundtrip_payload = schema.loads(raw)
         assert roundtrip_payload == payload
         del raw
+
+
+# TODO: test websocket can work with message sent across mutiple TCP frames

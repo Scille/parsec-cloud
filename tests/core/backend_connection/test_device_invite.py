@@ -16,7 +16,7 @@ from parsec.core.invite_claim import (
 
 @pytest.mark.trio
 async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_backend):
-    nd_id = DeviceID("alice@new_device")
+    nd_id = DeviceID(f"{alice.user_id}@new_device")
     nd_signing_key = SigningKey.generate()
     token = "123456"
 
@@ -34,7 +34,7 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
         await alice_backend_cmds.device_create(certified_device, encrypted_answer)
 
     async def _alice_nd_claim():
-        async with backend_anonymous_cmds_factory(running_backend.addr) as cmds:
+        async with backend_anonymous_cmds_factory(alice.organization_addr) as cmds:
             invitation_creator = await cmds.device_get_invitation_creator(nd_id)
             assert isinstance(invitation_creator, RemoteUser)
 
@@ -64,6 +64,6 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
         nursery.start_soon(_alice_nd_claim)
 
     # Now alice's new device should be able to connect to backend
-    async with backend_cmds_factory(running_backend.addr, nd_id, nd_signing_key) as cmds:
+    async with backend_cmds_factory(alice.organization_addr, nd_id, nd_signing_key) as cmds:
         pong = await cmds.ping("Hello World !")
         assert pong == "Hello World !"

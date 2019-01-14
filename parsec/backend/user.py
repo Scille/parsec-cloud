@@ -3,7 +3,8 @@ import attr
 from typing import Dict, List, Optional, Tuple
 import pendulum
 
-from parsec.types import UserID, DeviceID, FrozenDict
+from parsec.types import UserID, DeviceID, OrganizationID, FrozenDict
+from parsec.crypto import VerifyKey, PublicKey
 from parsec.trustchain import (
     unsecure_certified_device_extract_verify_key,
     unsecure_certified_user_extract_public_key,
@@ -68,7 +69,7 @@ class Device:
         return self.device_id.user_id
 
     @property
-    def verify_key(self):
+    def verify_key(self) -> VerifyKey:
         return unsecure_certified_device_extract_verify_key(self.certified_device)
 
     device_id: DeviceID
@@ -95,10 +96,10 @@ class User:
         return attr.evolve(self, **kwargs)
 
     @property
-    def public_key(self):
+    def public_key(self) -> PublicKey:
         return unsecure_certified_user_extract_public_key(self.certified_user)
 
-    def is_revocated(self):
+    def is_revocated(self) -> bool:
         return any((False for d in self.devices.values if not d.revocated_on), True)
 
     user_id: UserID
@@ -145,6 +146,10 @@ class UserInvitation:
     creator: DeviceID
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
 
+    @property
+    def organization_id(self) -> OrganizationID:
+        return self.user_id.organization_id
+
     def is_valid(self) -> bool:
         return (pendulum.now() - self.created_on).total_seconds() < INVITATION_VALIDITY
 
@@ -170,7 +175,9 @@ class BaseUserComponent:
         msg = user_get_serializer.req_load(msg)
 
         try:
-            user, trustchain = await self.get_user_with_trustchain(msg["user_id"])
+            user, trustchain = await self.get_user_with_trustchain(
+                client_ctx.organization_id, msg["user_id"]
+            )
         except UserNotFoundError as exc:
             return {"status": "not_found"}
 
@@ -190,7 +197,7 @@ class BaseUserComponent:
     @catch_protocole_errors
     async def api_user_find(self, client_ctx, msg):
         msg = user_find_serializer.req_load(msg)
-        results, total = await self.find(**msg)
+        results, total = await self.find(client_ctx.organization_id, **msg)
         return user_find_serializer.rep_dump(
             {
                 "status": "ok",
@@ -207,7 +214,9 @@ class BaseUserComponent:
     async def api_user_invite(self, client_ctx, msg):
         # is_admin could have changed in db since the creation of the connection
         try:
-            user, _ = await self.get_user_with_trustchain(client_ctx.device_id.user_id)
+            user, _ = await self.get_user_with_trustchain(
+                client_ctx.organization_id, client_ctx.device_id.user_id
+            )
 
         except UserNotFoundError as exc:
             raise RuntimeError("User `{client_ctx.device_id.user_id}` disappeared !")
@@ -222,7 +231,7 @@ class BaseUserComponent:
 
         invitation = UserInvitation(msg["user_id"], client_ctx.device_id)
         try:
-            await self.create_user_invitation(invitation)
+            await self.create_user_invitation(client_ctx.organization_id, invitation)
 
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
@@ -232,9 +241,9 @@ class BaseUserComponent:
         claim_answered = trio.Event()
         _encrypted_claim = None
 
-        def _on_user_claimed(event, user_id, encrypted_claim):
+        def _on_user_claimed(event, organization_id, user_id, encrypted_claim):
             nonlocal _encrypted_claim
-            if user_id == invitation.user_id:
+            if organization_id == client_ctx.organization_id and user_id == invitation.user_id:
                 claim_answered.set()
                 _encrypted_claim = encrypted_claim
 
@@ -256,11 +265,15 @@ class BaseUserComponent:
         msg = user_get_invitation_creator_serializer.req_load(msg)
 
         try:
-            invitation = await self.get_user_invitation(msg["invited_user_id"])
+            invitation = await self.get_user_invitation(
+                client_ctx.organization_id, msg["invited_user_id"]
+            )
             if not invitation.is_valid():
                 return {"status": "not_found"}
 
-            user, trustchain = await self.get_user_with_trustchain(invitation.creator.user_id)
+            user, trustchain = await self.get_user_with_trustchain(
+                client_ctx.organization_id, invitation.creator.user_id
+            )
 
         except UserNotFoundError as exc:
             return {"status": "not_found"}
@@ -283,7 +296,7 @@ class BaseUserComponent:
 
         try:
             invitation = await self.claim_user_invitation(
-                msg["invited_user_id"], msg["encrypted_claim"]
+                client_ctx.organization_id, msg["invited_user_id"], msg["encrypted_claim"]
             )
             if not invitation.is_valid():
                 return {"status": "not_found"}
@@ -299,9 +312,9 @@ class BaseUserComponent:
         replied = trio.Event()
         replied_ok = False
 
-        def _on_reply(event, user_id):
+        def _on_reply(event, organization_id, user_id):
             nonlocal replied_ok
-            if user_id == invitation.user_id:
+            if organization_id == client_ctx.organization_id and user_id == invitation.user_id:
                 replied_ok = event == "user.created"
                 replied.set()
 
@@ -322,7 +335,7 @@ class BaseUserComponent:
     async def api_user_cancel_invitation(self, client_ctx, msg):
         msg = user_cancel_invitation_serializer.req_load(msg)
 
-        await self.cancel_user_invitation(msg["user_id"])
+        await self.cancel_user_invitation(client_ctx.organization_id, msg["user_id"])
 
         return user_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
@@ -385,7 +398,7 @@ class BaseUserComponent:
                 ),
                 created_on=u_data["timestamp"],
             )
-            await self.create_user(user)
+            await self.create_user(client_ctx.organization_id, user)
 
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
@@ -401,7 +414,7 @@ class BaseUserComponent:
         invited_device_id = DeviceID(f"{client_ctx.device_id.user_id}@{msg['invited_device_name']}")
         invitation = DeviceInvitation(invited_device_id, client_ctx.device_id)
         try:
-            await self.create_device_invitation(invitation)
+            await self.create_device_invitation(client_ctx.organization_id, invitation)
 
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
@@ -411,9 +424,9 @@ class BaseUserComponent:
         claim_answered = trio.Event()
         _encrypted_claim = None
 
-        def _on_device_claimed(event, device_id, encrypted_claim):
+        def _on_device_claimed(event, organization_id, device_id, encrypted_claim):
             nonlocal _encrypted_claim
-            if device_id == invitation.device_id:
+            if organization_id == client_ctx.organization_id and device_id == invitation.device_id:
                 claim_answered.set()
                 _encrypted_claim = encrypted_claim
 
@@ -435,11 +448,15 @@ class BaseUserComponent:
         msg = device_get_invitation_creator_serializer.req_load(msg)
 
         try:
-            invitation = await self.get_device_invitation(msg["invited_device_id"])
+            invitation = await self.get_device_invitation(
+                client_ctx.organization_id, msg["invited_device_id"]
+            )
             if not invitation.is_valid():
                 return {"status": "not_found"}
 
-            user, trustchain = await self.get_user_with_trustchain(invitation.creator.user_id)
+            user, trustchain = await self.get_user_with_trustchain(
+                client_ctx.organization_id, invitation.creator.user_id
+            )
 
         except UserNotFoundError as exc:
             return {"status": "not_found"}
@@ -462,7 +479,7 @@ class BaseUserComponent:
 
         try:
             invitation = await self.claim_device_invitation(
-                msg["invited_device_id"], msg["encrypted_claim"]
+                client_ctx.organization_id, msg["invited_device_id"], msg["encrypted_claim"]
             )
             if not invitation.is_valid():
                 return {"status": "not_found"}
@@ -479,9 +496,9 @@ class BaseUserComponent:
         replied_ok = False
         replied_encrypted_answer = None
 
-        def _on_reply(event, device_id, encrypted_answer=None):
+        def _on_reply(event, organization_id, device_id, encrypted_answer=None):
             nonlocal replied_ok, replied_encrypted_answer
-            if device_id == invitation.device_id:
+            if organization_id == client_ctx.organization_id and device_id == invitation.device_id:
                 replied_ok = event == "device.created"
                 replied_encrypted_answer = encrypted_answer
                 replied.set()
@@ -508,7 +525,7 @@ class BaseUserComponent:
 
         invited_device_id = DeviceID(f"{client_ctx.device_id.user_id}@{msg['invited_device_name']}")
 
-        await self.cancel_device_invitation(invited_device_id)
+        await self.cancel_device_invitation(client_ctx.organization_id, invited_device_id)
 
         return device_cancel_invitation_serializer.rep_dump({"status": "ok"})
 
@@ -548,7 +565,9 @@ class BaseUserComponent:
                 device_certifier=certifier_id,
                 created_on=data["timestamp"],
             )
-            await self.create_device(device, encrypted_answer=msg["encrypted_answer"])
+            await self.create_device(
+                client_ctx.organization_id, device, encrypted_answer=msg["encrypted_answer"]
+            )
         except UserAlreadyExistsError as exc:
             return {"status": "already_exists", "reason": str(exc)}
 
@@ -584,7 +603,9 @@ class BaseUserComponent:
 
         if client_ctx.device_id.user_id != data["device_id"].user_id:
             try:
-                user, _ = await self.get_user_with_trustchain(client_ctx.device_id.user_id)
+                user, _ = await self.get_user_with_trustchain(
+                    client_ctx.organization_id, client_ctx.device_id.user_id
+                )
 
             except UserNotFoundError as exc:
                 raise RuntimeError("User `{client_ctx.device_id.user_id}` disappeared !")
@@ -596,7 +617,12 @@ class BaseUserComponent:
                 }
 
         try:
-            await self.revoke_device(data["device_id"], msg["certified_revocation"], certifier_id)
+            await self.revoke_device(
+                client_ctx.organization_id,
+                data["device_id"],
+                msg["certified_revocation"],
+                certifier_id,
+            )
 
         except UserNotFoundError:
             return {"status": "not_found"}
@@ -611,28 +637,32 @@ class BaseUserComponent:
 
     #### Virtual methods ####
 
-    async def set_user_admin(self, user_id: UserID, is_admin: bool) -> None:
+    async def set_user_admin(
+        self, organization_id: OrganizationID, user_id: UserID, is_admin: bool
+    ) -> None:
         """
         Raises:
             UserNotFoundError
         """
         raise NotImplementedError()
 
-    async def create_user(self, user: User) -> None:
+    async def create_user(self, organization_id: OrganizationID, user: User) -> None:
         """
         Raises:
             UserAlreadyExistsError
         """
         raise NotImplementedError()
 
-    async def create_device(self, device: Device, encrypted_answer: bytes = b"") -> None:
+    async def create_device(
+        self, organization_id: OrganizationID, device: Device, encrypted_answer: bytes = b""
+    ) -> None:
         """
         Raises:
             UserAlreadyExistsError
         """
         raise NotImplementedError()
 
-    async def get_user(self, user_id: UserID) -> User:
+    async def get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
         """
         Raises:
             UserNotFoundError
@@ -640,7 +670,7 @@ class BaseUserComponent:
         raise NotImplementedError()
 
     async def get_user_with_trustchain(
-        self, user_id: UserID
+        self, organization_id: OrganizationID, user_id: UserID
     ) -> Tuple[User, Dict[DeviceID, Device]]:
         """
         Raises:
@@ -648,7 +678,7 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
-    async def get_device(self, device_id: DeviceID) -> Device:
+    async def get_device(self, organization_id: OrganizationID, device_id: DeviceID) -> Device:
         """
         Raises:
             UserNotFoundError
@@ -656,7 +686,7 @@ class BaseUserComponent:
         raise NotImplementedError()
 
     async def get_device_with_trustchain(
-        self, device_id: DeviceID
+        self, organization_id: OrganizationID, device_id: DeviceID
     ) -> Tuple[Device, Dict[DeviceID, Device]]:
         """
         Raises:
@@ -665,18 +695,22 @@ class BaseUserComponent:
         raise NotImplementedError()
 
     async def find(
-        self, query: str = None, page: int = 1, per_page: int = 100
+        self, organization_id: OrganizationID, query: str = None, page: int = 1, per_page: int = 100
     ) -> Tuple[List[UserID], int]:
         raise NotImplementedError()
 
-    async def create_user_invitation(self, invitation: UserInvitation) -> None:
+    async def create_user_invitation(
+        self, organization_id: OrganizationID, invitation: UserInvitation
+    ) -> None:
         """
         Raises:
             UserAlreadyExistsError
         """
         raise NotImplementedError()
 
-    async def get_user_invitation(self, user_id: UserID) -> UserInvitation:
+    async def get_user_invitation(
+        self, organization_id: OrganizationID, user_id: UserID
+    ) -> UserInvitation:
         """
         Raises:
             UserAlreadyExistsError
@@ -685,7 +719,7 @@ class BaseUserComponent:
         raise NotImplementedError()
 
     async def claim_user_invitation(
-        self, user_id: UserID, encrypted_claim: bytes = b""
+        self, organization_id: OrganizationID, user_id: UserID, encrypted_claim: bytes = b""
     ) -> UserInvitation:
         """
         Raises:
@@ -694,13 +728,17 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
-    async def cancel_user_invitation(self, user_id: UserID) -> None:
+    async def cancel_user_invitation(
+        self, organization_id: OrganizationID, user_id: UserID
+    ) -> None:
         """
         Raises: Nothing
         """
         raise NotImplementedError()
 
-    async def create_device_invitation(self, invitation: DeviceInvitation) -> None:
+    async def create_device_invitation(
+        self, organization_id: OrganizationID, invitation: DeviceInvitation
+    ) -> None:
         """
         Raises:
             UserAlreadyExistsError
@@ -708,7 +746,9 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
-    async def get_device_invitation(self, device_id: DeviceID) -> DeviceInvitation:
+    async def get_device_invitation(
+        self, organization_id: OrganizationID, device_id: DeviceID
+    ) -> DeviceInvitation:
         """
         Raises:
             UserAlreadyExistsError
@@ -717,7 +757,7 @@ class BaseUserComponent:
         raise NotImplementedError()
 
     async def claim_device_invitation(
-        self, device_id: DeviceID, encrypted_claim: bytes = b""
+        self, organization_id: OrganizationID, device_id: DeviceID, encrypted_claim: bytes = b""
     ) -> UserInvitation:
         """
         Raises:
@@ -726,14 +766,20 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
-    async def cancel_device_invitation(self, device_id: DeviceID) -> None:
+    async def cancel_device_invitation(
+        self, organization_id: OrganizationID, device_id: DeviceID
+    ) -> None:
         """
         Raises: Nothing
         """
         raise NotImplementedError()
 
     async def revoke_device(
-        self, device_id: DeviceID, certified_revocation: bytes, revocation_certifier: DeviceID
+        self,
+        organization_id: OrganizationID,
+        device_id: DeviceID,
+        certified_revocation: bytes,
+        revocation_certifier: DeviceID,
     ) -> None:
         """
         Raises:

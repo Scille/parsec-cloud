@@ -1,5 +1,6 @@
 from triopg import UniqueViolationError
 
+from parsec.types import OrganizationID
 from parsec.crypto import VerifyKey
 from parsec.backend.user import BaseUserComponent, UserError, User
 from parsec.backend.organization import (
@@ -21,16 +22,16 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self.dbh = dbh
         self.user_component = user_component
 
-    async def create(self, name: str, bootstrap_token: str) -> None:
+    async def create(self, id: OrganizationID, bootstrap_token: str) -> None:
         async with self.dbh.pool.acquire() as conn:
             try:
                 result = await conn.execute(
                     """
                     INSERT INTO organizations (
-                        name, bootstrap_token
+                        organization_id, bootstrap_token
                     ) VALUES ($1, $2)
                     """,
-                    name,
+                    id,
                     bootstrap_token,
                 )
             except UniqueViolationError:
@@ -39,31 +40,35 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             if result != "INSERT 0 1":
                 raise OrganizationError(f"Insertion error: {result}")
 
-    async def get(self, name: str) -> Organization:
+    async def get(self, id: OrganizationID) -> Organization:
         async with self.dbh.pool.acquire() as conn:
-            return self._get(conn, name)
+            return await self._get(conn, id)
 
     @staticmethod
-    async def _get(conn, name: str) -> Organization:
+    async def _get(conn, id: OrganizationID) -> Organization:
         data = await conn.fetchrow(
             """
-                SELECT name, bootstrap_token, root_verify_key
-                FROM organizations WHERE name = $1
+                SELECT bootstrap_token, root_verify_key
+                FROM organizations WHERE organization_id = $1
                 """,
-            name,
+            id,
         )
         if not data:
             raise OrganizationNotFoundError()
 
-        rvk = VerifyKey(data[2]) if data[2] else None
-        return Organization(name=data[0], bootstrap_token=data[1], root_verify_key=rvk)
+        rvk = VerifyKey(data[1]) if data[1] else None
+        return Organization(organization_id=id, bootstrap_token=data[0], root_verify_key=rvk)
 
     async def bootstrap(
-        self, name: str, bootstrap_token: str, root_verify_key: VerifyKey, user: User
+        self,
+        organization_id: OrganizationID,
+        user: User,
+        bootstrap_token: str,
+        root_verify_key: VerifyKey,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                organization = await self._get(conn, name)
+                organization = await self._get(conn, organization_id)
 
                 if organization.is_bootstrapped():
                     raise OrganizationAlreadyBootstrappedError()
@@ -72,15 +77,19 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     raise OrganizationInvalidBootstrapTokenError()
 
                 try:
-                    await self.user_component._create_user(conn, user)
+                    await self.user_component._create_user(conn, organization_id, user)
                 except UserError as exc:
-                    raise OrganizationFirstUserCreationError() from exc
+                    raise OrganizationFirstUserCreationError(exc) from exc
 
                 result = await conn.execute(
                     """
-                    UPDATE organizations SET root_verify_key = $3 WHERE name = $1 AND bootstrap_token = $2 AND root_verify_key IS NULL;
+                    UPDATE organizations
+                    SET root_verify_key = $3
+                    WHERE organization_id = $1
+                        AND bootstrap_token = $2
+                        AND root_verify_key IS NULL;
                     """,
-                    name,
+                    organization_id,
                     bootstrap_token,
                     root_verify_key.encode(),
                 )

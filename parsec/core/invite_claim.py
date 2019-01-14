@@ -208,7 +208,7 @@ async def claim_device(cmds: BackendCmdsPool, new_device_id: DeviceID, token: st
 
     answer = extract_device_encrypted_answer(answer_private_key, encrypted_answer)
     return LocalDevice(
-        backend_addr=cmds.addr,
+        organization_addr=cmds.addr,
         device_id=new_device_id,
         signing_key=device_signing_key,
         private_key=answer["private_key"],

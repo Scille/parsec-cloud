@@ -17,7 +17,7 @@ async def test_backend_offline(backend_addr, alice):
 @pytest.mark.trio
 async def test_backend_switch_offline(running_backend, alice, tcp_stream_spy):
     async with backend_cmds_factory(
-        running_backend.addr, alice.device_id, alice.signing_key
+        alice.organization_addr, alice.device_id, alice.signing_key
     ) as cmds:
         # First, have a good request to make sure a socket has been opened
         pong = await cmds.ping("Hello World !")
@@ -28,7 +28,7 @@ async def test_backend_switch_offline(running_backend, alice, tcp_stream_spy):
         async def _broken_send_stream():
             raise trio.BrokenResourceError("Huho!")
 
-        tcp_stream_spy.get_socks(running_backend.addr)[
+        tcp_stream_spy.get_socks(alice.organization_addr)[
             -1
         ].send_stream.send_all_hook = _broken_send_stream
         pong = await cmds.ping("Hello World !")
@@ -48,7 +48,7 @@ async def test_backend_switch_offline(running_backend, alice, tcp_stream_spy):
 @pytest.mark.parametrize("cmds_used", (False, True))
 async def test_backend_closed_cmds(cmds_used, running_backend, alice):
     async with backend_cmds_factory(
-        running_backend.addr, alice.device_id, alice.signing_key
+        alice.organization_addr, alice.device_id, alice.signing_key
     ) as cmds:
         if cmds_used:
             await cmds.ping("Whatever")
@@ -72,7 +72,7 @@ async def test_concurrency_sends(running_backend, alice):
             work_all_done.set()
 
     async with backend_cmds_factory(
-        running_backend.addr, alice.device_id, alice.signing_key
+        alice.organization_addr, alice.device_id, alice.signing_key
     ) as cmds:
 
         async with trio.open_nursery() as nursery:

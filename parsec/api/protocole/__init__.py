@@ -7,7 +7,7 @@ from parsec.api.protocole.base import (
 )
 from parsec.api.protocole.handshake import (
     HandshakeError,
-    HandshakeFormatError,
+    HandshakeFailedChallenge,
     HandshakeBadIdentity,
     HandshakeRevokedDevice,
     ServerHandshake,
@@ -53,7 +53,7 @@ __all__ = (
     "packb",
     "unpackb",
     "HandshakeError",
-    "HandshakeFormatError",
+    "HandshakeFailedChallenge",
     "HandshakeBadIdentity",
     "HandshakeRevokedDevice",
     "ServerHandshake",

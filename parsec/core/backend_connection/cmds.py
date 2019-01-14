@@ -1,7 +1,7 @@
 from typing import Tuple, List, Dict, Iterable
 from uuid import UUID
 
-from parsec.types import DeviceID, UserID, DeviceName
+from parsec.types import DeviceID, UserID, DeviceName, OrganizationID
 from parsec.crypto import VerifyKey
 from parsec.api.transport import Transport, TransportError
 from parsec.api.protocole import (
@@ -366,9 +366,12 @@ async def device_revoke(transport: Transport, certified_revocation: bytes) -> No
 # ping already defined in authenticated part
 
 
-async def organization_create(transport: Transport, name: str) -> str:
+async def organization_create(transport: Transport, organization_id: OrganizationID) -> str:
     rep = await _send_cmd(
-        transport, organization_create_serializer, cmd="organization_create", name=name
+        transport,
+        organization_create_serializer,
+        cmd="organization_create",
+        organization_id=organization_id,
     )
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)
@@ -377,7 +380,7 @@ async def organization_create(transport: Transport, name: str) -> str:
 
 async def organization_bootstrap(
     transport: Transport,
-    name: str,
+    organization_id: OrganizationID,
     bootstrap_token: str,
     root_verify_key: VerifyKey,
     certified_user: bytes,
@@ -387,7 +390,7 @@ async def organization_bootstrap(
         transport,
         organization_bootstrap_serializer,
         cmd="organization_bootstrap",
-        name=name,
+        organization_id=organization_id,
         bootstrap_token=bootstrap_token,
         root_verify_key=root_verify_key,
         certified_user=certified_user,

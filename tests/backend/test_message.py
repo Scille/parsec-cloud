@@ -61,7 +61,7 @@ async def test_message_from_bob_to_alice_multi_backends(
     async with backend_factory(
         config={"blockstore_types": ["POSTGRESQL"], "db_url": postgresql_url}
     ) as backend_1, backend_factory(
-        devices=(), config={"blockstore_types": ["POSTGRESQL"], "db_url": postgresql_url}
+        populated=False, config={"blockstore_types": ["POSTGRESQL"], "db_url": postgresql_url}
     ) as backend_2:
 
         async with backend_sock_factory(
@@ -77,7 +77,7 @@ async def test_message_from_bob_to_alice_multi_backends(
             rep = await message_get(alice_backend_sock)
             assert rep == {
                 "status": "ok",
-                "messages": [{"body": b"Hello from Bob !", "sender": "bob@dev1", "count": 1}],
+                "messages": [{"body": b"Hello from Bob !", "sender": bob.device_id, "count": 1}],
             }
 
 
@@ -86,8 +86,12 @@ async def test_message_received_event(backend, alice_backend_sock, alice, bob):
     await events_subscribe(alice_backend_sock, message_received=True)
 
     # Good message
-    await backend.message.send(bob.device_id, alice.user_id, b"Hello from bob to alice")
-    await backend.message.send(bob.device_id, alice.user_id, b"Goodbye from bob to alice")
+    await backend.message.send(
+        bob.organization_id, bob.device_id, alice.user_id, b"Hello from bob to alice"
+    )
+    await backend.message.send(
+        bob.organization_id, bob.device_id, alice.user_id, b"Goodbye from bob to alice"
+    )
 
     with trio.fail_after(1):
         # No guarantees those events occur before the commands' return
@@ -105,6 +109,8 @@ async def test_message_received_event(backend, alice_backend_sock, alice, bob):
     ]
 
     # Message to self is silly... and doesn't trigger event !
-    await backend.message.send(alice.device_id, alice.user_id, b"Hello to myself")
+    await backend.message.send(
+        alice.organization_id, alice.device_id, alice.user_id, b"Hello to myself"
+    )
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "no_events"}

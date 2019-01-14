@@ -6,7 +6,7 @@ from parsec.backend.user import PEER_EVENT_MAX_WAIT
 from parsec.api.protocole import device_invite_serializer
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def alice_nd_id(alice):
     return DeviceID(f"{alice.user_id}@new_device")
 
@@ -30,8 +30,18 @@ async def test_device_invite(backend, alice_backend_sock, alice, alice_nd_id):
         # Waiting for device.claimed event
         await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "device.claimed"})
 
-        backend.event_bus.send("device.claimed", device_id="foo", encrypted_claim=b"<dummy>")
-        backend.event_bus.send("device.claimed", device_id=alice_nd_id, encrypted_claim=b"<good>")
+        backend.event_bus.send(
+            "device.claimed",
+            organization_id=alice.organization_id,
+            device_id="foo",
+            encrypted_claim=b"<dummy>",
+        )
+        backend.event_bus.send(
+            "device.claimed",
+            organization_id=alice.organization_id,
+            device_id=alice_nd_id,
+            encrypted_claim=b"<good>",
+        )
 
     assert prep[0] == {"status": "ok", "encrypted_claim": b"<good>"}
 
@@ -79,7 +89,10 @@ async def test_concurrent_device_invite(
             )
 
             backend.event_bus.send(
-                "device.claimed", device_id=alice_nd_id, encrypted_claim=b"<good>"
+                "device.claimed",
+                organization_id=alice.organization_id,
+                device_id=alice_nd_id,
+                encrypted_claim=b"<good>",
             )
 
     assert prep[0] == {"status": "ok", "encrypted_claim": b"<good>"}

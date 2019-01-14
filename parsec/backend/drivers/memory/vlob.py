@@ -1,7 +1,8 @@
 from uuid import UUID
 from typing import List, Tuple
+from collections import defaultdict
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.backend.beacon import BaseBeaconComponent
 from parsec.backend.vlob import (
@@ -25,9 +26,11 @@ class MemoryVlobComponent(BaseVlobComponent):
     def __init__(self, event_bus: EventBus, beacon_component: BaseBeaconComponent):
         self.event_bus = event_bus
         self.beacon_component = beacon_component
-        self.vlobs = {}
+        self._organizations = defaultdict(dict)
 
-    async def group_check(self, to_check: List[dict]) -> List[dict]:
+    async def group_check(
+        self, organization_id: OrganizationID, to_check: List[dict]
+    ) -> List[dict]:
         changed = []
         for item in to_check:
             id = item["id"]
@@ -37,7 +40,7 @@ class MemoryVlobComponent(BaseVlobComponent):
                 changed.append({"id": id, "version": version})
             else:
                 try:
-                    current_version, _ = await self.read(id, rts)
+                    current_version, _ = await self.read(organization_id, id, rts)
                 except (VlobNotFoundError, VlobTrustSeedError):
                     continue
                 if current_version != version:
@@ -46,6 +49,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
     async def create(
         self,
+        organization_id: OrganizationID,
         id: UUID,
         rts: str,
         wts: str,
@@ -53,18 +57,24 @@ class MemoryVlobComponent(BaseVlobComponent):
         author: DeviceID,
         notify_beacon: UUID = None,
     ) -> None:
+        vlobs = self._organizations[organization_id]
+
         vlob = MemoryVlob(id, rts, wts)
         vlob.blob_versions.append((blob, author))
-        if vlob.id in self.vlobs:
+        if vlob.id in vlobs:
             raise VlobAlreadyExistsError()
-        self.vlobs[vlob.id] = vlob
+        vlobs[vlob.id] = vlob
 
         if notify_beacon:
-            await self.beacon_component.update(notify_beacon, id, 1, author)
+            await self.beacon_component.update(organization_id, notify_beacon, id, 1, author)
 
-    async def read(self, id: UUID, rts: str, version: int = None) -> Tuple[int, bytes]:
+    async def read(
+        self, organization_id: OrganizationID, id: UUID, rts: str, version: int = None
+    ) -> Tuple[int, bytes]:
+        vlobs = self._organizations[organization_id]
+
         try:
-            vlob = self.vlobs[id]
+            vlob = vlobs[id]
             if vlob.rts != rts:
                 raise VlobTrustSeedError()
 
@@ -81,6 +91,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
     async def update(
         self,
+        organization_id: OrganizationID,
         id: UUID,
         wts: str,
         version: int,
@@ -88,8 +99,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         author: DeviceID,
         notify_beacon: UUID = None,
     ) -> None:
+        vlobs = self._organizations[organization_id]
+
         try:
-            vlob = self.vlobs[id]
+            vlob = vlobs[id]
             if vlob.wts != wts:
                 raise VlobTrustSeedError()
 
@@ -102,4 +115,4 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobVersionError()
 
         if notify_beacon:
-            await self.beacon_component.update(notify_beacon, id, version, author)
+            await self.beacon_component.update(organization_id, notify_beacon, id, version, author)

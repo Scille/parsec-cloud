@@ -21,13 +21,13 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 @pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
 def test_fs_online_tree_and_sync(
     hypothesis_settings,
-    oracle_fs_with_sync_factory,
-    device_factory,
-    local_db_factory,
+    backend_addr,
     backend_factory,
     server_factory,
+    oracle_fs_with_sync_factory,
+    local_db_factory,
     fs_factory,
-    backend_addr,
+    alice,
 ):
     class FSOnlineTreeAndSync(TrioRuleBasedStateMachine):
         Files = Bundle("file")
@@ -49,7 +49,7 @@ def test_fs_online_tree_and_sync(
 
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
-                async with backend_factory(devices=[self.device]) as backend:
+                async with backend_factory() as backend:
                     async with server_factory(backend.handle_client, backend_addr) as server:
                         await started_cb(backend=backend, server=server)
 
@@ -68,7 +68,7 @@ def test_fs_online_tree_and_sync(
         @initialize(target=Folders)
         async def init(self):
             self.oracle_fs = oracle_fs_with_sync_factory()
-            self.device = device_factory()
+            self.device = alice
             self.local_db = local_db_factory(self.device)
 
             await self.start_backend()

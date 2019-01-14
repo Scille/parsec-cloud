@@ -1,7 +1,7 @@
 from uuid import UUID
 from typing import List, Tuple
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, OrganizationID
 from parsec.api.protocole import beacon_read_serializer
 from parsec.backend.utils import catch_protocole_errors
 
@@ -12,7 +12,7 @@ class BaseBeaconComponent:
         msg = beacon_read_serializer.req_load(msg)
 
         # TODO: raise error if too many events since offset ?
-        items = await self.read(msg["id"], msg["offset"])
+        items = await self.read(client_ctx.organization_id, msg["id"], msg["offset"])
 
         return beacon_read_serializer.rep_dump(
             {
@@ -23,10 +23,17 @@ class BaseBeaconComponent:
             }
         )
 
-    async def read(self, id: UUID, offset: int) -> List[Tuple[UUID, int]]:
+    async def read(
+        self, organization_id: OrganizationID, id: UUID, offset: int
+    ) -> List[Tuple[UUID, int]]:
         raise NotImplementedError()
 
     async def update(
-        self, id: UUID, src_id: UUID, src_version: int, author: DeviceID = None
+        self,
+        organization_id: OrganizationID,
+        id: UUID,
+        src_id: UUID,
+        src_version: int,
+        author: DeviceID = None,
     ) -> None:
         raise NotImplementedError()

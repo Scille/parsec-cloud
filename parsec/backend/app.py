@@ -33,6 +33,7 @@ from parsec.backend.drivers.postgresql import (
     PGPingComponent,
 )
 from parsec.backend.user import UserNotFoundError
+from parsec.backend.organization import OrganizationNotFoundError
 
 
 logger = get_logger()
@@ -40,8 +41,8 @@ logger = get_logger()
 
 @attr.s
 class LoggedClientContext:
-    anonymous = False
     transport = attr.ib()
+    organization_id = attr.ib()
     device_id = attr.ib()
     public_key = attr.ib()
     verify_key = attr.ib()
@@ -53,7 +54,7 @@ class LoggedClientContext:
     def __attrs_post_init__(self):
         self.conn_id = self.transport.conn_id
         self.logger = self.transport.logger = self.transport.logger.bind(
-            client_id=str(self.device_id)
+            organization_id=str(self.organization_id), client_id=str(self.device_id)
         )
 
     @property
@@ -68,14 +69,30 @@ class LoggedClientContext:
 @attr.s
 class AnonymousClientContext:
     transport = attr.ib()
+    organization_id = attr.ib()
     conn_id = attr.ib(init=False)
     logger = attr.ib(init=False)
     device_id = None
-    anonymous = True
 
     def __attrs_post_init__(self):
         self.conn_id = self.transport.conn_id
-        self.logger = self.transport.logger = self.transport.logger.bind(client_id="<anonymous>")
+        self.logger = self.transport.logger = self.transport.logger.bind(
+            organization_id=str(self.organization_id), client_id="<anonymous>"
+        )
+
+
+@attr.s
+class AdministratorClientContext:
+    transport = attr.ib()
+    conn_id = attr.ib(init=False)
+    logger = attr.ib(init=False)
+    device_id = None
+
+    def __attrs_post_init__(self):
+        self.conn_id = self.transport.conn_id
+        self.logger = self.transport.logger = self.transport.logger.bind(
+            client_id="<administrator>"
+        )
 
 
 def _filter_binary_fields(data):
@@ -143,8 +160,11 @@ class BackendApp:
             "user_get_invitation_creator": self.user.api_user_get_invitation_creator,
             "device_claim": self.user.api_device_claim,
             "device_get_invitation_creator": self.user.api_device_get_invitation_creator,
-            "organization_create": self.organization.api_organization_create,
             "organization_bootstrap": self.organization.api_organization_bootstrap,
+            "ping": self.ping.api_ping,
+        }
+        self.administration_cmds = {
+            "organization_create": self.organization.api_organization_create,
             "ping": self.ping.api_ping,
         }
         for fn in self.anonymous_cmds.values():
@@ -168,25 +188,54 @@ class BackendApp:
             answer_req = await transport.recv()
 
             hs.process_answer_req(answer_req)
+
             if hs.is_anonymous():
-                context = AnonymousClientContext(transport)
-                result_req = hs.build_result_req()
+
+                if hs.organization_id == self.config.administrator_token:
+                    context = AdministratorClientContext(transport)
+                    result_req = hs.build_result_req()
+
+                else:
+                    try:
+                        organization = await self.organization.get(hs.organization_id)
+
+                    except OrganizationNotFoundError:
+                        result_req = hs.build_bad_identity_result_req()
+
+                    else:
+                        if (
+                            hs.root_verify_key
+                            and organization.root_verify_key != hs.root_verify_key
+                        ):
+                            result_req = hs.build_rvk_mismatch_result_req()
+
+                        else:
+                            context = AnonymousClientContext(transport, hs.organization_id)
+                            result_req = hs.build_result_req()
 
             else:
                 try:
-                    user = await self.user.get_user(hs.identity.user_id)
-                    device = user.devices[hs.identity.device_name]
+                    organization = await self.organization.get(hs.organization_id)
+                    user = await self.user.get_user(hs.organization_id, hs.device_id.user_id)
+                    device = user.devices[hs.device_id.device_name]
 
-                except (UserNotFoundError, KeyError):
+                except (OrganizationNotFoundError, UserNotFoundError, KeyError):
                     result_req = hs.build_bad_identity_result_req()
 
                 else:
-                    if device.revocated_on:
+                    if organization.root_verify_key != hs.root_verify_key:
+                        result_req = hs.build_rvk_mismatch_result_req()
+
+                    elif device.revocated_on:
                         result_req = hs.build_revoked_device_result_req()
 
                     else:
                         context = LoggedClientContext(
-                            transport, hs.identity, user.public_key, device.verify_key
+                            transport,
+                            hs.organization_id,
+                            hs.device_id,
+                            user.public_key,
+                            device.verify_key,
                         )
                         result_req = hs.build_result_req(device.verify_key)
 
@@ -264,10 +313,15 @@ class BackendApp:
                 cmd = req.get("cmd", "<missing>")
                 if not isinstance(cmd, str):
                     raise KeyError()
-                if client_ctx.anonymous:
-                    cmd_func = self.anonymous_cmds[cmd]
-                else:
+
+                if isinstance(client_ctx, AdministratorClientContext):
+                    cmd_func = self.administration_cmds[cmd]
+
+                elif isinstance(client_ctx, LoggedClientContext):
                     cmd_func = self.logged_cmds[cmd]
+
+                else:
+                    cmd_func = self.anonymous_cmds[cmd]
 
             except KeyError:
                 client_ctx.logger.info("Invalid request", bad_cmd=cmd)

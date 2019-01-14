@@ -3,7 +3,7 @@ import itertools
 from triopg.exceptions import UniqueViolationError
 from typing import Tuple, Dict, List
 
-from parsec.types import UserID, DeviceID
+from parsec.types import UserID, DeviceID, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.backend.user import (
     BaseUserComponent,
@@ -25,42 +25,65 @@ class PGUserComponent(BaseUserComponent):
         self.dbh = dbh
         self.event_bus = event_bus
 
-    async def set_user_admin(self, user_id: UserID, is_admin: bool) -> None:
-        user = await self.get_user(user_id)
+    async def set_user_admin(
+        self, organization_id: OrganizationID, user_id: UserID, is_admin: bool
+    ) -> None:
+        await self.get_user(organization_id, user_id)
 
         async with self.dbh.pool.acquire() as conn:
             result = await conn.execute(
                 """
-                UPDATE users SET
-                    is_admin = $2
-                WHERE user_id = $1
-                """,
+UPDATE users SET
+    is_admin = $3
+WHERE
+    organization = (
+        SELECT _id from organizations WHERE organization_id = $1
+    )
+    AND user_id = $2
+""",
+                organization_id,
                 user_id,
                 is_admin,
             )
             if result != "UPDATE 1":
                 raise UserError(f"Update error: {result}")
 
-    async def create_user(self, user: User) -> None:
+    async def create_user(self, organization_id: OrganizationID, user: User) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                await self._create_user(conn, user)
-                await send_signal(conn, "user.created", user_id=user.user_id)
+                await self._create_user(conn, organization_id, user)
+                await send_signal(
+                    conn, "user.created", organization_id=organization_id, user_id=user.user_id
+                )
 
     @staticmethod
-    async def _create_user(conn, user: User) -> None:
+    async def _create_user(conn, organization_id: OrganizationID, user: User) -> None:
         try:
             result = await conn.execute(
                 """
-                INSERT INTO users (
-                    user_id,
-                    is_admin,
-                    certified_user,
-                    user_certifier,
-                    created_on
-                )
-                VALUES ($1, $2, $3, $4, $5)
-                """,
+INSERT INTO users (
+    organization,
+    user_id,
+    is_admin,
+    certified_user,
+    user_certifier,
+    created_on
+)
+SELECT
+    _id,
+    $2, $3, $4,
+    (
+        SELECT _id
+        FROM devices
+        WHERE
+            device_id = $5
+            AND organization = organizations._id
+    ),
+    $6
+FROM organizations
+WHERE organization_id = $1
+""",
+                organization_id,
                 user.user_id,
                 user.is_admin,
                 user.certified_user,
@@ -74,22 +97,44 @@ class PGUserComponent(BaseUserComponent):
             raise UserError(f"Insertion error: {result}")
 
         await conn.executemany(
-            """INSERT INTO devices (
-                device_id,
-                user_id,
-                certified_device,
-                device_certifier,
-                created_on,
-                revocated_on,
-                certified_revocation,
-                revocation_certifier
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            """,
+            """
+INSERT INTO devices (
+    organization,
+    user_,
+    device_id,
+    certified_device,
+    device_certifier,
+    created_on,
+    revocated_on,
+    certified_revocation,
+    revocation_certifier
+)
+SELECT
+    _id,
+    (
+        SELECT _id
+        FROM users
+        WHERE
+            user_id = $2
+            AND organization = organizations._id
+    ),
+    $3, $4,
+    (
+        SELECT _id
+        FROM devices
+        WHERE
+            device_id = $5
+            AND organization = organizations._id
+    ),
+    $6, $7, $8, $9
+FROM organizations
+WHERE organization_id = $1
+""",
             [
                 (
-                    device.device_id,
+                    organization_id,
                     device.user_id,
+                    device.device_id,
                     device.certified_device,
                     device.device_certifier,
                     device.created_on,
@@ -101,20 +146,35 @@ class PGUserComponent(BaseUserComponent):
             ],
         )
 
-    async def create_device(self, device: Device, encrypted_answer: bytes = b"") -> None:
+    async def create_device(
+        self, organization_id: OrganizationID, device: Device, encrypted_answer: bytes = b""
+    ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                await self._create_device(conn, device)
+                await self._create_device(conn, organization_id, device)
                 await send_signal(
                     conn,
                     "device.created",
+                    organization_id=organization_id,
                     device_id=device.device_id,
                     encrypted_answer=encrypted_answer,
                 )
 
-    async def _create_device(self, conn, device: Device) -> None:
+    async def _create_device(self, conn, organization_id: OrganizationID, device: Device) -> None:
         existing_devices = await conn.fetch(
-            "SELECT device_id FROM devices WHERE user_id = $1", device.user_id
+            """
+SELECT device_id FROM devices
+WHERE user_ = (
+    SELECT _id FROM users
+    WHERE
+        organization = (
+            SELECT _id from organizations WHERE organization_id = $1
+        )
+        AND user_id = $2
+)
+            """,
+            organization_id,
+            device.user_id,
         )
         if not existing_devices:
             raise UserNotFoundError(f"User `{device.user_id}` doesn't exists")
@@ -123,20 +183,42 @@ class PGUserComponent(BaseUserComponent):
             raise UserAlreadyExistsError(f"Device `{device.device_id}` already exists")
 
         result = await conn.execute(
-            """INSERT INTO devices (
-                device_id,
-                user_id,
-                certified_device,
-                device_certifier,
-                created_on,
-                revocated_on,
-                certified_revocation,
-                revocation_certifier
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            """,
-            device.device_id,
+            """
+INSERT INTO devices (
+    organization,
+    user_,
+    device_id,
+    certified_device,
+    device_certifier,
+    created_on,
+    revocated_on,
+    certified_revocation,
+    revocation_certifier
+)
+SELECT
+    _id,
+    (
+        SELECT _id
+        FROM users
+        WHERE
+            user_id = $2
+            AND organization = organizations._id
+    ),
+    $3, $4,
+    (
+        SELECT _id
+        FROM devices
+        WHERE
+            device_id = $5
+            AND organization = organizations._id
+    ),
+    $6, $7, $8, $9
+FROM organizations
+WHERE organization_id = $1
+""",
+            organization_id,
             device.user_id,
+            device.device_id,
             device.certified_device,
             device.device_certifier,
             device.created_on,
@@ -148,18 +230,27 @@ class PGUserComponent(BaseUserComponent):
         if result != "INSERT 0 1":
             raise UserError(f"Insertion error: {result}")
 
-    async def get_user(self, user_id: UserID) -> User:
+    async def get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                return await self._get_user(conn, user_id)
+                return await self._get_user(conn, organization_id, user_id)
 
-    async def _get_user(self, conn, user_id: UserID) -> User:
+    async def _get_user(self, conn, organization_id: OrganizationID, user_id: UserID) -> User:
         user_result = await conn.fetchrow(
             """
-            SELECT is_admin, certified_user, user_certifier, created_on
-            FROM users
-            WHERE user_id = $1
-            """,
+SELECT
+    is_admin,
+    certified_user,
+    (SELECT device_id FROM devices WHERE _id = user_certifier),
+    created_on
+FROM users
+WHERE
+    organization = (
+        SELECT _id from organizations WHERE organization_id = $1
+    )
+    AND user_id = $2
+""",
+            organization_id,
             user_id,
         )
         if not user_result:
@@ -167,16 +258,28 @@ class PGUserComponent(BaseUserComponent):
 
         devices_results = await conn.fetch(
             """
-            SELECT
-                device_id,
-                certified_device,
-                device_certifier,
-                created_on,
-                revocated_on,
-                certified_revocation,
-                revocation_certifier
-            FROM devices WHERE user_id = $1
-            """,
+SELECT
+    d1.device_id,
+    d1.certified_device,
+    (
+        SELECT devices.device_id FROM devices WHERE devices._id = d1.device_certifier
+    ) AS device_certifier,
+    d1.created_on,
+    d1.revocated_on,
+    d1.certified_revocation,
+    (
+        SELECT devices.device_id FROM devices WHERE devices._id = d1.revocation_certifier
+    ) as revocation_certifier
+FROM devices as d1
+WHERE user_ = (
+    SELECT _id FROM users WHERE
+        organization = (
+            SELECT _id from organizations WHERE organization_id = $1
+        )
+        AND user_id = $2
+);
+""",
+            organization_id,
             user_id,
         )
         devices = DevicesMapping(
@@ -195,7 +298,9 @@ class PGUserComponent(BaseUserComponent):
             devices=devices,
         )
 
-    async def _get_trustchain(self, conn, user: User) -> Dict[DeviceID, Device]:
+    async def _get_trustchain(
+        self, conn, organization_id: OrganizationID, user: User
+    ) -> Dict[DeviceID, Device]:
         # TODO: it's time to do a super awesome SQL query fetching everything
         # in one go...
         devices = {}
@@ -211,16 +316,26 @@ class PGUserComponent(BaseUserComponent):
         while devices_to_fetch:
             results = await conn.fetch(
                 """
-            SELECT
-                device_id,
-                certified_device,
-                device_certifier,
-                created_on,
-                revocated_on,
-                certified_revocation,
-                revocation_certifier
-            FROM devices WHERE device_id = any($1::text[])
-                """,
+SELECT
+    d1.device_id,
+    d1.certified_device,
+    (
+        SELECT devices.device_id FROM devices WHERE devices._id = d1.device_certifier
+    ) AS device_certifier,
+    d1.created_on,
+    d1.revocated_on,
+    d1.certified_revocation,
+    (
+        SELECT devices.device_id FROM devices WHERE devices._id = d1.revocation_certifier
+    ) as revocation_certifier
+FROM devices as d1
+WHERE
+    organization = (
+        SELECT _id from organizations WHERE organization_id = $1
+    )
+    AND device_id = any($2::text[]);
+""",
+                organization_id,
                 devices_to_fetch,
             )
 
@@ -237,12 +352,12 @@ class PGUserComponent(BaseUserComponent):
         return devices
 
     async def get_user_with_trustchain(
-        self, user_id: UserID
+        self, organization_id: OrganizationID, user_id: UserID
     ) -> Tuple[User, Dict[DeviceID, Device]]:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                user = await self._get_user(conn, user_id)
-                trustchain = await self._get_trustchain(conn, user)
+                user = await self._get_user(conn, organization_id, user_id)
+                trustchain = await self._get_trustchain(conn, organization_id, user)
                 return user, trustchain
 
     # async def get_device(self, device_id: DeviceID) -> Device:
@@ -254,7 +369,7 @@ class PGUserComponent(BaseUserComponent):
     #     raise NotImplementedError()
 
     async def find(
-        self, query: str = None, page: int = 1, per_page: int = 100
+        self, organization_id: OrganizationID, query: str = None, page: int = 1, per_page: int = 100
     ) -> Tuple[List[UserID], int]:
         async with self.dbh.pool.acquire() as conn:
             if query:
@@ -262,74 +377,125 @@ class PGUserComponent(BaseUserComponent):
                 escaped_query = query.replace("!", "!!").replace("%", "!%").replace("_", "!_")
                 all_results = await conn.fetch(
                     """
-                    SELECT user_id FROM users
-                    WHERE
-                        user_id LIKE $1 ESCAPE '!'
-                    ORDER BY user_id
-                    """,
+SELECT user_id FROM users
+WHERE
+    organization = (
+        SELECT _id from organizations WHERE organization_id = $1
+    )
+    AND user_id LIKE $2 ESCAPE '!'
+ORDER BY user_id
+""",
+                    organization_id,
                     f"{escaped_query}%",
                 )
             else:
                 all_results = await conn.fetch(
                     """
-                    SELECT user_id FROM users ORDER BY user_id
-                    """
+SELECT user_id FROM users
+WHERE organization = (
+    SELECT _id from organizations WHERE organization_id = $1
+)
+ORDER BY user_id
+""",
+                    organization_id,
                 )
             # TODO: should user LIMIT and OFFSET in the SQL query instead
-            results = [x[0] for x in all_results[(page - 1) * per_page : page * per_page]]
+            results = [UserID(x[0]) for x in all_results[(page - 1) * per_page : page * per_page]]
         return results, len(all_results)
 
-    async def _user_exists(self, conn, user_id: UserID) -> bool:
-        user_result = await conn.fetchrow("SELECT true FROM users WHERE user_id = $1", user_id)
-        return bool(user_result)
-
-    async def _device_exists(self, conn, device_id: DeviceID) -> bool:
+    async def _user_exists(self, conn, organization_id: OrganizationID, user_id: UserID) -> bool:
         user_result = await conn.fetchrow(
-            "SELECT true FROM devices WHERE device_id = $1", device_id
+            """
+SELECT true FROM users
+WHERE
+    organization = (
+        SELECT _id from organizations WHERE organization_id = $1
+    )
+    AND user_id = $2
+""",
+            organization_id,
+            user_id,
         )
         return bool(user_result)
 
-    async def create_user_invitation(self, invitation: UserInvitation) -> None:
+    async def _device_exists(
+        self, conn, organization_id: OrganizationID, device_id: DeviceID
+    ) -> bool:
+        user_result = await conn.fetchrow(
+            """
+SELECT true
+FROM devices
+WHERE
+    organization = (
+        SELECT _id from organizations WHERE organization_id = $1
+    )
+    AND device_id = $2
+""",
+            organization_id,
+            device_id,
+        )
+        return bool(user_result)
+
+    async def create_user_invitation(
+        self, organization_id: OrganizationID, invitation: UserInvitation
+    ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
 
-                if await self._user_exists(conn, invitation.user_id):
+                if await self._user_exists(conn, organization_id, invitation.user_id):
                     raise UserAlreadyExistsError(f"User `{invitation.user_id}` already exists")
 
                 result = await conn.execute(
                     """
-                    INSERT INTO user_invitations (
-                        user_id,
-                        creator,
-                        created_on
-                    ) VALUES ($1, $2, $3)
-                    ON CONFLICT (user_id)
-                    DO UPDATE
-                    SET creator = $2, created_on = $3
-                    """,
-                    invitation.user_id,
+INSERT INTO user_invitations (
+    organization,
+    creator,
+    user_id,
+    created_on
+) VALUES (
+    (SELECT _id FROM organizations WHERE organization_id = $1),
+    (SELECT _id FROM devices WHERE device_id = $2),
+    $3, $4
+)
+ON CONFLICT (user_id)
+DO UPDATE
+SET
+    organization = excluded.organization,
+    creator = excluded.creator,
+    created_on = excluded.created_on
+""",
+                    organization_id,
                     invitation.creator,
+                    invitation.user_id,
                     invitation.created_on,
                 )
 
                 if result not in ("INSERT 0 1", "UPDATE 1"):
                     raise UserError(f"Insertion error: {result}")
 
-    async def get_user_invitation(self, user_id: UserID) -> UserInvitation:
+    async def get_user_invitation(
+        self, organization_id: OrganizationID, user_id: UserID
+    ) -> UserInvitation:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                return await self._get_user_invitation(conn, user_id)
+                return await self._get_user_invitation(conn, organization_id, user_id)
 
-    async def _get_user_invitation(self, conn, user_id):
-        if await self._user_exists(conn, user_id):
+    async def _get_user_invitation(self, conn, organization_id: OrganizationID, user_id: UserID):
+        if await self._user_exists(conn, organization_id, user_id):
             raise UserAlreadyExistsError(f"User `{user_id}` already exists")
 
         result = await conn.fetchrow(
             """
-            SELECT user_id, creator, created_on
-            FROM user_invitations
-            WHERE user_id = $1
-            """,
+SELECT user_invitations.user_id, devices.device_id, user_invitations.created_on
+FROM user_invitations
+LEFT JOIN devices ON user_invitations.creator = devices._id
+WHERE
+    user_invitations.organization = (
+        SELECT _id from organizations WHERE organization_id = $1
+    )
+    AND user_invitations.user_id = $2
+""",
+            organization_id,
             user_id,
         )
         if not result:
@@ -340,79 +506,114 @@ class PGUserComponent(BaseUserComponent):
         )
 
     async def claim_user_invitation(
-        self, user_id: UserID, encrypted_claim: bytes = b""
+        self, organization_id: OrganizationID, user_id: UserID, encrypted_claim: bytes = b""
     ) -> UserInvitation:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                invitation = await self._get_user_invitation(conn, user_id)
+                invitation = await self._get_user_invitation(conn, organization_id, user_id)
                 await send_signal(
                     conn,
                     "user.claimed",
+                    organization_id=organization_id,
                     user_id=invitation.user_id,
                     encrypted_claim=encrypted_claim,
                 )
                 return invitation
 
-    async def cancel_user_invitation(self, user_id: UserID) -> None:
+    async def cancel_user_invitation(
+        self, organization_id: OrganizationID, user_id: UserID
+    ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
 
-                if await self._user_exists(conn, user_id):
+                if await self._user_exists(conn, organization_id, user_id):
                     raise UserAlreadyExistsError(f"User `{user_id}` already exists")
 
                 result = await conn.execute(
                     """
-                    DELETE FROM user_invitations
-                    WHERE user_id = $1
-                    """,
+DELETE FROM user_invitations
+WHERE
+    organization = (
+        SELECT _id from organizations WHERE organization_id = $1
+    )
+    AND user_id = $2
+""",
+                    organization_id,
                     user_id,
                 )
                 if result not in ("DELETE 1", "DELETE 0"):
                     raise UserError(f"Deletion error: {result}")
 
-                await send_signal(conn, "user.invitation.cancelled", device_id=user_id)
+                await send_signal(
+                    conn,
+                    "user.invitation.cancelled",
+                    organization_id=organization_id,
+                    device_id=user_id,
+                )
 
-    async def create_device_invitation(self, invitation: DeviceInvitation) -> None:
+    async def create_device_invitation(
+        self, organization_id: OrganizationID, invitation: DeviceInvitation
+    ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
 
-                if await self._device_exists(conn, invitation.device_id):
+                if await self._device_exists(conn, organization_id, invitation.device_id):
                     raise UserAlreadyExistsError(f"Device `{invitation.device_id}` already exists")
 
                 result = await conn.execute(
                     """
-                    INSERT INTO device_invitations (
-                        device_id,
-                        creator,
-                        created_on
-                    ) VALUES ($1, $2, $3)
-                    ON CONFLICT (device_id)
-                    DO UPDATE
-                    SET creator = $2, created_on = $3
-                    """,
-                    invitation.device_id,
+INSERT INTO device_invitations (
+    organization,
+    creator,
+    device_id,
+    created_on
+)
+VALUES (
+    (SELECT _id FROM organizations WHERE organization_id = $1),
+    (SELECT _id FROM devices WHERE device_id = $2),
+    $3, $4
+)
+ON CONFLICT (device_id)
+DO UPDATE
+SET
+    organization = excluded.organization,
+    creator = excluded.creator,
+    created_on = excluded.created_on
+""",
+                    organization_id,
                     invitation.creator,
+                    invitation.device_id,
                     invitation.created_on,
                 )
 
                 if result not in ("INSERT 0 1", "UPDATE 1"):
                     raise UserError(f"Insertion error: {result}")
 
-    async def get_device_invitation(self, device_id: DeviceID) -> DeviceInvitation:
+    async def get_device_invitation(
+        self, organization_id: OrganizationID, device_id: DeviceID
+    ) -> DeviceInvitation:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                return await self._get_device_invitation(conn, device_id)
+                return await self._get_device_invitation(conn, organization_id, device_id)
 
-    async def _get_device_invitation(self, conn, device_id):
-        if await self._device_exists(conn, device_id):
+    async def _get_device_invitation(
+        self, conn, organization_id: OrganizationID, device_id: DeviceID
+    ):
+        if await self._device_exists(conn, organization_id, device_id):
             raise UserAlreadyExistsError(f"Device `{device_id}` already exists")
 
         result = await conn.fetchrow(
             """
-            SELECT device_id, creator, created_on
-            FROM device_invitations
-            WHERE device_id = $1
-            """,
+SELECT device_invitations.device_id, devices.device_id, device_invitations.created_on
+FROM device_invitations
+LEFT JOIN devices ON device_invitations.creator = devices._id
+WHERE
+    device_invitations.organization = (
+        SELECT _id from organizations WHERE organization_id = $1
+    )
+    AND device_invitations.device_id = $2
+""",
+            organization_id,
             device_id,
         )
         if not result:
@@ -423,52 +624,77 @@ class PGUserComponent(BaseUserComponent):
         )
 
     async def claim_device_invitation(
-        self, device_id: DeviceID, encrypted_claim: bytes = b""
+        self, organization_id: OrganizationID, device_id: DeviceID, encrypted_claim: bytes = b""
     ) -> UserInvitation:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                invitation = await self._get_device_invitation(conn, device_id)
+                invitation = await self._get_device_invitation(conn, organization_id, device_id)
                 await send_signal(
                     conn,
                     "device.claimed",
+                    organization_id=organization_id,
                     device_id=invitation.device_id,
                     encrypted_claim=encrypted_claim,
                 )
                 return invitation
 
-    async def cancel_device_invitation(self, device_id: DeviceID) -> None:
+    async def cancel_device_invitation(
+        self, organization_id: OrganizationID, device_id: DeviceID
+    ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
 
-                if await self._device_exists(conn, device_id):
+                if await self._device_exists(conn, organization_id, device_id):
                     raise UserAlreadyExistsError(f"Device `{device_id}` already exists")
 
                 result = await conn.execute(
                     """
-                    DELETE FROM device_invitations
-                    WHERE device_id = $1
-                    """,
+DELETE FROM device_invitations
+WHERE
+    organization = (
+        SELECT _id from organizations WHERE organization_id = $1
+    )
+    AND device_id = $2
+""",
+                    organization_id,
                     device_id,
                 )
                 if result not in ("DELETE 1", "DELETE 0"):
                     raise UserError(f"Deletion error: {result}")
 
-                await send_signal(conn, "device.invitation.cancelled", device_id=device_id)
+                await send_signal(
+                    conn,
+                    "device.invitation.cancelled",
+                    organization_id=organization_id,
+                    device_id=device_id,
+                )
 
     async def revoke_device(
-        self, device_id: DeviceID, certified_revocation: bytes, revocation_certifier: DeviceID
+        self,
+        organization_id: OrganizationID,
+        device_id: DeviceID,
+        certified_revocation: bytes,
+        revocation_certifier: DeviceID,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
 
                 result = await conn.execute(
                     """
-                    UPDATE devices SET
-                        certified_revocation = $2,
-                        revocation_certifier = $3,
-                        revocated_on = $4
-                    WHERE device_id = $1 AND revocated_on IS NULL
-                    """,
+UPDATE devices SET
+    certified_revocation = $3,
+    revocation_certifier = (
+        SELECT _id FROM devices WHERE device_id = $4
+    ),
+    revocated_on = $5
+WHERE
+    organization = (
+        SELECT _id from organizations WHERE organization_id = $1
+    )
+    AND device_id = $2
+    AND revocated_on IS NULL
+""",
+                    organization_id,
                     device_id,
                     certified_revocation,
                     revocation_certifier,
@@ -479,8 +705,15 @@ class PGUserComponent(BaseUserComponent):
                     # TODO: avoid having to do another query to find the error
                     err_result = await conn.fetchrow(
                         """
-                        SELECT revocated_on FROM devices WHERE device_id = $1
-                    """,
+SELECT revocated_on
+FROM devices
+WHERE
+    organization = (
+        SELECT _id from organizations WHERE organization_id = $1
+    )
+    AND device_id = $2
+""",
+                        organization_id,
                         device_id,
                     )
                     if not err_result:

@@ -41,7 +41,10 @@ async def test_user_create_ok(
 
         with trio.fail_after(1):
             # No guarantees this event occurs before the command's return
-            await spy.wait("user.created", kwargs={"user_id": mallory.user_id})
+            await spy.wait(
+                "user.created",
+                kwargs={"organization_id": alice.organization_id, "user_id": mallory.user_id},
+            )
 
     # Make sure mallory can connect now
     async with backend_sock_factory(backend, mallory) as sock:
@@ -79,13 +82,13 @@ async def test_user_create_invalid_certified(alice_backend_sock, alice, bob, mal
 
 
 @pytest.mark.trio
-async def test_user_create_not_matching_user_device(alice_backend_sock, alice, mallory):
+async def test_user_create_not_matching_user_device(alice_backend_sock, alice, bob, mallory):
     now = pendulum.now()
     certified_user = certify_user(
         alice.device_id, alice.signing_key, mallory.user_id, mallory.public_key, now=now
     )
     certified_device = certify_device(
-        alice.device_id, alice.signing_key, "zack@foo", mallory.verify_key, now=now
+        alice.device_id, alice.signing_key, bob.device_id, mallory.verify_key, now=now
     )
 
     rep = await user_create(
@@ -110,7 +113,7 @@ async def test_user_create_already_exists(alice_backend_sock, alice, bob):
     rep = await user_create(
         alice_backend_sock, certified_user=certified_user, certified_device=certified_device
     )
-    assert rep == {"status": "already_exists", "reason": "User `bob` already exists"}
+    assert rep == {"status": "already_exists", "reason": f"User `{bob.user_id}` already exists"}
 
 
 @pytest.mark.trio

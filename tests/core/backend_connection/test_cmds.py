@@ -15,16 +15,18 @@ from tests.open_tcp_stream_mock_wrapper import offline
 
 
 @pytest.mark.trio
-async def test_backend_offline(backend_addr, alice):
+async def test_backend_offline(alice):
     with pytest.raises(BackendNotAvailable):
-        async with backend_cmds_factory(backend_addr, alice.device_id, alice.signing_key) as cmds:
+        async with backend_cmds_factory(
+            alice.organization_addr, alice.device_id, alice.signing_key
+        ) as cmds:
             await cmds.ping()
 
 
 @pytest.mark.trio
 async def test_backend_switch_offline(running_backend, alice):
     async with backend_cmds_factory(
-        running_backend.addr, alice.device_id, alice.signing_key
+        alice.organization_addr, alice.device_id, alice.signing_key
     ) as cmds:
         with offline(running_backend.addr):
             with pytest.raises(BackendNotAvailable):
@@ -34,7 +36,7 @@ async def test_backend_switch_offline(running_backend, alice):
 @pytest.mark.trio
 async def test_backend_closed_cmds(running_backend, alice):
     async with backend_cmds_factory(
-        running_backend.addr, alice.device_id, alice.signing_key
+        alice.organization_addr, alice.device_id, alice.signing_key
     ) as cmds:
         pass
     with pytest.raises(trio.ClosedResourceError):
@@ -45,7 +47,7 @@ async def test_backend_closed_cmds(running_backend, alice):
 async def test_backend_bad_handshake(running_backend, mallory):
     with pytest.raises(BackendHandshakeError):
         async with backend_cmds_factory(
-            running_backend.addr, mallory.device_id, mallory.signing_key
+            mallory.organization_addr, mallory.device_id, mallory.signing_key
         ) as cmds:
             await cmds.ping()
 
@@ -55,11 +57,13 @@ async def test_revoked_device_handshake(running_backend, backend, alice, alice2)
     certified_revocation = certify_device_revocation(
         alice.device_id, alice.signing_key, alice2.device_id
     )
-    await backend.user.revoke_device(alice2.device_id, certified_revocation, alice.device_id)
+    await backend.user.revoke_device(
+        alice2.organization_id, alice2.device_id, certified_revocation, alice.device_id
+    )
 
     with pytest.raises(BackendDeviceRevokedError):
         async with backend_cmds_factory(
-            running_backend.addr, alice2.device_id, alice2.signing_key
+            alice2.organization_addr, alice2.device_id, alice2.signing_key
         ) as cmds:
             await cmds.ping()
 
@@ -86,7 +90,7 @@ async def test_backend_disconnect_during_handshake(tcp_stream_spy, alice, backen
         with tcp_stream_spy.install_hook(backend_addr, connection_factory):
             with pytest.raises(BackendNotAvailable):
                 async with backend_cmds_factory(
-                    backend_addr, alice.device_id, alice.signing_key
+                    alice.organization_addr, alice.device_id, alice.signing_key
                 ) as cmds:
                     await cmds.ping()
 

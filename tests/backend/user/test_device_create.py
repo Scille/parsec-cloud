@@ -1,10 +1,7 @@
-import attr
 import trio
 import pytest
 import pendulum
 
-from parsec.types import DeviceID
-from parsec.crypto import SigningKey
 from parsec.trustchain import certify_device
 from parsec.backend.user import INVITATION_VALIDITY
 from parsec.api.protocole import packb, device_create_serializer, ping_serializer
@@ -12,19 +9,9 @@ from parsec.api.protocole import packb, device_create_serializer, ping_serialize
 from tests.common import freeze_time
 
 
-@attr.s(slots=True, frozen=True)
-class NewDevice:
-    device_id = attr.ib()
-    signing_key = attr.ib()
-
-    @property
-    def verify_key(self):
-        return self.signing_key.verify_key
-
-
 @pytest.fixture
-def alice_nd(alice):
-    return NewDevice(DeviceID(f"{alice.user_id}@new_device"), SigningKey.generate())
+def alice_nd(local_device_factory, alice):
+    return local_device_factory(f"{alice.user_id}@new_device")
 
 
 async def device_create(sock, **kwargs):
@@ -51,7 +38,11 @@ async def test_device_create_ok(backend, backend_sock_factory, alice_backend_soc
             # No guarantees this event occurs before the command's return
             await spy.wait(
                 "device.created",
-                kwargs={"device_id": alice_nd.device_id, "encrypted_answer": b"<good>"},
+                kwargs={
+                    "organization_id": alice_nd.organization_id,
+                    "device_id": alice_nd.device_id,
+                    "encrypted_answer": b"<good>",
+                },
             )
 
     # Make sure the new device can connect now

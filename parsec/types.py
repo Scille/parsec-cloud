@@ -75,12 +75,21 @@ class BackendAddr(str):
 
 
 class BackendOrganizationAddr(BackendAddr):
-    __slots__ = ("_root_verify_key", "_organization")
+    __slots__ = ("_root_verify_key", "_organization_id")
+
+    @classmethod
+    def build(
+        cls, backend_addr: str, name: str, root_verify_key: VerifyKey
+    ) -> "BackendOrganizationAddr":
+        scheme, netloc, _, _, fragment = urlsplit(backend_addr)
+        rvk = export_root_verify_key(root_verify_key)
+        query = f"rvk={rvk}"
+        return cls(urlunsplit((scheme, netloc, name, query, fragment)))
 
     def __init__(self, raw: str):
         super().__init__(raw)
 
-        self._organization = OrganizationID(self._split.path[1:])
+        self._organization_id = OrganizationID(self._split.path[1:])
 
         query = parse_qs(self._split.query)
         try:
@@ -90,15 +99,16 @@ class BackendOrganizationAddr(BackendAddr):
             raise ValueError("Backend organization address must contains `rvk` params.") from exc
 
     @property
-    def organization(self) -> OrganizationID:
-        return self._organization
+    def organization_id(self) -> OrganizationID:
+        return self._organization_id
 
+    @property
     def root_verify_key(self) -> VerifyKey:
         return self._root_verify_key
 
 
 class BackendOrganizationBootstrapAddr(BackendAddr):
-    __slots__ = ("_bootstrap_token", "_organization")
+    __slots__ = ("_bootstrap_token", "_organization_id")
 
     @classmethod
     def build(
@@ -111,7 +121,7 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
     def __init__(self, raw: str):
         super().__init__(raw)
 
-        self._organization = OrganizationID(self._split.path[1:])
+        self._organization_id = OrganizationID(self._split.path[1:])
 
         query = parse_qs(self._split.query)
         try:
@@ -123,15 +133,19 @@ class BackendOrganizationBootstrapAddr(BackendAddr):
             ) from exc
 
     @property
-    def organization(self) -> OrganizationID:
-        return self._organization
+    def organization_id(self) -> OrganizationID:
+        return self._organization_id
 
+    @property
     def bootstrap_token(self) -> str:
         return self._bootstrap_token
 
     def generate_organization_addr(self, root_verify_key: VerifyKey) -> BackendOrganizationAddr:
         scheme, netloc, path, _, fragment = urlsplit(self)
         query = f"rvk={export_root_verify_key(root_verify_key)}"
+        return BackendOrganizationAddr.build(
+            urlunsplit((scheme, netloc, "", "", fragment)), self.organization_id, root_verify_key
+        )
         return BackendOrganizationAddr(urlunsplit((scheme, netloc, path, query, fragment)))
 
 
@@ -141,7 +155,7 @@ class UserID(str):
 
     def __init__(self, raw):
         if not isinstance(raw, str) or not self.regex.match(raw):
-            raise ValueError("Invalid user ID")
+            raise ValueError("Invalid user name")
 
     def __repr__(self):
         return f"<UserID {super().__repr__()}>"

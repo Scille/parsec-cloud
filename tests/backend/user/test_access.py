@@ -1,17 +1,8 @@
 import pytest
-import attr
 from unittest.mock import ANY
 from pendulum import Pendulum
 
-from parsec.types import DeviceID
-from parsec.crypto import SigningKey, PrivateKey
-from parsec.trustchain import certify_user, certify_device, certify_device_revocation
 from parsec.api.protocole import packb, user_get_serializer, user_find_serializer
-from parsec.backend.user import (
-    User as BackendUser,
-    Device as BackendDevice,
-    DevicesMapping as BackendDevicesMapping,
-)
 
 from tests.common import freeze_time
 
@@ -28,19 +19,40 @@ async def user_find(sock, **kwargs):
     return user_find_serializer.rep_loads(raw_rep)
 
 
+@pytest.fixture
+async def access_testbed(
+    backend_factory,
+    backend_data_binder_factory,
+    backend_sock_factory,
+    organization_factory,
+    local_device_factory,
+):
+    async with backend_factory(populated=False) as backend:
+        binder = backend_data_binder_factory(backend)
+        org = organization_factory("IFD")
+        device = local_device_factory("Godfrey@dev1", org)
+        with freeze_time("2000-01-01"):
+            await binder.bind_organization(org, device)
+
+        async with backend_sock_factory(backend, device) as sock:
+            yield binder, org, device, sock
+
+
 @pytest.mark.trio
-async def test_api_user_get_ok(backend, alice_backend_sock, bob):
-    rep = await user_get(alice_backend_sock, bob.user_id)
+async def test_api_user_get_ok(access_testbed):
+    binder, org, device, sock = access_testbed
+
+    rep = await user_get(sock, device.user_id)
     assert rep == {
         "status": "ok",
         "is_admin": False,
-        "user_id": bob.user_id,
+        "user_id": device.user_id,
         "certified_user": ANY,
         "user_certifier": None,
         "created_on": Pendulum(2000, 1, 1),
         "devices": {
-            bob.device_name: {
-                "device_id": bob.device_id,
+            device.device_name: {
+                "device_id": device.device_id,
                 "created_on": Pendulum(2000, 1, 1),
                 "revocated_on": None,
                 "certified_revocation": None,
@@ -53,79 +65,34 @@ async def test_api_user_get_ok(backend, alice_backend_sock, bob):
     }
 
 
-@attr.s
-class Device:
-    device_id = attr.ib()
-    signing_key = attr.ib()
-
-
-def user_factory(creator, device_id):
-    device_id = DeviceID(device_id)
-    private_key = PrivateKey.generate()
-    certified_user = certify_user(
-        creator.device_id, creator.signing_key, device_id.user_id, private_key.public_key
-    )
-    local_device, backend_device = device_factory(creator, device_id)
-    backend_user = BackendUser(
-        device_id.user_id,
-        certified_user=certified_user,
-        user_certifier=creator.device_id,
-        devices=BackendDevicesMapping(backend_device),
-    )
-    return local_device, backend_user
-
-
-def device_factory(creator, device_id):
-    device_id = DeviceID(device_id)
-    signing_key = SigningKey.generate()
-    certified_device = certify_device(
-        creator.device_id, creator.signing_key, device_id, signing_key.verify_key
-    )
-    backend_device = BackendDevice(
-        device_id=device_id, certified_device=certified_device, device_certifier=creator.device_id
-    )
-    local_device = Device(device_id=device_id, signing_key=signing_key)
-    return local_device, backend_device
-
-
-async def create_user(backend, creator, device_id):
-    local_device, user = user_factory(creator, device_id)
-    await backend.user.create_user(user)
-    return local_device
-
-
-async def create_device(backend, creator, device_id):
-    local_device, device = device_factory(creator, device_id)
-    await backend.user.create_device(device)
-    return local_device
-
-
-async def revoke_device(backend, revoker, device_id):
-    certified_revocation = certify_device_revocation(
-        revoker.device_id, revoker.signing_key, device_id
-    )
-    await backend.user.revoke_device(device_id, certified_revocation, revoker.device_id)
-
-
 @pytest.mark.trio
-async def test_api_user_get_ok_deep_trustchain(backend, alice_backend_sock, alice):
-    # <root> --> alice@dev1 --> roger@dev1 --> mike@dev1 --> mike@dev2
-    #                       --> philippe@dev1 --> philippe@dev2
+async def test_api_user_get_ok_deep_trustchain(
+    access_testbed, organization_factory, local_device_factory
+):
+    binder, org, godfrey1, sock = access_testbed
     d1 = Pendulum(2000, 1, 1)
     d2 = Pendulum(2000, 1, 2)
 
+    roger1 = local_device_factory("roger@dev1", org)
+    mike1 = local_device_factory("mike@dev1", org)
+    mike2 = local_device_factory("mike@dev2", org)
+    ph1 = local_device_factory("philippe@dev1", org)
+    ph2 = local_device_factory("philippe@dev2", org)
+
+    # <root> --> godfrey@dev1 --> roger@dev1 --> mike@dev1 --> mike@dev2
+    #                         --> philippe@dev1 --> philippe@dev2
     with freeze_time(d1):
-        roger1 = await create_user(backend, alice, "roger@dev1")
-        mike1 = await create_user(backend, roger1, "mike@dev1")
-        mike2 = await create_device(backend, mike1, "mike@dev2")
-        ph1 = await create_user(backend, alice, "philippe@dev1")
-        ph2 = await create_device(backend, ph1, "philippe@dev2")
+        await binder.bind_device(roger1, certifier=godfrey1)
+        await binder.bind_device(mike1, certifier=roger1)
+        await binder.bind_device(ph1, certifier=godfrey1)
+        await binder.bind_device(ph2, certifier=ph1)
+        await binder.bind_device(mike2, certifier=mike1)
 
     with freeze_time(d2):
-        await revoke_device(backend, ph1, roger1.device_id)
-        await revoke_device(backend, ph2, mike2.device_id)
+        await binder.bind_revocation(roger1, certifier=ph1)
+        await binder.bind_revocation(mike2, certifier=ph2)
 
-    rep = await user_get(alice_backend_sock, mike2.device_id.user_id)
+    rep = await user_get(sock, mike2.device_id.user_id)
     assert rep == {
         "status": "ok",
         "is_admin": False,
@@ -154,8 +121,8 @@ async def test_api_user_get_ok_deep_trustchain(backend, alice_backend_sock, alic
             },
         },
         "trustchain": {
-            alice.device_id: {
-                "device_id": alice.device_id,
+            godfrey1.device_id: {
+                "device_id": godfrey1.device_id,
                 "created_on": d1,
                 "revocated_on": None,
                 "certified_revocation": None,
@@ -179,7 +146,7 @@ async def test_api_user_get_ok_deep_trustchain(backend, alice_backend_sock, alic
                 "certified_revocation": ANY,
                 "revocation_certifier": ph1.device_id,
                 "certified_device": ANY,
-                "device_certifier": alice.device_id,
+                "device_certifier": godfrey1.device_id,
             },
             ph1.device_id: {
                 "device_id": ph1.device_id,
@@ -188,7 +155,7 @@ async def test_api_user_get_ok_deep_trustchain(backend, alice_backend_sock, alic
                 "certified_revocation": None,
                 "revocation_certifier": None,
                 "certified_device": ANY,
-                "device_certifier": alice.device_id,
+                "device_certifier": godfrey1.device_id,
             },
             ph2.device_id: {
                 "device_id": ph2.device_id,
@@ -215,26 +182,41 @@ async def test_api_user_get_bad_msg(alice_backend_sock, bad_msg):
 
 
 @pytest.mark.trio
-async def test_api_user_get_not_found(alice_backend_sock):
+async def test_api_user_get_not_found(alice_backend_sock, coolorg):
     rep = await user_get(alice_backend_sock, "dummy")
     assert rep == {"status": "not_found"}
 
 
 @pytest.mark.trio
-async def test_api_user_find(alice, backend, alice_backend_sock):
+async def test_api_user_get_other_organization(
+    backend, alice, sock_from_other_organization_factory
+):
+    # Organizations should be isolated
+    async with sock_from_other_organization_factory(backend) as sock:
+        rep = await user_get(sock, alice.user_id)
+        assert rep == {"status": "not_found"}
+
+
+@pytest.mark.trio
+async def test_api_user_find(access_testbed, organization_factory, local_device_factory):
+    binder, org, godfrey1, sock = access_testbed
+
     # Populate with cool guys
-    await create_user(backend, alice, "Philippe@p1")
-    await create_device(backend, alice, "Philippe@p2")
-    await create_user(backend, alice, "Mike@p1")
-    await create_user(backend, alice, "Blacky@p1")
-    await create_user(backend, alice, "Philip_J_Fry@p1")
+    for name in ["Philippe@p1", "Philippe@p2", "Mike@p1", "Blacky@p1", "Philip_J_Fry@p1"]:
+        device = local_device_factory(name, org)
+        await binder.bind_device(device, certifier=godfrey1)
+
+    # Also create homonyme in different organization, just to be sure...
+    other_org = organization_factory("FilmMark")
+    other_device = local_device_factory("Philippe@p1", other_org)
+    await binder.bind_organization(other_org, other_device)
 
     # Test exact match
-    rep = await user_find(alice_backend_sock, query="Mike")
+    rep = await user_find(sock, query="Mike")
     assert rep == {"status": "ok", "results": ["Mike"], "per_page": 100, "page": 1, "total": 1}
 
     # Test partial search
-    rep = await user_find(alice_backend_sock, query="Phil")
+    rep = await user_find(sock, query="Phil")
     assert rep == {
         "status": "ok",
         "results": ["Philip_J_Fry", "Philippe"],
@@ -244,7 +226,7 @@ async def test_api_user_find(alice, backend, alice_backend_sock):
     }
 
     # Test pagination
-    rep = await user_find(alice_backend_sock, query="Phil", page=1, per_page=1)
+    rep = await user_find(sock, query="Phil", page=1, per_page=1)
     assert rep == {
         "status": "ok",
         "results": ["Philip_J_Fry"],
@@ -254,22 +236,22 @@ async def test_api_user_find(alice, backend, alice_backend_sock):
     }
 
     # Test out of pagination
-    rep = await user_find(alice_backend_sock, query="Phil", page=2, per_page=5)
+    rep = await user_find(sock, query="Phil", page=2, per_page=5)
     assert rep == {"status": "ok", "results": [], "per_page": 5, "page": 2, "total": 2}
 
     # Test no params
-    rep = await user_find(alice_backend_sock)
+    rep = await user_find(sock)
     assert rep == {
         "status": "ok",
-        "results": ["alice", "Blacky", "bob", "Mike", "Philip_J_Fry", "Philippe"],
+        "results": ["Blacky", "Godfrey", "Mike", "Philip_J_Fry", "Philippe"],
         "per_page": 100,
         "page": 1,
-        "total": 6,
+        "total": 5,
     }
 
     # Test bad params
     for bad in [{"dummy": 42}, {"query": 42}, {"page": 0}, {"per_page": 0}, {"per_page": 101}]:
-        await alice_backend_sock.send(packb({"cmd": "user_find", **bad}))
-        raw_rep = await alice_backend_sock.recv()
+        await sock.send(packb({"cmd": "user_find", **bad}))
+        raw_rep = await sock.recv()
         rep = user_find_serializer.rep_loads(raw_rep)
         assert rep["status"] == "bad_message"

@@ -1,7 +1,7 @@
 from typing import List, Tuple
 from collections import defaultdict
 
-from parsec.types import UserID, DeviceID
+from parsec.types import UserID, DeviceID, OrganizationID
 from parsec.event_bus import EventBus
 from parsec.backend.message import BaseMessageComponent
 
@@ -9,12 +9,24 @@ from parsec.backend.message import BaseMessageComponent
 class MemoryMessageComponent(BaseMessageComponent):
     def __init__(self, event_bus: EventBus):
         self.event_bus = event_bus
-        self._messages = defaultdict(list)
+        self._organizations = defaultdict(lambda: defaultdict(list))
 
-    async def send(self, sender: DeviceID, recipient: UserID, body: bytes) -> None:
-        self._messages[recipient].append((sender, body))
-        index = len(self._messages[recipient])
-        self.event_bus.send("message.received", author=sender, recipient=recipient, index=index)
+    async def send(
+        self, organization_id: OrganizationID, sender: DeviceID, recipient: UserID, body: bytes
+    ) -> None:
+        messages = self._organizations[organization_id]
+        messages[recipient].append((sender, body))
+        index = len(messages[recipient])
+        self.event_bus.send(
+            "message.received",
+            organization_id=organization_id,
+            author=sender,
+            recipient=recipient,
+            index=index,
+        )
 
-    async def get(self, recipient: UserID, offset: int) -> List[Tuple[DeviceID, bytes]]:
-        return self._messages[recipient][offset:]
+    async def get(
+        self, organization_id: OrganizationID, recipient: UserID, offset: int
+    ) -> List[Tuple[DeviceID, bytes]]:
+        messages = self._organizations[organization_id]
+        return messages[recipient][offset:]

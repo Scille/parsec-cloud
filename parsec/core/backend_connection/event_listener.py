@@ -124,7 +124,10 @@ class BackendEventsManager:
     async def _event_pump(self, *, task_status=trio.TASK_STATUS_IGNORED):
         with trio.open_cancel_scope() as cancel_scope:
             async with backend_cmds_factory(
-                self.device.backend_addr, self.device.device_id, self.device.signing_key, max_pool=1
+                self.device.organization_addr,
+                self.device.device_id,
+                self.device.signing_key,
+                max_pool=1,
             ) as cmds:
                 # Copy `self._subscribed_beacons` to avoid concurrent modifications
                 await cmds.events_subscribe(

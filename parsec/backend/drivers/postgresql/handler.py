@@ -79,65 +79,80 @@ async def _create_db_tables(conn):
         """
         CREATE TABLE organizations (
             _id SERIAL PRIMARY KEY,
-            name VARCHAR(32) UNIQUE NOT NULL,
+            organization_id VARCHAR(32) UNIQUE NOT NULL,
             bootstrap_token TEXT NOT NULL,
             root_verify_key BYTEA
         );
 
         CREATE TABLE users (
-            user_id VARCHAR(32) PRIMARY KEY,
+            _id SERIAL PRIMARY KEY,
+            organization INTEGER REFERENCES organizations (_id),
+            user_id VARCHAR(32) NOT NULL,
             is_admin BOOLEAN,
             certified_user BYTEA,
-            user_certifier VARCHAR(32),
-            created_on TIMESTAMPTZ NOT NULL
+            user_certifier INTEGER,
+            created_on TIMESTAMPTZ NOT NULL,
+            UNIQUE(organization, user_id)
         );
 
         CREATE TABLE devices (
-            device_id VARCHAR(65) PRIMARY KEY,
-            user_id VARCHAR(32) REFERENCES users (user_id) NOT NULL,
+            _id SERIAL PRIMARY KEY,
+            organization INTEGER REFERENCES organizations (_id),
+            user_ INTEGER REFERENCES users (_id) NOT NULL,
+            device_id VARCHAR(65) NOT NULL,
             certified_device BYTEA,
-            device_certifier VARCHAR(32) REFERENCES devices (device_id),
+            device_certifier INTEGER REFERENCES devices (_id),
             created_on TIMESTAMPTZ NOT NULL,
             revocated_on TIMESTAMPTZ,
             certified_revocation BYTEA,
-            revocation_certifier VARCHAR(32) REFERENCES devices (device_id)
+            revocation_certifier INTEGER REFERENCES devices (_id),
+            UNIQUE(organization, device_id),
+            UNIQUE(user_, device_id)
         );
 
         ALTER TABLE users
-        ADD CONSTRAINT FK_users_devices FOREIGN KEY (user_certifier) REFERENCES devices(device_id);
+        ADD CONSTRAINT FK_users_devices FOREIGN KEY (user_certifier) REFERENCES devices (_id);
 
         CREATE TABLE user_invitations (
-            user_id VARCHAR(32) PRIMARY KEY,
-            creator VARCHAR(65) REFERENCES devices (device_id) NOT NULL,
+            _id SERIAL PRIMARY KEY,
+            organization INTEGER REFERENCES organizations (_id),
+            user_id VARCHAR(32) UNIQUE NOT NULL,
+            creator INTEGER REFERENCES devices (_id) NOT NULL,
             created_on TIMESTAMPTZ NOT NULL
         );
 
         CREATE TABLE device_invitations (
-            device_id VARCHAR(65) PRIMARY KEY,
-            creator VARCHAR(65) REFERENCES devices (device_id) NOT NULL,
+            _id SERIAL PRIMARY KEY,
+            organization INTEGER REFERENCES organizations (_id),
+            device_id VARCHAR(65) UNIQUE NOT NULL,
+            creator INTEGER REFERENCES devices (_id) NOT NULL,
             created_on TIMESTAMPTZ NOT NULL
         );
 
         CREATE TABLE messages (
             _id SERIAL PRIMARY KEY,
-            recipient VARCHAR(32) REFERENCES users (user_id) NOT NULL,
-            sender VARCHAR(65) REFERENCES devices (device_id) NOT NULL,
+            organization INTEGER REFERENCES organizations (_id),
+            recipient INTEGER REFERENCES users (_id) NOT NULL,
+            sender INTEGER REFERENCES devices (_id) NOT NULL,
             body BYTEA NOT NULL
         );
 
         CREATE TABLE vlobs (
             _id SERIAL PRIMARY KEY,
+            organization INTEGER REFERENCES organizations (_id),
             vlob_id UUID NOT NULL,
             version INTEGER NOT NULL,
             rts TEXT NOT NULL,
             wts TEXT NOT NULL,
             blob BYTEA NOT NULL,
-            author VARCHAR(65) REFERENCES devices (device_id) NOT NULL,
+            author INTEGER REFERENCES devices (_id) NOT NULL,
             UNIQUE(vlob_id, version)
         );
 
+        -- TODO: link to organization...
         CREATE TABLE beacons (
             _id SERIAL PRIMARY KEY,
+            organization INTEGER REFERENCES organizations (_id),
             beacon_id UUID NOT NULL,
             beacon_index INTEGER NOT NULL,
             src_id UUID NOT NULL,
@@ -147,9 +162,10 @@ async def _create_db_tables(conn):
 
         CREATE TABLE blockstore (
             _id SERIAL PRIMARY KEY,
+            organization INTEGER REFERENCES organizations (_id),
             block_id UUID UNIQUE NOT NULL,
             block BYTEA NOT NULL,
-            author VARCHAR(65) REFERENCES devices (device_id) NOT NULL
+            author INTEGER REFERENCES devices (_id) NOT NULL
         );
     """
     )

@@ -1,7 +1,7 @@
 import trio
 from uuid import UUID
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, OrganizationID
 from parsec.backend.blockstore import (
     BaseBlockstoreComponent,
     BlockstoreAlreadyExistsError,
@@ -13,11 +13,11 @@ class RAID1BlockstoreComponent(BaseBlockstoreComponent):
     def __init__(self, blockstores):
         self.blockstores = blockstores
 
-    async def read(self, id: UUID) -> bytes:
-        async def _single_blockstore_read(nursery, blockstore, id):
+    async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
+        async def _single_blockstore_read(nursery, blockstore):
             nonlocal value
             try:
-                value = await blockstore.read(id)
+                value = await blockstore.read(organization_id, id)
                 nursery.cancel_scope.cancel()
             except BlockstoreNotFoundError:
                 pass
@@ -25,17 +25,19 @@ class RAID1BlockstoreComponent(BaseBlockstoreComponent):
         value = None
         async with trio.open_nursery() as nursery:
             for blockstore in self.blockstores:
-                nursery.start_soon(_single_blockstore_read, nursery, blockstore, id)
+                nursery.start_soon(_single_blockstore_read, nursery, blockstore)
 
         if not value:
             raise BlockstoreNotFoundError()
 
         return value
 
-    async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
-        async def _single_blockstore_create(nursery, blockstore, id, block):
+    async def create(
+        self, organization_id: OrganizationID, id: UUID, block: bytes, author: DeviceID
+    ) -> None:
+        async def _single_blockstore_create(blockstore):
             try:
-                await blockstore.create(id, block, author)
+                await blockstore.create(organization_id, id, block, author)
             except BlockstoreAlreadyExistsError:
                 # It's possible a previous tentative to upload this block has
                 # failed due to another blockstore not available. In such case
@@ -46,4 +48,4 @@ class RAID1BlockstoreComponent(BaseBlockstoreComponent):
 
         async with trio.open_nursery() as nursery:
             for blockstore in self.blockstores:
-                nursery.start_soon(_single_blockstore_create, nursery, blockstore, id, block)
+                nursery.start_soon(_single_blockstore_create, blockstore)

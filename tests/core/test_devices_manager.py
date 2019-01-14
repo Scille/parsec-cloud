@@ -3,9 +3,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 from parsec.core.devices_manager.pkcs11_tools import NoKeysFound, DevicePKCS11Error
-from parsec.types import DeviceID
+from parsec.types import DeviceID, OrganizationID
 from parsec.core.devices_manager import (
-    generate_new_device,
     LocalDevicesManager,
     DeviceManagerError,
     DeviceConfigAleadyExists,
@@ -24,16 +23,6 @@ def realcrypto(unmock_crypto):
 
 
 @pytest.fixture
-def alice(backend_addr):
-    return generate_new_device(DeviceID("alice@pc1"), backend_addr)
-
-
-@pytest.fixture
-def bob(backend_addr):
-    return generate_new_device(DeviceID("bob@pc2"), backend_addr)
-
-
-@pytest.fixture
 def local_device_manager(tmpdir):
     return LocalDevicesManager(Path(tmpdir))
 
@@ -46,16 +35,40 @@ def test_list_no_devices(path_exists, tmpdir, local_device_manager):
     assert not devices
 
 
-def test_list_devices(mocked_pkcs11, local_device_manager, alice, bob):
-    encryptor = PasswordDeviceEncryptor("S3Cr37")
-    local_device_manager.save_device(alice, encryptor)
+def test_list_devices(
+    mocked_pkcs11, local_device_manager, organization_factory, local_device_factory
+):
+    org1 = organization_factory("org1")
+    org2 = organization_factory("org2")
 
-    _, token_id, key_id = mocked_pkcs11
-    encryptor = PKCS11DeviceEncryptor(token_id, key_id)
-    local_device_manager.save_device(bob, encryptor)
+    o1d11 = local_device_factory("d1@1", org1)
+    o1d12 = local_device_factory("d1@2", org1)
+    o1d21 = local_device_factory("d2@1", org1)
+
+    o2d11 = local_device_factory("d1@1", org2)
+    o2d12 = local_device_factory("d1@2", org2)
+    o2d21 = local_device_factory("d2@1", org2)
+
+    for device in [o1d11, o1d12, o1d21]:
+        encryptor = PasswordDeviceEncryptor("S3Cr37")
+        local_device_manager.save_device(device, encryptor)
+
+    for device in [o2d11, o2d12, o2d21]:
+        _, token_id, key_id = mocked_pkcs11
+        encryptor = PKCS11DeviceEncryptor(token_id, key_id)
+        local_device_manager.save_device(device, encryptor)
+
+    # TODO: Also add dummy stuff that should be ignored
 
     devices = local_device_manager.list_available_devices()
-    assert set(devices) == {(alice.device_id, "password"), (bob.device_id, "pkcs11")}
+    assert set(devices) == {
+        (o1d11.organization_id, o1d11.device_id, "password"),
+        (o1d12.organization_id, o1d12.device_id, "password"),
+        (o1d21.organization_id, o1d21.device_id, "password"),
+        (o2d11.organization_id, o2d11.device_id, "pkcs11"),
+        (o2d12.organization_id, o2d12.device_id, "pkcs11"),
+        (o2d21.organization_id, o2d21.device_id, "pkcs11"),
+    }
 
 
 @pytest.mark.parametrize("path_exists", (True, False))
@@ -66,7 +79,9 @@ def test_password_save_and_load(path_exists, tmpdir, alice):
     local_device_manager.save_device(alice, encryptor)
 
     decryptor = PasswordDeviceDecryptor("S3Cr37")
-    alice_reloaded = local_device_manager.load_device(alice.device_id, decryptor)
+    alice_reloaded = local_device_manager.load_device(
+        alice.organization_id, alice.device_id, decryptor
+    )
     assert alice == alice_reloaded
 
 
@@ -76,7 +91,7 @@ def test_load_bad_password(local_device_manager, alice):
 
     decryptor = PasswordDeviceDecryptor("dummy")
     with pytest.raises(DeviceManagerError):
-        local_device_manager.load_device(alice.device_id, decryptor)
+        local_device_manager.load_device(alice.organization_id, alice.device_id, decryptor)
 
 
 def test_password_save_already_existing(local_device_manager, alice):
@@ -89,7 +104,7 @@ def test_password_save_already_existing(local_device_manager, alice):
 def test_password_load_not_found(local_device_manager):
     decryptor = PasswordDeviceDecryptor("S3Cr37")
     with pytest.raises(DeviceConfigNotFound):
-        local_device_manager.load_device(DeviceID("waldo@pc1"), decryptor)
+        local_device_manager.load_device(OrganizationID("foo"), DeviceID("waldo@pc1"), decryptor)
 
 
 @pytest.fixture
@@ -127,7 +142,9 @@ def test_pkcs11_save_and_load(mocked_pkcs11, local_device_manager, alice):
 
     local_device_manager.save_device(alice, encryptor)
 
-    alice_reloaded = local_device_manager.load_device(alice.device_id, decryptor)
+    alice_reloaded = local_device_manager.load_device(
+        alice.organization_id, alice.device_id, decryptor
+    )
     assert alice_reloaded == alice
 
     with pytest.raises(DeviceManagerError):
@@ -140,12 +157,12 @@ def test_pkcs11_save_and_load(mocked_pkcs11, local_device_manager, alice):
 
     with pytest.raises(DeviceManagerError):
         bad_decryptor = PKCS11DeviceDecryptor(token_id, key_id, "foo")
-        local_device_manager.load_device(alice.device_id, bad_decryptor)
+        local_device_manager.load_device(alice.organization_id, alice.device_id, bad_decryptor)
 
     with pytest.raises(DeviceManagerError):
         bad_decryptor = PKCS11DeviceDecryptor(42, key_id, pin)
-        local_device_manager.load_device(alice.device_id, bad_decryptor)
+        local_device_manager.load_device(alice.organization_id, alice.device_id, bad_decryptor)
 
     with pytest.raises(DeviceManagerError):
         bad_decryptor = PKCS11DeviceDecryptor(token_id, 42, pin)
-        local_device_manager.load_device(alice.device_id, bad_decryptor)
+        local_device_manager.load_device(alice.organization_id, alice.device_id, bad_decryptor)

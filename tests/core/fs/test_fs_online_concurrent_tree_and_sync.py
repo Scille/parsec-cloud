@@ -43,14 +43,14 @@ def compare_fs_dumps(entry_1, entry_2):
 @pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
 def test_fs_online_concurrent_tree_and_sync(
     hypothesis_settings,
-    oracle_fs_with_sync_factory,
-    unused_tcp_addr,
-    device_factory,
-    local_db_factory,
+    backend_addr,
     backend_factory,
     server_factory,
+    oracle_fs_with_sync_factory,
+    local_db_factory,
     fs_factory,
-    backend_addr,
+    alice,
+    alice2,
 ):
     class FSOnlineConcurrentTreeAndSync(TrioRuleBasedStateMachine):
         Files = Bundle("file")
@@ -66,7 +66,7 @@ def test_fs_online_concurrent_tree_and_sync(
 
         async def start_backend(self, devices):
             async def _backend_controlled_cb(started_cb):
-                async with backend_factory(devices=devices) as backend:
+                async with backend_factory() as backend:
                     async with server_factory(backend.handle_client, backend_addr) as server:
                         await started_cb(backend=backend, server=server)
 
@@ -83,8 +83,8 @@ def test_fs_online_concurrent_tree_and_sync(
         @initialize(target=Folders)
         async def init(self):
             self.oracle_fs = oracle_fs_with_sync_factory()
-            self.device1 = device_factory()
-            self.device2 = device_factory(user_id=self.device1.user_id)
+            self.device1 = alice
+            self.device2 = alice2
             self.local_db1 = local_db_factory(self.device1)
             self.local_db2 = local_db_factory(self.device2)
 
