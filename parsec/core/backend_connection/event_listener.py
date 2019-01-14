@@ -118,7 +118,7 @@ class BackendEventsManager:
             except (BackendHandshakeError, BackendDeviceRevokedError):
                 # No need to retry given backend don't want to talk to us...
                 self._event_pump_lost()
-                logger.exceptions("Cannot connect to the backend")
+                logger.exception("Cannot connect to the backend")
                 return
 
     async def _event_pump(self, *, task_status=trio.TASK_STATUS_IGNORED):
