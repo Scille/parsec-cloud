@@ -24,8 +24,8 @@ FORMS += forms/main_window.ui \
          forms/register_device_dialog.ui \
          forms/devices_widget.ui \
          forms/login_login_widget.ui \
-         forms/login_register_device_widget.ui \
-         forms/login_register_user_widget.ui \
+         forms/claim_device_widget.ui \
+         forms/claim_user_widget.ui \
          forms/mount_widget.ui \
          forms/workspaces_widget.ui \
          forms/workspace_button.ui \

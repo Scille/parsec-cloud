@@ -1,0 +1,210 @@
+import threading
+import queue
+
+from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
+from PyQt5.QtWidgets import QWidget
+
+import trio
+
+from parsec.core import devices_manager
+from parsec.types import BackendOrganizationAddr, DeviceID
+from parsec.core.backend_connection import backend_anonymous_cmds_factory
+from parsec.core.invite_claim import claim_user as core_claim_user
+from parsec.core.gui.desktop import get_default_device
+from parsec.core.gui.custom_widgets import show_error, show_info
+from parsec.core.gui.password_validation import (
+    get_password_strength,
+    PASSWORD_STRENGTH_TEXTS,
+    PASSWORD_CSS,
+)
+from parsec.core.gui.ui.claim_user_widget import Ui_ClaimUserWidget
+
+
+async def _trio_claim_user(
+    queue,
+    qt_on_done,
+    config,
+    addr,
+    device_id,
+    token,
+    use_pkcs11,
+    password=None,
+    pkcs11_token=None,
+    pkcs11_key=None,
+):
+    portal = trio.BlockingTrioPortal()
+    queue.put(portal)
+    with trio.open_cancel_scope() as cancel_scope:
+        queue.put(cancel_scope)
+        async with backend_anonymous_cmds_factory(addr) as cmds:
+            device = await core_claim_user(cmds, device_id, token)
+        if use_pkcs11:
+            devices_manager.save_device_with_pkcs11(
+                config.config_dir, device, pkcs11_token, pkcs11_key
+            )
+        else:
+            devices_manager.save_device_with_password(config.config_dir, device, password)
+        qt_on_done.emit()
+
+
+class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
+    user_claimed = pyqtSignal()
+    claim_successful = pyqtSignal()
+
+    def __init__(self, core_config, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setupUi(self)
+        self.core_config = core_config
+        self.button_cancel.hide()
+        self.button_claim.clicked.connect(self.claim_clicked)
+        self.button_cancel.clicked.connect(self.cancel_claim)
+        self.line_edit_login.textChanged.connect(self.check_infos)
+        self.line_edit_device.textChanged.connect(self.check_infos)
+        self.line_edit_token.textChanged.connect(self.check_infos)
+        self.line_edit_url.textChanged.connect(self.check_infos)
+        self.line_edit_password.textChanged.connect(self.password_changed)
+        self.claim_successful.connect(self.claim_finished)
+        self.claim_thread = None
+        self.cancel_scope = None
+        self.trio_portal = None
+        self.claim_queue = queue.Queue(1)
+
+    def cancel_claim(self):
+        self.trio_portal.run_sync(self.cancel_scope.cancel)
+        self.claim_thread.join()
+        self.claim_thread = None
+        self.cancel_scope = None
+        self.trio_portal = None
+        self.button_cancel.hide()
+        self.check_infos("")
+
+    def claim_finished(self):
+        self.claim_thread.join()
+        self.claim_thread = None
+        self.cancel_scope = None
+        self.trio_portal = None
+        show_info(
+            self,
+            QCoreApplication.translate(
+                "ClaimUserWidget", "The user has been registered. You can now login."
+            ),
+        )
+        self.user_claimed.emit()
+
+    def password_changed(self, text):
+        if len(text):
+            self.label_password_strength.show()
+            score = get_password_strength(text)
+            self.label_password_strength.setText(
+                QCoreApplication.translate("ClaimDeviceWidget", "Password strength: {}").format(
+                    PASSWORD_STRENGTH_TEXTS[score]
+                )
+            )
+            self.label_password_strength.setStyleSheet(PASSWORD_CSS[score])
+        else:
+            self.label_password_strength.hide()
+
+    def check_infos(self, _):
+        if (
+            len(self.line_edit_login.text())
+            and len(self.line_edit_token.text())
+            and len(self.line_edit_device.text())
+            and len(self.line_edit_url.text())
+        ):
+            self.button_claim.setDisabled(False)
+        else:
+            self.button_claim.setDisabled(True)
+
+    def _thread_claim_user(
+        self, addr, device_id, token, use_pkcs11, password=None, pkcs11_token=None, pkcs11_key=None
+    ):
+        trio.run(
+            _trio_claim_user,
+            self.claim_queue,
+            self.claim_successful,
+            self.core_config,
+            addr,
+            device_id,
+            token,
+            use_pkcs11,
+            password,
+            pkcs11_token,
+            pkcs11_key,
+        )
+
+    def claim_clicked(self):
+        use_pkcs11 = True
+        if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
+            use_pkcs11 = False
+            if (
+                len(self.line_edit_password.text()) > 0
+                or len(self.line_edit_password_check.text()) > 0
+            ):
+                if self.line_edit_password.text() != self.line_edit_password_check.text():
+                    show_error(
+                        self, QCoreApplication.translate("ClaimUserWidget", "Passwords don't match")
+                    )
+                    return
+        try:
+            backend_addr = BackendOrganizationAddr(self.line_edit_url.text())
+            device_id = DeviceID(
+                "{}@{}".format(self.line_edit_login.text(), self.line_edit_device.text())
+            )
+        except:
+            show_error(
+                self, QCoreApplication.translate("ClaimUserWidget", "URL or device is invalid.")
+            )
+            return
+        try:
+            args = None
+            if use_pkcs11:
+                args = (
+                    backend_addr,
+                    device_id,
+                    self.line_edit_token.text(),
+                    True,
+                    None,
+                    int(self.line_edit_pkcs11_token.text()),
+                    int(self.line_edit_pkcs11.key.text()),
+                )
+            else:
+                args = (
+                    backend_addr,
+                    device_id,
+                    self.line_edit_token.text(),
+                    False,
+                    self.line_edit_password.text(),
+                )
+            self.button_cancel.show()
+            self.claim_thread = threading.Thread(target=self._thread_claim_user, args=args)
+            self.claim_thread.start()
+            self.trio_portal = self.claim_queue.get()
+            self.cancel_scope = self.claim_queue.get()
+            self.button_claim.setDisabled(True)
+        except:
+            import traceback
+
+            traceback.print_exc()
+
+            show_error(
+                self,
+                QCoreApplication.translate("ClaimUserWidget", "Can not register the new user."),
+            )
+
+    def reset(self):
+        self.line_edit_login.setText("")
+        self.line_edit_password.setText("")
+        self.line_edit_password_check.setText("")
+        self.line_edit_url.setText("")
+        self.line_edit_device.setText(get_default_device())
+        self.line_edit_token.setText("")
+        self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
+        self.line_edit_password.setDisabled(False)
+        self.line_edit_password_check.setDisabled(False)
+        self.combo_pkcs11_key.clear()
+        self.combo_pkcs11_key.addItem("0")
+        self.combo_pkcs11_token.clear()
+        self.combo_pkcs11_token.addItem("0")
+        self.button_cancel.hide()
+        self.widget_pkcs11.hide()
+        self.label_password_strength.hide()

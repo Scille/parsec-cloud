@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>LoginRegisterDeviceWidget</class>
- <widget class="QWidget" name="LoginRegisterDeviceWidget">
+ <class>ClaimDeviceWidget</class>
+ <widget class="QWidget" name="ClaimDeviceWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -67,6 +67,18 @@ border: 2px solid rgb(46, 145, 208);
 background-color: white;
 color: black;
 padding-left: 5px;
+}
+
+QPushButton:disabled
+{
+background-color: rgb(128, 128, 128);
+}
+
+QPushButton
+{
+border: 1px solid rgb(255, 255, 255);
+color: rgb(255, 255, 255);
+padding: 7px;
 }
 
 QLabel
@@ -563,7 +575,7 @@ image: url(:/icons/images/icons/checked.png)
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <property name="spacing">
-         <number>0</number>
+         <number>10</number>
         </property>
         <item>
          <spacer name="horizontalSpacer">
@@ -579,6 +591,18 @@ image: url(:/icons/images/icons/checked.png)
          </spacer>
         </item>
         <item>
+         <widget class="QPushButton" name="button_cancel">
+          <property name="font">
+           <font>
+            <pointsize>13</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Cancel</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="button_claim">
           <property name="font">
            <font>
@@ -589,9 +613,7 @@ image: url(:/icons/images/icons/checked.png)
            <enum>Qt::RightToLeft</enum>
           </property>
           <property name="styleSheet">
-           <string notr="true">border: 1px solid rgb(255, 255, 255);
-color: rgb(255, 255, 255);
-padding: 7px;</string>
+           <string notr="true"/>
           </property>
           <property name="text">
            <string>Register</string>

@@ -121,7 +121,6 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             self.line_edit_url.setCursorPosition(0)
             self.button_cancel.setFocus()
             self.widget_registration.show()
-            self.cancel_event = trio.Event()
             self.register_thread = threading.Thread(
                 target=_run_registration, args=(self.line_edit_device_name.text(), token)
             )

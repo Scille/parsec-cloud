@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QDialog
 
 import trio
 
+from parsec.core.backend_connection import BackendCmdsBadResponse
 from parsec.core.invite_claim import generate_invitation_token, invite_and_create_user
 
 from parsec.core.gui import desktop
@@ -13,16 +14,21 @@ from parsec.core.gui.custom_widgets import show_warning, show_info
 from parsec.core.gui.ui.register_user_dialog import Ui_RegisterUserDialog
 
 
-async def _handle_invite_and_create_user(queue, qt_on_done, core, username, token):
-    with trio.open_cancel_scope() as cancel_scope:
-        queue.put(cancel_scope)
-        async with trio.open_nursery() as nursery:
-            await invite_and_create_user(core.device, core.backend_cmds, username, token)
-        qt_on_done.emit()
+async def _handle_invite_and_create_user(queue, qt_on_done, qt_on_error, core, username, token):
+    try:
+        with trio.open_cancel_scope() as cancel_scope:
+            queue.put(cancel_scope)
+            async with trio.open_nursery() as nursery:
+                await invite_and_create_user(core.device, core.backend_cmds, username, token)
+            qt_on_done.emit()
+    except BackendCmdsBadResponse as e:
+        qt_on_error.emit(e.status)
+        print(e.status)
 
 
 class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
     on_registered = pyqtSignal()
+    on_register_error = pyqtSignal(str)
 
     def __init__(self, portal, core, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -40,6 +46,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.button_copy_token.clicked.connect(self.copy_field(self.line_edit_token))
         self.button_copy_url.clicked.connect(self.copy_field(self.line_edit_url))
         self.on_registered.connect(self.user_registered)
+        self.on_register_error.connect(self.registration_error)
         self.closing_allowed = True
 
     def copy_field(self, widget):
@@ -48,9 +55,37 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
 
         return _inner_copy_field
 
+    def registration_error(self, status):
+        self.register_thread.join()
+        self.register_thread = None
+        self.cancel_scope = None
+        self.line_edit_token.setText("")
+        self.line_edit_url.setText("")
+        self.line_edit_user.setText("")
+        self.widget_registration.hide()
+        self.button_cancel.hide()
+        self.button_register.show()
+        self.line_edit_username.show()
+        self.closing_allowed = True
+        if status == "invalid_role":
+            show_warning(
+                self,
+                QCoreApplication.translate(
+                    "RegisterUserDialog", "Only admins can invite a new user."
+                ),
+            )
+        else:
+            show_warning(
+                self,
+                QCoreApplication.translate(
+                    "RegisterUserDialog", "Unhandled response {}".format(status)
+                ),
+            )
+
     def user_registered(self):
         self.register_thread.join()
         self.register_thread = None
+        self.cancel_scope = None
         show_info(
             self,
             QCoreApplication.translate(
@@ -99,6 +134,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
                 _handle_invite_and_create_user,
                 self.register_queue,
                 self.on_registered,
+                self.on_register_error,
                 self.core,
                 username,
                 token,
@@ -129,7 +165,6 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             self.line_edit_url.setCursorPosition(0)
             self.button_cancel.setFocus()
             self.widget_registration.show()
-            self.cancel_event = trio.Event()
             self.register_thread = threading.Thread(
                 target=_run_registration, args=(self.line_edit_username.text(), token)
             )
