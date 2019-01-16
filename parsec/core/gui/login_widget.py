@@ -1,8 +1,7 @@
-from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QCompleter
 
 from parsec.core import devices_manager
-from parsec.core.gui.custom_widgets import show_error, show_info
 from parsec.core.gui import settings
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget

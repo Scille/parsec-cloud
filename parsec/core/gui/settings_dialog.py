@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout
+from PyQt5.QtWidgets import QDialog
 
 from parsec.core.gui.settings_widget import SettingsWidget
 from parsec.core.gui.ui.settings_dialog import Ui_SettingsDialog
