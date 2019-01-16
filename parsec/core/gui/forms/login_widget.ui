@@ -235,7 +235,8 @@ text-align: left;
 
 QPushButton#button_login_instead:hover,
 QPushButton#button_register_device_instead:hover,
-QPushButton#button_register_user_instead:hover
+QPushButton#button_register_user_instead:hover,
+QPushButton#button_settings:hover
 {
 text-decoration: underline;
 }</string>
@@ -341,6 +342,31 @@ text-decoration: underline;
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="QPushButton" name="button_settings">
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Settings</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../rc/resources.qrc">
+               <normaloff>:/icons/images/icons/menu_settings.png</normaloff>:/icons/images/icons/menu_settings.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
@@ -386,150 +412,5 @@ text-decoration: underline;
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>button_login_instead</sender>
-   <signal>clicked()</signal>
-   <receiver>button_register_device_instead</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>200</x>
-     <y>219</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>200</x>
-     <y>194</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>button_login_instead</sender>
-   <signal>clicked()</signal>
-   <receiver>button_register_user_instead</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>200</x>
-     <y>219</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>200</x>
-     <y>169</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>button_login_instead</sender>
-   <signal>clicked()</signal>
-   <receiver>button_login_instead</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>200</x>
-     <y>219</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>200</x>
-     <y>219</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>button_register_device_instead</sender>
-   <signal>clicked()</signal>
-   <receiver>button_register_user_instead</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>200</x>
-     <y>194</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>200</x>
-     <y>169</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>button_register_device_instead</sender>
-   <signal>clicked()</signal>
-   <receiver>button_register_device_instead</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>200</x>
-     <y>194</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>200</x>
-     <y>194</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>button_register_device_instead</sender>
-   <signal>clicked()</signal>
-   <receiver>button_login_instead</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>200</x>
-     <y>194</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>200</x>
-     <y>219</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>button_register_user_instead</sender>
-   <signal>clicked()</signal>
-   <receiver>button_login_instead</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>200</x>
-     <y>169</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>200</x>
-     <y>219</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>button_register_user_instead</sender>
-   <signal>clicked()</signal>
-   <receiver>button_register_device_instead</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>200</x>
-     <y>169</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>200</x>
-     <y>194</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>button_register_user_instead</sender>
-   <signal>clicked()</signal>
-   <receiver>button_register_user_instead</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>200</x>
-     <y>169</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>200</x>
-     <y>169</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

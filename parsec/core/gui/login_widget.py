@@ -6,6 +6,7 @@ from parsec.core.gui.custom_widgets import show_error, show_info
 from parsec.core.gui import settings
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
+from parsec.core.gui.settings_dialog import SettingsDialog
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 
@@ -73,6 +74,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
 
+        self.core_config = core_config
         self.login_widget = LoginLoginWidget(core_config)
         self.layout.insertWidget(0, self.login_widget)
         self.claim_user_widget = ClaimUserWidget(core_config)
@@ -86,6 +88,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_widget.login_with_pkcs11_clicked.connect(self.emit_login_with_pkcs11)
         self.claim_user_widget.user_claimed.connect(self.show_login_widget)
         self.claim_device_widget.device_claimed.connect(self.show_login_widget)
+        self.button_settings.clicked.connect(self.show_settings)
         self.reset()
 
     def emit_login_with_password(self, login, password):
@@ -93,6 +96,10 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
     def emit_login_with_pkcs11(self, login, pkcs11_pin, pkcs11_key, pkcs11_token):
         self.login_with_pkcs11_clicked.emit(login, pkcs11_pin, pkcs11_key, pkcs11_token)
+
+    def show_settings(self):
+        settings_dialog = SettingsDialog(self.core_config, parent=self)
+        settings_dialog.exec_()
 
     def show_login_widget(self):
         self.claim_user_widget.hide()
