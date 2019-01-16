@@ -182,6 +182,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 )
                 if not result:
                     event.ignore()
+                    self.close_requested = False
                     return
                 event.accept()
             else:
