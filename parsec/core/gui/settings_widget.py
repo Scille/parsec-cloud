@@ -9,10 +9,11 @@ from parsec.core.gui.ui.settings_widget import Ui_SettingsWidget
 
 
 class SettingsWidget(QWidget, Ui_SettingsWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.global_settings = GlobalSettingsWidget()
+        self.core_config = core_config
+        self.global_settings = GlobalSettingsWidget(core_config)
         self.tab_settings.addTab(
             self.global_settings,
             QIcon(":/icons/images/icons/settings_on.png"),

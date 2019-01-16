@@ -13,8 +13,9 @@ from parsec.core.gui.ui.global_settings_widget import Ui_GlobalSettingsWidget
 class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
     save_clicked = pyqtSignal()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.core_config = core_config
         self.setupUi(self)
         self.init()
         self.button_choose_mountpoint.clicked.connect(self.choose_mountpoint)
@@ -22,11 +23,9 @@ class GlobalSettingsWidget(QWidget, Ui_GlobalSettingsWidget):
         self.button_save.clicked.connect(self.save_clicked)
 
     def init(self):
-        mountpoint = settings.get_value("global/mountpoint", None)
-        if mountpoint is None:
-            mountpoint = os.path.join(str(pathlib.Path.home()), "parsec")
-            settings.set_value("global/mountpoint", mountpoint)
-        self.line_edit_mountpoint.setText(mountpoint)
+        mountpoint = self.core_config.mountpoint_base_dir
+        settings.set_value("global/mountpoint", str(mountpoint))
+        self.line_edit_mountpoint.setText(str(mountpoint))
         mountpoint_enabled = settings.get_value("global/mountpoint_enabled", None)
         if os.name == "nt":
             settings.set_value("global/mountpoint_enabled", False)

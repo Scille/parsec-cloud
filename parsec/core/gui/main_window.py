@@ -50,7 +50,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.main_widget_layout.addWidget(self.users_widget)
         self.devices_widget = DevicesWidget(parent=self)
         self.main_widget_layout.addWidget(self.devices_widget)
-        self.settings_widget = SettingsWidget(parent=self)
+        self.settings_widget = SettingsWidget(core_config=self.core_config, parent=self)
         self.main_widget_layout.addWidget(self.settings_widget)
         self.login_widget = LoginWidget(core_config=self.core_config, parent=self)
         self.main_widget_layout.addWidget(self.login_widget)
