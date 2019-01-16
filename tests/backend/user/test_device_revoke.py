@@ -25,7 +25,7 @@ async def device_revoke(sock, **kwargs):
 async def test_device_revoke_ok(
     backend, backend_sock_factory, alice_backend_sock, alice, bob, bob_revocation
 ):
-    await backend.user.set_user_admin(alice.user_id, True)
+    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
     rep = await device_revoke(alice_backend_sock, certified_revocation=bob_revocation)
     assert rep == {"status": "ok"}
@@ -38,10 +38,10 @@ async def test_device_revoke_ok(
 
 @pytest.mark.trio
 async def test_device_revoke_not_admin(
-    backend, backend_sock_factory, alice_backend_sock, bob, bob_revocation
+    backend, backend_sock_factory, alice_backend_sock, alice, bob, bob_revocation
 ):
     rep = await device_revoke(alice_backend_sock, certified_revocation=bob_revocation)
-    assert rep == {"status": "invalid_role", "reason": "User `alice` is not admin"}
+    assert rep == {"status": "invalid_role", "reason": f"User `{alice.user_id}` is not admin"}
 
 
 @pytest.mark.trio
@@ -64,7 +64,7 @@ async def test_device_revoke_own_device_not_admin(
 
 @pytest.mark.trio
 async def test_device_revoke_unknown(backend, alice_backend_sock, alice, mallory):
-    await backend.user.set_user_admin(alice.user_id, True)
+    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
     certified_revocation = certify_device_revocation(
         alice.device_id, alice.signing_key, mallory.device_id, now=pendulum.now()
@@ -76,7 +76,7 @@ async def test_device_revoke_unknown(backend, alice_backend_sock, alice, mallory
 
 @pytest.mark.trio
 async def test_device_good_user_bad_device(backend, alice_backend_sock, alice):
-    await backend.user.set_user_admin(alice.user_id, True)
+    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
     certified_revocation = certify_device_revocation(
         alice.device_id, alice.signing_key, f"{alice.user_id}@foo", now=pendulum.now()
@@ -90,7 +90,7 @@ async def test_device_good_user_bad_device(backend, alice_backend_sock, alice):
 async def test_device_revoke_already_revoked(
     backend, alice_backend_sock, alice, bob, bob_revocation
 ):
-    await backend.user.set_user_admin(alice.user_id, True)
+    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
     rep = await device_revoke(alice_backend_sock, certified_revocation=bob_revocation)
     assert rep == {"status": "ok"}
@@ -104,7 +104,7 @@ async def test_device_revoke_already_revoked(
 
 @pytest.mark.trio
 async def test_device_revoke_invalid_certified(backend, alice_backend_sock, alice2, bob):
-    await backend.user.set_user_admin(alice2.user_id, True)
+    await backend.user.set_user_admin(alice2.organization_id, alice2.user_id, True)
 
     certified_revocation = certify_device_revocation(
         alice2.device_id, alice2.signing_key, bob.device_id, now=pendulum.now()
@@ -119,7 +119,7 @@ async def test_device_revoke_invalid_certified(backend, alice_backend_sock, alic
 
 @pytest.mark.trio
 async def test_device_revoke_certify_too_old(backend, alice_backend_sock, alice, bob):
-    await backend.user.set_user_admin(alice.user_id, True)
+    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
     now = pendulum.Pendulum(2000, 1, 1)
     certified_revocation = certify_device_revocation(
@@ -132,3 +132,25 @@ async def test_device_revoke_certify_too_old(backend, alice_backend_sock, alice,
             "status": "invalid_certification",
             "reason": "Invalid certification data (Timestamp is too old.).",
         }
+
+
+@pytest.mark.trio
+async def test_device_revoke_other_organization(
+    sock_from_other_organization_factory, backend_sock_factory, backend, alice, bob
+):
+
+    # Organizations should be isolated...
+    async with sock_from_other_organization_factory(backend, mimick=alice.device_id) as sock:
+        # ...even for organization admins !
+        await backend.user.set_user_admin(sock.device.organization_id, sock.device.user_id, True)
+
+        revocation = certify_device_revocation(
+            sock.device.device_id, sock.device.signing_key, bob.device_id
+        )
+
+        rep = await device_revoke(sock, certified_revocation=revocation)
+        assert rep == {"status": "not_found"}
+
+    # Make sure bob still works
+    async with backend_sock_factory(backend, bob):
+        pass

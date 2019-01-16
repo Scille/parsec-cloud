@@ -1,3 +1,4 @@
+from parsec.types import OrganizationID
 from parsec.crypto import VerifyKey
 from parsec.backend.user import BaseUserComponent, UserError, User
 from parsec.backend.organization import (
@@ -18,21 +19,21 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self._organizations = {}
         self._organizations_invitations = {}
 
-    async def create(self, name: str, bootstrap_token: str) -> None:
-        if name in self._organizations:
+    async def create(self, id: OrganizationID, bootstrap_token: str) -> None:
+        if id in self._organizations:
             raise OrganizationAlreadyExistsError()
 
-        self._organizations[name] = Organization(name=name, bootstrap_token=bootstrap_token)
+        self._organizations[id] = Organization(organization_id=id, bootstrap_token=bootstrap_token)
 
-    async def get(self, name: str) -> Organization:
-        if name not in self._organizations:
+    async def get(self, id: OrganizationID) -> Organization:
+        if id not in self._organizations:
             raise OrganizationNotFoundError()
-        return self._organizations[name]
+        return self._organizations[id]
 
     async def bootstrap(
-        self, name: str, bootstrap_token: str, root_verify_key: VerifyKey, user: User
+        self, id: OrganizationID, user: User, bootstrap_token: str, root_verify_key: VerifyKey
     ) -> None:
-        organization = await self.get(name)
+        organization = await self.get(id)
         if organization.is_bootstrapped():
             raise OrganizationAlreadyBootstrappedError()
 
@@ -40,9 +41,11 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             raise OrganizationInvalidBootstrapTokenError()
 
         try:
-            await self.user_component.create_user(user)
+            await self.user_component.create_user(id, user)
 
         except UserError as exc:
-            raise OrganizationFirstUserCreationError() from exc
+            raise OrganizationFirstUserCreationError(exc) from exc
 
-        self._organizations[name] = organization.evolve(root_verify_key=root_verify_key)
+        self._organizations[organization.organization_id] = organization.evolve(
+            root_verify_key=root_verify_key
+        )

@@ -21,7 +21,7 @@ pbr.version.VersionInfo = Mock(side_effect=side_effect)
 import swiftclient
 from swiftclient.exceptions import ClientException
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, OrganizationID
 from parsec.backend.blockstore import (
     BaseBlockstoreComponent,
     BlockstoreAlreadyExistsError,
@@ -43,10 +43,11 @@ class SwiftBlockstoreComponent(BaseBlockstoreComponent):
         self._container = container
         self.swift_client.head_container(container)
 
-    async def read(self, id: UUID) -> bytes:
+    async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
+        slug = f"{organization_id}/{id}"
         try:
             headers, obj = await trio.run_sync_in_worker_thread(
-                self.swift_client.get_object, self._container, str(id)
+                self.swift_client.get_object, self._container, slug
             )
 
         except ClientException as exc:
@@ -59,10 +60,13 @@ class SwiftBlockstoreComponent(BaseBlockstoreComponent):
         # Remember, to retreive the author: DeviceID(headers[AUTHOR_META_HEADER])
         return obj
 
-    async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
+    async def create(
+        self, organization_id: OrganizationID, id: UUID, block: bytes, author: DeviceID
+    ) -> None:
+        slug = f"{organization_id}/{id}"
         try:
             _, obj = await trio.run_sync_in_worker_thread(
-                self.swift_client.get_object, self._container, str(id)
+                self.swift_client.get_object, self._container, slug
             )
 
         except ClientException as exc:
@@ -71,7 +75,7 @@ class SwiftBlockstoreComponent(BaseBlockstoreComponent):
                     partial(
                         self.swift_client.put_object,
                         self._container,
-                        str(id),
+                        slug,
                         block,
                         headers={AUTHOR_META_HEADER: author},
                     )

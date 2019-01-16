@@ -11,25 +11,27 @@ from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 
 
 class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
-    login_with_password_clicked = pyqtSignal(str, str)
-    login_with_pkcs11_clicked = pyqtSignal(str, str, int, int)
+    login_with_password_clicked = pyqtSignal(str, str, str)
+    login_with_pkcs11_clicked = pyqtSignal(str, str, str, int, int)
 
     def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.core_config = core_config
         self.button_login.clicked.connect(self.emit_login)
-        self.devices = []
+        self.devices = {}
         self.reset()
 
     def emit_login(self):
+        organization_id, device_id, _ = self.devices[self.line_edit_device.text()]
         if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
             self.login_with_password_clicked.emit(
-                self.line_edit_device.text(), self.line_edit_password.text()
+                organization_id, device_id, self.line_edit_password.text()
             )
         else:
             self.login_with_pkcs11_clicked.emit(
-                self.line_edit_device.text(),
+                organization_id,
+                device_id,
                 self.line_edit_pkcs11_pin.text(),
                 int(self.combo_pkcs11_key.currentText()),
                 int(self.combo_pkcs11_token.currentText()),
@@ -45,13 +47,15 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         self.combo_pkcs11_token.clear()
         self.combo_pkcs11_token.addItem("0")
         self.widget_pkcs11.hide()
-        self.devices = devices_manager.list_available_devices(self.core_config.config_dir)
+        devices = devices_manager.list_available_devices(self.core_config.config_dir)
+        # Display devices in `<organization>:<device_id>` format
+        self.devices = {f"{o}:{d}": (o, d, t) for o, d, t in devices}
         if len(self.devices) == 1:
-            self.line_edit_device.setText(self.devices[0][0])
+            self.line_edit_device.setText(next(iter(self.devices)))
             self.line_edit_password.setFocus()
         elif len(self.devices) > 1:
             last_device = settings.get_value("last_device")
-            if last_device and last_device in [d[0] for d in self.devices]:
+            if last_device and last_device in self.devices:
                 self.line_edit_device.setText(last_device)
                 self.line_edit_password.setFocus()
             else:
@@ -59,15 +63,15 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         else:
             self.line_edit_device.setText("")
             self.line_edit_device.setFocus()
-        completer = QCompleter([d[0] for d in self.devices])
+        completer = QCompleter(self.devices.keys())
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         completer.popup().setStyleSheet("border: 2px solid rgb(46, 145, 208); border-top: 0;")
         self.line_edit_device.setCompleter(completer)
 
 
 class LoginWidget(QWidget, Ui_LoginWidget):
-    login_with_password_clicked = pyqtSignal(str, str)
-    login_with_pkcs11_clicked = pyqtSignal(str, str, int, int)
+    login_with_password_clicked = pyqtSignal(str, str, str)
+    login_with_pkcs11_clicked = pyqtSignal(str, str, str, int, int)
 
     def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -90,11 +94,15 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_settings.clicked.connect(self.show_settings)
         self.reset()
 
-    def emit_login_with_password(self, login, password):
-        self.login_with_password_clicked.emit(login, password)
+    def emit_login_with_password(self, organization_id, device_id, password):
+        self.login_with_password_clicked.emit(organization_id, device_id, password)
 
-    def emit_login_with_pkcs11(self, login, pkcs11_pin, pkcs11_key, pkcs11_token):
-        self.login_with_pkcs11_clicked.emit(login, pkcs11_pin, pkcs11_key, pkcs11_token)
+    def emit_login_with_pkcs11(
+        self, organization_id, device_id, pkcs11_pin, pkcs11_key, pkcs11_token
+    ):
+        self.login_with_pkcs11_clicked.emit(
+            organization_id, device_id, pkcs11_pin, pkcs11_key, pkcs11_token
+        )
 
     def show_settings(self):
         settings_dialog = SettingsDialog(self.core_config, parent=self)

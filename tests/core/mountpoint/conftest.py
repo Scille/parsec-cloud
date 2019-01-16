@@ -23,9 +23,7 @@ def fuse_mode(request):
 
 @pytest.fixture
 @pytest.mark.fuse
-def fuse_service_factory(
-    tmpdir, unused_tcp_addr, device_factory, event_bus_factory, fs_factory, fuse_mode
-):
+def fuse_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_factory, fuse_mode):
     """
     Run a trio loop with fs and fuse in a separate thread to allow
     blocking operations on the mountpoint in the test
@@ -82,8 +80,7 @@ def fuse_service_factory(
             self._portal = trio.BlockingTrioPortal()
 
             async def _fuse_controlled_cb(started_cb):
-                device = device_factory()
-                async with fs_factory(device) as fs:
+                async with fs_factory(alice) as fs:
 
                     await fs.workspace_create(f"/{self.default_workspace_name}")
 

@@ -34,7 +34,7 @@ async def _bootstrap_organization(
     async with spinner(f"Sending {device_display} to server"):
         async with backend_anonymous_cmds_factory(organization_bootstrap_addr) as cmds:
             await cmds.organization_bootstrap(
-                organization_bootstrap_addr.organization,
+                organization_bootstrap_addr.organization_id,
                 organization_bootstrap_addr.bootstrap_token,
                 root_verify_key,
                 certified_user,

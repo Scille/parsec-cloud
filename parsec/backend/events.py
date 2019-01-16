@@ -8,8 +8,12 @@ from parsec.backend.utils import catch_protocole_errors
 def _pinged_callback_factory(client_ctx, pings):
     pings = set(pings)
 
-    def _on_pinged(event, author, ping):
-        if author == client_ctx.device_id or ping not in pings:
+    def _on_pinged(event, organization_id, author, ping):
+        if (
+            organization_id != client_ctx.organization_id
+            or author == client_ctx.device_id
+            or ping not in pings
+        ):
             return
 
         try:
@@ -23,8 +27,12 @@ def _pinged_callback_factory(client_ctx, pings):
 def _beacon_updated_callback_factory(client_ctx, beacons_ids):
     beacons_ids = set(beacons_ids)
 
-    def _on_beacon_updated(event, author, beacon_id, index, src_id, src_version):
-        if author == client_ctx.device_id or beacon_id not in beacons_ids:
+    def _on_beacon_updated(event, organization_id, author, beacon_id, index, src_id, src_version):
+        if (
+            organization_id != client_ctx.organization_id
+            or author == client_ctx.device_id
+            or beacon_id not in beacons_ids
+        ):
             return
 
         msg = {
@@ -43,8 +51,12 @@ def _beacon_updated_callback_factory(client_ctx, beacons_ids):
 
 
 def _message_received_callback_factory(client_ctx):
-    def _on_message_received(event, author, recipient, index):
-        if author == client_ctx.device_id or recipient != client_ctx.user_id:
+    def _on_message_received(event, organization_id, author, recipient, index):
+        if (
+            organization_id != client_ctx.organization_id
+            or author == client_ctx.device_id
+            or recipient != client_ctx.user_id
+        ):
             return
 
         try:

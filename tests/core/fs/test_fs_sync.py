@@ -26,7 +26,7 @@ async def assert_same_fs(fs1, fs2):
 
 
 @pytest.mark.trio
-async def test_new_workspace(running_backend, alice_fs, alice2_fs):
+async def test_new_workspace(running_backend, alice, alice_fs, alice2_fs):
     with freeze_time("2000-01-02"):
         await alice_fs.workspace_create("/w")
 
@@ -52,8 +52,8 @@ async def test_new_workspace(running_backend, alice_fs, alice2_fs):
         "base_version": 1,
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
-        "participants": ["alice"],
-        "creator": "alice",
+        "participants": [alice.user_id],
+        "creator": alice.user_id,
         "children": [],
     }
     stat2 = await alice2_fs.stat("/w")
@@ -514,7 +514,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
 
 
 @pytest.mark.trio
-async def test_create_already_existing_folder_vlob(running_backend, alice_fs, alice2_fs):
+async def test_create_already_existing_folder_vlob(running_backend, alice, alice_fs, alice2_fs):
     # First create data locally
     with freeze_time("2000-01-02"):
         # File and folder are handled basically the same
@@ -543,8 +543,8 @@ async def test_create_already_existing_folder_vlob(running_backend, alice_fs, al
         "need_sync": False,
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
-        "creator": "alice",
-        "participants": ["alice"],
+        "creator": alice.user_id,
+        "participants": [alice.user_id],
         "children": [],
     }
 

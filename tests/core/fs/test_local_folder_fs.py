@@ -34,7 +34,7 @@ def test_stat_root(local_folder_fs):
     }
 
 
-def test_workspace_create(local_folder_fs):
+def test_workspace_create(local_folder_fs, alice):
     with freeze_time("2000-01-02"):
         local_folder_fs.workspace_create(FsPath("/foo"))
 
@@ -60,12 +60,12 @@ def test_workspace_create(local_folder_fs):
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
         "children": [],
-        "creator": "alice",
-        "participants": ["alice"],
+        "creator": alice.user_id,
+        "participants": [alice.user_id],
     }
 
 
-def test_file_create(local_folder_fs):
+def test_file_create(local_folder_fs, alice):
 
     with freeze_time("2000-01-02"):
         local_folder_fs.workspace_create(FsPath("/w"))
@@ -82,8 +82,8 @@ def test_file_create(local_folder_fs):
         "need_sync": True,
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 3),
-        "creator": "alice",
-        "participants": ["alice"],
+        "creator": alice.user_id,
+        "participants": [alice.user_id],
         "children": ["foo.txt"],
     }
 
@@ -260,7 +260,7 @@ class PathElement:
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Windows path style not compatible with oracle")
 def test_folder_operations(
-    tmpdir, hypothesis_settings, device_factory, local_db_factory, local_folder_fs_factory
+    tmpdir, hypothesis_settings, local_db_factory, local_folder_fs_factory, alice
 ):
     tentative = 0
 
@@ -277,7 +277,7 @@ def test_folder_operations(
             tentative += 1
 
             self.last_step_id_to_path = set()
-            self.device = device_factory()
+            self.device = alice
             self.local_db = local_db_factory(self.device)
             self.local_folder_fs = local_folder_fs_factory(self.device, self.local_db)
 

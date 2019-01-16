@@ -42,7 +42,7 @@ async def test_init_end_with_backend_offline_status_event(event_bus, alice):
 
 @pytest.mark.trio
 async def test_subscribe_listen_unsubscribe_beacon(
-    event_bus, backend, running_backend_listen_events
+    event_bus, backend, running_backend_listen_events, alice
 ):
     beacon_id = uuid4()
     src_id = uuid4()
@@ -58,6 +58,7 @@ async def test_subscribe_listen_unsubscribe_beacon(
 
     backend.event_bus.send(
         "beacon.updated",
+        organization_id=alice.organization_id,
         author="bob@test",
         beacon_id=beacon_id,
         index=1,
@@ -83,6 +84,7 @@ async def test_subscribe_listen_unsubscribe_beacon(
     with event_bus.listen() as spy:
         backend.event_bus.send(
             "beacon.updated",
+            organization_id=alice.organization_id,
             author="bob@test",
             beacon_id=beacon_id,
             index=1,
@@ -128,7 +130,7 @@ async def test_listen_already_listened_beacon_id_does_nothing(
 
 @pytest.mark.trio
 async def test_backend_switch_offline(
-    mock_clock, event_bus, backend_addr, backend, running_backend_listen_events
+    mock_clock, event_bus, backend_addr, backend, running_backend_listen_events, alice
 ):
     beacon_id = uuid4()
     src_id = uuid4()
@@ -159,6 +161,7 @@ async def test_backend_switch_offline(
     with event_bus.listen() as spy:
         backend.event_bus.send(
             "beacon.updated",
+            organization_id=alice.organization_id,
             author="bob@test",
             beacon_id=beacon_id,
             index=1,

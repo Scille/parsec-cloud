@@ -144,19 +144,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.current_device = None
         self.show_login_widget()
 
-    def login_with_password(self, device_id, password):
+    def login_with_password(self, organization_id, device_id, password):
         try:
             self.current_device = load_device_with_password(
-                self.core_config.config_dir, device_id, password
+                self.core_config.config_dir, organization_id, device_id, password
             )
             self.start_core()
             self.show_mount_widget()
         except DeviceManagerError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
 
-    def login_with_pkcs11(self, device_id, pkcs11_pin, pkcs11_key, pkcs11_token):
+    def login_with_pkcs11(self, organization_id, device_id, pkcs11_pin, pkcs11_key, pkcs11_token):
         try:
-            device = load_device_with_pkcs11(self.core_config.config_dir, device_id)
+            device = load_device_with_pkcs11(
+                self.core_config.config_dir, organization_id, device_id
+            )
             self.mount()
             self.show_mount_widget()
         except DeviceManagerError:

@@ -2,46 +2,12 @@ import pytest
 import trio
 from async_generator import asynccontextmanager
 
-from parsec.types import DeviceID
 from parsec.core.types import local_manifest_serializer
-from parsec.core.devices_manager import generate_new_device
 from parsec.core.backend_connection import backend_cmds_factory
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.fs import FS
 
 from tests.common import freeze_time, InMemoryLocalDB
-
-
-@pytest.fixture
-def device_factory(backend_addr):
-    users = {}
-    devices = {}
-    count = 0
-
-    def _device_factory(user_id=None, device_name=None):
-        nonlocal count
-        count += 1
-
-        if not user_id:
-            user_id = f"user_{count}"
-        if not device_name:
-            device_name = f"device_{count}"
-
-        device_id = DeviceID(f"{user_id}@{device_name}")
-        assert device_id not in devices
-
-        device = generate_new_device(device_id, backend_addr)
-        try:
-            private_key, user_manifest_access = users[user_id]
-        except KeyError:
-            users[user_id] = (device.private_key, device.user_manifest_access)
-        else:
-            device = device.evolve(
-                private_key=private_key, user_manifest_access=user_manifest_access
-            )
-        return device
-
-    return _device_factory
 
 
 @pytest.fixture
@@ -54,10 +20,8 @@ def local_db_factory(initial_user_manifest_state):
 
         local_db = InMemoryLocalDB()
         local_dbs[device_id] = local_db
-        if user_manifest_in_v0:
-            initial_user_manifest_state.set_v0_in_device(device_id)
-        else:
-            user_manifest = initial_user_manifest_state.get_initial_for_device(device)
+        if not user_manifest_in_v0:
+            user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
             local_db.set(
                 device.user_manifest_access, local_manifest_serializer.dumps(user_manifest)
             )
@@ -91,7 +55,7 @@ def encryption_manager_factory():
     async def _encryption_manager_factory(device, local_db=None):
         local_db = local_db or InMemoryLocalDB()
         async with backend_cmds_factory(
-            device.backend_addr, device.device_id, device.signing_key
+            device.organization_addr, device.device_id, device.signing_key
         ) as cmds:
             em = EncryptionManager(device, local_db, cmds)
             async with trio.open_nursery() as nursery:
@@ -162,7 +126,7 @@ def backend_addr_factory(running_backend, tcp_stream_spy):
 @pytest.fixture
 async def alice_backend_cmds(running_backend, alice):
     async with backend_cmds_factory(
-        running_backend.addr, alice.device_id, alice.signing_key
+        alice.organization_addr, alice.device_id, alice.signing_key
     ) as cmds:
         yield cmds
 
@@ -170,12 +134,12 @@ async def alice_backend_cmds(running_backend, alice):
 @pytest.fixture
 async def alice2_backend_cmds(running_backend, alice2):
     async with backend_cmds_factory(
-        running_backend.addr, alice2.device_id, alice2.signing_key
+        alice2.organization_addr, alice2.device_id, alice2.signing_key
     ) as cmds:
         yield cmds
 
 
 @pytest.fixture
 async def bob_backend_cmds(running_backend, bob):
-    async with backend_cmds_factory(running_backend.addr, bob.device_id, bob.signing_key) as cmds:
+    async with backend_cmds_factory(bob.organization_addr, bob.device_id, bob.signing_key) as cmds:
         yield cmds

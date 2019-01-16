@@ -1,6 +1,7 @@
 from uuid import UUID
+from collections import defaultdict
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, OrganizationID
 from parsec.backend.blockstore import (
     BaseBlockstoreComponent,
     BlockstoreAlreadyExistsError,
@@ -10,18 +11,24 @@ from parsec.backend.blockstore import (
 
 class MemoryBlockstoreComponent(BaseBlockstoreComponent):
     def __init__(self):
-        self.blocks = {}
+        self._organizations = defaultdict(dict)
 
-    async def read(self, id: UUID) -> bytes:
+    async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
+        blocks = self._organizations[organization_id]
+
         try:
-            return self.blocks[id][0]
+            return blocks[id][0]
 
         except KeyError:
             raise BlockstoreNotFoundError()
 
-    async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
-        if id in self.blocks:
+    async def create(
+        self, organization_id: OrganizationID, id: UUID, block: bytes, author: DeviceID
+    ) -> None:
+        blocks = self._organizations[organization_id]
+
+        if id in blocks:
             # Should never happen
             raise BlockstoreAlreadyExistsError()
 
-        self.blocks[id] = (block, author)
+        blocks[id] = (block, author)

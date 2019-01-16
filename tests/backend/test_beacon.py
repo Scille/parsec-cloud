@@ -23,7 +23,7 @@ async def vlob_ids(backend, alice):
         UUID("af20bbfcc3294b96bb536fe65efc86b4"),
     )
     for id in ids:
-        await backend.vlob.create(id, "<rts>", "<wts>", b"", alice.device_id)
+        await backend.vlob.create(alice.organization_id, id, "<rts>", "<wts>", b"", alice.device_id)
     return ids
 
 
@@ -42,10 +42,16 @@ async def test_beacon_read_any(alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_beacon_multimessages(backend, alice_backend_sock, vlob_ids):
-    await backend.beacon.update(BEACON_ID_1, src_id=vlob_ids[0], src_version=1, author="alice")
-    await backend.beacon.update(BEACON_ID_1, src_id=vlob_ids[1], src_version=2, author="bob")
-    await backend.beacon.update(BEACON_ID_1, src_id=vlob_ids[2], src_version=3, author="bob")
+async def test_beacon_multimessages(backend, alice_backend_sock, alice, vlob_ids):
+    await backend.beacon.update(
+        alice.organization_id, BEACON_ID_1, src_id=vlob_ids[0], src_version=1, author="alice"
+    )
+    await backend.beacon.update(
+        alice.organization_id, BEACON_ID_1, src_id=vlob_ids[1], src_version=2, author="bob"
+    )
+    await backend.beacon.update(
+        alice.organization_id, BEACON_ID_1, src_id=vlob_ids[2], src_version=3, author="bob"
+    )
 
     rep = await beacon_read(alice_backend_sock, BEACON_ID_1, 0)
     assert rep == {
@@ -64,9 +70,17 @@ async def test_beacon_multimessages(backend, alice_backend_sock, vlob_ids):
 
 @pytest.mark.trio
 async def test_beacon_in_vlob_update(backend, alice_backend_sock, alice):
-    await backend.vlob.create(VLOB_ID, VLOB_RTS, VLOB_WTS, blob=b"foo", author=alice.device_id)
+    await backend.vlob.create(
+        alice.organization_id, VLOB_ID, VLOB_RTS, VLOB_WTS, blob=b"foo", author=alice.device_id
+    )
     await backend.vlob.update(
-        VLOB_ID, VLOB_WTS, version=2, blob=b"bar", notify_beacon=BEACON_ID_1, author=alice.device_id
+        alice.organization_id,
+        VLOB_ID,
+        VLOB_WTS,
+        version=2,
+        blob=b"bar",
+        notify_beacon=BEACON_ID_1,
+        author=alice.device_id,
     )
 
     rep = await beacon_read(alice_backend_sock, BEACON_ID_1, 0)
@@ -76,7 +90,13 @@ async def test_beacon_in_vlob_update(backend, alice_backend_sock, alice):
 @pytest.mark.trio
 async def test_beacon_in_vlob_create(backend, alice_backend_sock, alice):
     await backend.vlob.create(
-        VLOB_ID, VLOB_RTS, VLOB_WTS, b"foo", notify_beacon=BEACON_ID_1, author=alice.device_id
+        alice.organization_id,
+        VLOB_ID,
+        VLOB_RTS,
+        VLOB_WTS,
+        b"foo",
+        notify_beacon=BEACON_ID_1,
+        author=alice.device_id,
     )
 
     rep = await beacon_read(alice_backend_sock, BEACON_ID_1, 0)
@@ -89,13 +109,13 @@ async def test_beacon_updated_event(backend, alice_backend_sock, vlob_ids, alice
 
     # Good events
     await backend.beacon.update(
-        BEACON_ID_1, src_id=vlob_ids[0], src_version=1, author=bob.device_id
+        alice.organization_id, BEACON_ID_1, src_id=vlob_ids[0], src_version=1, author=bob.device_id
     )
     await backend.beacon.update(
-        BEACON_ID_2, src_id=vlob_ids[1], src_version=2, author=bob.device_id
+        alice.organization_id, BEACON_ID_2, src_id=vlob_ids[1], src_version=2, author=bob.device_id
     )
     await backend.beacon.update(
-        BEACON_ID_2, src_id=vlob_ids[1], src_version=3, author=bob.device_id
+        alice.organization_id, BEACON_ID_2, src_id=vlob_ids[1], src_version=3, author=bob.device_id
     )
 
     with trio.fail_after(1):
@@ -140,14 +160,18 @@ async def test_beacon_updated_event(backend, alice_backend_sock, vlob_ids, alice
 
     # Ignore self events
     await backend.beacon.update(
-        BEACON_ID_1, src_id=vlob_ids[0], src_version=1, author=alice.device_id
+        alice.organization_id,
+        BEACON_ID_1,
+        src_id=vlob_ids[0],
+        src_version=1,
+        author=alice.device_id,
     )
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "no_events"}
 
     # Beacon id not subscribed to
     await backend.beacon.update(
-        BEACON_ID_3, src_id=vlob_ids[0], src_version=1, author=bob.device_id
+        alice.organization_id, BEACON_ID_3, src_id=vlob_ids[0], src_version=1, author=bob.device_id
     )
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "no_events"}

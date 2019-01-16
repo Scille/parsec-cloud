@@ -7,7 +7,7 @@ from botocore.exceptions import (
 from uuid import UUID
 from functools import partial
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, OrganizationID
 from parsec.backend.blockstore import (
     BlockstoreAlreadyExistsError,
     BaseBlockstoreComponent,
@@ -26,9 +26,10 @@ class S3BlockstoreComponent(BaseBlockstoreComponent):
         self._s3_bucket = s3_bucket
         self._s3.head_bucket(Bucket=s3_bucket)
 
-    async def read(self, id: UUID) -> bytes:
+    async def read(self, organization_id: OrganizationID, id: UUID) -> bytes:
+        slug = f"{organization_id}/{id}"
         try:
-            obj = self._s3.get_object(Bucket=self._s3_bucket, Key=str(id))
+            obj = self._s3.get_object(Bucket=self._s3_bucket, Key=slug)
 
         except S3ClientError as exc:
             if exc.response["Error"]["Code"] == "404":
@@ -43,10 +44,13 @@ class S3BlockstoreComponent(BaseBlockstoreComponent):
         # Remember, to retreive the author: DeviceID(obj["Metadata"]["author"])
         return obj["Body"].read()
 
-    async def create(self, id: UUID, block: bytes, author: DeviceID) -> None:
+    async def create(
+        self, organization_id: OrganizationID, id: UUID, block: bytes, author: DeviceID
+    ) -> None:
+        slug = f"{organization_id}/{id}"
         try:
             await trio.run_sync_in_worker_thread(
-                partial(self._s3.head_object, Bucket=self._s3_bucket, Key=str(id))
+                partial(self._s3.head_object, Bucket=self._s3_bucket, Key=slug)
             )
         except S3ClientError as exc:
             if exc.response["Error"]["Code"] == "404":
@@ -55,7 +59,7 @@ class S3BlockstoreComponent(BaseBlockstoreComponent):
                         partial(
                             self._s3.put_object,
                             Bucket=self._s3_bucket,
-                            Key=str(id),
+                            Key=slug,
                             Body=block,
                             Metadata={"author": author},
                         )

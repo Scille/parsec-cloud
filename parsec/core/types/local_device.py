@@ -10,7 +10,7 @@ from parsec.core.types.access import ManifestAccessSchema
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
 class LocalDevice:
 
-    backend_addr: BackendOrganizationAddr
+    organization_addr: BackendOrganizationAddr
     device_id: DeviceID
     signing_key: SigningKey
     private_key: PrivateKey
@@ -24,12 +24,24 @@ class LocalDevice:
         return attr.evolve(self, **kwargs)
 
     @property
+    def full_device_id(self):
+        return FullDeviceID.build(self.organization_id, self.device_id)
+
+    @property
     def root_verify_key(self):
-        return self.backend_addr.root_verify_key
+        return self.organization_addr.root_verify_key
+
+    @property
+    def organization_id(self):
+        return self.organization_addr.organization_id
 
     @property
     def device_name(self):
         return self.device_id.device_name
+
+    @property
+    def user_name(self):
+        return self.device_id.user_name
 
     @property
     def user_id(self):
@@ -45,8 +57,7 @@ class LocalDevice:
 
 
 class LocalDeviceSchema(UnknownCheckedSchema):
-    backend_addr = fields.String(required=True)
-    root_verify_key = fields.VerifyKey(required=True)
+    organization_addr = fields.BackendOrganizationAddr(required=True)
     device_id = fields.DeviceID(required=True)
     signing_key = fields.SigningKey(required=True)
     private_key = fields.PrivateKey(required=True)

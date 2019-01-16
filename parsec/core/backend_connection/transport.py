@@ -2,8 +2,14 @@ import os
 import trio
 from async_generator import asynccontextmanager
 from structlog import get_logger
+from typing import Optional, Union
 
-from parsec.types import DeviceID, BackendAddr
+from parsec.types import (
+    DeviceID,
+    BackendAddr,
+    BackendOrganizationAddr,
+    BackendOrganizationBootstrapAddr,
+)
 from parsec.crypto import SigningKey
 from parsec.api.transport import Transport, TransportError, TransportClosedByPeer
 from parsec.api.protocole import (
@@ -22,6 +28,7 @@ from parsec.core.backend_connection.exceptions import (
 __all__ = (
     "authenticated_transport_factory",
     "anonymous_transport_factory",
+    "administrator_transport_factory",
     "transport_pool_factory",
     "TransportPool",
 )
@@ -30,7 +37,12 @@ __all__ = (
 logger = get_logger()
 
 
-async def _connect(addr: BackendAddr, device_id: DeviceID = None, signing_key: SigningKey = None):
+async def _connect(
+    addr: Union[BackendAddr, BackendOrganizationBootstrapAddr, BackendOrganizationAddr],
+    device_id: Optional[DeviceID] = None,
+    signing_key: Optional[SigningKey] = None,
+    administrator_token: Optional[str] = None,
+):
     try:
         stream = await trio.open_tcp_stream(addr.hostname, addr.port)
 
@@ -47,8 +59,23 @@ async def _connect(addr: BackendAddr, device_id: DeviceID = None, signing_key: S
         logger.debug("Connection lost during transport creation", reason=exc)
         raise BackendNotAvailable(exc) from exc
 
+    if administrator_token:
+        ch = AnonymousClientHandshake(administrator_token)
+
+    elif not device_id:
+        if isinstance(addr, BackendOrganizationBootstrapAddr):
+            ch = AnonymousClientHandshake(addr.organization_id)
+        else:
+            assert isinstance(addr, BackendOrganizationAddr)
+            ch = AnonymousClientHandshake(addr.organization_id, addr.root_verify_key)
+
+    else:
+        assert isinstance(addr, BackendOrganizationAddr)
+        assert signing_key
+        ch = ClientHandshake(addr.organization_id, device_id, signing_key, addr.root_verify_key)
+
     try:
-        await _do_handshade(transport, device_id, signing_key)
+        await _do_handshade(transport, ch)
 
     except Exception as exc:
         transport.logger.debug("Connection lost during handshake", reason=exc)
@@ -73,17 +100,8 @@ def _upgrade_stream_to_ssl(raw_stream, hostname):
     return trio.ssl.SSLStream(raw_stream, ssl_context, server_hostname=hostname)
 
 
-async def _do_handshade(
-    transport: Transport, device_id: DeviceID = None, signing_key: SigningKey = None
-):
-    if device_id and not signing_key:
-        raise ValueError("Signing key is mandatory for non anonymous authentication")
-
+async def _do_handshade(transport: Transport, ch):
     try:
-        if not device_id:
-            ch = AnonymousClientHandshake()
-        else:
-            ch = ClientHandshake(device_id, signing_key)
         challenge_req = await transport.recv()
         answer_req = ch.process_challenge_req(challenge_req)
         await transport.send(answer_req)
@@ -105,7 +123,7 @@ async def _do_handshade(
 
 @asynccontextmanager
 async def authenticated_transport_factory(
-    addr: BackendAddr, device_id: DeviceID, signing_key: SigningKey
+    addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey
 ) -> Transport:
     transport = await _connect(addr, device_id, signing_key)
     transport.logger = transport.logger.bind(device_id=device_id)
@@ -117,8 +135,19 @@ async def authenticated_transport_factory(
 
 
 @asynccontextmanager
-async def anonymous_transport_factory(addr: BackendAddr) -> Transport:
+async def anonymous_transport_factory(addr: BackendOrganizationAddr) -> Transport:
     transport = await _connect(addr)
+    transport.logger = transport.logger.bind(auth="<anonymous>")
+    try:
+        yield transport
+
+    finally:
+        await transport.aclose()
+
+
+@asynccontextmanager
+async def administrator_transport_factory(addr: BackendAddr, token: str) -> Transport:
+    transport = await _connect(addr, administrator_token=token)
     transport.logger = transport.logger.bind(auth="<anonymous>")
     try:
         yield transport
@@ -169,7 +198,7 @@ class TransportPool:
 
 @asynccontextmanager
 async def transport_pool_factory(
-    addr: BackendAddr, device_id: DeviceID, signing_key: SigningKey, max: int = 4
+    addr: BackendOrganizationAddr, device_id: DeviceID, signing_key: SigningKey, max: int = 4
 ) -> TransportPool:
     pool = TransportPool(addr, device_id, signing_key, max)
     try:

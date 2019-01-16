@@ -12,7 +12,7 @@ from tests.common import freeze_time
 @pytest.fixture
 async def mallory_invitation(backend, alice, mallory):
     invitation = UserInvitation(mallory.user_id, alice.device_id, Pendulum(2000, 1, 2))
-    await backend.user.create_user_invitation(invitation)
+    await backend.user.create_user_invitation(alice.organization_id, invitation)
     return invitation
 
 
@@ -71,7 +71,7 @@ async def test_user_get_invitation_creator_ok(anonymous_backend_sock, mallory_in
 
 
 @pytest.mark.trio
-async def test_user_claim_ok(backend, anonymous_backend_sock, mallory_invitation):
+async def test_user_claim_ok(backend, anonymous_backend_sock, coolorg, mallory_invitation):
     with freeze_time(mallory_invitation.created_on):
         async with user_claim(
             anonymous_backend_sock,
@@ -82,8 +82,14 @@ async def test_user_claim_ok(backend, anonymous_backend_sock, mallory_invitation
             await backend.event_bus.spy.wait(
                 "event.connected", kwargs={"event_name": "user.created"}
             )
-            backend.event_bus.send("user.created", user_id="dummy")
-            backend.event_bus.send("user.created", user_id=mallory_invitation.user_id)
+            backend.event_bus.send(
+                "user.created", organization_id=coolorg.organization_id, user_id="dummy"
+            )
+            backend.event_bus.send(
+                "user.created",
+                organization_id=coolorg.organization_id,
+                user_id=mallory_invitation.user_id,
+            )
 
     assert prep[0] == {"status": "ok"}
 
@@ -109,7 +115,7 @@ async def test_user_claim_timeout(mock_clock, backend, anonymous_backend_sock, m
 
 
 @pytest.mark.trio
-async def test_user_claim_denied(backend, anonymous_backend_sock, mallory_invitation):
+async def test_user_claim_denied(backend, anonymous_backend_sock, coolorg, mallory_invitation):
     with freeze_time(mallory_invitation.created_on):
         async with user_claim(
             anonymous_backend_sock,
@@ -120,8 +126,14 @@ async def test_user_claim_denied(backend, anonymous_backend_sock, mallory_invita
             await backend.event_bus.spy.wait(
                 "event.connected", kwargs={"event_name": "user.invitation.cancelled"}
             )
-            backend.event_bus.send("user.created", user_id="dummy")
-            backend.event_bus.send("user.invitation.cancelled", user_id=mallory_invitation.user_id)
+            backend.event_bus.send(
+                "user.created", organization_id=coolorg.organization_id, user_id="dummy"
+            )
+            backend.event_bus.send(
+                "user.invitation.cancelled",
+                organization_id=coolorg.organization_id,
+                user_id=mallory_invitation.user_id,
+            )
 
     assert prep[0] == {"status": "denied", "reason": "Invitation creator rejected us."}
 
@@ -142,11 +154,12 @@ async def test_user_claim_already_exists(
     mock_clock, backend, anonymous_backend_sock, alice, mallory_invitation
 ):
     await backend.user.create_user(
+        alice.organization_id,
         User(
             user_id=mallory_invitation.user_id,
             certified_user=b"<foo>",
             user_certifier=alice.device_id,
-        )
+        ),
     )
 
     with freeze_time(mallory_invitation.created_on):

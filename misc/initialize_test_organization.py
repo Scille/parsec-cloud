@@ -8,18 +8,25 @@ import pendulum
 from parsec.crypto import SigningKey
 from parsec.trustchain import certify_user, certify_device
 
-from parsec.types import BackendAddr
-from parsec.types import DeviceID, BackendOrganizationBootstrapAddr
+from parsec.types import (
+    BackendAddr, OrganizationID,
+DeviceID, BackendOrganizationBootstrapAddr
+)
 
 from parsec.core import logged_core_factory
 from parsec.logging import configure_logging
 from parsec.core.config import get_default_config_dir, load_config
-from parsec.core.backend_connection import BackendCmdsBadResponse, backend_cmds_factory
-from parsec.core.backend_connection import backend_anonymous_cmds_factory
+from parsec.core.backend_connection import (
+    BackendCmdsBadResponse, backend_cmds_factory,
+    backend_administrator_cmds_factory,
+    backend_anonymous_cmds_factory
+)
 from parsec.core.devices_manager import generate_new_device, save_device_with_password
 from parsec.core.devices_manager import load_device_with_password
 from parsec.core.invite_claim import generate_invitation_token, invite_and_create_device
 from parsec.core.invite_claim import invite_and_create_user, claim_device, claim_user
+
+from parsec.backend.config import DEFAULT_ADMINISTRATOR_TOKEN
 
 
 async def retry(corofn, *args, retries=10, tick=0.1):
@@ -34,7 +41,7 @@ async def retry(corofn, *args, retries=10, tick=0.1):
 
 @click.command()
 @click.option("-B", "--backend-address", default="ws://localhost:6777")
-@click.option("-O", "--organization", default="corp")
+@click.option("-O", "--organization-id", default="corp")
 @click.option("-a", "--alice-device-id", default="alice@laptop")
 @click.option("-b", "--bob-device-id", default="bob@laptop")
 @click.option("-o", "--other-device-name", default="pc")
@@ -66,36 +73,40 @@ def main(*args, **kwargs):
 
 async def amain(
     backend_address="ws://localhost:6777",
-    organization="vcorp",
+    organization_id="vcorp",
     alice_device_id="alice@laptop",
     bob_device_id="bob@laptop",
     other_device_name="pc",
     alice_workspace="alicews",
     bob_workspace="bobws",
     password="test",
+    administrator_token=DEFAULT_ADMINISTRATOR_TOKEN,
     force=False,
 ):
 
     configure_logging("WARNING")
 
     config_dir = get_default_config_dir(os.environ)
+    organization_id = OrganizationID(organization_id)
     backend_address = BackendAddr(backend_address)
     alice_device_id = DeviceID(alice_device_id)
     bob_device_id = DeviceID(bob_device_id)
+    alice_slugid = f"{organization_id}:{alice_device_id}"
+    bob_slugid = f"{organization_id}:{bob_device_id}"
 
     # Create organization
 
-    async with backend_anonymous_cmds_factory(backend_address) as cmds:
+    async with backend_administrator_cmds_factory(backend_address, administrator_token) as cmds:
 
-        bootstrap_token = await cmds.organization_create(organization)
+        bootstrap_token = await cmds.organization_create(organization_id)
 
         organization_bootstrap_addr = BackendOrganizationBootstrapAddr.build(
-            backend_address, organization, bootstrap_token
+            backend_address, organization_id, bootstrap_token
         )
 
     # Bootstrap organization and Alice user
 
-    async with backend_anonymous_cmds_factory(backend_address) as cmds:
+    async with backend_anonymous_cmds_factory(organization_bootstrap_addr) as cmds:
         root_signing_key = SigningKey.generate()
         root_verify_key = root_signing_key.verify_key
         organization_addr = organization_bootstrap_addr.generate_organization_addr(root_verify_key)
@@ -113,7 +124,7 @@ async def amain(
         )
 
         await cmds.organization_bootstrap(
-            organization_bootstrap_addr.organization,
+            organization_bootstrap_addr.organization_id,
             organization_bootstrap_addr.bootstrap_token,
             root_verify_key,
             certified_user,
@@ -130,15 +141,16 @@ async def amain(
 
     token = generate_invitation_token()
     other_alice_device_id = DeviceID("@".join((alice_device.user_id, other_device_name)))
+    other_alice_slugid = f"{organization_id}:{other_alice_device_id}"
 
     async def invite_task():
         async with backend_cmds_factory(
-            alice_device.backend_addr, alice_device.device_id, alice_device.signing_key
+            alice_device.organization_addr, alice_device.device_id, alice_device.signing_key
         ) as cmds:
             await invite_and_create_device(alice_device, cmds, other_device_name, token)
 
     async def claim_task():
-        async with backend_anonymous_cmds_factory(alice_device.backend_addr) as cmds:
+        async with backend_anonymous_cmds_factory(alice_device.organization_addr) as cmds:
             other_alice_device = await retry(
                 claim_device, cmds, other_alice_device_id, token)
             save_device_with_password(
@@ -154,12 +166,12 @@ async def amain(
 
     async def invite_task():
         async with backend_cmds_factory(
-            alice_device.backend_addr, alice_device.device_id, alice_device.signing_key
+            alice_device.organization_addr, alice_device.device_id, alice_device.signing_key
         ) as cmds:
             await invite_and_create_user(alice_device, cmds, bob_device_id.user_id, token)
 
     async def claim_task():
-        async with backend_anonymous_cmds_factory(alice_device.backend_addr) as cmds:
+        async with backend_anonymous_cmds_factory(alice_device.organization_addr) as cmds:
             bob_device = await retry(claim_user, cmds, bob_device_id, token)
             save_device_with_password(config_dir, bob_device, password, force=force)
 
@@ -169,7 +181,7 @@ async def amain(
 
     # Create bob workspace and share with Alice
 
-    bob_device = load_device_with_password(config.config_dir, bob_device_id, password)
+    bob_device = load_device_with_password(config.config_dir, organization_id, bob_device_id, password)
 
     async with logged_core_factory(config, bob_device) as core:
         await core.fs.workspace_create(f"/{bob_workspace}")
@@ -186,9 +198,9 @@ async def amain(
         f"""
 Mount alice and bob drives using:
 
-    $ parsec core run -P {password} -D {alice_device_id}
-    $ parsec core run -P {password} -D {other_alice_device_id}
-    $ parsec core run -P {password} -D {bob_device_id}
+    $ parsec core run -P {password} -D {alice_slugid}
+    $ parsec core run -P {password} -D {other_alice_slugid}
+    $ parsec core run -P {password} -D {bob_slugid}
 """
     )
 

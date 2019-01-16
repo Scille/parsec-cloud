@@ -18,12 +18,12 @@ PLAYGROUND_SIZE = BLOCK_SIZE * 10
 @pytest.mark.slow
 def test_fs_online_rwfile_and_sync(
     hypothesis_settings,
-    device_factory,
-    local_db_factory,
+    backend_addr,
     backend_factory,
     server_factory,
+    local_db_factory,
     fs_factory,
-    backend_addr,
+    alice,
 ):
     class FSOnlineRwFileAndSync(TrioRuleBasedStateMachine):
         async def restart_fs(self, device, local_db):
@@ -42,7 +42,7 @@ def test_fs_online_rwfile_and_sync(
 
         async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
-                async with backend_factory(devices=[self.device]) as backend:
+                async with backend_factory() as backend:
                     async with server_factory(backend.handle_client, backend_addr) as server:
                         await started_cb(backend=backend, server=server)
 
@@ -60,7 +60,7 @@ def test_fs_online_rwfile_and_sync(
 
         @initialize()
         async def init(self):
-            self.device = device_factory()
+            self.device = alice
             self.local_db = local_db_factory(self.device)
             await self.start_backend()
             await self.restart_fs(self.device, self.local_db)

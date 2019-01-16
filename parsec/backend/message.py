@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from parsec.types import DeviceID, UserID
+from parsec.types import DeviceID, UserID, OrganizationID
 from parsec.api.protocole import message_send_serializer, message_get_serializer
 from parsec.backend.utils import catch_protocole_errors
 
@@ -14,7 +14,9 @@ class BaseMessageComponent:
     async def api_message_send(self, client_ctx, msg):
         msg = message_send_serializer.req_load(msg)
 
-        await self.send(client_ctx.device_id, msg["recipient"], msg["body"])
+        await self.send(
+            client_ctx.organization_id, client_ctx.device_id, msg["recipient"], msg["body"]
+        )
 
         return message_send_serializer.rep_dump({"status": "ok"})
 
@@ -23,7 +25,7 @@ class BaseMessageComponent:
         msg = message_get_serializer.req_load(msg)
 
         offset = msg["offset"]
-        messages = await self.get(client_ctx.user_id, offset)
+        messages = await self.get(client_ctx.organization_id, client_ctx.user_id, offset)
 
         return message_get_serializer.rep_dump(
             {
@@ -35,8 +37,12 @@ class BaseMessageComponent:
             }
         )
 
-    async def send(self, sender: DeviceID, recipient: UserID, body: bytes) -> None:
+    async def send(
+        self, organization_id: OrganizationID, sender: DeviceID, recipient: UserID, body: bytes
+    ) -> None:
         raise NotImplementedError()
 
-    async def get(self, recipient: UserID, offset: int) -> List[Tuple[DeviceID, bytes]]:
+    async def get(
+        self, organization_id: OrganizationID, recipient: UserID, offset: int
+    ) -> List[Tuple[DeviceID, bytes]]:
         raise NotImplementedError()

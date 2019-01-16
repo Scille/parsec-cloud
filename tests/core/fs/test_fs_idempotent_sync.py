@@ -29,7 +29,7 @@ def check_fs_dump(entry, is_root=True):
 
 @pytest.mark.slow
 def test_fs_online_idempotent_sync(
-    hypothesis_settings, device_factory, backend_factory, server_factory, fs_factory, backend_addr
+    hypothesis_settings, backend_addr, backend_factory, server_factory, fs_factory, alice
 ):
     class FSOnlineIdempotentSync(TrioRuleBasedStateMachine):
         BadPath = Bundle("bad_path")
@@ -42,9 +42,9 @@ def test_fs_online_idempotent_sync(
 
             return await self.get_root_nursery().start(call_with_control, _fs_controlled_cb)
 
-        async def start_backend(self, devices):
+        async def start_backend(self):
             async def _backend_controlled_cb(started_cb):
-                async with backend_factory(devices=devices) as backend:
+                async with backend_factory() as backend:
                     async with server_factory(backend.handle_client, backend_addr) as server:
                         await started_cb(backend=backend, server=server)
 
@@ -56,9 +56,9 @@ def test_fs_online_idempotent_sync(
 
         @initialize(target=BadPath)
         async def init(self):
-            self.device = device_factory()
-            self.backend_controller = await self.start_backend([self.device])
-            self.fs_controller = await self.start_fs(self.device)
+            self.backend_controller = await self.start_backend()
+            self.device = alice
+            self.fs_controller = await self.start_fs(alice)
 
             await self.fs.workspace_create("/w")
             await self.fs.file_create("/w/good_file.txt")

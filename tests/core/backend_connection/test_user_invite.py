@@ -14,7 +14,7 @@ async def test_user_invite_then_claim_ok(
 ):
     token = "424242"
 
-    await backend.user.set_user_admin(alice.user_id, True)
+    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
     async def _alice_invite():
         encrypted_claim = await alice_backend_cmds.user_invite(mallory.user_id)
@@ -36,7 +36,7 @@ async def test_user_invite_then_claim_ok(
         await alice_backend_cmds.user_create(certified_user, certified_device, False)
 
     async def _mallory_claim():
-        async with backend_anonymous_cmds_factory(mallory.backend_addr) as cmds:
+        async with backend_anonymous_cmds_factory(mallory.organization_addr) as cmds:
             invitation_creator = await cmds.user_get_invitation_creator(mallory.user_id)
             assert isinstance(invitation_creator, RemoteUser)
 
@@ -58,7 +58,7 @@ async def test_user_invite_then_claim_ok(
 
     # Now mallory should be able to connect to backend
     async with backend_cmds_factory(
-        mallory.backend_addr, mallory.device_id, mallory.signing_key
+        mallory.organization_addr, mallory.device_id, mallory.signing_key
     ) as cmds:
         pong = await cmds.ping("Hello World !")
         assert pong == "Hello World !"

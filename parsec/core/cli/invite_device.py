@@ -11,13 +11,13 @@ from parsec.core.backend_connection import backend_cmds_factory
 async def _invite_device(config, device, new_device_name):
     token = generate_invitation_token()
 
-    backend_addr_display = click.style(device.backend_addr, fg="yellow")
+    organization_addr_display = click.style(device.organization_addr, fg="yellow")
     token_display = click.style(token, fg="yellow")
-    click.echo(f"Backend url: {backend_addr_display}")
+    click.echo(f"Backend url: {organization_addr_display}")
     click.echo(f"Invitation token: {token_display}")
 
     async with backend_cmds_factory(
-        device.backend_addr, device.device_id, device.signing_key
+        device.organization_addr, device.device_id, device.signing_key
     ) as cmds:
 
         async with spinner("Waiting for invitation reply"):
