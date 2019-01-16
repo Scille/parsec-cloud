@@ -14,16 +14,19 @@ from parsec.core.gui.custom_widgets import show_warning, show_info
 from parsec.core.gui.ui.register_user_dialog import Ui_RegisterUserDialog
 
 
-async def _handle_invite_and_create_user(queue, qt_on_done, qt_on_error, core, username, token):
+async def _handle_invite_and_create_user(
+    queue, qt_on_done, qt_on_error, core, username, token, is_admin
+):
     try:
         with trio.open_cancel_scope() as cancel_scope:
             queue.put(cancel_scope)
             async with trio.open_nursery() as nursery:
-                await invite_and_create_user(core.device, core.backend_cmds, username, token)
+                await invite_and_create_user(
+                    core.device, core.backend_cmds, username, token, is_admin
+                )
             qt_on_done.emit()
     except BackendCmdsBadResponse as e:
         qt_on_error.emit(e.status)
-        print(e.status)
 
 
 class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
@@ -64,6 +67,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.line_edit_user.setText("")
         self.widget_registration.hide()
         self.button_cancel.hide()
+        self.checkbox_is_admin.show()
         self.button_register.show()
         self.line_edit_username.show()
         self.closing_allowed = True
@@ -99,6 +103,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.button_cancel.hide()
         self.button_register.show()
         self.line_edit_username.show()
+        self.checkbox_is_admin.show()
         self.closing_allowed = True
 
     def cancel_register_user(self):
@@ -113,6 +118,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.button_cancel.hide()
         self.button_register.show()
         self.line_edit_username.show()
+        self.checkbox_is_admin.show()
         self.closing_allowed = True
 
     def closeEvent(self, event):
@@ -129,7 +135,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             event.accept()
 
     def register_user(self):
-        def _run_registration(username, token):
+        def _run_registration(username, token, is_admin):
             self.portal.run(
                 _handle_invite_and_create_user,
                 self.register_queue,
@@ -138,6 +144,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
                 self.core,
                 username,
                 token,
+                is_admin,
             )
 
         if not self.line_edit_username.text():
@@ -166,12 +173,14 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             self.button_cancel.setFocus()
             self.widget_registration.show()
             self.register_thread = threading.Thread(
-                target=_run_registration, args=(self.line_edit_username.text(), token)
+                target=_run_registration,
+                args=(self.line_edit_username.text(), token, self.checkbox_is_admin.isChecked()),
             )
             self.register_thread.start()
             self.cancel_scope = self.register_queue.get()
             self.button_cancel.show()
             self.line_edit_username.hide()
+            self.checkbox_is_admin.hide()
             self.button_register.hide()
             self.closing_allowed = False
         except:
