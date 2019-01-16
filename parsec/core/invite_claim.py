@@ -243,7 +243,7 @@ async def invite_and_create_device(
 
 
 async def invite_and_create_user(
-    device: LocalDevice, cmds: BackendCmdsPool, user_id: UserID, token: str
+    device: LocalDevice, cmds: BackendCmdsPool, user_id: UserID, token: str, is_admin: bool
 ) -> DeviceID:
     """
     Raises:
@@ -266,5 +266,5 @@ async def invite_and_create_user(
         device.device_id, device.signing_key, device_id, claim["verify_key"], now=now
     )
 
-    await cmds.user_create(certified_user, certified_device)
+    await cmds.user_create(certified_user, certified_device, is_admin)
     return device_id
