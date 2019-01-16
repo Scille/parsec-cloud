@@ -8,7 +8,7 @@ from parsec.core.invite_claim import generate_invitation_token, invite_and_creat
 from parsec.core.cli.utils import core_config_and_device_options
 
 
-async def _invite_user(config, device, invited_user_id):
+async def _invite_user(config, device, invited_user_id, admin):
     async with backend_cmds_factory(
         device.backend_addr, device.device_id, device.signing_key
     ) as cmds:
@@ -21,7 +21,9 @@ async def _invite_user(config, device, invited_user_id):
         click.echo(f"Invitation token: {token_display}")
 
         async with spinner("Waiting for invitation reply"):
-            invite_device_id = await invite_and_create_user(device, cmds, invited_user_id, token)
+            invite_device_id = await invite_and_create_user(
+                device, cmds, invited_user_id, token, admin
+            )
 
         display_device = click.style(invite_device_id, fg="yellow")
         click.echo(f"Device {display_device} has been created")
@@ -29,7 +31,8 @@ async def _invite_user(config, device, invited_user_id):
 
 @click.command()
 @core_config_and_device_options
+@click.option("--admin", is_flag=True)
 @click.argument("invited_user_id", type=UserID, required=True)
-def invite_user(config, device, invited_user_id, **kwargs):
+def invite_user(config, device, admin, invited_user_id, **kwargs):
     with cli_exception_handler(config.debug):
-        trio.run(_invite_user, config, device, invited_user_id)
+        trio.run(_invite_user, config, device, invited_user_id, admin)

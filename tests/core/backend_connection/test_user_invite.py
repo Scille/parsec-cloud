@@ -33,7 +33,7 @@ async def test_user_invite_then_claim_ok(
         certified_device = certify_device(
             alice.device_id, alice.signing_key, claim["device_id"], claim["verify_key"], now=now
         )
-        await alice_backend_cmds.user_create(certified_user, certified_device)
+        await alice_backend_cmds.user_create(certified_user, certified_device, False)
 
     async def _mallory_claim():
         async with backend_anonymous_cmds_factory(mallory.backend_addr) as cmds:

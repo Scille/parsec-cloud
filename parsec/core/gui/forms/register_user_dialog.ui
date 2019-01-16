@@ -132,6 +132,13 @@ padding-right: 5px;
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="checkbox_is_admin">
+     <property name="text">
+      <string>User is administrator</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QWidget" name="widget_registration" native="true">
      <layout class="QVBoxLayout" name="verticalLayout">
       <property name="leftMargin">

@@ -297,13 +297,16 @@ async def user_cancel_invitation(transport: Transport, user_id: UserID) -> None:
         raise BackendCmdsBadResponse(rep)
 
 
-async def user_create(transport: Transport, certified_user: bytes, certified_device: bytes) -> None:
+async def user_create(
+    transport: Transport, certified_user: bytes, certified_device: bytes, is_admin: bool
+) -> None:
     rep = await _send_cmd(
         transport,
         user_create_serializer,
         cmd="user_create",
         certified_user=certified_user,
         certified_device=certified_device,
+        is_admin=is_admin,
     )
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)
