@@ -120,7 +120,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_mountpoint.setText(str(self.core.mountpoint))
         self.label_username.setText(self.core.device.user_id)
         self.label_device.setText(self.core.device.device_name)
-        settings.set_value("last_device", self.core.device.device_id)
+        settings.set_value(
+            "last_device",
+            "{}:{}".format(
+                self.core.device.organization_addr.organization_id, self.core.device.device_id
+            ),
+        )
         self._on_connection_state_changed(True)
         self.core.event_bus.connect("backend.connection.ready", self._on_connection_changed)
         self.core.event_bus.connect("backend.connection.lost", self._on_connection_changed)
