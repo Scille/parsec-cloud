@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QDialog
 
 import trio
 
+from parsec.core.backend_connection import BackendCmdsBadResponse
 from parsec.core.invite_claim import generate_invitation_token, invite_and_create_device
 
 from parsec.core.gui import desktop
@@ -13,16 +14,22 @@ from parsec.core.gui.custom_widgets import show_warning, show_info
 from parsec.core.gui.ui.register_device_dialog import Ui_RegisterDeviceDialog
 
 
-async def _handle_invite_and_create_device(queue, qt_on_done, core, device_name, token):
-    with trio.open_cancel_scope() as cancel_scope:
-        queue.put(cancel_scope)
-        async with trio.open_nursery() as nursery:
-            await invite_and_create_device(core.device, core.backend_cmds, device_name, token)
-        qt_on_done.emit()
+async def _handle_invite_and_create_device(
+    queue, qt_on_done, qt_on_error, core, device_name, token
+):
+    try:
+        with trio.open_cancel_scope() as cancel_scope:
+            queue.put(cancel_scope)
+            async with trio.open_nursery() as nursery:
+                await invite_and_create_device(core.device, core.backend_cmds, device_name, token)
+            qt_on_done.emit()
+    except BackendCmdsBadResponse as e:
+        qt_on_error.emit(e.status)
 
 
 class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
     on_registered = pyqtSignal()
+    on_register_error = pyqtSignal(str)
 
     def __init__(self, portal, core, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -40,6 +47,7 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         self.button_copy_token.clicked.connect(self.copy_field(self.line_edit_token))
         self.button_copy_url.clicked.connect(self.copy_field(self.line_edit_url))
         self.on_registered.connect(self.device_registered)
+        self.on_register_error.connect(self.register_error)
         self.closing_allowed = True
 
     def copy_field(self, widget):
@@ -47,6 +55,31 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             desktop.copy_to_clipboard(widget.text())
 
         return _inner_copy_field
+
+    def register_error(self, status):
+        self.register_thread.join()
+        self.register_thread = None
+        self.cancel_scope = None
+        self.line_edit_token.setText("")
+        self.line_edit_url.setText("")
+        self.line_edit_device.setText("")
+        self.widget_registration.hide()
+        self.button_cancel.hide()
+        self.button_register.show()
+        self.line_edit_device_name.show()
+        self.closing_allowed = True
+        if status == "already_exists":
+            show_warning(
+                self,
+                QCoreApplication.translate("RegisterDeviceDialog", "This device already exists."),
+            )
+        else:
+            show_warning(
+                self,
+                QCoreApplication.translate(
+                    "RegisterDeviceDialog", "Can not register this device ({})."
+                ).format(status),
+            )
 
     def device_registered(self):
         self.register_thread.join()
@@ -99,6 +132,7 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
                 _handle_invite_and_create_device,
                 self.register_queue,
                 self.on_registered,
+                self.on_register_error,
                 self.core,
                 device_name,
                 token,
@@ -117,7 +151,7 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             self.line_edit_device.setCursorPosition(0)
             self.line_edit_token.setText(token)
             self.line_edit_token.setCursorPosition(0)
-            self.line_edit_url.setText(self.core.device.backend_addr)
+            self.line_edit_url.setText(self.core.device.organization_addr)
             self.line_edit_url.setCursorPosition(0)
             self.button_cancel.setFocus()
             self.widget_registration.show()
@@ -131,9 +165,6 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             self.button_register.hide()
             self.closing_allowed = False
         except:
-            import traceback
-
-            traceback.print_exc()
             show_warning(
                 self,
                 QCoreApplication.translate(

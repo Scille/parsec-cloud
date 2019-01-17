@@ -8,7 +8,7 @@ import trio
 
 from parsec.core import devices_manager
 from parsec.types import BackendOrganizationAddr, DeviceID
-from parsec.core.backend_connection import backend_anonymous_cmds_factory
+from parsec.core.backend_connection import backend_anonymous_cmds_factory, BackendCmdsBadResponse
 from parsec.core.invite_claim import claim_user as core_claim_user
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_widgets import show_error, show_info
@@ -23,6 +23,7 @@ from parsec.core.gui.ui.claim_user_widget import Ui_ClaimUserWidget
 async def _trio_claim_user(
     queue,
     qt_on_done,
+    qt_on_error,
     config,
     addr,
     device_id,
@@ -36,20 +37,24 @@ async def _trio_claim_user(
     queue.put(portal)
     with trio.open_cancel_scope() as cancel_scope:
         queue.put(cancel_scope)
-        async with backend_anonymous_cmds_factory(addr) as cmds:
-            device = await core_claim_user(cmds, device_id, token)
-        if use_pkcs11:
-            devices_manager.save_device_with_pkcs11(
-                config.config_dir, device, pkcs11_token, pkcs11_key
-            )
-        else:
-            devices_manager.save_device_with_password(config.config_dir, device, password)
-        qt_on_done.emit()
+        try:
+            async with backend_anonymous_cmds_factory(addr) as cmds:
+                device = await core_claim_user(cmds, device_id, token)
+            if use_pkcs11:
+                devices_manager.save_device_with_pkcs11(
+                    config.config_dir, device, pkcs11_token, pkcs11_key
+                )
+            else:
+                devices_manager.save_device_with_password(config.config_dir, device, password)
+            qt_on_done.emit()
+        except BackendCmdsBadResponse as e:
+            qt_on_error.emit(e.status)
 
 
 class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
     user_claimed = pyqtSignal()
     claim_successful = pyqtSignal()
+    on_claim_error = pyqtSignal(str)
 
     def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,10 +69,32 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.line_edit_url.textChanged.connect(self.check_infos)
         self.line_edit_password.textChanged.connect(self.password_changed)
         self.claim_successful.connect(self.claim_finished)
+        self.on_claim_error.connect(self.claim_error)
         self.claim_thread = None
         self.cancel_scope = None
         self.trio_portal = None
         self.claim_queue = queue.Queue(1)
+
+    def claim_error(self, status):
+        self.claim_thread.join()
+        self.claim_thread = None
+        self.cancel_scope = None
+        self.trio_portal = None
+        self.button_cancel.hide()
+        self.button_claim.setDisabled(False)
+        self.check_infos("")
+        if status == "not_found":
+            show_error(
+                self,
+                QCoreApplication.translate("ClaimUserWidget", "No invitation found for this user."),
+            )
+        else:
+            show_error(
+                self,
+                QCoreApplication.translate(
+                    "ClaimUserWidget", "Can not claim this user ({})."
+                ).format(status),
+            )
 
     def cancel_claim(self):
         self.trio_portal.run_sync(self.cancel_scope.cancel)
@@ -76,6 +103,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.cancel_scope = None
         self.trio_portal = None
         self.button_cancel.hide()
+        self.button_claim.setDisabled(False)
         self.check_infos("")
 
     def claim_finished(self):
@@ -83,6 +111,8 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.claim_thread = None
         self.cancel_scope = None
         self.trio_portal = None
+        self.button_claim.setDisabled(False)
+        self.button_cancel.hide()
         show_info(
             self,
             QCoreApplication.translate(
@@ -122,6 +152,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             _trio_claim_user,
             self.claim_queue,
             self.claim_successful,
+            self.on_claim_error,
             self.core_config,
             addr,
             device_id,

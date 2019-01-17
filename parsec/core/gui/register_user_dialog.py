@@ -168,7 +168,7 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             self.line_edit_user.setCursorPosition(0)
             self.line_edit_token.setText(token)
             self.line_edit_token.setCursorPosition(0)
-            self.line_edit_url.setText(self.core.device.backend_addr)
+            self.line_edit_url.setText(self.core.device.organization_addr)
             self.line_edit_url.setCursorPosition(0)
             self.button_cancel.setFocus()
             self.widget_registration.show()
@@ -184,6 +184,9 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
             self.button_register.hide()
             self.closing_allowed = False
         except:
+            import traceback
+
+            traceback.print_exc()
             show_warning(
                 self,
                 QCoreApplication.translate("RegisterUserDialog", "Could not register the user."),
