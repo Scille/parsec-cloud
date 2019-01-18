@@ -184,13 +184,18 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
             result = self.portal.run(self.core.fs.stat, "/")
             user_id = self.core.device.user_id
             for workspace in result.get("children", []):
-                ws_infos = self.portal.run(self.core.fs.stat, "/{}".format(workspace))
+                ws_infos = self.portal.run(self.core.fs.stat, os.path.join("/", workspace))
                 ws_infos["participants"].remove(user_id)
+                files = ws_infos["children"][:4]
+                display_files = {}
+                for f in files:
+                    f_infos = self.portal.run(self.core.fs.stat, os.path.join("/", workspace, f))
+                    display_files[f] = f_infos["is_folder"]
                 self.add_workspace(
                     workspace,
                     user_id == ws_infos["creator"],
                     ws_infos["creator"],
-                    files=ws_infos["children"][:4],
+                    files=display_files,
                     shared_with=ws_infos["participants"],
                 )
 

@@ -1,6 +1,6 @@
 import pathlib
 
-from PyQt5.QtCore import QCoreApplication, Qt, QTimer
+from PyQt5.QtCore import QCoreApplication, Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (
     QFileDialog,
@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
     QTreeView,
     QDialog,
     QCompleter,
+    QLineEdit,
 )
 
 from parsec.core.gui.ui.message_dialog import Ui_MessageDialog
@@ -180,3 +181,35 @@ def get_open_files(parent):
     file_dialog = FileDialog(parent=parent)
     result = file_dialog.exec_()
     return bool(result), file_dialog.selectedFiles()
+
+
+class FileLineEdit(QLineEdit):
+    clicked = pyqtSignal(str, bool)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_dir = False
+        self.text = ""
+
+    def setText(self, text):
+        self.text = text
+        if len(text) > 30:
+            text = text[:30] + "..."
+        super().setText(text)
+
+    def setIsDir(self, val):
+        self.is_dir = val
+
+    def enterEvent(self, _):
+        f = self.font()
+        f.setUnderline(True)
+        self.setFont(f)
+
+    def leaveEvent(self, _):
+        f = self.font()
+        f.setUnderline(False)
+        self.setFont(f)
+
+    def mousePressEvent(self, event):
+        if event.button() & Qt.LeftButton:
+            self.clicked.emit(self.text, self.is_dir)
