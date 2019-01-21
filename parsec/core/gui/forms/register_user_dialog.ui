@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Register new user</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QDialog#RegisterUserDialog
