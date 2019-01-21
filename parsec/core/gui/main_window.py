@@ -114,9 +114,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.portal = self.core_queue.get()
         self.cancel_scope = self.core_queue.get()
         self.core = self.core_queue.get()
-        self.mount_widget.set_core_attrs(portal=self.portal, core=self.core)
-        self.devices_widget.set_core_attrs(portal=self.portal, core=self.core)
-        self.users_widget.set_core_attrs(portal=self.portal, core=self.core)
+        self.mount_widget.set_core_attributes(portal=self.portal, core=self.core)
+        self.devices_widget.set_core_attributes(portal=self.portal, core=self.core)
+        self.users_widget.set_core_attributes(portal=self.portal, core=self.core)
         self.label_mountpoint.setText(str(self.core.mountpoint))
         self.label_username.setText(self.core.device.user_id)
         self.label_device.setText(self.core.device.device_name)
@@ -139,9 +139,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.core = None
         self.cancel_scope = None
         self.core_thread = None
-        self.mount_widget.set_core_attrs(None, None)
-        self.users_widget.portal = None
-        self.users_widget.core = None
+        self.mount_widget.set_core_attributes(None, None)
+        self.devices_widget.set_core_attributes(None, None)
+        self.users_widget.set_core_attributes(None, None)
 
     def logout(self):
         if self.core_thread:

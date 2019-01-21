@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPixmap
 
+from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
 from parsec.core.gui.register_device_dialog import RegisterDeviceDialog
 from parsec.core.gui.ui.device_button import Ui_DeviceButton
@@ -25,20 +26,14 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         self.label_device.setText(value)
 
 
-class DevicesWidget(QWidget, Ui_DevicesWidget):
+class DevicesWidget(CoreWidget, Ui_DevicesWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.setupUi(self)
         self.devices = []
-        self.portal = None
-        self.core = None
         self.button_add_device.clicked.connect(self.register_new_device)
         self.line_edit_search.textChanged.connect(self.filter_devices)
-
-    def set_core_attrs(self, core, portal):
-        self.portal = portal
-        self.core = core
 
     def filter_devices(self, pattern):
         pattern = pattern.lower()

@@ -3,7 +3,6 @@ from uuid import UUID
 import pathlib
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal
-from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.custom_widgets import (
     show_error,
@@ -12,13 +11,14 @@ from parsec.core.gui.custom_widgets import (
     get_text,
     get_user_name,
 )
+from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
 from parsec.core.fs import FSEntryNotFound
 from parsec.core.fs.sharing import SharingRecipientError
 
 
-class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
+class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
     fs_changed_qt = pyqtSignal(str, UUID, str)
     load_workspace_clicked = pyqtSignal(str)
 
@@ -27,32 +27,18 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self._core = None
-        self._portal = None
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
         self.button_add_workspace.clicked.connect(self.create_workspace_clicked)
 
-    @property
-    def core(self):
-        return self._core
-
-    @core.setter
+    @CoreWidget.core.setter
     def core(self, c):
         if self._core:
-            self.core.fs.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
-            self.core.fs.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
+            self._core.fs.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
+            self._core.fs.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self._core = c
         if self._core:
-            self.core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
-            self.core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
-
-    @property
-    def portal(self):
-        return self._portal
-
-    @portal.setter
-    def portal(self, p):
-        self._portal = p
+            self._core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
+            self._core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
 
     def load_workspace(self, workspace):
         self.load_workspace_clicked.emit(workspace)

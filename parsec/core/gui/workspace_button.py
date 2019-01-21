@@ -49,7 +49,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_shared.hide()
 
     def open_clicked_file(self, file_name, is_dir):
-        print(file_name, is_dir)
+        pass
 
     def button_details_clicked(self):
         self.details_clicked.emit(self)

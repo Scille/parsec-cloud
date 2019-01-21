@@ -2,11 +2,12 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.core.gui.files_widget import FilesWidget
 from parsec.core.gui.workspaces_widget import WorkspacesWidget
+from parsec.core.gui.core_widget import CoreWidget
 
 from parsec.core.gui.ui.mount_widget import Ui_MountWidget
 
 
-class MountWidget(QWidget, Ui_MountWidget):
+class MountWidget(CoreWidget, Ui_MountWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
@@ -18,11 +19,10 @@ class MountWidget(QWidget, Ui_MountWidget):
         self.workspaces_widget.load_workspace_clicked.connect(self.load_workspace)
         self.files_widget.back_clicked.connect(self.reset)
 
-    def set_core_attrs(self, core, portal):
-        self.workspaces_widget.portal = portal
-        self.workspaces_widget.core = core
-        self.files_widget.portal = portal
-        self.files_widget.core = core
+    def set_core_attributes(self, core, portal):
+        super().set_core_attributes(core, portal)
+        self.workspaces_widget.set_core_attributes(core, portal)
+        self.files_widget.set_core_attributes(core, portal)
         self.workspaces_widget.reset()
 
     def stop(self):

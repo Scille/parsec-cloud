@@ -21,6 +21,7 @@ from PyQt5.QtGui import QIcon
 
 from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import show_error, ask_question, get_text
+from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.gui.file_size import get_filesize
 from parsec.core.fs import FSEntryNotFound
@@ -54,15 +55,13 @@ class FileType(IntEnum):
     File = 4
 
 
-class FilesWidget(QWidget, Ui_FilesWidget):
+class FilesWidget(CoreWidget, Ui_FilesWidget):
     fs_changed_qt = pyqtSignal(str, UUID, str)
     back_clicked = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self._core = None
-        self._portal = None
         h_header = self.table_files.horizontalHeader()
         h_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         h_header.setSectionResizeMode(0, QHeaderView.Fixed)
@@ -98,27 +97,15 @@ class FilesWidget(QWidget, Ui_FilesWidget):
         self.import_thread = threading.Thread(target=self._import_files)
         self.import_thread.start()
 
-    @property
-    def core(self):
-        return self._core
-
-    @core.setter
+    @CoreWidget.core.setter
     def core(self, c):
         if self._core:
-            self.core.fs.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
-            self.core.fs.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
+            self._core.fs.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
+            self._core.fs.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
         self._core = c
         if self._core:
-            self.core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
-            self.core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
-
-    @property
-    def portal(self):
-        return self._portal
-
-    @portal.setter
-    def portal(self, p):
-        self._portal = p
+            self._core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
+            self._core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
 
     def stop(self):
         self.file_queue.put_nowait((None, None))

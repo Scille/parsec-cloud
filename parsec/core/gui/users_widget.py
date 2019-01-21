@@ -4,6 +4,7 @@ from PyQt5.QtGui import QPixmap
 from parsec.core.backend_connection import BackendNotAvailable
 
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
+from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
 
@@ -27,20 +28,14 @@ class UserButton(QWidget, Ui_UserButton):
         self.label_user.setText(value)
 
 
-class UsersWidget(QWidget, Ui_UsersWidget):
+class UsersWidget(CoreWidget, Ui_UsersWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.setupUi(self)
         self.users = []
-        self.portal = None
-        self.core = None
         self.button_add_user.clicked.connect(self.register_user)
         self.line_edit_search.textChanged.connect(self.filter_users)
-
-    def set_core_attrs(self, core, portal):
-        self.portal = portal
-        self.core = core
 
     def filter_users(self, pattern):
         pattern = pattern.lower()
