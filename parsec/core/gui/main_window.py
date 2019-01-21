@@ -45,15 +45,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.widget_menu.hide()
 
         self.mount_widget = MountWidget(parent=self)
-        self.main_widget_layout.addWidget(self.mount_widget)
+        self.layout_main.insertWidget(0, self.mount_widget)
         self.users_widget = UsersWidget(parent=self)
-        self.main_widget_layout.addWidget(self.users_widget)
+        self.layout_main.insertWidget(0, self.users_widget)
         self.devices_widget = DevicesWidget(parent=self)
-        self.main_widget_layout.addWidget(self.devices_widget)
+        self.layout_main.insertWidget(0, self.devices_widget)
         self.settings_widget = SettingsWidget(core_config=self.core_config, parent=self)
-        self.main_widget_layout.addWidget(self.settings_widget)
+        self.layout_main.insertWidget(0, self.settings_widget)
         self.login_widget = LoginWidget(core_config=self.core_config, parent=self)
-        self.main_widget_layout.addWidget(self.login_widget)
+        self.layout_login.insertWidget(0, self.login_widget)
 
         self.add_tray_icon()
         self.setWindowTitle("Parsec - Community Edition - v{}".format(PARSEC_VERSION))
@@ -231,6 +231,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_files.setChecked(True)
         self.label_title.setText(QCoreApplication.translate("MainWindow", "Documents"))
         self.widget_menu.show()
+        self.widget_taskbar.show()
         self.widget_title.show()
         self.mount_widget.show()
 
@@ -240,6 +241,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_title.setText(QCoreApplication.translate("MainWindow", "Users"))
         self.widget_menu.show()
         self.widget_title.show()
+        self.widget_taskbar.show()
         self.users_widget.reset()
         self.users_widget.show()
 
@@ -249,6 +251,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_title.setText(QCoreApplication.translate("MainWindow", "Devices"))
         self.widget_menu.show()
         self.widget_title.show()
+        self.widget_taskbar.show()
         self.devices_widget.reset()
         self.devices_widget.show()
 
@@ -273,6 +276,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.devices_widget.hide()
         self.widget_title.hide()
         self.widget_menu.hide()
+        self.widget_taskbar.show()
         self.button_files.setChecked(False)
         self.button_users.setChecked(False)
         self.button_settings.setChecked(False)

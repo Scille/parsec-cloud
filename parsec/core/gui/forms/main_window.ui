@@ -721,6 +721,9 @@ background-color: rgb(255, 255, 255);
            <number>0</number>
           </property>
           <item>
+           <layout class="QVBoxLayout" name="layout_login"/>
+          </item>
+          <item>
            <layout class="QVBoxLayout" name="main_widget_layout2">
             <property name="spacing">
              <number>0</number>
@@ -884,10 +887,45 @@ color: rgb(124, 133, 166);
              </widget>
             </item>
             <item>
-             <layout class="QVBoxLayout" name="main_widget_layout">
+             <layout class="QVBoxLayout" name="Layout">
               <property name="sizeConstraint">
                <enum>QLayout::SetMaximumSize</enum>
               </property>
+              <item>
+               <layout class="QVBoxLayout" name="layout_main">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_7">
+                  <item>
+                   <widget class="QWidget" name="widget_taskbar" native="true">
+                    <property name="styleSheet">
+                     <string notr="true">QWidget#WidgetTaskBar
+{
+background-color: rgb(12, 65, 157);
+}</string>
+                    </property>
+                    <layout class="QHBoxLayout" name="horizontalLayout_8">
+                     <property name="spacing">
+                      <number>0</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                    </layout>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
              </layout>
             </item>
            </layout>

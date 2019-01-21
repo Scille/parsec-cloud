@@ -1,7 +1,7 @@
 import pathlib
 
-from PyQt5.QtCore import QCoreApplication, Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import QCoreApplication, Qt, QTimer, pyqtSignal, QSize
+from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtWidgets import (
     QFileDialog,
     QAbstractItemView,
@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (
     QDialog,
     QCompleter,
     QLineEdit,
+    QPushButton,
 )
 
 from parsec.core.gui.ui.message_dialog import Ui_MessageDialog
@@ -213,3 +214,15 @@ class FileLineEdit(QLineEdit):
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:
             self.clicked.emit(self.text, self.is_dir)
+
+
+class TaskbarButton(QPushButton):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setMinimumSize(80, 64)
+        self.setMaximumSize(80, 64)
+        self.setStyleSheet("background-color: rgb(12, 65, 157); border: 0;")
+
+    def setIcon(self, path):
+        self.setIcon(QIcon(path))
+        self.setIconSize(QSize(50, 50))
