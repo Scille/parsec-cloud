@@ -8,18 +8,16 @@ import pendulum
 from parsec.crypto import SigningKey
 from parsec.trustchain import certify_user, certify_device
 
-from parsec.types import (
-    BackendAddr, OrganizationID,
-DeviceID, BackendOrganizationBootstrapAddr
-)
+from parsec.types import BackendAddr, OrganizationID, DeviceID, BackendOrganizationBootstrapAddr
 
 from parsec.core import logged_core_factory
 from parsec.logging import configure_logging
 from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.backend_connection import (
-    BackendCmdsBadResponse, backend_cmds_factory,
+    BackendCmdsBadResponse,
+    backend_cmds_factory,
     backend_administrator_cmds_factory,
-    backend_anonymous_cmds_factory
+    backend_anonymous_cmds_factory,
 )
 from parsec.core.devices_manager import generate_new_device, save_device_with_password
 from parsec.core.devices_manager import load_device_with_password
@@ -34,7 +32,7 @@ async def retry(corofn, *args, retries=10, tick=0.1):
         try:
             return await corofn(*args)
         except BackendCmdsBadResponse as exc:
-            if exc.status != 'not_found' or i >= retries:
+            if exc.status != "not_found" or i >= retries:
                 raise
             await trio.sleep(tick)
 
@@ -151,10 +149,8 @@ async def amain(
 
     async def claim_task():
         async with backend_anonymous_cmds_factory(alice_device.organization_addr) as cmds:
-            other_alice_device = await retry(
-                claim_device, cmds, other_alice_device_id, token)
-            save_device_with_password(
-                config_dir, other_alice_device, password, force=force)
+            other_alice_device = await retry(claim_device, cmds, other_alice_device_id, token)
+            save_device_with_password(config_dir, other_alice_device, password, force=force)
 
     async with trio.open_nursery() as nursery:
         nursery.start_soon(invite_task)
@@ -168,7 +164,9 @@ async def amain(
         async with backend_cmds_factory(
             alice_device.organization_addr, alice_device.device_id, alice_device.signing_key
         ) as cmds:
-            await invite_and_create_user(alice_device, cmds, bob_device_id.user_id, token)
+            await invite_and_create_user(
+                alice_device, cmds, bob_device_id.user_id, token, is_admin=True
+            )
 
     async def claim_task():
         async with backend_anonymous_cmds_factory(alice_device.organization_addr) as cmds:
@@ -181,7 +179,9 @@ async def amain(
 
     # Create bob workspace and share with Alice
 
-    bob_device = load_device_with_password(config.config_dir, organization_id, bob_device_id, password)
+    bob_device = load_device_with_password(
+        config.config_dir, organization_id, bob_device_id, password
+    )
 
     async with logged_core_factory(config, bob_device) as core:
         await core.fs.workspace_create(f"/{bob_workspace}")
