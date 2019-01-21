@@ -96,8 +96,6 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         id: UUID,
-        rts: str,
-        wts: str,
         blob: bytes,
         author: DeviceID,
         notify_beacon: UUID = None,
@@ -109,7 +107,7 @@ class BaseVlobComponent:
         raise NotImplementedError()
 
     async def read(
-        self, organization_id: OrganizationID, id: UUID, rts: str, version: int = None
+        self, organization_id: OrganizationID, id: UUID, version: int = None
     ) -> Tuple[int, bytes]:
         """
         Raises:
@@ -123,7 +121,6 @@ class BaseVlobComponent:
         self,
         organization_id: OrganizationID,
         id: UUID,
-        wts: str,
         version: int,
         blob: bytes,
         author: DeviceID,

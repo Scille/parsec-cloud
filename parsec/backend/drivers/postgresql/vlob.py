@@ -36,7 +36,7 @@ class PGVlobComponent(BaseVlobComponent):
         async with self.dbh.pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-SELECT DISTINCT ON (vlob_id) vlob_id, rts, version
+SELECT DISTINCT ON (vlob_id) vlob_id, version
 FROM vlobs
 WHERE
     organization = (
@@ -49,9 +49,8 @@ ORDER BY vlob_id, version DESC
                 to_check_dict.keys(),
             )
 
-        for id, rts, version in rows:
-            if rts != to_check_dict[id]["rts"]:
-                continue
+        for id, version in rows:
+            # TODO: check acces rights here
             if version != to_check_dict[id]["version"]:
                 changed.append({"id": id, "version": version})
 
@@ -61,8 +60,6 @@ ORDER BY vlob_id, version DESC
         self,
         organization_id: OrganizationID,
         id: UUID,
-        rts: str,
-        wts: str,
         blob: bytes,
         author: DeviceID,
         notify_beacon: UUID = None,
@@ -73,11 +70,11 @@ ORDER BY vlob_id, version DESC
                     result = await conn.execute(
                         """
 INSERT INTO vlobs (
-    organization, vlob_id, rts, wts, version, blob, author
+    organization, vlob_id, version, blob, author
 )
 SELECT
     _id,
-    $2, $3, $4,
+    $2,
     1,
     $5,
     (
@@ -92,8 +89,6 @@ WHERE organization_id = $1
 """,
                         organization_id,
                         id,
-                        rts,
-                        wts,
                         blob,
                         author,
                     )
@@ -109,14 +104,14 @@ WHERE organization_id = $1
                     )
 
     async def read(
-        self, organization_id: OrganizationID, id: UUID, rts: str, version: int = None
+        self, organization_id: OrganizationID, id: UUID, version: int = None
     ) -> Tuple[int, bytes]:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 if version is None:
                     data = await conn.fetchrow(
                         """
-SELECT rts, version, blob
+SELECT version, blob
 FROM vlobs
 WHERE
     organization = (
@@ -134,7 +129,7 @@ ORDER BY version DESC LIMIT 1
                 else:
                     data = await conn.fetchrow(
                         """
-SELECT rts, version, blob
+SELECT version, blob
 FROM vlobs
 WHERE
     organization = (
@@ -168,8 +163,7 @@ WHERE
                         else:
                             raise VlobNotFoundError()
 
-            if data["rts"] != rts:
-                raise VlobTrustSeedError()
+            # TODO: check access rights here
 
         return data[1:]
 
@@ -177,7 +171,6 @@ WHERE
         self,
         organization_id: OrganizationID,
         id: UUID,
-        wts: str,
         version: int,
         blob: bytes,
         author: DeviceID,
@@ -187,7 +180,7 @@ WHERE
             async with conn.transaction():
                 previous = await conn.fetchrow(
                     """
-SELECT wts, version, rts
+SELECT version
 FROM vlobs
 WHERE
     organization = (
@@ -199,23 +192,21 @@ ORDER BY version DESC LIMIT 1
                     organization_id,
                     id,
                 )
+                # TODO: check access rights here
                 if not previous:
                     raise VlobNotFoundError()
-                elif previous[0] != wts:
-                    raise VlobTrustSeedError()
-                elif previous[1] != version - 1:
+                elif previous[0] != version - 1:
                     raise VlobVersionError()
 
-                rts = previous[2]
                 try:
                     result = await conn.execute(
                         """
 INSERT INTO vlobs (
-    organization, vlob_id, rts, wts, version, blob, author
+    organization, vlob_id, version, blob, author
 )
 SELECT
     _id,
-    $2, $3, $4, $5, $6,
+    $2, $5, $6,
     (
         SELECT _id
         FROM devices
@@ -228,8 +219,6 @@ WHERE organization_id = $1
 """,
                         organization_id,
                         id,
-                        rts,
-                        wts,
                         version,
                         blob,
                         author,

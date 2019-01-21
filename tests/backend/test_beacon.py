@@ -13,8 +13,6 @@ BEACON_ID_1 = UUID("093393b2362042799652b05ee630070a")
 BEACON_ID_2 = UUID("7f3f1dadab6d44978a72ad20620953d3")
 BEACON_ID_3 = UUID("773c9971085d42d0bbcbf6fc186c445a")
 VLOB_ID = UUID("fc0dfa885c6c4d3781341e10bf94b080")
-VLOB_RTS = "<rts>"
-VLOB_WTS = "<wts>"
 
 
 @pytest.fixture
@@ -25,7 +23,7 @@ async def vlob_ids(backend, alice):
         UUID("af20bbfcc3294b96bb536fe65efc86b4"),
     )
     for id in ids:
-        await backend.vlob.create(alice.organization_id, id, "<rts>", "<wts>", b"", alice.device_id)
+        await backend.vlob.create(alice.organization_id, id, b"", alice.device_id)
     return ids
 
 
@@ -72,13 +70,10 @@ async def test_beacon_multimessages(backend, alice_backend_sock, alice, vlob_ids
 
 @pytest.mark.trio
 async def test_beacon_in_vlob_update(backend, alice_backend_sock, alice):
-    await backend.vlob.create(
-        alice.organization_id, VLOB_ID, VLOB_RTS, VLOB_WTS, blob=b"foo", author=alice.device_id
-    )
+    await backend.vlob.create(alice.organization_id, VLOB_ID, blob=b"foo", author=alice.device_id)
     await backend.vlob.update(
         alice.organization_id,
         VLOB_ID,
-        VLOB_WTS,
         version=2,
         blob=b"bar",
         notify_beacon=BEACON_ID_1,
@@ -92,13 +87,7 @@ async def test_beacon_in_vlob_update(backend, alice_backend_sock, alice):
 @pytest.mark.trio
 async def test_beacon_in_vlob_create(backend, alice_backend_sock, alice):
     await backend.vlob.create(
-        alice.organization_id,
-        VLOB_ID,
-        VLOB_RTS,
-        VLOB_WTS,
-        b"foo",
-        notify_beacon=BEACON_ID_1,
-        author=alice.device_id,
+        alice.organization_id, VLOB_ID, b"foo", notify_beacon=BEACON_ID_1, author=alice.device_id
     )
 
     rep = await beacon_read(alice_backend_sock, BEACON_ID_1, 0)

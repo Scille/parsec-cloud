@@ -16,14 +16,6 @@ from parsec.backend.vlob import (
 )
 
 
-class MemoryVlob:
-    def __init__(self, id, rts, wts):
-        self.id = id
-        self.rts = rts
-        self.wts = wts
-        self.blob_versions = []
-
-
 class MemoryVlobComponent(BaseVlobComponent):
     def __init__(self, event_bus: EventBus, beacon_component: BaseBeaconComponent):
         self.event_bus = event_bus
@@ -36,15 +28,15 @@ class MemoryVlobComponent(BaseVlobComponent):
         changed = []
         for item in to_check:
             id = item["id"]
-            rts = item["rts"]
             version = item["version"]
             if version == 0:
                 changed.append({"id": id, "version": version})
             else:
                 try:
-                    current_version, _ = await self.read(organization_id, id, rts)
+                    current_version, _ = await self.read(organization_id, id)
                 except (VlobNotFoundError, VlobTrustSeedError):
                     continue
+                # TODO: check access rights here
                 if current_version != version:
                     changed.append({"id": id, "version": current_version})
         return changed
@@ -53,40 +45,36 @@ class MemoryVlobComponent(BaseVlobComponent):
         self,
         organization_id: OrganizationID,
         id: UUID,
-        rts: str,
-        wts: str,
         blob: bytes,
         author: DeviceID,
         notify_beacon: UUID = None,
     ) -> None:
         vlobs = self._organizations[organization_id]
 
-        vlob = MemoryVlob(id, rts, wts)
-        vlob.blob_versions.append((blob, author))
-        if vlob.id in vlobs:
+        if id in vlobs:
             raise VlobAlreadyExistsError()
-        vlobs[vlob.id] = vlob
+        vlobs[id] = [(blob, author)]
 
         if notify_beacon:
             await self.beacon_component.update(organization_id, notify_beacon, id, 1, author)
 
     async def read(
-        self, organization_id: OrganizationID, id: UUID, rts: str, version: int = None
+        self, organization_id: OrganizationID, id: UUID, version: int = None
     ) -> Tuple[int, bytes]:
         vlobs = self._organizations[organization_id]
 
         try:
             vlob = vlobs[id]
-            if vlob.rts != rts:
-                raise VlobTrustSeedError()
 
         except KeyError:
             raise VlobNotFoundError()
 
+        # TODO: check access rights here
+
         if version is None:
-            version = len(vlob.blob_versions)
+            version = len(vlob)
         try:
-            return (version, vlob.blob_versions[version - 1][0])
+            return (version, vlob[version - 1][0])
 
         except IndexError:
             raise VlobVersionError()
@@ -95,7 +83,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         self,
         organization_id: OrganizationID,
         id: UUID,
-        wts: str,
         version: int,
         blob: bytes,
         author: DeviceID,
@@ -105,14 +92,14 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         try:
             vlob = vlobs[id]
-            if vlob.wts != wts:
-                raise VlobTrustSeedError()
 
         except KeyError:
             raise VlobNotFoundError()
 
-        if version - 1 == len(vlob.blob_versions):
-            vlob.blob_versions.append((blob, author))
+        # TODO: check access rights here
+
+        if version - 1 == len(vlob):
+            vlob.append((blob, author))
         else:
             raise VlobVersionError()
 

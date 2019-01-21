@@ -148,8 +148,6 @@ async def _create_db_tables(conn):
             organization INTEGER REFERENCES organizations (_id),
             vlob_id UUID NOT NULL,
             version INTEGER NOT NULL,
-            rts TEXT NOT NULL,
-            wts TEXT NOT NULL,
             blob BYTEA NOT NULL,
             author INTEGER REFERENCES devices (_id) NOT NULL,
             UNIQUE(vlob_id, version)
