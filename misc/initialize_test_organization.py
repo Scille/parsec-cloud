@@ -164,7 +164,9 @@ async def amain(
         async with backend_cmds_factory(
             alice_device.organization_addr, alice_device.device_id, alice_device.signing_key
         ) as cmds:
-            await invite_and_create_user(alice_device, cmds, bob_device_id.user_id, token)
+            await invite_and_create_user(
+                alice_device, cmds, bob_device_id.user_id, token, is_admin=True
+            )
 
     async def claim_task():
         async with backend_anonymous_cmds_factory(alice_device.organization_addr) as cmds:
