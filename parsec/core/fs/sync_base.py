@@ -61,7 +61,7 @@ class BaseSyncer:
                 for child_access in manifest.children.values():
                     _recursive_get_local_entries_ids(child_access)
 
-            entries.append({"id": access.id, "rts": access.rts, "version": manifest.base_version})
+            entries.append({"id": access.id, "version": manifest.base_version})
 
         _recursive_get_local_entries_ids(self.device.user_manifest_access)
         return entries
@@ -222,7 +222,7 @@ class BaseSyncer:
         return [entry["id"] for entry in changed]
 
     async def _backend_vlob_read(self, access, version=None):
-        _, blob = await self.backend_cmds.vlob_read(access.id, access.rts, version)
+        _, blob = await self.backend_cmds.vlob_read(access.id, version)
         raw = await self.encryption_manager.decrypt_with_secret_key(access.key, blob)
         return remote_manifest_serializer.loads(raw)
 
@@ -232,9 +232,7 @@ class BaseSyncer:
             access.key, remote_manifest_serializer.dumps(manifest)
         )
         try:
-            await self.backend_cmds.vlob_create(
-                access.id, access.rts, access.wts, ciphered, notify_beacon
-            )
+            await self.backend_cmds.vlob_create(access.id, ciphered, notify_beacon)
         except BackendCmdsBadResponse as exc:
             if exc.status == "already_exists":
                 raise SyncConcurrencyError(access)
@@ -247,7 +245,7 @@ class BaseSyncer:
         )
         try:
             await self.backend_cmds.vlob_update(
-                access.id, access.wts, manifest.version, ciphered, notify_beacon
+                access.id, manifest.version, ciphered, notify_beacon
             )
         except BackendCmdsBadResponse as exc:
             if exc.status == "bad_version":

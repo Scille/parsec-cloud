@@ -13,16 +13,12 @@ from parsec.core.types.base import TrustSeed, AccessID, TrustSeedField, serializ
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class ManifestAccess:
     id: AccessID = attr.ib(factory=uuid4)
-    rts: TrustSeed = attr.ib(factory=lambda: uuid4().hex)
-    wts: TrustSeed = attr.ib(factory=lambda: uuid4().hex)
     key: SymetricKey = attr.ib(factory=generate_secret_key)
 
 
 class ManifestAccessSchema(UnknownCheckedSchema):
     id = fields.UUID(required=True)
     key = fields.SymetricKey(required=True)
-    rts = TrustSeedField(required=True, validate=validate.Length(min=1, max=32))
-    wts = TrustSeedField(required=True, validate=validate.Length(min=1, max=32))
 
     @post_load
     def make_obj(self, data):

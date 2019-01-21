@@ -163,16 +163,12 @@ async def vlob_group_check(transport: Transport, to_check: list) -> list:
     return rep["changed"]
 
 
-async def vlob_create(
-    transport: Transport, id: UUID, rts: str, wts: str, blob: bytes, notify_beacon=UUID
-) -> None:
+async def vlob_create(transport: Transport, id: UUID, blob: bytes, notify_beacon=UUID) -> None:
     rep = await _send_cmd(
         transport,
         vlob_create_serializer,
         cmd="vlob_create",
         id=id,
-        rts=rts,
-        wts=wts,
         blob=blob,
         notify_beacon=notify_beacon,
     )
@@ -180,19 +176,15 @@ async def vlob_create(
         raise BackendCmdsBadResponse(rep)
 
 
-async def vlob_read(
-    transport: Transport, id: UUID, rts: str, version: int = None
-) -> Tuple[int, bytes]:
-    rep = await _send_cmd(
-        transport, vlob_read_serializer, cmd="vlob_read", id=id, rts=rts, version=version
-    )
+async def vlob_read(transport: Transport, id: UUID, version: int = None) -> Tuple[int, bytes]:
+    rep = await _send_cmd(transport, vlob_read_serializer, cmd="vlob_read", id=id, version=version)
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)
     return rep["version"], rep["blob"]
 
 
 async def vlob_update(
-    transport: Transport, id: UUID, wts: str, version: int, blob: bytes, notify_beacon: UUID
+    transport: Transport, id: UUID, version: int, blob: bytes, notify_beacon: UUID
 ) -> None:
     rep = await _send_cmd(
         transport,
@@ -200,7 +192,6 @@ async def vlob_update(
         cmd="vlob_update",
         id=id,
         version=version,
-        wts=wts,
         blob=blob,
         notify_beacon=notify_beacon,
     )
