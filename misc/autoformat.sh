@@ -8,4 +8,5 @@ black --line-length=100 \
   parsec \
   tests \
   setup.py \
+  misc/initialize_test_organization.py \
   $@
