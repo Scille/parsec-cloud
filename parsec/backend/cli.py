@@ -23,7 +23,7 @@ def init_cmd(db, force):
     """
     Initialize a new backend's PostgreSQL database.
     """
-    if not db.startswith("postgresql://") or db.startswith("postgres://"):
+    if not (db.startswith("postgresql://") or db.startswith("postgres://")):
         raise SystemExit("Can only initialize a PostgreSQL database.")
 
     debug = "DEBUG" in os.environ
