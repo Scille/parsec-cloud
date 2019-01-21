@@ -56,7 +56,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.layout_login.insertWidget(0, self.login_widget)
 
         self.add_tray_icon()
-        self.setWindowTitle("Parsec - Community Edition - v{}".format(PARSEC_VERSION))
+        self.setWindowTitle("Parsec - Community Edition - {}".format(PARSEC_VERSION))
         self.tray_message_shown = False
         self.connection_state_changed.connect(self._on_connection_state_changed)
         self.connect_all()
