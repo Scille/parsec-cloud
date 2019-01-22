@@ -9,7 +9,11 @@ from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
 
-from parsec.core.devices_manager import DeviceManagerError, load_device_with_password
+from parsec.core.devices_manager import (
+    DeviceManagerError,
+    load_device_with_password,
+    load_device_with_pkcs11,
+)
 
 from parsec.core.gui import settings
 from parsec.core import logged_core_factory
@@ -162,10 +166,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def login_with_pkcs11(self, organization_id, device_id, pkcs11_pin, pkcs11_key, pkcs11_token):
         try:
-            device = load_device_with_pkcs11(
+            self.current_device = load_device_with_pkcs11(
                 self.core_config.config_dir, organization_id, device_id
             )
-            self.mount()
+            self.start_core()
             self.show_mount_widget()
         except DeviceManagerError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
