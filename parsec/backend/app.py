@@ -294,7 +294,7 @@ class BackendApp:
             transport.logger.info("Client has left")
             return
 
-        except (TransportError, MessageSerializationError) as exc:
+        except (TransportError, MessageSerializationError):
             transport.logger.info("Close client connection due to invalid data")
             rep = {"status": "invalid_msg_format", "reason": "Invalid message format"}
             try:

@@ -102,7 +102,7 @@ class LocalDevicesManager:
         key_file = self._get_key_file(organization_id, device_id)
         try:
             ciphertext = key_file.read_bytes()
-        except OSError as exc:
+        except OSError:
             raise DeviceConfigNotFound(f"Config file {key_file} is missing")
 
         for decryptor_cls, cipher in (

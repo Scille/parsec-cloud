@@ -76,5 +76,5 @@ class PasswordDeviceDecryptor(BaseLocalDeviceDecryptor):
             password_payload_serializer.loads(ciphertext)
             return True
 
-        except (SerdeError) as exc:
+        except SerdeError:
             return False

@@ -57,11 +57,11 @@ class LocalFolderFS:
             for child_access in root_manifest.children.values():
                 try:
                     child_manifest = self._get_manifest_read_only(child_access)
-                except FSManifestLocalMiss as exc:
+                except FSManifestLocalMiss:
                     continue
                 if is_workspace_manifest(child_manifest):
                     beacons.append(child_access.id)
-        except FSManifestLocalMiss as exc:
+        except FSManifestLocalMiss:
             raise AssertionError("root manifest should always be available in local !")
         return beacons
 

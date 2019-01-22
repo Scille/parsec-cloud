@@ -56,11 +56,11 @@ class BaseVlobComponent:
         try:
             version, blob = await self.read(client_ctx.organization_id, **msg)
 
-        except (VlobNotFoundError, VlobTrustSeedError) as exc:
+        except (VlobNotFoundError, VlobTrustSeedError):
             # Don't leak existence information if trust seed is invalid
             return vlob_create_serializer.rep_dump({"status": "not_found"})
 
-        except VlobVersionError as exc:
+        except VlobVersionError:
             return vlob_create_serializer.rep_dump({"status": "bad_version"})
 
         return vlob_read_serializer.rep_dump({"status": "ok", "blob": blob, "version": version})
@@ -72,11 +72,11 @@ class BaseVlobComponent:
         try:
             await self.update(client_ctx.organization_id, **msg, author=client_ctx.device_id)
 
-        except (VlobNotFoundError, VlobTrustSeedError) as exc:
+        except (VlobNotFoundError, VlobTrustSeedError):
             # Don't leak existence information if trust seed is invalid
             return vlob_create_serializer.rep_dump({"status": "not_found"})
 
-        except VlobVersionError as exc:
+        except VlobVersionError:
             return vlob_create_serializer.rep_dump({"status": "bad_version"})
 
         return vlob_update_serializer.rep_dump({"status": "ok"})

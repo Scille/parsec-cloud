@@ -84,7 +84,7 @@ class EncryptionManager(BaseAsyncComponent):
             raw_user_data = self.local_db.get(self._build_remote_user_local_access(user_id))
             return pickle.loads(raw_user_data)
 
-        except LocalDBMissingEntry as exc:
+        except LocalDBMissingEntry:
             return None
 
     def _fetch_remote_device_from_local(self, device_id: DeviceID):
@@ -98,7 +98,7 @@ class EncryptionManager(BaseAsyncComponent):
             except KeyError:
                 return None
 
-        except LocalDBMissingEntry as exc:
+        except LocalDBMissingEntry:
             return None
 
     async def fetch_remote_device(self, device_id: DeviceID) -> RemoteDevice:
