@@ -127,7 +127,8 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
                 self,
                 QCoreApplication.translate(
                     "RegisterUserDialog",
-                    "Can not close this window while waiting for the new user to register. Please cancel first.",
+                    "Can not close this window while waiting for the new user to register. "
+                    "Please cancel first.",
                 ),
             )
             event.ignore()

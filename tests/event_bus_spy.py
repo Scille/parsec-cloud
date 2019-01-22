@@ -97,7 +97,8 @@ class EventBusSpy:
             return SpiedEvent(*event)
         else:
             raise ValueError(
-                "event must be provided as `SpiedEvent`, `(<event>, <kwargs>, <dt>)` tuple or string"
+                "event must be provided as `SpiedEvent`, `(<event>, <kwargs>, <dt>)` tuple "
+                "or string"
             )
 
     def assert_event_occured(self, event, dt=ANY, kwargs=ANY):

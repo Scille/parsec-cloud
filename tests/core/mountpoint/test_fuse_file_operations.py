@@ -38,10 +38,10 @@ def test_fuse_file_operations(tmpdir, hypothesis_settings, fuse_service):
 
         @rule(
             length=st.integers(min_value=0),
-            # Given FUSE takes control over the cursor position (i.e. it gives us an offset parameters
-            # for read/write operations), it cannot handle SEEK_END properly (given it doesn't know the
-            # size of the file, it decides not to move the cursor when handling lseek with this
-            # option...)
+            # Given FUSE takes control over the cursor position (i.e. it gives us an offset
+            # parameters for read/write operations), it cannot handle SEEK_END properly (given it
+            # doesn't know the size of the file, it decides not to move the cursor when handling
+            # lseek with this option...)
             # seek_type=st.one_of(st.just(os.SEEK_SET), st.just(os.SEEK_CUR), st.just(os.SEEK_END)),
             seek_type=st.one_of(st.just(os.SEEK_SET), st.just(os.SEEK_CUR)),
         )

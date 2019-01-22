@@ -47,7 +47,8 @@ def init_cmd(db, force):
     "-b",
     default="MOCKED",
     type=click.Choice(("MOCKED", "POSTGRESQL", "S3", "SWIFT", "RAID1")),
-    help="Block store the clients should write into (default: mocked in memory). Set environment variables accordingly.",
+    help="Block store the clients should write into (default: mocked in memory). "
+    "Set environment variables accordingly.",
 )
 @click.option(
     "--ssl-keyfile", default=None, type=click.Path(exists=True, dir_okay=False), help="SSL key file"
@@ -126,7 +127,8 @@ def run_cmd(
                     await backend.teardown()
 
         print(
-            f"Starting Parsec Backend on {host}:{port} (db={config.db_type}, blockstore={config.blockstore_config.type})"
+            f"Starting Parsec Backend on {host}:{port} (db={config.db_type}, "
+            f"blockstore={config.blockstore_config.type})"
         )
         try:
             trio_asyncio.run(_run_backend)

@@ -119,7 +119,8 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
                 self,
                 QCoreApplication.translate(
                     "RegisterDeviceDialog",
-                    "Can not close this window while waiting for the new device to register. Please cancel first.",
+                    "Can not close this window while waiting for the new device to register. "
+                    "Please cancel first.",
                 ),
             )
             event.ignore()

@@ -131,8 +131,9 @@ class Monitor(Instrument):
                     with client:
                         client.settimeout(0.5)
 
-                        # This bit of magic is for reading lines of input while still allowing timeouts
-                        # and the ability for the monitor to die when curio exits.  See Issue #108.
+                        # This bit of magic is for reading lines of input while still allowing
+                        # timeouts and the ability for the monitor to die when curio exits.
+                        # See Issue #108.
 
                         def readlines():
                             buffer = bytearray()
