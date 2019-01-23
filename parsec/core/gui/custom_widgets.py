@@ -217,12 +217,10 @@ class FileLineEdit(QLineEdit):
 
 
 class TaskbarButton(QPushButton):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, icon_path, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setMinimumSize(80, 64)
-        self.setMaximumSize(80, 64)
-        self.setStyleSheet("background-color: rgb(12, 65, 157); border: 0;")
-
-    def setIcon(self, path):
-        self.setIcon(QIcon(path))
+        self.setMinimumSize(64, 64)
+        self.setMaximumSize(64, 64)
+        self.setIcon(QIcon(icon_path))
         self.setIconSize(QSize(50, 50))
+        self.setStyleSheet("background-color: rgb(12, 65, 157); border: 0;")

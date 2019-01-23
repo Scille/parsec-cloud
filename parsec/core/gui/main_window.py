@@ -2,7 +2,7 @@ import queue
 import threading
 import trio
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal
+from PyQt5.QtCore import QCoreApplication, pyqtSignal, QSize
 from PyQt5.QtWidgets import QMainWindow, QMenu, QSystemTrayIcon
 from PyQt5.QtGui import QIcon, QPixmap
 from structlog import get_logger
@@ -45,6 +45,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.widget_menu.hide()
 
         self.mount_widget = MountWidget(parent=self)
+        self.mount_widget.reset_taskbar.connect(self.reset_taskbar)
         self.layout_main.insertWidget(0, self.mount_widget)
         self.users_widget = UsersWidget(parent=self)
         self.layout_main.insertWidget(0, self.users_widget)
@@ -226,6 +227,33 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         elif event == "backend.connection.lost":
             self.connection_state_changed.emit(False)
 
+    def set_taskbar_buttons(self, buttons):
+        while self.widget_taskbar.layout().count() != 0:
+            item = self.widget_taskbar.layout().takeAt(0)
+            if item:
+                w = item.widget()
+                self.widget_taskbar.layout().removeWidget(w)
+                w.setParent(None)
+        total_width = 0
+        if len(buttons) == 0:
+            self.widget_taskbar.hide()
+        else:
+            self.widget_taskbar.show()
+            for b in buttons:
+                self.widget_taskbar.layout().addWidget(b)
+                total_width += b.size().width()
+            self.widget_taskbar.setFixedSize(QSize(total_width + 44, 68))
+
+    def reset_taskbar(self):
+        if self.mount_widget.isVisible():
+            self.set_taskbar_buttons(self.mount_widget.get_taskbar_buttons())
+        elif self.devices_widget.isVisible():
+            self.set_taskbar_buttons(self.devices_widget.get_taskbar_buttons())
+        elif self.users_widget.isVisible():
+            self.set_taskbar_buttons(self.users_widget.get_taskbar_buttons())
+        elif self.settings_widget.isVisible():
+            self.set_taskbar_buttons(self.settings_widget.get_taskbar_buttons())
+
     def show_mount_widget(self):
         self._hide_all_central_widgets()
         self.button_files.setChecked(True)
@@ -233,7 +261,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.widget_menu.show()
         self.widget_taskbar.show()
         self.widget_title.show()
+        self.mount_widget.reset()
         self.mount_widget.show()
+        self.reset_taskbar()
 
     def show_users_widget(self):
         self._hide_all_central_widgets()
@@ -244,6 +274,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.widget_taskbar.show()
         self.users_widget.reset()
         self.users_widget.show()
+        self.reset_taskbar()
 
     def show_devices_widget(self):
         self._hide_all_central_widgets()
@@ -254,6 +285,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.widget_taskbar.show()
         self.devices_widget.reset()
         self.devices_widget.show()
+        self.reset_taskbar()
 
     def show_settings_widget(self):
         self._hide_all_central_widgets()
@@ -261,7 +293,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_title.setText(QCoreApplication.translate("MainWindow", "Settings"))
         self.widget_menu.show()
         self.widget_title.show()
+        self.settings_widget.reset()
         self.settings_widget.show()
+        self.reset_taskbar()
 
     def show_login_widget(self):
         self._hide_all_central_widgets()

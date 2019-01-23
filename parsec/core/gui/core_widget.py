@@ -27,5 +27,8 @@ class CoreWidget(QWidget):
     def portal(self, val):
         self._portal = val
 
+    def get_taskbar_buttons(self):
+        return []
+
     def reset(self):
         raise NotImplementedError()

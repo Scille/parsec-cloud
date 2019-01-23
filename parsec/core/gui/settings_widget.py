@@ -1,14 +1,14 @@
 from PyQt5.QtCore import QCoreApplication
-from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QIcon
 
 from parsec.core.gui.custom_widgets import show_info
+from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.global_settings_widget import GlobalSettingsWidget
 from parsec.core.gui.network_settings_widget import NetworkSettingsWidget
 from parsec.core.gui.ui.settings_widget import Ui_SettingsWidget
 
 
-class SettingsWidget(QWidget, Ui_SettingsWidget):
+class SettingsWidget(CoreWidget, Ui_SettingsWidget):
     def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)

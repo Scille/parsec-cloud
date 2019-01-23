@@ -8,7 +8,6 @@ import pendulum
 
 from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import (
-    QWidget,
     QMenu,
     QStyledItemDelegate,
     QStyle,
@@ -20,7 +19,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QIcon
 
 from parsec.core.gui import desktop
-from parsec.core.gui.custom_widgets import show_error, ask_question, get_text
+from parsec.core.gui.custom_widgets import show_error, ask_question, get_text, TaskbarButton
 from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.gui.file_size import get_filesize
@@ -79,10 +78,19 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         v_header.setSectionResizeMode(QHeaderView.Fixed)
         v_header.setDefaultSectionSize(48)
         self.table_files.setItemDelegate(ItemDelegate())
-        self.button_back.clicked.connect(self.back_clicked)
-        self.button_create_folder.clicked.connect(self.create_folder_clicked)
-        self.button_import_files.clicked.connect(self.import_files_clicked)
-        self.button_import_folder.clicked.connect(self.import_folder_clicked)
+        self.taskbar_buttons = []
+        button_back = TaskbarButton(icon_path=":/icons/images/icons/go-back_button.png")
+        button_back.clicked.connect(self.back_clicked)
+        self.taskbar_buttons.append(button_back)
+        button_import_folder = TaskbarButton(icon_path=":/icons/images/icons/import_folder.png")
+        button_import_folder.clicked.connect(self.import_folder_clicked)
+        self.taskbar_buttons.append(button_import_folder)
+        button_import_files = TaskbarButton(icon_path=":/icons/images/icons/import_file.png")
+        button_import_files.clicked.connect(self.import_files_clicked)
+        self.taskbar_buttons.append(button_import_files)
+        button_create_folder = TaskbarButton(icon_path=":/icons/images/icons/add-plus-button.png")
+        button_create_folder.clicked.connect(self.create_folder_clicked)
+        self.taskbar_buttons.append(button_create_folder)
         self.table_files.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table_files.customContextMenuRequested.connect(self.show_context_menu)
         self.table_files.itemSelectionChanged.connect(self.change_selection)
@@ -96,6 +104,9 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         self.file_queue = queue.Queue(1024)
         self.import_thread = threading.Thread(target=self._import_files)
         self.import_thread.start()
+
+    def get_taskbar_buttons(self):
+        return self.taskbar_buttons
 
     @CoreWidget.core.setter
     def core(self, c):

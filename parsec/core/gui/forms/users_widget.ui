@@ -156,7 +156,7 @@ border: 0;
           <x>0</x>
           <y>0</y>
           <width>470</width>
-          <height>345</height>
+          <height>421</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -185,68 +185,8 @@ border: 0;
      </property>
     </spacer>
    </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <spacer name="horizontalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="button_add_user">
-       <property name="minimumSize">
-        <size>
-         <width>80</width>
-         <height>64</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>80</width>
-         <height>64</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>Add a user</string>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QPushButton#button_add_user
-{
-border-top-left-radius: 32px;
-border-bottom-left-radius: 32px;
-background-color: rgb(12, 65, 157);
-padding-left: 10px;
-}</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset resource="../rc/resources.qrc">
-         <normaloff>:/icons/images/icons/add-plus-button.png</normaloff>:/icons/images/icons/add-plus-button.png</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>50</width>
-         <height>50</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
   </layout>
  </widget>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

@@ -4,6 +4,7 @@ from PyQt5.QtGui import QPixmap
 from parsec.core.backend_connection import BackendNotAvailable
 
 from parsec.core.gui.register_user_dialog import RegisterUserDialog
+from parsec.core.gui.custom_widgets import TaskbarButton
 from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
@@ -34,8 +35,14 @@ class UsersWidget(CoreWidget, Ui_UsersWidget):
 
         self.setupUi(self)
         self.users = []
-        self.button_add_user.clicked.connect(self.register_user)
+        self.taskbar_buttons = []
+        button_add_user = TaskbarButton(icon_path=":/icons/images/icons/add-plus-button.png")
+        button_add_user.clicked.connect(self.register_user)
+        self.taskbar_buttons.append(button_add_user)
         self.line_edit_search.textChanged.connect(self.filter_users)
+
+    def get_taskbar_buttons(self):
+        return self.taskbar_buttons
 
     def filter_users(self, pattern):
         pattern = pattern.lower()

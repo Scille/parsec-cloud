@@ -718,7 +718,7 @@ background-color: rgb(255, 255, 255);
            <number>0</number>
           </property>
           <property name="bottomMargin">
-           <number>0</number>
+           <number>15</number>
           </property>
           <item>
            <layout class="QVBoxLayout" name="layout_login"/>
@@ -892,15 +892,43 @@ color: rgb(124, 133, 166);
                <enum>QLayout::SetMaximumSize</enum>
               </property>
               <item>
-               <layout class="QVBoxLayout" name="layout_main">
+               <layout class="QVBoxLayout" name="layout_main2">
+                <property name="spacing">
+                 <number>10</number>
+                </property>
+                <item>
+                 <layout class="QHBoxLayout" name="layout_main">
+                  <property name="spacing">
+                   <number>0</number>
+                  </property>
+                 </layout>
+                </item>
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_7">
+                  <property name="spacing">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <spacer name="horizontalSpacer">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
                   <item>
                    <widget class="QWidget" name="widget_taskbar" native="true">
                     <property name="styleSheet">
-                     <string notr="true">QWidget#WidgetTaskBar
+                     <string notr="true">QWidget#widget_taskbar
 {
 background-color: rgb(12, 65, 157);
+border-top-left-radius: 34px;
+border-bottom-left-radius: 34px;
 }</string>
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_8">
@@ -908,7 +936,7 @@ background-color: rgb(12, 65, 157);
                       <number>0</number>
                      </property>
                      <property name="leftMargin">
-                      <number>0</number>
+                      <number>20</number>
                      </property>
                      <property name="topMargin">
                       <number>0</number>

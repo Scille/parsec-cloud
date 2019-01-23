@@ -10,6 +10,7 @@ from parsec.core.gui.custom_widgets import (
     show_info,
     get_text,
     get_user_name,
+    TaskbarButton,
 )
 from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.workspace_button import WorkspaceButton
@@ -28,7 +29,10 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
-        self.button_add_workspace.clicked.connect(self.create_workspace_clicked)
+        self.taskbar_buttons = []
+        button_add_workspace = TaskbarButton(icon_path=":/icons/images/icons/add-plus-button.png")
+        button_add_workspace.clicked.connect(self.create_workspace_clicked)
+        self.taskbar_buttons.append(button_add_workspace)
 
     @CoreWidget.core.setter
     def core(self, c):
@@ -58,6 +62,9 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         button.details_clicked.connect(self.show_workspace_details)
         button.delete_clicked.connect(self.delete_workspace)
         button.rename_clicked.connect(self.rename_workspace)
+
+    def get_taskbar_buttons(self):
+        return self.taskbar_buttons
 
     def show_workspace_details(self, workspace_button):
         text = QCoreApplication.translate("WorkspacesWidget", "{}\n\nCreated by {}.\n").format(

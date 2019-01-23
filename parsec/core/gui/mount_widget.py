@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import pyqtSignal
 
 from parsec.core.gui.files_widget import FilesWidget
 from parsec.core.gui.workspaces_widget import WorkspacesWidget
@@ -8,6 +8,8 @@ from parsec.core.gui.ui.mount_widget import Ui_MountWidget
 
 
 class MountWidget(CoreWidget, Ui_MountWidget):
+    reset_taskbar = pyqtSignal()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
@@ -35,9 +37,16 @@ class MountWidget(CoreWidget, Ui_MountWidget):
         self.workspaces_widget.hide()
         self.files_widget.set_workspace(workspace_name)
         self.files_widget.show()
+        self.reset_taskbar.emit()
+
+    def get_taskbar_buttons(self):
+        if self.files_widget.isHidden():
+            return self.workspaces_widget.get_taskbar_buttons()
+        return self.files_widget.get_taskbar_buttons()
 
     def reset(self):
         self.files_widget.reset()
         self.workspaces_widget.reset()
         self.files_widget.hide()
         self.workspaces_widget.show()
+        self.reset_taskbar.emit()
