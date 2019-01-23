@@ -19,6 +19,7 @@ from parsec.core.gui.mount_widget import MountWidget
 from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.settings_widget import SettingsWidget
 from parsec.core.gui.devices_widget import DevicesWidget
+from parsec.core.gui.starting_guide_dialog import StartingGuideDialog
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 
 
@@ -63,6 +64,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.connect_all()
         self.show_login_widget()
 
+    def show_starting_guide(self):
+        s = StartingGuideDialog(parent=self)
+        s.exec_()
+
     def add_tray_icon(self):
         if not QSystemTrayIcon.isSystemTrayAvailable() or not settings.get_value(
             "global/tray_enabled", "true"
@@ -78,6 +83,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tray.setIcon(QIcon(":/icons/images/icons/parsec.png"))
         self.tray.activated.connect(self.tray_activated)
         self.tray.show()
+
+    def showMaximized(self):
+        super().showMaximized()
+        QCoreApplication.processEvents()
+#        self.show_starting_guide()
 
     def connect_all(self):
         self.button_files.clicked.connect(self.show_mount_widget)

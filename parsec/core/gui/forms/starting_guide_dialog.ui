@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>585</width>
-    <height>367</height>
+    <width>608</width>
+    <height>483</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,7 @@
   <property name="styleSheet">
    <string notr="true">QDialog#StartingGuideDialog
 {
-border: 2px solid rgb(12, 65, 157);
+border: 2px solid rgb(11, 65, 155);
 background-color: rgb(255, 255, 255);
 }</string>
   </property>
@@ -98,7 +98,40 @@ background-color: rgb(255, 255, 255);
     </layout>
    </item>
    <item>
+    <widget class="QWidget" name="widget_main" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <property name="leftMargin">
+       <number>20</number>
+      </property>
+      <property name="topMargin">
+       <number>20</number>
+      </property>
+      <property name="rightMargin">
+       <number>20</number>
+      </property>
+      <property name="bottomMargin">
+       <number>20</number>
+      </property>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <property name="leftMargin">
+      <number>20</number>
+     </property>
+     <property name="rightMargin">
+      <number>40</number>
+     </property>
+     <property name="bottomMargin">
+      <number>40</number>
+     </property>
      <item>
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
@@ -113,9 +146,27 @@ background-color: rgb(255, 255, 255);
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="button_next_page">
+      <widget class="QPushButton" name="button_start">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>32</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>18</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPushButton#button_start
+{
+border: 0;
+color: rgb(11, 65, 155);
+}</string>
+       </property>
        <property name="text">
-        <string>Next</string>
+        <string>Start</string>
        </property>
       </widget>
      </item>
@@ -126,5 +177,22 @@ background-color: rgb(255, 255, 255);
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>button_close</sender>
+   <signal>clicked()</signal>
+   <receiver>StartingGuideDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>592</x>
+     <y>14</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>303</x>
+     <y>241</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
