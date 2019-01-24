@@ -61,8 +61,8 @@ async def run_fuse_in_thread(
     fs_access = ThreadFSAccess(portal, fs)
     fuse_operations = FuseOperations(fs_access, abs_mountpoint)
 
-    async def _join_fuse_runner(stop=False):
-        await _join_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped, stop=stop)
+    async def _stop_fuse_runner():
+        await _stop_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped)
 
     initial_st_dev = _bootstrap_mountpoint(mountpoint)
 
@@ -84,11 +84,11 @@ async def run_fuse_in_thread(
 
             await _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev)
 
-            task_status.started(_join_fuse_runner),
             event_bus.send("mountpoint.started", mountpoint=abs_mountpoint)
+            task_status.started(abs_mountpoint)
 
     finally:
-        await _join_fuse_runner(stop=True)
+        await _stop_fuse_runner()
         event_bus.send("mountpoint.stopped", mountpoint=abs_mountpoint)
         _teardown_mountpoint(mountpoint)
 
@@ -117,7 +117,7 @@ async def _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev):
         need_stop = True
 
 
-async def _join_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped, stop=False):
+async def _stop_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped):
     if fuse_thread_stopped.is_set():
         return
 
@@ -133,10 +133,9 @@ async def _join_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped, st
             pass
 
     with trio.open_cancel_scope(shield=True):
-        if stop:
-            logger.info("Stopping fuse thread...")
-            fuse_operations.schedule_exit()
-            await trio.run_sync_in_worker_thread(_wakeup_fuse)
+        logger.info("Stopping fuse thread...")
+        fuse_operations.schedule_exit()
+        await trio.run_sync_in_worker_thread(_wakeup_fuse)
         await trio.run_sync_in_worker_thread(fuse_thread_stopped.wait)
         logger.info("Fuse thread stopped")
 
