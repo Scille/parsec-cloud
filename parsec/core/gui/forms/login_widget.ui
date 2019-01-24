@@ -96,7 +96,10 @@ background-color: rgb(255, 255, 255);
         </size>
        </property>
        <property name="styleSheet">
-        <string notr="true">background-color: rgb(12, 65, 156);
+        <string notr="true">QWidget#widget
+{
+background-color: rgb(12, 65, 156);
+}
 
 QLineEdit
 {
@@ -161,7 +164,10 @@ image: url(:/icons/images/icons/checked.png)
            </size>
           </property>
           <property name="styleSheet">
-           <string notr="true">background-color: rgb(21, 84, 169);</string>
+           <string notr="true">QWidget#widget_3
+{
+background-color: rgb(21, 84, 169);
+}</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <property name="spacing">

@@ -38,7 +38,10 @@ FORMS += forms/main_window.ui \
          forms/network_settings_widget.ui \
          forms/global_settings_widget.ui \
          forms/register_user_dialog.ui \
-    forms/settings_dialog.ui \
-    forms/starting_guide_dialog.ui
+         forms/settings_dialog.ui \
+         forms/starting_guide_dialog.ui \
+         forms/central_widget.ui \
+         forms/notification_center_widget.ui \
+    forms/menu_widget.ui
 
 RESOURCES += rc/resources.qrc

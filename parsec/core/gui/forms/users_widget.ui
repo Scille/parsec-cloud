@@ -55,18 +55,18 @@ background: none;
     <number>0</number>
    </property>
    <property name="topMargin">
-    <number>15</number>
+    <number>0</number>
    </property>
    <property name="rightMargin">
     <number>0</number>
    </property>
    <property name="bottomMargin">
-    <number>15</number>
+    <number>0</number>
    </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <property name="rightMargin">
-      <number>30</number>
+      <number>0</number>
      </property>
      <item>
       <widget class="QLineEdit" name="line_edit_search">
@@ -105,7 +105,7 @@ color: rgb(28, 78, 163);</string>
       <number>0</number>
      </property>
      <property name="rightMargin">
-      <number>30</number>
+      <number>0</number>
      </property>
      <item>
       <widget class="QPushButton" name="pushButton_4">
@@ -155,8 +155,8 @@ border: 0;
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>470</width>
-          <height>421</height>
+          <width>499</width>
+          <height>451</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">

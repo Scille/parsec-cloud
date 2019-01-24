@@ -27,16 +27,19 @@ background-color: rgb(255, 255, 255);
     <number>0</number>
    </property>
    <property name="topMargin">
-    <number>15</number>
+    <number>0</number>
    </property>
    <property name="rightMargin">
     <number>0</number>
    </property>
    <property name="bottomMargin">
-    <number>15</number>
+    <number>0</number>
    </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
      <item>
       <widget class="QLineEdit" name="line_edit_search">
        <property name="minimumSize">
@@ -71,7 +74,7 @@ color: rgb(28, 78, 163);</string>
       <number>0</number>
      </property>
      <property name="rightMargin">
-      <number>30</number>
+      <number>0</number>
      </property>
      <item>
       <widget class="QPushButton" name="pushButton_4">
@@ -121,8 +124,8 @@ border: 0;
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>446</width>
-          <height>390</height>
+          <width>475</width>
+          <height>450</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -146,7 +149,7 @@ border: 0;
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>40</height>
+       <height>10</height>
       </size>
      </property>
     </spacer>

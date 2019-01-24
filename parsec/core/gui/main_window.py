@@ -2,9 +2,9 @@ import queue
 import threading
 import trio
 
-from PyQt5.QtCore import QCoreApplication, pyqtSignal, QSize
+from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtWidgets import QMainWindow, QMenu, QSystemTrayIcon
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon
 from structlog import get_logger
 
 from parsec import __version__ as PARSEC_VERSION
@@ -17,12 +17,9 @@ from parsec.core.devices_manager import (
 
 from parsec.core.gui import settings
 from parsec.core import logged_core_factory
-from parsec.core.gui.custom_widgets import ask_question, show_error
 from parsec.core.gui.login_widget import LoginWidget
-from parsec.core.gui.mount_widget import MountWidget
-from parsec.core.gui.users_widget import UsersWidget
-from parsec.core.gui.settings_widget import SettingsWidget
-from parsec.core.gui.devices_widget import DevicesWidget
+from parsec.core.gui.central_widget import CentralWidget
+from parsec.core.gui.custom_widgets import ask_question, show_error
 from parsec.core.gui.starting_guide_dialog import StartingGuideDialog
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 
@@ -31,14 +28,11 @@ logger = get_logger()
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
-    connection_state_changed = pyqtSignal(bool)
-
     def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.setupUi(self)
-        self.core_config = core_config
         self.current_device = None
+        self.core_config = core_config
         self.portal = None
         self.core = None
         self.cancel_scope = None
@@ -47,25 +41,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.force_close = False
         self.close_requested = False
         self.tray = None
-        self.widget_menu.hide()
 
-        self.mount_widget = MountWidget(parent=self)
-        self.mount_widget.reset_taskbar.connect(self.reset_taskbar)
-        self.layout_main.insertWidget(0, self.mount_widget)
-        self.users_widget = UsersWidget(parent=self)
-        self.layout_main.insertWidget(0, self.users_widget)
-        self.devices_widget = DevicesWidget(parent=self)
-        self.layout_main.insertWidget(0, self.devices_widget)
-        self.settings_widget = SettingsWidget(core_config=self.core_config, parent=self)
-        self.layout_main.insertWidget(0, self.settings_widget)
         self.login_widget = LoginWidget(core_config=self.core_config, parent=self)
-        self.layout_login.insertWidget(0, self.login_widget)
+        self.widget_center.layout().addWidget(self.login_widget)
+        self.central_widget = CentralWidget(core_config=self.core_config, parent=self)
+        self.widget_center.layout().addWidget(self.central_widget)
 
         self.add_tray_icon()
         self.setWindowTitle("Parsec - Community Edition - {}".format(PARSEC_VERSION))
         self.tray_message_shown = False
-        self.connection_state_changed.connect(self._on_connection_state_changed)
-        self.connect_all()
+
+        self.central_widget.logout_requested.connect(self.logout)
+        self.login_widget.login_with_password_clicked.connect(self.login_with_password)
+        self.login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
+
         self.show_login_widget()
 
     def show_starting_guide(self):
@@ -92,15 +81,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super().showMaximized()
         QCoreApplication.processEvents()
         # self.show_starting_guide()
-
-    def connect_all(self):
-        self.button_files.clicked.connect(self.show_mount_widget)
-        self.button_users.clicked.connect(self.show_users_widget)
-        self.button_settings.clicked.connect(self.show_settings_widget)
-        self.button_devices.clicked.connect(self.show_devices_widget)
-        self.button_logout.clicked.connect(self.logout)
-        self.login_widget.login_with_password_clicked.connect(self.login_with_password)
-        self.login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
 
     def tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
@@ -129,21 +109,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.portal = self.core_queue.get()
         self.cancel_scope = self.core_queue.get()
         self.core = self.core_queue.get()
-        self.mount_widget.set_core_attributes(portal=self.portal, core=self.core)
-        self.devices_widget.set_core_attributes(portal=self.portal, core=self.core)
-        self.users_widget.set_core_attributes(portal=self.portal, core=self.core)
-        self.label_mountpoint.setText(str(self.core.mountpoint))
-        self.label_username.setText(self.core.device.user_id)
-        self.label_device.setText(self.core.device.device_name)
+        self.central_widget.set_core_attributes(core=self.core, portal=self.portal)
         settings.set_value(
             "last_device",
             "{}:{}".format(
                 self.core.device.organization_addr.organization_id, self.core.device.device_id
             ),
         )
-        self._on_connection_state_changed(True)
-        self.core.event_bus.connect("backend.connection.ready", self._on_connection_changed)
-        self.core.event_bus.connect("backend.connection.lost", self._on_connection_changed)
 
     def stop_core(self):
         if not self.portal:
@@ -152,16 +124,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.core_thread.join()
         self.portal = None
         self.core = None
+        self.current_device = None
         self.cancel_scope = None
         self.core_thread = None
-        self.mount_widget.set_core_attributes(None, None)
-        self.devices_widget.set_core_attributes(None, None)
-        self.users_widget.set_core_attributes(None, None)
+        self.central_widget.set_core_attributes(None, None)
 
     def logout(self):
         if self.core_thread:
             self.stop_core()
-        self.current_device = None
         self.show_login_widget()
 
     def login_with_password(self, organization_id, device_id, password):
@@ -170,7 +140,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.core_config.config_dir, organization_id, device_id, password
             )
             self.start_core()
-            self.show_mount_widget()
+            self.show_central_widget()
         except DeviceManagerError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
 
@@ -180,7 +150,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.core_config.config_dir, organization_id, device_id
             )
             self.start_core()
-            self.show_mount_widget()
+            self.show_central_widget()
         except DeviceManagerError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
 
@@ -209,8 +179,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 event.accept()
             else:
                 event.accept()
-            if self.mount_widget:
-                self.mount_widget.stop()
             if self.tray:
                 self.tray.hide()
             self.stop_core()
@@ -223,109 +191,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             event.ignore()
             self.hide()
 
-    def _on_connection_state_changed(self, state):
-        if state:
-            self.label_connection_text.setText(
-                QCoreApplication.translate("MainWindow", "Connected")
-            )
-            self.label_connection_icon.setPixmap(QPixmap(":/icons/images/icons/cloud_online.png"))
-        else:
-            self.label_connection_text.setText(
-                QCoreApplication.translate("MainWindow", "Disconnected")
-            )
-            self.label_connection_icon.setPixmap(QPixmap(":/icons/images/icons/cloud_offline.png"))
-
-    def _on_connection_changed(self, event):
-        if event == "backend.connection.ready":
-            self.connection_state_changed.emit(True)
-        elif event == "backend.connection.lost":
-            self.connection_state_changed.emit(False)
-
-    def set_taskbar_buttons(self, buttons):
-        while self.widget_taskbar.layout().count() != 0:
-            item = self.widget_taskbar.layout().takeAt(0)
-            if item:
-                w = item.widget()
-                self.widget_taskbar.layout().removeWidget(w)
-                w.setParent(None)
-        total_width = 0
-        if len(buttons) == 0:
-            self.widget_taskbar.hide()
-        else:
-            self.widget_taskbar.show()
-            for b in buttons:
-                self.widget_taskbar.layout().addWidget(b)
-                total_width += b.size().width()
-            self.widget_taskbar.setFixedSize(QSize(total_width + 44, 68))
-
-    def reset_taskbar(self):
-        if self.mount_widget.isVisible():
-            self.set_taskbar_buttons(self.mount_widget.get_taskbar_buttons())
-        elif self.devices_widget.isVisible():
-            self.set_taskbar_buttons(self.devices_widget.get_taskbar_buttons())
-        elif self.users_widget.isVisible():
-            self.set_taskbar_buttons(self.users_widget.get_taskbar_buttons())
-        elif self.settings_widget.isVisible():
-            self.set_taskbar_buttons(self.settings_widget.get_taskbar_buttons())
-
-    def show_mount_widget(self):
-        self._hide_all_central_widgets()
-        self.button_files.setChecked(True)
-        self.label_title.setText(QCoreApplication.translate("MainWindow", "Documents"))
-        self.widget_menu.show()
-        self.widget_taskbar.show()
-        self.widget_title.show()
-        self.mount_widget.reset()
-        self.mount_widget.show()
-        self.reset_taskbar()
-
-    def show_users_widget(self):
-        self._hide_all_central_widgets()
-        self.button_users.setChecked(True)
-        self.label_title.setText(QCoreApplication.translate("MainWindow", "Users"))
-        self.widget_menu.show()
-        self.widget_title.show()
-        self.widget_taskbar.show()
-        self.users_widget.reset()
-        self.users_widget.show()
-        self.reset_taskbar()
-
-    def show_devices_widget(self):
-        self._hide_all_central_widgets()
-        self.button_devices.setChecked(True)
-        self.label_title.setText(QCoreApplication.translate("MainWindow", "Devices"))
-        self.widget_menu.show()
-        self.widget_title.show()
-        self.widget_taskbar.show()
-        self.devices_widget.reset()
-        self.devices_widget.show()
-        self.reset_taskbar()
-
-    def show_settings_widget(self):
-        self._hide_all_central_widgets()
-        self.button_settings.setChecked(True)
-        self.label_title.setText(QCoreApplication.translate("MainWindow", "Settings"))
-        self.widget_menu.show()
-        self.widget_title.show()
-        self.settings_widget.reset()
-        self.settings_widget.show()
-        self.reset_taskbar()
+    def show_central_widget(self):
+        self._hide_all_widgets()
+        self.central_widget.show()
+        self.central_widget.reset()
 
     def show_login_widget(self):
-        self._hide_all_central_widgets()
+        self._hide_all_widgets()
         self.login_widget.reset()
         self.login_widget.show()
 
-    def _hide_all_central_widgets(self):
+    def _hide_all_widgets(self):
         self.login_widget.hide()
-        self.mount_widget.hide()
-        self.settings_widget.hide()
-        self.users_widget.hide()
-        self.devices_widget.hide()
-        self.widget_title.hide()
-        self.widget_menu.hide()
-        self.widget_taskbar.hide()
-        self.button_files.setChecked(False)
-        self.button_users.setChecked(False)
-        self.button_settings.setChecked(False)
-        self.button_devices.setChecked(False)
+        self.central_widget.hide()

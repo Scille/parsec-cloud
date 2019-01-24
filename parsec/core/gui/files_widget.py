@@ -102,8 +102,6 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
         self.previous_selection = []
         self.file_queue = queue.Queue(1024)
-        self.import_thread = threading.Thread(target=self._import_files)
-        self.import_thread.start()
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons
@@ -113,10 +111,16 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         if self._core:
             self._core.fs.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
             self._core.fs.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
+            self.stop()
         self._core = c
         if self._core:
             self._core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
             self._core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
+            self.start()
+
+    def start(self):
+        self.import_thread = threading.Thread(target=self._import_files)
+        self.import_thread.start()
 
     def stop(self):
         self.file_queue.put_nowait((None, None))
