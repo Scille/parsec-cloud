@@ -508,6 +508,11 @@ class LocalFolderFS:
             self.set_manifest(parent_access, parent_manifest)
             self.event_bus.send("fs.entry.updated", id=parent_access.id)
 
+        elif parent_dst.is_root():
+            raise PermissionError(
+                13, "Permission denied (only workspaces can be moved to root)", str(src), str(dst)
+            )
+
         else:
             parent_src_access, parent_src_manifest = self._retrieve_entry(parent_src)
             if not is_folderish_manifest(parent_src_manifest):
