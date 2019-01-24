@@ -244,29 +244,38 @@ def certified_extract_parts(certified: bytes) -> Tuple[DeviceID, bytes]:
         raise TrustChainInvalidDataError(*exc.args) from exc
 
 
-# def cascade_validate_devices(
-#     certified_devices, root_verify_key, root_device_id=ROOT_DEVICE_ID
-# ) -> Tuple[dict]:
-#     """
-#     Raises:
-#         TrustChainBrokenChainError
-#         TrustChainInvalidDataError
-#         TrustChainTooOldError
-#     """
-#     devices = []
-#     for certified_device in reversed(certified_devices):
-#         certifier_id, certified_payload = certified_extract_parts(certified_device)
-#         if not devices:
-#             if certifier_id != ROOT_DEVICE_ID:
-#                 raise TrustChainError(f"Device {device} is signed {device}")  # TODO
-#             certifier_key = root_verify_key
+def cascade_validate_devices(
+    certified_devices, root_device_id, root_verify_key, now
+) -> Tuple[dict]:
+    """
+    Raises:
+        TrustChainBrokenChainError
+        TrustChainInvalidDataError
+        TrustChainTooOldError
+    """
 
-#         else:
-#             if certifier_id != devices[-1].id:
-#                 raise TrustChainError(f"Device {device} is signed {device}")  # TODO
-#             certifier_key = devices[-1]["verify_key"]
+    def _check_current_certifier_match_previous_certifier(current_certifier, previous_certifier):
+        if current_certifier != previous_certifier:
+            raise TrustChainBrokenChainError(
+                f"Device {current_certifier} not signed by {previous_certifier}"
+            )
 
-#         validated = validate_payload_certified_device(certifier_key, certified_payload)
-#         devices.append(validated)
+    devices = []
+    for certified_device in certified_devices:
+        if devices:
+            previous_device = devices[-1]
+        else:
+            previous_device = {
+                "device_id": root_device_id,
+                "verify_key": root_verify_key.verify_key,
+            }
+        certifier_id, certified_payload = certified_extract_parts(certified_device)
+        _check_current_certifier_match_previous_certifier(
+            certifier_id, previous_device["device_id"]
+        )
+        validated = validate_payload_certified_device(
+            previous_device["verify_key"], certified_payload, now
+        )
+        devices.append(validated)
 
-#     return tuple(reversed(devices))
+    return tuple(devices)

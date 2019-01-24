@@ -5,11 +5,13 @@ from pendulum import Pendulum
 
 from parsec.trustchain import (
     TrustChainError,
+    TrustChainBrokenChainError,
     certified_extract_parts,
     certify_user,
     validate_payload_certified_user,
     certify_device,
     validate_payload_certified_device,
+    cascade_validate_devices,
     MAX_TS_BALLPARK,
 )
 
@@ -123,3 +125,36 @@ def test_validate_certified_device_too_old(alice, bob, mallory):
     now = now.add(seconds=MAX_TS_BALLPARK + 1)
     with pytest.raises(TrustChainError):
         validate_payload_certified_device(alice.verify_key, payload, now)
+
+
+def test_cascade_validate_devices_ok(alice, bob, mallory):
+    now = Pendulum(2000, 1, 1)
+
+    with freeze_time(now):
+        certification_1 = certify_device(
+            alice.device_id, alice.signing_key, bob.device_id, bob.verify_key
+        )
+        certification_2 = certify_device(
+            bob.device_id, bob.signing_key, mallory.device_id, mallory.verify_key
+        )
+    result = cascade_validate_devices(
+        [certification_1, certification_2], alice.device_id, alice.signing_key, now
+    )
+    assert len(result) == 2
+    # TODO check content?
+
+
+def test_cascade_validate_devices_wrong(alice, bob, mallory):
+    now = Pendulum(2000, 1, 1)
+
+    with freeze_time(now):
+        certification_1 = certify_device(
+            alice.device_id, alice.signing_key, mallory.device_id, mallory.verify_key
+        )
+        certification_2 = certify_device(
+            bob.device_id, bob.signing_key, mallory.device_id, mallory.verify_key
+        )
+    with pytest.raises(TrustChainBrokenChainError):
+        cascade_validate_devices(
+            [certification_1, certification_2], alice.device_id, alice.signing_key, now
+        )
