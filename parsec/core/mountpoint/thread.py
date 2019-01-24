@@ -39,8 +39,16 @@ def _bootstrap_mountpoint(mountpoint):
     return initial_st_dev
 
 
+def _teardown_mountpoint(mountpoint):
+    if os.name == "posix":
+        try:
+            mountpoint.rmdir()
+        except OSError:
+            pass
+
+
 async def run_fuse_in_thread(
-    fs, mountpoint: Path, fuse_config: dict, *, task_status=trio.TASK_STATUS_IGNORED
+    fs, mountpoint: Path, fuse_config: dict, event_bus, *, task_status=trio.TASK_STATUS_IGNORED
 ):
     """
     Raises:
@@ -53,21 +61,15 @@ async def run_fuse_in_thread(
     fs_access = ThreadFSAccess(portal, fs)
     fuse_operations = FuseOperations(fs_access, abs_mountpoint)
 
-    async def _stop_fuse_runner():
-        await _stop_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped)
+    async def _join_fuse_runner(stop=False):
+        await _join_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped, stop=stop)
 
     initial_st_dev = _bootstrap_mountpoint(mountpoint)
 
     try:
-        async with trio.open_nursery() as nursery:
+        event_bus.send("mountpoint.starting", mountpoint=abs_mountpoint)
 
-            nursery.start_soon(
-                _wait_for_fuse_ready,
-                mountpoint,
-                fuse_thread_started,
-                initial_st_dev,
-                lambda: task_status.started(_stop_fuse_runner),
-            )
+        async with trio.open_nursery() as nursery:
 
             def _run_fuse_thread():
                 try:
@@ -76,13 +78,22 @@ async def run_fuse_in_thread(
                 finally:
                     fuse_thread_stopped.set()
 
-            await trio.run_sync_in_worker_thread(_run_fuse_thread, cancellable=True)
+            nursery.start_soon(
+                lambda: trio.run_sync_in_worker_thread(_run_fuse_thread, cancellable=True)
+            )
+
+            await _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev)
+
+            task_status.started(_join_fuse_runner),
+            event_bus.send("mountpoint.started", mountpoint=abs_mountpoint)
 
     finally:
-        await _stop_fuse_runner()
+        await _join_fuse_runner(stop=True)
+        event_bus.send("mountpoint.stopped", mountpoint=abs_mountpoint)
+        _teardown_mountpoint(mountpoint)
 
 
-async def _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev, started_cb):
+async def _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev):
 
     # Polling until fuse is ready
     # Note given python fs api is blocking, we must run it inside a thread
@@ -104,34 +115,30 @@ async def _wait_for_fuse_ready(mountpoint, fuse_thread_started, initial_st_dev, 
         await trio.run_sync_in_worker_thread(_wait_for_fuse_ready_thread, cancellable=True)
     finally:
         need_stop = True
-    started_cb()
 
 
-async def _stop_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped):
-    fuse_operations.schedule_exit()
+async def _join_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped, stop=False):
+    if fuse_thread_stopped.is_set():
+        return
 
     # Ask for dummy file just to force a fuse operation that will
     # process the `fuse_exit` from a valid context
     # Note given python fs api is blocking, we must run it inside a thread
     # to avoid blocking the trio loop and ending up in a deadlock
 
-    def _stop_fuse():
+    def _wakeup_fuse():
         try:
             (mountpoint / "__shutdown_fuse__").exists()
         except OSError:
             pass
-        fuse_thread_stopped.wait()
 
     with trio.open_cancel_scope(shield=True):
-        logger.info("Stopping fuse thread...")
-        await trio.run_sync_in_worker_thread(_stop_fuse)
+        if stop:
+            logger.info("Stopping fuse thread...")
+            fuse_operations.schedule_exit()
+            await trio.run_sync_in_worker_thread(_wakeup_fuse)
+        await trio.run_sync_in_worker_thread(fuse_thread_stopped.wait)
         logger.info("Fuse thread stopped")
-
-    if os.name == "posix":
-        try:
-            mountpoint.rmdir()
-        except OSError:
-            pass
 
 
 class ThreadFSAccess:

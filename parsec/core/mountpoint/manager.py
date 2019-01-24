@@ -43,7 +43,7 @@ class FuseMountpointManager:
         self._lock = trio.Lock()
         self._fs = fs
         self._nursery = None
-        self._stop_fuse_runner = None
+        self._join_fuse_runner = None
         self._fuse_config = {"debug": debug, "nothreads": nothreads}
 
     def get_abs_mountpoint(self):
@@ -53,7 +53,7 @@ class FuseMountpointManager:
         self._nursery = nursery
 
     def is_started(self):
-        return self._stop_fuse_runner is not None
+        return self._join_fuse_runner is not None
 
     async def start(self, mountpoint):
         """
@@ -63,23 +63,20 @@ class FuseMountpointManager:
         """
         async with self._lock:
             if self.is_started():
-                raise MountpointAlreadyStarted(f"Fuse already started on mountpoint `{mountpoint}`")
+                raise MountpointAlreadyStarted(
+                    f"Fuse already started on mountpoint `{self.mountpoint}`"
+                )
 
             self.mountpoint = Path(mountpoint)
-            abs_mountpoint = self.get_abs_mountpoint()
-            self.event_bus.send("mountpoint.starting", mountpoint=abs_mountpoint)
-
             if self.mode == "process":
                 fuse_runner = run_fuse_in_process
             else:
                 fuse_runner = run_fuse_in_thread
-            self._stop_fuse_runner = await self._nursery.start(
-                fuse_runner, self._fs, self.mountpoint, self._fuse_config
+            self._join_fuse_runner = await self._nursery.start(
+                fuse_runner, self._fs, self.mountpoint, self._fuse_config, self.event_bus
             )
 
-            self.event_bus.send("mountpoint.started", mountpoint=abs_mountpoint)
-
-    async def stop(self):
+    async def join(self, stop=False):
         """
         Raises:
             MountpointNotStarted
@@ -88,10 +85,11 @@ class FuseMountpointManager:
             if not self.is_started():
                 raise MountpointNotStarted()
 
-            await self._stop_fuse_runner()
+            await self._join_fuse_runner(stop=stop)
+            self._join_fuse_runner = None
 
-            self._stop_fuse_runner = None
-            self.event_bus.send("mountpoint.stopped", mountpoint=self.get_abs_mountpoint())
+    async def stop(self):
+        await self.join(stop=True)
 
     async def teardown(self):
         try:
