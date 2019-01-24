@@ -1,11 +1,13 @@
 import os
 import warnings
-import trio
 import logging
 from pathlib import Path
 
+import trio
+import attr
+from async_generator import asynccontextmanager
+
 from parsec.types import DeviceID
-from parsec.core.mountpoint.exceptions import MountpointAlreadyStarted, MountpointNotStarted
 
 try:
     from fuse import FUSE
@@ -30,72 +32,64 @@ def get_default_mountpoint(device_id: DeviceID):
         return Path(f"/media/{device_id}")
 
 
-class FuseMountpointManager:
-    def __init__(self, fs, event_bus, mode="thread", debug: bool = False, nothreads: bool = False):
-        if not FUSE_AVAILABLE:
-            raise RuntimeError("Fuse is not available, is fusepy installed ?")
+@attr.s
+class TaskStatus:
 
-        self.event_bus = event_bus
-        if mode not in ("thread", "process"):
-            raise ValueError("mode param must be `thread` or `process`")
-        self.mode = mode
-        self.mountpoint = None
-        self._lock = trio.Lock()
-        self._fs = fs
-        self._nursery = None
-        self._join_fuse_runner = None
-        self._fuse_config = {"debug": debug, "nothreads": nothreads}
+    cancel = attr.ib()
+    join = attr.ib()
+    value = attr.ib()
 
-    def get_abs_mountpoint(self):
-        return str(self.mountpoint.absolute())
-
-    async def init(self, nursery):
-        self._nursery = nursery
-
-    def is_started(self):
-        return self._join_fuse_runner is not None
-
-    async def start(self, mountpoint):
-        """
-        Raises:
-            MountpointAlreadyStarted
-            MountpointConfigurationError
-        """
-        async with self._lock:
-            if self.is_started():
-                raise MountpointAlreadyStarted(
-                    f"Fuse already started on mountpoint `{self.mountpoint}`"
-                )
-
-            self.mountpoint = Path(mountpoint)
-            if self.mode == "process":
-                fuse_runner = run_fuse_in_process
-            else:
-                fuse_runner = run_fuse_in_thread
-            self._join_fuse_runner = await self._nursery.start(
-                fuse_runner, self._fs, self.mountpoint, self._fuse_config, self.event_bus
-            )
-
-    async def join(self, stop=False):
-        """
-        Raises:
-            MountpointNotStarted
-        """
-        async with self._lock:
-            if not self.is_started():
-                raise MountpointNotStarted()
-
-            await self._join_fuse_runner(stop=stop)
-            self._join_fuse_runner = None
-
-    async def stop(self):
-        await self.join(stop=True)
-
-    async def teardown(self):
-        try:
-            await self.stop()
-        except MountpointNotStarted:
-            pass
+    async def cancel_and_join(self):
+        self.cancel()
+        await self.join()
 
 
-MountpointManager = FuseMountpointManager
+async def stoppable(corofn, *args, task_status=trio.TASK_STATUS_IGNORED):
+    finished = trio.Event()
+    try:
+        async with trio.open_nursery() as nursery:
+            value = await nursery.start(corofn, *args)
+            status = TaskStatus(cancel=nursery.cancel_scope.cancel, join=finished.wait, value=value)
+            task_status.started(status)
+    finally:
+        finished.set()
+
+
+@asynccontextmanager
+async def fuse_mountpoint_manager(
+    fs,
+    event_bus,
+    mountpoint,
+    nursery,
+    *,
+    mode="thread",
+    debug: bool = False,
+    nothreads: bool = False,
+):
+    # No mountpoint
+    if mountpoint is None:
+        yield None
+        return
+
+    # Fuse not available
+    if not FUSE_AVAILABLE:
+        raise RuntimeError("Fuse is not available, is fusepy installed ?")
+
+    # Invalid mode
+    if mode not in ("thread", "process"):
+        raise ValueError("mode param must be `thread` or `process`")
+
+    fuse_config = {"debug": debug, "nothreads": nothreads}
+    if mode == "process":
+        fuse_runner = run_fuse_in_process
+    else:
+        fuse_runner = run_fuse_in_thread
+
+    task = await nursery.start(stoppable, fuse_runner, fs, mountpoint, fuse_config, event_bus)
+    try:
+        yield task
+    finally:
+        await task.cancel_and_join()
+
+
+mountpoint_manager = fuse_mountpoint_manager

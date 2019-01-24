@@ -29,7 +29,7 @@ async def _run_mountpoint(config, device, mountpoint):
         display_device = click.style(device.device_id, fg="yellow")
         mountpoint_display = click.style(str(core.mountpoint.absolute()), fg="yellow")
         click.echo(f"{display_device}'s drive mounted at {mountpoint_display}")
-        await core.mountpoint_manager.join()
+        await core.mountpoint_task.join()
 
 
 @click.command(short_help="run parsec mountpoint")

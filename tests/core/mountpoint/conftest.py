@@ -5,7 +5,7 @@ import trio
 import pathlib
 from contextlib import contextmanager
 
-from parsec.core.mountpoint import FuseMountpointManager
+from parsec.core.mountpoint import mountpoint_manager
 
 from tests.common import call_with_control
 
@@ -84,14 +84,11 @@ def fuse_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_f
 
                     await fs.workspace_create(f"/{self.default_workspace_name}")
 
-                    fuse = FuseMountpointManager(fs, fs.event_bus, mode=fuse_mode)
                     async with trio.open_nursery() as nursery:
-                        await fuse.init(nursery)
-                        try:
-                            await fuse.start(str(self.mountpoint))
-                            await started_cb(fs=fs, fuse=fuse)
-                        finally:
-                            await fuse.teardown()
+                        async with mountpoint_manager(
+                            fs, fs.event_bus, self.mountpoint, nursery, mode=fuse_mode
+                        ) as fuse_task:
+                            await started_cb(fs=fs, fuse=fuse_task)
 
             async with trio.open_nursery() as self._nursery:
                 self._ready.set()
