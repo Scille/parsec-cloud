@@ -6,6 +6,10 @@ class NotAvailableMountpointManager(BaseMountpointManager):
     def __init__(self, fs, event_bus, mode="thread", debug: bool = True, nothreads: bool = False):
         pass
 
+    @property
+    def mountpoint(self):
+        return None
+
     def get_abs_mountpoint(self):
         raise MountpointManagerNotAvailable("Mountpoint manager not available")
 
