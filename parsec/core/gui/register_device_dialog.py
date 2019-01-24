@@ -20,8 +20,7 @@ async def _handle_invite_and_create_device(
     try:
         with trio.open_cancel_scope() as cancel_scope:
             queue.put(cancel_scope)
-            async with trio.open_nursery() as nursery:
-                await invite_and_create_device(core.device, core.backend_cmds, device_name, token)
+            await invite_and_create_device(core.device, core.backend_cmds, device_name, token)
             qt_on_done.emit()
     except BackendCmdsBadResponse as e:
         qt_on_error.emit(e.status)
@@ -119,7 +118,8 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
                 self,
                 QCoreApplication.translate(
                     "RegisterDeviceDialog",
-                    "Can not close this window while waiting for the new device to register. Please cancel first.",
+                    "Can not close this window while waiting for the new device to register. "
+                    "Please cancel first.",
                 ),
             )
             event.ignore()

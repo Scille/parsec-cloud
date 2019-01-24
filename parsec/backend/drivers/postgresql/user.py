@@ -90,7 +90,7 @@ WHERE organization_id = $1
                 user.user_certifier,
                 user.created_on,
             )
-        except UniqueViolationError as exc:
+        except UniqueViolationError:
             raise UserAlreadyExistsError(f"User `{user.user_id}` already exists")
 
         if result != "INSERT 0 1":

@@ -20,10 +20,7 @@ async def _handle_invite_and_create_user(
     try:
         with trio.open_cancel_scope() as cancel_scope:
             queue.put(cancel_scope)
-            async with trio.open_nursery() as nursery:
-                await invite_and_create_user(
-                    core.device, core.backend_cmds, username, token, is_admin
-                )
+            await invite_and_create_user(core.device, core.backend_cmds, username, token, is_admin)
             qt_on_done.emit()
     except BackendCmdsBadResponse as e:
         qt_on_error.emit(e.status)
@@ -127,7 +124,8 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
                 self,
                 QCoreApplication.translate(
                     "RegisterUserDialog",
-                    "Can not close this window while waiting for the new user to register. Please cancel first.",
+                    "Can not close this window while waiting for the new user to register. "
+                    "Please cancel first.",
                 ),
             )
             event.ignore()

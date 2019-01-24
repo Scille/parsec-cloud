@@ -285,4 +285,4 @@ def local_manifest_loads(raw: bytes) -> LocalManifest:
     Raises:
         SerdeError
     """
-    return local_manifest_serializer.loads(manifest)
+    return local_manifest_serializer.loads(raw)

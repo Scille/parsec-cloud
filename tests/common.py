@@ -91,7 +91,7 @@ class FreezeTestOnTransportError(Transport):
         try:
             return await self.transport.send(msg)
 
-        except TransportError as exc:
+        except TransportError:
             # Wait here until this coroutine is cancelled
             await trio.sleep_forever()
 
@@ -99,7 +99,7 @@ class FreezeTestOnTransportError(Transport):
         try:
             return await self.transport.recv()
 
-        except TransportError as exc:
+        except TransportError:
             # Wait here until this coroutine is cancelled
             await trio.sleep_forever()
 

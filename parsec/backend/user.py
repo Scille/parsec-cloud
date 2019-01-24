@@ -178,7 +178,7 @@ class BaseUserComponent:
             user, trustchain = await self.get_user_with_trustchain(
                 client_ctx.organization_id, msg["user_id"]
             )
-        except UserNotFoundError as exc:
+        except UserNotFoundError:
             return {"status": "not_found"}
 
         return user_get_serializer.rep_dump(
@@ -218,7 +218,7 @@ class BaseUserComponent:
                 client_ctx.organization_id, client_ctx.device_id.user_id
             )
 
-        except UserNotFoundError as exc:
+        except UserNotFoundError:
             raise RuntimeError("User `{client_ctx.device_id.user_id}` disappeared !")
 
         if not user.is_admin:
@@ -275,7 +275,7 @@ class BaseUserComponent:
                 client_ctx.organization_id, invitation.creator.user_id
             )
 
-        except UserNotFoundError as exc:
+        except UserNotFoundError:
             return {"status": "not_found"}
 
         return user_get_invitation_creator_serializer.rep_dump(
@@ -458,7 +458,7 @@ class BaseUserComponent:
                 client_ctx.organization_id, invitation.creator.user_id
             )
 
-        except UserNotFoundError as exc:
+        except UserNotFoundError:
             return {"status": "not_found"}
 
         return device_get_invitation_creator_serializer.rep_dump(
@@ -607,7 +607,7 @@ class BaseUserComponent:
                     client_ctx.organization_id, client_ctx.device_id.user_id
                 )
 
-            except UserNotFoundError as exc:
+            except UserNotFoundError:
                 raise RuntimeError("User `{client_ctx.device_id.user_id}` disappeared !")
 
             if not user.is_admin:

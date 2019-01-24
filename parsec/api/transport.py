@@ -45,7 +45,7 @@ class Transport:
             try:
                 return next(self._ws_events)
 
-            except StopIteration as exc:
+            except StopIteration:
                 # Not enough data to form an event
                 await self._net_recv()
                 self._ws_events = self.ws.events()
@@ -117,7 +117,7 @@ class Transport:
             await self._net_send()
             await self.stream.aclose()
 
-        except (BrokenResourceError, TransportError) as exc:
+        except (BrokenResourceError, TransportError):
             pass
 
     async def send(self, msg: bytes) -> None:

@@ -13,7 +13,7 @@ def translate_error():
         yield
 
     except BackendNotAvailable as exc:
-        raise FuseOSError(ENETDOWN)
+        raise FuseOSError(ENETDOWN) from exc
 
     except FSInvalidFileDescriptor as exc:
         raise FuseOSError(EBADF) from exc

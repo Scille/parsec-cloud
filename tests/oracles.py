@@ -70,7 +70,7 @@ def oracle_fs_factory(tmpdir):
                 return "invalid_path"
             try:
                 path.touch(exist_ok=False)
-            except OSError as exc:
+            except OSError:
                 return "invalid_path"
             self._register_stat(path, "file")
             self.entries_stats[path.parent]["need_sync"] = True
@@ -91,7 +91,7 @@ def oracle_fs_factory(tmpdir):
 
             try:
                 path.mkdir(exist_ok=False)
-            except OSError as exc:
+            except OSError:
                 return "invalid_path"
             self._register_stat(path, "folder")
             self.entries_stats[path.parent]["need_sync"] = True
@@ -104,7 +104,7 @@ def oracle_fs_factory(tmpdir):
             path = self._cook_path(path)
             try:
                 path.unlink()
-            except OSError as exc:
+            except OSError:
                 return "invalid_path"
             del self.entries_stats[path]
             self.entries_stats[path.parent]["need_sync"] = True
@@ -114,7 +114,7 @@ def oracle_fs_factory(tmpdir):
             path = self._cook_path(path)
             try:
                 path.rmdir()
-            except OSError as exc:
+            except OSError:
                 return "invalid_path"
             self._delete_stats(path)
             self.entries_stats[path.parent]["need_sync"] = True
@@ -146,7 +146,7 @@ def oracle_fs_factory(tmpdir):
 
             try:
                 src.rename(str(dst))
-            except OSError as exc:
+            except OSError:
                 return "invalid_path"
 
             if src != dst:
@@ -165,7 +165,7 @@ def oracle_fs_factory(tmpdir):
 
             try:
                 src.rename(str(dst))
-            except OSError as exc:
+            except OSError:
                 return "invalid_path"
 
             if src != dst:

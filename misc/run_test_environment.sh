@@ -5,6 +5,11 @@ Create a temporary environment and initialize a test setup for parsec.
 WARNING: it also leaves an in-memory backend running in the background
 on port 6888.
 
+It is typically a good idea to source this script in order to export the XDG
+variables so the upcoming parsec commands point to the test environment:
+
+    $ source misc/run_test_environment.sh
+
 This scripts create two users, alice and bob who both own two devices,
 laptop and pc. They each have their workspace, respectively
 alice_workspace and bob_workspace, that their sharing with each other.
@@ -29,4 +34,4 @@ Configure your test environment with the following variables:
 pkill -f "parsec backend run -b MOCKED -P $PORT"
 parsec backend run -b MOCKED -P $PORT &
 sleep 1
-python $DIR/initialize_test_organization.py -B "ws://localhost:$PORT" $@
+python3 $DIR/initialize_test_organization.py -B "ws://localhost:$PORT" $@

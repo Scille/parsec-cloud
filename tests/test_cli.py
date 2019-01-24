@@ -190,7 +190,8 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
         print("####### Create another device #######")
         with _running(
             "core invite_device "
-            f"--config-dir={tmpdir} --device={alice1_slug} --password={password} {alice2.device_name}",
+            f"--config-dir={tmpdir} --device={alice1_slug} --password={password}"
+            f" {alice2.device_name}",
             wait_for="Invitation token:",
         ) as p:
             stdout = p.live_stdout.read()

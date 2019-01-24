@@ -23,9 +23,9 @@ class LocalDevice:
     def evolve(self, **kwargs):
         return attr.evolve(self, **kwargs)
 
-    @property
-    def full_device_id(self):
-        return FullDeviceID.build(self.organization_id, self.device_id)
+    # @property
+    # def full_device_id(self):
+    #     return FullDeviceID.build(self.organization_id, self.device_id)
 
     @property
     def root_verify_key(self):
