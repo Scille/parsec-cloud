@@ -87,7 +87,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def showMaximized(self):
         super().showMaximized()
         QCoreApplication.processEvents()
-#        self.show_starting_guide()
+        # self.show_starting_guide()
 
     def connect_all(self):
         self.button_files.clicked.connect(self.show_mount_widget)
@@ -320,7 +320,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.devices_widget.hide()
         self.widget_title.hide()
         self.widget_menu.hide()
-        self.widget_taskbar.show()
+        self.widget_taskbar.hide()
         self.button_files.setChecked(False)
         self.button_users.setChecked(False)
         self.button_settings.setChecked(False)
