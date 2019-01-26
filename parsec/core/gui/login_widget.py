@@ -6,6 +6,7 @@ from parsec.core.gui import settings
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
 from parsec.core.gui.settings_dialog import SettingsDialog
+from parsec.core.gui.create_org_dialog import CreateOrgDialog
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
 
@@ -91,8 +92,14 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_widget.login_with_pkcs11_clicked.connect(self.emit_login_with_pkcs11)
         self.claim_user_widget.user_claimed.connect(self.show_login_widget)
         self.claim_device_widget.device_claimed.connect(self.show_login_widget)
+        self.button_create_org.clicked.connect(self.create_organization)
         self.button_settings.clicked.connect(self.show_settings)
         self.reset()
+
+    def create_organization(self):
+        d = CreateOrgDialog(parent=self)
+        d.exec_()
+        self.login_widget.reset()
 
     def emit_login_with_password(self, organization_id, device_id, password):
         self.login_with_password_clicked.emit(organization_id, device_id, password)
