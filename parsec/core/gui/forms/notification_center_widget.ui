@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>250</width>
+    <width>350</width>
     <height>430</height>
    </rect>
   </property>
@@ -18,13 +18,13 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>250</width>
+    <width>350</width>
     <height>0</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>250</width>
+    <width>350</width>
     <height>16777215</height>
    </size>
   </property>
@@ -34,6 +34,7 @@
   <property name="styleSheet">
    <string notr="true">QWidget#NotificationCenterWidget
 {
+background-color: rgb(255, 255, 255);
 border-left: 1px solid black;
 border-bottom: 1px solid black;
 }</string>
@@ -88,6 +89,24 @@ border-bottom: 1px solid black;
 {
 border: 0;
 }</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="lineWidth">
+      <number>0</number>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="showDropIndicator" stdset="0">
+      <bool>false</bool>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::NoSelection</enum>
      </property>
     </widget>
    </item>
