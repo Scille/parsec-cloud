@@ -66,6 +66,7 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
             self.line_edit_device.setFocus()
         completer = QCompleter(self.devices.keys())
         completer.setCaseSensitivity(Qt.CaseInsensitive)
+        completer.setFilterMode(Qt.MatchContains)
         completer.popup().setStyleSheet("border: 2px solid rgb(46, 145, 208); border-top: 0;")
         self.line_edit_device.setCompleter(completer)
 
