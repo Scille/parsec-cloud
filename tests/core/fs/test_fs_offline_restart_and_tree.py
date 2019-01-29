@@ -54,7 +54,7 @@ def test_fs_offline_restart_and_tree(
             await self.fs.workspace_create("/w")
 
             self.oracle_fs = oracle_fs_factory()
-            self.oracle_fs.create_workspace("/w")
+            self.oracle_fs.workspace_create("/w")
             return "/w"
 
         @rule()
@@ -84,9 +84,9 @@ def test_fs_offline_restart_and_tree(
             return path
 
         @rule(target=Folders, name=st_entry_name)
-        async def create_workspace(self, name):
+        async def workspace_create(self, name):
             path = os.path.join("/", name)
-            expected_status = self.oracle_fs.create_workspace(path)
+            expected_status = self.oracle_fs.workspace_create(path)
             if expected_status == "ok":
                 await self.fs.workspace_create(path)
             else:

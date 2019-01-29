@@ -6,9 +6,6 @@ import shutil
 from pathlib import Path
 
 
-# TODO: rename create_workspace -> workspace_create & co
-
-
 @pytest.fixture
 def oracle_fs_factory(tmpdir):
     class OracleFS:
@@ -95,11 +92,11 @@ def oracle_fs_factory(tmpdir):
                 path.mkdir(exist_ok=False)
             except OSError:
                 return "invalid_path"
-            self._register_stat(path, "folder")
+            self._register_stat(path, "workspace" if workspace else "folder")
             self.entries_stats[path.parent]["need_sync"] = True
             return "ok"
 
-        def create_workspace(self, path):
+        def workspace_create(self, path):
             return self._create_folder(path, workspace=True)
 
         def unlink(self, path):
@@ -286,11 +283,17 @@ def oracle_fs_with_sync_factory(oracle_fs_factory):
         def create_folder(self, path):
             return self.fs.create_folder(path)
 
+        def workspace_create(self, path):
+            return self.fs.workspace_create(path)
+
         def delete(self, path):
             return self.fs.delete(path)
 
         def move(self, src, dst):
             return self.fs.move(src, dst)
+
+        def workspace_rename(self, src, dst):
+            return self.fs.workspace_rename(src, dst)
 
         def flush(self, path):
             return self.fs.flush(path)
@@ -307,7 +310,7 @@ def oracle_fs_with_sync_factory(oracle_fs_factory):
 
                 def _recursive_keep_synced(path):
                     stat = new_synced.entries_stats[path]
-                    if stat["type"] == "folder":
+                    if stat["type"] in ["folder", "workspace"]:
                         for child in path.iterdir():
                             _recursive_keep_synced(child)
                     stat["need_sync"] = False
