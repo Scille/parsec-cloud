@@ -22,8 +22,10 @@ async def _handle_invite_and_create_user(
             queue.put(cancel_scope)
             await invite_and_create_user(core.device, core.backend_cmds, username, token, is_admin)
             qt_on_done.emit()
-    except BackendCmdsBadResponse as e:
-        qt_on_error.emit(e.status)
+    except BackendCmdsBadResponse as exc:
+        qt_on_error.emit(exc.status)
+    except:
+        qt_on_error.emit(None)
 
 
 class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
@@ -68,7 +70,9 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
         self.button_register.show()
         self.line_edit_username.show()
         self.closing_allowed = True
-        if status == "invalid_role":
+        if status is None:
+            show_warning(self, QCoreApplication.translate("RegisterUserDialog", "Unknown error."))
+        elif status == "invalid_role":
             show_warning(
                 self,
                 QCoreApplication.translate(

@@ -22,8 +22,10 @@ async def _handle_invite_and_create_device(
             queue.put(cancel_scope)
             await invite_and_create_device(core.device, core.backend_cmds, device_name, token)
             qt_on_done.emit()
-    except BackendCmdsBadResponse as e:
-        qt_on_error.emit(e.status)
+    except BackendCmdsBadResponse as exc:
+        qt_on_error.emit(exc.status)
+    except:
+        qt_on_error.emit(None)
 
 
 class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
@@ -67,7 +69,9 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         self.button_register.show()
         self.line_edit_device_name.show()
         self.closing_allowed = True
-        if status == "already_exists":
+        if status is None:
+            show_warning(self, QCoreApplication.translate("RegisterUserDialog", "Unknown error."))
+        elif status == "already_exists":
             show_warning(
                 self,
                 QCoreApplication.translate("RegisterDeviceDialog", "This device already exists."),

@@ -15,6 +15,7 @@ from parsec.core.devices_manager import (
     load_device_with_pkcs11,
 )
 
+from parsec.core.backend_connection import BackendHandshakeError
 from parsec.core.gui import settings
 from parsec.core import logged_core_factory
 from parsec.core.gui.login_widget import LoginWidget
@@ -93,13 +94,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def start_core(self):
         def _run_core():
             async def _run():
-                portal = trio.BlockingTrioPortal()
-                self.core_queue.put(portal)
-                with trio.open_cancel_scope() as cancel_scope:
-                    self.core_queue.put(cancel_scope)
-                    async with logged_core_factory(self.core_config, self.current_device) as core:
-                        self.core_queue.put(core)
-                        await trio.sleep_forever()
+                try:
+                    portal = trio.BlockingTrioPortal()
+                    self.core_queue.put(portal)
+                    with trio.open_cancel_scope() as cancel_scope:
+                        self.core_queue.put(cancel_scope)
+                        async with logged_core_factory(
+                            self.core_config, self.current_device
+                        ) as core:
+                            self.core_queue.put(core)
+                            await trio.sleep_forever()
+                # If we have an exception, we never put the core object in the queue. Since the
+                # main thread except something to be there, we put the exception.
+                except Exception as exc:
+                    self.core_queue.put(exc)
 
             trio.run(_run)
 
@@ -109,6 +117,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.portal = self.core_queue.get()
         self.cancel_scope = self.core_queue.get()
         self.core = self.core_queue.get()
+        # Core object can be an exception if one occured with the logged_core_factory.
+        # We join the thread by calling stop_core(), then re-raise the exception.
+        if isinstance(self.core, Exception):
+            exc = self.core
+            self.portal = None
+            self.cancel_scope = None
+            self.stop_core()
+            raise exc
         self.central_widget.set_core_attributes(core=self.core, portal=self.portal)
         settings.set_value(
             "last_device",
@@ -118,10 +134,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
 
     def stop_core(self):
-        if not self.portal:
-            return
-        self.portal.run_sync(self.cancel_scope.cancel)
-        self.core_thread.join()
+        if self.portal and self.cancel_scope:
+            self.portal.run_sync(self.cancel_scope.cancel)
+        if self.core_thread:
+            self.core_thread.join()
         self.portal = None
         self.core = None
         self.current_device = None
@@ -143,6 +159,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_central_widget()
         except DeviceManagerError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
+        except BackendHandshakeError:
+            show_error(
+                self,
+                QCoreApplication.translate("MainWindow", "User not registered in the backend."),
+            )
+        except RuntimeError:
+            show_error(self, QCoreApplication.translate("MainWindow", "Mountpoint already in use."))
 
     def login_with_pkcs11(self, organization_id, device_id, pkcs11_pin, pkcs11_key, pkcs11_token):
         try:
@@ -153,6 +176,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_central_widget()
         except DeviceManagerError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
+        except BackendHandshakeError:
+            show_error(
+                self,
+                QCoreApplication.translate("MainWindow", "User not registered in the backend."),
+            )
+        except RuntimeError:
+            show_error(self, QCoreApplication.translate("MainWindow", "Mountpoint already in use."))
 
     def close_app(self):
         self.close_requested = True
