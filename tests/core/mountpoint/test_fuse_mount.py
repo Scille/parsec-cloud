@@ -1,8 +1,10 @@
-import pytest
-from unittest.mock import patch
-from pathlib import Path
 import os
+import subprocess
+
 import trio
+import pytest
+from pathlib import Path
+from unittest.mock import patch
 
 from parsec.core.mountpoint import (
     mountpoint_manager_factory,
@@ -103,7 +105,20 @@ async def test_mount_fuse(alice_fs, event_bus, tmpdir, fuse_mode):
 async def test_umount_fuse(core_config, alice, tmpdir, fuse_mode):
     core_config = core_config.evolve(mountpoint_enabled=True)
     async with logged_core_factory(core_config, alice) as alice_core:
-        assert trio.Path(alice_core.mountpoint).exists()
+        assert await trio.Path(alice_core.mountpoint).exists()
+    assert not await trio.Path(alice_core.mountpoint).exists()
+
+
+@pytest.mark.trio
+@pytest.mark.fuse
+async def test_external_umount_fuse(core_config, alice, tmpdir, fuse_mode):
+    core_config = core_config.evolve(mountpoint_enabled=True)
+    async with logged_core_factory(core_config, alice) as alice_core:
+        assert await trio.Path(alice_core.mountpoint).exists()
+        # TODO: use trio.Process once updated to trio 0.10.0
+        subprocess.run(f"fusermount -u {alice_core.mountpoint}".split())
+        await alice_core.mountpoint_manager.join()
+    assert not await trio.Path(alice_core.mountpoint).exists()
 
 
 @pytest.mark.trio
