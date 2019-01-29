@@ -12,6 +12,7 @@ from parsec.core.backend_connection import backend_anonymous_cmds_factory, Backe
 from parsec.core.invite_claim import claim_device as core_claim_device
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui.custom_widgets import show_error, show_info
+from parsec.core.gui import validators
 from parsec.core.gui.password_validation import (
     get_password_strength,
     PASSWORD_STRENGTH_TEXTS,
@@ -70,6 +71,9 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.line_edit_password.textChanged.connect(self.password_changed)
         self.claim_successful.connect(self.claim_finished)
         self.on_claim_error.connect(self.claim_error)
+        self.line_edit_login.setValidator(validators.UserIDValidator())
+        self.line_edit_device.setValidator(validators.DeviceNameValidator())
+        self.line_edit_url.setValidator(validators.BackendOrganizationAddrValidator())
         self.claim_thread = None
         self.cancel_scope = None
         self.trio_portal = None

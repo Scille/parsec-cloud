@@ -17,6 +17,7 @@ from parsec.core.config import get_default_config_dir
 from parsec.core.devices_manager import generate_new_device, save_device_with_password
 
 from parsec.core.gui.custom_widgets import show_error, show_info
+from parsec.core.gui import validators
 from parsec.core.gui.ui.create_org_dialog import Ui_CreateOrgDialog
 
 
@@ -25,6 +26,10 @@ class CreateOrgDialog(QDialog, Ui_CreateOrgDialog):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.button_create_org.clicked.connect(self.create_organization)
+        self.line_edit_org_name.setValidator(validators.OrganizationIDValidator())
+        self.line_edit_backend_addr.setValidator(validators.BackendAddrValidator())
+        self.line_edit_username.setValidator(validators.UserIDValidator())
+        self.line_edit_device.setValidator(validators.DeviceNameValidator())
 
     def create_organization(self):
         async def _create_org(name, backend_addr, admin_token):

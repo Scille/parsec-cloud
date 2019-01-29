@@ -10,6 +10,7 @@ from parsec.core.backend_connection import BackendCmdsBadResponse
 from parsec.core.invite_claim import generate_invitation_token, invite_and_create_device
 
 from parsec.core.gui import desktop
+from parsec.core.gui import validators
 from parsec.core.gui.custom_widgets import show_warning, show_info
 from parsec.core.gui.ui.register_device_dialog import Ui_RegisterDeviceDialog
 
@@ -49,6 +50,7 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
         self.button_copy_url.clicked.connect(self.copy_field(self.line_edit_url))
         self.on_registered.connect(self.device_registered)
         self.on_register_error.connect(self.register_error)
+        self.line_edit_device_name.setValidator(validators.DeviceNameValidator())
         self.closing_allowed = True
 
     def copy_field(self, widget):

@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QIntValidator
 
 from parsec.core.gui import settings
+from parsec.core.gui.validators import NetworkPortValidator
 from parsec.core.gui.ui.network_settings_widget import Ui_NetworkSettingsWidget
 
 
@@ -25,7 +26,7 @@ class NetworkSettingsWidget(QWidget, Ui_NetworkSettingsWidget):
             self.switch_network_limits(self.radio_download_no_limit)
         )
 
-        self.line_edit_proxy_port.setValidator(QIntValidator(1, 65536))
+        self.line_edit_proxy_port.setValidator(NetworkPortValidator())
         self.line_edit_upload_limit.setValidator(QIntValidator(1, 10000))
         self.line_edit_download_limit.setValidator(QIntValidator(1, 10000))
         self.combo_proxy_type.currentIndexChanged.connect(self.proxy_type_changed)
