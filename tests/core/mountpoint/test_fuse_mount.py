@@ -97,7 +97,10 @@ async def test_mount_fuse(alice_fs, event_bus, tmpdir, fuse_mode):
             await trio.run_sync_in_worker_thread(inspect_mountpoint)
 
         finally:
-            await manager.teardown()
+            with event_bus.listen() as spy:
+                await manager.teardown()
+                await trio.sleep(0.01)  # Synchronization issue - fixed in PR #145
+            spy.assert_events_occured([("mountpoint.stopped", {"mountpoint": mountpoint})])
 
 
 @pytest.mark.trio
