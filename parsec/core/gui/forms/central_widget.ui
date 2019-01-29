@@ -83,6 +83,9 @@ background-color: rgb(255, 255, 255);
          <property name="sizeConstraint">
           <enum>QLayout::SetMaximumSize</enum>
          </property>
+         <property name="topMargin">
+          <number>15</number>
+         </property>
          <item>
           <widget class="QWidget" name="widget_title" native="true">
            <layout class="QVBoxLayout" name="verticalLayout_4">

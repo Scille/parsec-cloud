@@ -44,6 +44,22 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         self.menu.button_logout.clicked.connect(self.logout_requested.emit)
         self.button_notif.clicked.connect(self.show_notification_center)
         self.connection_state_changed.connect(self._on_connection_state_changed)
+        self.notification_center.close_requested.connect(self.close_notification_center)
+
+        # self.notification_center.add_notification(
+        #     "ERROR", "An error message to test how it looks like."
+        # )
+        # self.notification_center.add_notification(
+        #     "WARNING", "Another message but this time its a warning."
+        # )
+        # self.notification_center.add_notification(
+        #     "INFO", "An information message, because we gotta test them all."
+        # )
+        # self.notification_center.add_notification(
+        #     "ERROR",
+        #     "And another error message, but this one will be a little bit longer just "
+        #     "to see if the GUI can handle it.",
+        # )
 
         self.reset()
 
@@ -72,11 +88,17 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
             self.menu.label_username.setText(self._core.device.user_id)
             self.menu.label_device.setText(self._core.device.device_name)
 
+    def close_notification_center(self):
+        self.notification_center.hide()
+        self.button_notif.setChecked(False)
+
     def show_notification_center(self):
         if self.notification_center.isVisible():
             self.notification_center.hide()
+            self.button_notif.setChecked(False)
         else:
             self.notification_center.show()
+            self.button_notif.setChecked(True)
 
     def _on_connection_state_changed(self, state):
         if state:
@@ -152,13 +174,13 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
 
     def reset_taskbar(self):
         if self.mount_widget.isVisible():
-            self.set_taskbar_buttons(self.mount_widget.get_taskbar_buttons())
+            self.set_taskbar_buttons(self.mount_widget.get_taskbar_buttons().copy())
         elif self.devices_widget.isVisible():
-            self.set_taskbar_buttons(self.devices_widget.get_taskbar_buttons())
+            self.set_taskbar_buttons(self.devices_widget.get_taskbar_buttons().copy())
         elif self.users_widget.isVisible():
-            self.set_taskbar_buttons(self.users_widget.get_taskbar_buttons())
+            self.set_taskbar_buttons(self.users_widget.get_taskbar_buttons().copy())
         elif self.settings_widget.isVisible():
-            self.set_taskbar_buttons(self.settings_widget.get_taskbar_buttons())
+            self.set_taskbar_buttons(self.settings_widget.get_taskbar_buttons().copy())
 
     def hide_all_widgets(self):
         self.mount_widget.hide()

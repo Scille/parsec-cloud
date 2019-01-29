@@ -221,6 +221,7 @@ class TaskbarButton(QPushButton):
         super().__init__(*args, **kwargs)
         self.setMinimumSize(64, 64)
         self.setMaximumSize(64, 64)
+        self.setFixedSize(64, 64)
         self.setIcon(QIcon(icon_path))
         self.setIconSize(QSize(50, 50))
         self.setStyleSheet("background-color: rgb(12, 65, 157); border: 0;")

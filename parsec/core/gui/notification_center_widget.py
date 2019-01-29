@@ -1,13 +1,6 @@
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import (
-    QWidget,
-    QStyle,
-    QStyleOption,
-    QListWidgetItem,
-    QStyledItemDelegate,
-    QStyleOptionViewItem,
-)
+from PyQt5.QtWidgets import QWidget, QStyle, QStyleOption, QStyledItemDelegate, QStyleOptionViewItem
 
 from parsec.core.gui.notification_widget import (
     ErrorNotificationWidget,
@@ -30,10 +23,12 @@ class ItemDelegate(QStyledItemDelegate):
 
 
 class NotificationCenterWidget(QWidget, Ui_NotificationCenterWidget):
+    close_requested = pyqtSignal()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.list_notifications.setItemDelegate(ItemDelegate())
+        self.button_close.clicked.connect(self.close_requested.emit)
 
     def paintEvent(self, _):
         opt = QStyleOption()
@@ -52,7 +47,4 @@ class NotificationCenterWidget(QWidget, Ui_NotificationCenterWidget):
         if not widget:
             return
         widget.message = msg
-        item = QListWidgetItem()
-        item.setSizeHint(widget.size())
-        self.list_notifications.addItem(item)
-        self.list_notifications.setItemWidget(item, widget)
+        self.widget_layout.layout().insertWidget(0, widget)
