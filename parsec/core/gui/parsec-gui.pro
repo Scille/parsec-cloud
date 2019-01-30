@@ -42,8 +42,7 @@ FORMS += forms/main_window.ui \
          forms/starting_guide_dialog.ui \
          forms/central_widget.ui \
          forms/notification_center_widget.ui \
-    forms/menu_widget.ui \
-    forms/create_org_dialog.ui \
-    forms/notification_widget.ui
+         forms/menu_widget.ui \
+         forms/notification_widget.ui
 
 RESOURCES += rc/resources.qrc

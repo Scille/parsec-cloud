@@ -242,8 +242,7 @@ text-align: left;
 QPushButton#button_login_instead:hover,
 QPushButton#button_register_device_instead:hover,
 QPushButton#button_register_user_instead:hover,
-QPushButton#button_settings:hover,
-QPushButton#button_create_org:hover
+QPushButton#button_settings:hover
 {
 text-decoration: underline;
 }</string>
@@ -339,25 +338,6 @@ text-decoration: underline;
              </property>
              <property name="text">
               <string>Log In</string>
-             </property>
-             <property name="icon">
-              <iconset resource="../rc/resources.qrc">
-               <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
-             </property>
-             <property name="flat">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="button_create_org">
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Create a new organization</string>
              </property>
              <property name="icon">
               <iconset resource="../rc/resources.qrc">
