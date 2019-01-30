@@ -35,6 +35,22 @@
    <string notr="true">QWidget#NotificationCenterWidget
 {
 background-color: rgb(255, 255, 255);
+}
+
+QScrollBar:vertical
+{
+background: rgb(255, 255, 255);
+}
+
+QScrollBar::handle:vertical
+{
+background: rgb(12, 65, 157);
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
+{
+border: none;
+background: none;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
