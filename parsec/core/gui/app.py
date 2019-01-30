@@ -2,6 +2,7 @@ import signal
 from structlog import get_logger
 
 from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication
 
 from parsec.core.config import CoreConfig
@@ -36,6 +37,9 @@ def run_gui(config: CoreConfig):
     app.setOrganizationName("Scille")
     app.setOrganizationDomain("parsec.cloud")
     app.setApplicationName("Parsec")
+
+    f = QFont("Arial")
+    app.setFont(f)
 
     # splash = QSplashScreen(QPixmap(':/logos/images/logos/parsec.png'))
     # splash.show()
