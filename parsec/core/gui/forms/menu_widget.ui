@@ -56,6 +56,7 @@ QPushButton:checked
 {
 background-color: rgb(116, 116, 116);
 border: 0;
+border-right: 16px solid rgb(217, 217, 217);
 }</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -92,7 +93,7 @@ background-color: rgb(171, 171, 171);
             <number>0</number>
            </property>
            <property name="leftMargin">
-            <number>50</number>
+            <number>20</number>
            </property>
            <property name="topMargin">
             <number>10</number>
