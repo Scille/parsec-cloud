@@ -1,5 +1,6 @@
 from PyQt5.QtCore import pyqtSignal, QCoreApplication, QSize
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QColor
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 
 from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.mount_widget import MountWidget
@@ -34,8 +35,16 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         self.widget_central.layout().insertWidget(0, self.settings_widget)
         self.notification_center = NotificationCenterWidget(parent=self)
         self.button_notif = TaskbarButton(icon_path=":/icons/images/icons/menu_settings.png")
+
         self.widget_notif.layout().addWidget(self.notification_center)
         self.notification_center.hide()
+
+        effect = QGraphicsDropShadowEffect(self)
+        effect.setColor(QColor(100, 100, 100))
+        effect.setBlurRadius(4)
+        effect.setXOffset(-2)
+        effect.setYOffset(2)
+        self.widget_notif.setGraphicsEffect(effect)
 
         self.menu.button_files.clicked.connect(self.show_mount_widget)
         self.menu.button_users.clicked.connect(self.show_users_widget)

@@ -35,8 +35,6 @@
    <string notr="true">QWidget#NotificationCenterWidget
 {
 background-color: rgb(255, 255, 255);
-border-left: 1px solid black;
-border-bottom: 1px solid black;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -53,7 +51,7 @@ border-bottom: 1px solid black;
     <number>0</number>
    </property>
    <property name="bottomMargin">
-    <number>1</number>
+    <number>0</number>
    </property>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
@@ -183,7 +181,7 @@ border: 0;
           <x>0</x>
           <y>0</y>
           <width>330</width>
-          <height>358</height>
+          <height>365</height>
          </rect>
         </property>
         <property name="styleSheet">
