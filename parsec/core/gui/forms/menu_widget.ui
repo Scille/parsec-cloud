@@ -40,21 +40,21 @@
      <property name="styleSheet">
       <string notr="true">QWidget#widget_menu
 {
-background-color: rgb(12, 65, 157);
+background-color: rgb(46, 46, 46);
 }
 
 QPushButton,
 QPushButton:pressed
 {
 color: rgb(255, 255, 255);
-background-color: rgb(12, 65, 157);
+background-color: rgb(46, 46, 46);
 text-align: left;
 padding-left: 10px;
 }
 
 QPushButton:checked
 {
-background-color: rgb(46, 145, 208);
+background-color: rgb(116, 116, 116);
 border: 0;
 }</string>
      </property>
@@ -76,20 +76,23 @@ border: 0;
       </property>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_3">
+        <property name="spacing">
+         <number>0</number>
+        </property>
         <item>
          <widget class="QWidget" name="widget_3" native="true">
           <property name="styleSheet">
            <string notr="true">QWidget#widget_3
 {
-background-color: rgb(21, 84, 169);
+background-color: rgb(171, 171, 171);
 }</string>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <property name="spacing">
-            <number>6</number>
+            <number>0</number>
            </property>
            <property name="leftMargin">
-            <number>25</number>
+            <number>50</number>
            </property>
            <property name="topMargin">
             <number>10</number>
@@ -117,27 +120,30 @@ background-color: rgb(21, 84, 169);
              <property name="scaledContents">
               <bool>false</bool>
              </property>
+             <property name="alignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
             </widget>
            </item>
           </layout>
          </widget>
         </item>
         <item>
-         <widget class="QFrame" name="frame">
+         <widget class="Line" name="line">
           <property name="styleSheet">
-           <string notr="true">QFrame#frame
-{
-background-color: rgb(46, 145, 208);
-}</string>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::HLine</enum>
+           <string notr="true">background-color: rgb(130, 130, 130);</string>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Sunken</enum>
+           <enum>QFrame::Plain</enum>
           </property>
           <property name="lineWidth">
            <number>2</number>
+          </property>
+          <property name="midLineWidth">
+           <number>2</number>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
          </widget>
         </item>
@@ -392,12 +398,12 @@ background-color: rgb(46, 145, 208);
           <property name="styleSheet">
            <string notr="true">QWidget#widget_connection
 {
-border-top: 2px solid rgb(46, 146, 208);
-border-bottom: 2px solid rgb(46, 146, 208);
+border-top: 2px solid rgb(130, 130, 130);
+border-bottom: 2px solid rgb(130, 130, 130);
 color: rgb(255, 255, 255);
 text-align: left;
 padding-left: 10px;
-background-color: rgb(22, 84, 169);
+background-color: rgb(65, 65, 65);
 }
 </string>
           </property>
@@ -462,12 +468,12 @@ background-color: rgb(22, 84, 169);
           <property name="styleSheet">
            <string notr="true">QWidget#widget_info
 {
-border-top: 2px solid rgb(46, 146, 208);
-border-bottom: 2px solid rgb(46, 146, 208);
+border-top: 2px solid rgb(130, 130, 130);
+border-bottom: 2px solid rgb(130, 130, 130);
 color: rgb(255, 255, 255);
 text-align: left;
 padding-left: 10px;
-background-color: rgb(22, 84, 169);
+background-color: rgb(65, 65, 65);
 }
 </string>
           </property>
