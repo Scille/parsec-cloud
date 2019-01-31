@@ -25,22 +25,6 @@
 background-color: rgb(255, 255, 255);
 }
 
-QListWidget
-{
-border: 1px solid rgb(28, 78, 163);
-}
-
-QListView::item
-{
-background-color: rgb(255, 255, 255);
-color: rgb(0, 0, 0);
-}
-
-QListView::item:selected
-{
-background-color: rgb(45, 144, 209);
-}
-
 QScrollBar:vertical
 {
 background: rgb(255, 255, 255);
@@ -48,7 +32,7 @@ background: rgb(255, 255, 255);
 
 QScrollBar::handle:vertical
 {
-background: rgb(12, 65, 157);
+background: rgb(46, 46, 46);
 }
 
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
@@ -198,9 +182,9 @@ color: rgb(255, 255, 255);
          <string notr="true">background-image: url(:/icons/images/icons/search.png);
 background-repeat: no-repeat;
 background-position: right;
-border: 1px solid rgb(28, 78, 163);
+border: 1px solid rgb(46, 46, 46);
 padding-left: 10px;
-color: rgb(28, 78, 163);</string>
+color: rgb(46, 46, 46);</string>
         </property>
         <property name="placeholderText">
          <string>Search files or folders</string>
@@ -227,14 +211,14 @@ color: rgb(28, 78, 163);</string>
           <property name="styleSheet">
            <string notr="true">QTableWidget
 {
-border: 1px solid rgb(12, 65, 157);
+border: 1px solid rgb(46, 46, 46);
 }
 
 QHeaderView::section
 {
 padding-left: 15px;
 border: 0;
-background-color: rgb(12, 65, 157);
+background-color: rgb(46, 46, 46);
 color: white;
 font-size: 16px;
 font-weight: bold;
@@ -245,13 +229,15 @@ text-align: left;
 QTableWidget::item
 {
 background-color: rgb(255, 255, 255);
+color: rgb(0, 0, 0);
 border: 0px;
 padding: 15px;
 }
 
 QTableWidget::item:selected
 {
-background-color: rgb(46, 146, 208);
+background-color: rgb(206, 225, 239);
+color: rgb(0, 0, 0);
 }
 
 QHeaderView::down-arrow
@@ -272,8 +258,7 @@ subcontrol-origin: padding;
 padding-right: 32px;
 width: 16px;
 height: 16px;
-}
-</string>
+}</string>
           </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
@@ -320,6 +305,9 @@ height: 16px;
           <property name="cornerButtonEnabled">
            <bool>false</bool>
           </property>
+          <property name="columnCount">
+           <number>5</number>
+          </property>
           <attribute name="horizontalHeaderStretchLastSection">
            <bool>false</bool>
           </attribute>
@@ -352,11 +340,6 @@ height: 16px;
           <column>
            <property name="text">
             <string>Size</string>
-           </property>
-          </column>
-          <column>
-           <property name="text">
-            <string/>
            </property>
           </column>
          </widget>

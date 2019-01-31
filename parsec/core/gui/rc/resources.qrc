@@ -63,6 +63,33 @@
         <file>images/icons/cloud_offline.png</file>
         <file>images/icons/cloud_online.png</file>
         <file>images/icons/copy_to_clipboard.png</file>
+        <file>images/icons/file_archive.png</file>
+        <file>images/icons/file_avi.png</file>
+        <file>images/icons/file_css.png</file>
+        <file>images/icons/file_csv.png</file>
+        <file>images/icons/file_dbf.png</file>
+        <file>images/icons/file_doc.png</file>
+        <file>images/icons/file_dwg.png</file>
+        <file>images/icons/file_exe.png</file>
+        <file>images/icons/file_fla.png</file>
+        <file>images/icons/file_html.png</file>
+        <file>images/icons/file_iso.png</file>
+        <file>images/icons/file_jpg.png</file>
+        <file>images/icons/file_js.png</file>
+        <file>images/icons/file_json.png</file>
+        <file>images/icons/file_mp3.png</file>
+        <file>images/icons/file_mp4.png</file>
+        <file>images/icons/file_pdf.png</file>
+        <file>images/icons/file_png.png</file>
+        <file>images/icons/file_ppt.png</file>
+        <file>images/icons/file_psd.png</file>
+        <file>images/icons/file_rtf.png</file>
+        <file>images/icons/file_svg.png</file>
+        <file>images/icons/file_txt.png</file>
+        <file>images/icons/file_unknown.png</file>
+        <file>images/icons/file_xls.png</file>
+        <file>images/icons/file_xml.png</file>
+        <file>images/icons/file_zip.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>
