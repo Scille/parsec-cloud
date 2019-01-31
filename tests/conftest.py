@@ -50,9 +50,7 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     # Mock and non-UTC timezones are a really bad mix, so keep things simple
     os.environ.setdefault("TZ", "UTC")
-    log_level = config.getoption("--log-level")
-    if log_level:
-        configure_logging(log_level=log_level)
+    configure_logging()
 
 
 @pytest.fixture(scope="session")
