@@ -17,7 +17,7 @@ class EventsBeaconUpdatedRepSchema(BaseRepSchema):
     status = fields.CheckedConstant("ok", required=True)
     event = fields.CheckedConstant("beacon.updated", required=True)
     beacon_id = fields.UUID(required=True)
-    index = fields.Integer(required=True)
+    checkpoint = fields.Integer(required=True)
     src_id = fields.UUID(required=True)
     src_version = fields.Integer(required=True)
 

@@ -144,7 +144,6 @@ class BackendApp:
             "events_subscribe": self.events.api_events_subscribe,
             "events_listen": self.events.api_events_listen,
             "ping": self.ping.api_ping,
-            "beacon_read": self.beacon.api_beacon_read,
             # Message
             "message_get": self.message.api_message_get,
             "message_send": self.message.api_message_send,
@@ -161,6 +160,10 @@ class BackendApp:
             # Blockstore
             "blockstore_create": self.blockstore.api_blockstore_create,
             "blockstore_read": self.blockstore.api_blockstore_read,
+            # Beacon
+            "beacon_get_rights": self.beacon.api_beacon_get_rights,
+            "beacon_set_rights": self.beacon.api_beacon_set_rights,
+            "beacon_poll": self.beacon.api_beacon_poll,
             # Vlob
             "vlob_group_check": self.vlob.api_vlob_group_check,
             "vlob_create": self.vlob.api_vlob_create,

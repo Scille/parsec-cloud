@@ -29,7 +29,9 @@ def _pinged_callback_factory(client_ctx, pings):
 def _beacon_updated_callback_factory(client_ctx, beacons_ids):
     beacons_ids = set(beacons_ids)
 
-    def _on_beacon_updated(event, organization_id, author, beacon_id, index, src_id, src_version):
+    def _on_beacon_updated(
+        event, organization_id, author, beacon_id, checkpoint, src_id, src_version
+    ):
         if (
             organization_id != client_ctx.organization_id
             or author == client_ctx.device_id
@@ -40,7 +42,7 @@ def _beacon_updated_callback_factory(client_ctx, beacons_ids):
         msg = {
             "event": event,
             "beacon_id": beacon_id,
-            "index": index,
+            "checkpoint": checkpoint,
             "src_id": src_id,
             "src_version": src_version,
         }

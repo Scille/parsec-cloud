@@ -7,7 +7,7 @@ from typing import Union
 
 from parsec.crypto import SymetricKey, HashDigest, generate_secret_key
 from parsec.serde import UnknownCheckedSchema, fields, validate, post_load
-from parsec.core.types.base import TrustSeed, AccessID, TrustSeedField, serializer_factory
+from parsec.core.types.base import AccessID, serializer_factory
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)

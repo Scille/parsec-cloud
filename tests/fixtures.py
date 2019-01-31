@@ -269,7 +269,11 @@ def backend_data_binder_factory(backend_addr, initial_user_manifest_state):
                     )
                     access = first_device.user_manifest_access
                     await self.backend.vlob.create(
-                        first_device.organization_id, access.id, ciphered, first_device.device_id
+                        first_device.organization_id,
+                        first_device.device_id,
+                        access.id,
+                        access.id,
+                        ciphered,
                     )
 
         async def bind_device(
@@ -306,7 +310,7 @@ def backend_data_binder_factory(backend_addr, initial_user_manifest_state):
                     )
                     access = device.user_manifest_access
                     await self.backend.vlob.create(
-                        device.organization_id, access.id, ciphered, device.device_id
+                        device.organization_id, device.device_id, access.id, access.id, ciphered
                     )
 
             self.binded_local_devices.append(device)

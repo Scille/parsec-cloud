@@ -38,9 +38,9 @@ vlob_group_check_serializer = CmdSerializer(VlobGroupCheckReqSchema, VlobGroupCh
 
 
 class VlobCreateReqSchema(BaseReqSchema):
+    beacon = fields.UUID(required=True)
     id = fields.UUID(required=True)
     blob = fields.Bytes(required=True)
-    notify_beacon = fields.UUID(missing=None)
 
 
 class VlobCreateRepSchema(BaseRepSchema):
@@ -67,7 +67,6 @@ class VlobUpdateReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
     version = fields.Integer(required=True, validate=_validate_version)
     blob = fields.Bytes(required=True)
-    notify_beacon = fields.UUID(missing=None)
 
 
 class VlobUpdateRepSchema(BaseRepSchema):

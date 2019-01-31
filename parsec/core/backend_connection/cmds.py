@@ -14,7 +14,9 @@ from parsec.api.protocole import (
     organization_bootstrap_serializer,
     events_subscribe_serializer,
     events_listen_serializer,
-    beacon_read_serializer,
+    beacon_set_rights_serializer,
+    beacon_get_rights_serializer,
+    beacon_poll_serializer,
     message_send_serializer,
     message_get_serializer,
     vlob_group_check_serializer,
@@ -124,13 +126,38 @@ async def events_listen(transport: Transport, wait: bool = True) -> dict:
 # Beacon
 
 
-async def beacon_read(transport: Transport, id: UUID, offset: int) -> List[Tuple[UUID, int]]:
+async def beacon_get_rights(transport: Transport, id: UUID) -> Dict[UserID, Dict]:
+    rep = await _send_cmd(transport, beacon_get_rights_serializer, cmd="beacon_get_rights", id=id)
+    if rep["status"] != "ok":
+        raise BackendCmdsBadResponse(rep)
+    return rep["users"]
+
+
+async def beacon_set_rights(
+    transport: Transport, id: UUID, user: UserID, read_access: bool, write_access: bool
+) -> None:
     rep = await _send_cmd(
-        transport, beacon_read_serializer, cmd="beacon_read", id=id, offset=offset
+        transport,
+        beacon_set_rights_serializer,
+        cmd="beacon_set_rights",
+        id=id,
+        user=user,
+        read_access=read_access,
+        write_access=write_access,
     )
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)
-    return [(item["src_id"], item["src_version"]) for item in rep["items"]]
+
+
+async def beacon_poll(
+    transport: Transport, id: UUID, last_checkpoint: int
+) -> Tuple[int, Dict[UUID, int]]:
+    rep = await _send_cmd(
+        transport, beacon_poll_serializer, cmd="beacon_poll", id=id, last_checkpoint=last_checkpoint
+    )
+    if rep["status"] != "ok":
+        raise BackendCmdsBadResponse(rep)
+    return (rep["current_checkpoint"], rep["changes"])
 
 
 # Message

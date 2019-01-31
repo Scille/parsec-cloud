@@ -1,8 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from uuid import uuid4, UUID
-from collections import namedtuple
+from uuid import UUID
 
 from parsec.api.protocole import (
     packb,
@@ -13,7 +12,9 @@ from parsec.api.protocole import (
 )
 
 
-VLOB_ID = uuid4()
+VLOB_ID = UUID("00000000000000000000000000000001")
+BEACON_ID = UUID("00000000000000000000000000000002")
+OTHER_VLOB_ID = UUID("00000000000000000000000000000003")
 
 
 async def vlob_group_check(sock, to_check):
@@ -24,9 +25,11 @@ async def vlob_group_check(sock, to_check):
     return vlob_group_check_serializer.rep_loads(raw_rep)
 
 
-async def vlob_create(sock, id, blob, check_rep=True):
+async def vlob_create(sock, beacon, id, blob, check_rep=True):
     await sock.send(
-        vlob_create_serializer.req_dumps({"cmd": "vlob_create", "id": id, "blob": blob})
+        vlob_create_serializer.req_dumps(
+            {"cmd": "vlob_create", "beacon": beacon, "id": id, "blob": blob}
+        )
     )
     raw_rep = await sock.recv()
     rep = vlob_create_serializer.rep_loads(raw_rep)
@@ -59,20 +62,22 @@ async def vlob_update(sock, id, version, blob, check_rep=True):
 @pytest.fixture
 async def vlobs(backend, alice):
     ids = (UUID("00000000000000000000000000000001"), UUID("00000000000000000000000000000002"))
-    await backend.vlob.create(alice.organization_id, ids[0], b"1 blob v1", author=alice.device_id)
-    await backend.vlob.update(
-        alice.organization_id, ids[0], 2, b"1 blob v2", author=alice.device_id
+    await backend.vlob.create(
+        alice.organization_id, alice.device_id, BEACON_ID, ids[0], b"1 blob v1"
     )
-    await backend.vlob.create(alice.organization_id, ids[1], b"2 blob v1", author=alice.device_id)
+    await backend.vlob.update(alice.organization_id, alice.device_id, ids[0], 2, b"1 blob v2")
+    await backend.vlob.create(
+        alice.organization_id, alice.device_id, BEACON_ID, ids[1], b"2 blob v1"
+    )
     return ids
 
 
 @pytest.mark.trio
-async def test_vlob_create_and_read(alice_backend_sock, bob_backend_sock):
+async def test_vlob_create_and_read(alice_backend_sock, alice2_backend_sock):
     blob = b"Initial commit."
-    await vlob_create(alice_backend_sock, VLOB_ID, blob)
+    await vlob_create(alice_backend_sock, BEACON_ID, VLOB_ID, blob)
 
-    rep = await vlob_read(bob_backend_sock, VLOB_ID)
+    rep = await vlob_read(alice2_backend_sock, VLOB_ID)
     assert rep == {"status": "ok", "version": 1, "blob": blob}
 
 
@@ -98,10 +103,20 @@ async def test_vlob_create_bad_msg(alice_backend_sock, bad_msg):
 async def test_vlob_create_but_already_exists(alice_backend_sock):
     blob = b"Initial commit."
 
-    await vlob_create(alice_backend_sock, VLOB_ID, blob)
+    await vlob_create(alice_backend_sock, BEACON_ID, VLOB_ID, blob)
 
-    rep = await vlob_create(alice_backend_sock, VLOB_ID, blob, check_rep=False)
+    rep = await vlob_create(alice_backend_sock, BEACON_ID, VLOB_ID, blob, check_rep=False)
     assert rep["status"] == "already_exists"
+
+
+@pytest.mark.trio
+async def test_vlob_create_not_allowed_by_beacon(alice_backend_sock, bob_backend_sock):
+    blob = b"Initial commit."
+
+    await vlob_create(alice_backend_sock, BEACON_ID, VLOB_ID, blob)
+
+    rep = await vlob_create(bob_backend_sock, BEACON_ID, OTHER_VLOB_ID, blob, check_rep=False)
+    assert rep["status"] == "not_allowed"
 
 
 @pytest.mark.trio
@@ -114,6 +129,12 @@ async def test_vlob_read_not_found(alice_backend_sock):
 async def test_vlob_read_ok(alice_backend_sock, vlobs):
     rep = await vlob_read(alice_backend_sock, vlobs[0])
     assert rep == {"status": "ok", "blob": b"1 blob v2", "version": 2}
+
+
+@pytest.mark.trio
+async def test_vlob_read_not_allowed_by_beacon(bob_backend_sock, vlobs):
+    rep = await vlob_read(bob_backend_sock, vlobs[0])
+    assert rep == {"status": "not_allowed"}
 
 
 @pytest.mark.trio
@@ -155,6 +176,14 @@ async def test_read_bad_version(alice_backend_sock, vlobs):
 @pytest.mark.trio
 async def test_vlob_update_ok(alice_backend_sock, vlobs):
     await vlob_update(alice_backend_sock, vlobs[0], version=3, blob=b"Next version.")
+
+
+@pytest.mark.trio
+async def test_vlob_update_not_allowed_by_beacon(bob_backend_sock, vlobs):
+    rep = await vlob_update(
+        bob_backend_sock, vlobs[0], version=3, blob=b"Next version.", check_rep=False
+    )
+    assert rep == {"status": "not_allowed"}
 
 
 @pytest.mark.trio
@@ -206,21 +235,31 @@ async def test_update_bad_version(alice_backend_sock, vlobs):
 
 
 @pytest.mark.trio
-async def test_group_check(alice_backend_sock, vlobs):
+async def test_group_check(bob_backend_sock, alice_backend_sock, vlobs):
+    unknown_vlob_id = UUID("0000000000000000000000000000000A")
+    placeholder_vlob_id = UUID("0000000000000000000000000000000B")
+    bob_vlob_id = UUID("0000000000000000000000000000000C")
+    bob_beacon_id = UUID("0000000000000000000000000000000D")
+
+    await vlob_create(bob_backend_sock, bob_beacon_id, bob_vlob_id, b"")
+    await vlob_update(bob_backend_sock, bob_vlob_id, 2, b"")
+
     rep = await vlob_group_check(
         alice_backend_sock,
         [
+            # Ignore vlob with no read access
+            {"id": bob_vlob_id, "version": 1},
             # Ignore unknown id
-            {"id": VLOB_ID, "version": 1},
+            {"id": unknown_vlob_id, "version": 1},
             # Version 0 is accepted
-            {"id": VLOB_ID, "version": 0},
+            {"id": placeholder_vlob_id, "version": 0},
             {"id": vlobs[0], "version": 1},
             {"id": vlobs[1], "version": 1},
         ],
     )
     assert rep == {
         "status": "ok",
-        "changed": [{"id": VLOB_ID, "version": 0}, {"id": vlobs[0], "version": 2}],
+        "changed": [{"id": placeholder_vlob_id, "version": 0}, {"id": vlobs[0], "version": 2}],
     }
 
 

@@ -51,7 +51,11 @@ class BackendCmdsPool:
 
     events_subscribe = _expose_cmds_with_retrier("events_subscribe")
     events_listen = _expose_cmds_with_retrier("events_listen")
-    beacon_read = _expose_cmds_with_retrier("beacon_read")
+
+    beacon_get_rights = _expose_cmds_with_retrier("beacon_get_rights")
+    beacon_set_rights = _expose_cmds_with_retrier("beacon_set_rights")
+    beacon_poll = _expose_cmds_with_retrier("beacon_poll")
+
     message_send = _expose_cmds_with_retrier("message_send")
     message_get = _expose_cmds_with_retrier("message_get")
 

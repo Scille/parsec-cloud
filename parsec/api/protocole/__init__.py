@@ -22,7 +22,11 @@ from parsec.api.protocole.organization import (
 )
 from parsec.api.protocole.events import events_subscribe_serializer, events_listen_serializer
 from parsec.api.protocole.ping import ping_serializer
-from parsec.api.protocole.beacon import beacon_read_serializer
+from parsec.api.protocole.beacon import (
+    beacon_set_rights_serializer,
+    beacon_get_rights_serializer,
+    beacon_poll_serializer,
+)
 from parsec.api.protocole.message import message_send_serializer, message_get_serializer
 from parsec.api.protocole.blockstore import blockstore_create_serializer, blockstore_read_serializer
 from parsec.api.protocole.vlob import (
@@ -70,7 +74,9 @@ __all__ = (
     # Ping
     "ping_serializer",
     # Beacon
-    "beacon_read_serializer",
+    "beacon_set_rights_serializer",
+    "beacon_get_rights_serializer",
+    "beacon_poll_serializer",
     # Message
     "message_send_serializer",
     "message_get_serializer",

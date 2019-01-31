@@ -1,41 +1,111 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from uuid import UUID
-from typing import List, Tuple
+from typing import Dict, Tuple
 
-from parsec.types import DeviceID, OrganizationID
-from parsec.api.protocole import beacon_read_serializer
+from parsec.types import DeviceID, UserID, OrganizationID
+from parsec.api.protocole import (
+    beacon_get_rights_serializer,
+    beacon_set_rights_serializer,
+    beacon_poll_serializer,
+)
 from parsec.backend.utils import catch_protocole_errors
+
+
+class BeaconError(Exception):
+    pass
+
+
+class BeaconAlreadyExists(BeaconError):
+    pass
+
+
+class BeaconNotFound(BeaconError):
+    pass
+
+
+class BeaconAccessError(BeaconError):
+    pass
 
 
 class BaseBeaconComponent:
     @catch_protocole_errors
-    async def api_beacon_read(self, client_ctx, msg):
-        msg = beacon_read_serializer.req_load(msg)
+    async def api_beacon_get_rights(self, client_ctx, msg):
+        msg = beacon_get_rights_serializer.req_load(msg)
 
-        # TODO: raise error if too many events since offset ?
-        items = await self.read(client_ctx.organization_id, msg["id"], msg["offset"])
+        try:
+            per_users_rights = await self.get_rights(
+                client_ctx.organization_id, client_ctx.user_id, msg["id"]
+            )
 
-        return beacon_read_serializer.rep_dump(
+        except BeaconAccessError:
+            return beacon_poll_serializer.rep_dump({"status": "not_allowed"})
+
+        except BeaconNotFound:
+            return beacon_poll_serializer.rep_dump({"status": "not_found"})
+
+        return beacon_get_rights_serializer.rep_dump(
             {
                 "status": "ok",
-                "items": [
-                    {"src_id": src_id, "src_version": src_version} for src_id, src_version in items
-                ],
+                "users": {
+                    u: {"read_access": ra, "write_access": wa}
+                    for u, (ra, wa) in per_users_rights.items()
+                },
             }
         )
 
-    async def read(
-        self, organization_id: OrganizationID, id: UUID, offset: int
-    ) -> List[Tuple[UUID, int]]:
+    @catch_protocole_errors
+    async def api_beacon_set_rights(self, client_ctx, msg):
+        msg = beacon_set_rights_serializer.req_load(msg)
+
+        try:
+            await self.set_rights(client_ctx.organization_id, client_ctx.user_id, **msg)
+
+        except BeaconAccessError:
+            return beacon_poll_serializer.rep_dump({"status": "not_allowed"})
+
+        except BeaconNotFound:
+            return beacon_poll_serializer.rep_dump({"status": "not_found"})
+
+        return beacon_set_rights_serializer.rep_dump({"status": "ok"})
+
+    @catch_protocole_errors
+    async def api_beacon_poll(self, client_ctx, msg):
+        msg = beacon_poll_serializer.req_load(msg)
+
+        # TODO: raise error if too many events since offset ?
+        try:
+            checkpoint, changes = await self.poll(
+                client_ctx.organization_id, client_ctx.user_id, msg["id"], msg["last_checkpoint"]
+            )
+
+        except BeaconAccessError:
+            return beacon_poll_serializer.rep_dump({"status": "not_allowed"})
+
+        except BeaconNotFound:
+            return beacon_poll_serializer.rep_dump({"status": "not_found"})
+
+        return beacon_poll_serializer.rep_dump(
+            {"status": "ok", "current_checkpoint": checkpoint, "changes": changes}
+        )
+
+    async def get_rights(
+        self, organization_id: OrganizationID, author: UserID, id: UUID
+    ) -> Dict[DeviceID, Tuple[bool, bool]]:
         raise NotImplementedError()
 
-    async def update(
+    async def set_rights(
         self,
         organization_id: OrganizationID,
+        author: UserID,
         id: UUID,
-        src_id: UUID,
-        src_version: int,
-        author: DeviceID = None,
+        user: UserID,
+        read_access: bool,
+        write_access: bool,
     ) -> None:
+        raise NotImplementedError()
+
+    async def poll(
+        self, organization_id: OrganizationID, author: UserID, id: UUID, checkpoint: int
+    ) -> Tuple[int, Dict[UUID, int]]:
         raise NotImplementedError()

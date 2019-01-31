@@ -4,21 +4,50 @@ from parsec.serde import UnknownCheckedSchema, fields
 from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 
 
-__all__ = "beacon_read_serializer"
+__all__ = ("beacon_set_rights_serializer", "beacon_get_rights_serializer", "beacon_poll_serializer")
 
 
-class BeaconReadReqSchema(BaseReqSchema):
+# TODO: rename {Get|Set}Rights => {Get|Set}UserRights (or change api to set all rights ?)
+
+
+class BeaconSetRightsReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
-    offset = fields.Integer(required=True)
+    user = fields.UserID(required=True)
+    read_access = fields.Boolean(required=True)
+    write_access = fields.Boolean(required=True)
 
 
-class BeaconItemSchema(UnknownCheckedSchema):
-    src_id = fields.UUID(required=True)
-    src_version = fields.Integer(required=True)
+class BeaconSetRightsRepSchema(BaseRepSchema):
+    pass
 
 
-class BeaconReadRepSchema(BaseRepSchema):
-    items = fields.List(fields.Nested(BeaconItemSchema), required=True)
+beacon_set_rights_serializer = CmdSerializer(BeaconSetRightsReqSchema, BeaconSetRightsRepSchema)
 
 
-beacon_read_serializer = CmdSerializer(BeaconReadReqSchema, BeaconReadRepSchema)
+class BeaconGetRightsReqSchema(BaseReqSchema):
+    id = fields.UUID(required=True)
+
+
+class BeaconUserRights(UnknownCheckedSchema):
+    read_access = fields.Boolean(required=True)
+    write_access = fields.Boolean(required=True)
+
+
+class BeaconGetRightsRepSchema(BaseRepSchema):
+    users = fields.Map(fields.UserID(), fields.Nested(BeaconUserRights), required=True)
+
+
+beacon_get_rights_serializer = CmdSerializer(BeaconGetRightsReqSchema, BeaconGetRightsRepSchema)
+
+
+class BeaconPollReqSchema(BaseReqSchema):
+    id = fields.UUID(required=True)
+    last_checkpoint = fields.Integer(required=True)
+
+
+class BeaconPollRepSchema(BaseRepSchema):
+    changes = fields.Map(fields.UUID(), fields.Integer(), required=True)
+    current_checkpoint = fields.Integer(required=True)
+
+
+beacon_poll_serializer = CmdSerializer(BeaconPollReqSchema, BeaconPollRepSchema)

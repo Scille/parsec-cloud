@@ -4,110 +4,201 @@ import pytest
 from uuid import UUID
 import trio
 
-from parsec.api.protocole import beacon_read_serializer
+from parsec.api.protocole import (
+    beacon_poll_serializer,
+    beacon_get_rights_serializer,
+    beacon_set_rights_serializer,
+)
 
 from tests.backend.test_events import events_subscribe, events_listen_nowait
+from tests.backend.test_vlob import vlob_update
 
 
-BEACON_ID_1 = UUID("093393b2362042799652b05ee630070a")
-BEACON_ID_2 = UUID("7f3f1dadab6d44978a72ad20620953d3")
-BEACON_ID_3 = UUID("773c9971085d42d0bbcbf6fc186c445a")
-VLOB_ID = UUID("fc0dfa885c6c4d3781341e10bf94b080")
+VLOB_ID = UUID("00000000000000000000000000000001")
+OTHER_VLOB_ID = UUID("00000000000000000000000000000002")
+YET_ANOTHER_VLOB_ID = UUID("00000000000000000000000000000003")
+BEACON_ID = UUID("0000000000000000000000000000000A")
+OTHER_BEACON_ID = UUID("0000000000000000000000000000000B")
+YET_ANOTHER_BEACON_ID = UUID("0000000000000000000000000000000C")
 
 
-@pytest.fixture
-async def vlob_ids(backend, alice):
-    ids = (
-        UUID("fc0dfa885c6c4d3781341e10bf94b080"),
-        UUID("7a0efe58bad146df861a53207c550860"),
-        UUID("af20bbfcc3294b96bb536fe65efc86b4"),
-    )
-    for id in ids:
-        await backend.vlob.create(alice.organization_id, id, b"", alice.device_id)
-    return ids
-
-
-async def beacon_read(sock, id, offset):
+async def beacon_get_rights(sock, id):
     raw_rep = await sock.send(
-        beacon_read_serializer.req_dumps({"cmd": "beacon_read", "id": id, "offset": offset})
+        beacon_get_rights_serializer.req_dumps({"cmd": "beacon_get_rights", "id": id})
     )
     raw_rep = await sock.recv()
-    return beacon_read_serializer.rep_loads(raw_rep)
+    return beacon_get_rights_serializer.rep_loads(raw_rep)
+
+
+async def beacon_set_rights(sock, id, user, read_access, write_access):
+    raw_rep = await sock.send(
+        beacon_set_rights_serializer.req_dumps(
+            {
+                "cmd": "beacon_set_rights",
+                "id": id,
+                "user": user,
+                "read_access": read_access,
+                "write_access": write_access,
+            }
+        )
+    )
+    raw_rep = await sock.recv()
+    return beacon_set_rights_serializer.rep_loads(raw_rep)
+
+
+async def beacon_poll(sock, id, last_checkpoint):
+    raw_rep = await sock.send(
+        beacon_poll_serializer.req_dumps(
+            {"cmd": "beacon_poll", "id": id, "last_checkpoint": last_checkpoint}
+        )
+    )
+    raw_rep = await sock.recv()
+    return beacon_poll_serializer.rep_loads(raw_rep)
 
 
 @pytest.mark.trio
-async def test_beacon_read_any(alice_backend_sock):
-    rep = await beacon_read(alice_backend_sock, BEACON_ID_1, 0)
-    assert rep == {"status": "ok", "items": []}
+async def test_beacon_lazy_created_by_new_vlob(backend, alice, alice_backend_sock):
+    await backend.vlob.create(alice.organization_id, alice.device_id, BEACON_ID, VLOB_ID, b"v1")
+
+    rep = await beacon_poll(alice_backend_sock, BEACON_ID, 0)
+    assert rep == {"status": "ok", "current_checkpoint": 1, "changes": {VLOB_ID: 1}}
 
 
 @pytest.mark.trio
-async def test_beacon_multimessages(backend, alice_backend_sock, alice, vlob_ids):
-    await backend.beacon.update(
-        alice.organization_id, BEACON_ID_1, src_id=vlob_ids[0], src_version=1, author="alice"
-    )
-    await backend.beacon.update(
-        alice.organization_id, BEACON_ID_1, src_id=vlob_ids[1], src_version=2, author="bob"
-    )
-    await backend.beacon.update(
-        alice.organization_id, BEACON_ID_1, src_id=vlob_ids[2], src_version=3, author="bob"
-    )
+async def test_beacon_updated_by_vlob(backend, alice, alice_backend_sock):
+    await backend.vlob.create(alice.organization_id, alice.device_id, BEACON_ID, VLOB_ID, b"v1")
+    await backend.vlob.update(alice.organization_id, alice.device_id, VLOB_ID, 2, b"v2")
 
-    rep = await beacon_read(alice_backend_sock, BEACON_ID_1, 0)
+    for last_checkpoint in (0, 1):
+        rep = await beacon_poll(alice_backend_sock, BEACON_ID, last_checkpoint)
+        assert rep == {"status": "ok", "current_checkpoint": 2, "changes": {VLOB_ID: 2}}
+
+
+@pytest.mark.trio
+async def test_beacon_poll_checkpoint_up_to_date(backend, alice, alice_backend_sock):
+    await backend.vlob.create(alice.organization_id, alice.device_id, BEACON_ID, VLOB_ID, b"v1")
+    await backend.vlob.update(alice.organization_id, alice.device_id, VLOB_ID, 2, b"v2")
+
+    rep = await beacon_poll(alice_backend_sock, BEACON_ID, 2)
+    assert rep == {"status": "ok", "current_checkpoint": 2, "changes": {}}
+
+
+@pytest.mark.trio
+async def test_beacon_poll_not_found(alice_backend_sock):
+    rep = await beacon_poll(alice_backend_sock, BEACON_ID, 0)
+    assert rep == {"status": "not_found"}
+
+
+@pytest.mark.trio
+async def test_beacon_get_rights_not_found(alice_backend_sock):
+    rep = await beacon_get_rights(alice_backend_sock, BEACON_ID)
+    assert rep == {"status": "not_found"}
+
+
+@pytest.mark.trio
+async def test_beacon_set_rights_not_found(bob, alice_backend_sock):
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, True, True)
+    assert rep == {"status": "not_found"}
+
+
+@pytest.mark.trio
+async def test_beacon_remove_rights_idempotent(backend, alice, bob, alice_backend_sock):
+    await backend.vlob.create(alice.organization_id, alice.device_id, BEACON_ID, VLOB_ID, b"v1")
+
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, False, False)
+    assert rep == {"status": "ok"}
+
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, False, False)
+    assert rep == {"status": "ok"}
+
+    rep = await beacon_get_rights(alice_backend_sock, BEACON_ID)
+    assert rep == {"status": "ok", "users": {"alice": {"read_access": True, "write_access": True}}}
+
+
+@pytest.mark.trio
+async def test_beacon_handle_rights(backend, alice, bob, alice_backend_sock, bob_backend_sock):
+    await backend.vlob.create(alice.organization_id, alice.device_id, BEACON_ID, VLOB_ID, b"v1")
+
+    # At first only Alice is allowed
+
+    rep = await beacon_poll(bob_backend_sock, BEACON_ID, 2)
+    assert rep == {"status": "not_allowed"}
+
+    rep = await beacon_get_rights(alice_backend_sock, BEACON_ID)
+    assert rep == {"status": "ok", "users": {"alice": {"read_access": True, "write_access": True}}}
+
+    # Now add Bob with write access only
+
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, False, True)
+    assert rep == {"status": "ok"}
+
+    rep = await beacon_get_rights(alice_backend_sock, BEACON_ID)
     assert rep == {
         "status": "ok",
-        "items": [
-            {"src_id": vlob_ids[0], "src_version": 1},
-            {"src_id": vlob_ids[1], "src_version": 2},
-            {"src_id": vlob_ids[2], "src_version": 3},
-        ],
+        "users": {
+            "alice": {"read_access": True, "write_access": True},
+            "bob": {"read_access": False, "write_access": True},
+        },
     }
 
-    # Also test offset
-    rep = await beacon_read(alice_backend_sock, BEACON_ID_1, 2)
-    assert rep == {"status": "ok", "items": [{"src_id": vlob_ids[2], "src_version": 3}]}
+    rep = await vlob_update(bob_backend_sock, VLOB_ID, 2, b"v2")
+    assert rep == {"status": "ok"}
+
+    rep = await beacon_poll(bob_backend_sock, BEACON_ID, 1)
+    assert rep == {"status": "not_allowed"}
+
+    # Now add Bob with read access
+
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, True, False)
+    assert rep == {"status": "ok"}
+
+    rep = await beacon_get_rights(alice_backend_sock, BEACON_ID)
+    assert rep == {
+        "status": "ok",
+        "users": {
+            "alice": {"read_access": True, "write_access": True},
+            "bob": {"read_access": True, "write_access": False},
+        },
+    }
+
+    rep = await vlob_update(bob_backend_sock, VLOB_ID, 3, b"v3", check_rep=False)
+    assert rep == {"status": "not_allowed"}
+
+    rep = await beacon_poll(bob_backend_sock, BEACON_ID, 1)
+    assert rep == {"status": "ok", "current_checkpoint": 2, "changes": {VLOB_ID: 2}}
+
+    # Finally remove all rights from Bob
+
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, False, False)
+    assert rep == {"status": "ok"}
+
+    rep = await beacon_poll(bob_backend_sock, BEACON_ID, 2)
+    assert rep == {"status": "not_allowed"}
+
+    rep = await vlob_update(bob_backend_sock, VLOB_ID, 3, b"v3", check_rep=False)
+    assert rep == {"status": "not_allowed"}
+
+    rep = await beacon_get_rights(alice_backend_sock, BEACON_ID)
+    assert rep == {"status": "ok", "users": {"alice": {"read_access": True, "write_access": True}}}
 
 
 @pytest.mark.trio
-async def test_beacon_in_vlob_update(backend, alice_backend_sock, alice):
-    await backend.vlob.create(alice.organization_id, VLOB_ID, blob=b"foo", author=alice.device_id)
-    await backend.vlob.update(
-        alice.organization_id,
-        VLOB_ID,
-        version=2,
-        blob=b"bar",
-        notify_beacon=BEACON_ID_1,
-        author=alice.device_id,
-    )
+async def test_beacon_updated_event(backend, alice_backend_sock, alice, alice2):
+    # Not listened events
 
-    rep = await beacon_read(alice_backend_sock, BEACON_ID_1, 0)
-    assert rep == {"status": "ok", "items": [{"src_id": VLOB_ID, "src_version": 2}]}
+    await backend.vlob.create(alice.organization_id, alice.device_id, BEACON_ID, VLOB_ID, b"v1")
 
+    # Start listening events
 
-@pytest.mark.trio
-async def test_beacon_in_vlob_create(backend, alice_backend_sock, alice):
-    await backend.vlob.create(
-        alice.organization_id, VLOB_ID, b"foo", notify_beacon=BEACON_ID_1, author=alice.device_id
-    )
-
-    rep = await beacon_read(alice_backend_sock, BEACON_ID_1, 0)
-    assert rep == {"status": "ok", "items": [{"src_id": VLOB_ID, "src_version": 1}]}
-
-
-@pytest.mark.trio
-async def test_beacon_updated_event(backend, alice_backend_sock, vlob_ids, alice, bob):
-    await events_subscribe(alice_backend_sock, beacon_updated=[BEACON_ID_1, BEACON_ID_2])
+    await events_subscribe(alice_backend_sock, beacon_updated=[BEACON_ID, OTHER_BEACON_ID])
 
     # Good events
-    await backend.beacon.update(
-        alice.organization_id, BEACON_ID_1, src_id=vlob_ids[0], src_version=1, author=bob.device_id
+
+    await backend.vlob.create(
+        alice.organization_id, alice2.device_id, OTHER_BEACON_ID, OTHER_VLOB_ID, b"v1"
     )
-    await backend.beacon.update(
-        alice.organization_id, BEACON_ID_2, src_id=vlob_ids[1], src_version=2, author=bob.device_id
-    )
-    await backend.beacon.update(
-        alice.organization_id, BEACON_ID_2, src_id=vlob_ids[1], src_version=3, author=bob.device_id
-    )
+    await backend.vlob.update(alice.organization_id, alice2.device_id, VLOB_ID, 2, b"v2")
+    await backend.vlob.update(alice.organization_id, alice2.device_id, VLOB_ID, 3, b"v3")
 
     with trio.fail_after(1):
         # No guarantees those events occur before the commands' return
@@ -125,44 +216,45 @@ async def test_beacon_updated_event(backend, alice_backend_sock, vlob_ids, alice
         {
             "status": "ok",
             "event": "beacon.updated",
-            "beacon_id": BEACON_ID_1,
-            "index": 1,
-            "src_id": vlob_ids[0],
+            "beacon_id": OTHER_BEACON_ID,
+            "checkpoint": 1,
+            "src_id": OTHER_VLOB_ID,
             "src_version": 1,
         },
         {
             "status": "ok",
             "event": "beacon.updated",
-            "beacon_id": BEACON_ID_2,
-            "index": 1,
-            "src_id": vlob_ids[1],
+            "beacon_id": BEACON_ID,
+            "checkpoint": 2,
+            "src_id": VLOB_ID,
             "src_version": 2,
         },
         {
             "status": "ok",
             "event": "beacon.updated",
-            "beacon_id": BEACON_ID_2,
-            "index": 2,
-            "src_id": vlob_ids[1],
+            "beacon_id": BEACON_ID,
+            "checkpoint": 3,
+            "src_id": VLOB_ID,
             "src_version": 3,
         },
         {"status": "no_events"},
     ]
 
     # Ignore self events
-    await backend.beacon.update(
-        alice.organization_id,
-        BEACON_ID_1,
-        src_id=vlob_ids[0],
-        src_version=1,
-        author=alice.device_id,
-    )
+
+    await backend.vlob.update(alice.organization_id, alice.device_id, VLOB_ID, 4, b"v4")
+
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "no_events"}
 
     # Beacon id not subscribed to
-    await backend.beacon.update(
-        alice.organization_id, BEACON_ID_3, src_id=vlob_ids[0], src_version=1, author=bob.device_id
+
+    await backend.vlob.create(
+        alice.organization_id, alice2.device_id, YET_ANOTHER_BEACON_ID, YET_ANOTHER_VLOB_ID, b"v1"
     )
+    await backend.vlob.update(
+        alice.organization_id, alice2.device_id, YET_ANOTHER_VLOB_ID, 2, b"v2"
+    )
+
     rep = await events_listen_nowait(alice_backend_sock)
     assert rep == {"status": "no_events"}
