@@ -125,6 +125,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # We join the thread by calling stop_core(), then re-raise the exception.
         if isinstance(self.core, Exception):
             exc = self.core
+            self.core = None
             self.portal = None
             self.cancel_scope = None
             self.stop_core()
