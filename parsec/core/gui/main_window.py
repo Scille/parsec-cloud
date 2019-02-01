@@ -2,7 +2,7 @@ import queue
 import threading
 import trio
 
-from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtCore import QCoreApplication, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QMenu, QSystemTrayIcon
 from PyQt5.QtGui import QIcon
 from structlog import get_logger
@@ -29,6 +29,8 @@ logger = get_logger()
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
+    mountpoint_stopped = pyqtSignal()
+
     def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
@@ -55,6 +57,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.central_widget.logout_requested.connect(self.logout)
         self.login_widget.login_with_password_clicked.connect(self.login_with_password)
         self.login_widget.login_with_pkcs11_clicked.connect(self.login_with_pkcs11)
+
+        self.mountpoint_stopped.connect(self._qt_on_mountpoint_stopped)
 
         self.show_login_widget()
 
@@ -125,6 +129,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.cancel_scope = None
             self.stop_core()
             raise exc
+
+        self.core.event_bus.connect("mountpoint.stopped", self._on_mountpoint_stopped)
         self.central_widget.set_core_attributes(core=self.core, portal=self.portal)
         settings.set_value(
             "last_device",
@@ -133,7 +139,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             ),
         )
 
+    def _on_mountpoint_stopped(self, event, mountpoint):
+        self.mountpoint_stopped.emit()
+
+    def _qt_on_mountpoint_stopped(self):
+        show_error(
+            self,
+            QCoreApplication.translate(
+                "MainWindow", "The mounpoint has been unmounted, you will now be logged off."
+            ),
+        )
+        self.logout()
+
     def stop_core(self):
+        if self.core:
+            self.core.event_bus.disconnect("mountpoint.stopped", self._on_mountpoint_stopped)
         if self.portal and self.cancel_scope:
             self.portal.run_sync(self.cancel_scope.cancel)
         if self.core_thread:
