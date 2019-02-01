@@ -21,13 +21,13 @@ background-color: rgb(255, 255, 255);
 
 QLineEdit
 {
-border: 1px solid rgb(30, 78, 162);
+border: 1px solid rgb(46, 46, 46);
 padding-left: 10px;
 }
 
 QSpinBox
 {
-border: 1px solid rgb(30, 78, 162);
+border: 1px solid rgb(46, 46, 46);
 padding-right: 10px;
 }
 
@@ -56,7 +56,7 @@ border: 1px solid rgb(180, 180, 180);
 QPushButton
 {
 background-color: rgb(45, 144, 209);
-border: 1px solid rgb(11, 56, 166);
+border: 1px solid rgb(46, 46, 46);
 color: rgb(255, 255, 255);
 padding-left: 10px;
 padding-right: 10px;
@@ -64,7 +64,7 @@ padding-right: 10px;
 
 QPushButton:disabled
 {
-border: 1px solid rgb(65, 75, 106);
+border: 1px solid rgb(46, 46, 46);
 background-color: rgb(112, 122, 153);
 color: rgb(255, 255, 255);
 }
@@ -74,7 +74,7 @@ QCheckBox::indicator
 width: 15px;
 height: 15px;
 background-color: rgb(255, 255, 255);
-border: 2px solid rgb(30, 78, 162);
+border: 2px solid rgb(46, 46,46);
 color: black;
 }
 
@@ -85,7 +85,7 @@ image: url(:/icons/images/icons/checked.png)
 
 QComboBox
 {
-border: 1px solid rgb(30, 78, 162);
+border: 1px solid rgb(46, 46, 46);
 background-color: white;
 color: black;
 padding-left: 5px;
