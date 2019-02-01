@@ -5,6 +5,7 @@ from parsec.core import devices_manager
 from parsec.core.gui import settings
 from parsec.core.gui.claim_user_widget import ClaimUserWidget
 from parsec.core.gui.claim_device_widget import ClaimDeviceWidget
+from parsec.core.gui.bootstrap_organization_widget import BootstrapOrganizationWidget
 from parsec.core.gui.settings_dialog import SettingsDialog
 from parsec.core.gui.ui.login_widget import Ui_LoginWidget
 from parsec.core.gui.ui.login_login_widget import Ui_LoginLoginWidget
@@ -80,14 +81,17 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
         self.core_config = core_config
         self.login_widget = LoginLoginWidget(core_config)
-        self.layout.insertWidget(0, self.login_widget)
+        self.main_widget.layout().insertWidget(0, self.login_widget)
+        self.bootstrap_organization = BootstrapOrganizationWidget(core_config)
+        self.main_widget.layout().insertWidget(0, self.bootstrap_organization)
         self.claim_user_widget = ClaimUserWidget(core_config)
-        self.layout.insertWidget(0, self.claim_user_widget)
+        self.main_widget.layout().insertWidget(0, self.claim_user_widget)
         self.claim_device_widget = ClaimDeviceWidget(core_config)
-        self.layout.insertWidget(0, self.claim_device_widget)
+        self.main_widget.layout().insertWidget(0, self.claim_device_widget)
         self.button_login_instead.clicked.connect(self.show_login_widget)
         self.button_register_user_instead.clicked.connect(self.show_claim_user_widget)
         self.button_register_device_instead.clicked.connect(self.show_claim_device_widget)
+        self.button_bootstrap_instead.clicked.connect(self.show_bootstrap_widget)
         self.login_widget.login_with_password_clicked.connect(self.emit_login_with_password)
         self.login_widget.login_with_pkcs11_clicked.connect(self.emit_login_with_pkcs11)
         self.claim_user_widget.user_claimed.connect(self.show_login_widget)
@@ -112,27 +116,44 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     def show_login_widget(self):
         self.claim_user_widget.hide()
         self.claim_device_widget.hide()
+        self.bootstrap_organization.hide()
         self.button_login_instead.hide()
         self.button_register_user_instead.show()
         self.button_register_device_instead.show()
+        self.button_bootstrap_instead.show()
         self.login_widget.reset()
         self.login_widget.show()
+
+    def show_bootstrap_widget(self):
+        self.claim_user_widget.hide()
+        self.claim_device_widget.hide()
+        self.login_widget.hide()
+        self.button_bootstrap_instead.hide()
+        self.button_login_instead.show()
+        self.button_register_user_instead.show()
+        self.button_register_device_instead.show()
+        self.bootstrap_organization.reset()
+        self.bootstrap_organization.show()
 
     def show_claim_user_widget(self):
         self.login_widget.hide()
         self.claim_device_widget.hide()
+        self.bootstrap_organization.hide()
         self.button_login_instead.show()
         self.button_register_user_instead.hide()
         self.button_register_device_instead.show()
+        self.button_bootstrap_instead.show()
         self.claim_user_widget.reset()
         self.claim_user_widget.show()
 
     def show_claim_device_widget(self):
         self.login_widget.hide()
         self.claim_user_widget.hide()
+        self.bootstrap_organization.hide()
         self.button_login_instead.show()
         self.button_register_user_instead.show()
         self.button_register_device_instead.hide()
+        self.button_bootstrap_instead.show()
         self.claim_device_widget.reset()
         self.claim_device_widget.show()
 
@@ -141,6 +162,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.button_login_instead.hide()
         self.button_register_user_instead.show()
         self.button_register_device_instead.show()
+        self.button_bootstrap_instead.show()
         self.claim_user_widget.reset()
         self.claim_device_widget.reset()
+        self.bootstrap_organization.reset()
         self.login_widget.reset()

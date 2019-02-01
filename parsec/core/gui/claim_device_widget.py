@@ -77,7 +77,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.claim_thread = None
         self.cancel_scope = None
         self.trio_portal = None
-        self.claim_queue = queue.Queue(1)
+        self.claim_queue = queue.Queue(2)
 
     def claim_error(self, status):
         self.claim_thread.join()

@@ -77,7 +77,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.claim_thread = None
         self.cancel_scope = None
         self.trio_portal = None
-        self.claim_queue = queue.Queue(1)
+        self.claim_queue = queue.Queue(2)
 
     def claim_error(self, status):
         self.claim_thread.join()
@@ -85,7 +85,6 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.cancel_scope = None
         self.trio_portal = None
         self.button_cancel.hide()
-        self.button_claim.setDisabled(False)
         self.check_infos("")
         if status == "not_found":
             show_error(
@@ -217,10 +216,6 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             self.cancel_scope = self.claim_queue.get()
             self.button_claim.setDisabled(True)
         except:
-            import traceback
-
-            traceback.print_exc()
-
             show_error(
                 self,
                 QCoreApplication.translate("ClaimUserWidget", "Can not register the new user."),
@@ -234,8 +229,6 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.line_edit_device.setText(get_default_device())
         self.line_edit_token.setText("")
         self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
-        self.line_edit_password.setDisabled(False)
-        self.line_edit_password_check.setDisabled(False)
         self.combo_pkcs11_key.clear()
         self.combo_pkcs11_key.addItem("0")
         self.combo_pkcs11_token.clear()

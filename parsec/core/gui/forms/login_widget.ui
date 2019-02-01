@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>602</width>
-    <height>275</height>
+    <height>420</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -242,7 +242,8 @@ text-align: left;
 QPushButton#button_login_instead:hover,
 QPushButton#button_register_device_instead:hover,
 QPushButton#button_register_user_instead:hover,
-QPushButton#button_settings:hover
+QPushButton#button_settings:hover,
+QPushButton#button_bootstrap_instead:hover
 {
 text-decoration: underline;
 }</string>
@@ -280,6 +281,54 @@ text-decoration: underline;
              <property name="bottomMargin">
               <number>0</number>
              </property>
+             <item>
+              <widget class="QScrollArea" name="scrollArea">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::NoFrame</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Plain</enum>
+               </property>
+               <property name="lineWidth">
+                <number>0</number>
+               </property>
+               <property name="horizontalScrollBarPolicy">
+                <enum>Qt::ScrollBarAlwaysOff</enum>
+               </property>
+               <property name="widgetResizable">
+                <bool>true</bool>
+               </property>
+               <widget class="QWidget" name="main_widget">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>558</width>
+                  <height>75</height>
+                 </rect>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QWidget#main_widget
+{
+background-color: rgb(12, 65, 156);
+}</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_6"/>
+               </widget>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>
@@ -349,6 +398,22 @@ text-decoration: underline;
             </widget>
            </item>
            <item>
+            <widget class="QPushButton" name="button_bootstrap_instead">
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Bootstrap an organization</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../rc/resources.qrc">
+               <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QPushButton" name="button_settings">
              <property name="font">
               <font>
@@ -385,7 +450,7 @@ text-decoration: underline;
         <enum>Qt::Vertical</enum>
        </property>
        <property name="sizeType">
-        <enum>QSizePolicy::Expanding</enum>
+        <enum>QSizePolicy::MinimumExpanding</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
