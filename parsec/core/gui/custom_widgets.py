@@ -232,7 +232,7 @@ class NotificationTaskbarButton(TaskbarButton):
         super().__init__(icon_path=":/icons/images/icons/menu_settings.png", *args, **kwargs)
         self.notif_count = 0
 
-    def add_notif_count(self):
+    def inc_notif_count(self):
         self.notif_count += 1
 
     def reset_notif_count(self):

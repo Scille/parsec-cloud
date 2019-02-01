@@ -14,8 +14,11 @@ from parsec.core.gui.ui.central_widget import Ui_CentralWidget
 
 
 class CentralWidget(CoreWidget, Ui_CentralWidget):
+    NOTIFICATION_EVENTS = ["backend.connection.lost", "mountpoint.stopped"]
+
     connection_state_changed = pyqtSignal(bool)
     logout_requested = pyqtSignal()
+    new_notification = pyqtSignal(str, str)
 
     def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -46,6 +49,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         effect.setYOffset(2)
         self.widget_notif.setGraphicsEffect(effect)
 
+        self.new_notification.connect(self.on_new_notification)
         self.menu.button_files.clicked.connect(self.show_mount_widget)
         self.menu.button_users.clicked.connect(self.show_users_widget)
         self.menu.button_settings.clicked.connect(self.show_settings_widget)
@@ -82,20 +86,36 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
     @CoreWidget.core.setter
     def core(self, c):
         if self._core:
-            self._core.fs.event_bus.disconnect(
-                "backend.connection.ready", self._on_connection_changed
-            )
-            self._core.fs.event_bus.disconnect(
-                "backend.connection.lost", self._on_connection_changed
-            )
+            self._core.event_bus.disconnect("backend.connection.ready", self._on_connection_changed)
+            self._core.event_bus.disconnect("backend.connection.lost", self._on_connection_changed)
+            for e in self.NOTIFICATION_EVENTS:
+                self._core.event_bus.disconnect(e, self.handle_event)
         self._core = c
         if self._core:
-            self._core.fs.event_bus.connect("backend.connection.ready", self._on_connection_changed)
-            self._core.fs.event_bus.connect("backend.connection.lost", self._on_connection_changed)
+            self._core.event_bus.connect("backend.connection.ready", self._on_connection_changed)
+            self._core.event_bus.connect("backend.connection.lost", self._on_connection_changed)
+            for e in self.NOTIFICATION_EVENTS:
+                self._core.event_bus.connect(e, self.handle_event)
             self._on_connection_state_changed(True)
             self.label_mountpoint.setText(str(self._core.mountpoint))
             self.menu.label_username.setText(self._core.device.user_id)
             self.menu.label_device.setText(self._core.device.device_name)
+
+    def handle_event(self, event, *args, **kwargs):
+        if event == "backend.connection.lost":
+            self.new_notification.emit(
+                "WARNING",
+                QCoreApplication.translate("CentralWidget", "Connection to backend has been lost."),
+            )
+        elif event == "mountpoint.stopped":
+            self.new_notification.emit(
+                "ERROR",
+                QCoreApplication.translate("CentralWidget", "Mountpoint has been unmounted."),
+            )
+        elif event == "fs.entry.updated":
+            self.new_notification.emit(
+                "INFO", QCoreApplication.translate("CentralWidget", "New file.")
+            )
 
     def close_notification_center(self):
         self.notification_center.hide()
@@ -108,6 +128,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         else:
             self.notification_center.show()
             self.button_notif.setChecked(True)
+            self.button_notif.reset_notif_count()
 
     def _on_connection_state_changed(self, state):
         if state:
@@ -124,6 +145,12 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
             self.menu.label_connection_icon.setPixmap(
                 QPixmap(":/icons/images/icons/cloud_offline.png")
             )
+
+    def on_new_notification(self, notif_type, msg):
+        self.notification_center.add_notification(notif_type, msg)
+        if self.notification_center.isHidden():
+            self.button_notif.inc_notif_count()
+            self.button_notif.repaint()
 
     def _on_connection_changed(self, event):
         if event == "backend.connection.ready":
