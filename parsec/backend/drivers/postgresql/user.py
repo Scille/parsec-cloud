@@ -168,7 +168,7 @@ WHERE user_ = (
     SELECT _id FROM users
     WHERE
         organization = (
-            SELECT _id from organizations WHERE organization_id = $1
+            SELECT _id FROM organizations WHERE organization_id = $1
         )
         AND user_id = $2
 )
@@ -246,7 +246,7 @@ SELECT
 FROM users
 WHERE
     organization = (
-        SELECT _id from organizations WHERE organization_id = $1
+        SELECT _id FROM organizations WHERE organization_id = $1
     )
     AND user_id = $2
 """,
@@ -274,7 +274,7 @@ FROM devices as d1
 WHERE user_ = (
     SELECT _id FROM users WHERE
         organization = (
-            SELECT _id from organizations WHERE organization_id = $1
+            SELECT _id FROM organizations WHERE organization_id = $1
         )
         AND user_id = $2
 );
@@ -331,7 +331,7 @@ SELECT
 FROM devices as d1
 WHERE
     organization = (
-        SELECT _id from organizations WHERE organization_id = $1
+        SELECT _id FROM organizations WHERE organization_id = $1
     )
     AND device_id = any($2::text[]);
 """,
@@ -380,7 +380,7 @@ WHERE
 SELECT user_id FROM users
 WHERE
     organization = (
-        SELECT _id from organizations WHERE organization_id = $1
+        SELECT _id FROM organizations WHERE organization_id = $1
     )
     AND user_id LIKE $2 ESCAPE '!'
 ORDER BY user_id
@@ -393,7 +393,7 @@ ORDER BY user_id
                     """
 SELECT user_id FROM users
 WHERE organization = (
-    SELECT _id from organizations WHERE organization_id = $1
+    SELECT _id FROM organizations WHERE organization_id = $1
 )
 ORDER BY user_id
 """,
@@ -409,7 +409,7 @@ ORDER BY user_id
 SELECT true FROM users
 WHERE
     organization = (
-        SELECT _id from organizations WHERE organization_id = $1
+        SELECT _id FROM organizations WHERE organization_id = $1
     )
     AND user_id = $2
 """,
@@ -427,7 +427,7 @@ SELECT true
 FROM devices
 WHERE
     organization = (
-        SELECT _id from organizations WHERE organization_id = $1
+        SELECT _id FROM organizations WHERE organization_id = $1
     )
     AND device_id = $2
 """,
@@ -454,10 +454,17 @@ INSERT INTO user_invitations (
     created_on
 ) VALUES (
     (SELECT _id FROM organizations WHERE organization_id = $1),
-    (SELECT _id FROM devices WHERE device_id = $2),
+    (SELECT _id
+     FROM devices
+     WHERE
+        device_id = $2 AND
+        organization = (
+            SELECT _id FROM organizations WHERE organization_id = $1
+        )
+    ),
     $3, $4
 )
-ON CONFLICT (user_id)
+ON CONFLICT (organization, user_id)
 DO UPDATE
 SET
     organization = excluded.organization,
@@ -491,7 +498,7 @@ FROM user_invitations
 LEFT JOIN devices ON user_invitations.creator = devices._id
 WHERE
     user_invitations.organization = (
-        SELECT _id from organizations WHERE organization_id = $1
+        SELECT _id FROM organizations WHERE organization_id = $1
     )
     AND user_invitations.user_id = $2
 """,
@@ -534,7 +541,7 @@ WHERE
 DELETE FROM user_invitations
 WHERE
     organization = (
-        SELECT _id from organizations WHERE organization_id = $1
+        SELECT _id FROM organizations WHERE organization_id = $1
     )
     AND user_id = $2
 """,
@@ -570,10 +577,17 @@ INSERT INTO device_invitations (
 )
 VALUES (
     (SELECT _id FROM organizations WHERE organization_id = $1),
-    (SELECT _id FROM devices WHERE device_id = $2),
+    (SELECT _id
+     FROM devices
+     WHERE
+        device_id = $2 AND
+        organization = (
+            SELECT _id FROM organizations WHERE organization_id = $1
+        )
+    ),
     $3, $4
 )
-ON CONFLICT (device_id)
+ON CONFLICT (organization, device_id)
 DO UPDATE
 SET
     organization = excluded.organization,
@@ -609,7 +623,7 @@ FROM device_invitations
 LEFT JOIN devices ON device_invitations.creator = devices._id
 WHERE
     device_invitations.organization = (
-        SELECT _id from organizations WHERE organization_id = $1
+        SELECT _id FROM organizations WHERE organization_id = $1
     )
     AND device_invitations.device_id = $2
 """,
@@ -652,7 +666,7 @@ WHERE
 DELETE FROM device_invitations
 WHERE
     organization = (
-        SELECT _id from organizations WHERE organization_id = $1
+        SELECT _id FROM organizations WHERE organization_id = $1
     )
     AND device_id = $2
 """,
@@ -684,12 +698,19 @@ WHERE
 UPDATE devices SET
     certified_revocation = $3,
     revocation_certifier = (
-        SELECT _id FROM devices WHERE device_id = $4
+        SELECT _id
+        FROM devices
+        WHERE
+            device_id = $4
+        AND
+            organization = (
+                SELECT _id FROM organizations WHERE organization_id = $1
+            )
     ),
     revocated_on = $5
 WHERE
     organization = (
-        SELECT _id from organizations WHERE organization_id = $1
+        SELECT _id FROM organizations WHERE organization_id = $1
     )
     AND device_id = $2
     AND revocated_on IS NULL
@@ -709,7 +730,7 @@ SELECT revocated_on
 FROM devices
 WHERE
     organization = (
-        SELECT _id from organizations WHERE organization_id = $1
+        SELECT _id FROM organizations WHERE organization_id = $1
     )
     AND device_id = $2
 """,

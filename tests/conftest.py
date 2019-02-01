@@ -316,8 +316,10 @@ def backend_factory(
     event_bus_factory,
     backend_data_binder_factory,
     coolorg,
+    otherorg,
     alice,
     alice2,
+    otheralice,
     bob,
     initial_user_manifest_state,
     blockstore,
@@ -350,6 +352,7 @@ def backend_factory(
                 with freeze_time("2000-01-01"):
                     binder = backend_data_binder_factory(backend)
                     await binder.bind_organization(coolorg, alice)
+                    await binder.bind_organization(otherorg, otheralice)
                     await binder.bind_device(alice2)
                     await binder.bind_device(bob)
 
@@ -455,6 +458,12 @@ async def alice_backend_sock(backend_sock_factory, backend, alice):
 @pytest.fixture
 async def alice2_backend_sock(backend_sock_factory, backend, alice2):
     async with backend_sock_factory(backend, alice2) as sock:
+        yield sock
+
+
+@pytest.fixture
+async def otheralice_backend_sock(backend_sock_factory, backend, otheralice):
+    async with backend_sock_factory(backend, otheralice) as sock:
         yield sock
 
 

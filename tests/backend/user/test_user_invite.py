@@ -97,3 +97,55 @@ async def test_concurrent_user_invite(
 
     assert prep1[0] == {"status": "ok", "encrypted_claim": b"<good>"}
     assert prep2[0] == {"status": "ok", "encrypted_claim": b"<good>"}
+
+
+@pytest.mark.trio
+async def test_user_invite_same_name_different_organizations(
+    backend, alice_backend_sock, otheralice_backend_sock, alice, otheralice, mallory
+):
+    # Mallory invitation from first organization
+    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
+
+    async with user_invite(alice_backend_sock, user_id=mallory.user_id) as prep:
+
+        # Waiting for user.claimed event
+        await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
+
+        backend.event_bus.send(
+            "user.claimed",
+            organization_id=alice.organization_id,
+            user_id="foo",
+            encrypted_claim=b"<dummy>",
+        )
+        backend.event_bus.send(
+            "user.claimed",
+            organization_id=alice.organization_id,
+            user_id=mallory.user_id,
+            encrypted_claim=b"<good>",
+        )
+
+    assert prep[0] == {"status": "ok", "encrypted_claim": b"<good>"}
+    backend.event_bus.spy.clear()
+
+    # Mallory invitation from second organization
+    await backend.user.set_user_admin(otheralice.organization_id, otheralice.user_id, True)
+
+    async with user_invite(otheralice_backend_sock, user_id=mallory.user_id) as prep:
+
+        # Waiting for user.claimed event
+        await backend.event_bus.spy.wait("event.connected", kwargs={"event_name": "user.claimed"})
+
+        backend.event_bus.send(
+            "user.claimed",
+            organization_id=otheralice.organization_id,
+            user_id="foo",
+            encrypted_claim=b"<dummy>",
+        )
+        backend.event_bus.send(
+            "user.claimed",
+            organization_id=otheralice.organization_id,
+            user_id=mallory.user_id,
+            encrypted_claim=b"<good>",
+        )
+
+    assert prep[0] == {"status": "ok", "encrypted_claim": b"<good>"}
