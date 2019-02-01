@@ -22,7 +22,7 @@ async def monitor_beacons(device, fs, event_bus, *, task_status=trio.TASK_STATUS
     def _on_workspace_unloaded(sender, path, id):
         event_bus.send("backend.beacon.unlisten", beacon_id=id)
 
-    def _on_beacon_updated(sender, beacon_id, index, src_id, src_version):
+    def _on_beacon_updated(sender, beacon_id, checkpoint, src_id, src_version):
         workspace_path = _retreive_workspace_from_beacon(device, fs, beacon_id)
         if not workspace_path:
             # This workspace is not present in our local cache, nothing

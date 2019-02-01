@@ -26,6 +26,9 @@ class ChangedEntrySchema(UnknownCheckedSchema):
     version = fields.Integer(required=True)
 
 
+# TODO: still useful ? (replaced by beacon_poll)
+
+
 class VlobGroupCheckReqSchema(BaseReqSchema):
     to_check = fields.List(fields.Nested(CheckEntrySchema), required=True)
 

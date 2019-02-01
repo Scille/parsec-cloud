@@ -193,12 +193,12 @@ class FileSyncerMixin(BaseSyncer):
         )
 
         # Upload the file manifest as new vlob version
-        notify_beacons = self.local_folder_fs.get_beacon(path)
+        beacon = self.local_folder_fs.get_beacon(path)
         try:
             if is_placeholder_manifest(manifest):
-                await self._backend_vlob_create(access, to_sync_manifest, notify_beacons)
+                await self._backend_vlob_create(beacon, access, to_sync_manifest)
             else:
-                await self._backend_vlob_update(access, to_sync_manifest, notify_beacons)
+                await self._backend_vlob_update(access, to_sync_manifest)
 
         except SyncConcurrencyError:
             # Placeholder don't have remote version, so concurrency shouldn't

@@ -157,7 +157,7 @@ class BackendEventsManager:
                 self.event_bus.send(
                     "backend.beacon.updated",
                     beacon_id=rep["beacon_id"],
-                    index=rep["index"],
+                    checkpoint=rep["checkpoint"],
                     src_id=rep["src_id"],
                     src_version=rep["src_version"],
                 )

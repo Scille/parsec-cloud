@@ -226,27 +226,25 @@ class BaseSyncer:
         raw = await self.encryption_manager.decrypt_with_secret_key(access.key, blob)
         return remote_manifest_serializer.loads(raw)
 
-    async def _backend_vlob_create(self, access, manifest, notify_beacon):
+    async def _backend_vlob_create(self, beacon, access, manifest):
         assert manifest.version == 1
         ciphered = self.encryption_manager.encrypt_with_secret_key(
             access.key, remote_manifest_serializer.dumps(manifest)
         )
         try:
-            await self.backend_cmds.vlob_create(access.id, ciphered, notify_beacon)
+            await self.backend_cmds.vlob_create(beacon, access.id, ciphered)
         except BackendCmdsBadResponse as exc:
             if exc.status == "already_exists":
                 raise SyncConcurrencyError(access)
             raise
 
-    async def _backend_vlob_update(self, access, manifest, notify_beacon):
+    async def _backend_vlob_update(self, access, manifest):
         assert manifest.version > 1
         ciphered = self.encryption_manager.encrypt_with_secret_key(
             access.key, remote_manifest_serializer.dumps(manifest)
         )
         try:
-            await self.backend_cmds.vlob_update(
-                access.id, manifest.version, ciphered, notify_beacon
-            )
+            await self.backend_cmds.vlob_update(access.id, manifest.version, ciphered)
         except BackendCmdsBadResponse as exc:
             if exc.status == "bad_version":
                 raise SyncConcurrencyError(access)

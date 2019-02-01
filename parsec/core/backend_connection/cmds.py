@@ -190,14 +190,9 @@ async def vlob_group_check(transport: Transport, to_check: list) -> list:
     return rep["changed"]
 
 
-async def vlob_create(transport: Transport, id: UUID, blob: bytes, notify_beacon=UUID) -> None:
+async def vlob_create(transport: Transport, beacon: UUID, id: UUID, blob: bytes) -> None:
     rep = await _send_cmd(
-        transport,
-        vlob_create_serializer,
-        cmd="vlob_create",
-        id=id,
-        blob=blob,
-        notify_beacon=notify_beacon,
+        transport, vlob_create_serializer, cmd="vlob_create", beacon=beacon, id=id, blob=blob
     )
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)
@@ -210,17 +205,9 @@ async def vlob_read(transport: Transport, id: UUID, version: int = None) -> Tupl
     return rep["version"], rep["blob"]
 
 
-async def vlob_update(
-    transport: Transport, id: UUID, version: int, blob: bytes, notify_beacon: UUID
-) -> None:
+async def vlob_update(transport: Transport, id: UUID, version: int, blob: bytes) -> None:
     rep = await _send_cmd(
-        transport,
-        vlob_update_serializer,
-        cmd="vlob_update",
-        id=id,
-        version=version,
-        blob=blob,
-        notify_beacon=notify_beacon,
+        transport, vlob_update_serializer, cmd="vlob_update", id=id, version=version, blob=blob
     )
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)
