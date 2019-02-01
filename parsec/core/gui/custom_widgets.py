@@ -1,7 +1,7 @@
 import pathlib
 
-from PyQt5.QtCore import QCoreApplication, Qt, QTimer, pyqtSignal, QSize
-from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtCore import QCoreApplication, Qt, QTimer, pyqtSignal, QSize, QPoint
+from PyQt5.QtGui import QPixmap, QIcon, QPainter, QColor
 from PyQt5.QtWidgets import (
     QFileDialog,
     QAbstractItemView,
@@ -225,3 +225,36 @@ class TaskbarButton(QPushButton):
         self.setIcon(QIcon(icon_path))
         self.setIconSize(QSize(50, 50))
         self.setStyleSheet("background-color: rgb(12, 65, 157); border: 0;")
+
+
+class NotificationTaskbarButton(TaskbarButton):
+    def __init__(self, *args, **kwargs):
+        super().__init__(icon_path=":/icons/images/icons/menu_settings.png", *args, **kwargs)
+        self.notif_count = 0
+
+    def add_notif_count(self):
+        self.notif_count += 1
+
+    def reset_notif_count(self):
+        self.notif_count = 0
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if self.notif_count == 0:
+            return
+        text = str(self.notif_count)
+        if self.notif_count >= 100:
+            text = "99+"
+        rect = event.rect()
+        painter = QPainter(self)
+        painter.setPen(QColor(220, 54, 66))
+        painter.setBrush(QColor(220, 54, 66))
+        painter.drawEllipse(rect.right() - 35, 0, 35, 35)
+        painter.setPen(QColor(255, 255, 255))
+        if len(text) == 1:
+            painter.drawText(QPoint(rect.right() - 22, 23), text)
+        elif len(text) == 2:
+            painter.drawText(QPoint(rect.right() - 27, 23), text)
+        elif len(text) == 3:
+            painter.drawText(QPoint(rect.right() - 30, 23), text)
+        painter.end()

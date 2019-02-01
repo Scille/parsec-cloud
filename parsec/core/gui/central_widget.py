@@ -8,7 +8,7 @@ from parsec.core.gui.users_widget import UsersWidget
 from parsec.core.gui.settings_widget import SettingsWidget
 from parsec.core.gui.devices_widget import DevicesWidget
 from parsec.core.gui.menu_widget import MenuWidget
-from parsec.core.gui.custom_widgets import TaskbarButton
+from parsec.core.gui.custom_widgets import NotificationTaskbarButton
 from parsec.core.gui.notification_center_widget import NotificationCenterWidget
 from parsec.core.gui.ui.central_widget import Ui_CentralWidget
 
@@ -34,7 +34,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         self.settings_widget = SettingsWidget(core_config=core_config, parent=self)
         self.widget_central.layout().insertWidget(0, self.settings_widget)
         self.notification_center = NotificationCenterWidget(parent=self)
-        self.button_notif = TaskbarButton(icon_path=":/icons/images/icons/menu_settings.png")
+        self.button_notif = NotificationTaskbarButton()
 
         self.widget_notif.layout().addWidget(self.notification_center)
         self.notification_center.hide()
