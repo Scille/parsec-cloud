@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>602</width>
-    <height>420</height>
+    <height>330</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -77,18 +77,24 @@ background-color: rgb(255, 255, 255);
         <enum>Qt::Vertical</enum>
        </property>
        <property name="sizeType">
-        <enum>QSizePolicy::Expanding</enum>
+        <enum>QSizePolicy::MinimumExpanding</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
          <width>0</width>
-         <height>0</height>
+         <height>30</height>
         </size>
        </property>
       </spacer>
      </item>
      <item>
       <widget class="QWidget" name="widget" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>600</width>
@@ -203,7 +209,7 @@ background-color: rgb(21, 84, 169);
               <string/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../rc/resources.qrc">:/logos/images/logos/parsec_white_medium.png</pixmap>
+              <pixmap>:/logos/images/logos/parsec_white_medium.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -231,6 +237,12 @@ background-color: rgb(21, 84, 169);
         </item>
         <item>
          <widget class="QWidget" name="widget_2" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="styleSheet">
            <string notr="true">QPushButton
 {
@@ -281,54 +293,6 @@ text-decoration: underline;
              <property name="bottomMargin">
               <number>0</number>
              </property>
-             <item>
-              <widget class="QScrollArea" name="scrollArea">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="frameShape">
-                <enum>QFrame::NoFrame</enum>
-               </property>
-               <property name="frameShadow">
-                <enum>QFrame::Plain</enum>
-               </property>
-               <property name="lineWidth">
-                <number>0</number>
-               </property>
-               <property name="horizontalScrollBarPolicy">
-                <enum>Qt::ScrollBarAlwaysOff</enum>
-               </property>
-               <property name="widgetResizable">
-                <bool>true</bool>
-               </property>
-               <widget class="QWidget" name="main_widget">
-                <property name="geometry">
-                 <rect>
-                  <x>0</x>
-                  <y>0</y>
-                  <width>558</width>
-                  <height>75</height>
-                 </rect>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QWidget#main_widget
-{
-background-color: rgb(12, 65, 156);
-}</string>
-                </property>
-                <layout class="QVBoxLayout" name="verticalLayout_6"/>
-               </widget>
-              </widget>
-             </item>
             </layout>
            </item>
            <item>
@@ -345,7 +309,7 @@ background-color: rgb(12, 65, 156);
               <string>Register a new account</string>
              </property>
              <property name="icon">
-              <iconset resource="../rc/resources.qrc">
+              <iconset>
                <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
              </property>
              <property name="flat">
@@ -367,7 +331,7 @@ background-color: rgb(12, 65, 156);
               <string>Register a new device</string>
              </property>
              <property name="icon">
-              <iconset resource="../rc/resources.qrc">
+              <iconset>
                <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
              </property>
              <property name="flat">
@@ -389,7 +353,7 @@ background-color: rgb(12, 65, 156);
               <string>Log In</string>
              </property>
              <property name="icon">
-              <iconset resource="../rc/resources.qrc">
+              <iconset>
                <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
              </property>
              <property name="flat">
@@ -408,7 +372,7 @@ background-color: rgb(12, 65, 156);
               <string>Bootstrap an organization</string>
              </property>
              <property name="icon">
-              <iconset resource="../rc/resources.qrc">
+              <iconset>
                <normaloff>:/icons/images/icons/right-chevron.png</normaloff>:/icons/images/icons/right-chevron.png</iconset>
              </property>
             </widget>
@@ -424,7 +388,7 @@ background-color: rgb(12, 65, 156);
               <string>Settings</string>
              </property>
              <property name="icon">
-              <iconset resource="../rc/resources.qrc">
+              <iconset>
                <normaloff>:/icons/images/icons/menu_settings.png</normaloff>:/icons/images/icons/menu_settings.png</iconset>
              </property>
              <property name="iconSize">
@@ -455,7 +419,7 @@ background-color: rgb(12, 65, 156);
        <property name="sizeHint" stdset="0">
         <size>
          <width>0</width>
-         <height>0</height>
+         <height>30</height>
         </size>
        </property>
       </spacer>
@@ -480,8 +444,6 @@ background-color: rgb(12, 65, 156);
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

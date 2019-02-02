@@ -81,13 +81,13 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
         self.core_config = core_config
         self.login_widget = LoginLoginWidget(core_config)
-        self.main_widget.layout().insertWidget(0, self.login_widget)
+        self.layout.insertWidget(0, self.login_widget)
         self.bootstrap_organization = BootstrapOrganizationWidget(core_config)
-        self.main_widget.layout().insertWidget(0, self.bootstrap_organization)
+        self.layout.insertWidget(0, self.bootstrap_organization)
         self.claim_user_widget = ClaimUserWidget(core_config)
-        self.main_widget.layout().insertWidget(0, self.claim_user_widget)
+        self.layout.insertWidget(0, self.claim_user_widget)
         self.claim_device_widget = ClaimDeviceWidget(core_config)
-        self.main_widget.layout().insertWidget(0, self.claim_device_widget)
+        self.layout.insertWidget(0, self.claim_device_widget)
         self.button_login_instead.clicked.connect(self.show_login_widget)
         self.button_register_user_instead.clicked.connect(self.show_claim_user_widget)
         self.button_register_device_instead.clicked.connect(self.show_claim_device_widget)
