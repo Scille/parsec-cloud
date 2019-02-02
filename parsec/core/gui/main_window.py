@@ -85,7 +85,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def showMaximized(self):
         super().showMaximized()
         QCoreApplication.processEvents()
-        # self.show_starting_guide()
+        self.show_starting_guide()
 
     def tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:

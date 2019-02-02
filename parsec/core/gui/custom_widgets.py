@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (
     QCompleter,
     QLineEdit,
     QPushButton,
+    QLabel,
 )
 
 from parsec.core.gui.ui.message_dialog import Ui_MessageDialog
@@ -257,4 +258,29 @@ class NotificationTaskbarButton(TaskbarButton):
             painter.drawText(QPoint(rect.right() - 27, 23), text)
         elif len(text) == 3:
             painter.drawText(QPoint(rect.right() - 30, 23), text)
+        painter.end()
+
+
+class PageLabel(QLabel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.page = 0
+        self.max_page = 0
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+        grey = QColor(215, 215, 215)
+        blue = QColor(38, 142, 212)
+
+        x = 0
+        for p in range(self.max_page):
+            if p == self.page:
+                painter.setPen(blue)
+                painter.setBrush(blue)
+            else:
+                painter.setPen(grey)
+                painter.setBrush(grey)
+            x = p * 16 + 22 * p
+            painter.drawEllipse(x, 20, 16, 16)
         painter.end()
