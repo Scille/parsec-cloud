@@ -21,6 +21,10 @@ ENTRIES = {
         "decode": lambda raw: raw.lower() == "true",
     },
     "global/language": {"encode": identity, "decode": identity},
+    "global/first_launch": {
+        "encode": lambda raw: "true" if raw else "false",
+        "decode": lambda raw: raw.lower() == "true",
+    },
     "network/proxy_type": {"encode": identity, "decode": identity},
     "network/proxy_host": {"encode": identity, "decode": identity},
     "network/proxy_username": {"encode": identity, "decode": identity},

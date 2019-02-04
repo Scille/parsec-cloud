@@ -81,7 +81,7 @@ background-color: rgb(255, 255, 255);
         <string/>
        </property>
        <property name="icon">
-        <iconset resource="../rc/resources.qrc">
+        <iconset>
          <normaloff>:/icons/images/icons/menu_cancel.png</normaloff>:/icons/images/icons/menu_cancel.png</iconset>
        </property>
        <property name="iconSize">
@@ -202,7 +202,7 @@ color: rgb(14, 71, 153);
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="../rc/resources.qrc">:/logos/images/logos/parsec.png</pixmap>
+        <pixmap>:/logos/images/logos/parsec.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -325,34 +325,6 @@ border: 0;
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="button_next_placeholder">
-       <property name="minimumSize">
-        <size>
-         <width>120</width>
-         <height>32</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>120</width>
-         <height>32</height>
-        </size>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QPushButton#button_next_placeholder
-{
-border: 0;
-}</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="flat">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QPushButton" name="button_next">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -411,9 +383,7 @@ border-top-right-radius: 20px;
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>button_close</sender>
