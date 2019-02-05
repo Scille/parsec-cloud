@@ -14,7 +14,9 @@ class StartingGuideDialog(QDialog, Ui_StartingGuideDialog):
                 "Parsec allows you to store your data in the cloud with a very high security level."
                 "\nFind out more by letting us guide you step by step!",
             ),
-            "screenshot": QCoreApplication.translate("StartingGuide", ":/screenshots/page1.png"),
+            "screenshot": QCoreApplication.translate(
+                "StartingGuide", ":/screenshots/images/screenshots/page1.png"
+            ),
         },
         {
             "title": QCoreApplication.translate("StartingGuide", "Workspaces"),
@@ -23,7 +25,9 @@ class StartingGuideDialog(QDialog, Ui_StartingGuideDialog):
                 "Arrange all your files by workspace, a clear interface for an easy to use and "
                 "simple process.",
             ),
-            "screenshot": QCoreApplication.translate("StartingGuide", ":/screenshots/page2.png"),
+            "screenshot": QCoreApplication.translate(
+                "StartingGuide", ":/screenshots/images/screenshots/workspaces.png"
+            ),
         },
         {
             "title": QCoreApplication.translate("StartingGuide", "Documents"),
@@ -32,7 +36,9 @@ class StartingGuideDialog(QDialog, Ui_StartingGuideDialog):
                 "In your workspaces, all your files appear, just as a regular file explorer. "
                 "A lightweight display to increase your productivity!",
             ),
-            "screenshot": QCoreApplication.translate("StartingGuide", ":/screenshots/page3.png"),
+            "screenshot": QCoreApplication.translate(
+                "StartingGuide", ":/screenshots/images/screenshots/documents.png"
+            ),
         },
         {
             "title": QCoreApplication.translate("StartingGuide", "Sharing"),
@@ -41,20 +47,25 @@ class StartingGuideDialog(QDialog, Ui_StartingGuideDialog):
                 "Share your workspaces with a few clicks. See who can access it, and what others "
                 "share with you.",
             ),
-            "screenshot": QCoreApplication.translate("StartingGuide", ":/screenshots/page4.png"),
+            "screenshot": QCoreApplication.translate(
+                "StartingGuide", ":/screenshots/images/screenshots/page4.png"
+            ),
         },
         {
             "title": QCoreApplication.translate("StartingGuide", "Manage your devices"),
             "text": QCoreApplication.translate("StartingGuide", "See and manage your devices."),
-            "screenshot": QCoreApplication.translate("StartingGuide", ":/screenshots/page5.png"),
+            "screenshot": QCoreApplication.translate("StartingGuide", ":/screenshots/devices.png"),
         },
         {
             "title": QCoreApplication.translate("StartingGuide", "Manage the users"),
             "text": QCoreApplication.translate(
                 "StartingGuide",
-                "And for the administratots ? You can manage all users and their privileges, add users, or revoke them.",
+                "And for the administratots ? You can manage all users and their privileges, "
+                "add users, or revoke them.",
             ),
-            "screenshot": QCoreApplication.translate("StartingGuide", ":/screenshots/page6.png"),
+            "screenshot": QCoreApplication.translate(
+                "StartingGuide", ":/screenshots/images/screenshots/users.png"
+            ),
         },
         {
             "title": QCoreApplication.translate("StartingGuide", "Even offline"),
@@ -63,7 +74,9 @@ class StartingGuideDialog(QDialog, Ui_StartingGuideDialog):
                 "No network ? Not a problem. You can access all your files. Modifications will "
                 "be saved locally until your device comes online again.",
             ),
-            "screenshot": QCoreApplication.translate("StartingGuide", ":/screenshots/page7.png"),
+            "screenshot": QCoreApplication.translate(
+                "StartingGuide", ":/screenshots/images/screenshots/page7.png"
+            ),
         },
         {
             "title": QCoreApplication.translate("StartingGuide", "Now it's your turn !"),
@@ -72,7 +85,9 @@ class StartingGuideDialog(QDialog, Ui_StartingGuideDialog):
                 "Create your workspaces, import your files, share your documents.\nSecurity waits "
                 "for no one!",
             ),
-            "screenshot": QCoreApplication.translate("StartingGuide", ":/screenshots/page8.png"),
+            "screenshot": QCoreApplication.translate(
+                "StartingGuide", ":/screenshots/images/screenshots/page8.png"
+            ),
         },
     ]
 
@@ -80,12 +95,16 @@ class StartingGuideDialog(QDialog, Ui_StartingGuideDialog):
         super().__init__(*args, parent=parent, **kwargs)
         self.setupUi(self)
         parent_size = parent.size()
+        ratio = parent_size.width() / parent_size.height()
         if parent_size.width() > parent_size.height():
             height = parent_size.height() - 100
-            self.setFixedSize(QSize(height * 1.33, height))
+            self.setFixedSize(QSize(height * ratio, height))
+            self.label_screenshot.setFixedSize(
+                QSize(self.size().width() / 2, self.size().height() / 2)
+            )
         else:
             width = parent_size.width() - 100
-            self.setFixedSize(QSize(width, width * 1.33))
+            self.setFixedSize(QSize(width, width * ratio))
         self.setWindowFlags(Qt.SplashScreen)
         self.page = 0
         self.max_page = 7

@@ -104,5 +104,10 @@
     <qresource prefix="/fonts">
         <file>fonts/ProximaNova.otf</file>
     </qresource>
-    <qresource prefix="/screenshots"/>
+    <qresource prefix="/screenshots">
+        <file>images/screenshots/devices.png</file>
+        <file>images/screenshots/documents.png</file>
+        <file>images/screenshots/users.png</file>
+        <file>images/screenshots/workspaces.png</file>
+    </qresource>
 </RCC>
