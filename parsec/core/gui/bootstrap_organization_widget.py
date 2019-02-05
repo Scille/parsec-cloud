@@ -71,6 +71,7 @@ async def _trio_bootstrap_organization(
 class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     bootstrap_successful = pyqtSignal()
     bootstrap_error = pyqtSignal(str)
+    organization_bootstrapped = pyqtSignal()
 
     def __init__(self, core_config, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -92,7 +93,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
         self.thread = None
         self.cancel_scope = None
         self.trio_portal = None
-        self.queue = queue.Queue(1)
+        self.queue = queue.Queue(2)
 
     def on_bootstrap_error(self, status):
         self.thread.join()
@@ -122,16 +123,16 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
                 "The organization and the user have been created. You can now login.",
             ),
         )
-        self.user_claimed.emit()
+        self.organization_bootstrapped.emit()
 
     def _thread_bootstrap_organization(
         self, addr, device_id, use_pkcs11, password=None, pkcs11_token=None, pkcs11_key=None
     ):
         trio.run(
             _trio_bootstrap_organization,
-            self.claim_queue,
-            self.claim_successful,
-            self.on_claim_error,
+            self.queue,
+            self.bootstrap_successful,
+            self.bootstrap_error,
             self.core_config,
             addr,
             device_id,
@@ -176,25 +177,18 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
                 args = (
                     backend_addr,
                     device_id,
-                    self.line_edit_token.text(),
                     True,
                     None,
                     int(self.line_edit_pkcs11_token.text()),
                     int(self.line_edit_pkcs11.key.text()),
                 )
             else:
-                args = (
-                    backend_addr,
-                    device_id,
-                    self.line_edit_token.text(),
-                    False,
-                    self.line_edit_password.text(),
-                )
+                args = (backend_addr, device_id, False, self.line_edit_password.text())
             self.button_cancel.show()
-            self.claim_thread = threading.Thread(target=self._thread_claim_user, args=args)
-            self.claim_thread.start()
-            self.trio_portal = self.claim_queue.get()
-            self.cancel_scope = self.claim_queue.get()
+            self.thread = threading.Thread(target=self._thread_bootstrap_organization, args=args)
+            self.thread.start()
+            self.trio_portal = self.queue.get()
+            self.cancel_scope = self.queue.get()
             self.button_bootstrap.setDisabled(True)
         except:
             import traceback
@@ -221,7 +215,6 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
     def check_infos(self, _):
         if (
             len(self.line_edit_login.text())
-            and len(self.line_edit_token.text())
             and len(self.line_edit_device.text())
             and len(self.line_edit_url.text())
         ):

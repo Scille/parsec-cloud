@@ -95,6 +95,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         self.login_widget.login_with_password_clicked.connect(self.emit_login_with_password)
         self.login_widget.login_with_pkcs11_clicked.connect(self.emit_login_with_pkcs11)
         self.claim_user_widget.user_claimed.connect(self.show_login_widget)
+        self.bootstrap_organization.organization_bootstrapped.connect(self.show_login_widget)
         self.claim_device_widget.device_claimed.connect(self.show_login_widget)
         self.button_settings.clicked.connect(self.show_settings)
         self.reset()
