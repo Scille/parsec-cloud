@@ -104,4 +104,5 @@
     <qresource prefix="/fonts">
         <file>fonts/ProximaNova.otf</file>
     </qresource>
+    <qresource prefix="/screenshots"/>
 </RCC>

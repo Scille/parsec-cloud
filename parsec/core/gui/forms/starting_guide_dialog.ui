@@ -81,7 +81,7 @@ background-color: rgb(255, 255, 255);
         <string/>
        </property>
        <property name="icon">
-        <iconset>
+        <iconset resource="../rc/resources.qrc">
          <normaloff>:/icons/images/icons/menu_cancel.png</normaloff>:/icons/images/icons/menu_cancel.png</iconset>
        </property>
        <property name="iconSize">
@@ -106,14 +106,17 @@ background-color: rgb(255, 255, 255);
       </sizepolicy>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
+      <property name="spacing">
+       <number>30</number>
+      </property>
       <property name="leftMargin">
-       <number>20</number>
+       <number>60</number>
       </property>
       <property name="topMargin">
-       <number>20</number>
+       <number>60</number>
       </property>
       <property name="rightMargin">
-       <number>20</number>
+       <number>60</number>
       </property>
       <property name="bottomMargin">
        <number>20</number>
@@ -122,7 +125,9 @@ background-color: rgb(255, 255, 255);
        <widget class="QLabel" name="label_title">
         <property name="font">
          <font>
-          <pointsize>18</pointsize>
+          <pointsize>22</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
          </font>
         </property>
         <property name="styleSheet">
@@ -144,6 +149,8 @@ color: rgb(14, 71, 153);
         <property name="font">
          <font>
           <pointsize>14</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
          </font>
         </property>
         <property name="text">
@@ -151,6 +158,9 @@ color: rgb(14, 71, 153);
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -176,25 +186,25 @@ color: rgb(14, 71, 153);
       <number>20</number>
      </property>
      <property name="leftMargin">
-      <number>20</number>
+      <number>50</number>
      </property>
      <property name="rightMargin">
-      <number>20</number>
+      <number>50</number>
      </property>
      <property name="bottomMargin">
-      <number>20</number>
+      <number>60</number>
      </property>
      <item>
       <widget class="QLabel" name="label">
        <property name="minimumSize">
         <size>
-         <width>220</width>
+         <width>270</width>
          <height>40</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>220</width>
+         <width>270</width>
          <height>40</height>
         </size>
        </property>
@@ -202,7 +212,7 @@ color: rgb(14, 71, 153);
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap>:/logos/images/logos/parsec.png</pixmap>
+        <pixmap resource="../rc/resources.qrc">:/logos/images/logos/parsec.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -383,7 +393,9 @@ border-top-right-radius: 20px;
    <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../rc/resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>button_close</sender>
