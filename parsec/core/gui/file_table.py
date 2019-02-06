@@ -1,0 +1,146 @@
+import pendulum
+
+from PyQt5.QtCore import Qt, QCoreApplication
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import (
+    QTableWidget,
+    QHeaderView,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
+    QStyle,
+    QTableWidgetItem,
+)
+
+from parsec.core.gui.file_items import (
+    FileTableItem,
+    CustomTableItem,
+    ParentFolderTableItem,
+    ParentWorkspaceTableItem,
+    FolderTableItem,
+    FileType,
+)
+from parsec.core.gui.file_size import get_filesize
+
+
+class ItemDelegate(QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        view_option = QStyleOptionViewItem(option)
+        view_option.decorationAlignment |= Qt.AlignHCenter
+        # Qt tries to be nice and adds a lovely background color
+        # on the focused item. Since we select items by rows and not
+        # individually, we don't want that, so we remove the focus
+        if option.state & QStyle.State_HasFocus:
+            view_option.state &= ~QStyle.State_HasFocus
+        super().paint(painter, view_option, index)
+
+
+class FileTable(QTableWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.previous_selection = []
+
+    def init(self):
+        h_header = self.horizontalHeader()
+        h_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        h_header.setSectionResizeMode(0, QHeaderView.Fixed)
+        self.setColumnWidth(0, 60)
+        h_header.setSectionResizeMode(1, QHeaderView.Stretch)
+        h_header.setSectionResizeMode(2, QHeaderView.Fixed)
+        self.setColumnWidth(2, 200)
+        h_header.setSectionResizeMode(3, QHeaderView.Fixed)
+        self.setColumnWidth(3, 200)
+        h_header.setSectionResizeMode(4, QHeaderView.Fixed)
+        self.setColumnWidth(4, 100)
+        v_header = self.verticalHeader()
+        v_header.setSectionResizeMode(QHeaderView.Fixed)
+        v_header.setDefaultSectionSize(48)
+        self.setItemDelegate(ItemDelegate())
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.itemSelectionChanged.connect(self.change_selection)
+
+    def clear(self):
+        self.clearContents()
+        self.setRowCount(0)
+        self.previous_selection = []
+
+    def change_selection(self):
+        selected = self.selectedItems()
+        for item in self.previous_selection:
+            if item.column() == 0:
+                file_type = item.data(Qt.UserRole)
+                if file_type == FileType.ParentWorkspace or file_type == FileType.ParentFolder:
+                    item.setIcon(QIcon(":/icons/images/icons/folder-up.png"))
+        for item in selected:
+            if item.column() == 0:
+                file_type = item.data(Qt.UserRole)
+                if file_type == FileType.ParentWorkspace or file_type == FileType.ParentFolder:
+                    item.setIcon(QIcon(":/icons/images/icons/folder-up_selected.png"))
+        self.previous_selection = selected
+
+    def add_parent_folder(self):
+        row_idx = self.rowCount()
+        self.insertRow(row_idx)
+        item = ParentFolderTableItem()
+        self.setItem(row_idx, 0, item)
+        item = QTableWidgetItem(QCoreApplication.translate("FilesWidget", "Parent Folder"))
+        self.setItem(row_idx, 1, item)
+        item = CustomTableItem()
+        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
+        self.setItem(row_idx, 2, item)
+        item = CustomTableItem()
+        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
+        self.setItem(row_idx, 3, item)
+        item = CustomTableItem()
+        item.setData(Qt.UserRole, -2)
+        self.setItem(row_idx, 4, item)
+
+    def add_parent_workspace(self):
+        row_idx = self.rowCount()
+        self.insertRow(row_idx)
+        item = ParentWorkspaceTableItem()
+        self.setItem(row_idx, 0, item)
+        item = QTableWidgetItem(QCoreApplication.translate("FilesWidget", "Parent Workspace"))
+        self.setItem(row_idx, 1, item)
+        item = CustomTableItem()
+        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
+        self.setItem(row_idx, 2, item)
+        item = CustomTableItem()
+        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
+        self.setItem(row_idx, 3, item)
+        item = CustomTableItem()
+        item.setData(Qt.UserRole, -2)
+        self.setItem(row_idx, 4, item)
+
+    def add_folder(self, folder_name):
+        row_idx = self.rowCount()
+        self.insertRow(row_idx)
+        item = FolderTableItem()
+        self.setItem(row_idx, 0, item)
+        item = QTableWidgetItem(folder_name)
+        self.setItem(row_idx, 1, item)
+        item = CustomTableItem()
+        item.setData(Qt.UserRole, pendulum.datetime(1971, 1, 1))
+        self.setItem(row_idx, 2, item)
+        item = CustomTableItem()
+        item.setData(Qt.UserRole, pendulum.datetime(1971, 1, 1))
+        self.setItem(row_idx, 3, item)
+        item = CustomTableItem()
+        item.setData(Qt.UserRole, -1)
+        self.setItem(row_idx, 4, item)
+
+    def add_file(self, file_name, file_size, created_on, updated_on):
+        row_idx = self.rowCount()
+        self.insertRow(row_idx)
+        item = FileTableItem(file_name)
+        self.setItem(row_idx, 0, item)
+        item = QTableWidgetItem(file_name)
+        self.setItem(row_idx, 1, item)
+        item = CustomTableItem(created_on.format("%x %X"))
+        item.setData(Qt.UserRole, created_on)
+        self.setItem(row_idx, 2, item)
+        item = CustomTableItem(updated_on.format("%x %X"))
+        item.setData(Qt.UserRole, updated_on)
+        self.setItem(row_idx, 3, item)
+        item = CustomTableItem(get_filesize(file_size))
+        item.setData(Qt.UserRole, file_size)
+        self.setItem(row_idx, 4, item)

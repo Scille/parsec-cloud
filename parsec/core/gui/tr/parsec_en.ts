@@ -399,22 +399,22 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="327"/>
+        <location filename="../forms/files_widget.ui" line="333"/>
         <source>Name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="332"/>
+        <location filename="../forms/files_widget.ui" line="338"/>
         <source>Created</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="337"/>
+        <location filename="../forms/files_widget.ui" line="343"/>
         <source>Updated</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="342"/>
+        <location filename="../forms/files_widget.ui" line="348"/>
         <source>Size</source>
         <translation></translation>
     </message>

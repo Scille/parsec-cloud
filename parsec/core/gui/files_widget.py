@@ -3,46 +3,16 @@ import queue
 import threading
 import pathlib
 from uuid import UUID
-import pendulum
 
 from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal
-from PyQt5.QtWidgets import (
-    QMenu,
-    QStyledItemDelegate,
-    QStyle,
-    QFileDialog,
-    QHeaderView,
-    QTableWidgetItem,
-    QStyleOptionViewItem,
-)
-from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QMenu, QFileDialog
 
 from parsec.core.gui import desktop
-from parsec.core.gui.file_items import (
-    FileType,
-    FileTableItem,
-    CustomTableItem,
-    ParentFolderTableItem,
-    ParentWorkspaceTableItem,
-    FolderTableItem,
-)
+from parsec.core.gui.file_items import FileType
 from parsec.core.gui.custom_widgets import show_error, ask_question, get_text, TaskbarButton
 from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
-from parsec.core.gui.file_size import get_filesize
 from parsec.core.fs import FSEntryNotFound
-
-
-class ItemDelegate(QStyledItemDelegate):
-    def paint(self, painter, option, index):
-        view_option = QStyleOptionViewItem(option)
-        view_option.decorationAlignment |= Qt.AlignHCenter
-        # Qt tries to be nice and adds a lovely background color
-        # on the focused item. Since we select items by rows and not
-        # individually, we don't want that, so we remove the focus
-        if option.state & QStyle.State_HasFocus:
-            view_option.state &= ~QStyle.State_HasFocus
-        super().paint(painter, view_option, index)
 
 
 class FilesWidget(CoreWidget, Ui_FilesWidget):
@@ -52,21 +22,6 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        h_header = self.table_files.horizontalHeader()
-        h_header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        h_header.setSectionResizeMode(0, QHeaderView.Fixed)
-        self.table_files.setColumnWidth(0, 60)
-        h_header.setSectionResizeMode(1, QHeaderView.Stretch)
-        h_header.setSectionResizeMode(2, QHeaderView.Fixed)
-        self.table_files.setColumnWidth(2, 200)
-        h_header.setSectionResizeMode(3, QHeaderView.Fixed)
-        self.table_files.setColumnWidth(3, 200)
-        h_header.setSectionResizeMode(4, QHeaderView.Fixed)
-        self.table_files.setColumnWidth(4, 100)
-        v_header = self.table_files.verticalHeader()
-        v_header.setSectionResizeMode(QHeaderView.Fixed)
-        v_header.setDefaultSectionSize(48)
-        self.table_files.setItemDelegate(ItemDelegate())
         self.taskbar_buttons = []
         button_back = TaskbarButton(icon_path=":/icons/images/icons/go-back_button.png")
         button_back.clicked.connect(self.back_clicked)
@@ -80,16 +35,14 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         button_create_folder = TaskbarButton(icon_path=":/icons/images/icons/add-plus-button.png")
         button_create_folder.clicked.connect(self.create_folder_clicked)
         self.taskbar_buttons.append(button_create_folder)
-        self.table_files.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table_files.customContextMenuRequested.connect(self.show_context_menu)
-        self.table_files.itemSelectionChanged.connect(self.change_selection)
         self.table_files.cellDoubleClicked.connect(self.item_double_clicked)
         self.line_edit_search.textChanged.connect(self.filter_files)
         self.current_directory = ""
         self.workspace = None
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
-        self.previous_selection = []
         self.file_queue = queue.Queue(1024)
+        self.table_files.init()
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons
@@ -121,30 +74,6 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                 return
             self._import_file(src, dst)
 
-    # slot
-    def change_selection(self):
-        selected = self.table_files.selectedItems()
-        for item in self.previous_selection:
-            if item.column() == 0:
-                file_type = item.data(Qt.UserRole)
-                # if file_type == FileType.Folder:
-                #     item.setIcon(QIcon(":/icons/images/icons/folder.png"))
-                # elif file_type == FileType.File:
-                #     item.setIcon(QIcon(":/icons/images/icons/file.png"))
-                # else:
-                if file_type == FileType.ParentWorkspace or file_type == FileType.ParentFolder:
-                    item.setIcon(QIcon(":/icons/images/icons/folder-up.png"))
-        for item in selected:
-            if item.column() == 0:
-                file_type = item.data(Qt.UserRole)
-                # if file_type == FileType.Folder:
-                #     item.setIcon(QIcon(":/icons/images/icons/folder_selected.png"))
-                # elif file_type == FileType.File:
-                #     item.setIcon(QIcon(":/icons/images/icons/file_selected.png"))
-                if file_type == FileType.ParentWorkspace or file_type == FileType.ParentFolder:
-                    item.setIcon(QIcon(":/icons/images/icons/folder-up_selected.png"))
-        self.previous_selection = selected
-
     def set_workspace(self, workspace):
         self.workspace = workspace
         self.label_current_workspace.setText(workspace)
@@ -155,17 +84,15 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         if not self.workspace and not directory:
             return
 
-        self.table_files.clearContents()
-        self.table_files.setRowCount(0)
+        self.table_files.clear()
         old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
         old_order = self.table_files.horizontalHeader().sortIndicatorOrder()
         self.table_files.setSortingEnabled(False)
-        self.previous_selection = []
         self.current_directory = directory
         if self.current_directory:
-            self._add_parent_folder()
+            self.table_files.add_parent_folder()
         else:
-            self._add_parent_workspace()
+            self.table_files.add_parent_workspace()
         if not self.current_directory:
             self.label_current_directory.hide()
             self.label_caret.hide()
@@ -178,9 +105,9 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         for child in dir_stat["children"]:
             child_stat = self.portal.run(self.core.fs.stat, os.path.join(dir_path, child))
             if child_stat["is_folder"]:
-                self._add_folder(child)
+                self.table_files.add_folder(child)
             else:
-                self._add_file(
+                self.table_files.add_file(
                     child, child_stat["size"], child_stat["created"], child_stat["updated"]
                 )
         self.table_files.sortItems(old_sort, old_order)
@@ -293,74 +220,6 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                 ),
             )
             return False
-
-    def _add_parent_folder(self):
-        row_idx = self.table_files.rowCount()
-        self.table_files.insertRow(row_idx)
-        item = ParentFolderTableItem()
-        self.table_files.setItem(row_idx, 0, item)
-        item = QTableWidgetItem(QCoreApplication.translate("FilesWidget", "Parent Folder"))
-        self.table_files.setItem(row_idx, 1, item)
-        item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
-        self.table_files.setItem(row_idx, 2, item)
-        item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
-        self.table_files.setItem(row_idx, 3, item)
-        item = CustomTableItem()
-        item.setData(Qt.UserRole, -2)
-        self.table_files.setItem(row_idx, 4, item)
-
-    def _add_parent_workspace(self):
-        row_idx = self.table_files.rowCount()
-        self.table_files.insertRow(row_idx)
-        item = ParentWorkspaceTableItem()
-        self.table_files.setItem(row_idx, 0, item)
-        item = QTableWidgetItem(QCoreApplication.translate("FilesWidget", "Parent Workspace"))
-        self.table_files.setItem(row_idx, 1, item)
-        item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
-        self.table_files.setItem(row_idx, 2, item)
-        item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1970, 1, 1))
-        self.table_files.setItem(row_idx, 3, item)
-        item = CustomTableItem()
-        item.setData(Qt.UserRole, -2)
-        self.table_files.setItem(row_idx, 4, item)
-
-    def _add_folder(self, folder_name):
-        row_idx = self.table_files.rowCount()
-        self.table_files.insertRow(row_idx)
-        item = FolderTableItem()
-        self.table_files.setItem(row_idx, 0, item)
-        item = QTableWidgetItem(folder_name)
-        self.table_files.setItem(row_idx, 1, item)
-        item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1971, 1, 1))
-        self.table_files.setItem(row_idx, 2, item)
-        item = CustomTableItem()
-        item.setData(Qt.UserRole, pendulum.datetime(1971, 1, 1))
-        self.table_files.setItem(row_idx, 3, item)
-        item = CustomTableItem()
-        item.setData(Qt.UserRole, -1)
-        self.table_files.setItem(row_idx, 4, item)
-
-    def _add_file(self, file_name, file_size, created_on, updated_on):
-        row_idx = self.table_files.rowCount()
-        self.table_files.insertRow(row_idx)
-        item = FileTableItem(file_name)
-        self.table_files.setItem(row_idx, 0, item)
-        item = QTableWidgetItem(file_name)
-        self.table_files.setItem(row_idx, 1, item)
-        item = CustomTableItem(created_on.format("%x %X"))
-        item.setData(Qt.UserRole, created_on)
-        self.table_files.setItem(row_idx, 2, item)
-        item = CustomTableItem(updated_on.format("%x %X"))
-        item.setData(Qt.UserRole, updated_on)
-        self.table_files.setItem(row_idx, 3, item)
-        item = CustomTableItem(get_filesize(file_size))
-        item.setData(Qt.UserRole, file_size)
-        self.table_files.setItem(row_idx, 4, item)
 
     def delete_item(self, row):
         def _inner_delete_item():
@@ -493,12 +352,15 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         elif file_type == FileType.Folder:
             self.load(os.path.join(os.path.join(self.current_directory, name_item.text())))
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Delete:
+            row = self.table_files.currentRow()
+            self.delete_item(row)()
+
     def reset(self):
         self.workspace = ""
         self.current_directory = ""
-        self.previous_selection = []
-        self.table_files.clearContents()
-        self.table_files.setRowCount(0)
+        self.table_files.clear()
 
     # slot
     def _on_fs_entry_synced_trio(self, event, path, id):

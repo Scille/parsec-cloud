@@ -550,7 +550,7 @@
         <translation type="obsolete">Importer</translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="327"/>
+        <location filename="../forms/files_widget.ui" line="333"/>
         <source>Name</source>
         <translation>Nom</translation>
     </message>
@@ -565,7 +565,7 @@
         <translation type="obsolete">Modifié le</translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="342"/>
+        <location filename="../forms/files_widget.ui" line="348"/>
         <source>Size</source>
         <translation>Taille</translation>
     </message>
@@ -635,12 +635,12 @@
         <translation>Choisir le répertoire à importer</translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="332"/>
+        <location filename="../forms/files_widget.ui" line="338"/>
         <source>Created</source>
         <translation>Créé le</translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="337"/>
+        <location filename="../forms/files_widget.ui" line="343"/>
         <source>Updated</source>
         <translation>Modifié le</translation>
     </message>

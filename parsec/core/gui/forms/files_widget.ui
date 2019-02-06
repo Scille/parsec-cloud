@@ -200,7 +200,7 @@ color: rgb(46, 46, 46);</string>
          <number>0</number>
         </property>
         <item>
-         <widget class="QTableWidget" name="table_files">
+         <widget class="FileTable" name="table_files">
           <property name="font">
            <font>
             <pointsize>12</pointsize>
@@ -278,6 +278,12 @@ height: 16px;
           <property name="showDropIndicator" stdset="0">
            <bool>false</bool>
           </property>
+          <property name="dragEnabled">
+           <bool>false</bool>
+          </property>
+          <property name="dragDropMode">
+           <enum>QAbstractItemView::NoDragDrop</enum>
+          </property>
           <property name="selectionMode">
            <enum>QAbstractItemView::SingleSelection</enum>
           </property>
@@ -351,6 +357,13 @@ height: 16px;
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FileTable</class>
+   <extends>QTableWidget</extends>
+   <header>parsec.core.gui.file_table</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>
