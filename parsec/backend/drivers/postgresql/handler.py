@@ -1,10 +1,11 @@
+import trio
 import triopg
 from structlog import get_logger
 from base64 import b64decode, b64encode
 
 from parsec.event_bus import EventBus
 from parsec.serde import packb, unpackb
-from parsec.utils import call_with_control
+from parsec.utils import start_task
 
 
 logger = get_logger()
@@ -178,14 +179,12 @@ class PGHandler:
         self.event_bus = event_bus
         self.pool = None
         self.notification_conn = None
-        self._run_connections_control = None
+        self._task_status = None
 
     async def init(self, nursery):
-        self._run_connections_control = await nursery.start(
-            call_with_control, self._run_connections
-        )
+        self._task_status = await start_task(nursery, self._run_connections)
 
-    async def _run_connections(self, started_cb):
+    async def _run_connections(self, task_status=trio.TASK_STATUS_IGNORED):
         async with triopg.create_pool(self.url) as self.pool:
             async with self.pool.acquire() as conn:
                 if not await _is_db_initialized(conn):
@@ -194,8 +193,8 @@ class PGHandler:
             # would only complicate stuff to include it into the connection pool
             async with triopg.connect(self.url) as self.notification_conn:
                 await self.notification_conn.add_listener("app_notification", self._on_notification)
-
-                await started_cb()
+                task_status.started()
+                await trio.sleep_forever()
 
     def _on_notification(self, connection, pid, channel, payload):
         data = unpackb(b64decode(payload.encode("ascii")))
@@ -204,8 +203,8 @@ class PGHandler:
         self.event_bus.send(signal, **data)
 
     async def teardown(self):
-        if self._run_connections_control:
-            await self._run_connections_control.stop()
+        if self._task_status:
+            await self._task_status.cancel_and_join()
 
 
 async def send_signal(conn, signal, **kwargs):
