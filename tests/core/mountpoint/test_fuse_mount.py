@@ -96,6 +96,17 @@ async def test_external_umount_fuse(core_config, alice, tmpdir, fuse_mode):
 
 @pytest.mark.trio
 @pytest.mark.fuse
+async def test_cancellable_join_umount_fuse(core_config, alice, tmpdir, fuse_mode):
+    core_config = core_config.evolve(mountpoint_enabled=True)
+    async with logged_core_factory(core_config, alice) as alice_core:
+        assert await trio.Path(alice_core.mountpoint).exists()
+        with trio.move_on_after(0.01):
+            await alice_core.mountpoint_task.join()
+    assert not await trio.Path(alice_core.mountpoint).exists()
+
+
+@pytest.mark.trio
+@pytest.mark.fuse
 @pytest.mark.skipif(os.name == "nt", reason="Windows doesn't support threaded fuse")
 async def test_hard_crash_in_fuse_thread(core_config, alice, tmpdir, fuse_mode):
     core_config = core_config.evolve(mountpoint_enabled=True)
