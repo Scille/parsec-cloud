@@ -3,11 +3,10 @@ import warnings
 import logging
 from pathlib import Path
 
-import trio
-import attr
 from async_generator import asynccontextmanager
 
 from parsec.types import DeviceID
+from parsec.utils import start_task
 
 try:
     from fuse import FUSE
@@ -30,29 +29,6 @@ def get_default_mountpoint(device_id: DeviceID):
         raise NotImplementedError()
     else:
         return Path(f"/media/{device_id}")
-
-
-@attr.s
-class TaskStatus:
-
-    cancel = attr.ib()
-    join = attr.ib()
-    value = attr.ib()
-
-    async def cancel_and_join(self):
-        self.cancel()
-        await self.join()
-
-
-async def stoppable(corofn, *args, task_status=trio.TASK_STATUS_IGNORED):
-    finished = trio.Event()
-    try:
-        async with trio.open_nursery() as nursery:
-            value = await nursery.start(corofn, *args)
-            status = TaskStatus(cancel=nursery.cancel_scope.cancel, join=finished.wait, value=value)
-            task_status.started(status)
-    finally:
-        finished.set()
 
 
 @asynccontextmanager
@@ -85,7 +61,7 @@ async def fuse_mountpoint_manager(
     else:
         fuse_runner = run_fuse_in_thread
 
-    task = await nursery.start(stoppable, fuse_runner, fs, mountpoint, fuse_config, event_bus)
+    task = await start_task(nursery, fuse_runner, fs, mountpoint, fuse_config, event_bus)
     try:
         yield task
     finally:
