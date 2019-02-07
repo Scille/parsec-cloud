@@ -113,8 +113,16 @@ class OneOfSchema(UnknownCheckedSchema):
 
     type_field = "type"
     type_field_remove = True
-    type_schemas = []
+    type_schemas = {}
     fallback_type_schema = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.type_schemas = {
+            k: v if isinstance(v, Schema) else v() for k, v in self.type_schemas.items()
+        }
+        if self.fallback_type_schema and not isinstance(self.fallback_type_schema, Schema):
+            self.fallback_type_schema = self.fallback_type_schema()
 
     def get_obj_type(self, obj):
         """Returns name of object schema"""
@@ -148,14 +156,10 @@ class OneOfSchema(UnknownCheckedSchema):
                 None, {"_schema": "Unknown object class: %s" % obj.__class__.__name__}
             )
 
-        type_schema = self.type_schemas.get(obj_type)
-        if not type_schema:
-            if not self.fallback_type_schema:
-                return MarshalResult(None, {"_schema": "Unsupported object type: %s" % obj_type})
-            else:
-                type_schema = self.fallback_type_schema
+        schema = self.type_schemas.get(obj_type, self.fallback_type_schema)
+        if not schema:
+            return MarshalResult(None, {"_schema": "Unsupported object type: %s" % obj_type})
 
-        schema = type_schema if isinstance(type_schema, Schema) else type_schema()
         result = schema.dump(obj, many=False, update_fields=update_fields, **kwargs)
         if result.data:
             result.data[self.type_field] = obj_type
@@ -199,18 +203,14 @@ class OneOfSchema(UnknownCheckedSchema):
             return UnmarshalResult({}, {self.type_field: ["Missing data for required field."]})
 
         try:
-            type_schema = self.type_schemas.get(data_type)
+            schema = self.type_schemas.get(data_type, self.fallback_type_schema)
         except TypeError:
             # data_type could be unhashable
             return UnmarshalResult({}, {self.type_field: ["Invalid value: %s" % data_type]})
 
-        if not type_schema:
-            if not self.fallback_type_schema:
-                return UnmarshalResult({}, {self.type_field: ["Unsupported value: %s" % data_type]})
-            else:
-                type_schema = self.fallback_type_schema
+        if not schema:
+            return UnmarshalResult({}, {self.type_field: ["Unsupported value: %s" % data_type]})
 
-        schema = type_schema if isinstance(type_schema, Schema) else type_schema()
         return schema.load(data, many=False, partial=partial)
 
     def validate(self, data, many=None, partial=None):
