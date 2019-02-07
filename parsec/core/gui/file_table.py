@@ -1,6 +1,6 @@
 import pendulum
 
-from PyQt5.QtCore import Qt, QCoreApplication
+from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QTableWidget,
@@ -35,6 +35,8 @@ class ItemDelegate(QStyledItemDelegate):
 
 
 class FileTable(QTableWidget):
+    file_moved = pyqtSignal(str, str)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.previous_selection = []
@@ -144,3 +146,24 @@ class FileTable(QTableWidget):
         item = CustomTableItem(get_filesize(file_size))
         item.setData(Qt.UserRole, file_size)
         self.setItem(row_idx, 4, item)
+
+    def dropEvent(self, event):
+        if event.source() != self:
+            return
+        target_row = self.indexAt(event.pos()).row()
+        rows = set([i.row() for i in self.selectedIndexes() if i != target_row])
+        if not rows:
+            return
+        file_type = self.item(target_row, 0).data(Qt.UserRole)
+        target_name = self.item(target_row, 1).text()
+
+        if file_type != FileType.ParentFolder and file_type != FileType.Folder:
+            return
+        for row in rows:
+            file_name = self.item(row, 1).text()
+            if file_type == FileType.ParentFolder:
+                self.file_moved.emit(file_name, "..")
+            else:
+                self.file_moved.emit(file_name, target_name)
+            self.removeRow(row)
+        event.accept()

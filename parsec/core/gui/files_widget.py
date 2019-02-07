@@ -42,6 +42,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         self.workspace = None
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
         self.file_queue = queue.Queue(1024)
+        self.table_files.file_moved.connect(self.on_file_moved)
         self.table_files.init()
 
     def get_taskbar_buttons(self):
@@ -271,6 +272,20 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         if not folder_name:
             return
         self._create_folder(folder_name)
+
+    # slot
+    def on_file_moved(self, src, dst):
+        src_path = os.path.join("/", self.workspace, self.current_directory, src)
+        dst_path = ""
+        if dst == "..":
+            target_dir = pathlib.Path(
+                os.path.join("/", self.workspace, self.current_directory)
+            ).parent
+            dst_path = os.path.join("/", self.workspace, target_dir, src)
+        else:
+            dst_path = os.path.join("/", self.workspace, dst, src)
+        print("Moving from", src_path, "to", dst_path)
+        self.portal.run(self.core.fs.move, src_path, dst_path)
 
     # slot
     def show_context_menu(self, pos):
