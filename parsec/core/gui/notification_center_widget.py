@@ -36,6 +36,11 @@ class NotificationCenterWidget(QWidget, Ui_NotificationCenterWidget):
         p = QPainter(self)
         self.style().drawPrimitive(QStyle.PE_Widget, opt, p, self)
 
+    def close_notification(self, notif):
+        self.widget_layout.layout().removeWidget(notif)
+        notif.hide()
+        notif.setParent(None)
+
     def add_notification(self, notif_type, msg):
         widget = None
         if notif_type == "ERROR":
@@ -48,3 +53,4 @@ class NotificationCenterWidget(QWidget, Ui_NotificationCenterWidget):
             return
         widget.message = msg
         self.widget_layout.layout().insertWidget(0, widget)
+        widget.close_clicked.connect(self.close_notification)

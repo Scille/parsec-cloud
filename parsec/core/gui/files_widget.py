@@ -284,7 +284,6 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             dst_path = os.path.join("/", self.workspace, target_dir, src)
         else:
             dst_path = os.path.join("/", self.workspace, dst, src)
-        print("Moving from", src_path, "to", dst_path)
         self.portal.run(self.core.fs.move, src_path, dst_path)
 
     # slot

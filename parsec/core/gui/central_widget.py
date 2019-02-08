@@ -105,16 +105,16 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         if event == "backend.connection.lost":
             self.new_notification.emit(
                 "WARNING",
-                QCoreApplication.translate("CentralWidget", "Connection to backend has been lost."),
+                QCoreApplication.translate("CentralWidget", "Disconnected from the backend."),
+            )
+        elif event == "backend.connection.ready":
+            self.new_notification.emit(
+                "INFO", QCoreApplication.translate("CentralWidget", "Connected to the backend.")
             )
         elif event == "mountpoint.stopped":
             self.new_notification.emit(
                 "ERROR",
                 QCoreApplication.translate("CentralWidget", "Mountpoint has been unmounted."),
-            )
-        elif event == "fs.entry.updated":
-            self.new_notification.emit(
-                "INFO", QCoreApplication.translate("CentralWidget", "New file.")
             )
 
     def close_notification_center(self):
