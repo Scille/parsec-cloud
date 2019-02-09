@@ -14,7 +14,12 @@ from parsec.core.gui.ui.central_widget import Ui_CentralWidget
 
 
 class CentralWidget(CoreWidget, Ui_CentralWidget):
-    NOTIFICATION_EVENTS = ["backend.connection.lost", "mountpoint.stopped"]
+    NOTIFICATION_EVENTS = [
+        "backend.connection.lost",
+        "backend.connection.ready",
+        "mountpoint.stopped",
+        "sharing.new",
+    ]
 
     connection_state_changed = pyqtSignal(bool)
     logout_requested = pyqtSignal()
@@ -101,7 +106,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
             self.menu.label_username.setText(self._core.device.user_id)
             self.menu.label_device.setText(self._core.device.device_name)
 
-    def handle_event(self, event, *args, **kwargs):
+    def handle_event(self, event, **kwargs):
         if event == "backend.connection.lost":
             self.new_notification.emit(
                 "WARNING",
@@ -115,6 +120,13 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
             self.new_notification.emit(
                 "ERROR",
                 QCoreApplication.translate("CentralWidget", "Mountpoint has been unmounted."),
+            )
+        elif event == "sharing.new":
+            self.new_notification.emit(
+                "INFO",
+                QCoreApplication.translate(
+                    "CentralWidget", "Workspace '{}' shared with you"
+                ).format(kwargs["path"]),
             )
 
     def close_notification_center(self):
