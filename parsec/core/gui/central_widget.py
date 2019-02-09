@@ -19,6 +19,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         "backend.connection.ready",
         "mountpoint.stopped",
         "sharing.new",
+        "fs.entry.file_update_conflicted",
     ]
 
     connection_state_changed = pyqtSignal(bool)
@@ -126,6 +127,13 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
                 "INFO",
                 QCoreApplication.translate(
                     "CentralWidget", "Workspace '{}' shared with you"
+                ).format(kwargs["path"]),
+            )
+        elif event == "fs.entry.file_update_conflicted":
+            self.new_notification.emit(
+                "WARNING",
+                QCoreApplication.translate(
+                    "CentralWidget", "Conflict while syncing file '{}'."
                 ).format(kwargs["path"]),
             )
 
