@@ -113,6 +113,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 # If we have an exception, we never put the core object in the queue. Since the
                 # main thread except something to be there, we put the exception.
                 except Exception as exc:
+                    import traceback
+
+                    traceback.print_exc()
                     self.core_queue.put(exc)
 
             trio.run(_run)
@@ -158,7 +161,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.core:
             self.core.event_bus.disconnect("mountpoint.stopped", self._on_mountpoint_stopped)
         if self.portal and self.cancel_scope:
-            self.portal.run_sync(self.cancel_scope.cancel)
+            try:
+                self.portal.run_sync(self.cancel_scope.cancel)
+            except trio.RunFinishedError:
+                logger.warning("Trio loop already exited")
         if self.core_thread:
             self.core_thread.join()
         self.portal = None
