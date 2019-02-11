@@ -217,7 +217,6 @@ def backend_addr(unused_tcp_port):
     return BackendAddr(f"ws://127.0.0.1:{unused_tcp_port}")
 
 
-@pytest.fixture
 def bootstrap_postgresql(url):
     # In theory we should use TrioPG here to do db init, but:
     # - Duck typing and similar api makes `_init_db` compatible with both
