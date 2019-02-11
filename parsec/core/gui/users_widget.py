@@ -36,7 +36,7 @@ class UsersWidget(CoreWidget, Ui_UsersWidget):
         self.setupUi(self)
         self.users = []
         self.taskbar_buttons = []
-        button_add_user = TaskbarButton(icon_path=":/icons/images/icons/add-plus-button.png")
+        button_add_user = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
         button_add_user.clicked.connect(self.register_user)
         self.taskbar_buttons.append(button_add_user)
         self.line_edit_search.textChanged.connect(self.filter_users)

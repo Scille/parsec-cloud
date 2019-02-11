@@ -34,7 +34,7 @@ class DevicesWidget(CoreWidget, Ui_DevicesWidget):
         self.setupUi(self)
         self.devices = []
         self.taskbar_buttons = []
-        button_add_device = TaskbarButton(icon_path=":/icons/images/icons/add-plus-button.png")
+        button_add_device = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
         button_add_device.clicked.connect(self.register_new_device)
         self.taskbar_buttons.append(button_add_device)
         self.line_edit_search.textChanged.connect(self.filter_devices)

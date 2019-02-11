@@ -30,7 +30,7 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         self.setupUi(self)
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
         self.taskbar_buttons = []
-        button_add_workspace = TaskbarButton(icon_path=":/icons/images/icons/add-plus-button.png")
+        button_add_workspace = TaskbarButton(icon_path=":/icons/images/icons/plus_off.png")
         button_add_workspace.clicked.connect(self.create_workspace_clicked)
         self.taskbar_buttons.append(button_add_workspace)
 

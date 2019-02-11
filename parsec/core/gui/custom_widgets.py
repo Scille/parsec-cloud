@@ -230,7 +230,7 @@ class TaskbarButton(QPushButton):
 
 class NotificationTaskbarButton(TaskbarButton):
     def __init__(self, *args, **kwargs):
-        super().__init__(icon_path=":/icons/images/icons/menu_settings.png", *args, **kwargs)
+        super().__init__(icon_path=":/icons/images/icons/notification_off.png", *args, **kwargs)
         self.notif_count = 0
 
     def inc_notif_count(self):
@@ -238,6 +238,15 @@ class NotificationTaskbarButton(TaskbarButton):
 
     def reset_notif_count(self):
         self.notif_count = 0
+
+    def setChecked(self, val):
+        super().setChecked(val)
+        if val:
+            self.setIcon(QIcon(":/icons/images/icons/notification_on.png"))
+            self.setIconSize(QSize(50, 50))
+        else:
+            self.setIcon(QIcon(":/icons/images/icons/notification_off.png"))
+            self.setIconSize(QSize(50, 50))
 
     def paintEvent(self, event):
         super().paintEvent(event)

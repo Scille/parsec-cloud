@@ -65,20 +65,20 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         self.connection_state_changed.connect(self._on_connection_state_changed)
         self.notification_center.close_requested.connect(self.close_notification_center)
 
-        # self.notification_center.add_notification(
-        #     "ERROR", "An error message to test how it looks like."
-        # )
-        # self.notification_center.add_notification(
-        #     "WARNING", "Another message but this time its a warning."
-        # )
-        # self.notification_center.add_notification(
-        #     "INFO", "An information message, because we gotta test them all."
-        # )
-        # self.notification_center.add_notification(
-        #     "ERROR",
-        #     "And another error message, but this one will be a little bit longer just "
-        #     "to see if the GUI can handle it.",
-        # )
+        self.notification_center.add_notification(
+            "ERROR", "An error message to test how it looks like."
+        )
+        self.notification_center.add_notification(
+            "WARNING", "Another message but this time its a warning."
+        )
+        self.notification_center.add_notification(
+            "INFO", "An information message, because we gotta test them all."
+        )
+        self.notification_center.add_notification(
+            "ERROR",
+            "And another error message, but this one will be a little bit longer just "
+            "to see if the GUI can handle it.",
+        )
 
         self.reset()
 

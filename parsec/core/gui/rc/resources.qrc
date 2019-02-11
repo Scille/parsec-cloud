@@ -26,7 +26,6 @@
         <file>images/icons/new_document.png</file>
         <file>images/icons/search.png</file>
         <file>images/icons/add_user.png</file>
-        <file>images/icons/error.png</file>
         <file>images/icons/user_menu.png</file>
         <file>images/icons/edit_white.png</file>
         <file>images/icons/settings_off.png</file>
@@ -35,9 +34,7 @@
         <file>images/icons/wifi_on.png</file>
         <file>images/icons/right-chevron_black.png</file>
         <file>images/icons/user.png</file>
-        <file>images/icons/info.png</file>
         <file>images/icons/question.png</file>
-        <file>images/icons/warning.png</file>
         <file>images/icons/cancel_white.png</file>
         <file>images/icons/checked_white.png</file>
         <file>images/icons/folder-up.png</file>
@@ -53,10 +50,6 @@
         <file>images/icons/sort_up_arrow.png</file>
         <file>images/icons/hard-drive_grey.png</file>
         <file>images/icons/edit_blue.png</file>
-        <file>images/icons/add-plus-button.png</file>
-        <file>images/icons/go-back_button.png</file>
-        <file>images/icons/import_file.png</file>
-        <file>images/icons/import_folder.png</file>
         <file>images/icons/owner.png</file>
         <file>images/icons/share_info.png</file>
         <file>images/icons/user_owner.png</file>
@@ -90,6 +83,19 @@
         <file>images/icons/file_xls.png</file>
         <file>images/icons/file_xml.png</file>
         <file>images/icons/file_zip.png</file>
+        <file>images/icons/error.png</file>
+        <file>images/icons/info.png</file>
+        <file>images/icons/warning.png</file>
+        <file>images/icons/notification_off.png</file>
+        <file>images/icons/notification_on.png</file>
+        <file>images/icons/plus_off.png</file>
+        <file>images/icons/plus_on.png</file>
+        <file>images/icons/return_off.png</file>
+        <file>images/icons/return_on.png</file>
+        <file>images/icons/upload_file_off.png</file>
+        <file>images/icons/upload_file_on.png</file>
+        <file>images/icons/upload_folder_off.png</file>
+        <file>images/icons/upload_folder_on.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>
