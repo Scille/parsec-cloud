@@ -70,7 +70,10 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         text = QCoreApplication.translate("WorkspacesWidget", "{}\n\nCreated by {}.\n").format(
             workspace_button.name, workspace_button.creator
         )
-        if len(workspace_button.participants):
+        if len(workspace_button.participants) == 1:
+            text += QCoreApplication.translate("WorkspacesWidget", "Shared with one person.")
+            )
+        elif len(workspace_button.participants) > 1:
             text += QCoreApplication.translate("WorkspacesWidget", "Shared with {} people.").format(
                 len(workspace_button.participants)
             )
