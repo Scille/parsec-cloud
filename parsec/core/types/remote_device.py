@@ -93,4 +93,4 @@ class RemoteUser:
         return unsecure_certified_user_extract_public_key(self.certified_user)
 
     def is_revocated(self) -> bool:
-        return any((False for d in self.devices.values if d.revocated_on), True)
+        return all(bool(d.revocated_on) for d in self.devices.values())

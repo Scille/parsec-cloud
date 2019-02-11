@@ -15,7 +15,8 @@ from parsec.core.devices_manager import (
     load_device_with_pkcs11,
 )
 
-from parsec.core.backend_connection import BackendHandshakeError
+from parsec.core.mountpoint import MountpointConfigurationError
+from parsec.core.backend_connection import BackendHandshakeError, BackendDeviceRevokedError
 from parsec.core.gui import settings
 from parsec.core import logged_core_factory
 from parsec.core.gui.login_widget import LoginWidget
@@ -167,6 +168,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 logger.warning("Trio loop already exited")
         if self.core_thread:
             self.core_thread.join()
+        self.core_queue = queue.Queue(3)
         self.portal = None
         self.core = None
         self.current_device = None
@@ -188,13 +190,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_central_widget()
         except DeviceManagerError:
             show_error(self, QCoreApplication.translate("MainWindow", "Authentication failed."))
+        except BackendDeviceRevokedError:
+            show_error(
+                self, QCoreApplication.translate("MainWindow", "This device has been revoked.")
+            )
         except BackendHandshakeError:
             show_error(
                 self,
                 QCoreApplication.translate("MainWindow", "User not registered in the backend."),
             )
-        except RuntimeError:
+        except (RuntimeError, MountpointConfigurationError):
             show_error(self, QCoreApplication.translate("MainWindow", "Mountpoint already in use."))
+        except Exception as exc:
+            show_error(
+                self,
+                QCoreApplication.translate("MainWindow", "Can not login ({})").format(type(exc)),
+            )
 
     def login_with_pkcs11(self, organization_id, device_id, pkcs11_pin, pkcs11_key, pkcs11_token):
         try:

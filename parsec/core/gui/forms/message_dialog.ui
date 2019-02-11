@@ -189,6 +189,9 @@ background-color: rgb(255, 255, 255);
            <enum>QLayout::SetMaximumSize</enum>
           </property>
           <property name="leftMargin">
+           <number>15</number>
+          </property>
+          <property name="topMargin">
            <number>10</number>
           </property>
           <property name="rightMargin">

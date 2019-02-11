@@ -65,7 +65,7 @@ color: rgb(255, 255, 255);
       <number>0</number>
      </property>
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="UserLabel" name="label">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -138,6 +138,13 @@ padding: 20px;
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>UserLabel</class>
+   <extends>QLabel</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../rc/resources.qrc"/>
  </resources>

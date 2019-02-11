@@ -1,7 +1,7 @@
 import pathlib
 
 from PyQt5.QtCore import QCoreApplication, Qt, QTimer, pyqtSignal, QSize, QPoint
-from PyQt5.QtGui import QPixmap, QIcon, QPainter, QColor
+from PyQt5.QtGui import QPixmap, QIcon, QPainter, QColor, QPen
 from PyQt5.QtWidgets import (
     QFileDialog,
     QAbstractItemView,
@@ -292,4 +292,27 @@ class PageLabel(QLabel):
                 painter.setBrush(grey)
             x = p * 16 + 22 * p
             painter.drawEllipse(x, 20, 16, 16)
+        painter.end()
+
+
+class UserLabel(QLabel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_revoked = False
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if not self.is_revoked:
+            return
+        rect = event.rect()
+        painter = QPainter(self)
+        painter.setRenderHints(QPainter.HighQualityAntialiasing)
+        pen = QPen(QColor(218, 53, 69))
+        pen.setWidth(5)
+        pen.setJoinStyle(Qt.RoundJoin)
+        pen.setCapStyle(Qt.RoundCap)
+        painter.setPen(pen)
+        painter.drawEllipse(rect.right() - 60, 10, 50, 50)
+        painter.drawLine(rect.right() - 51, 51, rect.right() - 19, 19)
+        painter.setPen(QColor(218, 53, 69))
         painter.end()
