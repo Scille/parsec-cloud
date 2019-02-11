@@ -194,7 +194,7 @@ background-color: rgb(171, 171, 171);
           </property>
           <property name="icon">
            <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/menu_folder.png</normaloff>:/icons/images/icons/menu_folder.png</iconset>
+            <normaloff>:/icons/images/icons/documents.png</normaloff>:/icons/images/icons/documents.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -250,7 +250,7 @@ background-color: rgb(171, 171, 171);
           </property>
           <property name="icon">
            <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/menu_group.png</normaloff>:/icons/images/icons/menu_group.png</iconset>
+            <normaloff>:/icons/images/icons/group.png</normaloff>:/icons/images/icons/group.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -306,7 +306,7 @@ background-color: rgb(171, 171, 171);
           </property>
           <property name="icon">
            <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/menu_devices.png</normaloff>:/icons/images/icons/menu_devices.png</iconset>
+            <normaloff>:/icons/images/icons/devices.png</normaloff>:/icons/images/icons/devices.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -365,7 +365,7 @@ background-color: rgb(171, 171, 171);
           </property>
           <property name="icon">
            <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/menu_settings.png</normaloff>:/icons/images/icons/menu_settings.png</iconset>
+            <normaloff>:/icons/images/icons/gear.png</normaloff>:/icons/images/icons/gear.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -512,7 +512,7 @@ background-color: rgb(65, 65, 65);
               <string/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../rc/resources.qrc">:/icons/images/icons/user_menu.png</pixmap>
+              <pixmap resource="../rc/resources.qrc">:/icons/images/icons/avatar.png</pixmap>
              </property>
              <property name="scaledContents">
               <bool>true</bool>
@@ -615,7 +615,7 @@ color: rgb(255, 255, 255);
           </property>
           <property name="icon">
            <iconset resource="../rc/resources.qrc">
-            <normaloff>:/icons/images/icons/menu_logout.png</normaloff>:/icons/images/icons/menu_logout.png</iconset>
+            <normaloff>:/icons/images/icons/exit.png</normaloff>:/icons/images/icons/exit.png</iconset>
           </property>
           <property name="iconSize">
            <size>

@@ -96,6 +96,15 @@
         <file>images/icons/upload_file_on.png</file>
         <file>images/icons/upload_folder_off.png</file>
         <file>images/icons/upload_folder_on.png</file>
+        <file>images/icons/avatar.png</file>
+        <file>images/icons/exit.png</file>
+        <file>images/icons/gear.png</file>
+        <file>images/icons/group.png</file>
+        <file>images/icons/owner2.png</file>
+        <file>images/icons/user2.png</file>
+        <file>images/icons/personal-computer.png</file>
+        <file>images/icons/devices.png</file>
+        <file>images/icons/documents.png</file>
     </qresource>
     <qresource prefix="/logos">
         <file>images/logos/parsec.png</file>
