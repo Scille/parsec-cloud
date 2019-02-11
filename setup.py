@@ -248,8 +248,8 @@ test_requirements = [
     "wheel",
     "Sphinx",
     "flake8",
-    "hypothesis==3.82.2",  # Hypothesis-trio not compatible with new versions
-    "hypothesis-trio>=0.2.1",
+    "hypothesis==4.5.5",
+    "hypothesis-trio==0.3.0",
     "black==18.9b0",  # Pin black to avoid flaky style check
 ]
 

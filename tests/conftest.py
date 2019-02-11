@@ -51,6 +51,7 @@ def hypothesis_settings(request):
     return hypothesis.settings(
         max_examples=pytest.config.getoption("--hypothesis-max-examples"),
         derandomize=pytest.config.getoption("--hypothesis-derandomize"),
+        deadline=None,
     )
 
 
