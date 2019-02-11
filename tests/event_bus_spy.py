@@ -50,15 +50,15 @@ class EventBusSpy:
         return await self._wait(expected)
 
     async def _wait(self, cooked_expected_event):
-        catcher = trio.Queue(1)
+        send_channel, receive_channel = trio.open_memory_channel(1)
 
         def _waiter(cooked_event):
             if cooked_expected_event == cooked_event:
-                catcher.put_nowait(cooked_event)
+                send_channel.send_nowait(cooked_event)
                 self._waiters.remove(_waiter)
 
         self._waiters.add(_waiter)
-        return await catcher.get()
+        return await receive_channel.receive()
 
     async def wait_multiple(self, events):
         expected_events = self._cook_events_params(events)

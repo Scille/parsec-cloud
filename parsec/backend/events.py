@@ -17,7 +17,7 @@ def _pinged_callback_factory(client_ctx, pings):
             return
 
         try:
-            client_ctx.events.put_nowait({"event": event, "ping": ping})
+            client_ctx.send_events_channel.send_nowait({"event": event, "ping": ping})
         except trio.WouldBlock:
             client_ctx.logger.warning("event queue is full")
 
@@ -43,7 +43,7 @@ def _beacon_updated_callback_factory(client_ctx, beacons_ids):
             "src_version": src_version,
         }
         try:
-            client_ctx.events.put_nowait(msg)
+            client_ctx.send_events_channel.send_nowait(msg)
         except trio.WouldBlock:
             client_ctx.logger.warning("event queue is full")
 
@@ -60,7 +60,7 @@ def _message_received_callback_factory(client_ctx):
             return
 
         try:
-            client_ctx.events.put_nowait({"event": event, "index": index})
+            client_ctx.send_events_channel.send_nowait({"event": event, "index": index})
         except trio.WouldBlock:
             client_ctx.logger.warning("event queue is full")
 
@@ -111,7 +111,7 @@ class EventsComponent:
 
             async def _get_event(cancel_scope):
                 nonlocal event_data
-                event_data = await client_ctx.events.get()
+                event_data = await client_ctx.receive_events_channel.receive()
                 cancel_scope.cancel()
 
             async def _keep_transport_breathing(cancel_scope):
@@ -130,7 +130,7 @@ class EventsComponent:
 
         else:
             try:
-                event_data = client_ctx.events.get_nowait()
+                event_data = client_ctx.receive_events_channel.receive_nowait()
             except trio.WouldBlock:
                 return {"status": "no_events"}
 

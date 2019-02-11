@@ -49,7 +49,7 @@ class LoggedClientContext:
     conn_id = attr.ib(init=False)
     logger = attr.ib(init=False)
     subscribed_events = attr.ib(factory=dict)
-    events = attr.ib(factory=lambda: trio.Queue(100))
+    channels = attr.ib(factory=lambda: trio.open_memory_channel(100))
 
     def __attrs_post_init__(self):
         self.conn_id = self.transport.conn_id
@@ -64,6 +64,16 @@ class LoggedClientContext:
     @property
     def device_name(self):
         return self.device_id.device_name
+
+    @property
+    def send_events_channel(self):
+        send_channel, _ = self.channels
+        return send_channel
+
+    @property
+    def receive_events_channel(self):
+        _, receive_channel = self.channels
+        return receive_channel
 
 
 @attr.s

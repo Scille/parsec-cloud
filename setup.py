@@ -220,7 +220,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "attrs==18.1.0",
+    "attrs==18.2.0",
     "click==7.0",
     "msgpack==0.6.0",
     "wsproto==0.12.0",
@@ -229,7 +229,7 @@ requirements = [
     "toastedmarshmallow==0.2.6",
     "pendulum==1.3.1",
     "PyNaCl==1.2.0",
-    "trio==0.9.0",
+    "trio==0.11.0",
     "python-interface==1.4.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',

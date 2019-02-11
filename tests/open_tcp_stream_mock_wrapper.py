@@ -60,7 +60,7 @@ class OpenTCPStreamMockWrapper:
         for sock in self._socks[netloc]:
 
             async def _broken_stream(*args, **kwargs):
-                raise trio.BrokenStreamError()
+                raise trio.BrokenResourceError()
 
             _broken_stream.old_send_all_hook = sock.send_stream.send_all_hook
             _broken_stream.old_receive_some_hook = sock.receive_stream.receive_some_hook
