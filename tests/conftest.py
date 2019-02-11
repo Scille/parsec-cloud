@@ -49,8 +49,9 @@ def pytest_addoption(parser):
 @pytest.fixture(scope="session")
 def hypothesis_settings(request):
     return hypothesis.settings(
-        max_examples=pytest.config.getoption("--hypothesis-max-examples"),
-        derandomize=pytest.config.getoption("--hypothesis-derandomize"),
+        max_examples=request.config.getoption("--hypothesis-max-examples"),
+        derandomize=request.config.getoption("--hypothesis-derandomize"),
+        deadline=None,
     )
 
 
@@ -67,9 +68,9 @@ def pytest_runtest_setup(item):
 
 
 @pytest.fixture(autouse=True, scope="session", name="unmock_crypto")
-def mock_crypto():
+def mock_crypto(request):
     # Crypto is CPU hungry
-    if pytest.config.getoption("--realcrypto"):
+    if request.config.getoption("--realcrypto"):
 
         def unmock():
             pass
@@ -119,8 +120,8 @@ def _get_postgresql_url():
 
 
 @pytest.fixture(scope="session")
-def postgresql_url():
-    if not pytest.config.getoption("--postgresql"):
+def postgresql_url(request):
+    if not request.config.getoption("--postgresql"):
         pytest.skip("`--postgresql` option not provided")
     return _get_postgresql_url()
 
@@ -216,7 +217,6 @@ def backend_addr(unused_tcp_port):
     return BackendAddr(f"ws://127.0.0.1:{unused_tcp_port}")
 
 
-@pytest.fixture
 def bootstrap_postgresql(url):
     # In theory we should use TrioPG here to do db init, but:
     # - Duck typing and similar api makes `_init_db` compatible with both
@@ -241,13 +241,14 @@ def bootstrap_postgresql(url):
 
 @pytest.fixture()
 def backend_store(request):
-    if pytest.config.getoption("--postgresql"):
+    if request.config.getoption("--postgresql"):
         if request.node.get_closest_marker("slow"):
             import warnings
 
             warnings.warn(
                 "TODO: trio-asyncio loop currently incompatible with hypothesis tests :'("
             )
+
             return "MOCKED"
 
         # TODO: would be better to create a new postgresql cluster for each test

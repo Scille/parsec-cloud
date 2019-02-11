@@ -152,6 +152,9 @@ def test_block_not_loaded_entry(local_folder_fs, local_file_fs, foo_txt):
     assert data == block1 + block2[:4]
 
 
+size = st.integers(min_value=0, max_value=4 * 1024 ** 2)  # Between 0 and 4MB
+
+
 @pytest.mark.slow
 @pytest.mark.skipif(os.name == "nt", reason="Windows file style not compatible with oracle")
 def test_file_operations(
@@ -179,7 +182,7 @@ def test_file_operations(
         def teardown(self):
             os.close(self.file_oracle_fd)
 
-        @rule(size=st.integers(min_value=0))
+        @rule(size=size)
         def read(self, size):
             data = self.local_file_fs.read(self.fd, size)
             expected = os.read(self.file_oracle_fd, size)
@@ -190,12 +193,12 @@ def test_file_operations(
             self.local_file_fs.write(self.fd, content)
             os.write(self.file_oracle_fd, content)
 
-        @rule(length=st.integers(min_value=0))
+        @rule(length=size)
         def seek(self, length):
             self.local_file_fs.seek(self.fd, length)
             os.lseek(self.file_oracle_fd, length, os.SEEK_SET)
 
-        @rule(length=st.integers(min_value=0))
+        @rule(length=size)
         def truncate(self, length):
             self.local_file_fs.truncate(self.fd, length)
             os.ftruncate(self.file_oracle_fd, length)

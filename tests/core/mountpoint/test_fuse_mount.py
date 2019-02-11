@@ -150,4 +150,4 @@ async def test_mount_missing_path(core_config, alice, tmpdir):
     core_config = core_config.evolve(mountpoint_enabled=True, mountpoint_base_dir=base_mountpoint)
     async with logged_core_factory(core_config, alice) as alice_core:
         assert str(alice_core.mountpoint) == f"{base_mountpoint}/{alice.device_id}"
-        assert trio.Path(alice_core.mountpoint).exists()
+        assert await trio.Path(alice_core.mountpoint).exists()

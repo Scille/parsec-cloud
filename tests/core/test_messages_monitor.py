@@ -1,7 +1,9 @@
 import trio
+import pytest
 
 
-async def test_new_sharing_trigger_event(alice_core, bob_core):
+@pytest.mark.trio
+async def test_new_sharing_trigger_event(alice_core, bob_core, running_backend):
     await alice_core.event_bus.spy.wait_for_backend_connection_ready()
     await bob_core.event_bus.spy.wait_for_backend_connection_ready()
 
@@ -15,6 +17,5 @@ async def test_new_sharing_trigger_event(alice_core, bob_core):
     # Bob should get a notification
     with trio.fail_after(seconds=1):
         await bob_core.event_bus.spy.wait(
-            "sharing.new",
-            kwargs={"path": f"/foo (shared by alice)", "access": bob_core.event_bus.spy.ANY},
+            "sharing.new", kwargs={"path": f"/foo", "access": bob_core.event_bus.spy.ANY}
         )

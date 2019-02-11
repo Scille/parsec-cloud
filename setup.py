@@ -220,7 +220,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "attrs==18.1.0",
+    "attrs==18.2.0",
     "click==7.0",
     "msgpack==0.6.0",
     "wsproto==0.12.0",
@@ -229,7 +229,7 @@ requirements = [
     "toastedmarshmallow==0.2.6",
     "pendulum==1.3.1",
     "PyNaCl==1.2.0",
-    "trio==0.9.0",
+    "trio==0.11.0",
     "python-interface==1.4.0",
     "async_generator>=1.9",
     'contextvars==2.1;python_version<"3.7"',
@@ -240,7 +240,7 @@ requirements = [
 
 
 test_requirements = [
-    "pytest==4.0.2",
+    "pytest==4.2.0",
     "pytest-cov",
     "pytest-xdist",
     "pytest-trio>=0.5.1",
@@ -248,8 +248,8 @@ test_requirements = [
     "wheel",
     "Sphinx",
     "flake8",
-    "hypothesis==3.82.2",  # Hypothesis-trio not compatible with new versions
-    "hypothesis-trio>=0.2.1",
+    "hypothesis==4.5.5",
+    "hypothesis-trio==0.3.0",
     "black==18.9b0",  # Pin black to avoid flaky style check
 ]
 
