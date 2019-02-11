@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>210</width>
-    <height>210</height>
+    <width>150</width>
+    <height>150</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>210</width>
-    <height>210</height>
+    <width>150</width>
+    <height>150</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>210</width>
-    <height>210</height>
+    <width>150</width>
+    <height>150</height>
    </size>
   </property>
   <property name="font">
@@ -74,28 +74,24 @@ color: rgb(255, 255, 255);
        </property>
        <property name="minimumSize">
         <size>
-         <width>178</width>
-         <height>178</height>
+         <width>123</width>
+         <height>123</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>178</width>
-         <height>178</height>
+         <width>123</width>
+         <height>123</height>
         </size>
        </property>
        <property name="styleSheet">
-        <string notr="true">QLabel#label
-{
-border: 2px solid rgb(45, 145, 207);
-padding: 20px;
-}</string>
+        <string notr="true"/>
        </property>
        <property name="text">
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="../rc/resources.qrc">:/icons/images/icons/user.png</pixmap>
+        <pixmap resource="../rc/resources.qrc">:/icons/images/icons/personal-computer.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>

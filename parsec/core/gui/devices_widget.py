@@ -13,9 +13,9 @@ class DeviceButton(QWidget, Ui_DeviceButton):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         if is_current_device:
-            self.label.setPixmap(QPixmap(":/icons/images/icons/user_owner.png"))
+            self.label.setPixmap(QPixmap(":/icons/images/icons/personal-computer.png"))
         else:
-            self.label.setPixmap(QPixmap(":/icons/images/icons/user.png"))
+            self.label.setPixmap(QPixmap(":/icons/images/icons/personal-computer.png"))
         self.label_device.setText(device_name)
 
     @property

@@ -19,9 +19,9 @@ class UserButton(QWidget, Ui_UserButton):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         if is_current_user:
-            self.label.setPixmap(QPixmap(":/icons/images/icons/user_owner.png"))
+            self.label.setPixmap(QPixmap(":/icons/images/icons/owner2.png"))
         else:
-            self.label.setPixmap(QPixmap(":/icons/images/icons/user.png"))
+            self.label.setPixmap(QPixmap(":/icons/images/icons/user2.png"))
         self.label_user.setText(user_name)
         self.label.is_revoked = is_revoked
         self.created_on = created_on
