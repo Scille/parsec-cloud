@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>438</width>
-    <height>372</height>
+    <height>430</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -144,10 +144,13 @@ background: none;
         <x>0</x>
         <y>0</y>
         <width>398</width>
-        <height>258</height>
+        <height>316</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
+       <property name="spacing">
+        <number>25</number>
+       </property>
        <item>
         <widget class="QWidget" name="widget_2" native="true">
          <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -480,6 +483,19 @@ background: none;
           </item>
          </layout>
         </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>
