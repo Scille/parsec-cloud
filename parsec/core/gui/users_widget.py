@@ -43,8 +43,8 @@ class UserButton(QWidget, Ui_UserButton):
 
     @is_revoked.setter
     def is_revoked(self, value):
-        self.label.is_revoked = True
-        self.label.is_revoked.repaint()
+        self.label.is_revoked = value
+        self.label.repaint()
 
     def show_context_menu(self, pos):
         global_pos = self.mapToGlobal(pos)
@@ -159,7 +159,7 @@ class UsersWidget(CoreWidget, Ui_UsersWidget):
                     ),
                 )
         except:
-            show_error(self, QCoreApplication.translate("UsersWidget", "Can not revoke this user"))
+            show_error(self, QCoreApplication.translate("UsersWidget", "Can not revoke this user."))
 
     def reset(self):
         self.line_edit_search.setText("")
@@ -183,4 +183,6 @@ class UsersWidget(CoreWidget, Ui_UsersWidget):
                         is_revoked=user_info.is_revocated(),
                     )
             except BackendNotAvailable:
+                pass
+            except:
                 pass

@@ -65,7 +65,7 @@ color: rgb(255, 255, 255);
       <number>0</number>
      </property>
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="DeviceLabel" name="label">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -91,7 +91,7 @@ color: rgb(255, 255, 255);
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="../rc/resources.qrc">:/icons/images/icons/personal-computer.png</pixmap>
+        <pixmap>:/icons/images/icons/personal-computer.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -134,8 +134,13 @@ color: rgb(255, 255, 255);
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <customwidgets>
+  <customwidget>
+   <class>DeviceLabel</class>
+   <extends>QLabel</extends>
+   <header>parsec.core.gui.custom_widgets</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
  <connections/>
 </ui>

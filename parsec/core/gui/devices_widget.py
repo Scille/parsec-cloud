@@ -1,22 +1,32 @@
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import pyqtSignal, QCoreApplication, Qt
+from PyQt5.QtWidgets import QWidget, QMenu
 from PyQt5.QtGui import QPixmap
 
+from parsec.trustchain import certify_device_revocation
+from parsec.core.backend_connection import BackendNotAvailable, BackendCmdsBadResponse
+
 from parsec.core.gui.core_widget import CoreWidget
-from parsec.core.gui.custom_widgets import TaskbarButton
+from parsec.core.gui.custom_widgets import TaskbarButton, show_info, show_error, ask_question
 from parsec.core.gui.ui.devices_widget import Ui_DevicesWidget
 from parsec.core.gui.register_device_dialog import RegisterDeviceDialog
 from parsec.core.gui.ui.device_button import Ui_DeviceButton
 
 
 class DeviceButton(QWidget, Ui_DeviceButton):
-    def __init__(self, device_name, is_current_device, *args, **kwargs):
+    revoke_clicked = pyqtSignal(QWidget)
+
+    def __init__(self, device_name, is_current_device, is_revoked, revoked_on, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.revoked_on = revoked_on
+        self.label.is_revoked = is_revoked
         if is_current_device:
             self.label.setPixmap(QPixmap(":/icons/images/icons/personal-computer.png"))
         else:
             self.label.setPixmap(QPixmap(":/icons/images/icons/personal-computer.png"))
         self.label_device.setText(device_name)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.show_context_menu)
 
     @property
     def name(self):
@@ -25,6 +35,34 @@ class DeviceButton(QWidget, Ui_DeviceButton):
     @name.setter
     def name(self, value):
         self.label_device.setText(value)
+
+    @property
+    def is_revoked(self):
+        return self.label.is_revoked
+
+    @is_revoked.setter
+    def is_revoked(self, value):
+        self.label.is_revoked = value
+        self.label.repaint()
+
+    def show_context_menu(self, pos):
+        global_pos = self.mapToGlobal(pos)
+        menu = QMenu(self)
+        action = menu.addAction(QCoreApplication.translate("DeviceButton", "Show info"))
+        action.triggered.connect(self.show_info)
+        if not self.label.is_revoked:
+            action = menu.addAction(QCoreApplication.translate("DeviceButton", "Revoke"))
+            action.triggered.connect(self.revoke)
+        menu.exec_(global_pos)
+
+    def show_info(self):
+        text = "{}".format(self.name)
+        if self.label.is_revoked:
+            text += QCoreApplication.translate("DeviceButton", "\n\nThis device has been revoked.")
+        show_info(self, text)
+
+    def revoke(self):
+        self.revoke_clicked.emit(self)
 
 
 class DevicesWidget(CoreWidget, Ui_DevicesWidget):
@@ -53,6 +91,59 @@ class DevicesWidget(CoreWidget, Ui_DevicesWidget):
                 else:
                     w.show()
 
+    def revoke_device(self, device_button):
+        device_name = device_button.name
+        result = ask_question(
+            self,
+            QCoreApplication.translate("DevicesWidget", "Confirmation"),
+            QCoreApplication.translate(
+                "DevicesWidget", 'Are you sure you want to revoke device "{}" ?'
+            ).format(device_name),
+        )
+        if not result:
+            return
+
+        try:
+            certified_revocation = certify_device_revocation(
+                self.core.device.device_id,
+                self.core.device.signing_key,
+                "{}@{}".format(self.core.device.device_id.user_id, device_name),
+            )
+            self.portal.run(self.core.fs.backend_cmds.device_revoke, certified_revocation)
+            device_button.is_revoked = True
+            show_info(
+                self,
+                QCoreApplication.translate("DevicesWidget", 'Device "{}" has been revoked.').format(
+                    device_name
+                ),
+            )
+        except BackendCmdsBadResponse as exc:
+            if exc.status == "already_revoked":
+                show_error(
+                    self,
+                    QCoreApplication.translate(
+                        "DevicesWidget", 'Device "{}" has already been revoked.'
+                    ).format(device_name),
+                )
+            elif exc.status == "not_found":
+                show_error(
+                    self,
+                    QCoreApplication.translate("DevicesWidget", 'Device "{}" not found.').format(
+                        device_name
+                    ),
+                )
+            elif exc.status == "invalid_role" or exc.status == "invalid_certification":
+                show_error(
+                    self,
+                    QCoreApplication.translate(
+                        "DevicesWidget", "You don't have the permission to revoke this device."
+                    ),
+                )
+        except:
+            show_error(
+                self, QCoreApplication.translate("DevicesWidget", "Can not revoke this device.")
+            )
+
     def register_new_device(self):
         self.register_device_dialog = RegisterDeviceDialog(
             parent=self, portal=self.portal, core=self.core
@@ -60,13 +151,14 @@ class DevicesWidget(CoreWidget, Ui_DevicesWidget):
         self.register_device_dialog.exec_()
         self.reset()
 
-    def add_device(self, device_name, is_current_device):
+    def add_device(self, device_name, is_current_device, is_revoked, revoked_on):
         if device_name in self.devices:
             return
-        button = DeviceButton(device_name, is_current_device)
+        button = DeviceButton(device_name, is_current_device, is_revoked, revoked_on)
         self.layout_devices.addWidget(
             button, int(len(self.devices) / 4), int(len(self.devices) % 4)
         )
+        button.revoke_clicked.connect(self.revoke_device)
         self.devices.append(device_name)
 
     def reset(self):
@@ -81,11 +173,17 @@ class DevicesWidget(CoreWidget, Ui_DevicesWidget):
         if self.portal and self.core:
             try:
                 current_device = self.core.device
-                user = self.portal.run(self.core.backend_cmds.user_get, self.core.device.user_id)
-                for device in user[0].devices:
-                    self.add_device(device, is_current_device=device == current_device.device_name)
+                user_info, _ = self.portal.run(
+                    self.core.backend_cmds.user_get, self.core.device.user_id
+                )
+                for device_name, device in user_info.devices.items():
+                    self.add_device(
+                        device_name,
+                        is_current_device=device_name == current_device.device_name,
+                        is_revoked=bool(device.revocated_on),
+                        revoked_on=device.revocated_on,
+                    )
+            except BackendNotAvailable:
+                pass
             except:
-                import traceback
-
-                traceback.print_exc()
                 pass

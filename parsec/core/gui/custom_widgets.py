@@ -295,7 +295,7 @@ class PageLabel(QLabel):
         painter.end()
 
 
-class UserLabel(QLabel):
+class DeviceLabel(QLabel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_revoked = False
