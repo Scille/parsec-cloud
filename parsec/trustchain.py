@@ -265,14 +265,12 @@ def cascade_validate_devices(
         if devices:
             previous_device = devices[-1]
         else:
-            previous_device = {
-                "device_id": root_device_id,
-                "verify_key": root_verify_key.verify_key,
-            }
+            previous_device = {"device_id": root_device_id, "verify_key": root_verify_key}
         certifier_id, certified_payload = certified_extract_parts(certified_device)
-        _check_current_certifier_match_previous_certifier(
-            certifier_id, previous_device["device_id"]
-        )
+        if certifier_id:
+            _check_current_certifier_match_previous_certifier(
+                certifier_id, previous_device["device_id"]
+            )
         validated = validate_payload_certified_device(
             previous_device["verify_key"], certified_payload, now
         )

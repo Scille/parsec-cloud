@@ -2,8 +2,10 @@
 
 import pickle
 import hashlib
+from pendulum import Pendulum
 from typing import Tuple
 
+from parsec.trustchain import cascade_validate_devices
 from parsec.types import DeviceID, UserID
 from parsec.crypto import (
     encrypt_for,
@@ -70,7 +72,20 @@ class EncryptionManager(BaseAsyncComponent):
                 return
             else:
                 raise
-        # TODO: verify trustchain here
+
+        for device in user.devices:
+            trustchain_list = [user.devices[device].certified_device]
+            current_device = user.devices[device].device_certifier
+            while current_device:
+                trustchain_list.insert(0, trustchain[current_device].certified_device)
+                current_device = trustchain[current_device].device_certifier
+
+            cascade_validate_devices(
+                trustchain_list,
+                self.device.organization_id,
+                self.device.root_verify_key,
+                Pendulum.now(),
+            )
 
         # TODO: use schema here
         raw = pickle.dumps(user)

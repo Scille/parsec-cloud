@@ -138,7 +138,7 @@ def test_cascade_validate_devices_ok(alice, bob, mallory):
             bob.device_id, bob.signing_key, mallory.device_id, mallory.verify_key
         )
     result = cascade_validate_devices(
-        [certification_1, certification_2], alice.device_id, alice.signing_key, now
+        [certification_1, certification_2], alice.device_id, alice.verify_key, now
     )
     assert len(result) == 2
     # TODO check content?
@@ -156,5 +156,5 @@ def test_cascade_validate_devices_wrong(alice, bob, mallory):
         )
     with pytest.raises(TrustChainBrokenChainError):
         cascade_validate_devices(
-            [certification_1, certification_2], alice.device_id, alice.signing_key, now
+            [certification_1, certification_2], alice.device_id, alice.verify_key, now
         )
