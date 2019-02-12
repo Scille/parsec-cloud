@@ -3,14 +3,14 @@
 import trio
 import pytest
 
-
-from tests.common import create_shared_workspace
+from tests.common import create_shared_workspace, freeze_time
 
 
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ("folder", "file"))
 async def test_beacon_notif_on_new_entry_sync(type, running_backend, alice_core, alice2_fs):
-    await create_shared_workspace("/w", alice_core, alice2_fs)
+    with freeze_time("2000-01-01"):
+        await create_shared_workspace("/w", alice_core, alice2_fs)
     await alice_core.event_bus.spy.wait_for_backend_connection_ready()
 
     if type == "folder":

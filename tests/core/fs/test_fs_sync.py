@@ -43,7 +43,8 @@ async def test_new_workspace(running_backend, alice, alice_fs, alice2_fs):
         ]
     )
 
-    await alice2_fs.sync("/")
+    with freeze_time("2000-01-04"):
+        await alice2_fs.sync("/")
 
     stat = await alice_fs.stat("/w")
     assert stat == {
@@ -65,7 +66,8 @@ async def test_new_workspace(running_backend, alice, alice_fs, alice2_fs):
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ["file", "folder"])
 async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("w", alice_fs, alice2_fs)
+    with freeze_time("2000-01-01"):
+        await create_shared_workspace("w", alice_fs, alice2_fs)
     with freeze_time("2000-01-02"):
         if type == "file":
             await alice_fs.file_create("/w/foo")
@@ -83,7 +85,8 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
         ]
     )
 
-    await alice2_fs.sync("/w")
+    with freeze_time("2000-01-04"):
+        await alice2_fs.sync("/w")
 
     stat = await alice_fs.stat("/w/foo")
     if type == "file":
@@ -114,7 +117,8 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
 
 @pytest.mark.trio
 async def test_simple_sync(running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("/w", alice_fs, alice2_fs)
+    with freeze_time("2000-01-01"):
+        await create_shared_workspace("/w", alice_fs, alice2_fs)
 
     # 0) Make sure workspace is loaded for alice2
     # (otherwise won't get synced event during step 2)
@@ -217,7 +221,8 @@ async def test_fs_recursive_sync(running_backend, alice_fs):
 
 @pytest.mark.trio
 async def test_cross_sync(running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("/w", alice_fs, alice2_fs)
+    with freeze_time("2000-01-01"):
+        await create_shared_workspace("/w", alice_fs, alice2_fs)
 
     # 1) Both fs have things to sync
 
@@ -290,7 +295,8 @@ async def test_cross_sync(running_backend, alice_fs, alice2_fs):
 
 @pytest.mark.trio
 async def test_sync_growth_by_truncate_file(running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("/w", alice_fs, alice2_fs)
+    with freeze_time("2000-01-01"):
+        await create_shared_workspace("/w", alice_fs, alice2_fs)
 
     # Growth by truncate is special because no blocks are created to hold
     # the newly created null bytes
@@ -313,7 +319,8 @@ async def test_sync_growth_by_truncate_file(running_backend, alice_fs, alice2_fs
 @pytest.mark.trio
 async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     # TODO: break this test down to reduce complexity
-    await create_shared_workspace("/w", alice_fs, alice2_fs)
+    with freeze_time("2000-01-01"):
+        await create_shared_workspace("/w", alice_fs, alice2_fs)
 
     # 1) Create an existing item in both fs
 
@@ -322,8 +329,8 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
         await alice_fs.file_write("/w/foo.txt", b"v1")
         await alice_fs.folder_create("/w/bar")
 
-    await alice_fs.sync("/")
-    await alice2_fs.sync("/")
+        await alice_fs.sync("/")
+        await alice2_fs.sync("/")
 
     # 2) Make both fs diverged
 
@@ -530,11 +537,13 @@ async def test_create_already_existing_folder_vlob(running_backend, alice, alice
 
     alice_fs._syncer._backend_vlob_create = mocked_backend_vlob_create
 
-    with pytest.raises(BackendNotAvailable):
-        await alice_fs.sync("/w")
+    with freeze_time("2000-01-02"):
+        with pytest.raises(BackendNotAvailable):
+            await alice_fs.sync("/w")
 
     alice_fs._syncer._backend_vlob_create = vanilla_backend_vlob_create
-    await alice_fs.sync("/w")
+    with freeze_time("2000-01-02"):
+        await alice_fs.sync("/w")
 
     stat = await alice_fs.stat("/w")
     assert stat == {
@@ -550,14 +559,16 @@ async def test_create_already_existing_folder_vlob(running_backend, alice, alice
         "children": [],
     }
 
-    await alice2_fs.sync("/")
+    with freeze_time("2000-01-02"):
+        await alice2_fs.sync("/")
     stat2 = await alice2_fs.stat("/w")
     assert stat == stat2
 
 
 @pytest.mark.trio
 async def test_create_already_existing_file_vlob(running_backend, alice_fs, alice2_fs):
-    await create_shared_workspace("/w", alice_fs, alice2_fs)
+    with freeze_time("2000-01-01"):
+        await create_shared_workspace("/w", alice_fs, alice2_fs)
 
     # First create data locally
     with freeze_time("2000-01-02"):
@@ -629,7 +640,8 @@ async def test_create_already_existing_block(running_backend, alice_fs, alice2_f
     # eventual consistency.
 
     alice_fs._syncer._backend_block_create = vanilla_backend_block_create
-    await alice_fs.sync("/w/foo.txt")
+    with freeze_time("2000-01-03"):
+        await alice_fs.sync("/w/foo.txt")
 
     # Finally test this so-called consistency ;-)
 
@@ -647,7 +659,8 @@ async def test_create_already_existing_block(running_backend, alice_fs, alice2_f
         "size": 4,
     }
 
-    await alice2_fs.sync("/")
+    with freeze_time("2000-01-03"):
+        await alice2_fs.sync("/")
     data2 = await alice2_fs.file_read("/w/foo.txt")
     assert data2 == b"data"
 

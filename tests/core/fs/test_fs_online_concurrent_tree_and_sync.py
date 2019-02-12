@@ -12,7 +12,7 @@ from hypothesis_trio.stateful import (
     TrioRuleBasedStateMachine,
 )
 
-from tests.common import call_with_control
+from tests.common import call_with_control, freeze_time
 
 # The point is not to find breaking filenames here, so keep it simple
 st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
@@ -184,19 +184,20 @@ def test_fs_online_concurrent_tree_and_sync(
 
         @rule()
         async def sync_all_the_files(self):
-            # Send two syncs in a row given file conflict results are not synced
-            # once created
+            with freeze_time("2000-01-01"):
+                # Send two syncs in a row given file conflict results are not synced
+                # once created
 
-            # Sync 1
-            await self.fs1.sync("/")
-            await self.fs1.sync("/")
+                # Sync 1
+                await self.fs1.sync("/")
+                await self.fs1.sync("/")
 
-            # Sync 2
-            await self.fs2.sync("/")
-            await self.fs2.sync("/")
+                # Sync 2
+                await self.fs2.sync("/")
+                await self.fs2.sync("/")
 
-            # Sync 1
-            await self.fs1.sync("/")
+                # Sync 1
+                await self.fs1.sync("/")
 
             fs_dump_1 = self.fs1._local_folder_fs.dump()
             fs_dump_2 = self.fs2._local_folder_fs.dump()
