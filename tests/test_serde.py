@@ -1,7 +1,7 @@
 import pendulum
 import uuid
 
-from parsec.serde import packb, unpackb
+from parsec.serde import packb, unpackb, UnknownCheckedSchema, Serializer
 
 
 def test_pack_datetime():
@@ -18,3 +18,11 @@ def test_pack_uuid():
     unpacked = unpackb(packed)
     assert unpacked == data
     assert isinstance(unpacked["uuid"], uuid.UUID)
+
+
+def test_repr_serializer():
+    class MySchema(UnknownCheckedSchema):
+        pass
+
+    serializer = Serializer(MySchema)
+    assert repr(serializer) == "Serializer(schema=MySchema)"

@@ -67,8 +67,8 @@ class CmdSerializer:
     def __repr__(self):
         return (
             f"{self.__class__.__name__}("
-            f"{self.req_schema.__class__.__name__}, "
-            f"{self.rep_noerror_schema.__class__.__name__})"
+            f"req_schema={self._req_serializer}, "
+            f"rep_schema={self._rep_serializer})"
         )
 
     def __init__(self, req_schema_cls, rep_schema_cls):
