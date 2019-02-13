@@ -50,21 +50,16 @@ def init_cmd(db, force):
     help="Block store the clients should write into (default: mocked in memory). "
     "Set environment variables accordingly.",
 )
+@click.option("--ssl-keyfile", type=click.Path(exists=True, dir_okay=False), help="SSL key file")
 @click.option(
-    "--ssl-keyfile", default=None, type=click.Path(exists=True, dir_okay=False), help="SSL key file"
-)
-@click.option(
-    "--ssl-certfile",
-    default=None,
-    type=click.Path(exists=True, dir_okay=False),
-    help="SSL certificate file",
+    "--ssl-certfile", type=click.Path(exists=True, dir_okay=False), help="SSL certificate file"
 )
 @click.option(
     "--log-level", "-l", default="WARNING", type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR"))
 )
-@click.option("--log-format", "-f", default="CONSOLE", type=click.Choice(("CONSOLE", "JSON")))
+@click.option("--log-format", "-f", type=click.Choice(("CONSOLE", "JSON")))
 @click.option("--log-file", "-o")
-@click.option("--log-filter", default=None)
+@click.option("--log-filter")
 def run_cmd(
     host,
     port,

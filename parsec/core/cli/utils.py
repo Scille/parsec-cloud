@@ -18,16 +18,10 @@ from parsec.core.devices_manager import (
 def core_config_options(fn):
     @click.option("--config-dir", type=click.Path(exists=True, file_okay=False))
     @click.option(
-        "--ssl-keyfile",
-        default=None,
-        type=click.Path(exists=True, dir_okay=False),
-        help="SSL key file",
+        "--ssl-keyfile", type=click.Path(exists=True, dir_okay=False), help="SSL key file"
     )
     @click.option(
-        "--ssl-certfile",
-        default=None,
-        type=click.Path(exists=True, dir_okay=False),
-        help="SSL certificate file",
+        "--ssl-certfile", type=click.Path(exists=True, dir_okay=False), help="SSL certificate file"
     )
     @click.option(
         "--log-level",
@@ -35,9 +29,9 @@ def core_config_options(fn):
         default="WARNING",
         type=click.Choice(("DEBUG", "INFO", "WARNING", "ERROR")),
     )
-    @click.option("--log-format", "-f", default="CONSOLE", type=click.Choice(("CONSOLE", "JSON")))
+    @click.option("--log-format", "-f", type=click.Choice(("CONSOLE", "JSON")))
     @click.option("--log-file", "-o")
-    @click.option("--log-filter", default=None)
+    @click.option("--log-filter")
     @wraps(fn)
     def wrapper(config_dir, *args, **kwargs):
         assert "config" not in kwargs

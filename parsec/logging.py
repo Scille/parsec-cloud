@@ -4,7 +4,7 @@ import logging
 from raven.handlers.logging import SentryHandler
 
 
-def configure_logging(log_level="WARNING", log_format="CONSOLE", log_file=None, log_filter=None):
+def configure_logging(log_level="WARNING", log_format=None, log_file=None, log_filter=None):
 
     shared_processors = [
         structlog.stdlib.add_logger_name,
@@ -35,6 +35,8 @@ def configure_logging(log_level="WARNING", log_format="CONSOLE", log_file=None, 
         cache_logger_on_first_use=True,
     )
 
+    if not log_format:
+        log_format = "JSON" if log_file else "CONSOLE"
     if log_format == "CONSOLE":
         formatter_renderer = structlog.dev.ConsoleRenderer
     elif log_format == "JSON":
