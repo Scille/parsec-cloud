@@ -1,5 +1,9 @@
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtCore import QTimer, Qt, QCoreApplication
+from PyQt5.QtWidgets import QDialog, QCompleter
+
+from parsec.core.fs.sharing import SharingRecipientError
+
+from parsec.core.gui.custom_widgets import show_error, show_warning
 
 from parsec.core.gui.ui.workspace_sharing_dialog import Ui_WorkspaceSharingDialog
 
@@ -49,14 +53,14 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                 self,
                 QCoreApplication.translate(
                     "WorkspacesWidget", 'Can not share the workspace "{}" with this user.'
-                ).format(workspace_button.name),
+                ).format(self.workspace),
             )
         except:
             show_error(
                 self,
                 QCoreApplication.translate(
                     "WorkspacesWidget", 'Can not share the workspace "{}" with "{}".'
-                ).format(workspace_button.name, user),
+                ).format(self.workspace, user),
             )
 
     def validate(self):
