@@ -107,6 +107,24 @@ def test_password_load_not_found(local_device_manager):
         local_device_manager.load_device(OrganizationID("foo"), DeviceID("waldo@pc1"), decryptor)
 
 
+def test_same_device_id_different_orginazations(tmpdir, alice, otheralice):
+    path = Path(tmpdir)
+    devices = (alice, otheralice)
+
+    local_device_manager = LocalDevicesManager(path)
+
+    for device in devices:
+        encryptor = PasswordDeviceEncryptor(f"S3Cr37-{device.organization_id}")
+        local_device_manager.save_device(device, encryptor)
+
+    for device in devices:
+        decryptor = PasswordDeviceDecryptor(f"S3Cr37-{device.organization_id}")
+        device_reloaded = local_device_manager.load_device(
+            device.organization_id, device.device_id, decryptor
+        )
+        assert device == device_reloaded
+
+
 @pytest.fixture
 def mocked_pkcs11():
     PIN = "123456"
