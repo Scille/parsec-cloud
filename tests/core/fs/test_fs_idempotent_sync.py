@@ -9,6 +9,7 @@ from hypothesis_trio.stateful import (
     invariant,
     run_state_machine_as_test,
     TrioRuleBasedStateMachine,
+    multiple,
 )
 
 from tests.common import call_with_control
@@ -33,7 +34,9 @@ def test_fs_online_idempotent_sync(
 ):
     class FSOnlineIdempotentSync(TrioRuleBasedStateMachine):
         BadPath = Bundle("bad_path")
-        GoodPath = Bundle("good_path")
+        GoodFilePath = Bundle("good_file_path")
+        GoodFolderPath = Bundle("good_folder_path")
+        GoodPath = st.one_of(GoodFilePath, GoodFolderPath)
 
         async def start_fs(self, device):
             async def _fs_controlled_cb(started_cb):
@@ -71,20 +74,13 @@ def test_fs_online_idempotent_sync(
 
             return "/w/dummy"
 
-        @rule(
-            target=GoodPath,
-            path=st.sampled_from(
-                [
-                    "/",
-                    "/w",
-                    "/w/good_file.txt",
-                    "/w/good_folder/",
-                    "/w/good_folder/good_sub_file.txt",
-                ]
-            ),
-        )
-        async def init_good_path(self, path):
-            return path
+        @initialize(target=GoodFolderPath)
+        async def init_good_folder_pathes(self):
+            return multiple("/", "/w/", "/w/good_folder/")
+
+        @initialize(target=GoodFilePath)
+        async def init_good_file_pathes(self):
+            return multiple("/w/good_file.txt", "/w/good_folder/good_sub_file.txt")
 
         @rule(target=BadPath, type=st_entry_type, bad_parent=BadPath, name=st_entry_name)
         async def try_to_create_bad_path(self, type, bad_parent, name):
@@ -120,16 +116,16 @@ def test_fs_online_idempotent_sync(
             with pytest.raises(OSError):
                 await self.fs.move(src, dst)
 
-        @rule(src=GoodPath, dst=GoodPath.filter(lambda x: x.endswith("/")))
+        @rule(src=GoodPath, dst=GoodFolderPath)
         async def try_to_move_bad_dst(self, src, dst):
             # TODO: why so much special cases ?
-            if src == dst and src != "/":
+            if src == dst and src not in ("/", "/w/"):
                 await self.fs.move(src, dst)
             else:
                 with pytest.raises(OSError):
                     await self.fs.move(src, dst)
 
-        @rule(path=st.one_of(GoodPath))
+        @rule(path=GoodPath)
         async def sync(self, path):
             await self.fs.sync(path)
 
