@@ -27,7 +27,8 @@
            users_widget.py \
            validators.py \
            workspace_button.py \
-           workspaces_widget.py
+           workspaces_widget.py \
+           workspace_sharing_dialog.py
 
 
 TRANSLATIONS += tr/parsec_fr.ts \
@@ -62,6 +63,7 @@ FORMS += forms/main_window.ui \
          forms/notification_center_widget.ui \
          forms/menu_widget.ui \
          forms/notification_widget.ui \
-    forms/bootstrap_organization_widget.ui
+         forms/bootstrap_organization_widget.ui \
+         forms/workspace_sharing_dialog.ui
 
 RESOURCES += rc/resources.qrc

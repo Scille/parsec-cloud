@@ -207,7 +207,7 @@ background: none;
                <string/>
               </property>
               <property name="pixmap">
-               <pixmap resource="../rc/resources.qrc">:/icons/images/icons/right-chevron_black.png</pixmap>
+               <pixmap>:/icons/images/icons/right-chevron_black.png</pixmap>
               </property>
               <property name="scaledContents">
                <bool>true</bool>
@@ -454,7 +454,7 @@ background: none;
                <string/>
               </property>
               <property name="pixmap">
-               <pixmap resource="../rc/resources.qrc">:/icons/images/icons/right-chevron_black.png</pixmap>
+               <pixmap>:/icons/images/icons/right-chevron_black.png</pixmap>
               </property>
               <property name="scaledContents">
                <bool>true</bool>
@@ -679,7 +679,7 @@ padding-right: 10px;
                <string/>
               </property>
               <property name="pixmap">
-               <pixmap resource="../rc/resources.qrc">:/icons/images/icons/right-chevron_black.png</pixmap>
+               <pixmap>:/icons/images/icons/right-chevron_black.png</pixmap>
               </property>
               <property name="scaledContents">
                <bool>true</bool>
@@ -824,7 +824,7 @@ padding-right: 10px;
         <string>Save</string>
        </property>
        <property name="icon">
-        <iconset resource="../rc/resources.qrc">
+        <iconset>
          <normaloff>:/icons/images/icons/checked_white.png</normaloff>:/icons/images/icons/checked_white.png</iconset>
        </property>
        <property name="iconSize">
@@ -839,9 +839,7 @@ padding-right: 10px;
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>radio_download_no_limit</sender>
