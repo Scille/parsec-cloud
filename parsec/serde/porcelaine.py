@@ -6,7 +6,7 @@ from parsec.serde.exceptions import SerdeValidationError
 
 class Serializer:
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.req_schema.__class__.__name__})"
+        return f"{self.__class__.__name__}(schema={self.schema.__class__.__name__})"
 
     def __init__(
         self, schema_cls, validation_exc=SerdeValidationError, packing_exc=SerdePackingError
