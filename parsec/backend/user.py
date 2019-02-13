@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import trio
 import attr
 from typing import Dict, List, Optional, Tuple

@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from parsec.core.fs.fs import FS
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, FSEntryNotFound
 from parsec.core.fs.local_file_fs import FSBlocksLocalMiss, FSInvalidFileDescriptor

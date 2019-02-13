@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from typing import Tuple, NewType, Optional
 import pendulum
 from secrets import token_hex

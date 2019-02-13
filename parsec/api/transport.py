@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from uuid import uuid4
 from trio import BrokenResourceError
 from structlog import get_logger

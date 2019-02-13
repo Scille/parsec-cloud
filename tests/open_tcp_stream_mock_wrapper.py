@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from collections import defaultdict
 from contextlib import contextmanager
 from unittest.mock import patch

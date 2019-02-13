@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from .handler import PGHandler, init_db
 from .organization import PGOrganizationComponent
 from .blockstore import PGBlockstoreComponent

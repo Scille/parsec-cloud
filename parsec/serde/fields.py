@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from pendulum import Pendulum
 from uuid import UUID as _UUID
 from collections import Mapping

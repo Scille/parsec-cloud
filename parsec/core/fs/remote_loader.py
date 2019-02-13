@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from hashlib import sha256
 
 from parsec.crypto import decrypt_raw_with_secret_key
