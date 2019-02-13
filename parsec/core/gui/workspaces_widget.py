@@ -4,6 +4,9 @@ import pathlib
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal
 
+from parsec.core.fs import FSEntryNotFound
+from parsec.core.fs.sharing import SharingRecipientError
+
 from parsec.core.gui.custom_widgets import (
     show_error,
     show_warning,
@@ -15,8 +18,7 @@ from parsec.core.gui.custom_widgets import (
 from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget
-from parsec.core.fs import FSEntryNotFound
-from parsec.core.fs.sharing import SharingRecipientError
+from parsec.core.gui.workspace_sharing_dialog import WorkspaceSharingDialog
 
 
 class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
@@ -67,18 +69,8 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         return self.taskbar_buttons
 
     def show_workspace_details(self, workspace_button):
-        text = QCoreApplication.translate("WorkspacesWidget", "{}\n\nCreated by {}.\n").format(
-            workspace_button.name, workspace_button.creator
-        )
-        if len(workspace_button.participants) == 1:
-            text += QCoreApplication.translate("WorkspacesWidget", "Shared with one person.")
-        elif len(workspace_button.participants) > 1:
-            text += QCoreApplication.translate("WorkspacesWidget", "Shared with {} people.").format(
-                len(workspace_button.participants)
-            )
-        else:
-            text += QCoreApplication.translate("WorkspacesWidget", "Not shared.")
-        show_info(self, text)
+        d = WorkspaceSharingDialog(self.core, self.portal, workspace_button)
+        d.exec_()
 
     def delete_workspace(self, workspace_button):
         show_warning(self, QCoreApplication.translate("WorkspacesWidget", "Not yet implemented."))

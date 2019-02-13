@@ -1,11 +1,18 @@
 from PyQt5.QtCore import QTimer, Qt, QCoreApplication
-from PyQt5.QtWidgets import QDialog, QCompleter
+from PyQt5.QtWidgets import QDialog, QCompleter, QWidget
 
 from parsec.core.fs.sharing import SharingRecipientError
 
 from parsec.core.gui.custom_widgets import show_error, show_warning
 
 from parsec.core.gui.ui.workspace_sharing_dialog import Ui_WorkspaceSharingDialog
+from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
+
+
+class SharingWidget(QWidget, Ui_SharingWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setupUi(self)
 
 
 class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
@@ -31,9 +38,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
     def show_auto_complete(self):
         self.timer.stop()
         if len(self.line_edit_share.text()):
-            users = self.portal.run(
-                self.core.fs.backend_cmds.user_find, self.line_edit_text.text()
-            )
+            users = self.portal.run(self.core.fs.backend_cmds.user_find, self.line_edit_text.text())
             users = [u for u in users if u != self.core.device.user_id]
             completer = QCompleter(users)
             completer.setCaseSensitivity(Qt.CaseInsensitive)

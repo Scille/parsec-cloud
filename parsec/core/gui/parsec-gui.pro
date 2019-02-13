@@ -64,6 +64,7 @@ FORMS += forms/main_window.ui \
          forms/menu_widget.ui \
          forms/notification_widget.ui \
          forms/bootstrap_organization_widget.ui \
-         forms/workspace_sharing_dialog.ui
+         forms/workspace_sharing_dialog.ui \
+    forms/sharing_widget.ui
 
 RESOURCES += rc/resources.qrc
