@@ -116,17 +116,19 @@ async def _create_db_tables(conn):
         CREATE TABLE user_invitations (
             _id SERIAL PRIMARY KEY,
             organization INTEGER REFERENCES organizations (_id),
-            user_id VARCHAR(32) UNIQUE NOT NULL,
+            user_id VARCHAR(32) NOT NULL,
             creator INTEGER REFERENCES devices (_id) NOT NULL,
-            created_on TIMESTAMPTZ NOT NULL
+            created_on TIMESTAMPTZ NOT NULL,
+            UNIQUE(organization, user_id)
         );
 
         CREATE TABLE device_invitations (
             _id SERIAL PRIMARY KEY,
             organization INTEGER REFERENCES organizations (_id),
-            device_id VARCHAR(65) UNIQUE NOT NULL,
+            device_id VARCHAR(65) NOT NULL,
             creator INTEGER REFERENCES devices (_id) NOT NULL,
-            created_on TIMESTAMPTZ NOT NULL
+            created_on TIMESTAMPTZ NOT NULL,
+            UNIQUE(organization, device_id)
         );
 
         CREATE TABLE messages (
