@@ -366,6 +366,10 @@ class LocalFolderFS:
                 13, "Permission denied (workspace must be direct root child)", str(src), str(dst)
             )
 
+        # No point in raising a FileExistsError in this case
+        if src == dst:
+            return
+
         root_manifest = self.get_user_manifest()
         if dst.name in root_manifest.children:
             raise FileExistsError(17, "File exists", str(dst))
