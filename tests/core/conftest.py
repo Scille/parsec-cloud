@@ -13,18 +13,18 @@ from tests.common import freeze_time, InMemoryLocalDB
 
 
 @pytest.fixture
-def local_db_factory(initial_user_manifest_state):
+def local_db_factory(initial_user_manifest_state, tmpdir):
     local_dbs = {}
 
     def _local_db_factory(device, user_manifest_in_v0=False, force=True):
         device_id = device.device_id
         assert force or (device_id not in local_dbs)
 
-        local_db = InMemoryLocalDB()
+        local_db = InMemoryLocalDB(tmpdir)
         local_dbs[device_id] = local_db
         if not user_manifest_in_v0:
             user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
-            local_db.set(
+            local_db.set_user(
                 device.user_manifest_access, local_manifest_serializer.dumps(user_manifest)
             )
 
@@ -52,10 +52,10 @@ def bob_local_db(local_db_factory, bob):
 
 
 @pytest.fixture
-def encryption_manager_factory():
+def encryption_manager_factory(tmpdir):
     @asynccontextmanager
     async def _encryption_manager_factory(device, local_db=None):
-        local_db = local_db or InMemoryLocalDB()
+        local_db = local_db or InMemoryLocalDB(tmpdir)
         async with backend_cmds_factory(
             device.organization_addr, device.device_id, device.signing_key
         ) as cmds:

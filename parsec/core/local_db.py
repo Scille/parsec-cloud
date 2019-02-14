@@ -2,8 +2,12 @@
 
 import os
 from pathlib import Path
+import pendulum
+from pendulum import Pendulum
 from shutil import rmtree
+import sqlite3
 
+from parsec.core.types.access import ManifestAccess
 from parsec.crypto import encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
 
 # TODO: shouldn't use core.fs.types.Acces here
@@ -13,6 +17,7 @@ Access = None  # TODO: hack to fix recursive import
 
 # TODO: should be in config.py
 DEFAULT_MAX_CACHE_SIZE = 128 * 1024 * 1024
+DEFAULT_BLOCK_SIZE = 2 ** 16
 
 
 class LocalDBError(Exception):
@@ -29,65 +34,198 @@ class LocalDB:
         self._path = Path(path)
         self.max_cache_size = max_cache_size
         self._path.mkdir(parents=True, exist_ok=True)
-        self._cache = self._path / "cache"
-        self._cache.mkdir(parents=True, exist_ok=True)
-        self._placeholders = self._path / "placeholders"
-        self._placeholders.mkdir(parents=True, exist_ok=True)
+        self._db_files = self._path / "cache"
+        self._db_files.mkdir(parents=True, exist_ok=True)
+        self.conn = sqlite3.connect(str(self._path / "cache.sqlite"))
+        self.create_db()
+        self.nb_blocks = self.get_nb_blocks()
+
+    def create_db(self):
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """CREATE TABLE IF NOT EXISTS users
+                (_id SERIAL PRIMARY KEY,
+                 user_id UUID NOT NULL,
+                 blob BYTEA NOT NULL,
+                 created_on TIMESTAMPTZ);"""
+        )
+        cursor.execute(
+            """CREATE TABLE IF NOT EXISTS vlobs
+                (_id SERIAL PRIMARY KEY,
+                 vlob_id UUID NOT NULL,
+                 blob BYTEA NOT NULL,
+                 deletable BOOLEAN NOT NULL);"""
+        )
+        cursor.execute(
+            """CREATE TABLE IF NOT EXISTS blocks
+                (block_id INT PRIMARY KEY NOT NULL,
+                 size INT NOT NULL,
+                 deletable BOOLEAN NOT NULL,
+                 offline BOOLEAN NOT NULL,
+                 accessed_on TIMESTAMPTZ,
+                 file_path TEXT NOT NULL);"""
+        )
+        cursor.close()
 
     @property
     def path(self):
         return str(self._path)
 
+    # parsec/core/encryption_manager.py:        self.local_db.set_user(self._build_remote_user_local_access(user_id), raw)
+    # parsec/core/encryption_manager.py:            raw_user_data = self.local_db.get_user(self._build_remote_user_local_access(user_id))
+    # parsec/core/encryption_manager.py:            raw_user_data = self.local_db.get_user(
+    # parsec/core/fs/remote_loader.py:        self.local_db.set_block(access, block)
+    # parsec/core/fs/remote_loader.py:        self.local_db.set_manifest(access, raw_local_manifest)
+    # parsec/core/fs/local_file_fs.py:        return self.local_db.get_block(access)
+    # parsec/core/fs/local_file_fs.py:        return self.local_db.set_block(access, block, deletable)
+    # parsec/core/fs/local_folder_fs.py:            raw = self._local_db.get_manifest(access)
+    # parsec/core/fs/local_folder_fs.py:        self._local_db.set_manifest(access, raw, False)
+
+    def get_nb_blocks(self):
+        cursor = self.conn.cursor()
+        res = cursor.execute("SELECT COUNT(block_id) FROM blocks WHERE deletable = 1")
+        res = res.fetchone()
+        cursor.close()
+        return res[0]
+
     def get_cache_size(self):
-        cache = str(self._cache)
+        cursor = self.conn.cursor()
+        res = cursor.execute("SELECT SUM(size) FROM blocks WHERE deletable = 1")
+        res = res.fetchone()
+        cursor.close()
+        return res[0] if res[0] else 0
+
+    def get_user(self, access: Access):
+        cursor = self.conn.cursor()
+        res = cursor.execute(
+            "SELECT user_id, blob, created_on FROM users WHERE user_id = ?", (str(access.id),)
+        )
+        user = res.fetchone()
+        cursor.close()
+        if not user or pendulum.parse(user[2]).add(hours=1) <= Pendulum.now():
+            raise LocalDBMissingEntry(access)
+        return decrypt_raw_with_secret_key(access.key, user[1])
+
+    def set_user(self, access: Access, raw: bytes):
+        assert isinstance(raw, (bytes, bytearray))
+        ciphered = encrypt_raw_with_secret_key(access.key, raw)
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM users WHERE user_id = ? ", (str(access.id),))
+        cursor.execute(
+            """INSERT INTO users (user_id, blob, created_on)
+               VALUES (?, ?, ?)""",
+            (str(access.id), ciphered, str(Pendulum.now())),
+        )
+        cursor.close()
+
+    def get_manifest(self, access: Access):
+        cursor = self.conn.cursor()
+        res = cursor.execute("SELECT vlob_id, blob FROM vlobs WHERE vlob_id = ?", (str(access.id),))
+        vlob = res.fetchone()
+        cursor.close()
+        if not vlob:
+            raise LocalDBMissingEntry(access)
+        return decrypt_raw_with_secret_key(access.key, vlob[1])
+
+    def set_manifest(self, access: Access, raw: bytes, deletable: bool = True):
+        assert isinstance(raw, (bytes, bytearray))
+        ciphered = encrypt_raw_with_secret_key(access.key, raw)
+
+        if deletable:
+            pass
+            # TODO clean
+            # if self.get_block_cache_size() + len(ciphered) > self.max_cache_size:
+            #     self.run_block_garbage_collector()
+
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM vlobs WHERE vlob_id = ? ", (str(access.id),))
+        cursor.execute(
+            """INSERT INTO vlobs (vlob_id, blob, deletable)
+               VALUES (?, ?, ?)""",
+            (str(access.id), ciphered, deletable),
+        )
+        cursor.close()
+
+    def get_block_cache_size(self):
+        cache = str(self._db_files)
         return sum(
             os.path.getsize(os.path.join(cache, f))
             for f in os.listdir(cache)
             if os.path.isfile(os.path.join(cache, f))
         )
 
-    def _find(self, access):
-        try:
-            return next(
-                (
-                    directory / str(access.id)
-                    for directory in [self._cache, self._placeholders]
-                    if (directory / str(access.id)).exists()
-                )
-            )
-        except StopIteration:
-            pass
-
-    def get(self, access: Access):
-        file = self._find(access)
+    def get_block(self, access: Access):
+        file = self._db_files / str(access.id)
         if not file:
             raise LocalDBMissingEntry(access)
-        ciphered = file.read_bytes()
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """UPDATE blocks SET accessed_on = ? WHERE block_id = ? and deletable = 0""",
+            (str(Pendulum.now()), str(access.id)),
+        )
+        cursor.close()
+        ciphered = self._read_file(access)
         return decrypt_raw_with_secret_key(access.key, ciphered)
 
-    def set(self, access: Access, raw: bytes, deletable: bool = True):
+    def set_block(self, access: Access, raw: bytes, deletable: bool = True):
         assert isinstance(raw, (bytes, bytearray))
 
         ciphered = encrypt_raw_with_secret_key(access.key, raw)
-
         if deletable:
-            if self.get_cache_size() + len(ciphered) > self.max_cache_size:
-                self.run_garbage_collector()
+            if self.nb_blocks + 1 > DEFAULT_MAX_CACHE_SIZE / DEFAULT_BLOCK_SIZE:
+                cursor = self.conn.cursor()
+                cursor.execute("SELECT block_id from blocks WHERE deletable = 1 limit 1")
+                block_id_to_delete = cursor.fetchone()[0]
+                cursor.execute(
+                    "DELETE FROM blocks WHERE deletable = 1 and block_id IN (SELECT block_id from blocks WHERE block_id = ?)",
+                    (block_id_to_delete,),
+                )
+                cursor.close()
+                access_to_delete = ManifestAccess(block_id_to_delete)
+                self.clear_block(access_to_delete)
+                self.nb_blocks -= 1
+        file = self._db_files / str(access.id)
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM blocks WHERE block_id = ? ", (str(access.id),))
+        cursor.execute(
+            """INSERT INTO blocks (block_id, size, deletable, offline, file_path)
+               VALUES (?, ?, ?, ?, ?)""",
+            (str(access.id), len(ciphered), deletable, False, str(file)),
+        )
+        cursor.close()
+        #  TODO offline
+        self._write_file(access, ciphered)
+        self.nb_blocks += 1
 
+    def clear_block(self, access: Access):
+        file = self._db_files / str(access.id)
+        if file.exists():
+            file.unlink()
+        else:
+            raise LocalDBMissingEntry(access)
+
+    def clear_dirty_vlob_blocks(self):
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM vlobs WHERE deletable = 0")
+        cursor.execute("DELETE FROM blocks WHERE deletable = 0")
+        cursor.close()
+
+    def _write_file(self, access: Access, content: bytes):
         try:
-            self.clear(access)
+            self.clear_block(access)
         except LocalDBMissingEntry:
             pass
-        file = self._cache / str(access.id) if deletable else self._placeholders / str(access.id)
-        file.write_bytes(ciphered)
+        file = self._db_files / str(access.id)
+        file.write_bytes(content)
 
-    def clear(self, access: Access):
-        file = self._find(access)
-        if not file:
+    def _read_file(self, access: Access):
+        file = self._db_files / str(access.id)
+        if file.exists():
+            return file.read_bytes()
+        else:
             raise LocalDBMissingEntry(access)
-        file.unlink()
 
-    def run_garbage_collector(self):
-        # TODO: really quick'n dirty GC...
-        rmtree(str(self._cache))
-        self._cache.mkdir(parents=True, exist_ok=True)
+    def run_block_garbage_collector(self):
+        # TODO: really quick'n deletable GC...
+        rmtree(str(self._db_files))
+        self._db_files.mkdir(parents=True, exist_ok=True)

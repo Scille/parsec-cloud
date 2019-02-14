@@ -3,6 +3,7 @@
 import trio
 import attr
 import pendulum
+import sqlite3
 from unittest.mock import Mock
 from contextlib import ExitStack
 from inspect import iscoroutinefunction
@@ -14,21 +15,25 @@ from parsec.api.transport import Transport, TransportError
 
 
 class InMemoryLocalDB(LocalDB):
-    def __init__(self):
+    def __init__(self, tmpdir):
         self._data = {}
+        self.conn = sqlite3.connect(f"{tmpdir}/cache.sqlite")
+        self.create_db()
 
-    def get(self, access):
+    def _read_file(self, access):
+        file = self._db_files / str(access.id)
         try:
-            return self._data[access.id]
+            return self._data[file]
         except KeyError:
             raise LocalDBMissingEntry(access)
 
-    def set(self, access, raw: bytes, deletable=False):
+    def _write_file(self, access, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
-        self._data[access.id] = raw
+        file = self._db_files / str(access.id)
+        self._data[file] = raw
 
-    def clear(self, access):
-        del self._data[access.id]
+    def clear_block(self, file):
+        del self._data[file]
 
 
 def freeze_time(time):
