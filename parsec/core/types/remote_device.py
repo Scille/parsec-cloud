@@ -2,6 +2,7 @@
 
 import attr
 import pendulum
+from typing import Optional
 
 from parsec.types import DeviceID, DeviceName, UserID
 from parsec.trustchain import (
@@ -95,4 +96,15 @@ class RemoteUser:
         return unsecure_certified_user_extract_public_key(self.certified_user)
 
     def is_revocated(self) -> bool:
-        return all(bool(d.revocated_on) for d in self.devices.values())
+        now = pendulum.now()
+        for d in self.devices.values():
+            if not d.revocated_on or d.revocated_on > now:
+                return False
+        return True
+
+    def get_revocated_on(self) -> Optional[pendulum.Pendulum]:
+        revocations = [d.revocated_on for d in self.devices.values()]
+        if not revocations or None in revocations:
+            return None
+        else:
+            return sorted(revocations)[-1]

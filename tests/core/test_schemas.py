@@ -4,8 +4,9 @@ import pytest
 from uuid import UUID
 from pendulum import datetime
 
-from parsec.types import DeviceID
+from parsec.types import DeviceID, UserID
 from parsec.core.types.access import BlockAccess, BlockAccessSchema, ManifestAccess
+from parsec.core.types.remote_device import RemoteUser, RemoteDevicesMapping, RemoteDevice
 from parsec.core.types.remote_manifests import (
     FileManifest,
     FileManifestSchema,
@@ -19,8 +20,64 @@ from parsec.core.types.local_manifests import (
     LocalFolderManifestSchema,
 )
 
+from tests.common import freeze_time
+
 
 REMOVE_FIELD = object()
+
+
+def test_user_revocation_access():
+    yesterday = datetime(2000, 1, 1)
+    tomorrow = datetime(2000, 1, 3)
+
+    dev_not_revocated = RemoteDevice(
+        device_id=DeviceID("user@dev_not_revocated"),
+        certified_device=b"<certif>",
+        device_certifier=None,
+    )
+    dev_revocated_yesterday = RemoteDevice(
+        device_id=DeviceID("user@dev_revocated_yesterday"),
+        certified_device=b"<certif>",
+        device_certifier=None,
+        revocated_on=yesterday,
+        certified_revocation=b"<certif>",
+    )
+    dev_revocated_tomorrow = RemoteDevice(
+        device_id=DeviceID("user@dev_revocated_tomorrow"),
+        certified_device=b"<certif>",
+        device_certifier=None,
+        revocated_on=tomorrow,
+        certified_revocation=b"<certif>",
+    )
+
+    def _user_factory(*devices):
+        return RemoteUser(
+            user_id=UserID("user"),
+            certified_user=b"<certif>",
+            user_certifier=None,
+            devices=RemoteDevicesMapping(*devices),
+        )
+
+    with freeze_time("2000-01-02"):
+        user = _user_factory()
+        assert user.is_revocated()
+        assert user.get_revocated_on() is None
+
+        user = _user_factory(dev_revocated_yesterday)
+        assert user.is_revocated()
+        assert user.get_revocated_on() == yesterday
+
+        user = _user_factory(dev_not_revocated)
+        assert not user.is_revocated()
+        assert user.get_revocated_on() is None
+
+        user = _user_factory(dev_not_revocated, dev_revocated_tomorrow)
+        assert not user.is_revocated()
+        assert user.get_revocated_on() is None
+
+        user = _user_factory(dev_revocated_yesterday, dev_revocated_tomorrow)
+        assert not user.is_revocated()
+        assert user.get_revocated_on() == tomorrow
 
 
 class TestBlockAccessSchema:

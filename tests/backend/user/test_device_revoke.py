@@ -25,16 +25,40 @@ async def device_revoke(sock, **kwargs):
 
 @pytest.mark.trio
 async def test_device_revoke_ok(
-    backend, backend_sock_factory, alice_backend_sock, alice, bob, bob_revocation
+    backend, backend_sock_factory, bob_backend_sock, alice, alice2, bob
 ):
-    await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
+    await backend.user.set_user_admin(bob.organization_id, bob.user_id, True)
 
-    rep = await device_revoke(alice_backend_sock, certified_revocation=bob_revocation)
-    assert rep == {"status": "ok"}
+    now = pendulum.Pendulum(2000, 10, 11)
+    alice_revocation = certify_device_revocation(
+        bob.device_id, bob.signing_key, alice.device_id, now=now
+    )
+    alice2_revocation = certify_device_revocation(
+        bob.device_id, bob.signing_key, alice2.device_id, now=now
+    )
 
-    # Make sure bob cannot connect from now on
+    # Revoke Alice's first device
+    with freeze_time(now):
+        rep = await device_revoke(bob_backend_sock, certified_revocation=alice_revocation)
+    assert rep == {"status": "ok", "user_revocated_on": None}
+
+    # Alice cannot connect from now on...
     with pytest.raises(HandshakeRevokedDevice):
-        async with backend_sock_factory(backend, bob):
+        async with backend_sock_factory(backend, alice):
+            pass
+
+    # ...but Alice2 can
+    async with backend_sock_factory(backend, alice2):
+        pass
+
+    # Revoke Alice's second device (should automatically revoke the user)
+    with freeze_time(now):
+        rep = await device_revoke(bob_backend_sock, certified_revocation=alice2_revocation)
+    assert rep == {"status": "ok", "user_revocated_on": now}
+
+    # Alice2 cannot connect from now on...
+    with pytest.raises(HandshakeRevokedDevice):
+        async with backend_sock_factory(backend, alice2):
             pass
 
 
@@ -56,7 +80,7 @@ async def test_device_revoke_own_device_not_admin(
     )
 
     rep = await device_revoke(alice_backend_sock, certified_revocation=alice2_revocation)
-    assert rep == {"status": "ok"}
+    assert rep == {"status": "ok", "user_revocated_on": None}
 
     # Make sure alice2 cannot connect from now on
     with pytest.raises(HandshakeRevokedDevice):
@@ -95,7 +119,7 @@ async def test_device_revoke_already_revoked(
     await backend.user.set_user_admin(alice.organization_id, alice.user_id, True)
 
     rep = await device_revoke(alice_backend_sock, certified_revocation=bob_revocation)
-    assert rep == {"status": "ok"}
+    assert rep["status"] == "ok"
 
     rep = await device_revoke(alice_backend_sock, certified_revocation=bob_revocation)
     assert rep == {
