@@ -401,6 +401,7 @@ class LocalFolderFS:
 
         parent_manifest = parent_manifest.evolve_children_and_mark_updated({path.name: None})
         self.set_manifest(parent_access, parent_manifest)
+        self.mark_outdated_manifest(item_access)
         self.event_bus.send("fs.entry.updated", id=parent_access.id)
 
     def delete(self, path: FsPath) -> None:
