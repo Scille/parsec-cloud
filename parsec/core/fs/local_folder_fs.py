@@ -501,9 +501,11 @@ class LocalFolderFS:
             moved_access = self._recursive_manifest_copy(src_access, src_manifest)
 
             if not delete_src:
-                parent_manifest = parent_manifest.evolve_children({dst.name: moved_access})
+                parent_manifest = parent_manifest.evolve_children_and_mark_updated(
+                    {dst.name: moved_access}
+                )
             else:
-                parent_manifest = parent_manifest.evolve_children(
+                parent_manifest = parent_manifest.evolve_children_and_mark_updated(
                     {dst.name: moved_access, src.name: None}
                 )
             self.set_manifest(parent_access, parent_manifest)
