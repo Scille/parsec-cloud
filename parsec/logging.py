@@ -4,7 +4,7 @@ import logging
 from raven.handlers.logging import SentryHandler
 
 
-def configure_logging(log_level="WARNING", log_format=None, log_file=None, log_filter=None):
+def configure_logging(log_level=None, log_format=None, log_file=None, log_filter=None):
 
     shared_processors = [
         structlog.stdlib.add_logger_name,
@@ -56,7 +56,8 @@ def configure_logging(log_level="WARNING", log_format=None, log_file=None, log_f
 
     root_logger = logging.getLogger()
     root_logger.addHandler(handler)
-    root_logger.setLevel(log_level.upper())
+    if log_level is not None:
+        root_logger.setLevel(log_level.upper())
 
 
 def configure_sentry_logging(sentry_url):
