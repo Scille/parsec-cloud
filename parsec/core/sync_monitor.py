@@ -61,7 +61,7 @@ class SyncMonitor(BaseAsyncComponent):
             self.event_bus.send("sync_monitor.disconnected")
 
     async def _monitoring(self):
-        with trio.open_cancel_scope() as self._monitoring_cancel_scope:
+        with trio.CancelScope() as self._monitoring_cancel_scope:
             self.event_bus.send("sync_monitor.reconnection_sync.started")
             try:
                 await self.fs.full_sync()

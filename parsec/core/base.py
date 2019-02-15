@@ -50,7 +50,7 @@ def taskify(func, *args, **kwargs):
 
         stopped = trio.Event()
         try:
-            with trio.open_cancel_scope() as cancel_scope:
+            with trio.CancelScope() as cancel_scope:
 
                 async def stop():
                     cancel_scope.cancel()

@@ -122,7 +122,7 @@ class BackendEventsManager:
                 return
 
     async def _event_pump(self, *, task_status=trio.TASK_STATUS_IGNORED):
-        with trio.open_cancel_scope() as cancel_scope:
+        with trio.CancelScope() as cancel_scope:
             async with backend_cmds_factory(
                 self.device.organization_addr,
                 self.device.device_id,

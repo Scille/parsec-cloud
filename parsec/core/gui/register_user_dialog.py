@@ -19,7 +19,7 @@ async def _handle_invite_and_create_user(
     queue, qt_on_done, qt_on_error, core, username, token, is_admin
 ):
     try:
-        with trio.open_cancel_scope() as cancel_scope:
+        with trio.CancelScope() as cancel_scope:
             queue.put(cancel_scope)
             await invite_and_create_user(core.device, core.backend_cmds, username, token, is_admin)
             qt_on_done.emit()
