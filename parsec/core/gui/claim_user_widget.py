@@ -36,7 +36,7 @@ async def _trio_claim_user(
 ):
     portal = trio.BlockingTrioPortal()
     queue.put(portal)
-    with trio.open_cancel_scope() as cancel_scope:
+    with trio.CancelScope() as cancel_scope:
         queue.put(cancel_scope)
         try:
             async with backend_anonymous_cmds_factory(addr) as cmds:

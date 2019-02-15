@@ -132,7 +132,7 @@ async def _join_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped, st
         except OSError:
             pass
 
-    with trio.open_cancel_scope(shield=True):
+    with trio.CancelScope(shield=True):
         if stop:
             logger.info("Stopping fuse thread...")
             fuse_operations.schedule_exit()

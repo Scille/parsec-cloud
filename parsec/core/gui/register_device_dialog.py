@@ -19,7 +19,7 @@ async def _handle_invite_and_create_device(
     queue, qt_on_done, qt_on_error, core, device_name, token
 ):
     try:
-        with trio.open_cancel_scope() as cancel_scope:
+        with trio.CancelScope() as cancel_scope:
             queue.put(cancel_scope)
             await invite_and_create_device(core.device, core.backend_cmds, device_name, token)
             qt_on_done.emit()

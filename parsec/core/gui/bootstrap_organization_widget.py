@@ -36,7 +36,7 @@ async def _trio_bootstrap_organization(
 ):
     portal = trio.BlockingTrioPortal()
     queue.put(portal)
-    with trio.open_cancel_scope() as cancel_scope:
+    with trio.CancelScope() as cancel_scope:
         queue.put(cancel_scope)
         try:
             root_signing_key = SigningKey.generate()
