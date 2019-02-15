@@ -14,8 +14,8 @@ from parsec.core.backend_connection import (
     backend_listen_events,
     monitor_backend_connection,
 )
+from parsec.core.mountpoint import mountpoint_manager
 from parsec.core.encryption_manager import EncryptionManager
-from parsec.core.mountpoint import mountpoint_manager_factory
 from parsec.core.beacons_monitor import monitor_beacons
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
@@ -33,13 +33,10 @@ class LoggedCore:
     local_db = attr.ib()
     event_bus = attr.ib()
     encryption_manager = attr.ib()
-    mountpoint_manager = attr.ib()
+    mountpoint = attr.ib()
+    mountpoint_task = attr.ib()
     backend_cmds = attr.ib()
     fs = attr.ib()
-
-    @property
-    def mountpoint(self):
-        return self.mountpoint_manager.mountpoint
 
 
 @asynccontextmanager
@@ -85,27 +82,23 @@ async def logged_core_factory(
                 await monitor_nursery.start(monitor_messages, backend_online, fs, event_bus)
                 await monitor_nursery.start(monitor_sync, backend_online, fs, event_bus)
 
-                # TODO: rework mountpoint manager to avoid init/teardown
-                mountpoint_manager = mountpoint_manager_factory(fs, event_bus)
-                await mountpoint_manager.init(monitor_nursery)
-                if config.mountpoint_enabled:
-                    if not mountpoint:
-                        mountpoint = config.mountpoint_base_dir / device.device_id
-                    await mountpoint_manager.start(mountpoint)
+                if not config.mountpoint_enabled:
+                    mountpoint = None
+                elif mountpoint is None:
+                    mountpoint = config.mountpoint_base_dir / device.device_id
 
-                try:
+                async with mountpoint_manager(
+                    fs, event_bus, mountpoint, monitor_nursery
+                ) as mountpoint_task:
                     yield LoggedCore(
                         config=config,
                         device=device,
                         local_db=local_db,
                         event_bus=event_bus,
                         encryption_manager=encryption_manager,
-                        mountpoint_manager=mountpoint_manager,
+                        mountpoint=mountpoint,
+                        mountpoint_task=mountpoint_task,
                         backend_cmds=backend_cmds_pool,
                         fs=fs,
                     )
                     root_nursery.cancel_scope.cancel()
-
-                finally:
-                    if config.mountpoint_enabled:
-                        await mountpoint_manager.teardown()
