@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>438</width>
-    <height>39</height>
+    <height>35</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -20,7 +20,12 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QCheckBox::indicator
+   <string notr="true">QWidget#SharingWidget
+{
+background-color: rgb(255, 255, 255);
+}
+
+QCheckBox::indicator
 {
 width: 15px;
 height: 15px;
@@ -43,13 +48,13 @@ image: url(:/icons/images/icons/checked.png)
     <number>10</number>
    </property>
    <property name="topMargin">
-    <number>0</number>
+    <number>5</number>
    </property>
    <property name="rightMargin">
     <number>10</number>
    </property>
    <property name="bottomMargin">
-    <number>0</number>
+    <number>5</number>
    </property>
    <item>
     <widget class="QLabel" name="label_name">

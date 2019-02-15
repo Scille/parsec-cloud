@@ -104,7 +104,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 try:
                     portal = trio.BlockingTrioPortal()
                     self.core_queue.put(portal)
-                    with trio.open_cancel_scope() as cancel_scope:
+                    with trio.CancelScope() as cancel_scope:
                         self.core_queue.put(cancel_scope)
                         async with logged_core_factory(
                             self.core_config, self.current_device
@@ -202,6 +202,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         except (RuntimeError, MountpointConfigurationError):
             show_error(self, QCoreApplication.translate("MainWindow", "Mountpoint already in use."))
         except Exception as exc:
+            import traceback
+
+            traceback.print_exc()
             show_error(
                 self,
                 QCoreApplication.translate("MainWindow", "Can not login ({})").format(type(exc)),

@@ -5,14 +5,12 @@ import pathlib
 from PyQt5.QtCore import QCoreApplication, pyqtSignal
 
 from parsec.core.fs import FSEntryNotFound
-from parsec.core.fs.sharing import SharingRecipientError
 
 from parsec.core.gui.custom_widgets import (
     show_error,
     show_warning,
     show_info,
     get_text,
-    get_user_name,
     TaskbarButton,
 )
 from parsec.core.gui.core_widget import CoreWidget
@@ -69,8 +67,18 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         return self.taskbar_buttons
 
     def show_workspace_details(self, workspace_button):
-        d = WorkspaceSharingDialog(self.core, self.portal, workspace_button)
-        d.exec_()
+        text = QCoreApplication.translate("WorkspacesWidget", "{}\n\nCreated by {}.\n").format(
+            workspace_button.name, workspace_button.creator
+        )
+        if len(workspace_button.participants) == 1:
+            text += QCoreApplication.translate("WorkspacesWidget", "Shared with one person.")
+        elif len(workspace_button.participants) > 1:
+            text += QCoreApplication.translate("WorkspacesWidget", "Shared with {} people.").format(
+                len(workspace_button.participants)
+            )
+        else:
+            text += QCoreApplication.translate("WorkspacesWidget", "Not shared.")
+        show_info(self, text)
 
     def delete_workspace(self, workspace_button):
         show_warning(self, QCoreApplication.translate("WorkspacesWidget", "Not yet implemented."))
@@ -104,40 +112,8 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
             )
 
     def share_workspace(self, workspace_button):
-        current_user = self.core.device.user_id
-        user = get_user_name(
-            portal=self.portal,
-            core=self.core,
-            parent=self,
-            title=QCoreApplication.translate("WorkspacesWidget", "Share a workspace"),
-            message=QCoreApplication.translate(
-                "WorkspacesWidget", "Give a user name to share the workspace {} with."
-            ).format(workspace_button.name),
-            exclude=[current_user],
-        )
-        if not user:
-            return
-        try:
-            self.portal.run(self.core.fs.share, "/" + workspace_button.name, user)
-            show_info(
-                self,
-                QCoreApplication.translate("WorkspacesWidget", "The workspaces has been shared."),
-            )
-            workspace_button.participants = workspace_button.participants + [user]
-        except SharingRecipientError:
-            show_warning(
-                self,
-                QCoreApplication.translate(
-                    "WorkspacesWidget", 'Can not share the workspace "{}" with this user.'
-                ).format(workspace_button.name),
-            )
-        except:
-            show_error(
-                self,
-                QCoreApplication.translate(
-                    "WorkspacesWidget", 'Can not share the workspace "{}" with "{}".'
-                ).format(workspace_button.name, user),
-            )
+        d = WorkspaceSharingDialog(workspace_button.name, self.core, self.portal)
+        d.exec_()
 
     def create_workspace_clicked(self):
         workspace_name = get_text(
