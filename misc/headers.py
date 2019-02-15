@@ -7,7 +7,9 @@ import re
 import argparse
 
 HEADER = "# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS\n\n"
-HEADER_RE = re.compile("^# Parsec Cloud \(https://parsec.cloud\) Copyright \(c\) AGPLv3 2019 Scille SAS$")
+HEADER_RE = re.compile(
+    r"^# Parsec Cloud \(https://parsec.cloud\) Copyright \(c\) AGPLv3 2019 Scille SAS$"
+)
 
 
 def get_files():
@@ -25,7 +27,7 @@ def get_files():
 def check_headers():
     ret = 0
     for f in get_files():
-        with open(f, 'r') as fd:
+        with open(f, "r") as fd:
             if not HEADER_RE.match(fd.readline()[:-1]):
                 print("Missing header", f)
                 ret = 1
@@ -35,12 +37,12 @@ def check_headers():
 def add_headers():
     for f in get_files():
         data = None
-        with open(f, 'r') as fd:
+        with open(f, "r") as fd:
             first_line = fd.readline()[:-1]
             if HEADER_RE.match(first_line):
                 continue
             data = fd.read()
-        with open(f, 'w') as fd:
+        with open(f, "w") as fd:
             fd.write(HEADER)
             fd.write(first_line)
             fd.write("\n")
