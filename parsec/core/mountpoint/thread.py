@@ -74,7 +74,13 @@ async def run_fuse_in_thread(
             def _run_fuse_thread():
                 try:
                     fuse_thread_started.set()
-                    FUSE(fuse_operations, abs_mountpoint, foreground=True, **fuse_config)
+                    FUSE(
+                        fuse_operations,
+                        abs_mountpoint,
+                        foreground=True,
+                        auto_unmount=True,
+                        **fuse_config,
+                    )
                 finally:
                     fuse_thread_stopped.set()
 
