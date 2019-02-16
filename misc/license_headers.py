@@ -28,9 +28,18 @@ def get_files():
 def check_headers():
     ret = 0
     for f in get_files():
-        with open(f, "r") as fd:
-            if not HEADER_RE.match(fd.readline()[:-1]):
-                print("Missing header", f)
+        try:
+            header, *remains = f.read_text().split("\n")
+        except ValueError:
+            header = ""
+            remains = []
+
+        if not HEADER_RE.match(header):
+            print("Missing header", f)
+            ret = 1
+        for line, line_txt in enumerate(remains, 2):
+            if HEADER_RE.match(line_txt.strip()):
+                print("Header wrongly present at line", line, f)
                 ret = 1
     return ret
 
