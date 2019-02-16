@@ -6,6 +6,7 @@ import pathlib
 import re
 import argparse
 
+
 HEADER = "# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS\n\n"
 HEADER_RE = re.compile(
     r"^# Parsec Cloud \(https://parsec.cloud\) Copyright \(c\) AGPLv3 2019 Scille SAS$"
