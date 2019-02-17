@@ -15,7 +15,7 @@ from parsec.types import BackendAddr, OrganizationID
 from parsec.logging import configure_logging
 from parsec.core import CoreConfig
 from parsec.core.logged_core import logged_core_factory
-from parsec.core.mountpoint import FUSE_AVAILABLE
+from parsec.core.mountpoint import get_mountpoint_runner
 from parsec.backend import BackendApp, config_factory as backend_config_factory
 from parsec.api.protocole import ClientHandshake, AnonymousClientHandshake
 from parsec.api.transport import Transport
@@ -41,7 +41,7 @@ def pytest_addoption(parser):
         help="Use PostgreSQL backend instead of default memory mock",
     )
     parser.addoption("--runslow", action="store_true", help="Don't skip slow tests")
-    parser.addoption("--runfuse", action="store_true", help="Don't skip fuse tests")
+    parser.addoption("--runfuse", action="store_true", help="Don't skip FUSE/WinFSP tests")
     parser.addoption(
         "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
@@ -68,8 +68,8 @@ def pytest_runtest_setup(item):
     if item.get_closest_marker("fuse"):
         if not item.config.getoption("--runfuse"):
             pytest.skip("need --runfuse option to run")
-        elif not FUSE_AVAILABLE:
-            pytest.skip("fuse is not available")
+        elif not get_mountpoint_runner():
+            pytest.skip("FUSE/WinFSP not available")
 
 
 @pytest.fixture(autouse=True, scope="session", name="unmock_crypto")

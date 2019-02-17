@@ -14,7 +14,7 @@ from parsec.core import logged_core_factory
 async def test_fuse_not_available(alice_fs, event_bus):
     mountpoint = Path("/foo")
 
-    with patch("parsec.core.mountpoint.manager.FUSE_AVAILABLE", new=False):
+    with patch("parsec.core.mountpoint.manager.get_mountpoint_runner", return_value=None):
         async with trio.open_nursery() as nursery:
             with pytest.raises(RuntimeError):
                 async with mountpoint_manager(alice_fs, event_bus, mountpoint, nursery):

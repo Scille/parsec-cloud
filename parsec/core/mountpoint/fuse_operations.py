@@ -23,7 +23,7 @@ def translate_error():
 
 
 class FuseOperations(LoggingMixIn, Operations):
-    def __init__(self, fs_access, mountpoint):
+    def __init__(self, fs_access):
         super().__init__()
         self.fs_access = fs_access
         self.fds = {}

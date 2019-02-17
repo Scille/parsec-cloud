@@ -1,7 +1,7 @@
 from parsec.core.mountpoint.manager import (
     mountpoint_manager,
     get_default_mountpoint,
-    FUSE_AVAILABLE,
+    get_mountpoint_runner,
 )
 
 from parsec.core.mountpoint.exceptions import (
@@ -17,5 +17,5 @@ __all__ = (
     "MountpointManagerError",
     "MountpointManagerNotAvailable",
     "MountpointConfigurationError",
-    "FUSE_AVAILABLE",
+    "get_mountpoint_runner",
 )
