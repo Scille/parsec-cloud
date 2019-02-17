@@ -81,20 +81,24 @@ class EventsComponent:
 
         if msg["pinged"]:
             on_pinged = _pinged_callback_factory(client_ctx, msg["pinged"])
-            new_subscribed_events.append(on_pinged)
-            self.event_bus.connect("pinged", on_pinged, weak=True)
+            new_subscribed_events.append(("pinged", on_pinged))
+            self.event_bus.connect("pinged", on_pinged)
 
         if msg["beacon_updated"]:
             on_beacon_updated = _beacon_updated_callback_factory(client_ctx, msg["beacon_updated"])
-            new_subscribed_events.append(on_beacon_updated)
-            self.event_bus.connect("beacon.updated", on_beacon_updated, weak=True)
+            new_subscribed_events.append(("beacon.updated", on_beacon_updated))
+            self.event_bus.connect("beacon.updated", on_beacon_updated)
 
         if msg["message_received"]:
             on_message_received = _message_received_callback_factory(client_ctx)
-            new_subscribed_events.append(on_message_received)
-            self.event_bus.connect("message.received", on_message_received, weak=True)
+            new_subscribed_events.append(("message.received", on_message_received))
+            self.event_bus.connect("message.received", on_message_received)
 
-        # Note: previous subscribed events should be disconnected by doing this
+        # Note: we used to rely on weak ref to automatically disconnect the
+        # previous callbacks, but logging sometime keeps track of stackframe
+        # which prevent the callbacks from beeing freed...
+        for event, cb in client_ctx.subscribed_events:
+            self.event_bus.disconnect(event, cb)
         client_ctx.subscribed_events = tuple(new_subscribed_events)
 
         return events_subscribe_serializer.rep_dump({"status": "ok"})
@@ -108,7 +112,7 @@ class EventsComponent:
             # unlike other requests this one is going to (potentially) take
             # a long time to complete. In the meantime we must monitor the
             # connection with the client in order to make sure it is still
-            # online and handle websocket pings
+            # online and handles websocket pings
             event_data = None
 
             async def _get_event(cancel_scope):
