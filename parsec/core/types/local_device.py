@@ -40,10 +40,6 @@ class LocalDevice:
         return self.device_id.device_name
 
     @property
-    def user_name(self):
-        return self.device_id.user_name
-
-    @property
     def user_id(self):
         return self.device_id.user_id
 
