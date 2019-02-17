@@ -5,7 +5,8 @@ import threading
 from pathlib import Path
 from fuse import FUSE
 from structlog import get_logger
-from winfspy import FileSystem, enable_debug_log, filetime_now
+from winfspy import FileSystem, enable_debug_log
+from winfspy.plumbing.winstuff import filetime_now
 
 from parsec.core.mountpoint.winfsp_operations import WinFSPOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
@@ -62,10 +63,10 @@ async def winfsp_mountpoint_runner(
     if config.get("debug", False):
         enable_debug_log()
 
-    volume_label = f"parsec-{fs.device.user_name}"[:31]
+    volume_label = f"parsec-{fs.device.user_id}"[:31]
     operations = WinFSPOperations(volume_label, fs_access)
     fs = FileSystem(
-        abs_mountpoint,
+        str(abs_mountpoint),
         operations,
         sector_size=512,
         sectors_per_allocation_unit=1,
@@ -78,7 +79,7 @@ async def winfsp_mountpoint_runner(
         persistent_acls=1,
         post_cleanup_when_modified_only=1,
         um_file_context_is_user_context2=1,
-        file_system_name=mountpoint,
+        file_system_name="parsec-mnt",
         prefix="",
         # security_timeout_valid=1,
         # security_timeout=10000,
