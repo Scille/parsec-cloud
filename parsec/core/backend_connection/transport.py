@@ -19,6 +19,7 @@ from parsec.api.protocole import (
     ClientHandshake,
 )
 from parsec.core.backend_connection.exceptions import (
+    BackendConnectionError,
     BackendNotAvailable,
     BackendHandshakeError,
     BackendDeviceRevokedError,
@@ -43,6 +44,32 @@ async def _connect(
     signing_key: Optional[SigningKey] = None,
     administrator_token: Optional[str] = None,
 ):
+    if administrator_token:
+        if not isinstance(addr, BackendAddr):
+            raise BackendConnectionError(f"Invalid url format `{addr}`")
+        ch = AnonymousClientHandshake(administrator_token)
+
+    elif not device_id:
+        if isinstance(addr, BackendOrganizationBootstrapAddr):
+            ch = AnonymousClientHandshake(addr.organization_id)
+        elif isinstance(addr, BackendOrganizationAddr):
+            ch = AnonymousClientHandshake(addr.organization_id, addr.root_verify_key)
+        else:
+            raise BackendConnectionError(
+                f"Invalid url format `{addr}` "
+                "(should be an organization url or organization bootstrap url)"
+            )
+
+    else:
+        if not isinstance(addr, BackendOrganizationAddr):
+            raise BackendConnectionError(
+                f"Invalid url format `{addr}` (should be an organization url)"
+            )
+
+        if not signing_key:
+            raise BackendConnectionError(f"Missing signing_key to connect as `{device_id}`")
+        ch = ClientHandshake(addr.organization_id, device_id, signing_key, addr.root_verify_key)
+
     try:
         stream = await trio.open_tcp_stream(addr.hostname, addr.port)
 
@@ -58,21 +85,6 @@ async def _connect(
     except TransportError as exc:
         logger.debug("Connection lost during transport creation", reason=exc)
         raise BackendNotAvailable(exc) from exc
-
-    if administrator_token:
-        ch = AnonymousClientHandshake(administrator_token)
-
-    elif not device_id:
-        if isinstance(addr, BackendOrganizationBootstrapAddr):
-            ch = AnonymousClientHandshake(addr.organization_id)
-        else:
-            assert isinstance(addr, BackendOrganizationAddr)
-            ch = AnonymousClientHandshake(addr.organization_id, addr.root_verify_key)
-
-    else:
-        assert isinstance(addr, BackendOrganizationAddr)
-        assert signing_key
-        ch = ClientHandshake(addr.organization_id, device_id, signing_key, addr.root_verify_key)
 
     try:
         await _do_handshade(transport, ch)
