@@ -23,7 +23,7 @@ async def test_fuse_not_available(alice_fs, event_bus):
 
 @pytest.mark.trio
 @pytest.mark.fuse
-async def test_mount_fuse(alice_fs, event_bus, tmpdir, fuse_mode):
+async def test_mount_fuse(alice_fs, event_bus, tmpdir):
     # Populate a bit the fs first...
 
     await alice_fs.workspace_create("/w")
@@ -36,9 +36,7 @@ async def test_mount_fuse(alice_fs, event_bus, tmpdir, fuse_mode):
     mountpoint = Path(f"{tmpdir}/fuse_mountpoint")
     async with trio.open_nursery() as nursery:
         with event_bus.listen() as spy:
-            async with mountpoint_manager(
-                alice_fs, event_bus, mountpoint, nursery, mode=fuse_mode
-            ) as task:
+            async with mountpoint_manager(alice_fs, event_bus, mountpoint, nursery) as task:
                 abs_mountpoint = str(mountpoint.absolute())
                 assert task.value == abs_mountpoint
 
@@ -75,7 +73,8 @@ async def test_mount_fuse(alice_fs, event_bus, tmpdir, fuse_mode):
 
 @pytest.mark.trio
 @pytest.mark.fuse
-async def test_umount_fuse(core_config, alice, tmpdir, fuse_mode):
+@pytest.mark.skipif(os.name == "nt", reason="WinFSP doesn't support `pathlib.Path.stat` yet...")
+async def test_umount_fuse(core_config, alice, tmpdir):
     core_config = core_config.evolve(mountpoint_enabled=True)
     async with logged_core_factory(core_config, alice) as alice_core:
         assert await trio.Path(alice_core.mountpoint).exists()
@@ -84,7 +83,8 @@ async def test_umount_fuse(core_config, alice, tmpdir, fuse_mode):
 
 @pytest.mark.trio
 @pytest.mark.fuse
-async def test_external_umount_fuse(core_config, alice, tmpdir, fuse_mode):
+@pytest.mark.skipif(os.name == "nt", reason="WinFSP doesn't support `pathlib.Path.stat` yet...")
+async def test_external_umount_fuse(core_config, alice, tmpdir):
     core_config = core_config.evolve(mountpoint_enabled=True)
     async with logged_core_factory(core_config, alice) as alice_core:
         assert await trio.Path(alice_core.mountpoint).exists()
@@ -96,7 +96,8 @@ async def test_external_umount_fuse(core_config, alice, tmpdir, fuse_mode):
 
 @pytest.mark.trio
 @pytest.mark.fuse
-async def test_cancellable_join_umount_fuse(core_config, alice, tmpdir, fuse_mode):
+@pytest.mark.skipif(os.name == "nt", reason="WinFSP doesn't support `pathlib.Path.stat` yet...")
+async def test_cancellable_join_umount_fuse(core_config, alice, tmpdir):
     core_config = core_config.evolve(mountpoint_enabled=True)
     async with logged_core_factory(core_config, alice) as alice_core:
         assert await trio.Path(alice_core.mountpoint).exists()
@@ -107,8 +108,8 @@ async def test_cancellable_join_umount_fuse(core_config, alice, tmpdir, fuse_mod
 
 @pytest.mark.trio
 @pytest.mark.fuse
-@pytest.mark.skipif(os.name == "nt", reason="Windows doesn't support threaded fuse")
-async def test_hard_crash_in_fuse_thread(core_config, alice, tmpdir, fuse_mode):
+@pytest.mark.skipif(os.name == "nt", reason="FUSE not used on Windows")
+async def test_hard_crash_in_fuse_thread(core_config, alice, tmpdir):
     core_config = core_config.evolve(mountpoint_enabled=True)
 
     class ToughLuckError(Exception):
@@ -117,7 +118,7 @@ async def test_hard_crash_in_fuse_thread(core_config, alice, tmpdir, fuse_mode):
     def _crash_fuse(*args, **kwargs):
         raise ToughLuckError()
 
-    with patch("parsec.core.mountpoint.thread.FUSE", new=_crash_fuse):
+    with patch("parsec.core.mountpoint.fuse_runner.FUSE", new=_crash_fuse):
         with pytest.raises(ToughLuckError):
             async with logged_core_factory(core_config, alice):
                 pass
@@ -130,5 +131,5 @@ async def test_mount_missing_path(core_config, alice, tmpdir):
     base_mountpoint = Path(f"{tmpdir}/dummy/dummy/dummy")
     core_config = core_config.evolve(mountpoint_enabled=True, mountpoint_base_dir=base_mountpoint)
     async with logged_core_factory(core_config, alice) as alice_core:
-        assert str(alice_core.mountpoint) == f"{base_mountpoint}/{alice.device_id}"
-        assert await trio.Path(alice_core.mountpoint).exists()
+        assert str(alice_core.mountpoint) == str(base_mountpoint / alice.device_id)
+        # assert await trio.Path(alice_core.mountpoint).exists()

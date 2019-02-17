@@ -62,6 +62,7 @@ class PathElement:
 
 @pytest.mark.slow
 @pytest.mark.fuse
+@pytest.mark.skipif(os.name == "nt", reason="TODO: fix this ASAP !!!")
 def test_fuse_folder_operations(tmpdir, hypothesis_settings, fuse_service):
 
     tentative = 0

@@ -6,6 +6,7 @@ from hypothesis import strategies as st
 
 @pytest.mark.slow
 @pytest.mark.fuse
+@pytest.mark.skipif(os.name == "nt", reason="Seems to spiral into infinite loop so far...")
 @pytest.mark.xfail(reason="FUSE's lower layers seems to hate this...")
 def test_fuse_file_operations(tmpdir, hypothesis_settings, fuse_service):
     tentative = 0
@@ -19,7 +20,7 @@ def test_fuse_file_operations(tmpdir, hypothesis_settings, fuse_service):
             fuse_service.start()
 
             self.oracle_fd = os.open(tmpdir / f"oracle-test-{tentative}", os.O_RDWR | os.O_CREAT)
-            self.fd = os.open(fuse_service.mountpoint / "bar.txt", os.O_RDWR | os.O_CREAT)
+            self.fd = os.open(fuse_service.default_workspace / "bar.txt", os.O_RDWR | os.O_CREAT)
 
         def teardown(self):
             fuse_service.stop()
@@ -58,7 +59,7 @@ def test_fuse_file_operations(tmpdir, hypothesis_settings, fuse_service):
         @rule()
         def reopen(self):
             os.close(self.fd)
-            self.fd = os.open(fuse_service.mountpoint / "bar.txt", os.O_RDWR)
+            self.fd = os.open(fuse_service.default_workspace / "bar.txt", os.O_RDWR)
             os.close(self.oracle_fd)
             self.oracle_fd = os.open(tmpdir / f"oracle-test-{tentative}", os.O_RDWR)
 

@@ -31,7 +31,7 @@ def fuse_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_f
             self._ready = threading.Event()
 
         @property
-        def default_workpsace(self):
+        def default_workspace(self):
             return self.mountpoint / self.default_workspace_name
 
         async def _start(self):
@@ -105,7 +105,6 @@ def fuse_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_f
         count += 1
         if not mountpoint:
             mountpoint = tmpdir / f"mountpoint-{count}"
-            mountpoint.mkdir()
 
         fuse_service = FuseService(str(mountpoint))
         fuse_service.init()
