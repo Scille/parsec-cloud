@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import ANY
 
 from parsec.api.protocole.base import packb, unpackb, InvalidMessageError
 from parsec.api.protocole.handshake import (
@@ -218,7 +219,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
     }
     sh.process_answer_req(packb(answer))
     req = getattr(sh, method)()
-    assert unpackb(req) == {"handshake": "result", "result": expected_result}
+    assert unpackb(req) == {"handshake": "result", "result": expected_result, "help": ANY}
 
 
 # 5) Client process result

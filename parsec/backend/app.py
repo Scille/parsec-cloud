@@ -249,8 +249,8 @@ class BackendApp:
                         )
                         result_req = hs.build_result_req(device.verify_key)
 
-        except ProtocoleError:
-            result_req = hs.build_bad_format_result_req()
+        except ProtocoleError as exc:
+            result_req = hs.build_bad_format_result_req(str(exc))
 
         await transport.send(result_req)
         return context
