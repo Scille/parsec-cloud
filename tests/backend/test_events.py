@@ -23,8 +23,7 @@ async def events_subscribe(sock, **kwargs):
 
 async def events_listen_nowait(sock):
     await sock.send(events_listen_serializer.req_dumps({"cmd": "events_listen", "wait": False}))
-    with trio.fail_after(1):
-        raw_rep = await sock.recv()
+    raw_rep = await sock.recv()
     return events_listen_serializer.rep_loads(raw_rep)
 
 
@@ -128,7 +127,7 @@ async def test_event_resubscribe(backend, alice_backend_sock, alice2_backend_soc
     await subscribe_pinged(alice_backend_sock, ["bar", "spam"])
 
     with backend.event_bus.listen() as spy:
-        await ping(alice2_backend_sock, "foo")
+        await ping(alice2_backend_sock, "foo")  # Should be ignored
         await ping(alice2_backend_sock, "bar")
         await ping(alice2_backend_sock, "spam")
 

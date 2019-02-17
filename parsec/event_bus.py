@@ -80,5 +80,5 @@ class EventBus:
 
     def disconnect(self, event, cb):
         # logger.debug("disconnect event", event_name=event, cb=cb)
-        self._event_handlers[event].discard(cb)
+        self._event_handlers[event].remove(cb)
         self.send("event.disconnected", event_name=event)
