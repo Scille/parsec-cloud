@@ -52,6 +52,7 @@ def add_headers():
             if HEADER_RE.match(first_line):
                 continue
             data = fd.read()
+        print("Add missing header", f)
         with open(f, "w") as fd:
             fd.write(HEADER)
             fd.write(first_line)
