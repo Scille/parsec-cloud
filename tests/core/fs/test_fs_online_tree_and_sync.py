@@ -127,9 +127,9 @@ def test_fs_online_tree_and_sync(
             return path
 
         @rule(target=Folders, parent=Folders, name=st_entry_name)
-        async def workspace_create(self, parent, name):
+        async def create_workspace(self, parent, name):
             path = os.path.join(parent, name)
-            expected_status = self.oracle_fs.workspace_create(path)
+            expected_status = self.oracle_fs.create_workspace(path)
             if expected_status == "ok":
                 await self.fs.workspace_create(path=path)
             else:
@@ -182,9 +182,9 @@ def test_fs_online_tree_and_sync(
             return dst
 
         @rule(target=Folders, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
-        async def workspace_rename(self, src, dst_parent, dst_name):
+        async def rename_workspace(self, src, dst_parent, dst_name):
             dst = os.path.join(dst_parent, dst_name)
-            expected_status = self.oracle_fs.workspace_rename(src, dst)
+            expected_status = self.oracle_fs.rename_workspace(src, dst)
             if expected_status == "ok":
                 await self.fs.workspace_rename(src, dst)
             else:

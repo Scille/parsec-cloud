@@ -96,7 +96,7 @@ def oracle_fs_factory(tmpdir):
             self.entries_stats[path.parent]["need_sync"] = True
             return "ok"
 
-        def workspace_create(self, path):
+        def create_workspace(self, path):
             return self._create_folder(path, workspace=True)
 
         def unlink(self, path):
@@ -136,7 +136,7 @@ def oracle_fs_factory(tmpdir):
                     new_stats[canditate_path] = candidate_stat
             self.entries_stats = new_stats
 
-        def workspace_rename(self, src, dst):
+        def rename_workspace(self, src, dst):
             src = self._cook_path(src)
             dst = self._cook_path(dst)
 
@@ -283,8 +283,8 @@ def oracle_fs_with_sync_factory(oracle_fs_factory):
         def create_folder(self, path):
             return self.fs.create_folder(path)
 
-        def workspace_create(self, path):
-            return self.fs.workspace_create(path)
+        def create_workspace(self, path):
+            return self.fs.create_workspace(path)
 
         def delete(self, path):
             return self.fs.delete(path)
@@ -292,8 +292,8 @@ def oracle_fs_with_sync_factory(oracle_fs_factory):
         def move(self, src, dst):
             return self.fs.move(src, dst)
 
-        def workspace_rename(self, src, dst):
-            return self.fs.workspace_rename(src, dst)
+        def rename_workspace(self, src, dst):
+            return self.fs.rename_workspace(src, dst)
 
         def flush(self, path):
             return self.fs.flush(path)

@@ -122,7 +122,7 @@ def test_fs_online_concurrent_tree_and_sync(
             return path
 
         @rule(target=Folders, fs=FSs, name=st_entry_name)
-        async def workspace_create(self, fs, name):
+        async def create_workspace(self, fs, name):
             path = os.path.join("/", name)
             try:
                 await fs.workspace_create(path=path)
@@ -131,7 +131,7 @@ def test_fs_online_concurrent_tree_and_sync(
             return path
 
         @rule(target=Folders, fs=FSs, source=Folders, name=st_entry_name)
-        async def workspace_rename(self, fs, source, name):
+        async def rename_workspace(self, fs, source, name):
             path = os.path.join("/", name)
             try:
                 await fs.workspace_rename(source, path)
