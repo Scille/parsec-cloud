@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from PyQt5.QtGui import QValidator, QIntValidator
 
 from parsec.types import (

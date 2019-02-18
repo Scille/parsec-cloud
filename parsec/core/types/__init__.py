@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from typing import Union
 
 from parsec.core.types.base import TrustSeed, AccessID, EntryName, FileDescriptor, FsPath

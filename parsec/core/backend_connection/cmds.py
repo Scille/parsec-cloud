@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from typing import Tuple, List, Dict, Iterable
 from uuid import UUID
 

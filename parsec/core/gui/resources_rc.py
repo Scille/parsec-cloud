@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 try:
     from parsec.core.gui._resources_rc import *  # noqa
 except ImportError as exc:

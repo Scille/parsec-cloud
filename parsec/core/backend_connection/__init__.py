@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from parsec.core.backend_connection.exceptions import (
     BackendConnectionError,
     BackendNotAvailable,

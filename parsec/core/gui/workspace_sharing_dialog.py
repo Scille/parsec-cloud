@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import os
 
 from PyQt5.QtCore import QTimer, Qt, QCoreApplication, pyqtSignal

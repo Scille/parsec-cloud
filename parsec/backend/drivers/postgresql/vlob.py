@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from triopg import UniqueViolationError
 from uuid import UUID
 from typing import List, Tuple

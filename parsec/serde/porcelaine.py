@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from marshmallow import ValidationError
 
 from parsec.serde.packing import packb, unpackb, SerdePackingError

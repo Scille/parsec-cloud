@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import pathlib
 
 from PyQt5.QtCore import QCoreApplication, Qt, QTimer, pyqtSignal, QSize, QPoint

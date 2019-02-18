@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from .organization import MemoryOrganizationComponent
 from .blockstore import MemoryBlockstoreComponent
 from .message import MemoryMessageComponent

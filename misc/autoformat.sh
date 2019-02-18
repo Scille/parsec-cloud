@@ -9,4 +9,5 @@ black --line-length=100 \
   tests \
   setup.py \
   misc/initialize_test_organization.py \
+  misc/license_headers.py \
   $@
