@@ -2,6 +2,7 @@
 
 import pytest
 import trio
+from functools import partial
 
 from parsec.serde import UnknownCheckedSchema, fields
 from parsec.api.transport import Transport, TransportClosedByPeer
@@ -19,14 +20,19 @@ async def serve_tcp_testbed(unused_tcp_port):
             transport = await Transport.init_for_server(stream)
             await server_fn(transport)
 
-        async with trio.open_nursery() as nursery:
-            await nursery.start(trio.serve_tcp, _serve_client, unused_tcp_port)
-            assert len(nursery.child_tasks) == 1
-            serve_tcp_task = list(nursery.child_tasks)[0]
-            assert len(serve_tcp_task.child_nurseries) == 1
-            serve_tcp_nursery = serve_tcp_task.child_nurseries[0]
+        async def _store_handlers(*, task_status=trio.TASK_STATUS_IGNORED):
+            async with trio.open_nursery() as handler_nursery:
+                task_status.started(handler_nursery)
+                await trio.sleep_forever()
 
-            initial_tasks = serve_tcp_nursery.child_tasks.copy()
+        async with trio.open_nursery() as nursery:
+            handler_nursery = await nursery.start(_store_handlers)
+            await nursery.start(
+                partial(
+                    trio.serve_tcp, _serve_client, unused_tcp_port, handler_nursery=handler_nursery
+                )
+            )
+            assert not handler_nursery.child_tasks
 
             for client_fn, server_fn in conns:
                 stream = await trio.open_tcp_stream(host, unused_tcp_port)
@@ -36,8 +42,8 @@ async def serve_tcp_testbed(unused_tcp_port):
                 await client_fn(transport)
 
                 await trio.testing.wait_all_tasks_blocked()
-                tasks = serve_tcp_nursery.child_tasks.copy()
-                assert tasks == initial_tasks
+                # No pending connections should remain
+                assert not handler_nursery.child_tasks
 
             await send_channel.aclose()
             nursery.cancel_scope.cancel()
