@@ -1,23 +1,11 @@
-import argparse
-import time
-from functools import wraps
-from pathlib import PureWindowsPath
 from contextlib import contextmanager
 from winfspy import (
     NTStatusError,
     BaseFileSystemOperations,
     FILE_ATTRIBUTE,
     CREATE_FILE_CREATE_OPTIONS,
-    NTStatusObjectNameNotFound,
-    NTStatusDirectoryNotEmpty,
 )
-from winfspy.plumbing.winstuff import (
-    dt_to_filetime,
-    filetime_now,
-    security_descriptor_factory,
-    NTSTATUS,
-    posix_to_ntstatus,
-)
+from winfspy.plumbing.winstuff import dt_to_filetime, NTSTATUS, posix_to_ntstatus
 
 from parsec.core.fs import FSInvalidFileDescriptor
 from parsec.core.backend_connection import BackendNotAvailable

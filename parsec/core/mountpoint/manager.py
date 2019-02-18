@@ -12,7 +12,7 @@ from parsec.utils import start_task
 def get_mountpoint_runner():
     if os.name == "nt":
         try:
-            import winfspy
+            import winfspy  # noqa: test import is working
 
             logging.getLogger("winfspy").setLevel(logging.WARNING)
 
@@ -27,7 +27,7 @@ def get_mountpoint_runner():
 
     else:
         try:
-            from fuse import FUSE
+            from fuse import FUSE  # noqa: test import is working
 
             logging.getLogger("fuse").setLevel(logging.WARNING)
 

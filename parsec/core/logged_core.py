@@ -1,4 +1,3 @@
-import os
 import trio
 import attr
 from typing import Optional

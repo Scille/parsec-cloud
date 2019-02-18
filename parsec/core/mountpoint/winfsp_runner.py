@@ -1,9 +1,5 @@
-import os
 import trio
-import time
-import threading
 from pathlib import Path
-from fuse import FUSE
 from structlog import get_logger
 from winfspy import FileSystem, enable_debug_log
 from winfspy.plumbing.winstuff import filetime_now
@@ -52,8 +48,6 @@ async def winfsp_mountpoint_runner(
     Raises:
         MountpointConfigurationError
     """
-    fuse_thread_started = threading.Event()
-    fuse_thread_stopped = threading.Event()
     portal = trio.BlockingTrioPortal()
     abs_mountpoint = str(mountpoint.absolute())
     fs_access = ThreadFSAccess(portal, fs)

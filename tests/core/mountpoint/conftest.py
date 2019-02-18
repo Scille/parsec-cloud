@@ -1,4 +1,3 @@
-import os
 import pytest
 import threading
 import trio
