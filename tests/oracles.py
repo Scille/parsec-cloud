@@ -149,7 +149,16 @@ def oracle_fs_factory(tmpdir):
                 return "invalid_path"
 
             if src != dst:
-                self.entries_stats[dst] = self.entries_stats.pop(src)
+                # Rename all the affected entries
+                for child_src, entry in self.entries_stats.copy().items():
+                    # Note `child_src` will also contain `src` itself here
+                    try:
+                        relative = child_src.relative_to(src)
+                    except ValueError:
+                        continue
+                    child_dst = dst / relative
+                    self.entries_stats[child_dst] = self.entries_stats.pop(child_src)
+
                 # Remember dst.parent == src.parent == '/'
                 self.entries_stats[dst.parent]["need_sync"] = True
 
