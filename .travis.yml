@@ -22,7 +22,7 @@ script:
 - flake8
 - ./misc/license_headers.py check
 - py.test tests -n 2 --cov=parsec --cov-config=setup.cfg -vvv
-- py.test tests -n 2 --cov=parsec --cov-config=setup.cfg --runslow --runfuse --postgresql --hypothesis-derandomize -vvv
+- py.test tests -n 2 --cov=parsec --cov-config=setup.cfg --runslow --runfuse --postgresql -vvv
 after_success:
 - coveralls
 deploy:
