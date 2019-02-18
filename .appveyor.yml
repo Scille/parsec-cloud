@@ -25,7 +25,7 @@ build_script:
   - createdb parsec_test_gw1
   - which pg_config
   - pg_config --version
-  - choco install winfsp -y --version=1.3.18160
+  - choco install winfsp -y --version=1.4.19016
   - git --no-pager log -n2
   - echo %APPVEYOR_REPO_COMMIT%
   - SET PATH=%PYTHON%;%PYTHON%\Scripts;;%PATH%
