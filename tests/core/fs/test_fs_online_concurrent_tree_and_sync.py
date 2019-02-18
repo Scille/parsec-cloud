@@ -14,7 +14,6 @@ from hypothesis_trio.stateful import (
 
 from tests.common import call_with_control
 
-
 # The point is not to find breaking filenames here, so keep it simple
 st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 st_fs = st.sampled_from(["fs_1", "fs_2"])
@@ -122,6 +121,24 @@ def test_fs_online_concurrent_tree_and_sync(
                 pass
             return path
 
+        @rule(target=Folders, fs=FSs, name=st_entry_name)
+        async def create_workspace(self, fs, name):
+            path = os.path.join("/", name)
+            try:
+                await fs.workspace_create(path=path)
+            except OSError:
+                pass
+            return path
+
+        @rule(target=Folders, fs=FSs, source=Folders, name=st_entry_name)
+        async def rename_workspace(self, fs, source, name):
+            path = os.path.join("/", name)
+            try:
+                await fs.workspace_rename(source, path)
+            except OSError:
+                pass
+            return path
+
         @rule(fs=FSs, path=Files)
         async def update_file(self, fs, path):
             try:
@@ -167,15 +184,18 @@ def test_fs_online_concurrent_tree_and_sync(
 
         @rule()
         async def sync_all_the_files(self):
-            print("~~~ SYNC 1 ~~~")
             # Send two syncs in a row given file conflict results are not synced
             # once created
+
+            # Sync 1
             await self.fs1.sync("/")
             await self.fs1.sync("/")
-            print("~~~ SYNC 2 ~~~")
+
+            # Sync 2
             await self.fs2.sync("/")
             await self.fs2.sync("/")
-            print("~~~ SYNC 1 ~~~")
+
+            # Sync 1
             await self.fs1.sync("/")
 
             fs_dump_1 = self.fs1._local_folder_fs.dump()

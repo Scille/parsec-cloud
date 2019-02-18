@@ -366,6 +366,10 @@ class LocalFolderFS:
                 13, "Permission denied (workspace must be direct root child)", str(src), str(dst)
             )
 
+        # No point in raising a FileExistsError in this case
+        if src == dst:
+            return
+
         root_manifest = self.get_user_manifest()
         if dst.name in root_manifest.children:
             raise FileExistsError(17, "File exists", str(dst))
@@ -401,6 +405,7 @@ class LocalFolderFS:
 
         parent_manifest = parent_manifest.evolve_children_and_mark_updated({path.name: None})
         self.set_manifest(parent_access, parent_manifest)
+        self.mark_outdated_manifest(item_access)
         self.event_bus.send("fs.entry.updated", id=parent_access.id)
 
     def delete(self, path: FsPath) -> None:
@@ -500,13 +505,20 @@ class LocalFolderFS:
             moved_access = self._recursive_manifest_copy(src_access, src_manifest)
 
             if not delete_src:
-                parent_manifest = parent_manifest.evolve_children({dst.name: moved_access})
+                parent_manifest = parent_manifest.evolve_children_and_mark_updated(
+                    {dst.name: moved_access}
+                )
             else:
-                parent_manifest = parent_manifest.evolve_children(
+                parent_manifest = parent_manifest.evolve_children_and_mark_updated(
                     {dst.name: moved_access, src.name: None}
                 )
             self.set_manifest(parent_access, parent_manifest)
             self.event_bus.send("fs.entry.updated", id=parent_access.id)
+
+        elif parent_dst.is_root():
+            raise PermissionError(
+                13, "Permission denied (only workspaces can be moved to root)", str(src), str(dst)
+            )
 
         else:
             parent_src_access, parent_src_manifest = self._retrieve_entry(parent_src)
