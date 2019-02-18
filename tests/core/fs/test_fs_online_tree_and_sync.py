@@ -200,8 +200,11 @@ def test_fs_online_tree_and_sync(
             else:
                 stat = await self.fs.stat(path)
                 assert stat["type"] == expected["type"]
-                # Skip base version for the moment
+                # TODO: oracle's `base_version` is broken (synchronization
+                # strategy with parent placeholder make it complex to get right)
                 # assert stat["base_version"] == expected["base_version"]
+                if not stat["need_sync"]:
+                    assert stat["base_version"] > 0
                 assert stat["is_placeholder"] == expected["is_placeholder"]
                 assert stat["need_sync"] == expected["need_sync"]
 
