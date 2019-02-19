@@ -16,7 +16,8 @@ environment:
   PGPASSWORD: Password12!
 
   matrix:
-    - PYTHON: C:\Python36
+    # Disable 32 bits tests for the moment
+    # - PYTHON: C:\Python36
     - PYTHON: C:\Python36-x64
 
 build_script:
