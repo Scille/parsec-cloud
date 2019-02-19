@@ -101,9 +101,6 @@ class User:
     def public_key(self) -> PublicKey:
         return unsecure_certified_user_extract_public_key(self.certified_user)
 
-    def is_revocated(self) -> bool:
-        return any((False for d in self.devices.values if not d.revocated_on), True)
-
     user_id: UserID
     certified_user: bytes
     user_certifier: Optional[DeviceID]
@@ -111,6 +108,20 @@ class User:
     devices: DevicesMapping = attr.ib(factory=DevicesMapping)
 
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+
+    def is_revocated(self) -> bool:
+        now = pendulum.now()
+        for d in self.devices.values():
+            if not d.revocated_on or d.revocated_on > now:
+                return False
+        return True
+
+    def get_revocated_on(self) -> Optional[pendulum.Pendulum]:
+        revocations = [d.revocated_on for d in self.devices.values()]
+        if not revocations or None in revocations:
+            return None
+        else:
+            return sorted(revocations)[-1]
 
 
 def new_user_factory(
@@ -618,7 +629,7 @@ class BaseUserComponent:
                 }
 
         try:
-            await self.revoke_device(
+            user_revocated_on = await self.revoke_device(
                 client_ctx.organization_id,
                 data["device_id"],
                 msg["certified_revocation"],
@@ -634,7 +645,9 @@ class BaseUserComponent:
                 "reason": f"Device `{data['device_id']}` already revoked",
             }
 
-        return device_revoke_serializer.rep_dump({"status": "ok"})
+        return device_revoke_serializer.rep_dump(
+            {"status": "ok", "user_revocated_on": user_revocated_on}
+        )
 
     #### Virtual methods ####
 
@@ -696,7 +709,12 @@ class BaseUserComponent:
         raise NotImplementedError()
 
     async def find(
-        self, organization_id: OrganizationID, query: str = None, page: int = 1, per_page: int = 100
+        self,
+        organization_id: OrganizationID,
+        query: str = None,
+        page: int = 1,
+        per_page: int = 100,
+        omit_revocated: bool = False,
     ) -> Tuple[List[UserID], int]:
         raise NotImplementedError()
 
@@ -781,10 +799,11 @@ class BaseUserComponent:
         device_id: DeviceID,
         certified_revocation: bytes,
         revocation_certifier: DeviceID,
-    ) -> None:
+    ) -> Optional[pendulum.Pendulum]:
         """
         Raises:
             UserNotFoundError
             UserAlreadyRevokedError
+        Returns: User revoked date if any
         """
         raise NotImplementedError()

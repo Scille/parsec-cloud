@@ -3,7 +3,7 @@
 import pendulum
 import itertools
 from triopg.exceptions import UniqueViolationError
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, List, Optional
 
 from parsec.types import UserID, DeviceID, OrganizationID
 from parsec.event_bus import EventBus
@@ -371,9 +371,15 @@ WHERE
     #     raise NotImplementedError()
 
     async def find(
-        self, organization_id: OrganizationID, query: str = None, page: int = 1, per_page: int = 100
+        self,
+        organization_id: OrganizationID,
+        query: str = None,
+        page: int = 1,
+        per_page: int = 100,
+        omit_revocated: bool = False,
     ) -> Tuple[List[UserID], int]:
         async with self.dbh.pool.acquire() as conn:
+            now = pendulum.now()
             if query:
                 # LIKE only use % and _ as special tokens
                 escaped_query = query.replace("!", "!!").replace("%", "!%").replace("_", "!_")
@@ -385,21 +391,48 @@ WHERE
         SELECT _id FROM organizations WHERE organization_id = $1
     )
     AND user_id LIKE $2 ESCAPE '!'
+    AND (
+        NOT $3 OR EXISTS (
+            SELECT TRUE FROM devices
+            WHERE
+                user_ = users._id
+                AND (
+                    revocated_on IS NULL
+                    OR revocated_on > $4
+                )
+        )
+    )
 ORDER BY user_id
 """,
                     organization_id,
                     f"{escaped_query}%",
+                    omit_revocated,
+                    now,
                 )
             else:
                 all_results = await conn.fetch(
                     """
 SELECT user_id FROM users
-WHERE organization = (
-    SELECT _id FROM organizations WHERE organization_id = $1
-)
+WHERE
+    organization = (
+        SELECT _id FROM organizations WHERE organization_id = $1
+    )
+    AND (
+        NOT $2 OR EXISTS (
+            SELECT TRUE FROM devices
+            WHERE
+                user_ = users._id
+                AND (
+                    revocated_on IS NULL
+                    OR revocated_on > $3
+                )
+        )
+    )
 ORDER BY user_id
 """,
                     organization_id,
+                    omit_revocated,
+                    now,
                 )
             # TODO: should user LIMIT and OFFSET in the SQL query instead
             results = [UserID(x[0]) for x in all_results[(page - 1) * per_page : page * per_page]]
@@ -691,7 +724,7 @@ WHERE
         device_id: DeviceID,
         certified_revocation: bytes,
         revocation_certifier: DeviceID,
-    ) -> None:
+    ) -> Optional[pendulum.Pendulum]:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
 
@@ -746,3 +779,27 @@ WHERE
 
                     else:
                         raise UserError(f"Update error: {result}")
+
+                # Determine if the user has bee revoked (i.e. all
+                # his devices are revoked)
+                result = await conn.fetch(
+                    """
+SELECT revocated_on FROM devices
+WHERE user_ = (
+    SELECT _id FROM users
+    WHERE
+        organization = (
+            SELECT _id FROM organizations WHERE organization_id = $1
+        )
+        AND user_id = $2
+    )
+            """,
+                    organization_id,
+                    device_id.user_id,
+                )
+
+        revocations = [r[0] for r in result]
+        if None in revocations:
+            return None
+        else:
+            return sorted(revocations)[-1]

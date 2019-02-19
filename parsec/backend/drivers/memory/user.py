@@ -2,7 +2,7 @@
 
 import attr
 import pendulum
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional
 from collections import defaultdict
 
 from parsec.types import UserID, DeviceID, OrganizationID
@@ -126,14 +126,23 @@ class MemoryUserComponent(BaseUserComponent):
         return device, trustchain
 
     async def find(
-        self, organization_id: OrganizationID, query: str = None, page: int = 0, per_page: int = 100
+        self,
+        organization_id: OrganizationID,
+        query: str = None,
+        page: int = 0,
+        per_page: int = 100,
+        omit_revocated: bool = False,
     ):
         org = self._organizations[organization_id]
+        users = org._users
 
         if query:
-            results = [user_id for user_id in org._users.keys() if user_id.startswith(query)]
+            results = [user_id for user_id in users.keys() if user_id.startswith(query)]
         else:
-            results = org._users.keys()
+            results = users.keys()
+
+        if omit_revocated:
+            results = [user_id for user_id in results if not users[user_id].is_revocated()]
 
         # PostgreSQL does case insensitive sort
         sorted_results = sorted(results, key=lambda s: s.lower())
@@ -235,7 +244,7 @@ class MemoryUserComponent(BaseUserComponent):
         device_id: DeviceID,
         certified_revocation: bytes,
         revocation_certifier: DeviceID,
-    ) -> None:
+    ) -> Optional[pendulum.Pendulum]:
         org = self._organizations[organization_id]
 
         user = await self.get_user(organization_id, device_id.user_id)
@@ -256,4 +265,5 @@ class MemoryUserComponent(BaseUserComponent):
                 )
             patched_devices.append(device)
 
-        org._users[device_id.user_id] = user.evolve(devices=DevicesMapping(*patched_devices))
+        user = org._users[device_id.user_id] = user.evolve(devices=DevicesMapping(*patched_devices))
+        return user.get_revocated_on()
