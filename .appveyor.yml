@@ -37,7 +37,7 @@ build_script:
 test_script:
   # Uncomment this for RDP debug
   # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-  - py.test tests/ -n 2 --cov=parsec --cov-config=setup.cfg --runslow -x --postgresql -vvv
+  - py.test tests/ -n 2 --cov=parsec --cov-config=setup.cfg --runslow -x --postgresql --log-level=DEBUG -vvv
 
 # TODO: re-enable me !
 # on_success:
