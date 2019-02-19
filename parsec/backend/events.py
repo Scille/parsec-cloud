@@ -77,25 +77,20 @@ class EventsComponent:
     async def api_events_subscribe(self, client_ctx, msg):
         msg = events_subscribe_serializer.req_load(msg)
 
-        new_subscribed_events = []
+        # Drop previous event callbacks if any
+        client_ctx.event_bus_ctx.clear()
 
         if msg["pinged"]:
             on_pinged = _pinged_callback_factory(client_ctx, msg["pinged"])
-            new_subscribed_events.append(on_pinged)
-            self.event_bus.connect("pinged", on_pinged, weak=True)
+            client_ctx.event_bus_ctx.connect("pinged", on_pinged)
 
         if msg["beacon_updated"]:
             on_beacon_updated = _beacon_updated_callback_factory(client_ctx, msg["beacon_updated"])
-            new_subscribed_events.append(on_beacon_updated)
-            self.event_bus.connect("beacon.updated", on_beacon_updated, weak=True)
+            client_ctx.event_bus_ctx.connect("beacon.updated", on_beacon_updated)
 
         if msg["message_received"]:
             on_message_received = _message_received_callback_factory(client_ctx)
-            new_subscribed_events.append(on_message_received)
-            self.event_bus.connect("message.received", on_message_received, weak=True)
-
-        # Note: previous subscribed events should be disconnected by doing this
-        client_ctx.subscribed_events = tuple(new_subscribed_events)
+            client_ctx.event_bus_ctx.connect("message.received", on_message_received)
 
         return events_subscribe_serializer.rep_dump({"status": "ok"})
 
@@ -108,7 +103,7 @@ class EventsComponent:
             # unlike other requests this one is going to (potentially) take
             # a long time to complete. In the meantime we must monitor the
             # connection with the client in order to make sure it is still
-            # online and handle websocket pings
+            # online and handles websocket pings
             event_data = None
 
             async def _get_event(cancel_scope):

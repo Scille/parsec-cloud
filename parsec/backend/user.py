@@ -240,26 +240,23 @@ class BaseUserComponent:
 
         # Wait for invited user to send `user_claim`
 
-        claim_answered = trio.Event()
-        _encrypted_claim = None
+        def _filter_on_user_claimed(event, organization_id, user_id, encrypted_claim):
+            return organization_id == client_ctx.organization_id and user_id == invitation.user_id
 
-        def _on_user_claimed(event, organization_id, user_id, encrypted_claim):
-            nonlocal _encrypted_claim
-            if organization_id == client_ctx.organization_id and user_id == invitation.user_id:
-                claim_answered.set()
-                _encrypted_claim = encrypted_claim
+        with self.event_bus.waiter_on("user.claimed", filter=_filter_on_user_claimed) as waiter:
+            with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
+                _, event_data = await waiter.wait()
 
-        self.event_bus.connect("user.claimed", _on_user_claimed, weak=True)
-        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            await claim_answered.wait()
         if cancel_scope.cancelled_caught:
             return {
                 "status": "timeout",
                 "reason": ("Timeout while waiting for new user to be claimed."),
             }
-        return user_invite_serializer.rep_dump(
-            {"status": "ok", "encrypted_claim": _encrypted_claim}
-        )
+
+        else:
+            return user_invite_serializer.rep_dump(
+                {"status": "ok", "encrypted_claim": event_data["encrypted_claim"]}
+            )
 
     @anonymous_api
     @catch_protocole_errors
@@ -311,27 +308,29 @@ class BaseUserComponent:
 
         # Wait for creator user to accept (or refuse) our claim
 
-        replied = trio.Event()
         replied_ok = False
 
-        def _on_reply(event, organization_id, user_id):
-            nonlocal replied_ok
-            if organization_id == client_ctx.organization_id and user_id == invitation.user_id:
-                replied_ok = event == "user.created"
-                replied.set()
+        def _filter_on_reply(event, organization_id, user_id):
+            return organization_id == client_ctx.organization_id and user_id == invitation.user_id
 
-        self.event_bus.connect("user.created", _on_reply, weak=True)
-        self.event_bus.connect("user.invitation.cancelled", _on_reply, weak=True)
-        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            await replied.wait()
+        with self.event_bus.waiter_on_first(
+            "user.created", "user.invitation.cancelled", filter=_filter_on_reply
+        ) as waiter:
+            with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
+                event, event_data = await waiter.wait()
+                replied_ok = event == "user.created"
+
         if cancel_scope.cancelled_caught:
             return {
                 "status": "timeout",
                 "reason": "Timeout while waiting for invitation creator to answer.",
             }
-        if not replied_ok:
+
+        elif not replied_ok:
             return {"status": "denied", "reason": "Invitation creator rejected us."}
-        return user_claim_serializer.rep_dump({"status": "ok"})
+
+        else:
+            return user_claim_serializer.rep_dump({"status": "ok"})
 
     @catch_protocole_errors
     async def api_user_cancel_invitation(self, client_ctx, msg):
@@ -423,26 +422,25 @@ class BaseUserComponent:
 
         # Wait for invited user to send `user_claim`
 
-        claim_answered = trio.Event()
-        _encrypted_claim = None
+        def _filter_on_device_claimed(event, organization_id, device_id, encrypted_claim):
+            return (
+                organization_id == client_ctx.organization_id and device_id == invitation.device_id
+            )
 
-        def _on_device_claimed(event, organization_id, device_id, encrypted_claim):
-            nonlocal _encrypted_claim
-            if organization_id == client_ctx.organization_id and device_id == invitation.device_id:
-                claim_answered.set()
-                _encrypted_claim = encrypted_claim
+        with self.event_bus.waiter_on("device.claimed", filter=_filter_on_device_claimed) as waiter:
+            with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
+                _, event_data = await waiter.wait()
 
-        self.event_bus.connect("device.claimed", _on_device_claimed, weak=True)
-        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            await claim_answered.wait()
         if cancel_scope.cancelled_caught:
             return {
                 "status": "timeout",
                 "reason": ("Timeout while waiting for new device to be claimed."),
             }
-        return device_invite_serializer.rep_dump(
-            {"status": "ok", "encrypted_claim": _encrypted_claim}
-        )
+
+        else:
+            return device_invite_serializer.rep_dump(
+                {"status": "ok", "encrypted_claim": event_data["encrypted_claim"]}
+            )
 
     @anonymous_api
     @catch_protocole_errors
@@ -494,32 +492,33 @@ class BaseUserComponent:
 
         # Wait for creator device to accept (or refuse) our claim
 
-        replied = trio.Event()
         replied_ok = False
-        replied_encrypted_answer = None
 
-        def _on_reply(event, organization_id, device_id, encrypted_answer=None):
-            nonlocal replied_ok, replied_encrypted_answer
-            if organization_id == client_ctx.organization_id and device_id == invitation.device_id:
+        def _filter_on_reply(event, organization_id, device_id, encrypted_answer=None):
+            return (
+                organization_id == client_ctx.organization_id and device_id == invitation.device_id
+            )
+
+        with self.event_bus.waiter_on_first(
+            "device.created", "device.invitation.cancelled", filter=_filter_on_reply
+        ) as waiter:
+            with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
+                event, event_data = await waiter.wait()
                 replied_ok = event == "device.created"
-                replied_encrypted_answer = encrypted_answer
-                replied.set()
 
-        self.event_bus.connect("device.created", _on_reply, weak=True)
-        self.event_bus.connect("device.invitation.cancelled", _on_reply, weak=True)
-        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            await replied.wait()
         if cancel_scope.cancelled_caught:
             return {
                 "status": "timeout",
                 "reason": ("Timeout while waiting for invitation creator to answer."),
             }
-        if not replied_ok:
+
+        elif not replied_ok:
             return {"status": "denied", "reason": ("Invitation creator rejected us.")}
 
-        return device_claim_serializer.rep_dump(
-            {"status": "ok", "encrypted_answer": replied_encrypted_answer}
-        )
+        else:
+            return device_claim_serializer.rep_dump(
+                {"status": "ok", "encrypted_answer": event_data["encrypted_answer"]}
+            )
 
     @catch_protocole_errors
     async def api_device_cancel_invitation(self, client_ctx, msg):

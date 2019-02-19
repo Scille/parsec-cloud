@@ -28,8 +28,8 @@ class BackendEventsManager:
         self._subscribed_beacons = set()
         self._subscribed_beacons_changed = trio.Event()
         self._task_info = None
-        self.event_bus.connect("backend.beacon.listen", self._on_beacon_listen, weak=True)
-        self.event_bus.connect("backend.beacon.unlisten", self._on_beacon_unlisten, weak=True)
+        self.event_bus.connect("backend.beacon.listen", self._on_beacon_listen)
+        self.event_bus.connect("backend.beacon.unlisten", self._on_beacon_unlisten)
 
     def _on_beacon_listen(self, sender, beacon_id):
         if beacon_id in self._subscribed_beacons:
@@ -68,14 +68,14 @@ class BackendEventsManager:
                 # If backend is online, we want to wait before calling
                 # `task_status.started` until we are connected to the backend
                 # with events listener ready.
-                waiter = self.event_bus.waiter_on_first("backend.online", "backend.offline")
+                with self.event_bus.waiter_on_first("backend.online", "backend.offline") as waiter:
 
-                async def _wait_first_backend_connection_outcome():
-                    event, _ = await waiter.wait()
-                    task_status.started((nursery.cancel_scope, closed_event))
+                    async def _wait_first_backend_connection_outcome():
+                        await waiter.wait()
+                        task_status.started((nursery.cancel_scope, closed_event))
 
-                nursery.start_soon(_wait_first_backend_connection_outcome)
-                await self._event_listener_manager()
+                    nursery.start_soon(_wait_first_backend_connection_outcome)
+                    await self._event_listener_manager()
 
         finally:
             closed_event.set()
@@ -167,22 +167,6 @@ class BackendEventsManager:
 
 
 async def backend_listen_events(device, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
-    backend_events_manager = BackendEventsManager(device, event_bus)
-    await backend_events_manager.run(task_status=task_status)
-
-
-# async def backend_listen_events2(device, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
-#         self.device = device
-#         self.event_bus = event_bus
-#         self._backend_online = False
-#         self._subscribed_beacons = set()
-#         self._subscribed_beacons_changed = trio.Event()
-#         self._task_info = None
-#         self.event_bus.connect("backend.beacon.listen", self._on_beacon_listen, weak=True)
-#         self.event_bus.connect("backend.beacon.unlisten", self._on_beacon_unlisten, weak=True)
-
-
-#     backend_events_manager = BackendEventsManager(device, event_bus)
-
-
-#     await backend_events_manager.run(task_status=task_status)
+    with event_bus.connection_context() as event_bus_ctx:
+        backend_events_manager = BackendEventsManager(device, event_bus_ctx)
+        await backend_events_manager.run(task_status=task_status)

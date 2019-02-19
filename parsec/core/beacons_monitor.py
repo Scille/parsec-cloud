@@ -38,12 +38,14 @@ async def monitor_beacons(device, fs, event_bus, *, task_status=trio.TASK_STATUS
         )
         event_bus.send("fs.entry.updated", id=src_id)
 
-    event_bus.connect("fs.workspace.loaded", _on_workspace_loaded, weak=True)
-    event_bus.connect("fs.workspace.unloaded", _on_workspace_unloaded, weak=True)
-    event_bus.connect("backend.beacon.updated", _on_beacon_updated, weak=True)
+    with event_bus.connect_in_context(
+        ("fs.workspace.loaded", _on_workspace_loaded),
+        ("fs.workspace.unloaded", _on_workspace_unloaded),
+        ("backend.beacon.updated", _on_beacon_updated),
+    ):
 
-    task_status.started()
-    await trio.sleep_forever()
+        task_status.started()
+        await trio.sleep_forever()
 
 
 def _retreive_workspace_from_beacon(device, fs, beacon_id):
