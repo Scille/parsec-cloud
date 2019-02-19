@@ -74,6 +74,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             return
         try:
             self.portal.run(self.core.fs.share, os.path.join("/", self.name), user)
+            self.add_participant(user)
         except SharingRecipientError:
             show_warning(
                 self,
