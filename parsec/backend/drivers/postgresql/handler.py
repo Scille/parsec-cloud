@@ -2,6 +2,7 @@
 
 import trio
 import triopg
+from uuid import uuid4
 from structlog import get_logger
 from base64 import b64decode, b64encode
 
@@ -214,6 +215,12 @@ class PGHandler:
 async def send_signal(conn, signal, **kwargs):
     # PostgreSQL's NOTIFY only accept string as payload, hence we must
     # use base64 on our payload...
-    raw_data = b64encode(packb({"__signal__": signal, **kwargs})).decode("ascii")
+
+    # Add UUID to ensure the payload is unique given it seems Postgresql can
+    # drop duplicated NOTIFY (same channel/payload)
+    # see: https://github.com/Scille/parsec-cloud/issues/199
+    raw_data = b64encode(packb({"__id__": uuid4().hex, "__signal__": signal, **kwargs})).decode(
+        "ascii"
+    )
     await conn.execute("SELECT pg_notify($1, $2)", "app_notification", raw_data)
     logger.debug("notif sent", signal=signal, kwargs=kwargs)
