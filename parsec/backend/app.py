@@ -48,9 +48,9 @@ class LoggedClientContext:
     device_id = attr.ib()
     public_key = attr.ib()
     verify_key = attr.ib()
+    event_bus_ctx = attr.ib(default=None)
     conn_id = attr.ib(init=False)
     logger = attr.ib(init=False)
-    subscribed_events = attr.ib(factory=dict)
     channels = attr.ib(factory=lambda: trio.open_memory_channel(100))
 
     def __attrs_post_init__(self):
@@ -300,7 +300,9 @@ class BackendApp:
 
             client_ctx.logger.debug("handshake done")
 
-            await self._handle_client_loop(transport, client_ctx)
+            with self.event_bus.connection_context() as client_ctx.event_bus_ctx:
+
+                await self._handle_client_loop(transport, client_ctx)
 
         except TransportClosedByPeer:
             transport.logger.info("Client has left")

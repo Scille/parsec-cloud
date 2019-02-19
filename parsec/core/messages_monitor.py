@@ -18,9 +18,6 @@ async def monitor_messages(backend_online, fs, event_bus, *, task_status=trio.TA
     def _on_msg_arrived(event, index=None):
         msg_arrived.set()
 
-    event_bus.connect("backend.message.received", _on_msg_arrived, weak=True)
-    event_bus.connect("backend.message.polling_needed", _on_msg_arrived, weak=True)
-
     def _on_backend_online(event):
         backend_online_event.set()
 
@@ -29,32 +26,36 @@ async def monitor_messages(backend_online, fs, event_bus, *, task_status=trio.TA
         if process_message_cancel_scope:
             process_message_cancel_scope.cancel()
 
-    event_bus.connect("backend.online", _on_backend_online, weak=True)
-    event_bus.connect("backend.offline", _on_backend_offline, weak=True)
+    with event_bus.connect_in_context(
+        ("backend.message.received", _on_msg_arrived),
+        ("backend.message.polling_needed", _on_msg_arrived),
+        ("backend.online", _on_backend_online),
+        ("backend.offline", _on_backend_offline),
+    ):
 
-    if backend_online:
-        _on_backend_online(None)
+        if backend_online:
+            _on_backend_online(None)
 
-    task_status.started()
-    while True:
-        try:
+        task_status.started()
+        while True:
+            try:
 
-            with trio.CancelScope() as process_message_cancel_scope:
-                event_bus.send("message_monitor.reconnection_message_processing.started")
-                try:
-                    await fs.process_last_messages()
-                finally:
-                    event_bus.send("message_monitor.reconnection_message_processing.done")
-                while True:
-                    await msg_arrived.wait()
-                    msg_arrived.clear()
+                with trio.CancelScope() as process_message_cancel_scope:
+                    event_bus.send("message_monitor.reconnection_message_processing.started")
                     try:
                         await fs.process_last_messages()
-                    except SharingError:
-                        logger.exception("Invalid message from backend")
+                    finally:
+                        event_bus.send("message_monitor.reconnection_message_processing.done")
+                    while True:
+                        await msg_arrived.wait()
+                        msg_arrived.clear()
+                        try:
+                            await fs.process_last_messages()
+                        except SharingError:
+                            logger.exception("Invalid message from backend")
 
-        except BackendNotAvailable:
-            pass
-        process_message_cancel_scope = None
-        msg_arrived.clear()
-        await backend_online_event.wait()
+            except BackendNotAvailable:
+                pass
+            process_message_cancel_scope = None
+            msg_arrived.clear()
+            await backend_online_event.wait()

@@ -2,20 +2,23 @@
 
 import trio
 from structlog import get_logger
-from weakref import ref, WeakMethod, ReferenceType
 from collections import defaultdict
+from contextlib import contextmanager
 
 
 logger = get_logger()
 
 
 class EventWaiter:
-    def __init__(self):
+    def __init__(self, filter):
+        self._filter = filter
         self._event_occured = trio.Event()
         self._event_result = None
 
     def _cb(self, event, **kwargs):
         if self._event_occured.is_set():
+            return
+        if self._filter and not self._filter(event, **kwargs):
             return
         self._event_result = (event, kwargs)
         self._event_occured.set()
@@ -29,58 +32,96 @@ class EventWaiter:
         self._event_result = None
 
 
+class EventBusConnectionContext:
+    def __init__(self, event_bus):
+        self.event_bus = event_bus
+        self.to_disconnect = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.clear()
+
+    def clear(self):
+        for event, cb in self.to_disconnect:
+            self.event_bus.disconnect(event, cb)
+        self.to_disconnect.clear()
+
+    def send(self, event, **kwargs):
+        self.event_bus.send(event, **kwargs)
+
+    def waiter_on(self, event):
+        return self.event_bus.waiter_on(event)
+
+    def waiter_on_first(self, *events):
+        return self.event_bus.waiter_on_first(*events)
+
+    def connect(self, event, cb):
+        self.to_disconnect.append((event, cb))
+        self.event_bus.connect(event, cb)
+
+    def connect_in_context(self, *events):
+        return self.event_bus.connect_in_context(*events)
+
+    def disconnect(self, event, cb):
+        self.event_bus.disconnect(event, cb)
+        self.to_disconnect.remove((event, cb))
+
+
 class EventBus:
     def __init__(self):
-        self._event_handlers = defaultdict(set)
+        self._event_handlers = defaultdict(list)
+
+    def stats(self):
+        return {event: len(cbs) for event, cbs in self._event_handlers.items() if cbs}
+
+    def connection_context(self):
+        return EventBusConnectionContext(self)
 
     def send(self, event, **kwargs):
         logger.debug("send event", event_name=event, kwargs=kwargs)
-        # Given event handlers are stored as weakrefs, any one of them
-        # can become unavailable at any time.
-        # In such case we perform a cleanup operation.
-        # Note we don't want to use weakref's callback feature to do that
-        # given it would mean event_handlers list could change size randomly
-        # during iteration...
-        need_clean = False
 
         for cb in self._event_handlers[event]:
-            if isinstance(cb, ReferenceType):
-                cb = cb()
-                if not cb:
-                    need_clean = True
-                else:
-                    cb(event, **kwargs)
-            else:
-                cb(event, **kwargs)
+            cb(event, **kwargs)
 
-        if need_clean:
-            self._event_handlers[event] = {cb for cb in self._event_handlers[event] if cb()}
+    @contextmanager
+    def waiter_on(self, event, *, filter=None):
+        ew = EventWaiter(filter)
+        self.connect(event, ew._cb)
+        try:
+            yield ew
 
-    def waiter_on(self, event):
-        ew = EventWaiter()
-        self.connect(event, ew._cb, weak=True)
-        return ew
+        finally:
+            self.disconnect(event, ew._cb)
 
-    def waiter_on_first(self, *events):
-        ew = EventWaiter()
+    @contextmanager
+    def waiter_on_first(self, *events, filter=None):
+        ew = EventWaiter(filter)
         for event in events:
-            self.connect(event, ew._cb, weak=True)
-        return ew
+            self.connect(event, ew._cb)
+        try:
+            yield ew
 
-    def connect(self, event, cb, weak=False):
-        # logger.debug("connect event", event_name=event)
-        if weak:
-            try:
-                weak = WeakMethod(cb)
-            except TypeError:
-                weak = ref(cb)
+        finally:
+            for event in events:
+                self.disconnect(event, ew._cb)
 
-            self._event_handlers[event].add(weak)
-        else:
-            self._event_handlers[event].add(cb)
+    def connect(self, event, cb):
+        self._event_handlers[event].append(cb)
         self.send("event.connected", event_name=event)
 
+    @contextmanager
+    def connect_in_context(self, *events):
+        for event, cb in events:
+            self.connect(event, cb)
+        try:
+            yield
+
+        finally:
+            for event, cb in events:
+                self.disconnect(event, cb)
+
     def disconnect(self, event, cb):
-        # logger.debug("disconnect event", event_name=event, cb=cb)
         self._event_handlers[event].remove(cb)
         self.send("event.disconnected", event_name=event)

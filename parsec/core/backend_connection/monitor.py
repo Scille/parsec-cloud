@@ -16,24 +16,26 @@ async def monitor_backend_connection(
     def _on_event(event, *args, **kwargs):
         events[event].set()
 
-    event_bus.connect("backend.offline", _on_event, weak=True)
-    event_bus.connect("backend.online", _on_event, weak=True)
-    event_bus.connect("sync_monitor.reconnection_sync.done", _on_event, weak=True)
-    event_bus.connect("message_monitor.reconnection_message_processing.done", _on_event, weak=True)
+    with event_bus.connect_in_context(
+        ("backend.offline", _on_event),
+        ("backend.online", _on_event),
+        ("sync_monitor.reconnection_sync.done", _on_event),
+        ("message_monitor.reconnection_message_processing.done", _on_event),
+    ):
 
-    if backend_online:
-        events["backend.online"].set()
+        if backend_online:
+            events["backend.online"].set()
 
-    task_status.started()
-    while True:
-        await events["backend.online"].wait()
-        event_bus.send("backend.connection.bootstrapping")
+        task_status.started()
+        while True:
+            await events["backend.online"].wait()
+            event_bus.send("backend.connection.bootstrapping")
 
-        await events["sync_monitor.reconnection_sync.done"].wait()
-        await events["message_monitor.reconnection_message_processing.done"].wait()
-        event_bus.send("backend.connection.ready")
+            await events["sync_monitor.reconnection_sync.done"].wait()
+            await events["message_monitor.reconnection_message_processing.done"].wait()
+            event_bus.send("backend.connection.ready")
 
-        await events["backend.offline"].wait()
-        for e in events.values():
-            e.clear()
-        event_bus.send("backend.connection.lost")
+            await events["backend.offline"].wait()
+            for e in events.values():
+                e.clear()
+            event_bus.send("backend.connection.lost")

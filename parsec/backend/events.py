@@ -77,29 +77,20 @@ class EventsComponent:
     async def api_events_subscribe(self, client_ctx, msg):
         msg = events_subscribe_serializer.req_load(msg)
 
-        new_subscribed_events = []
+        # Drop previous event callbacks if any
+        client_ctx.event_bus_ctx.clear()
 
         if msg["pinged"]:
             on_pinged = _pinged_callback_factory(client_ctx, msg["pinged"])
-            new_subscribed_events.append(("pinged", on_pinged))
-            self.event_bus.connect("pinged", on_pinged)
+            client_ctx.event_bus_ctx.connect("pinged", on_pinged)
 
         if msg["beacon_updated"]:
             on_beacon_updated = _beacon_updated_callback_factory(client_ctx, msg["beacon_updated"])
-            new_subscribed_events.append(("beacon.updated", on_beacon_updated))
-            self.event_bus.connect("beacon.updated", on_beacon_updated)
+            client_ctx.event_bus_ctx.connect("beacon.updated", on_beacon_updated)
 
         if msg["message_received"]:
             on_message_received = _message_received_callback_factory(client_ctx)
-            new_subscribed_events.append(("message.received", on_message_received))
-            self.event_bus.connect("message.received", on_message_received)
-
-        # Note: we used to rely on weak ref to automatically disconnect the
-        # previous callbacks, but logging sometime keeps track of stackframe
-        # which prevent the callbacks from beeing freed...
-        for event, cb in client_ctx.subscribed_events:
-            self.event_bus.disconnect(event, cb)
-        client_ctx.subscribed_events = tuple(new_subscribed_events)
+            client_ctx.event_bus_ctx.connect("message.received", on_message_received)
 
         return events_subscribe_serializer.rep_dump({"status": "ok"})
 
