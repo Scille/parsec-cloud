@@ -203,6 +203,7 @@ class PGHandler:
 
     def _on_notification(self, connection, pid, channel, payload):
         data = unpackb(b64decode(payload.encode("ascii")))
+        data.pop("__id__")  # Simply discard the notification id
         signal = data.pop("__signal__")
         logger.debug("notif received", pid=pid, channel=channel, payload=payload)
         self.event_bus.send(signal, **data)
