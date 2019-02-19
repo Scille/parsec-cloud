@@ -61,7 +61,6 @@ async def _send_cmd(transport, serializer, **req):
     except ProtocoleError as exc:
         raise BackendCmdsInvalidRequest() from exc
 
-    transport.logger.debug("send req", req=_shorten_data(raw_req))
     try:
         await transport.send(raw_req)
         raw_rep = await transport.recv()
@@ -69,8 +68,6 @@ async def _send_cmd(transport, serializer, **req):
     except TransportError as exc:
         transport.logger.info("Request failed (backend not available)", cmd=req["cmd"])
         raise BackendNotAvailable(exc) from exc
-
-    transport.logger.debug("recv rep", req=_shorten_data(raw_rep))
 
     try:
         rep = serializer.rep_loads(raw_rep)
