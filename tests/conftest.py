@@ -52,7 +52,10 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     # Mock and non-UTC timezones are a really bad mix, so keep things simple
     os.environ.setdefault("TZ", "UTC")
-    configure_logging()
+    # For some reason, Windows doesn't like our logging configuration and
+    # prevents pytest from capturing them properly.
+    if os.name != "nt":
+        configure_logging()
 
 
 @pytest.fixture(scope="session")
