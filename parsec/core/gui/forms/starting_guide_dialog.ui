@@ -6,9 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1216</width>
-    <height>483</height>
+    <width>832</width>
+    <height>600</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>832</width>
+    <height>600</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>832</width>
+    <height>600</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
@@ -107,16 +119,16 @@ background-color: rgb(255, 255, 255);
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="spacing">
-       <number>30</number>
+       <number>10</number>
       </property>
       <property name="leftMargin">
-       <number>60</number>
+       <number>30</number>
       </property>
       <property name="topMargin">
-       <number>60</number>
+       <number>10</number>
       </property>
       <property name="rightMargin">
-       <number>60</number>
+       <number>30</number>
       </property>
       <property name="bottomMargin">
        <number>20</number>
@@ -189,14 +201,14 @@ color: rgb(14, 71, 153);
           </property>
           <property name="minimumSize">
            <size>
-            <width>0</width>
-            <height>0</height>
+            <width>600</width>
+            <height>400</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>16777215</width>
-            <height>16777215</height>
+            <width>600</width>
+            <height>400</height>
            </size>
           </property>
           <property name="text">
@@ -228,29 +240,32 @@ color: rgb(14, 71, 153);
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <property name="spacing">
-      <number>20</number>
+      <number>10</number>
      </property>
      <property name="leftMargin">
-      <number>50</number>
+      <number>20</number>
+     </property>
+     <property name="topMargin">
+      <number>10</number>
      </property>
      <property name="rightMargin">
-      <number>50</number>
+      <number>20</number>
      </property>
      <property name="bottomMargin">
-      <number>60</number>
+      <number>20</number>
      </property>
      <item>
       <widget class="QLabel" name="label">
        <property name="minimumSize">
         <size>
-         <width>270</width>
-         <height>40</height>
+         <width>210</width>
+         <height>32</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>270</width>
-         <height>40</height>
+         <width>210</width>
+         <height>32</height>
         </size>
        </property>
        <property name="text">
@@ -316,13 +331,13 @@ color: rgb(14, 71, 153);
       <widget class="QPushButton" name="button_previous">
        <property name="minimumSize">
         <size>
-         <width>120</width>
+         <width>100</width>
          <height>32</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>120</width>
+         <width>100</width>
          <height>16777215</height>
         </size>
        </property>
@@ -352,16 +367,16 @@ border-top-right-radius: 20px;
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="button_previous_placeholder">
+      <widget class="QPushButton" name="button_placeholder">
        <property name="minimumSize">
         <size>
-         <width>120</width>
+         <width>100</width>
          <height>32</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>120</width>
+         <width>100</width>
          <height>32</height>
         </size>
        </property>
@@ -389,13 +404,13 @@ border: 0;
        </property>
        <property name="minimumSize">
         <size>
-         <width>120</width>
+         <width>100</width>
          <height>32</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>120</width>
+         <width>100</width>
          <height>16777215</height>
         </size>
        </property>
