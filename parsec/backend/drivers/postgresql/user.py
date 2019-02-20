@@ -38,9 +38,7 @@ class PGUserComponent(BaseUserComponent):
 UPDATE users SET
     is_admin = $3
 WHERE
-    organization = (
-        SELECT _id from organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND user_id = $2
 """,
                 organization_id,
@@ -72,18 +70,10 @@ INSERT INTO users (
     created_on
 )
 SELECT
-    _id,
+    get_organization_internal_id($1),
     $2, $3, $4,
-    (
-        SELECT _id
-        FROM devices
-        WHERE
-            device_id = $5
-            AND organization = organizations._id
-    ),
+    get_device_internal_id($1, $5),
     $6
-FROM organizations
-WHERE organization_id = $1
 """,
                 organization_id,
                 user.user_id,
@@ -112,25 +102,12 @@ INSERT INTO devices (
     revocation_certifier
 )
 SELECT
-    _id,
-    (
-        SELECT _id
-        FROM users
-        WHERE
-            user_id = $2
-            AND organization = organizations._id
-    ),
+    get_organization_internal_id($1),
+    get_user_internal_id($1, $2),
     $3, $4,
-    (
-        SELECT _id
-        FROM devices
-        WHERE
-            device_id = $5
-            AND organization = organizations._id
-    ),
-    $6, $7, $8, $9
-FROM organizations
-WHERE organization_id = $1
+    get_device_internal_id($1, $5),
+    $6, $7, $8,
+    get_device_internal_id($1, $9)
 """,
             [
                 (
@@ -166,14 +143,7 @@ WHERE organization_id = $1
         existing_devices = await conn.fetch(
             """
 SELECT device_id FROM devices
-WHERE user_ = (
-    SELECT _id FROM users
-    WHERE
-        organization = (
-            SELECT _id FROM organizations WHERE organization_id = $1
-        )
-        AND user_id = $2
-)
+WHERE user_ = get_user_internal_id($1, $2)
             """,
             organization_id,
             device.user_id,
@@ -198,25 +168,12 @@ INSERT INTO devices (
     revocation_certifier
 )
 SELECT
-    _id,
-    (
-        SELECT _id
-        FROM users
-        WHERE
-            user_id = $2
-            AND organization = organizations._id
-    ),
+    get_organization_internal_id($1),
+    get_user_internal_id($1, $2),
     $3, $4,
-    (
-        SELECT _id
-        FROM devices
-        WHERE
-            device_id = $5
-            AND organization = organizations._id
-    ),
-    $6, $7, $8, $9
-FROM organizations
-WHERE organization_id = $1
+    get_device_internal_id($1, $5),
+    $6, $7, $8,
+    get_device_internal_id($1, $9)
 """,
             organization_id,
             device.user_id,
@@ -243,13 +200,11 @@ WHERE organization_id = $1
 SELECT
     is_admin,
     certified_user,
-    (SELECT device_id FROM devices WHERE _id = user_certifier),
+    get_device_id(user_certifier) as user_certifier,
     created_on
 FROM users
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND user_id = $2
 """,
             organization_id,
@@ -263,32 +218,19 @@ WHERE
 SELECT
     d1.device_id,
     d1.certified_device,
-    (
-        SELECT devices.device_id FROM devices WHERE devices._id = d1.device_certifier
-    ) AS device_certifier,
+    get_device_id(d1.device_certifier) as device_certifier,
     d1.created_on,
     d1.revocated_on,
     d1.certified_revocation,
-    (
-        SELECT devices.device_id FROM devices WHERE devices._id = d1.revocation_certifier
-    ) as revocation_certifier
+    get_device_id(d1.revocation_certifier) as revocation_certifier
 FROM devices as d1
-WHERE user_ = (
-    SELECT _id FROM users WHERE
-        organization = (
-            SELECT _id FROM organizations WHERE organization_id = $1
-        )
-        AND user_id = $2
-);
+WHERE user_ = get_user_internal_id($1, $2)
 """,
             organization_id,
             user_id,
         )
         devices = DevicesMapping(
-            *[
-                Device(DeviceID(device_result[0]), *device_result[1:])
-                for device_result in devices_results
-            ]
+            *[Device(DeviceID(d_id), *d_data) for d_id, *d_data in devices_results]
         )
 
         return User(
@@ -321,21 +263,15 @@ WHERE user_ = (
 SELECT
     d1.device_id,
     d1.certified_device,
-    (
-        SELECT devices.device_id FROM devices WHERE devices._id = d1.device_certifier
-    ) AS device_certifier,
+    get_device_id(d1.device_certifier) as device_certifier,
     d1.created_on,
     d1.revocated_on,
     d1.certified_revocation,
-    (
-        SELECT devices.device_id FROM devices WHERE devices._id = d1.revocation_certifier
-    ) as revocation_certifier
+    get_device_id(d1.revocation_certifier) as revocation_certifier
 FROM devices as d1
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
-    AND device_id = any($2::text[]);
+    organization = get_organization_internal_id($1)
+    AND device_id = any($2::text[])
 """,
                 organization_id,
                 devices_to_fetch,
@@ -387,9 +323,7 @@ WHERE
                     """
 SELECT user_id FROM users
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND user_id LIKE $2 ESCAPE '!'
     AND (
         NOT $3 OR EXISTS (
@@ -414,9 +348,7 @@ ORDER BY user_id
                     """
 SELECT user_id FROM users
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND (
         NOT $2 OR EXISTS (
             SELECT TRUE FROM devices
@@ -442,11 +374,7 @@ ORDER BY user_id
         user_result = await conn.fetchrow(
             """
 SELECT true FROM users
-WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
-    AND user_id = $2
+WHERE  _id = get_user_internal_id($1, $2)
 """,
             organization_id,
             user_id,
@@ -461,9 +389,7 @@ WHERE
 SELECT true
 FROM devices
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND device_id = $2
 """,
             organization_id,
@@ -488,15 +414,8 @@ INSERT INTO user_invitations (
     user_id,
     created_on
 ) VALUES (
-    (SELECT _id FROM organizations WHERE organization_id = $1),
-    (SELECT _id
-     FROM devices
-     WHERE
-        device_id = $2 AND
-        organization = (
-            SELECT _id FROM organizations WHERE organization_id = $1
-        )
-    ),
+    get_organization_internal_id($1),
+    get_device_internal_id($1, $2),
     $3, $4
 )
 ON CONFLICT (organization, user_id)
@@ -528,14 +447,11 @@ SET
 
         result = await conn.fetchrow(
             """
-SELECT user_invitations.user_id, devices.device_id, user_invitations.created_on
+SELECT user_id, get_device_id(creator), created_on
 FROM user_invitations
-LEFT JOIN devices ON user_invitations.creator = devices._id
 WHERE
-    user_invitations.organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
-    AND user_invitations.user_id = $2
+    organization = get_organization_internal_id($1)
+    AND user_id = $2
 """,
             organization_id,
             user_id,
@@ -575,9 +491,7 @@ WHERE
                     """
 DELETE FROM user_invitations
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND user_id = $2
 """,
                     organization_id,
@@ -611,15 +525,8 @@ INSERT INTO device_invitations (
     created_on
 )
 VALUES (
-    (SELECT _id FROM organizations WHERE organization_id = $1),
-    (SELECT _id
-     FROM devices
-     WHERE
-        device_id = $2 AND
-        organization = (
-            SELECT _id FROM organizations WHERE organization_id = $1
-        )
-    ),
+    get_organization_internal_id($1),
+    get_device_internal_id($1, $2),
     $3, $4
 )
 ON CONFLICT (organization, device_id)
@@ -653,14 +560,11 @@ SET
 
         result = await conn.fetchrow(
             """
-SELECT device_invitations.device_id, devices.device_id, device_invitations.created_on
+SELECT device_id, get_device_id(creator), created_on
 FROM device_invitations
-LEFT JOIN devices ON device_invitations.creator = devices._id
 WHERE
-    device_invitations.organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
-    AND device_invitations.device_id = $2
+    organization = get_organization_internal_id($1)
+    AND device_id = $2
 """,
             organization_id,
             device_id,
@@ -700,9 +604,7 @@ WHERE
                     """
 DELETE FROM device_invitations
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND device_id = $2
 """,
                     organization_id,
@@ -732,21 +634,10 @@ WHERE
                     """
 UPDATE devices SET
     certified_revocation = $3,
-    revocation_certifier = (
-        SELECT _id
-        FROM devices
-        WHERE
-            device_id = $4
-        AND
-            organization = (
-                SELECT _id FROM organizations WHERE organization_id = $1
-            )
-    ),
+    revocation_certifier = get_device_internal_id($1, $4),
     revocated_on = $5
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND device_id = $2
     AND revocated_on IS NULL
 """,
@@ -764,9 +655,7 @@ WHERE
 SELECT revocated_on
 FROM devices
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND device_id = $2
 """,
                         organization_id,
@@ -785,14 +674,7 @@ WHERE
                 result = await conn.fetch(
                     """
 SELECT revocated_on FROM devices
-WHERE user_ = (
-    SELECT _id FROM users
-    WHERE
-        organization = (
-            SELECT _id FROM organizations WHERE organization_id = $1
-        )
-        AND user_id = $2
-    )
+WHERE user_ = get_user_internal_id($1, $2)
             """,
                     organization_id,
                     device_id.user_id,
