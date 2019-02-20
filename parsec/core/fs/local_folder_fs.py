@@ -418,18 +418,12 @@ class LocalFolderFS:
         return self._delete(path, expect="folder")
 
     def move(self, src: FsPath, dst: FsPath) -> None:
-        return self._copy(src, dst, True)
-
-    def copy(self, src: FsPath, dst: FsPath) -> None:
-        return self._copy(src, dst, False)
-
-    def _copy(self, src: FsPath, dst: FsPath, delete_src: bool) -> None:
         # The idea here is to consider a manifest never move around the fs
         # (i.e. a given access always points to the same path). This simplify
         # sync notifications handling and avoid ending up with two path
         # (possibly from different workspaces !) pointing to the same manifest
         # which would be weird for user experience.
-        # Long story short, when moving/copying manifest, we must recursively
+        # Long story short, when moving a manifest, we must recursively
         # copy the manifests and create new accesses for them.
 
         parent_src = src.parent
@@ -504,14 +498,9 @@ class LocalFolderFS:
 
             moved_access = self._recursive_manifest_copy(src_access, src_manifest)
 
-            if not delete_src:
-                parent_manifest = parent_manifest.evolve_children_and_mark_updated(
-                    {dst.name: moved_access}
-                )
-            else:
-                parent_manifest = parent_manifest.evolve_children_and_mark_updated(
-                    {dst.name: moved_access, src.name: None}
-                )
+            parent_manifest = parent_manifest.evolve_children_and_mark_updated(
+                {dst.name: moved_access, src.name: None}
+            )
             self.set_manifest(parent_access, parent_manifest)
             self.event_bus.send("fs.entry.updated", id=parent_access.id)
 
@@ -565,18 +554,19 @@ class LocalFolderFS:
 
             moved_access = self._recursive_manifest_copy(src_access, src_manifest)
 
+            # Update destination
             parent_dst_manifest = parent_dst_manifest.evolve_children_and_mark_updated(
                 {dst.name: moved_access}
             )
             self.set_manifest(parent_dst_access, parent_dst_manifest)
             self.event_bus.send("fs.entry.updated", id=parent_dst_access.id)
 
-            if delete_src:
-                parent_src_manifest = parent_src_manifest.evolve_children_and_mark_updated(
-                    {src.name: None}
-                )
-                self.set_manifest(parent_src_access, parent_src_manifest)
-                self.event_bus.send("fs.entry.updated", id=parent_src_access.id)
+            # Update source
+            parent_src_manifest = parent_src_manifest.evolve_children_and_mark_updated(
+                {src.name: None}
+            )
+            self.set_manifest(parent_src_access, parent_src_manifest)
+            self.event_bus.send("fs.entry.updated", id=parent_src_access.id)
 
     def _recursive_manifest_copy(self, access, manifest):
 
