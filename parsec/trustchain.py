@@ -72,7 +72,10 @@ certified_device_revocation_schema = Serializer(CertifiedDeviceRevocationSchema)
 
 
 def _validate_certified_payload(
-    schema: UnknownCheckedSchema, certifier_key: VerifyKey, payload: bytes, now: Pendulum = None
+    schema: UnknownCheckedSchema,
+    certifier_key: VerifyKey,
+    payload: bytes,
+    created_on: Pendulum = None,
 ) -> dict:
     """
     Raises:
@@ -86,7 +89,7 @@ def _validate_certified_payload(
     except (CryptoError, SerdeError) as exc:
         raise TrustChainInvalidDataError(*exc.args) from exc
 
-    if not timestamps_in_the_ballpark(data["timestamp"], now or pendulum.now()):
+    if not timestamps_in_the_ballpark(data["timestamp"], created_on):
         raise TrustChainTooOldError("Timestamp is too old.")
 
     return data
@@ -119,14 +122,14 @@ def certify_device(
 
 
 def validate_payload_certified_device(
-    certifier_key: VerifyKey, payload: bytes, now: Pendulum
+    certifier_key: VerifyKey, payload: bytes, created_on: Pendulum
 ) -> dict:
     """
     Raises:
         TrustChainInvalidDataError
         TrustChainTooOldError
     """
-    return _validate_certified_payload(certified_device_schema, certifier_key, payload, now)
+    return _validate_certified_payload(certified_device_schema, certifier_key, payload, created_on)
 
 
 def unsecure_certified_device_extract_verify_key(data: bytes) -> VerifyKey:
@@ -170,14 +173,14 @@ def certify_user(
 
 
 def validate_payload_certified_user(
-    certifier_key: VerifyKey, payload: bytes, now: Pendulum
+    certifier_key: VerifyKey, payload: bytes, created_on: Pendulum
 ) -> dict:
     """
     Raises:
         TrustChainInvalidDataError
         TrustChainTooOldError
     """
-    return _validate_certified_payload(certified_user_schema, certifier_key, payload, now)
+    return _validate_certified_payload(certified_user_schema, certifier_key, payload, created_on)
 
 
 def unsecure_certified_user_extract_public_key(data: bytes) -> PublicKey:
@@ -219,7 +222,7 @@ def certify_device_revocation(
 
 
 def validate_payload_certified_device_revocation(
-    certifier_key: VerifyKey, payload: bytes, now: Pendulum
+    certifier_key: VerifyKey, payload: bytes, revocated_on: Pendulum
 ) -> dict:
     """
     Raises:
@@ -227,7 +230,7 @@ def validate_payload_certified_device_revocation(
         TrustChainTooOldError
     """
     return _validate_certified_payload(
-        certified_device_revocation_schema, certifier_key, payload, now
+        certified_device_revocation_schema, certifier_key, payload, revocated_on
     )
 
 
@@ -244,9 +247,7 @@ def certified_extract_parts(certified: bytes) -> Tuple[DeviceID, bytes]:
         raise TrustChainInvalidDataError(*exc.args) from exc
 
 
-def cascade_validate_devices(
-    certified_devices, root_device_id, root_verify_key, now
-) -> Tuple[dict]:
+def cascade_validate_devices(user, trustchain, root_device_id, root_verify_key) -> Tuple[dict]:
     """
     Raises:
         TrustChainBrokenChainError
@@ -260,20 +261,71 @@ def cascade_validate_devices(
                 f"Device {current_certifier} not signed by {previous_certifier}"
             )
 
-    devices = []
-    for certified_device in certified_devices:
-        if devices:
-            previous_device = devices[-1]
-        else:
-            previous_device = {"device_id": root_device_id, "verify_key": root_verify_key}
-        certifier_id, certified_payload = certified_extract_parts(certified_device)
-        if certifier_id:
-            _check_current_certifier_match_previous_certifier(
-                certifier_id, previous_device["device_id"]
-            )
-        validated = validate_payload_certified_device(
-            previous_device["verify_key"], certified_payload, now
-        )
-        devices.append(validated)
+    user_devices = user.devices
+    trustchain.update(user_devices)
 
-    return tuple(devices)
+    revocation_dates = {}
+    for device_name, remove_device in trustchain.items():
+        revocation_dates[device_name] = remove_device.revocated_on
+
+    certifier_id, certified_payload = certified_extract_parts(user.certified_user)
+    if user.user_certifier:
+        previous_device = {
+            "device_id": trustchain[user.user_certifier].device_id,
+            "verify_key": trustchain[user.user_certifier].verify_key,
+        }
+        user_certifier_device = [
+            {trustchain[user.user_certifier].device_name: trustchain[user.user_certifier]}
+        ]
+        # TODO user_devices[user.user_certifier] = RemoteDevice ?
+    else:
+        previous_device = {"device_id": root_device_id, "verify_key": root_verify_key}
+        user_certifier_device = []
+    if (
+        previous_device["device_id"] != root_device_id
+        and revocation_dates[previous_device["device_id"]]
+        and revocation_dates[previous_device["device_id"]] < user.created_on
+    ):
+        raise TrustChainBrokenChainError("Revocated user")
+    validated = validate_payload_certified_user(
+        previous_device["verify_key"], certified_payload, user.created_on
+    )
+    if user.is_revocated():
+        raise TrustChainBrokenChainError("Revocated user")
+
+    certified_devices = []
+    revocated_devices = []
+    for mapping in [user_devices, *user_certifier_device]:
+        children = []
+        for device_name in mapping:
+            current_device = device_name
+            while current_device:
+                children.append(current_device)
+                certified_device = trustchain[current_device].certified_device
+                device_certifier = trustchain[current_device].device_certifier
+                if device_certifier:
+                    previous_device = {
+                        "device_id": trustchain[device_certifier].device_id,
+                        "verify_key": trustchain[device_certifier].verify_key,
+                    }
+                else:
+                    previous_device = {"device_id": root_device_id, "verify_key": root_verify_key}
+                certifier_id, certified_payload = certified_extract_parts(certified_device)
+                if certifier_id:
+                    _check_current_certifier_match_previous_certifier(
+                        certifier_id, previous_device["device_id"] or root_device_id
+                    )
+                device = trustchain[device_name]
+                if (
+                    previous_device["device_id"] != root_device_id
+                    and revocation_dates[previous_device["device_id"]]
+                    and revocation_dates[previous_device["device_id"]] < device.created_on
+                ):
+                    revocated_devices += children
+                validated = validate_payload_certified_device(
+                    previous_device["verify_key"], certified_payload, device.created_on
+                )
+                current_device = device_certifier
+            certified_devices.append(device_name)
+
+    return [trustchain[i] for i in certified_devices if i not in revocated_devices]

@@ -664,6 +664,7 @@ class BaseUserComponent:
                 data["device_id"],
                 msg["certified_revocation"],
                 certifier_id,
+                data["timestamp"],
             )
 
         except UserNotFoundError:

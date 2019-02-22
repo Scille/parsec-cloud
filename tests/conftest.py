@@ -403,10 +403,7 @@ def running_backend_ready(request):
 
 
 @pytest.fixture
-async def running_backend(
-    monkeypatch, server_factory, backend_addr, backend, running_backend_ready
-):
-    monkeypatch.setattr("parsec.trustchain.MAX_TS_BALLPARK", 60 * 60 * 24 * 8)
+async def running_backend(server_factory, backend_addr, backend, running_backend_ready):
     async with server_factory(backend.handle_client, backend_addr) as server:
         server.backend = backend
         running_backend_ready.set()

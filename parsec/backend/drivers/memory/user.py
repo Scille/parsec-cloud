@@ -244,7 +244,9 @@ class MemoryUserComponent(BaseUserComponent):
         device_id: DeviceID,
         certified_revocation: bytes,
         revocation_certifier: DeviceID,
+        now: pendulum.Pendulum = None,
     ) -> Optional[pendulum.Pendulum]:
+        now = now or pendulum.now()
         org = self._organizations[organization_id]
 
         user = await self.get_user(organization_id, device_id.user_id)
@@ -259,7 +261,7 @@ class MemoryUserComponent(BaseUserComponent):
         for device in user.devices.values():
             if device.device_id == device_id:
                 device = device.evolve(
-                    revocated_on=pendulum.now(),
+                    revocated_on=now,
                     certified_revocation=certified_revocation,
                     revocation_certifier=revocation_certifier,
                 )
