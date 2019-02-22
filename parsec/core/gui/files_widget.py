@@ -11,6 +11,7 @@ from parsec.core.gui import desktop
 from parsec.core.gui.file_items import FileType
 from parsec.core.gui.custom_widgets import show_error, ask_question, get_text, TaskbarButton
 from parsec.core.gui.core_widget import CoreWidget
+from parsec.core.gui.loading_dialog import LoadingDialog
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.fs import FSEntryNotFound
 
@@ -149,12 +150,16 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         )
         if not paths:
             return
+        d = LoadingDialog(parent=self)
+        d.show()
         err = False
         for path in paths:
             p = pathlib.Path(path)
             err |= self._import_file(
                 str(p), os.path.join("/", self.workspace, self.current_directory, p.name)
             )
+        d.hide()
+        d.setParent(None)
         if err:
             show_error(
                 self, QCoreApplication.translate("FilesWidget", "Some files could not be imported.")
@@ -169,10 +174,14 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         )
         if not path:
             return
+        d = LoadingDialog(parent=self)
+        d.show()
         p = pathlib.Path(path)
         err = self._import_folder(
             p, os.path.join("/", self.workspace, self.current_directory, p.name)
         )
+        d.hide()
+        d.setParent(None)
         if err:
             show_error(
                 self, QCoreApplication.translate("FilesWidget", "The folder could not be imported.")
