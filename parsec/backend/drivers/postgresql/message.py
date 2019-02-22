@@ -25,24 +25,10 @@ INSERT INTO messages (
     body
 )
 SELECT
-    _id,
-    (
-        SELECT _id
-        FROM devices
-        WHERE
-            organization = organizations._id
-            AND device_id = $2
-    ),
-    (
-        SELECT _id
-        FROM users
-        WHERE
-            organization = organizations._id
-            AND user_id = $3
-    ),
+    get_organization_internal_id($1),
+    get_device_internal_id($1, $2),
+    get_user_internal_id($1, $3),
     $4
-FROM organizations
-WHERE organization_id = $1
 """,
                     organization_id,
                     sender,
@@ -57,15 +43,7 @@ WHERE organization_id = $1
                 index, = await conn.fetchrow(
                     """
 SELECT COUNT(*) FROM messages
-WHERE recipient = (
-    SELECT _id
-    FROM users
-    WHERE
-        organization = (
-            SELECT _id from organizations WHERE organization_id = $1
-        )
-        AND user_id = $2
-)
+WHERE recipient = get_user_internal_id($1, $2)
 """,
                     organization_id,
                     recipient,
@@ -85,19 +63,10 @@ WHERE recipient = (
         async with self.dbh.pool.acquire() as conn:
             data = await conn.fetch(
                 """
-SELECT devices.device_id, messages.body
+SELECT get_device_id(sender), body
 FROM messages
-LEFT JOIN devices ON messages.sender = devices._id
-WHERE recipient = (
-    SELECT _id
-    FROM users
-    WHERE
-        organization = (
-            SELECT _id from organizations WHERE organization_id = $1
-        )
-        AND user_id = $2
-)
-ORDER BY messages._id ASC OFFSET $3
+WHERE recipient = get_user_internal_id($1, $2)
+ORDER BY _id ASC OFFSET $3
 """,
                 organization_id,
                 recipient,
