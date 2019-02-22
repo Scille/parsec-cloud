@@ -76,7 +76,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
             return
         for i in range(self.scroll_content.layout().count()):
             item = self.scroll_content.layout().itemAt(i)
-            if item.widget().name == user:
+            if item and item.widget() and item.widget().name == user:
                 show_warning(
                     self,
                     QCoreApplication.translate(
