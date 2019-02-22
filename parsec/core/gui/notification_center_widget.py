@@ -43,6 +43,13 @@ class NotificationCenterWidget(QWidget, Ui_NotificationCenterWidget):
         notif.hide()
         notif.setParent(None)
 
+    def clear(self):
+        while self.widget_layout.layout().count() > 1:
+            item = self.widget_layout.layout().takeAt(0)
+            if item.widget():
+                item.widget().hide()
+                item.widget().setParent(None)
+
     def add_notification(self, notif_type, msg):
         widget = None
         if notif_type == "ERROR":
