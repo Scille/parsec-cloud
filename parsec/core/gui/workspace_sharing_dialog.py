@@ -83,6 +83,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                         "WorkspacesWidget", 'This workspace is already shared with "{}".'
                     ).format(user),
                 )
+                return
 
         try:
             self.portal.run(self.core.fs.share, os.path.join("/", self.name), user)
