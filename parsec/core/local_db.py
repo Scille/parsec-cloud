@@ -47,6 +47,12 @@ class LocalDB:
         self.create_db()
         self.nb_blocks = self.get_nb_blocks()
 
+    @property
+    def path(self):
+        return str(self._path)
+
+    # Database initialization
+
     def create_db(self):
         cursor = self.conn.cursor()
         cursor.execute(
@@ -74,19 +80,7 @@ class LocalDB:
         )
         cursor.close()
 
-    @property
-    def path(self):
-        return str(self._path)
-
-    # parsec/core/encryption_manager.py:        self.local_db.set_user(self._build_remote_user_local_access(user_id), raw)
-    # parsec/core/encryption_manager.py:            raw_user_data = self.local_db.get_user(self._build_remote_user_local_access(user_id))
-    # parsec/core/encryption_manager.py:            raw_user_data = self.local_db.get_user(
-    # parsec/core/fs/remote_loader.py:        self.local_db.set_block(access, block)
-    # parsec/core/fs/remote_loader.py:        self.local_db.set_manifest(access, raw_local_manifest)
-    # parsec/core/fs/local_file_fs.py:        return self.local_db.get_block(access)
-    # parsec/core/fs/local_file_fs.py:        return self.local_db.set_block(access, block, deletable)
-    # parsec/core/fs/local_folder_fs.py:            raw = self._local_db.get_manifest(access)
-    # parsec/core/fs/local_folder_fs.py:        self._local_db.set_manifest(access, raw, False)
+    # Size and blocks
 
     def get_nb_blocks(self):
         cursor = self.conn.cursor()
@@ -101,6 +95,8 @@ class LocalDB:
         res = res.fetchone()
         cursor.close()
         return res[0] if res[0] else 0
+
+    # User operations
 
     def get_user(self, access: Access):
         cursor = self.conn.cursor()
@@ -124,6 +120,8 @@ class LocalDB:
             (str(access.id), ciphered, str(Pendulum.now())),
         )
         cursor.close()
+
+    # Manifest operations
 
     def get_manifest(self, access: Access):
         cursor = self.conn.cursor()
@@ -153,6 +151,8 @@ class LocalDB:
         )
         cursor.close()
 
+    # Block operations
+
     def get_block_cache_size(self):
         cache = str(self._db_files)
         return sum(
@@ -173,15 +173,6 @@ class LocalDB:
         cursor.close()
         ciphered = self._read_file(access)
         return decrypt_raw_with_secret_key(access.key, ciphered)
-
-    def clear_blocks_from_database(self, limit=None):
-        cursor = self.conn.cursor()
-        limit_string = f" limit {limit}" if limit is not None else ""
-        cursor.execute("SELECT block_id from blocks WHERE deletable = 1" + limit_string)
-        block_ids = [block_id for (block_id,) in cursor.fetchall()]
-        cursor.close()
-        for block_id in block_ids:
-            self.clear_block_from_database(ManifestAccess(block_id))
 
     def set_block(self, access: Access, raw: bytes, deletable: bool = True):
         assert isinstance(raw, (bytes, bytearray))
@@ -212,33 +203,35 @@ class LocalDB:
         # Clean up if necessary
         if deletable and self.nb_blocks > self.block_limit:
             limit = self.nb_blocks - self.block_limit
-            self.clear_blocks_from_database(limit=limit)
+            self.cleanup_blocks(limit=limit)
 
         #  TODO offline
 
-    def clear_block_from_database(self, access):
+    # Clear operations
+
+    def clear_block(self, access):
         cursor = self.conn.cursor()
         cursor.execute("DELETE FROM blocks WHERE block_id = ?", (str(access.id),))
         cursor.close()
         self.nb_blocks -= 1
-        self.clear_block(access)
+        self._remove_file(access)
 
-    def clear_block(self, access: Access):
-        file = self._db_files / str(access.id)
-        if file.exists():
-            file.unlink()
-        else:
-            raise LocalDBMissingEntry(access)
+    def clear_manifest(self, access: Access):
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM vlobs WHERE vlob_id = ?", (str(access.id),))
+        cursor.close()
 
-    def clear_dirty_vlob_blocks(self):
+    def clear_non_deletable_blocks_and_manifests(self):
         cursor = self.conn.cursor()
         cursor.execute("DELETE FROM vlobs WHERE deletable = 0")
         cursor.execute("DELETE FROM blocks WHERE deletable = 0")
         cursor.close()
 
+    # Block file operations
+
     def _write_file(self, access: Access, content: bytes):
         try:
-            self.clear_block(access)
+            self._remove_file(access)
         except LocalDBMissingEntry:
             pass
         file = self._db_files / str(access.id)
@@ -251,5 +244,23 @@ class LocalDB:
         else:
             raise LocalDBMissingEntry(access)
 
+    def _remove_file(self, access: Access):
+        file = self._db_files / str(access.id)
+        if file.exists():
+            file.unlink()
+        else:
+            raise LocalDBMissingEntry(access)
+
+    # Garbage collection
+
+    def cleanup_blocks(self, limit=None):
+        cursor = self.conn.cursor()
+        limit_string = f" limit {limit}" if limit is not None else ""
+        cursor.execute("SELECT block_id from blocks WHERE deletable = 1" + limit_string)
+        block_ids = [block_id for (block_id,) in cursor.fetchall()]
+        cursor.close()
+        for block_id in block_ids:
+            self.clear_block(ManifestAccess(block_id))
+
     def run_block_garbage_collector(self):
-        self.clear_blocks_from_database()
+        self.cleanup_blocks()
