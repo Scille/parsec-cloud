@@ -2,7 +2,6 @@
 
 import pickle
 import hashlib
-from pendulum import Pendulum
 from typing import Tuple
 
 from parsec.api.protocole.user import UserSchema
@@ -18,7 +17,7 @@ from parsec.crypto import (
 )
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.local_db import LocalDBMissingEntry
-from parsec.core.types import RemoteDevice, RemoteDevicesMapping, RemoteUser, ManifestAccess
+from parsec.core.types import RemoteDevice, RemoteUser, ManifestAccess
 from parsec.core.backend_connection import BackendCmdsBadResponse
 from parsec.serde import Serializer
 
@@ -78,29 +77,12 @@ class EncryptionManager(BaseAsyncComponent):
             else:
                 raise
 
-        new_devices = cascade_validate_devices(
+        cascade_validate_devices(
             user, trustchain, self.device.organization_id, self.device.root_verify_key
         )
 
-        new_user = RemoteUser(
-            user_id=user.user_id,
-            certified_user=user.certified_user,
-            user_certifier=user.user_certifier,
-            devices=RemoteDevicesMapping(*new_devices),
-            created_on=user.created_on,
-        )
-
-        # raw = user_schema_serializer.dumps({
-        #     'user_id': new_user.user_id,
-        #     'is_admin': True,
-        #     'created_on': new_user.created_on,
-        #     'certified_user': new_user.certified_user,
-        #     'user_certifier': new_user.user_certifier,
-        #     'devices': new_user.devices
-        # })
-
         # TODO: use schema here
-        raw = pickle.dumps(new_user)
+        raw = pickle.dumps(user)
         self.local_db.set(self._build_remote_user_local_access(user_id), raw)
 
     def _build_remote_user_local_access(self, user_id: UserID) -> ManifestAccess:

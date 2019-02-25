@@ -19,8 +19,6 @@ from parsec.core.types import (
 from parsec.core.devices_manager import generate_new_device
 from parsec.backend.user import User as BackendUser, new_user_factory as new_backend_user_factory
 
-from tests.common import freeze_time
-
 
 @attr.s
 class OrganizationFullData:

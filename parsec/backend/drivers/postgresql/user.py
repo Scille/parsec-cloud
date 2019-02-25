@@ -724,6 +724,7 @@ WHERE
         device_id: DeviceID,
         certified_revocation: bytes,
         revocation_certifier: DeviceID,
+        now: pendulum.Pendulum = None,
     ) -> Optional[pendulum.Pendulum]:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
@@ -754,7 +755,7 @@ WHERE
                     device_id,
                     certified_revocation,
                     revocation_certifier,
-                    pendulum.now(),
+                    now or pendulum.now(),
                 )
 
                 if result != "UPDATE 1":
