@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
 import trio
 import time
 import threading
@@ -8,8 +7,12 @@ from pathlib import Path
 from fuse import FUSE
 from structlog import get_logger
 
-from parsec.core.mountpoint.operations import FuseOperations
+from parsec.core.mountpoint.fuse_operations import FuseOperations
+from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
 from parsec.core.mountpoint.exceptions import MountpointConfigurationError
+
+
+__all__ = ("fuse_mountpoint_runner",)
 
 
 logger = get_logger()
@@ -17,18 +20,9 @@ logger = get_logger()
 
 def _bootstrap_mountpoint(mountpoint):
     try:
-        if os.name == "posix":
-            # On POSIX systems, mounting target must exists
-            mountpoint.mkdir(exist_ok=True, parents=True)
-            initial_st_dev = mountpoint.stat().st_dev
-        else:
-            # On Windows, only parent's mounting target must exists
-            mountpoint.parent.mkdir(exist_ok=True, parents=True)
-            if mountpoint.exists():
-                raise MountpointConfigurationError(
-                    f"Mountpoint `{mountpoint.absolute()}` must not exists on windows"
-                )
-            initial_st_dev = None
+        # On POSIX systems, mounting target must exists
+        mountpoint.mkdir(exist_ok=True, parents=True)
+        initial_st_dev = mountpoint.stat().st_dev
 
     except OSError as exc:
         # In case of hard crash, it's possible the FUSE mountpoint is still
@@ -42,15 +36,14 @@ def _bootstrap_mountpoint(mountpoint):
 
 
 def _teardown_mountpoint(mountpoint):
-    if os.name == "posix":
-        try:
-            mountpoint.rmdir()
-        except OSError:
-            pass
+    try:
+        mountpoint.rmdir()
+    except OSError:
+        pass
 
 
-async def run_fuse_in_thread(
-    fs, mountpoint: Path, fuse_config: dict, event_bus, *, task_status=trio.TASK_STATUS_IGNORED
+async def fuse_mountpoint_runner(
+    fs, mountpoint: Path, config: dict, event_bus, *, task_status=trio.TASK_STATUS_IGNORED
 ):
     """
     Raises:
@@ -61,10 +54,7 @@ async def run_fuse_in_thread(
     portal = trio.BlockingTrioPortal()
     abs_mountpoint = str(mountpoint.absolute())
     fs_access = ThreadFSAccess(portal, fs)
-    fuse_operations = FuseOperations(fs_access, abs_mountpoint)
-
-    async def _stop_fuse_runner():
-        await _stop_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped)
+    fuse_operations = FuseOperations(fs_access)
 
     initial_st_dev = _bootstrap_mountpoint(mountpoint)
 
@@ -81,7 +71,7 @@ async def run_fuse_in_thread(
                         abs_mountpoint,
                         foreground=True,
                         auto_unmount=True,
-                        **fuse_config,
+                        **config,
                     )
                 finally:
                     fuse_thread_stopped.set()
@@ -96,7 +86,7 @@ async def run_fuse_in_thread(
             task_status.started(abs_mountpoint)
 
     finally:
-        await _stop_fuse_runner()
+        await _stop_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped)
         event_bus.send("mountpoint.stopped", mountpoint=abs_mountpoint)
         _teardown_mountpoint(mountpoint)
 
@@ -146,52 +136,3 @@ async def _stop_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped):
         await trio.run_sync_in_worker_thread(_wakeup_fuse)
         await trio.run_sync_in_worker_thread(fuse_thread_stopped.wait)
         logger.info("Fuse thread stopped")
-
-
-class ThreadFSAccess:
-    def __init__(self, portal, fs):
-        self.fs = fs
-        self._portal = portal
-
-    def stat(self, path):
-        return self._portal.run(self.fs.stat, path)
-
-    def delete(self, path):
-        return self._portal.run(self.fs.delete, path)
-
-    def move(self, src, dst):
-        return self._portal.run(self.fs.move, src, dst)
-
-    def file_create(self, path):
-        async def _do(path):
-            await self.fs.file_create(path)
-            return await self.fs.file_fd_open(path)
-
-        return self._portal.run(_do, path)
-
-    def folder_create(self, path):
-        return self._portal.run(self.fs.folder_create, path)
-
-    def file_truncate(self, path, length):
-        return self._portal.run(self.fs.file_truncate, path, length)
-
-    def file_fd_open(self, path):
-        return self._portal.run(self.fs.file_fd_open, path)
-
-    def file_fd_close(self, fh):
-        return self._portal.run(self.fs.file_fd_close, fh)
-
-    def file_fd_seek(self, fh, offset):
-        return self._portal.run(self.fs.file_fd_seek, fh, offset)
-
-    def file_fd_read(self, fh, size, offset):
-        return self._portal.run(self.fs.file_fd_read, fh, size, offset)
-
-    def file_fd_write(self, fh, data, offset):
-        return self._portal.run(self.fs.file_fd_write, fh, data, offset)
-
-    def file_fd_truncate(self, fh, length):
-        return self._portal.run(self.fs.file_fd_truncate, fh, length)
-
-    def file_fd_flush(self, fh):
-        return self._portal.run(self.fs.file_fd_flush, fh)

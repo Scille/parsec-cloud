@@ -40,10 +40,14 @@ async def test_handshake_invalid_format(backend, server_factory):
         transport = await Transport.init_for_client(stream, server.addr)
 
         await transport.recv()  # Get challenge
-        req = {"handshake": "answer", "dummy": "field"}
+        req = {"handshake": "answer", "organization_id": "zob", "dummy": "field"}
         await transport.send(packb(req))
         result_req = await transport.recv()
-        assert unpackb(result_req) == {"handshake": "result", "result": "bad_format"}
+        assert unpackb(result_req) == {
+            "handshake": "result",
+            "result": "bad_format",
+            "help": "{'_schema': ['Unknown field name dummy']}",
+        }
 
 
 @pytest.mark.trio

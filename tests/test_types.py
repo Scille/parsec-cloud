@@ -13,15 +13,15 @@ from parsec.crypto import SigningKey, export_root_verify_key
 
 
 def test_device_id():
-    device_id = DeviceID("user_name@device_name")
-    assert device_id == "user_name@device_name"
-    assert device_id.user_id == "user_name"
+    device_id = DeviceID("user_id@device_name")
+    assert device_id == "user_id@device_name"
+    assert device_id.user_id == "user_id"
     assert device_id.device_name == "device_name"
 
 
 def test_user_id():
-    user_id = UserID("user_name")
-    assert user_id == "user_name"
+    user_id = UserID("user_id")
+    assert user_id == "user_id"
 
 
 def test_backend_addr_good():

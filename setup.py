@@ -257,7 +257,12 @@ test_requirements = [
 PYQT_DEP = "PyQt5==5.11.2"
 extra_requirements = {
     "pkcs11": ["python-pkcs11==0.5.0", "pycrypto==2.6.1"],
-    "core": [PYQT_DEP, "fusepy==3.0.1", "zxcvbn==4.4.27"],
+    "core": [
+        PYQT_DEP,
+        'fusepy==3.0.1;platform_system=="Linux"',
+        'winfspy==0.3.7;platform_system=="Windows"',
+        "zxcvbn==4.4.27",
+    ],
     "backend": [
         # PostgreSQL
         "triopg==0.3.0",

@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
 import trio
 import attr
 from typing import Optional
@@ -48,10 +47,6 @@ async def logged_core_factory(
     event_bus: Optional[EventBus] = None,
     mountpoint: Optional[Path] = None,
 ):
-    if config.mountpoint_enabled and os.name == "nt":
-        logger.warning("Mountpoint disabled (not supported yet on Windows)")
-        config = config.evolve(mountpoint_enabled=False)
-
     event_bus = event_bus or EventBus()
 
     # Plenty of nested scope to order components init/teardown

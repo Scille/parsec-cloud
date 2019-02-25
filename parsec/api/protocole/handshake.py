@@ -50,6 +50,7 @@ handshake_answer_serializer = serializer_factory(HandshakeAnswerSchema)
 class HandshakeResultSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("result", required=True)
     result = fields.String(required=True)
+    help = fields.String(allow_none=True, missing=None)
 
 
 handshake_result_serializer = serializer_factory(HandshakeResultSchema)
@@ -94,34 +95,45 @@ class ServerHandshake:
         self.device_id = data["device_id"]
         self.state = "answer"
 
-    def build_bad_format_result_req(self) -> bytes:
+    def build_bad_format_result_req(self, help="Invalid params") -> bytes:
         if self.state not in ("answer", "challenge"):
             raise HandshakeError("Invalid state.")
 
         self.state = "result"
-        return handshake_result_serializer.dumps({"handshake": "result", "result": "bad_format"})
+        return handshake_result_serializer.dumps(
+            {"handshake": "result", "result": "bad_format", "help": help}
+        )
 
-    def build_bad_identity_result_req(self) -> bytes:
-        if not self.state == "answer":
-            raise HandshakeError("Invalid state.")
-
-        self.state = "result"
-        return handshake_result_serializer.dumps({"handshake": "result", "result": "bad_identity"})
-
-    def build_rvk_mismatch_result_req(self) -> bytes:
-        if not self.state == "answer":
-            raise HandshakeError("Invalid state.")
-
-        self.state = "result"
-        return handshake_result_serializer.dumps({"handshake": "result", "result": "rvk_mismatch"})
-
-    def build_revoked_device_result_req(self) -> bytes:
+    def build_bad_identity_result_req(self, help="Unknown Organization or Device") -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
         self.state = "result"
         return handshake_result_serializer.dumps(
-            {"handshake": "result", "result": "revoked_device"}
+            {"handshake": "result", "result": "bad_identity", "help": help}
+        )
+
+    def build_rvk_mismatch_result_req(self, help=None) -> bytes:
+        if not self.state == "answer":
+            raise HandshakeError("Invalid state.")
+
+        help = help or (
+            "Root verify key for organization `{self.organization_id}` "
+            "differs between client and server"
+        )
+
+        self.state = "result"
+        return handshake_result_serializer.dumps(
+            {"handshake": "result", "result": "rvk_mismatch", "help": help}
+        )
+
+    def build_revoked_device_result_req(self, help="Device has been revoked") -> bytes:
+        if not self.state == "answer":
+            raise HandshakeError("Invalid state.")
+
+        self.state = "result"
+        return handshake_result_serializer.dumps(
+            {"handshake": "result", "result": "revoked_device", "help": help}
         )
 
     def build_result_req(self, verify_key=None) -> bytes:
@@ -165,19 +177,18 @@ class ClientHandshake:
         data = handshake_result_serializer.loads(req)
         if data["result"] != "ok":
             if data["result"] == "bad_identity":
-                raise HandshakeBadIdentity("Backend didn't recognized our identity")
+                raise HandshakeBadIdentity(data["help"])
 
             elif data["result"] == "rvk_mismatch":
-                raise HandshakeRVKMismatch(
-                    "Backend doesn't agree on the root verify key"
-                    f" for organization `{self.organization_id}`"
-                )
+                raise HandshakeRVKMismatch(data["help"])
 
             elif data["result"] == "revoked_device":
-                raise HandshakeRevokedDevice("Backend rejected revoked device")
+                raise HandshakeRevokedDevice(data["help"])
 
             else:
-                raise InvalidMessageError(f"Bad `result` handshake: {data['result']}")
+                raise InvalidMessageError(
+                    f"Bad `result` handshake: {data['result']} ({data['help']})"
+                )
 
 
 @attr.s
@@ -199,13 +210,12 @@ class AnonymousClientHandshake:
         data = handshake_result_serializer.loads(req)
         if data["result"] != "ok":
             if data["result"] == "bad_identity":
-                raise HandshakeBadIdentity("Backend didn't recognized our identity")
+                raise HandshakeBadIdentity(data["help"])
 
             elif data["result"] == "rvk_mismatch":
-                raise HandshakeRVKMismatch(
-                    "Backend doesn't agree on the root verify key"
-                    f" for organization `{self.organization_id}`"
-                )
+                raise HandshakeRVKMismatch(data["help"])
 
             else:
-                raise InvalidMessageError(f"Bad `result` handshake: {data['result']}")
+                raise InvalidMessageError(
+                    f"Bad `result` handshake: {data['result']} ({data['help']})"
+                )

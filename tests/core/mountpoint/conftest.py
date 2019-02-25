@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import os
 import pytest
 import threading
 import trio
@@ -12,20 +11,9 @@ from parsec.core.mountpoint import mountpoint_manager
 from tests.common import call_with_control
 
 
-@pytest.fixture(params=("thread", "process"))
-def fuse_mode(request):
-    if request.param == "process":
-        pytest.skip("Quick fix for CI...")
-    if request.param == "thread" and os.name == "nt":
-        pytest.skip("Windows doesn't support threaded fuse")
-    if request.param == "process" and os.name == "posix":
-        pytest.skip("Nobody ain't not time for this on POSIX !!!")
-    return request.param
-
-
 @pytest.fixture
 @pytest.mark.fuse
-def fuse_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_factory, fuse_mode):
+def fuse_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_factory):
     """
     Run a trio loop with fs and fuse in a separate thread to allow
     blocking operations on the mountpoint in the test
@@ -44,7 +32,7 @@ def fuse_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_f
             self._ready = threading.Event()
 
         @property
-        def default_workpsace(self):
+        def default_workspace(self):
             return self.mountpoint / self.default_workspace_name
 
         async def _start(self):
@@ -88,7 +76,7 @@ def fuse_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_f
 
                     async with trio.open_nursery() as nursery:
                         async with mountpoint_manager(
-                            fs, fs.event_bus, self.mountpoint, nursery, mode=fuse_mode
+                            fs, fs.event_bus, self.mountpoint, nursery
                         ) as fuse_task:
                             await started_cb(fs=fs, fuse=fuse_task)
 
@@ -118,7 +106,6 @@ def fuse_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_f
         count += 1
         if not mountpoint:
             mountpoint = tmpdir / f"mountpoint-{count}"
-            mountpoint.mkdir()
 
         fuse_service = FuseService(str(mountpoint))
         fuse_service.init()
