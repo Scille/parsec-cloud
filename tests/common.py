@@ -3,7 +3,7 @@
 import trio
 import attr
 import pendulum
-import sqlite3
+import itertools
 from unittest.mock import Mock
 from contextlib import ExitStack
 from inspect import iscoroutinefunction
@@ -15,10 +15,12 @@ from parsec.api.transport import Transport, TransportError
 
 
 class InMemoryLocalDB(LocalDB):
-    def __init__(self, tmpdir):
+    id_counter = itertools.count()
+
+    def __init__(self, path, **kwargs):
+        path = f"{path}/{next(self.id_counter)}"
+        super().__init__(path, **kwargs)
         self._data = {}
-        self.conn = sqlite3.connect(f"{tmpdir}/cache.sqlite")
-        self.create_db()
 
     def _read_file(self, access):
         file = self._db_files / str(access.id)

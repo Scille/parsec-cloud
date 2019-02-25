@@ -12,19 +12,18 @@ from hypothesis.stateful import (
 from hypothesis import strategies as st
 
 from parsec.core.local_db import LocalDB, LocalDBMissingEntry
+from parsec.core.local_db import DEFAULT_BLOCK_SIZE as block_size
 from parsec.core.types import ManifestAccess
 
 
-@pytest.mark.trio
-async def test_local_db_path(tmpdir):
-    local_db = LocalDB(tmpdir, max_cache_size=128)
+def test_local_db_path(tmpdir):
+    local_db = LocalDB(tmpdir, max_cache_size=128 * block_size)
     assert local_db.path == tmpdir
-    assert local_db.max_cache_size == 128
+    assert local_db.max_cache_size == 128 * block_size
 
 
-@pytest.mark.trio
-async def test_local_db_cache_size(tmpdir):
-    local_db = LocalDB(tmpdir, max_cache_size=128)
+def test_local_db_cache_size(tmpdir):
+    local_db = LocalDB(tmpdir, max_cache_size=128 * block_size)
 
     access = ManifestAccess()
     assert local_db.get_cache_size() == 0
@@ -36,9 +35,8 @@ async def test_local_db_cache_size(tmpdir):
     assert local_db.get_cache_size() > 4
 
 
-@pytest.mark.trio
-async def test_local_db_set_get_clear(tmpdir):
-    local_db = LocalDB(tmpdir, max_cache_size=128)
+def test_local_db_set_get_clear(tmpdir):
+    local_db = LocalDB(tmpdir, max_cache_size=128 * block_size)
 
     access = ManifestAccess()
     local_db.set_block(access, b"data")
@@ -55,20 +53,20 @@ async def test_local_db_set_get_clear(tmpdir):
         local_db.get_block(access)
 
 
-@pytest.mark.trio
-async def test_local_db_on_disk(tmpdir):
-    local_db = LocalDB(tmpdir, max_cache_size=128)
+def test_local_db_on_disk(tmpdir):
+    local_db = LocalDB(tmpdir, max_cache_size=128 * block_size)
     access = ManifestAccess()
     local_db.set_block(access, b"data")
+    # TODO: implement an explicit close method
+    del local_db
 
     local_db_cpy = LocalDB(tmpdir, max_cache_size=128)
     data = local_db_cpy.get_block(access)
     assert data == b"data"
 
 
-@pytest.mark.trio
-async def test_local_manual_run_garbage_collector(tmpdir):
-    local_db = LocalDB(tmpdir, max_cache_size=128)
+def test_local_manual_run_block_garbage_collector(tmpdir):
+    local_db = LocalDB(tmpdir, max_cache_size=128 * block_size)
 
     access_precious = ManifestAccess()
     local_db.set_block(access_precious, b"precious_data", False)
@@ -76,18 +74,17 @@ async def test_local_manual_run_garbage_collector(tmpdir):
     access_deletable = ManifestAccess()
     local_db.set_block(access_deletable, b"deletable_data")
 
-    local_db.run_garbage_collector()
+    local_db.run_block_garbage_collector()
     local_db.get_block(access_precious) == b"precious_data"
     with pytest.raises(LocalDBMissingEntry):
         local_db.get_block(access_deletable)
 
 
-@pytest.mark.trio
-async def test_local_automatic_run_garbage_collector(tmpdir):
-    local_db = LocalDB(tmpdir, max_cache_size=16)
+def test_local_automatic_run_garbage_collector(tmpdir):
+    local_db = LocalDB(tmpdir, max_cache_size=2 * block_size)
 
     access_a = ManifestAccess()
-    local_db.set_block(access_a, b"a" * 10)
+    local_db.set_block(access_a, b"a" * 10, False)
 
     access_b = ManifestAccess()
     local_db.set_block(access_b, b"b" * 5)
@@ -98,8 +95,8 @@ async def test_local_automatic_run_garbage_collector(tmpdir):
     access_c = ManifestAccess()
     local_db.set_block(access_c, b"c" * 5)
 
-    with pytest.raises(LocalDBMissingEntry):
-        local_db.get_block(access_a)
+    data_a = local_db.get_block(access_a)
+    assert data_a == b"a" * 10
 
     with pytest.raises(LocalDBMissingEntry):
         local_db.get_block(access_b)
@@ -123,7 +120,9 @@ def test_local_db_stateful(tmpdir, hypothesis_settings):
 
             self.cleared_precious_data = set()
 
-            self.local_db = LocalDB(tmpdir / f"local-db-{tentative}", max_cache_size=128)
+            self.local_db = LocalDB(
+                tmpdir / f"local-db-{tentative}", max_cache_size=128 * block_size
+            )
             # Monkey patch to simplify test
             self.local_db._encrypt_with_symkey = lambda key, data: data
             self.local_db._decrypt_with_symkey = lambda key, data: data
@@ -184,7 +183,7 @@ def test_local_db_stateful(tmpdir, hypothesis_settings):
 
         @rule()
         def gc(self):
-            self.local_db.run_garbage_collector()
+            self.local_db.run_block_garbage_collector()
 
         @invariant()
         def check(self):

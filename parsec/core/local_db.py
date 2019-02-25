@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 import pendulum
 from pendulum import Pendulum
-from shutil import rmtree
 import sqlite3
 
 from parsec.core.types.access import ManifestAccess
@@ -31,11 +30,19 @@ class LocalDBMissingEntry(LocalDBError):
 
 class LocalDB:
     def __init__(self, path: Path, max_cache_size: int = DEFAULT_MAX_CACHE_SIZE):
+        # Attributes
+        self.conn = None
+        self.nb_blocks = 0
         self._path = Path(path)
-        self.max_cache_size = max_cache_size
-        self._path.mkdir(parents=True, exist_ok=True)
         self._db_files = self._path / "cache"
+        self.max_cache_size = max_cache_size
+        self.block_limit = max_cache_size // DEFAULT_BLOCK_SIZE
+
+        # Create directories
+        self._path.mkdir(parents=True, exist_ok=True)
         self._db_files.mkdir(parents=True, exist_ok=True)
+
+        # Connect and initialize database
         self.conn = sqlite3.connect(str(self._path / "cache.sqlite"))
         self.create_db()
         self.nb_blocks = self.get_nb_blocks()
@@ -167,35 +174,54 @@ class LocalDB:
         ciphered = self._read_file(access)
         return decrypt_raw_with_secret_key(access.key, ciphered)
 
+    def clear_blocks_from_database(self, limit=None):
+        cursor = self.conn.cursor()
+        limit_string = f" limit {limit}" if limit is not None else ""
+        cursor.execute("SELECT block_id from blocks WHERE deletable = 1" + limit_string)
+        block_ids = [block_id for (block_id,) in cursor.fetchall()]
+        cursor.close()
+        for block_id in block_ids:
+            self.clear_block_from_database(ManifestAccess(block_id))
+
     def set_block(self, access: Access, raw: bytes, deletable: bool = True):
         assert isinstance(raw, (bytes, bytearray))
-
-        ciphered = encrypt_raw_with_secret_key(access.key, raw)
-        if deletable:
-            if self.nb_blocks + 1 > DEFAULT_MAX_CACHE_SIZE / DEFAULT_BLOCK_SIZE:
-                cursor = self.conn.cursor()
-                cursor.execute("SELECT block_id from blocks WHERE deletable = 1 limit 1")
-                block_id_to_delete = cursor.fetchone()[0]
-                cursor.execute(
-                    "DELETE FROM blocks WHERE deletable = 1 and block_id IN (SELECT block_id from blocks WHERE block_id = ?)",
-                    (block_id_to_delete,),
-                )
-                cursor.close()
-                access_to_delete = ManifestAccess(block_id_to_delete)
-                self.clear_block(access_to_delete)
-                self.nb_blocks -= 1
         file = self._db_files / str(access.id)
+        ciphered = encrypt_raw_with_secret_key(access.key, raw)
+
+        # Update database
         cursor = self.conn.cursor()
-        cursor.execute("DELETE FROM blocks WHERE block_id = ? ", (str(access.id),))
         cursor.execute(
             """INSERT INTO blocks (block_id, size, deletable, offline, file_path)
-               VALUES (?, ?, ?, ?, ?)""",
-            (str(access.id), len(ciphered), deletable, False, str(file)),
+            VALUES (:block_id, :size, :deletable, :offline, :file_path)
+            ON CONFLICT(block_id) DO UPDATE SET
+            size=:size, deletable=:deletable, offline=:offline, file_path=:file_path""",
+            {
+                "block_id": str(access.id),
+                "size": len(ciphered),
+                "deletable": deletable,
+                "offline": False,
+                "file_path": str(file),
+            },
         )
         cursor.close()
-        #  TODO offline
+
+        # Write file
         self._write_file(access, ciphered)
         self.nb_blocks += 1
+
+        # Clean up if necessary
+        if deletable and self.nb_blocks > self.block_limit:
+            limit = self.nb_blocks - self.block_limit
+            self.clear_blocks_from_database(limit=limit)
+
+        #  TODO offline
+
+    def clear_block_from_database(self, access):
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM blocks WHERE block_id = ?", (str(access.id),))
+        cursor.close()
+        self.nb_blocks -= 1
+        self.clear_block(access)
 
     def clear_block(self, access: Access):
         file = self._db_files / str(access.id)
@@ -226,6 +252,4 @@ class LocalDB:
             raise LocalDBMissingEntry(access)
 
     def run_block_garbage_collector(self):
-        # TODO: really quick'n deletable GC...
-        rmtree(str(self._db_files))
-        self._db_files.mkdir(parents=True, exist_ok=True)
+        self.clear_blocks_from_database()
