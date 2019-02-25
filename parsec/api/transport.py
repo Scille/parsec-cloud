@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from uuid import uuid4
 from trio import BrokenResourceError
 from structlog import get_logger
@@ -58,17 +60,14 @@ class Transport:
             raise TransportError(*exc.args) from exc
 
         if not in_data:
-            self.logger.debug("Receiving no data")
             # A receive of zero bytes indicates the TCP socket has been closed. We
             # need to pass None to wsproto to update its internal state.
             self.ws.receive_bytes(None)
         else:
-            self.logger.debug("Receiving", data=in_data)
             self.ws.receive_bytes(in_data)
 
     async def _net_send(self):
         out_data = self.ws.bytes_to_send()
-        self.logger.debug("Sending", data=out_data)
         try:
             await self.stream.send_all(out_data)
 

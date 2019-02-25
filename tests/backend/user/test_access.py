@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import pytest
 from unittest.mock import ANY
 from pendulum import Pendulum
@@ -206,14 +208,17 @@ async def test_api_user_find(access_testbed, organization_factory, local_device_
         device = local_device_factory(name, org)
         await binder.bind_device(device, certifier=godfrey1)
 
+    await binder.bind_revocation(binder.get_device("Philip_J_Fry@p1"), certifier=godfrey1)
+    await binder.bind_revocation(binder.get_device("Philippe@p2"), certifier=godfrey1)
+
     # Also create homonyme in different organization, just to be sure...
     other_org = organization_factory("FilmMark")
     other_device = local_device_factory("Philippe@p1", other_org)
     await binder.bind_organization(other_org, other_device)
 
-    # Test exact match
-    rep = await user_find(sock, query="Mike")
-    assert rep == {"status": "ok", "results": ["Mike"], "per_page": 100, "page": 1, "total": 1}
+    # # Test exact match
+    # rep = await user_find(sock, query="Mike")
+    # assert rep == {"status": "ok", "results": ["Mike"], "per_page": 100, "page": 1, "total": 1}
 
     # Test partial search
     rep = await user_find(sock, query="Phil")
@@ -224,6 +229,10 @@ async def test_api_user_find(access_testbed, organization_factory, local_device_
         "page": 1,
         "total": 2,
     }
+
+    # Test partial search while omitting revoked users
+    rep = await user_find(sock, query="Phil", omit_revocated=True)
+    assert rep == {"status": "ok", "results": ["Philippe"], "per_page": 100, "page": 1, "total": 1}
 
     # Test pagination
     rep = await user_find(sock, query="Phil", page=1, per_page=1)
@@ -247,6 +256,16 @@ async def test_api_user_find(access_testbed, organization_factory, local_device_
         "per_page": 100,
         "page": 1,
         "total": 5,
+    }
+
+    # Test omit revoked users
+    rep = await user_find(sock, omit_revocated=True)
+    assert rep == {
+        "status": "ok",
+        "results": ["Blacky", "Godfrey", "Mike", "Philippe"],
+        "per_page": 100,
+        "page": 1,
+        "total": 4,
     }
 
     # Test bad params

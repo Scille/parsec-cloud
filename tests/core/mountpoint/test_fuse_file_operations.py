@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import os
 import pytest
 from hypothesis.stateful import RuleBasedStateMachine, initialize, rule, run_state_machine_as_test

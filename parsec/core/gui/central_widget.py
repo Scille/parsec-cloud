@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from PyQt5.QtCore import pyqtSignal, QCoreApplication, QSize
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect
@@ -64,22 +66,6 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         self.button_notif.clicked.connect(self.show_notification_center)
         self.connection_state_changed.connect(self._on_connection_state_changed)
         self.notification_center.close_requested.connect(self.close_notification_center)
-
-        self.notification_center.add_notification(
-            "ERROR", "An error message to test how it looks like."
-        )
-        self.notification_center.add_notification(
-            "WARNING", "Another message but this time its a warning."
-        )
-        self.notification_center.add_notification(
-            "INFO", "An information message, because we gotta test them all."
-        )
-        self.notification_center.add_notification(
-            "ERROR",
-            "And another error message, but this one will be a little bit longer just "
-            "to see if the GUI can handle it.",
-        )
-
         self.reset()
 
     def set_core_attributes(self, core, portal):
@@ -88,6 +74,22 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         self.users_widget.set_core_attributes(core, portal)
         self.devices_widget.set_core_attributes(core, portal)
         self.settings_widget.set_core_attributes(core, portal)
+        self.notification_center.clear()
+        self.button_notif.reset_notif_count()
+        # self.on_new_notification(
+        #     "ERROR", "An error message to test how it looks like."
+        # )
+        # self.on_new_notification(
+        #     "WARNING", "Another message but this time its a warning."
+        # )
+        # self.on_new_notification(
+        #     "INFO", "An information message, because we gotta test them all."
+        # )
+        # self.on_new_notification(
+        #     "ERROR",
+        #     "And another error message, but this one will be a little bit longer just "
+        #     "to see if the GUI can handle it.",
+        # )
 
     @CoreWidget.core.setter
     def core(self, c):
@@ -249,5 +251,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
         self.menu.button_devices.setChecked(False)
 
     def reset(self):
+        self.notification_center.clear()
+        self.button_notif.reset_notif_count()
         self.hide_all_widgets()
         self.show_mount_widget()

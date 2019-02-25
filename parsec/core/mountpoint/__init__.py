@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from parsec.core.mountpoint.manager import (
     mountpoint_manager,
     get_default_mountpoint,

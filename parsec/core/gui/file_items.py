@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from enum import IntEnum
 import pathlib
 
@@ -43,7 +45,7 @@ class FileTableItem(CustomTableItem):
         ".bz2": "file_archive",
         ".7z": "file_archive",
         ".ppt": "file_ppt",
-        ".pptx": "file_pptx",
+        ".pptx": "file_ppt",
         ".psd": "file_psd",
         ".json": "file_json",
         ".js": "file_js",

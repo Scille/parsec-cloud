@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from parsec.serde import UnknownCheckedSchema, fields
 from parsec.api.protocole.base import BaseReqSchema, BaseRepSchema, CmdSerializer
 
@@ -58,6 +60,7 @@ user_get_serializer = CmdSerializer(UserGetReqSchema, UserGetRepSchema)
 
 class FindUserReqSchema(BaseReqSchema):
     query = fields.String(missing=None, allow_none=True)
+    omit_revocated = fields.Boolean(missing=False)
     page = fields.Int(missing=1, validate=lambda n: n > 0)
     per_page = fields.Integer(missing=100, validate=lambda n: 0 < n <= 100)
 
@@ -214,7 +217,7 @@ class DeviceRevokeReqSchema(BaseReqSchema):
 
 
 class DeviceRevokeRepSchema(BaseRepSchema):
-    pass
+    user_revocated_on = fields.DateTime(allow_none=True)
 
 
 device_revoke_serializer = CmdSerializer(DeviceRevokeReqSchema, DeviceRevokeRepSchema)

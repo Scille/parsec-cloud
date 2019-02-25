@@ -124,5 +124,9 @@
         <file>images/screenshots/documents.png</file>
         <file>images/screenshots/users.png</file>
         <file>images/screenshots/workspaces.png</file>
+        <file>images/screenshots/cloud-computing.png</file>
+        <file>images/screenshots/offline_en.png</file>
+        <file>images/screenshots/offline_fr.png</file>
+        <file>images/screenshots/your_turn.png</file>
     </qresource>
 </RCC>

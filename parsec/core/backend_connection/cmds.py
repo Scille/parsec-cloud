@@ -1,5 +1,8 @@
-from typing import Tuple, List, Dict, Iterable
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
+from typing import Tuple, List, Dict, Iterable, Optional
 from uuid import UUID
+import pendulum
 
 from parsec.types import DeviceID, UserID, DeviceName, OrganizationID
 from parsec.crypto import VerifyKey
@@ -58,7 +61,6 @@ async def _send_cmd(transport, serializer, **req):
     except ProtocoleError as exc:
         raise BackendCmdsInvalidRequest() from exc
 
-    transport.logger.debug("send req", req=_shorten_data(raw_req))
     try:
         await transport.send(raw_req)
         raw_rep = await transport.recv()
@@ -66,8 +68,6 @@ async def _send_cmd(transport, serializer, **req):
     except TransportError as exc:
         transport.logger.info("Request failed (backend not available)", cmd=req["cmd"])
         raise BackendNotAvailable(exc) from exc
-
-    transport.logger.debug("recv rep", req=_shorten_data(raw_rep))
 
     try:
         rep = serializer.rep_loads(raw_rep)
@@ -272,10 +272,20 @@ async def user_get(
 
 
 async def user_find(
-    transport: Transport, query: str = None, page: int = 1, per_page: int = 100
+    transport: Transport,
+    query: str = None,
+    page: int = 1,
+    per_page: int = 100,
+    omit_revocated: bool = False,
 ) -> List[UserID]:
     rep = await _send_cmd(
-        transport, user_find_serializer, cmd="user_find", query=query, page=page, per_page=per_page
+        transport,
+        user_find_serializer,
+        cmd="user_find",
+        query=query,
+        page=page,
+        per_page=per_page,
+        omit_revocated=omit_revocated,
     )
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)
@@ -349,7 +359,9 @@ async def device_create(
         raise BackendCmdsBadResponse(rep)
 
 
-async def device_revoke(transport: Transport, certified_revocation: bytes) -> None:
+async def device_revoke(
+    transport: Transport, certified_revocation: bytes
+) -> Optional[pendulum.Pendulum]:
     rep = await _send_cmd(
         transport,
         device_revoke_serializer,
@@ -358,6 +370,7 @@ async def device_revoke(transport: Transport, certified_revocation: bytes) -> No
     )
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)
+    return rep["user_revocated_on"]
 
 
 ###  Backend anonymous cmds  ###

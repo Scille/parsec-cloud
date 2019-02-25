@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import trio
 import attr
 from typing import Dict, List, Optional, Tuple
@@ -99,9 +101,6 @@ class User:
     def public_key(self) -> PublicKey:
         return unsecure_certified_user_extract_public_key(self.certified_user)
 
-    def is_revocated(self) -> bool:
-        return any((False for d in self.devices.values if not d.revocated_on), True)
-
     user_id: UserID
     certified_user: bytes
     user_certifier: Optional[DeviceID]
@@ -109,6 +108,20 @@ class User:
     devices: DevicesMapping = attr.ib(factory=DevicesMapping)
 
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+
+    def is_revocated(self) -> bool:
+        now = pendulum.now()
+        for d in self.devices.values():
+            if not d.revocated_on or d.revocated_on > now:
+                return False
+        return True
+
+    def get_revocated_on(self) -> Optional[pendulum.Pendulum]:
+        revocations = [d.revocated_on for d in self.devices.values()]
+        if not revocations or None in revocations:
+            return None
+        else:
+            return sorted(revocations)[-1]
 
 
 def new_user_factory(
@@ -238,26 +251,23 @@ class BaseUserComponent:
 
         # Wait for invited user to send `user_claim`
 
-        claim_answered = trio.Event()
-        _encrypted_claim = None
+        def _filter_on_user_claimed(event, organization_id, user_id, encrypted_claim):
+            return organization_id == client_ctx.organization_id and user_id == invitation.user_id
 
-        def _on_user_claimed(event, organization_id, user_id, encrypted_claim):
-            nonlocal _encrypted_claim
-            if organization_id == client_ctx.organization_id and user_id == invitation.user_id:
-                claim_answered.set()
-                _encrypted_claim = encrypted_claim
+        with self.event_bus.waiter_on("user.claimed", filter=_filter_on_user_claimed) as waiter:
+            with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
+                _, event_data = await waiter.wait()
 
-        self.event_bus.connect("user.claimed", _on_user_claimed, weak=True)
-        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            await claim_answered.wait()
         if cancel_scope.cancelled_caught:
             return {
                 "status": "timeout",
                 "reason": ("Timeout while waiting for new user to be claimed."),
             }
-        return user_invite_serializer.rep_dump(
-            {"status": "ok", "encrypted_claim": _encrypted_claim}
-        )
+
+        else:
+            return user_invite_serializer.rep_dump(
+                {"status": "ok", "encrypted_claim": event_data["encrypted_claim"]}
+            )
 
     @anonymous_api
     @catch_protocole_errors
@@ -294,42 +304,60 @@ class BaseUserComponent:
     async def api_user_claim(self, client_ctx, msg):
         msg = user_claim_serializer.req_load(msg)
 
-        try:
-            invitation = await self.claim_user_invitation(
-                client_ctx.organization_id, msg["invited_user_id"], msg["encrypted_claim"]
-            )
-            if not invitation.is_valid():
-                return {"status": "not_found"}
-
-        except UserAlreadyExistsError:
-            return {"status": "not_found"}
-
-        except UserNotFoundError:
-            return {"status": "not_found"}
-
-        # Wait for creator user to accept (or refuse) our claim
-
-        replied = trio.Event()
-        replied_ok = False
-
-        def _on_reply(event, organization_id, user_id):
-            nonlocal replied_ok
-            if organization_id == client_ctx.organization_id and user_id == invitation.user_id:
-                replied_ok = event == "user.created"
-                replied.set()
-
-        self.event_bus.connect("user.created", _on_reply, weak=True)
-        self.event_bus.connect("user.invitation.cancelled", _on_reply, weak=True)
+        # Setting the cancel scope here instead of just were we are waiting
+        # for the event make testing easier.
         with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            await replied.wait()
+            rep = await self._api_user_claim(client_ctx, msg)
+
         if cancel_scope.cancelled_caught:
-            return {
+            rep = {
                 "status": "timeout",
                 "reason": "Timeout while waiting for invitation creator to answer.",
             }
+
+        return user_claim_serializer.rep_dump(rep)
+
+    async def _api_user_claim(self, client_ctx, msg):
+        replied_ok = False
+
+        # Must start listening events before calling `claim_user_invitation`
+        # given this function will send the `user.claimed` event the creator
+        # is waiting for.
+
+        send_channel, recv_channel = trio.open_memory_channel(1000)
+
+        def _on_organization_events(event, organization_id, user_id):
+            if organization_id == client_ctx.organization_id:
+                send_channel.send_nowait((event, user_id))
+
+        with self.event_bus.connect_in_context(
+            ("user.created", _on_organization_events),
+            ("user.invitation.cancelled", _on_organization_events),
+        ):
+            try:
+                invitation = await self.claim_user_invitation(
+                    client_ctx.organization_id, msg["invited_user_id"], msg["encrypted_claim"]
+                )
+                if not invitation.is_valid():
+                    return {"status": "not_found"}
+
+            except UserAlreadyExistsError:
+                return {"status": "not_found"}
+
+            except UserNotFoundError:
+                return {"status": "not_found"}
+
+            # Wait for creator user to accept (or refuse) our claim
+            async for event, user_id in recv_channel:
+                if user_id == invitation.user_id:
+                    replied_ok = event == "user.created"
+                    break
+
         if not replied_ok:
             return {"status": "denied", "reason": "Invitation creator rejected us."}
-        return user_claim_serializer.rep_dump({"status": "ok"})
+
+        else:
+            return {"status": "ok"}
 
     @catch_protocole_errors
     async def api_user_cancel_invitation(self, client_ctx, msg):
@@ -421,26 +449,25 @@ class BaseUserComponent:
 
         # Wait for invited user to send `user_claim`
 
-        claim_answered = trio.Event()
-        _encrypted_claim = None
+        def _filter_on_device_claimed(event, organization_id, device_id, encrypted_claim):
+            return (
+                organization_id == client_ctx.organization_id and device_id == invitation.device_id
+            )
 
-        def _on_device_claimed(event, organization_id, device_id, encrypted_claim):
-            nonlocal _encrypted_claim
-            if organization_id == client_ctx.organization_id and device_id == invitation.device_id:
-                claim_answered.set()
-                _encrypted_claim = encrypted_claim
+        with self.event_bus.waiter_on("device.claimed", filter=_filter_on_device_claimed) as waiter:
+            with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
+                _, event_data = await waiter.wait()
 
-        self.event_bus.connect("device.claimed", _on_device_claimed, weak=True)
-        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            await claim_answered.wait()
         if cancel_scope.cancelled_caught:
             return {
                 "status": "timeout",
                 "reason": ("Timeout while waiting for new device to be claimed."),
             }
-        return device_invite_serializer.rep_dump(
-            {"status": "ok", "encrypted_claim": _encrypted_claim}
-        )
+
+        else:
+            return device_invite_serializer.rep_dump(
+                {"status": "ok", "encrypted_claim": event_data["encrypted_claim"]}
+            )
 
     @anonymous_api
     @catch_protocole_errors
@@ -477,47 +504,62 @@ class BaseUserComponent:
     async def api_device_claim(self, client_ctx, msg):
         msg = device_claim_serializer.req_load(msg)
 
-        try:
-            invitation = await self.claim_device_invitation(
-                client_ctx.organization_id, msg["invited_device_id"], msg["encrypted_claim"]
-            )
-            if not invitation.is_valid():
+        # Setting the cancel scope here instead of just were we are waiting
+        # for the event make testing easier.
+        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
+            rep = await self._api_device_claim(client_ctx, msg)
+
+        if cancel_scope.cancelled_caught:
+            rep = {
+                "status": "timeout",
+                "reason": "Timeout while waiting for invitation creator to answer.",
+            }
+
+        return device_claim_serializer.rep_dump(rep)
+
+    async def _api_device_claim(self, client_ctx, msg):
+        replied_ok = False
+
+        # Must start listening events before calling `claim_device_invitation`
+        # given this function will send the `device.claimed` event the creator
+        # is waiting for.
+
+        send_channel, recv_channel = trio.open_memory_channel(1000)
+
+        def _on_organization_events(event, organization_id, device_id, encrypted_answer=None):
+            if organization_id == client_ctx.organization_id:
+                send_channel.send_nowait((event, device_id, encrypted_answer))
+
+        with self.event_bus.connect_in_context(
+            ("device.created", _on_organization_events),
+            ("device.invitation.cancelled", _on_organization_events),
+        ):
+            try:
+                invitation = await self.claim_device_invitation(
+                    client_ctx.organization_id, msg["invited_device_id"], msg["encrypted_claim"]
+                )
+                if not invitation.is_valid():
+                    return {"status": "not_found"}
+
+            except UserAlreadyExistsError:
                 return {"status": "not_found"}
 
-        except UserAlreadyExistsError:
-            return {"status": "not_found"}
+            except UserNotFoundError:
+                return {"status": "not_found"}
 
-        except UserNotFoundError:
-            return {"status": "not_found"}
+            # Wait for creator device to accept (or refuse) our claim
+            async for event, device_id, encrypted_answer in recv_channel:
+                if device_id == invitation.device_id:
+                    replied_ok = event == "device.created"
+                    break
 
-        # Wait for creator device to accept (or refuse) our claim
-
-        replied = trio.Event()
-        replied_ok = False
-        replied_encrypted_answer = None
-
-        def _on_reply(event, organization_id, device_id, encrypted_answer=None):
-            nonlocal replied_ok, replied_encrypted_answer
-            if organization_id == client_ctx.organization_id and device_id == invitation.device_id:
-                replied_ok = event == "device.created"
-                replied_encrypted_answer = encrypted_answer
-                replied.set()
-
-        self.event_bus.connect("device.created", _on_reply, weak=True)
-        self.event_bus.connect("device.invitation.cancelled", _on_reply, weak=True)
-        with trio.move_on_after(PEER_EVENT_MAX_WAIT) as cancel_scope:
-            await replied.wait()
-        if cancel_scope.cancelled_caught:
-            return {
-                "status": "timeout",
-                "reason": ("Timeout while waiting for invitation creator to answer."),
-            }
         if not replied_ok:
             return {"status": "denied", "reason": ("Invitation creator rejected us.")}
 
-        return device_claim_serializer.rep_dump(
-            {"status": "ok", "encrypted_answer": replied_encrypted_answer}
-        )
+        else:
+            return device_claim_serializer.rep_dump(
+                {"status": "ok", "encrypted_answer": encrypted_answer}
+            )
 
     @catch_protocole_errors
     async def api_device_cancel_invitation(self, client_ctx, msg):
@@ -617,7 +659,7 @@ class BaseUserComponent:
                 }
 
         try:
-            await self.revoke_device(
+            user_revocated_on = await self.revoke_device(
                 client_ctx.organization_id,
                 data["device_id"],
                 msg["certified_revocation"],
@@ -633,7 +675,9 @@ class BaseUserComponent:
                 "reason": f"Device `{data['device_id']}` already revoked",
             }
 
-        return device_revoke_serializer.rep_dump({"status": "ok"})
+        return device_revoke_serializer.rep_dump(
+            {"status": "ok", "user_revocated_on": user_revocated_on}
+        )
 
     #### Virtual methods ####
 
@@ -695,7 +739,12 @@ class BaseUserComponent:
         raise NotImplementedError()
 
     async def find(
-        self, organization_id: OrganizationID, query: str = None, page: int = 1, per_page: int = 100
+        self,
+        organization_id: OrganizationID,
+        query: str = None,
+        page: int = 1,
+        per_page: int = 100,
+        omit_revocated: bool = False,
     ) -> Tuple[List[UserID], int]:
         raise NotImplementedError()
 
@@ -780,10 +829,11 @@ class BaseUserComponent:
         device_id: DeviceID,
         certified_revocation: bytes,
         revocation_certifier: DeviceID,
-    ) -> None:
+    ) -> Optional[pendulum.Pendulum]:
         """
         Raises:
             UserNotFoundError
             UserAlreadyRevokedError
+        Returns: User revoked date if any
         """
         raise NotImplementedError()

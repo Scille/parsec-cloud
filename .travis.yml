@@ -20,8 +20,9 @@ script:
 # Only print output if check failed
 - OUT=$(2>&1 ./misc/autoformat.sh --check) || (echo $OUT; $(exit 1))
 - flake8
-- py.test tests -n 2 --cov=parsec --cov-config=setup.cfg -vvv
-- py.test tests -n 2 --cov=parsec --cov-config=setup.cfg --runslow --runfuse --postgresql -vvv
+- ./misc/license_headers.py check
+- py.test tests -n 2 --cov=parsec --cov-config=setup.cfg --log-level=DEBUG -vvv
+- py.test tests -n 2 --cov=parsec --cov-config=setup.cfg --runslow --runfuse --postgresql --log-level=DEBUG -vvv
 after_success:
 - coveralls
 deploy:

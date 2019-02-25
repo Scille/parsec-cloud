@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import QWidget, QStyle, QStyleOption, QStyledItemDelegate, QStyleOptionViewItem
@@ -40,6 +42,13 @@ class NotificationCenterWidget(QWidget, Ui_NotificationCenterWidget):
         self.widget_layout.layout().removeWidget(notif)
         notif.hide()
         notif.setParent(None)
+
+    def clear(self):
+        while self.widget_layout.layout().count() > 1:
+            item = self.widget_layout.layout().takeAt(0)
+            if item.widget():
+                item.widget().hide()
+                item.widget().setParent(None)
 
     def add_notification(self, notif_type, msg):
         widget = None

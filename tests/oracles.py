@@ -1,10 +1,9 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import os
 import pytest
 import shutil
 from pathlib import Path
-
-
-# TODO: rename create_workspace -> workspace_create & co
 
 
 @pytest.fixture
@@ -93,7 +92,7 @@ def oracle_fs_factory(tmpdir):
                 path.mkdir(exist_ok=False)
             except OSError:
                 return "invalid_path"
-            self._register_stat(path, "folder")
+            self._register_stat(path, "workspace" if workspace else "folder")
             self.entries_stats[path.parent]["need_sync"] = True
             return "ok"
 
@@ -137,7 +136,7 @@ def oracle_fs_factory(tmpdir):
                     new_stats[canditate_path] = candidate_stat
             self.entries_stats = new_stats
 
-        def workspace_rename(self, src, dst):
+        def rename_workspace(self, src, dst):
             src = self._cook_path(src)
             dst = self._cook_path(dst)
 
@@ -150,7 +149,16 @@ def oracle_fs_factory(tmpdir):
                 return "invalid_path"
 
             if src != dst:
-                self.entries_stats[dst] = self.entries_stats.pop(src)
+                # Rename all the affected entries
+                for child_src, entry in self.entries_stats.copy().items():
+                    # Note `child_src` will also contain `src` itself here
+                    try:
+                        relative = child_src.relative_to(src)
+                    except ValueError:
+                        continue
+                    child_dst = dst / relative
+                    self.entries_stats[child_dst] = self.entries_stats.pop(child_src)
+
                 # Remember dst.parent == src.parent == '/'
                 self.entries_stats[dst.parent]["need_sync"] = True
 
@@ -284,11 +292,17 @@ def oracle_fs_with_sync_factory(oracle_fs_factory):
         def create_folder(self, path):
             return self.fs.create_folder(path)
 
+        def create_workspace(self, path):
+            return self.fs.create_workspace(path)
+
         def delete(self, path):
             return self.fs.delete(path)
 
         def move(self, src, dst):
             return self.fs.move(src, dst)
+
+        def rename_workspace(self, src, dst):
+            return self.fs.rename_workspace(src, dst)
 
         def flush(self, path):
             return self.fs.flush(path)
@@ -305,7 +319,7 @@ def oracle_fs_with_sync_factory(oracle_fs_factory):
 
                 def _recursive_keep_synced(path):
                     stat = new_synced.entries_stats[path]
-                    if stat["type"] == "folder":
+                    if stat["type"] in ["folder", "workspace"]:
                         for child in path.iterdir():
                             _recursive_keep_synced(child)
                     stat["need_sync"] = False

@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import pytest
 import trio
 from trio.testing import wait_all_tasks_blocked

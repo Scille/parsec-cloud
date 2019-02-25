@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from parsec.types import OrganizationID
 from parsec.crypto import VerifyKey
 from parsec.backend.user import BaseUserComponent, UserError, User

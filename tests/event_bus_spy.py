@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import trio
 import attr
 import pendulum
@@ -150,5 +152,8 @@ class SpiedEventBus(EventBus):
     @contextmanager
     def listen(self):
         spy = self.create_spy()
-        yield spy
-        self.destroy_spy(spy)
+        try:
+            yield spy
+
+        finally:
+            self.destroy_spy(spy)

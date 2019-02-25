@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import trio
 from trio.hazmat import current_clock
 
@@ -27,8 +29,8 @@ class SyncMonitor(BaseAsyncComponent):
         self._backend_online_event = trio.Event()
         self._monitoring_cancel_scope = None
 
-        self.event_bus.connect("backend.online", self._on_backend_online, weak=True)
-        self.event_bus.connect("backend.offline", self._on_backend_offline, weak=True)
+        self.event_bus.connect("backend.online", self._on_backend_online)
+        self.event_bus.connect("backend.offline", self._on_backend_offline)
 
         if backend_online:
             self._on_backend_online(None)
@@ -74,7 +76,7 @@ class SyncMonitor(BaseAsyncComponent):
         updated_entries = {}
         new_event = trio.Event()
 
-        def _on_entry_updated(sender, id):
+        def _on_entry_updated(event, id):
             try:
                 first_updated, _ = updated_entries[id]
                 last_updated = timestamp()
@@ -83,24 +85,24 @@ class SyncMonitor(BaseAsyncComponent):
             updated_entries[id] = (first_updated, last_updated)
             new_event.set()
 
-        self.event_bus.connect("fs.entry.updated", _on_entry_updated, weak=True)
+        with self.event_bus.connect_in_context(("fs.entry.updated", _on_entry_updated)):
 
-        async with trio.open_nursery() as nursery:
-            while True:
-                self.event_bus.send("sync_monitor.ready")
+            async with trio.open_nursery() as nursery:
+                while True:
+                    self.event_bus.send("sync_monitor.ready")
 
-                await new_event.wait()
-                new_event.clear()
+                    await new_event.wait()
+                    new_event.clear()
 
-                await self._monitoring_tick(updated_entries)
+                    await self._monitoring_tick(updated_entries)
 
-                if updated_entries:
+                    if updated_entries:
 
-                    async def _wait():
-                        await trio.sleep(MIN_WAIT)
-                        new_event.set()
+                        async def _wait():
+                            await trio.sleep(MIN_WAIT)
+                            new_event.set()
 
-                    nursery.start_soon(_wait)
+                        nursery.start_soon(_wait)
 
     async def _monitoring_tick(self, updated_entries):
         now = timestamp()
@@ -129,5 +131,6 @@ class SyncMonitor(BaseAsyncComponent):
 
 
 async def monitor_sync(backend_online, fs, event_bus, *, task_status=trio.TASK_STATUS_IGNORED):
-    sync_monitor = SyncMonitor(backend_online, fs, event_bus)
-    await sync_monitor.run(task_status=task_status)
+    with event_bus.connection_context() as event_bus_ctx:
+        sync_monitor = SyncMonitor(backend_online, fs, event_bus_ctx)
+        await sync_monitor.run(task_status=task_status)

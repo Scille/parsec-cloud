@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import math
 import inspect
 from uuid import UUID
@@ -150,11 +152,6 @@ class FS:
         cooked_src = FsPath(src)
         cooked_dst = FsPath(dst)
         await self._load_and_retry(self._local_folder_fs.move, cooked_src, cooked_dst)
-
-    async def copy(self, src: str, dst: str):
-        cooked_src = FsPath(src)
-        cooked_dst = FsPath(dst)
-        await self._load_and_retry(self._local_folder_fs.copy, cooked_src, cooked_dst)
 
     async def delete(self, path: str):
         cooked_path = FsPath(path)

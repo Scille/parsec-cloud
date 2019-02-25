@@ -70,3 +70,4 @@ parsec/core/gui/ui/*.py
 
 # Temporary files
 *~
+*#

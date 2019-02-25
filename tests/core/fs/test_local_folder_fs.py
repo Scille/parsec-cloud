@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import os
 import attr
 import pytest
@@ -100,8 +102,7 @@ def test_file_create(local_folder_fs, alice):
     }
 
 
-@pytest.mark.parametrize("type", ["copy", "move"])
-def test_copy_folders_create_new_accesses(local_folder_fs, type):
+def test_move_folders_create_new_accesses(local_folder_fs):
     with freeze_time("2000-01-02"):
         local_folder_fs.workspace_create(FsPath("/w"))
         local_folder_fs.mkdir(FsPath("/w/foo"))
@@ -116,18 +117,13 @@ def test_copy_folders_create_new_accesses(local_folder_fs, type):
             access, _ = local_folder_fs.get_entry(FsPath("/w/foo/" + path))
             existing_ids.add(access.id)
 
-    if type == "copy":
-        local_folder_fs.copy(FsPath("/w/foo"), FsPath("/w/foo2"))
-        stat = local_folder_fs.stat(FsPath("/w"))
-        assert stat["children"] == ["foo", "foo2"]
-    else:
-        local_folder_fs.move(FsPath("/w/foo"), FsPath("/w/foo2"))
-        stat = local_folder_fs.stat(FsPath("/w"))
-        assert stat["children"] == ["foo2"]
+    local_folder_fs.move(FsPath("/w/foo"), FsPath("/w/foo2"))
+    stat = local_folder_fs.stat(FsPath("/w"))
+    assert stat["children"] == ["foo2"]
 
-        for path in pathes:
-            access, _ = local_folder_fs.get_entry(FsPath("/w/foo2/" + path))
-            assert access.id not in existing_ids
+    for path in pathes:
+        access, _ = local_folder_fs.get_entry(FsPath("/w/foo2/" + path))
+        assert access.id not in existing_ids
 
 
 def test_rename_but_cannot_move_workspace(local_folder_fs):
@@ -135,12 +131,9 @@ def test_rename_but_cannot_move_workspace(local_folder_fs):
     # Workpsace children should not have they access modified
     local_folder_fs.mkdir(FsPath("/spam/bar"))
 
-    # Test bad move/copy
-
+    # Test bad move
     with pytest.raises(PermissionError):
         local_folder_fs.move(FsPath("/spam"), FsPath("/foo"))
-    with pytest.raises(PermissionError):
-        local_folder_fs.copy(FsPath("/spam"), FsPath("/foo"))
 
     # Now test the good rename
 

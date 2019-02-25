@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from typing import Tuple, Optional
 import pendulum
 from pendulum import Pendulum

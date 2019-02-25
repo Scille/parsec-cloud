@@ -63,27 +63,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bootstrap_organization_widget.py" line="105"/>
+        <location filename="../bootstrap_organization_widget.py" line="107"/>
         <source>Can not bootstrap this organization.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bootstrap_organization_widget.py" line="154"/>
+        <location filename="../bootstrap_organization_widget.py" line="156"/>
         <source>Passwords don&apos;t match</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bootstrap_organization_widget.py" line="167"/>
+        <location filename="../bootstrap_organization_widget.py" line="169"/>
         <source>URL or device is invalid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bootstrap_organization_widget.py" line="198"/>
+        <location filename="../bootstrap_organization_widget.py" line="200"/>
         <source>Can not register the new user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bootstrap_organization_widget.py" line="229"/>
+        <location filename="../bootstrap_organization_widget.py" line="231"/>
         <source>Password strength: {}</source>
         <translation type="unfinished"></translation>
     </message>
@@ -96,48 +96,58 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../central_widget.py" line="106"/>
-        <source>Connection to backend has been lost.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../central_widget.py" line="111"/>
+        <location filename="../central_widget.py" line="123"/>
         <source>Mountpoint has been unmounted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../central_widget.py" line="116"/>
-        <source>New file.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../central_widget.py" line="135"/>
+        <location filename="../central_widget.py" line="157"/>
         <source>Connected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../central_widget.py" line="142"/>
+        <location filename="../central_widget.py" line="164"/>
         <source>Disconnected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../central_widget.py" line="182"/>
+        <location filename="../central_widget.py" line="204"/>
         <source>Documents</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../central_widget.py" line="190"/>
+        <location filename="../central_widget.py" line="212"/>
         <source>Users</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../central_widget.py" line="198"/>
+        <location filename="../central_widget.py" line="220"/>
         <source>Devices</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../central_widget.py" line="206"/>
+        <location filename="../central_widget.py" line="228"/>
         <source>Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../central_widget.py" line="114"/>
+        <source>Disconnected from the backend.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../central_widget.py" line="119"/>
+        <source>Connected to the backend.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../central_widget.py" line="128"/>
+        <source>Workspace &apos;{}&apos; shared with you</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../central_widget.py" line="135"/>
+        <source>Conflict while syncing file &apos;{}&apos;.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -209,27 +219,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="120"/>
+        <location filename="../claim_device_widget.py" line="122"/>
         <source>The device has been registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="131"/>
+        <location filename="../claim_user_widget.py" line="133"/>
         <source>Password strength: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="179"/>
+        <location filename="../claim_device_widget.py" line="181"/>
         <source>Passwords don&apos;t match</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="192"/>
+        <location filename="../claim_device_widget.py" line="194"/>
         <source>URL or device is invalid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="227"/>
+        <location filename="../claim_device_widget.py" line="229"/>
         <source>Can not register the new device.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -302,37 +312,37 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="91"/>
+        <location filename="../claim_device_widget.py" line="93"/>
         <source>No invitation found for this device.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="95"/>
+        <location filename="../claim_user_widget.py" line="97"/>
         <source>Can not claim this user ({}).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="90"/>
+        <location filename="../claim_user_widget.py" line="92"/>
         <source>No invitation found for this user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="119"/>
+        <location filename="../claim_user_widget.py" line="121"/>
         <source>The user has been registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="178"/>
+        <location filename="../claim_user_widget.py" line="180"/>
         <source>Passwords don&apos;t match</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="188"/>
+        <location filename="../claim_user_widget.py" line="190"/>
         <source>URL or device is invalid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="219"/>
+        <location filename="../claim_user_widget.py" line="221"/>
         <source>Can not register the new user.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -361,27 +371,27 @@
 <context>
     <name>FileSize</name>
     <message>
-        <location filename="../file_size.py" line="115"/>
+        <location filename="../file_size.py" line="117"/>
         <source> TB</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../file_size.py" line="116"/>
+        <location filename="../file_size.py" line="118"/>
         <source> GB</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../file_size.py" line="117"/>
+        <location filename="../file_size.py" line="119"/>
         <source> MB</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../file_size.py" line="118"/>
+        <location filename="../file_size.py" line="120"/>
         <source> KB</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../file_size.py" line="119"/>
+        <location filename="../file_size.py" line="121"/>
         <source> B</source>
         <translation></translation>
     </message>
@@ -399,112 +409,102 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="333"/>
+        <location filename="../forms/files_widget.ui" line="339"/>
         <source>Name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="338"/>
+        <location filename="../forms/files_widget.ui" line="344"/>
         <source>Created</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="343"/>
+        <location filename="../forms/files_widget.ui" line="349"/>
         <source>Updated</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/files_widget.ui" line="348"/>
+        <location filename="../forms/files_widget.ui" line="354"/>
         <source>Size</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="231"/>
+        <location filename="../files_widget.py" line="146"/>
         <source>Select files to import</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="248"/>
+        <location filename="../files_widget.py" line="160"/>
         <source>Some files could not be imported.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="254"/>
+        <location filename="../files_widget.py" line="166"/>
         <source>Select a directory to import</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="266"/>
+        <location filename="../files_widget.py" line="178"/>
         <source>The folder could not be imported.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="290"/>
+        <location filename="../files_widget.py" line="202"/>
         <source>A folder with the same name already exists.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="303"/>
-        <source>Parent Folder</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="320"/>
-        <source>Parent Workspace</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../files_widget.py" line="371"/>
+        <location filename="../files_widget.py" line="215"/>
         <source>Confirmation</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="371"/>
+        <location filename="../files_widget.py" line="215"/>
         <source>Are you sure you want to delete &quot;{}&quot; ?</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="407"/>
+        <location filename="../files_widget.py" line="251"/>
         <source>Folder name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="407"/>
+        <location filename="../files_widget.py" line="251"/>
         <source>Enter new folder name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="428"/>
+        <location filename="../files_widget.py" line="286"/>
         <source>Open</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="430"/>
+        <location filename="../files_widget.py" line="288"/>
         <source>Open in explorer</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="432"/>
+        <location filename="../files_widget.py" line="290"/>
         <source>Rename</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="441"/>
+        <location filename="../files_widget.py" line="299"/>
         <source>New name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="441"/>
+        <location filename="../files_widget.py" line="299"/>
         <source>Enter file new name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="464"/>
+        <location filename="../files_widget.py" line="322"/>
         <source>Can not rename.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="434"/>
+        <location filename="../files_widget.py" line="292"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
@@ -517,52 +517,52 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="213"/>
+        <location filename="../forms/global_settings_widget.ui" line="216"/>
         <source>Mountpoint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="277"/>
+        <location filename="../forms/global_settings_widget.ui" line="280"/>
         <source>Choose mountpoint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="296"/>
+        <location filename="../forms/global_settings_widget.ui" line="299"/>
         <source>Enable mountpoint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="363"/>
+        <location filename="../forms/global_settings_widget.ui" line="366"/>
         <source>Behavior</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="377"/>
+        <location filename="../forms/global_settings_widget.ui" line="380"/>
         <source>Close button minimizes Parsec in the tray</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="441"/>
+        <location filename="../forms/global_settings_widget.ui" line="444"/>
         <source>Localization</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="457"/>
+        <location filename="../forms/global_settings_widget.ui" line="460"/>
         <source>Language</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="542"/>
+        <location filename="../forms/global_settings_widget.ui" line="558"/>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../global_settings_widget.py" line="68"/>
+        <location filename="../global_settings_widget.py" line="70"/>
         <source>Choose a mountpoint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../global_settings_widget.py" line="77"/>
+        <location filename="../global_settings_widget.py" line="79"/>
         <source>The choosen folder is not writable.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -664,33 +664,43 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="201"/>
+        <location filename="../main_window.py" line="223"/>
         <source>Authentication failed.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="223"/>
+        <location filename="../main_window.py" line="245"/>
         <source>Are you sure you want to quit ?</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="240"/>
+        <location filename="../main_window.py" line="262"/>
         <source>Parsec is still running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="149"/>
+        <location filename="../main_window.py" line="155"/>
         <source>The mounpoint has been unmounted, you will now be logged off.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="203"/>
+        <location filename="../main_window.py" line="225"/>
         <source>User not registered in the backend.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="208"/>
+        <location filename="../main_window.py" line="230"/>
         <source>Mountpoint already in use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="196"/>
+        <source>This device has been revoked.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="210"/>
+        <source>Can not login ({})</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -735,7 +745,7 @@
 <context>
     <name>MessageDialog</name>
     <message>
-        <location filename="../forms/message_dialog.ui" line="26"/>
+        <location filename="../forms/message_dialog.ui" line="32"/>
         <source>Dialog</source>
         <translation></translation>
     </message>
@@ -756,102 +766,102 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="224"/>
+        <location filename="../forms/network_settings_widget.ui" line="227"/>
         <source>Proxy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="243"/>
+        <location filename="../forms/network_settings_widget.ui" line="246"/>
         <source>Proxy type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="263"/>
+        <location filename="../forms/network_settings_widget.ui" line="266"/>
         <source>No proxy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="268"/>
+        <location filename="../forms/network_settings_widget.ui" line="271"/>
         <source>HTTP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="273"/>
+        <location filename="../forms/network_settings_widget.ui" line="276"/>
         <source>Socks4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="278"/>
+        <location filename="../forms/network_settings_widget.ui" line="281"/>
         <source>Socks5</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="329"/>
+        <location filename="../forms/network_settings_widget.ui" line="332"/>
         <source>Host</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="351"/>
+        <location filename="../forms/network_settings_widget.ui" line="354"/>
         <source>Port</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="377"/>
+        <location filename="../forms/network_settings_widget.ui" line="380"/>
         <source>Username</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="402"/>
+        <location filename="../forms/network_settings_widget.ui" line="405"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="471"/>
+        <location filename="../forms/network_settings_widget.ui" line="474"/>
         <source>Speed limits</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="485"/>
+        <location filename="../forms/network_settings_widget.ui" line="488"/>
         <source>Upload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="574"/>
+        <location filename="../forms/network_settings_widget.ui" line="577"/>
         <source>No limit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="589"/>
+        <location filename="../forms/network_settings_widget.ui" line="592"/>
         <source>Limit to</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="620"/>
+        <location filename="../forms/network_settings_widget.ui" line="623"/>
         <source>10</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="633"/>
+        <location filename="../forms/network_settings_widget.ui" line="636"/>
         <source>kb/s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="567"/>
+        <location filename="../forms/network_settings_widget.ui" line="570"/>
         <source>Download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="696"/>
+        <location filename="../forms/network_settings_widget.ui" line="699"/>
         <source>Misc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="710"/>
+        <location filename="../forms/network_settings_widget.ui" line="713"/>
         <source>Number of simultaneous connections</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/network_settings_widget.ui" line="808"/>
+        <location filename="../forms/network_settings_widget.ui" line="824"/>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
@@ -880,27 +890,27 @@
 <context>
     <name>PasswordStrength</name>
     <message>
-        <location filename="../password_validation.py" line="7"/>
+        <location filename="../password_validation.py" line="9"/>
         <source>Very weak</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../password_validation.py" line="8"/>
+        <location filename="../password_validation.py" line="10"/>
         <source>Weak</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../password_validation.py" line="9"/>
+        <location filename="../password_validation.py" line="11"/>
         <source>Good</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../password_validation.py" line="10"/>
+        <location filename="../password_validation.py" line="12"/>
         <source>Strong</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../password_validation.py" line="11"/>
+        <location filename="../password_validation.py" line="13"/>
         <source>Very strong</source>
         <translation type="unfinished"></translation>
     </message>
@@ -971,28 +981,33 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../register_device_dialog.py" line="77"/>
+        <location filename="../register_device_dialog.py" line="79"/>
         <source>This device already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../register_device_dialog.py" line="82"/>
+        <location filename="../register_device_dialog.py" line="91"/>
         <source>Can not register this device ({}).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../register_device_dialog.py" line="92"/>
+        <location filename="../register_device_dialog.py" line="101"/>
         <source>Device has been registered. You may now close this window.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../register_device_dialog.py" line="148"/>
+        <location filename="../register_device_dialog.py" line="157"/>
         <source>Please enter a device name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../register_device_dialog.py" line="174"/>
+        <location filename="../register_device_dialog.py" line="183"/>
         <source>Could not register the device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../register_device_dialog.py" line="84"/>
+        <source>Device took too much time to register.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1049,33 +1064,43 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../register_user_dialog.py" line="76"/>
+        <location filename="../register_user_dialog.py" line="78"/>
         <source>Unknown error.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../register_user_dialog.py" line="78"/>
+        <location filename="../register_user_dialog.py" line="80"/>
         <source>Only admins can invite a new user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../register_user_dialog.py" line="96"/>
+        <location filename="../register_user_dialog.py" line="105"/>
         <source>User has been registered. You may now close this window.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../register_user_dialog.py" line="155"/>
+        <location filename="../register_user_dialog.py" line="164"/>
         <source>Please enter a username.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../register_user_dialog.py" line="162"/>
+        <location filename="../register_user_dialog.py" line="171"/>
         <source>A user with the same name already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../register_user_dialog.py" line="194"/>
+        <location filename="../register_user_dialog.py" line="203"/>
         <source>Could not register the user.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../register_user_dialog.py" line="87"/>
+        <source>User took too much time to register.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../register_user_dialog.py" line="94"/>
+        <source>Unhandled response {}</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1100,126 +1125,164 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="17"/>
+        <location filename="../settings_widget.py" line="19"/>
         <source>Global</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../settings_widget.py" line="23"/>
+        <location filename="../settings_widget.py" line="25"/>
         <source>Network</source>
         <translation></translation>
     </message>
 </context>
 <context>
-    <name>SharedDialog</name>
+    <name>SharingWidget</name>
     <message>
-        <location filename="../forms/shared_dialog.ui" line="17"/>
-        <source>Dialog</source>
-        <translation></translation>
+        <location filename="../forms/sharing_widget.ui" line="20"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>StartingGuide</name>
     <message>
-        <location filename="../starting_guide_dialog.py" line="11"/>
+        <location filename="../starting_guide_dialog.py" line="14"/>
         <source>Welcome!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="17"/>
-        <source>:/screenshots/images/screenshots/page1.png</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../starting_guide_dialog.py" line="22"/>
+        <location filename="../starting_guide_dialog.py" line="26"/>
         <source>Workspaces</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="28"/>
+        <location filename="../starting_guide_dialog.py" line="32"/>
         <source>:/screenshots/images/screenshots/workspaces.png</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="33"/>
+        <location filename="../starting_guide_dialog.py" line="38"/>
         <source>Documents</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="39"/>
+        <location filename="../starting_guide_dialog.py" line="44"/>
         <source>:/screenshots/images/screenshots/documents.png</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="44"/>
+        <location filename="../starting_guide_dialog.py" line="50"/>
         <source>Sharing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="50"/>
+        <location filename="../starting_guide_dialog.py" line="56"/>
         <source>:/screenshots/images/screenshots/page4.png</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="55"/>
+        <location filename="../starting_guide_dialog.py" line="62"/>
         <source>Manage your devices</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="56"/>
-        <source>See and manage your devices.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../starting_guide_dialog.py" line="57"/>
-        <source>:/screenshots/devices.png</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../starting_guide_dialog.py" line="60"/>
+        <location filename="../starting_guide_dialog.py" line="72"/>
         <source>Manage the users</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="66"/>
+        <location filename="../starting_guide_dialog.py" line="78"/>
         <source>:/screenshots/images/screenshots/users.png</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="71"/>
+        <location filename="../starting_guide_dialog.py" line="84"/>
         <source>Even offline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="77"/>
-        <source>:/screenshots/images/screenshots/page7.png</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../starting_guide_dialog.py" line="82"/>
+        <location filename="../starting_guide_dialog.py" line="96"/>
         <source>Now it&apos;s your turn !</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="88"/>
-        <source>:/screenshots/images/screenshots/page8.png</source>
+        <location filename="../starting_guide_dialog.py" line="20"/>
+        <source>:/screenshots/images/screenshots/cloud-computing.png</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="63"/>
+        <source>See and manage thee devices you trust. Those are the key to the guaranted security of your files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="68"/>
+        <source>:/screenshots/images/screenshots/devices.png</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="90"/>
+        <source>:/screenshots/images/screenshots/offline_en.png</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="102"/>
+        <source>:/screenshots/images/screenshots/your_turn.png</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="15"/>
+        <source>Parsec allows you to store data in the cloud with a very high security level.
+Find out more by letting us guide you step by step!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="27"/>
+        <source>Arrange all your files by workspaces, a clear interface for an easy to use and simple process.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="39"/>
+        <source>In your workspaces, see and manage all your files, just as with a regular file explorer. A lightweight display to increase your productivity!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="51"/>
+        <source>Share your workspaces with a few clicks. See who can access it, and what others share with you.
+Everything shared with you automatically appears.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="73"/>
+        <source>And for the administrators ? You can manage all users and their privileges, add users, or revoke them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="85"/>
+        <source>No network ? Not a problem. You can access all your files. Modifications will be saved locally until your device comes online again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="97"/>
+        <source>Create your first workspace, import your files, share your documents.
+Security waits for no one!</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>StartingGuideDialog</name>
     <message>
-        <location filename="../forms/starting_guide_dialog.ui" line="14"/>
+        <location filename="../forms/starting_guide_dialog.ui" line="26"/>
         <source>Dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/starting_guide_dialog.ui" line="350"/>
+        <location filename="../forms/starting_guide_dialog.ui" line="365"/>
         <source>Back</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/starting_guide_dialog.ui" line="423"/>
+        <location filename="../forms/starting_guide_dialog.ui" line="438"/>
         <source>Start</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1230,6 +1293,28 @@
         <location filename="../forms/user_button.ui" line="31"/>
         <source>Form</source>
         <translation></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="54"/>
+        <source>Show info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="57"/>
+        <source>Revoke</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="63"/>
+        <source>Created on {}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="67"/>
+        <source>
+
+This user has been revoked.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1243,6 +1328,41 @@
         <location filename="../forms/users_widget.ui" line="96"/>
         <source>Search users</source>
         <translation></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="115"/>
+        <source>Confirmation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="115"/>
+        <source>Are you sure you want to revoke user &quot;{}&quot; ?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="135"/>
+        <source>User &quot;{}&quot; has been revoked.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="143"/>
+        <source>User &quot;{}&quot; has already been revoked.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="150"/>
+        <source>User &quot;{}&quot; not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="157"/>
+        <source>You don&apos;t have the permission to revoke this user.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../users_widget.py" line="164"/>
+        <source>Can not revoke this user.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1289,6 +1409,39 @@
     </message>
 </context>
 <context>
+    <name>WorkspaceSharingDialog</name>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="14"/>
+        <source>Manage workspace sharing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="66"/>
+        <source>Share with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="125"/>
+        <source>Share</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="199"/>
+        <source>Read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="229"/>
+        <source>Write</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="342"/>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>WorkspacesWidget</name>
     <message>
         <location filename="../forms/workspaces_widget.ui" line="14"/>
@@ -1296,72 +1449,57 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="82"/>
+        <location filename="../workspaces_widget.py" line="86"/>
         <source>Not yet implemented.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="86"/>
+        <location filename="../workspaces_widget.py" line="90"/>
         <source>New name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="86"/>
+        <location filename="../workspaces_widget.py" line="90"/>
         <source>Enter workspace new name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="149"/>
+        <location filename="../workspaces_widget.py" line="121"/>
         <source>Workspace name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="160"/>
+        <location filename="../workspaces_widget.py" line="132"/>
         <source>A workspace with the same name already exists.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="107"/>
+        <location filename="../workspaces_widget.py" line="111"/>
         <source>Can not rename the workspace.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="114"/>
-        <source>Share a workspace</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../workspaces_widget.py" line="114"/>
-        <source>Give a user name to share the workspace {} with.</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../workspaces_widget.py" line="128"/>
-        <source>The workspaces has been shared.</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../workspaces_widget.py" line="134"/>
+        <location filename="../workspace_sharing_dialog.py" line="91"/>
         <source>Can not share the workspace &quot;{}&quot; with this user.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="141"/>
+        <location filename="../workspace_sharing_dialog.py" line="101"/>
         <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="149"/>
+        <location filename="../workspaces_widget.py" line="121"/>
         <source>New workspace</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="149"/>
+        <location filename="../workspaces_widget.py" line="121"/>
         <source>Enter new workspace name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="70"/>
+        <location filename="../workspaces_widget.py" line="72"/>
         <source>{}
 
 Created by {}.
@@ -1369,13 +1507,23 @@ Created by {}.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="74"/>
+        <location filename="../workspaces_widget.py" line="78"/>
         <source>Shared with {} people.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="78"/>
+        <location filename="../workspaces_widget.py" line="82"/>
         <source>Not shared.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspaces_widget.py" line="76"/>
+        <source>Shared with one person.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspace_sharing_dialog.py" line="80"/>
+        <source>This workspace is already shared with &quot;{}&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

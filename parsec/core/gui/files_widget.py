@@ -1,16 +1,17 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import os
-import queue
-import threading
 import pathlib
 from uuid import UUID
 
 from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal
-from PyQt5.QtWidgets import QMenu, QFileDialog
+from PyQt5.QtWidgets import QMenu, QFileDialog, QApplication
 
 from parsec.core.gui import desktop
 from parsec.core.gui.file_items import FileType
 from parsec.core.gui.custom_widgets import show_error, ask_question, get_text, TaskbarButton
 from parsec.core.gui.core_widget import CoreWidget
+from parsec.core.gui.loading_dialog import LoadingDialog
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.fs import FSEntryNotFound
 
@@ -41,7 +42,6 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         self.current_directory = ""
         self.workspace = None
         self.fs_changed_qt.connect(self._on_fs_changed_qt)
-        self.file_queue = queue.Queue(1024)
         self.table_files.file_moved.connect(self.on_file_moved)
         self.table_files.init()
 
@@ -53,27 +53,10 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         if self._core:
             self._core.fs.event_bus.disconnect("fs.entry.updated", self._on_fs_entry_updated_trio)
             self._core.fs.event_bus.disconnect("fs.entry.synced", self._on_fs_entry_synced_trio)
-            self.stop()
         self._core = c
         if self._core:
             self._core.fs.event_bus.connect("fs.entry.updated", self._on_fs_entry_updated_trio)
             self._core.fs.event_bus.connect("fs.entry.synced", self._on_fs_entry_synced_trio)
-            self.start()
-
-    def start(self):
-        self.import_thread = threading.Thread(target=self._import_files)
-        self.import_thread.start()
-
-    def stop(self):
-        self.file_queue.put_nowait((None, None))
-        self.import_thread.join()
-
-    def _import_files(self):
-        while True:
-            src, dst = self.file_queue.get()
-            if src is None or dst is None:
-                return
-            self._import_file(src, dst)
 
     def set_workspace(self, workspace):
         self.workspace = workspace
@@ -103,7 +86,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             self.label_caret.show()
         dir_path = os.path.join("/", self.workspace, self.current_directory)
         dir_stat = self.portal.run(self.core.fs.stat, dir_path)
-        for child in dir_stat["children"]:
+        for i, child in enumerate(dir_stat["children"]):
             child_stat = self.portal.run(self.core.fs.stat, os.path.join(dir_path, child))
             if child_stat["is_folder"]:
                 self.table_files.add_folder(child)
@@ -111,6 +94,8 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                 self.table_files.add_file(
                     child, child_stat["size"], child_stat["created"], child_stat["updated"]
                 )
+            if i % 5 == 0:
+                QApplication.processEvents()
         self.table_files.sortItems(old_sort, old_order)
         self.table_files.setSortingEnabled(True)
         if self.line_edit_search.text():
@@ -120,15 +105,14 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         err = False
         try:
             self.portal.run(self.core.fs.folder_create, dst)
-            for f in src.iterdir():
+            for i, f in enumerate(src.iterdir()):
                 try:
                     if f.is_dir():
                         err |= self._import_folder(f, os.path.join(dst, f.name))
                     elif f.is_file():
-                        try:
-                            self.file_queue.put_nowait((f, os.path.join(dst, f.name)))
-                        except queue.Full:
-                            err = True
+                        err |= self._import_file(f, os.path.join(dst, f.name))
+                    if i % 5 == 0:
+                        QApplication.processEvents()
                 except:
                     err = True
         except:
@@ -141,11 +125,15 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             self.portal.run(self.core.fs.file_create, dst)
             fd_out = self.portal.run(self.core.fs.file_fd_open, dst)
             with open(src, "rb") as fd_in:
+                i = 0
                 while True:
-                    chunk = fd_in.read(8192)
+                    chunk = fd_in.read(65536)
                     if not chunk:
                         break
                     self.portal.run(self.core.fs.file_fd_write, fd_out, chunk)
+                    i += 1
+                    if i % 5 == 0:
+                        QApplication.processEvents()
             return False
         except:
             return True
@@ -162,15 +150,16 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         )
         if not paths:
             return
+        d = LoadingDialog(parent=self)
+        d.show()
         err = False
         for path in paths:
             p = pathlib.Path(path)
-            try:
-                self.file_queue.put_nowait(
-                    (str(p), os.path.join("/", self.workspace, self.current_directory, p.name))
-                )
-            except queue.Full:
-                err = True
+            err |= self._import_file(
+                str(p), os.path.join("/", self.workspace, self.current_directory, p.name)
+            )
+        d.hide()
+        d.setParent(None)
         if err:
             show_error(
                 self, QCoreApplication.translate("FilesWidget", "Some files could not be imported.")
@@ -185,10 +174,14 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         )
         if not path:
             return
+        d = LoadingDialog(parent=self)
+        d.show()
         p = pathlib.Path(path)
         err = self._import_folder(
             p, os.path.join("/", self.workspace, self.current_directory, p.name)
         )
+        d.hide()
+        d.setParent(None)
         if err:
             show_error(
                 self, QCoreApplication.translate("FilesWidget", "The folder could not be imported.")

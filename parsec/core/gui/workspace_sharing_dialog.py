@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import os
 
 from PyQt5.QtCore import QTimer, Qt, QCoreApplication, pyqtSignal
@@ -21,6 +23,10 @@ class SharingWidget(QWidget, Ui_SharingWidget):
         self.checkbox_read.setChecked(read)
         self.checkbox_write.setChecked(write)
         self.button_remove.clicked.connect(self.remove)
+
+    @property
+    def name(self):
+        return self.label_name.text()
 
     def remove(self):
         self.remove_clicked.emit(self)
@@ -55,7 +61,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         self.timer.stop()
         if len(self.line_edit_share.text()):
             users = self.portal.run(
-                self.core.fs.backend_cmds.user_find, self.line_edit_share.text()
+                self.core.fs.backend_cmds.user_find, self.line_edit_share.text(), 1, 100, True
             )
             users = [u for u in users if u != self.core.device.user_id]
             completer = QCompleter(users)
@@ -66,12 +72,22 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
 
     def add_user(self):
         user = self.line_edit_share.text()
-        print(user)
-        print(self.name)
         if not user:
             return
+        for i in range(self.scroll_content.layout().count()):
+            item = self.scroll_content.layout().itemAt(i)
+            if item and item.widget() and item.widget().name == user:
+                show_warning(
+                    self,
+                    QCoreApplication.translate(
+                        "WorkspacesWidget", 'This workspace is already shared with "{}".'
+                    ).format(user),
+                )
+                return
+
         try:
             self.portal.run(self.core.fs.share, os.path.join("/", self.name), user)
+            self.add_participant(user)
         except SharingRecipientError:
             show_warning(
                 self,

@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import attr
 import pytest
 import pendulum
@@ -238,6 +240,13 @@ def backend_data_binder_factory(backend_addr, initial_user_manifest_state):
             self.backend = backend
             self.backend_addr = backend_addr
             self.binded_local_devices = []
+
+        def get_device(self, device_id):
+            for d in self.binded_local_devices:
+                if d.device_id == device_id:
+                    return d
+            else:
+                raise ValueError(device_id)
 
         async def bind_organization(
             self,

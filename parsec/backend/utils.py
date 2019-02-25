@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 from functools import wraps
 
 from parsec.api.protocole import ProtocoleError, InvalidMessageError

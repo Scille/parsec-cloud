@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import threading
 import queue
 
@@ -81,11 +83,18 @@ class RegisterUserDialog(QDialog, Ui_RegisterUserDialog):
                     "RegisterUserDialog", "Only admins can invite a new user."
                 ),
             )
-        else:
+        elif status == "timeout":
             show_warning(
                 self,
                 QCoreApplication.translate(
-                    "RegisterUserDialog", "Unhandled response {}".format(status)
+                    "RegisterUserDialog", "User took too much time to register."
+                ),
+            )
+        else:
+            show_warning(
+                self,
+                QCoreApplication.translate("RegisterUserDialog", "Unhandled response {}").format(
+                    status
                 ),
             )
 

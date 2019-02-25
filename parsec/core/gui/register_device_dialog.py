@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import threading
 import queue
 
@@ -77,6 +79,13 @@ class RegisterDeviceDialog(QDialog, Ui_RegisterDeviceDialog):
             show_warning(
                 self,
                 QCoreApplication.translate("RegisterDeviceDialog", "This device already exists."),
+            )
+        elif status == "timeout":
+            show_warning(
+                self,
+                QCoreApplication.translate(
+                    "RegisterDeviceDialog", "Device took too much time to register."
+                ),
             )
         else:
             show_warning(

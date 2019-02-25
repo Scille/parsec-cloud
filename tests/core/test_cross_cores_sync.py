@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
+
 import pytest
 import trio
 from async_generator import asynccontextmanager
@@ -27,9 +29,13 @@ async def wait_for_entries_synced(core, entries_pathes):
         if synced == to_sync:
             event.set()
 
-    core.signal_ns.connect("fs.entry.synced", _on_entry_synced, weak=True)
-    yield event
-    await event.wait()
+    core.signal_ns.connect("fs.entry.synced", _on_entry_synced)
+    try:
+        yield event
+        await event.wait()
+
+    finally:
+        core.signal_ns.disconnect("fs.entry.synced", _on_entry_synced)
 
 
 # @pytest.mark.trio
