@@ -30,13 +30,25 @@ class LocalDBMissingEntry(LocalDBError):
 
 class LocalDB:
     def __init__(self, path: Path, max_cache_size: int = DEFAULT_MAX_CACHE_SIZE):
-        # Attributes
         self.conn = None
         self.nb_blocks = 0
         self._path = Path(path)
         self._db_files = self._path / "cache"
         self.max_cache_size = max_cache_size
-        self.block_limit = max_cache_size // DEFAULT_BLOCK_SIZE
+
+    @property
+    def path(self):
+        return str(self._path)
+
+    @property
+    def block_limit(self):
+        return self.max_cache_size // DEFAULT_BLOCK_SIZE
+
+    # Life cycle
+
+    def connect(self):
+        if self.conn is not None:
+            raise RuntimeError("Already connected")
 
         # Create directories
         self._path.mkdir(parents=True, exist_ok=True)
@@ -44,12 +56,34 @@ class LocalDB:
 
         # Connect and initialize database
         self.conn = sqlite3.connect(str(self._path / "cache.sqlite"))
+
+        # Use auto-commit
+        self.conn.isolation_level = None
+
+        # Initialize
         self.create_db()
         self.nb_blocks = self.get_nb_blocks()
 
-    @property
-    def path(self):
-        return str(self._path)
+    def close(self):
+        # Idempotency
+        if self.conn is None:
+            return
+
+        # Commit, just in case
+        self.conn.commit()
+
+        # Close the connection
+        self.conn.close()
+        self.conn = None
+
+    # Context management
+
+    def __enter__(self):
+        self.connect()
+        return self
+
+    def __exit__(self, *args):
+        self.close()
 
     # Database initialization
 

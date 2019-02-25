@@ -60,6 +60,7 @@ async def logged_core_factory(
         ) as backend_cmds_pool:
 
             local_db = LocalDB(config.data_base_dir / device.device_id)
+            local_db.connect()
 
             encryption_manager = EncryptionManager(device, local_db, backend_cmds_pool)
             fs = FS(device, local_db, backend_cmds_pool, encryption_manager, event_bus)

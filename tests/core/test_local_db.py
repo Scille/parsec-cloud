@@ -16,15 +16,18 @@ from parsec.core.local_db import DEFAULT_BLOCK_SIZE as block_size
 from parsec.core.types import ManifestAccess
 
 
-def test_local_db_path(tmpdir):
-    local_db = LocalDB(tmpdir, max_cache_size=128 * block_size)
+@pytest.fixture
+def local_db(tmpdir):
+    with LocalDB(tmpdir, max_cache_size=128 * block_size) as db:
+        yield db
+
+
+def test_local_db_path(tmpdir, local_db):
     assert local_db.path == tmpdir
     assert local_db.max_cache_size == 128 * block_size
 
 
-def test_local_db_cache_size(tmpdir):
-    local_db = LocalDB(tmpdir, max_cache_size=128 * block_size)
-
+def test_local_db_cache_size(local_db):
     access = ManifestAccess()
     assert local_db.get_cache_size() == 0
 
@@ -35,9 +38,7 @@ def test_local_db_cache_size(tmpdir):
     assert local_db.get_cache_size() > 4
 
 
-def test_local_db_set_get_clear(tmpdir):
-    local_db = LocalDB(tmpdir, max_cache_size=128 * block_size)
-
+def test_local_db_set_get_clear(local_db):
     access = ManifestAccess()
     local_db.set_block(access, b"data")
 
@@ -53,21 +54,17 @@ def test_local_db_set_get_clear(tmpdir):
         local_db.get_block(access)
 
 
-def test_local_db_on_disk(tmpdir):
-    local_db = LocalDB(tmpdir, max_cache_size=128 * block_size)
+def test_local_db_on_disk(tmpdir, local_db):
     access = ManifestAccess()
     local_db.set_block(access, b"data")
-    # TODO: implement an explicit close method
-    del local_db
+    local_db.close()
 
-    local_db_cpy = LocalDB(tmpdir, max_cache_size=128)
-    data = local_db_cpy.get_block(access)
+    with LocalDB(tmpdir, max_cache_size=128 * block_size) as local_db_copy:
+        data = local_db_copy.get_block(access)
     assert data == b"data"
 
 
-def test_local_manual_run_block_garbage_collector(tmpdir):
-    local_db = LocalDB(tmpdir, max_cache_size=128 * block_size)
-
+def test_local_manual_run_block_garbage_collector(local_db):
     access_precious = ManifestAccess()
     local_db.set_block(access_precious, b"precious_data", False)
 
@@ -80,8 +77,8 @@ def test_local_manual_run_block_garbage_collector(tmpdir):
         local_db.get_block(access_deletable)
 
 
-def test_local_automatic_run_garbage_collector(tmpdir):
-    local_db = LocalDB(tmpdir, max_cache_size=2 * block_size)
+def test_local_automatic_run_garbage_collector(local_db):
+    local_db.max_cache_size = 2 * block_size
 
     access_a = ManifestAccess()
     local_db.set_block(access_a, b"a" * 10, False)
@@ -123,12 +120,14 @@ def test_local_db_stateful(tmpdir, hypothesis_settings):
             self.local_db = LocalDB(
                 tmpdir / f"local-db-{tentative}", max_cache_size=128 * block_size
             )
+            self.local_db.connect()
+
             # Monkey patch to simplify test
             self.local_db._encrypt_with_symkey = lambda key, data: data
             self.local_db._decrypt_with_symkey = lambda key, data: data
 
         def teardown(self):
-            pass
+            self.local_db.close()
 
         @rule(entry=PreciousEntry)
         def get_precious_data(self, entry):
