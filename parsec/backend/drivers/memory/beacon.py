@@ -7,7 +7,13 @@ from uuid import UUID
 
 from parsec.types import DeviceID, UserID, OrganizationID
 from parsec.event_bus import EventBus
-from parsec.backend.beacon import BaseBeaconComponent, BeaconNotFound, BeaconAccessError
+from parsec.backend.beacon import (
+    BaseBeaconComponent,
+    BeaconError,
+    BeaconNotFound,
+    BeaconAccessError,
+)
+from parsec.backend.drivers.memory.user import MemoryUserComponent, UserNotFoundError
 
 
 @attr.s
@@ -18,9 +24,10 @@ class Beacon:
 
 
 class MemoryBeaconComponent(BaseBeaconComponent):
-    def __init__(self, event_bus: EventBus):
+    def __init__(self, event_bus: EventBus, user_component: MemoryUserComponent):
         self.event_bus = event_bus
         self._organizations = defaultdict(dict)
+        self._user_component = user_component
 
     def _lazy_init(self, organization_id, id, author):
         beacons = self._organizations[organization_id]
@@ -82,6 +89,10 @@ class MemoryBeaconComponent(BaseBeaconComponent):
         read_access: bool,
         write_access: bool,
     ) -> None:
+        try:
+            await self._user_component.get_user(organization_id, user)
+        except UserNotFoundError:
+            raise BeaconError("Unknown user")
         beacon = self._get(organization_id, id)
         if not beacon.rights.get(author, (False, False, False))[0]:
             raise BeaconAccessError()

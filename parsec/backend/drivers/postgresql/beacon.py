@@ -2,9 +2,15 @@
 
 from typing import Tuple, Dict
 from uuid import UUID
+from triopg.exceptions import NotNullViolationError
 
 from parsec.types import UserID, DeviceID, OrganizationID
-from parsec.backend.beacon import BaseBeaconComponent, BeaconNotFound, BeaconAccessError
+from parsec.backend.beacon import (
+    BaseBeaconComponent,
+    BeaconError,
+    BeaconNotFound,
+    BeaconAccessError,
+)
 from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
 
 
@@ -88,8 +94,9 @@ WHERE beacon = get_beacon_internal_id($1, $2)
                 elif not ret[0][0]:
                     raise BeaconAccessError()
 
-                ret = await conn.execute(
-                    """
+                try:
+                    ret = await conn.execute(
+                        """
 INSERT INTO beacon_accesses (
     beacon,
     user_,
@@ -108,14 +115,16 @@ SET
     admin_access = excluded.admin_access,
     read_access = excluded.read_access,
     write_access = excluded.write_access
-                    """,
-                    organization_id,
-                    id,
-                    user,
-                    admin_access,
-                    read_access,
-                    write_access,
-                )
+                        """,
+                        organization_id,
+                        id,
+                        user,
+                        admin_access,
+                        read_access,
+                        write_access,
+                    )
+                except NotNullViolationError:
+                    raise BeaconError("Unknown user")
 
     async def poll(
         self, organization_id: OrganizationID, author: UserID, id: UUID, checkpoint: int

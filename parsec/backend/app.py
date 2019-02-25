@@ -123,7 +123,7 @@ class BackendApp:
             self.user = MemoryUserComponent(self.event_bus)
             self.organization = MemoryOrganizationComponent(self.user)
             self.message = MemoryMessageComponent(self.event_bus)
-            self.beacon = MemoryBeaconComponent(self.event_bus)
+            self.beacon = MemoryBeaconComponent(self.event_bus, self.user)
             self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
             self.ping = MemoryPingComponent(self.event_bus)
             self.blockstore = blockstore_factory(self.config.blockstore_config)

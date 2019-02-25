@@ -39,10 +39,13 @@ class BaseBeaconComponent:
             )
 
         except BeaconAccessError:
-            return beacon_poll_serializer.rep_dump({"status": "not_allowed"})
+            return beacon_get_rights_serializer.rep_dump({"status": "not_allowed"})
 
         except BeaconNotFound:
-            return beacon_poll_serializer.rep_dump({"status": "not_found"})
+            return beacon_get_rights_serializer.rep_dump({"status": "not_found"})
+
+        except BeaconError as exc:
+            return beacon_get_rights_serializer.rep_dump({"status": "error", "reason": str(exc)})
 
         return beacon_get_rights_serializer.rep_dump(
             {
@@ -62,10 +65,13 @@ class BaseBeaconComponent:
             await self.set_rights(client_ctx.organization_id, client_ctx.user_id, **msg)
 
         except BeaconAccessError:
-            return beacon_poll_serializer.rep_dump({"status": "not_allowed"})
+            return beacon_set_rights_serializer.rep_dump({"status": "not_allowed"})
 
         except BeaconNotFound:
-            return beacon_poll_serializer.rep_dump({"status": "not_found"})
+            return beacon_set_rights_serializer.rep_dump({"status": "not_found"})
+
+        except BeaconError as exc:
+            return beacon_set_rights_serializer.rep_dump({"status": "error", "reason": str(exc)})
 
         return beacon_set_rights_serializer.rep_dump({"status": "ok"})
 

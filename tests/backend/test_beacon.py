@@ -104,6 +104,14 @@ async def test_beacon_set_rights_not_found(bob, alice_backend_sock):
 
 
 @pytest.mark.trio
+async def test_beacon_set_rights_bad_user(backend, alice, mallory, alice_backend_sock):
+    await backend.vlob.create(alice.organization_id, alice.device_id, BEACON_ID, VLOB_ID, b"v1")
+
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, mallory.user_id, True, True, True)
+    assert rep == {"status": "error", "reason": "Unknown user"}
+
+
+@pytest.mark.trio
 async def test_beacon_remove_rights_idempotent(backend, alice, bob, alice_backend_sock):
     await backend.vlob.create(alice.organization_id, alice.device_id, BEACON_ID, VLOB_ID, b"v1")
 
