@@ -1,17 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import time
 import os
 import pathlib
 from uuid import UUID
 
 from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal
-from PyQt5.QtWidgets import QMenu, QFileDialog, QApplication
+from PyQt5.QtWidgets import QMenu, QFileDialog, QApplication, QDialog
 
 from parsec.core.gui import desktop
 from parsec.core.gui.file_items import FileType
 from parsec.core.gui.custom_widgets import show_error, ask_question, get_text, TaskbarButton
 from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.loading_dialog import LoadingDialog
+from parsec.core.gui.replace_dialog import ReplaceDialog
 from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.fs import FSEntryNotFound
 
@@ -101,42 +103,105 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         if self.line_edit_search.text():
             self.filter_files(self.line_edit_search.text())
 
-    def _import_folder(self, src, dst):
-        err = False
+    def import_all(self, files, total_size):
+        loading_dialog = LoadingDialog(total_size=total_size, parent=self)
+        loading_dialog.show()
+        current_size = 0
+        start_time = time.time()
+        skip_all = False
+        replace_all = False
+        for src, dst in files:
+            file_exists = False
+            try:
+                self.portal.run(self.core.fs.stat, dst)
+                file_exists = True
+            except FileNotFoundError:
+                file_exists = False
+            if file_exists:
+                replace = False or replace_all
+                skip = False or skip_all
+                if not replace and not skip:
+                    replace_dialog = ReplaceDialog(dst, parent=self)
+                    if replace_dialog.exec_() == QDialog.Rejected:
+                        return
+                    else:
+                        if replace_dialog.skip:
+                            skip = True
+                            if replace_dialog.all_files:
+                                skip_all = True
+                        elif replace_dialog.replace:
+                            replace = True
+                            if replace_dialog.all_files:
+                                replace_all = True
+                if replace:
+                    self.import_file(src, dst, current_size, loading_dialog)
+                elif skip:
+                    continue
+            else:
+                self.import_file(src, dst, current_size, loading_dialog)
+            current_size += src.stat().st_size
+            loading_dialog.set_progress(current_size)
+            QApplication.processEvents()
+        elapsed = time.time() - start_time
+        # Done for ergonomy. We don't want a window just flashing before the user, so we
+        # add this little trick. The window will be opened at least 0.5s, which is more than
+        # enough for the user to realize that it is a progress bar and not just a bug.
+        if elapsed < 0.5:
+            time.sleep(1.0 - elapsed)
+        loading_dialog.hide()
+
+    def get_files(self, paths):
+        files = []
+        total_size = 0
+        for path in paths:
+            p = pathlib.Path(path)
+            dst = os.path.join("/", self.workspace, self.current_directory, p.name)
+            files.append((p, dst))
+            total_size += p.stat().st_size
+        return files, total_size
+
+    def get_folder(self, src, dst):
+        files = []
+        total_size = 0
         try:
             self.portal.run(self.core.fs.folder_create, dst)
-            for i, f in enumerate(src.iterdir()):
-                try:
-                    if f.is_dir():
-                        err |= self._import_folder(f, os.path.join(dst, f.name))
-                    elif f.is_file():
-                        err |= self._import_file(f, os.path.join(dst, f.name))
-                    if i % 5 == 0:
-                        QApplication.processEvents()
-                except:
-                    err = True
-        except:
-            err = True
-        return err
+        except FileExistsError:
+            pass
+        for f in src.iterdir():
+            if f.is_dir():
+                files.extend(self.get_folder(f, os.path.join(dst, f.name)))
+            elif f.is_file():
+                new_dst = os.path.join(dst, f.name)
+                files.append((f, new_dst))
+                total_size += f.stat().st_size
+        return files, total_size
 
-    def _import_file(self, src, dst):
+    def import_file(self, src, dst, current_size, loading_dialog):
+        loading_dialog.set_current_file(src.name)
         fd_out = None
         try:
-            self.portal.run(self.core.fs.file_create, dst)
+            try:
+                self.portal.run(self.core.fs.file_create, dst)
+            except FileExistsError:
+                pass
             fd_out = self.portal.run(self.core.fs.file_fd_open, dst)
             with open(src, "rb") as fd_in:
                 i = 0
+                read_size = 0
                 while True:
                     chunk = fd_in.read(65536)
                     if not chunk:
                         break
                     self.portal.run(self.core.fs.file_fd_write, fd_out, chunk)
+                    read_size += len(chunk)
                     i += 1
                     if i % 5 == 0:
+                        loading_dialog.set_progress(current_size + read_size)
                         QApplication.processEvents()
-            return False
         except:
-            return True
+            import traceback
+
+            traceback.print_exc()
         finally:
             if fd_out:
                 self.portal.run(self.core.fs.file_fd_close, fd_out)
@@ -150,20 +215,8 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         )
         if not paths:
             return
-        d = LoadingDialog(parent=self)
-        d.show()
-        err = False
-        for path in paths:
-            p = pathlib.Path(path)
-            err |= self._import_file(
-                str(p), os.path.join("/", self.workspace, self.current_directory, p.name)
-            )
-        d.hide()
-        d.setParent(None)
-        if err:
-            show_error(
-                self, QCoreApplication.translate("FilesWidget", "Some files could not be imported.")
-            )
+        files, total_size = self.get_files(paths)
+        self.import_all(files, total_size)
 
     # slot
     def import_folder_clicked(self):
@@ -174,18 +227,11 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         )
         if not path:
             return
-        d = LoadingDialog(parent=self)
-        d.show()
         p = pathlib.Path(path)
-        err = self._import_folder(
+        files, total_size = self.get_folder(
             p, os.path.join("/", self.workspace, self.current_directory, p.name)
         )
-        d.hide()
-        d.setParent(None)
-        if err:
-            show_error(
-                self, QCoreApplication.translate("FilesWidget", "The folder could not be imported.")
-            )
+        self.import_all(files, total_size)
 
     # slot
     def filter_files(self, pattern):
@@ -346,18 +392,26 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         name_item = self.table_files.item(row, 1)
         type_item = self.table_files.item(row, 0)
         file_type = type_item.data(Qt.UserRole)
-        if file_type == FileType.ParentFolder:
-            self.load(os.path.dirname(self.current_directory))
-        elif file_type == FileType.ParentWorkspace:
-            self.back_clicked.emit()
-        elif file_type == FileType.File:
-            desktop.open_file(
-                os.path.join(
-                    self.core.mountpoint, self.workspace, self.current_directory, name_item.text()
+        try:
+            if file_type == FileType.ParentFolder:
+                self.load(os.path.dirname(self.current_directory))
+            elif file_type == FileType.ParentWorkspace:
+                self.back_clicked.emit()
+            elif file_type == FileType.File:
+                desktop.open_file(
+                    os.path.join(
+                        self.core.mountpoint,
+                        self.workspace,
+                        self.current_directory,
+                        name_item.text(),
+                    )
                 )
-            )
-        elif file_type == FileType.Folder:
-            self.load(os.path.join(os.path.join(self.current_directory, name_item.text())))
+            elif file_type == FileType.Folder:
+                self.load(os.path.join(os.path.join(self.current_directory, name_item.text())))
+        except AttributeError:
+            # This can happen when updating the list: double click event gets processed after
+            # the item has been removed.
+            pass
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Delete:

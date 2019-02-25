@@ -7,7 +7,17 @@ from parsec.core.gui.ui.loading_dialog import Ui_LoadingDialog
 
 
 class LoadingDialog(QDialog, Ui_LoadingDialog):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, total_size, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.setWindowFlags(Qt.SplashScreen)
+        self.setModal(True)
+        self.progress_bar.setMaximum(total_size)
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setValue(0)
+
+    def set_current_file(self, f):
+        self.label.setText(f)
+
+    def set_progress(self, size):
+        self.progress_bar.setValue(size)
