@@ -61,7 +61,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         self.timer.stop()
         if len(self.line_edit_share.text()):
             users = self.portal.run(
-                self.core.fs.backend_cmds.user_find, self.line_edit_share.text()
+                self.core.fs.backend_cmds.user_find, self.line_edit_share.text(), 1, 100, True
             )
             users = [u for u in users if u != self.core.device.user_id]
             completer = QCompleter(users)
