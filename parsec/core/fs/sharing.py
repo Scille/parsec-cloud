@@ -123,7 +123,7 @@ class Sharing:
 
         # Step 1)
         try:
-            await self.backend_cmds.beacon_set_rights(access.id, recipient, True, True)
+            await self.backend_cmds.beacon_set_rights(access.id, recipient, True, True, True)
         except BackendCmdsBadResponse as exc:
             raise SharingBackendMessageError(
                 f"Error while trying to set beacon rights in backend: {exc}"

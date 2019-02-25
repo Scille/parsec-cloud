@@ -134,7 +134,12 @@ async def beacon_get_rights(transport: Transport, id: UUID) -> Dict[UserID, Dict
 
 
 async def beacon_set_rights(
-    transport: Transport, id: UUID, user: UserID, read_access: bool, write_access: bool
+    transport: Transport,
+    id: UUID,
+    user: UserID,
+    admin_access: bool,
+    read_access: bool,
+    write_access: bool,
 ) -> None:
     rep = await _send_cmd(
         transport,
@@ -142,6 +147,7 @@ async def beacon_set_rights(
         cmd="beacon_set_rights",
         id=id,
         user=user,
+        admin_access=admin_access,
         read_access=read_access,
         write_access=write_access,
     )

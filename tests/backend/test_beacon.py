@@ -3,6 +3,7 @@
 import pytest
 from uuid import UUID
 import trio
+from itertools import combinations_with_replacement
 
 from parsec.api.protocole import (
     beacon_poll_serializer,
@@ -30,13 +31,14 @@ async def beacon_get_rights(sock, id):
     return beacon_get_rights_serializer.rep_loads(raw_rep)
 
 
-async def beacon_set_rights(sock, id, user, read_access, write_access):
+async def beacon_set_rights(sock, id, user, admin_access, read_access, write_access):
     raw_rep = await sock.send(
         beacon_set_rights_serializer.req_dumps(
             {
                 "cmd": "beacon_set_rights",
                 "id": id,
                 "user": user,
+                "admin_access": admin_access,
                 "read_access": read_access,
                 "write_access": write_access,
             }
@@ -97,7 +99,7 @@ async def test_beacon_get_rights_not_found(alice_backend_sock):
 
 @pytest.mark.trio
 async def test_beacon_set_rights_not_found(bob, alice_backend_sock):
-    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, True, True)
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, True, True, True)
     assert rep == {"status": "not_found"}
 
 
@@ -105,14 +107,41 @@ async def test_beacon_set_rights_not_found(bob, alice_backend_sock):
 async def test_beacon_remove_rights_idempotent(backend, alice, bob, alice_backend_sock):
     await backend.vlob.create(alice.organization_id, alice.device_id, BEACON_ID, VLOB_ID, b"v1")
 
-    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, False, False)
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, False, False, False)
     assert rep == {"status": "ok"}
 
-    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, False, False)
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, False, False, False)
     assert rep == {"status": "ok"}
 
     rep = await beacon_get_rights(alice_backend_sock, BEACON_ID)
-    assert rep == {"status": "ok", "users": {"alice": {"read_access": True, "write_access": True}}}
+    assert rep == {
+        "status": "ok",
+        "users": {"alice": {"admin_access": True, "read_access": True, "write_access": True}},
+    }
+
+
+@pytest.mark.trio
+async def test_beacon_need_admin_to_share(backend, alice, bob, alice_backend_sock):
+    await backend.vlob.create(alice.organization_id, alice.device_id, BEACON_ID, VLOB_ID, b"v1")
+
+    # Only read access...
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, alice.user_id, False, True, True)
+    assert rep == {"status": "ok"}
+
+    # ...so we shouldn't be able to allow Bob to write
+    for rights in combinations_with_replacement((True, False), 3):
+        rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, *rights)
+        assert rep == {"status": "not_allowed"}
+
+    # Can no longer re-enable ourselft either
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, alice.user_id, True, True, True)
+    assert rep == {"status": "not_allowed"}
+
+    rep = await beacon_get_rights(alice_backend_sock, BEACON_ID)
+    assert rep == {
+        "status": "ok",
+        "users": {"alice": {"admin_access": False, "read_access": True, "write_access": True}},
+    }
 
 
 @pytest.mark.trio
@@ -125,19 +154,22 @@ async def test_beacon_handle_rights(backend, alice, bob, alice_backend_sock, bob
     assert rep == {"status": "not_allowed"}
 
     rep = await beacon_get_rights(alice_backend_sock, BEACON_ID)
-    assert rep == {"status": "ok", "users": {"alice": {"read_access": True, "write_access": True}}}
+    assert rep == {
+        "status": "ok",
+        "users": {"alice": {"admin_access": True, "read_access": True, "write_access": True}},
+    }
 
     # Now add Bob with write access only
 
-    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, False, True)
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, False, False, True)
     assert rep == {"status": "ok"}
 
     rep = await beacon_get_rights(alice_backend_sock, BEACON_ID)
     assert rep == {
         "status": "ok",
         "users": {
-            "alice": {"read_access": True, "write_access": True},
-            "bob": {"read_access": False, "write_access": True},
+            "alice": {"admin_access": True, "read_access": True, "write_access": True},
+            "bob": {"admin_access": False, "read_access": False, "write_access": True},
         },
     }
 
@@ -149,15 +181,15 @@ async def test_beacon_handle_rights(backend, alice, bob, alice_backend_sock, bob
 
     # Now add Bob with read access
 
-    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, True, False)
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, False, True, False)
     assert rep == {"status": "ok"}
 
     rep = await beacon_get_rights(alice_backend_sock, BEACON_ID)
     assert rep == {
         "status": "ok",
         "users": {
-            "alice": {"read_access": True, "write_access": True},
-            "bob": {"read_access": True, "write_access": False},
+            "alice": {"admin_access": True, "read_access": True, "write_access": True},
+            "bob": {"admin_access": False, "read_access": True, "write_access": False},
         },
     }
 
@@ -169,7 +201,7 @@ async def test_beacon_handle_rights(backend, alice, bob, alice_backend_sock, bob
 
     # Finally remove all rights from Bob
 
-    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, False, False)
+    rep = await beacon_set_rights(alice_backend_sock, BEACON_ID, bob.user_id, False, False, False)
     assert rep == {"status": "ok"}
 
     rep = await beacon_poll(bob_backend_sock, BEACON_ID, 2)
@@ -179,7 +211,10 @@ async def test_beacon_handle_rights(backend, alice, bob, alice_backend_sock, bob
     assert rep == {"status": "not_allowed"}
 
     rep = await beacon_get_rights(alice_backend_sock, BEACON_ID)
-    assert rep == {"status": "ok", "users": {"alice": {"read_access": True, "write_access": True}}}
+    assert rep == {
+        "status": "ok",
+        "users": {"alice": {"admin_access": True, "read_access": True, "write_access": True}},
+    }
 
 
 @pytest.mark.trio

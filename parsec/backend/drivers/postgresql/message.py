@@ -3,7 +3,7 @@
 from typing import List, Tuple
 
 from parsec.types import UserID, DeviceID, OrganizationID
-from parsec.backend.message import BaseMessageComponent, MessageError
+from parsec.backend.message import BaseMessageComponent
 from parsec.backend.drivers.postgresql.handler import send_signal, PGHandler
 
 
@@ -16,38 +16,33 @@ class PGMessageComponent(BaseMessageComponent):
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
-                result = await conn.execute(
+                index = await conn.fetchval(
                     """
 INSERT INTO messages (
     organization,
-    sender,
     recipient,
+    index,
+    sender,
     body
 )
 SELECT
     get_organization_internal_id($1),
-    get_device_internal_id($1, $2),
-    get_user_internal_id($1, $3),
+    get_user_internal_id($1, $2),
+    (
+        SELECT COUNT(*) + 1
+        FROM messages
+        WHERE recipient = get_user_internal_id($1, $2)
+    ),
+    get_device_internal_id($1, $3),
     $4
+RETURNING index
 """,
                     organization_id,
-                    sender,
                     recipient,
+                    sender,
                     body,
                 )
-                if result != "INSERT 0 1":
-                    raise MessageError(f"Insertion error: {result}")
 
-                # TODO: index doesn't seem to be used in the core, and is complicated to get here...
-                # Maybe we should replace it by a timestamp ?
-                index, = await conn.fetchrow(
-                    """
-SELECT COUNT(*) FROM messages
-WHERE recipient = get_user_internal_id($1, $2)
-""",
-                    organization_id,
-                    recipient,
-                )
                 await send_signal(
                     conn,
                     "message.received",

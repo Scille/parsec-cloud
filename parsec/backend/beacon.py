@@ -48,8 +48,8 @@ class BaseBeaconComponent:
             {
                 "status": "ok",
                 "users": {
-                    u: {"read_access": ra, "write_access": wa}
-                    for u, (ra, wa) in per_users_rights.items()
+                    u: {"admin_access": aa, "read_access": ra, "write_access": wa}
+                    for u, (aa, ra, wa) in per_users_rights.items()
                 },
             }
         )
@@ -91,7 +91,7 @@ class BaseBeaconComponent:
 
     async def get_rights(
         self, organization_id: OrganizationID, author: UserID, id: UUID
-    ) -> Dict[DeviceID, Tuple[bool, bool]]:
+    ) -> Dict[DeviceID, Tuple[bool, bool, bool]]:
         raise NotImplementedError()
 
     async def set_rights(
@@ -100,6 +100,7 @@ class BaseBeaconComponent:
         author: UserID,
         id: UUID,
         user: UserID,
+        admin_access: bool,
         read_access: bool,
         write_access: bool,
     ) -> None:

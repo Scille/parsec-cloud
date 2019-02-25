@@ -13,6 +13,7 @@ __all__ = ("beacon_set_rights_serializer", "beacon_get_rights_serializer", "beac
 class BeaconSetRightsReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
     user = fields.UserID(required=True)
+    admin_access = fields.Boolean(required=True)
     read_access = fields.Boolean(required=True)
     write_access = fields.Boolean(required=True)
 
@@ -29,6 +30,7 @@ class BeaconGetRightsReqSchema(BaseReqSchema):
 
 
 class BeaconUserRights(UnknownCheckedSchema):
+    admin_access = fields.Boolean(required=True)
     read_access = fields.Boolean(required=True)
     write_access = fields.Boolean(required=True)
 

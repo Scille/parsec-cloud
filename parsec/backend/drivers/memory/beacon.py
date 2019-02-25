@@ -7,11 +7,7 @@ from uuid import UUID
 
 from parsec.types import DeviceID, UserID, OrganizationID
 from parsec.event_bus import EventBus
-from parsec.backend.beacon import (
-    BaseBeaconComponent,
-    BeaconNotFound,
-    BeaconAccessError,
-)
+from parsec.backend.beacon import BaseBeaconComponent, BeaconNotFound, BeaconAccessError
 
 
 @attr.s
@@ -30,7 +26,7 @@ class MemoryBeaconComponent(BaseBeaconComponent):
         beacons = self._organizations[organization_id]
         if id in beacons:
             return
-        beacons[id] = Beacon(rights={author: (True, True)})
+        beacons[id] = Beacon(rights={author: (True, True, True)})
 
     def _get(self, organization_id, id):
         beacons = self._organizations[organization_id]
@@ -43,14 +39,14 @@ class MemoryBeaconComponent(BaseBeaconComponent):
     def _can_read(self, organization_id, user_id, id):
         try:
             beacon = self._get(organization_id, id)
-            return beacon.rights[user_id][0]
+            return beacon.rights[user_id][1]
         except (BeaconNotFound, KeyError):
             return False
 
     def _can_write(self, organization_id, user_id, id):
         try:
             beacon = self._get(organization_id, id)
-            return beacon.rights[user_id][1]
+            return beacon.rights[user_id][2]
         except (BeaconNotFound, KeyError):
             return False
 
@@ -70,9 +66,9 @@ class MemoryBeaconComponent(BaseBeaconComponent):
 
     async def get_rights(
         self, organization_id: OrganizationID, author: UserID, id: UUID
-    ) -> Dict[DeviceID, Tuple[bool, bool]]:
+    ) -> Dict[DeviceID, Tuple[bool, bool, bool]]:
         beacon = self._get(organization_id, id)
-        if not beacon.rights.get(author, (False, False))[0]:
+        if not beacon.rights.get(author, (False, False, False))[1]:
             raise BeaconAccessError()
         return beacon.rights.copy()
 
@@ -82,22 +78,23 @@ class MemoryBeaconComponent(BaseBeaconComponent):
         author: UserID,
         id: UUID,
         user: UserID,
+        admin_access: bool,
         read_access: bool,
         write_access: bool,
     ) -> None:
         beacon = self._get(organization_id, id)
-        if not beacon.rights.get(author, (False, False))[1]:
+        if not beacon.rights.get(author, (False, False, False))[0]:
             raise BeaconAccessError()
         if not read_access and not write_access:
             beacon.rights.pop(user, None)
         else:
-            beacon.rights[user] = (read_access, write_access)
+            beacon.rights[user] = (admin_access, read_access, write_access)
 
     async def poll(
         self, organization_id: OrganizationID, author: UserID, id: UUID, checkpoint: int
     ) -> Tuple[int, Dict[UUID, int]]:
         beacon = self._get(organization_id, id)
-        if not beacon.rights.get(author, (False, False))[0]:
+        if not beacon.rights.get(author, (False, False, False))[1]:
             raise BeaconAccessError()
         changes_since_checkpoint = {
             src_id: src_version

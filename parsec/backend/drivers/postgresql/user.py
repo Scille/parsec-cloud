@@ -216,14 +216,14 @@ WHERE
         devices_results = await conn.fetch(
             """
 SELECT
-    d1.device_id,
-    d1.certified_device,
-    get_device_id(d1.device_certifier) as device_certifier,
-    d1.created_on,
-    d1.revocated_on,
-    d1.certified_revocation,
-    get_device_id(d1.revocation_certifier) as revocation_certifier
-FROM devices as d1
+    device_id,
+    certified_device,
+    get_device_id(device_certifier) as device_certifier,
+    created_on,
+    revocated_on,
+    certified_revocation,
+    get_device_id(revocation_certifier) as revocation_certifier
+FROM devices
 WHERE user_ = get_user_internal_id($1, $2)
 """,
             organization_id,
@@ -261,14 +261,14 @@ WHERE user_ = get_user_internal_id($1, $2)
             results = await conn.fetch(
                 """
 SELECT
-    d1.device_id,
-    d1.certified_device,
-    get_device_id(d1.device_certifier) as device_certifier,
-    d1.created_on,
-    d1.revocated_on,
-    d1.certified_revocation,
-    get_device_id(d1.revocation_certifier) as revocation_certifier
-FROM devices as d1
+    device_id,
+    certified_device,
+    get_device_id(device_certifier) as device_certifier,
+    created_on,
+    revocated_on,
+    certified_revocation,
+    get_device_id(revocation_certifier) as revocation_certifier
+FROM devices
 WHERE
     organization = get_organization_internal_id($1)
     AND device_id = any($2::text[])
@@ -663,7 +663,8 @@ WHERE
                     )
                     if not err_result:
                         raise UserNotFoundError(device_id)
-                    if err_result[0]:
+
+                    elif err_result[0]:
                         raise UserAlreadyRevokedError()
 
                     else:
