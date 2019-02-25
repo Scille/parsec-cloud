@@ -83,11 +83,12 @@ class OpenedFile:
 
 
 class WinFSPOperations(BaseFileSystemOperations):
-    def __init__(self, volume_label, fs_access):
+    def __init__(self, workspace, volume_label, fs_access):
         super().__init__()
         if len(volume_label) > 31:
             raise ValueError("`volume_label` must be 31 characters long max")
 
+        self.workspace = workspace
         self.fs_access = fs_access
 
         max_file_nodes = 1024
@@ -99,6 +100,9 @@ class WinFSPOperations(BaseFileSystemOperations):
             "volume_label": volume_label,
         }
 
+    def _localize_path(self, path):
+        return f"/{self.workspace}/{path}"
+
     def get_volume_info(self):
         return self._volume_info
 
@@ -106,6 +110,8 @@ class WinFSPOperations(BaseFileSystemOperations):
         self._volume_info["volume_label"] = volume_label
 
     def get_security_by_name(self, file_name):
+        file_name = self._localize_path(file_name)
+
         with translate_error():
             stat = self.fs_access.stat(file_name)
 
@@ -123,6 +129,8 @@ class WinFSPOperations(BaseFileSystemOperations):
         security_descriptor,
         allocation_size,
     ):
+        file_name = self._localize_path(file_name)
+
         # `granted_access` is already handle by winfsp
         # `allocation_size` useless for us
         # `security_descriptor` is not supported yet
@@ -146,10 +154,14 @@ class WinFSPOperations(BaseFileSystemOperations):
         pass
 
     def rename(self, file_context, file_name, new_file_name, replace_if_exists):
+        file_name = self._localize_path(file_name)
+        new_file_name = self._localize_path(new_file_name)
+
         with translate_error():
             self.fs_access.move(file_name, new_file_name)
 
     def open(self, file_name, create_options, granted_access):
+        file_name = self._localize_path(file_name)
         # `granted_access` is already handle by winfsp
 
         with translate_error():

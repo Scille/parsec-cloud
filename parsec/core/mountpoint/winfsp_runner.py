@@ -44,7 +44,13 @@ def _teardown_mountpoint(mountpoint):
 
 
 async def winfsp_mountpoint_runner(
-    fs, mountpoint: Path, config: dict, event_bus, *, task_status=trio.TASK_STATUS_IGNORED
+    workspace: str,
+    mountpoint: Path,
+    config: dict,
+    fs,
+    event_bus,
+    *,
+    task_status=trio.TASK_STATUS_IGNORED,
 ):
     """
     Raises:
@@ -59,8 +65,8 @@ async def winfsp_mountpoint_runner(
     if config.get("debug", False):
         enable_debug_log()
 
-    volume_label = f"parsec-{fs.device.user_id}"[:31]
-    operations = WinFSPOperations(volume_label, fs_access)
+    volume_label = f"{fs.device.user_id}-{workspace}"[:31]
+    operations = WinFSPOperations(workspace, volume_label, fs_access)
     fs = FileSystem(
         str(abs_mountpoint),
         operations,

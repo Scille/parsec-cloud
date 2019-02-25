@@ -1,13 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 
-class MountpointManagerError(Exception):
+class MountpointError(Exception):
     pass
 
 
-class MountpointManagerNotAvailable(MountpointManagerError):
+class MountpointDriverCrash(MountpointError):
     pass
 
 
-class MountpointConfigurationError(MountpointManagerError):
+class MountpointAlreadyMounted(MountpointError):
+    pass
+
+
+class MountpointNotMounted(MountpointError):
+    pass
+
+
+class MountpointNotAvailable(MountpointError):
+    pass
+
+
+class MountpointDisabled(MountpointError):
+    pass
+
+
+class MountpointConfigurationError(MountpointError):
     pass

@@ -25,11 +25,15 @@ def translate_error():
 
 
 class FuseOperations(LoggingMixIn, Operations):
-    def __init__(self, fs_access):
+    def __init__(self, workspace, fs_access):
         super().__init__()
+        self.workspace = workspace
         self.fs_access = fs_access
         self.fds = {}
         self._need_exit = False
+
+    def _localize_path(self, path):
+        return f"/{self.workspace}/{path}"
 
     def schedule_exit(self):
         # TODO: Currently call fuse_exit from a non fuse thread is not possible
@@ -40,6 +44,8 @@ class FuseOperations(LoggingMixIn, Operations):
         pass
 
     def getattr(self, path, fh=None):
+        path = self._localize_path(path)
+
         if self._need_exit:
             fuse_exit()
 
@@ -70,6 +76,8 @@ class FuseOperations(LoggingMixIn, Operations):
         return fuse_stat
 
     def readdir(self, path, fh):
+        path = self._localize_path(path)
+
         with translate_error():
             stat = self.fs_access.stat(path)
 
@@ -79,28 +87,40 @@ class FuseOperations(LoggingMixIn, Operations):
         return [".", ".."] + list(stat["children"])
 
     def create(self, path, mode):
+        path = self._localize_path(path)
+
         with translate_error():
             return self.fs_access.file_create(path)
 
     def open(self, path, flags=0):
+        path = self._localize_path(path)
+
         with translate_error():
             return self.fs_access.file_fd_open(path)
 
     def release(self, path, fh):
+        path = self._localize_path(path)
+
         with translate_error():
             self.fs_access.file_fd_close(fh)
 
     def read(self, path, size, offset, fh):
+        path = self._localize_path(path)
+
         with translate_error():
             ret = self.fs_access.file_fd_read(fh, size, offset)
             # Fuse wants bytes but file_fd_read returns a bytearray
             return bytes(ret)
 
     def write(self, path, data, offset, fh):
+        path = self._localize_path(path)
+
         with translate_error():
             return self.fs_access.file_fd_write(fh, data, offset)
 
     def truncate(self, path, length, fh=None):
+        path = self._localize_path(path)
+
         with translate_error():
             if fh:
                 self.fs_access.file_fd_truncate(fh, length)
@@ -108,16 +128,22 @@ class FuseOperations(LoggingMixIn, Operations):
                 self.fs_access.file_truncate(path, length)
 
     def unlink(self, path):
+        path = self._localize_path(path)
+
         with translate_error():
             self.fs_access.delete(path)
 
     def mkdir(self, path, mode):
+        path = self._localize_path(path)
+
         with translate_error():
             self.fs_access.folder_create(path)
 
         return 0
 
     def rmdir(self, path):
+        path = self._localize_path(path)
+
         # TODO: check directory is empty
         # TODO: check path is a directory
         with translate_error():
@@ -126,6 +152,9 @@ class FuseOperations(LoggingMixIn, Operations):
         return 0
 
     def rename(self, src, dst):
+        src = self._localize_path(src)
+        dst = self._localize_path(dst)
+
         # Unix allows to overwrite the destination, so make sure to have
         # space before calling the move
         with translate_error():
@@ -134,16 +163,22 @@ class FuseOperations(LoggingMixIn, Operations):
         return 0
 
     def flush(self, path, fh):
+        path = self._localize_path(path)
+
         with translate_error():
             self.fs_access.file_fd_flush(fh)
 
         return 0
 
     def fsync(self, path, datasync, fh):
+        path = self._localize_path(path)
+
         with translate_error():
             self.fs_access.file_fd_flush(fh)
 
         return 0
 
     def fsyncdir(self, path, datasync, fh):
+        path = self._localize_path(path)
+
         return 0  # TODO

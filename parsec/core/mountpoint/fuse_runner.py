@@ -2,6 +2,7 @@
 
 import trio
 import time
+import errno
 import threading
 from pathlib import Path
 from fuse import FUSE
@@ -9,7 +10,7 @@ from structlog import get_logger
 
 from parsec.core.mountpoint.fuse_operations import FuseOperations
 from parsec.core.mountpoint.thread_fs_access import ThreadFSAccess
-from parsec.core.mountpoint.exceptions import MountpointConfigurationError
+from parsec.core.mountpoint.exceptions import MountpointConfigurationError, MountpointDriverCrash
 
 
 __all__ = ("fuse_mountpoint_runner",)
@@ -43,7 +44,13 @@ def _teardown_mountpoint(mountpoint):
 
 
 async def fuse_mountpoint_runner(
-    fs, mountpoint: Path, config: dict, event_bus, *, task_status=trio.TASK_STATUS_IGNORED
+    workspace: str,
+    mountpoint: Path,
+    config: dict,
+    fs,
+    event_bus,
+    *,
+    task_status=trio.TASK_STATUS_IGNORED,
 ):
     """
     Raises:
@@ -54,7 +61,7 @@ async def fuse_mountpoint_runner(
     portal = trio.BlockingTrioPortal()
     abs_mountpoint = str(mountpoint.absolute())
     fs_access = ThreadFSAccess(portal, fs)
-    fuse_operations = FuseOperations(fs_access)
+    fuse_operations = FuseOperations(workspace, fs_access)
 
     initial_st_dev = _bootstrap_mountpoint(mountpoint)
 
@@ -73,6 +80,16 @@ async def fuse_mountpoint_runner(
                         auto_unmount=True,
                         **config,
                     )
+
+                except Exception as exc:
+                    try:
+                        errcode = errno.errorcode[exc.args[0]]
+                    except (KeyError, IndexError):
+                        errcode = f"Unknown error code: {exc}"
+                    raise MountpointDriverCrash(
+                        f"Fuse has crashed on {abs_mountpoint}: {errcode}"
+                    ) from exc
+
                 finally:
                     fuse_thread_stopped.set()
 
@@ -131,8 +148,8 @@ async def _stop_fuse_thread(mountpoint, fuse_operations, fuse_thread_stopped):
             pass
 
     with trio.CancelScope(shield=True):
-        logger.info("Stopping fuse thread...")
+        logger.info("Stopping fuse thread...", mountpoint=mountpoint)
         fuse_operations.schedule_exit()
         await trio.run_sync_in_worker_thread(_wakeup_fuse)
         await trio.run_sync_in_worker_thread(fuse_thread_stopped.wait)
-        logger.info("Fuse thread stopped")
+        logger.info("Fuse thread stopped", mountpoint=mountpoint)

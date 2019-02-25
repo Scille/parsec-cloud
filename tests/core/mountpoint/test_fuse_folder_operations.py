@@ -63,9 +63,9 @@ class PathElement:
 
 
 @pytest.mark.slow
-@pytest.mark.fuse
+@pytest.mark.mountpoint
 @pytest.mark.skipif(os.name == "nt", reason="TODO: fix this ASAP !!!")
-def test_fuse_folder_operations(tmpdir, hypothesis_settings, fuse_service):
+def test_fuse_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
 
     tentative = 0
 
@@ -78,23 +78,23 @@ def test_fuse_folder_operations(tmpdir, hypothesis_settings, fuse_service):
             nonlocal tentative
             tentative += 1
 
-            fuse_service.start()
+            mountpoint_service.start()
 
             self.folder_oracle = Path(tmpdir / f"oracle-test-{tentative}")
             self.folder_oracle.mkdir()
             oracle_root = self.folder_oracle / "root"
             oracle_root.mkdir()
             self.folder_oracle.chmod(0o500)  # Root oracle can no longer be removed this way
-            (oracle_root / fuse_service.default_workspace_name).mkdir()
+            (oracle_root / mountpoint_service.default_workspace_name).mkdir()
 
             return PathElement(
-                f"/{fuse_service.default_workspace_name}",
-                Path(str(fuse_service.mountpoint)),
+                f"/{mountpoint_service.default_workspace_name}",
+                mountpoint_service.get_default_workspace_mountpoint(),
                 oracle_root,
             )
 
         def teardown(self):
-            fuse_service.stop()
+            mountpoint_service.stop()
 
         @rule(target=Files, parent=Folders, name=st_entry_name)
         def touch(self, parent, name):

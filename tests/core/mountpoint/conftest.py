@@ -6,22 +6,21 @@ import trio
 import pathlib
 from contextlib import contextmanager
 
-from parsec.core.mountpoint import mountpoint_manager
-
-from tests.common import call_with_control
+from parsec.utils import start_task
+from parsec.core.mountpoint import mountpoint_manager_factory
 
 
 @pytest.fixture
 @pytest.mark.fuse
-def fuse_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_factory):
+def mountpoint_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_factory):
     """
-    Run a trio loop with fs and fuse in a separate thread to allow
-    blocking operations on the mountpoint in the test
+    Run a trio loop with fs and mountpoint manager in a separate thread to
+    allow blocking operations on the mountpoint in the test
     """
 
-    class FuseService:
-        def __init__(self, mountpoint):
-            self.mountpoint = pathlib.Path(mountpoint)
+    class MountpointService:
+        def __init__(self, base_mountpoint):
+            self.base_mountpoint = pathlib.Path(base_mountpoint)
             # Provide a default workspace given we cannot create it through FUSE
             self.default_workspace_name = "w"
             self._portal = None
@@ -31,28 +30,27 @@ def fuse_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_f
             self._started = trio.Event()
             self._ready = threading.Event()
 
-        @property
-        def default_workspace(self):
-            return self.mountpoint / self.default_workspace_name
-
-        async def _start(self):
-            self._need_start.set()
-            await self._started.wait()
-
-        async def _stop(self):
-            if self._started.is_set():
-                self._need_stop.set()
-                await self._stopped.wait()
+        def get_default_workspace_mountpoint(self):
+            return self.base_mountpoint / f"{alice.user_id}-{self.default_workspace_name}"
 
         def start(self):
-            self._portal.run(self._start)
+            async def _start():
+                self._need_start.set()
+                await self._started.wait()
+
+            self._portal.run(_start)
 
         def stop(self):
-            self._portal.run(self._stop)
+            async def _stop():
+                if self._started.is_set():
+                    self._need_stop.set()
+                    await self._stopped.wait()
+
+            self._portal.run(_stop)
 
         def init(self):
             self._thread = threading.Thread(target=trio.run, args=(self._service,))
-            self._thread.setName("FuseService")
+            self._thread.setName("MountpointService")
             self._thread.start()
             self._ready.wait()
 
@@ -69,16 +67,19 @@ def fuse_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_f
         async def _service(self):
             self._portal = trio.BlockingTrioPortal()
 
-            async def _fuse_controlled_cb(started_cb):
+            async def _mountpoint_controlled_cb(*, task_status=trio.TASK_STATUS_IGNORED):
                 async with fs_factory(alice) as fs:
 
                     await fs.workspace_create(f"/{self.default_workspace_name}")
 
-                    async with trio.open_nursery() as nursery:
-                        async with mountpoint_manager(
-                            fs, fs.event_bus, self.mountpoint, nursery
-                        ) as fuse_task:
-                            await started_cb(fs=fs, fuse=fuse_task)
+                    async with mountpoint_manager_factory(
+                        fs, fs.event_bus, self.base_mountpoint, debug=True
+                    ) as mountpoint_manager:
+
+                        await mountpoint_manager.mount_workspace(self.default_workspace_name)
+
+                        task_status.started((fs, mountpoint_manager))
+                        await trio.sleep_forever()
 
             async with trio.open_nursery() as self._nursery:
                 self._ready.set()
@@ -87,37 +88,36 @@ def fuse_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_f
                     self._need_stop.clear()
                     self._stopped.clear()
 
-                    fuse_controller = await self._nursery.start(
-                        call_with_control, _fuse_controlled_cb
-                    )
+                    self._task = await start_task(self._nursery, _mountpoint_controlled_cb)
                     self._started.set()
 
                     await self._need_stop.wait()
                     self._need_start.clear()
                     self._started.clear()
-                    await fuse_controller.stop()
+                    await self._task.cancel_and_join()
                     self._stopped.set()
 
     count = 0
 
     @contextmanager
-    def _fuse_service_factory(mountpoint=None):
+    def _mountpoint_service_factory(base_mountpoint=None):
         nonlocal count
         count += 1
-        if not mountpoint:
-            mountpoint = tmpdir / f"mountpoint-{count}"
+        if not base_mountpoint:
+            base_mountpoint = tmpdir / f"mountpoint-svc-{count}"
 
-        fuse_service = FuseService(str(mountpoint))
-        fuse_service.init()
+        mountpoint_service = MountpointService(str(base_mountpoint))
+        mountpoint_service.init()
         try:
-            yield fuse_service
-        finally:
-            fuse_service.teardown()
+            yield mountpoint_service
 
-    return _fuse_service_factory
+        finally:
+            mountpoint_service.teardown()
+
+    return _mountpoint_service_factory
 
 
 @pytest.fixture
-def fuse_service(fuse_service_factory):
-    with fuse_service_factory() as fuse:
+def mountpoint_service(mountpoint_service_factory):
+    with mountpoint_service_factory() as fuse:
         yield fuse
