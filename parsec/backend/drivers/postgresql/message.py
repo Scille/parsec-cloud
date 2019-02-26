@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import pendulum
 from typing import List, Tuple
 
 from parsec.types import UserID, DeviceID, OrganizationID
@@ -21,6 +22,7 @@ class PGMessageComponent(BaseMessageComponent):
 INSERT INTO message (
     organization,
     recipient,
+    created_on,
     index,
     sender,
     body
@@ -28,6 +30,7 @@ INSERT INTO message (
 SELECT
     get_organization_internal_id($1),
     get_user_internal_id($1, $2),
+    $5,
     (
         SELECT COUNT(*) + 1
         FROM message
@@ -41,6 +44,7 @@ RETURNING index
                     recipient,
                     sender,
                     body,
+                    pendulum.now(),
                 )
 
                 await send_signal(
@@ -67,5 +71,4 @@ ORDER BY _id ASC OFFSET $3
                 recipient,
                 offset,
             )
-        # TODO: we should configure a DeviceID custom serializer in dbh
         return [(DeviceID(d[0]), d[1]) for d in data]

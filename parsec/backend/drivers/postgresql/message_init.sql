@@ -5,7 +5,8 @@ CREATE TABLE message (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organizations (_id) NOT NULL,
     recipient INTEGER REFERENCES users (_id) NOT NULL,
-    index INTEGER,
+    created_on TIMESTAMPTZ NOT NULL,
+    index INTEGER NOT NULL,
     sender INTEGER REFERENCES devices (_id) NOT NULL,
     body BYTEA NOT NULL
 );
