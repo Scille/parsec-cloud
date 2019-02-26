@@ -182,17 +182,9 @@ class LocalDB:
         # Update database
         cursor = self.conn.cursor()
         cursor.execute(
-            """INSERT INTO blocks (block_id, size, deletable, offline, file_path)
-            VALUES (:block_id, :size, :deletable, :offline, :file_path)
-            ON CONFLICT(block_id) DO UPDATE SET
-            size=:size, deletable=:deletable, offline=:offline, file_path=:file_path""",
-            {
-                "block_id": str(access.id),
-                "size": len(ciphered),
-                "deletable": deletable,
-                "offline": False,
-                "file_path": str(file),
-            },
+            """INSERT OR REPLACE INTO blocks (block_id, size, deletable, offline, file_path)
+            VALUES (?, ?, ?, ?, ?)""",
+            (str(access.id), len(ciphered), deletable, False, str(file)),
         )
         cursor.close()
 
