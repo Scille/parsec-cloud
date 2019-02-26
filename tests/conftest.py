@@ -4,7 +4,6 @@ import pytest
 import attr
 import os
 import socket
-import asyncpg
 import contextlib
 from unittest.mock import patch
 import trio

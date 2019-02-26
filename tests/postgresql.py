@@ -99,7 +99,7 @@ def bootstrap_pg_cluster():
 
     _pg_cluster = TempCluster()
     # Make the default superuser name stable.
-    print(_pg_cluster.init(username="postgres"))
+    _pg_cluster.init(username="postgres")
     _pg_cluster.trust_local_connections()
     _pg_cluster.start(port="dynamic", server_settings={})
 
