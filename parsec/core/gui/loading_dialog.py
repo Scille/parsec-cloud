@@ -17,7 +17,10 @@ class LoadingDialog(QDialog, Ui_LoadingDialog):
         self.progress_bar.setValue(0)
 
     def set_current_file(self, f):
-        self.label.setText(f)
+        if len(f) > 35:
+            self.label.setText('"' + f[:26] + "..." + f[-6:] + '"')
+        else:
+            self.label.setText('"' + f + '"')
 
     def set_progress(self, size):
         self.progress_bar.setValue(size)
