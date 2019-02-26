@@ -128,7 +128,7 @@ def _running(cmd, wait_for=None):
 
 @pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
 def test_init_backend(postgresql_url, unused_tcp_port):
-    _run(f"backend init --force --db {postgresql_url}")
+    _run(f"backend init --db {postgresql_url}")
 
     # Already initialized db is ok
     p = _run(f"backend init --db {postgresql_url}")
