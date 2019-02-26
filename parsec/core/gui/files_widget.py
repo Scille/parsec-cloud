@@ -104,7 +104,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             self.filter_files(self.line_edit_search.text())
 
     def import_all(self, files, total_size):
-        loading_dialog = LoadingDialog(total_size=total_size, parent=self)
+        loading_dialog = LoadingDialog(total_size=total_size + len(files), parent=self)
         loading_dialog.show()
         current_size = 0
         start_time = time.time()
@@ -139,7 +139,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                     continue
             else:
                 self.import_file(src, dst, current_size, loading_dialog)
-            current_size += src.stat().st_size
+            current_size += src.stat().st_size + 1
             loading_dialog.set_progress(current_size)
             QApplication.processEvents()
         elapsed = time.time() - start_time
@@ -169,7 +169,9 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             pass
         for f in src.iterdir():
             if f.is_dir():
-                files.extend(self.get_folder(f, os.path.join(dst, f.name)))
+                new_files, new_size = self.get_folder(f, os.path.join(dst, f.name))
+                files.extend(new_files)
+                total_size += new_size
             elif f.is_file():
                 new_dst = os.path.join(dst, f.name)
                 files.append((f, new_dst))
