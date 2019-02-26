@@ -7,15 +7,11 @@ services:
   - postgresql
 addons:
   postgresql: "9.5"
-env:
-  - PARSEC_POSTGRESQL_TEST_URL='postgresql://postgres@localhost/parsec_test'
 install:
 - pip install -U coveralls
 - pip install .[all]
 before_script:
   - sudo modprobe fuse
-  - psql -c 'create database parsec_test_gw0;' -U postgres
-  - psql -c 'create database parsec_test_gw1;' -U postgres
 script:
 # Only print output if check failed
 - OUT=$(2>&1 ./misc/autoformat.sh --check) || (echo $OUT; $(exit 1))

@@ -18,7 +18,7 @@ class PGMessageComponent(BaseMessageComponent):
             async with conn.transaction():
                 index = await conn.fetchval(
                     """
-INSERT INTO messages (
+INSERT INTO message (
     organization,
     recipient,
     index,
@@ -30,7 +30,7 @@ SELECT
     get_user_internal_id($1, $2),
     (
         SELECT COUNT(*) + 1
-        FROM messages
+        FROM message
         WHERE recipient = get_user_internal_id($1, $2)
     ),
     get_device_internal_id($1, $3),
@@ -59,7 +59,7 @@ RETURNING index
             data = await conn.fetch(
                 """
 SELECT get_device_id(sender), body
-FROM messages
+FROM message
 WHERE recipient = get_user_internal_id($1, $2)
 ORDER BY _id ASC OFFSET $3
 """,

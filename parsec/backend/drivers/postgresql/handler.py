@@ -21,31 +21,26 @@ def get_sql_query(name):
     return read_text(__package__, f"{name}.sql")
 
 
-async def init_db(url: str, force: bool = False) -> bool:
+async def init_db(url: str) -> None:
     """
+    Returns: if the database was already initialized
     Raises:
         triopg.exceptions.PostgresError
     """
     async with triopg.connect(url) as conn:
-        return await _init_db(conn, force)
+        return await _init_db(conn)
 
 
-async def _init_db(conn, force: bool = False) -> bool:
-    if force:
-        drop_db_query = get_sql_query("drop_db")
-        async with conn.transaction():
-            # TODO: Ideally we would totally drop the db here instead of just
-            # the databases we know...
-            await conn.execute(drop_db_query)
+async def _init_db(conn):
+    if await _is_db_initialized(conn):
+        return True
 
-    already_initialized = await _is_db_initialized(conn)
-
-    if not already_initialized:
-        init_db_query = get_sql_query("init_db")
-        async with conn.transaction():
-            await conn.execute(init_db_query)
-
-    return already_initialized
+    async with conn.transaction():
+        # Init query is divided into multiple parts for readability
+        for part in ("organization", "user", "message", "vlob", "blockstore"):
+            sub_query = get_sql_query(f"{part}_init")
+            await conn.execute(sub_query)
+    return False
 
 
 async def _is_db_initialized(conn):
@@ -73,9 +68,6 @@ class PGHandler:
 
     async def _run_connections(self, task_status=trio.TASK_STATUS_IGNORED):
         async with triopg.create_pool(self.url) as self.pool:
-            async with self.pool.acquire() as conn:
-                if not await _is_db_initialized(conn):
-                    raise RuntimeError("Database not initialized !")
             # This connection is dedicated to the notifications listening, so it
             # would only complicate stuff to include it into the connection pool
             async with triopg.connect(self.url) as self.notification_conn:
