@@ -189,8 +189,8 @@ async def test_share_bad_recipient(running_backend, mallory, alice_fs):
     with pytest.raises(SharingBackendMessageError) as exc:
         await alice_fs.share("/w", recipient=mallory.user_id)
     assert exc.value.args == (
-        "Error while trying to set beacon rights in backend: "
-        "{'reason': 'Unknown user', 'status': 'error'}",
+        "Error while trying to set vlob group rights in backend: "
+        "{'reason': \"User `mallory` doesn't exist\", 'status': 'not_found'}",
     )
 
 

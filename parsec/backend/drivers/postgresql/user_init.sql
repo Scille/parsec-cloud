@@ -6,9 +6,9 @@
 -------------------------------------------------------
 
 
-CREATE TABLE users (
+CREATE TABLE user_ (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organizations (_id) NOT NULL,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
     user_id VARCHAR(32) NOT NULL,
     is_admin BOOLEAN NOT NULL,
     certified_user BYTEA NOT NULL,
@@ -20,47 +20,47 @@ CREATE TABLE users (
 );
 
 
-CREATE TABLE devices (
+CREATE TABLE device (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organizations (_id) NOT NULL,
-    user_ INTEGER REFERENCES users (_id) NOT NULL,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
     device_id VARCHAR(65) NOT NULL,
     certified_device BYTEA NOT NULL,
     -- NULL if certifier is the Root Verify Key
-    device_certifier INTEGER REFERENCES devices (_id),
+    device_certifier INTEGER REFERENCES device (_id),
     created_on TIMESTAMPTZ NOT NULL,
     -- NULL if not yet revocated
     revocated_on TIMESTAMPTZ,
     -- NULL if not yet revocated
     certified_revocation BYTEA,
     -- NULL if certifier is the Root Verify Key
-    revocation_certifier INTEGER REFERENCES devices (_id),
+    revocation_certifier INTEGER REFERENCES device (_id),
 
     UNIQUE(organization, device_id),
     UNIQUE(user_, device_id)
 );
 
 
-ALTER TABLE users
-ADD CONSTRAINT FK_users_devices FOREIGN KEY (user_certifier) REFERENCES devices (_id);
+ALTER TABLE user_
+ADD CONSTRAINT FK_user_device FOREIGN KEY (user_certifier) REFERENCES device (_id);
 
 
-CREATE TABLE user_invitations (
+CREATE TABLE user_invitation (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organizations (_id) NOT NULL,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
     user_id VARCHAR(32) NOT NULL,
-    creator INTEGER REFERENCES devices (_id) NOT NULL,
+    creator INTEGER REFERENCES device (_id) NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
 
     UNIQUE(organization, user_id)
 );
 
 
-CREATE TABLE device_invitations (
+CREATE TABLE device_invitation (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organizations (_id) NOT NULL,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
     device_id VARCHAR(65) NOT NULL,
-    creator INTEGER REFERENCES devices (_id) NOT NULL,
+    creator INTEGER REFERENCES device (_id) NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
 
     UNIQUE(organization, device_id)
@@ -78,7 +78,7 @@ BEGIN
     RETURN (
         SELECT
             _id
-        FROM users
+        FROM user_
         WHERE
             organization = get_organization_internal_id(orgid)
             AND user_id = userid
@@ -93,7 +93,7 @@ BEGIN
     RETURN (
         SELECT
             user_id
-        FROM users
+        FROM user_
         WHERE _id = userinternalid
     );
 END;
@@ -106,7 +106,7 @@ BEGIN
     RETURN (
         SELECT
             _id
-        FROM devices
+        FROM device
         WHERE
             organization = get_organization_internal_id(orgid)
             AND device_id = deviceid
@@ -121,7 +121,7 @@ BEGIN
     RETURN (
         SELECT
             device_id
-        FROM devices
+        FROM device
         WHERE
             _id = deviceinternalid
     );

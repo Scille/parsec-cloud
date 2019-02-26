@@ -62,21 +62,20 @@ def reset_postgresql_testbed():
         _pg_db_url,
         """
 TRUNCATE TABLE
-    organizations,
+    organization,
 
-    users,
-    devices,
-
-    user_invitations,
-    device_invitations,
+    user_,
+    device,
+    user_invitation,
+    device_invitation,
 
     message,
 
-    beacons,
-    beacon_accesses,
-    vlobs,
-    vlob_atoms,
-    beacon_vlob_atom_updates,
+    vlob_group,
+    vlob_group_right,
+    vlob,
+    vlob_atom,
+    vlob_group_update,
 
     blockstore
 RESTART IDENTITY CASCADE

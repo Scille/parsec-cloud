@@ -25,24 +25,24 @@ class BackendEventsManager:
         self.device = device
         self.event_bus = event_bus
         self._backend_online = None
-        self._subscribed_beacons = set()
-        self._subscribed_beacons_changed = trio.Event()
+        self._subscribed_vlob_groups = set()
+        self._subscribed_vlob_groups_changed = trio.Event()
         self._task_info = None
-        self.event_bus.connect("backend.beacon.listen", self._on_beacon_listen)
-        self.event_bus.connect("backend.beacon.unlisten", self._on_beacon_unlisten)
+        self.event_bus.connect("backend.vlob_group.listen", self._on_vlob_group_listen)
+        self.event_bus.connect("backend.vlob_group.unlisten", self._on_vlob_group_unlisten)
 
-    def _on_beacon_listen(self, sender, beacon_id):
-        if beacon_id in self._subscribed_beacons:
+    def _on_vlob_group_listen(self, sender, id):
+        if id in self._subscribed_vlob_groups:
             return
-        self._subscribed_beacons.add(beacon_id)
-        self._subscribed_beacons_changed.set()
+        self._subscribed_vlob_groups.add(id)
+        self._subscribed_vlob_groups_changed.set()
 
-    def _on_beacon_unlisten(self, sender, beacon_id):
+    def _on_vlob_group_unlisten(self, sender, id):
         try:
-            self._subscribed_beacons.remove(beacon_id)
+            self._subscribed_vlob_groups.remove(id)
         except KeyError:
             return
-        self._subscribed_beacons_changed.set()
+        self._subscribed_vlob_groups_changed.set()
 
     async def _teardown(self):
         cancel_scope, closed_event = self._task_info
@@ -87,14 +87,14 @@ class BackendEventsManager:
 
                 async with trio.open_nursery() as nursery:
                     logger.info("Try to connect to backend...")
-                    self._subscribed_beacons_changed.clear()
+                    self._subscribed_vlob_groups_changed.clear()
                     event_pump_cancel_scope = await nursery.start(self._event_pump)
                     backend_connection_failures = 0
                     logger.info("Backend online")
                     self._event_pump_ready()
                     while True:
-                        await self._subscribed_beacons_changed.wait()
-                        self._subscribed_beacons_changed.clear()
+                        await self._subscribed_vlob_groups_changed.wait()
+                        self._subscribed_vlob_groups_changed.clear()
                         new_cancel_scope = await nursery.start(self._event_pump)
                         self._event_pump_ready()
                         event_pump_cancel_scope.cancel()
@@ -131,9 +131,9 @@ class BackendEventsManager:
                 self.device.signing_key,
                 max_pool=1,
             ) as cmds:
-                # Copy `self._subscribed_beacons` to avoid concurrent modifications
+                # Copy `self._subscribed_vlob_groups` to avoid concurrent modifications
                 await cmds.events_subscribe(
-                    message_received=True, beacon_updated=self._subscribed_beacons.copy()
+                    message_received=True, vlob_group_updated=self._subscribed_vlob_groups.copy()
                 )
 
                 # Given the backend won't notify us for messages that arrived while
@@ -153,10 +153,10 @@ class BackendEventsManager:
             elif rep["event"] == "pinged":
                 self.event_bus.send("backend.pinged", ping=rep["ping"])
 
-            elif rep["event"] == "beacon.updated":
+            elif rep["event"] == "vlob_group.updated":
                 self.event_bus.send(
-                    "backend.beacon.updated",
-                    beacon_id=rep["beacon_id"],
+                    "backend.vlob_group.updated",
+                    id=rep["id"],
                     checkpoint=rep["checkpoint"],
                     src_id=rep["src_id"],
                     src_version=rep["src_version"],

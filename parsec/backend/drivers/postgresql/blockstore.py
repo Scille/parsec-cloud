@@ -24,9 +24,7 @@ class PGBlockstoreComponent(BaseBlockstoreComponent):
 SELECT block
 FROM blockstore
 WHERE
-    organization = (
-        SELECT _id from organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND block_id = $2
 """,
                 organization_id,
@@ -51,18 +49,10 @@ INSERT INTO blockstore (
     author
 )
 SELECT
-    _id,
+    get_organization_internal_id($1),
     $2,
     $3,
-    (
-        SELECT _id
-        FROM devices
-        WHERE
-            organization = organizations._id
-            AND device_id = $4
-    )
-FROM organizations
-WHERE organization_id = $1
+    get_device_internal_id($1, $4)
 """,
                         organization_id,
                         id,

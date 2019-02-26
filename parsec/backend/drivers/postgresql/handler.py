@@ -48,7 +48,7 @@ async def _is_db_initialized(conn):
     # is already initialized...
     root_key = await conn.fetchrow(
         """
-        SELECT true FROM pg_catalog.pg_tables WHERE tablename = 'users';
+        SELECT true FROM pg_catalog.pg_tables WHERE tablename = 'user_';
         """
     )
     return bool(root_key)

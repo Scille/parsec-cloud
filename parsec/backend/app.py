@@ -22,7 +22,6 @@ from parsec.backend.drivers.memory import (
     MemoryUserComponent,
     MemoryVlobComponent,
     MemoryMessageComponent,
-    MemoryBeaconComponent,
     MemoryPingComponent,
 )
 from parsec.backend.drivers.postgresql import (
@@ -31,7 +30,6 @@ from parsec.backend.drivers.postgresql import (
     PGUserComponent,
     PGVlobComponent,
     PGMessageComponent,
-    PGBeaconComponent,
     PGPingComponent,
 )
 from parsec.backend.user import UserNotFoundError
@@ -123,8 +121,7 @@ class BackendApp:
             self.user = MemoryUserComponent(self.event_bus)
             self.organization = MemoryOrganizationComponent(self.user)
             self.message = MemoryMessageComponent(self.event_bus)
-            self.beacon = MemoryBeaconComponent(self.event_bus, self.user)
-            self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
+            self.vlob = MemoryVlobComponent(self.event_bus, self.user)
             self.ping = MemoryPingComponent(self.event_bus)
             self.blockstore = blockstore_factory(self.config.blockstore_config)
 
@@ -133,8 +130,7 @@ class BackendApp:
             self.user = PGUserComponent(self.dbh, self.event_bus)
             self.organization = PGOrganizationComponent(self.dbh, self.user)
             self.message = PGMessageComponent(self.dbh)
-            self.beacon = PGBeaconComponent(self.dbh)
-            self.vlob = PGVlobComponent(self.dbh, self.beacon)
+            self.vlob = PGVlobComponent(self.dbh)
             self.ping = PGPingComponent(self.dbh)
             self.blockstore = blockstore_factory(
                 self.config.blockstore_config, postgresql_dbh=self.dbh
@@ -160,15 +156,14 @@ class BackendApp:
             # Blockstore
             "blockstore_create": self.blockstore.api_blockstore_create,
             "blockstore_read": self.blockstore.api_blockstore_read,
-            # Beacon
-            "beacon_get_rights": self.beacon.api_beacon_get_rights,
-            "beacon_set_rights": self.beacon.api_beacon_set_rights,
-            "beacon_poll": self.beacon.api_beacon_poll,
             # Vlob
             "vlob_group_check": self.vlob.api_vlob_group_check,
             "vlob_create": self.vlob.api_vlob_create,
             "vlob_read": self.vlob.api_vlob_read,
             "vlob_update": self.vlob.api_vlob_update,
+            "vlob_group_get_rights": self.vlob.api_vlob_group_get_rights,
+            "vlob_group_update_rights": self.vlob.api_vlob_group_update_rights,
+            "vlob_group_poll": self.vlob.api_vlob_group_poll,
         }
         self.anonymous_cmds = {
             "user_claim": self.user.api_user_claim,

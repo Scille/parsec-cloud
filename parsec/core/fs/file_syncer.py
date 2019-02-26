@@ -193,10 +193,10 @@ class FileSyncerMixin(BaseSyncer):
         )
 
         # Upload the file manifest as new vlob version
-        beacon = self.local_folder_fs.get_beacon(path)
+        vlob_group = self.local_folder_fs.get_vlob_group(path)
         try:
             if is_placeholder_manifest(manifest):
-                await self._backend_vlob_create(beacon, access, to_sync_manifest)
+                await self._backend_vlob_create(vlob_group, access, to_sync_manifest)
             else:
                 await self._backend_vlob_update(access, to_sync_manifest)
 

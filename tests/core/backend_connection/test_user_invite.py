@@ -35,7 +35,8 @@ async def test_user_invite_then_claim_ok(
         certified_device = certify_device(
             alice.device_id, alice.signing_key, claim["device_id"], claim["verify_key"], now=now
         )
-        await alice_backend_cmds.user_create(certified_user, certified_device, False)
+        with trio.fail_after(1):
+            await alice_backend_cmds.user_create(certified_user, certified_device, False)
 
     async def _mallory_claim():
         async with backend_anonymous_cmds_factory(mallory.organization_addr) as cmds:
@@ -49,7 +50,8 @@ async def test_user_invite_then_claim_ok(
                 mallory.public_key,
                 mallory.verify_key,
             )
-            await cmds.user_claim(mallory.user_id, encrypted_claim)
+            with trio.fail_after(1):
+                await cmds.user_claim(mallory.user_id, encrypted_claim)
 
     async with trio.open_nursery() as nursery:
         nursery.start_soon(_alice_invite)

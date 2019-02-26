@@ -14,15 +14,15 @@ from parsec.api.protocole import (
     organization_bootstrap_serializer,
     events_subscribe_serializer,
     events_listen_serializer,
-    beacon_set_rights_serializer,
-    beacon_get_rights_serializer,
-    beacon_poll_serializer,
     message_send_serializer,
     message_get_serializer,
     vlob_group_check_serializer,
     vlob_read_serializer,
     vlob_create_serializer,
     vlob_update_serializer,
+    vlob_group_update_rights_serializer,
+    vlob_group_get_rights_serializer,
+    vlob_group_poll_serializer,
     blockstore_create_serializer,
     blockstore_read_serializer,
     user_get_serializer,
@@ -100,7 +100,7 @@ async def ping(transport: Transport, ping: str) -> str:
 async def events_subscribe(
     transport: Transport,
     message_received: bool = False,
-    beacon_updated: Iterable[UUID] = (),
+    vlob_group_updated: Iterable[UUID] = (),
     pinged: Iterable[str] = (),
 ) -> None:
     rep = await _send_cmd(
@@ -108,7 +108,7 @@ async def events_subscribe(
         events_subscribe_serializer,
         cmd="events_subscribe",
         message_received=message_received,
-        beacon_updated=beacon_updated,
+        vlob_group_updated=vlob_group_updated,
         pinged=pinged,
     )
     if rep["status"] != "ok":
@@ -123,50 +123,7 @@ async def events_listen(transport: Transport, wait: bool = True) -> dict:
     return rep
 
 
-# Beacon
-
-
-async def beacon_get_rights(transport: Transport, id: UUID) -> Dict[UserID, Dict]:
-    rep = await _send_cmd(transport, beacon_get_rights_serializer, cmd="beacon_get_rights", id=id)
-    if rep["status"] != "ok":
-        raise BackendCmdsBadResponse(rep)
-    return rep["users"]
-
-
-async def beacon_set_rights(
-    transport: Transport,
-    id: UUID,
-    user: UserID,
-    admin_access: bool,
-    read_access: bool,
-    write_access: bool,
-) -> None:
-    rep = await _send_cmd(
-        transport,
-        beacon_set_rights_serializer,
-        cmd="beacon_set_rights",
-        id=id,
-        user=user,
-        admin_access=admin_access,
-        read_access=read_access,
-        write_access=write_access,
-    )
-    if rep["status"] != "ok":
-        raise BackendCmdsBadResponse(rep)
-
-
-async def beacon_poll(
-    transport: Transport, id: UUID, last_checkpoint: int
-) -> Tuple[int, Dict[UUID, int]]:
-    rep = await _send_cmd(
-        transport, beacon_poll_serializer, cmd="beacon_poll", id=id, last_checkpoint=last_checkpoint
-    )
-    if rep["status"] != "ok":
-        raise BackendCmdsBadResponse(rep)
-    return (rep["current_checkpoint"], rep["changes"])
-
-
-# Message
+### Message API ###
 
 
 async def message_send(transport: Transport, recipient: UserID, body: bytes) -> None:
@@ -196,9 +153,9 @@ async def vlob_group_check(transport: Transport, to_check: list) -> list:
     return rep["changed"]
 
 
-async def vlob_create(transport: Transport, beacon: UUID, id: UUID, blob: bytes) -> None:
+async def vlob_create(transport: Transport, group: UUID, id: UUID, blob: bytes) -> None:
     rep = await _send_cmd(
-        transport, vlob_create_serializer, cmd="vlob_create", beacon=beacon, id=id, blob=blob
+        transport, vlob_create_serializer, cmd="vlob_create", group=group, id=id, blob=blob
     )
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)
@@ -217,6 +174,52 @@ async def vlob_update(transport: Transport, id: UUID, version: int, blob: bytes)
     )
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)
+
+
+async def vlob_group_get_rights(transport: Transport, id: UUID) -> Dict[UserID, Dict]:
+    rep = await _send_cmd(
+        transport, vlob_group_get_rights_serializer, cmd="vlob_group_get_rights", id=id
+    )
+    if rep["status"] != "ok":
+        raise BackendCmdsBadResponse(rep)
+    return rep["users"]
+
+
+async def vlob_group_update_rights(
+    transport: Transport,
+    id: UUID,
+    user: UserID,
+    admin_right: bool,
+    read_right: bool,
+    write_right: bool,
+) -> None:
+    rep = await _send_cmd(
+        transport,
+        vlob_group_update_rights_serializer,
+        cmd="vlob_group_update_rights",
+        id=id,
+        user=user,
+        admin_right=admin_right,
+        read_right=read_right,
+        write_right=write_right,
+    )
+    if rep["status"] != "ok":
+        raise BackendCmdsBadResponse(rep)
+
+
+async def vlob_group_poll(
+    transport: Transport, id: UUID, last_checkpoint: int
+) -> Tuple[int, Dict[UUID, int]]:
+    rep = await _send_cmd(
+        transport,
+        vlob_group_poll_serializer,
+        cmd="vlob_group_poll",
+        id=id,
+        last_checkpoint=last_checkpoint,
+    )
+    if rep["status"] != "ok":
+        raise BackendCmdsBadResponse(rep)
+    return (rep["current_checkpoint"], rep["changes"])
 
 
 ### Blockstore API ###

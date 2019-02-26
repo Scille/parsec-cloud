@@ -26,22 +26,20 @@ def _pinged_callback_factory(client_ctx, pings):
     return _on_pinged
 
 
-def _beacon_updated_callback_factory(client_ctx, beacons_ids):
-    beacons_ids = set(beacons_ids)
+def _vlob_group_updated_callback_factory(client_ctx, vlob_group_ids):
+    vlob_group_ids = set(vlob_group_ids)
 
-    def _on_beacon_updated(
-        event, organization_id, author, beacon_id, checkpoint, src_id, src_version
-    ):
+    def _on_vlob_group_updated(event, organization_id, author, id, checkpoint, src_id, src_version):
         if (
             organization_id != client_ctx.organization_id
             or author == client_ctx.device_id
-            or beacon_id not in beacons_ids
+            or id not in vlob_group_ids
         ):
             return
 
         msg = {
             "event": event,
-            "beacon_id": beacon_id,
+            "id": id,
             "checkpoint": checkpoint,
             "src_id": src_id,
             "src_version": src_version,
@@ -51,7 +49,7 @@ def _beacon_updated_callback_factory(client_ctx, beacons_ids):
         except trio.WouldBlock:
             client_ctx.logger.warning("event queue is full")
 
-    return _on_beacon_updated
+    return _on_vlob_group_updated
 
 
 def _message_received_callback_factory(client_ctx):
@@ -86,9 +84,11 @@ class EventsComponent:
             on_pinged = _pinged_callback_factory(client_ctx, msg["pinged"])
             client_ctx.event_bus_ctx.connect("pinged", on_pinged)
 
-        if msg["beacon_updated"]:
-            on_beacon_updated = _beacon_updated_callback_factory(client_ctx, msg["beacon_updated"])
-            client_ctx.event_bus_ctx.connect("beacon.updated", on_beacon_updated)
+        if msg["vlob_group_updated"]:
+            on_vlob_group_updated = _vlob_group_updated_callback_factory(
+                client_ctx, msg["vlob_group_updated"]
+            )
+            client_ctx.event_bus_ctx.connect("vlob_group.updated", on_vlob_group_updated)
 
         if msg["message_received"]:
             on_message_received = _message_received_callback_factory(client_ctx)

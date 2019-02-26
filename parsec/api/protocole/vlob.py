@@ -9,6 +9,9 @@ __all__ = (
     "vlob_create_serializer",
     "vlob_read_serializer",
     "vlob_update_serializer",
+    "vlob_group_update_rights_serializer",
+    "vlob_group_get_rights_serializer",
+    "vlob_group_poll_serializer",
 )
 
 
@@ -26,7 +29,7 @@ class ChangedEntrySchema(UnknownCheckedSchema):
     version = fields.Integer(required=True)
 
 
-# TODO: still useful ? (replaced by beacon_poll)
+# TODO: still useful ? (replaced by vlob_group_poll)
 
 
 class VlobGroupCheckReqSchema(BaseReqSchema):
@@ -41,7 +44,7 @@ vlob_group_check_serializer = CmdSerializer(VlobGroupCheckReqSchema, VlobGroupCh
 
 
 class VlobCreateReqSchema(BaseReqSchema):
-    beacon = fields.UUID(required=True)
+    group = fields.UUID(required=True)
     id = fields.UUID(required=True)
     blob = fields.Bytes(required=True)
 
@@ -79,3 +82,52 @@ class VlobUpdateRepSchema(BaseRepSchema):
 
 
 vlob_update_serializer = CmdSerializer(VlobUpdateReqSchema, VlobUpdateRepSchema)
+
+
+class VlobGroupUpdateRightsReqSchema(BaseReqSchema):
+    id = fields.UUID(required=True)
+    user = fields.UserID(required=True)
+    admin_right = fields.Boolean(required=True)
+    read_right = fields.Boolean(required=True)
+    write_right = fields.Boolean(required=True)
+
+
+class VlobGroupUpdateRightsRepSchema(BaseRepSchema):
+    pass
+
+
+vlob_group_update_rights_serializer = CmdSerializer(
+    VlobGroupUpdateRightsReqSchema, VlobGroupUpdateRightsRepSchema
+)
+
+
+class VlobGroupGetRightsReqSchema(BaseReqSchema):
+    id = fields.UUID(required=True)
+
+
+class VlobGroupUserRights(UnknownCheckedSchema):
+    admin_right = fields.Boolean(required=True)
+    read_right = fields.Boolean(required=True)
+    write_right = fields.Boolean(required=True)
+
+
+class VlobGroupGetRightsRepSchema(BaseRepSchema):
+    users = fields.Map(fields.UserID(), fields.Nested(VlobGroupUserRights), required=True)
+
+
+vlob_group_get_rights_serializer = CmdSerializer(
+    VlobGroupGetRightsReqSchema, VlobGroupGetRightsRepSchema
+)
+
+
+class VlobGroupPollReqSchema(BaseReqSchema):
+    id = fields.UUID(required=True)
+    last_checkpoint = fields.Integer(required=True)
+
+
+class VlobGroupPollRepSchema(BaseRepSchema):
+    changes = fields.Map(fields.UUID(), fields.Integer(), required=True)
+    current_checkpoint = fields.Integer(required=True)
+
+
+vlob_group_poll_serializer = CmdSerializer(VlobGroupPollReqSchema, VlobGroupPollRepSchema)

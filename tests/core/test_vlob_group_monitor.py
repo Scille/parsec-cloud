@@ -9,7 +9,7 @@ from tests.common import create_shared_workspace
 
 @pytest.mark.trio
 @pytest.mark.parametrize("type", ("folder", "file"))
-async def test_beacon_notif_on_new_entry_sync(type, running_backend, alice_core, alice2_fs):
+async def test_vlob_group_notif_on_new_entry_sync(type, running_backend, alice_core, alice2_fs):
     await create_shared_workspace("/w", alice_core, alice2_fs)
     await alice_core.event_bus.spy.wait_for_backend_connection_ready()
 
@@ -19,7 +19,7 @@ async def test_beacon_notif_on_new_entry_sync(type, running_backend, alice_core,
         await alice2_fs.file_create("/w/foo")
 
     dump_fs = alice2_fs._local_folder_fs.dump()
-    beacon_id = dump_fs["children"]["w"]["access"]["id"]
+    vlob_group_id = dump_fs["children"]["w"]["access"]["id"]
     entry_id = dump_fs["children"]["w"]["children"]["foo"]["access"]["id"]
 
     with alice_core.event_bus.listen() as spy:
@@ -29,9 +29,9 @@ async def test_beacon_notif_on_new_entry_sync(type, running_backend, alice_core,
             await spy.wait_multiple(
                 [
                     (
-                        "backend.beacon.updated",
+                        "backend.vlob_group.updated",
                         {
-                            "beacon_id": beacon_id,
+                            "id": vlob_group_id,
                             "checkpoint": 2,
                             "src_id": entry_id,
                             "src_version": 1,
@@ -39,21 +39,21 @@ async def test_beacon_notif_on_new_entry_sync(type, running_backend, alice_core,
                     ),
                     ("fs.entry.updated", {"id": entry_id}),
                     (
-                        "backend.beacon.updated",
+                        "backend.vlob_group.updated",
                         {
-                            "beacon_id": beacon_id,
+                            "id": vlob_group_id,
                             "checkpoint": 3,
-                            "src_id": beacon_id,
+                            "src_id": vlob_group_id,
                             "src_version": 2,
                         },
                     ),
-                    ("fs.entry.updated", {"id": beacon_id}),
+                    ("fs.entry.updated", {"id": vlob_group_id}),
                 ]
             )
 
 
 @pytest.mark.trio
-async def test_beacon_notif_on_new_workspace_sync(running_backend, alice_core, alice2_fs):
+async def test_vlob_group_notif_on_new_workspace_sync(running_backend, alice_core, alice2_fs):
     await alice_core.event_bus.spy.wait_for_backend_connection_ready()
 
     await alice2_fs.workspace_create("/foo")
@@ -68,13 +68,8 @@ async def test_beacon_notif_on_new_workspace_sync(running_backend, alice_core, a
             await spy.wait_multiple(
                 [
                     (
-                        "backend.beacon.updated",
-                        {
-                            "beacon_id": root_id,
-                            "checkpoint": 2,
-                            "src_id": root_id,
-                            "src_version": 2,
-                        },
+                        "backend.vlob_group.updated",
+                        {"id": root_id, "checkpoint": 2, "src_id": root_id, "src_version": 2},
                     ),
                     ("fs.entry.updated", {"id": root_id}),
                 ]
@@ -85,7 +80,9 @@ async def test_beacon_notif_on_new_workspace_sync(running_backend, alice_core, a
 @pytest.mark.trio
 @pytest.mark.xfail
 @pytest.mark.parametrize("type", ("folder", "file"))
-async def test_beacon_notif_on_new_nested_entry_sync(type, running_backend, alice_core, alice2_fs):
+async def test_vlob_group_notif_on_new_nested_entry_sync(
+    type, running_backend, alice_core, alice2_fs
+):
     await alice_core.event_bus.spy.wait_for_backend_connection_ready()
 
     # A workspace already exists and is synced between parties
@@ -98,7 +95,7 @@ async def test_beacon_notif_on_new_nested_entry_sync(type, running_backend, alic
         await alice2_fs.file_create("/foo/bar")
 
     dump_fs = alice2_fs._local_folder_fs.dump()
-    beacon_id = dump_fs["children"]["foo"]["beacon_id"]
+    vlob_group_id = dump_fs["children"]["foo"]["vlob_group_id"]
     workspace_id = dump_fs["children"]["foo"]["access"]["id"]
     entry_id = dump_fs["children"]["foo"]["children"]["bar"]["access"]["id"]
 
@@ -109,9 +106,9 @@ async def test_beacon_notif_on_new_nested_entry_sync(type, running_backend, alic
             await spy.wait_multiple(
                 [
                     (
-                        "backend.beacon.updated",
+                        "backend.vlob_group.updated",
                         {
-                            "beacon_id": beacon_id,
+                            "id": vlob_group_id,
                             "checkpoint": 1,
                             "src_id": entry_id,
                             "src_version": 1,
@@ -119,9 +116,9 @@ async def test_beacon_notif_on_new_nested_entry_sync(type, running_backend, alic
                     ),
                     ("fs.entry.updated", {"id": entry_id}),
                     (
-                        "backend.beacon.updated",
+                        "backend.vlob_group.updated",
                         {
-                            "beacon_id": beacon_id,
+                            "id": vlob_group_id,
                             "checkpoint": 2,
                             "src_id": workspace_id,
                             "src_version": 2,

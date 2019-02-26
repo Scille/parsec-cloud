@@ -115,7 +115,7 @@ class Sharing:
         await self.syncer.sync(path, recursive=False)
 
         # Actual sharing is done in two steps:
-        # 1) update access rights for the beacon corresponding to the workspace
+        # 1) update access rights for the vlob group corresponding to the workspace
         # 2) communicate to the new collaborator through a message the access to
         #    the workspace manifest
         # Those two steps are not atomics, but this is not that much a trouble
@@ -123,10 +123,10 @@ class Sharing:
 
         # Step 1)
         try:
-            await self.backend_cmds.beacon_set_rights(access.id, recipient, True, True, True)
+            await self.backend_cmds.vlob_group_update_rights(access.id, recipient, True, True, True)
         except BackendCmdsBadResponse as exc:
             raise SharingBackendMessageError(
-                f"Error while trying to set beacon rights in backend: {exc}"
+                f"Error while trying to set vlob group rights in backend: {exc}"
             ) from exc
 
         # Step 2)

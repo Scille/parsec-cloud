@@ -6,56 +6,56 @@
 -------------------------------------------------------
 
 
-CREATE TABLE beacons (
+CREATE TABLE vlob_group (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organizations (_id) NOT NULL,
-    beacon_id UUID NOT NULL,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    vlob_group_id UUID NOT NULL,
 
-    UNIQUE(organization, beacon_id)
+    UNIQUE(organization, vlob_group_id)
 );
 
 
-CREATE TABLE beacon_accesses (
+CREATE TABLE vlob_group_right (
     _id SERIAL PRIMARY KEY,
-    beacon INTEGER REFERENCES beacons (_id) NOT NULL,
-    user_ INTEGER REFERENCES users (_id) NOT NULL,
-    admin_access BOOLEAN NOT NULL,
-    read_access BOOLEAN NOT NULL,
-    write_access BOOLEAN NOT NULL,
+    vlob_group INTEGER REFERENCES vlob_group (_id) NOT NULL,
+    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    admin_right BOOLEAN NOT NULL,
+    read_right BOOLEAN NOT NULL,
+    write_right BOOLEAN NOT NULL,
 
-    UNIQUE(beacon, user_)
+    UNIQUE(vlob_group, user_)
 );
 
 
-CREATE TABLE vlobs (
+CREATE TABLE vlob (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organizations (_id) NOT NULL,
-    beacon INTEGER REFERENCES beacons (_id),
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    vlob_group INTEGER REFERENCES vlob_group (_id),
     vlob_id UUID NOT NULL,
 
     UNIQUE(organization, vlob_id)
 );
 
 
-CREATE TABLE vlob_atoms (
+CREATE TABLE vlob_atom (
     _id SERIAL PRIMARY KEY,
-    vlob INTEGER REFERENCES vlobs (_id) NOT NULL,
+    vlob INTEGER REFERENCES vlob (_id) NOT NULL,
     version INTEGER NOT NULL,
     blob BYTEA NOT NULL,
-    author INTEGER REFERENCES devices (_id) NOT NULL,
-    -- created_on TIMESTAMPTZ NOT NULL, TODO
+    author INTEGER REFERENCES device (_id) NOT NULL,
+    created_on TIMESTAMPTZ NOT NULL,
 
     UNIQUE(vlob, version)
 );
 
 
-CREATE TABLE beacon_vlob_atom_updates (
+CREATE TABLE vlob_group_update (
     _id SERIAL PRIMARY KEY,
-    beacon INTEGER REFERENCES beacons (_id) NOT NULL,
+    vlob_group INTEGER REFERENCES vlob_group (_id) NOT NULL,
     index INTEGER NOT NULL,
-    vlob_atom INTEGER REFERENCES vlob_atoms (_id) NOT NULL,
+    vlob_atom INTEGER REFERENCES vlob_atom (_id) NOT NULL,
 
-    UNIQUE(beacon, index)
+    UNIQUE(vlob_group, index)
 );
 
 
@@ -64,67 +64,80 @@ CREATE TABLE beacon_vlob_atom_updates (
 -------------------------------------------------------
 
 
-CREATE FUNCTION user_can_administrate_beacon(userinternalid INTEGER, beaconinternalid INTEGER) RETURNS BOOLEAN AS $$
+CREATE FUNCTION user_has_vlob_group_admin_right(userinternalid INTEGER, vgroupinternalid INTEGER) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
     RETURN EXISTS (
         SELECT
             true
-        FROM beacon_accesses
+        FROM vlob_group_right
         WHERE
-            beacon = beaconinternalid
+            vlob_group = vgroupinternalid
             AND user_ = userinternalid
-            AND admin_access = TRUE
+            AND admin_right = TRUE
         LIMIT 1
     );
 END;
 $$ LANGUAGE plpgsql STABLE STRICT;
 
 
-CREATE FUNCTION user_can_read_beacon(userinternalid INTEGER, beaconinternalid INTEGER) RETURNS BOOLEAN AS $$
+CREATE FUNCTION user_has_vlob_group_read_right(userinternalid INTEGER, vgroupinternalid INTEGER) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
     RETURN EXISTS (
         SELECT
             true
-        FROM beacon_accesses
+        FROM vlob_group_right
         WHERE
-            beacon = beaconinternalid
+            vlob_group = vgroupinternalid
             AND user_ = userinternalid
-            AND read_access = TRUE
+            AND read_right = TRUE
         LIMIT 1
     );
 END;
 $$ LANGUAGE plpgsql STABLE STRICT;
 
 
-CREATE FUNCTION user_can_write_beacon(userinternalid INTEGER, beaconinternalid INTEGER) RETURNS BOOLEAN AS $$
+CREATE FUNCTION user_has_vlob_group_write_right(userinternalid INTEGER, vgroupinternalid INTEGER) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
     RETURN EXISTS (
         SELECT
             true
-        FROM beacon_accesses
+        FROM vlob_group_right
         WHERE
-            beacon = beaconinternalid
+            vlob_group = vgroupinternalid
             AND user_ = userinternalid
-            AND write_access = TRUE
+            AND write_right = TRUE
         LIMIT 1
     );
 END;
 $$ LANGUAGE plpgsql STABLE STRICT;
 
 
-CREATE FUNCTION get_beacon_internal_id(orgid VARCHAR, beaconid UUID) RETURNS INTEGER AS $$
+CREATE FUNCTION get_vlob_group_internal_id(orgid VARCHAR, vgroupid UUID) RETURNS INTEGER AS $$
 DECLARE
 BEGIN
     RETURN (
         SELECT
             _id
-        FROM beacons
+        FROM vlob_group
         WHERE
             organization = get_organization_internal_id(orgid)
-            AND beacon_id = beaconid
+            AND vlob_group_id = vgroupid
+    );
+END;
+$$ LANGUAGE plpgsql STABLE STRICT;
+
+
+CREATE FUNCTION get_vlob_group_id(vgroupinternalid INTEGER) RETURNS UUID AS $$
+DECLARE
+BEGIN
+    RETURN (
+        SELECT
+            vlob_group_id
+        FROM vlob_group
+        WHERE _id = vgroupinternalid
     );
 END;
 $$ LANGUAGE plpgsql STABLE STRICT;
@@ -136,7 +149,7 @@ BEGIN
     RETURN (
         SELECT
             _id
-        FROM vlobs
+        FROM vlob
         WHERE
             organization = get_organization_internal_id(orgid)
             AND vlob_id = vlobid
@@ -151,7 +164,7 @@ BEGIN
     RETURN (
         SELECT
             vlob_id
-        FROM vlobs
+        FROM vlob
         WHERE _id = vlobinternalid
     );
 END;

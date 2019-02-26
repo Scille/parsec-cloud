@@ -3,10 +3,10 @@
 
 CREATE TABLE blockstore (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organizations (_id) NOT NULL,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
     block_id UUID UNIQUE NOT NULL,
     block BYTEA NOT NULL,
-    author INTEGER REFERENCES devices (_id) NOT NULL
+    author INTEGER REFERENCES device (_id) NOT NULL
 );
 
 
@@ -14,11 +14,11 @@ CREATE TABLE blockstore (
 
 -- CREATE TABLE blocks (
 --     _id SERIAL PRIMARY KEY,
---     organization INTEGER REFERENCES organizations (_id) NOT NULL,
+--     organization INTEGER REFERENCES organization (_id) NOT NULL,
 --     beacon INTEGER REFERENCES beacons (_id) NOT NULL,
 --     block_id UUID UNIQUE NOT NULL,
 --     block BYTEA NOT NULL,
---     author INTEGER REFERENCES devices (_id) NOT NULL,
+--     author INTEGER REFERENCES device (_id) NOT NULL,
 --     deleted BOOLEAN NOT NULL
 -- );
 
