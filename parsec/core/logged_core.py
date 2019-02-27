@@ -59,34 +59,35 @@ async def logged_core_factory(
             config.backend_max_connections,
         ) as backend_cmds_pool:
 
-            local_db = LocalDB(config.data_base_dir / device.device_id)
-            local_db.connect()
+            with LocalDB(config.data_base_dir / device.device_id) as local_db:
 
-            encryption_manager = EncryptionManager(device, local_db, backend_cmds_pool)
-            fs = FS(device, local_db, backend_cmds_pool, encryption_manager, event_bus)
+                encryption_manager = EncryptionManager(device, local_db, backend_cmds_pool)
+                fs = FS(device, local_db, backend_cmds_pool, encryption_manager, event_bus)
 
-            async with trio.open_nursery() as monitor_nursery:
-                # Finally start monitors
+                async with trio.open_nursery() as monitor_nursery:
+                    # Finally start monitors
 
-                # Monitor connection must be first given it will watch on
-                # other monitors' events
-                await monitor_nursery.start(monitor_backend_connection, backend_online, event_bus)
-                await monitor_nursery.start(monitor_vlob_groups, device, fs, event_bus)
-                await monitor_nursery.start(monitor_messages, backend_online, fs, event_bus)
-                await monitor_nursery.start(monitor_sync, backend_online, fs, event_bus)
-
-                async with mountpoint_manager_factory(
-                    fs, event_bus, config.mountpoint_base_dir, enabled=config.mountpoint_enabled
-                ) as mountpoint_manager:
-
-                    yield LoggedCore(
-                        config=config,
-                        device=device,
-                        local_db=local_db,
-                        event_bus=event_bus,
-                        encryption_manager=encryption_manager,
-                        mountpoint_manager=mountpoint_manager,
-                        backend_cmds=backend_cmds_pool,
-                        fs=fs,
+                    # Monitor connection must be first given it will watch on
+                    # other monitors' events
+                    await monitor_nursery.start(
+                        monitor_backend_connection, backend_online, event_bus
                     )
-                    root_nursery.cancel_scope.cancel()
+                    await monitor_nursery.start(monitor_vlob_groups, device, fs, event_bus)
+                    await monitor_nursery.start(monitor_messages, backend_online, fs, event_bus)
+                    await monitor_nursery.start(monitor_sync, backend_online, fs, event_bus)
+
+                    async with mountpoint_manager_factory(
+                        fs, event_bus, config.mountpoint_base_dir, enabled=config.mountpoint_enabled
+                    ) as mountpoint_manager:
+
+                        yield LoggedCore(
+                            config=config,
+                            device=device,
+                            local_db=local_db,
+                            event_bus=event_bus,
+                            encryption_manager=encryption_manager,
+                            mountpoint_manager=mountpoint_manager,
+                            backend_cmds=backend_cmds_pool,
+                            fs=fs,
+                        )
+                        root_nursery.cancel_scope.cancel()
