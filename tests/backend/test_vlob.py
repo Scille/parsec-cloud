@@ -63,11 +63,11 @@ async def vlob_update(sock, id, version, blob, check_rep=True):
 async def vlobs(backend, alice):
     ids = (UUID("00000000000000000000000000000001"), UUID("00000000000000000000000000000002"))
     await backend.vlob.create(
-        alice.organization_id, alice.device_id, GROUP_ID, ids[0], b"1 blob v1"
+        alice.organization_id, alice.device_id, ids[0], GROUP_ID, b"1 blob v1"
     )
     await backend.vlob.update(alice.organization_id, alice.device_id, ids[0], 2, b"1 blob v2")
     await backend.vlob.create(
-        alice.organization_id, alice.device_id, GROUP_ID, ids[1], b"2 blob v1"
+        alice.organization_id, alice.device_id, ids[1], GROUP_ID, b"2 blob v1"
     )
     return ids
 

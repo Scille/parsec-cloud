@@ -206,7 +206,7 @@ class BaseVlobComponent:
         raise NotImplementedError()
 
     async def create(
-        self, organization_id: OrganizationID, author: DeviceID, group: UUID, id: UUID, blob: bytes
+        self, organization_id: OrganizationID, author: DeviceID, id: UUID, group: UUID, blob: bytes
     ) -> None:
         """
         Raises:

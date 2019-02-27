@@ -256,7 +256,7 @@ ORDER BY vlob_id, version DESC
         return changed
 
     async def create(
-        self, organization_id: OrganizationID, author: DeviceID, group: UUID, id: UUID, blob: bytes
+        self, organization_id: OrganizationID, author: DeviceID, id: UUID, group: UUID, blob: bytes
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
