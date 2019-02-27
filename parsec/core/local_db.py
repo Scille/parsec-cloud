@@ -245,7 +245,11 @@ class LocalDB:
     def clear_manifest(self, access: Access):
         cursor = self.conn.cursor()
         cursor.execute("DELETE FROM vlobs WHERE vlob_id = ?", (str(access.id),))
+        cursor.execute("SELECT changes()")
+        deleted, = cursor.fetchone()
         cursor.close()
+        if not deleted:
+            raise LocalDBMissingEntry(access)
 
     def clear_non_deletable_blocks_and_manifests(self):
         cursor = self.conn.cursor()

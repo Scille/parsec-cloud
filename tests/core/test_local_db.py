@@ -25,6 +25,7 @@ def local_db(tmpdir):
 def test_local_db_path(tmpdir, local_db):
     assert local_db.path == tmpdir
     assert local_db.max_cache_size == 128 * block_size
+    assert local_db.block_limit == 128
 
 
 def test_local_db_cache_size(local_db):
@@ -38,7 +39,7 @@ def test_local_db_cache_size(local_db):
     assert local_db.get_cache_size() > 4
 
 
-def test_local_db_set_get_clear(local_db):
+def test_local_db_set_get_clear_block(local_db):
     access = ManifestAccess()
     local_db.set_block(access, b"data")
 
@@ -54,14 +55,35 @@ def test_local_db_set_get_clear(local_db):
         local_db.get_block(access)
 
 
-def test_local_db_on_disk(tmpdir, local_db):
+def test_local_db_set_get_clear_manifest(local_db):
     access = ManifestAccess()
-    local_db.set_block(access, b"data")
+    local_db.set_manifest(access, b"data")
+
+    data = local_db.get_manifest(access)
+    assert data == b"data"
+
+    local_db.clear_manifest(access)
+
+    with pytest.raises(LocalDBMissingEntry):
+        local_db.clear_manifest(access)
+
+    with pytest.raises(LocalDBMissingEntry):
+        local_db.get_manifest(access)
+
+
+def test_local_db_on_disk(tmpdir, local_db):
+    vlob_access = ManifestAccess()
+    local_db.set_manifest(vlob_access, b"vlob_data")
+    block_access = ManifestAccess()
+    local_db.set_block(block_access, b"block_data")
     local_db.close()
 
     with LocalDB(tmpdir, max_cache_size=128 * block_size) as local_db_copy:
-        data = local_db_copy.get_block(access)
-    assert data == b"data"
+        vlob_data = local_db_copy.get_manifest(vlob_access)
+        block_data = local_db_copy.get_block(block_access)
+
+    assert vlob_data == b"vlob_data"
+    assert block_data == b"block_data"
 
 
 def test_local_manual_run_block_garbage_collector(local_db):
