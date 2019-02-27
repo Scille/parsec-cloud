@@ -4,7 +4,6 @@ import pytest
 import attr
 import os
 import socket
-import asyncpg
 import contextlib
 from unittest.mock import patch
 import trio
@@ -26,6 +25,11 @@ from parsec.api.transport import Transport
 pytest.register_assert_rewrite("tests.event_bus_spy")
 
 from tests.common import freeze_time, FreezeTestOnTransportError
+from tests.postgresql import (
+    get_postgresql_url,
+    bootstrap_postgresql_testbed,
+    reset_postgresql_testbed,
+)
 from tests.open_tcp_stream_mock_wrapper import OpenTCPStreamMockWrapper
 from tests.event_bus_spy import SpiedEventBus
 from tests.fixtures import *  # noqa
@@ -40,13 +44,20 @@ def pytest_addoption(parser):
     parser.addoption(
         "--postgresql",
         action="store_true",
-        help="Use PostgreSQL backend instead of default memory mock",
+        help=(
+            "Use PostgreSQL backend instead of default memory mock "
+            "(use `PG_URL` env var to customize the database to use)"
+        ),
     )
     parser.addoption("--runslow", action="store_true", help="Don't skip slow tests")
     parser.addoption("--runfuse", action="store_true", help="Don't skip FUSE/WinFSP tests")
     parser.addoption(
         "--realcrypto", action="store_true", help="Don't mock crypto operation to save time"
     )
+
+
+def is_xdist_master(config):
+    return config.getoption("dist") != "no" and not os.environ.get("PYTEST_XDIST_WORKER")
 
 
 def pytest_configure(config):
@@ -56,6 +67,8 @@ def pytest_configure(config):
     # prevents pytest from capturing them properly.
     if os.name != "nt":
         configure_logging()
+    if config.getoption("--postgresql") and not is_xdist_master(config):
+        bootstrap_postgresql_testbed()
 
 
 @pytest.fixture(scope="session")
@@ -110,30 +123,11 @@ def realcrypto(unmock_crypto):
         yield
 
 
-def _patch_url_if_xdist(url):
-    xdist_worker = os.environ.get("PYTEST_XDIST_WORKER")
-    if xdist_worker:
-        return f"{url}_{xdist_worker}"
-    else:
-        return url
-
-
-# Use current unix user's credential, don't forget to do
-# `psql -c 'CREATE DATABASE parsec_test;'` prior to run tests
-DEFAULT_POSTGRESQL_TEST_URL = "postgresql:///parsec_test"
-
-
-def _get_postgresql_url():
-    return _patch_url_if_xdist(
-        os.environ.get("PARSEC_POSTGRESQL_TEST_URL", DEFAULT_POSTGRESQL_TEST_URL)
-    )
-
-
 @pytest.fixture(scope="session")
 def postgresql_url(request):
     if not request.config.getoption("--postgresql"):
         pytest.skip("`--postgresql` option not provided")
-    return _get_postgresql_url()
+    return get_postgresql_url()
 
 
 @pytest.fixture
@@ -227,28 +221,6 @@ def backend_addr(unused_tcp_port):
     return BackendAddr(f"ws://127.0.0.1:{unused_tcp_port}")
 
 
-def bootstrap_postgresql(url):
-    # In theory we should use TrioPG here to do db init, but:
-    # - Duck typing and similar api makes `_init_db` compatible with both
-    # - AsyncPG should be slightly faster than TrioPG
-    # - Most important: a trio loop is potentially already started inside this
-    #   thread (i.e. if the test is mark as trio). Hence we would have to spawn
-    #   another thread just to run the new trio loop.
-
-    import asyncio
-    import asyncpg
-    from parsec.backend.drivers.postgresql.handler import _init_db
-
-    async def _bootstrap():
-        conn = await asyncpg.connect(url)
-        await _init_db(conn, force=True)
-        await conn.close()
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(_bootstrap())
-
-
 @pytest.fixture()
 def backend_store(request):
     if request.config.getoption("--postgresql"):
@@ -261,16 +233,8 @@ def backend_store(request):
 
             return "MOCKED"
 
-        # TODO: would be better to create a new postgresql cluster for each test
-        url = _get_postgresql_url()
-        try:
-            bootstrap_postgresql(url)
-        except asyncpg.exceptions.InvalidCatalogNameError as exc:
-            raise RuntimeError(
-                "Is `parsec_test` a valid database in PostgreSQL ?\n"
-                "Running `psql -c 'CREATE DATABASE parsec_test;'` may fix this"
-            ) from exc
-        return url
+        reset_postgresql_testbed()
+        return get_postgresql_url()
 
     elif request.node.get_closest_marker("postgresql"):
         pytest.skip("`Test is postgresql-only")

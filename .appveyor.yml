@@ -12,8 +12,6 @@ environment:
   COVERALLS_REPO_TOKEN:
     secure: W4++xmF7Q6ientAUP2crOR/1HDfmqanOk2NycHPjNVnCE7oS33FL4TwPJZEZw8Lc
   PGINSTALLATION: C:\Program Files\PostgreSQL\9.6\bin
-  PGUSER: postgres
-  PGPASSWORD: Password12!
 
   matrix:
     # Disable 32 bits tests for the moment
@@ -22,8 +20,6 @@ environment:
 
 build_script:
   - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
-  - createdb parsec_test_gw0
-  - createdb parsec_test_gw1
   - which pg_config
   - pg_config --version
   - choco install winfsp -y --version=1.4.19016

@@ -22,7 +22,6 @@ from parsec.backend.drivers.memory import (
     MemoryUserComponent,
     MemoryVlobComponent,
     MemoryMessageComponent,
-    MemoryBeaconComponent,
     MemoryPingComponent,
 )
 from parsec.backend.drivers.postgresql import (
@@ -31,7 +30,6 @@ from parsec.backend.drivers.postgresql import (
     PGUserComponent,
     PGVlobComponent,
     PGMessageComponent,
-    PGBeaconComponent,
     PGPingComponent,
 )
 from parsec.backend.user import UserNotFoundError
@@ -123,8 +121,7 @@ class BackendApp:
             self.user = MemoryUserComponent(self.event_bus)
             self.organization = MemoryOrganizationComponent(self.user)
             self.message = MemoryMessageComponent(self.event_bus)
-            self.beacon = MemoryBeaconComponent(self.event_bus)
-            self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
+            self.vlob = MemoryVlobComponent(self.event_bus, self.user)
             self.ping = MemoryPingComponent(self.event_bus)
             self.blockstore = blockstore_factory(self.config.blockstore_config)
 
@@ -133,8 +130,7 @@ class BackendApp:
             self.user = PGUserComponent(self.dbh, self.event_bus)
             self.organization = PGOrganizationComponent(self.dbh, self.user)
             self.message = PGMessageComponent(self.dbh)
-            self.beacon = PGBeaconComponent(self.dbh)
-            self.vlob = PGVlobComponent(self.dbh, self.beacon)
+            self.vlob = PGVlobComponent(self.dbh)
             self.ping = PGPingComponent(self.dbh)
             self.blockstore = blockstore_factory(
                 self.config.blockstore_config, postgresql_dbh=self.dbh
@@ -144,7 +140,6 @@ class BackendApp:
             "events_subscribe": self.events.api_events_subscribe,
             "events_listen": self.events.api_events_listen,
             "ping": self.ping.api_ping,
-            "beacon_read": self.beacon.api_beacon_read,
             # Message
             "message_get": self.message.api_message_get,
             "message_send": self.message.api_message_send,
@@ -166,6 +161,9 @@ class BackendApp:
             "vlob_create": self.vlob.api_vlob_create,
             "vlob_read": self.vlob.api_vlob_read,
             "vlob_update": self.vlob.api_vlob_update,
+            "vlob_group_get_rights": self.vlob.api_vlob_group_get_rights,
+            "vlob_group_update_rights": self.vlob.api_vlob_group_update_rights,
+            "vlob_group_poll": self.vlob.api_vlob_group_poll,
         }
         self.anonymous_cmds = {
             "user_claim": self.user.api_user_claim,

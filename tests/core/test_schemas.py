@@ -231,18 +231,8 @@ class TestFolderManifestSchema:
         "created": datetime(2017, 1, 1),
         "updated": datetime(2017, 12, 31, 23, 59, 59),
         "children": {
-            "foo": {
-                "id": UUID("8aadbc777ece4a4fb5fa0564ecfbb54f"),
-                "rts": "9809c436b3af4fba9dd6955ad03e0310",
-                "wts": "004714d9997147efa52a696127694fdc",
-                "key": b"<foo key>",
-            },
-            "bar.txt": {
-                "id": UUID("51c865a60b194d9bb087df000056c299"),
-                "rts": "5a48035bdd7c4082b1101b28b6656d0c",
-                "wts": "9b2ab384ed6b426daa1214f49587458a",
-                "key": b"<bar.txt key>",
-            },
+            "foo": {"id": UUID("8aadbc777ece4a4fb5fa0564ecfbb54f"), "key": b"<foo key>"},
+            "bar.txt": {"id": UUID("51c865a60b194d9bb087df000056c299"), "key": b"<bar.txt key>"},
         },
     }
 
@@ -256,16 +246,10 @@ class TestFolderManifestSchema:
             updated=datetime(2017, 12, 31, 23, 59, 59),
             children={
                 "foo": ManifestAccess(
-                    id=UUID("8aadbc777ece4a4fb5fa0564ecfbb54f"),
-                    rts="9809c436b3af4fba9dd6955ad03e0310",
-                    wts="004714d9997147efa52a696127694fdc",
-                    key=b"<foo key>",
+                    id=UUID("8aadbc777ece4a4fb5fa0564ecfbb54f"), key=b"<foo key>"
                 ),
                 "bar.txt": ManifestAccess(
-                    id=UUID("51c865a60b194d9bb087df000056c299"),
-                    rts="5a48035bdd7c4082b1101b28b6656d0c",
-                    wts="9b2ab384ed6b426daa1214f49587458a",
-                    key=b"<bar.txt key>",
+                    id=UUID("51c865a60b194d9bb087df000056c299"), key=b"<bar.txt key>"
                 ),
             },
         )
@@ -450,18 +434,8 @@ class TestLocalFolderManifestSchema:
         "created": datetime(2017, 1, 1),
         "updated": datetime(2017, 12, 31, 23, 59, 59),
         "children": {
-            "foo": {
-                "id": UUID("8aadbc777ece4a4fb5fa0564ecfbb54f"),
-                "rts": "9809c436b3af4fba9dd6955ad03e0310",
-                "wts": "004714d9997147efa52a696127694fdc",
-                "key": b"<foo key>",
-            },
-            "bar.txt": {
-                "id": UUID("51c865a60b194d9bb087df000056c299"),
-                "rts": "d756228815074b1f9ea6e5d383bcb995",
-                "wts": "ba4fddebe99d4f3e9f17ccb84a524e19",
-                "key": b"<bar.txt key>",
-            },
+            "foo": {"id": UUID("8aadbc777ece4a4fb5fa0564ecfbb54f"), "key": b"<foo key>"},
+            "bar.txt": {"id": UUID("51c865a60b194d9bb087df000056c299"), "key": b"<bar.txt key>"},
         },
     }
 
@@ -477,16 +451,10 @@ class TestLocalFolderManifestSchema:
             updated=datetime(2017, 12, 31, 23, 59, 59),
             children={
                 "foo": ManifestAccess(
-                    id=UUID("8aadbc777ece4a4fb5fa0564ecfbb54f"),
-                    rts="9809c436b3af4fba9dd6955ad03e0310",
-                    wts="004714d9997147efa52a696127694fdc",
-                    key=b"<foo key>",
+                    id=UUID("8aadbc777ece4a4fb5fa0564ecfbb54f"), key=b"<foo key>"
                 ),
                 "bar.txt": ManifestAccess(
-                    id=UUID("51c865a60b194d9bb087df000056c299"),
-                    rts="d756228815074b1f9ea6e5d383bcb995",
-                    wts="ba4fddebe99d4f3e9f17ccb84a524e19",
-                    key=b"<bar.txt key>",
+                    id=UUID("51c865a60b194d9bb087df000056c299"), key=b"<bar.txt key>"
                 ),
             },
         )

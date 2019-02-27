@@ -34,6 +34,8 @@ class EventBusSpy:
     def clear(self):
         self.events.clear()
 
+    # TODO: Remove this ? At least check were it is still needed since
+    # `running_backend_ready` fixture should have fixed most of it usecases
     async def wait_for_backend_connection_ready(self):
         for occured_event in reversed(self.events):
             if occured_event.event == "backend.connection.ready":

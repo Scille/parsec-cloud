@@ -29,10 +29,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             try:
                 result = await conn.execute(
                     """
-                    INSERT INTO organizations (
-                        organization_id, bootstrap_token
-                    ) VALUES ($1, $2)
-                    """,
+INSERT INTO organization (
+    organization_id, bootstrap_token
+) VALUES ($1, $2)
+""",
                     id,
                     bootstrap_token,
                 )
@@ -50,9 +50,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     async def _get(conn, id: OrganizationID) -> Organization:
         data = await conn.fetchrow(
             """
-                SELECT bootstrap_token, root_verify_key
-                FROM organizations WHERE organization_id = $1
-                """,
+SELECT bootstrap_token, root_verify_key
+FROM organization
+WHERE organization_id = $1
+""",
             id,
         )
         if not data:
@@ -85,12 +86,13 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
                 result = await conn.execute(
                     """
-                    UPDATE organizations
-                    SET root_verify_key = $3
-                    WHERE organization_id = $1
-                        AND bootstrap_token = $2
-                        AND root_verify_key IS NULL;
-                    """,
+UPDATE organization
+SET root_verify_key = $3
+WHERE
+    organization_id = $1
+    AND bootstrap_token = $2
+    AND root_verify_key IS NULL;
+""",
                     organization_id,
                     bootstrap_token,
                     root_verify_key.encode(),

@@ -235,6 +235,7 @@ requirements = [
     'contextvars==2.1;python_version<"3.7"',
     "raven==6.8.0",  # Sentry support
     "structlog==18.2.0",
+    "importlib_resources==1.0.2",
     "colorama==0.4.0",  # structlog colored output
 ]
 
@@ -303,6 +304,7 @@ setup(
     # As you may know, setuptools is really broken, so we have to roll our
     # globing ourself to include non-python files...
     package_data={
+        "parsec.backend.drivers.postgresql": "*.sql",
         "parsec.core.gui": [
             x[len("parsec/core/gui/") :]
             for x in itertools.chain(
@@ -313,7 +315,7 @@ setup(
                 glob.glob("parsec/core/gui/rc/**/*.qrc", recursive=True),
                 glob.glob("parsec/core/gui/rc/**/*.otf", recursive=True),
             )
-        ]
+        ],
     },
     entry_points={"console_scripts": ["parsec = parsec.cli:cli"]},
     options={"build_exe": build_exe_options},

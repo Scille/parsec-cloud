@@ -9,6 +9,9 @@ __all__ = (
     "vlob_create_serializer",
     "vlob_read_serializer",
     "vlob_update_serializer",
+    "vlob_group_update_rights_serializer",
+    "vlob_group_get_rights_serializer",
+    "vlob_group_poll_serializer",
 )
 
 
@@ -18,13 +21,15 @@ _validate_version = validate.Range(min=1)
 
 class CheckEntrySchema(UnknownCheckedSchema):
     id = fields.UUID(required=True)
-    rts = fields.String(required=True, validate=_validate_trust_seed)
     version = fields.Integer(required=True, validate=validate.Range(min=0))
 
 
 class ChangedEntrySchema(UnknownCheckedSchema):
     id = fields.UUID(required=True)
     version = fields.Integer(required=True)
+
+
+# TODO: still useful ? (replaced by vlob_group_poll)
 
 
 class VlobGroupCheckReqSchema(BaseReqSchema):
@@ -39,11 +44,9 @@ vlob_group_check_serializer = CmdSerializer(VlobGroupCheckReqSchema, VlobGroupCh
 
 
 class VlobCreateReqSchema(BaseReqSchema):
+    group = fields.UUID(required=True)
     id = fields.UUID(required=True)
-    rts = fields.String(required=True, validate=_validate_trust_seed)
-    wts = fields.String(required=True, validate=_validate_trust_seed)
     blob = fields.Bytes(required=True)
-    notify_beacon = fields.UUID(missing=None)
 
 
 class VlobCreateRepSchema(BaseRepSchema):
@@ -55,13 +58,14 @@ vlob_create_serializer = CmdSerializer(VlobCreateReqSchema, VlobCreateRepSchema)
 
 class VlobReadReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
-    rts = fields.String(required=True, validate=_validate_trust_seed)
     version = fields.Integer(validate=lambda n: n is None or _validate_version(n), missing=None)
 
 
 class VlobReadRepSchema(BaseRepSchema):
     version = fields.Integer(required=True, validate=_validate_version)
     blob = fields.Bytes(required=True)
+    # TODO: add author
+    # TODO: add timestamp
 
 
 vlob_read_serializer = CmdSerializer(VlobReadReqSchema, VlobReadRepSchema)
@@ -70,9 +74,7 @@ vlob_read_serializer = CmdSerializer(VlobReadReqSchema, VlobReadRepSchema)
 class VlobUpdateReqSchema(BaseReqSchema):
     id = fields.UUID(required=True)
     version = fields.Integer(required=True, validate=_validate_version)
-    wts = fields.String(required=True, validate=_validate_trust_seed)
     blob = fields.Bytes(required=True)
-    notify_beacon = fields.UUID(missing=None)
 
 
 class VlobUpdateRepSchema(BaseRepSchema):
@@ -80,3 +82,52 @@ class VlobUpdateRepSchema(BaseRepSchema):
 
 
 vlob_update_serializer = CmdSerializer(VlobUpdateReqSchema, VlobUpdateRepSchema)
+
+
+class VlobGroupUpdateRightsReqSchema(BaseReqSchema):
+    id = fields.UUID(required=True)
+    user = fields.UserID(required=True)
+    admin_right = fields.Boolean(required=True)
+    read_right = fields.Boolean(required=True)
+    write_right = fields.Boolean(required=True)
+
+
+class VlobGroupUpdateRightsRepSchema(BaseRepSchema):
+    pass
+
+
+vlob_group_update_rights_serializer = CmdSerializer(
+    VlobGroupUpdateRightsReqSchema, VlobGroupUpdateRightsRepSchema
+)
+
+
+class VlobGroupGetRightsReqSchema(BaseReqSchema):
+    id = fields.UUID(required=True)
+
+
+class VlobGroupUserRights(UnknownCheckedSchema):
+    admin_right = fields.Boolean(required=True)
+    read_right = fields.Boolean(required=True)
+    write_right = fields.Boolean(required=True)
+
+
+class VlobGroupGetRightsRepSchema(BaseRepSchema):
+    users = fields.Map(fields.UserID(), fields.Nested(VlobGroupUserRights), required=True)
+
+
+vlob_group_get_rights_serializer = CmdSerializer(
+    VlobGroupGetRightsReqSchema, VlobGroupGetRightsRepSchema
+)
+
+
+class VlobGroupPollReqSchema(BaseReqSchema):
+    id = fields.UUID(required=True)
+    last_checkpoint = fields.Integer(required=True)
+
+
+class VlobGroupPollRepSchema(BaseRepSchema):
+    changes = fields.Map(fields.UUID(), fields.Integer(), required=True)
+    current_checkpoint = fields.Integer(required=True)
+
+
+vlob_group_poll_serializer = CmdSerializer(VlobGroupPollReqSchema, VlobGroupPollRepSchema)

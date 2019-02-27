@@ -51,7 +51,7 @@ class BackendCmdsPool:
 
     events_subscribe = _expose_cmds_with_retrier("events_subscribe")
     events_listen = _expose_cmds_with_retrier("events_listen")
-    beacon_read = _expose_cmds_with_retrier("beacon_read")
+
     message_send = _expose_cmds_with_retrier("message_send")
     message_get = _expose_cmds_with_retrier("message_get")
 
@@ -59,6 +59,9 @@ class BackendCmdsPool:
     vlob_create = _expose_cmds_with_retrier("vlob_create")
     vlob_read = _expose_cmds_with_retrier("vlob_read")
     vlob_update = _expose_cmds_with_retrier("vlob_update")
+    vlob_group_get_rights = _expose_cmds_with_retrier("vlob_group_get_rights")
+    vlob_group_update_rights = _expose_cmds_with_retrier("vlob_group_update_rights")
+    vlob_group_poll = _expose_cmds_with_retrier("vlob_group_poll")
 
     blockstore_create = _expose_cmds_with_retrier("blockstore_create")
     blockstore_read = _expose_cmds_with_retrier("blockstore_read")

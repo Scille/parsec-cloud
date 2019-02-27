@@ -6,7 +6,6 @@ from .blockstore import PGBlockstoreComponent
 from .message import PGMessageComponent
 from .user import PGUserComponent
 from .vlob import PGVlobComponent
-from .beacon import PGBeaconComponent
 from .ping import PGPingComponent
 
 
@@ -18,6 +17,5 @@ __all__ = [
     "PGMessageComponent",
     "PGUserComponent",
     "PGVlobComponent",
-    "PGBeaconComponent",
     "PGPingComponent",
 ]

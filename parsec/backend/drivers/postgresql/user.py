@@ -35,12 +35,10 @@ class PGUserComponent(BaseUserComponent):
         async with self.dbh.pool.acquire() as conn:
             result = await conn.execute(
                 """
-UPDATE users SET
+UPDATE user_ SET
     is_admin = $3
 WHERE
-    organization = (
-        SELECT _id from organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND user_id = $2
 """,
                 organization_id,
@@ -63,7 +61,7 @@ WHERE
         try:
             result = await conn.execute(
                 """
-INSERT INTO users (
+INSERT INTO user_ (
     organization,
     user_id,
     is_admin,
@@ -72,18 +70,10 @@ INSERT INTO users (
     created_on
 )
 SELECT
-    _id,
+    get_organization_internal_id($1),
     $2, $3, $4,
-    (
-        SELECT _id
-        FROM devices
-        WHERE
-            device_id = $5
-            AND organization = organizations._id
-    ),
+    get_device_internal_id($1, $5),
     $6
-FROM organizations
-WHERE organization_id = $1
 """,
                 organization_id,
                 user.user_id,
@@ -100,7 +90,7 @@ WHERE organization_id = $1
 
         await conn.executemany(
             """
-INSERT INTO devices (
+INSERT INTO device (
     organization,
     user_,
     device_id,
@@ -112,25 +102,12 @@ INSERT INTO devices (
     revocation_certifier
 )
 SELECT
-    _id,
-    (
-        SELECT _id
-        FROM users
-        WHERE
-            user_id = $2
-            AND organization = organizations._id
-    ),
+    get_organization_internal_id($1),
+    get_user_internal_id($1, $2),
     $3, $4,
-    (
-        SELECT _id
-        FROM devices
-        WHERE
-            device_id = $5
-            AND organization = organizations._id
-    ),
-    $6, $7, $8, $9
-FROM organizations
-WHERE organization_id = $1
+    get_device_internal_id($1, $5),
+    $6, $7, $8,
+    get_device_internal_id($1, $9)
 """,
             [
                 (
@@ -165,15 +142,8 @@ WHERE organization_id = $1
     async def _create_device(self, conn, organization_id: OrganizationID, device: Device) -> None:
         existing_devices = await conn.fetch(
             """
-SELECT device_id FROM devices
-WHERE user_ = (
-    SELECT _id FROM users
-    WHERE
-        organization = (
-            SELECT _id FROM organizations WHERE organization_id = $1
-        )
-        AND user_id = $2
-)
+SELECT device_id FROM device
+WHERE user_ = get_user_internal_id($1, $2)
             """,
             organization_id,
             device.user_id,
@@ -186,7 +156,7 @@ WHERE user_ = (
 
         result = await conn.execute(
             """
-INSERT INTO devices (
+INSERT INTO device (
     organization,
     user_,
     device_id,
@@ -198,25 +168,12 @@ INSERT INTO devices (
     revocation_certifier
 )
 SELECT
-    _id,
-    (
-        SELECT _id
-        FROM users
-        WHERE
-            user_id = $2
-            AND organization = organizations._id
-    ),
+    get_organization_internal_id($1),
+    get_user_internal_id($1, $2),
     $3, $4,
-    (
-        SELECT _id
-        FROM devices
-        WHERE
-            device_id = $5
-            AND organization = organizations._id
-    ),
-    $6, $7, $8, $9
-FROM organizations
-WHERE organization_id = $1
+    get_device_internal_id($1, $5),
+    $6, $7, $8,
+    get_device_internal_id($1, $9)
 """,
             organization_id,
             device.user_id,
@@ -243,13 +200,11 @@ WHERE organization_id = $1
 SELECT
     is_admin,
     certified_user,
-    (SELECT device_id FROM devices WHERE _id = user_certifier),
+    get_device_id(user_certifier) as user_certifier,
     created_on
-FROM users
+FROM user_
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND user_id = $2
 """,
             organization_id,
@@ -261,34 +216,21 @@ WHERE
         devices_results = await conn.fetch(
             """
 SELECT
-    d1.device_id,
-    d1.certified_device,
-    (
-        SELECT devices.device_id FROM devices WHERE devices._id = d1.device_certifier
-    ) AS device_certifier,
-    d1.created_on,
-    d1.revocated_on,
-    d1.certified_revocation,
-    (
-        SELECT devices.device_id FROM devices WHERE devices._id = d1.revocation_certifier
-    ) as revocation_certifier
-FROM devices as d1
-WHERE user_ = (
-    SELECT _id FROM users WHERE
-        organization = (
-            SELECT _id FROM organizations WHERE organization_id = $1
-        )
-        AND user_id = $2
-);
+    device_id,
+    certified_device,
+    get_device_id(device_certifier) as device_certifier,
+    created_on,
+    revocated_on,
+    certified_revocation,
+    get_device_id(revocation_certifier) as revocation_certifier
+FROM device
+WHERE user_ = get_user_internal_id($1, $2)
 """,
             organization_id,
             user_id,
         )
         devices = DevicesMapping(
-            *[
-                Device(DeviceID(device_result[0]), *device_result[1:])
-                for device_result in devices_results
-            ]
+            *[Device(DeviceID(d_id), *d_data) for d_id, *d_data in devices_results]
         )
 
         return User(
@@ -319,23 +261,17 @@ WHERE user_ = (
             results = await conn.fetch(
                 """
 SELECT
-    d1.device_id,
-    d1.certified_device,
-    (
-        SELECT devices.device_id FROM devices WHERE devices._id = d1.device_certifier
-    ) AS device_certifier,
-    d1.created_on,
-    d1.revocated_on,
-    d1.certified_revocation,
-    (
-        SELECT devices.device_id FROM devices WHERE devices._id = d1.revocation_certifier
-    ) as revocation_certifier
-FROM devices as d1
+    device_id,
+    certified_device,
+    get_device_id(device_certifier) as device_certifier,
+    created_on,
+    revocated_on,
+    certified_revocation,
+    get_device_id(revocation_certifier) as revocation_certifier
+FROM device
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
-    AND device_id = any($2::text[]);
+    organization = get_organization_internal_id($1)
+    AND device_id = any($2::text[])
 """,
                 organization_id,
                 devices_to_fetch,
@@ -385,17 +321,15 @@ WHERE
                 escaped_query = query.replace("!", "!!").replace("%", "!%").replace("_", "!_")
                 all_results = await conn.fetch(
                     """
-SELECT user_id FROM users
+SELECT user_id FROM user_
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND user_id LIKE $2 ESCAPE '!'
     AND (
         NOT $3 OR EXISTS (
-            SELECT TRUE FROM devices
+            SELECT TRUE FROM device
             WHERE
-                user_ = users._id
+                user_ = user_._id
                 AND (
                     revocated_on IS NULL
                     OR revocated_on > $4
@@ -412,16 +346,14 @@ ORDER BY user_id
             else:
                 all_results = await conn.fetch(
                     """
-SELECT user_id FROM users
+SELECT user_id FROM user_
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND (
         NOT $2 OR EXISTS (
-            SELECT TRUE FROM devices
+            SELECT TRUE FROM device
             WHERE
-                user_ = users._id
+                user_ = user_._id
                 AND (
                     revocated_on IS NULL
                     OR revocated_on > $3
@@ -441,12 +373,8 @@ ORDER BY user_id
     async def _user_exists(self, conn, organization_id: OrganizationID, user_id: UserID) -> bool:
         user_result = await conn.fetchrow(
             """
-SELECT true FROM users
-WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
-    AND user_id = $2
+SELECT true FROM user_
+WHERE  _id = get_user_internal_id($1, $2)
 """,
             organization_id,
             user_id,
@@ -459,11 +387,9 @@ WHERE
         user_result = await conn.fetchrow(
             """
 SELECT true
-FROM devices
+FROM device
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND device_id = $2
 """,
             organization_id,
@@ -482,21 +408,14 @@ WHERE
 
                 result = await conn.execute(
                     """
-INSERT INTO user_invitations (
+INSERT INTO user_invitation (
     organization,
     creator,
     user_id,
     created_on
 ) VALUES (
-    (SELECT _id FROM organizations WHERE organization_id = $1),
-    (SELECT _id
-     FROM devices
-     WHERE
-        device_id = $2 AND
-        organization = (
-            SELECT _id FROM organizations WHERE organization_id = $1
-        )
-    ),
+    get_organization_internal_id($1),
+    get_device_internal_id($1, $2),
     $3, $4
 )
 ON CONFLICT (organization, user_id)
@@ -528,14 +447,11 @@ SET
 
         result = await conn.fetchrow(
             """
-SELECT user_invitations.user_id, devices.device_id, user_invitations.created_on
-FROM user_invitations
-LEFT JOIN devices ON user_invitations.creator = devices._id
+SELECT user_id, get_device_id(creator), created_on
+FROM user_invitation
 WHERE
-    user_invitations.organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
-    AND user_invitations.user_id = $2
+    organization = get_organization_internal_id($1)
+    AND user_id = $2
 """,
             organization_id,
             user_id,
@@ -573,11 +489,9 @@ WHERE
 
                 result = await conn.execute(
                     """
-DELETE FROM user_invitations
+DELETE FROM user_invitation
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND user_id = $2
 """,
                     organization_id,
@@ -604,22 +518,15 @@ WHERE
 
                 result = await conn.execute(
                     """
-INSERT INTO device_invitations (
+INSERT INTO device_invitation (
     organization,
     creator,
     device_id,
     created_on
 )
 VALUES (
-    (SELECT _id FROM organizations WHERE organization_id = $1),
-    (SELECT _id
-     FROM devices
-     WHERE
-        device_id = $2 AND
-        organization = (
-            SELECT _id FROM organizations WHERE organization_id = $1
-        )
-    ),
+    get_organization_internal_id($1),
+    get_device_internal_id($1, $2),
     $3, $4
 )
 ON CONFLICT (organization, device_id)
@@ -653,14 +560,11 @@ SET
 
         result = await conn.fetchrow(
             """
-SELECT device_invitations.device_id, devices.device_id, device_invitations.created_on
-FROM device_invitations
-LEFT JOIN devices ON device_invitations.creator = devices._id
+SELECT device_id, get_device_id(creator), created_on
+FROM device_invitation
 WHERE
-    device_invitations.organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
-    AND device_invitations.device_id = $2
+    organization = get_organization_internal_id($1)
+    AND device_id = $2
 """,
             organization_id,
             device_id,
@@ -698,11 +602,9 @@ WHERE
 
                 result = await conn.execute(
                     """
-DELETE FROM device_invitations
+DELETE FROM device_invitation
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND device_id = $2
 """,
                     organization_id,
@@ -730,23 +632,12 @@ WHERE
 
                 result = await conn.execute(
                     """
-UPDATE devices SET
+UPDATE device SET
     certified_revocation = $3,
-    revocation_certifier = (
-        SELECT _id
-        FROM devices
-        WHERE
-            device_id = $4
-        AND
-            organization = (
-                SELECT _id FROM organizations WHERE organization_id = $1
-            )
-    ),
+    revocation_certifier = get_device_internal_id($1, $4),
     revocated_on = $5
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND device_id = $2
     AND revocated_on IS NULL
 """,
@@ -762,11 +653,9 @@ WHERE
                     err_result = await conn.fetchrow(
                         """
 SELECT revocated_on
-FROM devices
+FROM device
 WHERE
-    organization = (
-        SELECT _id FROM organizations WHERE organization_id = $1
-    )
+    organization = get_organization_internal_id($1)
     AND device_id = $2
 """,
                         organization_id,
@@ -774,7 +663,8 @@ WHERE
                     )
                     if not err_result:
                         raise UserNotFoundError(device_id)
-                    if err_result[0]:
+
+                    elif err_result[0]:
                         raise UserAlreadyRevokedError()
 
                     else:
@@ -784,15 +674,8 @@ WHERE
                 # his devices are revoked)
                 result = await conn.fetch(
                     """
-SELECT revocated_on FROM devices
-WHERE user_ = (
-    SELECT _id FROM users
-    WHERE
-        organization = (
-            SELECT _id FROM organizations WHERE organization_id = $1
-        )
-        AND user_id = $2
-    )
+SELECT revocated_on FROM device
+WHERE user_ = get_user_internal_id($1, $2)
             """,
                     organization_id,
                     device_id.user_id,
