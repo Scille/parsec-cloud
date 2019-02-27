@@ -30,7 +30,8 @@ class LocalDBMissingEntry(LocalDBError):
 
 class LocalDB:
     def __init__(self, path: Path, max_cache_size: int = DEFAULT_MAX_CACHE_SIZE):
-        self.conn = None
+        self.local_conn = None
+        self.remote_conn = None
         self.nb_remote_blocks = 0
         self._path = Path(path)
         self._cache_db_files = self._path / "cache"
@@ -48,7 +49,7 @@ class LocalDB:
     # Life cycle
 
     def connect(self):
-        if self.conn is not None:
+        if self.local_conn is not None or self.remote_conn is not None:
             raise RuntimeError("Already connected")
 
         # Create directories
@@ -56,26 +57,32 @@ class LocalDB:
         self._cache_db_files.mkdir(parents=True, exist_ok=True)
 
         # Connect and initialize database
-        self.conn = sqlite3.connect(str(self._path / "cache.sqlite"))
+        self.local_conn = sqlite3.connect(str(self._path / "local.sqlite"))
+        self.remote_conn = sqlite3.connect(str(self._path / "remote.sqlite"))
 
         # Use auto-commit
-        self.conn.isolation_level = None
+        self.local_conn.isolation_level = None
 
         # Initialize
         self.create_db()
         self.nb_remote_blocks = self.get_nb_remote_blocks()
 
-    def close(self):
+    def close(self, local: bool):
+        if local:
+            conn = self.local_conn
+        else:
+            conn = self.remote_conn
+
         # Idempotency
-        if self.conn is None:
+        if conn is None:
             return
 
         # Commit, just in case
-        self.conn.commit()
+        conn.commit()
 
         # Close the connection
-        self.conn.close()
-        self.conn = None
+        conn.close()
+        conn = None
 
     # Context management
 
@@ -84,32 +91,34 @@ class LocalDB:
         return self
 
     def __exit__(self, *args):
-        self.close()
+        self.close(False)
+        self.close(True)
 
     # Database initialization
 
     def create_db(self):
-        cursor = self.conn.cursor()
-        cursor.execute(
+        local_cursor = self.local_conn.cursor()
+        remote_cursor = self.remote_conn.cursor()
+        local_cursor.execute(
             """CREATE TABLE IF NOT EXISTS users
                 (_id SERIAL PRIMARY KEY,
                  user_id UUID NOT NULL,
                  blob BYTEA NOT NULL,
                  created_on TIMESTAMPTZ);"""
         )
-        cursor.execute(
+        local_cursor.execute(
             """CREATE TABLE IF NOT EXISTS local_vlobs
                 (_id SERIAL PRIMARY KEY,
                  vlob_id UUID NOT NULL,
                  blob BYTEA NOT NULL);"""
         )
-        cursor.execute(
+        remote_cursor.execute(
             """CREATE TABLE IF NOT EXISTS remote_vlobs
                 (_id SERIAL PRIMARY KEY,
                  vlob_id UUID NOT NULL,
                  blob BYTEA NOT NULL);"""
         )
-        cursor.execute(
+        local_cursor.execute(
             """CREATE TABLE IF NOT EXISTS local_blocks
                 (block_id INT PRIMARY KEY NOT NULL,
                  size INT NOT NULL,
@@ -117,7 +126,7 @@ class LocalDB:
                  accessed_on TIMESTAMPTZ,
                  file_path TEXT NOT NULL);"""
         )
-        cursor.execute(
+        remote_cursor.execute(
             """CREATE TABLE IF NOT EXISTS remote_blocks
                 (block_id INT PRIMARY KEY NOT NULL,
                  size INT NOT NULL,
@@ -125,19 +134,20 @@ class LocalDB:
                  accessed_on TIMESTAMPTZ,
                  file_path TEXT NOT NULL);"""
         )
-        cursor.close()
+        local_cursor.close()
+        remote_cursor.close()
 
     # Size and blocks
 
     def get_nb_remote_blocks(self):
-        cursor = self.conn.cursor()
+        cursor = self.remote_conn.cursor()
         res = cursor.execute("SELECT COUNT(block_id) FROM remote_blocks")
         res = res.fetchone()
         cursor.close()
         return res[0]
 
     def get_cache_size(self):
-        cursor = self.conn.cursor()
+        cursor = self.remote_conn.cursor()
         res = cursor.execute("SELECT SUM(size) FROM remote_blocks")
         res = res.fetchone()
         cursor.close()
@@ -146,7 +156,7 @@ class LocalDB:
     # User operations
 
     def get_user(self, access: Access):
-        cursor = self.conn.cursor()
+        cursor = self.local_conn.cursor()
         res = cursor.execute(
             "SELECT user_id, blob, created_on FROM users WHERE user_id = ?", (str(access.id),)
         )
@@ -159,7 +169,7 @@ class LocalDB:
     def set_user(self, access: Access, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
         ciphered = encrypt_raw_with_secret_key(access.key, raw)
-        cursor = self.conn.cursor()
+        cursor = self.local_conn.cursor()
         cursor.execute("DELETE FROM users WHERE user_id = ? ", (str(access.id),))
         cursor.execute(
             """INSERT INTO users (user_id, blob, created_on)
@@ -171,7 +181,7 @@ class LocalDB:
     # Manifest operations
 
     def get_local_manifest(self, access: Access):
-        cursor = self.conn.cursor()
+        cursor = self.local_conn.cursor()
         res = cursor.execute("SELECT vlob_id, blob FROM local_vlobs WHERE vlob_id = ?", (str(access.id),))
         vlob = res.fetchone()
         cursor.close()
@@ -183,7 +193,7 @@ class LocalDB:
         assert isinstance(raw, (bytes, bytearray))
         ciphered = encrypt_raw_with_secret_key(access.key, raw)
 
-        cursor = self.conn.cursor()
+        cursor = self.local_conn.cursor()
         cursor.execute("DELETE FROM local_vlobs WHERE vlob_id = ? ", (str(access.id),))
         cursor.execute(
             """INSERT INTO local_vlobs (vlob_id, blob)
@@ -193,7 +203,7 @@ class LocalDB:
         cursor.close()
 
     def get_remote_manifest(self, access: Access):
-        cursor = self.conn.cursor()
+        cursor = self.remote_conn.cursor()
         res = cursor.execute("SELECT vlob_id, blob FROM remote_vlobs WHERE vlob_id = ?", (str(access.id),))
         vlob = res.fetchone()
         cursor.close()
@@ -211,7 +221,7 @@ class LocalDB:
             # if self.get_block_cache_size() + len(ciphered) > self.max_cache_size:
             #     self.run_block_garbage_collector()
 
-        cursor = self.conn.cursor()
+        cursor = self.remote_conn.cursor()
         cursor.execute("DELETE FROM remote_vlobs WHERE vlob_id = ? ", (str(access.id),))
         cursor.execute(
             """INSERT INTO remote_vlobs (vlob_id, blob)
@@ -234,7 +244,7 @@ class LocalDB:
         file = self._cache_db_files / str(access.id)
         if not file:
             raise LocalDBMissingEntry(access)
-        cursor = self.conn.cursor()
+        cursor = self.local_conn.cursor()
         cursor.execute(
             """UPDATE local_blocks SET accessed_on = ? WHERE block_id = ?""",
             (str(Pendulum.now()), str(access.id)),
@@ -249,7 +259,7 @@ class LocalDB:
         ciphered = encrypt_raw_with_secret_key(access.key, raw)
 
         # Update database
-        cursor = self.conn.cursor()
+        cursor = self.local_conn.cursor()
         cursor.execute(
             """INSERT OR REPLACE INTO local_blocks (block_id, size, offline, file_path)
             VALUES (?, ?, ?, ?)""",
@@ -266,7 +276,7 @@ class LocalDB:
         file = self._cache_db_files / str(access.id)
         if not file:
             raise LocalDBMissingEntry(access)
-        cursor = self.conn.cursor()
+        cursor = self.remote_conn.cursor()
         cursor.execute(
             """UPDATE remote_blocks SET accessed_on = ? WHERE block_id = ?""",
             (str(Pendulum.now()), str(access.id)),
@@ -281,7 +291,7 @@ class LocalDB:
         ciphered = encrypt_raw_with_secret_key(access.key, raw)
 
         # Update database
-        cursor = self.conn.cursor()
+        cursor = self.remote_conn.cursor()
         cursor.execute(
             """INSERT OR REPLACE INTO remote_blocks (block_id, size, offline, file_path)
             VALUES (?, ?, ?, ?)""",
@@ -302,16 +312,15 @@ class LocalDB:
 
     # Clear operations
 
-    def clear_block(self, access, deletable: bool):
-        cursor = self.conn.cursor()
-        cursor.execute("DELETE FROM blocks WHERE block_id = ?", (str(access.id),))
+    def clear_block(self, access):
+        cursor = self.remote_conn.cursor()
+        cursor.execute("DELETE FROM remote_blocks WHERE block_id = ?", (str(access.id),))
         cursor.close()
-        if deletable:
-            self.nb_remote_blocks -= 1
+        self.nb_remote_blocks -= 1
         self._remove_file(access, deletable)
 
     def clear_manifest(self, access: Access):
-        cursor = self.conn.cursor()
+        cursor = self.remote_conn.cursor()
         cursor.execute("DELETE FROM vlobs WHERE vlob_id = ?", (str(access.id),))
         cursor.execute("SELECT changes()")
         deleted, = cursor.fetchone()
@@ -321,8 +330,8 @@ class LocalDB:
 
     def clear_non_deletable_blocks_and_manifests(self):
         cursor = self.conn.cursor()
-        cursor.execute("DELETE FROM vlobs WHERE deletable = 0")
-        cursor.execute("DELETE FROM blocks WHERE deletable = 0")
+        cursor.execute("DELETE FROM local_vlobs")
+        cursor.execute("DELETE FROM local_blocks")
         cursor.close()
 
     # Block file operations
@@ -361,9 +370,9 @@ class LocalDB:
     # Garbage collection
 
     def cleanup_blocks(self, limit=None):
-        cursor = self.conn.cursor()
+        cursor = self.remote_conn.cursor()
         limit_string = f" limit {limit}" if limit is not None else ""
-        cursor.execute("SELECT block_id from blocks WHERE deletable = 1" + limit_string)
+        cursor.execute("SELECT block_id from remote_blocks" + limit_string)
         block_ids = [block_id for (block_id,) in cursor.fetchall()]
         cursor.close()
         for block_id in block_ids:
