@@ -2,9 +2,10 @@
 
 import os
 from pathlib import Path
+from sqlite3 import Connection, connect as sqlite_connect
+
 import pendulum
 from pendulum import Pendulum
-import sqlite3
 
 from parsec.core.types.access import ManifestAccess
 from parsec.crypto import encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
@@ -58,8 +59,8 @@ class LocalDB:
         self._local_db_files.mkdir(parents=True, exist_ok=True)
 
         # Connect and initialize database
-        self.local_conn = sqlite3.connect(str(self._path / "local_data.sqlite"))
-        self.remote_conn = sqlite3.connect(str(self._path / "remote_cache.sqlite"))
+        self.local_conn = sqlite_connect(str(self._path / "local_data.sqlite"))
+        self.remote_conn = sqlite_connect(str(self._path / "remote_cache.sqlite"))
 
         # Use auto-commit for local data since it is very sensitive
         self.local_conn.isolation_level = None
@@ -99,6 +100,8 @@ class LocalDB:
     def create_db(self):
         local_cursor = self.local_conn.cursor()
         remote_cursor = self.remote_conn.cursor()
+
+        # User table
         local_cursor.execute(
             """CREATE TABLE IF NOT EXISTS users
                 (_id SERIAL PRIMARY KEY,
@@ -106,34 +109,27 @@ class LocalDB:
                  blob BYTEA NOT NULL,
                  created_on TIMESTAMPTZ);"""
         )
-        local_cursor.execute(
-            """CREATE TABLE IF NOT EXISTS local_vlobs
-                (_id SERIAL PRIMARY KEY,
-                 vlob_id UUID NOT NULL,
-                 blob BYTEA NOT NULL);"""
-        )
-        remote_cursor.execute(
-            """CREATE TABLE IF NOT EXISTS remote_vlobs
-                (_id SERIAL PRIMARY KEY,
-                 vlob_id UUID NOT NULL,
-                 blob BYTEA NOT NULL);"""
-        )
-        local_cursor.execute(
-            """CREATE TABLE IF NOT EXISTS local_blocks
-                (block_id INT PRIMARY KEY NOT NULL,
-                 size INT NOT NULL,
-                 offline BOOLEAN NOT NULL,
-                 accessed_on TIMESTAMPTZ,
-                 file_path TEXT NOT NULL);"""
-        )
-        remote_cursor.execute(
-            """CREATE TABLE IF NOT EXISTS remote_blocks
-                (block_id INT PRIMARY KEY NOT NULL,
-                 size INT NOT NULL,
-                 offline BOOLEAN NOT NULL,
-                 accessed_on TIMESTAMPTZ,
-                 file_path TEXT NOT NULL);"""
-        )
+
+        for cursor in (local_cursor, remote_cursor):
+
+            # Manifest tables
+            cursor.execute(
+                """CREATE TABLE IF NOT EXISTS manifests
+                    (_id SERIAL PRIMARY KEY,
+                     manifest_id UUID NOT NULL,
+                     blob BYTEA NOT NULL);"""
+            )
+
+            # Blocks tables
+            cursor.execute(
+                """CREATE TABLE IF NOT EXISTS blocks
+                    (block_id INT PRIMARY KEY NOT NULL,
+                     size INT NOT NULL,
+                     offline BOOLEAN NOT NULL,
+                     accessed_on TIMESTAMPTZ,
+                     file_path TEXT NOT NULL);"""
+            )
+
         local_cursor.close()
         remote_cursor.close()
 
@@ -141,17 +137,25 @@ class LocalDB:
 
     def get_nb_remote_blocks(self):
         cursor = self.remote_conn.cursor()
-        res = cursor.execute("SELECT COUNT(block_id) FROM remote_blocks")
+        res = cursor.execute("SELECT COUNT(block_id) FROM blocks")
         res = res.fetchone()
         cursor.close()
         return res[0]
 
     def get_cache_size(self):
         cursor = self.remote_conn.cursor()
-        res = cursor.execute("SELECT SUM(size) FROM remote_blocks")
+        res = cursor.execute("SELECT SUM(size) FROM blocks")
         res = res.fetchone()
         cursor.close()
         return res[0] if res[0] else 0
+
+    def get_block_cache_size(self):
+        cache = str(self._remote_db_files)
+        return sum(
+            os.path.getsize(os.path.join(cache, f))
+            for f in os.listdir(cache)
+            if os.path.isfile(os.path.join(cache, f))
+        )
 
     # User operations
 
@@ -178,202 +182,155 @@ class LocalDB:
         )
         cursor.close()
 
-    # Manifest operations
+    # Generic manifest operations
 
-    def get_local_manifest(self, access: Access):
-        cursor = self.local_conn.cursor()
+    def _get_manifest(self, conn: Connection, access: Access):
+        cursor = conn.cursor()
         res = cursor.execute(
-            "SELECT vlob_id, blob FROM local_vlobs WHERE vlob_id = ?", (str(access.id),)
+            "SELECT manifest_id, blob FROM manifests WHERE manifest_id = ?", (str(access.id),)
         )
-        vlob = res.fetchone()
+        manifest = res.fetchone()
         cursor.close()
-        if not vlob:
+        if not manifest:
             raise LocalDBMissingEntry(access)
-        return decrypt_raw_with_secret_key(access.key, vlob[1])
+        return decrypt_raw_with_secret_key(access.key, manifest[1])
 
-    def set_local_manifest(self, access: Access, raw: bytes):
+    def _set_manifest(self, conn: Connection, access: Access, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
         ciphered = encrypt_raw_with_secret_key(access.key, raw)
 
-        cursor = self.local_conn.cursor()
-        cursor.execute("DELETE FROM local_vlobs WHERE vlob_id = ? ", (str(access.id),))
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM manifests WHERE manifest_id = ? ", (str(access.id),))
         cursor.execute(
-            """INSERT INTO local_vlobs (vlob_id, blob)
+            """INSERT INTO manifests (manifest_id, blob)
                VALUES (?, ?)""",
             (str(access.id), ciphered),
         )
         cursor.close()
+
+    def _clear_manifest(self, conn: Connection, access: Access):
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM manifests WHERE manifest_id = ?", (str(access.id),))
+        cursor.execute("SELECT changes()")
+        deleted, = cursor.fetchone()
+        cursor.close()
+        if not deleted:
+            raise LocalDBMissingEntry(access)
+
+    # Remote manifest operations
 
     def get_remote_manifest(self, access: Access):
-        cursor = self.remote_conn.cursor()
-        res = cursor.execute(
-            "SELECT vlob_id, blob FROM remote_vlobs WHERE vlob_id = ?", (str(access.id),)
-        )
-        vlob = res.fetchone()
-        cursor.close()
-        if not vlob:
-            raise LocalDBMissingEntry(access)
-        return decrypt_raw_with_secret_key(access.key, vlob[1])
+        return self._get_manifest(self.remote_conn, access)
 
-    def set_remote_manifest(self, access: Access, raw: bytes, deletable: bool = True):
-        assert isinstance(raw, (bytes, bytearray))
-        ciphered = encrypt_raw_with_secret_key(access.key, raw)
+    def set_remote_manifest(self, access: Access, raw: bytes):
+        self._set_manifest(self.remote_conn, access, raw)
 
-        if deletable:
-            pass
-            # TODO clean
-            # if self.get_block_cache_size() + len(ciphered) > self.max_cache_size:
-            #     self.run_block_garbage_collector()
+    def clear_remote_manifest(self, access: Access):
+        self._clear_manifest(self.remote_conn, access)
 
-        cursor = self.remote_conn.cursor()
-        cursor.execute("DELETE FROM remote_vlobs WHERE vlob_id = ? ", (str(access.id),))
-        cursor.execute(
-            """INSERT INTO remote_vlobs (vlob_id, blob)
-               VALUES (?, ?)""",
-            (str(access.id), ciphered),
-        )
-        cursor.close()
+    # Local manifest operations
 
-    # Block operations
+    def get_local_manifest(self, access: Access):
+        return self._get_manifest(self.local_conn, access)
 
-    def get_block_cache_size(self):
-        cache = str(self._remote_db_files)
-        return sum(
-            os.path.getsize(os.path.join(cache, f))
-            for f in os.listdir(cache)
-            if os.path.isfile(os.path.join(cache, f))
-        )
+    def set_local_manifest(self, access: Access, raw: bytes):
+        self._set_manifest(self.local_conn, access, raw)
 
-    def get_local_block(self, access: Access):
-        file = self._local_db_files / str(access.id)
+    def clear_local_manifest(self, access: Access):
+        self._clear_manifest(self.local_conn, access)
+
+    # Generic block operations
+
+    def _get_block(self, conn: Connection, path: Path, access: Access):
+        file = path / str(access.id)
         if not file:
             raise LocalDBMissingEntry(access)
-        cursor = self.local_conn.cursor()
+        cursor = conn.cursor()
         cursor.execute(
-            """UPDATE local_blocks SET accessed_on = ? WHERE block_id = ?""",
+            """UPDATE blocks SET accessed_on = ? WHERE block_id = ?""",
             (str(Pendulum.now()), str(access.id)),
         )
         cursor.close()
-        ciphered = self._read_file(access, False)
+        ciphered = self._read_file(access, path)
         return decrypt_raw_with_secret_key(access.key, ciphered)
 
-    def set_local_block(self, access: Access, raw: bytes):
+    def _set_block(self, conn: Connection, path: Path, access: Access, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
-        file = self._local_db_files / str(access.id)
+        file = path / str(access.id)
         ciphered = encrypt_raw_with_secret_key(access.key, raw)
 
         # Update database
-        cursor = self.local_conn.cursor()
+        cursor = conn.cursor()
         cursor.execute(
             """INSERT OR REPLACE INTO
-            local_blocks (block_id, size, offline, accessed_on, file_path)
+            blocks (block_id, size, offline, accessed_on, file_path)
             VALUES (?, ?, ?, ?, ?)""",
             (str(access.id), len(ciphered), False, str(Pendulum.now()), str(file)),
         )
         cursor.close()
 
         # Write file
-        self._write_file(access, ciphered, False)
+        self._write_file(access, ciphered, path)
+
+    def _clear_block(self, conn: Connection, path: Path, access: Access):
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM blocks WHERE block_id = ?", (str(access.id),))
+        cursor.close()
+        self.nb_remote_blocks -= 1
+        self._remove_file(access, path)
+
+    # Remote block operations
 
     def get_remote_block(self, access: Access):
-        file = self._remote_db_files / str(access.id)
-        if not file:
-            raise LocalDBMissingEntry(access)
-        cursor = self.remote_conn.cursor()
-        cursor.execute(
-            """UPDATE remote_blocks SET accessed_on = ? WHERE block_id = ?""",
-            (str(Pendulum.now()), str(access.id)),
-        )
-        cursor.close()
-        ciphered = self._read_file(access, True)
-        return decrypt_raw_with_secret_key(access.key, ciphered)
+        return self._get_block(self.remote_conn, self._remote_db_files, access)
 
     def set_remote_block(self, access: Access, raw: bytes):
-        assert isinstance(raw, (bytes, bytearray))
-        file = self._remote_db_files / str(access.id)
-        ciphered = encrypt_raw_with_secret_key(access.key, raw)
+        self._set_block(self.remote_conn, self._remote_db_files, access, raw)
 
-        # Update database
-        cursor = self.remote_conn.cursor()
-        cursor.execute(
-            """INSERT OR REPLACE INTO remote_blocks
-            (block_id, size, offline, accessed_on, file_path)
-            VALUES (?, ?, ?, ?, ?)""",
-            (str(access.id), len(ciphered), False, str(Pendulum.now()), str(file)),
-        )
-        cursor.close()
-
-        # Write file
-        self._write_file(access, ciphered, True)
-        self.nb_remote_blocks += 1
+        # Update the number of remote blocks
+        self.nb_remote_blocks = self.get_nb_remote_blocks()
 
         # Clean up if necessary
         if self.nb_remote_blocks > self.block_limit:
             limit = self.nb_remote_blocks - self.block_limit
-            self.cleanup_blocks(limit=limit)
-
-    # Clear operations
+            self.cleanup_remote_blocks(limit=limit)
 
     def clear_remote_block(self, access):
-        cursor = self.remote_conn.cursor()
-        cursor.execute("DELETE FROM remote_blocks WHERE block_id = ?", (str(access.id),))
-        cursor.close()
-        self.nb_remote_blocks -= 1
-        self._remove_file(access, True)
+        self._clear_block(self.remote_conn, self._remote_db_files, access)
 
-    def clear_remote_manifest(self, access: Access):
-        cursor = self.remote_conn.cursor()
-        cursor.execute("DELETE FROM remote_vlobs WHERE vlob_id = ?", (str(access.id),))
-        cursor.execute("SELECT changes()")
-        deleted, = cursor.fetchone()
-        cursor.close()
-        if not deleted:
-            raise LocalDBMissingEntry(access)
+        # Update the number of remote blocks
+        self.nb_remote_blocks = self.get_nb_remote_blocks()
+
+    # Local block operations
+
+    def get_local_block(self, access: Access):
+        return self._get_block(self.local_conn, self._local_db_files, access)
+
+    def set_local_block(self, access: Access, raw: bytes):
+        self._set_block(self.local_conn, self._local_db_files, access, raw)
 
     def clear_local_block(self, access):
-        cursor = self.local_conn.cursor()
-        cursor.execute("DELETE FROM local_blocks WHERE block_id = ?", (str(access.id),))
-        cursor.close()
-        self.nb_remote_blocks -= 1
-        self._remove_file(access, False)
-
-    def clear_local_manifest(self, access: Access):
-        cursor = self.local_conn.cursor()
-        cursor.execute("DELETE FROM local_vlobs WHERE vlob_id = ?", (str(access.id),))
-        cursor.execute("SELECT changes()")
-        deleted, = cursor.fetchone()
-        cursor.close()
-        if not deleted:
-            raise LocalDBMissingEntry(access)
+        self._clear_block(self.local_conn, self._local_db_files, access)
 
     # Block file operations
 
-    def _write_file(self, access: Access, content: bytes, deletable: bool):
-        try:
-            self._remove_file(access, deletable)
-        except LocalDBMissingEntry:
-            pass
-        if deletable:
-            file = self._remote_db_files / str(access.id)
-        else:
-            file = self._local_db_files / str(access.id)
-        file.write_bytes(content)
-
-    def _read_file(self, access: Access, deletable: bool):
-        if deletable:
-            file = self._remote_db_files / str(access.id)
-        else:
-            file = self._local_db_files / str(access.id)
+    def _read_file(self, access: Access, path: Path):
+        file = path / str(access.id)
         if file.exists():
             return file.read_bytes()
         else:
             raise LocalDBMissingEntry(access)
 
-    def _remove_file(self, access: Access, deletable: bool):
-        if deletable:
-            file = self._remote_db_files / str(access.id)
-        else:
-            file = self._local_db_files / str(access.id)
+    def _write_file(self, access: Access, content: bytes, path: Path):
+        try:
+            self._remove_file(access, path)
+        except LocalDBMissingEntry:
+            pass
+        file = path / str(access.id)
+        file.write_bytes(content)
+
+    def _remove_file(self, access: Access, path: Path):
+        file = path / str(access.id)
         if file.exists():
             file.unlink()
         else:
@@ -381,12 +338,12 @@ class LocalDB:
 
     # Garbage collection
 
-    def cleanup_blocks(self, limit=None):
+    def cleanup_remote_blocks(self, limit=None):
         cursor = self.remote_conn.cursor()
         limit_string = f" LIMIT {limit}" if limit is not None else ""
         cursor.execute(
             """
-            SELECT block_id FROM remote_blocks ORDER BY accessed_on ASC
+            SELECT block_id FROM blocks ORDER BY accessed_on ASC
             """
             + limit_string
         )
@@ -396,4 +353,4 @@ class LocalDB:
             self.clear_remote_block(ManifestAccess(block_id))
 
     def run_block_garbage_collector(self):
-        self.cleanup_blocks()
+        self.cleanup_remote_blocks()
