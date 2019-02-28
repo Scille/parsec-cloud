@@ -3,7 +3,6 @@
 import trio
 import attr
 from typing import Optional
-from pathlib import Path
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
@@ -41,10 +40,7 @@ class LoggedCore:
 
 @asynccontextmanager
 async def logged_core_factory(
-    config: CoreConfig,
-    device: LocalDevice,
-    event_bus: Optional[EventBus] = None,
-    mountpoint: Optional[Path] = None,
+    config: CoreConfig, device: LocalDevice, event_bus: Optional[EventBus] = None
 ):
     event_bus = event_bus or EventBus()
 

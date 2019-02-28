@@ -105,7 +105,7 @@ class CentralWidget(CoreWidget, Ui_CentralWidget):
             for e in self.NOTIFICATION_EVENTS:
                 self._core.event_bus.connect(e, self.handle_event)
             self._on_connection_state_changed(True)
-            self.label_mountpoint.setText(str(self._core.mountpoint))
+            self.label_mountpoint.setText(str(self._core.config.mountpoint_base_dir))
             self.menu.label_username.setText(self._core.device.user_id)
             self.menu.label_device.setText(self._core.device.device_name)
 
