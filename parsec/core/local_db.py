@@ -34,8 +34,8 @@ class LocalDB:
         self.remote_conn = None
         self.nb_remote_blocks = 0
         self._path = Path(path)
-        self._remote_db_files = self._path / "cache"
-        self._local_db_files = self._path / "dirty"
+        self._remote_db_files = self._path / "remote_cache"
+        self._local_db_files = self._path / "local_data"
         self.max_cache_size = max_cache_size
 
     @property
@@ -58,8 +58,8 @@ class LocalDB:
         self._local_db_files.mkdir(parents=True, exist_ok=True)
 
         # Connect and initialize database
-        self.local_conn = sqlite3.connect(str(self._path / "local.sqlite"))
-        self.remote_conn = sqlite3.connect(str(self._path / "remote.sqlite"))
+        self.local_conn = sqlite3.connect(str(self._path / "local_data.sqlite"))
+        self.remote_conn = sqlite3.connect(str(self._path / "remote_cache.sqlite"))
 
         # Use auto-commit for local data since it is very sensitive
         self.local_conn.isolation_level = None
