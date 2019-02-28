@@ -39,36 +39,26 @@ def test_local_db_cache_size(local_db):
     assert local_db.get_cache_size() > 4
 
 
-def test_local_db_set_get_clear_block(local_db):
-    access = ManifestAccess()
-    local_db.set_remote_block(access, b"data")
+@pytest.mark.parametrize("dtype", ["block", "manifest"])
+@pytest.mark.parametrize("sensitivity", ["local", "remote"])
+def test_local_db_set_get_clear(local_db, dtype, sensitivity):
+    get_method = getattr(local_db, f"get_{sensitivity}_{dtype}")
+    set_method = getattr(local_db, f"set_{sensitivity}_{dtype}")
+    clear_method = getattr(local_db, f"clear_{sensitivity}_{dtype}")
 
-    data = local_db.get_remote_block(access)
+    access = ManifestAccess()
+    set_method(access, b"data")
+
+    data = get_method(access)
     assert data == b"data"
 
-    local_db.clear_remote_block(access)
+    clear_method(access)
 
     with pytest.raises(LocalDBMissingEntry):
-        local_db.clear_remote_block(access)
+        clear_method(access)
 
     with pytest.raises(LocalDBMissingEntry):
-        local_db.get_remote_block(access)
-
-
-def test_local_db_set_get_clear_manifest(local_db):
-    access = ManifestAccess()
-    local_db.set_remote_manifest(access, b"data")
-
-    data = local_db.get_remote_manifest(access)
-    assert data == b"data"
-
-    local_db.clear_remote_manifest(access)
-
-    with pytest.raises(LocalDBMissingEntry):
-        local_db.clear_remote_manifest(access)
-
-    with pytest.raises(LocalDBMissingEntry):
-        local_db.get_remote_manifest(access)
+        get_method(access)
 
 
 def test_local_db_on_disk(tmpdir, local_db):
