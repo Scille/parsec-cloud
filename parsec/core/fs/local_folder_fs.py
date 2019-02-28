@@ -89,14 +89,17 @@ class LocalFolderFS:
         except KeyError:
             pass
         try:
-            raw = self._local_db.get_manifest(access)
+            raw = self._local_db.get_local_manifest(access)
         except LocalDBMissingEntry as exc:
-            # Last chance: if we are looking for the user manifest, we can
-            # fake to know it version 0, which is useful during boostrap step
-            if access == self.root_access:
-                manifest = LocalUserManifest(self.local_author)
-            else:
-                raise FSManifestLocalMiss(access) from exc
+            try:
+                raw = self._local_db.get_remote_manifest(access)
+            except LocalDBMissingEntry as exc:
+                # Last chance: if we are looking for the user manifest, we can
+                # fake to know it version 0, which is useful during boostrap step
+                if access == self.root_access:
+                    manifest = LocalUserManifest(self.local_author)
+                else:
+                    raise FSManifestLocalMiss(access) from exc
         else:
             manifest = local_manifest_serializer.loads(raw)
         self._manifests_cache[access.id] = manifest
@@ -122,7 +125,7 @@ class LocalFolderFS:
 
     def set_manifest(self, access: Access, manifest: LocalManifest):
         raw = local_manifest_serializer.dumps(manifest)
-        self._local_db.set_manifest(access, raw, False)
+        self._local_db.set_local_manifest(access, raw)
         self._manifests_cache[access.id] = manifest
 
     def update_manifest(self, access: Access, manifest: LocalManifest):

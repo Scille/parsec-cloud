@@ -88,10 +88,16 @@ class LocalFileFS:
         # TODO: handle fs.entry.moved events coming from sync
 
     def get_block(self, access: BlockAccess) -> bytes:
-        return self.local_db.get_block(access)
+        try:
+            return self.local_db.get_remote_block(access)
+        except LocalDBMissingEntry:
+            return self.local_db.get_local_block(access)
 
     def set_block(self, access: BlockAccess, block: bytes, deletable=False) -> None:
-        return self.local_db.set_block(access, block, deletable)
+        if deletable:
+            return self.local_db.set_remote_block(access, block)
+        else:
+            return self.local_db.set_local_block(access, block)
 
     def _get_cursor_from_fd(self, fd: FileDescriptor) -> FileCursor:
         try:

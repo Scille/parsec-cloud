@@ -24,7 +24,7 @@ def local_db_factory(initial_user_manifest_state):
         local_dbs[device_id] = local_db
         if not user_manifest_in_v0:
             user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
-            local_db.set_manifest(
+            local_db.set_local_manifest(
                 device.user_manifest_access, local_manifest_serializer.dumps(user_manifest)
             )
         return local_db

@@ -23,12 +23,14 @@ class InMemoryLocalDB(LocalDB):
     """
 
     def __init__(self, **kwargs):
-        self._data = {}
+        self._local_data = {}
+        self._remote_data = {}
         super().__init__("unused", **kwargs)
 
-        self.conn = sqlite3.connect(":memory:")
+        self.local_conn = sqlite3.connect(":memory:")
+        self.remote_conn = sqlite3.connect(":memory:")
         self.create_db()
-        self.nb_blocks = self.get_nb_blocks()
+        self.nb_blocks = self.get_nb_remote_blocks()
 
     # Disable life cycle
 
@@ -40,22 +42,37 @@ class InMemoryLocalDB(LocalDB):
 
     # File systeme interface
 
-    def _read_file(self, access):
-        file = self._db_files / str(access.id)
+    def _read_file(self, access, deletable):
+        if deletable:
+            file = self._remote_db_files / str(access.id)
+            data = self._remote_data
+        else:
+            file = self._local_db_files / str(access.id)
+            data = self._local_data
         try:
-            return self._data[file]
+            return data[file]
         except KeyError:
             raise LocalDBMissingEntry(access)
 
-    def _write_file(self, access, raw: bytes):
+    def _write_file(self, access, raw: bytes, deletable):
         assert isinstance(raw, (bytes, bytearray))
-        file = self._db_files / str(access.id)
-        self._data[file] = raw
+        if deletable:
+            file = self._remote_db_files / str(access.id)
+            data = self._remote_data
+        else:
+            file = self._local_db_files / str(access.id)
+            data = self._local_data
+        data[file] = raw
 
-    def _remove_file(self, access):
-        file = self._db_files / str(access.id)
+    def _remove_file(self, access, deletable):
+        if deletable:
+            file = self._remote_db_files / str(access.id)
+            data = self._remote_data
+        else:
+            file = self._local_db_files / str(access.id)
+            data = self._local_data
         try:
-            del self._data[file]
+            del data[file]
         except KeyError:
             raise LocalDBMissingEntry(access)
 

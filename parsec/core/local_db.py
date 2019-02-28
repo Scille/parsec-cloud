@@ -34,8 +34,8 @@ class LocalDB:
         self.remote_conn = None
         self.nb_remote_blocks = 0
         self._path = Path(path)
-        self._cache_db_files = self._path / "cache"
-        self._dirty_db_files = self._path / "dirty"
+        self._remote_db_files = self._path / "cache"
+        self._local_db_files = self._path / "dirty"
         self.max_cache_size = max_cache_size
 
     @property
@@ -54,7 +54,8 @@ class LocalDB:
 
         # Create directories
         self._path.mkdir(parents=True, exist_ok=True)
-        self._cache_db_files.mkdir(parents=True, exist_ok=True)
+        self._remote_db_files.mkdir(parents=True, exist_ok=True)
+        self._local_db_files.mkdir(parents=True, exist_ok=True)
 
         # Connect and initialize database
         self.local_conn = sqlite3.connect(str(self._path / "local.sqlite"))
@@ -182,7 +183,9 @@ class LocalDB:
 
     def get_local_manifest(self, access: Access):
         cursor = self.local_conn.cursor()
-        res = cursor.execute("SELECT vlob_id, blob FROM local_vlobs WHERE vlob_id = ?", (str(access.id),))
+        res = cursor.execute(
+            "SELECT vlob_id, blob FROM local_vlobs WHERE vlob_id = ?", (str(access.id),)
+        )
         vlob = res.fetchone()
         cursor.close()
         if not vlob:
@@ -204,7 +207,9 @@ class LocalDB:
 
     def get_remote_manifest(self, access: Access):
         cursor = self.remote_conn.cursor()
-        res = cursor.execute("SELECT vlob_id, blob FROM remote_vlobs WHERE vlob_id = ?", (str(access.id),))
+        res = cursor.execute(
+            "SELECT vlob_id, blob FROM remote_vlobs WHERE vlob_id = ?", (str(access.id),)
+        )
         vlob = res.fetchone()
         cursor.close()
         if not vlob:
@@ -233,7 +238,7 @@ class LocalDB:
     # Block operations
 
     def get_block_cache_size(self):
-        cache = str(self._cache_db_files)
+        cache = str(self._remote_db_files)
         return sum(
             os.path.getsize(os.path.join(cache, f))
             for f in os.listdir(cache)
@@ -241,7 +246,7 @@ class LocalDB:
         )
 
     def get_local_block(self, access: Access):
-        file = self._cache_db_files / str(access.id)
+        file = self._local_db_files / str(access.id)
         if not file:
             raise LocalDBMissingEntry(access)
         cursor = self.local_conn.cursor()
@@ -255,7 +260,7 @@ class LocalDB:
 
     def set_local_block(self, access: Access, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
-        file = self._cache_db_files / str(access.id)
+        file = self._local_db_files / str(access.id)
         ciphered = encrypt_raw_with_secret_key(access.key, raw)
 
         # Update database
@@ -273,7 +278,7 @@ class LocalDB:
         #  TODO offline
 
     def get_remote_block(self, access: Access):
-        file = self._cache_db_files / str(access.id)
+        file = self._remote_db_files / str(access.id)
         if not file:
             raise LocalDBMissingEntry(access)
         cursor = self.remote_conn.cursor()
@@ -287,7 +292,7 @@ class LocalDB:
 
     def set_remote_block(self, access: Access, raw: bytes):
         assert isinstance(raw, (bytes, bytearray))
-        file = self._cache_db_files / str(access.id)
+        file = self._remote_db_files / str(access.id)
         ciphered = encrypt_raw_with_secret_key(access.key, raw)
 
         # Update database
@@ -317,11 +322,11 @@ class LocalDB:
         cursor.execute("DELETE FROM remote_blocks WHERE block_id = ?", (str(access.id),))
         cursor.close()
         self.nb_remote_blocks -= 1
-        self._remove_file(access, deletable)
+        self._remove_file(access, True)
 
     def clear_manifest(self, access: Access):
         cursor = self.remote_conn.cursor()
-        cursor.execute("DELETE FROM vlobs WHERE vlob_id = ?", (str(access.id),))
+        cursor.execute("DELETE FROM remote_vlobs WHERE vlob_id = ?", (str(access.id),))
         cursor.execute("SELECT changes()")
         deleted, = cursor.fetchone()
         cursor.close()
@@ -342,16 +347,16 @@ class LocalDB:
         except LocalDBMissingEntry:
             pass
         if deletable:
-            file = self._cache_db_files / str(access.id)
+            file = self._remote_db_files / str(access.id)
         else:
-            file = self._dirty_db_files / str(access.id)
+            file = self._local_db_files / str(access.id)
         file.write_bytes(content)
 
     def _read_file(self, access: Access, deletable: bool):
         if deletable:
-            file = self._cache_db_files / str(access.id)
+            file = self._remote_db_files / str(access.id)
         else:
-            file = self._dirty_db_files / str(access.id)
+            file = self._local_db_files / str(access.id)
         if file.exists():
             return file.read_bytes()
         else:
@@ -359,9 +364,9 @@ class LocalDB:
 
     def _remove_file(self, access: Access, deletable: bool):
         if deletable:
-            file = self._cache_db_files / str(access.id)
+            file = self._remote_db_files / str(access.id)
         else:
-            file = self._dirty_db_files / str(access.id)
+            file = self._local_db_files / str(access.id)
         if file.exists():
             file.unlink()
         else:
@@ -376,7 +381,7 @@ class LocalDB:
         block_ids = [block_id for (block_id,) in cursor.fetchall()]
         cursor.close()
         for block_id in block_ids:
-            self.clear_block(ManifestAccess(block_id), True)
+            self.clear_block(ManifestAccess(block_id))
 
     def run_block_garbage_collector(self):
         self.cleanup_blocks()
