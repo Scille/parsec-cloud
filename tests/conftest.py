@@ -18,7 +18,11 @@ from parsec.core import CoreConfig
 from parsec.core.logged_core import logged_core_factory
 from parsec.core.mountpoint import get_mountpoint_runner
 from parsec.backend import BackendApp, config_factory as backend_config_factory
-from parsec.api.protocole import ClientHandshake, AnonymousClientHandshake
+from parsec.api.protocole import (
+    AdministrationClientHandshake,
+    AuthenticatedClientHandshake,
+    AnonymousClientHandshake,
+)
 from parsec.api.transport import Transport
 
 # TODO: needed ?
@@ -391,10 +395,10 @@ def backend_sock_factory(server_factory, coolorg):
                 elif auth_as == "anonymous":
                     # TODO: for legacy test, refactorise this ?
                     ch = AnonymousClientHandshake(coolorg.organization_id)
-                elif auth_as == "administrator":
-                    ch = AnonymousClientHandshake(backend.config.administrator_token)
+                elif auth_as == "administration":
+                    ch = AdministrationClientHandshake(backend.config.administration_token)
                 else:
-                    ch = ClientHandshake(
+                    ch = AuthenticatedClientHandshake(
                         auth_as.organization_id,
                         auth_as.device_id,
                         auth_as.signing_key,
@@ -418,8 +422,8 @@ async def anonymous_backend_sock(backend_sock_factory, backend):
 
 
 @pytest.fixture
-async def administrator_backend_sock(backend_sock_factory, backend):
-    async with backend_sock_factory(backend, "administrator") as sock:
+async def administration_backend_sock(backend_sock_factory, backend):
+    async with backend_sock_factory(backend, "administration") as sock:
         yield sock
 
 

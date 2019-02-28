@@ -9,7 +9,7 @@ from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.transport import (
     transport_pool_factory,
     anonymous_transport_factory,
-    administrator_transport_factory,
+    administration_transport_factory,
     TransportError,
 )
 from parsec.core.backend_connection import cmds
@@ -104,7 +104,7 @@ class BackendAnonymousCmds:
     device_claim = _expose_cmds("device_claim")
 
 
-class BackendAdministratorCmds:
+class BackendAdministrationCmds:
     def __init__(self, addr, transport):
         self.addr = addr
         self.transport = transport
@@ -141,11 +141,11 @@ async def backend_anonymous_cmds_factory(addr: BackendOrganizationAddr) -> Backe
 
 
 @asynccontextmanager
-async def backend_administrator_cmds_factory(
+async def backend_administration_cmds_factory(
     addr: BackendAddr, token: str
-) -> BackendAdministratorCmds:
+) -> BackendAdministrationCmds:
     try:
-        async with administrator_transport_factory(addr, token) as transport:
-            yield BackendAdministratorCmds(addr, transport)
+        async with administration_transport_factory(addr, token) as transport:
+            yield BackendAdministrationCmds(addr, transport)
     except TransportError as exc:
         raise BackendNotAvailable(exc) from exc

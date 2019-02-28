@@ -18,7 +18,8 @@ from parsec.api.protocole import (
     ProtocoleError,
     HandshakeRevokedDevice,
     AnonymousClientHandshake,
-    ClientHandshake,
+    AuthenticatedClientHandshake,
+    AdministrationClientHandshake,
 )
 from parsec.core.backend_connection.exceptions import (
     BackendConnectionError,
@@ -31,7 +32,7 @@ from parsec.core.backend_connection.exceptions import (
 __all__ = (
     "authenticated_transport_factory",
     "anonymous_transport_factory",
-    "administrator_transport_factory",
+    "administration_transport_factory",
     "transport_pool_factory",
     "TransportPool",
 )
@@ -44,12 +45,12 @@ async def _connect(
     addr: Union[BackendAddr, BackendOrganizationBootstrapAddr, BackendOrganizationAddr],
     device_id: Optional[DeviceID] = None,
     signing_key: Optional[SigningKey] = None,
-    administrator_token: Optional[str] = None,
+    administration_token: Optional[str] = None,
 ):
-    if administrator_token:
+    if administration_token:
         if not isinstance(addr, BackendAddr):
             raise BackendConnectionError(f"Invalid url format `{addr}`")
-        ch = AnonymousClientHandshake(administrator_token)
+        ch = AdministrationClientHandshake(administration_token)
 
     elif not device_id:
         if isinstance(addr, BackendOrganizationBootstrapAddr):
@@ -70,7 +71,9 @@ async def _connect(
 
         if not signing_key:
             raise BackendConnectionError(f"Missing signing_key to connect as `{device_id}`")
-        ch = ClientHandshake(addr.organization_id, device_id, signing_key, addr.root_verify_key)
+        ch = AuthenticatedClientHandshake(
+            addr.organization_id, device_id, signing_key, addr.root_verify_key
+        )
 
     try:
         stream = await trio.open_tcp_stream(addr.hostname, addr.port)
@@ -160,8 +163,8 @@ async def anonymous_transport_factory(addr: BackendOrganizationAddr) -> Transpor
 
 
 @asynccontextmanager
-async def administrator_transport_factory(addr: BackendAddr, token: str) -> Transport:
-    transport = await _connect(addr, administrator_token=token)
+async def administration_transport_factory(addr: BackendAddr, token: str) -> Transport:
+    transport = await _connect(addr, administration_token=token)
     transport.logger = transport.logger.bind(auth="<anonymous>")
     try:
         yield transport
