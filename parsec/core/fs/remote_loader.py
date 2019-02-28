@@ -44,4 +44,4 @@ class RemoteLoader:
         local_manifest = remote_manifest.to_local()
         raw_local_manifest = local_manifest_serializer.dumps(local_manifest)
 
-        self.local_db.set_local_manifest(access, raw_local_manifest)
+        self.local_db.set_remote_manifest(access, raw_local_manifest)

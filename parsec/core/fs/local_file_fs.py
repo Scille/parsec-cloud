@@ -89,15 +89,12 @@ class LocalFileFS:
 
     def get_block(self, access: BlockAccess) -> bytes:
         try:
-            return self.local_db.get_remote_block(access)
-        except LocalDBMissingEntry:
             return self.local_db.get_local_block(access)
+        except LocalDBMissingEntry:
+            return self.local_db.get_remote_block(access)
 
-    def set_block(self, access: BlockAccess, block: bytes, deletable=False) -> None:
-        if deletable:
-            return self.local_db.set_remote_block(access, block)
-        else:
-            return self.local_db.set_local_block(access, block)
+    def set_block(self, access: BlockAccess, block: bytes) -> None:
+        return self.local_db.set_local_block(access, block)
 
     def _get_cursor_from_fd(self, fd: FileDescriptor) -> FileCursor:
         try:
@@ -278,7 +275,7 @@ class LocalFileFS:
         new_dirty_blocks = []
         for pw in hf.pending_writes:
             block_access = BlockAccess.from_block(pw.data, pw.start)
-            self.set_block(block_access, pw.data, False)
+            self.set_block(block_access, pw.data)
             new_dirty_blocks.append(block_access)
 
         # TODO: clean overwritten dirty blocks

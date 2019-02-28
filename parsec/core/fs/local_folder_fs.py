@@ -83,23 +83,28 @@ class LocalFolderFS:
 
         return _recursive_dump(self.root_access)
 
+    def _get_raw_manifest_from_local_db(self, access: Access) -> LocalManifest:
+        # Try local manifest first
+        try:
+            return self._local_db.get_local_manifest(access)
+        # Then remote manifest
+        except LocalDBMissingEntry:
+            return self._local_db.get_remote_manifest(access)
+
     def _get_manifest_read_only(self, access: Access) -> LocalManifest:
         try:
             return self._manifests_cache[access.id]
         except KeyError:
             pass
         try:
-            raw = self._local_db.get_local_manifest(access)
-        except LocalDBMissingEntry:
-            try:
-                raw = self._local_db.get_remote_manifest(access)
-            except LocalDBMissingEntry as exc:
-                # Last chance: if we are looking for the user manifest, we can
-                # fake to know it version 0, which is useful during boostrap step
-                if access == self.root_access:
-                    manifest = LocalUserManifest(self.local_author)
-                else:
-                    raise FSManifestLocalMiss(access) from exc
+            raw = self._get_raw_manifest_from_local_db(access)
+        except LocalDBMissingEntry as exc:
+            # Last chance: if we are looking for the user manifest, we can
+            # fake to know it version 0, which is useful during boostrap step
+            if access == self.root_access:
+                manifest = LocalUserManifest(self.local_author)
+            else:
+                raise FSManifestLocalMiss(access) from exc
         else:
             manifest = local_manifest_serializer.loads(raw)
         self._manifests_cache[access.id] = manifest
@@ -133,7 +138,10 @@ class LocalFolderFS:
         self._manifests_cache[access.id] = manifest
 
     def mark_outdated_manifest(self, access: Access):
-        self._local_db.clear_local_manifest(access)
+        try:
+            self._local_db.clear_remote_manifest(access)
+        except LocalDBMissingEntry:
+            self._local_db.clear_local_manifest(access)
         self._manifests_cache.pop(access.id, None)
 
     def get_vlob_group(self, path: FsPath) -> UUID:
