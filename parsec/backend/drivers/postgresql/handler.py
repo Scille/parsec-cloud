@@ -37,7 +37,7 @@ async def _init_db(conn):
 
     async with conn.transaction():
         # Init query is divided into multiple parts for readability
-        for part in ("organization", "user", "message", "vlob", "blockstore"):
+        for part in ("organization", "user", "message", "vlob", "block"):
             sub_query = get_sql_query(f"{part}_init")
             await conn.execute(sub_query)
     return False

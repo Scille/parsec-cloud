@@ -24,7 +24,7 @@ from parsec.api.protocole.organization import (
 from parsec.api.protocole.events import events_subscribe_serializer, events_listen_serializer
 from parsec.api.protocole.ping import ping_serializer
 from parsec.api.protocole.message import message_send_serializer, message_get_serializer
-from parsec.api.protocole.blockstore import blockstore_create_serializer, blockstore_read_serializer
+from parsec.api.protocole.block import block_create_serializer, block_read_serializer
 from parsec.api.protocole.vlob import (
     vlob_group_check_serializer,
     vlob_create_serializer,
@@ -76,9 +76,9 @@ __all__ = (
     # Message
     "message_send_serializer",
     "message_get_serializer",
-    # Blockstore
-    "blockstore_create_serializer",
-    "blockstore_read_serializer",
+    # Block
+    "block_create_serializer",
+    "block_read_serializer",
     # Vlob
     "vlob_group_check_serializer",
     "vlob_create_serializer",

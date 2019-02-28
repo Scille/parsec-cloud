@@ -23,8 +23,8 @@ from parsec.api.protocole import (
     vlob_group_update_rights_serializer,
     vlob_group_get_rights_serializer,
     vlob_group_poll_serializer,
-    blockstore_create_serializer,
-    blockstore_read_serializer,
+    block_create_serializer,
+    block_read_serializer,
     user_get_serializer,
     user_find_serializer,
     user_invite_serializer,
@@ -222,19 +222,24 @@ async def vlob_group_poll(
     return (rep["current_checkpoint"], rep["changes"])
 
 
-### Blockstore API ###
+### Block API ###
 
 
-async def blockstore_create(transport: Transport, id: UUID, block: bytes) -> None:
+async def block_create(transport: Transport, id: UUID, vlob_group: UUID, block: bytes) -> None:
     rep = await _send_cmd(
-        transport, blockstore_create_serializer, cmd="blockstore_create", id=id, block=block
+        transport,
+        block_create_serializer,
+        cmd="block_create",
+        id=id,
+        vlob_group=vlob_group,
+        block=block,
     )
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)
 
 
-async def blockstore_read(transport: Transport, id: UUID) -> bytes:
-    rep = await _send_cmd(transport, blockstore_read_serializer, cmd="blockstore_read", id=id)
+async def block_read(transport: Transport, id: UUID) -> bytes:
+    rep = await _send_cmd(transport, block_read_serializer, cmd="block_read", id=id)
     if rep["status"] != "ok":
         raise BackendCmdsBadResponse(rep)
     return rep["block"]

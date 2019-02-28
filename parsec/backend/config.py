@@ -6,7 +6,7 @@ import itertools
 from typing import List
 from collections import defaultdict
 
-__all__ = ("config_factory", "BackendConfig", "BaseBlockstoreConfig")
+__all__ = ("config_factory", "BackendConfig", "BaseBlockStoreConfig")
 
 
 # Must be changed in production obviously !!!
@@ -20,7 +20,7 @@ blockstore_environ_vars = {
 
 
 def _extract_s3_blockstore_config(environ):
-    config = S3BlockstoreConfig()
+    config = S3BlockStoreConfig()
     needed_vars = blockstore_environ_vars["S3"]
     for key in needed_vars:
         try:
@@ -33,7 +33,7 @@ def _extract_s3_blockstore_config(environ):
 
 
 def _extract_swift_blockstore_config(environ):
-    config = SWIFTBlockstoreConfig()
+    config = SWIFTBlockStoreConfig()
     needed_vars = blockstore_environ_vars["SWIFT"]
     for key in needed_vars:
         try:
@@ -92,14 +92,14 @@ def _extract_raid_blockstore_config(type, environ):
         except ValueError as exc:
             raise ValueError(f"Invalid config in `RAID_{sub_index}` config:\n{str(exc)}")
 
-    return RAIDBlockstoreConfig(type=f"RAID{type}", blockstores=tuple(blockstore_configs))
+    return RAIDBlockStoreConfig(type=f"RAID{type}", blockstores=tuple(blockstore_configs))
 
 
 def _extract_blockstore_config(blockstore_type, environ):
     if blockstore_type == "MOCKED":
-        return MockedBlockstoreConfig()
+        return MockedBlockStoreConfig()
     elif blockstore_type == "POSTGRESQL":
-        return PostgreSQLBlockstoreConfig()
+        return PostgreSQLBlockStoreConfig()
     elif blockstore_type == "S3":
         return _extract_s3_blockstore_config(environ)
     elif blockstore_type == "SWIFT":
@@ -114,19 +114,19 @@ def _extract_blockstore_config(blockstore_type, environ):
         )
 
 
-class BaseBlockstoreConfig:
+class BaseBlockStoreConfig:
     pass
 
 
 @attr.s(frozen=True)
-class RAIDBlockstoreConfig(BaseBlockstoreConfig):
+class RAIDBlockStoreConfig(BaseBlockStoreConfig):
     type = attr.ib()
 
-    blockstores: List[BaseBlockstoreConfig] = attr.ib(default=None)
+    blockstores: List[BaseBlockStoreConfig] = attr.ib(default=None)
 
 
 @attr.s(frozen=True)
-class S3BlockstoreConfig(BaseBlockstoreConfig):
+class S3BlockStoreConfig(BaseBlockStoreConfig):
     type = "S3"
 
     s3_region = attr.ib(default=None)
@@ -136,7 +136,7 @@ class S3BlockstoreConfig(BaseBlockstoreConfig):
 
 
 @attr.s(frozen=True)
-class SWIFTBlockstoreConfig(BaseBlockstoreConfig):
+class SWIFTBlockStoreConfig(BaseBlockStoreConfig):
     type = "SWIFT"
 
     swift_authurl = attr.ib(default=None)
@@ -147,12 +147,12 @@ class SWIFTBlockstoreConfig(BaseBlockstoreConfig):
 
 
 @attr.s(frozen=True)
-class PostgreSQLBlockstoreConfig(BaseBlockstoreConfig):
+class PostgreSQLBlockStoreConfig(BaseBlockStoreConfig):
     type = "POSTGRESQL"
 
 
 @attr.s(frozen=True)
-class MockedBlockstoreConfig(BaseBlockstoreConfig):
+class MockedBlockStoreConfig(BaseBlockStoreConfig):
     type = "MOCKED"
 
 
@@ -163,7 +163,7 @@ class BackendConfig:
     db_url: str = None
     db_type: str = None
 
-    blockstore_config: BaseBlockstoreConfig = None
+    blockstore_config: BaseBlockStoreConfig = None
 
     sentry_url: str = None
 

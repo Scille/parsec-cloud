@@ -2,7 +2,7 @@
 
 from .handler import PGHandler, init_db
 from .organization import PGOrganizationComponent
-from .blockstore import PGBlockstoreComponent
+from .block import PGBlockComponent, PGBlockStoreComponent
 from .message import PGMessageComponent
 from .user import PGUserComponent
 from .vlob import PGVlobComponent
@@ -13,7 +13,8 @@ __all__ = [
     "init_db",
     "PGHandler",
     "PGOrganizationComponent",
-    "PGBlockstoreComponent",
+    "PGBlockComponent",
+    "PGBlockStoreComponent",
     "PGMessageComponent",
     "PGUserComponent",
     "PGVlobComponent",

@@ -9,16 +9,12 @@ from botocore.exceptions import (
 from uuid import UUID
 from functools import partial
 
-from parsec.types import DeviceID, OrganizationID
-from parsec.backend.blockstore import (
-    BlockstoreAlreadyExistsError,
-    BaseBlockstoreComponent,
-    BlockstoreNotFoundError,
-    BlockstoreTimeoutError,
-)
+from parsec.types import OrganizationID
+from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
 
 
-class S3BlockstoreComponent(BaseBlockstoreComponent):
+class S3BlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self, s3_region, s3_bucket, s3_key, s3_secret):
         self._s3 = None
         self._s3_bucket = None
@@ -35,20 +31,17 @@ class S3BlockstoreComponent(BaseBlockstoreComponent):
 
         except S3ClientError as exc:
             if exc.response["Error"]["Code"] == "404":
-                raise BlockstoreNotFoundError() from exc
+                raise BlockNotFoundError() from exc
 
             else:
-                raise BlockstoreTimeoutError() from exc
+                raise BlockTimeoutError() from exc
 
         except S3EndpointConnectionError as exc:
-            raise BlockstoreTimeoutError() from exc
+            raise BlockTimeoutError() from exc
 
-        # Remember, to retreive the author: DeviceID(obj["Metadata"]["author"])
         return obj["Body"].read()
 
-    async def create(
-        self, organization_id: OrganizationID, id: UUID, block: bytes, author: DeviceID
-    ) -> None:
+    async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
         slug = f"{organization_id}/{id}"
         try:
             await trio.run_sync_in_worker_thread(
@@ -58,20 +51,14 @@ class S3BlockstoreComponent(BaseBlockstoreComponent):
             if exc.response["Error"]["Code"] == "404":
                 try:
                     await trio.run_sync_in_worker_thread(
-                        partial(
-                            self._s3.put_object,
-                            Bucket=self._s3_bucket,
-                            Key=slug,
-                            Body=block,
-                            Metadata={"author": author},
-                        )
+                        partial(self._s3.put_object, Bucket=self._s3_bucket, Key=slug, Body=block)
                     )
                 except (S3ClientError, S3EndpointConnectionError) as exc:
-                    raise BlockstoreTimeoutError() from exc
+                    raise BlockTimeoutError() from exc
             else:
-                raise BlockstoreTimeoutError() from exc
+                raise BlockTimeoutError() from exc
 
         except S3EndpointConnectionError as exc:
-            raise BlockstoreTimeoutError() from exc
+            raise BlockTimeoutError() from exc
         else:
-            raise BlockstoreAlreadyExistsError()
+            raise BlockAlreadyExistsError()

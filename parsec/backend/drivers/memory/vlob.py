@@ -118,7 +118,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         return changed
 
     async def create(
-        self, organization_id: OrganizationID, author: DeviceID, group: UUID, id: UUID, blob: bytes
+        self, organization_id: OrganizationID, author: DeviceID, id: UUID, group: UUID, blob: bytes
     ) -> None:
         self._create_group_if_needed(organization_id, group, author.user_id)
         if not self._can_write(organization_id, author.user_id, group):
