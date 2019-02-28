@@ -90,7 +90,7 @@ class LocalFolderFS:
             pass
         try:
             raw = self._local_db.get_local_manifest(access)
-        except LocalDBMissingEntry as exc:
+        except LocalDBMissingEntry:
             try:
                 raw = self._local_db.get_remote_manifest(access)
             except LocalDBMissingEntry as exc:
