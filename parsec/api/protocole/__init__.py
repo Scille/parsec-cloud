@@ -13,8 +13,9 @@ from parsec.api.protocole.handshake import (
     HandshakeBadIdentity,
     HandshakeRevokedDevice,
     ServerHandshake,
-    ClientHandshake,
+    AuthenticatedClientHandshake,
     AnonymousClientHandshake,
+    AdministrationClientHandshake,
 )
 from parsec.api.protocole.organization import (
     organization_create_serializer,
@@ -61,8 +62,9 @@ __all__ = (
     "HandshakeBadIdentity",
     "HandshakeRevokedDevice",
     "ServerHandshake",
-    "ClientHandshake",
+    "AuthenticatedClientHandshake",
     "AnonymousClientHandshake",
+    "AdministrationClientHandshake",
     # Organization
     "organization_create_serializer",
     "organization_bootstrap_serializer",

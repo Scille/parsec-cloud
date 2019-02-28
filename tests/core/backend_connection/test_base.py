@@ -5,7 +5,7 @@ import pytest
 from parsec.core.backend_connection import (
     backend_cmds_factory,
     backend_anonymous_cmds_factory,
-    backend_administrator_cmds_factory,
+    backend_administration_cmds_factory,
 )
 
 
@@ -17,9 +17,9 @@ async def test_anonymous_ping(running_backend, coolorg):
 
 
 @pytest.mark.trio
-async def test_administrator_ping(running_backend, backend_addr, backend):
-    async with backend_administrator_cmds_factory(
-        backend_addr, backend.config.administrator_token
+async def test_administration_ping(running_backend, backend_addr, backend):
+    async with backend_administration_cmds_factory(
+        backend_addr, backend.config.administration_token
     ) as cmds:
         pong = await cmds.ping("Hello World !")
         assert pong == "Hello World !"

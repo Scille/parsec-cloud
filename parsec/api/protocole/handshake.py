@@ -4,7 +4,7 @@ import attr
 from secrets import token_bytes
 
 from parsec.crypto import CryptoError
-from parsec.serde import UnknownCheckedSchema, fields
+from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields
 from parsec.api.protocole.base import ProtocoleError, InvalidMessageError, serializer_factory
 
 
@@ -13,6 +13,10 @@ class HandshakeError(ProtocoleError):
 
 
 class HandshakeFailedChallenge(HandshakeError):
+    pass
+
+
+class HandshakeBadAdministrationToken(HandshakeError):
     pass
 
 
@@ -36,12 +40,40 @@ class HandshakeChallengeSchema(UnknownCheckedSchema):
 handshake_challenge_serializer = serializer_factory(HandshakeChallengeSchema)
 
 
-class HandshakeAnswerSchema(UnknownCheckedSchema):
+class HandshakeAuthenticatedAnswerSchema(UnknownCheckedSchema):
     handshake = fields.CheckedConstant("answer", required=True)
+    type = fields.CheckedConstant("authenticated", required=True)
     organization_id = fields.OrganizationID(required=True)
-    device_id = fields.DeviceID(allow_none=True, missing=None)
-    rvk = fields.VerifyKey(allow_none=True, missing=None)
-    answer = fields.Bytes(allow_none=True, missing=None)
+    device_id = fields.DeviceID(required=True)
+    rvk = fields.VerifyKey(required=True)
+    answer = fields.Bytes(required=True)
+
+
+class HandshakeAnonymousAnswerSchema(UnknownCheckedSchema):
+    handshake = fields.CheckedConstant("answer", required=True)
+    type = fields.CheckedConstant("anonymous", required=True)
+    organization_id = fields.OrganizationID(required=True)
+    # Cannot provide rvk during organization bootstrap
+    rvk = fields.VerifyKey(missing=None)
+
+
+class HandshakeAdministrationAnswerSchema(UnknownCheckedSchema):
+    handshake = fields.CheckedConstant("answer", required=True)
+    type = fields.CheckedConstant("administration", required=True)
+    token = fields.String(required=True)
+
+
+class HandshakeAnswerSchema(OneOfSchema):
+    type_field = "type"
+    type_field_remove = False
+    type_schemas = {
+        "authenticated": HandshakeAuthenticatedAnswerSchema(),
+        "anonymous": HandshakeAnonymousAnswerSchema(),
+        "administration": HandshakeAdministrationAnswerSchema(),
+    }
+
+    def get_obj_type(self, obj):
+        return obj["type"]
 
 
 handshake_answer_serializer = serializer_factory(HandshakeAnswerSchema)
@@ -60,9 +92,8 @@ handshake_result_serializer = serializer_factory(HandshakeResultSchema)
 class ServerHandshake:
     challenge_size = attr.ib(default=48)
     challenge = attr.ib(default=None)
-    answer = attr.ib(default=None)
-    device_id = attr.ib(default=None)
-    root_verify_key = attr.ib(default=None)
+    answer_type = attr.ib(default=None)
+    answer_data = attr.ib(default=None)
     state = attr.ib(default="stalled")
 
     def is_anonymous(self):
@@ -85,14 +116,9 @@ class ServerHandshake:
 
         data = handshake_answer_serializer.loads(req)
 
-        defined_fields = [x for x in [data["device_id"], data["answer"]] if x]
-        if len(defined_fields) not in (0, 2):
-            raise InvalidMessageError("Field device_id and answer must be set together")
-
-        self.answer = data["answer"] or b""
-        self.organization_id = data["organization_id"]
-        self.root_verify_key = data["rvk"]
-        self.device_id = data["device_id"]
+        data.pop("handshake")
+        self.answer_type = data.pop("type")
+        self.answer_data = data
         self.state = "answer"
 
     def build_bad_format_result_req(self, help="Invalid params") -> bytes:
@@ -102,6 +128,17 @@ class ServerHandshake:
         self.state = "result"
         return handshake_result_serializer.dumps(
             {"handshake": "result", "result": "bad_format", "help": help}
+        )
+
+    def build_bad_administration_token_result_req(
+        self, help="Invalid administration token"
+    ) -> bytes:
+        if not self.state == "answer":
+            raise HandshakeError("Invalid state.")
+
+        self.state = "result"
+        return handshake_result_serializer.dumps(
+            {"handshake": "result", "result": "bad_admin_token", "help": help}
         )
 
     def build_bad_identity_result_req(self, help="Unknown Organization or Device") -> bytes:
@@ -140,9 +177,14 @@ class ServerHandshake:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
 
-        if verify_key:
+        if self.answer_type == "authenticated":
+            if not verify_key:
+                raise HandshakeError(
+                    "`verify_key` param must be provided for authenticated handshake"
+                )
+
             try:
-                returned_challenge = verify_key.verify(self.answer)
+                returned_challenge = verify_key.verify(self.answer_data["answer"])
                 if returned_challenge != self.challenge:
                     raise HandshakeFailedChallenge("Invalid returned challenge")
 
@@ -153,26 +195,7 @@ class ServerHandshake:
         return handshake_result_serializer.dumps({"handshake": "result", "result": "ok"})
 
 
-@attr.s
-class ClientHandshake:
-    organization_id = attr.ib()
-    device_id = attr.ib()
-    user_signkey = attr.ib()
-    root_verify_key = attr.ib()
-
-    def process_challenge_req(self, req: bytes) -> bytes:
-        data = handshake_challenge_serializer.loads(req)
-        answer = self.user_signkey.sign(data["challenge"])
-        return handshake_answer_serializer.dumps(
-            {
-                "handshake": "answer",
-                "organization_id": self.organization_id,
-                "device_id": self.device_id,
-                "rvk": self.root_verify_key,
-                "answer": answer,
-            }
-        )
-
+class BaseClientHandshake:
     def process_result_req(self, req: bytes) -> bytes:
         data = handshake_result_serializer.loads(req)
         if data["result"] != "ok":
@@ -185,6 +208,9 @@ class ClientHandshake:
             elif data["result"] == "revoked_device":
                 raise HandshakeRevokedDevice(data["help"])
 
+            if data["result"] == "bad_admin_token":
+                raise HandshakeBadAdministrationToken(data["help"])
+
             else:
                 raise InvalidMessageError(
                     f"Bad `result` handshake: {data['result']} ({data['help']})"
@@ -192,7 +218,29 @@ class ClientHandshake:
 
 
 @attr.s
-class AnonymousClientHandshake:
+class AuthenticatedClientHandshake(BaseClientHandshake):
+    organization_id = attr.ib()
+    device_id = attr.ib()
+    user_signkey = attr.ib()
+    root_verify_key = attr.ib()
+
+    def process_challenge_req(self, req: bytes) -> bytes:
+        data = handshake_challenge_serializer.loads(req)
+        answer = self.user_signkey.sign(data["challenge"])
+        return handshake_answer_serializer.dumps(
+            {
+                "handshake": "answer",
+                "type": "authenticated",
+                "organization_id": self.organization_id,
+                "device_id": self.device_id,
+                "rvk": self.root_verify_key,
+                "answer": answer,
+            }
+        )
+
+
+@attr.s
+class AnonymousClientHandshake(BaseClientHandshake):
     organization_id = attr.ib()
     root_verify_key = attr.ib(default=None)
 
@@ -201,21 +249,19 @@ class AnonymousClientHandshake:
         return handshake_answer_serializer.dumps(
             {
                 "handshake": "answer",
+                "type": "anonymous",
                 "organization_id": self.organization_id,
                 "rvk": self.root_verify_key,
             }
         )
 
-    def process_result_req(self, req: bytes) -> bytes:
-        data = handshake_result_serializer.loads(req)
-        if data["result"] != "ok":
-            if data["result"] == "bad_identity":
-                raise HandshakeBadIdentity(data["help"])
 
-            elif data["result"] == "rvk_mismatch":
-                raise HandshakeRVKMismatch(data["help"])
+@attr.s
+class AdministrationClientHandshake(BaseClientHandshake):
+    token = attr.ib()
 
-            else:
-                raise InvalidMessageError(
-                    f"Bad `result` handshake: {data['result']} ({data['help']})"
-                )
+    def process_challenge_req(self, req: bytes) -> bytes:
+        handshake_challenge_serializer.loads(req)  # Sanity check
+        return handshake_answer_serializer.dumps(
+            {"handshake": "answer", "type": "administration", "token": self.token}
+        )

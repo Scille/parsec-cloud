@@ -42,14 +42,14 @@ async def organization_bootstrap(
 
 
 @pytest.mark.trio
-async def test_organization_create_already_exists(administrator_backend_sock, coolorg):
-    rep = await organization_create(administrator_backend_sock, coolorg.organization_id)
+async def test_organization_create_already_exists(administration_backend_sock, coolorg):
+    rep = await organization_create(administration_backend_sock, coolorg.organization_id)
     assert rep["status"] == "already_exists"
 
 
 @pytest.mark.trio
-async def test_organization_create_bad_name(administrator_backend_sock):
-    rep = await organization_create(administrator_backend_sock, "a" * 33)
+async def test_organization_create_bad_name(administration_backend_sock):
+    rep = await organization_create(administration_backend_sock, "a" * 33)
     assert rep["status"] == "bad_message"
 
 
@@ -59,7 +59,7 @@ async def test_organization_create_and_bootstrap(
     organization_factory,
     local_device_factory,
     alice,
-    administrator_backend_sock,
+    administration_backend_sock,
     backend_sock_factory,
 ):
     neworg = organization_factory("NewOrg")
@@ -67,7 +67,7 @@ async def test_organization_create_and_bootstrap(
     # 1) Create organization, note this means `neworg.bootstrap_token`
     # will contain an invalid token
 
-    rep = await organization_create(administrator_backend_sock, neworg.organization_id)
+    rep = await organization_create(administration_backend_sock, neworg.organization_id)
     assert rep == {"status": "ok", "bootstrap_token": ANY}
     bootstrap_token = rep["bootstrap_token"]
 

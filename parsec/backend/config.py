@@ -6,12 +6,11 @@ import itertools
 from typing import List
 from collections import defaultdict
 
-
 __all__ = ("config_factory", "BackendConfig", "BaseBlockstoreConfig")
 
 
 # Must be changed in production obviously !!!
-DEFAULT_ADMINISTRATOR_TOKEN = "CCDCC27B6108438D99EF8AF5E847C3BB"
+DEFAULT_ADMINISTRATION_TOKEN = "CCDCC27B6108438D99EF8AF5E847C3BB"
 
 
 blockstore_environ_vars = {
@@ -159,7 +158,7 @@ class MockedBlockstoreConfig(BaseBlockstoreConfig):
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class BackendConfig:
-    administrator_token: str = None
+    administration_token: str = None
 
     db_url: str = None
     db_type: str = None
@@ -188,7 +187,9 @@ def config_factory(
     config["blockstore_config"] = _extract_blockstore_config(blockstore_type, environ)
 
     # TODO: turn this mandatory to avoid misconfiguration ?
-    config["administrator_token"] = environ.get("ADMINISTRATOR_TOKEN", DEFAULT_ADMINISTRATOR_TOKEN)
+    config["administration_token"] = environ.get(
+        "ADMINISTRATION_TOKEN", DEFAULT_ADMINISTRATION_TOKEN
+    )
 
     config["sentry_url"] = environ.get("SENTRY_URL") or None
 

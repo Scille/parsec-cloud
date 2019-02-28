@@ -18,7 +18,7 @@ from parsec.core.config import get_default_config_dir, load_config
 from parsec.core.backend_connection import (
     BackendCmdsBadResponse,
     backend_cmds_factory,
-    backend_administrator_cmds_factory,
+    backend_administration_cmds_factory,
     backend_anonymous_cmds_factory,
 )
 from parsec.core.devices_manager import generate_new_device, save_device_with_password
@@ -26,7 +26,7 @@ from parsec.core.devices_manager import load_device_with_password
 from parsec.core.invite_claim import generate_invitation_token, invite_and_create_device
 from parsec.core.invite_claim import invite_and_create_user, claim_device, claim_user
 
-from parsec.backend.config import DEFAULT_ADMINISTRATOR_TOKEN
+from parsec.backend.config import DEFAULT_ADMINISTRATION_TOKEN
 
 
 async def retry(corofn, *args, retries=10, tick=0.1):
@@ -80,7 +80,7 @@ async def amain(
     alice_workspace="alicews",
     bob_workspace="bobws",
     password="test",
-    administrator_token=DEFAULT_ADMINISTRATOR_TOKEN,
+    administration_token=DEFAULT_ADMINISTRATION_TOKEN,
     force=False,
 ):
 
@@ -96,7 +96,7 @@ async def amain(
 
     # Create organization
 
-    async with backend_administrator_cmds_factory(backend_address, administrator_token) as cmds:
+    async with backend_administration_cmds_factory(backend_address, administration_token) as cmds:
 
         bootstrap_token = await cmds.organization_create(organization_id)
 
