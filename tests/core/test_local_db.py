@@ -94,13 +94,13 @@ def test_local_manual_run_block_garbage_collector(local_db):
     local_db.set_remote_block(access_deletable, b"deletable_data")
 
     local_db.run_block_garbage_collector()
-    local_db.get_remote_block(access_precious) == b"precious_data"
+    local_db.get_local_block(access_precious) == b"precious_data"
     with pytest.raises(LocalDBMissingEntry):
         local_db.get_remote_block(access_deletable)
 
 
 def test_local_automatic_run_garbage_collector(local_db):
-    local_db.max_cache_size = 2 * block_size
+    local_db.max_cache_size = 1 * block_size
 
     access_a = ManifestAccess()
     local_db.set_local_block(access_a, b"a" * 10)
