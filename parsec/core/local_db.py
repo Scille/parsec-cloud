@@ -265,16 +265,15 @@ class LocalDB:
         # Update database
         cursor = self.local_conn.cursor()
         cursor.execute(
-            """INSERT OR REPLACE INTO local_blocks (block_id, size, offline, file_path)
-            VALUES (?, ?, ?, ?)""",
-            (str(access.id), len(ciphered), False, str(file)),
+            """INSERT OR REPLACE INTO
+            local_blocks (block_id, size, offline, accessed_on, file_path)
+            VALUES (?, ?, ?, ?, ?)""",
+            (str(access.id), len(ciphered), False, str(Pendulum.now()), str(file)),
         )
         cursor.close()
 
         # Write file
         self._write_file(access, ciphered, False)
-
-        #  TODO offline
 
     def get_remote_block(self, access: Access):
         file = self._remote_db_files / str(access.id)
@@ -297,9 +296,10 @@ class LocalDB:
         # Update database
         cursor = self.remote_conn.cursor()
         cursor.execute(
-            """INSERT OR REPLACE INTO remote_blocks (block_id, size, offline, file_path)
-            VALUES (?, ?, ?, ?)""",
-            (str(access.id), len(ciphered), False, str(file)),
+            """INSERT OR REPLACE INTO remote_blocks
+            (block_id, size, offline, accessed_on, file_path)
+            VALUES (?, ?, ?, ?, ?)""",
+            (str(access.id), len(ciphered), False, str(Pendulum.now()), str(file)),
         )
         cursor.close()
 
@@ -383,8 +383,13 @@ class LocalDB:
 
     def cleanup_blocks(self, limit=None):
         cursor = self.remote_conn.cursor()
-        limit_string = f" limit {limit}" if limit is not None else ""
-        cursor.execute("SELECT block_id from remote_blocks" + limit_string)
+        limit_string = f" LIMIT {limit}" if limit is not None else ""
+        cursor.execute(
+            """
+            SELECT block_id FROM remote_blocks ORDER BY accessed_on ASC
+            """
+            + limit_string
+        )
         block_ids = [block_id for (block_id,) in cursor.fetchall()]
         cursor.close()
         for block_id in block_ids:
