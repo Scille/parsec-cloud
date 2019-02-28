@@ -80,9 +80,6 @@ class EventBus:
         return EventBusConnectionContext(self)
 
     def send(self, event, **kwargs):
-        if event not in ("event.disconnected", "event.connected"):
-            logger.warning("send event", ebid=id(self), event_name=event, kwargs=kwargs)
-
         for cb in self._event_handlers[event]:
             cb(event, **kwargs)
 
