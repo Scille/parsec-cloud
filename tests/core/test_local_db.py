@@ -76,7 +76,7 @@ def test_local_db_on_disk(tmpdir, local_db):
     local_db.set_remote_manifest(vlob_access, b"vlob_data")
     block_access = ManifestAccess()
     local_db.set_remote_block(block_access, b"block_data")
-    local_db.close(False)
+    local_db.close()
 
     with LocalDB(tmpdir, max_cache_size=128 * block_size) as local_db_copy:
         vlob_data = local_db_copy.get_remote_manifest(vlob_access)

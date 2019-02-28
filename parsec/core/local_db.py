@@ -61,29 +61,29 @@ class LocalDB:
         self.local_conn = sqlite3.connect(str(self._path / "local.sqlite"))
         self.remote_conn = sqlite3.connect(str(self._path / "remote.sqlite"))
 
-        # Use auto-commit
+        # Use auto-commit for local data since it is very sensitive
         self.local_conn.isolation_level = None
 
         # Initialize
         self.create_db()
         self.nb_remote_blocks = self.get_nb_remote_blocks()
 
-    def close(self, local: bool):
-        if local:
-            conn = self.local_conn
-        else:
-            conn = self.remote_conn
-
+    def close(self):
         # Idempotency
-        if conn is None:
+        if self.local_conn is None and self.remote_conn is None:
             return
 
-        # Commit, just in case
-        conn.commit()
-
-        # Close the connection
-        conn.close()
-        conn = None
+        # Write changes to the disk and close the connections
+        try:
+            # Local connection uses auto-commit
+            # But let's perform a commit anyway, just in case
+            self.local_conn.commit()
+            self.local_conn.close()
+            self.local_conn = None
+        finally:
+            self.remote_conn.commit()
+            self.remote_conn.close()
+            self.remote_conn = None
 
     # Context management
 
@@ -92,8 +92,7 @@ class LocalDB:
         return self
 
     def __exit__(self, *args):
-        self.close(False)
-        self.close(True)
+        self.close()
 
     # Database initialization
 
