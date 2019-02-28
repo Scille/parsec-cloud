@@ -46,10 +46,10 @@ def test_local_db_set_get_clear_block(local_db):
     data = local_db.get_remote_block(access)
     assert data == b"data"
 
-    local_db.clear_block(access)
+    local_db.clear_remote_block(access)
 
     with pytest.raises(LocalDBMissingEntry):
-        local_db.clear_block(access)
+        local_db.clear_remote_block(access)
 
     with pytest.raises(LocalDBMissingEntry):
         local_db.get_remote_block(access)
@@ -62,10 +62,10 @@ def test_local_db_set_get_clear_manifest(local_db):
     data = local_db.get_remote_manifest(access)
     assert data == b"data"
 
-    local_db.clear_manifest(access)
+    local_db.clear_remote_manifest(access)
 
     with pytest.raises(LocalDBMissingEntry):
-        local_db.clear_manifest(access)
+        local_db.clear_remote_manifest(access)
 
     with pytest.raises(LocalDBMissingEntry):
         local_db.get_remote_manifest(access)
@@ -156,9 +156,9 @@ def test_local_db_stateful(tmpdir, hypothesis_settings):
             access, expected_data = entry
             if access.id in self.cleared_precious_data:
                 with pytest.raises(LocalDBMissingEntry):
-                    self.local_db.get_remote_block(access)
+                    self.local_db.get_local_block(access)
             else:
-                data = self.local_db.get_remote_block(access)
+                data = self.local_db.get_local_block(access)
                 assert data == expected_data
 
         @rule(entry=DeletableEntry)
@@ -189,16 +189,16 @@ def test_local_db_stateful(tmpdir, hypothesis_settings):
             access, _ = entry
             if access.id in self.cleared_precious_data:
                 with pytest.raises(LocalDBMissingEntry):
-                    self.local_db.clear_block(access)
+                    self.local_db.clear_local_block(access)
             else:
-                self.local_db.clear_block(access)
+                self.local_db.clear_local_block(access)
                 self.cleared_precious_data.add(access.id)
 
         @rule(entry=DeletableEntry)
         def clear_deletable_data(self, entry):
             access, _ = entry
             try:
-                self.local_db.clear_block(access)
+                self.local_db.clear_remote_block(access)
             except LocalDBMissingEntry:
                 pass
 

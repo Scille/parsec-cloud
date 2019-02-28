@@ -133,7 +133,7 @@ class LocalFolderFS:
         self._manifests_cache[access.id] = manifest
 
     def mark_outdated_manifest(self, access: Access):
-        self._local_db.clear_manifest(access)
+        self._local_db.clear_local_manifest(access)
         self._manifests_cache.pop(access.id, None)
 
     def get_vlob_group(self, path: FsPath) -> UUID:

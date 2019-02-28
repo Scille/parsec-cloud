@@ -313,18 +313,16 @@ class LocalDB:
             limit = self.nb_remote_blocks - self.block_limit
             self.cleanup_blocks(limit=limit)
 
-        #  TODO offline
-
     # Clear operations
 
-    def clear_block(self, access):
+    def clear_remote_block(self, access):
         cursor = self.remote_conn.cursor()
         cursor.execute("DELETE FROM remote_blocks WHERE block_id = ?", (str(access.id),))
         cursor.close()
         self.nb_remote_blocks -= 1
         self._remove_file(access, True)
 
-    def clear_manifest(self, access: Access):
+    def clear_remote_manifest(self, access: Access):
         cursor = self.remote_conn.cursor()
         cursor.execute("DELETE FROM remote_vlobs WHERE vlob_id = ?", (str(access.id),))
         cursor.execute("SELECT changes()")
@@ -333,11 +331,21 @@ class LocalDB:
         if not deleted:
             raise LocalDBMissingEntry(access)
 
-    def clear_non_deletable_blocks_and_manifests(self):
-        cursor = self.conn.cursor()
-        cursor.execute("DELETE FROM local_vlobs")
-        cursor.execute("DELETE FROM local_blocks")
+    def clear_local_block(self, access):
+        cursor = self.local_conn.cursor()
+        cursor.execute("DELETE FROM local_blocks WHERE block_id = ?", (str(access.id),))
         cursor.close()
+        self.nb_remote_blocks -= 1
+        self._remove_file(access, False)
+
+    def clear_local_manifest(self, access: Access):
+        cursor = self.local_conn.cursor()
+        cursor.execute("DELETE FROM local_vlobs WHERE vlob_id = ?", (str(access.id),))
+        cursor.execute("SELECT changes()")
+        deleted, = cursor.fetchone()
+        cursor.close()
+        if not deleted:
+            raise LocalDBMissingEntry(access)
 
     # Block file operations
 
@@ -381,7 +389,7 @@ class LocalDB:
         block_ids = [block_id for (block_id,) in cursor.fetchall()]
         cursor.close()
         for block_id in block_ids:
-            self.clear_block(ManifestAccess(block_id))
+            self.clear_remote_block(ManifestAccess(block_id))
 
     def run_block_garbage_collector(self):
         self.cleanup_blocks()
