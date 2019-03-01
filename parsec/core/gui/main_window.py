@@ -88,7 +88,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def showMaximized(self):
         super().showMaximized()
         QCoreApplication.processEvents()
-        if settings.get_value("global/first_launch", "true"):
+        if settings.get_value("global/first_launch", "true") or True:
             self.show_starting_guide()
             settings.set_value("global/first_launch", False)
 

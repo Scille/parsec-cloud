@@ -164,67 +164,67 @@
 <context>
     <name>ClaimDeviceWidget</name>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="14"/>
+        <location filename="../forms/claim_device_widget.ui" line="20"/>
         <source>Form</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="39"/>
+        <location filename="../forms/claim_device_widget.ui" line="45"/>
         <source>To register a new device, you need an existing device to declare a new device and get the resulting token.</source>
         <translation>Pour enregistrer un nouvel appareil, vous avez besoin d&apos;un appareil existant afin de déclarer le nouveau et obtenir un jeton.</translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="161"/>
+        <location filename="../forms/claim_device_widget.ui" line="167"/>
         <source>User name</source>
         <translation>Nom d&apos;utilisateur</translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="201"/>
+        <location filename="../forms/claim_device_widget.ui" line="207"/>
         <source>Device name</source>
         <translation>Nom de l&apos;appareil</translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="241"/>
+        <location filename="../forms/claim_device_widget.ui" line="247"/>
         <source>Token</source>
         <translation>Jeton</translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="278"/>
+        <location filename="../forms/claim_device_widget.ui" line="284"/>
         <source>URL</source>
         <translation>URL</translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="336"/>
+        <location filename="../forms/claim_device_widget.ui" line="342"/>
         <source>Password</source>
         <translation>Mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="385"/>
+        <location filename="../forms/claim_device_widget.ui" line="391"/>
         <source>Password check</source>
         <translation>Vérification du mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="484"/>
+        <location filename="../forms/claim_device_widget.ui" line="490"/>
         <source>PKCS #11 Token</source>
         <translation>Jeton de la PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="527"/>
+        <location filename="../forms/claim_device_widget.ui" line="533"/>
         <source>PKCS #11 Key</source>
         <translation>Clef de la PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="568"/>
+        <location filename="../forms/claim_device_widget.ui" line="574"/>
         <source>Authenticate using PKCS #11</source>
         <translation>S&apos;authentifier en utilisant une PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="604"/>
+        <location filename="../forms/claim_device_widget.ui" line="610"/>
         <source>Cancel</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="622"/>
+        <location filename="../forms/claim_device_widget.ui" line="628"/>
         <source>Register</source>
         <translation>Enregistrer</translation>
     </message>
@@ -257,67 +257,67 @@
 <context>
     <name>ClaimUserWidget</name>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="14"/>
+        <location filename="../forms/claim_user_widget.ui" line="20"/>
         <source>Form</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="41"/>
+        <location filename="../forms/claim_user_widget.ui" line="47"/>
         <source>To register a new user, you need another user to create an account and get a token.</source>
         <translation>Pour enregistrer un nouvel utilisateur, vous avez besoin qu&apos;un utilisateur existant crée le compte et vous fournisse le jeton.</translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="179"/>
+        <location filename="../forms/claim_user_widget.ui" line="185"/>
         <source>User name</source>
         <translation>Nom d&apos;utilisateur</translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="219"/>
+        <location filename="../forms/claim_user_widget.ui" line="225"/>
         <source>Device name</source>
         <translation>Nom de l&apos;appareil</translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="259"/>
+        <location filename="../forms/claim_user_widget.ui" line="265"/>
         <source>Token</source>
         <translation>Jeton</translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="296"/>
+        <location filename="../forms/claim_user_widget.ui" line="302"/>
         <source>URL</source>
         <translation>URL</translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="354"/>
+        <location filename="../forms/claim_user_widget.ui" line="360"/>
         <source>Password</source>
         <translation>Mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="403"/>
+        <location filename="../forms/claim_user_widget.ui" line="409"/>
         <source>Password check</source>
         <translation>Vérification du mot de passe</translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="505"/>
+        <location filename="../forms/claim_user_widget.ui" line="511"/>
         <source>PKCS #11 Token</source>
         <translation>Jeton de la PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="548"/>
+        <location filename="../forms/claim_user_widget.ui" line="554"/>
         <source>PKCS #11 Key</source>
         <translation>Clef de la PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="589"/>
+        <location filename="../forms/claim_user_widget.ui" line="595"/>
         <source>Authenticate using PKCS #11</source>
         <translation>S&apos;authentifier en utilisant une PKCS #11</translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="625"/>
+        <location filename="../forms/claim_user_widget.ui" line="631"/>
         <source>Cancel</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="643"/>
+        <location filename="../forms/claim_user_widget.ui" line="649"/>
         <source>Register</source>
         <translation>Enregistrer</translation>
     </message>
@@ -2054,6 +2054,21 @@ Security waits for no one!</source>
         <translation type="obsolete">Créez votre premier espace de travail, importez vos fichiers, partagez vos documents, ...
 Vous n&apos;avez plus qu&apos;à vous lancer, car la sécurité n&apos;attend pas!</translation>
     </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="154"/>
+        <source>End</source>
+        <translation>Terminer</translation>
+    </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="179"/>
+        <source>Continue</source>
+        <translation>Continuer</translation>
+    </message>
+    <message>
+        <location filename="../starting_guide_dialog.py" line="174"/>
+        <source>Start</source>
+        <translation>Démarrer</translation>
+    </message>
 </context>
 <context>
     <name>StartingGuideDialog</name>
@@ -2254,17 +2269,17 @@ Cet utilisateur a été révoqué.</translation>
         <translation>Partager</translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="199"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="205"/>
         <source>Read</source>
         <translation>Lecture</translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="229"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="235"/>
         <source>Write</source>
         <translation>Écriture</translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="342"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="348"/>
         <source>Close</source>
         <translation>Fermer</translation>
     </message>
