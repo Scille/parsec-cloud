@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
+import warnings
 from math import inf
 from typing import List, Optional
 
@@ -93,8 +94,23 @@ class LocalFileFS:
         except LocalDBMissingEntry:
             return self.local_db.get_remote_block(access)
 
-    def set_block(self, access: BlockAccess, block: bytes) -> None:
+    def set_local_block(self, access: BlockAccess, block: bytes) -> None:
         return self.local_db.set_local_block(access, block)
+
+    def set_remote_block(self, access: BlockAccess, block: bytes) -> None:
+        return self.local_db.set_remote_block(access, block)
+
+    def clear_local_block(self, access: BlockAccess) -> None:
+        try:
+            self.local_db.clear_local_block(access)
+        except LocalDBMissingEntry:
+            warnings.warn("Tried to remove a dirty block that doesn't exist anymore")
+
+    def clear_remote_block(self, access: BlockAccess) -> None:
+        try:
+            self.local_db.clear_remote_block(access)
+        except LocalDBMissingEntry:
+            pass
 
     def _get_cursor_from_fd(self, fd: FileDescriptor) -> FileCursor:
         try:
@@ -275,7 +291,7 @@ class LocalFileFS:
         new_dirty_blocks = []
         for pw in hf.pending_writes:
             block_access = BlockAccess.from_block(pw.data, pw.start)
-            self.set_block(block_access, pw.data)
+            self.set_local_block(block_access, pw.data)
             new_dirty_blocks.append(block_access)
 
         # TODO: clean overwritten dirty blocks
@@ -283,7 +299,7 @@ class LocalFileFS:
             dirty_blocks=(*manifest.dirty_blocks, *new_dirty_blocks), size=hf.size
         )
 
-        self.local_folder_fs.set_manifest(cursor.access, manifest)
+        self.local_folder_fs.set_local_manifest(cursor.access, manifest)
 
         hf.pending_writes.clear()
         self.event_bus.send("fs.entry.updated", id=cursor.access.id)
