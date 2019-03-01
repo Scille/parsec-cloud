@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>358</width>
-    <height>419</height>
+    <width>488</width>
+    <height>465</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -157,6 +157,12 @@ font-weight: bold;
 </string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
          <property name="topMargin">
           <number>0</number>
          </property>
@@ -177,7 +183,7 @@ font-weight: bold;
           <widget class="QLabel" name="label">
            <property name="minimumSize">
             <size>
-             <width>55</width>
+             <width>90</width>
              <height>0</height>
             </size>
            </property>
@@ -207,7 +213,7 @@ font-weight: bold;
           <widget class="QLabel" name="label_2">
            <property name="minimumSize">
             <size>
-             <width>55</width>
+             <width>90</width>
              <height>0</height>
             </size>
            </property>
@@ -258,8 +264,8 @@ font-weight: bold;
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>340</width>
-           <height>242</height>
+           <width>470</width>
+           <height>288</height>
           </rect>
          </property>
          <property name="styleSheet">

@@ -42,7 +42,7 @@ image: url(:/icons/images/icons/checked.png)
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="spacing">
-    <number>40</number>
+    <number>10</number>
    </property>
    <property name="leftMargin">
     <number>10</number>
@@ -67,13 +67,13 @@ image: url(:/icons/images/icons/checked.png)
     <widget class="QCheckBox" name="checkbox_read">
      <property name="minimumSize">
       <size>
-       <width>20</width>
+       <width>70</width>
        <height>20</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>20</width>
+       <width>70</width>
        <height>20</height>
       </size>
      </property>
@@ -86,13 +86,13 @@ image: url(:/icons/images/icons/checked.png)
     <widget class="QCheckBox" name="checkbox_write">
      <property name="minimumSize">
       <size>
-       <width>20</width>
+       <width>70</width>
        <height>20</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>20</width>
+       <width>70</width>
        <height>20</height>
       </size>
      </property>
