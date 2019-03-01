@@ -720,32 +720,32 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="193"/>
+        <location filename="../forms/menu_widget.ui" line="187"/>
         <source>   Documents</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="249"/>
+        <location filename="../forms/menu_widget.ui" line="243"/>
         <source>   Users</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="305"/>
+        <location filename="../forms/menu_widget.ui" line="299"/>
         <source>   Devices</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="364"/>
+        <location filename="../forms/menu_widget.ui" line="358"/>
         <source>   Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="448"/>
+        <location filename="../forms/menu_widget.ui" line="442"/>
         <source>Disconnected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="614"/>
+        <location filename="../forms/menu_widget.ui" line="608"/>
         <source>   Log Out</source>
         <translation type="unfinished"></translation>
     </message>

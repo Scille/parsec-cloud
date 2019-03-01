@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS>
-<TS version="2.1" language="fr">
+<!DOCTYPE TS><TS version="2.0" language="fr" sourcelanguage="">
 <context>
     <name>BootstrapOrganizationWidget</name>
     <message>
@@ -265,7 +264,7 @@
     <message>
         <location filename="../forms/claim_user_widget.ui" line="41"/>
         <source>To register a new user, you need another user to create an account and get a token.</source>
-        <translation>Pour enregistrer un nouvel utilisateur, vous avez besoin qu&apos;un utilisateur existant créer le compte et vous fournisse le jeton.</translation>
+        <translation>Pour enregistrer un nouvel utilisateur, vous avez besoin qu&apos;un utilisateur existant crée le compte et vous fournisse le jeton.</translation>
     </message>
     <message>
         <location filename="../forms/claim_user_widget.ui" line="179"/>
@@ -1246,32 +1245,32 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="193"/>
+        <location filename="../forms/menu_widget.ui" line="187"/>
         <source>   Documents</source>
         <translation>   Documents</translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="249"/>
+        <location filename="../forms/menu_widget.ui" line="243"/>
         <source>   Users</source>
         <translation>   Utilisateurs</translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="305"/>
+        <location filename="../forms/menu_widget.ui" line="299"/>
         <source>   Devices</source>
         <translation>   Appareils</translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="364"/>
+        <location filename="../forms/menu_widget.ui" line="358"/>
         <source>   Settings</source>
         <translation>   Configuration</translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="448"/>
+        <location filename="../forms/menu_widget.ui" line="442"/>
         <source>Disconnected</source>
         <translation>Déconnecté</translation>
     </message>
     <message>
-        <location filename="../forms/menu_widget.ui" line="614"/>
+        <location filename="../forms/menu_widget.ui" line="608"/>
         <source>   Log Out</source>
         <translation>   Se déconnecter</translation>
     </message>

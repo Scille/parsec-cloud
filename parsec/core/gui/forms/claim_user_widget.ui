@@ -26,7 +26,7 @@ background-color: rgb(12, 65, 156);
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>55</height>
+       <height>16777215</height>
       </size>
      </property>
      <property name="font">
