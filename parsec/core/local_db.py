@@ -184,6 +184,15 @@ class LocalDB:
 
     # Generic manifest operations
 
+    def _check_presence(self, conn: Connection, access: Access):
+        cursor = conn.cursor()
+        res = cursor.execute(
+            "SELECT manifest_id FROM manifests WHERE manifest_id = ?", (str(access.id),)
+        )
+        result = res.fetchone()
+        cursor.close()
+        return bool(result)
+
     def _get_manifest(self, conn: Connection, access: Access):
         cursor = conn.cursor()
         res = cursor.execute(
@@ -223,6 +232,8 @@ class LocalDB:
         return self._get_manifest(self.remote_conn, access)
 
     def set_remote_manifest(self, access: Access, raw: bytes):
+        if self._check_presence(self.local_conn, access):
+            raise ValueError("Cannot set remote manifest: a local manifest is already present")
         self._set_manifest(self.remote_conn, access, raw)
 
     def clear_remote_manifest(self, access: Access):
@@ -234,6 +245,8 @@ class LocalDB:
         return self._get_manifest(self.local_conn, access)
 
     def set_local_manifest(self, access: Access, raw: bytes):
+        if self._check_presence(self.remote_conn, access):
+            raise ValueError("Cannot set local manifest: a remote manifest is already present")
         self._set_manifest(self.local_conn, access, raw)
 
     def clear_local_manifest(self, access: Access):
@@ -276,8 +289,8 @@ class LocalDB:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM blocks WHERE block_id = ?", (str(access.id),))
         cursor.close()
-        self.nb_remote_blocks -= 1
         self._remove_file(access, path)
+        self.nb_remote_blocks -= 1
 
     # Remote block operations
 
