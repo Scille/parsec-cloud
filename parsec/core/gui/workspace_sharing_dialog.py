@@ -16,12 +16,16 @@ from parsec.core.gui.ui.sharing_widget import Ui_SharingWidget
 class SharingWidget(QWidget, Ui_SharingWidget):
     remove_clicked = pyqtSignal(QWidget)
 
-    def __init__(self, name, read, write, *args, **kwargs):
+    def __init__(self, name, is_current_user, read, write, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.label_name.setText(name)
         self.checkbox_read.setChecked(read)
         self.checkbox_write.setChecked(write)
+        if is_current_user:
+            self.checkbox_read.hide()
+            self.checkbox_write.hide()
+            self.button_remove.hide()
         self.button_remove.clicked.connect(self.remove)
 
     @property
@@ -47,8 +51,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
         self.button_share.clicked.connect(self.add_user)
         ws_infos = self.portal.run(self.core.fs.stat, os.path.join("/", self.name))
         for p in ws_infos["participants"]:
-            if p != self.core.device.user_id:
-                self.add_participant(p)
+            self.add_participant(p, p == self.core.device.user_id)
 
     def text_changed(self, text):
         # In order to avoid a segfault by making to many requests,
@@ -87,7 +90,7 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
 
         try:
             self.portal.run(self.core.fs.share, os.path.join("/", self.name), user)
-            self.add_participant(user)
+            self.add_participant(user, False)
         except SharingRecipientError:
             show_warning(
                 self,
@@ -106,8 +109,10 @@ class WorkspaceSharingDialog(QDialog, Ui_WorkspaceSharingDialog):
                 ).format(self.name, user),
             )
 
-    def add_participant(self, participant):
-        w = SharingWidget(name=participant, read=True, write=True, parent=self)
+    def add_participant(self, participant, is_current_user):
+        w = SharingWidget(
+            name=participant, is_current_user=is_current_user, read=True, write=True, parent=self
+        )
         self.scroll_content.layout().insertWidget(0, w)
         w.remove_clicked.connect(self.remove_participant)
 
