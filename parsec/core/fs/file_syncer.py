@@ -178,6 +178,10 @@ class FileSyncerMixin(BaseSyncer):
                     await self._backend_block_create(block_access, data)
                     blocks.append(block_access)
 
+                    # The block has been successfully uploaded
+                    # Keep it in the remote storage
+                    self.local_file_fs.set_remote_block(block_access, data)
+
         if len(spaces) < 2:
             await _process_spaces()
 
@@ -289,4 +293,9 @@ class FileSyncerMixin(BaseSyncer):
         assert is_file_manifest(current_manifest)
 
         final_manifest = fast_forward_file(base_manifest, current_manifest, target_remote_manifest)
-        self.local_folder_fs.set_manifest(access, final_manifest)
+        # New manifest is not up to date with the remote
+        if final_manifest.need_sync:
+            self.local_folder_fs.set_local_manifest(access, final_manifest)
+        # New manifest is up to date with the remote: safely clean up the local manifest
+        else:
+            self.local_folder_fs.set_remote_manifest(access, final_manifest, force=True)
