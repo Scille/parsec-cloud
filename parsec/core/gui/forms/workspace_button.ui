@@ -7,19 +7,19 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>280</height>
+    <height>300</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>300</width>
-    <height>280</height>
+    <height>300</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>400</width>
-    <height>280</height>
+    <height>327</height>
    </size>
   </property>
   <property name="font">
@@ -106,7 +106,7 @@ text-decoration: underline;
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>45</height>
+            <height>60</height>
            </size>
           </property>
           <property name="maximumSize">

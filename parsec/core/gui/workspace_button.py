@@ -72,19 +72,19 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     @name.setter
     def name(self, value):
         self.workspace_name = value
+        display = self.workspace_name
+        if len(display) > 20:
+            display = display[:20] + "..."
+
         if self.shared_with:
             if self.is_owner:
-                self.label_workspace.setText(
-                    QCoreApplication.translate("WorkspacesWidget", "{} (shared)".format(value))
-                )
+                display += QCoreApplication.translate("WorkspaceButton", " (shared)")
             else:
-                self.label_workspace.setText(
-                    QCoreApplication.translate(
-                        "WorkspacesWidget", "{} (shared by {})".format(value, self.creator)
-                    )
+                display += QCoreApplication.translate("WorkspaceButton", " (shared by {})").format(
+                    self.creator
                 )
-        else:
-            self.label_workspace.setText(value)
+        self.label_workspace.setText(display)
+        self.label_workspace.setToolTip(self.workspace_name)
 
     @property
     def participants(self):
