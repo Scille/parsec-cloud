@@ -476,17 +476,17 @@
         <translation type="obsolete">Nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="251"/>
+        <location filename="../files_widget.py" line="322"/>
         <source>Enter new folder name</source>
         <translation>Entrez le nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="202"/>
+        <location filename="../files_widget.py" line="273"/>
         <source>A folder with the same name already exists.</source>
         <translation>Un répertoire avec le même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="286"/>
+        <location filename="../files_widget.py" line="357"/>
         <source>Open</source>
         <translation>Ouvrir</translation>
     </message>
@@ -496,12 +496,12 @@
         <translation type="obsolete">Ouvrir dans l&apos;explorateur de fichiers</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="292"/>
+        <location filename="../files_widget.py" line="363"/>
         <source>Delete</source>
         <translation>Supprimer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="215"/>
+        <location filename="../files_widget.py" line="286"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
@@ -591,37 +591,37 @@
         <translation>Taille</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="251"/>
+        <location filename="../files_widget.py" line="322"/>
         <source>Folder name</source>
         <translation>Nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="290"/>
+        <location filename="../files_widget.py" line="361"/>
         <source>Rename</source>
         <translation>Renommer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="288"/>
+        <location filename="../files_widget.py" line="359"/>
         <source>Open in explorer</source>
         <translation>Ouvrir dans l&apos;explorateur</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="299"/>
+        <location filename="../files_widget.py" line="370"/>
         <source>New name</source>
         <translation>Nouveau nom</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="299"/>
+        <location filename="../files_widget.py" line="370"/>
         <source>Enter file new name</source>
         <translation>Entrez le nouveau nom du fichier</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="322"/>
+        <location filename="../files_widget.py" line="393"/>
         <source>Can not rename.</source>
         <translation>Impossible de renommer.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="215"/>
+        <location filename="../files_widget.py" line="286"/>
         <source>Are you sure you want to delete &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer &quot;{}&quot; ?</translation>
     </message>
@@ -638,20 +638,20 @@
     <message>
         <location filename="../files_widget.py" line="160"/>
         <source>Some files could not be imported.</source>
-        <translation>Des fichiers n&apos;ont pas pu être importés.</translation>
+        <translation type="obsolete">Des fichiers n&apos;ont pas pu être importés.</translation>
     </message>
     <message>
         <location filename="../files_widget.py" line="178"/>
         <source>The folder could not be imported.</source>
-        <translation>Le dossier n&apos;a pas pu être importé.</translation>
+        <translation type="obsolete">Le dossier n&apos;a pas pu être importé.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="146"/>
+        <location filename="../files_widget.py" line="228"/>
         <source>Select files to import</source>
         <translation>Choisir les fichiers à importer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="166"/>
+        <location filename="../files_widget.py" line="240"/>
         <source>Select a directory to import</source>
         <translation>Choisir le répertoire à importer</translation>
     </message>
@@ -768,6 +768,24 @@
         <location filename="../forms/input_dialog.ui" line="255"/>
         <source>Ok</source>
         <translation>OK</translation>
+    </message>
+</context>
+<context>
+    <name>LoadingDialog</name>
+    <message>
+        <location filename="../forms/loading_dialog.ui" line="14"/>
+        <source>Dialog</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../forms/loading_dialog.ui" line="62"/>
+        <source>Importing</source>
+        <translation>Import de</translation>
+    </message>
+    <message>
+        <location filename="../forms/loading_dialog.ui" line="164"/>
+        <source>Cancel</source>
+        <translation>Annuler</translation>
     </message>
 </context>
 <context>
@@ -1723,6 +1741,29 @@
     </message>
 </context>
 <context>
+    <name>ReplaceDialog</name>
+    <message>
+        <location filename="../forms/replace_dialog.ui" line="14"/>
+        <source>Dialog</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../forms/replace_dialog.ui" line="246"/>
+        <source>Skip</source>
+        <translation>Passer</translation>
+    </message>
+    <message>
+        <location filename="../forms/replace_dialog.ui" line="281"/>
+        <source>Replace</source>
+        <translation>Remplacer</translation>
+    </message>
+    <message>
+        <location filename="../forms/replace_dialog.ui" line="323"/>
+        <source>Do the same for all files</source>
+        <translation>Utiliser la même action pour tous les fichiers</translation>
+    </message>
+</context>
+<context>
     <name>SettingsDialog</name>
     <message>
         <location filename="../forms/settings_dialog.ui" line="14"/>
@@ -1884,42 +1925,42 @@
 <context>
     <name>StartingGuide</name>
     <message>
-        <location filename="../starting_guide_dialog.py" line="14"/>
+        <location filename="../starting_guide_dialog.py" line="16"/>
         <source>Welcome!</source>
         <translation>Bienvenue !</translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="26"/>
+        <location filename="../starting_guide_dialog.py" line="28"/>
         <source>Workspaces</source>
         <translation>Espaces de travail</translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="32"/>
+        <location filename="../starting_guide_dialog.py" line="34"/>
         <source>:/screenshots/images/screenshots/workspaces.png</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="38"/>
+        <location filename="../starting_guide_dialog.py" line="40"/>
         <source>Documents</source>
         <translation>Documents</translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="44"/>
+        <location filename="../starting_guide_dialog.py" line="46"/>
         <source>:/screenshots/images/screenshots/documents.png</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="50"/>
+        <location filename="../starting_guide_dialog.py" line="52"/>
         <source>Sharing</source>
         <translation>Partage</translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="56"/>
+        <location filename="../starting_guide_dialog.py" line="58"/>
         <source>:/screenshots/images/screenshots/page4.png</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="62"/>
+        <location filename="../starting_guide_dialog.py" line="64"/>
         <source>Manage your devices</source>
         <translation>Gérer vos appareils</translation>
     </message>
@@ -1929,47 +1970,47 @@
         <translation type="obsolete">Voir et gérer vos appareils.</translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="72"/>
+        <location filename="../starting_guide_dialog.py" line="76"/>
         <source>Manage the users</source>
         <translation>Gérer les utilisateurs</translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="78"/>
+        <location filename="../starting_guide_dialog.py" line="82"/>
         <source>:/screenshots/images/screenshots/users.png</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="84"/>
+        <location filename="../starting_guide_dialog.py" line="88"/>
         <source>Even offline</source>
         <translation>Même hors-ligne</translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="96"/>
+        <location filename="../starting_guide_dialog.py" line="100"/>
         <source>Now it&apos;s your turn !</source>
         <translation>À vous de jouer !</translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="20"/>
+        <location filename="../starting_guide_dialog.py" line="22"/>
         <source>:/screenshots/images/screenshots/cloud-computing.png</source>
         <translation>:/screenshots/images/screenshots/cloud-computing.png</translation>
     </message>
     <message>
         <location filename="../starting_guide_dialog.py" line="63"/>
         <source>See and manage thee devices you trust. Those are the key to the guaranted security of your files.</source>
-        <translation>Visualisez et gérez aisément vos différents périphériques de confiance, qui sont la clé de la sécurisation assurée de vos fichiers.</translation>
+        <translation type="obsolete">Visualisez et gérez aisément vos différents périphériques de confiance, qui sont la clé de la sécurisation assurée de vos fichiers.</translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="68"/>
+        <location filename="../starting_guide_dialog.py" line="70"/>
         <source>:/screenshots/images/screenshots/devices.png</source>
         <translation>:/screenshots/images/screenshots/devices.png</translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="90"/>
+        <location filename="../starting_guide_dialog.py" line="94"/>
         <source>:/screenshots/images/screenshots/offline_en.png</source>
         <translation>:/screenshots/images/screenshots/offline_fr.png</translation>
     </message>
     <message>
-        <location filename="../starting_guide_dialog.py" line="102"/>
+        <location filename="../starting_guide_dialog.py" line="106"/>
         <source>:/screenshots/images/screenshots/your_turn.png</source>
         <translation>:/screenshots/images/screenshots/your_turn.png</translation>
     </message>
@@ -1977,41 +2018,41 @@
         <location filename="../starting_guide_dialog.py" line="15"/>
         <source>Parsec allows you to store data in the cloud with a very high security level.
 Find out more by letting us guide you step by step!</source>
-        <translation>Parsec permet de stocker vos fichiers dans le Cloud avec un très haut niveau de sécurité.
+        <translation type="obsolete">Parsec permet de stocker vos fichiers dans le Cloud avec un très haut niveau de sécurité.
 Découvrez Parsec en vous laissant guider pas à pas!</translation>
     </message>
     <message>
         <location filename="../starting_guide_dialog.py" line="27"/>
         <source>Arrange all your files by workspaces, a clear interface for an easy to use and simple process.</source>
-        <translation>Organizes tous vos fichiers par espace de travail, une interface claire pour une utilisation simple et efficace.</translation>
+        <translation type="obsolete">Organizes tous vos fichiers par espace de travail, une interface claire pour une utilisation simple et efficace.</translation>
     </message>
     <message>
         <location filename="../starting_guide_dialog.py" line="39"/>
         <source>In your workspaces, see and manage all your files, just as with a regular file explorer. A lightweight display to increase your productivity!</source>
-        <translation>Dans votre espace de travail, tous vos fichiers sont présents, comme si vous étiez dans votre explorateur de fichiers. Un affichage léger pour plus de productivité !</translation>
+        <translation type="obsolete">Dans votre espace de travail, tous vos fichiers sont présents, comme si vous étiez dans votre explorateur de fichiers. Un affichage léger pour plus de productivité !</translation>
     </message>
     <message>
         <location filename="../starting_guide_dialog.py" line="51"/>
         <source>Share your workspaces with a few clicks. See who can access it, and what others share with you.
 Everything shared with you automatically appears.</source>
-        <translation>Partagez vos espaces de travail en quelques clics. Voyez rapidement qui peut y accéder.
+        <translation type="obsolete">Partagez vos espaces de travail en quelques clics. Voyez rapidement qui peut y accéder.
 Ce qu&apos;on vous partage s&apos;affiche automatiquement dans votre interface.</translation>
     </message>
     <message>
         <location filename="../starting_guide_dialog.py" line="73"/>
         <source>And for the administrators ? You can manage all users and their privileges, add users, or revoke them.</source>
-        <translation>Et pour les administrateurs? Vous pouvez gérer la totalité des utilisateurs et leurs droits, en ajouter, en révoquer, ...</translation>
+        <translation type="obsolete">Et pour les administrateurs? Vous pouvez gérer la totalité des utilisateurs et leurs droits, en ajouter, en révoquer, ...</translation>
     </message>
     <message>
         <location filename="../starting_guide_dialog.py" line="85"/>
         <source>No network ? Not a problem. You can access all your files. Modifications will be saved locally until your device comes online again.</source>
-        <translation>Un problème de réseau? Aucun problème! Vous avez accès à tous vos fichiers, vos modifications sont sauvegardées localement, tout se synchronisera au retour du réseau!</translation>
+        <translation type="obsolete">Un problème de réseau? Aucun problème! Vous avez accès à tous vos fichiers, vos modifications sont sauvegardées localement, tout se synchronisera au retour du réseau!</translation>
     </message>
     <message>
         <location filename="../starting_guide_dialog.py" line="97"/>
         <source>Create your first workspace, import your files, share your documents.
 Security waits for no one!</source>
-        <translation>Créez votre premier espace de travail, importez vos fichiers, partagez vos documents, ...
+        <translation type="obsolete">Créez votre premier espace de travail, importez vos fichiers, partagez vos documents, ...
 Vous n&apos;avez plus qu&apos;à vous lancer, car la sécurité n&apos;attend pas!</translation>
     </message>
 </context>
@@ -2292,12 +2333,12 @@ Cet utilisateur a été révoqué.</translation>
         <translation type="obsolete">L&apos;espace de travail a été partagé.</translation>
     </message>
     <message>
-        <location filename="../workspace_sharing_dialog.py" line="91"/>
+        <location filename="../workspace_sharing_dialog.py" line="92"/>
         <source>Can not share the workspace &quot;{}&quot; with this user.</source>
         <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec cet utilisateur.</translation>
     </message>
     <message>
-        <location filename="../workspace_sharing_dialog.py" line="101"/>
+        <location filename="../workspace_sharing_dialog.py" line="102"/>
         <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
         <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec &quot;{}&quot;.</translation>
     </message>
