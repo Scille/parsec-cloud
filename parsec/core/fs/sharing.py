@@ -114,7 +114,24 @@ class Sharing:
         # is up to date
         await self.syncer.sync(path, recursive=False)
 
-        # Now we can build the sharing message...
+        # Actual sharing is done in two steps:
+        # 1) update access rights for the vlob group corresponding to the workspace
+        # 2) communicate to the new collaborator through a message the access to
+        #    the workspace manifest
+        # Those two steps are not atomics, but this is not that much a trouble
+        # given they are idempotent
+
+        # Step 1)
+        try:
+            await self.backend_cmds.vlob_group_update_rights(access.id, recipient, True, True, True)
+        except BackendCmdsBadResponse as exc:
+            raise SharingBackendMessageError(
+                f"Error while trying to set vlob group rights in backend: {exc}"
+            ) from exc
+
+        # Step 2)
+
+        # Build the sharing message...
         msg = {
             "type": "share",
             "author": self.device.device_id,

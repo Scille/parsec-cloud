@@ -50,9 +50,9 @@ class LocalFolderFS:
         self.event_bus = event_bus
         self._manifests_cache = {}
 
-    def get_local_beacons(self) -> List[UUID]:
-        # beacon_id is either the id of the user manifest or of a workpace manifest
-        beacons = [self.root_access.id]
+    def get_local_vlob_groups(self) -> List[UUID]:
+        # vlob_group_id is either the id of the user manifest or of a workpace manifest
+        vlob_groups = [self.root_access.id]
         try:
             root_manifest = self._get_manifest_read_only(self.root_access)
             # Currently workspace can only direct children of the user manifest
@@ -62,10 +62,10 @@ class LocalFolderFS:
                 except FSManifestLocalMiss:
                     continue
                 if is_workspace_manifest(child_manifest):
-                    beacons.append(child_access.id)
+                    vlob_groups.append(child_access.id)
         except FSManifestLocalMiss:
             raise AssertionError("root manifest should always be available in local !")
-        return beacons
+        return vlob_groups
 
     def dump(self) -> dict:
         def _recursive_dump(access: Access):
@@ -133,11 +133,11 @@ class LocalFolderFS:
         self._local_db.clear(access)
         self._manifests_cache.pop(access.id, None)
 
-    def get_beacon(self, path: FsPath) -> UUID:
-        # The beacon is used to notify other clients that we modified an entry.
+    def get_vlob_group(self, path: FsPath) -> UUID:
+        # The vlob group is used to notify other clients that we modified an entry.
         # We try to use the id of workspace containing the modification as
-        # beacon. This is not possible when directly modifying the user
-        # manifest in which case we use the user manifest id as beacon.
+        # vlob group. This is not possible when directly modifying the user
+        # manifest in which case we use the user manifest id as vlob group.
         try:
             _, workspace_name, *_ = path.parts
         except ValueError:

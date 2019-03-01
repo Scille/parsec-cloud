@@ -11,7 +11,10 @@ def open_file(path):
 
 
 def get_default_device():
-    return "".join([c for c in QSysInfo.productType() if DeviceName.regex.match(c)])
+    device = QSysInfo.machineHostName()
+    if device.lower() == "localhost":
+        device = QSysInfo.productType()
+    return "".join([c for c in device if DeviceName.regex.match(c)])
 
 
 def get_locale_language():

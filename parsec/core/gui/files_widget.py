@@ -18,6 +18,10 @@ from parsec.core.gui.ui.files_widget import Ui_FilesWidget
 from parsec.core.fs import FSEntryNotFound
 
 
+class CancelException(Exception):
+    pass
+
+
 class FilesWidget(CoreWidget, Ui_FilesWidget):
     fs_changed_qt = pyqtSignal(str, UUID, str)
     back_clicked = pyqtSignal()
@@ -104,7 +108,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             self.filter_files(self.line_edit_search.text())
 
     def import_all(self, files, total_size):
-        loading_dialog = LoadingDialog(total_size=total_size, parent=self)
+        loading_dialog = LoadingDialog(total_size=total_size + len(files), parent=self)
         loading_dialog.show()
         current_size = 0
         start_time = time.time()
@@ -139,9 +143,11 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                     continue
             else:
                 self.import_file(src, dst, current_size, loading_dialog)
-            current_size += src.stat().st_size
-            loading_dialog.set_progress(current_size)
-            QApplication.processEvents()
+            if not loading_dialog.is_cancelled:
+                current_size += src.stat().st_size + 1
+                loading_dialog.set_progress(current_size)
+            else:
+                break
         elapsed = time.time() - start_time
         # Done for ergonomy. We don't want a window just flashing before the user, so we
         # add this little trick. The window will be opened at least 0.5s, which is more than
@@ -149,6 +155,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         if elapsed < 0.5:
             time.sleep(1.0 - elapsed)
         loading_dialog.hide()
+        loading_dialog.setParent(None)
 
     def get_files(self, paths):
         files = []
@@ -169,7 +176,9 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             pass
         for f in src.iterdir():
             if f.is_dir():
-                files.extend(self.get_folder(f, os.path.join(dst, f.name)))
+                new_files, new_size = self.get_folder(f, os.path.join(dst, f.name))
+                files.extend(new_files)
+                total_size += new_size
             elif f.is_file():
                 new_dst = os.path.join(dst, f.name)
                 files.append((f, new_dst))
@@ -196,8 +205,13 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
                     read_size += len(chunk)
                     i += 1
                     if i % 5 == 0:
+                        if loading_dialog.is_cancelled:
+                            raise CancelException()
                         loading_dialog.set_progress(current_size + read_size)
                         QApplication.processEvents()
+        except CancelException:
+            loading_dialog.set_cancel_state()
+            QApplication.processEvents()
         except:
             import traceback
 
@@ -205,6 +219,8 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         finally:
             if fd_out:
                 self.portal.run(self.core.fs.file_fd_close, fd_out)
+            if loading_dialog.is_cancelled:
+                self.portal.run(self.core.fs.delete, dst)
 
     # slot
     def import_files_clicked(self):

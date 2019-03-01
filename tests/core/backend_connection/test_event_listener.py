@@ -43,41 +43,41 @@ async def test_init_end_with_backend_offline_status_event(event_bus, alice):
 
 
 @pytest.mark.trio
-async def test_subscribe_listen_unsubscribe_beacon(
+async def test_subscribe_listen_unsubscribe_vlob_group(
     event_bus, backend, running_backend_listen_events, alice
 ):
-    beacon_id = uuid4()
+    vlob_group_id = uuid4()
     src_id = uuid4()
 
     # Subscribe event
 
     with event_bus.listen() as spy:
-        event_bus.send("backend.beacon.listen", beacon_id=beacon_id)
+        event_bus.send("backend.vlob_group.listen", id=vlob_group_id)
         with trio.fail_after(1.0):
             await spy.wait("backend.listener.restarted")
 
     # Send&listen event
 
     backend.event_bus.send(
-        "beacon.updated",
+        "vlob_group.updated",
         organization_id=alice.organization_id,
         author="bob@test",
-        beacon_id=beacon_id,
-        index=1,
+        id=vlob_group_id,
+        checkpoint=1,
         src_id=src_id,
         src_version=42,
     )
 
     with trio.fail_after(1.0):
         await event_bus.spy.wait(
-            "backend.beacon.updated",
-            kwargs={"beacon_id": beacon_id, "index": 1, "src_id": src_id, "src_version": 42},
+            "backend.vlob_group.updated",
+            kwargs={"id": vlob_group_id, "checkpoint": 1, "src_id": src_id, "src_version": 42},
         )
 
     # Unsubscribe event
 
     with event_bus.listen() as spy:
-        event_bus.send("backend.beacon.unlisten", beacon_id=beacon_id)
+        event_bus.send("backend.vlob_group.unlisten", id=vlob_group_id)
         with trio.fail_after(1.0):
             await spy.wait("backend.listener.restarted")
 
@@ -85,11 +85,11 @@ async def test_subscribe_listen_unsubscribe_beacon(
 
     with event_bus.listen() as spy:
         backend.event_bus.send(
-            "beacon.updated",
+            "vlob_group.updated",
             organization_id=alice.organization_id,
             author="bob@test",
-            beacon_id=beacon_id,
-            index=1,
+            id=vlob_group_id,
+            checkpoint=1,
             src_id=src_id,
             src_version=42,
         )
@@ -98,35 +98,35 @@ async def test_subscribe_listen_unsubscribe_beacon(
 
 
 @pytest.mark.trio
-async def test_unlisten_unknown_beacon_id_does_nothing(event_bus, running_backend_listen_events):
-    beacon_id = uuid4()
+async def test_unlisten_unknown_vlob_group_does_nothing(event_bus, running_backend_listen_events):
+    vlob_group_id = uuid4()
 
     with event_bus.listen() as spy:
-        event_bus.send("backend.beacon.unlisten", beacon_id=beacon_id)
+        event_bus.send("backend.vlob_group.unlisten", id=vlob_group_id)
         await wait_all_tasks_blocked(cushion=0.01)
 
     assert not spy.assert_events_exactly_occured(
-        [("backend.beacon.unlisten", {"beacon_id": beacon_id})]
+        [("backend.vlob_group.unlisten", {"id": vlob_group_id})]
     )
 
 
 @pytest.mark.trio
-async def test_listen_already_listened_beacon_id_does_nothing(
+async def test_listen_already_listened_vlob_group_does_nothing(
     event_bus, running_backend_listen_events
 ):
-    beacon_id = uuid4()
+    vlob_group_id = uuid4()
 
     with event_bus.listen() as spy:
-        event_bus.send("backend.beacon.listen", beacon_id=beacon_id)
+        event_bus.send("backend.vlob_group.listen", id=vlob_group_id)
         await spy.wait("backend.listener.restarted")
 
     # Second subscribe is useless, event listener shouldn't be restarted
     with event_bus.listen() as spy:
-        event_bus.send("backend.beacon.listen", beacon_id=beacon_id)
+        event_bus.send("backend.vlob_group.listen", id=vlob_group_id)
         await wait_all_tasks_blocked(cushion=0.01)
 
     assert not spy.assert_events_exactly_occured(
-        [("backend.beacon.listen", {"beacon_id": beacon_id})]
+        [("backend.vlob_group.listen", {"id": vlob_group_id})]
     )
 
 
@@ -134,12 +134,12 @@ async def test_listen_already_listened_beacon_id_does_nothing(
 async def test_backend_switch_offline(
     mock_clock, event_bus, backend_addr, backend, running_backend_listen_events, alice
 ):
-    beacon_id = uuid4()
+    vlob_group_id = uuid4()
     src_id = uuid4()
     mock_clock.rate = 1.0
 
     with event_bus.listen() as spy:
-        event_bus.send("backend.beacon.listen", beacon_id=beacon_id)
+        event_bus.send("backend.vlob_group.listen", id=vlob_group_id)
         await spy.wait("backend.listener.restarted")
 
     # Switch backend offline and wait for according event
@@ -162,17 +162,17 @@ async def test_backend_switch_offline(
 
     with event_bus.listen() as spy:
         backend.event_bus.send(
-            "beacon.updated",
+            "vlob_group.updated",
             organization_id=alice.organization_id,
             author="bob@test",
-            beacon_id=beacon_id,
-            index=1,
+            id=vlob_group_id,
+            checkpoint=1,
             src_id=src_id,
             src_version=42,
         )
 
         with trio.fail_after(1.0):
             await spy.wait(
-                "backend.beacon.updated",
-                kwargs={"beacon_id": beacon_id, "index": 1, "src_id": src_id, "src_version": 42},
+                "backend.vlob_group.updated",
+                kwargs={"id": vlob_group_id, "checkpoint": 1, "src_id": src_id, "src_version": 42},
             )

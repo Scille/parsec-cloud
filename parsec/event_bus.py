@@ -80,8 +80,6 @@ class EventBus:
         return EventBusConnectionContext(self)
 
     def send(self, event, **kwargs):
-        logger.debug("send event", event_name=event, kwargs=kwargs)
-
         for cb in self._event_handlers[event]:
             cb(event, **kwargs)
 

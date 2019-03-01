@@ -13,8 +13,9 @@ from parsec.api.protocole.handshake import (
     HandshakeBadIdentity,
     HandshakeRevokedDevice,
     ServerHandshake,
-    ClientHandshake,
+    AuthenticatedClientHandshake,
     AnonymousClientHandshake,
+    AdministrationClientHandshake,
 )
 from parsec.api.protocole.organization import (
     organization_create_serializer,
@@ -22,7 +23,6 @@ from parsec.api.protocole.organization import (
 )
 from parsec.api.protocole.events import events_subscribe_serializer, events_listen_serializer
 from parsec.api.protocole.ping import ping_serializer
-from parsec.api.protocole.beacon import beacon_read_serializer
 from parsec.api.protocole.message import message_send_serializer, message_get_serializer
 from parsec.api.protocole.blockstore import blockstore_create_serializer, blockstore_read_serializer
 from parsec.api.protocole.vlob import (
@@ -30,6 +30,9 @@ from parsec.api.protocole.vlob import (
     vlob_create_serializer,
     vlob_read_serializer,
     vlob_update_serializer,
+    vlob_group_update_rights_serializer,
+    vlob_group_get_rights_serializer,
+    vlob_group_poll_serializer,
 )
 from parsec.api.protocole.user import (
     user_get_serializer,
@@ -59,8 +62,9 @@ __all__ = (
     "HandshakeBadIdentity",
     "HandshakeRevokedDevice",
     "ServerHandshake",
-    "ClientHandshake",
+    "AuthenticatedClientHandshake",
     "AnonymousClientHandshake",
+    "AdministrationClientHandshake",
     # Organization
     "organization_create_serializer",
     "organization_bootstrap_serializer",
@@ -69,8 +73,6 @@ __all__ = (
     "events_listen_serializer",
     # Ping
     "ping_serializer",
-    # Beacon
-    "beacon_read_serializer",
     # Message
     "message_send_serializer",
     "message_get_serializer",
@@ -82,6 +84,9 @@ __all__ = (
     "vlob_create_serializer",
     "vlob_read_serializer",
     "vlob_update_serializer",
+    "vlob_group_update_rights_serializer",
+    "vlob_group_get_rights_serializer",
+    "vlob_group_poll_serializer",
     # User
     "user_get_serializer",
     "user_find_serializer",

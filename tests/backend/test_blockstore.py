@@ -12,11 +12,6 @@ BLOCK_ID = uuid4()
 BLOCK_DATA = b"Hodi ho !"
 
 
-def _get_existing_block(backend):
-    # Backend must have been populated before that
-    return list(backend.test_populate_data["blocks"].items())[0]
-
-
 async def create(sock, id, block, **kwargs):
     await sock.send(
         blockstore_create_serializer.req_dumps(

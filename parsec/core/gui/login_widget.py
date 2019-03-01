@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import os
+
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QCompleter
 
@@ -41,6 +43,8 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
             )
 
     def reset(self):
+        if os.name == "nt":
+            self.check_box_use_pkcs11.hide()
         self.line_edit_password.setText("")
         self.check_box_use_pkcs11.setCheckState(Qt.Unchecked)
         self.line_edit_password.setDisabled(False)

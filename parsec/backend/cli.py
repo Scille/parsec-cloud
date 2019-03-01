@@ -20,8 +20,7 @@ logger = get_logger()
 
 @click.command(short_help="init the database")
 @click.option("--db", required=True, help="PostgreSQL database url")
-@click.option("--force", "-f", is_flag=True)
-def init_cmd(db, force):
+def init_cmd(db):
     """
     Initialize a new backend's PostgreSQL database.
     """
@@ -31,13 +30,13 @@ def init_cmd(db, force):
     debug = "DEBUG" in os.environ
     with cli_exception_handler(debug):
 
-        async def _init_db(db, force):
+        async def _init_db(db):
             async with spinner("Initializing database"):
-                already_initialized = await init_db(db, force)
+                already_initialized = await init_db(db)
             if already_initialized:
                 click.echo("Database already initialized, nothing to do.")
 
-        trio_asyncio.run(_init_db, db, force)
+        trio_asyncio.run(_init_db, db)
 
 
 @click.command(short_help="run the server")

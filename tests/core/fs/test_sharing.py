@@ -3,7 +3,11 @@
 import pytest
 
 from parsec.core.backend_connection import BackendNotAvailable
-from parsec.core.fs.sharing import SharingRecipientError, SharingNotAWorkspace
+from parsec.core.fs.sharing import (
+    SharingRecipientError,
+    SharingBackendMessageError,
+    SharingNotAWorkspace,
+)
 
 from tests.common import freeze_time
 
@@ -190,9 +194,12 @@ async def test_share_not_a_valid_path(running_backend, alice_fs, bob):
 async def test_share_bad_recipient(running_backend, mallory, alice_fs):
     await alice_fs.workspace_create("/w")
 
-    with pytest.raises(SharingRecipientError) as exc:
+    with pytest.raises(SharingBackendMessageError) as exc:
         await alice_fs.share("/w", recipient=mallory.user_id)
-    assert exc.value.args == (f"Cannot create message for `{mallory.user_id}`",)
+    assert exc.value.args == (
+        "Error while trying to set vlob group rights in backend: "
+        "{'reason': \"User `mallory` doesn't exist\", 'status': 'not_found'}",
+    )
 
 
 @pytest.mark.trio

@@ -17,7 +17,7 @@ from parsec.core.backend_connection import (
 )
 from parsec.core.mountpoint import mountpoint_manager
 from parsec.core.encryption_manager import EncryptionManager
-from parsec.core.beacons_monitor import monitor_beacons
+from parsec.core.vlob_groups_monitor import monitor_vlob_groups
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.fs import FS
@@ -53,7 +53,7 @@ async def logged_core_factory(
     async with trio.open_nursery() as root_nursery:
         # TODO: Currently backend_listen_events connect to backend and
         # switch to listen events mode, then monitors kick in and send it
-        # events about which beacons to listen on, obliging to restart the
+        # events about which vlob groups to listen on, obliging to restart the
         # listen connection...
         backend_online = await root_nursery.start(backend_listen_events, device, event_bus)
 
@@ -75,7 +75,7 @@ async def logged_core_factory(
                 # Monitor connection must be first given it will watch on
                 # other monitors' events
                 await monitor_nursery.start(monitor_backend_connection, backend_online, event_bus)
-                await monitor_nursery.start(monitor_beacons, device, fs, event_bus)
+                await monitor_nursery.start(monitor_vlob_groups, device, fs, event_bus)
                 await monitor_nursery.start(monitor_messages, backend_online, fs, event_bus)
                 await monitor_nursery.start(monitor_sync, backend_online, fs, event_bus)
 

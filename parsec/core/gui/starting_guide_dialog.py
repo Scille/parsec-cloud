@@ -151,12 +151,12 @@ class StartingGuideDialog(QDialog, Ui_StartingGuideDialog):
             self.button_next.show()
             self.button_previous.show()
             self.button_placeholder.hide()
-            self.button_next.setText("End")
+            self.button_next.setText(QCoreApplication.translate("StartingGuide", "End"))
         else:
             self.button_next.show()
             self.button_previous.show()
             self.button_placeholder.hide()
-            self.button_next.setText("Continue")
+            self.button_next.setText(QCoreApplication.translate("StartingGuide", "Continue"))
         self.label_page.page = self.page
         self.label_title.setText(self.PAGES[self.page]["title"])
         self.label_doc.setText(self.PAGES[self.page]["text"])
@@ -171,12 +171,12 @@ class StartingGuideDialog(QDialog, Ui_StartingGuideDialog):
             self.button_next.show()
             self.button_previous.hide()
             self.button_placeholder.show()
-            self.button_next.setText("Start")
+            self.button_next.setText(QCoreApplication.translate("StartingGuide", "Start"))
         else:
             self.button_next.show()
             self.button_previous.show()
             self.button_placeholder.hide()
-            self.button_next.setText("Continue")
+            self.button_next.setText(QCoreApplication.translate("StartingGuide", "Continue"))
         self.label_page.page = self.page
         self.label_title.setText(self.PAGES[self.page]["title"])
         self.label_doc.setText(self.PAGES[self.page]["text"])

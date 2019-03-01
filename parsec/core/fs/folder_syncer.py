@@ -47,14 +47,14 @@ class FolderSyncerMixin(BaseSyncer):
         to_sync_manifest = to_sync_manifest.evolve(version=manifest.base_version + 1)
 
         # Upload the folder manifest as new vlob version
-        notify_beacons = self.local_folder_fs.get_beacon(path)
+        vlob_group = self.local_folder_fs.get_vlob_group(path)
         force_update = False
         while True:
             try:
                 if is_placeholder_manifest(manifest) and not force_update:
-                    await self._backend_vlob_create(access, to_sync_manifest, notify_beacons)
+                    await self._backend_vlob_create(vlob_group, access, to_sync_manifest)
                 else:
-                    await self._backend_vlob_update(access, to_sync_manifest, notify_beacons)
+                    await self._backend_vlob_update(access, to_sync_manifest)
                 break
 
             except SyncConcurrencyError:

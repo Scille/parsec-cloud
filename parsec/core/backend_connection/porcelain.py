@@ -9,7 +9,7 @@ from parsec.core.backend_connection.exceptions import BackendNotAvailable
 from parsec.core.backend_connection.transport import (
     transport_pool_factory,
     anonymous_transport_factory,
-    administrator_transport_factory,
+    administration_transport_factory,
     TransportError,
 )
 from parsec.core.backend_connection import cmds
@@ -51,7 +51,7 @@ class BackendCmdsPool:
 
     events_subscribe = _expose_cmds_with_retrier("events_subscribe")
     events_listen = _expose_cmds_with_retrier("events_listen")
-    beacon_read = _expose_cmds_with_retrier("beacon_read")
+
     message_send = _expose_cmds_with_retrier("message_send")
     message_get = _expose_cmds_with_retrier("message_get")
 
@@ -59,6 +59,9 @@ class BackendCmdsPool:
     vlob_create = _expose_cmds_with_retrier("vlob_create")
     vlob_read = _expose_cmds_with_retrier("vlob_read")
     vlob_update = _expose_cmds_with_retrier("vlob_update")
+    vlob_group_get_rights = _expose_cmds_with_retrier("vlob_group_get_rights")
+    vlob_group_update_rights = _expose_cmds_with_retrier("vlob_group_update_rights")
+    vlob_group_poll = _expose_cmds_with_retrier("vlob_group_poll")
 
     blockstore_create = _expose_cmds_with_retrier("blockstore_create")
     blockstore_read = _expose_cmds_with_retrier("blockstore_read")
@@ -101,7 +104,7 @@ class BackendAnonymousCmds:
     device_claim = _expose_cmds("device_claim")
 
 
-class BackendAdministratorCmds:
+class BackendAdministrationCmds:
     def __init__(self, addr, transport):
         self.addr = addr
         self.transport = transport
@@ -138,11 +141,11 @@ async def backend_anonymous_cmds_factory(addr: BackendOrganizationAddr) -> Backe
 
 
 @asynccontextmanager
-async def backend_administrator_cmds_factory(
+async def backend_administration_cmds_factory(
     addr: BackendAddr, token: str
-) -> BackendAdministratorCmds:
+) -> BackendAdministrationCmds:
     try:
-        async with administrator_transport_factory(addr, token) as transport:
-            yield BackendAdministratorCmds(addr, transport)
+        async with administration_transport_factory(addr, token) as transport:
+            yield BackendAdministrationCmds(addr, transport)
     except TransportError as exc:
         raise BackendNotAvailable(exc) from exc

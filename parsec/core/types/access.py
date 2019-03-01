@@ -7,22 +7,18 @@ from typing import Union
 
 from parsec.crypto import SymetricKey, HashDigest, generate_secret_key
 from parsec.serde import UnknownCheckedSchema, fields, validate, post_load
-from parsec.core.types.base import TrustSeed, AccessID, TrustSeedField, serializer_factory
+from parsec.core.types.base import AccessID, serializer_factory
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class ManifestAccess:
     id: AccessID = attr.ib(factory=uuid4)
-    rts: TrustSeed = attr.ib(factory=lambda: uuid4().hex)
-    wts: TrustSeed = attr.ib(factory=lambda: uuid4().hex)
     key: SymetricKey = attr.ib(factory=generate_secret_key)
 
 
 class ManifestAccessSchema(UnknownCheckedSchema):
     id = fields.UUID(required=True)
     key = fields.SymetricKey(required=True)
-    rts = TrustSeedField(required=True, validate=validate.Length(min=1, max=32))
-    wts = TrustSeedField(required=True, validate=validate.Length(min=1, max=32))
 
     @post_load
     def make_obj(self, data):

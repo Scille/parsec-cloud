@@ -33,7 +33,8 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
         encrypted_answer = generate_device_encrypted_answer(
             claim["answer_public_key"], alice.private_key, alice.user_manifest_access
         )
-        await alice_backend_cmds.device_create(certified_device, encrypted_answer)
+        with trio.fail_after(1):
+            await alice_backend_cmds.device_create(certified_device, encrypted_answer)
 
     async def _alice_nd_claim():
         async with backend_anonymous_cmds_factory(alice.organization_addr) as cmds:
@@ -48,7 +49,8 @@ async def test_device_invite_then_claim_ok(alice, alice_backend_cmds, running_ba
                 verify_key=nd_signing_key.verify_key,
                 answer_public_key=answer_private_key.public_key,
             )
-            encrypted_answer = await cmds.device_claim(nd_id, encrypted_claim)
+            with trio.fail_after(1):
+                encrypted_answer = await cmds.device_claim(nd_id, encrypted_claim)
 
             answer = extract_device_encrypted_answer(answer_private_key, encrypted_answer)
             assert answer["private_key"] == alice.private_key

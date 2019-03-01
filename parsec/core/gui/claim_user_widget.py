@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
+import os
 import threading
 import queue
 
@@ -224,6 +225,8 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             )
 
     def reset(self):
+        if os.name == "nt":
+            self.check_box_use_pkcs11.hide()
         self.line_edit_login.setText("")
         self.line_edit_password.setText("")
         self.line_edit_password_check.setText("")

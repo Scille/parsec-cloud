@@ -13,11 +13,6 @@ def identity(raw):
 
 ENTRIES = {
     "last_device": {"encode": identity, "decode": identity},
-    "global/mountpoint": {"encode": identity, "decode": identity},
-    "global/mountpoint_enabled": {
-        "encode": lambda raw: "true" if raw else "false",
-        "decode": lambda raw: raw.lower() == "true",
-    },
     "global/tray_enabled": {
         "encode": lambda raw: "true" if raw else "false",
         "decode": lambda raw: raw.lower() == "true",

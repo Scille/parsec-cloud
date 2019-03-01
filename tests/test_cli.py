@@ -15,7 +15,7 @@ from click.testing import CliRunner
 
 import parsec
 from parsec.cli import cli
-from parsec.backend.config import DEFAULT_ADMINISTRATOR_TOKEN
+from parsec.backend.config import DEFAULT_ADMINISTRATION_TOKEN
 
 
 CWD = Path(__file__).parent.parent
@@ -128,7 +128,7 @@ def _running(cmd, wait_for=None):
 
 @pytest.mark.skipif(os.name == "nt", reason="Hard to test on Windows...")
 def test_init_backend(postgresql_url, unused_tcp_port):
-    _run(f"backend init --force --db {postgresql_url}")
+    _run(f"backend init --db {postgresql_url}")
 
     # Already initialized db is ok
     p = _run(f"backend init --db {postgresql_url}")
@@ -161,7 +161,7 @@ def test_full_run(alice, alice2, bob, unused_tcp_port, tmpdir):
         p = _run(
             "core create_organization "
             f"{org} --addr=ws://localhost:{unused_tcp_port} "
-            f"--administrator-token={DEFAULT_ADMINISTRATOR_TOKEN}"
+            f"--administration-token={DEFAULT_ADMINISTRATION_TOKEN}"
         )
         url = re.search(
             r"^Bootstrap organization url: (.*)$", p.stdout.decode(), re.MULTILINE

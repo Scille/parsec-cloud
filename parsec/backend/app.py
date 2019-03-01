@@ -22,7 +22,6 @@ from parsec.backend.drivers.memory import (
     MemoryUserComponent,
     MemoryVlobComponent,
     MemoryMessageComponent,
-    MemoryBeaconComponent,
     MemoryPingComponent,
 )
 from parsec.backend.drivers.postgresql import (
@@ -31,7 +30,6 @@ from parsec.backend.drivers.postgresql import (
     PGUserComponent,
     PGVlobComponent,
     PGMessageComponent,
-    PGBeaconComponent,
     PGPingComponent,
 )
 from parsec.backend.user import UserNotFoundError
@@ -94,7 +92,7 @@ class AnonymousClientContext:
 
 
 @attr.s
-class AdministratorClientContext:
+class AdministrationClientContext:
     transport = attr.ib()
     conn_id = attr.ib(init=False)
     logger = attr.ib(init=False)
@@ -103,7 +101,7 @@ class AdministratorClientContext:
     def __attrs_post_init__(self):
         self.conn_id = self.transport.conn_id
         self.logger = self.transport.logger = self.transport.logger.bind(
-            client_id="<administrator>"
+            client_id="<administration>"
         )
 
 
@@ -123,8 +121,7 @@ class BackendApp:
             self.user = MemoryUserComponent(self.event_bus)
             self.organization = MemoryOrganizationComponent(self.user)
             self.message = MemoryMessageComponent(self.event_bus)
-            self.beacon = MemoryBeaconComponent(self.event_bus)
-            self.vlob = MemoryVlobComponent(self.event_bus, self.beacon)
+            self.vlob = MemoryVlobComponent(self.event_bus, self.user)
             self.ping = MemoryPingComponent(self.event_bus)
             self.blockstore = blockstore_factory(self.config.blockstore_config)
 
@@ -133,8 +130,7 @@ class BackendApp:
             self.user = PGUserComponent(self.dbh, self.event_bus)
             self.organization = PGOrganizationComponent(self.dbh, self.user)
             self.message = PGMessageComponent(self.dbh)
-            self.beacon = PGBeaconComponent(self.dbh)
-            self.vlob = PGVlobComponent(self.dbh, self.beacon)
+            self.vlob = PGVlobComponent(self.dbh)
             self.ping = PGPingComponent(self.dbh)
             self.blockstore = blockstore_factory(
                 self.config.blockstore_config, postgresql_dbh=self.dbh
@@ -144,7 +140,6 @@ class BackendApp:
             "events_subscribe": self.events.api_events_subscribe,
             "events_listen": self.events.api_events_listen,
             "ping": self.ping.api_ping,
-            "beacon_read": self.beacon.api_beacon_read,
             # Message
             "message_get": self.message.api_message_get,
             "message_send": self.message.api_message_send,
@@ -166,6 +161,9 @@ class BackendApp:
             "vlob_create": self.vlob.api_vlob_create,
             "vlob_read": self.vlob.api_vlob_read,
             "vlob_update": self.vlob.api_vlob_update,
+            "vlob_group_get_rights": self.vlob.api_vlob_group_get_rights,
+            "vlob_group_update_rights": self.vlob.api_vlob_group_update_rights,
+            "vlob_group_poll": self.vlob.api_vlob_group_poll,
         }
         self.anonymous_cmds = {
             "user_claim": self.user.api_user_claim,
@@ -201,41 +199,20 @@ class BackendApp:
 
             hs.process_answer_req(answer_req)
 
-            if hs.is_anonymous():
-
-                if hs.organization_id == self.config.administrator_token:
-                    context = AdministratorClientContext(transport)
-                    result_req = hs.build_result_req()
-
-                else:
-                    try:
-                        organization = await self.organization.get(hs.organization_id)
-
-                    except OrganizationNotFoundError:
-                        result_req = hs.build_bad_identity_result_req()
-
-                    else:
-                        if (
-                            hs.root_verify_key
-                            and organization.root_verify_key != hs.root_verify_key
-                        ):
-                            result_req = hs.build_rvk_mismatch_result_req()
-
-                        else:
-                            context = AnonymousClientContext(transport, hs.organization_id)
-                            result_req = hs.build_result_req()
-
-            else:
+            if hs.answer_type == "authenticated":
+                organization_id = hs.answer_data["organization_id"]
+                device_id = hs.answer_data["device_id"]
+                expected_rvk = hs.answer_data["rvk"]
                 try:
-                    organization = await self.organization.get(hs.organization_id)
-                    user = await self.user.get_user(hs.organization_id, hs.device_id.user_id)
-                    device = user.devices[hs.device_id.device_name]
+                    organization = await self.organization.get(organization_id)
+                    user = await self.user.get_user(organization_id, device_id.user_id)
+                    device = user.devices[device_id.device_name]
 
                 except (OrganizationNotFoundError, UserNotFoundError, KeyError):
                     result_req = hs.build_bad_identity_result_req()
 
                 else:
-                    if organization.root_verify_key != hs.root_verify_key:
+                    if organization.root_verify_key != expected_rvk:
                         result_req = hs.build_rvk_mismatch_result_req()
 
                     elif device.revocated_on:
@@ -244,12 +221,36 @@ class BackendApp:
                     else:
                         context = LoggedClientContext(
                             transport,
-                            hs.organization_id,
-                            hs.device_id,
+                            organization_id,
+                            device_id,
                             user.public_key,
                             device.verify_key,
                         )
                         result_req = hs.build_result_req(device.verify_key)
+
+            elif hs.answer_type == "anonymous":
+                organization_id = hs.answer_data["organization_id"]
+                expected_rvk = hs.answer_data["rvk"]
+                try:
+                    organization = await self.organization.get(organization_id)
+
+                except OrganizationNotFoundError:
+                    result_req = hs.build_bad_identity_result_req()
+
+                else:
+                    if expected_rvk and organization.root_verify_key != expected_rvk:
+                        result_req = hs.build_rvk_mismatch_result_req()
+
+                    else:
+                        context = AnonymousClientContext(transport, organization_id)
+                        result_req = hs.build_result_req()
+
+            else:  # admin
+                context = AdministrationClientContext(transport)
+                if hs.answer_data["token"] == self.config.administration_token:
+                    result_req = hs.build_result_req()
+                else:
+                    result_req = hs.build_bad_administration_token_result_req()
 
         except ProtocoleError as exc:
             result_req = hs.build_bad_format_result_req(str(exc))
@@ -328,7 +329,7 @@ class BackendApp:
                 if not isinstance(cmd, str):
                     raise KeyError()
 
-                if isinstance(client_ctx, AdministratorClientContext):
+                if isinstance(client_ctx, AdministrationClientContext):
                     cmd_func = self.administration_cmds[cmd]
 
                 elif isinstance(client_ctx, LoggedClientContext):

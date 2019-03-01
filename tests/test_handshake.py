@@ -7,17 +7,21 @@ from parsec.api.protocole.base import packb, unpackb, InvalidMessageError
 from parsec.api.protocole.handshake import (
     HandshakeFailedChallenge,
     HandshakeBadIdentity,
+    HandshakeBadAdministrationToken,
     HandshakeRVKMismatch,
+    HandshakeRevokedDevice,
     ServerHandshake,
-    ClientHandshake,
+    BaseClientHandshake,
+    AuthenticatedClientHandshake,
     AnonymousClientHandshake,
+    AdministrationClientHandshake,
 )
 
 
 def test_good_handshake(alice):
     sh = ServerHandshake()
 
-    ch = ClientHandshake(
+    ch = AuthenticatedClientHandshake(
         alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
     )
     assert sh.state == "stalled"
@@ -29,9 +33,13 @@ def test_good_handshake(alice):
 
     sh.process_answer_req(answer_req)
     assert sh.state == "answer"
-    assert sh.organization_id == alice.organization_id
-    assert sh.device_id == alice.device_id
-    assert not sh.is_anonymous()
+    assert sh.answer_type == "authenticated"
+    assert sh.answer_data == {
+        "answer": ANY,
+        "organization_id": alice.organization_id,
+        "device_id": alice.device_id,
+        "rvk": alice.root_verify_key,
+    }
     result_req = sh.build_result_req(alice.verify_key)
     assert sh.state == "result"
 
@@ -55,10 +63,36 @@ def test_good_anonymous_handshake(coolorg, check_rvk):
 
     sh.process_answer_req(answer_req)
     assert sh.state == "answer"
-    assert sh.organization_id == coolorg.organization_id
-    assert sh.root_verify_key == (coolorg.root_verify_key if check_rvk else None)
-    assert sh.device_id is None
-    assert sh.is_anonymous()
+    assert sh.answer_type == "anonymous"
+    if check_rvk:
+        assert sh.answer_data == {
+            "organization_id": coolorg.organization_id,
+            "rvk": coolorg.root_verify_key,
+        }
+    else:
+        assert sh.answer_data == {"organization_id": coolorg.organization_id, "rvk": None}
+    result_req = sh.build_result_req()
+    assert sh.state == "result"
+
+    ch.process_result_req(result_req)
+
+
+def test_good_administration_handshake():
+    admin_token = "Xx" * 16
+    sh = ServerHandshake()
+
+    ch = AdministrationClientHandshake(admin_token)
+    assert sh.state == "stalled"
+
+    challenge_req = sh.build_challenge_req()
+    assert sh.state == "challenge"
+
+    answer_req = ch.process_challenge_req(challenge_req)
+
+    sh.process_answer_req(answer_req)
+    assert sh.state == "answer"
+    assert sh.answer_type == "administration"
+    assert sh.answer_data == {"token": admin_token}
     result_req = sh.build_result_req()
     assert sh.state == "result"
 
@@ -83,7 +117,7 @@ def test_good_anonymous_handshake(coolorg, check_rvk):
     ],
 )
 def test_process_challenge_req_bad_format(alice, req):
-    ch = ClientHandshake(
+    ch = AuthenticatedClientHandshake(
         alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
     )
     with pytest.raises(InvalidMessageError):
@@ -97,59 +131,96 @@ def test_process_challenge_req_bad_format(alice, req):
     "req",
     [
         {},
+        {"handshake": "answer", "type": "dummy"},  # Invalid type
+        # Authenticated answer
         {
             "handshake": "answer",
+            "type": "authenticated",
             "organization_id": "<good>",
             "device_id": "<good>",
-            "answer": "MTIzNDU2Nzg5MA==",
+            # Missing rvk
+            "answer": b"good answer",
         },
         {
             "handshake": "answer",
+            "type": "authenticated",
             "organization_id": "<good>",
+            # Missing device_id
             "rvk": "<good>",
-            "answer": "MTIzNDU2Nzg5MA==",
+            "answer": b"good answer",
         },
         {
             "handshake": "answer",
-            "organization_id": "<good>",
-            "device_id": "<good>",
-            "rvk": "<good>",
-        },
-        {
-            "handshake": "answer",
-            "organization_id": "<good>",
-            "device_id": "<good>",
-            "rvk": "<good>",
-            "answer": 42,
-        },
-        {
-            "handshake": "answer",
-            "device_id": "<good>",
-            "rvk": "<good>",
-            "answer": "MTIzNDU2Nzg5MA==",
-            "foo": "bar",
-        },
-        {
-            "handshake": "answer",
+            "type": "authenticated",
             "organization_id": "<good>",
             "device_id": "<good>",
             "rvk": "<good>",
-            "answer": "MTIzNDU2Nzg5MA==",
-            "foo": "bar",
+            # Missing answer
         },
         {
             "handshake": "answer",
-            "organization_id": "<good>",
-            "device_id": "dummy",
-            "rvk": "<good>",
-            "answer": "MTIzNDU2Nzg5MA==",
-        },
-        {
-            "handshake": "answer",
+            "type": "authenticated",
             "organization_id": "<good>",
             "device_id": "<good>",
-            "rvk": b"dummy",
-            "answer": "MTIzNDU2Nzg5MA==",
+            "rvk": "<good>",
+            "answer": 42,  # Bad type
+        },
+        {
+            "handshake": "answer",
+            "type": "authenticated",
+            "organization_id": "<good>",
+            "device_id": "<good>",
+            "rvk": "<good>",
+            "answer": b"good answer",
+            "foo": "bar",  # Unknown field
+        },
+        {
+            "handshake": "answer",
+            "type": "authenticated",
+            "organization_id": "<good>",
+            "device_id": "dummy",  # Invalid DeviceID
+            "rvk": "<good>",
+            "answer": b"good answer",
+        },
+        {
+            "handshake": "answer",
+            "type": "authenticated",
+            "organization_id": "<good>",
+            "device_id": "<good>",
+            "rvk": b"dummy",  # Invalid VerifyKey
+            "answer": b"good answer",
+        },
+        # Anonymous answer
+        {
+            "handshake": "answer",
+            "type": "anonymous",
+            "organization_id": "<good>",
+            "rvk": b"dummy",  # Invalid VerifyKey
+        },
+        {
+            "handshake": "answer",
+            "type": "anonymous",
+            "organization_id": "d@mmy",  # Invalid OrganizationID
+            "rvk": "<good>",
+        },
+        {
+            "handshake": "answer",
+            "type": "anonymous",
+            "organization_id": "<good>",
+            "rvk": "<good>",
+            "dummy": "whatever",  # Unknown field
+        },
+        # Admin answer
+        {
+            "handshake": "answer",
+            "type": "administration",
+            # Missing token
+        },
+        {
+            "handshake": "answer",
+            "type": "administration",
+            "token": "<good>",
+            "dummy": "whatever",  # Unknown field
         },
     ],
 )
@@ -175,6 +246,7 @@ def test_build_result_req_bad_key(alice, bob):
     sh.build_challenge_req()
     answer = {
         "handshake": "answer",
+        "type": "authenticated",
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -190,6 +262,7 @@ def test_build_result_req_bad_challenge(alice):
     sh.build_challenge_req()
     answer = {
         "handshake": "answer",
+        "type": "authenticated",
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -207,6 +280,7 @@ def test_build_result_req_bad_challenge(alice):
         ("build_bad_identity_result_req", "bad_identity"),
         ("build_rvk_mismatch_result_req", "rvk_mismatch"),
         ("build_revoked_device_result_req", "revoked_device"),
+        ("build_bad_administration_token_result_req", "bad_admin_token"),
     ],
 )
 def test_build_bad_outcomes(alice, method, expected_result):
@@ -214,6 +288,7 @@ def test_build_bad_outcomes(alice, method, expected_result):
     sh.build_challenge_req()
     answer = {
         "handshake": "answer",
+        "type": "authenticated",
         "organization_id": alice.organization_id,
         "device_id": alice.device_id,
         "rvk": alice.root_verify_key.encode(),
@@ -237,10 +312,8 @@ def test_build_bad_outcomes(alice, method, expected_result):
         {"handshake": "result", "result": "error"},
     ],
 )
-def test_process_result_req_bad_format(alice, req):
-    ch = ClientHandshake(
-        alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
-    )
+def test_process_result_req_bad_format(req):
+    ch = BaseClientHandshake()
     with pytest.raises(InvalidMessageError):
         ch.process_result_req(packb(req))
 
@@ -250,13 +323,13 @@ def test_process_result_req_bad_format(alice, req):
     [
         ("bad_identity", HandshakeBadIdentity),
         ("rvk_mismatch", HandshakeRVKMismatch),
+        ("revoked_device", HandshakeRevokedDevice),
+        ("bad_admin_token", HandshakeBadAdministrationToken),
         ("dummy", InvalidMessageError),
     ],
 )
-def test_process_result_req_bad_outcome(alice, result, exc_cls):
-    ch = ClientHandshake(
-        alice.organization_id, alice.device_id, alice.signing_key, alice.root_verify_key
-    )
+def test_process_result_req_bad_outcome(result, exc_cls):
+    ch = BaseClientHandshake()
     with pytest.raises(exc_cls):
         ch.process_result_req(packb({"handshake": "result", "result": result}))
 
