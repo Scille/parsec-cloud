@@ -107,10 +107,10 @@ class FileSyncerMixin(BaseSyncer):
             base_version=0, created=pendulum.now(), need_sync=True, is_placeholder=True
         )
 
-        self.local_folder_fs.set_manifest(moved_access, diverged_manifest)
-        self.local_folder_fs.set_manifest(parent_access, parent_manifest)
+        self.local_folder_fs.set_local_manifest(moved_access, diverged_manifest)
+        self.local_folder_fs.set_local_manifest(parent_access, parent_manifest)
         target_manifest = target_remote_manifest.to_local()
-        self.local_folder_fs.set_manifest(access, target_manifest)
+        self.local_folder_fs.set_local_manifest(access, target_manifest)
 
         self.event_bus.send(
             "fs.entry.file_update_conflicted",
@@ -144,7 +144,7 @@ class FileSyncerMixin(BaseSyncer):
         else:
             target_local_manifest = target_remote_manifest.to_local()
             # Otherwise just fast-forward the local data
-            self.local_folder_fs.set_manifest(access, target_local_manifest)
+            self.local_folder_fs.set_remote_manifest(access, target_local_manifest)
         return True
 
     async def _sync_file_actual_sync(

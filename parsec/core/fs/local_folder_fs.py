@@ -84,7 +84,7 @@ class LocalFolderFS:
         return _recursive_dump(self.root_access)
 
     def _get_raw_manifest_from_local_db(self, access: Access) -> LocalManifest:
-        # Try local manifest first
+        # Try local manifest first, although it should not matter
         try:
             return self._local_db.get_local_manifest(access)
         # Then remote manifest
@@ -128,20 +128,38 @@ class LocalFolderFS:
     def get_manifest(self, access: Access) -> LocalManifest:
         return self._get_manifest_read_only(access)
 
-    def set_manifest(self, access: Access, manifest: LocalManifest):
+    def set_remote_manifest(self, access: Access, manifest: LocalManifest, force=False):
+        # Always keep the user manifest locally
+        if access == self.root_access:
+            return self.set_local_manifest(access, manifest)
+        # Remove the corresponding local manifest if it exists
+        if force:
+            try:
+                self._local_db.clear_local_manifest(access)
+            except LocalDBMissingEntry:
+                pass
+        # Serialize and set remote manifest
         raw = local_manifest_serializer.dumps(manifest)
-        self._local_db.set_local_manifest(access, raw)
+        self._local_db.set_remote_manifest(access, raw)
         self._manifests_cache[access.id] = manifest
 
-    def update_manifest(self, access: Access, manifest: LocalManifest):
-        self.set_manifest(access, manifest)
+    def set_local_manifest(self, access: Access, manifest: LocalManifest):
+        try:
+            self._local_db.clear_remote_manifest(access)
+        except LocalDBMissingEntry:
+            pass
+        raw = local_manifest_serializer.dumps(manifest)
+        self._local_db.set_local_manifest(access, raw)
         self._manifests_cache[access.id] = manifest
 
     def mark_outdated_manifest(self, access: Access):
         try:
             self._local_db.clear_remote_manifest(access)
         except LocalDBMissingEntry:
-            self._local_db.clear_local_manifest(access)
+            try:
+                self._local_db.clear_local_manifest(access)
+            except LocalDBMissingEntry:
+                pass
         self._manifests_cache.pop(access.id, None)
 
     def get_vlob_group(self, path: FsPath) -> UUID:
@@ -310,8 +328,8 @@ class LocalFolderFS:
         child_access = ManifestAccess()
         child_manifest = LocalFileManifest(self.local_author)
         manifest = manifest.evolve_children_and_mark_updated({path.name: child_access})
-        self.set_manifest(access, manifest)
-        self.set_manifest(child_access, child_manifest)
+        self.set_local_manifest(access, manifest)
+        self.set_local_manifest(child_access, child_manifest)
         self.event_bus.send("fs.entry.updated", id=access.id)
         self.event_bus.send("fs.entry.updated", id=child_access.id)
 
@@ -334,8 +352,8 @@ class LocalFolderFS:
         child_manifest = LocalFolderManifest(self.local_author)
         manifest = manifest.evolve_children_and_mark_updated({path.name: child_access})
 
-        self.set_manifest(access, manifest)
-        self.set_manifest(child_access, child_manifest)
+        self.set_local_manifest(access, manifest)
+        self.set_local_manifest(child_access, child_manifest)
         self.event_bus.send("fs.entry.updated", id=access.id)
         self.event_bus.send("fs.entry.updated", id=child_access.id)
 
@@ -353,8 +371,8 @@ class LocalFolderFS:
         child_manifest = LocalWorkspaceManifest(self.local_author)
         root_manifest = root_manifest.evolve_children_and_mark_updated({path.name: child_access})
 
-        self.set_manifest(self.root_access, root_manifest)
-        self.set_manifest(child_access, child_manifest)
+        self.set_local_manifest(self.root_access, root_manifest)
+        self.set_local_manifest(child_access, child_manifest)
         self.event_bus.send("fs.entry.updated", id=self.root_access.id)
         self.event_bus.send("fs.entry.updated", id=child_access.id)
 
@@ -389,7 +407,7 @@ class LocalFolderFS:
         root_manifest = root_manifest.evolve_children_and_mark_updated(
             {dst.name: root_manifest.children[src.name], src.name: None}
         )
-        self.set_manifest(self.root_access, root_manifest)
+        self.set_local_manifest(self.root_access, root_manifest)
 
         self.event_bus.send("fs.entry.updated", id=self.root_access.id)
 
@@ -415,7 +433,7 @@ class LocalFolderFS:
             raise NotADirectoryError(20, "Not a directory", str(path))
 
         parent_manifest = parent_manifest.evolve_children_and_mark_updated({path.name: None})
-        self.set_manifest(parent_access, parent_manifest)
+        self.set_local_manifest(parent_access, parent_manifest)
         self.mark_outdated_manifest(item_access)
         self.event_bus.send("fs.entry.updated", id=parent_access.id)
 
@@ -512,7 +530,7 @@ class LocalFolderFS:
             parent_manifest = parent_manifest.evolve_children_and_mark_updated(
                 {dst.name: moved_access, src.name: None}
             )
-            self.set_manifest(parent_access, parent_manifest)
+            self.set_local_manifest(parent_access, parent_manifest)
             self.event_bus.send("fs.entry.updated", id=parent_access.id)
 
         elif parent_dst.is_root():
@@ -569,14 +587,14 @@ class LocalFolderFS:
             parent_dst_manifest = parent_dst_manifest.evolve_children_and_mark_updated(
                 {dst.name: moved_access}
             )
-            self.set_manifest(parent_dst_access, parent_dst_manifest)
+            self.set_local_manifest(parent_dst_access, parent_dst_manifest)
             self.event_bus.send("fs.entry.updated", id=parent_dst_access.id)
 
             # Update source
             parent_src_manifest = parent_src_manifest.evolve_children_and_mark_updated(
                 {src.name: None}
             )
-            self.set_manifest(parent_src_access, parent_src_manifest)
+            self.set_local_manifest(parent_src_access, parent_src_manifest)
             self.event_bus.send("fs.entry.updated", id=parent_src_access.id)
 
     def _recursive_manifest_copy(self, access, manifest):
@@ -642,7 +660,7 @@ class LocalFolderFS:
                     assert is_workspace_manifest(manifest)
                     cpy_manifest = LocalWorkspaceManifest(self.local_author, children=cpy_children)
 
-            self.set_manifest(cpy_access, cpy_manifest)
+            self.set_local_manifest(cpy_access, cpy_manifest)
             return cpy_access
 
         return _recursive_process_copy_map(copy_map)

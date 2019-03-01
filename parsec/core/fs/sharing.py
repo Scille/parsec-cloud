@@ -108,7 +108,7 @@ class Sharing:
         if recipient not in manifest.participants:
             participants = sorted({*manifest.participants, recipient})
             manifest = manifest.evolve_and_mark_updated(participants=participants)
-            self.local_folder_fs.update_manifest(access, manifest)
+            self.local_folder_fs.set_local_manifest(access, manifest)
 
         # Make sure there is no placeholder in the path and the entry
         # is up to date
@@ -200,7 +200,7 @@ class Sharing:
             user_manifest = user_manifest.evolve_and_mark_updated(
                 last_processed_message=new_last_processed_message
             )
-            self.local_folder_fs.update_manifest(user_manifest_access, user_manifest)
+            self.local_folder_fs.set_local_manifest(user_manifest_access, user_manifest)
 
     async def _process_message(self, sender_id: DeviceID, ciphered: bytes):
         """
@@ -243,7 +243,7 @@ class Sharing:
             user_manifest = user_manifest.evolve_children_and_mark_updated(
                 {sharing_name: msg["access"]}
             )
-            self.local_folder_fs.update_manifest(user_manifest_access, user_manifest)
+            self.local_folder_fs.set_local_manifest(user_manifest_access, user_manifest)
 
             path = f"/{sharing_name}"
             self.event_bus.send("sharing.new", path=path, access=msg["access"])
