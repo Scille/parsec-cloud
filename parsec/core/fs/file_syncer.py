@@ -230,6 +230,13 @@ class FileSyncerMixin(BaseSyncer):
             # )
             # await self._backend_vlob_create(access, to_sync_manifest, notify_beacons)
         else:
+            # The vlob has been successfully uploaded - clean up the dirty blocks
+            for dirty_block in manifest.dirty_blocks:
+                self.local_file_fs.clear_local_block(dirty_block)
+            # Also clean up the remote block cache
+            for remote_block in manifest.blocks:
+                if remote_block not in to_sync_manifest.blocks:
+                    self.local_file_fs.clear_remote_block(remote_block)
             self._sync_file_merge_back(access, manifest, to_sync_manifest)
 
         return to_sync_manifest
