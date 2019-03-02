@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pendulum import Pendulum
 import pytest
 import trio
 from async_generator import asynccontextmanager
@@ -73,10 +72,8 @@ def encryption_manager_factory():
 
 @pytest.fixture
 async def encryption_manager(running_backend, encryption_manager_factory, alice):
-    now = Pendulum(2000, 1, 1)
-    with freeze_time(now):
-        async with encryption_manager_factory(alice) as em:
-            yield em
+    async with encryption_manager_factory(alice) as em:
+        yield em
 
 
 @pytest.fixture

@@ -10,6 +10,8 @@ from parsec.trustchain import (
     unsecure_certified_user_extract_public_key,
 )
 from parsec.crypto import PublicKey, VerifyKey
+from parsec.serde import UnknownCheckedSchema, fields, post_load
+from parsec.core.types.base import serializer_factory
 
 
 @attr.s(slots=True, frozen=True, repr=False, auto_attribs=True)
@@ -41,6 +43,25 @@ class RemoteDevice:
     @property
     def verify_key(self) -> VerifyKey:
         return unsecure_certified_device_extract_verify_key(self.certified_device)
+
+
+class RemoteDeviceSchema(UnknownCheckedSchema):
+    device_id = fields.DeviceID(required=True)
+    created_on = fields.DateTime(required=True)
+
+    revocated_on = fields.DateTime(allow_none=True)
+    certified_revocation = fields.Bytes(allow_none=True)
+    revocation_certifier = fields.DeviceID(allow_none=True)
+
+    certified_device = fields.Bytes(required=True)
+    device_certifier = fields.DeviceID(allow_none=True)
+
+    @post_load
+    def make_obj(self, data):
+        return RemoteDevice(**data)
+
+
+remote_device_serializer = serializer_factory(RemoteDeviceSchema)
 
 
 class RemoteDevicesMapping:
@@ -81,6 +102,7 @@ class RemoteUser:
     user_id: UserID
     certified_user: bytes
     user_certifier: DeviceID
+    is_admin: bool = False
     devices: RemoteDevicesMapping = attr.ib(factory=RemoteDevicesMapping)
 
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
@@ -108,3 +130,22 @@ class RemoteUser:
             return None
         else:
             return sorted(revocations)[-1]
+
+
+class RemoteUserSchema(UnknownCheckedSchema):
+    user_id = fields.UserID(required=True)
+    is_admin = fields.Boolean(required=True)
+    created_on = fields.DateTime(required=True)
+
+    certified_user = fields.Bytes(required=True)
+    user_certifier = fields.DeviceID(allow_none=True)
+
+    devices = fields.Map(fields.DeviceName(), fields.Nested(RemoteDeviceSchema), required=True)
+
+    @post_load
+    def make_obj(self, data):
+        data["devices"] = RemoteDevicesMapping(*data["devices"].values())
+        return RemoteUser(**data)
+
+
+remote_user_serializer = serializer_factory(RemoteUserSchema)

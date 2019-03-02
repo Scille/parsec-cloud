@@ -830,6 +830,7 @@ class BaseUserComponent:
         device_id: DeviceID,
         certified_revocation: bytes,
         revocation_certifier: DeviceID,
+        revocated_on: pendulum.Pendulum = None,
     ) -> Optional[pendulum.Pendulum]:
         """
         Raises:

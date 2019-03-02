@@ -13,7 +13,12 @@ from parsec.core.types.local_manifests import (
     LocalManifest,
     local_manifest_serializer,
 )
-from parsec.core.types.remote_device import RemoteDevice, RemoteDevicesMapping, RemoteUser
+from parsec.core.types.remote_device import (
+    RemoteDevice,
+    RemoteDevicesMapping,
+    RemoteUser,
+    remote_user_serializer,
+)
 from parsec.core.types.remote_manifests import (
     FileManifest,
     FolderManifest,
@@ -48,6 +53,7 @@ __all__ = (
     "RemoteDevice",
     "RemoteDevicesMapping",
     "RemoteUser",
+    "remote_user_serializer",
     "FileManifest",
     "FolderManifest",
     "WorkspaceManifest",

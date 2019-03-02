@@ -1,11 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import pickle
 import hashlib
 from typing import Tuple
 
-from parsec.api.protocole.user import UserSchema
-from parsec.trustchain import cascade_validate_devices
+from parsec.trustchain import validate_user_with_trustchain
 from parsec.types import DeviceID, UserID
 from parsec.crypto import (
     encrypt_for,
@@ -17,12 +15,8 @@ from parsec.crypto import (
 )
 from parsec.core.base import BaseAsyncComponent
 from parsec.core.local_db import LocalDBMissingEntry
-from parsec.core.types import RemoteDevice, RemoteUser, ManifestAccess
+from parsec.core.types import RemoteDevice, RemoteUser, ManifestAccess, remote_user_serializer
 from parsec.core.backend_connection import BackendCmdsBadResponse
-from parsec.serde import Serializer
-
-
-user_schema_serializer = Serializer(UserSchema)
 
 
 class EncryptionManagerError(Exception):
@@ -77,12 +71,9 @@ class EncryptionManager(BaseAsyncComponent):
             else:
                 raise
 
-        cascade_validate_devices(
-            user, trustchain, self.device.organization_id, self.device.root_verify_key
-        )
+        validate_user_with_trustchain(user, trustchain, self.device.root_verify_key)
 
-        # TODO: use schema here
-        raw = pickle.dumps(user)
+        raw = remote_user_serializer.dumps(user)
         self.local_db.set(self._build_remote_user_local_access(user_id), raw)
 
     def _build_remote_user_local_access(self, user_id: UserID) -> ManifestAccess:
@@ -93,7 +84,7 @@ class EncryptionManager(BaseAsyncComponent):
     def _fetch_remote_user_from_local(self, user_id: UserID):
         try:
             raw_user_data = self.local_db.get(self._build_remote_user_local_access(user_id))
-            return pickle.loads(raw_user_data)
+            return remote_user_serializer.loads(raw_user_data)
 
         except LocalDBMissingEntry:
             return None
@@ -103,7 +94,7 @@ class EncryptionManager(BaseAsyncComponent):
             raw_user_data = self.local_db.get(
                 self._build_remote_user_local_access(device_id.user_id)
             )
-            user_data = pickle.loads(raw_user_data)
+            user_data = remote_user_serializer.loads(raw_user_data)
             try:
                 return user_data.devices[device_id.device_name]
             except KeyError:
