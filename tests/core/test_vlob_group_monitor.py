@@ -3,7 +3,6 @@
 import trio
 import pytest
 
-
 from tests.common import create_shared_workspace
 
 

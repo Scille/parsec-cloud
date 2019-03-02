@@ -6,6 +6,7 @@ from pendulum import Pendulum
 
 from parsec.types import DeviceID, UserID
 from parsec.serde import SerdeError, Serializer, UnknownCheckedSchema, fields
+
 from parsec.crypto import (
     CryptoError,
     VerifyKey,
@@ -27,6 +28,14 @@ class TrustChainInvalidDataError(TrustChainError):
 
 
 class TrustChainTooOldError(TrustChainError):
+    pass
+
+
+class TrustChainCertifServerMismatchError(TrustChainError):
+    pass
+
+
+class TrustChainSignedByRevokedDeviceError(TrustChainError):
     pass
 
 
@@ -72,7 +81,10 @@ certified_device_revocation_schema = Serializer(CertifiedDeviceRevocationSchema)
 
 
 def _validate_certified_payload(
-    schema: UnknownCheckedSchema, certifier_key: VerifyKey, payload: bytes, now: Pendulum = None
+    schema: UnknownCheckedSchema,
+    certifier_key: VerifyKey,
+    payload: bytes,
+    created_on: Pendulum = None,
 ) -> dict:
     """
     Raises:
@@ -86,7 +98,7 @@ def _validate_certified_payload(
     except (CryptoError, SerdeError) as exc:
         raise TrustChainInvalidDataError(*exc.args) from exc
 
-    if not timestamps_in_the_ballpark(data["timestamp"], now or pendulum.now()):
+    if not timestamps_in_the_ballpark(data["timestamp"], created_on):
         raise TrustChainTooOldError("Timestamp is too old.")
 
     return data
@@ -119,14 +131,14 @@ def certify_device(
 
 
 def validate_payload_certified_device(
-    certifier_key: VerifyKey, payload: bytes, now: Pendulum
+    certifier_key: VerifyKey, payload: bytes, created_on: Pendulum
 ) -> dict:
     """
     Raises:
         TrustChainInvalidDataError
         TrustChainTooOldError
     """
-    return _validate_certified_payload(certified_device_schema, certifier_key, payload, now)
+    return _validate_certified_payload(certified_device_schema, certifier_key, payload, created_on)
 
 
 def unsecure_certified_device_extract_verify_key(data: bytes) -> VerifyKey:
@@ -170,14 +182,14 @@ def certify_user(
 
 
 def validate_payload_certified_user(
-    certifier_key: VerifyKey, payload: bytes, now: Pendulum
+    certifier_key: VerifyKey, payload: bytes, created_on: Pendulum
 ) -> dict:
     """
     Raises:
         TrustChainInvalidDataError
         TrustChainTooOldError
     """
-    return _validate_certified_payload(certified_user_schema, certifier_key, payload, now)
+    return _validate_certified_payload(certified_user_schema, certifier_key, payload, created_on)
 
 
 def unsecure_certified_user_extract_public_key(data: bytes) -> PublicKey:
@@ -219,7 +231,7 @@ def certify_device_revocation(
 
 
 def validate_payload_certified_device_revocation(
-    certifier_key: VerifyKey, payload: bytes, now: Pendulum
+    certifier_key: VerifyKey, payload: bytes, revocated_on: Pendulum
 ) -> dict:
     """
     Raises:
@@ -227,7 +239,7 @@ def validate_payload_certified_device_revocation(
         TrustChainTooOldError
     """
     return _validate_certified_payload(
-        certified_device_revocation_schema, certifier_key, payload, now
+        certified_device_revocation_schema, certifier_key, payload, revocated_on
     )
 
 
@@ -244,29 +256,80 @@ def certified_extract_parts(certified: bytes) -> Tuple[DeviceID, bytes]:
         raise TrustChainInvalidDataError(*exc.args) from exc
 
 
-# def cascade_validate_devices(
-#     certified_devices, root_verify_key, root_device_id=ROOT_DEVICE_ID
-# ) -> Tuple[dict]:
-#     """
-#     Raises:
-#         TrustChainBrokenChainError
-#         TrustChainInvalidDataError
-#         TrustChainTooOldError
-#     """
-#     devices = []
-#     for certified_device in reversed(certified_devices):
-#         certifier_id, certified_payload = certified_extract_parts(certified_device)
-#         if not devices:
-#             if certifier_id != ROOT_DEVICE_ID:
-#                 raise TrustChainError(f"Device {device} is signed {device}")  # TODO
-#             certifier_key = root_verify_key
+def validate_user_with_trustchain(user, trustchain, root_verify_key: VerifyKey):
+    """
+    Returns: Tuple of RemoteDevice that have been validated during the validation of the RemoteUser
+    Raises:
+        TrustChainBrokenChainError
+        TrustChainInvalidDataError
+        TrustChainTooOldError
+    """
+    all_devices = {**trustchain, **{d.device_id: d for d in user.devices.values()}}
+    validated_devices = {}
 
-#         else:
-#             if certifier_id != devices[-1].id:
-#                 raise TrustChainError(f"Device {device} is signed {device}")  # TODO
-#             certifier_key = devices[-1]["verify_key"]
+    def _extract_certif_key_and_payload(certified, expected_certifier_id, timestamp, needed_by):
+        certifier_id, certified_payload = certified_extract_parts(certified)
+        if certifier_id != expected_certifier_id:
+            raise TrustChainCertifServerMismatchError(
+                f"Device `{needed_by}` is said to be signed by "
+                f"`{certifier_id if certifier_id else 'root key'}`"
+                f" according to certified payload but by"
+                f" `{expected_certifier_id}` according to server"
+            )
 
-#         validated = validate_payload_certified_device(certifier_key, certified_payload)
-#         devices.append(validated)
+        if certifier_id:
+            try:
+                certifier_device = all_devices[certifier_id]
 
-#     return tuple(reversed(devices))
+            except KeyError:
+                raise TrustChainBrokenChainError(
+                    f"Missing `{certifier_id}` needed to validate `{needed_by}`"
+                )
+
+            _recursive_validate_device(certifier_device)
+            if certifier_device.revocated_on and timestamp > certifier_device.revocated_on:
+                raise TrustChainSignedByRevokedDeviceError(
+                    f"Device `{certifier_id}` signed `{needed_by}` after it revocation "
+                    f"(revoked at {certifier_device.revocated_on}, signed at {timestamp})"
+                )
+            certifier_verify_key = certifier_device.verify_key
+
+        else:
+            certifier_verify_key = root_verify_key
+
+        return certifier_verify_key, certified_payload
+
+    def _recursive_validate_device(device):
+        if device.device_id in validated_devices:
+            return
+
+        certifier_verify_key, certified_payload = _extract_certif_key_and_payload(
+            device.certified_device, device.device_certifier, device.created_on, device.device_id
+        )
+        validate_payload_certified_device(
+            certifier_verify_key, certified_payload, device.created_on
+        )
+
+        if device.certified_revocation:
+            certifier_verify_key, certified_payload = _extract_certif_key_and_payload(
+                device.certified_revocation,
+                device.revocation_certifier,
+                device.revocated_on,
+                device.device_id,
+            )
+            validate_payload_certified_device_revocation(
+                certifier_verify_key, certified_payload, device.revocated_on
+            )
+        # All set ! This device is valid ;-)
+        validated_devices[device.device_id] = device
+
+    # Validate the user first
+    certifier_verify_key, certified_payload = _extract_certif_key_and_payload(
+        user.certified_user, user.user_certifier, user.created_on, user.user_id
+    )
+    validate_payload_certified_user(certifier_verify_key, certified_payload, user.created_on)
+    # Now validate the devices
+    for device in user.devices.values():
+        _recursive_validate_device(device)
+
+    return validated_devices

@@ -664,6 +664,7 @@ class BaseUserComponent:
                 data["device_id"],
                 msg["certified_revocation"],
                 certifier_id,
+                data["timestamp"],
             )
 
         except UserNotFoundError:
@@ -829,6 +830,7 @@ class BaseUserComponent:
         device_id: DeviceID,
         certified_revocation: bytes,
         revocation_certifier: DeviceID,
+        revocated_on: pendulum.Pendulum = None,
     ) -> Optional[pendulum.Pendulum]:
         """
         Raises:

@@ -244,6 +244,7 @@ class MemoryUserComponent(BaseUserComponent):
         device_id: DeviceID,
         certified_revocation: bytes,
         revocation_certifier: DeviceID,
+        revocated_on: pendulum.Pendulum = None,
     ) -> Optional[pendulum.Pendulum]:
         org = self._organizations[organization_id]
 
@@ -259,7 +260,7 @@ class MemoryUserComponent(BaseUserComponent):
         for device in user.devices.values():
             if device.device_id == device_id:
                 device = device.evolve(
-                    revocated_on=pendulum.now(),
+                    revocated_on=revocated_on or pendulum.now(),
                     certified_revocation=certified_revocation,
                     revocation_certifier=revocation_certifier,
                 )

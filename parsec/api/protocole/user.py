@@ -34,7 +34,7 @@ class DeviceSchema(UnknownCheckedSchema):
 
 
 class UserSchema(UnknownCheckedSchema):
-    user_id = fields.String(required=True)
+    user_id = fields.UserID(required=True)
     is_admin = fields.Boolean(required=True)
     created_on = fields.DateTime(required=True)
 
@@ -94,7 +94,7 @@ class UserGetInvitationCreatorReqSchema(BaseReqSchema):
 
 
 class UserGetInvitationCreatorRepSchema(BaseRepSchema):
-    user_id = fields.String(required=True)
+    user_id = fields.UserID(required=True)
     created_on = fields.DateTime(required=True)
 
     certified_user = fields.Bytes(required=True)
@@ -163,7 +163,7 @@ class DeviceGetInvitationCreatorReqSchema(BaseReqSchema):
 
 
 class DeviceGetInvitationCreatorRepSchema(BaseRepSchema):
-    user_id = fields.String(required=True)
+    user_id = fields.UserID(required=True)
     created_on = fields.DateTime(required=True)
 
     certified_user = fields.Bytes(required=True)
