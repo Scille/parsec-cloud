@@ -111,6 +111,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         async with logged_core_factory(
                             self.core_config, self.current_device
                         ) as core:
+                            await core.mountpoint_manager.mount_all()
                             self.core_queue.put(core)
                             await trio.sleep_forever()
                 # If we have an exception, we never put the core object in the queue. Since the
