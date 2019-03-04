@@ -236,27 +236,26 @@ async def test_vlob_group_handle_rights(backend, alice, bob, alice_backend_sock,
 
 @pytest.mark.trio
 async def test_vlob_group_updated_event(backend, alice_backend_sock, alice, alice2):
-    # Not listened events
-
+    # Not listened event
     await backend.vlob.create(alice.organization_id, alice.device_id, GROUP_ID, VLOB_ID, b"v1")
 
     # Start listening events
-
     await events_subscribe(alice_backend_sock, vlob_group_updated=[GROUP_ID, OTHER_GROUP_ID])
 
     # Good events
+    with backend.event_bus.listen() as spy:
 
-    await backend.vlob.create(
-        alice.organization_id, alice2.device_id, OTHER_GROUP_ID, OTHER_VLOB_ID, b"v1"
-    )
-    await backend.vlob.update(alice.organization_id, alice2.device_id, VLOB_ID, 2, b"v2")
-    await backend.vlob.update(alice.organization_id, alice2.device_id, VLOB_ID, 3, b"v3")
-
-    with trio.fail_after(1):
-        # No guarantees those events occur before the commands' return
-        await backend.event_bus.spy.wait_multiple(
-            ["vlob_group.updated", "vlob_group.updated", "vlob_group.updated"]
+        await backend.vlob.create(
+            alice.organization_id, alice2.device_id, OTHER_GROUP_ID, OTHER_VLOB_ID, b"v1"
         )
+        await backend.vlob.update(alice.organization_id, alice2.device_id, VLOB_ID, 2, b"v2")
+        await backend.vlob.update(alice.organization_id, alice2.device_id, VLOB_ID, 3, b"v3")
+
+        with trio.fail_after(1):
+            # No guarantees those events occur before the commands' return
+            await spy.wait_multiple(
+                ["vlob_group.updated", "vlob_group.updated", "vlob_group.updated"]
+            )
 
     reps = [
         await events_listen_nowait(alice_backend_sock),
