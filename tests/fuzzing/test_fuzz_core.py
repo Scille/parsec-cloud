@@ -24,7 +24,7 @@ class FSState:
     stats = defaultdict(lambda: defaultdict(lambda: 0))
     logs = attr.ib(factory=list)
     files = attr.ib(factory=list)
-    folders = attr.ib(factory=lambda: ["/"])
+    folders = attr.ib(factory=lambda: ["/w"])
 
     def get_cooked_stats(self):
         stats = {}
@@ -195,9 +195,6 @@ async def _fuzzer_cmd(id, core, fs_state):
 
     elif x < 70:
         old_path = fs_state.get_path()
-        if old_path == "/":
-            # Happens too often otherwise
-            raise SkipCommand()
         new_path = fs_state.get_new_path()
         try:
             await core.fs.move(old_path, new_path)
@@ -235,7 +232,7 @@ async def _fuzzer_cmd(id, core, fs_state):
 @pytest.mark.trio
 @pytest.mark.slow
 async def test_fuzz_core(running_backend, alice_core):
-    await alice_core.event_bus.spy.wait_for_backend_connection_ready()
+    await alice_core.fs.workspace_create("/w")
     try:
         async with trio.open_nursery() as nursery:
             fs_state = FSState()
