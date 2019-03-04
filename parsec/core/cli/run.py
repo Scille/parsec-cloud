@@ -25,13 +25,15 @@ else:
         _run_gui(config)
 
 
-async def _run_mountpoint(config, device, mountpoint):
+async def _run_mountpoint(config, device):
     config = config.evolve(mountpoint_enabled=True)
-    async with logged_core_factory(config, device, mountpoint=mountpoint) as core:
+    async with logged_core_factory(config, device) as core:
+        await core.mountpoint_manager.mount_all()
         display_device = click.style(device.device_id, fg="yellow")
-        mountpoint_display = click.style(str(core.mountpoint.absolute()), fg="yellow")
+        mountpoint_display = click.style(str(config.mountpoint_base_dir.absolute()), fg="yellow")
         click.echo(f"{display_device}'s drive mounted at {mountpoint_display}")
-        await core.mountpoint_task.join()
+
+        await trio.sleep_forever()
 
 
 @click.command(short_help="run parsec mountpoint")
@@ -41,7 +43,8 @@ def run_mountpoint(config, device, mountpoint, **kwargs):
     """
     Expose device's parsec drive on the given mountpoint.
     """
+    config = config.evolve(mountpoint_enabled=True)
     if mountpoint:
-        mountpoint = Path(mountpoint)
+        config = config.evolve(mountpoint_base_dir=Path(mountpoint))
     with cli_exception_handler(config.debug):
-        trio.run(_run_mountpoint, config, device, mountpoint)
+        trio.run(_run_mountpoint, config, device)

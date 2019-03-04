@@ -7,10 +7,11 @@ from hypothesis import strategies as st
 
 
 @pytest.mark.slow
-@pytest.mark.fuse
+@pytest.mark.mountpoint
 @pytest.mark.skipif(os.name == "nt", reason="Seems to spiral into infinite loop so far...")
-@pytest.mark.xfail(reason="FUSE's lower layers seems to hate this...")
-def test_fuse_file_operations(tmpdir, hypothesis_settings, fuse_service):
+@pytest.mark.xfail(reason="Not working at the moment...")
+def test_fuse_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
+
     tentative = 0
 
     class FuseFileOperationsStateMachine(RuleBasedStateMachine):
@@ -19,13 +20,18 @@ def test_fuse_file_operations(tmpdir, hypothesis_settings, fuse_service):
             nonlocal tentative
             tentative += 1
 
-            fuse_service.start()
+            mountpoint_service.start()
 
             self.oracle_fd = os.open(tmpdir / f"oracle-test-{tentative}", os.O_RDWR | os.O_CREAT)
-            self.fd = os.open(fuse_service.default_workspace / "bar.txt", os.O_RDWR | os.O_CREAT)
+            self.fd = os.open(
+                mountpoint_service.get_default_workspace_mountpoint() / "bar.txt",
+                os.O_RDWR | os.O_CREAT,
+            )
 
         def teardown(self):
-            fuse_service.stop()
+            mountpoint_service.stop()
+            os.close(self.oracle_fd)
+            os.close(self.fd)
 
         @rule(size=st.integers(min_value=0))
         def read(self, size):
@@ -61,7 +67,9 @@ def test_fuse_file_operations(tmpdir, hypothesis_settings, fuse_service):
         @rule()
         def reopen(self):
             os.close(self.fd)
-            self.fd = os.open(fuse_service.default_workspace / "bar.txt", os.O_RDWR)
+            self.fd = os.open(
+                mountpoint_service.get_default_workspace_mountpoint() / "bar.txt", os.O_RDWR
+            )
             os.close(self.oracle_fd)
             self.oracle_fd = os.open(tmpdir / f"oracle-test-{tentative}", os.O_RDWR)
 

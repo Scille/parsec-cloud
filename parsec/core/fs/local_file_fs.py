@@ -196,6 +196,7 @@ class LocalFileFS:
             hf.pending_writes.append(NullFillerBuffer(hf.size, length))
         hf.size = length
         hf.pending_writes = [pw for pw in hf.pending_writes if pw.start < length]
+        self.flush(fd)
 
     def read(self, fd: FileDescriptor, size: int = inf, offset: int = None) -> bytes:
         cursor = self._get_cursor_from_fd(fd)

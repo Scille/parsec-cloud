@@ -54,7 +54,12 @@ class PathElement:
         return self.oracle_root / self.absolute_path[1:]
 
     def to_parsec(self):
-        return self.parsec_root / self.absolute_path[1:]
+        root, workspace, *tail = Path(self.absolute_path).parts
+
+        # Do not allow to go outside the inital workspace
+        assert str(self.parsec_root).endswith("-" + workspace)
+
+        return self.parsec_root / Path(*tail)
 
     def __truediv__(self, path):
         return PathElement(
@@ -63,9 +68,9 @@ class PathElement:
 
 
 @pytest.mark.slow
-@pytest.mark.fuse
+@pytest.mark.mountpoint
 @pytest.mark.skipif(os.name == "nt", reason="TODO: fix this ASAP !!!")
-def test_fuse_folder_operations(tmpdir, hypothesis_settings, fuse_service):
+def test_fuse_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
 
     tentative = 0
 
@@ -78,23 +83,23 @@ def test_fuse_folder_operations(tmpdir, hypothesis_settings, fuse_service):
             nonlocal tentative
             tentative += 1
 
-            fuse_service.start()
+            mountpoint_service.start()
 
             self.folder_oracle = Path(tmpdir / f"oracle-test-{tentative}")
             self.folder_oracle.mkdir()
             oracle_root = self.folder_oracle / "root"
             oracle_root.mkdir()
             self.folder_oracle.chmod(0o500)  # Root oracle can no longer be removed this way
-            (oracle_root / fuse_service.default_workspace_name).mkdir()
+            (oracle_root / mountpoint_service.default_workspace_name).mkdir()
 
             return PathElement(
-                f"/{fuse_service.default_workspace_name}",
-                Path(str(fuse_service.mountpoint)),
+                f"/{mountpoint_service.default_workspace_name}",
+                mountpoint_service.get_default_workspace_mountpoint(),
                 oracle_root,
             )
 
         def teardown(self):
-            fuse_service.stop()
+            mountpoint_service.stop()
 
         @rule(target=Files, parent=Folders, name=st_entry_name)
         def touch(self, parent, name):
@@ -137,9 +142,12 @@ def test_fuse_folder_operations(tmpdir, hypothesis_settings, fuse_service):
             with expect_raises(expected_exc):
                 path.to_parsec().unlink()
 
-        # TODO: trying to remove root gives a DeviceBusy error instead of PermissionError...
-        @rule(path=Folders.filter(lambda x: x.absolute_path != "/"))
+        @rule(path=Folders)
         def rmdir(self, path):
+            # Do not remove the root or the default workspace
+            if path.absolute_path in ("/", f"/{mountpoint_service.default_workspace_name}"):
+                return
+
             expected_exc = None
             try:
                 path.to_oracle().rmdir()

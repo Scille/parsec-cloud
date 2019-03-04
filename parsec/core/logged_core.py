@@ -3,7 +3,6 @@
 import trio
 import attr
 from typing import Optional
-from pathlib import Path
 from structlog import get_logger
 from async_generator import asynccontextmanager
 
@@ -15,7 +14,7 @@ from parsec.core.backend_connection import (
     backend_listen_events,
     monitor_backend_connection,
 )
-from parsec.core.mountpoint import mountpoint_manager
+from parsec.core.mountpoint import mountpoint_manager_factory
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.vlob_groups_monitor import monitor_vlob_groups
 from parsec.core.messages_monitor import monitor_messages
@@ -34,18 +33,14 @@ class LoggedCore:
     local_db = attr.ib()
     event_bus = attr.ib()
     encryption_manager = attr.ib()
-    mountpoint = attr.ib()
-    mountpoint_task = attr.ib()
+    mountpoint_manager = attr.ib()
     backend_cmds = attr.ib()
     fs = attr.ib()
 
 
 @asynccontextmanager
 async def logged_core_factory(
-    config: CoreConfig,
-    device: LocalDevice,
-    event_bus: Optional[EventBus] = None,
-    mountpoint: Optional[Path] = None,
+    config: CoreConfig, device: LocalDevice, event_bus: Optional[EventBus] = None
 ):
     event_bus = event_bus or EventBus()
 
@@ -79,22 +74,17 @@ async def logged_core_factory(
                 await monitor_nursery.start(monitor_messages, backend_online, fs, event_bus)
                 await monitor_nursery.start(monitor_sync, backend_online, fs, event_bus)
 
-                if not config.mountpoint_enabled:
-                    mountpoint = None
-                elif mountpoint is None:
-                    mountpoint = config.mountpoint_base_dir / device.device_id
+                async with mountpoint_manager_factory(
+                    fs, event_bus, config.mountpoint_base_dir, enabled=config.mountpoint_enabled
+                ) as mountpoint_manager:
 
-                async with mountpoint_manager(
-                    fs, event_bus, mountpoint, monitor_nursery
-                ) as mountpoint_task:
                     yield LoggedCore(
                         config=config,
                         device=device,
                         local_db=local_db,
                         event_bus=event_bus,
                         encryption_manager=encryption_manager,
-                        mountpoint=mountpoint,
-                        mountpoint_task=mountpoint_task,
+                        mountpoint_manager=mountpoint_manager,
                         backend_cmds=backend_cmds_pool,
                         fs=fs,
                     )
