@@ -73,7 +73,7 @@ def mountpoint_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory
                     await fs.workspace_create(f"/{self.default_workspace_name}")
 
                     async with mountpoint_manager_factory(
-                        fs, fs.event_bus, self.base_mountpoint, debug=True
+                        fs, fs.event_bus, self.base_mountpoint, debug=False
                     ) as mountpoint_manager:
 
                         await mountpoint_manager.mount_workspace(self.default_workspace_name)

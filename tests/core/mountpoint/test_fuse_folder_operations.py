@@ -54,7 +54,12 @@ class PathElement:
         return self.oracle_root / self.absolute_path[1:]
 
     def to_parsec(self):
-        return self.parsec_root / self.absolute_path[1:]
+        root, workspace, *tail = Path(self.absolute_path).parts
+
+        # Do not allow to go outside the inital workspace
+        assert str(self.parsec_root).endswith("-" + workspace)
+
+        return self.parsec_root / Path(*tail)
 
     def __truediv__(self, path):
         return PathElement(
@@ -137,9 +142,12 @@ def test_fuse_folder_operations(tmpdir, hypothesis_settings, mountpoint_service)
             with expect_raises(expected_exc):
                 path.to_parsec().unlink()
 
-        # TODO: trying to remove root gives a DeviceBusy error instead of PermissionError...
-        @rule(path=Folders.filter(lambda x: x.absolute_path != "/"))
+        @rule(path=Folders)
         def rmdir(self, path):
+            # Do not remove the root or the default workspace
+            if path.absolute_path in ("/", f"/{mountpoint_service.default_workspace_name}"):
+                return
+
             expected_exc = None
             try:
                 path.to_oracle().rmdir()
