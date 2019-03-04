@@ -9,8 +9,9 @@ from hypothesis import strategies as st
 @pytest.mark.slow
 @pytest.mark.mountpoint
 @pytest.mark.skipif(os.name == "nt", reason="Seems to spiral into infinite loop so far...")
-@pytest.mark.xfail(reason="FUSE's lower layers seems to hate this...")
+@pytest.mark.xfail(reason="Not working at the moment...")
 def test_fuse_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
+
     tentative = 0
 
     class FuseFileOperationsStateMachine(RuleBasedStateMachine):
@@ -29,6 +30,8 @@ def test_fuse_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
 
         def teardown(self):
             mountpoint_service.stop()
+            os.close(self.oracle_fd)
+            os.close(self.fd)
 
         @rule(size=st.integers(min_value=0))
         def read(self, size):

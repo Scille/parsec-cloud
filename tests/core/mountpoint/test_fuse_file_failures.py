@@ -4,7 +4,6 @@ import os
 import pytest
 
 
-@pytest.mark.xfail(reason="FUSE's lower layers seems to hate this...")
 @pytest.mark.mountpoint
 def test_fuse_grow_by_truncate(tmpdir, mountpoint_service):
     mountpoint_service.start()
@@ -23,7 +22,7 @@ def test_fuse_grow_by_truncate(tmpdir, mountpoint_service):
     assert data == expected_data
 
 
-@pytest.mark.xfail(reason="FUSE's lower layers seems to hate this...")
+@pytest.mark.xfail(reason="Not working at the moment...")
 @pytest.mark.mountpoint
 def test_fuse_empty_read_then_reopen(tmpdir, mountpoint_service):
     mountpoint_service.start()
