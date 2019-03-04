@@ -7,6 +7,7 @@ from sqlite3 import Connection, connect as sqlite_connect
 
 import pendulum
 
+from parsec.core.memory_cache import MemoryCache
 from parsec.core.types.access import ManifestAccess
 from parsec.crypto import encrypt_raw_with_secret_key, decrypt_raw_with_secret_key
 
@@ -34,6 +35,7 @@ class LocalDBMissingEntry(LocalDBError):
 
 class LocalDB:
     def __init__(self, path: Path, max_cache_size: int = DEFAULT_MAX_CACHE_SIZE):
+        self.memory_cache = MemoryCache()
         self.dirty_conn = None
         self.clean_conn = None
         self._path = Path(path)
@@ -169,14 +171,16 @@ class LocalDB:
     # User operations
 
     def get_user(self, access: Access):
-        with self.open_dirty_cursor() as cursor:
-            cursor.execute(
-                "SELECT access_id, blob, inserted_on FROM users WHERE access_id = ?",
-                (str(access.id),),
-            )
-            user_row = cursor.fetchone()
-        if not user_row or pendulum.parse(user_row[2]).add(hours=1) <= now():
-            raise LocalDBMissingEntry(access)
+        user_row = self.memory_cache.get_user(access)
+        if not user_row:
+            with self.open_dirty_cursor() as cursor:
+                cursor.execute(
+                    "SELECT access_id, blob, inserted_on FROM users WHERE access_id = ?",
+                    (str(access.id),),
+                )
+                user_row = cursor.fetchone()
+            if not user_row or pendulum.parse(user_row[2]).add(hours=1) <= now():
+                raise LocalDBMissingEntry(access)
         access_id, blob, created_on = user_row
         return decrypt_raw_with_secret_key(access.key, blob)
 
@@ -189,6 +193,7 @@ class LocalDB:
                 VALUES (?, ?, ?)""",
                 (str(access.id), ciphered, str(now())),
             )
+        self.memory_cache.set_user(access, ciphered)
 
     # Generic manifest operations
 
@@ -201,13 +206,16 @@ class LocalDB:
         return bool(row)
 
     def _get_manifest(self, conn: Connection, access: Access):
-        with self._open_cursor(conn) as cursor:
-            cursor.execute(
-                "SELECT manifest_id, blob FROM manifests WHERE manifest_id = ?", (str(access.id),)
-            )
-            manifest_row = cursor.fetchone()
+        manifest_row = self.memory_cache.get_manifest(conn is self.clean_conn, access)
         if not manifest_row:
-            raise LocalDBMissingEntry(access)
+            with self._open_cursor(conn) as cursor:
+                cursor.execute(
+                    "SELECT manifest_id, blob FROM manifests WHERE manifest_id = ?",
+                    (str(access.id),),
+                )
+                manifest_row = cursor.fetchone()
+            if not manifest_row:
+                raise LocalDBMissingEntry(access)
         manifest_id, blob = manifest_row
         return decrypt_raw_with_secret_key(access.key, blob)
 
@@ -221,8 +229,10 @@ class LocalDB:
                 VALUES (?, ?)""",
                 (str(access.id), ciphered),
             )
+        self.memory_cache.set_manifest(conn is self.clean_conn, access, ciphered)
 
     def _clear_manifest(self, conn: Connection, access: Access):
+        self.memory_cache.clear_manifest(conn is self.clean_conn, access)
         with self._open_cursor(conn) as cursor:
             cursor.execute("DELETE FROM manifests WHERE manifest_id = ?", (str(access.id),))
             cursor.execute("SELECT changes()")
@@ -270,7 +280,11 @@ class LocalDB:
         if not changes:
             raise LocalDBMissingEntry(access)
 
-        ciphered = self._read_file(access, path)
+        block_row = self.memory_cache.get_block(conn is self.clean_conn, access)
+        if block_row:
+            ciphered = block_row[1]
+        else:
+            ciphered = self._read_file(access, path)
         return decrypt_raw_with_secret_key(access.key, ciphered)
 
     def _set_block(self, conn: Connection, path: Path, access: Access, raw: bytes):
@@ -286,6 +300,7 @@ class LocalDB:
                 VALUES (?, ?, ?, ?, ?)""",
                 (str(access.id), len(ciphered), False, str(now()), str(filepath)),
             )
+            self.memory_cache.set_block(conn is self.clean_conn, access, ciphered)
 
         # Write file
         self._write_file(access, ciphered, path)
@@ -300,6 +315,7 @@ class LocalDB:
             raise LocalDBMissingEntry(access)
 
         self._remove_file(access, path)
+        self.memory_cache.clear_block(conn is self.clean_conn, access)
 
     # Clean block operations
 
