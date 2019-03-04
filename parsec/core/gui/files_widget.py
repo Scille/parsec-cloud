@@ -5,7 +5,7 @@ import os
 import pathlib
 from uuid import UUID
 
-from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal
+from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QMenu, QFileDialog, QApplication, QDialog
 
 from parsec.core.gui import desktop
@@ -23,7 +23,8 @@ class CancelException(Exception):
 
 
 class FilesWidget(CoreWidget, Ui_FilesWidget):
-    fs_changed_qt = pyqtSignal(str, UUID, str)
+    fs_updated_qt = pyqtSignal(str, UUID)
+    fs_synced_qt = pyqtSignal(str, UUID, str)
     back_clicked = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
@@ -47,7 +48,10 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         self.line_edit_search.textChanged.connect(self.filter_files)
         self.current_directory = ""
         self.workspace = None
-        self.fs_changed_qt.connect(self._on_fs_changed_qt)
+        self.fs_updated_qt.connect(self._on_fs_updated_qt)
+        self.fs_synced_qt.connect(self._on_fs_synced_qt)
+        self.update_timer = QTimer()
+        self.update_timer.timeout.connect(self.reload)
         self.table_files.file_moved.connect(self.on_file_moved)
         self.table_files.init()
 
@@ -70,9 +74,14 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         self.load("")
         self.table_files.sortItems(0)
 
+    def reload(self):
+        self.load(self.current_directory)
+
     def load(self, directory):
         if not self.workspace and not directory:
             return
+
+        self.update_timer.stop()
 
         self.table_files.clear()
         old_sort = self.table_files.horizontalHeader().sortIndicatorSection()
@@ -110,6 +119,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
     def import_all(self, files, total_size):
         loading_dialog = LoadingDialog(total_size=total_size + len(files), parent=self)
         loading_dialog.show()
+        QApplication.processEvents()
         current_size = 0
         start_time = time.time()
         skip_all = False
@@ -156,6 +166,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             time.sleep(1.0 - elapsed)
         loading_dialog.hide()
         loading_dialog.setParent(None)
+        QApplication.processEvents()
 
     def get_files(self, paths):
         files = []
@@ -441,30 +452,30 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
 
     # slot
     def _on_fs_entry_synced_trio(self, event, path, id):
-        self.fs_changed_qt.emit(event, id, path)
+        self.fs_synced_qt.emit(event, id, path)
 
     # slot
     def _on_fs_entry_updated_trio(self, event, id):
-        self.fs_changed_qt.emit(event, id, None)
+        self.fs_updated_qt.emit(event, id)
 
     # slot
-    def _on_fs_changed_qt(self, event, id, path):
-        if not path:
-            try:
-                path = self.portal.run(self.core.fs.get_entry_path, id)
-            except FSEntryNotFound:
-                # Entry not locally present, nothing to do
-                return
+    def _on_fs_synced_qt(self, event, id, path):
+        pass
+
+    # slot
+    def _on_fs_updated_qt(self, event, id):
+        path = None
+        try:
+            path = self.portal.run(self.core.fs.get_entry_path, id)
+        except FSEntryNotFound:
+            # Entry not locally present, nothing to do
+            return
 
         # Modifications on root is handled by workspace_widget
         if path == "/":
             return
 
-        # TODO: too cumbersome...
-        if isinstance(path, pathlib.PurePosixPath):
-            modified_hops = [x for x in path.parts if x != "/"]
-        else:
-            modified_hops = [x for x in path.split("/") if x and x != "/"]
+        modified_hops = [x for x in path.parts if x != "/"]
 
         if self.workspace and self.current_directory:
             current_dir_hops = [self.workspace] + [
@@ -474,4 +485,4 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             current_dir_hops = []
         # Only direct children to current directory require reloading
         if modified_hops == current_dir_hops or modified_hops[:-1] == current_dir_hops:
-            self.load(self.current_directory)
+            self.update_timer.start(1000)
