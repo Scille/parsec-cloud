@@ -115,10 +115,10 @@ class FileTable(QTableWidget):
         item.setData(Qt.UserRole, -2)
         self.setItem(row_idx, 4, item)
 
-    def add_folder(self, folder_name):
+    def add_folder(self, folder_name, is_synced):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
-        item = FolderTableItem()
+        item = FolderTableItem(is_synced)
         self.setItem(row_idx, 0, item)
         item = QTableWidgetItem(folder_name)
         self.setItem(row_idx, 1, item)
@@ -132,10 +132,10 @@ class FileTable(QTableWidget):
         item.setData(Qt.UserRole, -1)
         self.setItem(row_idx, 4, item)
 
-    def add_file(self, file_name, file_size, created_on, updated_on):
+    def add_file(self, file_name, file_size, created_on, updated_on, is_synced):
         row_idx = self.rowCount()
         self.insertRow(row_idx)
-        item = FileTableItem(file_name)
+        item = FileTableItem(is_synced, file_name)
         self.setItem(row_idx, 0, item)
         item = QTableWidgetItem(file_name)
         self.setItem(row_idx, 1, item)

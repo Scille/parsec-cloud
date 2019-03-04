@@ -104,10 +104,14 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
         for i, child in enumerate(dir_stat["children"]):
             child_stat = self.portal.run(self.core.fs.stat, os.path.join(dir_path, child))
             if child_stat["is_folder"]:
-                self.table_files.add_folder(child)
+                self.table_files.add_folder(child, not child_stat["need_sync"])
             else:
                 self.table_files.add_file(
-                    child, child_stat["size"], child_stat["created"], child_stat["updated"]
+                    child,
+                    child_stat["size"],
+                    child_stat["created"],
+                    child_stat["updated"],
+                    not child_stat["need_sync"],
                 )
             if i % 5 == 0:
                 QApplication.processEvents()
@@ -460,6 +464,15 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
 
     # slot
     def _on_fs_synced_qt(self, event, id, path):
+        # if path == "/":
+        #     return
+        # hops = [x for x in path.split("/")[2:] if x]
+        # if self.current_directory:
+        #     current_hops = [
+        #         x for x in self.current_directory.split("/") if x
+        #     ]
+        # else:
+        #     current_hops = []
         pass
 
     # slot
