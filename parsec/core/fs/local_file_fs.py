@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
-import warnings
 from math import inf
 from typing import List, Optional
+
+from structlog import get_logger
 
 from parsec.event_bus import EventBus
 from parsec.core.types import FileDescriptor, Access, BlockAccess, LocalDevice, LocalFileManifest
@@ -16,6 +17,9 @@ from parsec.core.fs.buffer_ordering import (
     merge_buffers_with_limits,
 )
 from parsec.core.fs.local_folder_fs import LocalFolderFS
+
+
+logger = get_logger()
 
 
 def _shorten_data_repr(data: bytes) -> bytes:
@@ -104,7 +108,7 @@ class LocalFileFS:
         try:
             self.local_db.clear_local_block(access)
         except LocalDBMissingEntry:
-            warnings.warn("Tried to remove a dirty block that doesn't exist anymore")
+            logger.warning("Tried to remove a dirty block that doesn't exist anymore")
 
     def clear_remote_block(self, access: BlockAccess) -> None:
         try:
