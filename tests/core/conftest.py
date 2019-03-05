@@ -24,10 +24,9 @@ def local_db_factory(initial_user_manifest_state):
         local_dbs[device_id] = local_db
         if not user_manifest_in_v0:
             user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
-            local_db.set(
+            local_db.set_dirty_manifest(
                 device.user_manifest_access, local_manifest_serializer.dumps(user_manifest)
             )
-
         return local_db
 
     return _local_db_factory
@@ -82,6 +81,7 @@ def fs_factory(encryption_manager_factory, local_db_factory, event_bus_factory):
     async def _fs_factory(device, local_db=None, event_bus=None):
         if not event_bus:
             event_bus = event_bus_factory()
+
         local_db = local_db or local_db_factory(device)
 
         async with encryption_manager_factory(device, local_db) as em:

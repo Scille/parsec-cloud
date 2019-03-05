@@ -1,11 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import trio
-import attr
-import pendulum
+import sqlite3
 from unittest.mock import Mock
 from contextlib import ExitStack
 from inspect import iscoroutinefunction
+
+import trio
+import attr
+import pendulum
 
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import FS
@@ -14,21 +16,47 @@ from parsec.api.transport import Transport, TransportError
 
 
 class InMemoryLocalDB(LocalDB):
-    def __init__(self):
-        self._data = {}
+    """An in-memory version of the local database.
 
-    def get(self, access):
+    It doesn't perform any access to the file system
+    and has very permissive life cycle.
+    """
+
+    def __init__(self, **kwargs):
+        self._data = {}
+        super().__init__("unused", **kwargs)
+
+        self.dirty_conn = sqlite3.connect(":memory:")
+        self.clean_conn = sqlite3.connect(":memory:")
+        self.create_db()
+
+    # Disable life cycle
+
+    def connect(self):
+        pass
+
+    def close(self):
+        pass
+
+    # File systeme interface
+
+    def _read_file(self, access, path):
+        filepath = path / str(access.id)
         try:
-            return self._data[access.id]
+            return self._data[filepath]
         except KeyError:
             raise LocalDBMissingEntry(access)
 
-    def set(self, access, raw: bytes, deletable=False):
-        assert isinstance(raw, (bytes, bytearray))
-        self._data[access.id] = raw
+    def _write_file(self, access, content, path):
+        filepath = path / str(access.id)
+        self._data[filepath] = content
 
-    def clear(self, access):
-        del self._data[access.id]
+    def _remove_file(self, access, path):
+        filepath = path / str(access.id)
+        try:
+            del self._data[filepath]
+        except KeyError:
+            raise LocalDBMissingEntry(access)
 
 
 def freeze_time(time):

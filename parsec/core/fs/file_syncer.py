@@ -107,10 +107,10 @@ class FileSyncerMixin(BaseSyncer):
             base_version=0, created=pendulum.now(), need_sync=True, is_placeholder=True
         )
 
-        self.local_folder_fs.set_manifest(moved_access, diverged_manifest)
-        self.local_folder_fs.set_manifest(parent_access, parent_manifest)
+        self.local_folder_fs.set_dirty_manifest(moved_access, diverged_manifest)
+        self.local_folder_fs.set_dirty_manifest(parent_access, parent_manifest)
         target_manifest = target_remote_manifest.to_local()
-        self.local_folder_fs.set_manifest(access, target_manifest)
+        self.local_folder_fs.set_dirty_manifest(access, target_manifest)
 
         self.event_bus.send(
             "fs.entry.file_update_conflicted",
@@ -144,7 +144,7 @@ class FileSyncerMixin(BaseSyncer):
         else:
             target_local_manifest = target_remote_manifest.to_local()
             # Otherwise just fast-forward the local data
-            self.local_folder_fs.set_manifest(access, target_local_manifest)
+            self.local_folder_fs.set_clean_manifest(access, target_local_manifest)
         return True
 
     async def _sync_file_actual_sync(
@@ -177,6 +177,10 @@ class FileSyncerMixin(BaseSyncer):
                     block_access = BlockAccess.from_block(data, cs.start)
                     await self._backend_block_create(block_access, data)
                     blocks.append(block_access)
+
+                    # The block has been successfully uploaded
+                    # Keep it in the remote storage
+                    self.local_file_fs.set_clean_block(block_access, data)
 
         if len(spaces) < 2:
             await _process_spaces()
@@ -226,6 +230,16 @@ class FileSyncerMixin(BaseSyncer):
             # )
             # await self._backend_vlob_create(access, to_sync_manifest, notify_beacons)
         else:
+
+            # The vlob has been successfully uploaded - clean up the dirty blocks
+            for dirty_block in manifest.dirty_blocks:
+                self.local_file_fs.clear_dirty_block(dirty_block)
+
+            # Also clean up the outdated blocks from the remote cache
+            outdated_blocks = set(manifest.blocks) - set(to_sync_manifest.blocks)
+            for remote_block in outdated_blocks:
+                self.local_file_fs.clear_clean_block(remote_block)
+
             self._sync_file_merge_back(access, manifest, to_sync_manifest)
 
         return to_sync_manifest
@@ -289,4 +303,9 @@ class FileSyncerMixin(BaseSyncer):
         assert is_file_manifest(current_manifest)
 
         final_manifest = fast_forward_file(base_manifest, current_manifest, target_remote_manifest)
-        self.local_folder_fs.set_manifest(access, final_manifest)
+        if final_manifest.need_sync:
+            # New manifest is not up to date with the remote
+            self.local_folder_fs.set_dirty_manifest(access, final_manifest)
+        else:
+            # New manifest is up to date with the remote: safely clean up the local manifest
+            self.local_folder_fs.set_clean_manifest(access, final_manifest, force=True)

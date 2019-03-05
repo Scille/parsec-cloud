@@ -4,6 +4,8 @@ import attr
 from math import inf
 from typing import List, Optional
 
+from structlog import get_logger
+
 from parsec.event_bus import EventBus
 from parsec.core.types import FileDescriptor, Access, BlockAccess, LocalDevice, LocalFileManifest
 from parsec.core.local_db import LocalDB, LocalDBMissingEntry
@@ -15,6 +17,9 @@ from parsec.core.fs.buffer_ordering import (
     merge_buffers_with_limits,
 )
 from parsec.core.fs.local_folder_fs import LocalFolderFS
+
+
+logger = get_logger()
 
 
 def _shorten_data_repr(data: bytes) -> bytes:
@@ -88,10 +93,28 @@ class LocalFileFS:
         # TODO: handle fs.entry.moved events coming from sync
 
     def get_block(self, access: BlockAccess) -> bytes:
-        return self.local_db.get(access)
+        try:
+            return self.local_db.get_dirty_block(access)
+        except LocalDBMissingEntry:
+            return self.local_db.get_clean_block(access)
 
-    def set_block(self, access: BlockAccess, block: bytes, deletable=False) -> None:
-        return self.local_db.set(access, block, deletable)
+    def set_dirty_block(self, access: BlockAccess, block: bytes) -> None:
+        return self.local_db.set_dirty_block(access, block)
+
+    def set_clean_block(self, access: BlockAccess, block: bytes) -> None:
+        return self.local_db.set_clean_block(access, block)
+
+    def clear_dirty_block(self, access: BlockAccess) -> None:
+        try:
+            self.local_db.clear_dirty_block(access)
+        except LocalDBMissingEntry:
+            logger.warning("Tried to remove a dirty block that doesn't exist anymore")
+
+    def clear_clean_block(self, access: BlockAccess) -> None:
+        try:
+            self.local_db.clear_clean_block(access)
+        except LocalDBMissingEntry:
+            pass
 
     def _get_cursor_from_fd(self, fd: FileDescriptor) -> FileCursor:
         try:
@@ -272,7 +295,7 @@ class LocalFileFS:
         new_dirty_blocks = []
         for pw in hf.pending_writes:
             block_access = BlockAccess.from_block(pw.data, pw.start)
-            self.set_block(block_access, pw.data, False)
+            self.set_dirty_block(block_access, pw.data)
             new_dirty_blocks.append(block_access)
 
         # TODO: clean overwritten dirty blocks
@@ -280,7 +303,7 @@ class LocalFileFS:
             dirty_blocks=(*manifest.dirty_blocks, *new_dirty_blocks), size=hf.size
         )
 
-        self.local_folder_fs.set_manifest(cursor.access, manifest)
+        self.local_folder_fs.set_dirty_manifest(cursor.access, manifest)
 
         hf.pending_writes.clear()
         self.event_bus.send("fs.entry.updated", id=cursor.access.id)
