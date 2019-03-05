@@ -26,8 +26,8 @@ class InMemoryLocalDB(LocalDB):
         self._data = {}
         super().__init__("unused", **kwargs)
 
-        self.local_conn = sqlite3.connect(":memory:")
-        self.remote_conn = sqlite3.connect(":memory:")
+        self.dirty_conn = sqlite3.connect(":memory:")
+        self.clean_conn = sqlite3.connect(":memory:")
         self.create_db()
 
     # Disable life cycle
