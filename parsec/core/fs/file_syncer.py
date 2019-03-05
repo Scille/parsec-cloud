@@ -303,9 +303,9 @@ class FileSyncerMixin(BaseSyncer):
         assert is_file_manifest(current_manifest)
 
         final_manifest = fast_forward_file(base_manifest, current_manifest, target_remote_manifest)
-        # New manifest is not up to date with the remote
         if final_manifest.need_sync:
+            # New manifest is not up to date with the remote
             self.local_folder_fs.set_local_manifest(access, final_manifest)
-        # New manifest is up to date with the remote: safely clean up the local manifest
         else:
+            # New manifest is up to date with the remote: safely clean up the local manifest
             self.local_folder_fs.set_remote_manifest(access, final_manifest, force=True)
