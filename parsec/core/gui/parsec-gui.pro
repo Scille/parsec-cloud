@@ -6,7 +6,7 @@ SOURCES += app.py \
            claim_device_widget.py \
            claim_dialog.py \
            claim_user_widget.py \
-           core_widgets.py \
+           core_widget.py \
            custom_widgets.py \
            desktop.py \
            devices_widget.py \

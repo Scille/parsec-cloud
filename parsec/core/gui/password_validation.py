@@ -8,9 +8,9 @@ from zxcvbn import zxcvbn
 PASSWORD_STRENGTH_TEXTS = [
     QCoreApplication.translate("PasswordStrength", "Very weak"),
     QCoreApplication.translate("PasswordStrength", "Weak"),
+    QCoreApplication.translate("PasswordStrength", "Average"),
     QCoreApplication.translate("PasswordStrength", "Good"),
     QCoreApplication.translate("PasswordStrength", "Strong"),
-    QCoreApplication.translate("PasswordStrength", "Very strong"),
 ]
 
 PASSWORD_CSS = {

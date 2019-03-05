@@ -209,38 +209,46 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_device_widget.ui" line="610"/>
-        <source>Cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/claim_device_widget.ui" line="628"/>
+        <location filename="../forms/claim_device_widget.ui" line="616"/>
         <source>Register</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="122"/>
+        <location filename="../claim_device_widget.py" line="131"/>
         <source>The device has been registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="133"/>
+        <location filename="../claim_user_widget.py" line="142"/>
         <source>Password strength: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="181"/>
+        <location filename="../claim_device_widget.py" line="190"/>
         <source>Passwords don&apos;t match</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="194"/>
+        <location filename="../claim_device_widget.py" line="203"/>
         <source>URL or device is invalid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="229"/>
+        <location filename="../claim_device_widget.py" line="238"/>
         <source>Can not register the new device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ClaimDialog</name>
+    <message>
+        <location filename="../forms/claim_dialog.ui" line="14"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/claim_dialog.ui" line="137"/>
+        <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -302,48 +310,53 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/claim_user_widget.ui" line="631"/>
-        <source>Cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/claim_user_widget.ui" line="649"/>
+        <location filename="../forms/claim_user_widget.ui" line="637"/>
         <source>Register</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="93"/>
+        <location filename="../claim_device_widget.py" line="101"/>
         <source>No invitation found for this device.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="97"/>
+        <location filename="../claim_user_widget.py" line="106"/>
         <source>Can not claim this user ({}).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="92"/>
+        <location filename="../claim_user_widget.py" line="101"/>
         <source>No invitation found for this user.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="121"/>
+        <location filename="../claim_user_widget.py" line="130"/>
         <source>The user has been registered. You can now login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="180"/>
+        <location filename="../claim_user_widget.py" line="189"/>
         <source>Passwords don&apos;t match</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="190"/>
+        <location filename="../claim_user_widget.py" line="199"/>
         <source>URL or device is invalid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="221"/>
+        <location filename="../claim_user_widget.py" line="231"/>
         <source>Can not register the new user.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../claim_device_widget.py" line="84"/>
+        <source>Please wait while the device is registered.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../claim_user_widget.py" line="84"/>
+        <source>Please wait while the user is registered.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -353,6 +366,23 @@
         <location filename="../forms/device_button.ui" line="31"/>
         <source>Form</source>
         <translation></translation>
+    </message>
+    <message>
+        <location filename="../devices_widget.py" line="53"/>
+        <source>Show info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../devices_widget.py" line="56"/>
+        <source>Revoke</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../devices_widget.py" line="63"/>
+        <source>
+
+This device has been revoked.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -365,6 +395,41 @@
     <message>
         <location filename="../forms/devices_widget.ui" line="65"/>
         <source>Search devices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../devices_widget.py" line="98"/>
+        <source>Confirmation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../devices_widget.py" line="98"/>
+        <source>Are you sure you want to revoke device &quot;{}&quot; ?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../devices_widget.py" line="116"/>
+        <source>Device &quot;{}&quot; has been revoked.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../devices_widget.py" line="124"/>
+        <source>Device &quot;{}&quot; has already been revoked.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../devices_widget.py" line="131"/>
+        <source>Device &quot;{}&quot; not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../devices_widget.py" line="138"/>
+        <source>You don&apos;t have the permission to revoke this device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../devices_widget.py" line="145"/>
+        <source>Can not revoke this device.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -429,73 +494,91 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="228"/>
+        <location filename="../files_widget.py" line="243"/>
         <source>Select files to import</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="240"/>
+        <location filename="../files_widget.py" line="255"/>
         <source>Select a directory to import</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="273"/>
+        <location filename="../files_widget.py" line="288"/>
         <source>A folder with the same name already exists.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="286"/>
+        <location filename="../files_widget.py" line="301"/>
         <source>Confirmation</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="286"/>
+        <location filename="../files_widget.py" line="301"/>
         <source>Are you sure you want to delete &quot;{}&quot; ?</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="322"/>
+        <location filename="../files_widget.py" line="337"/>
         <source>Folder name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="322"/>
+        <location filename="../files_widget.py" line="337"/>
         <source>Enter new folder name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="357"/>
+        <location filename="../files_widget.py" line="372"/>
         <source>Open</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="359"/>
+        <location filename="../files_widget.py" line="374"/>
         <source>Open in explorer</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="361"/>
+        <location filename="../files_widget.py" line="376"/>
         <source>Rename</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="370"/>
+        <location filename="../files_widget.py" line="385"/>
         <source>New name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="370"/>
+        <location filename="../files_widget.py" line="385"/>
         <source>Enter file new name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="393"/>
+        <location filename="../files_widget.py" line="408"/>
         <source>Can not rename.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="363"/>
+        <location filename="../files_widget.py" line="378"/>
         <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../file_table.py" line="89"/>
+        <source>Parent Folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../file_table.py" line="106"/>
+        <source>Parent Workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GetUserName</name>
+    <message>
+        <location filename="../custom_widgets.py" line="70"/>
+        <source>User name</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -507,53 +590,28 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="216"/>
-        <source>Mountpoint</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/global_settings_widget.ui" line="280"/>
-        <source>Choose mountpoint</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/global_settings_widget.ui" line="299"/>
-        <source>Enable mountpoint</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../forms/global_settings_widget.ui" line="366"/>
+        <location filename="../forms/global_settings_widget.ui" line="209"/>
         <source>Behavior</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="380"/>
+        <location filename="../forms/global_settings_widget.ui" line="223"/>
         <source>Close button minimizes Parsec in the tray</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="444"/>
+        <location filename="../forms/global_settings_widget.ui" line="287"/>
         <source>Localization</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="460"/>
+        <location filename="../forms/global_settings_widget.ui" line="303"/>
         <source>Language</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="558"/>
+        <location filename="../forms/global_settings_widget.ui" line="401"/>
         <source>Save</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../global_settings_widget.py" line="70"/>
-        <source>Choose a mountpoint</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../global_settings_widget.py" line="79"/>
-        <source>The choosen folder is not writable.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -585,6 +643,11 @@
     <message>
         <location filename="../forms/loading_dialog.ui" line="164"/>
         <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../loading_dialog.py" line="35"/>
+        <source>Cancelling...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -672,42 +735,42 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="223"/>
+        <location filename="../main_window.py" line="224"/>
         <source>Authentication failed.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="245"/>
+        <location filename="../main_window.py" line="246"/>
         <source>Are you sure you want to quit ?</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="262"/>
+        <location filename="../main_window.py" line="263"/>
         <source>Parsec is still running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="155"/>
+        <location filename="../main_window.py" line="156"/>
         <source>The mounpoint has been unmounted, you will now be logged off.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="225"/>
+        <location filename="../main_window.py" line="226"/>
         <source>User not registered in the backend.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="230"/>
+        <location filename="../main_window.py" line="231"/>
         <source>Mountpoint already in use.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="196"/>
+        <location filename="../main_window.py" line="197"/>
         <source>This device has been revoked.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="210"/>
+        <location filename="../main_window.py" line="211"/>
         <source>Can not login ({})</source>
         <translation type="unfinished"></translation>
     </message>
@@ -747,6 +810,24 @@
     <message>
         <location filename="../forms/menu_widget.ui" line="608"/>
         <source>   Log Out</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Message</name>
+    <message>
+        <location filename="../custom_widgets.py" line="141"/>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../custom_widgets.py" line="151"/>
+        <source>Warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../custom_widgets.py" line="161"/>
+        <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -908,18 +989,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../password_validation.py" line="11"/>
+        <location filename="../password_validation.py" line="12"/>
         <source>Good</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../password_validation.py" line="12"/>
+        <location filename="../password_validation.py" line="13"/>
         <source>Strong</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../password_validation.py" line="13"/>
-        <source>Very strong</source>
+        <location filename="../password_validation.py" line="11"/>
+        <source>Average</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1132,6 +1213,12 @@
     <message>
         <location filename="../forms/replace_dialog.ui" line="323"/>
         <source>Do the same for all files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../replace_dialog.py" line="13"/>
+        <source>The file &quot;{}&quot; already exists.
+Do you want to replace it ?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1410,6 +1497,16 @@ This user has been revoked.</source>
         <source>This workspace is empty.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../workspace_button.py" line="81"/>
+        <source> (shared)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspace_button.py" line="83"/>
+        <source> (shared by {})</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>WorkspaceSharingDialog</name>
@@ -1482,12 +1579,12 @@ This user has been revoked.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspace_sharing_dialog.py" line="92"/>
+        <location filename="../workspace_sharing_dialog.py" line="95"/>
         <source>Can not share the workspace &quot;{}&quot; with this user.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspace_sharing_dialog.py" line="102"/>
+        <location filename="../workspace_sharing_dialog.py" line="105"/>
         <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
         <translation></translation>
     </message>
@@ -1525,7 +1622,7 @@ Created by {}.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspace_sharing_dialog.py" line="80"/>
+        <location filename="../workspace_sharing_dialog.py" line="83"/>
         <source>This workspace is already shared with &quot;{}&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
