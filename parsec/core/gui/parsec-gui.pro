@@ -22,6 +22,7 @@ SOURCES += app.py \
            menu_widget.py \
            mount_widget.py \
            network_settings_widget.py \
+           new_version.py \
            notification_center_widget.py \
            notification_widget.py \
            password_validation.py \
@@ -74,6 +75,7 @@ FORMS += forms/main_window.ui \
          forms/sharing_widget.ui \
          forms/loading_dialog.ui \
          forms/replace_dialog.ui \
-         forms/claim_dialog.ui
+         forms/claim_dialog.ui \
+    forms/new_version_dialog.ui
 
 RESOURCES += rc/resources.qrc

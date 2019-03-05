@@ -25,6 +25,7 @@ from parsec.core.gui.login_widget import LoginWidget
 from parsec.core.gui.central_widget import CentralWidget
 from parsec.core.gui.custom_widgets import ask_question, show_error
 from parsec.core.gui.starting_guide_dialog import StartingGuideDialog
+from parsec.core.gui.new_version import new_version_available, NewVersionDialog
 from parsec.core.gui.ui.main_window import Ui_MainWindow
 
 
@@ -64,6 +65,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.mountpoint_stopped.connect(self._qt_on_mountpoint_stopped)
 
         self.show_login_widget()
+
+        if not settings.get_value("global/no_check_version", "false"):
+            if new_version_available():
+                d = NewVersionDialog(parent=self)
+                d.exec_()
 
     def show_starting_guide(self):
         s = StartingGuideDialog(parent=self)

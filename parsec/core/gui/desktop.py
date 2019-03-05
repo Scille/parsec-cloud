@@ -10,6 +10,10 @@ def open_file(path):
     QDesktopServices.openUrl(QUrl.fromLocalFile(QFileInfo(path).absoluteFilePath()))
 
 
+def open_url(url):
+    QDesktopServices.openUrl(QUrl(url))
+
+
 def get_default_device():
     device = QSysInfo.machineHostName()
     if device.lower() == "localhost":
