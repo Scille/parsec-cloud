@@ -14,6 +14,7 @@ from parsec.types import BackendOrganizationAddr, DeviceID
 from parsec.core.backend_connection import backend_anonymous_cmds_factory, BackendCmdsBadResponse
 from parsec.core.invite_claim import claim_device as core_claim_device
 from parsec.core.gui.desktop import get_default_device
+from parsec.core.gui.claim_dialog import ClaimDialog
 from parsec.core.gui.custom_widgets import show_error, show_info
 from parsec.core.gui import validators
 from parsec.core.gui.password_validation import (
@@ -64,9 +65,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.core_config = core_config
-        self.button_cancel.hide()
         self.button_claim.clicked.connect(self.claim_clicked)
-        self.button_cancel.clicked.connect(self.cancel_claim)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_url.textChanged.connect(self.check_infos)
@@ -81,13 +80,21 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.cancel_scope = None
         self.trio_portal = None
         self.claim_queue = queue.Queue(2)
+        self.claim_dialog = ClaimDialog(parent=self)
+        self.claim_dialog.setText(
+            QCoreApplication.translate(
+                "ClaimUserWidget", "Please wait while the device is registered."
+            )
+        )
+        self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
+        self.claim_dialog.hide()
 
     def claim_error(self, status):
+        self.claim_dialog.hide()
         self.claim_thread.join()
         self.claim_thread = None
         self.cancel_scope = None
         self.trio_portal = None
-        self.button_cancel.hide()
         self.button_claim.setDisabled(False)
         self.check_infos("")
         if status == "not_found":
@@ -106,16 +113,17 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
             )
 
     def cancel_claim(self):
+        self.claim_dialog.hide()
         self.trio_portal.run_sync(self.cancel_scope.cancel)
         self.claim_thread.join()
         self.trio_portal = None
         self.cancel_scope = None
         self.claim_thread = None
-        self.button_cancel.hide()
         self.button_claim.setDisabled(False)
         self.check_infos("")
 
     def claim_finished(self):
+        self.claim_dialog.hide()
         self.claim_thread.join()
         self.claim_thread = None
         self.cancel_scope = None
@@ -216,7 +224,7 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
                     False,
                     self.line_edit_password.text(),
                 )
-            self.button_cancel.show()
+            self.claim_dialog.show()
             self.claim_thread = threading.Thread(target=self._thread_claim_device, args=args)
             self.claim_thread.start()
             self.trio_portal = self.claim_queue.get()
@@ -249,5 +257,4 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
         self.combo_pkcs11_key.addItem("0")
         self.combo_pkcs11_token.clear()
         self.combo_pkcs11_token.addItem("0")
-        self.button_cancel.hide()
         self.widget_pkcs11.hide()

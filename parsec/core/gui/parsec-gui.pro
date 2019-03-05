@@ -1,16 +1,22 @@
 # Used only for translations
 
-  SOURCES += app.py \
-  bootstrap_organization_widget.py \
+SOURCES += app.py \
+           bootstrap_organization_widget.py \
            central_widget.py \
            claim_device_widget.py \
+           claim_dialog.py \
            claim_user_widget.py \
+           core_widgets.py \
+           custom_widgets.py \
            desktop.py \
+           devices_widget.py \
            file_items.py \
            file_size.py \
            files_widget.py \
+           file_table.py \
            global_settings_widget.py \
            lang.py \
+           loading_dialog.py \
            login_widget.py \
            main_window.py \
            menu_widget.py \
@@ -21,6 +27,7 @@
            password_validation.py \
            register_device_dialog.py \
            register_user_dialog.py \
+           replace_dialog.py \
            settings_dialog.py \
            settings_widget.py \
            starting_guide_dialog.py \
@@ -64,8 +71,9 @@ FORMS += forms/main_window.ui \
          forms/notification_widget.ui \
          forms/bootstrap_organization_widget.ui \
          forms/workspace_sharing_dialog.ui \
-    forms/sharing_widget.ui \
-    forms/loading_dialog.ui \
-    forms/replace_dialog.ui
+         forms/sharing_widget.ui \
+         forms/loading_dialog.ui \
+         forms/replace_dialog.ui \
+         forms/claim_dialog.ui
 
 RESOURCES += rc/resources.qrc

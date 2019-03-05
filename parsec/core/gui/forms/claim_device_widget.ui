@@ -600,18 +600,6 @@ image: url(:/icons/images/icons/checked.png)
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="button_cancel">
-          <property name="font">
-           <font>
-            <pointsize>13</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Cancel</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QPushButton" name="button_claim">
           <property name="font">
            <font>

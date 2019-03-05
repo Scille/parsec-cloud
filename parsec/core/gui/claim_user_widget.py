@@ -16,6 +16,7 @@ from parsec.core.invite_claim import claim_user as core_claim_user
 from parsec.core.gui.desktop import get_default_device
 from parsec.core.gui import validators
 from parsec.core.gui.custom_widgets import show_error, show_info
+from parsec.core.gui.claim_dialog import ClaimDialog
 from parsec.core.gui.password_validation import (
     get_password_strength,
     PASSWORD_STRENGTH_TEXTS,
@@ -64,9 +65,7 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.core_config = core_config
-        self.button_cancel.hide()
         self.button_claim.clicked.connect(self.claim_clicked)
-        self.button_cancel.clicked.connect(self.cancel_claim)
         self.line_edit_login.textChanged.connect(self.check_infos)
         self.line_edit_device.textChanged.connect(self.check_infos)
         self.line_edit_token.textChanged.connect(self.check_infos)
@@ -81,13 +80,22 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.cancel_scope = None
         self.trio_portal = None
         self.claim_queue = queue.Queue(2)
+        self.claim_dialog = ClaimDialog(parent=self)
+        self.claim_dialog.setText(
+            QCoreApplication.translate(
+                "ClaimUserWidget", "Please wait while the user is registered."
+            )
+        )
+        self.claim_dialog.cancel_clicked.connect(self.cancel_claim)
+        self.claim_dialog.hide()
 
     def claim_error(self, status):
+        self.claim_dialog.hide()
         self.claim_thread.join()
         self.claim_thread = None
         self.cancel_scope = None
         self.trio_portal = None
-        self.button_cancel.hide()
+        self.button_claim.setDisabled(False)
         self.check_infos("")
         if status == "not_found":
             show_error(
@@ -103,22 +111,22 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             )
 
     def cancel_claim(self):
+        self.claim_dialog.hide()
         self.trio_portal.run_sync(self.cancel_scope.cancel)
         self.claim_thread.join()
         self.claim_thread = None
         self.cancel_scope = None
         self.trio_portal = None
-        self.button_cancel.hide()
         self.button_claim.setDisabled(False)
         self.check_infos("")
 
     def claim_finished(self):
+        self.claim_dialog.hide()
         self.claim_thread.join()
         self.claim_thread = None
         self.cancel_scope = None
         self.trio_portal = None
         self.button_claim.setDisabled(False)
-        self.button_cancel.hide()
         show_info(
             self,
             QCoreApplication.translate(
@@ -212,13 +220,14 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
                     False,
                     self.line_edit_password.text(),
                 )
-            self.button_cancel.show()
+            self.claim_dialog.show()
             self.claim_thread = threading.Thread(target=self._thread_claim_user, args=args)
             self.claim_thread.start()
             self.trio_portal = self.claim_queue.get()
             self.cancel_scope = self.claim_queue.get()
             self.button_claim.setDisabled(True)
         except:
+            self.claim_dialog.hide()
             show_error(
                 self,
                 QCoreApplication.translate("ClaimUserWidget", "Can not register the new user."),
@@ -238,6 +247,5 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
         self.combo_pkcs11_key.addItem("0")
         self.combo_pkcs11_token.clear()
         self.combo_pkcs11_token.addItem("0")
-        self.button_cancel.hide()
         self.widget_pkcs11.hide()
         self.label_password_strength.hide()
