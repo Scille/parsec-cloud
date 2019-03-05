@@ -146,8 +146,7 @@ class LocalDB:
 
     # Size and blocks
 
-    @property
-    def nb_remote_blocks(self):
+    def get_nb_remote_blocks(self):
         with self.open_remote_cursor() as cursor:
             cursor.execute("SELECT COUNT(*) FROM blocks")
             result, = cursor.fetchone()
@@ -311,7 +310,7 @@ class LocalDB:
         self._set_block(self.remote_conn, self._remote_db_files, access, raw)
 
         # Clean up if necessary
-        limit = self.nb_remote_blocks - self.block_limit
+        limit = self.get_nb_remote_blocks() - self.block_limit
         if limit > 0:
             self.cleanup_remote_blocks(limit=limit)
 
