@@ -5,6 +5,7 @@ import threading
 import trio
 import pathlib
 from contextlib import contextmanager
+from inspect import iscoroutinefunction
 
 from parsec.utils import start_task
 from parsec.core.mountpoint import mountpoint_manager_factory
@@ -12,7 +13,7 @@ from parsec.core.mountpoint import mountpoint_manager_factory
 
 @pytest.fixture
 @pytest.mark.fuse
-def mountpoint_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory, fs_factory):
+def mountpoint_service_factory(tmpdir, alice, fs_factory):
     """
     Run a trio loop with fs and mountpoint manager in a separate thread to
     allow blocking operations on the mountpoint in the test
@@ -30,8 +31,17 @@ def mountpoint_service_factory(tmpdir, unused_tcp_addr, alice, event_bus_factory
             self._started = trio.Event()
             self._ready = threading.Event()
 
+        def execute(self, cb):
+            if iscoroutinefunction(cb):
+                self._portal.run(cb, *self._task.value)
+            else:
+                self._portal.run_sync(cb, *self._task.value)
+
         def get_default_workspace_mountpoint(self):
-            return self.base_mountpoint / f"{alice.user_id}-{self.default_workspace_name}"
+            return self.get_workspace_mountpoint(self.default_workspace_name)
+
+        def get_workspace_mountpoint(self, workspace):
+            return self.base_mountpoint / f"{alice.user_id}-{workspace}"
 
         def start(self):
             async def _start():

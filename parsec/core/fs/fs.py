@@ -148,10 +148,10 @@ class FS:
         cooked_dst = FsPath(dst)
         await self._load_and_retry(self._local_folder_fs.workspace_rename, cooked_src, cooked_dst)
 
-    async def move(self, src: str, dst: str) -> None:
+    async def move(self, src: str, dst: str, overwrite: bool = True) -> None:
         cooked_src = FsPath(src)
         cooked_dst = FsPath(dst)
-        await self._load_and_retry(self._local_folder_fs.move, cooked_src, cooked_dst)
+        await self._load_and_retry(self._local_folder_fs.move, cooked_src, cooked_dst, overwrite)
 
     async def delete(self, path: str) -> None:
         cooked_path = FsPath(path)

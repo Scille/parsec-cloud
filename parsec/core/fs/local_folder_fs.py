@@ -275,6 +275,7 @@ class LocalFolderFS:
         access, manifest = self._retrieve_entry_read_only(path)
         if is_file_manifest(manifest):
             return {
+                "id": access.id,
                 "type": "file",
                 "is_folder": False,
                 "created": manifest.created,
@@ -287,6 +288,7 @@ class LocalFolderFS:
 
         elif is_workspace_manifest(manifest):
             return {
+                "id": access.id,
                 "type": "workspace",
                 "is_folder": True,
                 "created": manifest.created,
@@ -300,6 +302,7 @@ class LocalFolderFS:
             }
         else:
             return {
+                "id": access.id,
                 "type": "root" if path.is_root() else "folder",
                 "is_folder": True,
                 "created": manifest.created,
@@ -446,7 +449,7 @@ class LocalFolderFS:
     def rmdir(self, path: FsPath) -> None:
         return self._delete(path, expect="folder")
 
-    def move(self, src: FsPath, dst: FsPath) -> None:
+    def move(self, src: FsPath, dst: FsPath, overwrite: bool = True) -> None:
         # The idea here is to consider a manifest never move around the fs
         # (i.e. a given access always points to the same path). This simplify
         # sync notifications handling and avoid ending up with two path
@@ -515,6 +518,9 @@ class LocalFolderFS:
                 )
 
             if existing_dst_access:
+                if not overwrite:
+                    raise FileExistsError(17, "File exists", str(dst))
+
                 existing_dst_manifest = self.get_manifest(existing_dst_access)
                 if is_folderish_manifest(src_manifest):
                     if is_file_manifest(existing_dst_manifest):
@@ -571,6 +577,9 @@ class LocalFolderFS:
                 )
 
             if existing_dst_access:
+                if not overwrite:
+                    raise FileExistsError(17, "File exists", str(dst))
+
                 existing_entry_manifest = self.get_manifest(existing_dst_access)
                 if is_folderish_manifest(src_manifest):
                     if is_file_manifest(existing_entry_manifest):

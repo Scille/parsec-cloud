@@ -83,7 +83,7 @@ async def test_base_mountpoint_not_created(base_mountpoint, alice, alice_fs, eve
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-@pytest.mark.skipif(os.name == "nt", reason="Error message is POSIX-specific")
+# @pytest.mark.skipif(os.name == "nt", reason="Error message is POSIX-specific")
 async def test_mountpoint_already_in_use(base_mountpoint, alice, alice_fs, alice2_fs, event_bus):
     # Path should be created if it doesn' exist
     mountpoint = f"{base_mountpoint.absolute()}/{alice.user_id}-w"
