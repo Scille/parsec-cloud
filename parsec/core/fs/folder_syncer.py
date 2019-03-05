@@ -205,7 +205,7 @@ class FolderSyncerMixin(BaseSyncer):
             )
         if final_manifest.need_sync:
             # New manifest is not up to date with the remote
-            self.local_folder_fs.set_local_manifest(access, final_manifest)
+            self.local_folder_fs.set_dirty_manifest(access, final_manifest)
         else:
             # New manifest is up to date with the remote: safely clean up the local manifest
-            self.local_folder_fs.set_remote_manifest(access, final_manifest, force=True)
+            self.local_folder_fs.set_clean_manifest(access, final_manifest, force=True)

@@ -32,7 +32,7 @@ class RemoteLoader:
         block = decrypt_raw_with_secret_key(access.key, ciphered_block)
         assert sha256(block).hexdigest() == access.digest, access
 
-        self.local_db.set_remote_block(access, block)
+        self.local_db.set_clean_block(access, block)
 
     async def load_manifest(self, access: ManifestAccess) -> None:
         _, blob = await self.backend_cmds.vlob_read(access.id)
@@ -44,4 +44,4 @@ class RemoteLoader:
         local_manifest = remote_manifest.to_local()
         raw_local_manifest = local_manifest_serializer.dumps(local_manifest)
 
-        self.local_db.set_remote_manifest(access, raw_local_manifest)
+        self.local_db.set_clean_manifest(access, raw_local_manifest)

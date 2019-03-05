@@ -186,12 +186,12 @@ def test_access_not_loaded_entry(alice, bob, local_folder_fs):
         foo_access = ManifestAccess()
         foo_manifest = LocalFileManifest(bob.device_id)
         user_manifest = user_manifest.evolve_children({"foo.txt": foo_access})
-        local_folder_fs.set_local_manifest(alice.user_manifest_access, user_manifest)
+        local_folder_fs.set_dirty_manifest(alice.user_manifest_access, user_manifest)
 
     with pytest.raises(FSManifestLocalMiss):
         local_folder_fs.stat(FsPath("/foo.txt"))
 
-    local_folder_fs.set_local_manifest(foo_access, foo_manifest)
+    local_folder_fs.set_dirty_manifest(foo_access, foo_manifest)
     stat = local_folder_fs.stat(FsPath("/foo.txt"))
     assert stat == {
         "type": "file",
