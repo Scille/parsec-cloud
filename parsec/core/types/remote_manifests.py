@@ -11,8 +11,10 @@ from parsec.core.types.base import EntryName, EntryNameField, serializer_factory
 from parsec.core.types.access import (
     BlockAccess,
     ManifestAccess,
+    WorkspaceManifestAccess,
     BlockAccessSchema,
     ManifestAccessSchema,
+    WorkspaceManifestAccessSchema,
 )
 
 
@@ -167,6 +169,7 @@ workspace_manifest_serializer = serializer_factory(WorkspaceManifestSchema)
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class UserManifest(FolderManifest):
     last_processed_message: int
+    children: Dict[EntryName, WorkspaceManifestAccess] = attr.ib(converter=FrozenDict)
 
     def to_local(self) -> "local_manifests.LocalFolderManifest":
         return local_manifests.LocalUserManifest(
@@ -184,6 +187,11 @@ class UserManifest(FolderManifest):
 class UserManifestSchema(FolderManifestSchema):
     type = fields.CheckedConstant("user_manifest", required=True)
     last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
+    children = fields.Map(
+        EntryNameField(validate=validate.Length(min=1, max=256)),
+        fields.Nested(WorkspaceManifestAccessSchema),
+        required=True,
+    )
 
     @post_load
     def make_obj(self, data):

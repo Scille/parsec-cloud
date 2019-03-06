@@ -12,6 +12,7 @@ from parsec.core.types import (
     LocalManifest,
     local_manifest_serializer,
     ManifestAccess,
+    WorkspaceManifestAccess,
     LocalFileManifest,
     LocalFolderManifest,
     LocalWorkspaceManifest,
@@ -357,7 +358,7 @@ class LocalFolderFS:
         self.event_bus.send("fs.entry.updated", id=access.id)
         self.event_bus.send("fs.entry.updated", id=child_access.id)
 
-    def workspace_create(self, path: FsPath) -> None:
+    def workspace_create(self, path: FsPath) -> UUID:
         if not path.parent.is_root():
             raise PermissionError(
                 13, "Permission denied (workspace only allowed at root level)", str(path)
@@ -367,7 +368,7 @@ class LocalFolderFS:
         if path.name in root_manifest.children:
             raise FileExistsError(17, "File exists", str(path))
 
-        child_access = ManifestAccess()
+        child_access = WorkspaceManifestAccess()
         child_manifest = LocalWorkspaceManifest(self.local_author)
         root_manifest = root_manifest.evolve_children_and_mark_updated({path.name: child_access})
 
@@ -377,6 +378,8 @@ class LocalFolderFS:
         self.event_bus.send("fs.entry.updated", id=child_access.id)
 
         self.event_bus.send("fs.workspace.loaded", path=str(path), id=child_access.id)
+
+        return child_access.id
 
     def workspace_rename(self, src: FsPath, dst: FsPath) -> None:
         """

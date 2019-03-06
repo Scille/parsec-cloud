@@ -6,11 +6,11 @@ from itertools import count
 from parsec.types import UserID, DeviceID
 from parsec.serde import Serializer, SerdeError, UnknownCheckedSchema, OneOfSchema, fields
 from parsec.core.types import FsPath
-from parsec.core.types.access import ManifestAccessSchema
+from parsec.core.types.access import WorkspaceManifestAccessSchema
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
 from parsec.core.fs.utils import is_workspace_manifest
 from parsec.core.encryption_manager import EncryptionManagerError
-from parsec.core.backend_connection import BackendCmdsBadResponse
+from parsec.core.backend_connection import BackendCmdsBadResponse, BackendCmdsNotAllowed
 
 
 logger = get_logger()
@@ -36,10 +36,14 @@ class SharingInvalidMessageError(SharingError):
     pass
 
 
+class SharingNeedAdminRightError(SharingError):
+    pass
+
+
 class SharingMessageContentSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("share", required=True)
     author = fields.String(required=True)
-    access = fields.Nested(ManifestAccessSchema, required=True)
+    access = fields.Nested(WorkspaceManifestAccessSchema, required=True)
     name = fields.String(required=True)
 
 

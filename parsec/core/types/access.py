@@ -29,6 +29,33 @@ manifest_access_serializer = serializer_factory(ManifestAccessSchema)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class WorkspaceManifestAccess:
+    id: AccessID = attr.ib(factory=uuid4)
+    key: SymetricKey = attr.ib(factory=generate_secret_key)
+    read_right: bool = attr.ib(default=True)
+    write_right: bool = attr.ib(default=True)
+    admin_right: bool = attr.ib(default=True)
+
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
+
+
+class WorkspaceManifestAccessSchema(UnknownCheckedSchema):
+    id = fields.UUID(required=True)
+    key = fields.SymetricKey(required=True)
+    read_right = fields.Boolean(required=True)
+    write_right = fields.Boolean(required=True)
+    admin_right = fields.Boolean(required=True)
+
+    @post_load
+    def make_obj(self, data):
+        return WorkspaceManifestAccess(**data)
+
+
+workspace_manifest_access_serializer = serializer_factory(ManifestAccessSchema)
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class BlockAccess:
     id: AccessID
     key: SymetricKey
@@ -86,4 +113,4 @@ class DirtyBlockAccessSchema(UnknownCheckedSchema):
 dirty_block_access_serializer = serializer_factory(DirtyBlockAccessSchema)
 
 
-Access = Union[ManifestAccess, BlockAccess, DirtyBlockAccess]
+Access = Union[WorkspaceManifestAccess, ManifestAccess, BlockAccess, DirtyBlockAccess]

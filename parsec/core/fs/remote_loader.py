@@ -1,11 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from hashlib import sha256
+from typing import Union
 
 from parsec.crypto import decrypt_raw_with_secret_key
 from parsec.core.types import (
     BlockAccess,
     ManifestAccess,
+    WorkspaceManifestAccess,
     remote_manifest_serializer,
     local_manifest_serializer,
 )
@@ -34,7 +36,7 @@ class RemoteLoader:
 
         self.local_db.set_clean_block(access, block)
 
-    async def load_manifest(self, access: ManifestAccess) -> None:
+    async def load_manifest(self, access: Union[ManifestAccess, WorkspaceManifestAccess]) -> None:
         _, blob = await self.backend_cmds.vlob_read(access.id)
         raw_remote_manifest = await self.encryption_manager.decrypt_with_secret_key(
             access.key, blob
