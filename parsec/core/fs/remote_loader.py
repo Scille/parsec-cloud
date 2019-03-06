@@ -23,7 +23,7 @@ class RemoteLoader:
             BackendConnectionError
             CryptoError
         """
-        ciphered_block = await self.backend_cmds.blockstore_read(access.id)
+        ciphered_block = await self.backend_cmds.block_read(access.id)
         # TODO: let encryption manager do the digest check ?
         # TODO: is digest even useful ? Given nacl.secret.Box does digest check
         # on the ciphered data they cannot be tempered. And given each block

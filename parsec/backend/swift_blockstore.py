@@ -23,21 +23,12 @@ pbr.version.VersionInfo = Mock(side_effect=side_effect)
 import swiftclient
 from swiftclient.exceptions import ClientException
 
-from parsec.types import DeviceID, OrganizationID
-from parsec.backend.blockstore import (
-    BaseBlockstoreComponent,
-    BlockstoreAlreadyExistsError,
-    BlockstoreNotFoundError,
-    BlockstoreTimeoutError,
-)
+from parsec.types import OrganizationID
+from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
 
 
-# Swift custom headers are case insensitive, but `get_object`
-# return them in lower case in a case-sensitive dict...
-AUTHOR_META_HEADER = "X-Object-Meta-AUTHOR".lower()
-
-
-class SwiftBlockstoreComponent(BaseBlockstoreComponent):
+class SwiftBlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self, auth_url, tenant, container, user, password):
         self.swift_client = swiftclient.Connection(
             authurl=auth_url, user=":".join([user, tenant]), key=password
@@ -54,17 +45,14 @@ class SwiftBlockstoreComponent(BaseBlockstoreComponent):
 
         except ClientException as exc:
             if exc.http_status == 404:
-                raise BlockstoreNotFoundError() from exc
+                raise BlockNotFoundError() from exc
 
             else:
-                raise BlockstoreTimeoutError() from exc
+                raise BlockTimeoutError() from exc
 
-        # Remember, to retreive the author: DeviceID(headers[AUTHOR_META_HEADER])
         return obj
 
-    async def create(
-        self, organization_id: OrganizationID, id: UUID, block: bytes, author: DeviceID
-    ) -> None:
+    async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
         slug = f"{organization_id}/{id}"
         try:
             _, obj = await trio.run_sync_in_worker_thread(
@@ -74,16 +62,10 @@ class SwiftBlockstoreComponent(BaseBlockstoreComponent):
         except ClientException as exc:
             if exc.http_status == 404:
                 await trio.run_sync_in_worker_thread(
-                    partial(
-                        self.swift_client.put_object,
-                        self._container,
-                        slug,
-                        block,
-                        headers={AUTHOR_META_HEADER: author},
-                    )
+                    partial(self.swift_client.put_object, self._container, slug, block)
                 )
             else:
-                raise BlockstoreTimeoutError() from exc
+                raise BlockTimeoutError() from exc
 
         else:
-            raise BlockstoreAlreadyExistsError()
+            raise BlockAlreadyExistsError()

@@ -23,6 +23,7 @@ from parsec.backend.drivers.memory import (
     MemoryVlobComponent,
     MemoryMessageComponent,
     MemoryPingComponent,
+    MemoryBlockComponent,
 )
 from parsec.backend.drivers.postgresql import (
     PGHandler,
@@ -31,6 +32,7 @@ from parsec.backend.drivers.postgresql import (
     PGVlobComponent,
     PGMessageComponent,
     PGPingComponent,
+    PGBlockComponent,
 )
 from parsec.backend.user import UserNotFoundError
 from parsec.backend.organization import OrganizationNotFoundError
@@ -124,6 +126,7 @@ class BackendApp:
             self.vlob = MemoryVlobComponent(self.event_bus, self.user)
             self.ping = MemoryPingComponent(self.event_bus)
             self.blockstore = blockstore_factory(self.config.blockstore_config)
+            self.block = MemoryBlockComponent(self.blockstore, self.vlob)
 
         else:
             self.dbh = PGHandler(self.config.db_url, self.event_bus)
@@ -135,6 +138,7 @@ class BackendApp:
             self.blockstore = blockstore_factory(
                 self.config.blockstore_config, postgresql_dbh=self.dbh
             )
+            self.block = PGBlockComponent(self.dbh, self.blockstore, self.vlob)
 
         self.logged_cmds = {
             "events_subscribe": self.events.api_events_subscribe,
@@ -153,9 +157,9 @@ class BackendApp:
             "device_cancel_invitation": self.user.api_device_cancel_invitation,
             "device_create": self.user.api_device_create,
             "device_revoke": self.user.api_device_revoke,
-            # Blockstore
-            "blockstore_create": self.blockstore.api_blockstore_create,
-            "blockstore_read": self.blockstore.api_blockstore_read,
+            # Block
+            "block_create": self.block.api_block_create,
+            "block_read": self.block.api_block_read,
             # Vlob
             "vlob_group_check": self.vlob.api_vlob_group_check,
             "vlob_create": self.vlob.api_vlob_create,

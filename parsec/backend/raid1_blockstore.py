@@ -3,15 +3,12 @@
 import trio
 from uuid import UUID
 
-from parsec.types import DeviceID, OrganizationID
-from parsec.backend.blockstore import (
-    BaseBlockstoreComponent,
-    BlockstoreAlreadyExistsError,
-    BlockstoreNotFoundError,
-)
+from parsec.types import OrganizationID
+from parsec.backend.blockstore import BaseBlockStoreComponent
+from parsec.backend.block import BlockAlreadyExistsError, BlockNotFoundError, BlockTimeoutError
 
 
-class RAID1BlockstoreComponent(BaseBlockstoreComponent):
+class RAID1BlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self, blockstores):
         self.blockstores = blockstores
 
@@ -21,7 +18,7 @@ class RAID1BlockstoreComponent(BaseBlockstoreComponent):
             try:
                 value = await blockstore.read(organization_id, id)
                 nursery.cancel_scope.cancel()
-            except BlockstoreNotFoundError:
+            except (BlockNotFoundError, BlockTimeoutError):
                 pass
 
         value = None
@@ -30,17 +27,15 @@ class RAID1BlockstoreComponent(BaseBlockstoreComponent):
                 nursery.start_soon(_single_blockstore_read, nursery, blockstore)
 
         if not value:
-            raise BlockstoreNotFoundError()
+            raise BlockNotFoundError()
 
         return value
 
-    async def create(
-        self, organization_id: OrganizationID, id: UUID, block: bytes, author: DeviceID
-    ) -> None:
+    async def create(self, organization_id: OrganizationID, id: UUID, block: bytes) -> None:
         async def _single_blockstore_create(blockstore):
             try:
-                await blockstore.create(organization_id, id, block, author)
-            except BlockstoreAlreadyExistsError:
+                await blockstore.create(organization_id, id, block)
+            except BlockAlreadyExistsError:
                 # It's possible a previous tentative to upload this block has
                 # failed due to another blockstore not available. In such case
                 # a retrial will raise AlreadyExistsError on all the blockstores

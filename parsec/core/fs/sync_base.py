@@ -201,20 +201,20 @@ class BaseSyncer:
     ) -> None:
         raise NotImplementedError()
 
-    async def _backend_block_create(self, access, blob):
+    async def _backend_block_create(self, vlob_group, access, blob):
         ciphered = encrypt_raw_with_secret_key(access.key, bytes(blob))
         try:
-            await self.backend_cmds.blockstore_create(access.id, ciphered)
+            await self.backend_cmds.block_create(access.id, vlob_group, ciphered)
         except BackendCmdsBadResponse as exc:
             # If a previous attempt of uploading this block has been processed by
             # the backend but we lost the connection before receiving the response
             # Note we neglect the possibility of another id collision with another
             # unrelated block because we trust probability and uuid4, who doesn't ?
-            if exc.args[0].status != "already_exists":
+            if exc.args[0]["status"] != "already_exists":
                 raise
 
     async def _backend_block_read(self, access):
-        ciphered = await self.backend_cmds.blockstore_read(access.id)
+        ciphered = await self.backend_cmds.block_read(access.id)
         return decrypt_raw_with_secret_key(access.key, ciphered)
 
     async def _backend_vlob_group_check(self, to_check):

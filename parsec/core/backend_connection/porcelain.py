@@ -63,8 +63,8 @@ class BackendCmdsPool:
     vlob_group_update_rights = _expose_cmds_with_retrier("vlob_group_update_rights")
     vlob_group_poll = _expose_cmds_with_retrier("vlob_group_poll")
 
-    blockstore_create = _expose_cmds_with_retrier("blockstore_create")
-    blockstore_read = _expose_cmds_with_retrier("blockstore_read")
+    block_create = _expose_cmds_with_retrier("block_create")
+    block_read = _expose_cmds_with_retrier("block_read")
 
     user_get = _expose_cmds_with_retrier("user_get")
     user_find = _expose_cmds_with_retrier("user_find")

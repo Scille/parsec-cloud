@@ -77,7 +77,8 @@ TRUNCATE TABLE
     vlob_atom,
     vlob_group_update,
 
-    blockstore
+    block,
+    block_data
 RESTART IDENTITY CASCADE
 """,
     )
