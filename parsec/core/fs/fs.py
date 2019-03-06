@@ -125,23 +125,23 @@ class FS:
     async def file_fd_read(self, fd: int, size: int = -1, offset: int = None) -> bytes:
         return await self._load_and_retry(self._local_file_fs.read, fd, size, offset)
 
-    async def touch(self, path: str) -> None:
+    async def touch(self, path: str) -> UUID:
         cooked_path = FsPath(path)
-        await self._load_and_retry(self._local_folder_fs.touch, cooked_path)
+        return await self._load_and_retry(self._local_folder_fs.touch, cooked_path)
 
-    async def file_create(self, path: str) -> None:
-        await self.touch(path)
+    async def file_create(self, path: str) -> UUID:
+        return await self.touch(path)
 
-    async def mkdir(self, path: str) -> None:
+    async def mkdir(self, path: str) -> UUID:
         cooked_path = FsPath(path)
-        await self._load_and_retry(self._local_folder_fs.mkdir, cooked_path)
+        return await self._load_and_retry(self._local_folder_fs.mkdir, cooked_path)
 
-    async def folder_create(self, path: str) -> None:
-        await self.mkdir(path)
+    async def folder_create(self, path: str) -> UUID:
+        return await self.mkdir(path)
 
-    async def workspace_create(self, path: str) -> None:
+    async def workspace_create(self, path: str) -> UUID:
         cooked_path = FsPath(path)
-        await self._load_and_retry(self._local_folder_fs.workspace_create, cooked_path)
+        return await self._load_and_retry(self._local_folder_fs.workspace_create, cooked_path)
 
     async def workspace_rename(self, src: str, dst: str) -> None:
         cooked_src = FsPath(src)

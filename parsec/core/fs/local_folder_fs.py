@@ -313,7 +313,7 @@ class LocalFolderFS:
                 "children": list(sorted(manifest.children.keys())),
             }
 
-    def touch(self, path: FsPath) -> None:
+    def touch(self, path: FsPath) -> UUID:
         if path.is_root():
             raise FileExistsError(17, "File exists", str(path))
 
@@ -335,6 +335,8 @@ class LocalFolderFS:
         self.set_dirty_manifest(child_access, child_manifest)
         self.event_bus.send("fs.entry.updated", id=access.id)
         self.event_bus.send("fs.entry.updated", id=child_access.id)
+
+        return child_access.id
 
     def mkdir(self, path: FsPath) -> None:
         if path.is_root():
@@ -360,7 +362,9 @@ class LocalFolderFS:
         self.event_bus.send("fs.entry.updated", id=access.id)
         self.event_bus.send("fs.entry.updated", id=child_access.id)
 
-    def workspace_create(self, path: FsPath) -> None:
+        return child_access.id
+
+    def workspace_create(self, path: FsPath) -> UUID:
         if not path.parent.is_root():
             raise PermissionError(
                 13, "Permission denied (workspace only allowed at root level)", str(path)
@@ -380,6 +384,8 @@ class LocalFolderFS:
         self.event_bus.send("fs.entry.updated", id=child_access.id)
 
         self.event_bus.send("fs.workspace.loaded", path=str(path), id=child_access.id)
+
+        return child_access.id
 
     def workspace_rename(self, src: FsPath, dst: FsPath) -> None:
         """
