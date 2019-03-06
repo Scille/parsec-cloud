@@ -78,10 +78,10 @@ async def test_base_mountpoint_not_created(base_mountpoint, alice, alice_fs, eve
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-# @pytest.mark.skipif(os.name == "nt", reason="Error message is POSIX-specific")
+@pytest.mark.skipif(os.name == "nt", reason="TODO: Cause freeze in winfsp so far...")
 async def test_mountpoint_already_in_use(base_mountpoint, alice, alice_fs, alice2_fs, event_bus):
     # Path should be created if it doesn' exist
-    mountpoint = f"{base_mountpoint.absolute()}/{alice.user_id}-w"
+    mountpoint = str(base_mountpoint.absolute() / f"{alice.user_id}-w")
 
     await alice_fs.workspace_create("/w")
     await alice_fs.file_create("/w/bar.txt")
@@ -109,7 +109,6 @@ async def test_mountpoint_already_in_use(base_mountpoint, alice, alice_fs, alice
     assert not await bar_txt.exists()
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Not available yet for WinFSP...")
 @pytest.mark.trio
 @pytest.mark.mountpoint
 @pytest.mark.parametrize("manual_unmount", [True, False])
@@ -132,7 +131,7 @@ async def test_mount_and_explore_workspace(
         ) as mountpoint_manager:
 
             await mountpoint_manager.mount_workspace("w")
-            mountpoint = f"{base_mountpoint.absolute()}/{alice.user_id}-w"
+            mountpoint = str(base_mountpoint.absolute() / f"{alice.user_id}-w")
 
             spy.assert_events_occured(
                 [
@@ -144,7 +143,7 @@ async def test_mount_and_explore_workspace(
             # Finally explore the mountpoint
 
             def inspect_mountpoint():
-                wksp_children = set(os.listdir(f"{mountpoint}"))
+                wksp_children = set(os.listdir(mountpoint))
                 assert wksp_children == {"foo", "bar.txt"}
 
                 bar_stat = os.stat(f"{mountpoint}/bar.txt")
@@ -168,7 +167,6 @@ async def test_mount_and_explore_workspace(
             spy.assert_events_occured([("mountpoint.stopped", {"mountpoint": mountpoint})])
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Not available yet for WinFSP...")
 @pytest.mark.trio
 @pytest.mark.mountpoint
 @pytest.mark.parametrize("manual_unmount", [True, False])
@@ -208,7 +206,6 @@ async def test_idempotent_mount(base_mountpoint, alice, alice_fs, event_bus, man
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-@pytest.mark.skipif(os.name == "nt", reason="WinFSP doesn't support `pathlib.Path.stat` yet...")
 async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpdir):
     core_config = core_config.evolve(mountpoint_enabled=True, mountpoint_base_dir=base_mountpoint)
     mountpoint = f"{base_mountpoint.absolute()}/{alice.user_id}-w"
