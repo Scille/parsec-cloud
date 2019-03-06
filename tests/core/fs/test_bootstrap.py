@@ -2,6 +2,7 @@
 
 import pytest
 from pendulum import Pendulum
+from unittest.mock import ANY
 
 from tests.common import freeze_time
 
@@ -23,6 +24,7 @@ async def test_lazy_root_manifest_generation(
 
         assert stat == {
             "type": "root",
+            "id": ANY,
             "created": Pendulum(2000, 1, 2),
             "updated": Pendulum(2000, 1, 2),
             "base_version": 0,
@@ -38,6 +40,7 @@ async def test_lazy_root_manifest_generation(
         stat = await fs.stat("/")
         assert stat == {
             "type": "root",
+            "id": ANY,
             "created": Pendulum(2000, 1, 2),
             "updated": Pendulum(2000, 1, 2),
             "base_version": 1,
@@ -113,6 +116,7 @@ async def test_concurrent_devices_agreed_on_root_manifest(
     stat2 = await fs2.stat("/")
     assert stat1 == {
         "type": "root",
+        "id": ANY,
         "created": Pendulum(2000, 1, 3),
         "updated": Pendulum(2000, 1, 4),
         "base_version": 3,

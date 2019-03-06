@@ -2,6 +2,7 @@
 
 import pytest
 from pendulum import Pendulum
+from unittest.mock import ANY
 
 from parsec.core.types import FsPath
 from parsec.core.backend_connection import BackendNotAvailable
@@ -48,6 +49,7 @@ async def test_new_workspace(running_backend, alice, alice_fs, alice2_fs):
     stat = await alice_fs.stat("/w")
     assert stat == {
         "type": "workspace",
+        "id": ANY,
         "is_folder": True,
         "is_placeholder": False,
         "need_sync": False,
@@ -89,6 +91,7 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
     if type == "file":
         assert stat == {
             "type": "file",
+            "id": ANY,
             "is_folder": False,
             "is_placeholder": False,
             "need_sync": False,
@@ -100,6 +103,7 @@ async def test_new_empty_entry(type, running_backend, alice_fs, alice2_fs):
     else:
         assert stat == {
             "type": "folder",
+            "id": ANY,
             "is_folder": True,
             "is_placeholder": False,
             "need_sync": False,
@@ -539,6 +543,7 @@ async def test_create_already_existing_folder_vlob(running_backend, alice, alice
     stat = await alice_fs.stat("/w")
     assert stat == {
         "type": "workspace",
+        "id": ANY,
         "base_version": 1,
         "is_folder": True,
         "is_placeholder": False,
@@ -580,6 +585,7 @@ async def test_create_already_existing_file_vlob(running_backend, alice_fs, alic
     stat = await alice_fs.stat("/w/foo.txt")
     assert stat == {
         "type": "file",
+        "id": ANY,
         "is_folder": False,
         "is_placeholder": False,
         "need_sync": False,
@@ -638,6 +644,7 @@ async def test_create_already_existing_block(running_backend, alice_fs, alice2_f
     stat = await alice_fs.stat("/w/foo.txt")
     assert stat == {
         "type": "file",
+        "id": ANY,
         "is_folder": False,
         "is_placeholder": False,
         "need_sync": False,

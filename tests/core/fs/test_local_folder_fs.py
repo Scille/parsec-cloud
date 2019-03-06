@@ -14,6 +14,7 @@ from hypothesis.stateful import (
     run_state_machine_as_test,
     Bundle,
 )
+from unittest.mock import ANY
 from hypothesis import strategies as st
 
 from parsec.core.types import ManifestAccess, LocalFileManifest, FsPath
@@ -26,6 +27,7 @@ def test_stat_root(local_folder_fs):
     stat = local_folder_fs.stat(FsPath("/"))
     assert stat == {
         "type": "root",
+        "id": ANY,
         "is_folder": True,
         "base_version": 1,
         "is_placeholder": False,
@@ -43,6 +45,7 @@ def test_workspace_create(local_folder_fs, alice):
     root_stat = local_folder_fs.stat(FsPath("/"))
     assert root_stat == {
         "type": "root",
+        "id": ANY,
         "is_folder": True,
         "base_version": 1,
         "is_placeholder": False,
@@ -55,6 +58,7 @@ def test_workspace_create(local_folder_fs, alice):
     stat = local_folder_fs.stat(FsPath("/foo"))
     assert stat == {
         "type": "workspace",
+        "id": ANY,
         "is_folder": True,
         "base_version": 0,
         "is_placeholder": True,
@@ -78,6 +82,7 @@ def test_file_create(local_folder_fs, alice):
     root_stat = local_folder_fs.stat(FsPath("/w"))
     assert root_stat == {
         "type": "workspace",
+        "id": ANY,
         "is_folder": True,
         "base_version": 0,
         "is_placeholder": True,
@@ -92,6 +97,7 @@ def test_file_create(local_folder_fs, alice):
     foo_stat = local_folder_fs.stat(FsPath("/w/foo.txt"))
     assert foo_stat == {
         "type": "file",
+        "id": ANY,
         "is_folder": False,
         "base_version": 0,
         "is_placeholder": True,
@@ -195,6 +201,7 @@ def test_access_not_loaded_entry(alice, bob, local_folder_fs):
     stat = local_folder_fs.stat(FsPath("/foo.txt"))
     assert stat == {
         "type": "file",
+        "id": ANY,
         "is_folder": False,
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
