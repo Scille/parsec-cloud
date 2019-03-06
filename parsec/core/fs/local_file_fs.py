@@ -257,7 +257,7 @@ class LocalFileFS:
                     try:
                         buff = self.get_block(access)
                     except LocalDBMissingEntry as exc:
-                        raise RuntimeError(f"Unknown local block `{access['id']}`") from exc
+                        raise RuntimeError(f"Unknown local block `{access.id}`") from exc
 
                     data[bs.start - cs.start : bs.end - cs.start] = buff[
                         bs.buffer_slice_start : bs.buffer_slice_end
