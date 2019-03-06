@@ -49,6 +49,13 @@ class LocalFolderFS:
         self._local_db = local_db
         self.event_bus = event_bus
         self._manifests_cache = {}
+        self._hot_files = {}
+
+    def _register_hot_file(self, access_id, hot_file):
+        self._hot_files[access_id] = hot_file
+
+    def _delete_hot_file(self, access_id):
+        self._hot_files.pop(access_id, None)
 
     def get_local_vlob_groups(self) -> List[UUID]:
         # vlob_group_id is either the id of the user manifest or of a workpace manifest
@@ -274,6 +281,14 @@ class LocalFolderFS:
     def stat(self, path: FsPath) -> dict:
         access, manifest = self._retrieve_entry_read_only(path)
         if is_file_manifest(manifest):
+            hf = self._hot_files.get(access.id)
+            if hf:
+                size = hf.size
+                need_sync = hf.pending_writes or manifest.need_sync
+            else:
+                size = manifest.size
+                need_sync = manifest.need_sync
+
             return {
                 "id": access.id,
                 "type": "file",
@@ -282,8 +297,8 @@ class LocalFolderFS:
                 "updated": manifest.updated,
                 "base_version": manifest.base_version,
                 "is_placeholder": manifest.is_placeholder,
-                "need_sync": manifest.need_sync,
-                "size": manifest.size,
+                "need_sync": need_sync,
+                "size": size,
             }
 
         elif is_workspace_manifest(manifest):
@@ -443,7 +458,14 @@ class LocalFolderFS:
 
         parent_manifest = parent_manifest.evolve_children_and_mark_updated({path.name: None})
         self.set_dirty_manifest(parent_access, parent_manifest)
-        self.mark_outdated_manifest(item_access)
+        # TODO: If a file is opened while getting removed, we cannot
+        # drop the file manifest given a subsequent read/write would
+        # need it.
+        # The `LocalFolderFS._hot_files` is kind of a hack around this
+        # (but we endup leaking old files manifests), we should replace
+        # this by a clean ref counting strategy.
+        if item_access.id not in self._hot_files:
+            self.mark_outdated_manifest(item_access)
         self.event_bus.send("fs.entry.updated", id=parent_access.id)
 
     def delete(self, path: FsPath) -> None:

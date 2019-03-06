@@ -278,10 +278,6 @@ class WinFSPOperations(BaseFileSystemOperations):
             # LocalDB.set only wants bytes or bytearray...
             buffer = bytes(buffer)
             ret = self.fs_access.file_fd_write(file_context.fd, buffer, offset)
-            # Must force a flush otherwise information returned by `stat`
-            # won't take those changes into account. This is a trouble given
-            # `get_volume_info` rely on `stat` and must return up to date data.
-            self.fs_access.file_fd_flush(file_context.fd)
             return ret
 
     def flush(self, file_context) -> None:

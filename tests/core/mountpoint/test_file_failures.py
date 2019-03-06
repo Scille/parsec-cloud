@@ -23,7 +23,6 @@ def test_fuse_grow_by_truncate(tmpdir, mountpoint_service):
 
 
 @pytest.mark.mountpoint
-@pytest.mark.xfail
 def test_empty_read_then_reopen(tmpdir, mountpoint_service):
     mountpoint_service.start()
     mountpoint = mountpoint_service.get_default_workspace_mountpoint()

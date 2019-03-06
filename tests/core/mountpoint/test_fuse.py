@@ -51,7 +51,8 @@ async def test_unmount_with_fusermount(base_mountpoint, alice, alice_fs, event_b
             proc = trio.Process(f"fusermount -u {mountpoint}".split())
             await proc.wait()
 
-        spy.assert_events_occured([("mountpoint.stopped", {"mountpoint": mountpoint})])
+            with trio.fail_after(1):
+                await spy.wait("mountpoint.stopped", kwargs={"mountpoint": mountpoint})
         assert not await bar_txt.exists()
 
 
