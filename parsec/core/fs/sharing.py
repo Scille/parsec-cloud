@@ -5,12 +5,11 @@ from itertools import count
 
 from parsec.types import UserID, DeviceID
 from parsec.serde import Serializer, SerdeError, UnknownCheckedSchema, OneOfSchema, fields
-from parsec.core.types import FsPath
-from parsec.core.types.access import ManifestAccessSchema
+from parsec.core.types import FsPath, WorkspaceEntry, ManifestAccess
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
 from parsec.core.fs.utils import is_workspace_manifest
 from parsec.core.encryption_manager import EncryptionManagerError
-from parsec.core.backend_connection import BackendCmdsBadResponse
+from parsec.core.backend_connection import BackendCmdsBadResponse, BackendCmdsNotAllowed
 
 
 logger = get_logger()
@@ -36,11 +35,20 @@ class SharingInvalidMessageError(SharingError):
     pass
 
 
+class SharingNeedAdminRightError(SharingError):
+    pass
+
+
 class SharingMessageContentSchema(UnknownCheckedSchema):
     type = fields.CheckedConstant("share", required=True)
     author = fields.String(required=True)
-    access = fields.Nested(ManifestAccessSchema, required=True)
     name = fields.String(required=True)
+    id = fields.UUID(required=True)
+    read_right = fields.Boolean(required=True)
+    write_right = fields.Boolean(required=True)
+    admin_right = fields.Boolean(required=True)
+    # Obviouly won't provide this if we send an end of sharing event !
+    key = fields.SymetricKey(missing=None)
 
 
 sharing_message_content_serializer = Serializer(SharingMessageContentSchema)
@@ -154,15 +162,18 @@ class Sharing:
         # Step 2)
 
         # Build the sharing message...
-        shared_access = access.evolve(
-            admin_right=admin_right, read_right=read_right, write_right=write_right
-        )
         msg = {
             "type": "share",
             "author": self.device.device_id,
-            "access": shared_access,
             "name": path.name,
+            "id": access.id,
+            "admin_right": admin_right,
+            "read_right": read_right,
+            "write_right": write_right,
         }
+        if admin_right or read_right or write_right:
+            msg["key"] = access.key
+
         try:
             raw = sharing_message_content_serializer.dumps(msg)
 
@@ -266,58 +277,63 @@ class Sharing:
         #   doesn't have access to this workspace !)
         if msg["type"] == "share":
             user_manifest_access, user_manifest = await self._get_user_manifest()
-            new_access = msg["access"]
-            sharing_lost_event = (
-                not new_access.admin_right
-                and not new_access.read_right
-                and not new_access.write_right
+
+            # Do we already know this workspace ?
+            existing_workspace_entry = next(
+                (we for we in user_manifest.workspaces if we.access.id == msg["id"]), None
             )
 
-            for child_name, child_access in user_manifest.children.items():
-                if child_access.id == new_access.id:
-                    # Shared entry already present
-                    if sharing_lost_event:
-                        # We lost all rights, hence the workspace is not longer shared with us
-                        user_manifest = user_manifest.evolve_children_and_mark_updated(
-                            {child_name: None}
-                        )
-                        self.local_folder_fs.set_dirty_manifest(user_manifest_access, user_manifest)
-                        self.event_bus.send(
-                            "sharing.lost", path=f"/{child_name}", access=new_access
-                        )
-                        self.event_bus.send("fs.entry.updated", id=user_manifest_access.id)
-                        return
+            key = msg.get("key")
+            if not key:
+                if existing_workspace_entry:
+                    key = existing_workspace_entry.access.key
+                else:
+                    # We don't know this workspace, nothing we can do then
+                    return
 
-                    else:
-                        # Our rights has changed, update the access accordingly
-                        user_manifest = user_manifest.evolve_children_and_mark_updated(
-                            {child_name: new_access}
-                        )
-                        self.local_folder_fs.set_dirty_manifest(user_manifest_access, user_manifest)
-                        self.event_bus.send(
-                            "sharing.updated", path=f"/{child_name}", access=new_access
-                        )
-                        self.event_bus.send("fs.entry.updated", id=user_manifest_access.id)
-                        return
+            # Now make sure it name is not clashing
+            for i in count(1):
+                if i == 1:
+                    sharing_name = msg["name"]
+                else:
+                    sharing_name = f"{msg['name']} {i}"
+                if all(
+                    we.name != sharing_name or we.access.id == msg["id"]
+                    for we in user_manifest.workspaces
+                ):
+                    break
+
+            # All set ! We can update/insert the workspace entry
+            new_workpsace_entry = WorkspaceEntry(
+                name=sharing_name,
+                access=ManifestAccess(id=msg["id"], key=key),
+                admin_right=msg["admin_right"],
+                read_right=msg["read_right"],
+                write_right=msg["write_right"],
+            )
+            user_manifest = user_manifest.evolve_workspaces_and_mark_updated(new_workpsace_entry)
+            self.local_folder_fs.set_dirty_manifest(user_manifest_access, user_manifest)
+
+            # Finally send events
+            path = f"/{sharing_name}"
+            if not existing_workspace_entry:
+                self.event_bus.send("sharing.new", path=path, access=new_workpsace_entry.access)
+                self.event_bus.send("fs.entry.updated", id=user_manifest_access.id)
+                self.event_bus.send(
+                    "fs.entry.synced", id=new_workpsace_entry.access.id, path=str(path)
+                )
 
             else:
-                # New Shared entry
-                for i in count(1):
-                    if i == 1:
-                        sharing_name = msg["name"]
-                    else:
-                        sharing_name = f"{msg['name']} {i}"
-                    if sharing_name not in user_manifest.children:
-                        break
-                user_manifest = user_manifest.evolve_children_and_mark_updated(
-                    {sharing_name: msg["access"]}
-                )
-                self.local_folder_fs.set_dirty_manifest(user_manifest_access, user_manifest)
-
-                path = f"/{sharing_name}"
-                self.event_bus.send("sharing.new", path=path, access=msg["access"])
+                if (
+                    new_workpsace_entry.admin_right
+                    or new_workpsace_entry.read_right
+                    or new_workpsace_entry.write_right
+                ):
+                    event_type = "sharing.updated"
+                else:
+                    event_type = "sharing.lost"
+                self.event_bus.send(event_type, path=path, access=new_workpsace_entry.access)
                 self.event_bus.send("fs.entry.updated", id=user_manifest_access.id)
-                self.event_bus.send("fs.entry.synced", id=msg["access"].id, path=str(path))
 
         elif msg["type"] == "ping":
             self.event_bus.send("pinged")

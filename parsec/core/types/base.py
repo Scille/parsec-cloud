@@ -60,6 +60,9 @@ class FsPath(PurePosixPath):
     def is_root(self):
         return self.parent == self
 
+    def is_workspace(self):
+        return not self.is_root() and self.parent.is_root()
+
     def walk_from_path(self):
         parent = None
         curr = self

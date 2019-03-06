@@ -6,7 +6,7 @@ from structlog import get_logger
 from parsec.core.types import Access, LocalManifest, FsPath, LocalFolderManifest, FolderManifest
 from parsec.core.fs.utils import is_user_manifest, is_folderish_manifest, is_placeholder_manifest
 from parsec.core.fs.sync_base import SyncConcurrencyError, BaseSyncer
-from parsec.core.fs.merge_folders import merge_local_folder_manifests, merge_remote_folder_manifests
+from parsec.core.fs.merge_folders import merge_local_manifests, merge_remote_manifests
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss
 
 
@@ -87,7 +87,7 @@ class FolderSyncerMixin(BaseSyncer):
                 target = await self._backend_vlob_read(access)
 
                 # 3-ways merge between base, modified and target versions
-                to_sync_manifest, sync_needed, conflicts = merge_remote_folder_manifests(
+                to_sync_manifest, sync_needed, conflicts = merge_remote_manifests(
                     base, to_sync_manifest, target
                 )
                 for original_name, original_id, diverged_name, diverged_id in conflicts:
@@ -135,7 +135,15 @@ class FolderSyncerMixin(BaseSyncer):
             manifest = self.local_folder_fs.get_manifest(access)
             assert is_folderish_manifest(manifest)
 
-        manifest = manifest.evolve(children=self._strip_placeholders(manifest.children))
+        synced_children = self._strip_placeholders(manifest.children)
+        # Hack given user manifest has workspaces instead of children
+        if is_user_manifest(manifest):
+            manifest = manifest.evolve(
+                workspaces=tuple(we for we in manifest.workspaces if we.name in synced_children)
+            )
+
+        else:
+            manifest = manifest.evolve(children=synced_children)
 
         # Now we can synchronize the folder if needed
         if not manifest.need_sync:
@@ -170,7 +178,15 @@ class FolderSyncerMixin(BaseSyncer):
 
         synced_children = self._strip_placeholders(manifest.children)
         need_more_sync = synced_children.keys() != manifest.children.keys()
-        manifest = manifest.evolve(children=synced_children)
+
+        # Hack given user manifest has workspaces instead of children
+        if is_user_manifest(manifest):
+            manifest = manifest.evolve(
+                workspaces=tuple(we for we in manifest.workspaces if we.name in synced_children)
+            )
+
+        else:
+            manifest = manifest.evolve(children=synced_children)
 
         target_remote_manifest = await self._sync_folder_actual_sync(path, access, manifest)
         self._sync_folder_merge_back(path, access, manifest, target_remote_manifest)
@@ -192,7 +208,7 @@ class FolderSyncerMixin(BaseSyncer):
         assert is_folderish_manifest(current_manifest)
 
         target_manifest = target_remote_manifest.to_local()
-        final_manifest, conflicts = merge_local_folder_manifests(
+        final_manifest, _, conflicts = merge_local_manifests(
             base_manifest, current_manifest, target_manifest
         )
         for original_name, original_id, diverged_name, diverged_id in conflicts:

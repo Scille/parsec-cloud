@@ -2,7 +2,7 @@
 
 import attr
 import pendulum
-from typing import Tuple, Dict, Union
+from typing import Tuple, Dict, List, Union
 
 from parsec.types import DeviceID, UserID, FrozenDict
 from parsec.serde import UnknownCheckedSchema, OneOfSchema, fields, validate, post_load
@@ -11,8 +11,10 @@ from parsec.core.types.base import EntryName, EntryNameField, serializer_factory
 from parsec.core.types.access import (
     BlockAccess,
     ManifestAccess,
+    WorkspaceEntry,
     BlockAccessSchema,
     ManifestAccessSchema,
+    WorkspaceEntrySchema,
 )
 
 
@@ -165,25 +167,39 @@ workspace_manifest_serializer = serializer_factory(WorkspaceManifestSchema)
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class UserManifest(FolderManifest):
+class UserManifest:
+    author: DeviceID
+    version: int
+    created: pendulum.Pendulum
+    updated: pendulum.Pendulum
     last_processed_message: int
+    workspaces: List[WorkspaceEntry]
 
-    def to_local(self) -> "local_manifests.LocalFolderManifest":
+    def evolve(self, **data) -> "UserManifest":
+        return attr.evolve(self, **data)
+
+    def to_local(self) -> "local_manifests.LocalUserManifest":
         return local_manifests.LocalUserManifest(
             author=self.author,
             base_version=self.version,
             created=self.created,
             updated=self.updated,
-            children=self.children,
+            workspaces=self.workspaces,
             last_processed_message=self.last_processed_message,
             is_placeholder=False,
             need_sync=False,
         )
 
 
-class UserManifestSchema(FolderManifestSchema):
+class UserManifestSchema(UnknownCheckedSchema):
+    format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("user_manifest", required=True)
+    author = fields.DeviceID(required=True)
+    version = fields.Integer(required=True, validate=validate.Range(min=1))
+    created = fields.DateTime(required=True)
+    updated = fields.DateTime(required=True)
     last_processed_message = fields.Integer(required=True, validate=validate.Range(min=0))
+    workspaces = fields.List(fields.Nested(WorkspaceEntrySchema), required=True)
 
     @post_load
     def make_obj(self, data):
@@ -221,7 +237,7 @@ class TypedRemoteManifestSchema(OneOfSchema):
 remote_manifest_serializer = serializer_factory(TypedRemoteManifestSchema)
 
 
-RemoteManifest = Union[UserManifest, FolderManifest, WorkspaceManifest, UserManifest]
+RemoteManifest = Union[FileManifest, FolderManifest, WorkspaceManifest, UserManifest]
 
 
 def remote_manifest_dumps(manifest: RemoteManifest) -> bytes:
