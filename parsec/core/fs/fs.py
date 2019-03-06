@@ -78,7 +78,7 @@ class FS:
         return await self._load_and_retry(self._local_folder_fs.stat, cooked_path)
 
     async def file_write(self, path: str, content: bytes, offset: int = 0) -> int:
-        fd = await self.file_fd_open(path)
+        fd = await self.file_fd_open(path, "rw")
         try:
             if offset:
                 await self.file_fd_seek(fd, offset)
@@ -87,14 +87,14 @@ class FS:
             await self.file_fd_close(fd)
 
     async def file_truncate(self, path: str, length: int) -> None:
-        fd = await self.file_fd_open(path)
+        fd = await self.file_fd_open(path, "w")
         try:
             await self.file_fd_truncate(fd, length)
         finally:
             await self.file_fd_close(fd)
 
     async def file_read(self, path: str, size: int = math.inf, offset: int = 0) -> bytes:
-        fd = await self.file_fd_open(path)
+        fd = await self.file_fd_open(path, "r")
         try:
             if offset:
                 await self.file_fd_seek(fd, offset)
@@ -102,9 +102,9 @@ class FS:
         finally:
             await self.file_fd_close(fd)
 
-    async def file_fd_open(self, path: str) -> int:
+    async def file_fd_open(self, path: str, mode="rw") -> int:
         cooked_path = FsPath(path)
-        access = await self._load_and_retry(self._local_folder_fs.get_access, cooked_path)
+        access = await self._load_and_retry(self._local_folder_fs.get_access, cooked_path, mode)
         return self._local_file_fs.open(access)
 
     async def file_fd_close(self, fd: int) -> None:
@@ -157,7 +157,7 @@ class FS:
         cooked_path = FsPath(path)
         await self._load_and_retry(self._local_folder_fs.delete, cooked_path)
 
-    async def sync(self, path: str, recursive=True) -> None:
+    async def sync(self, path: str, recursive: bool = True) -> None:
         cooked_path = FsPath(path)
         await self._load_and_retry(self._syncer.sync, cooked_path, recursive=recursive)
 
@@ -175,9 +175,23 @@ class FS:
         path, _, _ = await self._load_and_retry(self._local_folder_fs.get_entry_path, id)
         return path
 
-    async def share(self, path: str, recipient: str) -> None:
+    async def share(
+        self,
+        path: str,
+        recipient: str,
+        admin_right: bool = True,
+        read_right: bool = True,
+        write_right: bool = True,
+    ) -> None:
         cooked_path = FsPath(path)
-        await self._load_and_retry(self._sharing.share, cooked_path, recipient)
+        await self._load_and_retry(
+            self._sharing.share,
+            cooked_path,
+            recipient,
+            admin_right=admin_right,
+            read_right=read_right,
+            write_right=write_right,
+        )
 
     async def process_last_messages(self) -> None:
         await self._sharing.process_last_messages()
