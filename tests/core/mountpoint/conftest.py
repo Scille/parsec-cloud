@@ -12,7 +12,12 @@ from parsec.core.mountpoint import mountpoint_manager_factory
 
 
 @pytest.fixture
-@pytest.mark.fuse
+def base_mountpoint(tmpdir):
+    return pathlib.Path(tmpdir / "base_mountpoint")
+
+
+@pytest.fixture
+@pytest.mark.mountpoint
 def mountpoint_service_factory(tmpdir, alice, fs_factory):
     """
     Run a trio loop with fs and mountpoint manager in a separate thread to

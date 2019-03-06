@@ -13,10 +13,10 @@ BALLPARK = 10000
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
-def test_fuse_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
+def test_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
     tentative = 0
 
-    class FuseFileOperationsStateMachine(RuleBasedStateMachine):
+    class FileOperationsStateMachine(RuleBasedStateMachine):
         @initialize()
         def init(self):
             nonlocal tentative
@@ -89,4 +89,4 @@ def test_fuse_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
             os.close(self.oracle_fd)
             self.oracle_fd = os.open(tmpdir / f"oracle-test-{tentative}", os.O_RDWR)
 
-    run_state_machine_as_test(FuseFileOperationsStateMachine, settings=hypothesis_settings)
+    run_state_machine_as_test(FileOperationsStateMachine, settings=hypothesis_settings)

@@ -12,7 +12,7 @@ from hypothesis.stateful import (
     rule,
     run_state_machine_as_test,
 )
-from hypothesis import strategies as st, reproduce_failure
+from hypothesis import strategies as st
 
 
 # The point is not to find breaking filenames here, so keep it simple
@@ -77,11 +77,11 @@ class PathElement:
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
-def test_fuse_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
+def test_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
 
     tentative = 0
 
-    class FuseFolderOperationsStateMachine(RuleBasedStateMachine):
+    class FolderOperationsStateMachine(RuleBasedStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")
         # Moving mountpoint
@@ -208,4 +208,4 @@ def test_fuse_folder_operations(tmpdir, hypothesis_settings, mountpoint_service)
             if not expected_exc:
                 assert children == expected_children
 
-    run_state_machine_as_test(FuseFolderOperationsStateMachine, settings=hypothesis_settings)
+    run_state_machine_as_test(FolderOperationsStateMachine, settings=hypothesis_settings)
