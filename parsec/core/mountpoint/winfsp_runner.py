@@ -73,7 +73,7 @@ async def winfsp_mountpoint_runner(
     volume_label = f"{fs.device.user_id}-{workspace}"[:31]
     volume_serial_number = _generate_volume_serial_number(fs.device, workspace)
     operations = WinFSPOperations(workspace, volume_label, fs_access)
-    # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa
+    # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa  # noqa
     fs = FileSystem(
         str(abs_mountpoint),
         operations,

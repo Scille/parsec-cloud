@@ -14,7 +14,7 @@ from winfspy.plumbing.winstuff import (
     SecurityDescriptor,
 )
 
-from parsec.core.fs import FSInvalidFileDescriptor, FSManifestLocalMiss
+from parsec.core.fs import FSInvalidFileDescriptor
 from parsec.core.backend_connection import BackendNotAvailable
 from parsec.core.fs.sync_base import DEFAULT_BLOCK_SIZE
 
@@ -98,7 +98,7 @@ class WinFSPOperations(BaseFileSystemOperations):
         if len(volume_label) > 31:
             raise ValueError("`volume_label` must be 31 characters long max")
 
-        # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format
+        # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format  # noqa
         self._security_descriptor = SecurityDescriptor(
             # "O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;WD)"
             "O:BAG:BAD:NO_ACCESS_CONTROL"

@@ -55,7 +55,7 @@ def test_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
             try:
                 pos = os.lseek(self.fd, length, seek_type)
 
-            except OSError as exc:
+            except OSError:
                 # Invalid length/seek_type couple
                 with pytest.raises(OSError):
                     os.lseek(self.oracle_fd, length, seek_type)
