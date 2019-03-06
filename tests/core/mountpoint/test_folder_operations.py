@@ -100,6 +100,7 @@ def test_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
             oracle_root.mkdir()
             self.folder_oracle.chmod(0o500)  # Root oracle can no longer be removed this way
             (oracle_root / mountpoint_service.default_workspace_name).mkdir()
+            oracle_root.chmod(0o500)  # Also protect workspace from deletion
 
             return PathElement(
                 f"/{mountpoint_service.default_workspace_name}",

@@ -121,6 +121,9 @@ def oracle_fs_factory(tmpdir):
 
         def delete(self, path):
             cooked_path = self._cook_path(path)
+            if self._is_workspace(cooked_path):
+                return "invalid_path"
+
             if cooked_path.is_file():
                 return self.unlink(path)
             else:
