@@ -268,7 +268,9 @@ class LocalFolderFS:
 
         return sync_path, sync_recursive
 
-    def get_access(self, path: FsPath) -> Access:
+    def get_access(self, path: FsPath, mode="rw") -> Access:
+        if not path.is_root() and "w" in mode:
+            self._ensure_workspace_write_right(path.parts[1])
         access, _ = self._retrieve_entry_read_only(path)
         return access
 
@@ -277,6 +279,7 @@ class LocalFolderFS:
         if is_file_manifest(manifest):
             return {
                 "type": "file",
+                "id": access.id,
                 "is_folder": False,
                 "created": manifest.created,
                 "updated": manifest.updated,
@@ -289,6 +292,7 @@ class LocalFolderFS:
         elif is_workspace_manifest(manifest):
             return {
                 "type": "workspace",
+                "id": access.id,
                 "is_folder": True,
                 "created": manifest.created,
                 "updated": manifest.updated,
@@ -302,6 +306,7 @@ class LocalFolderFS:
         else:
             return {
                 "type": "root" if path.is_root() else "folder",
+                "id": access.id,
                 "is_folder": True,
                 "created": manifest.created,
                 "updated": manifest.updated,
@@ -311,6 +316,12 @@ class LocalFolderFS:
                 "children": list(sorted(manifest.children.keys())),
             }
 
+    def _ensure_workspace_write_right(self, workspace):
+        user_manifest = self.get_user_manifest()
+        workspace_access = user_manifest.children.get(workspace)
+        if workspace_access and not workspace_access.write_right:
+            raise PermissionError(13, "No write right for workspace", f"/{workspace}")
+
     def touch(self, path: FsPath) -> None:
         if path.is_root():
             raise FileExistsError(17, "File exists", str(path))
@@ -319,6 +330,8 @@ class LocalFolderFS:
             raise PermissionError(
                 13, "Permission denied (only workpace allowed at root level)", str(path)
             )
+
+        self._ensure_workspace_write_right(path.parts[1])
 
         access, manifest = self._retrieve_entry(path.parent)
         if not is_folderish_manifest(manifest):
@@ -342,6 +355,8 @@ class LocalFolderFS:
             raise PermissionError(
                 13, "Permission denied (only workpace allowed at root level)", str(path)
             )
+
+        self._ensure_workspace_write_right(path.parts[1])
 
         access, manifest = self._retrieve_entry(path.parent)
         if not is_folderish_manifest(manifest):
@@ -417,6 +432,9 @@ class LocalFolderFS:
     def _delete(self, path: FsPath, expect=None) -> None:
         if path.is_root():
             raise PermissionError(13, "Permission denied", str(path))
+
+        self._ensure_workspace_write_right(path.parts[1])
+
         parent_access, parent_manifest = self._retrieve_entry(path.parent)
         if not is_folderish_manifest(parent_manifest):
             raise NotADirectoryError(20, "Not a directory", str(path.parent))
@@ -476,6 +494,9 @@ class LocalFolderFS:
                 raise NotADirectoryError(20, "Not a directory", str(src.parent))
             else:
                 raise PermissionError(13, "Permission denied", str(src), str(dst))
+
+        self._ensure_workspace_write_right(src.parts[1])
+        self._ensure_workspace_write_right(dst.parts[1])
 
         if src == dst:
             # Raise FileNotFoundError if doesn't exist
@@ -601,6 +622,9 @@ class LocalFolderFS:
             self.event_bus.send("fs.entry.updated", id=parent_src_access.id)
 
     def _recursive_manifest_copy(self, access, manifest):
+        # Copying a workspace is a bad idea given new and old ones will share
+        # the blocks, making it really hard to do history data cleanup.
+        assert not is_workspace_manifest(manifest)
 
         # First, make sure all the manifest have to copy are locally present
         # (otherwise we will have to stop while part of the manifest are
@@ -649,19 +673,15 @@ class LocalFolderFS:
                 )
 
             else:
+                assert is_folder_manifest(manifest)
+
                 cpy_children = {}
                 for child_name in manifest.children.keys():
                     child_copy_map = copy_map["children"][child_name]
                     new_child_access = _recursive_process_copy_map(child_copy_map)
                     cpy_children[child_name] = new_child_access
 
-                if is_folder_manifest(manifest):
-                    cpy_manifest = LocalFolderManifest(
-                        author=self.local_author, children=cpy_children
-                    )
-                else:
-                    assert is_workspace_manifest(manifest)
-                    cpy_manifest = LocalWorkspaceManifest(self.local_author, children=cpy_children)
+                cpy_manifest = LocalFolderManifest(author=self.local_author, children=cpy_children)
 
             self.set_dirty_manifest(cpy_access, cpy_manifest)
             return cpy_access
