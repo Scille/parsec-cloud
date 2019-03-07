@@ -2,6 +2,7 @@
 
 import pytest
 from pendulum import Pendulum
+from unittest.mock import ANY
 
 from tests.common import freeze_time
 
@@ -39,7 +40,7 @@ async def test_lazy_root_manifest_generation(
         stat = await fs.stat("/")
         assert stat == {
             "type": "root",
-            "id": alice.user_manifest_access.id,
+            "id": ANY,
             "created": Pendulum(2000, 1, 2),
             "updated": Pendulum(2000, 1, 2),
             "base_version": 1,

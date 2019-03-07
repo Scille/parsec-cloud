@@ -2,6 +2,7 @@
 
 import pytest
 from pendulum import Pendulum
+from unittest.mock import ANY
 
 from parsec.core.types import FsPath
 from parsec.core.backend_connection import BackendNotAvailable
@@ -49,6 +50,9 @@ async def test_new_workspace(running_backend, alice, alice_fs, alice2_fs):
     assert stat == {
         "type": "workspace",
         "id": w_id,
+        "admin_right": True,
+        "read_right": True,
+        "write_right": True,
         "is_folder": True,
         "is_placeholder": False,
         "need_sync": False,
@@ -318,7 +322,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     # TODO: break this test down to reduce complexity
     await create_shared_workspace("/w", alice_fs, alice2_fs)
 
-    # 1) Create an existing item in both fs
+    # 1) Create existing items in both fs
 
     with freeze_time("2000-01-02"):
         await alice_fs.file_create("/w/foo.txt")
@@ -331,7 +335,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     # 2) Make both fs diverged
 
     with freeze_time("2000-01-03"):
-        await alice_fs.workspace_create("/z")
+        z_by_alice_id = await alice_fs.workspace_create("/z")
         z_by_alice = alice_fs._local_folder_fs.get_access(FsPath("/z"))
         await alice_fs.file_write("/w/foo.txt", b"alice's v2")
         await alice_fs.folder_create("/w/bar/from_alice")
@@ -339,7 +343,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
         await alice_fs.file_create("/w/bar/buzz.txt")
 
     with freeze_time("2000-01-04"):
-        await alice2_fs.workspace_create("/z")
+        z_by_alice2_id = await alice2_fs.workspace_create("/z")
         z_by_alice2 = alice2_fs._local_folder_fs.get_access(FsPath("/z"))
         await alice2_fs.file_write("/w/foo.txt", b"alice2's v2")
         await alice2_fs.folder_create("/w/bar/from_alice2")
@@ -369,6 +373,9 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
             ("fs.entry.synced", {"path": "/z", "id": spy.ANY}, date_sync),
         ]
     )
+    stat = await alice_fs.stat("/z")
+    assert not stat["need_sync"]
+    assert stat["id"] == z_by_alice_id
 
     # 4) Sync Alice2, with conflicts on `/z`, `/w/bar/buzz.txt` and `/w/bar/spam`
 
@@ -435,6 +442,13 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
             ("fs.entry.synced", {"path": "/z", "id": spy.ANY}, date_sync),
         ]
     )
+    stat = await alice2_fs.stat("/z")
+    assert not stat["need_sync"]
+    assert stat["id"] == z_by_alice_id
+
+    stat = await alice2_fs.stat("/z (conflict 2000-01-06 00:00:00)")
+    assert not stat["need_sync"]
+    assert stat["id"] == z_by_alice2_id
 
     # 4) Sync another time Alice2, needed for diverged files created from conflicts
     # Note name conflicts has already been synchronized given they are not
@@ -474,6 +488,7 @@ async def test_concurrent_update(running_backend, alice_fs, alice2_fs):
     # 5) Sync Alice again to take into account changes from the second fs's sync
     with alice_fs.event_bus.listen() as spy:
         with freeze_time("2000-01-08"):
+            await alice_fs.sync("/")
             await alice_fs.sync("/")
     date_sync = Pendulum(2000, 1, 8)
     spy.assert_events_occured(
@@ -543,6 +558,9 @@ async def test_create_already_existing_folder_vlob(running_backend, alice, alice
     assert stat == {
         "type": "workspace",
         "id": w_id,
+        "admin_right": True,
+        "read_right": True,
+        "write_right": True,
         "base_version": 1,
         "is_folder": True,
         "is_placeholder": False,

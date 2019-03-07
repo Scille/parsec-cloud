@@ -16,7 +16,7 @@ from hypothesis.stateful import (
 )
 from hypothesis import strategies as st
 
-from parsec.core.types import ManifestAccess, LocalFileManifest, FsPath
+from parsec.core.types import FsPath, WorkspaceEntry, LocalWorkspaceManifest
 from parsec.core.fs.local_folder_fs import FSManifestLocalMiss, is_folder_manifest
 
 from tests.common import freeze_time
@@ -58,6 +58,9 @@ def test_workspace_create(local_folder_fs, alice):
     assert stat == {
         "type": "workspace",
         "id": w_id,
+        "admin_right": True,
+        "read_right": True,
+        "write_right": True,
         "is_folder": True,
         "base_version": 0,
         "is_placeholder": True,
@@ -82,6 +85,9 @@ def test_file_create(local_folder_fs, alice):
     assert root_stat == {
         "type": "workspace",
         "id": w_id,
+        "admin_right": True,
+        "read_right": True,
+        "write_right": True,
         "is_folder": True,
         "base_version": 0,
         "is_placeholder": True,
@@ -187,27 +193,33 @@ def test_cannot_replace_root(local_folder_fs):
 
 def test_access_not_loaded_entry(alice, bob, local_folder_fs):
     user_manifest = local_folder_fs.get_manifest(alice.user_manifest_access)
+
     with freeze_time("2000-01-02"):
-        foo_access = ManifestAccess()
-        foo_manifest = LocalFileManifest(bob.device_id)
-        user_manifest = user_manifest.evolve_children({"foo.txt": foo_access})
+        w_entry = WorkspaceEntry("w")
+        w_manifest = LocalWorkspaceManifest(bob.device_id)
+        user_manifest = user_manifest.evolve_workspaces(w_entry)
         local_folder_fs.set_dirty_manifest(alice.user_manifest_access, user_manifest)
 
     with pytest.raises(FSManifestLocalMiss):
-        local_folder_fs.stat(FsPath("/foo.txt"))
+        local_folder_fs.stat(FsPath("/w/"))
 
-    local_folder_fs.set_dirty_manifest(foo_access, foo_manifest)
-    stat = local_folder_fs.stat(FsPath("/foo.txt"))
+    local_folder_fs.set_dirty_manifest(w_entry.access, w_manifest)
+    stat = local_folder_fs.stat(FsPath("/w/"))
     assert stat == {
-        "type": "file",
-        "id": foo_access.id,
-        "is_folder": False,
+        "type": "workspace",
+        "id": w_entry.access.id,
+        "admin_right": True,
+        "read_right": True,
+        "write_right": True,
+        "is_folder": True,
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),
         "base_version": 0,
         "is_placeholder": True,
         "need_sync": True,
-        "size": 0,
+        "children": [],
+        "creator": bob.user_id,
+        "participants": [bob.user_id],
     }
 
 

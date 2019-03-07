@@ -1,13 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
+import pendulum
 from uuid import uuid4
 from hashlib import sha256
 from typing import Union
 
 from parsec.crypto import SymetricKey, HashDigest, generate_secret_key
 from parsec.serde import UnknownCheckedSchema, fields, validate, post_load
-from parsec.core.types.base import AccessID, serializer_factory
+from parsec.core.types.base import AccessID, serializer_factory, EntryNameField
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -87,3 +88,35 @@ dirty_block_access_serializer = serializer_factory(DirtyBlockAccessSchema)
 
 
 Access = Union[ManifestAccess, BlockAccess, DirtyBlockAccess]
+
+
+# Not stricly speaking an access, but close enough...
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class WorkspaceEntry:
+    name: str
+    access: ManifestAccess = attr.ib(factory=ManifestAccess)
+    granted_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
+    read_right: bool = attr.ib(default=True)
+    write_right: bool = attr.ib(default=True)
+    admin_right: bool = attr.ib(default=True)
+
+    def evolve(self, **kwargs):
+        return attr.evolve(self, **kwargs)
+
+
+class WorkspaceEntrySchema(UnknownCheckedSchema):
+    name = EntryNameField(validate=validate.Length(min=1, max=256), required=True)
+    access = fields.Nested(ManifestAccessSchema, required=True)
+    granted_on = fields.DateTime(required=True)
+    read_right = fields.Boolean(required=True)
+    write_right = fields.Boolean(required=True)
+    admin_right = fields.Boolean(required=True)
+
+    @post_load
+    def make_obj(self, data):
+        return WorkspaceEntry(**data)
+
+
+workspace_entry_serializer = serializer_factory(WorkspaceEntrySchema)

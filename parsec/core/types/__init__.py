@@ -3,7 +3,13 @@
 from typing import Union
 
 from parsec.core.types.base import TrustSeed, AccessID, EntryName, FileDescriptor, FsPath
-from parsec.core.types.access import Access, ManifestAccess, BlockAccess, DirtyBlockAccess
+from parsec.core.types.access import (
+    Access,
+    ManifestAccess,
+    BlockAccess,
+    DirtyBlockAccess,
+    WorkspaceEntry,
+)
 from parsec.core.types.local_device import LocalDevice, local_device_serializer
 from parsec.core.types.local_manifests import (
     LocalFileManifest,
@@ -42,6 +48,7 @@ __all__ = (
     "ManifestAccess",
     "BlockAccess",
     "DirtyBlockAccess",
+    "WorkspaceEntry",
     "LocalDevice",
     "local_device_serializer",
     "LocalFileManifest",
