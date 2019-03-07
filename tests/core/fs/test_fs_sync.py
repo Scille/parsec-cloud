@@ -2,7 +2,6 @@
 
 import pytest
 from pendulum import Pendulum
-from unittest.mock import ANY
 
 from parsec.core.types import FsPath
 from parsec.core.backend_connection import BackendNotAvailable

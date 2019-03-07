@@ -299,7 +299,6 @@ class LocalFolderFS:
             return {
                 "id": access.id,
                 "type": "file",
-                "id": access.id,
                 "is_folder": False,
                 "created": manifest.created,
                 "updated": manifest.updated,
@@ -314,7 +313,6 @@ class LocalFolderFS:
             return {
                 "id": access.id,
                 "type": "workspace",
-                "id": access.id,
                 "admin_right": entry.admin_right,
                 "read_right": entry.read_right,
                 "write_right": entry.write_right,
@@ -449,8 +447,6 @@ class LocalFolderFS:
         self.event_bus.send("fs.workspace.loaded", path=str(path), id=workspace_access.id)
 
         return workspace_access.id
-
-        return child_access.id
 
     def workspace_rename(self, src: FsPath, dst: FsPath) -> None:
         """
