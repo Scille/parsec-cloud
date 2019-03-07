@@ -42,6 +42,7 @@ class LocalDB:
         self._clean_db_files = self._path / "clean_data_cache"
         self._dirty_db_files = self._path / "dirty_data_storage"
         self.max_cache_size = max_cache_size
+        self.not_written_blocks_size = 0
 
     @property
     def path(self):
@@ -72,7 +73,20 @@ class LocalDB:
         # Initialize
         self.create_db()
 
+        # Clear invalidated blocks
+        with self.open_clean_cursor() as cursor:
+            cursor.execute("""DELETE FROM blocks WHERE accessed_on IS NULL""")
+
     def close(self):
+        # Update blocks from memory cache
+        if self.clean_conn:
+            with self.open_clean_cursor() as cursor:
+                for block_id, values in self.memory_cache.clean_blocks.items():
+                    cursor.execute(
+                        """UPDATE blocks SET accessed_on = ? WHERE block_id = ?""",
+                        (values["accessed_on"], block_id),
+                    )
+
         # Idempotency
         if self.dirty_conn is None and self.clean_conn is None:
             return
@@ -158,7 +172,7 @@ class LocalDB:
         with self.open_clean_cursor() as cursor:
             cursor.execute("SELECT COALESCE(SUM(size), 0) FROM blocks")
             result, = cursor.fetchone()
-            return result
+            return result + self.not_written_blocks_size
 
     def get_block_cache_size(self):
         cache = str(self._clean_db_files)
@@ -268,11 +282,11 @@ class LocalDB:
 
     # Generic block operations
 
-    def _get_block(self, conn: Connection, path: Path, access: Access):
+    def _update_block_accessed_on(self, conn: Connection, access: Access, accessed_on):
         with self._open_cursor(conn) as cursor:
             cursor.execute(
                 """UPDATE blocks SET accessed_on = ? WHERE block_id = ?""",
-                (str(now()), str(access.id)),
+                (accessed_on, str(access.id)),
             )
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
@@ -280,11 +294,18 @@ class LocalDB:
         if not changes:
             raise LocalDBMissingEntry(access)
 
+    def _get_block(self, conn: Connection, path: Path, access: Access):
+        accessed_on = None if (conn is self.clean_conn) else str(now())
         block_row = self.memory_cache.get_block(conn is self.clean_conn, access)
         if block_row:
-            ciphered = block_row[1]
+            ciphered = block_row[2]
         else:
             ciphered = self._read_file(access, path)
+            purged_block = self.memory_cache.set_block(conn is self.clean_conn, access, ciphered)
+            if purged_block:
+                self._update_block_accessed_on(conn, purged_block[0], purged_block[1])
+            self._update_block_accessed_on(conn, access, accessed_on)
+
         return decrypt_raw_with_secret_key(access.key, ciphered)
 
     def _set_block(self, conn: Connection, path: Path, access: Access, raw: bytes):
@@ -293,29 +314,41 @@ class LocalDB:
         ciphered = encrypt_raw_with_secret_key(access.key, raw)
 
         # Update database
-        with self._open_cursor(conn) as cursor:
-            cursor.execute(
-                """INSERT OR REPLACE INTO
-                blocks (block_id, size, offline, accessed_on, file_path)
-                VALUES (?, ?, ?, ?, ?)""",
-                (str(access.id), len(ciphered), False, str(now()), str(filepath)),
-            )
-            self.memory_cache.set_block(conn is self.clean_conn, access, ciphered)
+        if conn is self.dirty_conn:
+            with self._open_cursor(conn) as cursor:
+                cursor.execute(
+                    """INSERT OR REPLACE INTO
+                    blocks (block_id, size, offline, accessed_on, file_path)
+                    VALUES (?, ?, ?, ?, ?)""",
+                    (str(access.id), len(ciphered), False, str(now()), str(filepath)),
+                )
+        else:
+            self.not_written_blocks_size += len(ciphered)
+        purged_block = self.memory_cache.set_block(conn is self.clean_conn, access, ciphered)
+        if purged_block:
+            self._update_block_accessed_on(conn, purged_block[0], purged_block[1])
 
         # Write file
         self._write_file(access, ciphered, path)
 
     def _clear_block(self, conn: Connection, path: Path, access: Access):
         with self._open_cursor(conn) as cursor:
+            self.memory_cache.get_block(conn is self.clean_conn, access)
+            cursor.execute(
+                "SELECT accessed_on, size from blocks WHERE block_id = ?", (str(access.id),)
+            )
+            row = cursor.fetchone()
+            if row and not row[0]:
+                self.not_written_blocks_size -= len(row[1])
             cursor.execute("DELETE FROM blocks WHERE block_id = ?", (str(access.id),))
             cursor.execute("SELECT changes()")
             changes, = cursor.fetchone()
 
-        if not changes:
+        cached = self.memory_cache.clear_block(conn is self.clean_conn, access)
+        if not changes and not cached:
             raise LocalDBMissingEntry(access)
 
         self._remove_file(access, path)
-        self.memory_cache.clear_block(conn is self.clean_conn, access)
 
     # Clean block operations
 

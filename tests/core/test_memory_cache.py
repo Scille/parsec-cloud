@@ -32,9 +32,9 @@ def test_get_nb_blocks(clean, memory_db):
     assert memory_db.get_nb_blocks(clean) == 2
     assert memory_db.get_nb_blocks(not clean) == 0
     # Clear block again
-    memory_db.clear_block(clean, access_1)
+    assert memory_db.clear_block(clean, access_1) is True
     assert memory_db.get_nb_blocks(clean) == 1
-    memory_db.clear_block(clean, access_1)
+    assert memory_db.clear_block(clean, access_1) is False
     assert memory_db.get_nb_blocks(clean) == 1
 
 
@@ -79,15 +79,16 @@ def test_block(clean, memory_db):
     # Found
     memory_db.set_block(clean, access_1, b"data_1")
     memory_db.set_block(clean, access_1, b"data_1_bis")  # Replace silently if added again
-    result = memory_db.get_block(clean, access_1)
-    assert result == [str(access_1.id), b"data_1_bis"]
+    with freeze_time("2000-01-01"):
+        result = memory_db.get_block(clean, access_1)
+    assert result == [access_1, "2000-01-01T00:00:00+00:00", b"data_1_bis"]
     # Not found
     result = memory_db.get_block(not clean, access_1)
     assert result is None
     # Clear
-    memory_db.clear_block(clean, access_1)
+    assert memory_db.clear_block(clean, access_1) is True
     # Clear not found
-    memory_db.clear_block(clean, access_1)
+    assert memory_db.clear_block(clean, access_1) is False
     # Not found
     result = memory_db.get_block(clean, access_1)
     assert result is None
@@ -95,11 +96,12 @@ def test_block(clean, memory_db):
     memory_db.set_block(clean, access_1, b"data_1")
     memory_db.set_block(clean, access_2, b"data_2")
     assert memory_db.get_nb_blocks(clean) == 2
-    memory_db.set_block(clean, access_3, b"data_3")
-    memory_db.set_block(clean, access_4, b"data_4")  # Trigger garbage collector
+    assert memory_db.set_block(clean, access_3, b"data_3") is None
+    assert memory_db.set_block(clean, access_4, b"data_4")  # Trigger garbage collector
     assert memory_db.get_nb_blocks(clean) == 3
-    result = memory_db.get_block(clean, access_4)
-    assert result == [str(access_4.id), b"data_4"]
+    with freeze_time("2000-01-01"):
+        result = memory_db.get_block(clean, access_4)
+    assert result == [access_4, "2000-01-01T00:00:00+00:00", b"data_4"]
     results = [
         memory_db.get_block(clean, access) for access in [access_1, access_2, access_3, access_4]
     ]

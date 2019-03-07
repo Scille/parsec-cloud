@@ -69,6 +69,7 @@ def test_local_db_on_disk(tmpdir, local_db):
     local_db.close()
 
     with LocalDB(tmpdir, max_cache_size=128 * block_size) as local_db_copy:
+        local_db_copy.memory_cache = local_db.memory_cache
         vlob_data = local_db_copy.get_clean_manifest(vlob_access)
         block_data = local_db_copy.get_clean_block(block_access)
 

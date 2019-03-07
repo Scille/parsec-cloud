@@ -1,8 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from pendulum import Pendulum
+import pendulum
 import random
 
+# Alias now
+now = pendulum.Pendulum.now
 
 # TODO: shouldn't use core.fs.types.Acces here
 # from parsec.core.fs.types import Access
@@ -40,7 +42,7 @@ class MemoryCache:
         return [str(access.id), user["blob"], user["created_on"]]
 
     def set_user(self, access: Access, ciphered: bytes):
-        self.users[str(access.id)] = {"blob": ciphered, "created_on": str(Pendulum.now())}
+        self.users[str(access.id)] = {"blob": ciphered, "created_on": str(now())}
 
     # Manifest operations
 
@@ -68,20 +70,26 @@ class MemoryCache:
     def get_block(self, clean: bool, access: Access):
         blocks = self.clean_blocks if clean else self.remote_blocks
         try:
-            return [str(access.id), blocks[str(access.id)]]
+            block = blocks[str(access.id)]
         except KeyError:
-            pass
+            return
+        else:
+            block["accessed_on"] = str(now())
+            return [block["access"], block["accessed_on"], block["content"]]
 
     def set_block(self, clean: bool, access: Access, ciphered: bytes):
         blocks = self.clean_blocks if clean else self.remote_blocks
+        deleted = None
         if self.get_nb_blocks(clean) >= self.block_limit:
             deleted = random.choice(list(blocks.keys()))
             blocks.pop(deleted)
-        blocks[str(access.id)] = ciphered
+        blocks[str(access.id)] = {"access": access, "accessed_on": str(now()), "content": ciphered}
+        return deleted
 
     def clear_block(self, clean: bool, access: Access):
         blocks = self.clean_blocks if clean else self.remote_blocks
         try:
             del blocks[str(access.id)]
+            return True
         except KeyError:
-            pass
+            return False
