@@ -158,7 +158,7 @@ class FuseOperations(LoggingMixIn, Operations):
         # Unix allows to overwrite the destination, so make sure to have
         # space before calling the move
         with translate_error():
-            self.fs_access.move(src, dst)
+            self.fs_access.move(src, dst, overwrite=True)
 
         return 0
 

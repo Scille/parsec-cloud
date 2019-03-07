@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import trio
+from zlib import adler32
 from pathlib import Path
 from structlog import get_logger
 from winfspy import FileSystem, enable_debug_log
@@ -43,6 +44,10 @@ def _teardown_mountpoint(mountpoint):
     pass
 
 
+def _generate_volume_serial_number(device, workspace):
+    return adler32(f"{device.organization_id}-{device.device_id}-{workspace}".encode())
+
+
 async def winfsp_mountpoint_runner(
     workspace: str,
     mountpoint: Path,
@@ -66,20 +71,28 @@ async def winfsp_mountpoint_runner(
         enable_debug_log()
 
     volume_label = f"{fs.device.user_id}-{workspace}"[:31]
+    volume_serial_number = _generate_volume_serial_number(fs.device, workspace)
     operations = WinFSPOperations(workspace, volume_label, fs_access)
+    # See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa  # noqa
     fs = FileSystem(
         str(abs_mountpoint),
         operations,
         sector_size=512,
         sectors_per_allocation_unit=1,
         volume_creation_time=filetime_now(),
-        volume_serial_number=0,
+        volume_serial_number=volume_serial_number,
         file_info_timeout=1000,
         case_sensitive_search=1,
         case_preserved_names=1,
         unicode_on_disk=1,
-        persistent_acls=1,
+        persistent_acls=0,
+        reparse_points=0,
+        reparse_points_access_check=0,
+        named_streams=0,
+        read_only_volume=0,
         post_cleanup_when_modified_only=1,
+        pass_query_directory_file_name=1,
+        device_control=1,
         um_file_context_is_user_context2=1,
         file_system_name="parsec-mnt",
         prefix="",

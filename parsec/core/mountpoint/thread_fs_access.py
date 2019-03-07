@@ -12,8 +12,8 @@ class ThreadFSAccess:
     def delete(self, path):
         return self._portal.run(self.fs.delete, path)
 
-    def move(self, src, dst):
-        return self._portal.run(self.fs.move, src, dst)
+    def move(self, src, dst, overwrite):
+        return self._portal.run(self.fs.move, src, dst, overwrite)
 
     def file_create(self, path):
         async def _do(path):

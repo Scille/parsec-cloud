@@ -1,8 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-import attr
 import os
+import sys
+import attr
 import socket
 import contextlib
 from unittest.mock import patch
@@ -87,6 +88,10 @@ def hypothesis_settings(request):
 def pytest_runtest_setup(item):
     if item.get_closest_marker("slow") and not item.config.getoption("--runslow"):
         pytest.skip("need --runslow option to run")
+    if item.get_closest_marker("win32") and sys.platform != "win32":
+        pytest.skip("test specific to win32")
+    if item.get_closest_marker("linux") and sys.platform != "linux":
+        pytest.skip("test specific to linux")
     if item.get_closest_marker("mountpoint"):
         if not item.config.getoption("--runmountpoint"):
             pytest.skip("need --runmountpoint option to run")

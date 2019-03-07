@@ -26,6 +26,7 @@ def test_stat_root(local_folder_fs):
     stat = local_folder_fs.stat(FsPath("/"))
     assert stat == {
         "type": "root",
+        "id": local_folder_fs.root_access.id,
         "is_folder": True,
         "base_version": 1,
         "is_placeholder": False,
@@ -38,11 +39,12 @@ def test_stat_root(local_folder_fs):
 
 def test_workspace_create(local_folder_fs, alice):
     with freeze_time("2000-01-02"):
-        local_folder_fs.workspace_create(FsPath("/foo"))
+        w_id = local_folder_fs.workspace_create(FsPath("/foo"))
 
     root_stat = local_folder_fs.stat(FsPath("/"))
     assert root_stat == {
         "type": "root",
+        "id": alice.user_manifest_access.id,
         "is_folder": True,
         "base_version": 1,
         "is_placeholder": False,
@@ -55,6 +57,7 @@ def test_workspace_create(local_folder_fs, alice):
     stat = local_folder_fs.stat(FsPath("/foo"))
     assert stat == {
         "type": "workspace",
+        "id": w_id,
         "is_folder": True,
         "base_version": 0,
         "is_placeholder": True,
@@ -70,14 +73,15 @@ def test_workspace_create(local_folder_fs, alice):
 def test_file_create(local_folder_fs, alice):
 
     with freeze_time("2000-01-02"):
-        local_folder_fs.workspace_create(FsPath("/w"))
+        w_id = local_folder_fs.workspace_create(FsPath("/w"))
 
     with freeze_time("2000-01-03"):
-        local_folder_fs.touch(FsPath("/w/foo.txt"))
+        foo_id = local_folder_fs.touch(FsPath("/w/foo.txt"))
 
     root_stat = local_folder_fs.stat(FsPath("/w"))
     assert root_stat == {
         "type": "workspace",
+        "id": w_id,
         "is_folder": True,
         "base_version": 0,
         "is_placeholder": True,
@@ -92,6 +96,7 @@ def test_file_create(local_folder_fs, alice):
     foo_stat = local_folder_fs.stat(FsPath("/w/foo.txt"))
     assert foo_stat == {
         "type": "file",
+        "id": foo_id,
         "is_folder": False,
         "base_version": 0,
         "is_placeholder": True,
@@ -195,6 +200,7 @@ def test_access_not_loaded_entry(alice, bob, local_folder_fs):
     stat = local_folder_fs.stat(FsPath("/foo.txt"))
     assert stat == {
         "type": "file",
+        "id": foo_access.id,
         "is_folder": False,
         "created": Pendulum(2000, 1, 2),
         "updated": Pendulum(2000, 1, 2),

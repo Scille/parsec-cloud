@@ -22,9 +22,8 @@ def test_fuse_grow_by_truncate(tmpdir, mountpoint_service):
     assert data == expected_data
 
 
-@pytest.mark.xfail(reason="Not working at the moment...")
 @pytest.mark.mountpoint
-def test_fuse_empty_read_then_reopen(tmpdir, mountpoint_service):
+def test_empty_read_then_reopen(tmpdir, mountpoint_service):
     mountpoint_service.start()
     mountpoint = mountpoint_service.get_default_workspace_mountpoint()
 

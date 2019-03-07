@@ -6,15 +6,17 @@ from hypothesis.stateful import RuleBasedStateMachine, initialize, rule, run_sta
 from hypothesis import strategies as st
 
 
+# Just an arbitrary value to limit the size of data hypothesis generates
+# for read/write operations
+BALLPARK = 10000
+
+
 @pytest.mark.slow
 @pytest.mark.mountpoint
-@pytest.mark.skipif(os.name == "nt", reason="Seems to spiral into infinite loop so far...")
-@pytest.mark.xfail(reason="Not working at the moment...")
-def test_fuse_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
-
+def test_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
     tentative = 0
 
-    class FuseFileOperationsStateMachine(RuleBasedStateMachine):
+    class FileOperationsStateMachine(RuleBasedStateMachine):
         @initialize()
         def init(self):
             nonlocal tentative
@@ -30,39 +32,53 @@ def test_fuse_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
 
         def teardown(self):
             mountpoint_service.stop()
-            os.close(self.oracle_fd)
-            os.close(self.fd)
 
-        @rule(size=st.integers(min_value=0))
+        @rule(size=st.integers(min_value=0, max_value=BALLPARK))
         def read(self, size):
             expected_data = os.read(self.oracle_fd, size)
             data = os.read(self.fd, size)
             assert data == expected_data
 
-        @rule(content=st.binary())
+        @rule(content=st.binary(max_size=BALLPARK))
         def write(self, content):
             expected_ret = os.write(self.oracle_fd, content)
             ret = os.write(self.fd, content)
             assert ret == expected_ret
 
         @rule(
-            length=st.integers(min_value=0),
-            # Given FUSE takes control over the cursor position (i.e. it gives us an offset
-            # parameters for read/write operations), it cannot handle SEEK_END properly (given it
-            # doesn't know the size of the file, it decides not to move the cursor when handling
-            # lseek with this option...)
-            # seek_type=st.one_of(st.just(os.SEEK_SET), st.just(os.SEEK_CUR), st.just(os.SEEK_END)),
-            seek_type=st.one_of(st.just(os.SEEK_SET), st.just(os.SEEK_CUR)),
+            length=st.integers(min_value=-BALLPARK, max_value=BALLPARK),
+            seek_type=st.one_of(st.just(os.SEEK_SET), st.just(os.SEEK_CUR), st.just(os.SEEK_END)),
         )
         def seek(self, length, seek_type):
-            pos = os.lseek(self.fd, length, seek_type)
-            expected_pos = os.lseek(self.oracle_fd, length, seek_type)
-            assert pos == expected_pos
+            if seek_type != os.SEEK_END:
+                length = abs(length)
+            try:
+                pos = os.lseek(self.fd, length, seek_type)
 
-        @rule(length=st.integers(min_value=0))
+            except OSError:
+                # Invalid length/seek_type couple
+                with pytest.raises(OSError):
+                    os.lseek(self.oracle_fd, length, seek_type)
+
+            else:
+                expected_pos = os.lseek(self.oracle_fd, length, seek_type)
+                assert pos == expected_pos
+
+        @rule(length=st.integers(min_value=0, max_value=BALLPARK))
         def truncate(self, length):
             os.ftruncate(self.fd, length)
             os.ftruncate(self.oracle_fd, length)
+
+        @rule()
+        def sync(self):
+            os.fsync(self.fd)
+            os.fsync(self.oracle_fd)
+
+        @rule()
+        def stat(self):
+            stat = os.fstat(self.fd)
+            oracle_stat = os.fstat(self.oracle_fd)
+            assert stat.st_size == oracle_stat.st_size
 
         @rule()
         def reopen(self):
@@ -73,4 +89,4 @@ def test_fuse_file_operations(tmpdir, hypothesis_settings, mountpoint_service):
             os.close(self.oracle_fd)
             self.oracle_fd = os.open(tmpdir / f"oracle-test-{tentative}", os.O_RDWR)
 
-    run_state_machine_as_test(FuseFileOperationsStateMachine, settings=hypothesis_settings)
+    run_state_machine_as_test(FileOperationsStateMachine, settings=hypothesis_settings)

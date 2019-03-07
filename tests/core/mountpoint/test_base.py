@@ -15,13 +15,8 @@ from parsec.core.mountpoint import (
     MountpointNotMounted,
     MountpointDriverCrash,
 )
-
 from parsec.core import logged_core_factory
-
-
-@pytest.fixture
-def base_mountpoint(tmpdir):
-    return Path(tmpdir / "base_mountpoint")
+from parsec.core.types import FsPath
 
 
 @pytest.mark.trio
@@ -83,10 +78,10 @@ async def test_base_mountpoint_not_created(base_mountpoint, alice, alice_fs, eve
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-@pytest.mark.skipif(os.name == "nt", reason="Error message is POSIX-specific")
+@pytest.mark.skipif(os.name == "nt", reason="TODO: Cause freeze in winfsp so far...")
 async def test_mountpoint_already_in_use(base_mountpoint, alice, alice_fs, alice2_fs, event_bus):
     # Path should be created if it doesn' exist
-    mountpoint = f"{base_mountpoint.absolute()}/{alice.user_id}-w"
+    mountpoint = str(base_mountpoint.absolute() / f"{alice.user_id}-w")
 
     await alice_fs.workspace_create("/w")
     await alice_fs.file_create("/w/bar.txt")
@@ -114,7 +109,6 @@ async def test_mountpoint_already_in_use(base_mountpoint, alice, alice_fs, alice
     assert not await bar_txt.exists()
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Not available yet for WinFSP...")
 @pytest.mark.trio
 @pytest.mark.mountpoint
 @pytest.mark.parametrize("manual_unmount", [True, False])
@@ -137,7 +131,7 @@ async def test_mount_and_explore_workspace(
         ) as mountpoint_manager:
 
             await mountpoint_manager.mount_workspace("w")
-            mountpoint = f"{base_mountpoint.absolute()}/{alice.user_id}-w"
+            mountpoint = str(base_mountpoint.absolute() / f"{alice.user_id}-w")
 
             spy.assert_events_occured(
                 [
@@ -149,7 +143,7 @@ async def test_mount_and_explore_workspace(
             # Finally explore the mountpoint
 
             def inspect_mountpoint():
-                wksp_children = set(os.listdir(f"{mountpoint}"))
+                wksp_children = set(os.listdir(mountpoint))
                 assert wksp_children == {"foo", "bar.txt"}
 
                 bar_stat = os.stat(f"{mountpoint}/bar.txt")
@@ -173,7 +167,6 @@ async def test_mount_and_explore_workspace(
             spy.assert_events_occured([("mountpoint.stopped", {"mountpoint": mountpoint})])
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Not available yet for WinFSP...")
 @pytest.mark.trio
 @pytest.mark.mountpoint
 @pytest.mark.parametrize("manual_unmount", [True, False])
@@ -213,50 +206,6 @@ async def test_idempotent_mount(base_mountpoint, alice, alice_fs, event_bus, man
 
 @pytest.mark.trio
 @pytest.mark.mountpoint
-@pytest.mark.skipif(os.name == "nt", reason="Fusermount not available on Windows")
-async def test_unmount_with_fusermount(base_mountpoint, alice, alice_fs, event_bus):
-    mountpoint = f"{base_mountpoint.absolute()}/{alice.user_id}-w"
-    await alice_fs.workspace_create("/w")
-    await alice_fs.file_create("/w/bar.txt")
-
-    bar_txt = trio.Path(f"{mountpoint}/bar.txt")
-
-    async with mountpoint_manager_factory(
-        alice_fs, event_bus, base_mountpoint
-    ) as mountpoint_manager:
-
-        with event_bus.listen() as spy:
-            await mountpoint_manager.mount_workspace("w")
-            proc = trio.Process(f"fusermount -u {mountpoint}".split())
-            await proc.wait()
-
-        spy.assert_events_occured([("mountpoint.stopped", {"mountpoint": mountpoint})])
-        assert not await bar_txt.exists()
-
-
-@pytest.mark.trio
-@pytest.mark.skipif(os.name == "nt", reason="FUSE not used on Windows")
-async def test_hard_crash_in_fuse_thread(base_mountpoint, alice_fs, event_bus):
-    await alice_fs.workspace_create("/w")
-
-    class ToughLuckError(Exception):
-        pass
-
-    def _crash_fuse(*args, **kwargs):
-        raise ToughLuckError()
-
-    with patch("parsec.core.mountpoint.fuse_runner.FUSE", new=_crash_fuse):
-        async with mountpoint_manager_factory(
-            alice_fs, event_bus, base_mountpoint
-        ) as mountpoint_manager:
-
-            with pytest.raises(MountpointDriverCrash):
-                await mountpoint_manager.mount_workspace("w")
-
-
-@pytest.mark.trio
-@pytest.mark.mountpoint
-@pytest.mark.skipif(os.name == "nt", reason="WinFSP doesn't support `pathlib.Path.stat` yet...")
 async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpdir):
     core_config = core_config.evolve(mountpoint_enabled=True, mountpoint_base_dir=base_mountpoint)
     mountpoint = f"{base_mountpoint.absolute()}/{alice.user_id}-w"
@@ -273,3 +222,24 @@ async def test_work_within_logged_core(base_mountpoint, core_config, alice, tmpd
         assert await bar_txt.exists()
 
     assert not await bar_txt.exists()
+
+
+@pytest.mark.linux
+def test_manifest_not_available(mountpoint_service):
+    async def _bootstrap(fs, mountpoint_manager):
+        await fs.workspace_create("/x")
+        await fs.file_create("/x/foo.txt")
+        foo_access = fs._local_folder_fs.get_access(FsPath("/x/foo.txt"))
+        fs._local_folder_fs.mark_outdated_manifest(foo_access)
+        await mountpoint_manager.mount_all()
+
+    mountpoint_service.start()
+    mountpoint_service.execute(_bootstrap)
+    x_path = mountpoint_service.get_workspace_mountpoint("x")
+
+    with pytest.raises(OSError) as exc:
+        (x_path / "foo.txt").stat()
+    if os.name == "nt":
+        assert str(exc.value).startswith("[WinError 1231] The network location cannot be reached.")
+    else:
+        assert exc.value.args == (100, "Network is down")

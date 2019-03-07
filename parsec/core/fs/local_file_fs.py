@@ -157,6 +157,7 @@ class LocalFileFS:
         else:
             assert hf.base_version == manifest.base_version
 
+        self.local_folder_fs._register_hot_file(access.id, hf)
         return hf
 
     def _get_hot_file(self, access: Access) -> HotFile:
@@ -164,6 +165,7 @@ class LocalFileFS:
 
     def _delete_hot_file(self, access: Access) -> None:
         del self._hot_files[access.id]
+        self.local_folder_fs._delete_hot_file(access.id)
 
     def close(self, fd: FileDescriptor) -> None:
         self.flush(fd)
@@ -255,7 +257,7 @@ class LocalFileFS:
                     try:
                         buff = self.get_block(access)
                     except LocalDBMissingEntry as exc:
-                        raise RuntimeError(f"Unknown local block `{access['id']}`") from exc
+                        raise RuntimeError(f"Unknown local block `{access.id}`") from exc
 
                     data[bs.start - cs.start : bs.end - cs.start] = buff[
                         bs.buffer_slice_start : bs.buffer_slice_end

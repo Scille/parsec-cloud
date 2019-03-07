@@ -7,7 +7,12 @@ from winfspy import (
     FILE_ATTRIBUTE,
     CREATE_FILE_CREATE_OPTIONS,
 )
-from winfspy.plumbing.winstuff import dt_to_filetime, NTSTATUS, posix_to_ntstatus
+from winfspy.plumbing.winstuff import (
+    dt_to_filetime,
+    NTSTATUS,
+    posix_to_ntstatus,
+    SecurityDescriptor,
+)
 
 from parsec.core.fs import FSInvalidFileDescriptor
 from parsec.core.backend_connection import BackendNotAvailable
@@ -36,6 +41,8 @@ def round_to_block_size(size, block_size=DEFAULT_BLOCK_SIZE):
 
 
 def stat_to_file_attributes(stat):
+    # TODO: consider using FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS/FILE_ATTRIBUTE_RECALL_ON_OPEN ?
+    # (see https://docs.microsoft.com/en-us/windows/desktop/fileio/file-attribute-constants)
     if stat["is_folder"]:
         if stat["type"] == "root":
             return FILE_ATTRIBUTE.FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE.FILE_ATTRIBUTE_READONLY
@@ -53,11 +60,12 @@ def stat_to_winfsp_attributes(stat):
         "last_access_time": updated,
         "last_write_time": updated,
         "change_time": updated,
-        "index_number": 0,
+        "index_number": stat["id"].int & 0xFFFFFFFF,  # uint64_t
     }
 
     if stat["is_folder"]:
         attributes["file_attributes"] = FILE_ATTRIBUTE.FILE_ATTRIBUTE_DIRECTORY
+        # TODO: remove this once per-workspace-fs rework has been done
         if stat["type"] == "root":
             attributes["file_attributes"] |= FILE_ATTRIBUTE.FILE_ATTRIBUTE_READONLY
         attributes["allocation_size"] = round_to_block_size(1)
@@ -74,12 +82,14 @@ def stat_to_winfsp_attributes(stat):
 class OpenedFolder:
     def __init__(self, path):
         self.path = path
+        self.deleted = False
 
 
 class OpenedFile:
     def __init__(self, path, fd):
         self.path = path
         self.fd = fd
+        self.deleted = False
 
 
 class WinFSPOperations(BaseFileSystemOperations):
@@ -88,6 +98,11 @@ class WinFSPOperations(BaseFileSystemOperations):
         if len(volume_label) > 31:
             raise ValueError("`volume_label` must be 31 characters long max")
 
+        # see https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format  # noqa
+        self._security_descriptor = SecurityDescriptor(
+            # "O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;WD)"
+            "O:BAG:BAD:NO_ACCESS_CONTROL"
+        )
         self.workspace = workspace
         self.fs_access = fs_access
 
@@ -101,7 +116,7 @@ class WinFSPOperations(BaseFileSystemOperations):
         }
 
     def _localize_path(self, path):
-        return f"/{self.workspace}/{path}"
+        return f"\\{self.workspace}\\{path}"
 
     def get_volume_info(self):
         return self._volume_info
@@ -115,10 +130,11 @@ class WinFSPOperations(BaseFileSystemOperations):
         with translate_error():
             stat = self.fs_access.stat(file_name)
 
-        return {
-            "file_attributes": stat_to_file_attributes(stat),
-            "security_descriptor": None,
-        }  # TODO
+        return (
+            stat_to_file_attributes(stat),
+            self._security_descriptor.handle,
+            self._security_descriptor.size,
+        )
 
     def create(
         self,
@@ -146,8 +162,7 @@ class WinFSPOperations(BaseFileSystemOperations):
                 return OpenedFile(file_name, fd)
 
     def get_security(self, file_context):
-        # TODO
-        pass
+        return self._security_descriptor.handle, self._security_descriptor.size
 
     def set_security(self, file_context, security_information, modification_descriptor):
         # TODO
@@ -158,7 +173,7 @@ class WinFSPOperations(BaseFileSystemOperations):
         new_file_name = self._localize_path(new_file_name)
 
         with translate_error():
-            self.fs_access.move(file_name, new_file_name)
+            self.fs_access.move(file_name, new_file_name, overwrite=False)
 
     def open(self, file_name, create_options, granted_access):
         file_name = self._localize_path(file_name)
@@ -177,10 +192,15 @@ class WinFSPOperations(BaseFileSystemOperations):
             with translate_error():
                 self.fs_access.file_fd_close(file_context.fd)
 
+        if file_context.deleted:
+            with translate_error():
+                self.fs_access.delete(file_context.path)
+
     def get_file_info(self, file_context):
         with translate_error():
-            child_stat = self.fs_access.stat(file_context.path)
-        return stat_to_winfsp_attributes(child_stat)
+            stat = self.fs_access.stat(file_context.path)
+
+        return stat_to_winfsp_attributes(stat)
 
     def set_basic_info(
         self,
@@ -218,8 +238,9 @@ class WinFSPOperations(BaseFileSystemOperations):
         with translate_error():
             stat = self.fs_access.stat(file_context.path)
             if not stat["is_folder"]:
-                raise NTStatusError(NTSTATUS.STATUS_NOT_A_DIRECTORY)
-            if not stat["type"] != "folder":
+                return
+            if stat["type"] != "folder":
+                # Cannot remove root mountpoint !
                 raise NTStatusError(NTSTATUS.STATUS_RESOURCEMANAGER_READ_ONLY)
             if stat["children"]:
                 raise NTStatusError(NTSTATUS.STATUS_DIRECTORY_NOT_EMPTY)
@@ -256,10 +277,13 @@ class WinFSPOperations(BaseFileSystemOperations):
                 offset = -1
             # LocalDB.set only wants bytes or bytearray...
             buffer = bytes(buffer)
-            return self.fs_access.file_fd_write(file_context.fd, buffer, offset)
+            ret = self.fs_access.file_fd_write(file_context.fd, buffer, offset)
+            return ret
+
+    def flush(self, file_context) -> None:
+        with translate_error():
+            self.fs_access.file_fd_flush(file_context.fd)
 
     def cleanup(self, file_context, file_name, flags) -> None:
         # FspCleanupDelete
-        if flags & 1:
-            with translate_error():
-                self.fs_access.delete(file_name)
+        file_context.deleted = flags & 1

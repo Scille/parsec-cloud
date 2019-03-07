@@ -20,8 +20,9 @@ st_entry_name = st.text(alphabet=ascii_lowercase, min_size=1, max_size=3)
 
 
 class expect_raises:
-    def __init__(self, expected_exc):
+    def __init__(self, expected_exc, fallback_exc=None):
         self.expected_exc = expected_exc
+        self.fallback_exc = fallback_exc
 
     def __enter__(self):
         __tracebackhide__ = True
@@ -30,13 +31,17 @@ class expect_raises:
     def __exit__(self, exc_type, exc_value, traceback):
         __tracebackhide__ = True
 
-        if self.expected_exc is None:
+        if not self.expected_exc:
             return False
 
         if not exc_type:
             raise AssertionError(f"DID NOT RAISED {self.expected_exc!r}")
 
-        if not isinstance(exc_value, type(self.expected_exc)):
+        if self.fallback_exc:
+            allowed = (type(self.expected_exc), type(self.fallback_exc))
+        else:
+            allowed = type(self.expected_exc)
+        if not isinstance(exc_value, allowed):
             raise AssertionError(
                 f"RAISED {exc_value!r} BUT EXPECTED {self.expected_exc!r}"
             ) from exc_value
@@ -49,6 +54,9 @@ class PathElement:
     absolute_path = attr.ib()
     parsec_root = attr.ib()
     oracle_root = attr.ib()
+
+    def is_workspace(self):
+        return len(Path(self.absolute_path).parts) == 2
 
     def to_oracle(self):
         return self.oracle_root / self.absolute_path[1:]
@@ -69,14 +77,15 @@ class PathElement:
 
 @pytest.mark.slow
 @pytest.mark.mountpoint
-@pytest.mark.skipif(os.name == "nt", reason="TODO: fix this ASAP !!!")
-def test_fuse_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
+def test_folder_operations(tmpdir, hypothesis_settings, mountpoint_service):
 
     tentative = 0
 
-    class FuseFolderOperationsStateMachine(RuleBasedStateMachine):
+    class FolderOperationsStateMachine(RuleBasedStateMachine):
         Files = Bundle("file")
         Folders = Bundle("folder")
+        # Moving mountpoint
+        NonRootFolder = Folders.filter(lambda x: not x.is_workspace())
 
         @initialize(target=Folders)
         def init(self):
@@ -106,12 +115,17 @@ def test_fuse_folder_operations(tmpdir, hypothesis_settings, mountpoint_service)
             path = parent / name
 
             expected_exc = None
+            fallback_exc = None
             try:
                 path.to_oracle().touch(exist_ok=False)
             except OSError as exc:
                 expected_exc = exc
+                # WinFSP raises `OSError(22, 'Invalid argument')` instead
+                # of `FileNotFoundError(2, 'No such file or directory')`
+                if os.name == "nt" and isinstance(exc, FileNotFoundError):
+                    fallback_exc = OSError(22, "Invalid argument")
 
-            with expect_raises(expected_exc):
+            with expect_raises(expected_exc, fallback_exc):
                 path.to_parsec().touch(exist_ok=False)
 
             return path
@@ -121,12 +135,17 @@ def test_fuse_folder_operations(tmpdir, hypothesis_settings, mountpoint_service)
             path = parent / name
 
             expected_exc = None
+            fallback_exc = None
             try:
                 path.to_oracle().mkdir(exist_ok=False)
             except OSError as exc:
                 expected_exc = exc
+                # WinFSP raises `NotADirectoryError(20, 'The directory name is invalid')`
+                # instead of `FileNotFoundError(2, 'The system cannot find the path specified')`
+                if os.name == "nt" and isinstance(exc, FileNotFoundError):
+                    fallback_exc = NotADirectoryError(20, "The directory name is invalid")
 
-            with expect_raises(expected_exc):
+            with expect_raises(expected_exc, fallback_exc):
                 path.to_parsec().mkdir(exist_ok=False)
 
             return path
@@ -142,12 +161,8 @@ def test_fuse_folder_operations(tmpdir, hypothesis_settings, mountpoint_service)
             with expect_raises(expected_exc):
                 path.to_parsec().unlink()
 
-        @rule(path=Folders)
+        @rule(path=NonRootFolder)
         def rmdir(self, path):
-            # Do not remove the root or the default workspace
-            if path.absolute_path in ("/", f"/{mountpoint_service.default_workspace_name}"):
-                return
-
             expected_exc = None
             try:
                 path.to_oracle().rmdir()
@@ -175,7 +190,7 @@ def test_fuse_folder_operations(tmpdir, hypothesis_settings, mountpoint_service)
         def move_file(self, src, dst_parent, dst_name):
             return self._move(src, dst_parent, dst_name)
 
-        @rule(target=Folders, src=Folders, dst_parent=Folders, dst_name=st_entry_name)
+        @rule(target=Folders, src=NonRootFolder, dst_parent=Folders, dst_name=st_entry_name)
         def move_folder(self, src, dst_parent, dst_name):
             return self._move(src, dst_parent, dst_name)
 
@@ -193,4 +208,4 @@ def test_fuse_folder_operations(tmpdir, hypothesis_settings, mountpoint_service)
             if not expected_exc:
                 assert children == expected_children
 
-    run_state_machine_as_test(FuseFolderOperationsStateMachine, settings=hypothesis_settings)
+    run_state_machine_as_test(FolderOperationsStateMachine, settings=hypothesis_settings)
