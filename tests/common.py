@@ -11,11 +11,12 @@ import pendulum
 
 from parsec.core.logged_core import LoggedCore
 from parsec.core.fs import FS
+from parsec.core.persistent_storage import PersistentStorage
 from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
 from parsec.api.transport import Transport, TransportError
 
 
-class InMemoryLocalStorage(LocalStorage):
+class InMemoryPersistentStorage(PersistentStorage):
     """An in-memory version of the local database.
 
     It doesn't perform any access to the file system
@@ -57,6 +58,12 @@ class InMemoryLocalStorage(LocalStorage):
             del self._data[filepath]
         except KeyError:
             raise LocalStorageMissingEntry(access)
+
+
+class InMemoryLocalStorage(LocalStorage):
+    def __init__(self):
+        super().__init__("unused")
+        self.persistent_storage = InMemoryPersistentStorage()
 
 
 def freeze_time(time):
