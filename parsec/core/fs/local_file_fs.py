@@ -8,7 +8,7 @@ from structlog import get_logger
 
 from parsec.event_bus import EventBus
 from parsec.core.types import FileDescriptor, Access, BlockAccess, LocalDevice, LocalFileManifest
-from parsec.core.local_db import LocalDB, LocalDBMissingEntry
+from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
 from parsec.core.fs.utils import is_file_manifest
 from parsec.core.fs.buffer_ordering import (
     quick_filter_block_accesses,
@@ -80,13 +80,13 @@ class LocalFileFS:
     def __init__(
         self,
         device: LocalDevice,
-        local_db: LocalDB,
+        local_storage: LocalStorage,
         local_folder_fs: LocalFolderFS,
         event_bus: EventBus,
     ):
         self.event_bus = event_bus
         self.local_folder_fs = local_folder_fs
-        self.local_db = local_db
+        self.local_storage = local_storage
         self._opened_cursors = {}
         self._hot_files = {}
         self._next_fd = 1
@@ -94,26 +94,26 @@ class LocalFileFS:
 
     def get_block(self, access: BlockAccess) -> bytes:
         try:
-            return self.local_db.get_dirty_block(access)
-        except LocalDBMissingEntry:
-            return self.local_db.get_clean_block(access)
+            return self.local_storage.get_dirty_block(access)
+        except LocalStorageMissingEntry:
+            return self.local_storage.get_clean_block(access)
 
     def set_dirty_block(self, access: BlockAccess, block: bytes) -> None:
-        return self.local_db.set_dirty_block(access, block)
+        return self.local_storage.set_dirty_block(access, block)
 
     def set_clean_block(self, access: BlockAccess, block: bytes) -> None:
-        return self.local_db.set_clean_block(access, block)
+        return self.local_storage.set_clean_block(access, block)
 
     def clear_dirty_block(self, access: BlockAccess) -> None:
         try:
-            self.local_db.clear_dirty_block(access)
-        except LocalDBMissingEntry:
+            self.local_storage.clear_dirty_block(access)
+        except LocalStorageMissingEntry:
             logger.warning("Tried to remove a dirty block that doesn't exist anymore")
 
     def clear_clean_block(self, access: BlockAccess) -> None:
         try:
-            self.local_db.clear_clean_block(access)
-        except LocalDBMissingEntry:
+            self.local_storage.clear_clean_block(access)
+        except LocalStorageMissingEntry:
             pass
 
     def _get_cursor_from_fd(self, fd: FileDescriptor) -> FileCursor:
@@ -256,7 +256,7 @@ class LocalFileFS:
                     access = bs.buffer.access
                     try:
                         buff = self.get_block(access)
-                    except LocalDBMissingEntry as exc:
+                    except LocalStorageMissingEntry as exc:
                         raise RuntimeError(f"Unknown local block `{access.id}`") from exc
 
                     data[bs.start - cs.start : bs.end - cs.start] = buff[
@@ -267,7 +267,7 @@ class LocalFileFS:
                     access = bs.buffer.access
                     try:
                         buff = self.get_block(access)
-                    except LocalDBMissingEntry:
+                    except LocalStorageMissingEntry:
                         missing.append(access)
                         continue
 

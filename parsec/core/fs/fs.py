@@ -8,7 +8,7 @@ from uuid import UUID
 from parsec.types import UserID
 from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice, FsPath
-from parsec.core.local_db import LocalDB
+from parsec.core.local_storage import LocalStorage
 from parsec.core.backend_connection import BackendCmdsPool
 from parsec.core.fs.local_folder_fs import (
     FSManifestLocalMiss,
@@ -25,19 +25,19 @@ class FS:
     def __init__(
         self,
         device: LocalDevice,
-        local_db: LocalDB,
+        local_storage: LocalStorage,
         backend_cmds: BackendCmdsPool,
         encryption_manager,
         event_bus: EventBus,
     ):
         self.device = device
-        self.local_db = local_db
+        self.local_storage = local_storage
         self.backend_cmds = backend_cmds
         self.event_bus = event_bus
 
-        self._local_folder_fs = LocalFolderFS(device, local_db, event_bus)
-        self._local_file_fs = LocalFileFS(device, local_db, self._local_folder_fs, event_bus)
-        self._remote_loader = RemoteLoader(backend_cmds, encryption_manager, local_db)
+        self._local_folder_fs = LocalFolderFS(device, local_storage, event_bus)
+        self._local_file_fs = LocalFileFS(device, local_storage, self._local_folder_fs, event_bus)
+        self._remote_loader = RemoteLoader(backend_cmds, encryption_manager, local_storage)
         self._syncer = Syncer(
             device,
             backend_cmds,

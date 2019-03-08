@@ -10,15 +10,15 @@ from tests.common import freeze_time
 @pytest.mark.trio
 @pytest.mark.backend_not_populated
 async def test_lazy_root_manifest_generation(
-    running_backend, backend_data_binder, local_db_factory, fs_factory, coolorg, alice
+    running_backend, backend_data_binder, local_storage_factory, fs_factory, coolorg, alice
 ):
     with freeze_time("2000-01-01"):
         await backend_data_binder.bind_organization(
             coolorg, alice, initial_user_manifest_in_v0=True
         )
-    local_db = local_db_factory(alice, user_manifest_in_v0=True)
+    local_storage = local_storage_factory(alice, user_manifest_in_v0=True)
 
-    async with fs_factory(alice, local_db) as fs:
+    async with fs_factory(alice, local_storage) as fs:
         with freeze_time("2000-01-02"):
             stat = await fs.stat("/")
 
@@ -54,7 +54,7 @@ async def test_lazy_root_manifest_generation(
 @pytest.mark.trio
 @pytest.mark.backend_not_populated
 async def test_concurrent_devices_agreed_on_root_manifest(
-    running_backend, backend_data_binder, local_db_factory, fs_factory, coolorg, alice, alice2
+    running_backend, backend_data_binder, local_storage_factory, fs_factory, coolorg, alice, alice2
 ):
     with freeze_time("2000-01-01"):
         await backend_data_binder.bind_organization(
@@ -62,10 +62,12 @@ async def test_concurrent_devices_agreed_on_root_manifest(
         )
         await backend_data_binder.bind_device(alice2, initial_user_manifest_in_v0=True)
 
-    alice_local_db = local_db_factory(alice, user_manifest_in_v0=True)
-    alice2_local_db = local_db_factory(alice2, user_manifest_in_v0=True)
+    alice_local_storage = local_storage_factory(alice, user_manifest_in_v0=True)
+    alice2_local_storage = local_storage_factory(alice2, user_manifest_in_v0=True)
 
-    async with fs_factory(alice, alice_local_db) as fs1, fs_factory(alice2, alice2_local_db) as fs2:
+    async with fs_factory(alice, alice_local_storage) as fs1, fs_factory(
+        alice2, alice2_local_storage
+    ) as fs2:
 
         with freeze_time("2000-01-03"):
             await fs1.workspace_create("/from_1")
