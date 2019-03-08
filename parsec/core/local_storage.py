@@ -99,3 +99,29 @@ class LocalStorage:
             except LocalStorageMissingEntry:
                 pass
         self.manifest_cache.pop(access.id, None)
+
+    # Block interface
+
+    def get_block(self, access: BlockAccess) -> bytes:
+        try:
+            return self.persistent_storage.get_dirty_block(access)
+        except LocalStorageMissingEntry:
+            return self.persistent_storage.get_clean_block(access)
+
+    def set_dirty_block(self, access: BlockAccess, block: bytes) -> None:
+        return self.persistent_storage.set_dirty_block(access, block)
+
+    def set_clean_block(self, access: BlockAccess, block: bytes) -> None:
+        return self.persistent_storage.set_clean_block(access, block)
+
+    def clear_dirty_block(self, access: BlockAccess) -> None:
+        try:
+            self.persistent_storage.clear_dirty_block(access)
+        except LocalStorageMissingEntry:
+            logger.warning("Tried to remove a dirty block that doesn't exist anymore")
+
+    def clear_clean_block(self, access: BlockAccess) -> None:
+        try:
+            self.persistent_storage.clear_clean_block(access)
+        except LocalStorageMissingEntry:
+            pass

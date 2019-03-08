@@ -4,8 +4,6 @@ import attr
 from math import inf
 from typing import List, Optional
 
-from structlog import get_logger
-
 from parsec.event_bus import EventBus
 from parsec.core.types import FileDescriptor, Access, BlockAccess, LocalDevice, LocalFileManifest
 from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
@@ -17,9 +15,6 @@ from parsec.core.fs.buffer_ordering import (
     merge_buffers_with_limits,
 )
 from parsec.core.fs.local_folder_fs import LocalFolderFS
-
-
-logger = get_logger()
 
 
 def _shorten_data_repr(data: bytes) -> bytes:
@@ -93,10 +88,7 @@ class LocalFileFS:
         # TODO: handle fs.entry.moved events coming from sync
 
     def get_block(self, access: BlockAccess) -> bytes:
-        try:
-            return self.local_storage.get_dirty_block(access)
-        except LocalStorageMissingEntry:
-            return self.local_storage.get_clean_block(access)
+        return self.local_storage.get_block(access)
 
     def set_dirty_block(self, access: BlockAccess, block: bytes) -> None:
         return self.local_storage.set_dirty_block(access, block)
@@ -105,16 +97,10 @@ class LocalFileFS:
         return self.local_storage.set_clean_block(access, block)
 
     def clear_dirty_block(self, access: BlockAccess) -> None:
-        try:
-            self.local_storage.clear_dirty_block(access)
-        except LocalStorageMissingEntry:
-            logger.warning("Tried to remove a dirty block that doesn't exist anymore")
+        self.local_storage.clear_dirty_block(access)
 
     def clear_clean_block(self, access: BlockAccess) -> None:
-        try:
-            self.local_storage.clear_clean_block(access)
-        except LocalStorageMissingEntry:
-            pass
+        self.local_storage.clear_clean_block(access)
 
     def _get_cursor_from_fd(self, fd: FileDescriptor) -> FileCursor:
         try:
