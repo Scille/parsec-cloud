@@ -230,7 +230,7 @@ def test_manifest_not_available(mountpoint_service):
         await fs.workspace_create("/x")
         await fs.file_create("/x/foo.txt")
         foo_access = fs._local_folder_fs.get_access(FsPath("/x/foo.txt"))
-        fs._local_folder_fs.mark_outdated_manifest(foo_access)
+        fs._local_folder_fs.clear_manifest(foo_access)
         await mountpoint_manager.mount_all()
 
     mountpoint_service.start()
