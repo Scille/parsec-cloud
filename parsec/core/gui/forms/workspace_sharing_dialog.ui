@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>488</width>
-    <height>465</height>
+    <width>637</width>
+    <height>524</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -40,11 +40,37 @@ QLineEdit
 border: 1px solid rgb(46, 46, 46);
 padding-left: 10px;
 }
+
+QCheckBox::indicator
+{
+width: 15px;
+height: 15px;
+background-color: rgb(255, 255, 255);
+border: 2px solid rgb(46, 46,46);
+color: black;
+}
+
+QCheckBox::indicator:checked
+{
+image: url(:/icons/images/icons/checked.png)
+}
 </string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="spacing">
        <number>0</number>
+      </property>
+      <property name="leftMargin">
+       <number>15</number>
+      </property>
+      <property name="topMargin">
+       <number>15</number>
+      </property>
+      <property name="rightMargin">
+       <number>15</number>
+      </property>
+      <property name="bottomMargin">
+       <number>15</number>
       </property>
       <item>
        <widget class="QLineEdit" name="line_edit_share">
@@ -66,6 +92,70 @@ padding-left: 10px;
          <string>Share with</string>
         </property>
        </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <property name="leftMargin">
+         <number>20</number>
+        </property>
+        <property name="topMargin">
+         <number>10</number>
+        </property>
+        <property name="rightMargin">
+         <number>20</number>
+        </property>
+        <property name="bottomMargin">
+         <number>10</number>
+        </property>
+        <item>
+         <widget class="QCheckBox" name="checkbox_admin">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>User can administer</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkbox_read">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>User can read</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkbox_write">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>User can write</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -167,7 +257,7 @@ font-weight: bold;
           <number>0</number>
          </property>
          <property name="rightMargin">
-          <number>60</number>
+          <number>40</number>
          </property>
          <property name="bottomMargin">
           <number>0</number>
@@ -176,6 +266,36 @@ font-weight: bold;
           <widget class="QLabel" name="label_3">
            <property name="text">
             <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_4">
+           <property name="minimumSize">
+            <size>
+             <width>90</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>90</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="text">
+            <string>Admin</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -189,7 +309,7 @@ font-weight: bold;
            </property>
            <property name="maximumSize">
             <size>
-             <width>55</width>
+             <width>90</width>
              <height>16777215</height>
             </size>
            </property>
@@ -219,7 +339,7 @@ font-weight: bold;
            </property>
            <property name="maximumSize">
             <size>
-             <width>55</width>
+             <width>90</width>
              <height>16777215</height>
             </size>
            </property>
@@ -264,8 +384,8 @@ font-weight: bold;
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>470</width>
-           <height>288</height>
+           <width>607</width>
+           <height>243</height>
           </rect>
          </property>
          <property name="styleSheet">
@@ -276,6 +396,9 @@ border: 1px solid rgb(46, 46, 46);
 }</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
+          <property name="topMargin">
+           <number>9</number>
+          </property>
           <item>
            <spacer name="verticalSpacer">
             <property name="orientation">
@@ -292,6 +415,77 @@ border: 1px solid rgb(46, 46, 46);
          </layout>
         </widget>
        </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <property name="topMargin">
+         <number>10</number>
+        </property>
+        <property name="bottomMargin">
+         <number>10</number>
+        </property>
+        <item>
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="button_apply">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QPushButton#button_apply
+{
+background-color: rgb(45, 144, 209);
+border: 1px solid rgb(46, 46, 46);
+color: rgb(255, 255, 255);
+padding-left: 10px;
+padding-right: 10px;
+}
+
+QPushButton#button_apply:disabled
+{
+border: 1px solid rgb(46, 46, 46);
+background-color: rgb(112, 122, 153);
+color: rgb(255, 255, 255);
+}</string>
+          </property>
+          <property name="text">
+           <string>Apply</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../rc/resources.qrc">
+            <normaloff>:/icons/images/icons/checked_white.png</normaloff>:/icons/images/icons/checked_white.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>438</width>
+    <width>572</width>
     <height>35</height>
    </rect>
   </property>
@@ -51,7 +51,7 @@ image: url(:/icons/images/icons/checked.png)
     <number>5</number>
    </property>
    <property name="rightMargin">
-    <number>10</number>
+    <number>65</number>
    </property>
    <property name="bottomMargin">
     <number>5</number>
@@ -64,18 +64,56 @@ image: url(:/icons/images/icons/checked.png)
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="checkbox_read">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkbox_admin">
      <property name="minimumSize">
       <size>
-       <width>70</width>
+       <width>80</width>
        <height>20</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>70</width>
+       <width>80</width>
        <height>20</height>
       </size>
+     </property>
+     <property name="layoutDirection">
+      <enum>Qt::RightToLeft</enum>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkbox_read">
+     <property name="minimumSize">
+      <size>
+       <width>80</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>80</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="layoutDirection">
+      <enum>Qt::RightToLeft</enum>
      </property>
      <property name="text">
       <string/>
@@ -86,63 +124,26 @@ image: url(:/icons/images/icons/checked.png)
     <widget class="QCheckBox" name="checkbox_write">
      <property name="minimumSize">
       <size>
-       <width>70</width>
+       <width>80</width>
        <height>20</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>70</width>
+       <width>80</width>
        <height>20</height>
       </size>
+     </property>
+     <property name="layoutDirection">
+      <enum>Qt::RightToLeft</enum>
      </property>
      <property name="text">
       <string/>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QPushButton" name="button_remove">
-     <property name="minimumSize">
-      <size>
-       <width>20</width>
-       <height>20</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>20</width>
-       <height>20</height>
-      </size>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton#button_remove
-{
-border: 0;
-}</string>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="icon">
-      <iconset resource="../rc/resources.qrc">
-       <normaloff>:/icons/images/icons/menu_cancel.png</normaloff>:/icons/images/icons/menu_cancel.png</iconset>
-     </property>
-     <property name="iconSize">
-      <size>
-       <width>20</width>
-       <height>20</height>
-      </size>
-     </property>
-     <property name="flat">
-      <bool>true</bool>
      </property>
     </widget>
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../rc/resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

@@ -316,5 +316,4 @@ class DeviceLabel(QLabel):
         painter.setPen(pen)
         painter.drawEllipse(rect.right() - 53, 3, 50, 53)
         painter.drawLine(rect.right() - 44, 44, rect.right() - 12, 12)
-        painter.setPen(QColor(218, 53, 69))
         painter.end()
