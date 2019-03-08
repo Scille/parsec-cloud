@@ -37,11 +37,11 @@ class NewVersionDialog(QDialog, Ui_NewVersionDialog):
 
 
 def new_version_available():
-    if os.name != "nt":
-        return False
+    # if os.name != "nt":
+    #     return False
     r = requests.head(RELEASE_URL)
     s = urlsplit(r.headers["LOCATION"])
     version = s.path.split("/")[-1:][0].split("-")[:1][0]
     new_version = version.replace("v", "")
-    current_version = __version__.replace("v", "")
+    current_version = __version__.split("-")[0].replace("v", "")
     return StrictVersion(current_version) < StrictVersion(new_version)
