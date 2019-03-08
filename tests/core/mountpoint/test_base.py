@@ -4,7 +4,7 @@ import os
 
 import trio
 import pytest
-from pathlib import Path
+from pathlib import Path, PurePath
 from unittest.mock import patch
 
 from parsec.core.mountpoint import (
@@ -243,3 +243,28 @@ def test_manifest_not_available(mountpoint_service):
         assert str(exc.value).startswith("[WinError 1231] The network location cannot be reached.")
     else:
         assert exc.value.args == (100, "Network is down")
+
+
+@pytest.mark.trio
+@pytest.mark.mountpoint
+async def test_get_path_in_mountpoint(base_mountpoint, alice, alice_fs, event_bus):
+    # Populate a bit the fs first...
+    await alice_fs.workspace_create("/mounted_wksp")
+    await alice_fs.workspace_create("/not_mounted_wksp")
+    await alice_fs.file_create("/mounted_wksp/bar.txt")
+    await alice_fs.file_create("/not_mounted_wksp/foo.txt")
+
+    # Now we can start fuse
+    async with mountpoint_manager_factory(
+        alice_fs, event_bus, base_mountpoint
+    ) as mountpoint_manager:
+        await mountpoint_manager.mount_workspace("mounted_wksp")
+
+        bar_path = mountpoint_manager.get_path_in_mountpoint(FsPath("/mounted_wksp/bar.txt"))
+
+        assert isinstance(bar_path, PurePath)
+        assert str(bar_path) == f"{base_mountpoint.absolute()}/{alice.user_id}-mounted_wksp/bar.txt"
+        assert await trio.Path(bar_path).exists()
+
+        with pytest.raises(MountpointNotMounted):
+            mountpoint_manager.get_path_in_mountpoint(FsPath("/not_mounted_wksp/foo.txt"))
