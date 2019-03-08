@@ -32,7 +32,22 @@ class LocalStorageMissingEntry(LocalStorageError):
         self.access = access
 
 
-class LocalStorage:
+class PersistentStorage:
+    """Manage the access to the persistent storage.
+
+    That includes:
+    - the sqlite database for clean data (manifests and block metadata)
+    - the sqlite database for dirty data (user, manifests and block metadata)
+    - the clean block files
+    - the dirty block files
+
+    The only data that might be subject to garbage collection is the clean
+    blocks since they are large and non-sensitive.
+
+    The data is always bytes, this class doesn't have knowledge about object
+    types nor serialization processes.
+    """
+
     def __init__(self, path: Path, max_cache_size: int = DEFAULT_MAX_CACHE_SIZE):
         self.dirty_conn = None
         self.clean_conn = None
