@@ -5,7 +5,7 @@ import trio
 import warnings
 import logging
 from functools import partial
-from pathlib import Path
+from pathlib import PurePath
 
 from async_generator import asynccontextmanager
 
@@ -56,21 +56,21 @@ async def disabled_runner(*args, **kwargs):
 
 
 class MountpointManager:
-    def __init__(self, base_mountpoint: Path, fs, runner, nursery):
+    def __init__(self, base_mountpoint: PurePath, fs, runner, nursery):
         self._base_mountpoint = base_mountpoint
         self._fs = fs
         self._runner = runner
         self._nursery = nursery
         self._mountpoint_tasks = {}
 
-    def get_path_in_mountpoint(self, path: FsPath) -> Path:
+    def get_path_in_mountpoint(self, path: FsPath) -> PurePath:
         workspace = path.workspace
-        sub_path = path.relative_to(workspace)
+        sub_path = path.relative_to(f"/{workspace}")
         if workspace not in self._mountpoint_tasks:
             raise MountpointNotMounted(f"Workspace `{workspace}` is not mounted")
         return self._get_mountpoint_path(workspace) / sub_path
 
-    def _get_mountpoint_path(self, workspace: str) -> Path:
+    def _get_mountpoint_path(self, workspace: str) -> PurePath:
         return self._base_mountpoint / f"{self._fs.device.user_id}-{workspace}"
 
     async def mount_workspace(self, workspace: str):
