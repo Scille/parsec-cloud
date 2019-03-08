@@ -18,7 +18,7 @@ from parsec.core.types import (
     LocalWorkspaceManifest,
     LocalUserManifest,
 )
-from parsec.core.local_db import LocalDB, LocalDBMissingEntry
+from parsec.core.local_storage import LocalStorage, LocalStorageMissingEntry
 from parsec.core.fs.utils import (
     is_file_manifest,
     is_folder_manifest,
@@ -45,10 +45,10 @@ class FSMultiManifestLocalMiss(Exception):
 
 
 class LocalFolderFS:
-    def __init__(self, device: LocalDevice, local_db: LocalDB, event_bus: EventBus):
+    def __init__(self, device: LocalDevice, local_storage: LocalStorage, event_bus: EventBus):
         self.local_author = device.device_id
         self.root_access = device.user_manifest_access
-        self._local_db = local_db
+        self._local_storage = local_storage
         self.event_bus = event_bus
         self._manifests_cache = {}
         self._hot_files = {}
@@ -95,13 +95,13 @@ class LocalFolderFS:
 
         return _recursive_dump(self.root_access)
 
-    def _get_raw_manifest_from_local_db(self, access: Access) -> LocalManifest:
+    def _get_raw_manifest_from_local_storage(self, access: Access) -> LocalManifest:
         # Try local manifest first, although it should not matter
         try:
-            return self._local_db.get_dirty_manifest(access)
+            return self._local_storage.get_dirty_manifest(access)
         # Then remote manifest
-        except LocalDBMissingEntry:
-            return self._local_db.get_clean_manifest(access)
+        except LocalStorageMissingEntry:
+            return self._local_storage.get_clean_manifest(access)
 
     def _get_manifest_read_only(self, access: Access) -> LocalManifest:
         try:
@@ -109,8 +109,8 @@ class LocalFolderFS:
         except KeyError:
             pass
         try:
-            raw = self._get_raw_manifest_from_local_db(access)
-        except LocalDBMissingEntry as exc:
+            raw = self._get_raw_manifest_from_local_storage(access)
+        except LocalStorageMissingEntry as exc:
             # Last chance: if we are looking for the user manifest, we can
             # fake to know it version 0, which is useful during boostrap step
             if access == self.root_access:
@@ -147,30 +147,30 @@ class LocalFolderFS:
         # Remove the corresponding local manifest if it exists
         if force:
             try:
-                self._local_db.clear_dirty_manifest(access)
-            except LocalDBMissingEntry:
+                self._local_storage.clear_dirty_manifest(access)
+            except LocalStorageMissingEntry:
                 pass
         # Serialize and set remote manifest
         raw = local_manifest_serializer.dumps(manifest)
-        self._local_db.set_clean_manifest(access, raw)
+        self._local_storage.set_clean_manifest(access, raw)
         self._manifests_cache[access.id] = manifest
 
     def set_dirty_manifest(self, access: Access, manifest: LocalManifest):
         try:
-            self._local_db.clear_clean_manifest(access)
-        except LocalDBMissingEntry:
+            self._local_storage.clear_clean_manifest(access)
+        except LocalStorageMissingEntry:
             pass
         raw = local_manifest_serializer.dumps(manifest)
-        self._local_db.set_dirty_manifest(access, raw)
+        self._local_storage.set_dirty_manifest(access, raw)
         self._manifests_cache[access.id] = manifest
 
     def mark_outdated_manifest(self, access: Access):
         try:
-            self._local_db.clear_clean_manifest(access)
-        except LocalDBMissingEntry:
+            self._local_storage.clear_clean_manifest(access)
+        except LocalStorageMissingEntry:
             try:
-                self._local_db.clear_dirty_manifest(access)
-            except LocalDBMissingEntry:
+                self._local_storage.clear_dirty_manifest(access)
+            except LocalStorageMissingEntry:
                 pass
         self._manifests_cache.pop(access.id, None)
 

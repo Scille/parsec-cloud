@@ -12,10 +12,10 @@ from parsec.core.types import (
 
 
 class RemoteLoader:
-    def __init__(self, backend_cmds, encryption_manager, local_db):
+    def __init__(self, backend_cmds, encryption_manager, local_storage):
         self.backend_cmds = backend_cmds
         self.encryption_manager = encryption_manager
-        self.local_db = local_db
+        self.local_storage = local_storage
 
     async def load_block(self, access: BlockAccess) -> None:
         """
@@ -32,7 +32,7 @@ class RemoteLoader:
         block = decrypt_raw_with_secret_key(access.key, ciphered_block)
         assert sha256(block).hexdigest() == access.digest, access
 
-        self.local_db.set_clean_block(access, block)
+        self.local_storage.set_clean_block(access, block)
 
     async def load_manifest(self, access: ManifestAccess) -> None:
         _, blob = await self.backend_cmds.vlob_read(access.id)
@@ -44,4 +44,4 @@ class RemoteLoader:
         local_manifest = remote_manifest.to_local()
         raw_local_manifest = local_manifest_serializer.dumps(local_manifest)
 
-        self.local_db.set_clean_manifest(access, raw_local_manifest)
+        self.local_storage.set_clean_manifest(access, raw_local_manifest)

@@ -20,7 +20,7 @@ from parsec.core.vlob_groups_monitor import monitor_vlob_groups
 from parsec.core.messages_monitor import monitor_messages
 from parsec.core.sync_monitor import monitor_sync
 from parsec.core.fs import FS
-from parsec.core.local_db import LocalDB
+from parsec.core.local_storage import LocalStorage
 
 
 logger = get_logger()
@@ -30,7 +30,7 @@ logger = get_logger()
 class LoggedCore:
     config = attr.ib()
     device = attr.ib()
-    local_db = attr.ib()
+    local_storage = attr.ib()
     event_bus = attr.ib()
     encryption_manager = attr.ib()
     mountpoint_manager = attr.ib()
@@ -59,10 +59,10 @@ async def logged_core_factory(
             config.backend_max_connections,
         ) as backend_cmds_pool:
 
-            with LocalDB(config.data_base_dir / device.device_id) as local_db:
+            with LocalStorage(config.data_base_dir / device.device_id) as local_storage:
 
-                encryption_manager = EncryptionManager(device, local_db, backend_cmds_pool)
-                fs = FS(device, local_db, backend_cmds_pool, encryption_manager, event_bus)
+                encryption_manager = EncryptionManager(device, local_storage, backend_cmds_pool)
+                fs = FS(device, local_storage, backend_cmds_pool, encryption_manager, event_bus)
 
                 async with trio.open_nursery() as monitor_nursery:
                     # Finally start monitors
@@ -83,7 +83,7 @@ async def logged_core_factory(
                         yield LoggedCore(
                             config=config,
                             device=device,
-                            local_db=local_db,
+                            local_storage=local_storage,
                             event_bus=event_bus,
                             encryption_manager=encryption_manager,
                             mountpoint_manager=mountpoint_manager,

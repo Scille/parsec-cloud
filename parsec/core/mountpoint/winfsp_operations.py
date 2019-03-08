@@ -275,7 +275,7 @@ class WinFSPOperations(BaseFileSystemOperations):
         with translate_error():
             if write_to_end_of_file:
                 offset = -1
-            # LocalDB.set only wants bytes or bytearray...
+            # LocalStorage.set only wants bytes or bytearray...
             buffer = bytes(buffer)
             ret = self.fs_access.file_fd_write(file_context.fd, buffer, offset)
             return ret

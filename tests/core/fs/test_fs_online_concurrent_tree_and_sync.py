@@ -48,7 +48,7 @@ def test_fs_online_concurrent_tree_and_sync(
     backend_factory,
     server_factory,
     oracle_fs_with_sync_factory,
-    local_db_factory,
+    local_storage_factory,
     fs_factory,
     alice,
     alice2,
@@ -58,9 +58,9 @@ def test_fs_online_concurrent_tree_and_sync(
         Folders = Bundle("folder")
         FSs = Bundle("fs")
 
-        async def start_fs(self, device, local_db):
+        async def start_fs(self, device, local_storage):
             async def _fs_controlled_cb(started_cb):
-                async with fs_factory(device=device, local_db=local_db) as fs:
+                async with fs_factory(device=device, local_storage=local_storage) as fs:
                     await started_cb(fs=fs)
 
             return await self.get_root_nursery().start(call_with_control, _fs_controlled_cb)
@@ -86,12 +86,12 @@ def test_fs_online_concurrent_tree_and_sync(
             self.oracle_fs = oracle_fs_with_sync_factory()
             self.device1 = alice
             self.device2 = alice2
-            self.local_db1 = local_db_factory(self.device1)
-            self.local_db2 = local_db_factory(self.device2)
+            self.local_storage1 = local_storage_factory(self.device1)
+            self.local_storage2 = local_storage_factory(self.device2)
 
             self.backend_controller = await self.start_backend([self.device1, self.device2])
-            self.fs1_controller = await self.start_fs(self.device1, self.local_db1)
-            self.fs2_controller = await self.start_fs(self.device2, self.local_db2)
+            self.fs1_controller = await self.start_fs(self.device1, self.local_storage1)
+            self.fs2_controller = await self.start_fs(self.device2, self.local_storage2)
 
             return "/"
 

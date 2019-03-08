@@ -27,7 +27,7 @@ def test_fs_online_tree_and_sync(
     backend_factory,
     server_factory,
     oracle_fs_with_sync_factory,
-    local_db_factory,
+    local_storage_factory,
     fs_factory,
     alice,
 ):
@@ -35,14 +35,14 @@ def test_fs_online_tree_and_sync(
         Files = Bundle("file")
         Folders = Bundle("folder")
 
-        async def restart_fs(self, device, local_db):
+        async def restart_fs(self, device, local_storage):
             try:
                 await self.fs_controller.stop()
             except AttributeError:
                 pass
 
             async def _fs_controlled_cb(started_cb):
-                async with fs_factory(device=device, local_db=local_db) as fs:
+                async with fs_factory(device=device, local_storage=local_storage) as fs:
                     await started_cb(fs=fs)
 
             self.fs_controller = await self.get_root_nursery().start(
@@ -71,23 +71,23 @@ def test_fs_online_tree_and_sync(
         async def init(self):
             self.oracle_fs = oracle_fs_with_sync_factory()
             self.device = alice
-            self.local_db = local_db_factory(self.device)
+            self.local_storage = local_storage_factory(self.device)
 
             await self.start_backend()
-            await self.restart_fs(self.device, self.local_db)
+            await self.restart_fs(self.device, self.local_storage)
             await self.fs.sync("/")
 
             return "/"
 
         @rule()
         async def restart(self):
-            await self.restart_fs(self.device, self.local_db)
+            await self.restart_fs(self.device, self.local_storage)
 
         @rule()
         async def reset(self):
             # TODO: would be cleaner to recreate a new device...
-            self.local_db = local_db_factory(self.device, force=True)
-            await self.restart_fs(self.device, self.local_db)
+            self.local_storage = local_storage_factory(self.device, force=True)
+            await self.restart_fs(self.device, self.local_storage)
             await self.fs.sync("/")
             self.oracle_fs.reset()
 
