@@ -4,7 +4,6 @@ import pytest
 import trio
 from async_generator import asynccontextmanager
 
-from parsec.core.types import local_manifest_serializer
 from parsec.core.backend_connection import backend_cmds_factory
 from parsec.core.encryption_manager import EncryptionManager
 from parsec.core.fs import FS
@@ -24,9 +23,7 @@ def local_storage_factory(initial_user_manifest_state):
         local_storages[device_id] = local_storage
         if not user_manifest_in_v0:
             user_manifest = initial_user_manifest_state.get_user_manifest_v1_for_device(device)
-            local_storage.set_dirty_manifest(
-                device.user_manifest_access, local_manifest_serializer.dumps(user_manifest)
-            )
+            local_storage.set_dirty_manifest(device.user_manifest_access, user_manifest)
         return local_storage
 
     return _local_storage_factory

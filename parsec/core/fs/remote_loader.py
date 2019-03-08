@@ -3,12 +3,7 @@
 from hashlib import sha256
 
 from parsec.crypto import decrypt_raw_with_secret_key
-from parsec.core.types import (
-    BlockAccess,
-    ManifestAccess,
-    remote_manifest_serializer,
-    local_manifest_serializer,
-)
+from parsec.core.types import BlockAccess, ManifestAccess, remote_manifest_serializer
 
 
 class RemoteLoader:
@@ -42,6 +37,5 @@ class RemoteLoader:
         # TODO: handle and/or document exceptions
         remote_manifest = remote_manifest_serializer.loads(raw_remote_manifest)
         local_manifest = remote_manifest.to_local()
-        raw_local_manifest = local_manifest_serializer.dumps(local_manifest)
 
-        self.local_storage.set_clean_manifest(access, raw_local_manifest)
+        self.local_storage.set_clean_manifest(access, local_manifest)

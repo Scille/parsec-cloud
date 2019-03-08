@@ -52,3 +52,50 @@ class LocalStorage:
         access = self._build_remote_user_local_access(user_id)
         raw = remote_user_serializer.dumps(user)
         self.persistent_storage.set_user(access, raw)
+
+    # Manifest interface
+
+    def get_manifest(self, access: Access) -> LocalManifest:
+        try:
+            return self.manifest_cache[access.id]
+        except KeyError:
+            pass
+        # Try local manifest first, although it should not matter
+        try:
+            raw = self.persistent_storage.get_dirty_manifest(access)
+        except LocalStorageMissingEntry:
+            raw = self.persistent_storage.get_clean_manifest(access)
+        manifest = local_manifest_serializer.loads(raw)
+        self.manifest_cache[access.id] = manifest
+        return manifest
+
+    def set_clean_manifest(self, access: Access, manifest: LocalManifest, force=False):
+        # Remove the corresponding local manifest if it exists
+        if force:
+            try:
+                self.persistent_storage.clear_dirty_manifest(access)
+            except LocalStorageMissingEntry:
+                pass
+        # Serialize and set remote manifest
+        raw = local_manifest_serializer.dumps(manifest)
+        self.persistent_storage.set_clean_manifest(access, raw)
+        self.manifest_cache[access.id] = manifest
+
+    def set_dirty_manifest(self, access: Access, manifest: LocalManifest):
+        try:
+            self.persistent_storage.clear_clean_manifest(access)
+        except LocalStorageMissingEntry:
+            pass
+        raw = local_manifest_serializer.dumps(manifest)
+        self.persistent_storage.set_dirty_manifest(access, raw)
+        self.manifest_cache[access.id] = manifest
+
+    def clear_manifest(self, access: Access):
+        try:
+            self.persistent_storage.clear_clean_manifest(access)
+        except LocalStorageMissingEntry:
+            try:
+                self.persistent_storage.clear_dirty_manifest(access)
+            except LocalStorageMissingEntry:
+                pass
+        self.manifest_cache.pop(access.id, None)
