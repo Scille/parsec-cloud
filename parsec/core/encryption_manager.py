@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-import hashlib
 from typing import Tuple
 
 from parsec.trustchain import validate_user_with_trustchain
@@ -14,8 +13,8 @@ from parsec.crypto import (
     decrypt_with_secret_key,
 )
 from parsec.core.base import BaseAsyncComponent
+from parsec.core.types import RemoteDevice, RemoteUser
 from parsec.core.local_storage import LocalStorageMissingEntry
-from parsec.core.types import RemoteDevice, RemoteUser, ManifestAccess, remote_user_serializer
 from parsec.core.backend_connection import BackendCmdsBadResponse
 
 
@@ -53,6 +52,8 @@ class EncryptionManager(BaseAsyncComponent):
         self.device = device
         self.backend_cmds = backend_cmds
         self.local_storage = local_storage
+        # TODO: clean this up
+        self.local_storage.local_symkey = self.device.local_symkey
         self._mem_cache = {}
 
     async def _init(self, nursery):
@@ -72,37 +73,21 @@ class EncryptionManager(BaseAsyncComponent):
                 raise
 
         validate_user_with_trustchain(user, trustchain, self.device.root_verify_key)
-
-        raw = remote_user_serializer.dumps(user)
-        self.local_storage.set_user(self._build_remote_user_local_access(user_id), raw)
-
-    def _build_remote_user_local_access(self, user_id: UserID) -> ManifestAccess:
-        return ManifestAccess(
-            id=hashlib.sha256(user_id.encode("utf8")).hexdigest(), key=self.device.local_symkey
-        )
+        self.local_storage.set_user(user_id, user)
 
     def _fetch_remote_user_from_local(self, user_id: UserID):
         try:
-            raw_user_data = self.local_storage.get_user(
-                self._build_remote_user_local_access(user_id)
-            )
-            return remote_user_serializer.loads(raw_user_data)
-
+            return self.local_storage.get_user(user_id)
         except LocalStorageMissingEntry:
             return None
 
     def _fetch_remote_device_from_local(self, device_id: DeviceID):
+        user_data = self._fetch_remote_user_from_local(device_id.user_id)
+        if user_data is None:
+            return None
         try:
-            raw_user_data = self.local_storage.get_user(
-                self._build_remote_user_local_access(device_id.user_id)
-            )
-            user_data = remote_user_serializer.loads(raw_user_data)
-            try:
-                return user_data.devices[device_id.device_name]
-            except KeyError:
-                return None
-
-        except LocalStorageMissingEntry:
+            return user_data.devices[device_id.device_name]
+        except KeyError:
             return None
 
     async def fetch_remote_device(self, device_id: DeviceID) -> RemoteDevice:
