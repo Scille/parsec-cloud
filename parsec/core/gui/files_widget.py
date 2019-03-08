@@ -8,6 +8,7 @@ from uuid import UUID
 from PyQt5.QtCore import Qt, QCoreApplication, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QMenu, QFileDialog, QApplication, QDialog
 
+from parsec.core.types import FsPath
 from parsec.core.gui import desktop
 from parsec.core.gui.file_items import FileType
 from parsec.core.gui.custom_widgets import show_error, ask_question, get_text, TaskbarButton
@@ -410,11 +411,8 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
     # slot
     def open_file(self, file_name):
         def _inner_open_file():
-            desktop.open_file(
-                os.path.join(
-                    self.core.mountpoint, self.workspace, self.current_directory, file_name
-                )
-            )
+            path = FsPath("/") / self.workspace / self.current_directory / file_name
+            desktop.open_file(str(self.core.mountpoint_manager.get_path_in_mountpoint(path)))
 
         return _inner_open_file
 
@@ -429,14 +427,7 @@ class FilesWidget(CoreWidget, Ui_FilesWidget):
             elif file_type == FileType.ParentWorkspace:
                 self.back_clicked.emit()
             elif file_type == FileType.File:
-                desktop.open_file(
-                    os.path.join(
-                        self.core.mountpoint,
-                        self.workspace,
-                        self.current_directory,
-                        name_item.text(),
-                    )
-                )
+                self.open_file(name_item.text())()
             elif file_type == FileType.Folder:
                 self.load(os.path.join(os.path.join(self.current_directory, name_item.text())))
         except AttributeError:
