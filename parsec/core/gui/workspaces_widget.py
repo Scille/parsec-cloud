@@ -7,6 +7,7 @@ import pathlib
 from PyQt5.QtCore import QCoreApplication, pyqtSignal
 
 from parsec.core.fs import FSEntryNotFound
+from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted
 
 from parsec.core.gui.custom_widgets import (
     show_error,
@@ -64,6 +65,10 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         button.details_clicked.connect(self.show_workspace_details)
         button.delete_clicked.connect(self.delete_workspace)
         button.rename_clicked.connect(self.rename_workspace)
+        try:
+            self.portal.run(self.core.mountpoint_manager.mount_workspace, workspace_name)
+        except MountpointAlreadyMounted:
+            pass
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons
