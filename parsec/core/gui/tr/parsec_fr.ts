@@ -552,17 +552,17 @@ L&apos;appareil a été révoqué.</translation>
         <translation type="obsolete">Nouveau répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="337"/>
+        <location filename="../files_widget.py" line="338"/>
         <source>Enter new folder name</source>
         <translation>Entrez le nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="288"/>
+        <location filename="../files_widget.py" line="289"/>
         <source>A folder with the same name already exists.</source>
         <translation>Un répertoire avec le même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="372"/>
+        <location filename="../files_widget.py" line="373"/>
         <source>Open</source>
         <translation>Ouvrir</translation>
     </message>
@@ -572,12 +572,12 @@ L&apos;appareil a été révoqué.</translation>
         <translation type="obsolete">Ouvrir dans l&apos;explorateur de fichiers</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="378"/>
+        <location filename="../files_widget.py" line="379"/>
         <source>Delete</source>
         <translation>Supprimer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="301"/>
+        <location filename="../files_widget.py" line="302"/>
         <source>Confirmation</source>
         <translation>Confirmation</translation>
     </message>
@@ -667,37 +667,37 @@ L&apos;appareil a été révoqué.</translation>
         <translation>Taille</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="337"/>
+        <location filename="../files_widget.py" line="338"/>
         <source>Folder name</source>
         <translation>Nom du répertoire</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="376"/>
+        <location filename="../files_widget.py" line="377"/>
         <source>Rename</source>
         <translation>Renommer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="374"/>
+        <location filename="../files_widget.py" line="375"/>
         <source>Open in explorer</source>
         <translation>Ouvrir dans l&apos;explorateur</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="385"/>
+        <location filename="../files_widget.py" line="386"/>
         <source>New name</source>
         <translation>Nouveau nom</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="385"/>
+        <location filename="../files_widget.py" line="386"/>
         <source>Enter file new name</source>
         <translation>Entrez le nouveau nom du fichier</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="408"/>
+        <location filename="../files_widget.py" line="409"/>
         <source>Can not rename.</source>
         <translation>Impossible de renommer.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="301"/>
+        <location filename="../files_widget.py" line="302"/>
         <source>Are you sure you want to delete &quot;{}&quot; ?</source>
         <translation>Êtes-vous sûr de vouloir supprimer &quot;{}&quot; ?</translation>
     </message>
@@ -722,12 +722,12 @@ L&apos;appareil a été révoqué.</translation>
         <translation type="obsolete">Le dossier n&apos;a pas pu être importé.</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="243"/>
+        <location filename="../files_widget.py" line="244"/>
         <source>Select files to import</source>
         <translation>Choisir les fichiers à importer</translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="255"/>
+        <location filename="../files_widget.py" line="256"/>
         <source>Select a directory to import</source>
         <translation>Choisir le répertoire à importer</translation>
     </message>
@@ -776,6 +776,14 @@ L&apos;appareil a été révoqué.</translation>
     </message>
 </context>
 <context>
+    <name>GlobalSettings</name>
+    <message>
+        <location filename="../global_settings_widget.py" line="33"/>
+        <source>You have the most recent version of Parsec.</source>
+        <translation>Votre version de Parsec est à jour.</translation>
+    </message>
+</context>
+<context>
     <name>GlobalSettingsWidget</name>
     <message>
         <location filename="../forms/global_settings_widget.ui" line="14"/>
@@ -818,7 +826,7 @@ L&apos;appareil a été révoqué.</translation>
         <translation>Langue</translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="401"/>
+        <location filename="../forms/global_settings_widget.ui" line="538"/>
         <source>Save</source>
         <translation>Sauvegarder</translation>
     </message>
@@ -831,6 +839,21 @@ L&apos;appareil a été révoqué.</translation>
         <location filename="../global_settings_widget.py" line="79"/>
         <source>The choosen folder is not writable.</source>
         <translation type="obsolete">Le répertoire choisi n&apos;est pas accessible en écriture.</translation>
+    </message>
+    <message>
+        <location filename="../forms/global_settings_widget.ui" line="385"/>
+        <source>Version</source>
+        <translation>Version</translation>
+    </message>
+    <message>
+        <location filename="../forms/global_settings_widget.ui" line="401"/>
+        <source>Check for new version at startup</source>
+        <translation>Vérifier au lancement si une nouvelle version est disponible</translation>
+    </message>
+    <message>
+        <location filename="../forms/global_settings_widget.ui" line="440"/>
+        <source>Check for new version now</source>
+        <translation>Vérifier les mises à jour</translation>
     </message>
 </context>
 <context>
@@ -1199,7 +1222,7 @@ L&apos;appareil a été révoqué.</translation>
         <translation type="obsolete">   Se déconnecter</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="224"/>
+        <location filename="../main_window.py" line="236"/>
         <source>Authentication failed.</source>
         <translation>Impossible de se connecter.</translation>
     </message>
@@ -1249,7 +1272,7 @@ L&apos;appareil a été révoqué.</translation>
         <translation type="obsolete">Impossible de créer le nouvel appareil.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="246"/>
+        <location filename="../main_window.py" line="258"/>
         <source>Are you sure you want to quit ?</source>
         <translation>Êtes-vous sûr de vouloir quitter ?</translation>
     </message>
@@ -1284,7 +1307,7 @@ L&apos;appareil a été révoqué.</translation>
         <translation type="obsolete">Déconnecté</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="263"/>
+        <location filename="../main_window.py" line="275"/>
         <source>Parsec is still running.</source>
         <translation>Parsec est toujours ouvert.</translation>
     </message>
@@ -1294,27 +1317,27 @@ L&apos;appareil a été révoqué.</translation>
         <translation type="obsolete">Connecté</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="156"/>
+        <location filename="../main_window.py" line="168"/>
         <source>The mounpoint has been unmounted, you will now be logged off.</source>
         <translation>Le point de montage a été démonté, vous allez être déconnecté.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="226"/>
+        <location filename="../main_window.py" line="238"/>
         <source>User not registered in the backend.</source>
         <translation>L&apos;utilisateur n&apos;est pas enregistré sur le backend.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="231"/>
+        <location filename="../main_window.py" line="243"/>
         <source>Mountpoint already in use.</source>
         <translation>Le point de montage est déjà utilisé.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="197"/>
+        <location filename="../main_window.py" line="209"/>
         <source>This device has been revoked.</source>
         <translation>Cet appareil a été révoqué.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="211"/>
+        <location filename="../main_window.py" line="223"/>
         <source>Can not login ({})</source>
         <translation>Impossible de se connecter ({})</translation>
     </message>
@@ -1500,6 +1523,34 @@ L&apos;appareil a été révoqué.</translation>
     </message>
 </context>
 <context>
+    <name>NewVersionDialog</name>
+    <message>
+        <location filename="../forms/new_version_dialog.ui" line="14"/>
+        <source>Dialog</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../forms/new_version_dialog.ui" line="91"/>
+        <source>A new version of Parsec is available !</source>
+        <translation>Une nouvelle version de Parsec est disponible!</translation>
+    </message>
+    <message>
+        <location filename="../forms/new_version_dialog.ui" line="147"/>
+        <source>Download</source>
+        <translation>Télécharger</translation>
+    </message>
+    <message>
+        <location filename="../forms/new_version_dialog.ui" line="212"/>
+        <source>Don&apos;t remind me in the future</source>
+        <translation>Ne pas me le rappeler</translation>
+    </message>
+    <message>
+        <location filename="../forms/new_version_dialog.ui" line="250"/>
+        <source>Ignore</source>
+        <translation>Ignorer</translation>
+    </message>
+</context>
+<context>
     <name>NotificationCenterWidget</name>
     <message>
         <location filename="../forms/notification_center_widget.ui" line="32"/>
@@ -1577,17 +1628,17 @@ L&apos;appareil a été révoqué.</translation>
 <context>
     <name>QuestionDialog</name>
     <message>
-        <location filename="../forms/question_dialog.ui" line="14"/>
+        <location filename="../forms/question_dialog.ui" line="20"/>
         <source>Dialog</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/question_dialog.ui" line="256"/>
+        <location filename="../forms/question_dialog.ui" line="262"/>
         <source>No</source>
         <translation>Non</translation>
     </message>
     <message>
-        <location filename="../forms/question_dialog.ui" line="296"/>
+        <location filename="../forms/question_dialog.ui" line="302"/>
         <source>Yes</source>
         <translation>Oui</translation>
     </message>
@@ -2356,6 +2407,34 @@ Cet utilisateur a été révoqué.</translation>
     </message>
 </context>
 <context>
+    <name>WorkspaceSharing</name>
+    <message>
+        <location filename="../workspace_sharing_dialog.py" line="100"/>
+        <source>You can not share a workspace with yourself.</source>
+        <translation>Vous ne pouvez pas partager un espace de travail avec vous-même.</translation>
+    </message>
+    <message>
+        <location filename="../workspace_sharing_dialog.py" line="110"/>
+        <source>This workspace is already shared with &quot;{}&quot;.</source>
+        <translation>Cet espace de travail est déjà partagé avec &quot;{}&quot;.</translation>
+    </message>
+    <message>
+        <location filename="../workspace_sharing_dialog.py" line="131"/>
+        <source>Can not share the workspace &quot;{}&quot; with this user.</source>
+        <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec cet utilisateur.</translation>
+    </message>
+    <message>
+        <location filename="../workspace_sharing_dialog.py" line="141"/>
+        <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
+        <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec &quot;{}&quot;.</translation>
+    </message>
+    <message>
+        <location filename="../workspace_sharing_dialog.py" line="208"/>
+        <source>Are you sure?</source>
+        <translation>Êtes-vous sûr?</translation>
+    </message>
+</context>
+<context>
     <name>WorkspaceSharingDialog</name>
     <message>
         <location filename="../forms/workspace_sharing_dialog.ui" line="14"/>
@@ -2363,29 +2442,54 @@ Cet utilisateur a été révoqué.</translation>
         <translation>Gérer le partage de l&apos;espace de travail</translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="66"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="92"/>
         <source>Share with</source>
         <translation>Partager avec</translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="125"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="215"/>
         <source>Share</source>
         <translation>Partager</translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="205"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="325"/>
         <source>Read</source>
         <translation>Lecture</translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="235"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="355"/>
         <source>Write</source>
         <translation>Écriture</translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="348"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="542"/>
         <source>Close</source>
         <translation>Fermer</translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="118"/>
+        <source>User can administer</source>
+        <translation>Administrateur</translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="133"/>
+        <source>User can read</source>
+        <translation>Droits de lecture</translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="151"/>
+        <source>User can write</source>
+        <translation>Droits d&apos;écriture</translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="295"/>
+        <source>Admin</source>
+        <translation>Admin</translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="474"/>
+        <source>Apply</source>
+        <translation>Appliquer</translation>
     </message>
 </context>
 <context>
@@ -2453,12 +2557,12 @@ Cet utilisateur a été révoqué.</translation>
     <message>
         <location filename="../workspace_sharing_dialog.py" line="95"/>
         <source>Can not share the workspace &quot;{}&quot; with this user.</source>
-        <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec cet utilisateur.</translation>
+        <translation type="obsolete">Impossible de partager l&apos;espace de travail &quot;{}&quot; avec cet utilisateur.</translation>
     </message>
     <message>
         <location filename="../workspace_sharing_dialog.py" line="105"/>
         <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
-        <translation>Impossible de partager l&apos;espace de travail &quot;{}&quot; avec &quot;{}&quot;.</translation>
+        <translation type="obsolete">Impossible de partager l&apos;espace de travail &quot;{}&quot; avec &quot;{}&quot;.</translation>
     </message>
     <message>
         <location filename="../workspaces_widget.py" line="121"/>
@@ -2529,7 +2633,7 @@ Crée par {}.
     <message>
         <location filename="../workspace_sharing_dialog.py" line="83"/>
         <source>This workspace is already shared with &quot;{}&quot;.</source>
-        <translation>Cet espace de travail est déjà partagé avec &quot;{}&quot;.</translation>
+        <translation type="obsolete">Cet espace de travail est déjà partagé avec &quot;{}&quot;.</translation>
     </message>
 </context>
 </TS>

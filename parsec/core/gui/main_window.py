@@ -55,7 +55,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.widget_center.layout().addWidget(self.central_widget)
 
         self.add_tray_icon()
-        self.setWindowTitle("Parsec - Community Edition - {}".format(PARSEC_VERSION))
+        self.setWindowTitle(
+            QCoreApplication.translate(
+                "MainWindow",
+                "Parsec - Community Edition - {} - Sovereign enclave "
+                "for sharing sensitive data on the cloud".format(PARSEC_VERSION)
+            )
+        )
         self.tray_message_shown = False
 
         self.central_widget.logout_requested.connect(self.logout)

@@ -494,72 +494,72 @@ This device has been revoked.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="243"/>
+        <location filename="../files_widget.py" line="244"/>
         <source>Select files to import</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="255"/>
+        <location filename="../files_widget.py" line="256"/>
         <source>Select a directory to import</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="288"/>
+        <location filename="../files_widget.py" line="289"/>
         <source>A folder with the same name already exists.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="301"/>
+        <location filename="../files_widget.py" line="302"/>
         <source>Confirmation</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="301"/>
+        <location filename="../files_widget.py" line="302"/>
         <source>Are you sure you want to delete &quot;{}&quot; ?</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="337"/>
+        <location filename="../files_widget.py" line="338"/>
         <source>Folder name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="337"/>
+        <location filename="../files_widget.py" line="338"/>
         <source>Enter new folder name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="372"/>
+        <location filename="../files_widget.py" line="373"/>
         <source>Open</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="374"/>
+        <location filename="../files_widget.py" line="375"/>
         <source>Open in explorer</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="376"/>
+        <location filename="../files_widget.py" line="377"/>
         <source>Rename</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="385"/>
+        <location filename="../files_widget.py" line="386"/>
         <source>New name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="385"/>
+        <location filename="../files_widget.py" line="386"/>
         <source>Enter file new name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="408"/>
+        <location filename="../files_widget.py" line="409"/>
         <source>Can not rename.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../files_widget.py" line="378"/>
+        <location filename="../files_widget.py" line="379"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
@@ -579,6 +579,14 @@ This device has been revoked.</source>
     <message>
         <location filename="../custom_widgets.py" line="70"/>
         <source>User name</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GlobalSettings</name>
+    <message>
+        <location filename="../global_settings_widget.py" line="33"/>
+        <source>You have the most recent version of Parsec.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -610,8 +618,23 @@ This device has been revoked.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/global_settings_widget.ui" line="401"/>
+        <location filename="../forms/global_settings_widget.ui" line="538"/>
         <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/global_settings_widget.ui" line="385"/>
+        <source>Version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/global_settings_widget.ui" line="401"/>
+        <source>Check for new version at startup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/global_settings_widget.ui" line="440"/>
+        <source>Check for new version now</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -735,42 +758,42 @@ This device has been revoked.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="224"/>
+        <location filename="../main_window.py" line="236"/>
         <source>Authentication failed.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="246"/>
+        <location filename="../main_window.py" line="258"/>
         <source>Are you sure you want to quit ?</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="263"/>
+        <location filename="../main_window.py" line="275"/>
         <source>Parsec is still running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="156"/>
+        <location filename="../main_window.py" line="168"/>
         <source>The mounpoint has been unmounted, you will now be logged off.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="226"/>
+        <location filename="../main_window.py" line="238"/>
         <source>User not registered in the backend.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="231"/>
+        <location filename="../main_window.py" line="243"/>
         <source>Mountpoint already in use.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="197"/>
+        <location filename="../main_window.py" line="209"/>
         <source>This device has been revoked.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="211"/>
+        <location filename="../main_window.py" line="223"/>
         <source>Can not login ({})</source>
         <translation type="unfinished"></translation>
     </message>
@@ -956,6 +979,34 @@ This device has been revoked.</source>
     </message>
 </context>
 <context>
+    <name>NewVersionDialog</name>
+    <message>
+        <location filename="../forms/new_version_dialog.ui" line="14"/>
+        <source>Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/new_version_dialog.ui" line="91"/>
+        <source>A new version of Parsec is available !</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/new_version_dialog.ui" line="147"/>
+        <source>Download</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/new_version_dialog.ui" line="212"/>
+        <source>Don&apos;t remind me in the future</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/new_version_dialog.ui" line="250"/>
+        <source>Ignore</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>NotificationCenterWidget</name>
     <message>
         <location filename="../forms/notification_center_widget.ui" line="32"/>
@@ -1007,17 +1058,17 @@ This device has been revoked.</source>
 <context>
     <name>QuestionDialog</name>
     <message>
-        <location filename="../forms/question_dialog.ui" line="14"/>
+        <location filename="../forms/question_dialog.ui" line="20"/>
         <source>Dialog</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/question_dialog.ui" line="256"/>
+        <location filename="../forms/question_dialog.ui" line="262"/>
         <source>No</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../forms/question_dialog.ui" line="296"/>
+        <location filename="../forms/question_dialog.ui" line="302"/>
         <source>Yes</source>
         <translation></translation>
     </message>
@@ -1509,6 +1560,34 @@ This user has been revoked.</source>
     </message>
 </context>
 <context>
+    <name>WorkspaceSharing</name>
+    <message>
+        <location filename="../workspace_sharing_dialog.py" line="100"/>
+        <source>You can not share a workspace with yourself.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspace_sharing_dialog.py" line="110"/>
+        <source>This workspace is already shared with &quot;{}&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspace_sharing_dialog.py" line="131"/>
+        <source>Can not share the workspace &quot;{}&quot; with this user.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspace_sharing_dialog.py" line="141"/>
+        <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../workspace_sharing_dialog.py" line="208"/>
+        <source>Are you sure?</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>WorkspaceSharingDialog</name>
     <message>
         <location filename="../forms/workspace_sharing_dialog.ui" line="14"/>
@@ -1516,28 +1595,53 @@ This user has been revoked.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="66"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="92"/>
         <source>Share with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="125"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="215"/>
         <source>Share</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="205"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="325"/>
         <source>Read</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="235"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="355"/>
         <source>Write</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../forms/workspace_sharing_dialog.ui" line="348"/>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="542"/>
         <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="118"/>
+        <source>User can administer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="133"/>
+        <source>User can read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="151"/>
+        <source>User can write</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="295"/>
+        <source>Admin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../forms/workspace_sharing_dialog.ui" line="474"/>
+        <source>Apply</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1579,16 +1683,6 @@ This user has been revoked.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspace_sharing_dialog.py" line="95"/>
-        <source>Can not share the workspace &quot;{}&quot; with this user.</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../workspace_sharing_dialog.py" line="105"/>
-        <source>Can not share the workspace &quot;{}&quot; with &quot;{}&quot;.</source>
-        <translation></translation>
-    </message>
-    <message>
         <location filename="../workspaces_widget.py" line="121"/>
         <source>New workspace</source>
         <translation></translation>
@@ -1619,11 +1713,6 @@ Created by {}.
     <message>
         <location filename="../workspaces_widget.py" line="76"/>
         <source>Shared with one person.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../workspace_sharing_dialog.py" line="83"/>
-        <source>This workspace is already shared with &quot;{}&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
