@@ -27,6 +27,11 @@ class LoginLoginWidget(QWidget, Ui_LoginLoginWidget):
         self.devices = {}
         self.reset()
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Return:
+            self.emit_login()
+        event.accept()
+
     def emit_login(self):
         organization_id, device_id, _ = self.devices[self.line_edit_device.text()]
         if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
