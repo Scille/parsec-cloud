@@ -177,6 +177,11 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
             pkcs11_key,
         )
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Return:
+            self.claim_clicked()
+        event.accept()
+
     def claim_clicked(self):
         use_pkcs11 = True
         if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
