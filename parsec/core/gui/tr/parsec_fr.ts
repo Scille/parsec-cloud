@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="2.0" language="fr" sourcelanguage="">
+<!DOCTYPE TS>
+<TS version="2.1" language="fr">
 <context>
     <name>BootstrapOrganizationWidget</name>
     <message>
@@ -239,17 +240,17 @@
         <translation>Sûreté du mot de passe : {}</translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="190"/>
+        <location filename="../claim_device_widget.py" line="195"/>
         <source>Passwords don&apos;t match</source>
         <translation>Les mots de passe ne correspondent pas</translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="203"/>
+        <location filename="../claim_device_widget.py" line="208"/>
         <source>URL or device is invalid.</source>
         <translation>L&apos;URL ou l&apos;appareil sont invalides.</translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="238"/>
+        <location filename="../claim_device_widget.py" line="243"/>
         <source>Can not register the new device.</source>
         <translation>Impossible d&apos;enregistrer le nouvel appareil.</translation>
     </message>
@@ -355,17 +356,17 @@
         <translation>L&apos;utilisateur a été enregistré. Vous pouvez maintenant vous connecter.</translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="189"/>
+        <location filename="../claim_user_widget.py" line="194"/>
         <source>Passwords don&apos;t match</source>
         <translation>Les mots de passe ne correspondent pas</translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="199"/>
+        <location filename="../claim_user_widget.py" line="204"/>
         <source>URL or device is invalid.</source>
         <translation>L&apos;URL ou l&apos;appareil sont invalides.</translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="231"/>
+        <location filename="../claim_user_widget.py" line="236"/>
         <source>Can not register the new user.</source>
         <translation>Impossible d&apos;enregistrer le nouvel utilisateur.</translation>
     </message>
@@ -1340,6 +1341,11 @@ L&apos;appareil a été révoqué.</translation>
         <location filename="../main_window.py" line="223"/>
         <source>Can not login ({})</source>
         <translation>Impossible de se connecter ({})</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="58"/>
+        <source>Parsec - Community Edition - {} - Sovereign enclave for sharing sensitive data on the cloud</source>
+        <translation>Parsec - Community Edition - {} - Enclaves souveraines pour le partage de données sensibles sur le cloud</translation>
     </message>
 </context>
 <context>
@@ -2500,7 +2506,7 @@ Cet utilisateur a été révoqué.</translation>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="121"/>
+        <location filename="../workspaces_widget.py" line="126"/>
         <source>New workspace</source>
         <translation>Nouvel espace de travail</translation>
     </message>
@@ -2520,22 +2526,22 @@ Cet utilisateur a été révoqué.</translation>
         <translation type="obsolete">Renommer</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="90"/>
+        <location filename="../workspaces_widget.py" line="95"/>
         <source>New name</source>
         <translation>Nouveau nom</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="90"/>
+        <location filename="../workspaces_widget.py" line="95"/>
         <source>Enter workspace new name</source>
         <translation>Entrez le nouveau nom de l&apos;espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="132"/>
+        <location filename="../workspaces_widget.py" line="137"/>
         <source>A workspace with the same name already exists.</source>
         <translation>Un espace de travail du même nom existe déjà.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="111"/>
+        <location filename="../workspaces_widget.py" line="116"/>
         <source>Can not rename the workspace.</source>
         <translation>Impossible de renommer l&apos;espace de travail.</translation>
     </message>
@@ -2565,12 +2571,12 @@ Cet utilisateur a été révoqué.</translation>
         <translation type="obsolete">Impossible de partager l&apos;espace de travail &quot;{}&quot; avec &quot;{}&quot;.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="121"/>
+        <location filename="../workspaces_widget.py" line="126"/>
         <source>Enter new workspace name</source>
         <translation>Entrez le nom du nouvel espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="121"/>
+        <location filename="../workspaces_widget.py" line="126"/>
         <source>Workspace name</source>
         <translation>Nom de l&apos;espace de travail</translation>
     </message>
@@ -2600,12 +2606,12 @@ Cet utilisateur a été révoqué.</translation>
         <translation type="obsolete">Ajouter un nouvel espace de travail</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="86"/>
+        <location filename="../workspaces_widget.py" line="91"/>
         <source>Not yet implemented.</source>
         <translation>Cette fonctionnalité n&apos;est pas encore implémentée.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="72"/>
+        <location filename="../workspaces_widget.py" line="77"/>
         <source>{}
 
 Created by {}.
@@ -2616,17 +2622,17 @@ Crée par {}.
 </translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="78"/>
+        <location filename="../workspaces_widget.py" line="83"/>
         <source>Shared with {} people.</source>
         <translation>Partagé avec {} personne(s).</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="82"/>
+        <location filename="../workspaces_widget.py" line="87"/>
         <source>Not shared.</source>
         <translation>Non partagé.</translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="76"/>
+        <location filename="../workspaces_widget.py" line="81"/>
         <source>Shared with one person.</source>
         <translation>Partagé avec une personne.</translation>
     </message>

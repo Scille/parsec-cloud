@@ -224,17 +224,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="190"/>
+        <location filename="../claim_device_widget.py" line="195"/>
         <source>Passwords don&apos;t match</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="203"/>
+        <location filename="../claim_device_widget.py" line="208"/>
         <source>URL or device is invalid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_device_widget.py" line="238"/>
+        <location filename="../claim_device_widget.py" line="243"/>
         <source>Can not register the new device.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -335,17 +335,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="189"/>
+        <location filename="../claim_user_widget.py" line="194"/>
         <source>Passwords don&apos;t match</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="199"/>
+        <location filename="../claim_user_widget.py" line="204"/>
         <source>URL or device is invalid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../claim_user_widget.py" line="231"/>
+        <location filename="../claim_user_widget.py" line="236"/>
         <source>Can not register the new user.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -795,6 +795,11 @@ This device has been revoked.</source>
     <message>
         <location filename="../main_window.py" line="223"/>
         <source>Can not login ({})</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="58"/>
+        <source>Parsec - Community Edition - {} - Sovereign enclave for sharing sensitive data on the cloud</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1653,47 +1658,47 @@ This user has been revoked.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="86"/>
+        <location filename="../workspaces_widget.py" line="91"/>
         <source>Not yet implemented.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="90"/>
+        <location filename="../workspaces_widget.py" line="95"/>
         <source>New name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="90"/>
+        <location filename="../workspaces_widget.py" line="95"/>
         <source>Enter workspace new name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="121"/>
+        <location filename="../workspaces_widget.py" line="126"/>
         <source>Workspace name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="132"/>
+        <location filename="../workspaces_widget.py" line="137"/>
         <source>A workspace with the same name already exists.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="111"/>
+        <location filename="../workspaces_widget.py" line="116"/>
         <source>Can not rename the workspace.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="121"/>
+        <location filename="../workspaces_widget.py" line="126"/>
         <source>New workspace</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="121"/>
+        <location filename="../workspaces_widget.py" line="126"/>
         <source>Enter new workspace name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="72"/>
+        <location filename="../workspaces_widget.py" line="77"/>
         <source>{}
 
 Created by {}.
@@ -1701,17 +1706,17 @@ Created by {}.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="78"/>
+        <location filename="../workspaces_widget.py" line="83"/>
         <source>Shared with {} people.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="82"/>
+        <location filename="../workspaces_widget.py" line="87"/>
         <source>Not shared.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../workspaces_widget.py" line="76"/>
+        <location filename="../workspaces_widget.py" line="81"/>
         <source>Shared with one person.</source>
         <translation type="unfinished"></translation>
     </message>
