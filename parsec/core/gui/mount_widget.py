@@ -1,12 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
-from PyQt5.QtCore import pyqtSignal, QCoreApplication
+from PyQt5.QtCore import pyqtSignal
 
-from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted
 from parsec.core.gui.files_widget import FilesWidget
-from parsec.core.gui.custom_widgets import show_error
 from parsec.core.gui.workspaces_widget import WorkspacesWidget
 from parsec.core.gui.core_widget import CoreWidget
+
 from parsec.core.gui.ui.mount_widget import Ui_MountWidget
 
 
@@ -37,18 +36,6 @@ class MountWidget(CoreWidget, Ui_MountWidget):
         self.files_widget.mountpoint = mountpoint
 
     def load_workspace(self, workspace_name):
-        try:
-            self.portal.run(self.core.mountpoint_manager.mount_workspace, workspace_name)
-        except MountpointAlreadyMounted:
-            pass
-        except:
-            show_error(
-                self,
-                QCoreApplication.translate("MountWidget", "Can not mount the workspace {}.").format(
-                    workspace_name
-                ),
-            )
-            return
         self.workspaces_widget.hide()
         self.files_widget.set_workspace(workspace_name)
         self.files_widget.show()

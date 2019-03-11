@@ -65,6 +65,10 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         button.delete_clicked.connect(self.delete_workspace)
         button.rename_clicked.connect(self.rename_workspace)
         button.file_clicked.connect(self.open_workspace_file)
+        try:
+            self.portal.run(self.core.mountpoint_manager.mount_workspace, workspace_name)
+        except MountpointAlreadyMounted:
+            pass
 
     def open_workspace_file(self, workspace_name, file_name, is_dir):
         try:
