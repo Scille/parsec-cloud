@@ -10,7 +10,6 @@ from parsec.core.gui.ui.workspace_button import Ui_WorkspaceButton
 class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     clicked = pyqtSignal(str)
     share_clicked = pyqtSignal(QWidget)
-    details_clicked = pyqtSignal(QWidget)
     delete_clicked = pyqtSignal(QWidget)
     rename_clicked = pyqtSignal(QWidget)
     file_clicked = pyqtSignal(str, str, bool)
@@ -41,7 +40,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
         effect.setXOffset(4)
         effect.setYOffset(4)
         self.setGraphicsEffect(effect)
-        self.button_details.clicked.connect(self.button_details_clicked)
         self.button_share.clicked.connect(self.button_share_clicked)
         self.button_delete.clicked.connect(self.button_delete_clicked)
         self.button_rename.clicked.connect(self.button_rename_clicked)
@@ -52,9 +50,6 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
 
     def open_clicked_file(self, file_name, is_dir):
         self.file_clicked.emit(self.name, file_name, is_dir)
-
-    def button_details_clicked(self):
-        self.details_clicked.emit(self)
 
     def button_share_clicked(self):
         self.share_clicked.emit(self)

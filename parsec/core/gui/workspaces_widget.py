@@ -13,7 +13,6 @@ from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import (
     show_error,
     show_warning,
-    show_info,
     get_text,
     TaskbarButton,
 )
@@ -63,7 +62,6 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         )
         self.workspaces_count += 1
         button.share_clicked.connect(self.share_workspace)
-        button.details_clicked.connect(self.show_workspace_details)
         button.delete_clicked.connect(self.delete_workspace)
         button.rename_clicked.connect(self.rename_workspace)
         button.file_clicked.connect(self.open_workspace_file)
@@ -81,20 +79,6 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons
-
-    def show_workspace_details(self, workspace_button):
-        text = QCoreApplication.translate("WorkspacesWidget", "{}\n\nCreated by {}.\n").format(
-            workspace_button.name, workspace_button.creator
-        )
-        if len(workspace_button.participants) == 1:
-            text += QCoreApplication.translate("WorkspacesWidget", "Shared with one person.")
-        elif len(workspace_button.participants) > 1:
-            text += QCoreApplication.translate("WorkspacesWidget", "Shared with {} people.").format(
-                len(workspace_button.participants)
-            )
-        else:
-            text += QCoreApplication.translate("WorkspacesWidget", "Not shared.")
-        show_info(self, text)
 
     def delete_workspace(self, workspace_button):
         show_warning(self, QCoreApplication.translate("WorkspacesWidget", "Not yet implemented."))
