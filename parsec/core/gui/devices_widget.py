@@ -26,16 +26,19 @@ class DeviceButton(QWidget, Ui_DeviceButton):
             self.label.setPixmap(QPixmap(":/icons/images/icons/personal-computer.png"))
         else:
             self.label.setPixmap(QPixmap(":/icons/images/icons/personal-computer.png"))
-        self.label_device.setText(device_name)
+        self.name = device_name
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
 
     @property
     def name(self):
-        return self.label_device.text()
+        return self._name
 
     @name.setter
     def name(self, value):
+        self._name = value
+        if len(value) > 16:
+            value = value[:16] + "-\n" + value[16:]
         self.label_device.setText(value)
 
     @property

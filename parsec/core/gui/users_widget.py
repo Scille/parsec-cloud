@@ -24,7 +24,7 @@ class UserButton(QWidget, Ui_UserButton):
             self.label.setPixmap(QPixmap(":/icons/images/icons/owner2.png"))
         else:
             self.label.setPixmap(QPixmap(":/icons/images/icons/user2.png"))
-        self.label_user.setText(user_name)
+        self.name = user_name
         self.label.is_revoked = is_revoked
         self.created_on = created_on
         self.is_current_user = is_current_user
@@ -33,10 +33,13 @@ class UserButton(QWidget, Ui_UserButton):
 
     @property
     def name(self):
-        return self.label_user.text()
+        return self._name
 
     @name.setter
     def name(self, value):
+        self._name = value
+        if len(value) > 16:
+            value = value[:16] + "-\n" + value[16:]
         self.label_user.setText(value)
 
     @property
