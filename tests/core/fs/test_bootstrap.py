@@ -126,3 +126,62 @@ async def test_concurrent_devices_agreed_on_root_manifest(
         "children": ["from_1", "from_2"],
     }
     assert stat1 == stat2
+
+
+@pytest.mark.trio
+@pytest.mark.backend_not_populated
+async def test_reloading_v0_user_manifest(
+    running_backend, backend_data_binder, local_db_factory, fs_factory, coolorg, alice
+):
+    # Initialize backend and local storage
+    with freeze_time("2000-01-01"):
+        await backend_data_binder.bind_organization(
+            coolorg, alice, initial_user_manifest_in_v0=True
+        )
+    local_db = local_db_factory(alice, user_manifest_in_v0=True)
+
+    # Create a workspace without syncronizing
+    async with fs_factory(alice, local_db) as fs:
+        with freeze_time("2000-01-02"):
+            stat = await fs.workspace_create("/foo")
+
+    # TODO: clean manifest cache once it's been moved to local storage
+    # local_storage.clear_memory_cache()
+
+    # Reload version 0 manifest
+    async with fs_factory(alice, local_db) as fs:
+        with freeze_time("2000-01-02"):
+            stat = await fs.stat("/")
+
+        assert stat == {
+            "type": "root",
+            "id": alice.user_manifest_access.id,
+            "created": Pendulum(2000, 1, 2),
+            "updated": Pendulum(2000, 1, 2),
+            "base_version": 0,
+            "is_folder": True,
+            "is_placeholder": True,
+            "need_sync": True,
+            "children": ["foo"],
+        }
+
+    # TODO: clean manifest cache once it's been moved to local storage
+    # local_storage.clear_memory_cache()
+
+    # Syncronize version 0 manifest
+    async with fs_factory(alice, local_db) as fs:
+        with freeze_time("2000-01-03"):
+            await fs.sync("/")
+
+        stat = await fs.stat("/")
+        assert stat == {
+            "type": "root",
+            "id": ANY,
+            "created": Pendulum(2000, 1, 2),
+            "updated": Pendulum(2000, 1, 2),
+            "base_version": 2,
+            "is_folder": True,
+            "is_placeholder": False,
+            "need_sync": False,
+            "children": ["foo"],
+        }

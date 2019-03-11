@@ -270,7 +270,7 @@ class LocalUserManifestSchema(UnknownCheckedSchema):
     format = fields.CheckedConstant(1, required=True)
     type = fields.CheckedConstant("local_user_manifest", required=True)
     author = fields.DeviceID(required=True)
-    base_version = fields.Integer(required=True, validate=validate.Range(min=1))
+    base_version = fields.Integer(required=True, validate=validate.Range(min=0))
     need_sync = fields.Boolean(required=True)
     is_placeholder = fields.Boolean(required=True)
     created = fields.DateTime(required=True)
