@@ -4,17 +4,17 @@ python:
 - '3.6'
 #- '3.7-dev'
 services:
-  - postgresql
+- postgresql
 addons:
   postgresql: "9.5"
   apt:
     packages:
-      - postgresql-server-dev-9.5
+    - postgresql-server-dev-9.5
 install:
 - pip install -U coveralls
 - pip install .[all]
 before_script:
-  - sudo modprobe fuse
+- sudo modprobe fuse
 script:
 # Only print output if check failed
 - OUT=$(2>&1 ./misc/autoformat.sh --check) || (echo $OUT; $(exit 1))
@@ -29,7 +29,7 @@ deploy:
   distributions: sdist bdist_wheel
   user: touilleMan
   password:
-    secure: Kymr6A/qQ3+rvyzn1Yts9YEpBKCQtl9JyDF7xj/XRLh6VmnY9ocamkBCAL/fALGl5qWwBjEWqYOVhlHmR5cC1evSs8FqgG4OJItp5fVm1cNdniYwwTQ19DE7m/kJbzDouIrCpmSwb48TlHSU1IhbH1Nsbmz3Qz2mysVlk7PswGJ9Q9kfy4HoMy+9c9PKMFdFbSNdmXTSAUTJgVVLR4StxE2HcApVOUDN8S9GAQJB7ZQLjZhKHseoUMleazQrsZcHCcv6UKGvj/mC5Vloh7v/evUBkRpeOPhRRgPRc/SaF8VyII7PqYeqFS7swxTghTSCLAnN/DCWF5iXaNGLC59g9VQ6CYhB8TZlZ/wRXp6qOJLXP4vQ9F6HwT5s8YBtxUn/rJn2q4tE2vfvJKVeYQ04KFBkLXQsFRgkalkDjrx+mzNrAlPeXvLuKyg44u/s1F1mPdiE5FgBRDGCEh3ompydro2yZNtGcQyhN9tOasdH42q1rYd4W24Ty9tn66L9Okosw6bu2t+QP5LG4tRLms33qec39aPz5KxJ5AYNekRyyb1pCpR484hjp6ATYer7CKvGnZAxxQInAMfezCzcMwme2FsdlWaPXBtBVWWevGFj+fnEItNuBLzWOeaHBDPZKLFjs7QcU3Gm7bTqLxL/Hs6yOjOJ1UZRXDCl8MkkHa4Kl8Q=
+    secure: jKO3OqR3aPBMjeQAJ78IFN13ffFHG67pbWw851S/PyTkYTsQht985EmGDNBWqwzVzx7X1+uKyso5Rogjo1rpezHCTj7F016PUzawegx/4ujbt+pGFq1wN3wIpW9z6IygT769enV9I5WQ7/42AWNi5Zzs3+atEj3MT+LMqd0g80DvoxZmrRC3Imn3hDzG3oskA1I2VGELzvFkrLDfocXxsUmMiLkmvUBM/2T5Nf2LUdH/bSX+gnifYQwbjfkCKs0rfkLsTYSFA722UrP+lhZkj4H0N0laj0OoDMBREB4qnWaaMgNPrbv1mn3oI+sju6Oe97xLislj6ZxN5LOGmpRcXM5QYtSE8oWupvNQc5eTm9DFmy8/IYy0dbty0dTxI7OWssgLW7KKKjrrXARrNQaFoeOAR9jCRV0kK3l4e7xvvg0EFoyi9LCLkYKSU7cfe01cJzJIQHskTfKiO/KAiWTvSE44Upsf8gmwgPffttDkrb75adm8huXilCro/ICB2TSPTj8UnYaZkPas92anztdxlmIC8beFakR0JdjhniXrNk9aaRG0+NCK8oZx6lv4WwOcWkePE7HhGlVEDTNmI4uwdmLhbKv1UK5zfMzIHyPRD++e4SLINUweAFU6rQ38zVTq1C6N6+IEv1r9f6ecBL3ij+y+N+eeGztlkA1MqCrJRLU=
   on:
     tags: true
     repo: Scille/parsec-cloud
