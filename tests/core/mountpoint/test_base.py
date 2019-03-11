@@ -263,7 +263,8 @@ async def test_get_path_in_mountpoint(base_mountpoint, alice, alice_fs, event_bu
         bar_path = mountpoint_manager.get_path_in_mountpoint(FsPath("/mounted_wksp/bar.txt"))
 
         assert isinstance(bar_path, PurePath)
-        assert str(bar_path) == f"{base_mountpoint.absolute()}/{alice.user_id}-mounted_wksp/bar.txt"
+        expected = base_mountpoint / f"{alice.user_id}-mounted_wksp" / "bar.txt"
+        assert str(bar_path) == str(expected.absolute())
         assert await trio.Path(bar_path).exists()
 
         with pytest.raises(MountpointNotMounted):
