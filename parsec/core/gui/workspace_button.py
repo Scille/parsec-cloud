@@ -13,7 +13,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     details_clicked = pyqtSignal(QWidget)
     delete_clicked = pyqtSignal(QWidget)
     rename_clicked = pyqtSignal(QWidget)
-    file_clicked = pyqtSignal(str, bool)
+    file_clicked = pyqtSignal(str, str, bool)
 
     def __init__(self, workspace_name, is_owner, creator, files, shared_with=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32,7 +32,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
                 label = getattr(self, "line_edit_file{}".format(i))
                 label.clicked.connect(self.open_clicked_file)
                 label.setText(f)
-                label.setIsDir(is_dir)
+                label.is_dir = is_dir
                 label.setCursorPosition(0)
             self.label_empty.hide()
         effect = QGraphicsDropShadowEffect(self)
@@ -51,7 +51,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.label_shared.hide()
 
     def open_clicked_file(self, file_name, is_dir):
-        pass
+        self.file_clicked.emit(self.name, file_name, is_dir)
 
     def button_details_clicked(self):
         self.details_clicked.emit(self)

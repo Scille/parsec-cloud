@@ -201,9 +201,6 @@ class FileLineEdit(QLineEdit):
             text = text[:30] + "..."
         super().setText(text)
 
-    def setIsDir(self, val):
-        self.is_dir = val
-
     def enterEvent(self, _):
         f = self.font()
         f.setUnderline(True)

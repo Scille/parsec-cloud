@@ -58,10 +58,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setWindowTitle(
             QCoreApplication.translate(
                 "MainWindow",
-                "Parsec - Community Edition - {} - Sovereign enclave for sharing sensitive data on the cloud",   # noqa: E501
-            ).format(
-                PARSEC_VERSION
-            )
+                "Parsec - Community Edition - {} - Sovereign enclave for sharing sensitive data on the cloud",  # noqa: E501
+            ).format(PARSEC_VERSION)
         )
         self.tray_message_shown = False
 

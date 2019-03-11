@@ -6,8 +6,10 @@ import pathlib
 
 from PyQt5.QtCore import QCoreApplication, pyqtSignal
 
+from parsec.core.types import FsPath
 from parsec.core.fs import FSEntryNotFound
-
+from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted
+from parsec.core.gui import desktop
 from parsec.core.gui.custom_widgets import (
     show_error,
     show_warning,
@@ -64,6 +66,18 @@ class WorkspacesWidget(CoreWidget, Ui_WorkspacesWidget):
         button.details_clicked.connect(self.show_workspace_details)
         button.delete_clicked.connect(self.delete_workspace)
         button.rename_clicked.connect(self.rename_workspace)
+        button.file_clicked.connect(self.open_workspace_file)
+
+    def open_workspace_file(self, workspace_name, file_name, is_dir):
+        try:
+            self.portal.run(self.core.mountpoint_manager.mount_workspace, workspace_name)
+        except MountpointAlreadyMounted:
+            pass
+        except:
+            show_error(self, QCoreApplication.translate("MountWidget", "Can not acces this file."))
+            return
+        path = FsPath("/") / workspace_name / file_name
+        desktop.open_file(str(self.core.mountpoint_manager.get_path_in_mountpoint(path)))
 
     def get_taskbar_buttons(self):
         return self.taskbar_buttons
