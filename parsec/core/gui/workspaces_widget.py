@@ -10,12 +10,7 @@ from parsec.core.types import FsPath
 from parsec.core.fs import FSEntryNotFound
 from parsec.core.mountpoint.exceptions import MountpointAlreadyMounted
 from parsec.core.gui import desktop
-from parsec.core.gui.custom_widgets import (
-    show_error,
-    show_warning,
-    get_text,
-    TaskbarButton,
-)
+from parsec.core.gui.custom_widgets import show_error, show_warning, get_text, TaskbarButton
 from parsec.core.gui.core_widget import CoreWidget
 from parsec.core.gui.workspace_button import WorkspaceButton
 from parsec.core.gui.ui.workspaces_widget import Ui_WorkspacesWidget

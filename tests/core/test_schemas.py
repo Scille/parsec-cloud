@@ -30,23 +30,23 @@ def test_user_revocation_access():
     yesterday = datetime(2000, 1, 1)
     tomorrow = datetime(2000, 1, 3)
 
-    dev_not_revocated = RemoteDevice(
-        device_id=DeviceID("user@dev_not_revocated"),
+    dev_not_revoked = RemoteDevice(
+        device_id=DeviceID("user@dev_not_revoked"),
         certified_device=b"<certif>",
         device_certifier=None,
     )
-    dev_revocated_yesterday = RemoteDevice(
-        device_id=DeviceID("user@dev_revocated_yesterday"),
+    dev_revoked_yesterday = RemoteDevice(
+        device_id=DeviceID("user@dev_revoked_yesterday"),
         certified_device=b"<certif>",
         device_certifier=None,
-        revocated_on=yesterday,
+        revoked_on=yesterday,
         certified_revocation=b"<certif>",
     )
-    dev_revocated_tomorrow = RemoteDevice(
-        device_id=DeviceID("user@dev_revocated_tomorrow"),
+    dev_revoked_tomorrow = RemoteDevice(
+        device_id=DeviceID("user@dev_revoked_tomorrow"),
         certified_device=b"<certif>",
         device_certifier=None,
-        revocated_on=tomorrow,
+        revoked_on=tomorrow,
         certified_revocation=b"<certif>",
     )
 
@@ -60,24 +60,24 @@ def test_user_revocation_access():
 
     with freeze_time("2000-01-02"):
         user = _user_factory()
-        assert user.is_revocated()
-        assert user.get_revocated_on() is None
+        assert user.is_revoked()
+        assert user.get_revoked_on() is None
 
-        user = _user_factory(dev_revocated_yesterday)
-        assert user.is_revocated()
-        assert user.get_revocated_on() == yesterday
+        user = _user_factory(dev_revoked_yesterday)
+        assert user.is_revoked()
+        assert user.get_revoked_on() == yesterday
 
-        user = _user_factory(dev_not_revocated)
-        assert not user.is_revocated()
-        assert user.get_revocated_on() is None
+        user = _user_factory(dev_not_revoked)
+        assert not user.is_revoked()
+        assert user.get_revoked_on() is None
 
-        user = _user_factory(dev_not_revocated, dev_revocated_tomorrow)
-        assert not user.is_revocated()
-        assert user.get_revocated_on() is None
+        user = _user_factory(dev_not_revoked, dev_revoked_tomorrow)
+        assert not user.is_revoked()
+        assert user.get_revoked_on() is None
 
-        user = _user_factory(dev_revocated_yesterday, dev_revocated_tomorrow)
-        assert not user.is_revocated()
-        assert user.get_revocated_on() == tomorrow
+        user = _user_factory(dev_revoked_yesterday, dev_revoked_tomorrow)
+        assert not user.is_revoked()
+        assert user.get_revoked_on() == tomorrow
 
 
 class TestBlockAccessSchema:

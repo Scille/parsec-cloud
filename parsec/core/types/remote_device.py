@@ -22,7 +22,7 @@ class RemoteDevice:
     device_certifier: DeviceID
 
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-    revocated_on: pendulum.Pendulum = None
+    revoked_on: pendulum.Pendulum = None
     certified_revocation: bytes = None
     revocation_certifier: DeviceID = None
 
@@ -49,7 +49,7 @@ class RemoteDeviceSchema(UnknownCheckedSchema):
     device_id = fields.DeviceID(required=True)
     created_on = fields.DateTime(required=True)
 
-    revocated_on = fields.DateTime(allow_none=True)
+    revoked_on = fields.DateTime(allow_none=True)
     certified_revocation = fields.Bytes(allow_none=True)
     revocation_certifier = fields.DeviceID(allow_none=True)
 
@@ -117,15 +117,15 @@ class RemoteUser:
     def public_key(self) -> PublicKey:
         return unsecure_certified_user_extract_public_key(self.certified_user)
 
-    def is_revocated(self) -> bool:
+    def is_revoked(self) -> bool:
         now = pendulum.now()
         for d in self.devices.values():
-            if not d.revocated_on or d.revocated_on > now:
+            if not d.revoked_on or d.revoked_on > now:
                 return False
         return True
 
-    def get_revocated_on(self) -> Optional[pendulum.Pendulum]:
-        revocations = [d.revocated_on for d in self.devices.values()]
+    def get_revoked_on(self) -> Optional[pendulum.Pendulum]:
+        revocations = [d.revoked_on for d in self.devices.values()]
         if not revocations or None in revocations:
             return None
         else:

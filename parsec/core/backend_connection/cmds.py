@@ -235,7 +235,7 @@ async def user_get(
                 certified_device=rep_device["certified_device"],
                 device_certifier=rep_device["device_certifier"],
                 created_on=rep_device["created_on"],
-                revocated_on=rep_device["revocated_on"],
+                revoked_on=rep_device["revoked_on"],
                 certified_revocation=rep_device["certified_revocation"],
                 revocation_certifier=rep_device["revocation_certifier"],
             )
@@ -253,7 +253,7 @@ async def user_get(
             certified_device=v["certified_device"],
             device_certifier=v["device_certifier"],
             created_on=v["created_on"],
-            revocated_on=v["revocated_on"],
+            revoked_on=v["revoked_on"],
             certified_revocation=v["certified_revocation"],
             revocation_certifier=v["revocation_certifier"],
         )
@@ -267,7 +267,7 @@ async def user_find(
     query: str = None,
     page: int = 1,
     per_page: int = 100,
-    omit_revocated: bool = False,
+    omit_revoked: bool = False,
 ) -> List[UserID]:
     rep = await _send_cmd(
         transport,
@@ -276,7 +276,7 @@ async def user_find(
         query=query,
         page=page,
         per_page=per_page,
-        omit_revocated=omit_revocated,
+        omit_revoked=omit_revoked,
     )
     return rep["results"]
 
@@ -345,7 +345,7 @@ async def device_revoke(
         cmd="device_revoke",
         certified_revocation=certified_revocation,
     )
-    return rep["user_revocated_on"]
+    return rep["user_revoked_on"]
 
 
 ###  Backend anonymous cmds  ###

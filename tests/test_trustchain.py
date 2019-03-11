@@ -160,7 +160,7 @@ def trustchain_ctx_factory(local_device_factory, coolorg):
             created_on = todo_device.get("created_on", now)
             revoker = todo_device.get("revoker", None)
             if revoker:
-                revocated_on = todo_device.get("revocated_on", now)
+                revoked_on = todo_device.get("revoked_on", now)
 
             data = {"device_id": local_device.device_id}
 
@@ -181,9 +181,9 @@ def trustchain_ctx_factory(local_device_factory, coolorg):
                 revoker_id = revoker_ld.device_id
                 revoker_key = revoker_ld.signing_key
                 data["certified_revocation"] = certify_device_revocation(
-                    revoker_id, revoker_key, local_device.device_id, now=revocated_on
+                    revoker_id, revoker_key, local_device.device_id, now=revoked_on
                 )
-                data["revocated_on"] = revocated_on
+                data["revoked_on"] = revoked_on
                 data["revocation_certifier"] = revoker_id
 
             remote_devices[local_device.device_id] = RemoteDevice(**data)
@@ -258,8 +258,8 @@ def test_validate_user_with_trustchain_with_user_created_by_revoked_certifier(
         todo_devices=(
             {"id": "alice@dev1"},
             {"id": "alice@dev2", "certifier": "alice@dev1"},
-            {"id": "mallory@dev1", "revoker": "alice@dev2", "revocated_on": Pendulum(2000, 1, 3)},
-            {"id": "bob@dev1", "revoker": "mallory@dev1", "revocated_on": Pendulum(2000, 1, 2)},
+            {"id": "mallory@dev1", "revoker": "alice@dev2", "revoked_on": Pendulum(2000, 1, 3)},
+            {"id": "bob@dev1", "revoker": "mallory@dev1", "revoked_on": Pendulum(2000, 1, 2)},
             {"id": "alice@dev3", "certifier": "alice@dev2"},
         ),
         todo_user={"id": "alice", "certifier": "bob@dev1"},
@@ -273,8 +273,8 @@ def test_validate_user_with_trustchain_with_revoked_user(trustchain_ctx_factory)
         todo_devices=(
             {"id": "alice@dev1"},
             {"id": "alice@dev2", "certifier": "alice@dev1"},
-            {"id": "mallory@dev1", "revoker": "alice@dev2", "revocated_on": Pendulum(2000, 1, 3)},
-            {"id": "bob@dev1", "revoker": "mallory@dev1", "revocated_on": Pendulum(2000, 1, 2)},
+            {"id": "mallory@dev1", "revoker": "alice@dev2", "revoked_on": Pendulum(2000, 1, 3)},
+            {"id": "bob@dev1", "revoker": "mallory@dev1", "revoked_on": Pendulum(2000, 1, 2)},
             {"id": "alice@dev3", "certifier": "bob@dev1"},
         ),
         todo_user={"id": "alice"},
@@ -288,8 +288,8 @@ def test_validate_user_with_trustchain_broken_chain(trustchain_ctx_factory):
         todo_devices=(
             {"id": "alice@dev1"},
             {"id": "alice@dev2", "certifier": "alice@dev1"},
-            {"id": "mallory@dev1", "revoker": "alice@dev2", "revocated_on": Pendulum(2000, 1, 3)},
-            {"id": "bob@dev1", "revoker": "mallory@dev1", "revocated_on": Pendulum(2000, 1, 2)},
+            {"id": "mallory@dev1", "revoker": "alice@dev2", "revoked_on": Pendulum(2000, 1, 3)},
+            {"id": "bob@dev1", "revoker": "mallory@dev1", "revoked_on": Pendulum(2000, 1, 2)},
             {"id": "alice@dev3", "certifier": "bob@dev1"},
         ),
         todo_user={"id": "alice"},
@@ -349,14 +349,14 @@ def test_validate_user_with_trustchain_with_invalid_revocation(trustchain_ctx_fa
     ctx = trustchain_ctx_factory(
         todo_devices=(
             {"id": "alice@dev1"},
-            {"id": "bob@dev1", "revoker": "alice@dev1", "revocated_on": Pendulum(2000, 1, 2)},
+            {"id": "bob@dev1", "revoker": "alice@dev1", "revoked_on": Pendulum(2000, 1, 2)},
             {"id": "alice@dev2", "certifier": "alice@dev1"},
-            # Bob already revocated when it is supposed to do revoke alice
+            # Bob already revoked when it is supposed to do revoke alice
             {
                 "id": "alice@dev3",
                 "certifier": "alice@dev2",
                 "revoker": "bob@dev1",
-                "revocated_on": Pendulum(2000, 1, 3),
+                "revoked_on": Pendulum(2000, 1, 3),
             },
         ),
         todo_user={"id": "alice"},

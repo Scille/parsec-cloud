@@ -231,7 +231,7 @@ def certify_device_revocation(
 
 
 def validate_payload_certified_device_revocation(
-    certifier_key: VerifyKey, payload: bytes, revocated_on: Pendulum
+    certifier_key: VerifyKey, payload: bytes, revoked_on: Pendulum
 ) -> dict:
     """
     Raises:
@@ -239,7 +239,7 @@ def validate_payload_certified_device_revocation(
         TrustChainTooOldError
     """
     return _validate_certified_payload(
-        certified_device_revocation_schema, certifier_key, payload, revocated_on
+        certified_device_revocation_schema, certifier_key, payload, revoked_on
     )
 
 
@@ -287,10 +287,10 @@ def validate_user_with_trustchain(user, trustchain, root_verify_key: VerifyKey):
                 )
 
             _recursive_validate_device(certifier_device)
-            if certifier_device.revocated_on and timestamp > certifier_device.revocated_on:
+            if certifier_device.revoked_on and timestamp > certifier_device.revoked_on:
                 raise TrustChainSignedByRevokedDeviceError(
                     f"Device `{certifier_id}` signed `{needed_by}` after it revocation "
-                    f"(revoked at {certifier_device.revocated_on}, signed at {timestamp})"
+                    f"(revoked at {certifier_device.revoked_on}, signed at {timestamp})"
                 )
             certifier_verify_key = certifier_device.verify_key
 
@@ -314,11 +314,11 @@ def validate_user_with_trustchain(user, trustchain, root_verify_key: VerifyKey):
             certifier_verify_key, certified_payload = _extract_certif_key_and_payload(
                 device.certified_revocation,
                 device.revocation_certifier,
-                device.revocated_on,
+                device.revoked_on,
                 device.device_id,
             )
             validate_payload_certified_device_revocation(
-                certifier_verify_key, certified_payload, device.revocated_on
+                certifier_verify_key, certified_payload, device.revoked_on
             )
         # All set ! This device is valid ;-)
         validated_devices[device.device_id] = device

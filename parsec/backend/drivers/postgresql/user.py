@@ -97,7 +97,7 @@ INSERT INTO device (
     certified_device,
     device_certifier,
     created_on,
-    revocated_on,
+    revoked_on,
     certified_revocation,
     revocation_certifier
 )
@@ -117,7 +117,7 @@ SELECT
                     device.certified_device,
                     device.device_certifier,
                     device.created_on,
-                    device.revocated_on,
+                    device.revoked_on,
                     device.certified_revocation,
                     device.revocation_certifier,
                 )
@@ -163,7 +163,7 @@ INSERT INTO device (
     certified_device,
     device_certifier,
     created_on,
-    revocated_on,
+    revoked_on,
     certified_revocation,
     revocation_certifier
 )
@@ -181,7 +181,7 @@ SELECT
             device.certified_device,
             device.device_certifier,
             device.created_on,
-            device.revocated_on,
+            device.revoked_on,
             device.certified_revocation,
             device.revocation_certifier,
         )
@@ -220,7 +220,7 @@ SELECT
     certified_device,
     get_device_id(device_certifier) as device_certifier,
     created_on,
-    revocated_on,
+    revoked_on,
     certified_revocation,
     get_device_id(revocation_certifier) as revocation_certifier
 FROM device
@@ -265,7 +265,7 @@ SELECT
     certified_device,
     get_device_id(device_certifier) as device_certifier,
     created_on,
-    revocated_on,
+    revoked_on,
     certified_revocation,
     get_device_id(revocation_certifier) as revocation_certifier
 FROM device
@@ -312,7 +312,7 @@ WHERE
         query: str = None,
         page: int = 1,
         per_page: int = 100,
-        omit_revocated: bool = False,
+        omit_revoked: bool = False,
     ) -> Tuple[List[UserID], int]:
         async with self.dbh.pool.acquire() as conn:
             now = pendulum.now()
@@ -331,8 +331,8 @@ WHERE
             WHERE
                 user_ = user_._id
                 AND (
-                    revocated_on IS NULL
-                    OR revocated_on > $4
+                    revoked_on IS NULL
+                    OR revoked_on > $4
                 )
         )
     )
@@ -340,7 +340,7 @@ ORDER BY user_id
 """,
                     organization_id,
                     f"{escaped_query}%",
-                    omit_revocated,
+                    omit_revoked,
                     now,
                 )
             else:
@@ -355,15 +355,15 @@ WHERE
             WHERE
                 user_ = user_._id
                 AND (
-                    revocated_on IS NULL
-                    OR revocated_on > $3
+                    revoked_on IS NULL
+                    OR revoked_on > $3
                 )
         )
     )
 ORDER BY user_id
 """,
                     organization_id,
-                    omit_revocated,
+                    omit_revoked,
                     now,
                 )
             # TODO: should user LIMIT and OFFSET in the SQL query instead
@@ -626,7 +626,7 @@ WHERE
         device_id: DeviceID,
         certified_revocation: bytes,
         revocation_certifier: DeviceID,
-        revocated_on: pendulum.Pendulum = None,
+        revoked_on: pendulum.Pendulum = None,
     ) -> Optional[pendulum.Pendulum]:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
@@ -636,24 +636,24 @@ WHERE
 UPDATE device SET
     certified_revocation = $3,
     revocation_certifier = get_device_internal_id($1, $4),
-    revocated_on = $5
+    revoked_on = $5
 WHERE
     organization = get_organization_internal_id($1)
     AND device_id = $2
-    AND revocated_on IS NULL
+    AND revoked_on IS NULL
 """,
                     organization_id,
                     device_id,
                     certified_revocation,
                     revocation_certifier,
-                    revocated_on or pendulum.now(),
+                    revoked_on or pendulum.now(),
                 )
 
                 if result != "UPDATE 1":
                     # TODO: avoid having to do another query to find the error
                     err_result = await conn.fetchrow(
                         """
-SELECT revocated_on
+SELECT revoked_on
 FROM device
 WHERE
     organization = get_organization_internal_id($1)
@@ -675,7 +675,7 @@ WHERE
                 # his devices are revoked)
                 result = await conn.fetch(
                     """
-SELECT revocated_on FROM device
+SELECT revoked_on FROM device
 WHERE user_ = get_user_internal_id($1, $2)
             """,
                     organization_id,

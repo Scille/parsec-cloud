@@ -182,7 +182,7 @@ class UsersWidget(CoreWidget, Ui_UsersWidget):
                         str(user_info.user_id),
                         is_current_user=user_id == user,
                         created_on=user_info.created_on,
-                        is_revoked=user_info.is_revocated(),
+                        is_revoked=user_info.is_revoked(),
                     )
             except BackendNotAvailable:
                 pass

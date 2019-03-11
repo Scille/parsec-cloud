@@ -219,7 +219,7 @@ class BackendApp:
                     if organization.root_verify_key != expected_rvk:
                         result_req = hs.build_rvk_mismatch_result_req()
 
-                    elif device.revocated_on:
+                    elif device.revoked_on:
                         result_req = hs.build_revoked_device_result_req()
 
                     else:
