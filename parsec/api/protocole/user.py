@@ -25,7 +25,7 @@ class DeviceSchema(UnknownCheckedSchema):
     device_id = fields.DeviceID(required=True)
     created_on = fields.DateTime(required=True)
 
-    revocated_on = fields.DateTime(allow_none=True)
+    revoked_on = fields.DateTime(allow_none=True)
     certified_revocation = fields.Bytes(allow_none=True)
     revocation_certifier = fields.DeviceID(allow_none=True)
 
@@ -60,7 +60,7 @@ user_get_serializer = CmdSerializer(UserGetReqSchema, UserGetRepSchema)
 
 class FindUserReqSchema(BaseReqSchema):
     query = fields.String(missing=None, allow_none=True)
-    omit_revocated = fields.Boolean(missing=False)
+    omit_revoked = fields.Boolean(missing=False)
     page = fields.Int(missing=1, validate=lambda n: n > 0)
     per_page = fields.Integer(missing=100, validate=lambda n: 0 < n <= 100)
 
@@ -217,7 +217,7 @@ class DeviceRevokeReqSchema(BaseReqSchema):
 
 
 class DeviceRevokeRepSchema(BaseRepSchema):
-    user_revocated_on = fields.DateTime(allow_none=True)
+    user_revoked_on = fields.DateTime(allow_none=True)
 
 
 device_revoke_serializer = CmdSerializer(DeviceRevokeReqSchema, DeviceRevokeRepSchema)

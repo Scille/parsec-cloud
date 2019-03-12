@@ -185,8 +185,8 @@ class DevicesWidget(CoreWidget, Ui_DevicesWidget):
                     self.add_device(
                         device_name,
                         is_current_device=device_name == current_device.device_name,
-                        is_revoked=bool(device.revocated_on),
-                        revoked_on=device.revocated_on,
+                        is_revoked=bool(device.revoked_on),
+                        revoked_on=device.revoked_on,
                     )
             except BackendNotAvailable:
                 pass

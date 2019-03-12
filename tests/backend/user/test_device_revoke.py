@@ -40,7 +40,7 @@ async def test_device_revoke_ok(
     # Revoke Alice's first device
     with freeze_time(now):
         rep = await device_revoke(bob_backend_sock, certified_revocation=alice_revocation)
-    assert rep == {"status": "ok", "user_revocated_on": None}
+    assert rep == {"status": "ok", "user_revoked_on": None}
 
     # Alice cannot connect from now on...
     with pytest.raises(HandshakeRevokedDevice):
@@ -54,7 +54,7 @@ async def test_device_revoke_ok(
     # Revoke Alice's second device (should automatically revoke the user)
     with freeze_time(now):
         rep = await device_revoke(bob_backend_sock, certified_revocation=alice2_revocation)
-    assert rep == {"status": "ok", "user_revocated_on": now}
+    assert rep == {"status": "ok", "user_revoked_on": now}
 
     # Alice2 cannot connect from now on...
     with pytest.raises(HandshakeRevokedDevice):
@@ -80,7 +80,7 @@ async def test_device_revoke_own_device_not_admin(
     )
 
     rep = await device_revoke(alice_backend_sock, certified_revocation=alice2_revocation)
-    assert rep == {"status": "ok", "user_revocated_on": None}
+    assert rep == {"status": "ok", "user_revoked_on": None}
 
     # Make sure alice2 cannot connect from now on
     with pytest.raises(HandshakeRevokedDevice):

@@ -29,9 +29,9 @@ CREATE TABLE device (
     -- NULL if certifier is the Root Verify Key
     device_certifier INTEGER REFERENCES device (_id),
     created_on TIMESTAMPTZ NOT NULL,
-    -- NULL if not yet revocated
-    revocated_on TIMESTAMPTZ,
-    -- NULL if not yet revocated
+    -- NULL if not yet revoked
+    revoked_on TIMESTAMPTZ,
+    -- NULL if not yet revoked
     certified_revocation BYTEA,
     -- NULL if certifier is the Root Verify Key
     revocation_certifier INTEGER REFERENCES device (_id),

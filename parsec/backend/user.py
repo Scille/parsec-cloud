@@ -79,7 +79,7 @@ class Device:
     device_certifier: Optional[DeviceID]
 
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
-    revocated_on: pendulum.Pendulum = None
+    revoked_on: pendulum.Pendulum = None
     certified_revocation: bytes = None
     revocation_certifier: DeviceID = None
 
@@ -109,15 +109,15 @@ class User:
 
     created_on: pendulum.Pendulum = attr.ib(factory=pendulum.now)
 
-    def is_revocated(self) -> bool:
+    def is_revoked(self) -> bool:
         now = pendulum.now()
         for d in self.devices.values():
-            if not d.revocated_on or d.revocated_on > now:
+            if not d.revoked_on or d.revoked_on > now:
                 return False
         return True
 
-    def get_revocated_on(self) -> Optional[pendulum.Pendulum]:
-        revocations = [d.revocated_on for d in self.devices.values()]
+    def get_revoked_on(self) -> Optional[pendulum.Pendulum]:
+        revocations = [d.revoked_on for d in self.devices.values()]
         if not revocations or None in revocations:
             return None
         else:
@@ -659,7 +659,7 @@ class BaseUserComponent:
                 }
 
         try:
-            user_revocated_on = await self.revoke_device(
+            user_revoked_on = await self.revoke_device(
                 client_ctx.organization_id,
                 data["device_id"],
                 msg["certified_revocation"],
@@ -677,7 +677,7 @@ class BaseUserComponent:
             }
 
         return device_revoke_serializer.rep_dump(
-            {"status": "ok", "user_revocated_on": user_revocated_on}
+            {"status": "ok", "user_revoked_on": user_revoked_on}
         )
 
     #### Virtual methods ####
@@ -745,7 +745,7 @@ class BaseUserComponent:
         query: str = None,
         page: int = 1,
         per_page: int = 100,
-        omit_revocated: bool = False,
+        omit_revoked: bool = False,
     ) -> Tuple[List[UserID], int]:
         raise NotImplementedError()
 
@@ -830,7 +830,7 @@ class BaseUserComponent:
         device_id: DeviceID,
         certified_revocation: bytes,
         revocation_certifier: DeviceID,
-        revocated_on: pendulum.Pendulum = None,
+        revoked_on: pendulum.Pendulum = None,
     ) -> Optional[pendulum.Pendulum]:
         """
         Raises:

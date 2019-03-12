@@ -56,7 +56,7 @@ async def test_api_user_get_ok(access_testbed):
             device.device_name: {
                 "device_id": device.device_id,
                 "created_on": Pendulum(2000, 1, 1),
-                "revocated_on": None,
+                "revoked_on": None,
                 "certified_revocation": None,
                 "revocation_certifier": None,
                 "certified_device": ANY,
@@ -106,7 +106,7 @@ async def test_api_user_get_ok_deep_trustchain(
             mike1.device_id.device_name: {
                 "device_id": mike1.device_id,
                 "created_on": d1,
-                "revocated_on": None,
+                "revoked_on": None,
                 "certified_revocation": None,
                 "revocation_certifier": None,
                 "certified_device": ANY,
@@ -115,7 +115,7 @@ async def test_api_user_get_ok_deep_trustchain(
             mike2.device_id.device_name: {
                 "device_id": mike2.device_id,
                 "created_on": d1,
-                "revocated_on": d2,
+                "revoked_on": d2,
                 "certified_revocation": ANY,
                 "revocation_certifier": ph2.device_id,
                 "certified_device": ANY,
@@ -126,7 +126,7 @@ async def test_api_user_get_ok_deep_trustchain(
             godfrey1.device_id: {
                 "device_id": godfrey1.device_id,
                 "created_on": d1,
-                "revocated_on": None,
+                "revoked_on": None,
                 "certified_revocation": None,
                 "revocation_certifier": None,
                 "certified_device": ANY,
@@ -135,7 +135,7 @@ async def test_api_user_get_ok_deep_trustchain(
             mike1.device_id: {
                 "device_id": mike1.device_id,
                 "created_on": d1,
-                "revocated_on": None,
+                "revoked_on": None,
                 "certified_revocation": None,
                 "revocation_certifier": None,
                 "certified_device": ANY,
@@ -144,7 +144,7 @@ async def test_api_user_get_ok_deep_trustchain(
             roger1.device_id: {
                 "device_id": roger1.device_id,
                 "created_on": d1,
-                "revocated_on": d2,
+                "revoked_on": d2,
                 "certified_revocation": ANY,
                 "revocation_certifier": ph1.device_id,
                 "certified_device": ANY,
@@ -153,7 +153,7 @@ async def test_api_user_get_ok_deep_trustchain(
             ph1.device_id: {
                 "device_id": ph1.device_id,
                 "created_on": d1,
-                "revocated_on": None,
+                "revoked_on": None,
                 "certified_revocation": None,
                 "revocation_certifier": None,
                 "certified_device": ANY,
@@ -162,7 +162,7 @@ async def test_api_user_get_ok_deep_trustchain(
             ph2.device_id: {
                 "device_id": ph2.device_id,
                 "created_on": d1,
-                "revocated_on": None,
+                "revoked_on": None,
                 "certified_revocation": None,
                 "revocation_certifier": None,
                 "certified_device": ANY,
@@ -231,7 +231,7 @@ async def test_api_user_find(access_testbed, organization_factory, local_device_
     }
 
     # Test partial search while omitting revoked users
-    rep = await user_find(sock, query="Phil", omit_revocated=True)
+    rep = await user_find(sock, query="Phil", omit_revoked=True)
     assert rep == {"status": "ok", "results": ["Philippe"], "per_page": 100, "page": 1, "total": 1}
 
     # Test pagination
@@ -259,7 +259,7 @@ async def test_api_user_find(access_testbed, organization_factory, local_device_
     }
 
     # Test omit revoked users
-    rep = await user_find(sock, omit_revocated=True)
+    rep = await user_find(sock, omit_revoked=True)
     assert rep == {
         "status": "ok",
         "results": ["Blacky", "Godfrey", "Mike", "Philippe"],

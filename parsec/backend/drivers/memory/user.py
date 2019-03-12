@@ -131,7 +131,7 @@ class MemoryUserComponent(BaseUserComponent):
         query: str = None,
         page: int = 0,
         per_page: int = 100,
-        omit_revocated: bool = False,
+        omit_revoked: bool = False,
     ):
         org = self._organizations[organization_id]
         users = org._users
@@ -141,8 +141,8 @@ class MemoryUserComponent(BaseUserComponent):
         else:
             results = users.keys()
 
-        if omit_revocated:
-            results = [user_id for user_id in results if not users[user_id].is_revocated()]
+        if omit_revoked:
+            results = [user_id for user_id in results if not users[user_id].is_revoked()]
 
         # PostgreSQL does case insensitive sort
         sorted_results = sorted(results, key=lambda s: s.lower())
@@ -244,13 +244,13 @@ class MemoryUserComponent(BaseUserComponent):
         device_id: DeviceID,
         certified_revocation: bytes,
         revocation_certifier: DeviceID,
-        revocated_on: pendulum.Pendulum = None,
+        revoked_on: pendulum.Pendulum = None,
     ) -> Optional[pendulum.Pendulum]:
         org = self._organizations[organization_id]
 
         user = await self.get_user(organization_id, device_id.user_id)
         try:
-            if user.devices[device_id.device_name].revocated_on:
+            if user.devices[device_id.device_name].revoked_on:
                 raise UserAlreadyRevokedError()
 
         except KeyError:
@@ -260,11 +260,11 @@ class MemoryUserComponent(BaseUserComponent):
         for device in user.devices.values():
             if device.device_id == device_id:
                 device = device.evolve(
-                    revocated_on=revocated_on or pendulum.now(),
+                    revoked_on=revoked_on or pendulum.now(),
                     certified_revocation=certified_revocation,
                     revocation_certifier=revocation_certifier,
                 )
             patched_devices.append(device)
 
         user = org._users[device_id.user_id] = user.evolve(devices=DevicesMapping(*patched_devices))
-        return user.get_revocated_on()
+        return user.get_revoked_on()
