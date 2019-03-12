@@ -2,6 +2,7 @@
 
 import pytest
 from uuid import UUID
+from pendulum import Pendulum
 
 from parsec.api.protocole import (
     packb,
@@ -10,6 +11,8 @@ from parsec.api.protocole import (
     vlob_read_serializer,
     vlob_update_serializer,
 )
+
+from tests.common import freeze_time
 
 
 VLOB_ID = UUID("00000000000000000000000000000001")
@@ -62,23 +65,33 @@ async def vlob_update(sock, id, version, blob, check_rep=True):
 @pytest.fixture
 async def vlobs(backend, alice):
     ids = (UUID("00000000000000000000000000000001"), UUID("00000000000000000000000000000002"))
-    await backend.vlob.create(
-        alice.organization_id, alice.device_id, ids[0], GROUP_ID, b"1 blob v1"
-    )
-    await backend.vlob.update(alice.organization_id, alice.device_id, ids[0], 2, b"1 blob v2")
-    await backend.vlob.create(
-        alice.organization_id, alice.device_id, ids[1], GROUP_ID, b"2 blob v1"
-    )
+    with freeze_time("2000-01-02"):
+        await backend.vlob.create(
+            alice.organization_id, alice.device_id, ids[0], GROUP_ID, b"1 blob v1"
+        )
+    with freeze_time("2000-01-03"):
+        await backend.vlob.update(alice.organization_id, alice.device_id, ids[0], 2, b"1 blob v2")
+    with freeze_time("2000-01-04"):
+        await backend.vlob.create(
+            alice.organization_id, alice.device_id, ids[1], GROUP_ID, b"2 blob v1"
+        )
     return ids
 
 
 @pytest.mark.trio
-async def test_vlob_create_and_read(alice_backend_sock, alice2_backend_sock):
+async def test_vlob_create_and_read(alice, alice_backend_sock, alice2_backend_sock):
     blob = b"Initial commit."
-    await vlob_create(alice_backend_sock, GROUP_ID, VLOB_ID, blob)
+    with freeze_time("2000-01-02"):
+        await vlob_create(alice_backend_sock, GROUP_ID, VLOB_ID, blob)
 
     rep = await vlob_read(alice2_backend_sock, VLOB_ID)
-    assert rep == {"status": "ok", "version": 1, "blob": blob}
+    assert rep == {
+        "status": "ok",
+        "version": 1,
+        "blob": blob,
+        "author": alice.device_id,
+        "timestamp": Pendulum(2000, 1, 2),
+    }
 
 
 @pytest.mark.parametrize(
@@ -129,9 +142,15 @@ async def test_vlob_read_not_found(alice_backend_sock):
 
 
 @pytest.mark.trio
-async def test_vlob_read_ok(alice_backend_sock, vlobs):
+async def test_vlob_read_ok(alice, alice_backend_sock, vlobs):
     rep = await vlob_read(alice_backend_sock, vlobs[0])
-    assert rep == {"status": "ok", "blob": b"1 blob v2", "version": 2}
+    assert rep == {
+        "status": "ok",
+        "blob": b"1 blob v2",
+        "version": 2,
+        "author": alice.device_id,
+        "timestamp": Pendulum(2000, 1, 3),
+    }
 
 
 @pytest.mark.trio

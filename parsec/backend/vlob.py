@@ -2,6 +2,7 @@
 
 from typing import List, Tuple, Dict
 from uuid import UUID
+import pendulum
 
 from parsec.types import DeviceID, UserID, OrganizationID
 from parsec.api.protocole import (
@@ -64,7 +65,9 @@ class BaseVlobComponent:
         msg = vlob_read_serializer.req_load(msg)
 
         try:
-            version, blob = await self.read(client_ctx.organization_id, client_ctx.user_id, **msg)
+            version, blob, author, created_on = await self.read(
+                client_ctx.organization_id, client_ctx.user_id, **msg
+            )
 
         except VlobNotFoundError as exc:
             return vlob_create_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
@@ -75,7 +78,15 @@ class BaseVlobComponent:
         except VlobVersionError:
             return vlob_create_serializer.rep_dump({"status": "bad_version"})
 
-        return vlob_read_serializer.rep_dump({"status": "ok", "blob": blob, "version": version})
+        return vlob_read_serializer.rep_dump(
+            {
+                "status": "ok",
+                "blob": blob,
+                "version": version,
+                "author": author,
+                "timestamp": created_on,
+            }
+        )
 
     @catch_protocole_errors
     async def api_vlob_update(self, client_ctx, msg):
@@ -216,7 +227,7 @@ class BaseVlobComponent:
 
     async def read(
         self, organization_id: OrganizationID, author: UserID, id: UUID, version: int = None
-    ) -> Tuple[int, bytes]:
+    ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
         """
         Raises:
             VlobAccessError

@@ -64,8 +64,8 @@ class VlobReadReqSchema(BaseReqSchema):
 class VlobReadRepSchema(BaseRepSchema):
     version = fields.Integer(required=True, validate=_validate_version)
     blob = fields.Bytes(required=True)
-    # TODO: add author
-    # TODO: add timestamp
+    author = fields.DeviceID(required=True)
+    timestamp = fields.DateTime(required=True)
 
 
 vlob_read_serializer = CmdSerializer(VlobReadReqSchema, VlobReadRepSchema)

@@ -346,7 +346,7 @@ RETURNING _id
 
     async def read(
         self, organization_id: OrganizationID, user: UserID, id: UUID, version: int = None
-    ) -> Tuple[int, bytes]:
+    ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
         async with self.dbh.pool.acquire() as conn:
             async with conn.transaction():
                 if version is None:
@@ -358,9 +358,9 @@ SELECT
         vlob.vlob_group
     ),
     version,
-    blob
-    -- author,
-    -- created_on
+    blob,
+    get_device_id(author),
+    created_on
 FROM vlob_atom
 LEFT JOIN vlob ON vlob._id = vlob_atom.vlob
 WHERE
@@ -383,9 +383,9 @@ SELECT
         vlob.vlob_group
     ),
     version,
-    blob
-    -- author,
-    -- created_on
+    blob,
+    get_device_id(author),
+    created_on
 FROM vlob_atom
 LEFT JOIN vlob ON vlob._id = vlob_atom.vlob
 WHERE

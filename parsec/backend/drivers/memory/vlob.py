@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import attr
+import pendulum
 from uuid import UUID
 from typing import List, Tuple, Dict
 from collections import defaultdict
@@ -129,13 +130,13 @@ class MemoryVlobComponent(BaseVlobComponent):
         if id in vlobs:
             raise VlobAlreadyExistsError()
 
-        vlobs[id] = Vlob(group, [(blob, author)])
+        vlobs[id] = Vlob(group, [(blob, author, pendulum.now())])
 
         self._update_group(organization_id, author, group, id)
 
     async def read(
         self, organization_id: OrganizationID, author: UserID, id: UUID, version: int = None
-    ) -> Tuple[int, bytes]:
+    ) -> Tuple[int, bytes, DeviceID, pendulum.Pendulum]:
         vlob = self._get_vlob(organization_id, id)
 
         if not self._can_read(organization_id, author, vlob.group):
@@ -144,7 +145,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         if version is None:
             version = vlob.current_version
         try:
-            return (version, vlob.data[version - 1][0])
+            return (version, *vlob.data[version - 1])
 
         except IndexError:
             raise VlobVersionError()
@@ -158,7 +159,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             raise VlobAccessError()
 
         if version - 1 == vlob.current_version:
-            vlob.data.append((blob, author))
+            vlob.data.append((blob, author, pendulum.now()))
         else:
             raise VlobVersionError()
 

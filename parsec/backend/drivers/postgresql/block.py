@@ -2,6 +2,7 @@
 
 from triopg.exceptions import UniqueViolationError
 from uuid import UUID
+import pendulum
 
 from parsec.types import DeviceID, OrganizationID
 from parsec.backend.vlob import BaseVlobComponent
@@ -31,10 +32,12 @@ class PGBlockComponent(BaseBlockComponent):
         async with self.dbh.pool.acquire() as conn:
             ret = await conn.fetchrow(
                 """
-SELECT user_has_vlob_group_read_right(
-    get_user_internal_id($1, $2),
-    vlob_group
-)
+SELECT
+    deleted_on,
+    user_has_vlob_group_read_right(
+        get_user_internal_id($1, $2),
+        vlob_group
+    )
 FROM block
 WHERE
     organization = get_organization_internal_id($1)
@@ -44,10 +47,10 @@ WHERE
                 author.user_id,
                 id,
             )
-            if not ret:
+            if not ret or ret[0]:
                 raise BlockNotFoundError()
 
-            elif not ret[0]:
+            elif not ret[1]:
                 raise BlockAccessError()
 
         return await self._blockstore_component.read(organization_id, id)
@@ -109,20 +112,23 @@ INSERT INTO block (
     block_id,
     vlob_group,
     author,
-    size
+    size,
+    created_on
 )
 SELECT
     get_organization_internal_id($1),
     $3,
     get_vlob_group_internal_id($1, $4),
     get_device_internal_id($1, $2),
-    $5
+    $5,
+    $6
 """,
                 organization_id,
                 author,
                 id,
                 vlob_group,
                 len(block),
+                pendulum.now(),
             )
 
             if ret != "INSERT 0 1":

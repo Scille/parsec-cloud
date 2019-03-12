@@ -8,6 +8,7 @@ CREATE TABLE block (
     vlob_group INTEGER REFERENCES vlob_group (_id) NOT NULL,
     author INTEGER REFERENCES device (_id) NOT NULL,
     size INTEGER NOT NULL,
+    created_on TIMESTAMPTZ NOT NULL,
     -- NULL if not deleted
     deleted_on TIMESTAMPTZ,
 
