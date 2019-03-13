@@ -199,6 +199,29 @@ class Sharing:
                 f"Error while trying to send sharing message to backend: {exc}"
             ) from exc
 
+    async def get_permissions(self, path: FsPath):
+        """
+        Raises:
+            SharingBackendMessageError
+            SharingNotAWorkspace
+            FileNotFoundError
+            FSManifestLocalMiss: If path is not available in local
+            ValueError: If path is not a valid absolute path
+        """
+        access, manifest = self.local_folder_fs.get_entry(path)
+        if not is_workspace_manifest(manifest):
+            raise SharingNotAWorkspace(
+                f"`{path}` is not a workspace, hence does not have permissions"
+            )
+
+        try:
+            rights = await self.backend_cmds.vlob_group_get_rights(access.id)
+            return rights
+        except BackendCmdsBadResponse as exc:
+            raise SharingBackendMessageError(
+                f"Error while trying to get vlob group rights in backend: {exc}"
+            ) from exc
+
     # TODO: message handling should be in it own module, but given it is
     # only used for sharing so far...
 
