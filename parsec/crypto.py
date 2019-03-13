@@ -2,7 +2,6 @@
 
 from typing import Tuple, NewType, Optional
 import pendulum
-from secrets import token_hex
 from nacl.public import SealedBox
 from nacl.bindings import crypto_sign_BYTES
 from nacl.secret import SecretBox
@@ -31,7 +30,6 @@ __all__ = (
     "VerifyKey",
     "SymetricKey",
     "HashDigest",
-    "generate_token",
     "export_root_verify_key",
     "import_root_verify_key",
 )
@@ -63,10 +61,6 @@ signed_metadata_serializer = Serializer(SignedMetadataSchema)
 
 class CryptoMetadataError(CryptoError):
     pass
-
-
-def generate_token(length: int):
-    return token_hex(length)
 
 
 def generate_secret_key():
