@@ -195,6 +195,14 @@ class ClaimUserWidget(QWidget, Ui_ClaimUserWidget):
                         self, QCoreApplication.translate("ClaimUserWidget", "Passwords don't match")
                     )
                     return
+            if len(self.line_edit_password.text()) < 8:
+                show_error(
+                    self,
+                    QCoreApplication.translate(
+                        "BootstrapOrganizationWidget", "Password must be at least 8 caracters long."
+                    ),
+                )
+                return
         try:
             backend_addr = BackendOrganizationAddr(self.line_edit_url.text())
             device_id = DeviceID(

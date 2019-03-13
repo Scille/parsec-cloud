@@ -197,6 +197,15 @@ class ClaimDeviceWidget(QWidget, Ui_ClaimDeviceWidget):
                         QCoreApplication.translate("ClaimDeviceWidget", "Passwords don't match"),
                     )
                     return
+            if len(self.line_edit_password.text()) < 8:
+                show_error(
+                    self,
+                    QCoreApplication.translate(
+                        "BootstrapOrganizationWidget", "Password must be at least 8 caracters long."
+                    ),
+                )
+                return
+
         backend_addr = None
         device_id = None
         try:

@@ -146,6 +146,7 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
 
     def bootstrap_clicked(self):
         use_pkcs11 = True
+
         if self.check_box_use_pkcs11.checkState() == Qt.Unchecked:
             use_pkcs11 = False
             if (
@@ -160,6 +161,14 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
                         ),
                     )
                     return
+            if len(self.line_edit_password.text()) < 8:
+                show_error(
+                    self,
+                    QCoreApplication.translate(
+                        "BootstrapOrganizationWidget", "Password must be at least 8 caracters long."
+                    ),
+                )
+                return
         try:
             backend_addr = BackendOrganizationBootstrapAddr(self.line_edit_url.text())
             device_id = DeviceID(
