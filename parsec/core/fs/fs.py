@@ -2,8 +2,10 @@
 
 import math
 import inspect
+from typing import Dict
 from uuid import UUID
 
+from parsec.types import UserID
 from parsec.event_bus import EventBus
 from parsec.core.types import LocalDevice, FsPath
 from parsec.core.local_db import LocalDB
@@ -192,6 +194,11 @@ class FS:
             read_right=read_right,
             write_right=write_right,
         )
+
+    async def get_permissions(self, path: str) -> Dict[UserID, Dict]:
+        cooked_path = FsPath(path)
+        permissions = await self._load_and_retry(self._sharing.get_permissions, cooked_path)
+        return permissions
 
     async def process_last_messages(self) -> None:
         await self._sharing.process_last_messages()
