@@ -44,6 +44,8 @@ CREATE TABLE vlob_atom (
     blob BYTEA NOT NULL,
     author INTEGER REFERENCES device (_id) NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
+    -- NULL if not deleted
+    deleted_on TIMESTAMPTZ,
 
     UNIQUE(vlob, version)
 );

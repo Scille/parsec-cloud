@@ -3,9 +3,10 @@
 import attr
 import pendulum
 from typing import Optional
+from secrets import token_hex
 
 from parsec.types import OrganizationID
-from parsec.crypto import generate_token, VerifyKey
+from parsec.crypto import VerifyKey
 from parsec.trustchain import (
     TrustChainError,
     certified_extract_parts,
@@ -62,7 +63,7 @@ class BaseOrganizationComponent:
     async def api_organization_create(self, client_ctx, msg):
         msg = organization_create_serializer.req_load(msg)
 
-        bootstrap_token = generate_token(self.bootstrap_token_size)
+        bootstrap_token = token_hex(self.bootstrap_token_size)
         try:
             await self.create(msg["organization_id"], bootstrap_token=bootstrap_token)
 
